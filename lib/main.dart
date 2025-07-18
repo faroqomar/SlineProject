@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:sline_app/features/profile/ui/controller/profile_controller.dart';
 import 'core/services/supabase_config.dart';
 import 'features/auth/ui/login_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'features/home/ui/home_screen.dart';
+import 'package:provider/provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SupabaseConfig.init();
@@ -14,16 +16,21 @@ class SLineApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'SLine App',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        fontFamily: 'Roboto',
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ProfileController()),
+      ],
+      child: MaterialApp(
+        title: 'SLine App',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          fontFamily: 'Roboto',
+        ),
+        home: Supabase.instance.client.auth.currentUser != null
+            ? const HomeScreen()
+            : const LoginScreen(),
       ),
-      home: Supabase.instance.client.auth.currentUser != null
-          ? const HomeScreen()
-          : const LoginScreen(),
     );
   }
 }

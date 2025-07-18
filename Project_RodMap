@@ -1,5 +1,3 @@
-
-
 # 📍 SLine Project Roadmap
 
 A detailed roadmap to track the progress of our freelancing marketplace app, SLine, built with Flutter & Supabase.
@@ -23,23 +21,26 @@ A detailed roadmap to track the progress of our freelancing marketplace app, SLi
 - [x] Designed toggle UI to switch between Client and Freelancer roles.
 - [x] Implemented role toggle logic in UI.
 
+### 4. User Profile Module
+- [x] Created profile UI layout and connected with controller.
+- [x] Implemented logic to fetch user data from Supabase.
+- [x] Connected form fields (name, email, bio, avatar) to controller.
+- [x] Fixed navigation issue on profile route from home.
+- [x] Handled missing data errors and form initialization.
+
 ---
 
 ## 🔨 In Progress
 
-### 3. Role Management
-- [ ] Add role field to Supabase user profile table.
-- [ ] Implement row-level security (RLS) policies based on user roles.
+### 3. Role Management (Pending team decision)
+- [ ] (Optional) Add role field to Supabase user profile table.
+- [ ] (Optional) Implement row-level security (RLS) policies based on user roles.
+
+> 📝 Note: This feature is currently postponed until the team decides whether to support multiple roles (Client & Freelancer) in one account.
 
 ---
 
 ## ⏭️ Upcoming Tasks
-
-### 4. User Profile Module
-- [ ] Design UI for profile editing (Client/Freelancer).
-- [ ] Fetch profile data from Supabase.
-- [ ] Update user profile data (name, bio, image, etc.).
-- [ ] Upload & retrieve user avatar using Supabase Storage.
 
 ### 5. Chat Module
 - [ ] Setup Supabase tables for chats and messages.
@@ -73,3 +74,7 @@ A detailed roadmap to track the progress of our freelancing marketplace app, SLi
 - All UI designs follow a modular structure with `features/` separation.
 - Supabase handles auth, storage, and DB; FastAPI for business logic.
 - GitHub repo is private and regularly pushed from local.
+
+git add .
+git commit -m "Add PROJECT_LOG.md and SUPABASE_SETUP.md "
+git push

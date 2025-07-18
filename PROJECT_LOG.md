@@ -45,6 +45,10 @@ This file documents every step taken in building the SLine app.
 - Integrated image_picker for profile photo
 - Fixed issues with context use after async gaps
 - Added loading indicators and success messages
+- Connected all profile widgets (avatar, role toggle, form, logout) to `ProfileController`
+- Fixed null controllers and made all fields editable
+- Pulled existing user data from Supabase into form fields (name, email, bio)
+- Synced changes back to Supabase with update logic
 
 ---
 
