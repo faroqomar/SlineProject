@@ -12,6 +12,10 @@ class AuthController {
   }) async {
     try {
       await _repo.signIn(email: email, password: password);
+      final profile = await _repo.getCurrentUserProfile();
+      if (profile != null) {
+        debugPrint("User profile loaded: ${profile['full_name']}");
+      }
       if (!state.mounted) return;
       final messenger = ScaffoldMessenger.of(state.context);
       messenger.showSnackBar(const SnackBar(content: Text("Login successful")));
