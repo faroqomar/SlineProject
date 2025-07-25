@@ -1,0 +1,36 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../core/providers/navigation_provider.dart';
+import '../core/widgets/custom_bottom_nav_bar.dart';
+import '../features/home/presentation/home_screen.dart';
+import '../features/chat/presentation/chat_screen.dart';
+import '../features/tasks/presentation/tasks_screen.dart';
+import '../features/profile/presentation/profile_screen.dart';
+
+/// Main navigation screen that manages bottom navigation and screen switching
+class MainNavigationScreen extends StatelessWidget {
+  const MainNavigationScreen({super.key});
+
+  /// List of screens corresponding to bottom navigation tabs
+  static const List<Widget> _screens = [
+    HomeScreen(),
+    ChatScreen(),
+    TasksScreen(),
+    ProfileScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<NavigationProvider>(
+      builder: (context, navigationProvider, child) {
+        return Scaffold(
+          body: IndexedStack(
+            index: navigationProvider.currentIndex,
+            children: _screens,
+          ),
+          bottomNavigationBar: const CustomBottomNavBar(),
+        );
+      },
+    );
+  }
+}

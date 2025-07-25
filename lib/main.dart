@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:sline_app/features/profile/ui/controller/profile_controller.dart';
+import 'package:sline_app/features/profile/controllers/profile_controller.dart';
+import 'package:sline_app/features/auth/controllers/auth_controller.dart';
+import 'package:sline_app/features/home/controllers/home_controller.dart';
+import 'package:sline_app/features/chat/controllers/chat_controller.dart';
+import 'package:sline_app/features/tasks/controllers/task_controller.dart';
 import 'core/services/supabase_config.dart';
-import 'features/auth/ui/login_screen.dart';
+import 'features/auth/presentation/login_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'features/home/ui/home_screen.dart';
+import 'app/main_navigation_screen.dart';
+import 'core/providers/navigation_provider.dart';
 import 'package:provider/provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,6 +24,11 @@ class SLineApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ProfileController()),
+        ChangeNotifierProvider(create: (_) => NavigationProvider()),
+        ChangeNotifierProvider(create: (_) => AuthController()),
+        ChangeNotifierProvider(create: (_) => HomeController()),
+        ChangeNotifierProvider(create: (_) => ChatController()),
+        ChangeNotifierProvider(create: (_) => TaskController()),
       ],
       child: MaterialApp(
         title: 'SLine App',
@@ -28,7 +38,7 @@ class SLineApp extends StatelessWidget {
           fontFamily: 'Roboto',
         ),
         home: Supabase.instance.client.auth.currentUser != null
-            ? const HomeScreen()
+            ? const MainNavigationScreen()
             : const LoginScreen(),
       ),
     );
