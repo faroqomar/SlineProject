@@ -108,7 +108,7 @@ class ServiceCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(task.status).withOpacity(0.1),
+                      color: _getStatusColor(task.status).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -134,11 +134,11 @@ class ServiceCard extends StatelessWidget {
     switch (status) {
       case TaskStatus.open:
         return Colors.green;
-      case TaskStatus.inProgress:
+      case TaskStatus.assigned:
         return Colors.orange;
-      case TaskStatus.completed:
+      case TaskStatus.closed:
         return Colors.blue;
-      case TaskStatus.cancelled:
+      case TaskStatus.inProgress:
         return Colors.red;
     }
   }
@@ -150,10 +150,10 @@ class ServiceCard extends StatelessWidget {
         return 'Open';
       case TaskStatus.inProgress:
         return 'In Progress';
-      case TaskStatus.completed:
-        return 'Completed';
-      case TaskStatus.cancelled:
-        return 'Cancelled';
+      case TaskStatus.closed:
+        return 'Closed';
+      case TaskStatus.assigned:
+        return 'Assigned';
     }
   }
 }

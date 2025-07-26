@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sline_app/features/home/ui/home_screen.dart';
+import 'package:sline_app/features/home/presentation/home_screen.dart';
 import '../data/auth_repository.dart';
 
 class AuthController {

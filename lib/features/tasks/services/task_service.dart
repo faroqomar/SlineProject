@@ -7,66 +7,102 @@ class TaskService {
 
   /// Get all tasks from database
   Future<List<Task>> getTasks() async {
-    final response = await _client
-        .from('tasks')
-        .select()
-        .order('created_at', ascending: false);
-
-    return (response as List)
-        .map((json) => Task.fromJson(json))
-        .toList();
+    try {
+      final response = await _client
+          .from('tasks')
+          .select()
+          .order('created_at', ascending: false);
+      return (response as List)
+          .map((json) => Task.fromJson(json))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to get tasks: $e');
+    }
   }
 
   /// Create a new task
   Future<Task> createTask(Task task) async {
-    final response = await _client
-        .from('tasks')
-        .insert(task.toJson())
-        .select()
-        .single();
-
-    return Task.fromJson(response);
+    try {
+      final response = await _client
+          .from('tasks')
+          .insert(task.toJson(includeSystemFields: false))
+          .select()
+          .single();
+      return Task.fromJson(response);
+    } catch (e) {
+      throw Exception('Failed to create task: $e');
+    }
   }
 
   /// Update task status
   Future<void> updateTaskStatus(String taskId, TaskStatus status) async {
-    await _client
-        .from('tasks')
-        .update({'status': status.name})
-        .eq('id', taskId);
+    try {
+      await _client
+          .from('tasks')
+          .update({'status': status.name})
+          .eq('id', taskId);
+    } catch (e) {
+      throw Exception('Failed to update task status: $e');
+    }
   }
 
   /// Get tasks by user ID
   Future<List<Task>> getTasksByUser(String userId) async {
-    final response = await _client
-        .from('tasks')
-        .select()
-        .eq('posted_by', userId)
-        .order('created_at', ascending: false);
-
-    return (response as List)
-        .map((json) => Task.fromJson(json))
-        .toList();
+    try {
+      final response = await _client
+          .from('tasks')
+          .select()
+          .eq('user_id', userId)
+          .order('created_at', ascending: false);
+      return (response as List)
+          .map((json) => Task.fromJson(json))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to get tasks by user: $e');
+    }
   }
 
   /// Get tasks by status
   Future<List<Task>> getTasksByStatus(TaskStatus status) async {
-    final response = await _client
-        .from('tasks')
-        .select()
-        .eq('status', status.name)
-        .order('created_at', ascending: false);
-
-    return (response as List)
-        .map((json) => Task.fromJson(json))
-        .toList();
+    try {
+      final response = await _client
+          .from('tasks')
+          .select()
+          .eq('status', status.name)
+          .order('created_at', ascending: false);
+      return (response as List)
+          .map((json) => Task.fromJson(json))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to get tasks by status: $e');
+    }
   }
 
   /// Delete a task
   Future<void> deleteTask(String taskId) async {
-    await _client
-        .from('tasks')
-        .delete()
-        .eq('id', taskId);
+    try {
+      await _client
+          .from('tasks')
+          .delete()
+          .eq('id', taskId);
+    } catch (e) {
+      throw Exception('Failed to delete task: $e');
+    }
+  }
+
+  /// Get open tasks for the Home screen
+  Future<List<Task>> getOpenTasksForHome() async {
+    try {
+      final response = await _client
+          .from('tasks')
+          .select()
+          .eq('status', TaskStatus.open.name)
+          .order('created_at', ascending: false);
+      return (response as List)
+          .map((json) => Task.fromJson(json))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to get open tasks for home: $e');
+    }
   }
 }

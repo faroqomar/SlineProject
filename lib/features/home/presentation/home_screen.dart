@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/home_controller.dart';
 import '../widgets/service_card.dart';
+import '../../tasks/presentation/create_task_screen.dart';
 
 /// Home screen - main dashboard for the app
 class HomeScreen extends StatefulWidget {
@@ -33,6 +34,15 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.refresh),
             onPressed: () {
               context.read<HomeController>().refresh();
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CreateTaskScreen()),
+              );
             },
           ),
         ],
@@ -84,30 +94,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 
-                // Featured tasks list
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final task = homeController.featuredTasks[index];
-                      return ServiceCard(
-                        task: task,
-                        onTap: () {
-                          // TODO: Navigate to task details
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Tapped on ${task.title}'),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                    childCount: homeController.featuredTasks.length,
-                  ),
-                ),
-                
-                // Empty state
                 if (homeController.featuredTasks.isEmpty)
                   const SliverFillRemaining(
+                    hasScrollBody: false,
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -127,6 +116,26 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ],
                       ),
+                    ),
+                  )
+                else
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final task = homeController.featuredTasks[index];
+                        return ServiceCard(
+                          task: task,
+                          onTap: () {
+                            // TODO: Navigate to task details
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Tapped on ${task.title}'),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                      childCount: homeController.featuredTasks.length,
                     ),
                   ),
               ],

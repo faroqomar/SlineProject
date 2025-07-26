@@ -35,18 +35,18 @@ class TaskController extends ChangeNotifier {
           title: 'Website Development',
           description: 'Need a modern website for my business',
           budget: 500.0,
-          postedBy: 'client1',
+          userId: 'client1',
           status: TaskStatus.open,
-          createdAt: DateTime.now().subtract(const Duration(days: 2)),
+          createdAt: DateTime.now().subtract(const Duration(days: 2)), category: '',
         ),
         Task(
           id: '2',
           title: 'Mobile App Design',
           description: 'Design UI/UX for mobile application',
           budget: 800.0,
-          postedBy: 'client2',
+          userId: 'client2',
           status: TaskStatus.open,
-          createdAt: DateTime.now().subtract(const Duration(hours: 5)),
+          createdAt: DateTime.now().subtract(const Duration(hours: 5)), category: '',
         ),
       ]);
       

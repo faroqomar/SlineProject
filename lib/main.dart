@@ -30,7 +30,7 @@ class SLineApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ChatController()),
         ChangeNotifierProvider(create: (_) => TaskController()),
       ],
-      child: MaterialApp(
+      child: MaterialApp( 
         title: 'SLine App',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(

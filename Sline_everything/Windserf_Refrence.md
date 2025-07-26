@@ -94,8 +94,8 @@ sline_app/
 - **users**: Select, insert, update allowed if authenticated user ID matches row's ID
 - **roles**, **user_roles**: Read-only access for all authenticated users
 
-### Planned Tables
-- `tasks`: Job listings with user_id (posted_by), status, description, budget
+### Implemented Tables
+- `tasks`: Job listings with user_id (posted_by), title, description, budget, skills, status, created_at, category
 - `proposals`: Freelancer applications to jobs
 - `messages`: Chat system between users
 - `projects`: Active work agreements
@@ -159,15 +159,20 @@ MultiProvider(
    - Modular project structure
    - Database schema with RLS policies
 
+4. **Tasks Feature (Partial)**
+   - TaskModel and Supabase schema implemented
+   - CreateTaskScreen to post jobs
+   - HomeScreen fetches and displays tasks dynamically
+
 ### 🔄 Current State
 - **Functional**: Users can register, login, and manage profiles
 - **Navigation**: Basic routing between auth and home screens
-- **Home Screen**: Exists but minimal (placeholder)
+- **Home Screen**: Displays real job listings from Supabase
 - **Architecture**: Ready for feature expansion
 
 ### 📋 Next Development Priorities
 
-#### 1. Tasks/Job Listings System (High Priority)
+#### 1. Task CRUD System (In Progress)
 ```dart
 // Planned implementation:
 - TasksController extends ChangeNotifier

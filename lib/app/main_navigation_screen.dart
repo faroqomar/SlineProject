@@ -4,7 +4,7 @@ import '../core/providers/navigation_provider.dart';
 import '../core/widgets/custom_bottom_nav_bar.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/chat/presentation/chat_screen.dart';
-import '../features/tasks/presentation/tasks_screen.dart';
+import '../features/tasks/presentation/create_task_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
 
 /// Main navigation screen that manages bottom navigation and screen switching
@@ -15,7 +15,7 @@ class MainNavigationScreen extends StatelessWidget {
   static const List<Widget> _screens = [
     HomeScreen(),
     ChatScreen(),
-    TasksScreen(),
+    CreateTaskScreen(),
     ProfileScreen(),
   ];
 
