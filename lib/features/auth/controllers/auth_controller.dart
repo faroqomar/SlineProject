@@ -74,4 +74,20 @@ class AuthController extends ChangeNotifier {
       _setLoading(false);
     }
   }
+
+  /// Logout current user
+  Future<void> logout(BuildContext context) async {
+    _setLoading(true);
+    try {
+      await _authService.signOut();
+      if (!context.mounted) return;
+      Navigator.pushReplacementNamed(context, '/login');
+    } catch (e) {
+      if (!context.mounted) return;
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.showSnackBar(SnackBar(content: Text("Logout failed: $e")));
+    } finally {
+      _setLoading(false);
+    }
+  }
 }

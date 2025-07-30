@@ -14,6 +14,8 @@ class _SignupScreenState extends State<SignupScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  bool _isLoading = false;
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -23,11 +25,18 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
-  void _handleSignup() {
+  void _handleSignup() async {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
+
+    if (name.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("All fields are required")),
+      );
+      return;
+    }
 
     if (password != confirmPassword) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -36,12 +45,28 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
 
-    AuthController().register(
-      state: this,
-      email: email,
-      password: password,
-      fullName: name,
-    );
+    setState(() => _isLoading = true);
+
+    try {
+      await AuthController().register(
+        state: this,
+        email: email,
+        password: password,
+        fullName: name,
+      );
+
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/main');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Signup failed: $e")),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -110,10 +135,16 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: _handleSignup,
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 14.0),
-                  child: Text('Sign Up', style: TextStyle(fontSize: 16)),
+                onPressed: _isLoading ? null : _handleSignup,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14.0),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Sign Up', style: TextStyle(fontSize: 16)),
                 ),
               ),
               TextButton(

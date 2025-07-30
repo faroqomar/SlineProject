@@ -21,15 +21,19 @@ class HomeController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Load featured tasks for home screen
-  Future<void> loadFeaturedTasks() async {
+  /// Load featured tasks for home screen, optionally update a filter controller
+  Future<void> loadFeaturedTasks({dynamic filterController}) async {
     _setLoading(true);
     try {
       final tasks = await _taskService.getOpenTasksForHome();
       _featuredTasks
         ..clear()
         ..addAll(tasks);
-      
+
+      if (filterController != null) {
+        filterController.setTasks(_featuredTasks);
+      }
+
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading featured tasks: $e');
@@ -38,8 +42,8 @@ class HomeController extends ChangeNotifier {
     }
   }
 
-  /// Refresh home data
-  Future<void> refresh() async {
-    await loadFeaturedTasks();
+  /// Refresh home data, optionally update a filter controller
+  Future<void> refresh({dynamic filterController}) async {
+    await loadFeaturedTasks(filterController: filterController);
   }
 }

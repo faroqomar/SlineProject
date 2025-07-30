@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../controllers/home_controller.dart';
 import '../widgets/service_card.dart';
 import '../../tasks/presentation/create_task_screen.dart';
+import 'package:sline_app/features/tasks/controllers/task_filter_controller.dart';
+import 'package:sline_app/shared/constants/categories.dart';
 
 /// Home screen - main dashboard for the app
 class HomeScreen extends StatefulWidget {
@@ -16,9 +18,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Load featured tasks when screen initializes
+    // Load featured tasks and notify filter controller when screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<HomeController>().loadFeaturedTasks();
+      context.read<HomeController>().loadFeaturedTasks(
+            filterController: context.read<TaskFilterController>(),
+          );
     });
   }
 
@@ -47,42 +51,56 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Consumer<HomeController>(
-        builder: (context, homeController, child) {
+      body: Consumer2<HomeController, TaskFilterController>(
+        builder: (context, homeController, filterController, child) {
           if (homeController.isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           return RefreshIndicator(
-            onRefresh: homeController.refresh,
+            onRefresh: () async {
+              await homeController.refresh(filterController: filterController);
+            },
             child: CustomScrollView(
               slivers: [
-                // Welcome section
+                // Search and filter section
                 SliverToBoxAdapter(
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    child: const Column(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Welcome to SLine',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
+                        TextField(
+                          decoration: const InputDecoration(
+                            prefixIcon: Icon(Icons.search),
+                            hintText: 'Search tasks...',
+                            border: OutlineInputBorder(),
                           ),
+                          onChanged: filterController.searchTasks,
                         ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Your freelance marketplace',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey,
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            labelText: 'Filter by Category',
                           ),
+                          items: [
+                            const DropdownMenuItem(value: '', child: Text('All')),
+                            ...taskCategories.map(
+                              (category) => DropdownMenuItem(
+                                value: category,
+                                child: Text(category),
+                              ),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            if (value != null) {
+                              filterController.filterByCategory(value);
+                            }
+                          },
                         ),
-                        SizedBox(height: 16),
-                        Text(
+                        const SizedBox(height: 16),
+                        const Text(
                           'Featured Tasks',
                           style: TextStyle(
                             fontSize: 18,
@@ -93,26 +111,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
-                
-                if (homeController.featuredTasks.isEmpty)
+
+                if (filterController.filteredTasks.isEmpty)
                   const SliverFillRemaining(
                     hasScrollBody: false,
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.work_outline,
-                            size: 64,
-                            color: Colors.grey,
-                          ),
+                          Icon(Icons.work_outline, size: 64, color: Colors.grey),
                           SizedBox(height: 16),
                           Text(
-                            'No tasks available',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.grey,
-                            ),
+                            'No tasks found',
+                            style: TextStyle(fontSize: 18, color: Colors.grey),
                           ),
                         ],
                       ),
@@ -122,20 +133,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        final task = homeController.featuredTasks[index];
+                        final task = filterController.filteredTasks[index];
                         return ServiceCard(
                           task: task,
                           onTap: () {
-                            // TODO: Navigate to task details
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Tapped on ${task.title}'),
-                              ),
+                              SnackBar(content: Text('Tapped on ${task.title}')),
                             );
                           },
                         );
                       },
-                      childCount: homeController.featuredTasks.length,
+                      childCount: filterController.filteredTasks.length,
                     ),
                   ),
               ],

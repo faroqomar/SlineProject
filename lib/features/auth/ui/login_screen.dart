@@ -1,7 +1,6 @@
 // lib/features/auth/ui/login_screen.dart
 import 'package:flutter/material.dart';
 import '../controller/auth_controller.dart';
-import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -101,10 +100,7 @@ class _SignupRedirectButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextButton(
       onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const SignupScreen()),
-        );
+        Navigator.pushNamed(context, '/signup');
       },
       child: const Text("Don't have an account? Sign Up"),
     );

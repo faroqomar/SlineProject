@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/profile_controller.dart';
+import '../../auth/controllers/auth_controller.dart';
 import '../widgets/profile_avatar_widget.dart';
 
 /// Profile screen - user profile management and settings
@@ -32,7 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
-              context.read<ProfileController>().signOut(context);
+              context.read<AuthController>().logout(context);
             },
           ),
         ],
