@@ -164,6 +164,10 @@ MultiProvider(
    - CreateTaskScreen to post jobs
    - HomeScreen fetches and displays tasks dynamically
 
+5. **Task Publisher Integration**
+   - Displaying publisher name and avatar with tasks on HomeScreen
+   - Fixed task creation flow with confirmation feedback
+
 ### 🔄 Current State
 - **Functional**: Users can register, login, and manage profiles
 - **Navigation**: Basic routing between auth and home screens

@@ -33,7 +33,13 @@ class Task {
 
   /// List of skills required for the task (planned for Supabase integration)
   final List<String> skills;
-final String category;
+  final String category;
+
+  /// Optional name of the user who posted the task
+  final String? userName;
+
+  /// Optional avatar URL of the user who posted the task
+  final String? userAvatar;
 
   const Task({
     required this.id,
@@ -45,7 +51,9 @@ final String category;
     required this.category,
     required this.createdAt,
     this.deadline,
-    this.skills = const [], 
+    this.skills = const [],
+    this.userName,
+    this.userAvatar,
   });
 
   /// Create Task from JSON
@@ -62,12 +70,15 @@ final String category;
         orElse: () => TaskStatus.open,
       ),
       createdAt: DateTime.parse(json['created_at'] as String),
-      deadline: json['deadline'] != null 
-          ? DateTime.parse(json['deadline'] as String) 
+      deadline: json['deadline'] != null
+          ? DateTime.parse(json['deadline'] as String)
           : null,
       skills: (json['skills'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList() ?? [],
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
+      userName: null,
+      userAvatar: null,
     );
   }
 
@@ -102,6 +113,8 @@ final String category;
     DateTime? deadline,
     List<String>? skills,
     String? category,
+    String? userName,
+    String? userAvatar,
   }) {
     return Task(
       id: id ?? this.id,
@@ -114,6 +127,8 @@ final String category;
       deadline: deadline ?? this.deadline,
       skills: skills ?? this.skills,
       category: category ?? this.category,
+      userName: userName ?? this.userName,
+      userAvatar: userAvatar ?? this.userAvatar,
     );
   }
 }

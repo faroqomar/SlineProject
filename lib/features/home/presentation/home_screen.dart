@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/features/tasks/presentation/widgets/task_card.dart';
 import '../controllers/home_controller.dart';
-import '../widgets/service_card.dart';
 import '../../tasks/presentation/create_task_screen.dart';
 import 'package:sline_app/features/tasks/controllers/task_filter_controller.dart';
 import 'package:sline_app/shared/constants/categories.dart';
@@ -37,16 +37,23 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
-              context.read<HomeController>().refresh();
+              context.read<HomeController>().refresh(
+                filterController: context.read<TaskFilterController>(),
+              );
             },
           ),
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () {
-              Navigator.push(
+            onPressed: () async {
+              final result = await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const CreateTaskScreen()),
               );
+              if (result == true) {
+                context.read<HomeController>().refresh(
+                  filterController: context.read<TaskFilterController>(),
+                );
+              }
             },
           ),
         ],
@@ -134,7 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
                         final task = filterController.filteredTasks[index];
-                        return ServiceCard(
+                        return TaskCard(
                           task: task,
                           onTap: () {
                             ScaffoldMessenger.of(context).showSnackBar(

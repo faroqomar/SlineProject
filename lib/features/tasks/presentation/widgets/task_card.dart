@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import '../../models/task_model.dart';
@@ -21,25 +19,61 @@ class TaskCard extends StatelessWidget {
       elevation: 2,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
+      child: InkWell(
         onTap: onTap,
-        contentPadding: const EdgeInsets.all(16),
-        title: Text(
-          task.title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundImage: (task.userAvatar != null && task.userAvatar!.isNotEmpty)
+                        ? NetworkImage(task.userAvatar!)
+                        : null,
+                    child: (task.userAvatar == null || task.userAvatar!.isEmpty)
+                        ? const Icon(Icons.person, size: 20)
+                        : null,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    task.userName ?? 'Unknown User',
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(task.title,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 6),
+              Text(task.description),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('💰 ${PriceFormatter.formatPrice(task.budget)}'),
+                  Row(
+                    children: [
+                      TextButton.icon(
+                        onPressed: () {},
+                        icon: const Icon(Icons.chat_bubble_outline),
+                        label: const Text('Chat'),
+                      ),
+                      TextButton.icon(
+                        onPressed: () {},
+                        icon: const Icon(Icons.book_online_outlined),
+                        label: const Text('Book'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text(task.category),
-            const SizedBox(height: 4),
-            Text('💰 ${PriceFormatter.formatPrice(task.budget)}'),
-            const SizedBox(height: 4),
-            Text('📅 ${DateFormatter.timeAgo(task.createdAt)}'),
-          ],
-        ),
-        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
       ),
     );
   }

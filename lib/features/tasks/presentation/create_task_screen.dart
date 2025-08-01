@@ -59,12 +59,26 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
     try {
       await TaskService().createTask(task);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Task created successfully!')),
-        );
-        Navigator.of(context).pop(); // Go back
-      }
+
+      if (!mounted) return;
+
+      // Clear form fields
+      _titleController.clear();
+      _descriptionController.clear();
+      _budgetController.clear();
+      setState(() {
+        _selectedCategory = null;
+        _selectedDeadline = null;
+      });
+
+      // Show confirmation SnackBar
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Task published successfully!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${e.toString()}')),

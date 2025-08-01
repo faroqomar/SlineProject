@@ -10,11 +10,29 @@ class TaskService {
     try {
       final response = await _client
           .from('tasks')
-          .select()
+          .select('*')
           .order('created_at', ascending: false);
-      return (response as List)
+
+      final tasks = (response as List)
           .map((json) => Task.fromJson(json))
           .toList();
+
+      for (var i = 0; i < tasks.length; i++) {
+        final user = await _client
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('id', tasks[i].userId)
+            .maybeSingle();
+
+        if (user != null) {
+          tasks[i] = tasks[i].copyWith(
+            userName: user['full_name'] as String?,
+            userAvatar: user['avatar_url'] as String?,
+          );
+        }
+      }
+
+      return tasks;
     } catch (e) {
       throw Exception('Failed to get tasks: $e');
     }
@@ -26,9 +44,25 @@ class TaskService {
       final response = await _client
           .from('tasks')
           .insert(task.toJson(includeSystemFields: false))
-          .select()
+          .select('*')
           .single();
-      return Task.fromJson(response);
+
+      // Fetch user details separately
+      final user = await _client
+          .from('profiles')
+          .select('full_name, avatar_url')
+          .eq('id', response['user_id'])
+          .maybeSingle();
+
+      var createdTask = Task.fromJson(response);
+      if (user != null) {
+        createdTask = createdTask.copyWith(
+          userName: user['full_name'] as String?,
+          userAvatar: user['avatar_url'] as String?,
+        );
+      }
+
+      return createdTask;
     } catch (e) {
       throw Exception('Failed to create task: $e');
     }
@@ -51,12 +85,30 @@ class TaskService {
     try {
       final response = await _client
           .from('tasks')
-          .select()
+          .select('*')
           .eq('user_id', userId)
           .order('created_at', ascending: false);
-      return (response as List)
+
+      final tasks = (response as List)
           .map((json) => Task.fromJson(json))
           .toList();
+
+      for (var i = 0; i < tasks.length; i++) {
+        final user = await _client
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('id', tasks[i].userId)
+            .maybeSingle();
+
+        if (user != null) {
+          tasks[i] = tasks[i].copyWith(
+            userName: user['full_name'] as String?,
+            userAvatar: user['avatar_url'] as String?,
+          );
+        }
+      }
+
+      return tasks;
     } catch (e) {
       throw Exception('Failed to get tasks by user: $e');
     }
@@ -67,12 +119,30 @@ class TaskService {
     try {
       final response = await _client
           .from('tasks')
-          .select()
+          .select('*')
           .eq('status', status.name)
           .order('created_at', ascending: false);
-      return (response as List)
+
+      final tasks = (response as List)
           .map((json) => Task.fromJson(json))
           .toList();
+
+      for (var i = 0; i < tasks.length; i++) {
+        final user = await _client
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('id', tasks[i].userId)
+            .maybeSingle();
+
+        if (user != null) {
+          tasks[i] = tasks[i].copyWith(
+            userName: user['full_name'] as String?,
+            userAvatar: user['avatar_url'] as String?,
+          );
+        }
+      }
+
+      return tasks;
     } catch (e) {
       throw Exception('Failed to get tasks by status: $e');
     }
@@ -95,12 +165,30 @@ class TaskService {
     try {
       final response = await _client
           .from('tasks')
-          .select()
+          .select('*')
           .eq('status', TaskStatus.open.name)
           .order('created_at', ascending: false);
-      return (response as List)
+
+      final tasks = (response as List)
           .map((json) => Task.fromJson(json))
           .toList();
+
+      for (var i = 0; i < tasks.length; i++) {
+        final user = await _client
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('id', tasks[i].userId)
+            .maybeSingle();
+
+        if (user != null) {
+          tasks[i] = tasks[i].copyWith(
+            userName: user['full_name'] as String?,
+            userAvatar: user['avatar_url'] as String?,
+          );
+        }
+      }
+
+      return tasks;
     } catch (e) {
       throw Exception('Failed to get open tasks for home: $e');
     }

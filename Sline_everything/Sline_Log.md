@@ -438,6 +438,12 @@ feat/fix/docs: Brief description
 - Included success SnackBar after task is posted
 - Disabled button when loading to prevent multiple submissions
 
+##### 5. Publisher Info Display
+- TaskCard now displays publisher full_name and avatar_url
+- Implemented Supabase relationship (tasks → users) for fetching user info
+- Added SnackBar confirmation after successful task posting to replace black screen issue
+- Ensured BottomNavigationBar persists after publishing task
+
 #### 📊 Impact:
 - Users (clients) can now post tasks into the marketplace
 - Category is now a required field, shown in both posting and display

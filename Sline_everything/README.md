@@ -97,4 +97,12 @@ This directory contains all the essential documentation for the SLine freelance 
 
 ---
 
+### ✅ Recent Progress
+- ✅ Verified Supabase relationships for tasks and users
+- ✅ Fixed task publishing to avoid black screen by showing SnackBar confirmation
+- ✅ Updated bottom navigation to persist after task creation
+- ✅ Ensured user info (name, avatar) shows with tasks on HomeScreen
+
+---
+
 *This documentation hub serves as the single source of truth for all SLine project information and should be the first reference point for any development work.*

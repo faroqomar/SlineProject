@@ -51,7 +51,8 @@ Step | Feature | Description | Status
 4.7 | Task Details Screen | Full view of a task with PriceFormatter & DateFormatter | ✅ Completed
 4.8 | TaskCard widget | Beautiful summary card for each task | ✅ Completed
 4.9 | Search & Filter | Filter by category/skills, search tasks by keyword | ✅ Completed
-4.10 | Edit/Delete Task | Allow owners to update/remove tasks | ⏳ Planned
+4.10 | Edit/Delete Task | Allow owners to update/remove tasks | ⏳ In Progress
+4.11 | Display Publisher Info | Show user name and avatar in task cards | ✅ Completed
 
 ---
 

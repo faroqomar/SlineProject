@@ -29,6 +29,7 @@
 - Columns:
   - `id` (UUID, primary key, auto-generated)
   - `user_id` (UUID, foreign key to auth.users)
+    - Publisher Info: Linked to users table (user_id → users.id)
   - `title` (text)
   - `description` (text)
   - `budget` (numeric)
@@ -37,6 +38,24 @@
   - `skills` (array of text)
   - `status` (text): allowed values `open`, `assigned`, `closed`
   - `created_at` (timestamp, default: now())
+
+### 5. `profiles`
+- Stores extended user profile data for publisher info.
+- Columns:
+  - `id` (UUID, primary key, references `auth.users.id`)
+  - `full_name` (text)
+  - `avatar_url` (text)
+  - `created_at` (timestamp, default: now())
+
+### ✅ Relationships
+- `tasks.user_id → auth.users.id`  
+- `profiles.id → auth.users.id`  
+- Used for joining task listings with publisher info (full_name, avatar_url).
+
+### ✅ Recent Fixes
+- Added `profiles` table to store `full_name` and `avatar_url`.
+- Ensured tasks join with `profiles` instead of `users` to avoid schema cache errors.
+- Verified Supabase policies allow selecting publisher info alongside tasks.
 
 ## ✅ Policies Enabled
 
