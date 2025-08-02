@@ -79,7 +79,14 @@ class TaskService {
       throw Exception('Failed to update task status: $e');
     }
   }
-
+/// Update an existing task
+Future<void> updateTask(String taskId, Map<String, dynamic> updates) async {
+  try {
+    await _client.from('tasks').update(updates).eq('id', taskId);
+  } catch (e) {
+    throw Exception('Failed to update task: $e');
+  }
+}
   /// Get tasks by user ID
   Future<List<Task>> getTasksByUser(String userId) async {
     try {

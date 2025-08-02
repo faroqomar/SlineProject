@@ -51,7 +51,7 @@ Step | Feature | Description | Status
 4.7 | Task Details Screen | Full view of a task with PriceFormatter & DateFormatter | ✅ Completed
 4.8 | TaskCard widget | Beautiful summary card for each task | ✅ Completed
 4.9 | Search & Filter | Filter by category/skills, search tasks by keyword | ✅ Completed
-4.10 | Edit/Delete Task | Allow owners to update/remove tasks | ⏳ In Progress
+4.10 | Edit/Delete Task | Allow owners to update/remove tasks | ✅ Completed
 4.11 | Display Publisher Info | Show user name and avatar in task cards | ✅ Completed
 
 ---
@@ -84,7 +84,7 @@ Step | Feature | Description | Status
 7.1 | Profile screen | Show avatar, full name, email, phone | ✅ Completed
 7.2 | Edit profile | Update avatar, name, phone | ✅ Completed
 7.3 | Switch role | Toggle between Client ↔ Freelancer | ⏳ Planned
-7.4 | My Tasks | List tasks created by current user | ⏳ Planned
+7.4 | My Tasks | List tasks created by current user | ✅ Completed
 7.5 | Account management | Logout, delete account, reset password | ⏳ Planned
 
 ---

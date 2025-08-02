@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
+import '../../tasks/models/task_model.dart';
+import '../../tasks/services/task_service.dart';
 /// Controller for managing profile functionality
 class ProfileController extends ChangeNotifier {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -12,6 +13,10 @@ class ProfileController extends ChangeNotifier {
   final bioController = TextEditingController();
 
   final formKey = GlobalKey<FormState>();
+
+  final TaskService _taskService = TaskService();
+  List<Task> myTasks = [];
+  bool isLoadingMyTasks = false;
 
   /// Load current user data into controllers
   Future<void> loadUserData() async {
@@ -95,5 +100,45 @@ class ProfileController extends ChangeNotifier {
         .update({'avatar_url': publicUrl}).eq('id', user.id);
 
     notifyListeners();
+  }
+
+  /// Fetch tasks created by the current user
+  Future<void> fetchMyTasks() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+
+    isLoadingMyTasks = true;
+    notifyListeners();
+
+    try {
+      final tasks = await _taskService.getTasksByUser(user.id);
+      myTasks = tasks;
+    } catch (e) {
+      debugPrint('Error fetching user tasks: $e');
+    } finally {
+      isLoadingMyTasks = false;
+      notifyListeners();
+    }
+  }
+
+  /// Delete one of the user's tasks
+  Future<void> deleteMyTask(String taskId) async {
+    try {
+      await _taskService.deleteTask(taskId);
+      myTasks.removeWhere((task) => task.id == taskId);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error deleting task: $e');
+    }
+  }
+
+  /// Update a task
+  Future<void> updateMyTask(String taskId, Map<String, dynamic> updates) async {
+    try {
+      await _taskService.updateTask(taskId, updates);
+      await fetchMyTasks(); // refresh list
+    } catch (e) {
+      debugPrint('Error updating task: $e');
+    }
   }
 }

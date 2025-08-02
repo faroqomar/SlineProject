@@ -73,6 +73,7 @@
   - ✅ Select: Allowed for all authenticated users
   - ✅ Update: Allowed only if `auth.uid() = user_id`
   - ✅ Delete: Allowed only if `auth.uid() = user_id`
+  - ✅ Verified: Owners can now update/delete their own tasks via Profile > My Tasks
 
 ## ✅ Auth Configuration
 - Email + password sign-up enabled.

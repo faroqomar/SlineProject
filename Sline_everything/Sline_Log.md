@@ -408,6 +408,31 @@ feat/fix/docs: Brief description
 
 ---
 
+### 📦 Version 1.3 - My Tasks & Task Editing
+**Date**: 2025-08-02  
+**Status**: Completed My Tasks feature with edit/delete support  
+**Commit**: _Pending_ - "feat: Add My Tasks tab with edit and delete functionality"
+
+#### 🆕 Implemented Features:
+
+##### 1. My Tasks Section
+- Added "My Tasks" tab inside Profile screen
+- Displays list of tasks created by the logged-in user
+- Auto-loads tasks when the Profile screen is opened
+
+##### 2. Edit/Delete Task
+- Edit: Reuses CreateTaskScreen in edit mode with prefilled data
+- Delete: Removes selected task with confirmation and state refresh
+- TaskService updated with `updateTask` method
+- ProfileController extended with `fetchMyTasks`, `deleteMyTask`, `updateMyTask`
+
+#### 📊 Impact:
+- Users can now manage their posted tasks from Profile
+- Improves user experience by allowing direct editing and deletion of tasks
+- Prepares the groundwork for request and messaging features
+
+---
+
 ### 📦 Version 1.2 - Task Creation Feature
 **Date**: 2025-07-26  
 **Status**: Task creation fully implemented with Supabase integration  

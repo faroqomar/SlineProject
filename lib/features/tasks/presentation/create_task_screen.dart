@@ -5,7 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 
 class CreateTaskScreen extends StatefulWidget {
-  const CreateTaskScreen({super.key});
+  final Task? task; // optional task for edit mode
+  const CreateTaskScreen({super.key, this.task});
 
   @override
   State<CreateTaskScreen> createState() => _CreateTaskScreenState();
@@ -31,6 +32,18 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
   bool _isLoading = false;
 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.task != null) {
+      _titleController.text = widget.task!.title;
+      _descriptionController.text = widget.task!.description ?? '';
+      _budgetController.text = widget.task!.budget.toString();
+      _selectedDeadline = widget.task!.deadline;
+      _selectedCategory = widget.task!.category;
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -42,43 +55,55 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       return;
     }
 
-    final task = Task(
-      id: '',
-      title: _titleController.text.trim(),
-      description: _descriptionController.text.trim(),
-      budget: double.tryParse(_budgetController.text.trim()) ?? 0,
-      userId: userId,
-      status: TaskStatus.open,
-      createdAt: DateTime.now(),
-      deadline: _selectedDeadline,
-      category: _selectedCategory ?? 'Uncategorized',
-      skills: [],
-    );
-
     setState(() => _isLoading = true);
 
     try {
-      await TaskService().createTask(task);
+      if (widget.task == null) {
+        // Create mode
+        final task = Task(
+          id: '',
+          title: _titleController.text.trim(),
+          description: _descriptionController.text.trim(),
+          budget: double.tryParse(_budgetController.text.trim()) ?? 0,
+          userId: userId,
+          status: TaskStatus.open,
+          createdAt: DateTime.now(),
+          deadline: _selectedDeadline,
+          category: _selectedCategory ?? 'Uncategorized',
+          skills: [],
+        );
 
-      if (!mounted) return;
+        await TaskService().createTask(task);
 
-      // Clear form fields
-      _titleController.clear();
-      _descriptionController.clear();
-      _budgetController.clear();
-      setState(() {
-        _selectedCategory = null;
-        _selectedDeadline = null;
-      });
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Task published successfully!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        // Edit mode
+        await TaskService().updateTask(widget.task!.id, {
+          'title': _titleController.text.trim(),
+          'description': _descriptionController.text.trim(),
+          'budget': double.tryParse(_budgetController.text.trim()) ?? 0,
+          'deadline': _selectedDeadline?.toIso8601String(),
+          'category': _selectedCategory ?? 'Uncategorized',
+        });
 
-      // Show confirmation SnackBar
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Task published successfully!'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Task updated successfully!'),
+            backgroundColor: Colors.blue,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+
+      Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${e.toString()}')),
@@ -91,7 +116,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Task')),
+      appBar: AppBar(
+        title: Text(widget.task == null ? 'Create Task' : 'Edit Task'),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -145,7 +172,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                     context: context,
                     firstDate: DateTime.now(),
                     lastDate: DateTime.now().add(const Duration(days: 90)),
-                    initialDate: DateTime.now(),
+                    initialDate: _selectedDeadline ?? DateTime.now(),
                   );
                   if (picked != null) {
                     setState(() => _selectedDeadline = picked);
@@ -157,7 +184,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                 onPressed: _isLoading ? null : _submit,
                 child: _isLoading
                     ? const CircularProgressIndicator()
-                    : const Text('Publish Task'),
+                    : Text(widget.task == null ? 'Publish Task' : 'Update Task'),
               ),
             ],
           ),

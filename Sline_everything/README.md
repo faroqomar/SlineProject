@@ -98,6 +98,8 @@ This directory contains all the essential documentation for the SLine freelance 
 ---
 
 ### ✅ Recent Progress
+- ✅ Added My Tasks section in Profile to list user’s own tasks
+- ✅ Implemented Edit/Delete functionality for user tasks
 - ✅ Verified Supabase relationships for tasks and users
 - ✅ Fixed task publishing to avoid black screen by showing SnackBar confirmation
 - ✅ Updated bottom navigation to persist after task creation
