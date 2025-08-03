@@ -18,8 +18,16 @@ class _MessagesScreenState extends State<MessagesScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ChatController>().fetchConversations();
+      final controller = context.read<ChatController>();
+      controller.fetchConversations();
+      controller.subscribeToUserConversations();
     });
+  }
+
+  @override
+  void dispose() {
+    context.read<ChatController>().unsubscribeFromUserConversations();
+    super.dispose();
   }
 
   @override

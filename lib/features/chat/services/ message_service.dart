@@ -116,11 +116,33 @@ class MessageService {
     return _client
         .from('messages')
         .stream(primaryKey: ['id'])
-        .eq('conversation_id', conversationId) // Correct filter usage
+        .eq('conversation_id', conversationId)
         .order('created_at')
         .map((rows) {
-          if (rows.isEmpty) return null; // Handle empty list safely
-          return rows.map((row) => Message.fromJson(row)).last;
+          if (rows.isEmpty) return null;
+          try {
+            // Return the most recent message to trigger updates
+            final messages = rows.map((row) => Message.fromJson(row)).toList();
+            return messages.isNotEmpty ? messages.last : null;
+          } catch (e) {
+            AppLogger.e('Error parsing realtime message: $e');
+            return null;
+          }
+        });
+  }
+
+  /// Subscribe to realtime updates for user conversations
+  Stream<List<Map<String, dynamic>>> subscribeToConversations(String userId) {
+    return _client
+        .from('conversations')
+        .stream(primaryKey: ['id'])
+        .map((rows) {
+          // Filter rows client-side since `.stream()` only allows one filter
+          final filtered = rows.where((row) =>
+            row['user1_id'] == userId || row['user2_id'] == userId
+          ).toList();
+          AppLogger.i('🔄 Conversations updated after filter: ${filtered.length}');
+          return filtered;
         });
   }
 }

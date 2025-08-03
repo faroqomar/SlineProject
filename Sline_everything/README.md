@@ -1,6 +1,6 @@
 # 📚 SLine App - Documentation Hub
 
-*Last Updated: 2025-07-25*
+*Last Updated: 2025-08-03*
 
 This directory contains all the essential documentation for the SLine freelance marketplace app. All files are organized and maintained to provide comprehensive project understanding and development guidance.
 
@@ -110,6 +110,11 @@ This directory contains all the essential documentation for the SLine freelance 
 - ✅ Prepared for Supabase Realtime integration in messaging
 - ✅ Added success SnackBar confirmation after task publishing to prevent black screen
 - ✅ Enhanced AppLogger output with structured PrettyPrinter formatting
+
+- ✅ Enabled Supabase Realtime for messaging (conversations auto-update)
+- ✅ Verified cross-account chat works instantly without refresh
+- ✅ Fixed Chrome file upload bug (`dart:io.File` vs `storage_client.File`)
+- ✅ Confirmed SnackBar success message appears after task publishing
 
 ---
 

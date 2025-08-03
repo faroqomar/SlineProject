@@ -1,6 +1,3 @@
-// lib/features/chat/models/message_model.dart
-import 'package:meta/meta.dart';
-
 /// Represents a single message inside a conversation
 class Message {
   final String id;

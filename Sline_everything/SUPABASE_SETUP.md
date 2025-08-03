@@ -27,6 +27,47 @@
 - Implemented safe Supabase query handling for `last_message` field (handles Map/List/null).
 - Verified relationships fetch publisher info via `profiles` table
 - Ensured safe handling for conversations with no messages (last_message = null)
+- Enabled Supabase Realtime on `messages` and `conversations` tables.
+- Verified subscriptions deliver new messages instantly between accounts.
+- Adjusted queries to handle null/empty last messages safely in realtime updates.
+
+### 🛠 SQL Policies and Setup Implemented
+
+```sql
+-- Conversations policies
+create policy "Allow users to read conversations"
+on conversations for select
+using (auth.uid() = user1_id or auth.uid() = user2_id);
+
+create policy "Allow users to insert conversations"
+on conversations for insert
+with check (auth.uid() = user1_id or auth.uid() = user2_id);
+
+-- Messages policies
+create policy "Allow users to read messages"
+on messages for select
+using (auth.uid() = sender_id or auth.uid() in (
+  select user1_id from conversations where conversations.id = messages.conversation_id
+  union
+  select user2_id from conversations where conversations.id = messages.conversation_id
+));
+
+create policy "Allow users to insert messages"
+on messages for insert
+with check (auth.uid() = sender_id);
+
+-- Enable realtime for messages and conversations
+alter publication supabase_realtime add table messages;
+alter publication supabase_realtime add table conversations;
+```
+
+### 🔐 Additional Configuration
+- Supabase Realtime enabled for `messages` and `conversations`.
+- Policies ensure only participants of a conversation can view or send messages.
+- Insert policies restricted to authenticated users only.
+- Handled null/empty `last_message` to avoid UI crashes.
+- Confirmed fetch joins with `profiles` for publisher info (avatar + name).
+
 # Supabase Setup for Sline App
 
 ## ✅ Tables Created

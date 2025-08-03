@@ -1,10 +1,13 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:typed_data';
 import '../../../core/services/logger_service.dart';
 import '../../tasks/models/task_model.dart';
 import '../../tasks/services/task_service.dart';
+
+import 'dart:io' as io show File;
 /// Controller for managing profile functionality
 class ProfileController extends ChangeNotifier {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -88,17 +91,27 @@ class ProfileController extends ChangeNotifier {
 
     final fileExt = imageFile.path.split('.').last;
     final filePath = 'avatars/${user.id}.$fileExt';
-    final file = File(imageFile.path);
 
-    await _supabase.storage
-        .from('avatars')
-        .upload(filePath, file, fileOptions: FileOptions(upsert: true));
+    if (kIsWeb) {
+      // Web: upload as bytes
+      final bytes = await imageFile.readAsBytes();
+      await _supabase.storage
+          .from('avatars')
+          .uploadBinary(filePath, bytes, fileOptions: const FileOptions(upsert: true));
+    } else {
+      // Mobile only: ensure dart:io File is used safely
+      final file = io.File(imageFile.path);
+      await _supabase.storage
+          .from('avatars')
+          .uploadBinary(
+            filePath,
+            await file.readAsBytes(),
+            fileOptions: const FileOptions(upsert: true),
+          );
+    }
 
-    final publicUrl =
-        _supabase.storage.from('avatars').getPublicUrl(filePath);
-    await _supabase
-        .from('profiles')
-        .update({'avatar_url': publicUrl}).eq('id', user.id);
+    final publicUrl = _supabase.storage.from('avatars').getPublicUrl(filePath);
+    await _supabase.from('profiles').update({'avatar_url': publicUrl}).eq('id', user.id);
 
     notifyListeners();
   }

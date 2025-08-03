@@ -1,6 +1,6 @@
 # 📘 SLine App - Complete Development Log
 
-*Last Updated: 2025-07-25*
+*Last Updated: 2025-08-03*
 
 ---
 
@@ -478,7 +478,7 @@ feat/fix/docs: Brief description
 - Implement task browsing screen for freelancers
 - Display task details screen on tap
 - Enable filtering by category and skill
-# 
+
 # --- v0.7 Logger Integration & Messaging Fix ---
 ### 📦 Version 0.7 - Logger Integration & Messaging Fix
 **Date**: 2025-08-03  
@@ -519,3 +519,36 @@ feat/fix/docs: Brief description
 - Messaging tab reliably displays all conversations with last message + time
 - Groundwork laid for Supabase Realtime integration for live chat
 - Users receive clear feedback when posting tasks, eliminating confusion from previous black screen issue
+
+# --- v0.8 Supabase Realtime Messaging ---
+### 📦 Version 0.8 - Supabase Realtime Messaging
+**Date**: 2025-08-03  
+**Status**: Enabled Supabase Realtime for conversations and messages  
+**Commit**: _Pending_ - "feat: Enable Supabase Realtime for conversations and messages"
+
+#### 🆕 Implemented Features:
+
+##### 1. Supabase Realtime Integration
+- Enabled realtime on `messages` and `conversations` tables
+- Subscribed to conversation and message changes using `supabase.channel`
+- UI now auto-updates when new messages are sent/received between users
+
+##### 2. Security Policies
+- Added row-level security policies to restrict access:
+  - Conversations visible only to participants
+  - Messages visible only to sender and participants of a conversation
+- Insert policies restricted to authenticated users
+
+##### 3. UI Enhancements
+- Conversations list updates in real-time when a new message is added
+- Last message preview updates instantly without refresh
+- Fixed null/empty lastMessage cases to prevent crashes
+
+##### 4. Debug Logging
+- Extended AppLogger to show realtime subscription events
+- Clear logs for join, insert, update, and delete events
+
+#### 📊 Impact:
+- True real-time messaging between accounts without manual refresh
+- Improved user experience with instant updates in the Chat tab
+- Secure policies ensure no unauthorized data access

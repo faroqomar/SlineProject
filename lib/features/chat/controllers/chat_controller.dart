@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/ message_service.dart';
@@ -17,6 +19,9 @@ class ChatController extends ChangeNotifier {
   bool isLoadingMessages = false;
 
   Conversation? activeConversation;
+
+  StreamSubscription<Message?>? _subscription;
+  StreamSubscription<List<Map<String, dynamic>>>? _convoSubscription;
 
   /// Fetch all conversations for the current user
   Future<void> fetchConversations() async {
@@ -84,17 +89,63 @@ class ChatController extends ChangeNotifier {
     }
   }
 
-  /// Subscribe to realtime updates for the active conversation
   void subscribeToActiveConversation() {
     if (activeConversation == null) return;
 
-    _messageService
+    // Cancel any previous subscription
+    _subscription?.cancel();
+
+    _subscription = _messageService
         .subscribeToMessages(activeConversation!.id)
-        .listen((message) {
-      if (message != null) { // Skip nulls
-        currentMessages.add(message);
-        notifyListeners();
+        .listen((message) async {
+      if (message != null) {
+        // Re-fetch the full list to ensure consistency
+        await fetchMessages(activeConversation!.id);
+        AppLogger.i('📩 New message received and messages refreshed');
       }
+    }, onError: (error) {
+      AppLogger.e('Realtime subscription error: $error');
     });
+  }
+
+  /// Subscribe to realtime updates for user conversations
+  void subscribeToUserConversations() {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+
+    // Cancel old subscription
+    _convoSubscription?.cancel();
+
+    _convoSubscription = _messageService
+        .subscribeToConversations(user.id)
+        .listen((rows) {
+      try {
+        conversations = rows.map((json) {
+          return Conversation.fromJson({
+            ...json,
+            'task_title': json['tasks']?['title'] ?? 'Untitled Task',
+            'user1_name': json['user1']?['full_name'] ?? 'User',
+            'user2_name': json['user2']?['full_name'] ?? 'User',
+          });
+        }).toList();
+        AppLogger.i('✅ Conversations updated in controller: ${conversations.length}');
+        notifyListeners();
+      } catch (e) {
+        AppLogger.e('Error parsing realtime conversations: $e');
+      }
+    }, onError: (error) {
+      AppLogger.e('Realtime conversation subscription error: $error');
+    });
+  }
+
+  void unsubscribeFromUserConversations() {
+    _convoSubscription?.cancel();
+    _convoSubscription = null;
+  }
+
+  /// Call this when leaving the chat screen to avoid memory leaks
+  void unsubscribeFromConversation() {
+    _subscription?.cancel();
+    _subscription = null;
   }
 }

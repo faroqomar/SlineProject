@@ -32,7 +32,7 @@ Contains global application configurations such as:
 Houses shared logic, services, and UI elements across the app.
 
 - `models/`: Global data models (e.g., user model).
-- `services/`: Supabase service, image picker, **logger (AppLogger for debug-only logs)**, etc.
+    - `services/`: Supabase service (including Realtime subscriptions for messages & conversations), image picker, **logger (AppLogger for debug-only logs)**, etc.
 - `repositories/`: Abstract business logic layer over services.
 - `widgets/`: Shared UI widgets like buttons, nav bars, etc.
 - `providers/`: Global state (like navigation).
@@ -56,7 +56,7 @@ features/
 ### Feature Examples:
 - `auth/`: login/signup
 - `home/`: service cards & feed
-- `chat/`: real-time messaging
+- `chat/`: real-time messaging with Supabase Realtime subscriptions
 - `tasks/`: post and manage tasks
 - `profile/`: view and edit user profile
 - `booking/`: booking services
@@ -95,6 +95,15 @@ Then link it to the app via `main_navigation_screen.dart`.
 ---
 
 This structure helps keep SLine maintainable, scalable, and easy to navigate for all contributors.
+
+---
+
+## 🔄 Recent Updates (2025-08-03)
+
+- Integrated Supabase Realtime into the `chat` module for instant messaging updates.
+- Updated `core/services/` with structured logging (AppLogger).
+- Ensured cross-platform fixes for Chrome file uploads (`dart:io.File` vs `storage_client.File`).
+- Improved UX: Added SnackBar confirmation after task publishing.
 lib/
 ├── app/                     # Main App Configs: navigation, themes, and entry points
 │   ├── main_navigation_screen.dart  # Holds bottom nav and routes to feature screens
