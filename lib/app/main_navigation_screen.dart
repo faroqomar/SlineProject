@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/features/chat/presentation/%20messages_screen.dart';
 import '../core/providers/navigation_provider.dart';
 import '../core/widgets/custom_bottom_nav_bar.dart';
 import '../features/home/presentation/home_screen.dart';
-import '../features/chat/presentation/chat_screen.dart';
 import '../features/tasks/presentation/create_task_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
 
@@ -14,7 +14,7 @@ class MainNavigationScreen extends StatelessWidget {
   /// List of screens corresponding to bottom navigation tabs
   static const List<Widget> _screens = [
     HomeScreen(),
-    ChatScreen(),
+    MessagesScreen(),
     CreateTaskScreen(),
     ProfileScreen(),
   ];

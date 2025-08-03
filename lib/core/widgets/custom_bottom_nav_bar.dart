@@ -23,7 +23,7 @@ class CustomBottomNavBar extends StatelessWidget {
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.chat),
-              label: 'Chat',
+              label: 'Messages',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.task_alt),

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/features/auth/ui/signup_screen.dart';
+import 'package:sline_app/features/chat/controllers/chat_controller.dart';
 import 'package:sline_app/features/profile/controllers/profile_controller.dart';
 import 'package:sline_app/features/auth/controllers/auth_controller.dart';
 import 'package:sline_app/features/home/controllers/home_controller.dart';
-import 'package:sline_app/features/chat/controllers/chat_controller.dart';
 import 'package:sline_app/features/tasks/controllers/task_controller.dart';
 import 'package:sline_app/features/tasks/controllers/task_filter_controller.dart';
 import 'core/services/supabase_config.dart';
@@ -32,8 +32,8 @@ class SLineApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthController()),
         ChangeNotifierProvider(create: (_) => HomeController()),
         ChangeNotifierProvider(create: (_) => TaskFilterController()),
-        ChangeNotifierProvider(create: (_) => ChatController()),
         ChangeNotifierProvider(create: (_) => TaskController()),
+        ChangeNotifierProvider(create: (_) => ChatController()),
       ],
       child: MaterialApp(
         title: 'SLine App',

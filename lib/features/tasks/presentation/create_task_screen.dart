@@ -37,7 +37,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     super.initState();
     if (widget.task != null) {
       _titleController.text = widget.task!.title;
-      _descriptionController.text = widget.task!.description ?? '';
+      _descriptionController.text = widget.task!.description;
       _budgetController.text = widget.task!.budget.toString();
       _selectedDeadline = widget.task!.deadline;
       _selectedCategory = widget.task!.category;

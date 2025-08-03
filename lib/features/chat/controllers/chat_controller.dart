@@ -1,58 +1,95 @@
 import 'package:flutter/material.dart';
-import '../models/chat_message_model.dart';
+import 'package:sline_app/features/chat/services/%20message_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../models/conversation_model.dart';
+import '../models/message_model.dart';
 
-/// Controller for managing chat functionality
+/// Controller for managing chat state and logic
 class ChatController extends ChangeNotifier {
-  final List<ChatMessage> _messages = [];
-  bool _isLoading = false;
+  final SupabaseClient _supabase = Supabase.instance.client;
+  final MessageService _messageService = MessageService();
 
-  /// List of chat messages
-  List<ChatMessage> get messages => List.unmodifiable(_messages);
+  List<Conversation> conversations = [];
+  List<Message> currentMessages = [];
 
-  /// Current loading state
-  bool get isLoading => _isLoading;
+  bool isLoadingConversations = false;
+  bool isLoadingMessages = false;
 
-  /// Set loading state and notify listeners
-  void _setLoading(bool loading) {
-    _isLoading = loading;
-    notifyListeners();
-  }
+  Conversation? activeConversation;
 
-  /// Send a new message
-  Future<void> sendMessage(String content, String senderId) async {
-    final message = ChatMessage(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      content: content,
-      senderId: senderId,
-      timestamp: DateTime.now(),
-    );
+  /// Fetch all conversations for the current user
+  Future<void> fetchConversations() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
 
-    _messages.add(message);
+    isLoadingConversations = true;
     notifyListeners();
 
-    // TODO: Implement actual message sending to Supabase
-    // await _chatService.sendMessage(message);
-  }
-
-  /// Load chat messages
-  Future<void> loadMessages() async {
-    _setLoading(true);
     try {
-      // TODO: Implement loading messages from Supabase
-      // final messages = await _chatService.getMessages();
-      // _messages.clear();
-      // _messages.addAll(messages);
-      notifyListeners();
+      conversations =
+          await _messageService.getUserConversations(user.id);
+      debugPrint('✅ Conversations fetched: ${conversations.length}');
     } catch (e) {
-      debugPrint('Error loading messages: $e');
+      debugPrint('Error fetching conversations: $e');
     } finally {
-      _setLoading(false);
+      isLoadingConversations = false;
+      notifyListeners();
     }
   }
 
-  /// Clear all messages
-  void clearMessages() {
-    _messages.clear();
+  /// Fetch messages for a given conversation
+  Future<void> fetchMessages(String conversationId) async {
+    isLoadingMessages = true;
     notifyListeners();
+
+    try {
+      currentMessages =
+          await _messageService.getMessages(conversationId);
+      activeConversation = conversations
+          .firstWhere((c) => c.id == conversationId, orElse: () => activeConversation!);
+    } catch (e) {
+      debugPrint('Error fetching messages: $e');
+    } finally {
+      isLoadingMessages = false;
+      notifyListeners();
+    }
+  }
+
+  /// Send a new message in the active conversation
+  Future<void> sendMessage(String content) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null || activeConversation == null) return;
+
+    // Determine receiver (the other participant)
+    final receiverId = activeConversation!.user1Id == user.id
+        ? activeConversation!.user2Id
+        : activeConversation!.user1Id;
+
+    try {
+      final message = await _messageService.sendMessage(
+        conversationId: activeConversation!.id,
+        senderId: user.id,
+        receiverId: receiverId,
+        content: content,
+      );
+      currentMessages.add(message);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error sending message: $e');
+    }
+  }
+
+  /// Subscribe to realtime updates for the active conversation
+  void subscribeToActiveConversation() {
+    if (activeConversation == null) return;
+
+    _messageService
+        .subscribeToMessages(activeConversation!.id)
+        .listen((message) {
+      if (message != null) { // Skip nulls
+        currentMessages.add(message);
+        notifyListeners();
+      }
+    });
   }
 }

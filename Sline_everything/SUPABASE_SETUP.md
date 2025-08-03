@@ -1,3 +1,30 @@
+### 6. `conversations`
+- Stores user-to-user chat conversations.
+- Columns:
+  - `id` (UUID, primary key)
+  - `task_id` (UUID, foreign key to tasks)
+  - `user1_id` (UUID, foreign key to profiles)
+  - `user2_id` (UUID, foreign key to profiles)
+  - `created_at` (timestamp, default: now())
+
+### 7. `messages`
+- Stores chat messages linked to conversations.
+- Columns:
+  - `id` (UUID, primary key)
+  - `conversation_id` (UUID, foreign key to conversations)
+  - `sender_id` (UUID, foreign key to profiles)
+  - `content` (text)
+  - `created_at` (timestamp, default: now())
+
+### ✅ Relationships (Recent)
+- `conversations.user1_id → profiles.id`
+- `conversations.user2_id → profiles.id`
+- `messages.conversation_id → conversations.id`
+- `messages.sender_id → profiles.id`
+
+### ✅ Recent Fixes
+- Added `profiles` table relationships for `conversations`.
+- Implemented safe Supabase query handling for `last_message` field (handles Map/List/null).
 # Supabase Setup for Sline App
 
 ## ✅ Tables Created

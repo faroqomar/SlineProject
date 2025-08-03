@@ -101,9 +101,13 @@ This directory contains all the essential documentation for the SLine freelance 
 - ✅ Added My Tasks section in Profile to list user’s own tasks
 - ✅ Implemented Edit/Delete functionality for user tasks
 - ✅ Verified Supabase relationships for tasks and users
-- ✅ Fixed task publishing to avoid black screen by showing SnackBar confirmation
-- ✅ Updated bottom navigation to persist after task creation
-- ✅ Ensured user info (name, avatar) shows with tasks on HomeScreen
+- ✅ Integrated centralized AppLogger for clean debug logs
+- ✅ Enhanced Messaging tab:
+  - Shows last message content
+  - Displays timestamp of last message
+  - WhatsApp-style UI for conversations
+- ✅ Fixed conversation fetching with safe Supabase query handling
+- ✅ Prepared for Supabase Realtime integration in messaging
 
 ---
 

@@ -11,31 +11,37 @@ class TaskDetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(task.title)),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Card(
-            elevation: 4,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      body: Column(
+        children: [
+          Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader('🗂️ Category', task.category),
-                  Divider(height: 32, thickness: 1.2),
-                  _buildHeader('💰 Budget', PriceFormatter.formatPrice(task.budget)),
-                  Divider(height: 32, thickness: 1.2),
-                  _buildHeader('📅 Posted', DateFormatter.timeAgo(task.createdAt)),
-                  Divider(height: 32, thickness: 1.2),
-                  _buildHeader('📝 Description', task.description),
-                  Divider(height: 32, thickness: 1.2),
-                  _buildHeader('🛠️ Skills', task.skills.join(', ')),
-                ],
+              padding: const EdgeInsets.all(16.0),
+              child: SingleChildScrollView(
+                child: Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildHeader('🗂️ Category', task.category),
+                        Divider(height: 32, thickness: 1.2),
+                        _buildHeader('💰 Budget', PriceFormatter.formatPrice(task.budget)),
+                        Divider(height: 32, thickness: 1.2),
+                        _buildHeader('📅 Posted', DateFormatter.timeAgo(task.createdAt)),
+                        Divider(height: 32, thickness: 1.2),
+                        _buildHeader('📝 Description', task.description),
+                        Divider(height: 32, thickness: 1.2),
+                        _buildHeader('🛠️ Skills', task.skills.join(', ')),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

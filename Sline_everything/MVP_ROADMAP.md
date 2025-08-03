@@ -60,10 +60,10 @@ Step | Feature | Description | Status
 
 Step | Feature | Description | Status
 --- | --- | --- | ---
-5.1 | Message model | Store senderId, receiverId, content, timestamp in Supabase | ⏳ Planned
+5.1 | Message model | Store senderId, receiverId, content, timestamp in Supabase | ✅ Completed
 5.2 | Real-time messaging | Use Supabase Realtime for live chat | ⏳ Planned
-5.3 | Chat UI | Task-specific chat thread in "Messages" tab | ⏳ Planned
-5.4 | Link chat to requests | Each conversation tied to a task | ⏳ Planned
+5.3 | Chat UI | Task-specific chat thread in "Messages" tab | ✅ Completed
+5.4 | Link chat to requests | Each conversation tied to a task | ✅ Completed
 
 ---
 

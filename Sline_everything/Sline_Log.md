@@ -478,3 +478,39 @@ feat/fix/docs: Brief description
 - Implement task browsing screen for freelancers
 - Display task details screen on tap
 - Enable filtering by category and skill
+# 
+# --- v0.7 Logger Integration & Messaging Fix ---
+### 📦 Version 0.7 - Logger Integration & Messaging Fix
+**Date**: 2025-08-03  
+**Status**: Completed logger integration and messaging display fixes  
+**Commit**: _Pending_ - "feat: Integrate AppLogger and enhance messaging UI"
+
+#### 🆕 Implemented Features:
+
+##### 1. Centralized Logger Integration
+- Added `core/services/logger_service.dart` with `AppLogger` using PrettyPrinter
+- Replaced all `debugPrint` calls with `AppLogger` (d/i/w/e)
+- Ensured logs only display in debug mode using `kDebugMode`
+
+##### 2. Messaging System Enhancements
+- Extended `Conversation` model with `lastMessage` and `lastMessageTime`
+- Updated `message_service.dart` to fetch `last_message` safely (handles Map/List/null)
+- Updated `messages_screen.dart` UI to WhatsApp-style preview:
+  - Avatar + name of other user
+  - Last message content
+  - Timestamp of last message
+- Fixed conversation fetching to prevent type cast errors
+- Verified Supabase queries handle relationships with `profiles` table
+
+##### 3. Supabase Adjustments
+- Confirmed `conversations` table foreign keys:
+  - `user1_id → auth.users.id`
+  - `user2_id → auth.users.id`
+  - `task_id → tasks.id`
+- Adjusted Supabase query joins for `profiles` to fetch user names
+- Added safe handling for `messages` relation returning arrays
+
+#### 📊 Impact:
+- Debug console now shows structured, meaningful logs only in debug mode
+- Messaging tab reliably displays all conversations with last message + time
+- Groundwork laid for Supabase Realtime integration for live chat

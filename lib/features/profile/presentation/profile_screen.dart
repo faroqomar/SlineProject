@@ -159,7 +159,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                       child: ListTile(
                         title: Text(task.title),
-                        subtitle: Text(task.description ?? ''),
+                        subtitle: Text(task.description),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [

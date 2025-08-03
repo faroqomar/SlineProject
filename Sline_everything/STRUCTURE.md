@@ -32,7 +32,7 @@ Contains global application configurations such as:
 Houses shared logic, services, and UI elements across the app.
 
 - `models/`: Global data models (e.g., user model).
-- `services/`: Supabase service, image picker, logger, etc.
+- `services/`: Supabase service, image picker, **logger (AppLogger for debug-only logs)**, etc.
 - `repositories/`: Abstract business logic layer over services.
 - `widgets/`: Shared UI widgets like buttons, nav bars, etc.
 - `providers/`: Global state (like navigation).

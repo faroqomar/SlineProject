@@ -1,3 +1,11 @@
+
+### Core Infrastructure Updates
+- **Logger**: Integrated centralized `AppLogger` service in `core/services/logger_service.dart`. Logs are clean, structured, and active only in debug mode.
+- **Messaging**: Enhanced conversation fetching with safe handling of `last_message` as Map/List/null.
+- **UI**: Messages tab redesigned WhatsApp-style to show:
+  - Other participant’s name
+  - Last message content
+  - Timestamp of last message
 # 📚 Sline Project - Complete Reference Guide
 
 *Last Updated: 2025-07-25*
@@ -140,7 +148,7 @@ MultiProvider(
 
 ## 🚀 Development Status
 
-### ✅ Completed Features
+### ✅ Completed Features (Aug 2025)
 1. **Authentication System**
    - Email/password signup and login
    - User session management
@@ -167,6 +175,11 @@ MultiProvider(
 5. **Task Publisher Integration**
    - Displaying publisher name and avatar with tasks on HomeScreen
    - Fixed task creation flow with confirmation feedback
+
+- Integrated centralized AppLogger service
+- Fixed Supabase conversation fetching logic
+- Displayed last message + timestamp in Messages tab
+- Maintained clean project structure with updated Supabase schema
 
 ### 🔄 Current State
 - **Functional**: Users can register, login, and manage profiles
