@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/services/logger_service.dart';
 import '../models/task_model.dart';
 
 /// Controller for managing task functionality
@@ -52,7 +53,8 @@ class TaskController extends ChangeNotifier {
       
       notifyListeners();
     } catch (e) {
-      debugPrint('Error loading tasks: $e');
+      // Error: Failed to load tasks
+      AppLogger.e('Error loading tasks: $e');
     } finally {
       _setLoading(false);
     }
@@ -68,7 +70,8 @@ class TaskController extends ChangeNotifier {
       _tasks.add(task);
       notifyListeners();
     } catch (e) {
-      debugPrint('Error creating task: $e');
+      // Error: Failed to create task
+      AppLogger.e('Error creating task: $e');
     } finally {
       _setLoading(false);
     }
@@ -86,7 +89,8 @@ class TaskController extends ChangeNotifier {
         // await _taskService.updateTaskStatus(taskId, status);
       }
     } catch (e) {
-      debugPrint('Error updating task status: $e');
+      // Error: Failed to update task status
+      AppLogger.e('Error updating task status: $e');
     }
   }
 

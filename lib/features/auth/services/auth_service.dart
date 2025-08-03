@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/services/logger_service.dart';
 
 /// Service for handling authentication operations with Supabase
 class AuthService {
@@ -10,6 +11,8 @@ class AuthService {
     required String password,
     required String fullName,
   }) async {
+    // Info: Starting user registration process
+    AppLogger.i('Starting user registration for email: $email');
     final response = await _client.auth.signUp(email: email, password: password);
 
     // Ensure session exists, if not, sign in
@@ -27,6 +30,9 @@ class AuthService {
       'full_name': fullName,
       'email': email,
     });
+    
+    // Info: User registration completed successfully
+    AppLogger.i('User registration completed successfully for: $email');
   }
 
   /// Sign in user with email and password
@@ -34,14 +40,23 @@ class AuthService {
     required String email, 
     required String password
   }) async {
-    return await _client.auth.signInWithPassword(
+    // Info: User attempting to sign in
+    AppLogger.i('User attempting to sign in: $email');
+    final response = await _client.auth.signInWithPassword(
       email: email, 
       password: password
     );
+    
+    // Info: User signed in successfully
+    AppLogger.i('User signed in successfully: $email');
+    return response;
   }
 
   /// Sign out current user
   Future<void> signOut() async {
+    final userEmail = _client.auth.currentUser?.email;
+    // Info: User signing out
+    AppLogger.i('User signing out: ${userEmail ?? 'Unknown'}');
     await _client.auth.signOut();
   }
 

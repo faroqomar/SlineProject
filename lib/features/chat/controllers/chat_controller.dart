@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:sline_app/features/chat/services/%20message_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/ message_service.dart';
+import '../../../core/services/logger_service.dart';
 import '../models/conversation_model.dart';
 import '../models/message_model.dart';
 
@@ -28,9 +29,11 @@ class ChatController extends ChangeNotifier {
     try {
       conversations =
           await _messageService.getUserConversations(user.id);
-      debugPrint('✅ Conversations fetched: ${conversations.length}');
+      // Info: Conversations fetched successfully
+      AppLogger.i('✅ Conversations fetched: ${conversations.length}');
     } catch (e) {
-      debugPrint('Error fetching conversations: $e');
+      // Error: Failed to fetch conversations
+      AppLogger.e('Error fetching conversations: $e');
     } finally {
       isLoadingConversations = false;
       notifyListeners();
@@ -48,7 +51,8 @@ class ChatController extends ChangeNotifier {
       activeConversation = conversations
           .firstWhere((c) => c.id == conversationId, orElse: () => activeConversation!);
     } catch (e) {
-      debugPrint('Error fetching messages: $e');
+      // Error: Failed to fetch messages
+      AppLogger.e('Error fetching messages: $e');
     } finally {
       isLoadingMessages = false;
       notifyListeners();
@@ -75,7 +79,8 @@ class ChatController extends ChangeNotifier {
       currentMessages.add(message);
       notifyListeners();
     } catch (e) {
-      debugPrint('Error sending message: $e');
+      // Error: Failed to send message
+      AppLogger.e('Error sending message: $e');
     }
   }
 

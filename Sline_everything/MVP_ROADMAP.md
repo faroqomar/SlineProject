@@ -61,7 +61,7 @@ Step | Feature | Description | Status
 Step | Feature | Description | Status
 --- | --- | --- | ---
 5.1 | Message model | Store senderId, receiverId, content, timestamp in Supabase | ✅ Completed
-5.2 | Real-time messaging | Use Supabase Realtime for live chat | ⏳ Planned
+5.2 | Real-time messaging | Realtime integration planned, initial groundwork completed with conversation fetching and logger | ⏳ In Progress
 5.3 | Chat UI | Task-specific chat thread in "Messages" tab | ✅ Completed
 5.4 | Link chat to requests | Each conversation tied to a task | ✅ Completed
 
@@ -93,7 +93,7 @@ Step | Feature | Description | Status
 
 Step | Feature | Description | Status
 --- | --- | --- | ---
-8.1 | Logger service | Centralized debug/error logs | ✅ Completed
+8.1 | Logger service | Centralized debug/error logs with PrettyPrinter (debug-only) | ✅ Completed
 8.2 | Constants & Config | Shared constants and env setup | ✅ Completed
 8.3 | Theme system | Material 3 Light/Dark theme | ⏳ Planned
 8.4 | Localization | Arabic (RTL) + English (LTR) | ⏳ Planned

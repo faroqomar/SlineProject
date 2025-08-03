@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/services/logger_service.dart';
 import '../../chat/controllers/chat_controller.dart';
 import '../../chat/models/conversation_model.dart';
 import '../../chat/presentation/chat_screen.dart';
@@ -31,11 +32,13 @@ class _MessagesScreenState extends State<MessagesScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (controller.conversations.isEmpty) {
-            debugPrint('⚠️ No conversations to display');
+            // Warning: No conversations to display
+            AppLogger.w('⚠️ No conversations to display');
             return const Center(child: Text('No conversations yet.'));
           }
 
-          debugPrint('📋 Conversations count in UI: ${controller.conversations.length}');
+          // Debug: Displaying conversations count in UI
+          AppLogger.d('📋 Conversations count in UI: ${controller.conversations.length}');
 
           return ListView.separated(
             itemCount: controller.conversations.length,

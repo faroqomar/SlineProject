@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/services/logger_service.dart';
 import '../../tasks/models/task_model.dart';
 import '../../tasks/services/task_service.dart';
 /// Controller for managing profile functionality
@@ -114,7 +115,8 @@ class ProfileController extends ChangeNotifier {
       final tasks = await _taskService.getTasksByUser(user.id);
       myTasks = tasks;
     } catch (e) {
-      debugPrint('Error fetching user tasks: $e');
+      // Error: Failed to fetch user tasks
+      AppLogger.e('Error fetching user tasks: $e');
     } finally {
       isLoadingMyTasks = false;
       notifyListeners();
@@ -128,7 +130,8 @@ class ProfileController extends ChangeNotifier {
       myTasks.removeWhere((task) => task.id == taskId);
       notifyListeners();
     } catch (e) {
-      debugPrint('Error deleting task: $e');
+      // Error: Failed to delete task
+      AppLogger.e('Error deleting task: $e');
     }
   }
 
@@ -138,7 +141,8 @@ class ProfileController extends ChangeNotifier {
       await _taskService.updateTask(taskId, updates);
       await fetchMyTasks(); // refresh list
     } catch (e) {
-      debugPrint('Error updating task: $e');
+      // Error: Failed to update task
+      AppLogger.e('Error updating task: $e');
     }
   }
 }

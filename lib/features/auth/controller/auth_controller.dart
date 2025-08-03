@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/features/home/presentation/home_screen.dart';
+import '../../../core/services/logger_service.dart';
 import '../data/auth_repository.dart';
 
 class AuthController {
@@ -14,7 +15,8 @@ class AuthController {
       await _repo.signIn(email: email, password: password);
       final profile = await _repo.getCurrentUserProfile();
       if (profile != null) {
-        debugPrint("User profile loaded: ${profile['full_name']}");
+        // Info: User profile loaded successfully
+        AppLogger.i("User profile loaded: ${profile['full_name']}");
       }
       if (!state.mounted) return;
       final messenger = ScaffoldMessenger.of(state.context);

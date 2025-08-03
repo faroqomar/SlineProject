@@ -7,6 +7,7 @@ import 'package:sline_app/features/home/controllers/home_controller.dart';
 import 'package:sline_app/features/tasks/controllers/task_controller.dart';
 import 'package:sline_app/features/tasks/controllers/task_filter_controller.dart';
 import 'core/services/supabase_config.dart';
+import 'core/services/logger_service.dart';
 import 'features/auth/presentation/login_screen.dart';
 import 'features/home/presentation/home_screen.dart'; // add at the top with other imports
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -17,6 +18,10 @@ import 'package:provider/provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SupabaseConfig.init();
+
+  // Set logger level (info = clean logs, debug = verbose logs)
+  AppLogger.currentLevel = LogLevel.info;
+
   runApp(const SLineApp());
 }
 

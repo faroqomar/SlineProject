@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sline_app/features/chat/services/%20message_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/services/logger_service.dart';
+import '../../models/task_model.dart';
 import '../../../chat/controllers/chat_controller.dart';
 import '../../../chat/presentation/chat_screen.dart';
-import 'package:sline_app/core/utils/format_price.dart';
-import '../../models/task_model.dart';
+import '../../../chat/services/ message_service.dart';
+import '../../../../core/utils/format_price.dart';
 
 /// A card widget to display basic info about a task.
 class TaskCard extends StatelessWidget {
@@ -66,7 +67,8 @@ class TaskCard extends StatelessWidget {
                         onPressed: () async {
                           final user = Supabase.instance.client.auth.currentUser;
                           if (user == null) {
-                            debugPrint('❌ No authenticated user found');
+                            // Error: No authenticated user found
+                            AppLogger.e('❌ No authenticated user found');
                             return;
                           }
 
@@ -74,14 +76,16 @@ class TaskCard extends StatelessWidget {
                             final controller = context.read<ChatController>();
                             final messageService = MessageService();
 
-                            debugPrint('🚀 TaskCard Chat pressed - creating or fetching conversation...');
+                            // Info: Starting chat conversation from task card
+                            AppLogger.i('🚀 TaskCard Chat pressed - creating or fetching conversation...');
                             final conversation = await messageService.createOrGetConversation(
                               taskId: task.id,
                               user1Id: user.id,
                               user2Id: task.userId,
                             );
 
-                            debugPrint('✅ Conversation ready: ${conversation.id}');
+                            // Info: Conversation ready for navigation
+                            AppLogger.i('✅ Conversation ready: ${conversation.id}');
                             controller.activeConversation = conversation;
                             await controller.fetchMessages(conversation.id);
 
@@ -94,7 +98,8 @@ class TaskCard extends StatelessWidget {
                               );
                             }
                           } catch (e) {
-                            debugPrint('❌ Error starting conversation from TaskCard: $e');
+                            // Error: Failed to start conversation from task card
+                            AppLogger.e('❌ Error starting conversation from TaskCard: $e');
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text('Error starting chat: $e')),

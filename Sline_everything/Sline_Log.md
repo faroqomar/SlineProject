@@ -510,7 +510,12 @@ feat/fix/docs: Brief description
 - Adjusted Supabase query joins for `profiles` to fetch user names
 - Added safe handling for `messages` relation returning arrays
 
+##### 4. Task Publishing Confirmation
+   - Replaced black screen issue after posting task with success SnackBar
+   - Ensured BottomNavigationBar persists after publishing
+
 #### 📊 Impact:
 - Debug console now shows structured, meaningful logs only in debug mode
 - Messaging tab reliably displays all conversations with last message + time
 - Groundwork laid for Supabase Realtime integration for live chat
+- Users receive clear feedback when posting tasks, eliminating confusion from previous black screen issue

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/services/logger_service.dart';
 import '../../tasks/models/task_model.dart';
 import '../../tasks/services/task_service.dart';
 
@@ -36,7 +37,8 @@ class HomeController extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      debugPrint('Error loading featured tasks: $e');
+      // Error: Failed to load featured tasks
+      AppLogger.e('Error loading featured tasks: $e');
     } finally {
       _setLoading(false);
     }

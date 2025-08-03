@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/services/logger_service.dart';
 import '../models/task_model.dart';
 
 /// Service for handling task operations with Supabase
@@ -7,6 +8,8 @@ class TaskService {
 
   /// Get all tasks from database
   Future<List<Task>> getTasks() async {
+    // Info: Fetching all tasks from database
+    AppLogger.i('Fetching all tasks from database');
     try {
       final response = await _client
           .from('tasks')
@@ -32,14 +35,20 @@ class TaskService {
         }
       }
 
+      // Info: Successfully fetched tasks
+      AppLogger.i('Successfully fetched ${tasks.length} tasks');
       return tasks;
     } catch (e) {
+      // Error: Failed to fetch tasks
+      AppLogger.e('Failed to get tasks: $e');
       throw Exception('Failed to get tasks: $e');
     }
   }
 
   /// Create a new task
   Future<Task> createTask(Task task) async {
+    // Info: Creating new task
+    AppLogger.i('Creating new task: ${task.title}');
     try {
       final response = await _client
           .from('tasks')
@@ -62,8 +71,12 @@ class TaskService {
         );
       }
 
+      // Info: Task created successfully
+      AppLogger.i('Task created successfully: ${createdTask.title}');
       return createdTask;
     } catch (e) {
+      // Error: Failed to create task
+      AppLogger.e('Failed to create task: $e');
       throw Exception('Failed to create task: $e');
     }
   }
@@ -157,12 +170,18 @@ Future<void> updateTask(String taskId, Map<String, dynamic> updates) async {
 
   /// Delete a task
   Future<void> deleteTask(String taskId) async {
+    // Info: Deleting task
+    AppLogger.i('Deleting task with ID: $taskId');
     try {
       await _client
           .from('tasks')
           .delete()
           .eq('id', taskId);
+      // Info: Task deleted successfully
+      AppLogger.i('Task deleted successfully: $taskId');
     } catch (e) {
+      // Error: Failed to delete task
+      AppLogger.e('Failed to delete task: $e');
       throw Exception('Failed to delete task: $e');
     }
   }

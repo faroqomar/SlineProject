@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:meta/meta.dart';
+import '../../../core/services/logger_service.dart';
 
 /// Represents a conversation between two users about a specific task
 class Conversation {
@@ -36,7 +35,8 @@ class Conversation {
     final rawLastMessage = json['last_message'];
     // Add debug printing to inspect the shape of last_message
     // ignore: avoid_print
-    debugPrint('🔎 last_message raw: $rawLastMessage');
+    // Debug: Processing last message data
+    AppLogger.d('🔎 last_message raw: $rawLastMessage');
 
     if (rawLastMessage is Map) {
       lastMessage = rawLastMessage['content'] as String?;

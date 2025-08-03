@@ -6,6 +6,7 @@
   - Other participant’s name
   - Last message content
   - Timestamp of last message
+- **Task Publishing Confirmation**: Success SnackBar added after posting tasks, fixing black screen issue and improving UX.
 # 📚 Sline Project - Complete Reference Guide
 
 *Last Updated: 2025-07-25*

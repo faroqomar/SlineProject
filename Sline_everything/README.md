@@ -108,6 +108,8 @@ This directory contains all the essential documentation for the SLine freelance 
   - WhatsApp-style UI for conversations
 - ✅ Fixed conversation fetching with safe Supabase query handling
 - ✅ Prepared for Supabase Realtime integration in messaging
+- ✅ Added success SnackBar confirmation after task publishing to prevent black screen
+- ✅ Enhanced AppLogger output with structured PrettyPrinter formatting
 
 ---
 

@@ -75,14 +75,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
         await TaskService().createTask(task);
 
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Task published successfully!'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
       } else {
         // Edit mode
         await TaskService().updateTask(widget.task!.id, {
@@ -93,17 +85,19 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           'category': _selectedCategory ?? 'Uncategorized',
         });
 
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Task updated successfully!'),
-            backgroundColor: Colors.blue,
-            duration: Duration(seconds: 2),
-          ),
-        );
       }
 
-      Navigator.pop(context);
+      // Show confirmation without leaving the screen
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(widget.task == null
+              ? 'Task published successfully!'
+              : 'Task updated successfully!'),
+          backgroundColor: widget.task == null ? Colors.green : Colors.blue,
+          duration: const Duration(seconds: 2),
+        ),
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${e.toString()}')),

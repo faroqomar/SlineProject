@@ -1,5 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter/foundation.dart';
+import '../../../core/services/logger_service.dart';
 import '../models/conversation_model.dart';
 import '../models/message_model.dart';
 
@@ -21,9 +21,11 @@ class MessageService {
         .or('user1_id.eq.$user1Id,user2_id.eq.$user2Id')
         .limit(1);
 
-    debugPrint('🔎 Existing conversations found: ${existing.length}');
+    // Debug: Checking existing conversations
+    AppLogger.d('🔎 Existing conversations found: ${existing.length}');
     if (existing.isNotEmpty) {
-      debugPrint('📌 Using existing conversation: ${existing.first['id']}');
+      // Info: Using existing conversation
+      AppLogger.i('📌 Using existing conversation: ${existing.first['id']}');
       return Conversation.fromJson(existing.first);
     }
 
@@ -57,7 +59,8 @@ class MessageService {
           .order('created_at', ascending: false);
 
       if (response is List) {
-        debugPrint('📦 Conversations response count: ${response.length}');
+        // Debug: Conversations response received
+        AppLogger.d('📦 Conversations response count: ${response.length}');
         return response.map((json) {
           return Conversation.fromJson({
             ...json,
@@ -67,11 +70,13 @@ class MessageService {
           });
         }).toList();
       } else {
-        debugPrint('⚠️ Unexpected response type: $response');
+        // Warning: Unexpected response type
+        AppLogger.w('⚠️ Unexpected response type: $response');
         return [];
       }
     } catch (e) {
-      debugPrint('❌ Error fetching conversations: $e');
+      // Error: Failed to fetch conversations
+      AppLogger.e('❌ Error fetching conversations: $e');
       return [];
     }
   }

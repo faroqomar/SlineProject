@@ -25,6 +25,8 @@
 ### ✅ Recent Fixes
 - Added `profiles` table relationships for `conversations`.
 - Implemented safe Supabase query handling for `last_message` field (handles Map/List/null).
+- Verified relationships fetch publisher info via `profiles` table
+- Ensured safe handling for conversations with no messages (last_message = null)
 # Supabase Setup for Sline App
 
 ## ✅ Tables Created

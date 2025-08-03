@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/app/main_navigation_screen.dart';
+import '../../../core/services/logger_service.dart';
 import '../services/auth_service.dart';
 
 /// Controller for managing authentication logic
@@ -27,7 +28,8 @@ class AuthController extends ChangeNotifier {
       await _authService.signIn(email: email, password: password);
       final profile = await _authService.getCurrentUserProfile();
       if (profile != null) {
-        debugPrint("User profile loaded: ${profile['full_name']}");
+        // Info: User profile loaded successfully
+        AppLogger.i("User profile loaded: ${profile['full_name']}");
       }
       if (!state.mounted) return;
       final messenger = ScaffoldMessenger.of(state.context);
