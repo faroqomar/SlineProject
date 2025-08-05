@@ -23,7 +23,9 @@ class Message {
       senderId: json['sender_id'] as String,
       receiverId: json['receiver_id'] as String,
       content: json['content'] as String,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'] as String) ?? DateTime.now()
+          : DateTime.now(),
     );
   }
 

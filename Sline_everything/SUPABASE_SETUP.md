@@ -30,6 +30,8 @@
 - Enabled Supabase Realtime on `messages` and `conversations` tables.
 - Verified subscriptions deliver new messages instantly between accounts.
 - Adjusted queries to handle null/empty last messages safely in realtime updates.
+- Added `listenToMessagesRealtime()` in message_service.dart and integrated in chat_controller.dart.
+- Replaced `inFilter()` with `.in_()` in Supabase queries to fix undefined method error.
 
 ### 🛠 SQL Policies and Setup Implemented
 
@@ -67,6 +69,7 @@ alter publication supabase_realtime add table conversations;
 - Insert policies restricted to authenticated users only.
 - Handled null/empty `last_message` to avoid UI crashes.
 - Confirmed fetch joins with `profiles` for publisher info (avatar + name).
+- Real-time subscriptions verified: messages now appear instantly for both participants without refresh.
 
 # Supabase Setup for Sline App
 

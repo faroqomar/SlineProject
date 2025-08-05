@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../services/ message_service.dart';
+import '../services/message_service.dart';
 import '../../../core/services/logger_service.dart';
 import '../models/conversation_model.dart';
 import '../models/message_model.dart';
@@ -81,8 +81,19 @@ class ChatController extends ChangeNotifier {
         receiverId: receiverId,
         content: content,
       );
-      currentMessages.add(message);
-      notifyListeners();
+
+      // Ensure message has a createdAt timestamp for display
+      final messageWithTime = Message(
+        id: message.id,
+        conversationId: message.conversationId,
+        senderId: message.senderId,
+        receiverId: message.receiverId,
+        content: message.content,
+        createdAt: message.createdAt ?? DateTime.now(),
+      );
+
+      currentMessages.add(messageWithTime);
+      if (hasListeners) notifyListeners();
     } catch (e) {
       // Error: Failed to send message
       AppLogger.e('Error sending message: $e');
@@ -98,10 +109,12 @@ class ChatController extends ChangeNotifier {
     _subscription = _messageService
         .subscribeToMessages(activeConversation!.id)
         .listen((message) async {
-      if (message != null) {
-        // Re-fetch the full list to ensure consistency
+      if (message != null && activeConversation != null) {
         await fetchMessages(activeConversation!.id);
-        AppLogger.i('📩 New message received and messages refreshed');
+        if (hasListeners) {
+          AppLogger.i('📩 New message received and messages refreshed');
+          notifyListeners();
+        }
       }
     }, onError: (error) {
       AppLogger.e('Realtime subscription error: $error');
@@ -121,13 +134,20 @@ class ChatController extends ChangeNotifier {
         .listen((rows) {
       try {
         conversations = rows.map((json) {
+          // Enrich raw json with additional fields for display
+          final isUser1 = json['user1_id'] == user.id;
+          final otherUser = isUser1 ? json['user2'] : json['user1'];
+
           return Conversation.fromJson({
             ...json,
             'task_title': json['tasks']?['title'] ?? 'Untitled Task',
             'user1_name': json['user1']?['full_name'] ?? 'User',
             'user2_name': json['user2']?['full_name'] ?? 'User',
+            'other_user_name': otherUser?['full_name'],
+            'other_user_avatar': otherUser?['avatar_url'],
           });
         }).toList();
+
         AppLogger.i('✅ Conversations updated in controller: ${conversations.length}');
         notifyListeners();
       } catch (e) {

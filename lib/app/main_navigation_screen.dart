@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sline_app/features/chat/presentation/%20messages_screen.dart';
+import 'package:sline_app/features/chat/presentation/messages_screen.dart';
 import '../core/providers/navigation_provider.dart';
 import '../core/widgets/custom_bottom_nav_bar.dart';
 import '../features/home/presentation/home_screen.dart';

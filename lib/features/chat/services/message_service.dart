@@ -51,8 +51,8 @@ class MessageService {
             user2_id,
             created_at,
             tasks(title),
-            user1:profiles!conversations_user1_id_fkey(full_name),
-            user2:profiles!conversations_user2_id_fkey(full_name),
+            user1:profiles!conversations_user1_id_fkey(full_name, avatar_url),
+            user2:profiles!conversations_user2_id_fkey(full_name, avatar_url),
             last_message:messages!conversation_id(content, created_at)
           ''')
           .or('user1_id.eq.$userId,user2_id.eq.$userId')
@@ -62,11 +62,17 @@ class MessageService {
         // Debug: Conversations response received
         AppLogger.d('📦 Conversations response count: ${response.length}');
         return response.map((json) {
+          // Determine the other user in the conversation and their details
+          final isUser1 = json['user1_id'] == userId;
+          final otherUser = isUser1 ? json['user2'] : json['user1'];
+          AppLogger.d('📦 Raw conversation json: $json');
           return Conversation.fromJson({
             ...json,
             'task_title': json['tasks']?['title'] ?? 'Untitled Task',
             'user1_name': json['user1']?['full_name'] ?? 'User',
             'user2_name': json['user2']?['full_name'] ?? 'User',
+            'other_user_name': otherUser?['full_name'],
+            'other_user_avatar': otherUser?['avatar_url'],
           });
         }).toList();
       } else {
@@ -85,7 +91,7 @@ class MessageService {
   Future<List<Message>> getMessages(String conversationId) async {
     final response = await _client
         .from('messages')
-        .select()
+        .select('id, conversation_id, sender_id, receiver_id, content, created_at')
         .eq('conversation_id', conversationId)
         .order('created_at', ascending: true);
 
@@ -106,7 +112,8 @@ class MessageService {
       'sender_id': senderId,
       'receiver_id': receiverId,
       'content': content,
-    }).select().single();
+      'created_at': DateTime.now().toIso8601String(), // ensure timestamp is stored
+    }).select('id, conversation_id, sender_id, receiver_id, content, created_at').single();
 
     return Message.fromJson(response);
   }
@@ -136,13 +143,31 @@ class MessageService {
     return _client
         .from('conversations')
         .stream(primaryKey: ['id'])
-        .map((rows) {
-          // Filter rows client-side since `.stream()` only allows one filter
-          final filtered = rows.where((row) =>
-            row['user1_id'] == userId || row['user2_id'] == userId
-          ).toList();
-          AppLogger.i('🔄 Conversations updated after filter: ${filtered.length}');
-          return filtered;
+        .order('created_at')
+        .asyncMap((rows) async {
+          if (rows.isEmpty) return <Map<String, dynamic>>[];
+
+          // Fetch full profile info for each conversation
+          final convoIds = rows.map((row) => row['id']).toList();
+          final response = await _client
+              .from('conversations')
+              .select('''
+                id,
+                task_id,
+                user1_id,
+                user2_id,
+                created_at,
+                tasks(title),
+                user1:profiles!conversations_user1_id_fkey(full_name, avatar_url),
+                user2:profiles!conversations_user2_id_fkey(full_name, avatar_url),
+                last_message:messages!conversation_id(content, created_at)
+              ''')
+              .in_('id', convoIds);
+
+          // Ensuring each row is strictly typed as Map<String, dynamic> for controller stream
+          return (response as List)
+              .map((json) => Map<String, dynamic>.from(json as Map<String, dynamic>))
+              .toList();
         });
   }
 }

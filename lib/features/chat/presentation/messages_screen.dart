@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/logger_service.dart';
+// Utility functions for formatting date/time in chat UI
+import '../../../core/utils/format_date.dart' as date_utils;
 import '../../chat/controllers/chat_controller.dart';
 import '../../chat/models/conversation_model.dart';
 import '../../chat/presentation/chat_screen.dart';
@@ -26,7 +27,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
   @override
   void dispose() {
-    context.read<ChatController>().unsubscribeFromUserConversations();
+    final controller = context.read<ChatController>();
+    controller.unsubscribeFromUserConversations();
+    controller.unsubscribeFromConversation();
     super.dispose();
   }
 
@@ -53,13 +56,14 @@ class _MessagesScreenState extends State<MessagesScreen> {
             separatorBuilder: (context, index) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final Conversation convo = controller.conversations[index];
-              final user = Supabase.instance.client.auth.currentUser;
-              final otherUserName = convo.user1Id == user!.id
-                  ? (convo.user2Name ?? 'User')
-                  : (convo.user1Name ?? 'User');
+              final otherUserName = convo.otherUserName ?? 'User';
 
               return ListTile(
-                leading: const CircleAvatar(child: Icon(Icons.person)),
+                leading: convo.otherUserAvatar != null
+                    ? CircleAvatar(
+                        backgroundImage: NetworkImage(convo.otherUserAvatar!),
+                      )
+                    : const CircleAvatar(child: Icon(Icons.person)),
                 title: Text(
                   otherUserName,
                   style: const TextStyle(fontWeight: FontWeight.bold),
@@ -71,7 +75,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 ),
                 trailing: convo.lastMessageTime != null
                     ? Text(
-                        TimeOfDay.fromDateTime(convo.lastMessageTime!).format(context),
+                        date_utils.formatFriendlyTime(convo.lastMessageTime!),
                         style: const TextStyle(fontSize: 12, color: Colors.grey),
                       )
                     : null,

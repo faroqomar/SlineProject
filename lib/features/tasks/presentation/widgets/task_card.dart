@@ -5,7 +5,7 @@ import '../../../../core/services/logger_service.dart';
 import '../../models/task_model.dart';
 import '../../../chat/controllers/chat_controller.dart';
 import '../../../chat/presentation/chat_screen.dart';
-import '../../../chat/services/ message_service.dart';
+import '../../../chat/services/message_service.dart';
 import '../../../../core/utils/format_price.dart';
 
 /// A card widget to display basic info about a task.

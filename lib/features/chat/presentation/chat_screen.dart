@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../chat/controllers/chat_controller.dart';
 import '../../chat/models/conversation_model.dart';
 import '../../chat/models/message_model.dart';
+import '../../../core/utils/format_date.dart';
 
 /// Chat screen - messaging interface for users
 class ChatScreen extends StatefulWidget {
@@ -63,11 +64,25 @@ class _ChatScreenState extends State<ChatScreen> {
                               : Colors.grey.shade300,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Text(
-                          msg.content,
-                          style: TextStyle(
-                            color: isMine ? Colors.white : Colors.black,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              msg.content,
+                              style: TextStyle(
+                                color: isMine ? Colors.white : Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              formatFriendlyTime(msg.createdAt),
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: isMine ? Colors.white70 : Colors.black54,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     );

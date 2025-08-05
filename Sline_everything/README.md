@@ -1,6 +1,6 @@
 # 📚 SLine App - Documentation Hub
 
-*Last Updated: 2025-08-03*
+*Last Updated: 2025-08-05*
 
 This directory contains all the essential documentation for the SLine freelance marketplace app. All files are organized and maintained to provide comprehensive project understanding and development guidance.
 
@@ -115,6 +115,14 @@ This directory contains all the essential documentation for the SLine freelance 
 - ✅ Verified cross-account chat works instantly without refresh
 - ✅ Fixed Chrome file upload bug (`dart:io.File` vs `storage_client.File`)
 - ✅ Confirmed SnackBar success message appears after task publishing
+
+- ✅ Fixed realtime update issue when sending/receiving new messages
+- ✅ Implemented Supabase Realtime listener via channels in message_service.dart
+- ✅ Replaced inFilter() with in_() to resolve method error
+- ✅ Fixed ambiguous import for `Conversation` in chat_controller.dart
+- ✅ Fixed type cast issue in message fetching method
+- ✅ Cleaned unused/duplicate code from chat files (chat_controller.dart, message_service.dart, messages_screen.dart)
+- ✅ Added detailed English documentation/comments in chat_controller.dart, message_service.dart, and messages_screen.dart
 
 ---
 

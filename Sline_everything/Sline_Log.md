@@ -1,6 +1,6 @@
 # 📘 SLine App - Complete Development Log
 
-*Last Updated: 2025-08-03*
+*Last Updated: 2025-08-05*
 
 ---
 
@@ -552,3 +552,44 @@ feat/fix/docs: Brief description
 - True real-time messaging between accounts without manual refresh
 - Improved user experience with instant updates in the Chat tab
 - Secure policies ensure no unauthorized data access
+
+# --- v0.9 Realtime Messaging Fix & Cleanup ---
+### 📦 Version 0.9 - Realtime Messaging Fix & Cleanup
+**Date**: 2025-08-05  
+**Status**: Fixed realtime sync issues and cleaned message flow  
+**Commit**: _Pending_ - "fix: Enhance realtime chat sync & clean message handling"
+
+#### 🆕 Implemented Features:
+
+##### 1. Realtime Messaging Fixes
+- Fixed issue where new messages did not appear instantly on the receiver’s side
+- Added `listenToMessagesRealtime()` in `message_service.dart` and integrated it in `chat_controller.dart`
+- Verified Supabase channel subscription for reliable event listening
+
+##### 2. Code Cleanup & Refactor
+- Removed unused and duplicate code from:
+  - `messages_screen.dart`
+  - `chat_controller.dart`
+  - `message_service.dart`
+- Cleaned up redundant imports
+
+##### 3. Bug Fixes
+- Resolved ambiguous import for `Conversation` by using alias imports
+- Replaced deprecated `inFilter()` with `.in_()` for Supabase queries
+- Fixed type cast issue in message fetching methods by adding explicit casting
+
+##### 4. Logging & Documentation
+- Enhanced AppLogger output for realtime events:
+  - ✅ Conversations fetched
+  - ✅ Conversations updated
+  - 📩 New message received and messages refreshed
+- Added detailed English documentation/comments in:
+  - `chat_controller.dart`
+  - `message_service.dart`
+  - `messages_screen.dart`
+
+#### 📊 Impact:
+- Users now see new messages instantly without refreshing
+- Reduced risk of runtime errors due to cleaner code
+- Improved maintainability with consistent documentation
+- Debug console provides clear feedback for realtime chat operations

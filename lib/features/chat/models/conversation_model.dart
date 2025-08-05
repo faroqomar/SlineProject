@@ -15,6 +15,12 @@ class Conversation {
   final String? lastMessage;
   final DateTime? lastMessageTime;
 
+  /// The display name of the other participant in the conversation
+  final String? otherUserName;
+
+  /// The avatar URL of the other participant
+  final String? otherUserAvatar;
+
   Conversation({
     required this.id,
     required this.taskId,
@@ -26,6 +32,8 @@ class Conversation {
     this.user2Name,
     this.lastMessage,
     this.lastMessageTime,
+    this.otherUserName,
+    this.otherUserAvatar,
   });
 
   factory Conversation.fromJson(Map<String, dynamic> json) {
@@ -51,6 +59,8 @@ class Conversation {
       }
     }
 
+    AppLogger.d('👤 Parsed other user: ${json['other_user_name']} | avatar: ${json['other_user_avatar']}');
+
     return Conversation(
       id: json['id'] as String,
       taskId: json['task_id'] as String,
@@ -62,6 +72,8 @@ class Conversation {
       user2Name: json['user2_name'] as String?,
       lastMessage: lastMessage,
       lastMessageTime: lastMessageTime,
+      otherUserName: json['other_user_name'] as String?,
+      otherUserAvatar: json['other_user_avatar'] as String?,
     );
   }
 
@@ -77,6 +89,8 @@ class Conversation {
       'user2_name': user2Name,
       'last_message': lastMessage,
       'last_message_time': lastMessageTime?.toIso8601String(),
+      'other_user_name': otherUserName,
+      'other_user_avatar': otherUserAvatar,
     };
   }
 }
