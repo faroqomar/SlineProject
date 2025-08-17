@@ -179,3 +179,76 @@ lib/
 │   └── l10n.dart
 │
 └── main.dart                # Entry point of the app → calls MainNavigationScreen
+
+# 📁 SLine App – Folder Structure Guide (Updated)
+
+**Last updated:** 2025-08-17
+
+This document explains the folder structure used in the SLine freelance marketplace app built with Flutter, Supabase, and FastAPI.
+
+---
+
+## 🔰 Top-Level Overview
+
+```
+lib/
+├── app/
+├── core/
+├── features/
+├── generated/
+└── main.dart
+```
+
+---
+
+## 📂 `lib/app/`
+- `main_navigation_screen.dart`: BottomNavigationBar + main screens.
+- `app_theme.dart`: (Optional) Light/Dark themes.
+
+---
+
+## 📂 `lib/core/`
+Shared logic, services, and UI.
+
+- `models/`: Global data models.
+- `services/`: Supabase service, **logger (AppLogger)**, etc.
+- `repositories/`: Business logic over services.
+- `widgets/`: Shared UI components.
+- `providers/`: App-wide state.
+- `utils/`: Helpers (date/price formatters, validators).
+
+---
+
+## 📂 `lib/features/`
+Each feature is isolated:
+
+```
+features/
+└── chat/
+    ├── presentation/
+    │   └── chat_screen.dart           # UI (now supports images/files)
+    ├── controllers/
+    │   └── chat_controller.dart       # Realtime subscriptions
+    ├── services/
+    │   ├── message_service.dart       # send/get/subscribe + createOrGetConversation
+    │   └── attachment_service.dart    # upload + signed URLs (chat-attachments bucket)
+    └── models/
+        ├── conversation_model.dart
+        └── message_model.dart         # includes attachment fields
+```
+
+Other features follow the same pattern (`auth/`, `tasks/`, `profile/`, ...).
+
+---
+
+## 🧠 Core Principles
+- Modular design
+- Separation of concerns
+- Scalable & testable
+- Reusable shared components
+
+---
+
+## 🔄 Recent Updates
+- **2025-08-17**: Chat attachments added (Storage bucket, RLS, model/service/UI updates). 
+- **2025-08-03**: Realtime messaging enabled and stabilized.

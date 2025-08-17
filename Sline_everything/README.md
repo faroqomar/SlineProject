@@ -127,3 +127,35 @@ This directory contains all the essential documentation for the SLine freelance 
 ---
 
 *This documentation hub serves as the single source of truth for all SLine project information and should be the first reference point for any development work.*
+
+# 📚 SLine App - Documentation Hub (Updated)
+
+**Last Updated:** 2025-08-17
+
+This directory contains all the essential documentation for the SLine freelance marketplace app.
+
+---
+
+## 📋 Files
+- **STRUCTURE.md** — Folder structure and principles (updated with attachments service).
+- **SUPABASE_SETUP.md** — DB, RLS, Realtime, **Storage (chat-attachments)** with fixed policy checks.
+- **Sline_Log.md** — Version 1.4: Chat attachments + storage integration.
+- **MVP_ROADMAP.md** — Messaging updated to include attachments step as completed.
+
+---
+
+## ✅ Recent Progress
+- ✅ Private storage bucket `chat-attachments` for message attachments.
+- ✅ Storage RLS policies using `policyname` + `schemaname='storage'`.
+- ✅ Message model updated with attachment fields + `receiver_id`.
+- ✅ UI: Image/File sending in ChatScreen with thumbnails and file chips.
+- ✅ Services: `AttachmentService` (upload + signed URL), `MessageService` (send/get realtime with attachments).
+- ✅ DB index for faster chat history.
+
+---
+
+## 🧭 How to use
+1. Start from **SUPABASE_SETUP.md** to configure DB + Storage.
+2. Check **STRUCTURE.md** for where the new services and models live.
+3. Read **Sline_Log.md** (v1.4) for the complete change set.
+4. Track future work in **MVP_ROADMAP.md**.

@@ -68,10 +68,23 @@ class _MessagesScreenState extends State<MessagesScreen> {
                   otherUserName,
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-                subtitle: Text(
-                  convo.lastMessage ?? convo.taskTitle ?? 'No messages yet',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (convo.taskTitle != null)
+                      Text(
+                        convo.taskTitle!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 12, color: Colors.black54),
+                      ),
+                    Text(
+                      convo.lastMessage ?? 'No messages yet',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
                 trailing: convo.lastMessageTime != null
                     ? Text(

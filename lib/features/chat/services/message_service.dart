@@ -7,39 +7,39 @@ import '../models/message_model.dart';
 class MessageService {
   final SupabaseClient _client = Supabase.instance.client;
 
-  /// Create or get an existing conversation between two users for a task
+  /// Create or get conversation (order-insensitive pair)
   Future<Conversation> createOrGetConversation({
     required String taskId,
     required String user1Id,
     required String user2Id,
   }) async {
-    // Check if a conversation already exists
     final existing = await _client
         .from('conversations')
         .select()
         .eq('task_id', taskId)
-        .or('user1_id.eq.$user1Id,user2_id.eq.$user2Id')
+        .or('and(user1_id.eq.$user1Id,user2_id.eq.$user2Id),and(user1_id.eq.$user2Id,user2_id.eq.$user1Id)')
         .limit(1);
 
-    // Debug: Checking existing conversations
     AppLogger.d('🔎 Existing conversations found: ${existing.length}');
-    if (existing.isNotEmpty) {
-      // Info: Using existing conversation
+    if (existing is List && existing.isNotEmpty) {
       AppLogger.i('📌 Using existing conversation: ${existing.first['id']}');
-      return Conversation.fromJson(existing.first);
+      return Conversation.fromJson(Map<String, dynamic>.from(existing.first as Map));
     }
 
-    // Otherwise, create a new conversation
-    final response = await _client.from('conversations').insert({
-      'task_id': taskId,
-      'user1_id': user1Id,
-      'user2_id': user2Id,
-    }).select().single();
+    final response = await _client
+        .from('conversations')
+        .insert({
+          'task_id': taskId,
+          'user1_id': user1Id,
+          'user2_id': user2Id,
+        })
+        .select()
+        .single();
 
-    return Conversation.fromJson(response);
+    return Conversation.fromJson(Map<String, dynamic>.from(response as Map));
   }
 
-  /// Get all conversations for a user with task title and participant names
+  /// Get conversations for user (kept as-is)
   Future<List<Conversation>> getUserConversations(String userId) async {
     try {
       final response = await _client
@@ -59,13 +59,11 @@ class MessageService {
           .order('created_at', ascending: false);
 
       if (response is List) {
-        // Debug: Conversations response received
         AppLogger.d('📦 Conversations response count: ${response.length}');
-        return response.map((json) {
-          // Determine the other user in the conversation and their details
+        return response.map((raw) {
+          final json = Map<String, dynamic>.from(raw as Map);
           final isUser1 = json['user1_id'] == userId;
           final otherUser = isUser1 ? json['user2'] : json['user1'];
-          AppLogger.d('📦 Raw conversation json: $json');
           return Conversation.fromJson({
             ...json,
             'task_title': json['tasks']?['title'] ?? 'Untitled Task',
@@ -76,49 +74,60 @@ class MessageService {
           });
         }).toList();
       } else {
-        // Warning: Unexpected response type
         AppLogger.w('⚠️ Unexpected response type: $response');
         return [];
       }
     } catch (e) {
-      // Error: Failed to fetch conversations
       AppLogger.e('❌ Error fetching conversations: $e');
       return [];
     }
   }
 
-  /// Get all messages for a conversation
+  /// Get messages (now returns attachment fields too)
   Future<List<Message>> getMessages(String conversationId) async {
     final response = await _client
         .from('messages')
-        .select('id, conversation_id, sender_id, receiver_id, content, created_at')
+        .select('id, conversation_id, sender_id, receiver_id, content, created_at, attachment_url, attachment_type, attachment_name, attachment_size')
         .eq('conversation_id', conversationId)
         .order('created_at', ascending: true);
 
     return (response as List)
-        .map((json) => Message.fromJson(json))
+        .map((raw) => Message.fromJson(Map<String, dynamic>.from(raw as Map)))
         .toList();
   }
 
-  /// Send a new message
+  /// Send text and/or attachment
   Future<Message> sendMessage({
     required String conversationId,
     required String senderId,
     required String receiverId,
     required String content,
+    String? attachmentUrl,
+    String? attachmentType,
+    String? attachmentName,
+    int? attachmentSize,
   }) async {
-    final response = await _client.from('messages').insert({
+    final insertMap = <String, dynamic>{
       'conversation_id': conversationId,
       'sender_id': senderId,
       'receiver_id': receiverId,
       'content': content,
-      'created_at': DateTime.now().toIso8601String(), // ensure timestamp is stored
-    }).select('id, conversation_id, sender_id, receiver_id, content, created_at').single();
+    };
+    if (attachmentUrl != null) insertMap['attachment_url'] = attachmentUrl;
+    if (attachmentType != null) insertMap['attachment_type'] = attachmentType;
+    if (attachmentName != null) insertMap['attachment_name'] = attachmentName;
+    if (attachmentSize != null) insertMap['attachment_size'] = attachmentSize;
 
-    return Message.fromJson(response);
+    final response = await _client
+        .from('messages')
+        .insert(insertMap)
+        .select('id, conversation_id, sender_id, receiver_id, content, created_at, attachment_url, attachment_type, attachment_name, attachment_size')
+        .single();
+
+    return Message.fromJson(Map<String, dynamic>.from(response as Map));
   }
 
-  /// Subscribe to realtime updates for a conversation
+  /// Realtime for a conversation
   Stream<Message?> subscribeToMessages(String conversationId) {
     return _client
         .from('messages')
@@ -128,9 +137,8 @@ class MessageService {
         .map((rows) {
           if (rows.isEmpty) return null;
           try {
-            // Return the most recent message to trigger updates
-            final messages = rows.map((row) => Message.fromJson(row)).toList();
-            return messages.isNotEmpty ? messages.last : null;
+            final last = Map<String, dynamic>.from(rows.last as Map);
+            return Message.fromJson(last);
           } catch (e) {
             AppLogger.e('Error parsing realtime message: $e');
             return null;
@@ -138,7 +146,7 @@ class MessageService {
         });
   }
 
-  /// Subscribe to realtime updates for user conversations
+  /// Realtime for conversations (as-is)
   Stream<List<Map<String, dynamic>>> subscribeToConversations(String userId) {
     return _client
         .from('conversations')
@@ -146,9 +154,7 @@ class MessageService {
         .order('created_at')
         .asyncMap((rows) async {
           if (rows.isEmpty) return <Map<String, dynamic>>[];
-
-          // Fetch full profile info for each conversation
-          final convoIds = rows.map((row) => row['id']).toList();
+          final convoIds = rows.map((row) => (row as Map)['id']).toList();
           final response = await _client
               .from('conversations')
               .select('''
@@ -164,9 +170,8 @@ class MessageService {
               ''')
               .in_('id', convoIds);
 
-          // Ensuring each row is strictly typed as Map<String, dynamic> for controller stream
           return (response as List)
-              .map((json) => Map<String, dynamic>.from(json as Map<String, dynamic>))
+              .map((raw) => Map<String, dynamic>.from(raw as Map))
               .toList();
         });
   }

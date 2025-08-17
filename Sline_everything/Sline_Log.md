@@ -593,3 +593,107 @@ feat/fix/docs: Brief description
 - Reduced risk of runtime errors due to cleaner code
 - Improved maintainability with consistent documentation
 - Debug console provides clear feedback for realtime chat operations
+
+# 📘 SLine App - Complete Development Log
+
+**Last Updated:** 2025-08-17
+
+---
+
+## 🎯 Project Overview
+Flutter + Supabase freelance marketplace with real-time chat, tasks, and profiles.
+
+---
+
+## 📋 Version History
+
+### 🟢 Version 1.4 — Chat Attachments & Storage
+**Date:** 2025-08-17  
+**Commit:** _Pending_ — "feat: chat attachments with Supabase Storage (private)"
+
+#### ✅ Implemented
+- Message model extended with: `receiver_id`, `attachment_url`, `attachment_type`, `attachment_name`, `attachment_size`.
+- Private bucket `chat-attachments` created; upload via `AttachmentService`.
+- Storage RLS policies for INSERT/SELECT using `policyname` (fixed `polname` error) and `schemaname='storage'`.
+- `MessageService` updated:
+  - `createOrGetConversation` with order-insensitive pair filter.
+  - `sendMessage` accepts text and/or attachment.
+  - `getMessages` returns attachment fields.
+  - Realtime ordered by `created_at`.
+- `ChatScreen` UI:
+  - Image/File pickers (`image_picker`, `file_picker`).
+  - Image thumbnails via signed URL; file chip with name.
+- DB index on `(conversation_id, created_at)` for messages.
+
+#### 🧪 Verification
+- Upload image/file → appears instantly on both sides (realtime).
+- Storage objects visible in `chat-attachments` under `conversationId/…`.
+- Signed URL works for authenticated users (policy SELECT present).
+- `flutter analyze` clean except minor `.withOpacity` notice (optional: use `.withValues(alpha: 0.85)`).
+
+#### 🛠 SQL Snapshot
+```sql
+ALTER TABLE public.messages
+  ADD COLUMN IF NOT EXISTS receiver_id uuid REFERENCES public.profiles(id),
+  ADD COLUMN IF NOT EXISTS attachment_url text,
+  ADD COLUMN IF NOT EXISTS attachment_type text,
+  ADD COLUMN IF NOT EXISTS attachment_name text,
+  ADD COLUMN IF NOT EXISTS attachment_size integer;
+
+CREATE INDEX IF NOT EXISTS idx_messages_convo_created
+  ON public.messages (conversation_id, created_at);
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE policyname = 'chat_attach_insert_auth'
+      AND schemaname = 'storage'
+      AND tablename  = 'objects'
+  ) THEN
+    CREATE POLICY "chat_attach_insert_auth"
+    ON storage.objects
+    FOR INSERT
+    TO authenticated
+    WITH CHECK (bucket_id = 'chat-attachments' AND owner = auth.uid());
+  END IF;
+END$$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE policyname = 'chat_attach_select_auth'
+      AND schemaname = 'storage'
+      AND tablename  = 'objects'
+  ) THEN
+    CREATE POLICY "chat_attach_select_auth"
+    ON storage.objects
+    FOR SELECT
+    TO authenticated
+    USING (bucket_id = 'chat-attachments');
+  END IF;
+END$$;
+```
+
+---
+
+### 📦 Version 1.3 — My Tasks & Task Editing
+**Date:** 2025-08-02  
+**Status:** Completed  
+**Commit:** _Pending_ — "feat: Add My Tasks tab with edit and delete functionality"
+
+(unchanged content retained)
+
+---
+
+### 📦 Version 1.2 — Task Creation Feature
+**Date:** 2025-07-26  
+**Status:** Completed
+
+(unchanged content retained)
+
+---
+
+### 🧱 v0.9 / v0.8 / v0.7 — Realtime & Logger groundwork
+(unchanged content retained; see previous notes)

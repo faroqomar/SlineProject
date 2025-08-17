@@ -1,4 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Permissions for image picking and camera (Android 13+ and below) -->
+    <!-- Android 13+ -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- Pre-Android 13 -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!-- Camera (if capturing photos) -->
+    <uses-permission android:name="android.permission.CAMERA" />
     <application
         android:label="sline_app"
         android:name="${applicationName}"

@@ -67,7 +67,6 @@ class TaskCard extends StatelessWidget {
                         onPressed: () async {
                           final user = Supabase.instance.client.auth.currentUser;
                           if (user == null) {
-                            // Error: No authenticated user found
                             AppLogger.e('❌ No authenticated user found');
                             return;
                           }
@@ -76,7 +75,6 @@ class TaskCard extends StatelessWidget {
                             final controller = context.read<ChatController>();
                             final messageService = MessageService();
 
-                            // Info: Starting chat conversation from task card
                             AppLogger.i('🚀 TaskCard Chat pressed - creating or fetching conversation...');
                             final conversation = await messageService.createOrGetConversation(
                               taskId: task.id,
@@ -84,7 +82,6 @@ class TaskCard extends StatelessWidget {
                               user2Id: task.userId,
                             );
 
-                            // Info: Conversation ready for navigation
                             AppLogger.i('✅ Conversation ready: ${conversation.id}');
                             controller.activeConversation = conversation;
                             await controller.fetchMessages(conversation.id);
@@ -98,7 +95,6 @@ class TaskCard extends StatelessWidget {
                               );
                             }
                           } catch (e) {
-                            // Error: Failed to start conversation from task card
                             AppLogger.e('❌ Error starting conversation from TaskCard: $e');
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(

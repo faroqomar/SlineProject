@@ -89,8 +89,7 @@ class ChatController extends ChangeNotifier {
         senderId: message.senderId,
         receiverId: message.receiverId,
         content: message.content,
-        createdAt: message.createdAt ?? DateTime.now(),
-      );
+createdAt: message.createdAt,      );
 
       currentMessages.add(messageWithTime);
       if (hasListeners) notifyListeners();
