@@ -20,8 +20,9 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Use withValues to avoid precision loss warnings in newer Flutter versions.
     final bg = isMine
-        ? Theme.of(context).primaryColor.withOpacity(0.85)
+        ? Theme.of(context).primaryColor.withValues(alpha: 0.85)
         : Colors.grey.shade300;
     final fg = isMine ? Colors.white : Colors.black87;
 
@@ -80,6 +81,8 @@ class MessageBubble extends StatelessWidget {
     );
   }
 
+  /// Map status strings to WhatsApp-like icons
+  /// Why: UX parity — single check = sent, double grey = delivered, double blue = read.
   static Widget _statusIcon(String status, bool isMine) {
     final neutral = isMine ? Colors.white70 : Colors.black54;
     switch (status) {

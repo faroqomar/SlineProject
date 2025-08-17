@@ -373,3 +373,187 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.conversations;
 - `messages.conversation_id → conversations.id`
 - `messages.sender_id → profiles.id`
 - `messages.receiver_id → profiles.id`
+# 🔧 Supabase Setup for SLine — What We Did (DB + RLS + Realtime + Storage)
+
+**Last Updated:** 2025-08-17
+
+This document summarizes exactly what we set up and changed in Supabase for SLine.
+
+---
+
+## ✅ TL;DR — Implemented
+- **Core tables**: `profiles`, `tasks`, `conversations`, `messages` (extended for attachments & receipts-ready).
+- **RLS policies**: locked down reads/writes so only conversation participants can read, and only senders can insert messages.
+- **Realtime**: enabled on `messages` and `conversations`.
+- **Storage (attachments)**: private bucket `chat-attachments`, upload via client, display via Signed URLs.
+- **Indexes & query ergonomics**: added composite index on `(conversation_id, created_at)` and standardized query chaining (`.or/.in_` before `.order/.limit`).
+
+---
+
+## 1) Tables (Schema)
+
+### `profiles`
+- `id` UUID (PK → `auth.users.id`)
+- `full_name` text
+- `avatar_url` text
+- `created_at` timestamptz default now()
+
+### `tasks`
+- `id` UUID (PK)
+- `user_id` UUID (FK → `auth.users.id`)
+- `title` text, `description` text, `budget` numeric, `deadline` timestamptz
+- `category` text, `skills` text[]
+- `status` text (`open` | `assigned` | `closed`)
+- `created_at` timestamptz default now()
+
+### `conversations`
+- `id` UUID (PK)
+- `task_id` UUID (FK → `tasks.id`)
+- `user1_id` UUID (FK → `profiles.id`)
+- `user2_id` UUID (FK → `profiles.id`)
+- `created_at` timestamptz default now()
+
+### `messages` (extended)
+- `id` UUID (PK)
+- `conversation_id` UUID (FK → `conversations.id`)
+- `sender_id` UUID (FK → `profiles.id`)
+- `receiver_id` UUID (FK → `profiles.id`)  ← **added**
+- `content` text
+- `attachment_url` text  ← **added** (storage path, not public URL)
+- `attachment_type` text ← **added** (`image` | `file`)
+- `attachment_name` text ← **added**
+- `attachment_size` int  ← **added** (bytes)
+- `created_at` timestamptz default now()
+
+**Index (performance):**
+```sql
+CREATE INDEX IF NOT EXISTS idx_messages_convo_created
+  ON public.messages (conversation_id, created_at);
+```
+
+**Idempotent upgrade script:**
+```sql
+ALTER TABLE public.messages
+  ADD COLUMN IF NOT EXISTS receiver_id     uuid REFERENCES public.profiles(id),
+  ADD COLUMN IF NOT EXISTS attachment_url  text,
+  ADD COLUMN IF NOT EXISTS attachment_type text,
+  ADD COLUMN IF NOT EXISTS attachment_name text,
+  ADD COLUMN IF NOT EXISTS attachment_size integer;
+```
+
+---
+
+## 2) Row-Level Security (RLS) Policies
+
+### `conversations`
+```sql
+CREATE POLICY IF NOT EXISTS "Allow users to read conversations"
+ON public.conversations FOR SELECT
+USING (auth.uid() = user1_id OR auth.uid() = user2_id);
+
+CREATE POLICY IF NOT EXISTS "Allow users to insert conversations"
+ON public.conversations FOR INSERT
+WITH CHECK (auth.uid() = user1_id OR auth.uid() = user2_id);
+```
+
+### `messages`
+```sql
+CREATE POLICY IF NOT EXISTS "Allow users to read messages"
+ON public.messages FOR SELECT
+USING (
+  auth.uid() = sender_id OR auth.uid() IN (
+    SELECT user1_id FROM public.conversations WHERE conversations.id = messages.conversation_id
+    UNION
+    SELECT user2_id FROM public.conversations WHERE conversations.id = messages.conversation_id
+  )
+);
+
+CREATE POLICY IF NOT EXISTS "Allow users to insert messages"
+ON public.messages FOR INSERT
+WITH CHECK (auth.uid() = sender_id);
+```
+
+> Note: `receiver_id` exists for business logic but read-permission relies on conversation membership.
+
+---
+
+## 3) Realtime
+Enabled publications so inserts/updates stream to the client:
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.conversations;
+```
+**Client pattern:** subscribe to messages for the active conversation and **upsert** into the local list (avoid full refetch per event).
+
+---
+
+## 4) Storage (Attachments)
+- **Bucket:** `chat-attachments` (Private)
+- **Upload path:** `convos/<conversation_id>/<random_safe_name>`
+- **Display:** via **Signed URL** (default expiry 3600s)
+
+**RLS policies for `storage.objects`:**
+```sql
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE policyname = 'chat_attach_insert_auth'
+      AND schemaname = 'storage'
+      AND tablename  = 'objects'
+  ) THEN
+    CREATE POLICY "chat_attach_insert_auth"
+    ON storage.objects
+    FOR INSERT
+    TO authenticated
+    WITH CHECK (
+      bucket_id = 'chat-attachments' AND owner = auth.uid()
+    );
+  END IF;
+END$$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE policyname = 'chat_attach_select_auth'
+      AND schemaname = 'storage'
+      AND tablename  = 'objects'
+  ) THEN
+    CREATE POLICY "chat_attach_select_auth"
+    ON storage.objects
+    FOR SELECT
+    TO authenticated
+    USING (bucket_id = 'chat-attachments');
+  END IF;
+END$$;
+```
+
+**Verify policies:**
+```sql
+SELECT policyname, schemaname, tablename, cmd
+FROM pg_policies
+WHERE schemaname='storage' AND tablename='objects'
+ORDER BY policyname;
+```
+
+---
+
+## 5) Query Tips (Supabase Dart)
+To avoid `undefined_method` and over-fetching:
+- Call `.or(...)` and `.in_(...)` **before** `.order(...)` and `.limit(...)`.
+- For nested relations (e.g., `last_message:messages!conversation_id(...)`), constrain payload with:
+  - `.order('created_at', foreignTable: 'messages', ascending: false)`
+  - `.limit(1, foreignTable: 'messages')`
+
+---
+
+## 6) Optional / Deferred
+- **Typing indicators** via `conversation_presence` table + cleanup trigger. Deferred until after read receipts.
+
+---
+
+## 7) Why This Matters
+- Private attachments remain secure; clients only see what they’re allowed to see.
+- Realtime feels instant without network churn (local upsert).
+- Queries are predictable and stable across SDK updates.

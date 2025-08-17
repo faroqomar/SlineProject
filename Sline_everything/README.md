@@ -159,3 +159,45 @@ This directory contains all the essential documentation for the SLine freelance 
 2. Check **STRUCTURE.md** for where the new services and models live.
 3. Read **Sline_Log.md** (v1.4) for the complete change set.
 4. Track future work in **MVP_ROADMAP.md**.
+# 📚 SLine App – Documentation Hub (Up-to-date)
+
+**Last Updated:** 2025-08-17
+
+Central hub for architecture, setup, logs, and roadmap.
+
+---
+
+## 📋 Documents
+- **STRUCTURE.md** — Architecture & folder layout (includes attachments module)
+- **SUPABASE_SETUP.md** — DB schema, RLS, Realtime, Storage (private `chat-attachments` bucket)
+- **Sline_Log.md** — Versioned changelog (now at v1.5)
+- **MVP_ROADMAP.md** — Current status per feature (attachments ✅, realtime optimization ✅)
+
+---
+
+## ✅ Recent Highlights
+- **Attachments (v1.4):**
+  - Message model extended: `receiver_id`, `attachment_url`, `attachment_type`, `attachment_name`, `attachment_size`.
+  - Private bucket `chat-attachments`; upload via `AttachmentService`; signed URLs via `createSignedUrl`.
+  - Storage policies fixed using `policyname` + `schemaname='storage'`.
+- **Realtime Optimization (v1.5):**
+  - In `ChatController`, switched from full `fetchMessages()` per event to **local upsert** of new/updated message.
+  - Fixed immediate image rendering by appending the **server-returned** message (no temporary placeholder).
+  - `last_message` relation constrained by `order` (desc) + `limit 1` to reduce payload.
+  - Supabase query chaining: `.or()` / `.in_()` are applied **before** `.order()` / `.limit()` to avoid `PostgrestTransformBuilder` issues.
+- **DX:** Centralized logging via `AppLogger` across services & UI.
+
+---
+
+## 🧭 How to Use
+1. Start with **SUPABASE_SETUP.md** to set up DB, RLS, Realtime, and Storage.
+2. Review **STRUCTURE.md** to see where models/services/UI live (incl. attachments isolation).
+3. Read **Sline_Log.md** for step-by-step changes (v1.0 → v1.5).
+4. Track current scope and next steps in **MVP_ROADMAP.md**.
+
+---
+
+## 🛠 Dev Notes
+- Web: image compression is no-op; file picking uses `image_picker`/`file_picker`.
+- Signed URLs default to 1h; regenerate if a chat stays open long.
+- Avoid full-list refetch in realtime; use local upsert pattern.

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/services/logger_service.dart';
-// Utility functions for formatting date/time in chat UI
 import '../../../core/utils/format_date.dart' as date_utils;
 import '../../chat/controllers/chat_controller.dart';
 import '../../chat/models/conversation_model.dart';
@@ -15,21 +14,23 @@ class MessagesScreen extends StatefulWidget {
 }
 
 class _MessagesScreenState extends State<MessagesScreen> {
+  // Cache controller to avoid unsafe ancestor lookups in dispose.
+  late final ChatController _chatCtrl;
+
   @override
   void initState() {
     super.initState();
+    _chatCtrl = context.read<ChatController>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final controller = context.read<ChatController>();
-      controller.fetchConversations();
-      controller.subscribeToUserConversations();
+      _chatCtrl.fetchConversations();
+      _chatCtrl.subscribeToUserConversations();
     });
   }
 
   @override
   void dispose() {
-    final controller = context.read<ChatController>();
-    controller.unsubscribeFromUserConversations();
-    controller.unsubscribeFromConversation();
+    _chatCtrl.unsubscribeFromUserConversations();
+    _chatCtrl.unsubscribeFromConversation();
     super.dispose();
   }
 
@@ -43,12 +44,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (controller.conversations.isEmpty) {
-            // Warning: No conversations to display
             AppLogger.w('⚠️ No conversations to display');
             return const Center(child: Text('No conversations yet.'));
           }
 
-          // Debug: Displaying conversations count in UI
           AppLogger.d('📋 Conversations count in UI: ${controller.conversations.length}');
 
           return ListView.separated(
@@ -93,6 +92,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       )
                     : null,
                 onTap: () async {
+                  AppLogger.i('[CONVOS] open: ${convo.id}');
                   controller.activeConversation = convo;
                   await controller.fetchMessages(convo.id);
                   if (context.mounted) {

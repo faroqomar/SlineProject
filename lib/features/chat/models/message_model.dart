@@ -1,4 +1,5 @@
-/// Message domain model with optional attachment fields.
+/// Message domain model with optional attachment fields and read receipts.
+/// Why: attachments enable richer chat; read receipts enable UX states (sent/delivered/read).
 class Message {
   /// Unique id of the message
   final String id;
@@ -12,6 +13,14 @@ class Message {
   final String content;
   /// Server timestamp when the message is created
   final DateTime createdAt;
+
+  /// When the message was delivered to the receiver's device (nullable)
+  /// Why: used for the double-grey ticks state in WhatsApp-like UX.
+  final DateTime? deliveredAt;
+
+  /// When the message was seen (read) by the receiver (nullable)
+  /// Why: used for the double-blue ticks state in WhatsApp-like UX.
+  final DateTime? seenAt;
 
   /// Optional attachment storage path (private bucket path)
   final String? attachmentUrl;
@@ -29,6 +38,8 @@ class Message {
     required this.receiverId,
     required this.content,
     required this.createdAt,
+    this.deliveredAt,
+    this.seenAt,
     this.attachmentUrl,
     this.attachmentType,
     this.attachmentName,
@@ -43,6 +54,12 @@ class Message {
       receiverId: json['receiver_id'] as String,
       content: (json['content'] ?? '') as String,
       createdAt: DateTime.parse(json['created_at'] as String),
+      deliveredAt: json['delivered_at'] == null
+          ? null
+          : DateTime.parse(json['delivered_at'] as String),
+      seenAt: json['seen_at'] == null
+          ? null
+          : DateTime.parse(json['seen_at'] as String),
       attachmentUrl: json['attachment_url'] as String?,
       attachmentType: json['attachment_type'] as String?,
       attachmentName: json['attachment_name'] as String?,
@@ -65,6 +82,9 @@ class Message {
     if (attachmentType != null) map['attachment_type'] = attachmentType;
     if (attachmentName != null) map['attachment_name'] = attachmentName;
     if (attachmentSize != null) map['attachment_size'] = attachmentSize;
+    // Optional read-receipt timestamps
+    if (deliveredAt != null) map['delivered_at'] = deliveredAt!.toIso8601String();
+    if (seenAt != null) map['seen_at'] = seenAt!.toIso8601String();
     return map;
   }
 }

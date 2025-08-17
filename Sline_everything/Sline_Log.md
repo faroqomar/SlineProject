@@ -697,3 +697,70 @@ END$$;
 
 ### 🧱 v0.9 / v0.8 / v0.7 — Realtime & Logger groundwork
 (unchanged content retained; see previous notes)
+# 📘 SLine App - Complete Development Log (Consolidated)
+
+**Last Updated:** 2025-08-17
+
+---
+
+## 🎯 Overview
+Flutter + Supabase freelance marketplace with real-time chat, tasks, and profiles.
+
+---
+
+## 📋 Version History (highlights)
+
+### 🟢 Version 1.5 — Realtime Optimizations & Attachments Isolation
+**Date:** 2025-08-17  
+**Commit:** _Pending_ — "fix: realtime upsert, chats render images instantly; tighten queries"
+
+#### ✅ Implemented
+- **Realtime (messages):** in-place **upsert** on events (insert/replace + sort by `created_at`).
+- **Immediate image rendering:** append server-returned message directly after send.
+- **Query stability:** chain `.or()` / `.in_()` **before** `.order()` / `.limit()`.
+- **Conversations last_message:** `order(created_at desc)` + `limit 1` on embedded `messages`.
+- **Null-safety in ChatScreen:** guard `user?.id` when computing `isMine`.
+- **Attachments isolation:** `features/chat/attachments/` (services + widgets).
+
+#### 📦 Impact
+- Lower network usage and smoother UI in long threads.
+- No temporary `[photo]` text bubbles — images show immediately.
+- Fewer edge-case crashes (null auth, heavy relations).
+
+#### 🔧 Files (high level)
+- `chat_controller.dart`: send flow + realtime listener upsert
+- `message_service.dart`: query order/limit + filter order
+- `chat/presentation/`: `ChatScreen`, `AttachmentMessageTile`
+- `attachments/services/`: `upload_service.dart` wrapper → `AttachmentService`
+
+---
+
+### 🟢 Version 1.4 — Chat Attachments & Storage
+**Date:** 2025-08-17  
+**Commit:** _Pending_ — "feat: chat attachments with Supabase Storage (private)"
+
+#### ✅ Implemented
+- Message model extended: `receiver_id`, `attachment_url`, `attachment_type`, `attachment_name`, `attachment_size`.
+- Storage bucket `chat-attachments` (private) with INSERT/SELECT policies.
+- `AttachmentService` (upload + signed URL), UI image/file bubbles.
+- DB index `(conversation_id, created_at)` for messages.
+
+#### 🧪 SQL Snapshot
+(see `SUPABASE_SETUP.md`).
+
+---
+
+### 📦 Version 1.3 — My Tasks & Task Editing (2025-08-02)
+- "My Tasks" in Profile with edit/delete.
+
+### 📦 Version 1.2 — Task Creation (2025-07-26)
+- CreateTaskScreen + TaskService integration.
+
+### 🔧 v0.9 / v0.8 / v0.7 — Realtime & Logger groundwork
+- Realtime enabled for conversations/messages, AppLogger integrated.
+
+---
+
+## 🧭 Notes
+- Docs consolidated: **STRUCTURE.md**, **SUPABASE_SETUP.md**, **MVP_ROADMAP.md**.
+- Keep comments and docs in **English**; product UI bilingual later.

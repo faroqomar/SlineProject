@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:file_picker/file_picker.dart';
+
 import '../../chat/controllers/chat_controller.dart';
 import '../../chat/models/conversation_model.dart';
 import '../../chat/models/message_model.dart';
-import '../../chat/services/attachment_service.dart';
-import '../../chat/services/message_service.dart';
 import '../../../core/utils/format_date.dart';
-import 'widgets/message_bubble.dart';
+import '../../../core/services/logger_service.dart';
 
+import 'widgets/message_bubble.dart';
+import '../attachments/services/send_attachment_usecase.dart';
+import '../attachments/widgets/attachment_message_tile.dart';
+
+/// Chat screen
+/// Why: shows messages, renders attachments, and triggers receipts.
 class ChatScreen extends StatefulWidget {
   final Conversation conversation;
   const ChatScreen({super.key, required this.conversation});
@@ -21,83 +24,51 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final _messageController = TextEditingController();
-  final _attachmentService = AttachmentService();
-  final _messageService = MessageService();
+  late final ChatController _chatCtrl;
 
   @override
   void initState() {
     super.initState();
-    final chatController = context.read<ChatController>();
-    chatController.activeConversation = widget.conversation;
-    chatController.subscribeToActiveConversation();
+    _chatCtrl = context.read<ChatController>();
+    _chatCtrl.activeConversation = widget.conversation;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      AppLogger.i('[CHAT] opened: convo=${widget.conversation.id}');
+      _chatCtrl.subscribeToActiveConversation();
+      if (!mounted) return;
+      await _chatCtrl.markReceiptsForActive(delivered: true, seen: true);
+    });
   }
 
-  Future<void> _pickImageAndSend() async {
+  @override
+  void dispose() {
+    AppLogger.d('[CHAT] closed: convo=${widget.conversation.id}');
+    _chatCtrl.unsubscribeFromConversation();
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  /// Trigger image sending via the isolated attachments use-case.
+  Future<void> _onPickImage() async {
     try {
-      final picker = ImagePicker();
-      final xfile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
-      if (xfile == null) return;
-      final bytes = await xfile.readAsBytes();
-      await _sendAttachment(bytes: bytes, filename: xfile.name, type: 'image');
+      final me = Supabase.instance.client.auth.currentUser?.id;
+      if (me == null) return;
+      final convo = widget.conversation;
+      final receiverId = (convo.user1Id == me) ? convo.user2Id : convo.user1Id;
+
+      await sendImageAttachment(
+        conversationId: convo.id,
+        senderId: me,
+        receiverId: receiverId,
+      );
+
+      AppLogger.i('[CHAT] image sent via usecase for convo=${convo.id}');
     } catch (e) {
+      AppLogger.e('❌ sendImageAttachment failed: $e');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Image pick failed: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to send image')),
+      );
     }
-  }
-
-  Future<void> _pickFileAndSend() async {
-    try {
-      final res = await FilePicker.platform.pickFiles(withData: true);
-      if (res == null || res.files.isEmpty) return;
-      final file = res.files.first;
-      final bytes = file.bytes;
-      if (bytes == null) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Selected file has no bytes.')));
-        return;
-      }
-      await _sendAttachment(bytes: bytes, filename: file.name, type: 'file', size: file.size);
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('File pick failed: $e')));
-    }
-  }
-
-  Future<void> _sendAttachment({
-    required List<int> bytes,
-    required String filename,
-    required String type, // 'image' | 'file'
-    int? size,
-  }) async {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) return;
-    final convo = widget.conversation;
-    final senderId = user.id;
-    final receiverId = (convo.user1Id == senderId) ? convo.user2Id : convo.user1Id;
-
-    // guard size
-    if (size != null && size > 10 * 1024 * 1024) { // 10MB
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('File too large (>10MB)')));
-      return;
-    }
-
-    final path = await _attachmentService.uploadBytes(
-      conversationId: convo.id,
-      filename: filename,
-      bytes: bytes,
-    );
-
-    await _messageService.sendMessage(
-      conversationId: convo.id,
-      senderId: senderId,
-      receiverId: receiverId,
-      content: '',
-      attachmentUrl: path,
-      attachmentType: type,
-      attachmentName: filename,
-      attachmentSize: size ?? bytes.length,
-    );
   }
 
   @override
@@ -107,6 +78,8 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.conversation.otherUserName ?? 'Chat'),
+        backgroundColor: Theme.of(context).primaryColor,
+        foregroundColor: Colors.white,
       ),
       body: Column(
         children: [
@@ -124,74 +97,32 @@ class _ChatScreenState extends State<ChatScreen> {
                   itemCount: controller.currentMessages.length,
                   itemBuilder: (context, index) {
                     final Message msg = controller.currentMessages[index];
-                    final isMine = msg.senderId == user!.id;
+                    final userId = user?.id;
+                    final isMine = (userId != null) && msg.senderId == userId;
+                    final status = msg.seenAt != null
+                        ? 'read'
+                        : (msg.deliveredAt != null ? 'delivered' : 'sent');
 
-                    // Attachment rendering
-                    if (msg.attachmentUrl != null) {
-                      return FutureBuilder<String>(
-                        future: _attachmentService.createSignedUrl(msg.attachmentUrl!),
-                        builder: (context, snap) {
-                          if (!snap.hasData) {
-                            return Align(
-                              alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
-                              child: const Padding(
-                                padding: EdgeInsets.all(12.0),
-                                child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)),
-                              ),
-                            );
-                          }
-                          final signed = snap.data!;
-                          if (msg.attachmentType == 'image') {
-                            return Align(
-                              alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.network(
-                                  signed,
-                                  width: MediaQuery.of(context).size.width * 0.6,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            );
-                          } else {
-                            return Align(
-                              alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
-                              child: Container(
-                                width: MediaQuery.of(context).size.width * 0.7,
-                                margin: const EdgeInsets.symmetric(vertical: 6),
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: isMine ? Theme.of(context).primaryColor.withOpacity(0.85) : Colors.grey.shade300,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.insert_drive_file),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        msg.attachmentName ?? 'File',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(color: isMine ? Colors.white : Colors.black87),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }
-                        },
+                    final hasImage = (msg.attachmentType == 'image') &&
+                        (msg.attachmentUrl != null && msg.attachmentUrl!.isNotEmpty);
+
+                    if (hasImage) {
+                      final caption = (msg.content.trim().toLowerCase() == '[photo]')
+                          ? null
+                          : msg.content;
+                      return AttachmentMessageTile(
+                        isMine: isMine,
+                        storagePath: msg.attachmentUrl!,
+                        time: formatFriendlyTime(msg.createdAt),
+                        caption: caption,
                       );
                     }
 
-                    // Text bubble
                     return MessageBubble(
                       text: msg.content,
                       time: formatFriendlyTime(msg.createdAt),
                       isMine: isMine,
-                      status: isMine ? 'sent' : null,
+                      status: isMine ? status : null,
                     );
                   },
                 );
@@ -203,6 +134,11 @@ class _ChatScreenState extends State<ChatScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 children: [
+                  IconButton(
+                    icon: const Icon(Icons.image),
+                    tooltip: 'Send image',
+                    onPressed: _onPickImage,
+                  ),
                   Expanded(
                     child: TextField(
                       controller: _messageController,
@@ -214,20 +150,11 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   const SizedBox(width: 8),
                   IconButton(
-                    tooltip: 'Attach file',
-                    icon: const Icon(Icons.attach_file),
-                    onPressed: _pickFileAndSend,
-                  ),
-                  IconButton(
-                    tooltip: 'Pick image',
-                    icon: const Icon(Icons.image),
-                    onPressed: _pickImageAndSend,
-                  ),
-                  IconButton(
                     icon: const Icon(Icons.send, color: Colors.blue),
                     onPressed: () {
                       final text = _messageController.text.trim();
                       if (text.isNotEmpty) {
+                        AppLogger.d('[CHAT] send tap: len=${text.length}');
                         context.read<ChatController>().sendMessage(text);
                         _messageController.clear();
                       }

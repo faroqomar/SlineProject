@@ -3,7 +3,8 @@ import '../../../core/services/logger_service.dart';
 import '../models/conversation_model.dart';
 import '../models/message_model.dart';
 
-/// Service to handle messaging-related Supabase queries
+/// Why this service exists: encapsulates Supabase queries/streams so UI/controllers remain clean
+/// and to centralize schema changes (attachments, receipts, typing) in one place.
 class MessageService {
   final SupabaseClient _client = Supabase.instance.client;
 
@@ -36,6 +37,11 @@ class MessageService {
         .select()
         .single();
 
+    try {
+      final id = (response as Map)['id'];
+      AppLogger.i('🆕 Created conversation: $id');
+    } catch (_) {}
+
     return Conversation.fromJson(Map<String, dynamic>.from(response as Map));
   }
 
@@ -56,6 +62,8 @@ class MessageService {
             last_message:messages!conversation_id(content, created_at)
           ''')
           .or('user1_id.eq.$userId,user2_id.eq.$userId')
+          .order('created_at', foreignTable: 'messages', ascending: false)
+          .limit(1, foreignTable: 'messages')
           .order('created_at', ascending: false);
 
       if (response is List) {
@@ -87,7 +95,7 @@ class MessageService {
   Future<List<Message>> getMessages(String conversationId) async {
     final response = await _client
         .from('messages')
-        .select('id, conversation_id, sender_id, receiver_id, content, created_at, attachment_url, attachment_type, attachment_name, attachment_size')
+        .select('id, conversation_id, sender_id, receiver_id, content, created_at, attachment_url, attachment_type, attachment_name, attachment_size, delivered_at, seen_at')
         .eq('conversation_id', conversationId)
         .order('created_at', ascending: true);
 
@@ -121,10 +129,28 @@ class MessageService {
     final response = await _client
         .from('messages')
         .insert(insertMap)
-        .select('id, conversation_id, sender_id, receiver_id, content, created_at, attachment_url, attachment_type, attachment_name, attachment_size')
+        .select('id, conversation_id, sender_id, receiver_id, content, created_at, attachment_url, attachment_type, attachment_name, attachment_size, delivered_at, seen_at')
         .single();
 
     return Message.fromJson(Map<String, dynamic>.from(response as Map));
+  }
+
+  /// Mark all messages in a conversation as delivered for the current receiver.
+  /// Why: switch UI status from single tick (sent) to double-grey (delivered).
+  Future<void> markDelivered(String conversationId) async {
+    await _client.rpc('mark_conversation_delivered', params: {
+      'p_conversation_id': conversationId,
+    });
+    AppLogger.d('[RECEIPTS] delivered marked for convo=$conversationId');
+  }
+
+  /// Mark all messages in a conversation as seen for the current receiver.
+  /// Why: switch UI status from double-grey to double-blue (read).
+  Future<void> markSeen(String conversationId) async {
+    await _client.rpc('mark_conversation_seen', params: {
+      'p_conversation_id': conversationId,
+    });
+    AppLogger.d('[RECEIPTS] seen marked for convo=$conversationId');
   }
 
   /// Realtime for a conversation
@@ -133,7 +159,7 @@ class MessageService {
         .from('messages')
         .stream(primaryKey: ['id'])
         .eq('conversation_id', conversationId)
-        .order('created_at')
+        .order('created_at', ascending: true)
         .map((rows) {
           if (rows.isEmpty) return null;
           try {
@@ -168,7 +194,10 @@ class MessageService {
                 user2:profiles!conversations_user2_id_fkey(full_name, avatar_url),
                 last_message:messages!conversation_id(content, created_at)
               ''')
-              .in_('id', convoIds);
+              .in_('id', convoIds)
+              .order('created_at', foreignTable: 'messages', ascending: false)
+              .limit(1, foreignTable: 'messages')
+              .order('created_at', ascending: false);
 
           return (response as List)
               .map((raw) => Map<String, dynamic>.from(raw as Map))

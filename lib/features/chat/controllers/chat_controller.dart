@@ -23,6 +23,22 @@ class ChatController extends ChangeNotifier {
   StreamSubscription<Message?>? _subscription;
   StreamSubscription<List<Map<String, dynamic>>>? _convoSubscription;
 
+  /// Mark messages as delivered and seen for the active conversation (if any).
+  /// Why: called when opening the chat or when user scrolls to bottom.
+  Future<void> markReceiptsForActive({bool delivered = true, bool seen = false}) async {
+    if (activeConversation == null) return;
+    try {
+      if (delivered) {
+        await _messageService.markDelivered(activeConversation!.id);
+      }
+      if (seen) {
+        await _messageService.markSeen(activeConversation!.id);
+      }
+    } catch (e) {
+      AppLogger.e('Error marking receipts: $e');
+    }
+  }
+
   /// Fetch all conversations for the current user
   Future<void> fetchConversations() async {
     final user = _supabase.auth.currentUser;
@@ -53,8 +69,10 @@ class ChatController extends ChangeNotifier {
     try {
       currentMessages =
           await _messageService.getMessages(conversationId);
-      activeConversation = conversations
-          .firstWhere((c) => c.id == conversationId, orElse: () => activeConversation!);
+      final idx = conversations.indexWhere((c) => c.id == conversationId);
+      if (idx != -1) {
+        activeConversation = conversations[idx];
+      }
     } catch (e) {
       // Error: Failed to fetch messages
       AppLogger.e('Error fetching messages: $e');
@@ -65,7 +83,13 @@ class ChatController extends ChangeNotifier {
   }
 
   /// Send a new message in the active conversation
-  Future<void> sendMessage(String content) async {
+  Future<void> sendMessage(
+    String content, {
+    String? attachmentUrl,
+    String? attachmentType,
+    String? attachmentName,
+    int? attachmentSize,
+  }) async {
     final user = _supabase.auth.currentUser;
     if (user == null || activeConversation == null) return;
 
@@ -80,18 +104,14 @@ class ChatController extends ChangeNotifier {
         senderId: user.id,
         receiverId: receiverId,
         content: content,
+        attachmentUrl: attachmentUrl,
+        attachmentType: attachmentType,
+        attachmentName: attachmentName,
+        attachmentSize: attachmentSize,
       );
 
-      // Ensure message has a createdAt timestamp for display
-      final messageWithTime = Message(
-        id: message.id,
-        conversationId: message.conversationId,
-        senderId: message.senderId,
-        receiverId: message.receiverId,
-        content: message.content,
-createdAt: message.createdAt,      );
-
-      currentMessages.add(messageWithTime);
+      // Append the exact server-returned message (keeps attachment & receipt fields)
+      currentMessages.add(message);
       if (hasListeners) notifyListeners();
     } catch (e) {
       // Error: Failed to send message
@@ -100,24 +120,41 @@ createdAt: message.createdAt,      );
   }
 
   void subscribeToActiveConversation() {
+    if (activeConversation != null) {
+      AppLogger.i('[CHAT] subscribe: convo=${activeConversation!.id}');
+    }
+    // Removed double-subscribe prevention block.
+
     if (activeConversation == null) return;
 
-    // Cancel any previous subscription
+    // Cancel any previous subscriptions
     _subscription?.cancel();
 
+    // Messages realtime
     _subscription = _messageService
         .subscribeToMessages(activeConversation!.id)
         .listen((message) async {
-      if (message != null && activeConversation != null) {
-        await fetchMessages(activeConversation!.id);
-        if (hasListeners) {
-          AppLogger.i('📩 New message received and messages refreshed');
-          notifyListeners();
+      if (message == null) return;
+
+      // Only upsert if message belongs to the active conversation
+      if (activeConversation != null &&
+          message.conversationId == activeConversation!.id) {
+        final i = currentMessages.indexWhere((m) => m.id == message.id);
+        if (i >= 0) {
+          currentMessages[i] = message;
+        } else {
+          currentMessages.add(message);
+          currentMessages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
         }
+        await markReceiptsForActive(delivered: true, seen: false);
+        if (hasListeners) notifyListeners();
       }
-    }, onError: (error) {
+    }, onError: (error, [stack]) {
       AppLogger.e('Realtime subscription error: $error');
     });
+
+    // On open: mark delivered immediately
+    unawaited(markReceiptsForActive(delivered: true, seen: false));
   }
 
   /// Subscribe to realtime updates for user conversations
@@ -164,6 +201,7 @@ createdAt: message.createdAt,      );
 
   /// Call this when leaving the chat screen to avoid memory leaks
   void unsubscribeFromConversation() {
+    AppLogger.d('[CHAT] unsubscribe from active conversation');
     _subscription?.cancel();
     _subscription = null;
   }

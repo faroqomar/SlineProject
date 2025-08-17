@@ -252,3 +252,73 @@ Other features follow the same pattern (`auth/`, `tasks/`, `profile/`, ...).
 ## 🔄 Recent Updates
 - **2025-08-17**: Chat attachments added (Storage bucket, RLS, model/service/UI updates). 
 - **2025-08-03**: Realtime messaging enabled and stabilized.
+# 📁 SLine App – Folder Structure Guide (Up-to-date)
+
+**Last Updated:** 2025-08-17
+
+This guide explains the feature-first structure used in SLine (Flutter + Supabase).
+
+---
+
+## Top-Level
+```
+lib/
+├── app/
+├── core/
+├── features/
+├── generated/
+└── main.dart
+```
+
+---
+
+## `lib/app/`
+- `main_navigation_screen.dart` — Bottom nav + routing via `IndexedStack`
+- `app_theme.dart` — (optional) M3 light/dark themes
+
+## `lib/core/`
+Shared logic and cross-cutting utilities:
+- `services/` — `supabase_config.dart`, **`logger_service.dart` (AppLogger)**, pickers
+- `models/` — app-wide models (e.g., user)
+- `repositories/` — indirection over services
+- `providers/` — global state (e.g., navigation)
+- `widgets/` — shared UI pieces (bottom bar, etc.)
+- `utils/` — helpers (date/price formatters)
+
+## `lib/features/`
+Each feature is isolated with `presentation/`, `controllers/`, `services/`, `models/`.
+
+### Chat Feature
+```
+features/chat/
+├── presentation/
+│   ├── chat_screen.dart              # Thread UI (images/files supported)
+│   └── messages_screen.dart          # Conversations list
+├── controllers/
+│   └── chat_controller.dart          # Realtime (upsert-in-place)
+├── services/
+│   ├── message_service.dart          # send/get/subscribe + createOrGetConversation
+│   └── attachment_service.dart       # upload bytes + signed URLs (private bucket)
+├── models/
+│   ├── conversation_model.dart
+│   └── message_model.dart            # includes attachment fields
+└── attachments/
+    ├── services/
+    │   └── upload_service.dart       # thin wrapper around AttachmentService
+    ├── widgets/
+    │   └── attachment_message_tile.dart
+    ├── models/                       # (optional, payload types)
+    └── utils/                        # (optional, MIME helpers)
+```
+
+### Other Features
+- `auth/`, `tasks/`, `profile/`, `booking/` — same pattern
+
+---
+
+## Principles
+- **Feature isolation:** attachments live under `chat/attachments/`
+- **Realtime:** avoid full-list refetch; **upsert** new events locally
+- **Queries:** apply `.or()` / `.in_()` **before** `.order()` / `.limit()`
+- **Docs & comments:** English only
+- **Logging:** use `AppLogger` for debug, avoid `print`
