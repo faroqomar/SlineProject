@@ -104,6 +104,10 @@ This structure helps keep SLine maintainable, scalable, and easy to navigate for
 - Updated `core/services/` with structured logging (AppLogger).
 - Ensured cross-platform fixes for Chrome file uploads (`dart:io.File` vs `storage_client.File`).
 - Improved UX: Added SnackBar confirmation after task publishing.
+- **2025-08-22**: 
+  - Added `TaskType` (tender/booking) to `TaskModel` and wired UI splits in `TaskDetailsScreen`.
+  - Completed Offers flow (RequestsListScreen + SubmitRequestSheet) with provider-safe BottomSheet.
+  - Guarded RequestsListScreen for non-tender tasks; booking placeholders connected for Sprint 2.
 lib/
 ├── app/                     # Main App Configs: navigation, themes, and entry points
 │   ├── main_navigation_screen.dart  # Holds bottom nav and routes to feature screens

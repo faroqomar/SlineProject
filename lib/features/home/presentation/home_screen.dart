@@ -5,6 +5,7 @@ import '../controllers/home_controller.dart';
 import '../../tasks/presentation/create_task_screen.dart';
 import 'package:sline_app/features/tasks/controllers/task_filter_controller.dart';
 import 'package:sline_app/shared/constants/categories.dart';
+import 'package:sline_app/features/tasks/presentation/task_details_screen.dart';
 
 /// Home screen - main dashboard for the app
 class HomeScreen extends StatefulWidget {
@@ -144,8 +145,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         return TaskCard(
                           task: task,
                           onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Tapped on ${task.title}')),
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => TaskDetailsScreen(task: task),
+                              ),
                             );
                           },
                         );

@@ -5,6 +5,15 @@ enum TaskStatus {
   closed, inProgress,
 }
 
+/// Enum for task type (bidding vs. scheduling)
+enum TaskType {
+  /// Default tender-style tasks that use offers/requests
+  tender,
+
+  /// Booking-style tasks that use availability & scheduling
+  booking,
+}
+
 /// Model representing a task/job posting
 class Task {
   /// Unique identifier for the task
@@ -24,6 +33,9 @@ class Task {
 
   /// Current status of the task
   final TaskStatus status;
+
+  /// Type of the task (tender or booking)
+  final TaskType taskType;
 
   /// Timestamp when the task was created
   final DateTime createdAt;
@@ -48,6 +60,7 @@ class Task {
     required this.budget,
     required this.userId,
     required this.status,
+    this.taskType = TaskType.tender,
     required this.category,
     required this.createdAt,
     this.deadline,
@@ -58,6 +71,11 @@ class Task {
 
   /// Create Task from JSON
   factory Task.fromJson(Map<String, dynamic> json) {
+    // Map database string to TaskType enum; default to tender for backward compatibility
+    final String? typeStr = json['task_type'] as String?;
+    final TaskType parsedTaskType =
+        (typeStr == 'booking') ? TaskType.booking : TaskType.tender;
+
     return Task(
       id: json['id'] as String,
       category: json['category'] as String,
@@ -69,6 +87,7 @@ class Task {
         (e) => e.name == json['status'],
         orElse: () => TaskStatus.open,
       ),
+      taskType: parsedTaskType,
       createdAt: DateTime.parse(json['created_at'] as String),
       deadline: json['deadline'] != null
           ? DateTime.parse(json['deadline'] as String)
@@ -90,6 +109,7 @@ class Task {
       'budget': budget,
       'user_id': userId,
       'status': status.name,
+      'task_type': taskType.name,
       'deadline': deadline?.toIso8601String(),
       'skills': skills,
       'category': category,
@@ -101,6 +121,12 @@ class Task {
     return map;
   }
 
+  /// True if this is a tender (bidding) task
+  bool get isTender => taskType == TaskType.tender;
+
+  /// True if this is a booking (scheduling) task
+  bool get isBooking => taskType == TaskType.booking;
+
   /// Create a copy with updated fields
   Task copyWith({
     String? id,
@@ -109,6 +135,7 @@ class Task {
     double? budget,
     String? userId,
     TaskStatus? status,
+    TaskType? taskType,
     DateTime? createdAt,
     DateTime? deadline,
     List<String>? skills,
@@ -123,6 +150,7 @@ class Task {
       budget: budget ?? this.budget,
       userId: userId ?? this.userId,
       status: status ?? this.status,
+      taskType: taskType ?? this.taskType,
       createdAt: createdAt ?? this.createdAt,
       deadline: deadline ?? this.deadline,
       skills: skills ?? this.skills,

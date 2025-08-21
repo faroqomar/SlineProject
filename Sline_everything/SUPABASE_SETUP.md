@@ -160,7 +160,7 @@ alter publication supabase_realtime add table conversations;
 
 # 🔧 Supabase Setup for Sline App (Up-to-date)
 
-**Last updated:** 2025-08-17
+**Last updated:** 2025-08-22
 
 هذا الملف يجمّع كل ما أنجزناه حتى الآن بخصوص إعداد الـ DB + RLS + Realtime + Storage (المرفقات) في Supabase.
 
@@ -185,6 +185,24 @@ alter publication supabase_realtime add table conversations;
 - `skills` text[]
 - `status` text (`open` | `assigned` | `closed`)
 - `created_at` timestamp (default now())
+
+#### 🔤 Enum: `task_type_enum`
+```sql
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'task_type_enum') THEN
+    CREATE TYPE public.task_type_enum AS ENUM ('tender','booking');
+  END IF;
+END$$;
+
+ALTER TABLE public.tasks
+  ADD COLUMN IF NOT EXISTS task_type public.task_type_enum NOT NULL DEFAULT 'tender',
+  ADD COLUMN IF NOT EXISTS session_price_bigint BIGINT,
+  ADD COLUMN IF NOT EXISTS hour_rate_bigint BIGINT;
+
+CREATE INDEX IF NOT EXISTS idx_tasks_type_created_at
+  ON public.tasks (task_type, created_at DESC);
+```
 
 ### 3) `conversations`
 - `id` UUID (PK)
@@ -229,6 +247,107 @@ CREATE INDEX IF NOT EXISTS idx_messages_convo_created
 ```
 
 ---
+
+## 📦 Task Requests (Offers) — DONE
+
+### جدول `task_requests`
+```sql
+CREATE TABLE IF NOT EXISTS public.task_requests (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  task_id uuid NOT NULL REFERENCES public.tasks(id) ON DELETE CASCADE,
+  bidder_id uuid NOT NULL REFERENCES public.profiles(id),
+  price BIGINT NOT NULL,
+  days integer NOT NULL,
+  note text,
+  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','accepted','rejected')),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+```
+
+### فهارس & قيود
+```sql
+CREATE INDEX IF NOT EXISTS idx_task_requests_task_created
+  ON public.task_requests (task_id, created_at DESC);
+
+-- عرض pending واحد لكل (task_id, bidder_id)
+CREATE UNIQUE INDEX IF NOT EXISTS uq_task_requests_unique_pending_per_user
+  ON public.task_requests(task_id, bidder_id)
+  WHERE status = 'pending';
+```
+
+### RLS Policies
+```sql
+ALTER TABLE public.task_requests ENABLE ROW LEVEL SECURITY;
+
+-- المالك يشوف كل العروض على مهمته (tender فقط)
+CREATE POLICY IF NOT EXISTS "owner_selects_offers"
+ON public.task_requests FOR SELECT
+USING (EXISTS (
+  SELECT 1 FROM public.tasks t
+  WHERE t.id = task_requests.task_id
+    AND t.user_id = auth.uid()
+    AND t.task_type = 'tender'::task_type_enum
+));
+
+-- المزايد يشوف عروضه فقط
+CREATE POLICY IF NOT EXISTS "bidder_selects_own_offers"
+ON public.task_requests FOR SELECT
+USING (bidder_id = auth.uid());
+
+-- الإدراج: المزايد نفسه وعلى مهمة tender
+CREATE POLICY IF NOT EXISTS "bidder_inserts_offer"
+ON public.task_requests FOR INSERT
+WITH CHECK (bidder_id = auth.uid() AND EXISTS (
+  SELECT 1 FROM public.tasks t
+  WHERE t.id = task_requests.task_id
+    AND t.task_type = 'tender'::task_type_enum
+));
+
+-- التعديل (accept/reject): فقط مالك المهمة (tender)
+CREATE POLICY IF NOT EXISTS "owner_updates_offer_status"
+ON public.task_requests FOR UPDATE
+USING (EXISTS (
+  SELECT 1 FROM public.tasks t
+  WHERE t.id = task_requests.task_id
+    AND t.user_id = auth.uid()
+    AND t.task_type = 'tender'::task_type_enum
+));
+```
+
+### Triggers (حماية)
+```sql
+-- منع إدراج عرض على مهمة booking
+CREATE OR REPLACE FUNCTION public.trg_check_task_is_tender() RETURNS trigger AS $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM public.tasks t
+                 WHERE t.id = NEW.task_id AND t.task_type = 'tender') THEN
+    RAISE EXCEPTION 'Offers are only allowed on tender tasks';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_task_requests_only_for_tender ON public.task_requests;
+CREATE TRIGGER trg_task_requests_only_for_tender
+  BEFORE INSERT ON public.task_requests
+  FOR EACH ROW EXECUTE FUNCTION public.trg_check_task_is_tender();
+
+-- (اختياري) منع تعديل أي شيء غير status
+CREATE OR REPLACE FUNCTION public.trg_task_requests_allow_status_only() RETURNS trigger AS $$
+BEGIN
+  IF NEW.status IS DISTINCT FROM OLD.status THEN
+    RETURN NEW;
+  END IF;
+  RAISE EXCEPTION 'Only status updates are allowed';
+END;
+$$ LANGUAGE plpgsql;
+
+-- ملاحظة: فعّل هذا التريغر فقط إذا رغبت بقفل باقي الحقول أثناء lifecycle
+-- DROP TRIGGER IF EXISTS trg_task_requests_status_only ON public.task_requests;
+-- CREATE TRIGGER trg_task_requests_status_only
+--   BEFORE UPDATE ON public.task_requests
+--   FOR EACH ROW EXECUTE FUNCTION public.trg_task_requests_allow_status_only();
+```
 
 ## 🔐 سياسات RLS (محدّثة)
 
@@ -553,7 +672,287 @@ To avoid `undefined_method` and over-fetching:
 
 ---
 
+## 📜 Grants & Privileges — Snapshot
+
+> Current table-level privileges as reported by information_schema (anon/authenticated/postgres/service_role). RLS still applies on top, but wide GRANTs for `anon` are risky in production.
+
+| table_schema | table_name            | grantee       | privilege_type |
+| ------------ | --------------------- | ------------- | -------------- |
+| public       | conversation_presence | anon          | DELETE         |
+| public       | conversation_presence | anon          | INSERT         |
+| public       | conversation_presence | anon          | REFERENCES     |
+| public       | conversation_presence | anon          | SELECT         |
+| public       | conversation_presence | anon          | TRIGGER        |
+| public       | conversation_presence | anon          | TRUNCATE       |
+| public       | conversation_presence | anon          | UPDATE         |
+| public       | conversation_presence | authenticated | DELETE         |
+| public       | conversation_presence | authenticated | INSERT         |
+| public       | conversation_presence | authenticated | REFERENCES     |
+| public       | conversation_presence | authenticated | SELECT         |
+| public       | conversation_presence | authenticated | TRIGGER        |
+| public       | conversation_presence | authenticated | TRUNCATE       |
+| public       | conversation_presence | authenticated | UPDATE         |
+| public       | conversation_presence | postgres      | DELETE         |
+| public       | conversation_presence | postgres      | INSERT         |
+| public       | conversation_presence | postgres      | REFERENCES     |
+| public       | conversation_presence | postgres      | SELECT         |
+| public       | conversation_presence | postgres      | TRIGGER        |
+| public       | conversation_presence | postgres      | TRUNCATE       |
+| public       | conversation_presence | postgres      | UPDATE         |
+| public       | conversation_presence | service_role  | DELETE         |
+| public       | conversation_presence | service_role  | INSERT         |
+| public       | conversation_presence | service_role  | REFERENCES     |
+| public       | conversation_presence | service_role  | SELECT         |
+| public       | conversation_presence | service_role  | TRIGGER        |
+| public       | conversation_presence | service_role  | TRUNCATE       |
+| public       | conversation_presence | service_role  | UPDATE         |
+| public       | conversations         | anon          | DELETE         |
+| public       | conversations         | anon          | INSERT         |
+| public       | conversations         | anon          | REFERENCES     |
+| public       | conversations         | anon          | SELECT         |
+| public       | conversations         | anon          | TRIGGER        |
+| public       | conversations         | anon          | TRUNCATE       |
+| public       | conversations         | anon          | UPDATE         |
+| public       | conversations         | authenticated | DELETE         |
+| public       | conversations         | authenticated | INSERT         |
+| public       | conversations         | authenticated | REFERENCES     |
+| public       | conversations         | authenticated | SELECT         |
+| public       | conversations         | authenticated | TRIGGER        |
+| public       | conversations         | authenticated | TRUNCATE       |
+| public       | conversations         | authenticated | UPDATE         |
+| public       | conversations         | postgres      | DELETE         |
+| public       | conversations         | postgres      | INSERT         |
+| public       | conversations         | postgres      | REFERENCES     |
+| public       | conversations         | postgres      | SELECT         |
+| public       | conversations         | postgres      | TRIGGER        |
+| public       | conversations         | postgres      | TRUNCATE       |
+| public       | conversations         | postgres      | UPDATE         |
+| public       | conversations         | service_role  | DELETE         |
+| public       | conversations         | service_role  | INSERT         |
+| public       | conversations         | service_role  | REFERENCES     |
+| public       | conversations         | service_role  | SELECT         |
+| public       | conversations         | service_role  | TRIGGER        |
+| public       | conversations         | service_role  | TRUNCATE       |
+| public       | conversations         | service_role  | UPDATE         |
+| public       | messages              | anon          | DELETE         |
+| public       | messages              | anon          | INSERT         |
+| public       | messages              | anon          | REFERENCES     |
+| public       | messages              | anon          | SELECT         |
+| public       | messages              | anon          | TRIGGER        |
+| public       | messages              | anon          | TRUNCATE       |
+| public       | messages              | anon          | UPDATE         |
+| public       | messages              | authenticated | DELETE         |
+| public       | messages              | authenticated | INSERT         |
+| public       | messages              | authenticated | REFERENCES     |
+| public       | messages              | authenticated | SELECT         |
+| public       | messages              | authenticated | TRIGGER        |
+| public       | messages              | authenticated | TRUNCATE       |
+| public       | messages              | authenticated | UPDATE         |
+| public       | messages              | postgres      | DELETE         |
+| public       | messages              | postgres      | INSERT         |
+| public       | messages              | postgres      | REFERENCES     |
+| public       | messages              | postgres      | SELECT         |
+| public       | messages              | postgres      | TRIGGER        |
+| public       | messages              | postgres      | TRUNCATE       |
+| public       | messages              | postgres      | UPDATE         |
+| public       | messages              | service_role  | DELETE         |
+| public       | messages              | service_role  | INSERT         |
+| public       | messages              | service_role  | REFERENCES     |
+| public       | messages              | service_role  | SELECT         |
+| public       | messages              | service_role  | TRIGGER        |
+| public       | messages              | service_role  | TRUNCATE       |
+| public       | messages              | service_role  | UPDATE         |
+| public       | profiles              | anon          | DELETE         |
+| public       | profiles              | anon          | INSERT         |
+| public       | profiles              | anon          | REFERENCES     |
+| public       | profiles              | anon          | SELECT         |
+| public       | profiles              | anon          | TRIGGER        |
+| public       | profiles              | anon          | TRUNCATE       |
+| public       | profiles              | anon          | UPDATE         |
+| public       | profiles              | authenticated | DELETE         |
+| public       | profiles              | authenticated | INSERT         |
+| public       | profiles              | authenticated | REFERENCES     |
+| public       | profiles              | authenticated | SELECT         |
+| public       | profiles              | authenticated | TRIGGER        |
+| public       | profiles              | authenticated | TRUNCATE       |
+| public       | profiles              | authenticated | UPDATE         |
+| public       | profiles              | postgres      | DELETE         |
+| public       | profiles              | postgres      | INSERT         |
+| public       | profiles              | postgres      | REFERENCES     |
+| public       | profiles              | postgres      | SELECT         |
+| public       | profiles              | postgres      | TRIGGER        |
+| public       | profiles              | postgres      | TRUNCATE       |
+| public       | profiles              | postgres      | UPDATE         |
+| public       | profiles              | service_role  | DELETE         |
+| public       | profiles              | service_role  | INSERT         |
+| public       | profiles              | service_role  | REFERENCES     |
+| public       | profiles              | service_role  | SELECT         |
+| public       | profiles              | service_role  | TRIGGER        |
+| public       | profiles              | service_role  | TRUNCATE       |
+| public       | profiles              | service_role  | UPDATE         |
+| public       | task_requests         | anon          | DELETE         |
+| public       | task_requests         | anon          | INSERT         |
+| public       | task_requests         | anon          | REFERENCES     |
+| public       | task_requests         | anon          | SELECT         |
+| public       | task_requests         | anon          | TRIGGER        |
+| public       | task_requests         | anon          | TRUNCATE       |
+| public       | task_requests         | anon          | UPDATE         |
+| public       | task_requests         | authenticated | DELETE         |
+| public       | task_requests         | authenticated | INSERT         |
+| public       | task_requests         | authenticated | REFERENCES     |
+| public       | task_requests         | authenticated | SELECT         |
+| public       | task_requests         | authenticated | TRIGGER        |
+| public       | task_requests         | authenticated | TRUNCATE       |
+| public       | task_requests         | authenticated | UPDATE         |
+| public       | task_requests         | postgres      | DELETE         |
+| public       | task_requests         | postgres      | INSERT         |
+| public       | task_requests         | postgres      | REFERENCES     |
+| public       | task_requests         | postgres      | SELECT         |
+| public       | task_requests         | postgres      | TRIGGER        |
+| public       | task_requests         | postgres      | TRUNCATE       |
+| public       | task_requests         | postgres      | UPDATE         |
+| public       | task_requests         | service_role  | DELETE         |
+| public       | task_requests         | service_role  | INSERT         |
+| public       | task_requests         | service_role  | REFERENCES     |
+| public       | task_requests         | service_role  | SELECT         |
+| public       | task_requests         | service_role  | TRIGGER        |
+| public       | task_requests         | service_role  | TRUNCATE       |
+| public       | task_requests         | service_role  | UPDATE         |
+| public       | tasks                 | anon          | DELETE         |
+| public       | tasks                 | anon          | INSERT         |
+| public       | tasks                 | anon          | REFERENCES     |
+| public       | tasks                 | anon          | SELECT         |
+| public       | tasks                 | anon          | TRIGGER        |
+| public       | tasks                 | anon          | TRUNCATE       |
+| public       | tasks                 | anon          | UPDATE         |
+| public       | tasks                 | authenticated | DELETE         |
+| public       | tasks                 | authenticated | INSERT         |
+| public       | tasks                 | authenticated | REFERENCES     |
+| public       | tasks                 | authenticated | SELECT         |
+| public       | tasks                 | authenticated | TRIGGER        |
+| public       | tasks                 | authenticated | TRUNCATE       |
+| public       | tasks                 | authenticated | UPDATE         |
+| public       | tasks                 | postgres      | DELETE         |
+| public       | tasks                 | postgres      | INSERT         |
+| public       | tasks                 | postgres      | REFERENCES     |
+| public       | tasks                 | postgres      | SELECT         |
+| public       | tasks                 | postgres      | TRIGGER        |
+| public       | tasks                 | postgres      | TRUNCATE       |
+| public       | tasks                 | postgres      | UPDATE         |
+| public       | tasks                 | service_role  | DELETE         |
+| public       | tasks                 | service_role  | INSERT         |
+| public       | tasks                 | service_role  | REFERENCES     |
+| public       | tasks                 | service_role  | SELECT         |
+| public       | tasks                 | service_role  | TRIGGER        |
+| public       | tasks                 | service_role  | TRUNCATE       |
+| public       | tasks                 | service_role  | UPDATE         |
+| public       | test_table            | anon          | DELETE         |
+| public       | test_table            | anon          | INSERT         |
+| public       | test_table            | anon          | REFERENCES     |
+| public       | test_table            | anon          | SELECT         |
+| public       | test_table            | anon          | TRIGGER        |
+| public       | test_table            | anon          | TRUNCATE       |
+| public       | test_table            | anon          | UPDATE         |
+| public       | test_table            | authenticated | DELETE         |
+| public       | test_table            | authenticated | INSERT         |
+| public       | test_table            | authenticated | REFERENCES     |
+| public       | test_table            | authenticated | SELECT         |
+| public       | test_table            | authenticated | TRIGGER        |
+| public       | test_table            | authenticated | TRUNCATE       |
+| public       | test_table            | authenticated | UPDATE         |
+| public       | test_table            | postgres      | DELETE         |
+| public       | test_table            | postgres      | INSERT         |
+| public       | test_table            | postgres      | REFERENCES     |
+| public       | test_table            | postgres      | SELECT         |
+| public       | test_table            | postgres      | TRIGGER        |
+| public       | test_table            | postgres      | TRUNCATE       |
+| public       | test_table            | postgres      | UPDATE         |
+| public       | test_table            | service_role  | DELETE         |
+| public       | test_table            | service_role  | INSERT         |
+| public       | test_table            | service_role  | REFERENCES     |
+| public       | test_table            | service_role  | SELECT         |
+| public       | test_table            | service_role  | TRIGGER        |
+| public       | test_table            | service_role  | TRUNCATE       |
+| public       | test_table            | service_role  | UPDATE         |
+| public       | user_conversations    | anon          | DELETE         |
+| public       | user_conversations    | anon          | INSERT         |
+| public       | user_conversations    | anon          | REFERENCES     |
+| public       | user_conversations    | anon          | SELECT         |
+| public       | user_conversations    | anon          | TRIGGER        |
+| public       | user_conversations    | anon          | TRUNCATE       |
+| public       | user_conversations    | anon          | UPDATE         |
+| public       | user_conversations    | authenticated | DELETE         |
+| public       | user_conversations    | authenticated | INSERT         |
+| public       | user_conversations    | authenticated | REFERENCES     |
+| public       | user_conversations    | authenticated | SELECT         |
+| public       | user_conversations    | authenticated | TRIGGER        |
+| public       | user_conversations    | authenticated | TRUNCATE       |
+| public       | user_conversations    | authenticated | UPDATE         |
+| public       | user_conversations    | postgres      | DELETE         |
+| public       | user_conversations    | postgres      | INSERT         |
+| public       | user_conversations    | postgres      | REFERENCES     |
+| public       | user_conversations    | postgres      | SELECT         |
+| public       | user_conversations    | postgres      | TRIGGER        |
+| public       | user_conversations    | postgres      | TRUNCATE       |
+| public       | user_conversations    | postgres      | UPDATE         |
+| public       | user_conversations    | service_role  | DELETE         |
+| public       | user_conversations    | service_role  | INSERT         |
+| public       | user_conversations    | service_role  | REFERENCES     |
+| public       | user_conversations    | service_role  | SELECT         |
+| public       | user_conversations    | service_role  | TRIGGER        |
+| public       | user_conversations    | service_role  | TRUNCATE       |
+| public       | user_conversations    | service_role  | UPDATE         |
+| public       | users                 | anon          | DELETE         |
+| public       | users                 | anon          | INSERT         |
+| public       | users                 | anon          | REFERENCES     |
+| public       | users                 | anon          | SELECT         |
+| public       | users                 | anon          | TRIGGER        |
+| public       | users                 | anon          | TRUNCATE       |
+| public       | users                 | anon          | UPDATE         |
+| public       | users                 | authenticated | DELETE         |
+| public       | users                 | authenticated | INSERT         |
+| public       | users                 | authenticated | REFERENCES     |
+| public       | users                 | authenticated | SELECT         |
+| public       | users                 | authenticated | TRIGGER        |
+| public       | users                 | authenticated | TRUNCATE       |
+| public       | users                 | authenticated | UPDATE         |
+| public       | users                 | postgres      | DELETE         |
+| public       | users                 | postgres      | INSERT         |
+| public       | users                 | postgres      | REFERENCES     |
+| public       | users                 | postgres      | SELECT         |
+| public       | users                 | postgres      | TRIGGER        |
+| public       | users                 | postgres      | TRUNCATE       |
+| public       | users                 | postgres      | UPDATE         |
+| public       | users                 | service_role  | DELETE         |
+| public       | users                 | service_role  | INSERT         |
+| public       | users                 | service_role  | REFERENCES     |
+| public       | users                 | service_role  | SELECT         |
+| public       | users                 | service_role  | TRIGGER        |
+| public       | users                 | service_role  | TRUNCATE       |
+| public       | users                 | service_role  | UPDATE         |
+
+### ⚠️ Notes
+- `anon` currently holds wide privileges (INSERT/UPDATE/DELETE) on multiple tables; RLS reduces risk but consider revoking to limit surface area.
+- Keep `service_role` superwide only for server-side (never used in client apps).
+- Re-evaluate `test_table` and drop or restrict if not needed.
+
 ## 7) Why This Matters
 - Private attachments remain secure; clients only see what they’re allowed to see.
 - Realtime feels instant without network churn (local upsert).
 - Queries are predictable and stable across SDK updates.
+### 🧪 Quick DB Tests (JWT/RLS Simulation)
+```sql
+-- محاكاة مستخدم (bidder)
+SELECT set_config('request.jwt.claims', json_build_object('sub','00000000-0000-0000-0000-000000000001')::text, true);
+
+-- محاكاة دور authenticated
+SET ROLE authenticated;
+
+-- محاولة إدراج عرض على مهمة booking → يجب أن تفشل
+INSERT INTO public.task_requests(task_id, bidder_id, price, days, note)
+VALUES ('<booking-task-id>', '00000000-0000-0000-0000-000000000001', 10000, 3, 'test');
+
+-- إدراج عرض على مهمة tender → ينجح
+INSERT INTO public.task_requests(task_id, bidder_id, price, days, note)
+VALUES ('<tender-task-id>', '00000000-0000-0000-0000-000000000001', 15000, 5, 'can deliver fast');
+```

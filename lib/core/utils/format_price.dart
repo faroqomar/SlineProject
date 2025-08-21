@@ -1,36 +1,31 @@
-/// Utility functions for price formatting
+/// Utility functions for price and date formatting
 class PriceFormatter {
-  /// Format price with currency symbol
-  static String formatPrice(double price, {String currency = '\$'}) {
-    return '$currency${price.toStringAsFixed(2)}';
+  /// Format price for IQD by default with no decimals (common local display)
+  static String formatPrice(double price, {String currency = 'IQD '}) {
+    // IQD usually shown without fractional part
+    final rounded = price.round();
+    return '$currency$rounded';
   }
 
-  /// Format price range
-  static String formatPriceRange(double minPrice, double maxPrice, {String currency = '\$'}) {
+  /// Format price range (min - max)
+  static String formatPriceRange(double minPrice, double maxPrice, {String currency = 'IQD '}) {
     return '${formatPrice(minPrice, currency: currency)} - ${formatPrice(maxPrice, currency: currency)}';
   }
 }
 
-/// Utility functions for date formatting
 class DateFormatter {
-  /// Format date to readable string
+  /// Simple DD/MM/YYYY
   static String formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
   }
 
-  /// Format time ago (e.g., "2 hours ago")
+  /// Humanized time ago
   static String timeAgo(DateTime date) {
     final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays > 0) {
-      return '${difference.inDays} days ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours} hours ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} minutes ago';
-    } else {
-      return 'Just now';
-    }
+    final diff = now.difference(date);
+    if (diff.inDays > 0) return '${diff.inDays} days ago';
+    if (diff.inHours > 0) return '${diff.inHours} hours ago';
+    if (diff.inMinutes > 0) return '${diff.inMinutes} minutes ago';
+    return 'Just now';
   }
 }

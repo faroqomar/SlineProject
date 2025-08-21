@@ -13,7 +13,7 @@ class TaskService {
     try {
       final response = await _client
           .from('tasks')
-          .select('*')
+          .select('id, title, description, budget, user_id, status, task_type, category, created_at, deadline, skills')
           .order('created_at', ascending: false);
 
       final tasks = (response as List)
@@ -53,7 +53,7 @@ class TaskService {
       final response = await _client
           .from('tasks')
           .insert(task.toJson(includeSystemFields: false))
-          .select('*')
+          .select('id, title, description, budget, user_id, status, task_type, category, created_at, deadline, skills')
           .single();
 
       // Fetch user details separately
@@ -105,7 +105,7 @@ Future<void> updateTask(String taskId, Map<String, dynamic> updates) async {
     try {
       final response = await _client
           .from('tasks')
-          .select('*')
+          .select('id, title, description, budget, user_id, status, task_type, category, created_at, deadline, skills')
           .eq('user_id', userId)
           .order('created_at', ascending: false);
 
@@ -139,7 +139,7 @@ Future<void> updateTask(String taskId, Map<String, dynamic> updates) async {
     try {
       final response = await _client
           .from('tasks')
-          .select('*')
+          .select('id, title, description, budget, user_id, status, task_type, category, created_at, deadline, skills')
           .eq('status', status.name)
           .order('created_at', ascending: false);
 
@@ -191,7 +191,7 @@ Future<void> updateTask(String taskId, Map<String, dynamic> updates) async {
     try {
       final response = await _client
           .from('tasks')
-          .select('*')
+          .select('id, title, description, budget, user_id, status, task_type, category, created_at, deadline, skills')
           .eq('status', TaskStatus.open.name)
           .order('created_at', ascending: false);
 

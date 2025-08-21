@@ -1,6 +1,6 @@
 # 📘 SLine App - Complete Development Log
 
-*Last Updated: 2025-08-05*
+**Last Updated:** 2025-08-22
 
 ---
 
@@ -19,6 +19,33 @@
 ---
 
 ## 📋 Version History
+
+### 🟢 Version 1.6 — Tender Offers Complete & Booking Kickoff
+**Date:** 2025-08-22  
+**Commit:** _Pending_ — "feat: complete tender offers; add task_type & UI separation; provider fixes"
+
+#### ✅ Implemented
+- **DB:** `task_type_enum ('tender','booking')`, `task_requests` table with indexes and RLS.
+- **Policies:** Owner sees all offers for their tender task; bidder sees only their offers; owner can accept/reject.
+- **Triggers:** Prevent offers on booking tasks; optional trigger to allow updating `status` only.
+- **Indexes:** `idx_tasks_type_created_at(task_type, created_at desc)`, `idx_task_requests_task_created(task_id, created_at desc)`, unique pending-per-user (`task_id,bidder_id` where `status='pending'`).
+- **Flutter Model:** `TaskType` enum + `taskType` field; `isTender/isBooking` getters.
+- **Services:** Explicit `select(..., task_type, ...)` in `task_service.dart`.
+- **UI:** 
+  - `TaskDetailsScreen` shows **View Offers / Submit Offer** for tender; **Check Availability / Book Now** placeholders for booking.
+  - `RequestsListScreen` **guarded** for non-tender with info message.
+  - Submit-offer BottomSheet receives controller by parameter; `useRootNavigator: false`.
+- **Bugfix:** Resolved `ProviderNotFoundException` when opening submit-offer sheet.
+
+#### 📈 Impact
+- Clear separation between bidding (tender) and scheduling (booking).
+- Robust UX with no cross-route provider issues.
+- Ready foundation for Sprint 2 (Booking: availability + reservations).
+
+#### 🔜 Next (Sprint 2)
+- Add `availability_slots` + `bookings` tables + RLS.
+- Implement `AvailabilityScreen` + `BookingSheet`.
+- Realtime updates for bookings; prevent double-booking with trigger.
 
 ### 🔰 Version 0.1 - Initial State (Baseline)
 **Date**: Before 2025-07-25

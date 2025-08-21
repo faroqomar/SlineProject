@@ -1,6 +1,6 @@
 # 📚 SLine App - Documentation Hub
 
-*Last Updated: 2025-08-05*
+*Last Updated: 2025-08-22*
 
 This directory contains all the essential documentation for the SLine freelance marketplace app. All files are organized and maintained to provide comprehensive project understanding and development guidance.
 
@@ -110,6 +110,10 @@ This directory contains all the essential documentation for the SLine freelance 
 - ✅ Prepared for Supabase Realtime integration in messaging
 - ✅ Added success SnackBar confirmation after task publishing to prevent black screen
 - ✅ Enhanced AppLogger output with structured PrettyPrinter formatting
+- ✅ Tender Offers module completed end-to-end (DB + RLS + UI + pagination)
+- ✅ Task type separation (tender vs booking) in `TaskModel` + UI gates
+- ✅ `RequestsListScreen` guarded for non-tender tasks (informative UI)
+- ✅ Provider scope fixes for submit-offer BottomSheet (no more ProviderNotFoundException)
 
 - ✅ Enabled Supabase Realtime for messaging (conversations auto-update)
 - ✅ Verified cross-account chat works instantly without refresh
@@ -130,7 +134,7 @@ This directory contains all the essential documentation for the SLine freelance 
 
 # 📚 SLine App - Documentation Hub (Updated)
 
-**Last Updated:** 2025-08-17
+**Last Updated:** 2025-08-22
 
 This directory contains all the essential documentation for the SLine freelance marketplace app.
 
@@ -151,6 +155,8 @@ This directory contains all the essential documentation for the SLine freelance 
 - ✅ UI: Image/File sending in ChatScreen with thumbnails and file chips.
 - ✅ Services: `AttachmentService` (upload + signed URL), `MessageService` (send/get realtime with attachments).
 - ✅ DB index for faster chat history.
+- ✅ Offers (Tender) finalized with RLS, triggers, and Flutter UI polish
+- ✅ Booking Sprint kicked off: placeholders wired from TaskDetailsScreen
 
 ---
 
