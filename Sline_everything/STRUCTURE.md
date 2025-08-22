@@ -105,6 +105,7 @@ This structure helps keep SLine maintainable, scalable, and easy to navigate for
 - Ensured cross-platform fixes for Chrome file uploads (`dart:io.File` vs `storage_client.File`).
 - Improved UX: Added SnackBar confirmation after task publishing.
 - **2025-08-22**: 
+- Ownership enforcement in Offers: hide submit for owners; accept/reject visible only to task owner; RLS prevents owner self-bidding.
   - Added `TaskType` (tender/booking) to `TaskModel` and wired UI splits in `TaskDetailsScreen`.
   - Completed Offers flow (RequestsListScreen + SubmitRequestSheet) with provider-safe BottomSheet.
   - Guarded RequestsListScreen for non-tender tasks; booking placeholders connected for Sprint 2.

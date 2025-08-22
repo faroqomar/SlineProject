@@ -6,10 +6,17 @@ import 'package:sline_app/features/tasks/services/task_requests_service.dart';
 /// UI-facing controller for Task Requests (Offers) list and actions.
 class TaskRequestController extends ChangeNotifier {
   final String taskId;
+
+  /// Whether the current user is the owner of the task
+  final bool isOwner;
+
   final TaskRequestsService _service;
 
-  TaskRequestController({required this.taskId, TaskRequestsService? service})
-      : _service = service ?? TaskRequestsService();
+  TaskRequestController({
+    required this.taskId,
+    this.isOwner = false,
+    TaskRequestsService? service,
+  }) : _service = service ?? TaskRequestsService();
 
   // Paging state
   final List<TaskRequest> _items = <TaskRequest>[];
@@ -76,7 +83,7 @@ class TaskRequestController extends ChangeNotifier {
     }
   }
 
-  bool canActOn(TaskRequest req) => req.isPending;
+  bool canActOn(TaskRequest req) => isOwner && req.isPending;
 
   Future<void> accept(String requestId) async {
     try {

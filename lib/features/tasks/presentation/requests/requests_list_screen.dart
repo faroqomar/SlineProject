@@ -10,11 +10,14 @@ class RequestsListScreen extends StatefulWidget {
   final String taskId;
   final bool autoOpenSubmitSheet;
   final bool isTender;
+  /// True when the viewer is the owner of the task (can accept/reject)
+  final bool isOwner;
   const RequestsListScreen({
     super.key,
     required this.taskId,
     this.autoOpenSubmitSheet = false,
     this.isTender = true,
+    this.isOwner = false,
   });
 
   @override
@@ -64,14 +67,17 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
     }
     return ChangeNotifierProvider<TaskRequestController>(
       create: (_) {
-        final c = TaskRequestController(taskId: widget.taskId);
+        final c = TaskRequestController(
+          taskId: widget.taskId,
+          isOwner: widget.isOwner,
+        );
         c.loadInitial();
         return c;
       },
       builder: (ctx, _) {
         _providerCtx = ctx;
         WidgetsBinding.instance.addPostFrameCallback((_) async {
-          if (widget.autoOpenSubmitSheet) {
+          if (widget.autoOpenSubmitSheet && !widget.isOwner) {
             final c = ctx.read<TaskRequestController>();
             await showSubmitRequestSheet(
               ctx,
@@ -88,7 +94,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
                 onRefresh: () async => c.loadInitial(),
                 child: _buildBody(c),
               ),
-              floatingActionButton: FloatingActionButton.extended(
+              floatingActionButton: widget.isOwner ? null : FloatingActionButton.extended(
                 onPressed: () {
                   final prov = _providerCtx ?? context;
                   showSubmitRequestSheet(

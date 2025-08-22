@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/task_model.dart';
 import '../../../core/utils/format_price.dart';
 import 'requests/requests_list_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Shows details of a task and provides entry points to offers (requests).
 class TaskDetailsScreen extends StatelessWidget {
@@ -10,6 +11,9 @@ class TaskDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String? currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    final bool isOwner = currentUserId != null && currentUserId == task.userId;
+
     return Scaffold(
       appBar: AppBar(title: Text(task.title)),
       body: Padding(
@@ -72,6 +76,7 @@ class TaskDetailsScreen extends StatelessWidget {
                                 taskId: task.id,
                                 autoOpenSubmitSheet: false,
                                 isTender: task.isTender,
+                                isOwner: isOwner,
                               ),
                             ),
                           );
@@ -81,23 +86,25 @@ class TaskDetailsScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => RequestsListScreen(
-                                taskId: task.id,
-                                autoOpenSubmitSheet: true,
-                                isTender: task.isTender,
+                    if (!isOwner)
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => RequestsListScreen(
+                                  taskId: task.id,
+                                  autoOpenSubmitSheet: true,
+                                  isTender: task.isTender,
+                                  isOwner: isOwner,
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.send),
-                        label: const Text('Submit Offer'),
+                            );
+                          },
+                          icon: const Icon(Icons.send),
+                          label: const Text('Submit Offer'),
+                        ),
                       ),
-                    ),
                   ],
                 );
               } else {

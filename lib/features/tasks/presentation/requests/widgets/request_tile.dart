@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../models/task_request_model.dart';
 import '../../../../../core/utils/format_price.dart';
 
+/// One row/tile for a TaskRequest in the offers list.
 class RequestTile extends StatelessWidget {
   final TaskRequest request;
   final VoidCallback? onAccept;
