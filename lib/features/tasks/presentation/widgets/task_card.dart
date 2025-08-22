@@ -7,6 +7,7 @@ import '../../../chat/controllers/chat_controller.dart';
 import '../../../chat/presentation/chat_screen.dart';
 import '../../../chat/services/message_service.dart';
 import '../../../../core/utils/format_price.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// A card widget to display basic info about a task.
 class TaskCard extends StatelessWidget {
@@ -21,10 +22,27 @@ class TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isTender = task.isTender == true;
+    final bool isBooking = task.isBooking == true;
+    final Color cardBg = isTender
+        ? AppColors.tenderCardBg(context)
+        : isBooking
+            ? AppColors.bookingCardBg(context)
+            : Theme.of(context).colorScheme.surface;
+    final Color borderColor = isTender
+        ? AppColors.tenderBorder(context)
+        : isBooking
+            ? AppColors.bookingBorder(context)
+            : Theme.of(context).dividerColor.withOpacity(0.2);
+
     return Card(
-      elevation: 2,
+      elevation: 0,
+      color: cardBg,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: borderColor),
+      ),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -45,9 +63,31 @@ class TaskCard extends StatelessWidget {
                         : null,
                   ),
                   const SizedBox(width: 12),
-                  Text(
-                    task.userName ?? 'Unknown User',
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                  Expanded(
+                    child: Text(
+                      task.userName ?? 'Unknown User',
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isTender
+                          ? AppColors.tenderChipBg(context)
+                          : isBooking
+                              ? AppColors.bookingChipBg(context)
+                              : Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: borderColor),
+                    ),
+                    child: Text(
+                      isTender ? 'TENDER' : (isBooking ? 'BOOKING' : 'TASK'),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
                   ),
                 ],
               ),

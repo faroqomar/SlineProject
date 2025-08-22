@@ -14,7 +14,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app/main_navigation_screen.dart';
 import 'core/providers/navigation_provider.dart';
 import 'package:provider/provider.dart';
-
+import 'features/booking/controllers/booking_controller.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SupabaseConfig.init();
@@ -39,6 +39,7 @@ class SLineApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TaskFilterController()),
         ChangeNotifierProvider(create: (_) => TaskController()),
         ChangeNotifierProvider(create: (_) => ChatController()),
+        ChangeNotifierProvider(create: (_) => BookingController()),
       ],
       child: MaterialApp(
         title: 'SLine App',

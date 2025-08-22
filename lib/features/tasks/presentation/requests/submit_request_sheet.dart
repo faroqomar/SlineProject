@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:sline_app/features/tasks/controllers/task_requests_controller.dart';
 
 /// Shows a bottom sheet to submit a new offer for the given task.

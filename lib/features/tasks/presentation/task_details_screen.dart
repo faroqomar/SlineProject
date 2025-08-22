@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:sline_app/core/theme/app_colors.dart';
 import '../models/task_model.dart';
 import '../../../core/utils/format_price.dart';
 import 'requests/requests_list_screen.dart';
+import '../../booking/presentation/availability_screen.dart';
+import '../../booking/presentation/bookings_list_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Shows details of a task and provides entry points to offers (requests).
@@ -11,6 +14,19 @@ class TaskDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isTender = task.isTender == true;
+    final bool isBooking = task.isBooking == true;
+    final Color cardBg = isTender
+        ? AppColors.tenderCardBg(context)
+        : isBooking
+            ? AppColors.bookingCardBg(context)
+            : Theme.of(context).colorScheme.surface;
+    final Color borderColor = isTender
+        ? AppColors.tenderBorder(context)
+        : isBooking
+            ? AppColors.bookingBorder(context)
+            : Theme.of(context).dividerColor.withOpacity(0.2);
+
     final String? currentUserId = Supabase.instance.client.auth.currentUser?.id;
     final bool isOwner = currentUserId != null && currentUserId == task.userId;
 
@@ -19,7 +35,11 @@ class TaskDetailsScreen extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          color: cardBg,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: borderColor),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(20.0),
             child: Column(
@@ -64,7 +84,7 @@ class TaskDetailsScreen extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: Builder(
             builder: (context) {
-              if (task.isTender) {
+              if (task.isTender == true) {
                 return Row(
                   children: [
                     Expanded(
@@ -107,13 +127,17 @@ class TaskDetailsScreen extends StatelessWidget {
                       ),
                   ],
                 );
-              } else {
+              } else if (task.isBooking == true) {
                 return Row(
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {
-                          _showComingSoon(context, 'Availability will be here in Sprint 2');
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => AvailabilityScreen(providerId: task.userId, taskId: '',),
+                            ),
+                          );
                         },
                         icon: const Icon(Icons.schedule),
                         label: const Text('Check Availability'),
@@ -123,10 +147,27 @@ class TaskDetailsScreen extends StatelessWidget {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          _showComingSoon(context, 'Booking flow will be here in Sprint 2');
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const BookingsListScreen(),
+                            ),
+                          );
                         },
                         icon: const Icon(Icons.event_available),
-                        label: const Text('Book Now'),
+                        label: const Text('My Bookings'),
+                      ),
+                    ),
+                  ],
+                );
+              } else {
+                // Fallback: unknown task type — show disabled actions to avoid confusion
+                return Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: null,
+                        icon: const Icon(Icons.help_outline),
+                        label: const Text('Unavailable'),
                       ),
                     ),
                   ],
@@ -136,35 +177,6 @@ class TaskDetailsScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-
-  void _showComingSoon(BuildContext context, String message) {
-    showModalBottomSheet(
-      context: context,
-      useRootNavigator: false,
-      showDragHandle: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) {
-        return Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.construction),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  message,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

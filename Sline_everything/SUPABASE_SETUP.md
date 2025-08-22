@@ -956,3 +956,249 @@ VALUES ('<booking-task-id>', '00000000-0000-0000-0000-000000000001', 10000, 3, '
 INSERT INTO public.task_requests(task_id, bidder_id, price, days, note)
 VALUES ('<tender-task-id>', '00000000-0000-0000-0000-000000000001', 15000, 5, 'can deliver fast');
 ```
+# 
+## Booking — DDL + RLS + Triggers + Quick Tests
+
+> This section defines the scheduling subsystem (availability slots + bookings), status guards, indexes, and RLS. Store timestamps in UTC; convert to local time in the app UI.
+
+### 0) Required extensions
+```sql
+create extension if not exists btree_gist;
+create extension if not exists pgcrypto;
+```
+
+### 1) Enum: booking status
+```sql
+do $$
+begin
+  if not exists (
+    select 1 from pg_type t join pg_namespace n on n.oid = t.typnamespace
+    where t.typname = 'booking_status_enum' and n.nspname = 'public'
+  ) then
+    create type public.booking_status_enum as enum ('pending','confirmed','canceled','completed');
+  end if;
+end $$;
+```
+
+### 2) Tables
+```sql
+-- Provider availability windows
+create table if not exists public.availability_slots (
+  id uuid primary key default gen_random_uuid(),
+  provider_id uuid not null,
+  starts_at timestamptz not null,
+  ends_at   timestamptz not null,
+  is_blocked boolean not null default false,
+  created_at timestamptz not null default now(),
+  constraint chk_slot_time check (ends_at > starts_at)
+);
+
+-- Client bookings against specific slots
+create table if not exists public.bookings (
+  id uuid primary key default gen_random_uuid(),
+  task_id uuid,
+  provider_id uuid not null,
+  client_id uuid not null,
+  slot_id uuid not null references public.availability_slots(id) on delete cascade,
+  status public.booking_status_enum not null default 'pending',
+  note text,
+  created_at timestamptz not null default now()
+);
+
+-- FKs to auth.users
+alter table public.availability_slots
+  add constraint fk_slots_provider
+  foreign key (provider_id) references auth.users(id) on delete cascade;
+
+alter table public.bookings
+  add constraint fk_bookings_provider
+  foreign key (provider_id) references auth.users(id) on delete cascade;
+
+alter table public.bookings
+  add constraint fk_bookings_client
+  foreign key (client_id) references auth.users(id) on delete cascade;
+```
+
+### 3) Indexes & anti-overlap
+```sql
+-- Common filters
+create index if not exists idx_slots_provider_starts
+  on public.availability_slots (provider_id, starts_at);
+
+create index if not exists idx_bookings_client_created
+  on public.bookings (client_id, created_at desc);
+
+create index if not exists idx_bookings_provider_created
+  on public.bookings (provider_id, created_at desc);
+
+-- Prevent double-booking the same slot when status is active
+create unique index if not exists uq_bookings_slot_active
+  on public.bookings (slot_id)
+  where status in ('pending','confirmed');
+
+-- Prevent overlapping slots per provider using GiST
+do $$
+begin
+  if not exists (
+    select 1 from pg_indexes where schemaname='public' and indexname='excl_slots_provider_time'
+  ) then
+    execute $ex$
+      create index excl_slots_provider_time
+      on public.availability_slots
+      using gist (
+        provider_id,
+        tstzrange(starts_at, ends_at, '[)') with &&
+      )
+      where is_blocked = false;
+    $ex$;
+  end if;
+end $$;
+```
+
+#### Optional: trigger alternative for overlap prevention
+```sql
+create or replace function public.fn_reject_overlapping_slots()
+returns trigger language plpgsql as $$
+begin
+  if NEW.is_blocked = false then
+    if exists (
+      select 1 from public.availability_slots s
+      where s.provider_id = NEW.provider_id
+        and s.is_blocked = false
+        and tstzrange(s.starts_at, s.ends_at, '[)') && tstzrange(NEW.starts_at, NEW.ends_at, '[)')
+        and s.id <> coalesce(NEW.id, '00000000-0000-0000-0000-000000000000'::uuid)
+    ) then
+      raise exception 'Overlapping availability slot for provider %', NEW.provider_id;
+    end if;
+  end if;
+  return NEW;
+end $$;
+
+drop trigger if exists trg_no_overlap_slots on public.availability_slots;
+create trigger trg_no_overlap_slots
+before insert or update on public.availability_slots
+for each row execute function public.fn_reject_overlapping_slots();
+```
+
+### 4) Booking status transition guard
+```sql
+create or replace function public.fn_booking_guard()
+returns trigger language plpgsql as $$
+declare
+  old_status public.booking_status_enum := coalesce(OLD.status, 'pending');
+  new_status public.booking_status_enum := NEW.status;
+begin
+  if TG_OP = 'UPDATE' and old_status <> new_status then
+    if old_status = 'pending' and new_status in ('confirmed','canceled') then
+      -- ok
+    elsif old_status = 'confirmed' and new_status in ('completed','canceled') then
+      -- ok
+    else
+      raise exception 'Invalid booking status transition: % -> %', old_status, new_status;
+    end if;
+  end if;
+  return NEW;
+end $$;
+
+drop trigger if exists trg_booking_guard on public.bookings;
+create trigger trg_booking_guard
+before update on public.bookings
+for each row execute function public.fn_booking_guard();
+```
+
+### 5) Row Level Security (RLS)
+```sql
+alter table public.availability_slots enable row level security;
+alter table public.bookings enable row level security;
+
+-- availability_slots: anyone authenticated can read; only owner writes
+drop policy if exists "slots_select_read" on public.availability_slots;
+create policy "slots_select_read"
+on public.availability_slots for select
+to authenticated
+using (true);
+
+drop policy if exists "slots_write_owner" on public.availability_slots;
+create policy "slots_write_owner"
+on public.availability_slots for all
+to authenticated
+using (provider_id = auth.uid())
+with check (provider_id = auth.uid());
+
+-- bookings: client inserts, both parties read, provider updates (confirm/complete), client cancels
+drop policy if exists "bookings_insert_by_client" on public.bookings;
+create policy "bookings_insert_by_client"
+on public.bookings for insert
+to authenticated
+with check (
+  client_id = auth.uid()
+  and not exists (
+    select 1 from public.availability_slots s
+    where s.id = slot_id and s.is_blocked = true
+  )
+);
+
+drop policy if exists "bookings_select_by_parties" on public.bookings;
+create policy "bookings_select_by_parties"
+on public.bookings for select
+to authenticated
+using (
+  client_id = auth.uid() or provider_id = auth.uid()
+);
+
+drop policy if exists "bookings_update_by_provider" on public.bookings;
+create policy "bookings_update_by_provider"
+on public.bookings for update
+to authenticated
+using (provider_id = auth.uid())
+with check (provider_id = auth.uid());
+
+-- client cancels only
+drop policy if exists "bookings_cancel_by_client" on public.bookings;
+create policy "bookings_cancel_by_client"
+on public.bookings for update
+to authenticated
+using (client_id = auth.uid())
+with check (client_id = auth.uid() and status = 'canceled');
+```
+
+### 6) Quick tests (JWT/RLS smoke)
+```sql
+-- set as PROVIDER
+select set_config('request.jwt.claims', json_build_object('sub','<PROVIDER_UUID>','role','authenticated')::text, true);
+
+-- create a slot
+insert into public.availability_slots(provider_id, starts_at, ends_at)
+values ('<PROVIDER_UUID>', now() + interval '1 day', now() + interval '1 day 1 hour')
+returning *;
+
+-- set as CLIENT
+select set_config('request.jwt.claims', json_build_object('sub','<CLIENT_UUID>','role','authenticated')::text, true);
+
+-- read slots
+select id, provider_id, starts_at, ends_at from public.availability_slots order by starts_at limit 5;
+
+-- create a booking (pending)
+insert into public.bookings(provider_id, client_id, slot_id, note)
+values ('<PROVIDER_UUID>','<CLIENT_UUID>','<SLOT_ID>','demo booking')
+returning id, status;
+
+-- double-book same slot → should fail
+insert into public.bookings(provider_id, client_id, slot_id)
+values ('<PROVIDER_UUID>','<CLIENT_UUID>','<SLOT_ID>');
+
+-- provider confirms
+select set_config('request.jwt.claims', json_build_object('sub','<PROVIDER_UUID>','role','authenticated')::text, true);
+update public.bookings set status='confirmed' where id='<BOOKING_ID>' returning id,status;
+
+-- client tries invalid update → should fail
+select set_config('request.jwt.claims', json_build_object('sub','<CLIENT_UUID>','role','authenticated')::text, true);
+update public.bookings set status='completed' where id='<BOOKING_ID>';
+
+-- client cancels
+update public.bookings set status='canceled' where id='<BOOKING_ID>' returning id,status;
+```
+
+> Notes
+> - Store times in UTC; convert with `toLocal()` in Flutter.
+> - Hide management buttons by role in UI (don’t rely only on RLS for UX).

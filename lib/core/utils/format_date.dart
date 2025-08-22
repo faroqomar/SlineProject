@@ -21,3 +21,23 @@ String formatFriendlyTime(DateTime time) {
   // Fallback for older dates: show as DD/MM/YYYY
   return '${time.day}/${time.month}/${time.year}';
 }
+
+/// Formats a UTC [startUtc]..[endUtc] range into local time like
+/// "YYYY-MM-DD  HH:mm → HH:mm"
+String formatRangeUtcToLocal(DateTime startUtc, DateTime endUtc) {
+  final s = startUtc.toLocal();
+  final e = endUtc.toLocal();
+  String two(int n) => n.toString().padLeft(2, '0');
+  String ymd(DateTime d) => '${d.year}-${two(d.month)}-${two(d.day)}';
+  String hm(DateTime d) => '${two(d.hour)}:${two(d.minute)}';
+  return '${ymd(s)}  ${hm(s)} → ${hm(e)}';
+}
+
+/// Formats a single UTC DateTime to local "YYYY-MM-DD  HH:mm".
+String formatUtcToLocal(DateTime utc) {
+  final d = utc.toLocal();
+  String two(int n) => n.toString().padLeft(2, '0');
+  String ymd(DateTime x) => '${x.year}-${two(x.month)}-${two(x.day)}';
+  String hm(DateTime x) => '${two(x.hour)}:${two(x.minute)}';
+  return '${ymd(d)}  ${hm(d)}';
+}

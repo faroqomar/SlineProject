@@ -1,4 +1,3 @@
-library task_requests_service;
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/logger_service.dart';
@@ -80,7 +79,7 @@ class TaskRequestsService {
       AppLogger.i('[TaskRequestsService] submitOffer ok id=${model.id}');
       return model;
     } on PostgrestException catch (e, st) {
-      final msg = (e.message ?? '').toLowerCase();
+      final msg = (e.message).toLowerCase();
       if (msg.contains('ux_task_requests_pending_per_user') ||
           (msg.contains('duplicate key') && msg.contains('task_id') && msg.contains('bidder_id'))) {
         final friendly = Exception('You already have a pending offer on this task.');
