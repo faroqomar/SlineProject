@@ -3,7 +3,6 @@ import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:sline_app/features/tasks/services/task_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-
 class CreateTaskScreen extends StatefulWidget {
   final Task? task; // optional task for edit mode
   const CreateTaskScreen({super.key, this.task});
@@ -19,10 +18,13 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   final _descriptionController = TextEditingController();
   final _budgetController = TextEditingController();
 
+  // Selected task type: Request (tender) by default; Service = booking
+  TaskType _selectedTaskType = TaskType.tender;
+
   DateTime? _selectedDeadline;
   String? _selectedCategory;
 
-  final List<String> _categories = [
+  final List<String> _categories = const [
     'Design',
     'Development',
     'Writing',
@@ -41,7 +43,16 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       _budgetController.text = widget.task!.budget.toString();
       _selectedDeadline = widget.task!.deadline;
       _selectedCategory = widget.task!.category;
+      _selectedTaskType = widget.task!.taskType; // keep current type in edit mode
     }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _budgetController.dispose();
+    super.dispose();
   }
 
   Future<void> _submit() async {
@@ -67,14 +78,14 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           budget: double.tryParse(_budgetController.text.trim()) ?? 0,
           userId: userId,
           status: TaskStatus.open,
+          taskType: _selectedTaskType, // tender|booking
           createdAt: DateTime.now(),
           deadline: _selectedDeadline,
           category: _selectedCategory ?? 'Uncategorized',
-          skills: [],
+          skills: const [],
         );
 
         await TaskService().createTask(task);
-
       } else {
         // Edit mode
         await TaskService().updateTask(widget.task!.id, {
@@ -83,11 +94,10 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           'budget': double.tryParse(_budgetController.text.trim()) ?? 0,
           'deadline': _selectedDeadline?.toIso8601String(),
           'category': _selectedCategory ?? 'Uncategorized',
+          'task_type': _selectedTaskType.name, // persist type change
         });
-
       }
 
-      // Show confirmation without leaving the screen
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -134,16 +144,70 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                     value == null || value.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 12),
-              TextFormField(
-                controller: _budgetController,
-                decoration: const InputDecoration(labelText: 'Budget'),
-                keyboardType: TextInputType.number,
-                validator: (value) =>
-                    value == null || double.tryParse(value) == null
-                        ? 'Enter a valid number'
-                        : null,
+
+              // Task type selector: Request (tender) vs Service (booking)
+              Text(
+                'What are you creating?',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: [
+                    RadioListTile<TaskType>(
+                      title: const Text('Request (Receive offers)'),
+                      subtitle: const Text('Use tender: bidders will submit offers'),
+                      value: TaskType.tender,
+                      groupValue: _selectedTaskType,
+                      onChanged: (val) =>
+                          setState(() => _selectedTaskType = val!),
+                    ),
+                    const Divider(height: 0),
+                    RadioListTile<TaskType>(
+                      title: const Text('Service (Allow bookings)'),
+                      subtitle:
+                          const Text('Use booking: clients can schedule time'),
+                      value: TaskType.booking,
+                      groupValue: _selectedTaskType,
+                      onChanged: (val) =>
+                          setState(() => _selectedTaskType = val!),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 12),
+
+              TextFormField(
+                controller: _budgetController,
+                decoration: InputDecoration(
+                  labelText: _selectedTaskType == TaskType.tender
+                      ? 'Budget (IQD)'
+                      : 'Price (IQD) — hourly/session',
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  // tender: required number; booking: optional number
+                  if (_selectedTaskType == TaskType.tender) {
+                    if (value == null || value.isEmpty) return 'Required';
+                    if (double.tryParse(value) == null) {
+                      return 'Enter a valid number';
+                    }
+                  } else {
+                    if (value != null &&
+                        value.isNotEmpty &&
+                        double.tryParse(value) == null) {
+                      return 'Enter a valid number';
+                    }
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+
               DropdownButtonFormField<String>(
                 value: _selectedCategory,
                 items: _categories
