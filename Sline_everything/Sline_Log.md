@@ -20,12 +20,17 @@
 
 ## 📋 Version History
 
-### 🟢 Version 1.7 — Booking Alpha (A2–A4) + Categories DB-first
-**Date:** 2025-08-23  
+### 🟢 Version 1.7 — Sprint 2 Complete: Booking (A2–A4) + Categories (DB-first) + Portfolio v1**Date:** 2025-08-23  
 **Commit:** _Pending_ — "feat(booking): availability & bookings polish; add categories DB-first + tasks.category_id"
 
 #### ✅ Implemented
-### 🟢 Version 1.7 — 
+### 🟢 Version 1.7 — Sprint 2 Complete: Booking (A2–A4) + Categories (DB-first) + Portfolio v1
+
+- **Portfolio (B2)**
+  - DB: `portfolio_items` + private `portfolio` bucket with RLS
+  - Flutter: `PortfolioService`, `PortfolioController`, `PortfolioScreen`
+  - Features: upload image (image_picker), create, edit, delete, details sheet
+  - iOS: added NSPhotoLibraryUsageDescription in Info.plist
 
 - **Tasks (Long-term category name)**
   - All task `.select(...)` now include `categories(name)` embed.

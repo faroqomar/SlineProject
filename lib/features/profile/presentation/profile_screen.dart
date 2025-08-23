@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../controllers/profile_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../widgets/profile_avatar_widget.dart';
 import '../../tasks/models/task_model.dart';
 import '../../tasks/presentation/create_task_screen.dart';
+import 'portfolio/portfolio_screen.dart';
 
 /// Profile screen - user profile management and settings
 class ProfileScreen extends StatefulWidget {
@@ -29,7 +31,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Profile'),
@@ -39,6 +41,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             tabs: [
               Tab(text: 'Profile Info'),
               Tab(text: 'My Tasks'),
+              Tab(text: 'Portfolio'),
             ],
           ),
           actions: [
@@ -190,6 +193,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 );
               },
             ),
+            const PortfolioScreen(),
           ],
         ),
       ),

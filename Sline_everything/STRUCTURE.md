@@ -185,6 +185,22 @@ lib/
 │
 └── main.dart                # Entry point of the app → calls MainNavigationScreen
 
+    ├── presentation/
+    │   ├── profile_screen.dart
+    │   └── portfolio/
+    │       ├── portfolio_screen.dart
+    │       ├── widgets/
+    │       │   ├── portfolio_grid.dart
+    │       │   ├── add_portfolio_sheet.dart
+    │       │   └── portfolio_details_sheet.dart
+    ├── controllers/
+    │   ├── profile_controller.dart
+    │   └── portfolio_controller.dart
+    ├── services/
+    │   └── portfolio_service.dart
+    └── models/
+        └── portfolio_item.dart
+
 # 📁 SLine App – Folder Structure Guide (Updated)
 
 **Last updated:** 2025-08-17

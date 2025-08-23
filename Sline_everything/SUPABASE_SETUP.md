@@ -1491,6 +1491,217 @@ begin
     );
   end if;
 end$$;
+## ✅ Sprint 2 (Finalized) — Booking, Categories (DB-first), Portfolio (images)
+
+**Date:** 2025-08-23
+
+This section summarizes the DB/RLS/Storage we finalized in Sprint 2.
+
+### A) Booking — Tables, Indexes, RLS, Trigger
+
+```sql
+-- 1) Enum for booking status
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'booking_status_enum') THEN
+    CREATE TYPE public.booking_status_enum AS ENUM ('pending','confirmed','canceled','completed');
+  END IF;
+END$$;
+
+-- 2) availability_slots
+CREATE TABLE IF NOT EXISTS public.availability_slots (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  provider_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  starts_at timestamptz NOT NULL,
+  ends_at   timestamptz NOT NULL,
+  is_blocked boolean NOT NULL DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT chk_slot_time CHECK (ends_at > starts_at)
+);
+
+-- 3) bookings
+CREATE TABLE IF NOT EXISTS public.bookings (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  task_id uuid NOT NULL REFERENCES public.tasks(id) ON DELETE CASCADE,
+  provider_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  client_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  slot_id uuid NOT NULL REFERENCES public.availability_slots(id) ON DELETE CASCADE,
+  status public.booking_status_enum NOT NULL DEFAULT 'pending',
+  note text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- 4) Indexes
+CREATE INDEX IF NOT EXISTS idx_slots_provider_starts
+  ON public.availability_slots (provider_id, starts_at);
+
+CREATE INDEX IF NOT EXISTS idx_bookings_client_created
+  ON public.bookings (client_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_bookings_provider_created
+  ON public.bookings (provider_id, created_at DESC);
+
+-- Prevent double-booking of an active slot
+CREATE UNIQUE INDEX IF NOT EXISTS uq_bookings_slot_active
+  ON public.bookings (slot_id)
+  WHERE status IN ('pending','confirmed');
+
+-- 5) Overlap protection (trigger)
+CREATE OR REPLACE FUNCTION public.fn_reject_overlapping_slots() RETURNS trigger AS $$
+BEGIN
+  IF NEW.is_blocked = false THEN
+    IF EXISTS (
+      SELECT 1 FROM public.availability_slots s
+      WHERE s.provider_id = NEW.provider_id
+        AND s.is_blocked = false
+        AND tstzrange(s.starts_at, s.ends_at, '[)') && tstzrange(NEW.starts_at, NEW.ends_at, '[)')
+        AND s.id <> COALESCE(NEW.id, '00000000-0000-0000-0000-000000000000'::uuid)
+    ) THEN
+      RAISE EXCEPTION 'Overlapping availability slot for provider %', NEW.provider_id;
+    END IF;
+  END IF;
+  RETURN NEW;
+END$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_no_overlap_slots ON public.availability_slots;
+CREATE TRIGGER trg_no_overlap_slots
+BEFORE INSERT OR UPDATE ON public.availability_slots
+FOR EACH ROW EXECUTE FUNCTION public.fn_reject_overlapping_slots();
+
+-- 6) RLS
+ALTER TABLE public.availability_slots ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
+
+-- availability_slots RLS
+DROP POLICY IF EXISTS slots_select_all ON public.availability_slots;
+CREATE POLICY slots_select_all
+ON public.availability_slots FOR SELECT
+USING (true);
+
+DROP POLICY IF EXISTS slots_owner_write ON public.availability_slots;
+CREATE POLICY slots_owner_write
+ON public.availability_slots FOR ALL
+USING (auth.uid() = provider_id)
+WITH CHECK (auth.uid() = provider_id);
+
+-- bookings RLS
+DROP POLICY IF EXISTS bookings_insert_client ON public.bookings;
+CREATE POLICY bookings_insert_client
+ON public.bookings FOR INSERT
+WITH CHECK (
+  auth.uid() = client_id AND
+  NOT EXISTS (
+    SELECT 1 FROM public.bookings b2
+    WHERE b2.slot_id = NEW.slot_id AND b2.status IN ('pending','confirmed')
+  )
+);
+
+DROP POLICY IF EXISTS bookings_select_participants ON public.bookings;
+CREATE POLICY bookings_select_participants
+ON public.bookings FOR SELECT
+USING (
+  auth.uid() = client_id OR auth.uid() = provider_id
+);
+
+DROP POLICY IF EXISTS bookings_update_transitions ON public.bookings;
+CREATE POLICY bookings_update_transitions
+ON public.bookings FOR UPDATE
+USING (
+  (auth.uid() = provider_id) OR (auth.uid() = client_id)
+)
+WITH CHECK (true);
+
+CREATE TABLE IF NOT EXISTS public.categories (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  icon_url text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_categories_name ON public.categories (lower(name));
+CREATE INDEX IF NOT EXISTS idx_categories_name_lower ON public.categories ((lower(name)));
+
+ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS categories_select_all ON public.categories;
+CREATE POLICY categories_select_all
+ON public.categories FOR SELECT
+USING (true);
+
+-- tasks FK (nullable during migration)
+ALTER TABLE public.tasks
+  ADD COLUMN IF NOT EXISTS category_id uuid REFERENCES public.categories(id);
+CREATE INDEX IF NOT EXISTS idx_tasks_category_id ON public.tasks(category_id);
+
+-- Seed (idempotent)
+INSERT INTO public.categories (id, name)
+VALUES
+  ('6ec632a0-e5f1-426e-ba6a-839167f9b6ae','Design'),
+  ('fe47be26-cf55-4918-9032-f75314341492','Development'),
+  ('1b11a22a-1d65-4da8-9ebf-faca877c15fd','Marketing'),
+  ('9550c76b-9096-4aca-b310-560b019582da','Photography'),
+  ('8c357ad7-4f90-4999-b685-38f356384068','Writing'),
+  ('5a4767ab-ef09-4c4a-8dde-6b45c2b040e3','Cleaning'),
+  ('870360da-1eea-4a36-bdd4-2dc0f35c77f6','Other')
+ON CONFLICT (id) DO NOTHING;
+
+-- Table
+CREATE TABLE IF NOT EXISTS public.portfolio_items (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  title text NOT NULL,
+  description text,
+  image_path text, -- storage path, not public URL
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_portfolio_owner_created
+  ON public.portfolio_items (owner_id, created_at DESC);
+
+ALTER TABLE public.portfolio_items ENABLE ROW LEVEL SECURITY;
+
+-- RLS
+DROP POLICY IF EXISTS portfolio_select_owner_or_public ON public.portfolio_items;
+CREATE POLICY portfolio_select_owner_or_public
+ON public.portfolio_items FOR SELECT
+USING (true);
+
+DROP POLICY IF EXISTS portfolio_crud_owner ON public.portfolio_items;
+CREATE POLICY portfolio_crud_owner
+ON public.portfolio_items FOR ALL
+USING (auth.uid() = owner_id)
+WITH CHECK (auth.uid() = owner_id);
+-- Create bucket (SQL-compatible signature)
+SELECT storage.create_bucket('portfolio', false, false, NULL);
+
+-- Storage RLS
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE policyname = 'portfolio_insert_auth'
+      AND schemaname = 'storage'
+      AND tablename  = 'objects'
+  ) THEN
+    CREATE POLICY "portfolio_insert_auth"
+    ON storage.objects FOR INSERT TO authenticated
+    WITH CHECK (
+      bucket_id = 'portfolio' AND owner = auth.uid()
+    );
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE policyname = 'portfolio_select_auth'
+      AND schemaname = 'storage'
+      AND tablename  = 'objects'
+  ) THEN
+    CREATE POLICY "portfolio_select_auth"
+    ON storage.objects FOR SELECT TO authenticated
+    USING (bucket_id = 'portfolio');
+  END IF;
+END$$;
+
 ### 6) Notes
 - Keep using the in-app constants for now; UI will switch to DB later.
 - When ready to manage from the app, add explicit admin policies (e.g., match `auth.uid()` to an `admins` table), or perform writes via server-side service-role.
