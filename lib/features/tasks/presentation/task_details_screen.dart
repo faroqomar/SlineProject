@@ -47,7 +47,7 @@ class TaskDetailsScreen extends StatelessWidget {
               children: [
                 Text(task.title, style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 8),
-                Text('Category: ${task.category}', style: Theme.of(context).textTheme.bodyMedium),
+                Text('Category: ${task.categoryName ?? 'Uncategorized'}', style: Theme.of(context).textTheme.bodyMedium),
                 const SizedBox(height: 12),
                 Text('Budget: ${PriceFormatter.formatPrice(task.budget.toDouble())}'),
                 const SizedBox(height: 12),
@@ -135,7 +135,7 @@ class TaskDetailsScreen extends StatelessWidget {
                         onPressed: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => AvailabilityScreen(providerId: task.userId, taskId: '',),
+                              builder: (_) => AvailabilityScreen(providerId: task.userId, taskId: task.id,),
                             ),
                           );
                         },

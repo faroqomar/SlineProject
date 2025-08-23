@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:sline_app/features/tasks/services/task_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sline_app/features/categories/models/category_model.dart';
+import 'package:sline_app/features/categories/services/categories_service.dart';
 
 class CreateTaskScreen extends StatefulWidget {
   final Task? task; // optional task for edit mode
@@ -22,15 +24,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   TaskType _selectedTaskType = TaskType.tender;
 
   DateTime? _selectedDeadline;
-  String? _selectedCategory;
-
-  final List<String> _categories = const [
-    'Design',
-    'Development',
-    'Writing',
-    'Marketing',
-    'Translation',
-  ];
+  String? _selectedCategoryId;
+  List<CategoryModel> _categories = [];
+  bool _categoriesLoading = false;
 
   bool _isLoading = false;
 
@@ -42,8 +38,52 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       _descriptionController.text = widget.task!.description;
       _budgetController.text = widget.task!.budget.toString();
       _selectedDeadline = widget.task!.deadline;
-      _selectedCategory = widget.task!.category;
+      _selectedCategoryId = widget.task!.categoryId;
       _selectedTaskType = widget.task!.taskType; // keep current type in edit mode
+    }
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    setState(() => _categoriesLoading = true);
+    try {
+      final svc = CategoriesService(Supabase.instance.client);
+      final cats = await svc.getAll();
+      setState(() {
+        _categories = cats;
+      });
+    } catch (e) {
+      // fallback: use constants if service fails
+      setState(() {
+        _categories = [
+          CategoryModel(
+            id: 'static-design',
+            name: 'Design',
+            iconUrl: null,
+            createdAt: DateTime.now().toUtc(),
+          ),
+          CategoryModel(
+            id: 'static-dev',
+            name: 'Development',
+            iconUrl: null,
+            createdAt: DateTime.now().toUtc(),
+          ),
+          CategoryModel(
+            id: 'static-writing',
+            name: 'Writing',
+            iconUrl: null,
+            createdAt: DateTime.now().toUtc(),
+          ),
+          CategoryModel(
+            id: 'static-marketing',
+            name: 'Marketing',
+            iconUrl: null,
+            createdAt: DateTime.now().toUtc(),
+          ),
+        ];
+      });
+    } finally {
+      setState(() => _categoriesLoading = false);
     }
   }
 
@@ -81,7 +121,8 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           taskType: _selectedTaskType, // tender|booking
           createdAt: DateTime.now(),
           deadline: _selectedDeadline,
-          category: _selectedCategory ?? 'Uncategorized',
+          categoryId: _selectedCategoryId,
+          category: null, // legacy left null
           skills: const [],
         );
 
@@ -93,7 +134,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           'description': _descriptionController.text.trim(),
           'budget': double.tryParse(_budgetController.text.trim()) ?? 0,
           'deadline': _selectedDeadline?.toIso8601String(),
-          'category': _selectedCategory ?? 'Uncategorized',
+          'category_id': _selectedCategoryId,
           'task_type': _selectedTaskType.name, // persist type change
         });
       }
@@ -208,17 +249,21 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
               ),
               const SizedBox(height: 12),
 
-              DropdownButtonFormField<String>(
-                value: _selectedCategory,
-                items: _categories
-                    .map((cat) =>
-                        DropdownMenuItem(value: cat, child: Text(cat)))
-                    .toList(),
-                onChanged: (val) => setState(() => _selectedCategory = val),
-                decoration: const InputDecoration(labelText: 'Category'),
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Required' : null,
-              ),
+              _categoriesLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : DropdownButtonFormField<String>(
+                      value: _selectedCategoryId,
+                      items: _categories
+                          .map((cat) => DropdownMenuItem(
+                                value: cat.id,
+                                child: Text(cat.name),
+                              ))
+                          .toList(),
+                      onChanged: (val) => setState(() => _selectedCategoryId = val),
+                      decoration: const InputDecoration(labelText: 'Category'),
+                      validator: (value) =>
+                          value == null || value.isEmpty ? 'Required' : null,
+                    ),
               const SizedBox(height: 12),
               ListTile(
                 title: Text(_selectedDeadline == null

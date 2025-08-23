@@ -1,6 +1,6 @@
 # 📚 SLine App - Documentation Hub
 
-*Last Updated: 2025-08-22*
+*Last Updated: 2025-08-23*
 
 This directory contains all the essential documentation for the SLine freelance marketplace app. All files are organized and maintained to provide comprehensive project understanding and development guidance.
 
@@ -15,7 +15,7 @@ This directory contains all the essential documentation for the SLine freelance 
   - Provides development guidelines and standards
 
 ### 📖 **Development History**
-- **[Sline_Log.md](./Sline_Log.md)** - Complete development log (v1.2)
+- **[Sline_Log.md](./Sline_Log.md)** - Complete development log (v1.7)
   - Comprehensive version history from v0.1 to v1.2
   - Detailed feature implementation documentation
   - Architecture decisions and technical changes
@@ -97,7 +97,7 @@ This directory contains all the essential documentation for the SLine freelance 
 
 ---
 
-### ✅ Recent Progress
+-### ✅ Recent Progress
 - ✅ Added My Tasks section in Profile to list user’s own tasks
 - ✅ Implemented Edit/Delete functionality for user tasks
 - ✅ Verified Supabase relationships for tasks and users
@@ -127,6 +127,13 @@ This directory contains all the essential documentation for the SLine freelance 
 - ✅ Fixed type cast issue in message fetching method
 - ✅ Cleaned unused/duplicate code from chat files (chat_controller.dart, message_service.dart, messages_screen.dart)
 - ✅ Added detailed English documentation/comments in chat_controller.dart, message_service.dart, and messages_screen.dart
+
+- ✅ Booking A2–A4 shipped: Availability grid/list + pagination, Bookings lists with tabs & filters
+- ✅ Error mapping for booking (unique-violation & overlap) with clear UI messages
+- ✅ `format_date.dart` utilities for consistent local-time display
+- ✅ Categories DB-first: `categories` table + read-only RLS + seed; `tasks.category_id` (nullable) added
+- ✅ Booking A2–A4: Availability grid/list, Add Slot (provider-only), BookingSheet, Bookings lists with pagination & guards
+- ✅ Categories DB-first: `categories` table + `tasks.category_id`, embedded `categories(name)` in selects, UI shows resolved names
 
 ---
 

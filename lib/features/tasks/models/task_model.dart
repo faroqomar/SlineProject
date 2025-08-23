@@ -2,7 +2,8 @@
 enum TaskStatus {
   open,
   assigned,
-  closed, inProgress,
+  closed,
+  inProgress,
 }
 
 /// Enum for task type (bidding vs. scheduling)
@@ -14,6 +15,10 @@ enum TaskType {
   booking,
 }
 
+/// Category notes:
+/// - `categoryId` is a nullable FK to `public.categories(id)` (DB-first rollout).
+/// - `category` is the legacy text name kept for backward compatibility and fallback.
+/// - Prefer using `categoryId` going forward; `category` may be deprecated later.
 /// Model representing a task/job posting
 class Task {
   /// Unique identifier for the task
@@ -45,7 +50,15 @@ class Task {
 
   /// List of skills required for the task (planned for Supabase integration)
   final List<String> skills;
-  final String category;
+
+  /// Nullable FK to categories table (DB).
+  final String? categoryId;
+
+  /// Legacy text category (kept as fallback until full migration).
+  final String? category;
+
+  /// Resolved category name from embedded `categories(name)` or legacy `category`.
+  final String? categoryName;
 
   /// Optional name of the user who posted the task
   final String? userName;
@@ -61,12 +74,14 @@ class Task {
     required this.userId,
     required this.status,
     this.taskType = TaskType.tender,
-    required this.category,
     required this.createdAt,
     this.deadline,
     this.skills = const [],
+    this.categoryId,
+    this.category,
     this.userName,
     this.userAvatar,
+    this.categoryName,
   });
 
   /// Create Task from JSON
@@ -78,7 +93,6 @@ class Task {
 
     return Task(
       id: json['id'] as String,
-      category: json['category'] as String,
       title: json['title'] as String,
       description: json['description'] as String,
       budget: (json['budget'] as num).toDouble(),
@@ -96,6 +110,12 @@ class Task {
               ?.map((e) => e as String)
               .toList() ??
           [],
+      // New DB-first FK (nullable)
+      categoryId: json['category_id'] as String?,
+      // Legacy text (nullable for rollback/fallback)
+      category: json['category'] as String?,
+      // Resolved name from embedded relation (if present), fallback to legacy text
+      categoryName: ((json['categories'] as Map?)?['name'] as String?) ?? (json['category'] as String?),
       userName: null,
       userAvatar: null,
     );
@@ -112,7 +132,9 @@ class Task {
       'task_type': taskType.name,
       'deadline': deadline?.toIso8601String(),
       'skills': skills,
-      'category': category,
+      // Prefer DB-first FK; legacy category text is optional
+      'category_id': categoryId,
+      if (category != null) 'category': category,
     };
     if (includeSystemFields) {
       map['id'] = id;
@@ -139,9 +161,11 @@ class Task {
     DateTime? createdAt,
     DateTime? deadline,
     List<String>? skills,
+    String? categoryId,
     String? category,
     String? userName,
     String? userAvatar,
+    String? categoryName,
   }) {
     return Task(
       id: id ?? this.id,
@@ -154,9 +178,11 @@ class Task {
       createdAt: createdAt ?? this.createdAt,
       deadline: deadline ?? this.deadline,
       skills: skills ?? this.skills,
+      categoryId: categoryId ?? this.categoryId,
       category: category ?? this.category,
       userName: userName ?? this.userName,
       userAvatar: userAvatar ?? this.userAvatar,
+      categoryName: categoryName ?? this.categoryName,
     );
   }
 }

@@ -13,7 +13,7 @@ class TaskService {
     try {
       final response = await _client
           .from('tasks')
-          .select('id, title, description, budget, user_id, status, task_type, category, created_at, deadline, skills')
+          .select('id, title, description, budget, user_id, status, task_type, category_id, category, created_at, deadline, skills, categories(name)')
           .order('created_at', ascending: false);
 
       final tasks = (response as List)
@@ -53,7 +53,7 @@ class TaskService {
       final response = await _client
           .from('tasks')
           .insert(task.toJson(includeSystemFields: false))
-          .select('id, title, description, budget, user_id, status, task_type, category, created_at, deadline, skills')
+          .select('id, title, description, budget, user_id, status, task_type, category_id, category, created_at, deadline, skills, categories(name)')
           .single();
 
       // Fetch user details separately
@@ -92,20 +92,21 @@ class TaskService {
       throw Exception('Failed to update task status: $e');
     }
   }
-/// Update an existing task
-Future<void> updateTask(String taskId, Map<String, dynamic> updates) async {
-  try {
-    await _client.from('tasks').update(updates).eq('id', taskId);
-  } catch (e) {
-    throw Exception('Failed to update task: $e');
+  /// Update an existing task
+  /// Note: `updates` may include `category_id` (DB FK) or legacy `category`.
+  Future<void> updateTask(String taskId, Map<String, dynamic> updates) async {
+    try {
+      await _client.from('tasks').update(updates).eq('id', taskId);
+    } catch (e) {
+      throw Exception('Failed to update task: $e');
+    }
   }
-}
   /// Get tasks by user ID
   Future<List<Task>> getTasksByUser(String userId) async {
     try {
       final response = await _client
           .from('tasks')
-          .select('id, title, description, budget, user_id, status, task_type, category, created_at, deadline, skills')
+          .select('id, title, description, budget, user_id, status, task_type, category_id, category, created_at, deadline, skills, categories(name)')
           .eq('user_id', userId)
           .order('created_at', ascending: false);
 
@@ -139,7 +140,7 @@ Future<void> updateTask(String taskId, Map<String, dynamic> updates) async {
     try {
       final response = await _client
           .from('tasks')
-          .select('id, title, description, budget, user_id, status, task_type, category, created_at, deadline, skills')
+          .select('id, title, description, budget, user_id, status, task_type, category_id, category, created_at, deadline, skills, categories(name)')
           .eq('status', status.name)
           .order('created_at', ascending: false);
 
@@ -191,7 +192,7 @@ Future<void> updateTask(String taskId, Map<String, dynamic> updates) async {
     try {
       final response = await _client
           .from('tasks')
-          .select('id, title, description, budget, user_id, status, task_type, category, created_at, deadline, skills')
+          .select('id, title, description, budget, user_id, status, task_type, category_id, category, created_at, deadline, skills, categories(name)')
           .eq('status', TaskStatus.open.name)
           .order('created_at', ascending: false);
 

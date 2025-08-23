@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/slot_model.dart';
@@ -24,7 +23,7 @@ class BookingController extends ChangeNotifier {
     try {
       if (e is PostgrestException) {
         final code = e.code ?? '';
-        final msg = (e.message ?? '').toLowerCase();
+        final msg = (e.message).toLowerCase();
 
         // Unique violation (e.g., double-booking the same slot)
         if (code == '23505') {
@@ -37,7 +36,7 @@ class BookingController extends ChangeNotifier {
         }
 
         // Generic postgrest message
-        return e.message ?? 'Unexpected server error';
+        return e.message;
       }
 
       if (e is AuthException) {

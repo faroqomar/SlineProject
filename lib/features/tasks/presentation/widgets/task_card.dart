@@ -92,8 +92,21 @@ class TaskCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              Text(task.title,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(
+                task.title,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+
+              // Show resolved category name (from embedded join) with fallback
+              Text(
+                'Category: ${task.categoryName ?? 'Uncategorized'}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+
               const SizedBox(height: 6),
               Text(task.description),
               const SizedBox(height: 6),

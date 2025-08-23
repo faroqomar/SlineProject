@@ -1,6 +1,6 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2025-08-22
+**Last Updated:** 2025-08-23
 
 ---
 
@@ -19,6 +19,48 @@
 ---
 
 ## 📋 Version History
+
+### 🟢 Version 1.7 — Booking Alpha (A2–A4) + Categories DB-first
+**Date:** 2025-08-23  
+**Commit:** _Pending_ — "feat(booking): availability & bookings polish; add categories DB-first + tasks.category_id"
+
+#### ✅ Implemented
+### 🟢 Version 1.7 — 
+
+- **Tasks (Long-term category name)**
+  - All task `.select(...)` now include `categories(name)` embed.
+  - `TaskModel` adds `categoryName` resolved from embed (fallback to legacy text).
+  - `TaskCard` & `TaskDetailsScreen` display `categoryName` (no UUID / null).
+  - Fixed `AvailabilityScreen` navigation to pass correct `taskId` (`task.id`).
+- **Booking (Frontend)**
+  - `AvailabilityScreen`: grid/list toggle, pull-to-refresh, infinite scroll, role guard (provider-only Add Slot).
+  - `BookingsListScreen`: tabs (As Client / As Provider), status filter, pagination with hasMore + inline loader.
+  - `BookingSheet`: wired with `taskId`, `providerId`, `slotId`.
+  - `AddSlotSheet`: pick local start/end, convert to UTC, create blocked/open slot.
+  - `format_date.dart`: `formatRangeUtcToLocal`, `formatUtcToLocal` utilities (consistent local-time display).
+- **Booking (Logic/Service/Controller)**
+  - `BookingService.createSlot` now sets `provider_id = auth.uid()` (RLS requirement).
+  - `BookingService.bookSlot` now sets `client_id = auth.uid()` (RLS requirement).
+  - `BookingController`: friendly error mapper (`23505` → already booked, overlap trigger → overlapping slot), unified pagination flags (`slotsHasMore`, `bookingsClientHasMore`, `bookingsProviderHasMore`), and cursor handling.
+- **Booking (DB/RLS)**
+  - Partial unique index on `bookings(slot_id)` for `status in ('pending','confirmed')`.
+  - Overlap prevention for `availability_slots` via trigger on insert/update using `tstzrange &&`.
+  - Indexes: `idx_slots_provider_starts`, `idx_bookings_client_created`, `idx_bookings_provider_created`.
+- **Categories (B1, DB-first)**
+  - Table `public.categories` with `uq_categories_name` and `idx_categories_name_lower`.
+  - RLS: **read-only** for authenticated users (select policy only).
+  - Seed: Design/Development/Marketing/Photography/Writing/Cleaning/Other (idempotent).
+  - Migration: `tasks.category_id` (nullable) + index + optional backfill from existing text field.
+
+#### 📈 Impact
+- End-to-end booking happy-path works on Web/iOS with proper RLS compliance.
+- Clear UX: provider adds slots; client books; lists are paginated with robust states.
+- Categories are now managed in DB (UI can switch later without breaking current flows).
+
+#### 🔬 Notes
+- Timezone: store UTC in DB; display local in Flutter via `toLocal()` (+ utilities).
+- Providers are scoped by route; bottom sheets use the existing navigator to avoid Provider scope issues.
+- Policies remain conservative; category writes are admin/server-only for now.
 
 ### 🟢 Version 1.6 — Tender Offers Complete & Booking Kickoff
 **Date:** 2025-08-22  
@@ -331,6 +373,7 @@ lib/
 ## 🔮 Future Development Roadmap
 
 ### 📋 Next Priority Features:
+- [Update] B1 (Categories DB) is provisioned in DB; upcoming step is to switch Task form dropdown to use CategoriesService.
 
 #### Version 1.1 - Task Management System
 - **Task Posting**: Complete UI for clients to post jobs

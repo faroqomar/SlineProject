@@ -1202,3 +1202,296 @@ update public.bookings set status='canceled' where id='<BOOKING_ID>' returning i
 > Notes
 > - Store times in UTC; convert with `toLocal()` in Flutter.
 > - Hide management buttons by role in UI (don’t rely only on RLS for UX).
+# 
+## B1 — Categories (DB-first)
+
+> Goal: make categories dynamic (DB) while keeping current UI unchanged. We add the `categories` table, seed it, and add a nullable FK `tasks.category_id` so UI can switch later with minimal work.
+
+### 1) Table + Indexes (Idempotent)
+```sql
+-- Table
+create table if not exists public.categories (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  icon_url text,
+  created_at timestamptz not null default now(),
+  constraint uq_categories_name unique (name)
+);
+
+-- Case-insensitive search performance (optional)
+create index if not exists idx_categories_name_lower
+  on public.categories (lower(name));
+```
+
+### 2) RLS (Read-only for app clients)
+```sql
+alter table public.categories enable row level security;
+
+-- Allow all authenticated users to read
+create policy if not exists "categories_select_all"
+on public.categories for select
+to authenticated
+using (true);
+
+-- ⚠️ We intentionally DO NOT add insert/update/delete policies.
+-- That keeps categories read-only from the client.
+-- Admins can manage categories via SQL console or service-role backend only.
+```
+
+### 3) Seed (Idempotent upsert by name)
+> Replace the list below with your preferred set. This mirrors the current in-app constants.
+```sql
+insert into public.categories (name, icon_url)
+values
+  ('Design',      null),
+  ('Development', null),
+  ('Marketing',   null),
+  ('Photography', null),
+  ('Writing',     null),
+  ('Cleaning',    null),
+  ('Other',       null)
+on conflict (name) do nothing;
+```
+
+### 4) Tasks ↔ Categories (nullable FK)
+```sql
+-- Add FK column (nullable for smooth migration)
+alter table public.tasks
+  add column if not exists category_id uuid references public.categories(id);
+
+-- Helpful index for filters
+create index if not exists idx_tasks_category_id
+  on public.tasks (category_id);
+
+-- Optional backfill: map text-based tasks.category to categories by name
+update public.tasks t
+set category_id = c.id
+from public.categories c
+where t.category_id is null
+  and c.name ilike t.category;
+```
+
+### 5) Quick Tests (JWT/RLS simulation)
+```sql
+-- Act as any authenticated user
+select set_config('request.jwt.claims', json_build_object('sub','00000000-0000-0000-0000-000000000001','role','authenticated')::text, true);
+
+-- Read should work
+select id, name from public.categories order by name limit 10;
+
+-- Write should fail (no insert policy)
+insert into public.categories (name) values ('TestShouldFail');  -- expect RLS error
+```
+---
+
+## 📚 Categories (B1) — Schema, RLS, Seed (DB‑first)
+
+> Idempotent SQL. Safe to re-run.
+
+```sql
+-- 1) Table
+create table if not exists public.categories (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  icon_url text,
+  created_at timestamptz not null default now()
+);
+
+-- 2) Uniqueness & lookup performance
+create unique index if not exists uq_categories_name
+  on public.categories (lower(name));
+create index if not exists idx_categories_name_lower
+  on public.categories ((lower(name)));
+
+-- 3) RLS (read-only for authenticated users)
+alter table public.categories enable row level security;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where policyname = 'categories_select_auth'
+      and schemaname = 'public'
+      and tablename  = 'categories'
+  ) then
+    create policy "categories_select_auth"
+    on public.categories for select
+    to authenticated
+    using (true);
+  end if;
+end$$;
+
+-- 4) Tasks: add FK category_id (nullable) and relax legacy text column
+alter table public.tasks
+  add column if not exists category_id uuid references public.categories(id);
+
+create index if not exists idx_tasks_category_id
+  on public.tasks (category_id);
+
+-- Allow NULL in legacy text column to support DB-first rollout
+alter table public.tasks
+  alter column category drop not null,
+  alter column category drop default;
+
+-- 5) Seed (idempotent)
+insert into public.categories (id, name)
+values
+  ('5a4767ab-ef09-4c4a-8dde-6b45c2b040e3','Cleaning'),
+  ('6ec632a0-e5f1-426e-ba6a-839167f9b6ae','Design'),
+  ('fe47be26-cf55-4918-9032-f75314341492','Development'),
+  ('1b11a22a-1d65-4da8-9ebf-faca877c15fd','Marketing'),
+  ('870360da-1eea-4a36-bdd4-2dc0f35c77f6','Other'),
+  ('9550c76b-9096-4aca-b310-560b019582da','Photography'),
+  ('8c357ad7-4f90-4999-b685-38f356384068','Writing')
+on conflict (id) do nothing;
+-- A) Status enum
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'booking_status_enum') then
+    create type public.booking_status_enum as enum ('pending','confirmed','canceled','completed');
+  end if;
+end$$;
+
+-- B) Tables
+create table if not exists public.availability_slots (
+  id uuid primary key default gen_random_uuid(),
+  provider_id uuid not null references public.profiles(id),
+  starts_at timestamptz not null,
+  ends_at   timestamptz not null,
+  is_blocked boolean not null default false,
+  created_at timestamptz not null default now(),
+  constraint chk_slots_time check (ends_at > starts_at)
+);
+
+create table if not exists public.bookings (
+  id uuid primary key default gen_random_uuid(),
+  task_id uuid not null references public.tasks(id) on delete cascade,
+  provider_id uuid not null references public.profiles(id),
+  client_id uuid not null references public.profiles(id),
+  slot_id uuid not null references public.availability_slots(id),
+  status public.booking_status_enum not null default 'pending',
+  note text,
+  created_at timestamptz not null default now()
+);
+
+-- C) Indexes
+create index if not exists idx_slots_provider_starts
+  on public.availability_slots (provider_id, starts_at);
+
+create index if not exists idx_bookings_client_created
+  on public.bookings (client_id, created_at desc);
+
+create index if not exists idx_bookings_provider_created
+  on public.bookings (provider_id, created_at desc);
+
+-- Prevent double-booking on active states
+create unique index if not exists uq_bookings_slot_active
+  on public.bookings (slot_id)
+  where status in ('pending','confirmed');
+
+-- D) Overlap prevention (trigger — portable, no GiST dependency)
+create or replace function public.fn_reject_overlapping_slots()
+returns trigger language plpgsql as $$
+begin
+  if new.is_blocked = false then
+    if exists (
+      select 1 from public.availability_slots s
+      where s.provider_id = new.provider_id
+        and s.is_blocked = false
+        and tstzrange(s.starts_at, s.ends_at, '[)') && tstzrange(new.starts_at, new.ends_at, '[)')
+        and s.id <> coalesce(new.id, '00000000-0000-0000-0000-000000000000'::uuid)
+    ) then
+      raise exception 'Overlapping availability slot for provider %', new.provider_id;
+    end if;
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists trg_no_overlap_slots on public.availability_slots;
+create trigger trg_no_overlap_slots
+before insert or update on public.availability_slots
+for each row execute function public.fn_reject_overlapping_slots();
+
+-- E) RLS
+alter table public.availability_slots enable row level security;
+alter table public.bookings          enable row level security;
+
+-- availability_slots
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where policyname='slots_select_all' and schemaname='public' and tablename='availability_slots'
+  ) then
+    create policy "slots_select_all"
+    on public.availability_slots for select
+    to authenticated
+    using (true);
+  end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where policyname='slots_cud_owner' and schemaname='public' and tablename='availability_slots'
+  ) then
+    create policy "slots_cud_owner"
+    on public.availability_slots for all
+    to authenticated
+    using (provider_id = auth.uid())
+    with check (provider_id = auth.uid());
+  end if;
+end$$;
+
+-- bookings
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where policyname='bookings_select_owner_or_client' and schemaname='public' and tablename='bookings'
+  ) then
+    create policy "bookings_select_owner_or_client"
+    on public.bookings for select
+    to authenticated
+    using (provider_id = auth.uid() or client_id = auth.uid());
+  end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where policyname='bookings_insert_client_only' and schemaname='public' and tablename='bookings'
+  ) then
+    create policy "bookings_insert_client_only"
+    on public.bookings for insert
+    to authenticated
+    with check (
+      client_id = auth.uid()
+      and not exists (
+        select 1 from public.bookings b
+        where b.slot_id = bookings.slot_id
+          and b.status in ('pending','confirmed')
+      )
+    );
+  end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where policyname='bookings_update_roles' and schemaname='public' and tablename='bookings'
+  ) then
+    create policy "bookings_update_roles"
+    on public.bookings for update
+    to authenticated
+    using (
+      (provider_id = auth.uid()) or (client_id = auth.uid())
+    )
+    with check (
+      -- provider can confirm/complete; client can cancel
+      (
+        provider_id = auth.uid() and new.status in ('confirmed','completed')
+      ) or (
+        client_id = auth.uid() and new.status = 'canceled'
+      )
+    );
+  end if;
+end$$;
+### 6) Notes
+- Keep using the in-app constants for now; UI will switch to DB later.
+- When ready to manage from the app, add explicit admin policies (e.g., match `auth.uid()` to an `admins` table), or perform writes via server-side service-role.
+- `tasks.category_id` is optional; new UI can pass it, and old UI can keep using `tasks.category` text until fully migrated.
