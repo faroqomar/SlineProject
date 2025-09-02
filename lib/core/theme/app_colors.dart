@@ -1,3 +1,6 @@
+/// What: Theme-aware color helpers for consistent surfaces, borders, and chips.
+/// Why: Centralizes color logic so widgets adapt correctly to light/dark modes.
+library;
 import 'package:flutter/material.dart';
 
 /// Centralized app colors used across widgets.

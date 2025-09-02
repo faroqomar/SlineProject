@@ -1,3 +1,6 @@
+/// What: Encapsulates Supabase client bootstrapping and configuration values.
+/// Why: Initializes the SDK once at app start so repositories/services can use it.
+library;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseConfig {

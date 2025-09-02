@@ -6,36 +6,45 @@ import '../models/message_model.dart';
 /// Why this service exists: encapsulates Supabase queries/streams so UI/controllers remain clean
 /// and to centralize schema changes (attachments, receipts, typing) in one place.
 class MessageService {
-  final SupabaseClient _client = Supabase.instance.client;
+  /// Encapsulated Supabase client; allows injection for testing.
+  final SupabaseClient _client;
 
-  /// Create or get conversation (order-insensitive pair)
+  MessageService([SupabaseClient? client]) : _client = client ?? Supabase.instance.client;
+
+  /// Create or get conversation (order-insensitive pair). taskId can be null.
   Future<Conversation> createOrGetConversation({
-    required String taskId,
+    String? taskId,
     required String user1Id,
     required String user2Id,
   }) async {
-    final existing = await _client
-        .from('conversations')
-        .select()
-        .eq('task_id', taskId)
-        .or('and(user1_id.eq.$user1Id,user2_id.eq.$user2Id),and(user1_id.eq.$user2Id,user2_id.eq.$user1Id)')
-        .limit(1);
+    final base = _client.from('conversations').select();
 
-    AppLogger.d('🔎 Existing conversations found: ${existing.length}');
+    // Filter by pair regardless of order
+    final pairFilter =
+        "and(user1_id.eq.$user1Id,user2_id.eq.$user2Id),and(user1_id.eq.$user2Id,user2_id.eq.$user1Id)";
+
+    // Apply task filter (null vs specific)
+    final query = (taskId == null)
+        ? base.is_('task_id', null).or(pairFilter).limit(1)
+        : base.eq('task_id', taskId).or(pairFilter).limit(1);
+
+    final existing = await query;
+
+    AppLogger.d('🔎 Existing conversations found: ${existing is List ? existing.length : 'n/a'}');
     if (existing is List && existing.isNotEmpty) {
       AppLogger.i('📌 Using existing conversation: ${existing.first['id']}');
       return Conversation.fromJson(Map<String, dynamic>.from(existing.first as Map));
     }
 
-    final response = await _client
-        .from('conversations')
-        .insert({
-          'task_id': taskId,
-          'user1_id': user1Id,
-          'user2_id': user2Id,
-        })
-        .select()
-        .single();
+    // Create new conversation; initiator is user1Id (client)
+    final insertMap = <String, dynamic>{
+      if (taskId != null) 'task_id': taskId,
+      'user1_id': user1Id,
+      'user2_id': user2Id,
+      'initiated_by': user1Id,
+    };
+
+    final response = await _client.from('conversations').insert(insertMap).select().single();
 
     try {
       final id = (response as Map)['id'];
@@ -203,5 +212,22 @@ class MessageService {
               .map((raw) => Map<String, dynamic>.from(raw as Map))
               .toList();
         });
+  }
+
+  /// Starts (or fetches) a conversation initiated by the CLIENT.
+  /// - If [taskId] is provided, the caller must be the task owner (enforced by RLS).
+  /// - If [taskId] is null, the freelancer must be in client's favorites (enforced by RLS).
+  /// Returns the conversation id.
+  Future<String> startConversationByClient({
+    String? taskId,
+    required String clientId,
+    required String freelancerId,
+  }) async {
+    final convo = await createOrGetConversation(
+      taskId: taskId,
+      user1Id: clientId,
+      user2Id: freelancerId,
+    );
+    return convo.id;
   }
 }

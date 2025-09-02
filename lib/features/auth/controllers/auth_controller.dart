@@ -1,3 +1,6 @@
+/// What: ChangeNotifier that coordinates login/signup/logout using AuthService and exposes loading state for the UI.
+/// Why: Keeps UI thin and consistent with Provider pattern, and centralizes post-auth navigation and messaging.
+library;
 import 'package:flutter/material.dart';
 import 'package:sline_app/app/main_navigation_screen.dart';
 import '../../../core/services/logger_service.dart';

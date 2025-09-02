@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../controllers/booking_controller.dart';
 
 /// Bottom sheet to create a new availability slot (provider only).
@@ -97,7 +96,6 @@ class _AddSlotSheetState extends State<AddSlotSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final userId = Supabase.instance.client.auth.currentUser?.id;
     return Padding(
       padding: EdgeInsets.only(
         left: 16,

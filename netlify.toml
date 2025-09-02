@@ -1,0 +1,9 @@
+[build]
+  publish = "build/web"
+  command = ""
+
+# SPA routing for Flutter web
+[[redirects]]
+  from = "/**"
+  to = "/index.html"
+  status = 200

@@ -1,3 +1,5 @@
+/// What: Data model representing a user's profile row from Supabase `profiles`.
+/// Why: Provides a typed structure to map database rows to the app domain and back.
 /// Represents a user profile stored in Supabase `profiles` table.
 class UserProfile {
   final String id;          // UUID from auth.users

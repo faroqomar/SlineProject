@@ -8,6 +8,8 @@ import '../../../chat/presentation/chat_screen.dart';
 import '../../../chat/services/message_service.dart';
 import '../../../../core/utils/format_price.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../features/saved/controller/saved_tasks_controller.dart';
+import '../../../../features/favorites/data/favorites_service.dart';
 
 /// A card widget to display basic info about a task.
 class TaskCard extends StatelessWidget {
@@ -116,6 +118,50 @@ class TaskCard extends StatelessWidget {
                   Text('💰 ${PriceFormatter.formatPrice(task.budget)}'),
                   Row(
                     children: [
+                      // Bookmark toggle
+                      Builder(
+                        builder: (context) {
+                          final savedCtrl = context.watch<SavedTasksController>();
+                          final isSaved = savedCtrl.isSaved(task.id);
+                          return IconButton(
+                            tooltip: isSaved ? 'Remove bookmark' : 'Save task',
+                            icon: Icon(isSaved ? Icons.bookmark : Icons.bookmark_border),
+                            onPressed: () async {
+                              final nowSaved = await savedCtrl.toggle(task.id);
+                              if (!context.mounted) return;
+                              final snackBar = SnackBar(
+                                content: Text(nowSaved ? 'Task saved' : 'Bookmark removed'),
+                                action: nowSaved
+                                    ? SnackBarAction(
+                                        label: 'Add freelancer to favorites',
+                                        onPressed: () async {
+                                          try {
+                                            await FavoritesService().addFavorite(task.userId);
+                                            if (!context.mounted) return;
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text('Freelancer added to favorites')),
+                                            );
+                                          } catch (e) {
+                                            if (!context.mounted) return;
+                                            final msg = e.toString().contains('23505')
+                                                ? 'Already in favorites'
+                                                : e.toString().toLowerCase().contains('rls')
+                                                    ? 'Not allowed for your role'
+                                                    : 'Failed to add favorite';
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(content: Text(msg)),
+                                            );
+                                          }
+                                        },
+                                      )
+                                    : null,
+                                duration: const Duration(seconds: 4),
+                              );
+                              ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                            },
+                          );
+                        },
+                      ),
                       TextButton.icon(
                         onPressed: () async {
                           final user = Supabase.instance.client.auth.currentUser;

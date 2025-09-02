@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:sline_app/features/profile/presentation/portfolio/%20sheets/portfolio_details_sheet.dart';
 
 import '../../../controllers/portfolio_controller.dart';

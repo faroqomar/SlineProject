@@ -1,3 +1,5 @@
+/// What: Helpers to format prices (and simple dates) for consistent UI display.
+/// Why: Centralizes currency/range formatting rules (e.g., IQD without decimals).
 /// Utility functions for price and date formatting
 class PriceFormatter {
   /// Format price for IQD by default with no decimals (common local display)

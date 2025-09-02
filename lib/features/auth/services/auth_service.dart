@@ -1,3 +1,5 @@
+// What: Service layer for authentication against Supabase (sign up/in/out, session, profile fetch).
+// Why: Centralizes and isolates Supabase auth calls from Widgets/Controllers to keep a clean separation of concerns.
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/logger_service.dart';
 

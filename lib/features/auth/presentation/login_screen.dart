@@ -1,3 +1,6 @@
+/// What: Material 3 login screen that collects email/password and triggers AuthController.login.
+/// Why: Provides a form-based entry point for authentication using Provider-managed controller.
+library;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';

@@ -1,5 +1,67 @@
+import 'package:logger/logger.dart';
+
+final logger = Logger();
+
+/// Enum representing different types of messages.
+/// Why: Distinguishes message content types for handling and UI rendering.
+enum MessageType {
+  text,
+  offer,
+  offerUpdate,
+  offerAccepted,
+  offerRejected,
+  deliverySubmitted,
+  endEarlyRequest,
+  disputeReport,
+}
+
+MessageType messageTypeFromString(String type) {
+  switch (type) {
+    case 'offer':
+      return MessageType.offer;
+    case 'offerUpdate':
+      return MessageType.offerUpdate;
+    case 'offerAccepted':
+      return MessageType.offerAccepted;
+    case 'offerRejected':
+      return MessageType.offerRejected;
+    case 'deliverySubmitted':
+      return MessageType.deliverySubmitted;
+    case 'endEarlyRequest':
+      return MessageType.endEarlyRequest;
+    case 'disputeReport':
+      return MessageType.disputeReport;
+    case 'text':
+    default:
+      return MessageType.text;
+  }
+}
+
+String messageTypeToString(MessageType type) {
+  switch (type) {
+    case MessageType.offer:
+      return 'offer';
+    case MessageType.offerUpdate:
+      return 'offerUpdate';
+    case MessageType.offerAccepted:
+      return 'offerAccepted';
+    case MessageType.offerRejected:
+      return 'offerRejected';
+    case MessageType.deliverySubmitted:
+      return 'deliverySubmitted';
+    case MessageType.endEarlyRequest:
+      return 'endEarlyRequest';
+    case MessageType.disputeReport:
+      return 'disputeReport';
+    case MessageType.text:
+    default:
+      return 'text';
+  }
+}
+
 /// Message domain model with optional attachment fields and read receipts.
 /// Why: attachments enable richer chat; read receipts enable UX states (sent/delivered/read).
+/// Added messageType and payload to support various message semantics and additional data.
 class Message {
   /// Unique id of the message
   final String id;
@@ -31,6 +93,14 @@ class Message {
   /// Size in bytes (if any)
   final int? attachmentSize;
 
+  /// Type of the message indicating its semantic meaning.
+  /// Why: distinguishes different message categories beyond plain text.
+  final MessageType messageType;
+
+  /// Additional data associated with the message.
+  /// Why: allows extensible payloads for complex message types.
+  final Map<String, dynamic> payload;
+
   const Message({
     required this.id,
     required this.conversationId,
@@ -44,29 +114,43 @@ class Message {
     this.attachmentType,
     this.attachmentName,
     this.attachmentSize,
+    required this.messageType,
+    required this.payload,
   });
 
   factory Message.fromJson(Map<String, dynamic> json) {
-    return Message(
-      id: json['id'] as String,
-      conversationId: json['conversation_id'] as String,
-      senderId: json['sender_id'] as String,
-      receiverId: json['receiver_id'] as String,
-      content: (json['content'] ?? '') as String,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      deliveredAt: json['delivered_at'] == null
-          ? null
-          : DateTime.parse(json['delivered_at'] as String),
-      seenAt: json['seen_at'] == null
-          ? null
-          : DateTime.parse(json['seen_at'] as String),
-      attachmentUrl: json['attachment_url'] as String?,
-      attachmentType: json['attachment_type'] as String?,
-      attachmentName: json['attachment_name'] as String?,
-      attachmentSize: json['attachment_size'] == null
-          ? null
-          : (json['attachment_size'] as num).toInt(),
-    );
+    try {
+      final typeString = (json['message_type'] as String?) ?? 'text';
+      final type = messageTypeFromString(typeString);
+      final payloadJson = json['payload'] as Map<String, dynamic>? ?? {};
+
+      return Message(
+        id: json['id'] as String,
+        conversationId: json['conversation_id'] as String,
+        senderId: json['sender_id'] as String,
+        receiverId: json['receiver_id'] as String,
+        content: (json['content'] ?? '') as String,
+        createdAt: DateTime.parse(json['created_at'] as String),
+        deliveredAt: json['delivered_at'] == null
+            ? null
+            : DateTime.parse(json['delivered_at'] as String),
+        seenAt: json['seen_at'] == null
+            ? null
+            : DateTime.parse(json['seen_at'] as String),
+        attachmentUrl: json['attachment_url'] as String?,
+        attachmentType: json['attachment_type'] as String?,
+        attachmentName: json['attachment_name'] as String?,
+        attachmentSize: json['attachment_size'] == null
+            ? null
+            : (json['attachment_size'] as num).toInt(),
+        messageType: type,
+        payload: payloadJson,
+      );
+    } catch (e, st) {
+      // Log parsing errors for debugging and monitoring
+      logger.e("Failed to parse Message.fromJson", error: e, stackTrace: st);
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -77,6 +161,8 @@ class Message {
       'receiver_id': receiverId,
       'content': content,
       'created_at': createdAt.toIso8601String(),
+      'message_type': messageTypeToString(messageType),
+      'payload': payload,
     };
     if (attachmentUrl != null) map['attachment_url'] = attachmentUrl;
     if (attachmentType != null) map['attachment_type'] = attachmentType;

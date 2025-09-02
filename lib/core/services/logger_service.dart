@@ -1,3 +1,6 @@
+/// What: Centralized logging utility built on top of the `logger` package.
+/// Why: Provides a single place to control log formatting and verbosity by env/level.
+library;
 import 'package:logger/logger.dart';
 import 'package:flutter/foundation.dart';
 

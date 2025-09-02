@@ -10,6 +10,9 @@
 /// ------------------------------------------------------------
 
 import 'package:flutter/foundation.dart';
+import 'package:logger/logger.dart'; // Import logger for error logging
+
+final logger = Logger(); // Logger instance for capturing errors
 
 /// Status values must match DB CHECK constraint:
 /// 'pending' | 'accepted' | 'rejected'
@@ -50,7 +53,7 @@ class TaskRequest {
   final String id;
   final String taskId;
   final String bidderId;
-  final double price;
+  final int price; // Use int for price as DB schema uses BIGINT
   final int days;
   final String? note;
   final TaskRequestStatus status;
@@ -60,7 +63,7 @@ class TaskRequest {
     required this.id,
     required this.taskId,
     required this.bidderId,
-    required this.price,
+    required this.price, // price is int to match DB
     required this.days,
     this.note,
     required this.status,
@@ -72,18 +75,25 @@ class TaskRequest {
   bool get isRejected => status.isRejected;
 
   factory TaskRequest.fromMap(Map<String, dynamic> map) {
-    return TaskRequest(
-      id: map['id'] as String,
-      taskId: map['task_id'] as String,
-      bidderId: map['bidder_id'] as String,
-      price: (map['price'] is int)
-          ? (map['price'] as int).toDouble()
-          : (map['price'] as num).toDouble(),
-      days: map['days'] as int,
-      note: map['note'] as String?,
-      status: TaskRequestStatusX.fromDb(map['status'] as String?),
-      createdAt: DateTime.parse(map['created_at'] as String),
-    );
+    try {
+      // Parsing price as int to match DB BIGINT type
+      final priceValue = (map['price'] as num).toInt();
+
+      return TaskRequest(
+        id: map['id'] as String,
+        taskId: map['task_id'] as String,
+        bidderId: map['bidder_id'] as String,
+        price: priceValue,
+        days: map['days'] as int,
+        note: map['note'] as String?,
+        status: TaskRequestStatusX.fromDb(map['status'] as String?),
+        createdAt: DateTime.parse(map['created_at'] as String),
+      );
+    } catch (e, st) {
+      // Log parsing errors for debugging and rethrow
+      logger.e("Failed to parse TaskRequest.fromMap", error: e, stackTrace: st);
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toMap({bool forInsert = false}) {
@@ -91,7 +101,7 @@ class TaskRequest {
       'id': id,
       'task_id': taskId,
       'bidder_id': bidderId,
-      'price': price,
+      'price': price, // price remains int
       'days': days,
       'note': note,
       'status': status.dbValue,
@@ -102,7 +112,7 @@ class TaskRequest {
       return <String, dynamic>{
         'task_id': taskId,
         'bidder_id': bidderId,
-        'price': price,
+        'price': price, // price remains int
         'days': days,
         if (note != null && note!.trim().isNotEmpty) 'note': note,
       };
@@ -115,7 +125,7 @@ class TaskRequest {
     String? id,
     String? taskId,
     String? bidderId,
-    double? price,
+    int? price, // price is int to match DB
     int? days,
     String? note,
     TaskRequestStatus? status,

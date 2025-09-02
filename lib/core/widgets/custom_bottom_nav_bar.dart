@@ -1,3 +1,6 @@
+/// What: Stateless widget for the app's bottom navigation bar.
+/// Why: Provides a reusable navigation component bound to `NavigationProvider`.
+library;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/navigation_provider.dart';

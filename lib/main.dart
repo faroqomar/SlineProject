@@ -10,6 +10,8 @@ import 'core/services/supabase_config.dart';
 import 'core/services/logger_service.dart';
 import 'features/auth/presentation/login_screen.dart';
 import 'features/home/presentation/home_screen.dart'; // add at the top with other imports
+import 'features/favorites/routes/favorites_routes.dart';
+import 'features/favorites/presentation/screens/favorites_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app/main_navigation_screen.dart';
 import 'core/providers/navigation_provider.dart';
@@ -40,6 +42,7 @@ class SLineApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TaskController()),
         ChangeNotifierProvider(create: (_) => ChatController()),
         ChangeNotifierProvider(create: (_) => BookingController()),
+        
       ],
       child: MaterialApp(
         title: 'SLine App',
@@ -53,6 +56,7 @@ class SLineApp extends StatelessWidget {
           '/main': (_) => const MainNavigationScreen(),
           '/signup': (_) => const SignupScreen(),
           '/home': (_) => const HomeScreen(), // added route
+          FavoritesRoutes.routeName: (_) => const FavoritesScreen(),
         },
       ),
     );

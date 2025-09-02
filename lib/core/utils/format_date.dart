@@ -1,3 +1,5 @@
+/// What: Utilities to format DateTime values into human-friendly and local-time strings.
+/// Why: Standardizes how dates/times appear across the UI and avoids duplicated logic.
 /// Utility function to format DateTime objects into human-friendly strings.
 /// This is used in both conversation list and chat screens to show relative times.
 ///

@@ -7,6 +7,7 @@ import '../widgets/profile_avatar_widget.dart';
 import '../../tasks/models/task_model.dart';
 import '../../tasks/presentation/create_task_screen.dart';
 import 'portfolio/portfolio_screen.dart';
+import '../../../features/favorites/routes/favorites_routes.dart';
 
 /// Profile screen - user profile management and settings
 class ProfileScreen extends StatefulWidget {
@@ -45,6 +46,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
           actions: [
+            IconButton(
+              tooltip: 'Favorites',
+              icon: const Icon(Icons.favorite_outline),
+              onPressed: () {
+                Navigator.of(context).pushNamed(FavoritesRoutes.routeName);
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.logout),
               onPressed: () {

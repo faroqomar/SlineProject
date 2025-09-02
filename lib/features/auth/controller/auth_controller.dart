@@ -1,3 +1,5 @@
+/// What: Simple controller that performs login/register flows by calling AuthRepository.
+/// Why: Used by legacy UI under `features/auth/ui/` to keep network logic out of Widgets.
 import 'package:flutter/material.dart';
 import 'package:sline_app/features/home/presentation/home_screen.dart';
 import '../../../core/services/logger_service.dart';
