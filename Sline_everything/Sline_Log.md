@@ -839,3 +839,24 @@ Flutter + Supabase freelance marketplace with real-time chat, tasks, and profile
 ## 🧭 Notes
 - Docs consolidated: **STRUCTURE.md**, **SUPABASE_SETUP.md**, **MVP_ROADMAP.md**.
 - Keep comments and docs in **English**; product UI bilingual later.
+> ملاحظة: إذا عندك لقسم قديم باسم “6.2 حارس إنشاء المحادثات (Client-only)”، استبدله بالكامل بالنص الجديد أعلاه.
+
+---
+
+# 2) Sline_Log.md
+## أضِف مدخلة نسخة جديدة تحت “Version History”
+
+ابحث عن عنوان `## 📋 Version History` وألصق المقطع التالي **مباشرة بعده**:
+🟢 Version 1.8 — Chat guard flip (owner blocked) + RPC v1 + UI guard
+
+Date: 2025-09-14
+Commit: Pending — “fix(chat): block owner from starting task chat; add RPC v1; client guard”
+
+✅ Implemented
+	•	DB Trigger: Replaced trg_conversations_before_insert_guard logic → owner cannot start task-linked chats; non-owner must chat with task owner; normalized (user1_id,user2_id) order.
+	•	RPC: Added start_task_conversation_v1(p_task_id uuid) returning conversations row; grants to authenticated.
+	•	Flutter: message_service.createOrGetConversation() now calls start_task_conversation_v1(...).select().single(); task_card.dart shows a friendly SnackBar if owner taps Chat.
+
+📈 Impact
+	•	Prevents server-side error surfaces to owners; clean UX for non-owners.
+	•	Eliminates duplicate conversations for the same (task + pair).

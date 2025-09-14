@@ -733,3 +733,139 @@ REVOKE ALL ON TABLE public.conversations  FROM anon;
 	•	التصنيفات: متاحة قراءة فقط من العميل؛ إدارة الإضافة/التعديل عبر SQL أو خدمة بخادم بمفتاح service_role.
 
 لو حاب أحوّل هذا كله لملف جاهز للاستبدال (Markdown) بنفس اسم ملفك، قلّي ونسلمه لك بنفس التنسيق.
+
+6.2 حارس إنشاء المحادثات (Task-linked: non-owner only)
+
+CREATE OR REPLACE FUNCTION public.conversations_before_insert_guard()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_other       uuid;
+  v_task_owner  uuid;
+  v_me          uuid := auth.uid();
+  tmp           uuid;
+BEGIN
+  IF v_me IS NULL THEN
+    RAISE EXCEPTION 'unauthenticated';
+  END IF;
+
+  -- initiated_by defaults to current user
+  IF NEW.initiated_by IS NULL THEN
+    NEW.initiated_by := v_me;
+  END IF;
+  IF NEW.initiated_by IS DISTINCT FROM v_me THEN
+    RAISE EXCEPTION 'initiated_by must equal current user';
+  END IF;
+
+  -- initiator must be one of the two participants
+  IF NOT (NEW.user1_id = v_me OR NEW.user2_id = v_me) THEN
+    RAISE EXCEPTION 'initiator must be one of the participants';
+  END IF;
+
+  -- Task-linked conversation: owner cannot initiate; the other must be the task owner
+  IF NEW.task_id IS NOT NULL THEN
+    SELECT t.user_id INTO v_task_owner
+    FROM public.tasks t
+    WHERE t.id = NEW.task_id;
+
+    IF v_task_owner IS NULL THEN
+      RAISE EXCEPTION 'linked task not found';
+    END IF;
+
+    IF v_task_owner = v_me THEN
+      RAISE EXCEPTION 'task owner cannot start a task-linked conversation';
+    END IF;
+
+    v_other := CASE WHEN NEW.user1_id = v_me THEN NEW.user2_id ELSE NEW.user1_id END;
+    IF v_other IS DISTINCT FROM v_task_owner THEN
+      RAISE EXCEPTION 'for a task-linked chat, the other participant must be the task owner';
+    END IF;
+
+    -- normalize order to avoid duplicates
+    IF NEW.user1_id > NEW.user2_id THEN
+      tmp := NEW.user1_id; NEW.user1_id := NEW.user2_id; NEW.user2_id := tmp;
+    END IF;
+
+  -- Non-task conversation: require favorite relation
+  ELSE
+    v_other := CASE WHEN NEW.user1_id = v_me THEN NEW.user2_id ELSE NEW.user1_id END;
+    IF NOT EXISTS (
+      SELECT 1
+      FROM public.favorites f
+      WHERE f.client_id = v_me
+        AND f.freelancer_id = v_other
+    ) THEN
+      RAISE EXCEPTION 'to start a non-task chat, the other user must be in your favorites';
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END
+$function$;
+
+-- Trigger (replace old name if needed)
+DROP TRIGGER IF EXISTS trg_conversations_before_insert_guard ON public.conversations;
+CREATE TRIGGER trg_conversations_before_insert_guard
+BEFORE INSERT ON public.conversations
+FOR EACH ROW EXECUTE FUNCTION public.conversations_before_insert_guard();
+6.2.1 RPC: start_task_conversation_v1 (non-owner starts task chat)
+
+```sql
+DROP FUNCTION IF EXISTS public.start_task_conversation_v1(uuid);
+
+CREATE OR REPLACE FUNCTION public.start_task_conversation_v1(p_task_id uuid)
+RETURNS conversations
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+  v_owner uuid;
+  v_me    uuid := auth.uid();
+  v_a     uuid;
+  v_b     uuid;
+  v_convo conversations;
+BEGIN
+  SELECT t.user_id INTO v_owner FROM tasks t WHERE t.id = p_task_id;
+  IF v_owner IS NULL THEN
+    RAISE EXCEPTION 'task not found' USING ERRCODE = 'P0001';
+  END IF;
+
+  IF v_owner = v_me THEN
+    RAISE EXCEPTION 'task owner cannot start a task-linked conversation' USING ERRCODE = 'P0001';
+  END IF;
+
+  v_a := LEAST(v_owner, v_me);
+  v_b := GREATEST(v_owner, v_me);
+
+  SELECT * INTO v_convo
+  FROM conversations
+  WHERE task_id = p_task_id
+    AND LEAST(user1_id, user2_id) = v_a
+    AND GREATEST(user1_id, user2_id) = v_b
+  LIMIT 1;
+
+  IF FOUND THEN
+    RETURN v_convo;
+  END IF;
+
+  INSERT INTO conversations (id, task_id, user1_id, user2_id, initiated_by)
+  VALUES (gen_random_uuid(), p_task_id, v_a, v_b, v_me)
+  RETURNING * INTO v_convo;
+
+  RETURN v_convo;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.start_task_conversation_v1(uuid) TO authenticated;
+> ملاحظة: إذا عندك لقسم قديم باسم “6.2 حارس إنشاء المحادثات (Client-only)”، استبدله بالكامل بالنص الجديد أعلاه.
+
+---
+
+# 2) Sline_Log.md
+## أضِف مدخلة نسخة جديدة تحت “Version History”
+
+ابحث عن عنوان `## 📋 Version History` وألصق المقطع التالي **مباشرة بعده**:

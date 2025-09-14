@@ -17,38 +17,58 @@ class MessageService {
     required String user1Id,
     required String user2Id,
   }) async {
+    // If this is a task-linked conversation, delegate to the RPC which
+    // (a) blocks task owner from starting a convo with themselves,
+    // (b) returns existing convo if already present, otherwise creates one,
+    // (c) normalizes participant order (user1_id/user2_id) on the server.
+    if (taskId != null) {
+      try {
+        final response = await _client
+            .rpc('start_task_conversation_v1', params: {'p_task_id': taskId})
+            .select()
+            .single();
+        AppLogger.i('🧭 RPC start_task_conversation_v1 returned conversation');
+        return Conversation.fromJson(Map<String, dynamic>.from(response as Map));
+      } catch (e) {
+        AppLogger.e('❌ RPC start_task_conversation failed: $e');
+        rethrow;
+      }
+    }
+
+    // ----- Plain DM (no task_id) path: keep existing behavior -----
     final base = _client.from('conversations').select();
 
     // Filter by pair regardless of order
     final pairFilter =
         "and(user1_id.eq.$user1Id,user2_id.eq.$user2Id),and(user1_id.eq.$user2Id,user2_id.eq.$user1Id)";
 
-    // Apply task filter (null vs specific)
-    final query = (taskId == null)
-        ? base.is_('task_id', null).or(pairFilter).limit(1)
-        : base.eq('task_id', taskId).or(pairFilter).limit(1);
+    // Only look for DMs (task_id IS NULL)
+    final query = base.is_('task_id', null).or(pairFilter).limit(1);
 
     final existing = await query;
 
-    AppLogger.d('🔎 Existing conversations found: ${existing is List ? existing.length : 'n/a'}');
+    AppLogger.d('🔎 Existing DM conversations found: ${existing is List ? existing.length : 'n/a'}');
     if (existing is List && existing.isNotEmpty) {
-      AppLogger.i('📌 Using existing conversation: ${existing.first['id']}');
+      AppLogger.i('📌 Using existing DM conversation: ${existing.first['id']}');
       return Conversation.fromJson(Map<String, dynamic>.from(existing.first as Map));
     }
 
-    // Create new conversation; initiator is user1Id (client)
+    // Create new DM conversation; initiator is user1Id (caller)
     final insertMap = <String, dynamic>{
-      if (taskId != null) 'task_id': taskId,
       'user1_id': user1Id,
       'user2_id': user2Id,
       'initiated_by': user1Id,
     };
 
-    final response = await _client.from('conversations').insert(insertMap).select().single();
+    final response = await _client
+        .from('conversations')
+        .insert(insertMap)
+        .select()
+        .single();
 
     try {
       final id = (response as Map)['id'];
-      AppLogger.i('🆕 Created conversation: $id');
+      AppLogger.i('🆕 Created DM conversation: $id');
     } catch (_) {}
 
     return Conversation.fromJson(Map<String, dynamic>.from(response as Map));

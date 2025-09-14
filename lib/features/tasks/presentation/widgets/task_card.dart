@@ -36,6 +36,8 @@ class TaskCard extends StatelessWidget {
         : isBooking
             ? AppColors.bookingBorder(context)
             : Theme.of(context).dividerColor.withOpacity(0.2);
+    final String? currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    final bool isOwner = currentUserId != null && currentUserId == task.userId;
 
     return Card(
       elevation: 0,
@@ -168,6 +170,17 @@ class TaskCard extends StatelessWidget {
                           if (user == null) {
                             AppLogger.e('❌ No authenticated user found');
                             return;
+                          }
+                          if (task.userId == user.id) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("You can't start a chat on your own task. Open offers or share your task to get bids."),
+                                  duration: Duration(seconds: 3),
+                                ),
+                              );
+                            }
+                            return; // do not proceed to create a conversation
                           }
 
                           try {
