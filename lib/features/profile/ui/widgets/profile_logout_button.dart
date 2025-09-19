@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sline_app/features/profile/ui/controller/profile_controller.dart';
+import 'package:sline_app/features/profile/controllers/profile_controller.dart';
 /// A button that logs out the current user and redirects to the login screen.
 class ProfileLogoutButton extends StatelessWidget {
   final ProfileController controller;

@@ -444,3 +444,5 @@ lib/features/tasks/services/task_requests_service.dart
 lib/features/tasks/services/task_service.dart
 lib/main.dart
 lib/shared/constants/categories.dart
+lib/features/profile/services/avatar_service.dart
+lib/core/widgets/signed_avatar.dart

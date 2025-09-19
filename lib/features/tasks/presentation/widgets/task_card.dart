@@ -10,6 +10,7 @@ import '../../../../core/utils/format_price.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../features/saved/controller/saved_tasks_controller.dart';
 import '../../../../features/favorites/data/favorites_service.dart';
+import 'package:sline_app/core/widgets/signed_avatar.dart';
 
 /// A card widget to display basic info about a task.
 class TaskCard extends StatelessWidget {
@@ -35,7 +36,7 @@ class TaskCard extends StatelessWidget {
         ? AppColors.tenderBorder(context)
         : isBooking
             ? AppColors.bookingBorder(context)
-            : Theme.of(context).dividerColor.withOpacity(0.2);
+            : Theme.of(context).dividerColor.withValues(alpha: 0.2);
     final String? currentUserId = Supabase.instance.client.auth.currentUser?.id;
     final bool isOwner = currentUserId != null && currentUserId == task.userId;
 
@@ -57,14 +58,9 @@ class TaskCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  CircleAvatar(
+                  SignedAvatar(
+                    storagePathOrUrl: task.userAvatar,
                     radius: 20,
-                    backgroundImage: (task.userAvatar != null && task.userAvatar!.isNotEmpty)
-                        ? NetworkImage(task.userAvatar!)
-                        : null,
-                    child: (task.userAvatar == null || task.userAvatar!.isEmpty)
-                        ? const Icon(Icons.person, size: 20)
-                        : null,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -82,7 +78,7 @@ class TaskCard extends StatelessWidget {
                           ? AppColors.tenderChipBg(context)
                           : isBooking
                               ? AppColors.bookingChipBg(context)
-                              : Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.6),
+                              : Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: borderColor),
                     ),

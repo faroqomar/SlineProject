@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../controller/profile_controller.dart';
+import 'package:sline_app/features/profile/controllers/profile_controller.dart';
 import 'profile_avatar.dart';
 import 'profile_form.dart';
 import 'profile_password_reset.dart';
 import 'profile_language_toggle.dart';
 import 'profile_role_toggle.dart';
 import 'profile_logout_button.dart';
+
+
 
 /// Displays the user's profile content in a scrollable layout.
 /// 

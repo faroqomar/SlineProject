@@ -1,12 +1,10 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/logger_service.dart';
 import '../../tasks/models/task_model.dart';
 import '../../tasks/services/task_service.dart';
-
-import 'dart:io' as io show File;
+import '../services/avatar_service.dart';
 /// Controller for managing profile functionality
 class ProfileController extends ChangeNotifier {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -20,6 +18,10 @@ class ProfileController extends ChangeNotifier {
   final TaskService _taskService = TaskService();
   List<Task> myTasks = [];
   bool isLoadingMyTasks = false;
+
+  final AvatarService _avatarService = AvatarService(Supabase.instance.client);
+  String? avatarSignedUrl;
+  bool avatarUploading = false;
 
   /// Load current user data into controllers
   Future<void> loadUserData() async {
@@ -35,6 +37,7 @@ class ProfileController extends ChangeNotifier {
     nameController.text = profile['full_name'] ?? '';
     emailController.text = user.email ?? '';
     bioController.text = profile['bio'] ?? '';
+    await refreshAvatarSignedUrl();
   }
 
   /// Update profile with form data
@@ -83,36 +86,68 @@ class ProfileController extends ChangeNotifier {
     await _supabase.auth.resetPasswordForEmail(user.email!);
   }
 
-  /// Upload profile image and update avatar URL
-  Future<void> uploadProfileImage(XFile imageFile) async {
+  Future<void> pickAndUploadAvatar(BuildContext context) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile == null) return;
+
+    avatarUploading = true;
+    notifyListeners();
+
+    try {
+      final bytes = await pickedFile.readAsBytes();
+      final fileExt = pickedFile.path.split('.').last.toLowerCase();
+      final contentType = fileExt == 'png'
+          ? 'image/png'
+          : fileExt == 'jpg' || fileExt == 'jpeg'
+              ? 'image/jpeg'
+              : 'application/octet-stream';
+
+      final storagePath = await _avatarService.uploadAvatar(
+        userId: user.id,
+        bytes: bytes,
+        contentType: contentType,
+        fileExt: fileExt,
+      );
+
+      await _supabase.from('profiles').update({'avatar_url': storagePath}).eq('id', user.id);
+
+      avatarSignedUrl = await _avatarService.createSignedUrl(storagePath);
+
+      AppLogger.i('Avatar uploaded and profile updated');
+    } catch (e) {
+      AppLogger.e('Error uploading avatar: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to upload avatar: $e')),
+        );
+      }
+    } finally {
+      avatarUploading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> refreshAvatarSignedUrl() async {
     final user = _supabase.auth.currentUser;
     if (user == null) return;
 
-    final fileExt = imageFile.path.split('.').last;
-    final filePath = 'avatars/${user.id}.$fileExt';
+    try {
+      final profileRow = await _supabase
+          .from('profiles')
+          .select('avatar_url')
+          .eq('id', user.id)
+          .maybeSingle();
 
-    if (kIsWeb) {
-      // Web: upload as bytes
-      final bytes = await imageFile.readAsBytes();
-      await _supabase.storage
-          .from('avatars')
-          .uploadBinary(filePath, bytes, fileOptions: const FileOptions(upsert: true));
-    } else {
-      // Mobile only: ensure dart:io File is used safely
-      final file = io.File(imageFile.path);
-      await _supabase.storage
-          .from('avatars')
-          .uploadBinary(
-            filePath,
-            await file.readAsBytes(),
-            fileOptions: const FileOptions(upsert: true),
-          );
+      final path = profileRow?['avatar_url'] as String?;
+      if (path != null && path.isNotEmpty) {
+        avatarSignedUrl = await _avatarService.createSignedUrl(path);
+        notifyListeners();
+      }
+    } catch (e) {
+      AppLogger.e('Failed to refresh avatar signed url: $e');
     }
-
-    final publicUrl = _supabase.storage.from('avatars').getPublicUrl(filePath);
-    await _supabase.from('profiles').update({'avatar_url': publicUrl}).eq('id', user.id);
-
-    notifyListeners();
   }
 
   /// Fetch tasks created by the current user

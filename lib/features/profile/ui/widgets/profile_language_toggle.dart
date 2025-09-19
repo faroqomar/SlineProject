@@ -1,7 +1,7 @@
 
 
 import 'package:flutter/material.dart';
-import 'package:sline_app/features/profile/ui/controller/profile_controller.dart';
+import 'package:sline_app/features/profile/controllers/profile_controller.dart';
 
 /// A simple language toggle dropdown.
 class ProfileLanguageToggle extends StatelessWidget {

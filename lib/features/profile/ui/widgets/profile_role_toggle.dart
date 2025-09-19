@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../controller/profile_controller.dart';
+import 'package:sline_app/features/profile/controllers/profile_controller.dart';
 /// A toggle switch to change between Client and Freelancer roles.
 class ProfileRoleToggle extends StatelessWidget {
   final ProfileController controller;

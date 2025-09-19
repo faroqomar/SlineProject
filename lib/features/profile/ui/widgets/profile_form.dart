@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sline_app/features/profile/ui/controller/profile_controller.dart';
+import 'package:sline_app/features/profile/controllers/profile_controller.dart';
 import 'profile_password_reset.dart';
 
 /// This widget contains the form fields used to update the user's profile info

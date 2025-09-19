@@ -869,3 +869,24 @@ GRANT EXECUTE ON FUNCTION public.start_task_conversation_v1(uuid) TO authenticat
 ## أضِف مدخلة نسخة جديدة تحت “Version History”
 
 ابحث عن عنوان `## 📋 Version History` وألصق المقطع التالي **مباشرة بعده**:
+
+## Avatar Storage Setup (2025-09-19)
+
+# Supabase Setup – Avatars Bucket
+
+## 📦 Avatar Storage Setup (2025-09-19)
+
+### 1. Create Bucket
+```sql
+select storage.create_bucket('avatars', true);
+-- Allow authenticated users to insert their own avatar
+create policy avatars_insert_own
+  on storage.objects for insert
+  to authenticated
+  with check (bucket_id = 'avatars' and owner = auth.uid());
+
+-- Allow authenticated users to select (read) their own avatar
+create policy avatars_select_own
+  on storage.objects for select
+  to authenticated
+  using (bucket_id = 'avatars' and owner = auth.uid());

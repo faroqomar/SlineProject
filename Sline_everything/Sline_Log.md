@@ -1,6 +1,6 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2025-08-23
+**Last Updated:** 2025-09-19
 
 ---
 
@@ -19,6 +19,58 @@
 ---
 
 ## 📋 Version History
+
+### 🟢 Version 1.8 — Profile Avatars Revamp & Home Avatar Fix  
+**Date:** 2025-09-19  
+**Commit:** _Pending_ — "fix: unify ProfileController, add SignedAvatar, private avatars bucket + RLS"
+
+#### ✅ Implemented
+- **Storage (Supabase):** Created private bucket **`avatars`**.
+  - Path convention: `<uid>/<timestamp>.<ext>` (no bucket prefix inside `name`).
+  - Added RLS policies on `storage.objects`:
+    - INSERT/UPDATE/DELETE: authenticated users can write only under their own folder (`name like auth.uid() || '/%'`).
+    - SELECT: authenticated users can read from `bucket_id = 'avatars'` (for client-side signed URLs).
+- **AvatarService:**
+  - Switched bucket from `portfolio` → **`avatars`**.
+  - Fixed `createSignedUrl` to use Supabase v2 API (returns `String`).
+  - Upload now uses binary bytes (web-safe) and stores **storage path** in `profiles.avatar_url`.
+- **ProfileController:**
+  - Unified single source of truth (removed duplicate controller under `ui/controller/`).
+  - Added `pickAndUploadAvatar(context)` and `refreshAvatarSignedUrl()`.
+  - New state fields: `avatarSignedUrl`, `avatarUploading`.
+  - Cleaned imports: removed `dart:io`/legacy picker service.
+- **UI (Profile):**
+  - `profile_avatar.dart` now uses controller methods/fields above and shows a loading overlay.
+  - `profile_view.dart` import fixed to point to the unified controller.
+- **UI (Home/Tasks):**
+  - New reusable widget **`SignedAvatar`** (`lib/core/widgets/signed_avatar.dart`).
+    - Accepts either legacy **URL** or new **storage path**.
+    - Generates signed URL on the fly + in-memory TTL cache (~90m).
+  - `task_card.dart`: replaced raw `NetworkImage` with `SignedAvatar` so avatars refresh correctly on Home.
+- **Deprecations & Cleanup:**
+  - Replaced `.withOpacity(..)` → `.withValues(alpha: ..)` where applicable.
+  - Addressed `surfaceVariant` deprecation (migrate to `surfaceContainer*` as we polish theme).
+  - Removed unused imports/variables; analyzer warnings resolved.
+
+#### 🐛 Bugs Fixed
+- **403 RLS on upload** (`new row violates row-level security policy`): bucket policies added to allow authenticated INSERT under `<uid>/...`.
+- **Duplicate `ProfileController` type conflict**: removed legacy controller & fixed imports across widgets.
+- **Home avatars not updating**: `SignedAvatar` resolves storage paths to fresh signed URLs (with caching) — fixes stale images on Task cards.
+- **Web compatibility**: avatar upload avoids `dart:io` and uses `XFile.readAsBytes()`.
+
+#### 📈 Impact
+- Consistent, secure avatar flow across Web/iOS/Android.
+- Faster perceived loads for avatars via lightweight cache.
+- Cleaner architecture: single ProfileController + shared avatar widget.
+
+#### 🔬 Notes / Migration
+- Legacy rows where `profiles.avatar_url` stores a **public URL** still render (widget detects `http` and uses it directly).
+- New uploads store **storage path** only; rendering always uses a **signed URL**.
+
+#### 🧪 Smoke Test Checklist
+- Upload avatar → loader shows → image updates immediately.
+- Re-open Profile/Home → image still shows (signed URL regenerated on view).
+- Web upload works; no 403; no `dart:io` usage.
 
 ### 🟢 Version 1.7 — Sprint 2 Complete: Booking (A2–A4) + Categories (DB-first) + Portfolio v1**Date:** 2025-08-23  
 **Commit:** _Pending_ — "feat(booking): availability & bookings polish; add categories DB-first + tasks.category_id"
