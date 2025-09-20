@@ -11,6 +11,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../features/saved/controller/saved_tasks_controller.dart';
 import '../../../../features/favorites/data/favorites_service.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
+import 'package:sline_app/core/widgets/signed_image.dart';
 
 /// A card widget to display basic info about a task.
 class TaskCard extends StatelessWidget {
@@ -38,7 +39,6 @@ class TaskCard extends StatelessWidget {
             ? AppColors.bookingBorder(context)
             : Theme.of(context).dividerColor.withValues(alpha: 0.2);
     final String? currentUserId = Supabase.instance.client.auth.currentUser?.id;
-    final bool isOwner = currentUserId != null && currentUserId == task.userId;
 
     return Card(
       elevation: 0,
@@ -108,6 +108,16 @@ class TaskCard extends StatelessWidget {
               ),
 
               const SizedBox(height: 6),
+              if (task.imagePaths.isNotEmpty) ...[
+                SignedImage(
+                  storagePathOrUrl: task.imagePaths.first,
+                  width: double.infinity,
+                  height: 160,
+                  borderRadius: 12,
+                  fit: BoxFit.cover,
+                ),
+                const SizedBox(height: 8),
+              ],
               Text(task.description),
               const SizedBox(height: 6),
               Row(

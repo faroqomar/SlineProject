@@ -13,7 +13,7 @@ class TaskService {
     try {
       final response = await _client
           .from('tasks')
-          .select('id, title, description, budget, user_id, status, task_type, category_id, category, created_at, deadline, skills, categories(name)')
+          .select('id, title, description, budget, user_id, status, task_type, category_id, category, created_at, deadline, skills, image_paths, categories(name)')
           .order('created_at', ascending: false);
 
       final tasks = (response as List)
@@ -53,7 +53,7 @@ class TaskService {
       final response = await _client
           .from('tasks')
           .insert(task.toJson(includeSystemFields: false))
-          .select('id, title, description, budget, user_id, status, task_type, category_id, category, created_at, deadline, skills, categories(name)')
+          .select('id, title, description, budget, user_id, status, task_type, category_id, category, created_at, deadline, skills, image_paths, categories(name)')
           .single();
 
       // Fetch user details separately
@@ -106,7 +106,7 @@ class TaskService {
     try {
       final response = await _client
           .from('tasks')
-          .select('id, title, description, budget, user_id, status, task_type, category_id, category, created_at, deadline, skills, categories(name)')
+          .select('id, title, description, budget, user_id, status, task_type, category_id, category, created_at, deadline, skills, image_paths, categories(name)')
           .eq('user_id', userId)
           .order('created_at', ascending: false);
 
@@ -140,7 +140,7 @@ class TaskService {
     try {
       final response = await _client
           .from('tasks')
-          .select('id, title, description, budget, user_id, status, task_type, category_id, category, created_at, deadline, skills, categories(name)')
+          .select('id, title, description, budget, user_id, status, task_type, category_id, category, created_at, deadline, skills, image_paths, categories(name)')
           .eq('status', status.name)
           .order('created_at', ascending: false);
 
@@ -192,7 +192,7 @@ class TaskService {
     try {
       final response = await _client
           .from('tasks')
-          .select('id, title, description, budget, user_id, status, task_type, category_id, category, created_at, deadline, skills, categories(name)')
+          .select('id, title, description, budget, user_id, status, task_type, category_id, category, created_at, deadline, skills, image_paths, categories(name)')
           .eq('status', TaskStatus.open.name)
           .order('created_at', ascending: false);
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sline_app/core/widgets/signed_image.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import '../models/task_model.dart';
 import '../../../core/utils/format_price.dart';
@@ -51,6 +52,16 @@ class TaskDetailsScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text('Budget: ${PriceFormatter.formatPrice(task.budget.toDouble())}'),
                 const SizedBox(height: 12),
+                if (task.imagePaths.isNotEmpty) ...[
+                  SignedImage(
+                    storagePathOrUrl: task.imagePaths.first,
+                    width: double.infinity,
+                    height: 200,
+                    borderRadius: 12,
+                    fit: BoxFit.cover,
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 Text(task.description),
                 const SizedBox(height: 12),
                 if (task.isBooking)

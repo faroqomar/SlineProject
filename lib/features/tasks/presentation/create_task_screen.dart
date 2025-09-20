@@ -1,9 +1,14 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:sline_app/features/tasks/services/task_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/features/categories/models/category_model.dart';
 import 'package:sline_app/features/categories/services/categories_service.dart';
+import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:sline_app/features/tasks/controllers/task_controller.dart';
 
 class CreateTaskScreen extends StatefulWidget {
   final Task? task; // optional task for edit mode
@@ -126,7 +131,18 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           skills: const [],
         );
 
-        await TaskService().createTask(task);
+        // Create the task and get its id
+        final created = await TaskService().createTask(task);
+        final String newTaskId = (created is Task) ? created.id : (created as dynamic).id as String;
+
+        // Upload any picked images and update task with image paths
+        final taskCtrl = context.read<TaskController>();
+        final paths = await taskCtrl.finalizeTaskImages(userId: userId, taskId: newTaskId);
+        if (paths.isNotEmpty) {
+          await TaskService().updateTask(newTaskId, {
+            'image_paths': paths,
+          });
+        }
       } else {
         // Edit mode
         await TaskService().updateTask(widget.task!.id, {
@@ -137,6 +153,17 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           'category_id': _selectedCategoryId,
           'task_type': _selectedTaskType.name, // persist type change
         });
+
+        // Upload new picked images (if any) and merge with existing image_paths
+        final taskCtrl = context.read<TaskController>();
+        final newPaths = await taskCtrl.finalizeTaskImages(userId: userId, taskId: widget.task!.id);
+        if (newPaths.isNotEmpty) {
+          final existing = widget.task!.imagePaths;
+          final merged = <String>{...existing, ...newPaths}.toList();
+          await TaskService().updateTask(widget.task!.id, {
+            'image_paths': merged,
+          });
+        }
       }
 
       if (!mounted) return;
@@ -156,6 +183,100 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     } finally {
       setState(() => _isLoading = false);
     }
+  }
+
+  Widget _buildImagesPickerSection() {
+    final taskCtrl = context.watch<TaskController>();
+    final images = taskCtrl.pickedImages;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Task Images',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            Row(
+              children: [
+                Text('${images.length}/5', style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  onPressed: taskCtrl.uploadingImages
+                      ? null
+                      : () async {
+                          await taskCtrl.pickTaskImages();
+                        },
+                  icon: const Icon(Icons.add_photo_alternate_outlined),
+                  label: const Text('Add'),
+                ),
+                const SizedBox(width: 8),
+                if (images.isNotEmpty)
+                  TextButton(
+                    onPressed: taskCtrl.uploadingImages ? null : taskCtrl.clearPickedImages,
+                    child: const Text('Clear'),
+                  ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (images.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              'No images selected. You can add up to 5 screenshots/photos. Optional.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          )
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final x in images)
+                FutureBuilder<Uint8List>(
+                  future: x.readAsBytes(),
+                  builder: (context, snap) {
+                    if (!snap.hasData) {
+                      return Container(
+                        width: 90,
+                        height: 90,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.3),
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      );
+                    }
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.memory(
+                        snap.data!,
+                        width: 90,
+                        height: 90,
+                        fit: BoxFit.cover,
+                      ),
+                    );
+                  },
+                ),
+            ],
+          ),
+      ],
+    );
   }
 
   @override
@@ -283,6 +404,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                 },
               ),
               const SizedBox(height: 20),
+              // Images picker section
+              _buildImagesPickerSection(),
+              const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _isLoading ? null : _submit,
                 child: _isLoading

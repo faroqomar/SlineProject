@@ -9,7 +9,7 @@ import 'package:sline_app/features/tasks/controllers/task_filter_controller.dart
 import 'core/services/supabase_config.dart';
 import 'core/services/logger_service.dart';
 import 'features/auth/presentation/login_screen.dart';
-import 'features/home/presentation/home_screen.dart'; // add at the top with other imports
+import 'features/home/presentation/home_screen.dart'; 
 import 'features/favorites/routes/favorites_routes.dart';
 import 'features/favorites/presentation/screens/favorites_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';

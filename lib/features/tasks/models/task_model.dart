@@ -66,6 +66,9 @@ class Task {
   /// Optional avatar URL of the user who posted the task
   final String? userAvatar;
 
+  /// Storage paths (NOT URLs) for task images in the private `task-images` bucket.
+  final List<String> imagePaths;
+
   const Task({
     required this.id,
     required this.title,
@@ -82,6 +85,7 @@ class Task {
     this.userName,
     this.userAvatar,
     this.categoryName,
+    this.imagePaths = const [],
   });
 
   /// Create Task from JSON
@@ -90,6 +94,12 @@ class Task {
     final String? typeStr = json['task_type'] as String?;
     final TaskType parsedTaskType =
         (typeStr == 'booking') ? TaskType.booking : TaskType.tender;
+
+    final rawPaths = (json['image_paths'] as List?) ?? const [];
+    final parsedImagePaths = rawPaths
+        .map((e) => e?.toString() ?? '')
+        .where((s) => s.isNotEmpty)
+        .toList();
 
     return Task(
       id: json['id'] as String,
@@ -118,6 +128,7 @@ class Task {
       categoryName: ((json['categories'] as Map?)?['name'] as String?) ?? (json['category'] as String?),
       userName: null,
       userAvatar: null,
+      imagePaths: parsedImagePaths,
     );
   }
 
@@ -135,6 +146,7 @@ class Task {
       // Prefer DB-first FK; legacy category text is optional
       'category_id': categoryId,
       if (category != null) 'category': category,
+      'image_paths': imagePaths,
     };
     if (includeSystemFields) {
       map['id'] = id;
@@ -166,6 +178,7 @@ class Task {
     String? userName,
     String? userAvatar,
     String? categoryName,
+    List<String>? imagePaths,
   }) {
     return Task(
       id: id ?? this.id,
@@ -183,6 +196,7 @@ class Task {
       userName: userName ?? this.userName,
       userAvatar: userAvatar ?? this.userAvatar,
       categoryName: categoryName ?? this.categoryName,
+      imagePaths: imagePaths ?? this.imagePaths,
     );
   }
 }

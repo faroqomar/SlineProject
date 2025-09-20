@@ -20,6 +20,61 @@
 
 ## 📋 Version History
 
+### 🟢 Version 1.9 — Private Avatars & Task Images (Signed URLs)
+**Date:** 2025-09-20  
+**Commit:** _Pending_ — "feat(storage): avatars & task-images buckets + signed render; show task images; unify ProfileController"
+
+#### ✅ Implemented
+- **Storage**
+  - Created private buckets: **`avatars`**, **`task-images`**.
+  - RLS on `storage.objects`:  
+    - INSERT: authenticated owner only (`owner = auth.uid()` and correct `bucket_id`).  
+    - SELECT: authenticated users for respective bucket (for signed URLs).
+- **Database**
+  - Added `ALTER TABLE public.tasks ADD COLUMN IF NOT EXISTS image_paths text[] DEFAULT '{}'::text[];`
+  - Forced PostgREST cache reload via `NOTIFY pgrst, 'reload schema';`.
+- **Services**
+  - `AvatarService`: switched to `avatars` bucket, use bytes upload, `createSignedUrl` (Supabase v2), store **storage path** in `profiles.avatar_url`.
+  - **`TaskImageService`**: upload bytes to `task-images` under `tasks/<taskId>/<timestamp>.<ext>` and generate signed URLs.
+- **Controllers**
+  - Unified `ProfileController` (removed duplicate UI-layer version).
+  - `TaskController`: finalize images after create/update and persist `image_paths`.
+- **Widgets/UI**
+  - **`SignedAvatar`**: renders avatar from storage path or legacy URL with in-memory TTL cache.
+  - **`SignedImage`**: renders task image from storage path/URL with caching.
+  - `task_card.dart`: shows first task image (thumbnail).
+  - `task_details_screen.dart`: shows first task image above description.
+- **Code Hygiene**
+  - Replaced deprecated `.withOpacity` → `.withValues(alpha: ...)`.
+  - Removed unused imports and variables.
+
+#### 🐛 Bugs Fixed
+- 403 on avatar upload due to missing RLS → fixed by policies on `avatars`.
+- “column `image_paths` does not exist” during insert → added column and reloaded PostgREST cache.
+- Home avatars not refreshing → `SignedAvatar` with signed URL cache.
+- Duplicate `ProfileController` type → unified import path.
+
+#### 📊 Impact
+- Consistent, secure image handling (avatars + task images) via private buckets.
+- Faster perceived loads thanks to signed-URL caching.
+- Tasks on Home and Details now visually rich with thumbnail.
+
+#### 🗂️ Files Touched
+- **Core Widgets:** `lib/core/widgets/signed_avatar.dart`, `lib/core/widgets/signed_image.dart`
+- **Profile:** `features/profile/services/avatar_service.dart`, `features/profile/controllers/profile_controller.dart`, `features/profile/ui/widgets/profile_avatar.dart`, `features/profile/ui/widgets/profile_view.dart`
+- **Tasks:** `features/tasks/services/task_service.dart`, **`features/tasks/services/task_image_service.dart`**, `features/tasks/controllers/task_controller.dart`, `features/tasks/presentation/widgets/task_card.dart`, `features/tasks/presentation/task_details_screen.dart`
+- **Misc:** minor cleanups in theme & imports
+
+#### 🧪 Smoke Tests
+- Create task with 1–3 images → `image_paths` updated and visible in Home + Details.
+- Change avatar → profile + home avatars refresh instantly.
+- Web upload works (no `dart:io`).
+
+#### 🔜 Next
+- Task gallery (carousel) for multiple images in `task_details_screen`.
+- Pull-to-refresh on Home.
+- Image compression on upload (reduce bandwidth).
+
 ### 🟢 Version 1.8 — Profile Avatars Revamp & Home Avatar Fix  
 **Date:** 2025-09-19  
 **Commit:** _Pending_ — "fix: unify ProfileController, add SignedAvatar, private avatars bucket + RLS"

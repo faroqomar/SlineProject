@@ -346,6 +346,21 @@ features/chat/
 
 ## 📚 lib File Index (auto-generated: 2025-09-02)
 
+## 🔄 Recent Updates (2025-09-20)
+
+- **Avatars (private):** إنشاء سلة `avatars` + سياسات RLS (INSERT/SELECT لمالك الملف)، توحيد `ProfileController`، إضافة ويدجت **SignedAvatar** (يصنع signed URL + كاش داخلي). صور البروفايل تتحدث فورًا في Home/Tasks/Profile.
+- **Task Images (private):** إنشاء سلة `task-images` + RLS، إضافة **TaskImageService** (رفع بايتات + signed URL)، وإضافة عمود **`tasks.image_paths text[]`** (idempotent) وربطه بالواجهة.
+- **UI:**
+  - `task_card.dart`: عرض أول صورة للمهمة عبر **SignedImage**.
+  - `task_details_screen.dart`: عرض أول صورة فوق الوصف عبر **SignedImage**.
+- **تنظيف كود:** استبدال `.withOpacity` بـ `.withValues(alpha: ...)`، إزالة imports غير مستخدمة، وحل تضارب تعريف `ProfileController`.
+
+- `widgets/`: Shared UI widgets like buttons, nav bars, etc.
+  - `signed_avatar.dart` — resolves avatar storage path → short-lived signed URL with caching.
+  - `signed_image.dart` — resolves task image storage path/URL → short-lived signed URL with caching.
+
+task_image_service.dart (upload to task-images + createSignedUrl)
+
 Sorted ascending. Keep this section in sync when files change.
 
 ```text
@@ -446,3 +461,4 @@ lib/main.dart
 lib/shared/constants/categories.dart
 lib/features/profile/services/avatar_service.dart
 lib/core/widgets/signed_avatar.dart
+lib/core/widgets/signed_image.dart
