@@ -7,7 +7,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/features/categories/models/category_model.dart';
 import 'package:sline_app/features/categories/services/categories_service.dart';
 import 'package:provider/provider.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:sline_app/features/tasks/controllers/task_controller.dart';
 
 class CreateTaskScreen extends StatefulWidget {
