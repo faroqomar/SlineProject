@@ -66,6 +66,11 @@ class Task {
   /// Optional avatar URL of the user who posted the task
   final String? userAvatar;
 
+  /// When a request is accepted, `assigned_freelancer_id` is set in DB.
+  /// UI uses this to show "Assigned" state and gate actions.
+  /// Assigned freelancer (set when a request is accepted). Nullable.
+  final String? assignedFreelancerId;
+
   /// Storage paths (NOT URLs) for task images in the private `task-images` bucket.
   final List<String> imagePaths;
 
@@ -85,6 +90,7 @@ class Task {
     this.userName,
     this.userAvatar,
     this.categoryName,
+    this.assignedFreelancerId,
     this.imagePaths = const [],
   });
 
@@ -128,6 +134,7 @@ class Task {
       categoryName: ((json['categories'] as Map?)?['name'] as String?) ?? (json['category'] as String?),
       userName: null,
       userAvatar: null,
+      assignedFreelancerId: (json['assigned_freelancer_id'] as String?) ?? (json['freelancer_id'] as String?),
       imagePaths: parsedImagePaths,
     );
   }
@@ -147,6 +154,7 @@ class Task {
       'category_id': categoryId,
       if (category != null) 'category': category,
       'image_paths': imagePaths,
+      if (assignedFreelancerId != null) 'assigned_freelancer_id': assignedFreelancerId,
     };
     if (includeSystemFields) {
       map['id'] = id;
@@ -178,6 +186,7 @@ class Task {
     String? userName,
     String? userAvatar,
     String? categoryName,
+    String? assignedFreelancerId,
     List<String>? imagePaths,
   }) {
     return Task(
@@ -196,6 +205,7 @@ class Task {
       userName: userName ?? this.userName,
       userAvatar: userAvatar ?? this.userAvatar,
       categoryName: categoryName ?? this.categoryName,
+      assignedFreelancerId: assignedFreelancerId ?? this.assignedFreelancerId,
       imagePaths: imagePaths ?? this.imagePaths,
     );
   }

@@ -1,124 +1,93 @@
 
 
-⸻
+# Home Feature Reference
 
-🏠 Home Module – Developer Guide
+## 1. Human Explanation
+The Home feature is the authenticated landing page. It shows a searchable, filterable feed of featured/open tasks and routes to other modules (create task, saved tasks, task details). It follows MVVM:
+- UI in `lib/features/home/view/` renders search/filter controls and task list.
+- `HomeViewModel` loads/refreshes featured tasks and updates `TaskFilterViewModel`.
+- `TaskService` provides the Supabase reads for tasks and joins `profiles` for author display.
 
-1. Human Explanation
+## 2. Database & Supabase Mapping
+Home does not own tables; it reads from feature tables to populate the dashboard.
 
-The Home Module is the entry point of the app once a user is authenticated.
-It displays available services, highlights core features, and routes the user to the relevant feature modules (Tasks, Favorites, Bookings, Profile, etc.).
-	•	Purpose: Central dashboard for navigating the app.
-	•	User Flow:
-	1.	User logs in → redirected to Home.
-	2.	HomeController checks the user role (Client vs. Freelancer).
-	3.	Based on role, UI shows appropriate services (e.g., post a task, browse tasks, manage offers).
-	4.	Clicking a ServiceCard navigates into the corresponding module.
+### 2.1 `public.tasks` (consumed)
+| Column | Type | Purpose / Usage | Notes |
+| --- | --- | --- | --- |
+| `id` | `uuid` | Task id | Used for navigation/details |
+| `title` | `text` | Headline | Shown in list cards |
+| `description` | `text` | Summary | Displayed in `TaskCard` |
+| `budget` | `numeric`/`bigint` | Price field | Formatted via `format_price.dart` |
+| `user_id` | `uuid` (FK → `profiles.id`) | Author | Joined to display name/avatar |
+| `status` | `text`/enum | Filters (e.g., `open`) | Home fetch uses `status = 'open'` |
+| `task_type` | enum | Context | E.g., `tender` |
+| `category_id` | `uuid` (FK) | Category filter | Joined to `categories(name)` |
+| `created_at` | `timestamptz` | Sort by newest | UTC |
+| `image_paths` | `text[]` | Thumbnails | Shown by `TaskCard` via signed images |
 
-⸻
+Related tables: `public.profiles` for author name/avatar, `public.categories` for name label.
 
-2. Database & Supabase Mapping
+RLS: Reads allowed for authenticated users; writes follow feature-specific policies in Tasks.
 
-The Home module itself doesn’t directly manipulate Supabase tables.
-Instead, it depends on data from other modules (like tasks, profile, favorites) to display contextual information.
-	•	Indirect Dependencies:
-	•	profiles table → used by HomeController to check role (client / freelancer).
-	•	Other feature modules supply their own data for services.
+## 3. File Inventory
+| File | Layer | Description |
+| --- | --- | --- |
+| `lib/features/home/view/home_screen.dart` | View | Dashboard UI with search, category filter, refresh, and navigation to details/create/saved tasks. |
+| `lib/features/home/view/widgets/service_card.dart` | Widget | Reusable card (if used in home) for linking to modules. |
+| `lib/features/home/viewmodels/home_view_model.dart` | ViewModel | `ChangeNotifier` that loads/refreshes featured tasks and passes them to `TaskFilterViewModel`. |
+| `lib/features/tasks/viewmodels/task_filter_view_model.dart` | ViewModel | Holds filtered list, search text, and category filter state used by `HomeScreen`. |
 
-Table	Column	Purpose in Home
-profiles	role	Determines which services appear.
-
-
-⸻
-
-3. File Inventory
-
-File	Purpose
-home_controller.dart	Handles logic for deciding what to show on the home screen. Checks profile role and manages state.
-home_screen.dart	UI for the main home page. Renders service cards based on controller logic.
-service_card.dart	Reusable widget for displaying a single service (title, description, icon, tap handler).
-
-
-⸻
-
-4. State Flow Diagram
-
-flowchart LR
-    Controller[HomeController] --> Service[Other Feature Services]
-    Service --> Supabase[Supabase DB]
-    Supabase --> Service
-    Service --> Controller
-    Controller --> UI[HomeScreen + ServiceCard]
-
-Explanation:
-	•	HomeController queries ProfileService (inside profile module).
-	•	Profile data (role) comes from Supabase.
-	•	Controller decides which services to expose.
-	•	UI (HomeScreen) renders the appropriate ServiceCards.
-
-⸻
-
-5. ERD Diagram (Contextual)
-
+## 4. ERD Diagram (Context)
+```mermaid
 erDiagram
-    profiles {
-      uuid id PK
-      text role
-    }
-    profiles ||--o{ services : "determines available services"
+  PROFILES ||--o{ TASKS : "user_id"
+  CATEGORIES ||--o{ TASKS : "category_id"
 
-ASCII Fallback:
+  PROFILES { uuid id PK, text full_name, text avatar_url }
+  CATEGORIES { uuid id PK, text name }
+  TASKS { uuid id PK, uuid user_id FK, uuid category_id FK, text title, text description, timestamptz created_at }
+```
 
-profiles (id, role)
-   |
-   +-- determines --> available services (UI only)
+```text
+profiles (id) ──< tasks (user_id)
+categories (id) ──< tasks (category_id)
+```
 
+## 5. Supabase Snippets
 
-⸻
+### 5.1 Dart (reads used by Home)
+```dart
+final supabase = Supabase.instance.client;
 
-6. Supabase Snippets
+// Fetch open tasks with category name and author info (as in TaskService)
+final rows = await supabase
+  .from('tasks')
+  .select('id, title, description, budget, user_id, status, task_type, category_id, category, created_at, deadline, skills, image_paths, categories(name)')
+  .eq('status', 'open')
+  .order('created_at', ascending: false);
+```
 
-Even though Home doesn’t query directly, here’s how role-check logic works:
+### 5.2 Filter logic (ViewModel collaboration)
+```dart
+// HomeViewModel.loadFeaturedTasks(...) populates TaskFilterViewModel
+await homeViewModel.loadFeaturedTasks(filterController: context.read<TaskFilterViewModel>());
+```
 
-SQL:
+## 6. Error Handling
+| Origin | Error | User Message | Mitigation |
+| --- | --- | --- | --- |
+| Task fetch | Network/PostgREST | "Unable to load tasks." | Retry with pull-to-refresh; log via `AppLogger`. |
+| Profile join | Missing profile | "Author profile unavailable." | Render placeholder name/avatar. |
+| RLS | Permission denied | "Please sign in to view tasks." | Ensure valid session. |
 
-select role from profiles where id = auth.uid();
+## 7. Extra Notes & Testing Checklist
+- **Performance**: Avoid N+1 joins in UI; TaskService already batches and hydrates author names/avatars.
+- **UTC**: Times are UTC; convert with `formatUtcToLocal()` for display.
+- **Saved tasks**: Home integrates with `SavedTasksViewModel` to sync bookmark icons after refresh.
 
-Dart (supabase_flutter):
-
-final profile = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', supabase.auth.currentUser!.id)
-    .single();
-
-final role = profile['role'];
-if (role == 'client') {
-  // Show client services
-} else {
-  // Show freelancer services
-}
-
-
-⸻
-
-7. Error Handling
-
-Error	Cause	User-friendly Message
-row not found	Profile doesn’t exist yet	“Please complete your profile before using the app.”
-permission denied	RLS prevents access	“You don’t have permission to access this data.”
-
-
-⸻
-
-8. Extra Notes
-	•	Role switching: If a user changes their role (via Profile module), HomeController will reflect it automatically on next load.
-	•	Extensibility: New modules (e.g., Reports, Analytics) can be added simply by defining a new ServiceCard and wiring navigation.
-	•	Testing Checklist:
-	•	Log in as client → correct services shown.
-	•	Log in as freelancer → correct services shown.
-	•	Click each service card → navigates to correct module.
-	•	Profile without role → prompts setup.
-
-⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻
-
+Testing checklist:
+- Home loads with featured open tasks on first display.
+- Search and category filter update the list immediately.
+- Pull-to-refresh reloads tasks and syncs saved-state icons.
+- Navigate to task details and back; state is preserved.
+- Create a new task → returning to Home refreshes and shows it if `open`.

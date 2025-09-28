@@ -28,20 +28,20 @@ class AppColors {
   /// Subtle border color depending on theme; optional accent per type
   static Color tenderBorder(BuildContext context) {
     final theme = Theme.of(context);
-    return theme.dividerColor.withOpacity(0.25);
+    return theme.dividerColor.withValues(alpha: 0.25);
   }
 
   static Color bookingBorder(BuildContext context) {
     final theme = Theme.of(context);
-    return theme.dividerColor.withOpacity(0.25);
+    return theme.dividerColor.withValues(alpha: 0.25);
   }
 
   /// Text chip background accents (very subtle)
   static Color tenderChipBg(BuildContext context) {
-    return tenderCardBg(context).withOpacity(0.6);
+    return tenderCardBg(context).withValues(alpha: 0.6);
   }
 
   static Color bookingChipBg(BuildContext context) {
-    return bookingCardBg(context).withOpacity(0.6);
+    return bookingCardBg(context).withValues(alpha: 0.6);
   }
 }

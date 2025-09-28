@@ -1,13 +1,13 @@
-/// Task Requests (Offers/Bids) domain model.
-/// ------------------------------------------------------------
-/// What:
-///   Represents a freelancer's offer on a task, including price,
-///   estimated days, an optional note, status, and timestamps.
-///
-/// Why:
-///   Keeps UI/Services strongly-typed and consistent with DB schema,
-///   avoids map/stringly-typed bugs, and centralizes conversions.
-/// ------------------------------------------------------------
+// Task Requests (Offers/Bids) domain model.
+// ------------------------------------------------------------
+// What:
+//   Represents a freelancer's offer on a task, including price,
+//   estimated days, an optional note, status, and timestamps.
+//
+// Why:
+//   Keeps UI/Services strongly-typed and consistent with DB schema,
+//   avoids map/stringly-typed bugs, and centralizes conversions.
+// ------------------------------------------------------------
 
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart'; // Import logger for error logging

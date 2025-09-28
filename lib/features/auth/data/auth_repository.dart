@@ -1,5 +1,5 @@
-/// What: Repository that wraps Supabase auth/profile calls used by auth flows.
-/// Why: Keeps data access isolated from UI/controllers to follow repository pattern.
+// What: Repository that wraps Supabase auth/profile calls used by auth flows.
+// Why: Keeps data access isolated from UI/controllers to follow repository pattern.
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/logger_service.dart';
 

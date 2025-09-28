@@ -7,7 +7,7 @@ class UserProfile {
   final String? fullName;   // User's display name
   final String? email;      // Email copied from auth.users
   /// Stores the **private storage path** in Supabase Storage, not a public URL.
-  /// Example: 'avatars/<uid>/<timestamp>.jpg'.
+  /// Example: `avatars/{uid}/{timestamp}.jpg`.
   /// UI must call `AvatarService.createSignedUrl(avatarUrl!)` to display the image.
   final String? avatarUrl;  // Profile picture (optional)
 

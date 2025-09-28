@@ -1,165 +1,143 @@
-Perfect 🚀 Thanks for sending all the files for the Saved Module.
-I’ll now generate a clean, professional Developer Guide section in the same style as Booking, Chat, Favorites, Home, and Profile.
 
-⸻
+# Saved Feature Reference
 
-💾 Saved Module – Developer Guide
+## 1. Human Explanation
+The Saved feature lets an authenticated user bookmark tasks for quick access. It is private per-user and shows a list with navigation to task details. Architecture:
+- UI in `lib/features/saved/view/` renders saved tasks and toggles.
+- `SavedTasksViewModel` manages state (ids + full tasks), loading, and friendly errors.
+- `SavedTasksService` performs PostgREST calls to `saved_tasks` and joins `tasks` when needed.
 
-1. Human Explanation
+## 2. Database & Supabase Mapping
 
-The Saved Module allows users (primarily Clients) to bookmark tasks for later reference.
-It works like a “favorites list” but for tasks, making it easier to keep track of interesting jobs without submitting an offer immediately.
+### 2.1 `public.saved_tasks`
+| Column | Type | Purpose / Usage | Notes |
+| --- | --- | --- | --- |
+| `id` | `uuid` (PK) | Saved entry id | Default `gen_random_uuid()` |
+| `user_id` | `uuid` (FK → `profiles.id`) | Owner of the bookmark | Must equal `auth.uid()` (RLS) |
+| `task_id` | `uuid` (FK → `tasks.id`) | Bookmarked task | Unique with `user_id` |
+| `created_at` | `timestamptz` | When saved (UTC) | Default `now()` |
 
-Why it exists:
-	•	Clients may want to browse tasks and save some before deciding which to pursue.
-	•	It improves user experience by enabling a quick way to organize and revisit potential opportunities.
-	•	Saved tasks are private (each user only sees their own saved tasks).
+Indexes & Constraints
+- Unique `(user_id, task_id)` prevents duplicates.
+- (Typical) index on `user_id` for listing performance.
 
-User Flow:
-	1.	A Client browses available tasks.
-	2.	They tap “Save” on a task → it is stored in the saved_tasks table.
-	3.	Later, they open the Saved Tasks screen to view, manage, or remove saved tasks.
-	4.	From there, they can navigate directly to task details.
+RLS Policies (Summary)
+| Table | Action | Policy | Rule |
+| --- | --- | --- | --- |
+| `saved_tasks` | SELECT | owner-only | `user_id = auth.uid()` |
+| `saved_tasks` | INSERT | owner-only | `user_id = auth.uid()` |
+| `saved_tasks` | DELETE | owner-only | `user_id = auth.uid()` |
 
-⸻
+## 3. File Inventory
+| File | Layer | Description |
+| --- | --- | --- |
+| `lib/features/saved/data/saved_tasks_service.dart` | Service | CRUD: listMine, isSaved, add, remove, toggle, listMineWithDetails (join tasks). |
+| `lib/features/saved/models/saved_task_model.dart` | Model | Maps `saved_tasks` rows; typed fields `id`, `user_id`, `task_id`, `created_at`. |
+| `lib/features/saved/viewmodels/saved_tasks_view_model.dart` | ViewModel | Holds saved ids and full tasks; load/refresh/toggle with friendly error mapping. |
+| `lib/features/saved/view/saved_tasks_screen.dart` | View | List UI with remove/open actions; uses ViewModel. |
+| `lib/features/saved/view/widgets/saved_task_tile.dart` | Widget | Renders one saved task card/tile. |
+| `lib/features/saved/routes/saved_routes.dart` | Routes | Navigation to Saved screen. |
 
-2. Database & Supabase Mapping
-
-Table: saved_tasks
-
-Column	Type	Purpose / Usage	Notes
-id	uuid PK	Unique identifier for each saved task	Auto-generated
-user_id	uuid FK → profiles.id	The Client who saved the task	Enforced by RLS
-task_id	uuid FK → tasks.id	The Task being saved	Prevents duplicates with unique constraint
-created_at	timestamptz	Timestamp when the task was saved	Default now()
-
-RLS Policies
-
--- Only owner can view their saved tasks
-create policy "Saved tasks are viewable by owner"
-on saved_tasks for select
-using (user_id = auth.uid());
-
--- Only owner can insert
-create policy "Users can save tasks for themselves"
-on saved_tasks for insert
-with check (user_id = auth.uid());
-
--- Only owner can delete
-create policy "Users can remove their saved tasks"
-on saved_tasks for delete
-using (user_id = auth.uid());
-
-Constraints
-	•	Unique (user_id, task_id) → prevents saving the same task multiple times.
-
-⸻
-
-3. File Inventory
-
-File	Role
-saved_tasks_controller.dart	Manages state: fetch saved tasks, add/remove tasks, handle loading & errors.
-saved_tasks_service.dart	Supabase integration (CRUD operations: select, insert, delete).
-saved_task_model.dart	Dart model for a saved task record (id, userId, taskId, createdAt).
-saved_tasks_screen.dart	UI screen listing all saved tasks with options to remove or navigate to task details.
-saved_task_tile.dart	UI widget rendering a single saved task card.
-saved_routes.dart	Defines navigation routes for accessing Saved Tasks within the app.
-
-
-⸻
-
-4. ERD Diagram
-
-Mermaid
-
+## 4. ERD Diagram
+```mermaid
 erDiagram
-  profiles {
-    uuid id PK
-    text full_name
-  }
-  tasks {
-    uuid id PK
-    text title
-  }
-  saved_tasks {
-    uuid id PK
-    uuid user_id FK
-    uuid task_id FK
-    timestamptz created_at
-  }
+  PROFILES ||--o{ SAVED_TASKS : "user_id"
+  TASKS    ||--o{ SAVED_TASKS : "task_id"
 
-  profiles ||--o{ saved_tasks : "user_id"
-  tasks ||--o{ saved_tasks : "task_id"
+  PROFILES { uuid id PK }
+  TASKS { uuid id PK, text title }
+  SAVED_TASKS { uuid id PK, uuid user_id FK, uuid task_id FK, timestamptz created_at }
+```
 
-ASCII Fallback
-
+```text
 profiles (id) ──< saved_tasks (user_id)
 tasks (id)    ──< saved_tasks (task_id)
+```
 
+## 5. Supabase Snippets
 
-⸻
-
-5. Supabase Snippets
-
-SQL
-
--- Save a task
-insert into saved_tasks (user_id, task_id)
+### 5.1 SQL
+```sql
+-- Save a task (owner-only by RLS)
+insert into public.saved_tasks (user_id, task_id)
 values (auth.uid(), '<task_id>');
 
--- Fetch saved tasks
-select * from saved_tasks
+-- Fetch my saved tasks
+select * from public.saved_tasks
 where user_id = auth.uid()
 order by created_at desc;
 
 -- Remove a saved task
-delete from saved_tasks
+delete from public.saved_tasks
 where user_id = auth.uid() and task_id = '<task_id>';
+```
 
-Dart (supabase_flutter)
+### 5.2 Dart (supabase_flutter)
+```dart
+final supabase = Supabase.instance.client;
 
-// Save a task
-await supabase.from('saved_tasks').insert({
-  'user_id': supabase.auth.currentUser!.id,
-  'task_id': taskId,
-});
+class SavedTasksService {
+  Future<List<Map<String, dynamic>>> listMine() async {
+    final rows = await supabase
+        .from('saved_tasks')
+        .select()
+        .eq('user_id', supabase.auth.currentUser!.id)
+        .order('created_at', ascending: false);
+    return (rows as List).cast<Map<String, dynamic>>();
+  }
 
-// Fetch saved tasks
-final rows = await supabase
-    .from('saved_tasks')
-    .select('*, tasks(title, description)')
-    .eq('user_id', supabase.auth.currentUser!.id)
-    .order('created_at', ascending: false);
+  Future<bool> isSaved(String taskId) async {
+    final row = await supabase
+        .from('saved_tasks')
+        .select('id')
+        .eq('user_id', supabase.auth.currentUser!.id)
+        .eq('task_id', taskId)
+        .maybeSingle();
+    return row != null;
+  }
 
-// Remove saved task
-await supabase.from('saved_tasks')
-    .delete()
-    .eq('user_id', supabase.auth.currentUser!.id)
-    .eq('task_id', taskId);
+  Future<void> add(String taskId) async {
+    await supabase.from('saved_tasks').insert({
+      'user_id': supabase.auth.currentUser!.id,
+      'task_id': taskId,
+    });
+  }
 
+  Future<void> remove(String taskId) async {
+    await supabase
+        .from('saved_tasks')
+        .delete()
+        .eq('user_id', supabase.auth.currentUser!.id)
+        .eq('task_id', taskId);
+  }
 
-⸻
+  Future<bool> toggle(String taskId) async {
+    final already = await isSaved(taskId);
+    if (already) { await remove(taskId); return false; }
+    try {
+      await add(taskId); return true;
+    } on PostgrestException catch (e) {
+      if (e.code == '23505') return true; // unique violation → already saved
+      rethrow;
+    }
+  }
+}
+```
 
-6. Error Handling
+## 6. Error Handling
+| Origin | Error | User-Facing Message | Mitigation |
+| --- | --- | --- | --- |
+| Add duplicate | `23505` unique violation | "This task is already in your saved list." | Treat as success (already saved). |
+| Any CRUD | `42501` RLS denied | "Please sign in to manage saved tasks." | Ensure session; map to friendly copy. |
+| Join details | Missing task row | "This task is no longer available." | Hide card; allow cleanup removal. |
 
-Error	Cause	User-Friendly Message
-duplicate key value violates unique constraint	User tried to save the same task twice	“This task is already in your saved list.”
-permission denied for table saved_tasks	Tried accessing another user’s saved tasks	“You can only view your own saved tasks.”
-row-level security policy violation	Supabase blocked insert/delete for non-owner	“Access denied. Please log in again.”
-foreign key violation	Task no longer exists in tasks	“This task is no longer available.”
+## 7. Extra Notes & Testing Checklist
+- **Privacy**: Saved entries are per-user; never expose other users’ saved tasks.
+- **UX**: Toggle should optimistically update the icon, with background refresh of full list.
+- **UTC**: Use `formatUtcToLocal()` when displaying `created_at`.
 
-
-⸻
-
-7. Extra Notes
-	•	Privacy: Saved tasks are private to each user; not visible to others.
-	•	Caching: Controller can cache saved tasks locally for faster UI.
-	•	Extensibility: Could support categories/tags later.
-	•	Testing Checklist:
-	1.	Save a task → verify it appears in Saved screen.
-	2.	Try saving the same task twice → expect error.
-	3.	Remove a saved task → confirm removal.
-	4.	Access saved tasks from another account → should not be visible.
-	5.	Task deleted by Admin → ensure it disappears gracefully from Saved list.
-
-⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻⸻
+Testing checklist:
+- Save → appears in list; icon toggles immediately.
+- Save the same task twice → duplicate is handled gracefully.
+- Remove → disappears; toggle syncs across Home/Saved screens.
+- Access when signed out → friendly prompt and no data leakage.

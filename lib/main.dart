@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:sline_app/features/auth/ui/signup_screen.dart';
-import 'package:sline_app/features/chat/controllers/chat_controller.dart';
-import 'package:sline_app/features/profile/controllers/profile_controller.dart';
-import 'package:sline_app/features/auth/controllers/auth_controller.dart';
-import 'package:sline_app/features/home/controllers/home_controller.dart';
-import 'package:sline_app/features/tasks/controllers/task_controller.dart';
-import 'package:sline_app/features/tasks/controllers/task_filter_controller.dart';
+import 'package:sline_app/features/auth/view/signup_screen.dart';
+import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
+import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
+import 'package:sline_app/features/home/viewmodels/home_view_model.dart';
+import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
+import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
 import 'core/services/supabase_config.dart';
 import 'core/services/logger_service.dart';
-import 'features/auth/presentation/login_screen.dart';
-import 'features/home/presentation/home_screen.dart'; 
+import 'features/auth/view/login_screen.dart';
+import 'features/home/view/home_screen.dart';
 import 'features/favorites/routes/favorites_routes.dart';
-import 'features/favorites/presentation/screens/favorites_screen.dart';
+import 'features/favorites/view/favorites_screen.dart';
+import 'features/categories/view/categories_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app/main_navigation_screen.dart';
 import 'core/providers/navigation_provider.dart';
 import 'package:provider/provider.dart';
-import 'features/booking/controllers/booking_controller.dart';
+import 'features/booking/viewmodels/booking_view_model.dart';
+import 'features/booking/view/availability_screen.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SupabaseConfig.init();
@@ -34,15 +36,13 @@ class SLineApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ProfileController()),
+        ChangeNotifierProvider(create: (_) => ProfileViewModel()),
         ChangeNotifierProvider(create: (_) => NavigationProvider()),
-        ChangeNotifierProvider(create: (_) => AuthController()),
-        ChangeNotifierProvider(create: (_) => HomeController()),
-        ChangeNotifierProvider(create: (_) => TaskFilterController()),
-        ChangeNotifierProvider(create: (_) => TaskController()),
-        ChangeNotifierProvider(create: (_) => ChatController()),
-        ChangeNotifierProvider(create: (_) => BookingController()),
-        
+        ChangeNotifierProvider(create: (_) => HomeViewModel()),
+        ChangeNotifierProvider(create: (_) => TaskFilterViewModel()),
+        ChangeNotifierProvider(create: (_) => TaskViewModel()),
+        ChangeNotifierProvider(create: (_) => ChatViewModel()),
+        ChangeNotifierProvider(create: (_) => BookingViewModel()),
       ],
       child: MaterialApp(
         title: 'SLine App',
@@ -55,8 +55,23 @@ class SLineApp extends StatelessWidget {
           '/login': (_) => const LoginScreen(),
           '/main': (_) => const MainNavigationScreen(),
           '/signup': (_) => const SignupScreen(),
-          '/home': (_) => const HomeScreen(), // added route
+          '/home': (_) => const HomeScreen(), 
+          '/categories': (_) => const CategoriesScreen(),
           FavoritesRoutes.routeName: (_) => const FavoritesScreen(),
+          '/availability': (ctx) {
+            final args = ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>?;
+            final providerId = (args?['providerId'] ?? args?['freelancerId']) as String?;
+            final taskId = args?['taskId'] as String?;
+            if (providerId == null || taskId == null) {
+              return const Scaffold(
+                body: Center(child: Text('Missing arguments for Availability')),
+              );
+            }
+            return AvailabilityScreen(
+              providerId: providerId,
+              taskId: taskId,
+            );
+          },
         },
       ),
     );

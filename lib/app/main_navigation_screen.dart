@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sline_app/features/chat/presentation/messages_screen.dart';
+import 'package:sline_app/features/chat/view/messages_screen.dart';
 import '../core/providers/navigation_provider.dart';
 import '../core/widgets/custom_bottom_nav_bar.dart';
-import '../features/home/presentation/home_screen.dart';
-import '../features/tasks/presentation/create_task_screen.dart';
-import '../features/profile/presentation/profile_screen.dart';
+import '../features/home/view/home_screen.dart';
+import '../features/tasks/view/create_task_screen.dart';
+import '../features/profile/view/profile_screen.dart';
 
 /// Main navigation screen that manages bottom navigation and screen switching
 class MainNavigationScreen extends StatelessWidget {

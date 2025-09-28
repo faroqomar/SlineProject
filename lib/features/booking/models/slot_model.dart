@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 
 /// Domain model for an availability slot.
 /// All timestamps are stored/handled in UTC.

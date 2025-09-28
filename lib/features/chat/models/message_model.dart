@@ -54,8 +54,7 @@ String messageTypeToString(MessageType type) {
     case MessageType.disputeReport:
       return 'disputeReport';
     case MessageType.text:
-    default:
-      return 'text';
+    return 'text';
   }
 }
 

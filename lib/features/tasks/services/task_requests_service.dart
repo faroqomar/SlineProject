@@ -1,4 +1,3 @@
-
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/logger_service.dart';
 import '../models/task_request_model.dart';
@@ -94,6 +93,42 @@ class TaskRequestsService {
     }
   }
 
+  Future<TaskRequest> replaceOffer({
+    required String taskId,
+    required double price,
+    required int days,
+    String? note,
+  }) async {
+    AppLogger.d('[TaskRequestsService] replaceOffer start taskId=$taskId price=$price days=$days');
+
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) {
+      final err = Exception('Not authenticated');
+      AppLogger.e('[TaskRequestsService] replaceOffer no auth user', err);
+      throw err;
+    }
+
+    try {
+      final res = await _client.rpc('replace_task_request', params: {
+        'p_task_id': taskId,
+        'p_freelancer_id': uid,
+        'p_message': note ?? '',
+        'p_price': price,
+        'p_days': days,
+      });
+
+      final model = TaskRequest.fromMap(res as Map<String, dynamic>);
+      AppLogger.i('[TaskRequestsService] replaceOffer ok id=${model.id}');
+      return model;
+    } on PostgrestException catch (e, st) {
+      AppLogger.e('[TaskRequestsService] replaceOffer PostgrestException', e, st);
+      rethrow;
+    } catch (e, st) {
+      AppLogger.e('[TaskRequestsService] replaceOffer Unknown error', e, st);
+      rethrow;
+    }
+  }
+
   Future<TaskRequest> accept(String requestId) async {
     AppLogger.d('[TaskRequestsService] accept start requestId=$requestId');
     try {
@@ -101,7 +136,15 @@ class TaskRequestsService {
         'p_request_id': requestId,
       });
 
-      final map = (res as Map<String, dynamic>);
+      Map<String, dynamic> map;
+      if (res is Map<String, dynamic>) {
+        map = res;
+      } else if (res is List && res.isNotEmpty && res.first is Map<String, dynamic>) {
+        map = res.first as Map<String, dynamic>;
+      } else {
+        throw Exception('Unexpected RPC result format for accept_task_request');
+      }
+
       final model = TaskRequest.fromMap(map);
       AppLogger.i('[TaskRequestsService] accept ok id=${model.id}');
       return model;
@@ -121,7 +164,15 @@ class TaskRequestsService {
         'p_request_id': requestId,
       });
 
-      final map = (res as Map<String, dynamic>);
+      Map<String, dynamic> map;
+      if (res is Map<String, dynamic>) {
+        map = res;
+      } else if (res is List && res.isNotEmpty && res.first is Map<String, dynamic>) {
+        map = res.first as Map<String, dynamic>;
+      } else {
+        throw Exception('Unexpected RPC result format for reject_task_request');
+      }
+
       final model = TaskRequest.fromMap(map);
       AppLogger.i('[TaskRequestsService] reject ok id=${model.id}');
       return model;

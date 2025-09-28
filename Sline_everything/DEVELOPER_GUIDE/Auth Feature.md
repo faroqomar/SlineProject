@@ -1,131 +1,191 @@
-🔑 Auth Feature
+# Auth Feature Reference
 
-1. Human-Friendly Overview
+## 1. Human Explanation
+The authentication module gates the entire SLine marketplace. It lets prospective clients or freelancers sign up, seeds their `profiles` row, signs them into Supabase Auth, and exposes the active session to downstream features like tasks, chat, bookings, and profile management. Unauthenticated users are redirected to `LoginScreen`/`SignupScreen`; once `AuthViewModel` confirms credentials, navigation jumps to `MainNavigationScreen` and the rest of the app becomes accessible under RLS.
 
-The Auth feature is responsible for user authentication and session lifecycle. It provides signup and login flows, integrates directly with Supabase Auth (email/password), and ensures that the current session is always available across the app.
+## 2. Database & Supabase Mapping
+| Column | Type | Purpose / Usage | Notes |
+| --- | --- | --- | --- |
+| `auth.users.id` | `uuid` | Primary Supabase identity | Immutable; referenced by every feature table |
+| `auth.users.email` | `text` | Login credential | Unique; Supabase handles verification/reset |
+| `auth.users.created_at` | `timestamptz` | Account creation timestamp | Stored in UTC |
+| `profiles.id` | `uuid` | FK → `auth.users.id`; local profile key | Inserted during signup to unlock features |
+| `profiles.full_name` | `text` | Display name across UI | Captured at signup; editable later |
+| `profiles.email` | `text` | Cached email for quick reads | Should mirror `auth.users.email` |
+| `profiles.avatar_url` | `text` | Storage path for avatar | Signed URLs generated via `AvatarService` |
+| `profiles.role` | `text` | Current persona (client/freelancer) | Can be changed in profile settings |
+| `profiles.created_at` | `timestamptz` | Profile row creation | Default `now()` in UTC |
+| `auth.sessions` | Built-in | Active session in SDK | Required for any RLS-protected query |
 
-Without authentication, users cannot interact with tasks, chat, bookings, or profile data.
-	•	Login: Collects email + password → validates with Supabase → stores session.
-	•	Signup: Creates a new Supabase user → inserts a linked row into profiles.
-	•	Session Handling: Listens to Supabase auth state changes and keeps UI in sync.
+**RLS summary**
+- `profiles` **SELECT/UPDATE/DELETE**: allowed only when `auth.uid() = id`.
+- `profiles` **INSERT**: new row must satisfy `id = auth.uid()`.
+- Supabase Auth APIs bypass RLS but depend on configured email templates, reset links, and security policies.
 
-⸻
+## 3. File Inventory
+| File | Layer | Description |
+| --- | --- | --- |
+| `lib/features/auth/view/login_screen.dart` | View | Material 3 login form with validation, `ChangeNotifierProvider`, and call to `AuthViewModel.login()`.
+| `lib/features/auth/view/signup_screen.dart` | View | Signup experience with password confirmation and call to `AuthViewModel.register()`.
+| `lib/features/auth/viewmodels/auth_view_model.dart` | ViewModel | `ChangeNotifier` that toggles `isLoading`, invokes `AuthService`, emits snackbars, and routes to `MainNavigationScreen` or `/login`.
+| `lib/features/auth/services/auth_service.dart` | Service | Central Supabase layer for signup/signin/signout, session verification, and `profiles` access with logging via `AppLogger`.
+| `lib/features/auth/data/auth_repository.dart` | Repository | Optional abstraction mirroring service calls for future error mapping or caching; currently unused by the ViewModel.
 
-2. Supabase Variables & DB Dependencies
+## 4. ERD Diagram
+```mermaid
+erDiagram
+    AUTH_USERS ||--|| PROFILES : "id = id"
+    PROFILES ||--o{ USER_ROLES : "user_id"
+    ROLES ||--o{ USER_ROLES : "role_id"
+    PROFILES ||--o{ TASKS : "user_id"
 
-Variable / Field	Location (Supabase)	Purpose	Notes
-auth.users	Supabase built-in	Stores core identity	Immutable id (uuid) is FK for profiles and other tables
-profiles.id	FK → auth.users.id	Extended profile info	All app features reference this
-profiles.full_name	profiles table	Display name	Optional during signup
-profiles.avatar_url	profiles table	Path in avatars bucket	Used with signed URLs
-auth.session	SDK (client)	Current user session	Needed for RLS on every query
+    AUTH_USERS {
+        uuid id PK
+        text email
+        timestamptz created_at
+    }
 
+    PROFILES {
+        uuid id PK/FK
+        text full_name
+        text email
+        text avatar_url
+        text role
+        timestamptz created_at
+    }
 
-⸻
+    USER_ROLES {
+        uuid user_id FK
+        uuid role_id FK
+    }
 
-3. File Map
+    ROLES {
+        uuid id PK
+        text name
+    }
 
-File	Role	What It Contains
-features/auth/presentation/login_screen.dart	UI	Login form, input validation, calls AuthController.login()
-features/auth/presentation/signup_screen.dart	UI	Signup form, collects credentials, calls AuthController.signup()
-features/auth/services/auth_service.dart	Service	Wraps Supabase SDK methods: signInWithPassword, signUp, signOut, currentUser
-features/auth/data/auth_repository.dart	Repository	Converts raw Supabase responses into app-level results, central place for error mapping
-features/auth/controllers/auth_controller.dart	Controller	State management (loading, errors, session user), notifies listeners, connects UI ↔ Service/Repo
+    TASKS {
+        uuid id PK
+        uuid user_id FK
+        text title
+        numeric budget
+        text status
+    }
+```
 
+```text
+auth.users (id PK, email, created_at)
+   │
+   └── profiles (id PK/FK → auth.users.id, full_name, email, avatar_url, role, created_at)
+          │
+          ├──< user_roles (user_id FK → profiles.id, role_id FK → roles.id)
+          │        └── roles (id PK, name)
+          └──< tasks (user_id FK → profiles.id, title, budget, status, ...)
+```
 
-⸻
+## 5. Supabase Snippets
+```sql
+-- Seed profile after a successful signup
+insert into public.profiles (id, full_name, email)
+values ('<auth_user_id>', '<Full Name>', '<email@example.com>');
+-- RLS enforces auth.uid() = id.
 
-4. Error Handling Conventions
-	•	Service Level (auth_service.dart)
-	•	Catch Supabase exceptions (AuthException)
-	•	Return them as error objects instead of throwing raw exceptions.
-	•	Repository Level (auth_repository.dart)
-	•	Map Supabase error messages → human-friendly text.
-	•	Example: "Invalid login credentials" → "Email or password is incorrect"
-	•	Controller Level (auth_controller.dart)
-	•	Store error in authError field.
-	•	Call notifyListeners() to update the UI.
-	•	UI Level (login_screen.dart, signup_screen.dart)
-	•	Display error using a SnackBar or inline text under input fields.
-	•	Show a loading spinner when authController.isLoading is true.
+-- Retrieve full profile for dashboard
+select id, full_name, email, avatar_url, role
+from public.profiles
+where id = '<auth_user_id>';
 
-⸻
+-- Update display name
+update public.profiles
+set full_name = 'New Name'
+where id = '<auth_user_id>';
 
-5. State Flow Diagram
+-- Delete profile (rare client-side)
+delete from public.profiles
+where id = '<auth_user_id>';
+```
 
-Signup Flow (similar for Login):
+```dart
+final supabase = Supabase.instance.client;
 
-[User enters form data]
-        │
-        ▼
-   AuthController.signup()
-        │
-        ▼
-   AuthRepository.signup()
-        │
-        ▼
-   AuthService.signUp()  --->  Supabase Auth (signUp API)
-        │
-        ▼
-   Repository maps result (success/error)
-        │
-        ▼
-   Controller updates state (user or error)
-        │
-        ▼
-   UI listens → shows success (navigate) or error (SnackBar)
+/// Register a user and create the matching profile row.
+Future<void> registerUser({
+  required String email,
+  required String password,
+  required String fullName,
+}) async {
+  final response = await supabase.auth.signUp(email: email, password: password);
 
-This guarantees a clear separation of concerns:
-UI never talks directly to Supabase, only to the Controller → Repository → Service chain.
+  // Ensure we hold a session so RLS checks pass on profile insert.
+  final session = response.session ?? await supabase.auth.signInWithPassword(
+    email: email,
+    password: password,
+  );
 
-⸻
+  if (session == null || supabase.auth.currentUser == null) {
+    throw const AuthException('Sign-up succeeded but no session was created.');
+  }
 
-6. Example Supabase Queries
+  await supabase.from('profiles').insert({
+    'id': supabase.auth.currentUser!.id,
+    'full_name': fullName,
+    'email': email,
+  });
+}
 
-Signup
+/// Login with friendly error handling.
+Future<void> loginUser(String email, String password) async {
+  try {
+    await supabase.auth.signInWithPassword(email: email, password: password);
+  } on AuthException catch (error) {
+    if (error.message.contains('Invalid login credentials')) {
+      throw const FormatException('Email or password is incorrect.');
+    }
+    rethrow;
+  }
+}
 
-final response = await supabase.auth.signUp(
-  email: email,
-  password: password,
-  data: {'full_name': fullName}, // optional metadata
-);
+/// Update profile name while respecting RLS.
+Future<void> updateFullName(String fullName) async {
+  final userId = supabase.auth.currentUser?.id;
+  if (userId == null) throw const AuthException('Not signed in');
 
-Login
+  await supabase.from('profiles').update({
+    'full_name': fullName,
+  }).eq('id', userId);
+}
 
-final response = await supabase.auth.signInWithPassword(
-  email: email,
-  password: password,
-);
+/// Sign out the current user.
+Future<void> logoutUser() async {
+  await supabase.auth.signOut();
+}
+```
 
-Get Current User
+## 6. Error Handling
+| Origin | System Error | User-Facing Message | Mitigation |
+| --- | --- | --- | --- |
+| `supabase.auth.signUp` | `AuthException` (duplicate email / rate limit) | “An account with that email already exists. Try logging in.” | Prompt password reset |
+| `supabase.auth.signInWithPassword` | `AuthException: Invalid login credentials` | “Email or password is incorrect.” | Keep fields intact for retry |
+| `public.profiles` insert/update | `PostgrestException code=42501` (RLS) | “Session expired. Please log in again.” | Force re-authentication |
+| `public.profiles` insert` | `PostgrestException code=23505` (duplicate PK)` | “Profile already initialized. Please log in.” | Skip insert, continue login |
+| Network failure | `SocketException` / timeout | “Cannot reach the server. Check your connection and retry.” | Offer retry action |
+| `supabase.auth.signOut` | `AuthException: Session not found` | Silent success | Navigation still returns to `/login` |
 
-final user = supabase.auth.currentUser;
+**Mapping tips**
+- `23505` → Duplicate record; surface “already exists”.
+- `42501` → Permission denied; prompt re-login.
+- `AuthException` → Map library message to curated copy before showing to the user.
 
-Logout
+## 7. Extra Notes & Testing Checklist
+- **Session-first logic**: Always verify `supabase.auth.currentUser` before inserting into `profiles`; RLS rejects anonymous inserts.
+- **UTC timestamps**: Convert `auth.users.created_at` and `profiles.created_at` with `toLocal()` for presentation.
+- **Logging**: `AuthService` uses `AppLogger`; avoid logging PII such as passwords or tokens.
+- **Repository is optional**: `AuthRepository` mirrors `AuthService` and can be injected later for caching or analytics without refactoring UI.
+- **Storage integration**: Avatar uploads are delegated to `AvatarService`; auth feature only stores the resulting path.
 
-await supabase.auth.signOut();
-
-
-⸻
-
-7. ERD (Simplified)
-
-auth.users (built-in Supabase)
-        │
-        ▼
-profiles (app-owned table)
- id (PK, FK → auth.users.id)
- full_name
- avatar_url
- created_at
-
-
-⸻
-
-✅ With this section, any developer (or AI assistant) will know:
-	•	What the Auth feature does
-	•	Where Supabase connections are
-	•	How error handling flows
-	•	The state pipeline (UI → Controller → Repo → Service → Supabase)
-	•	Which files to open for what purpose
-	•	Sample queries and schema diagram
+**Testing checklist**
+- **Signup happy path**: Register user, confirm `profiles` row exists, navigate to `MainNavigationScreen`.
+- **Duplicate signup**: Expect friendly duplicate email message and prompt to log in.
+- **Login failure**: Buttons re-enable after error, snackbar shows mapped copy.
+- **Logout flow**: Session cleared and navigation returns to `/login`.
+- **Profile fetch post-login**: `AuthService.getCurrentUserProfile()` succeeds with current JWT and returns latest data.

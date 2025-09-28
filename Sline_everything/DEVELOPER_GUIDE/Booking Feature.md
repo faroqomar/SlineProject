@@ -1,4 +1,5 @@
-📅 Booking Feature
+
+# Booking Feature Reference
 
 1) Human-Readable Overview
 
@@ -18,25 +19,33 @@ Key design choices:
 
 2.1 Tables & Columns
 
-Table	Column	Type	Purpose / Notes
-availability_slots	id	uuid PK	Slot identifier
-	provider_id	uuid FK → profiles.id	Owner of the slot (the freelancer)
-	starts_at / ends_at	timestamptz	UTC time window; ends_at > starts_at check
-	is_blocked	boolean	True = not bookable (provider blocks personal time)
-	created_at	timestamptz	Audit trail
-bookings	id	uuid PK	Booking identifier
-	task_id	uuid FK → tasks.id	Linked task
-	provider_id	uuid FK → profiles.id	Provider receiving the booking
-	client_id	uuid FK → profiles.id	Client making the booking
-	slot_id	uuid FK → availability_slots.id	The reserved slot
-	status	booking_status_enum	pending → confirmed → completed (or canceled)
-	note	text	Optional client message
-	created_at	timestamptz	Audit trail
+### availability_slots
+| Column | Type | Purpose / Usage | Notes |
+| --- | --- | --- | --- |
+| `id` | `uuid` (PK) | Slot identifier | Default `gen_random_uuid()` |
+| `provider_id` | `uuid` (FK → `profiles.id`) | Owner of the slot (freelancer) | RLS requires `auth.uid() = provider_id` for writes |
+| `starts_at` | `timestamptz` | UTC start time | Convert local → UTC before insert |
+| `ends_at` | `timestamptz` | UTC end time | `chk_slot_time` enforces `ends_at > starts_at` |
+| `is_blocked` | `boolean` | Not bookable when true | Default `false` |
+| `created_at` | `timestamptz` | Audit timestamp | Default `now()` (UTC) |
+
+### bookings
+| Column | Type | Purpose / Usage | Notes |
+| --- | --- | --- | --- |
+| `id` | `uuid` (PK) | Booking identifier | Default `gen_random_uuid()` |
+| `task_id` | `uuid` (FK → `tasks.id`) | Linked task context | ON DELETE CASCADE |
+| `provider_id` | `uuid` (FK → `profiles.id`) | Provider receiving the booking | Scopes provider views |
+| `client_id` | `uuid` (FK → `profiles.id`) | Client making the booking | Must equal `auth.uid()` on insert (RLS) |
+| `slot_id` | `uuid` (FK → `availability_slots.id`) | The reserved slot | Unique while status in ('pending','confirmed') |
+| `status` | `booking_status_enum` | Lifecycle | Default `pending` |
+| `note` | `text` | Optional message | Nullable |
+| `created_at` | `timestamptz` | Audit timestamp | Default `now()` (UTC) |
 
 2.2 Enums
 
-Enum	Values	Notes
-booking_status_enum	pending, confirmed, canceled, completed	Guards state transitions in trigger
+| Enum | Values | Notes |
+| --- | --- | --- |
+| `booking_status_enum` | `pending`, `confirmed`, `canceled`, `completed` | Guarded by trigger `fn_booking_guard` for valid transitions |
 
 2.3 Indexes & Constraints
 	•	No double booking on the same slot:
@@ -53,12 +62,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_bookings_slot_active
 
 2.4 RLS Policies (Summary)
 
-Table	Policy	Who	Action	Rule
-availability_slots	slots_select_all	authenticated	SELECT	true
-	slots_cud_owner	authenticated	ALL	provider_id = auth.uid()
-bookings	bookings_select_owner_or_client	authenticated	SELECT	provider_id = auth.uid() OR client_id = auth.uid()
-	bookings_insert_client_only	authenticated	INSERT	client_id = auth.uid() AND slot not already active
-	bookings_update_roles	authenticated	UPDATE	Provider can confirm/complete; Client can cancel
+| Table | Policy | Who | Action | Rule |
+| --- | --- | --- | --- | --- |
+| `availability_slots` | `slots_select_all` | authenticated | SELECT | `true` |
+| `availability_slots` | `slots_cud_owner` | authenticated | INSERT/UPDATE/DELETE | `provider_id = auth.uid()` |
+| `bookings` | `bookings_select_owner_or_client` | authenticated | SELECT | `provider_id = auth.uid() OR client_id = auth.uid()` |
+| `bookings` | `bookings_insert_client_only` | authenticated | INSERT | `client_id = auth.uid()` AND slot not already active |
+| `bookings` | `bookings_update_roles` | authenticated | UPDATE | Provider can confirm/complete; Client can cancel |
 
 2.5 Triggers / Business Guards
 	•	No overlapping open slots for the same provider:
@@ -73,24 +83,22 @@ bookings	bookings_select_owner_or_client	authenticated	SELECT	provider_id = auth
 
 3) File Inventory (Flutter)
 
-File	Role	What it does
-features/booking/services/booking_service.dart	Service	Supabase queries for slots & bookings (list/create/update). Converts maps ↔ models.
-features/booking/controllers/booking_controller.dart	Controller	ChangeNotifier state: lists, loading flags, pagination, mutations (create slot, book, confirm, cancel).
-features/booking/models/slot_model.dart	Model	AvailabilitySlot (id, providerId, startsAt, endsAt, isBlocked). UTC serialization helpers.
-features/booking/models/booking_model.dart	Model	Booking (id, taskId, providerId, clientId, slotId, status, note). Enum mapping.
-features/booking/presentation/availability_screen.dart	UI	Provider calendar/list view. Create/block slots. Pull-to-refresh + infinite scroll.
-features/booking/presentation/add_slot_sheet.dart	UI	Bottom sheet to pick local start/end, convert to UTC, create slot or block time.
-features/booking/presentation/booking_sheet.dart	UI	Client-side flow to book a slot for a given task (+ optional note).
-features/booking/presentation/bookings_list_screen.dart	UI	Tabs: “As Client” & “As Provider”; status filters; pagination; actions (confirm/complete/cancel).
+File	Layer	Description
+lib/features/booking/data/booking_repository.dart	Repository	Wraps BookingService and exposes methods for slots/bookings; surfaces current user.
+lib/features/booking/services/booking_service.dart	Service	Executes PostgREST calls for `availability_slots` and `bookings` (list/create/update) and maps to models.
+lib/features/booking/viewmodels/booking_view_model.dart	ViewModel	ChangeNotifier holding UI state, pagination cursors, optimistic updates, and friendly error mapping.
+lib/features/booking/view/availability_screen.dart	View	Provider availability browser with pull-to-refresh, infinite scroll, and + button for `AddSlotSheet`.
+lib/features/booking/view/add_slot_sheet.dart	View	Bottom sheet to pick local start/end, convert to UTC, and call `BookingViewModel.createSlot()`.
+lib/features/booking/view/booking_sheet.dart	View	Client booking sheet with optional note; calls `BookingViewModel.bookSlot()`.
+lib/features/booking/view/bookings_list_screen.dart	View	Dual-tab history (As Client / As Provider) with filters, pagination, and action buttons (future confirm/complete/cancel).
 
-Convention: Service owns Supabase calls, Controller owns UI state + orchestration, UI is dumb (reads state, triggers controller methods).
+Convention: Service owns Supabase calls, ViewModel owns UI state + orchestration, UI is dumb (reads state, triggers ViewModel methods).
 
 ⸻
 
 4) ERD (Mini)
 
-Mermaid
-
+```mermaid
 erDiagram
   PROFILES ||--o{ AVAILABILITY_SLOTS : "provider_id"
   PROFILES ||--o{ BOOKINGS : "provider_id / client_id"
@@ -121,6 +129,7 @@ erDiagram
     uuid id PK
     uuid user_id
   }
+```
 
 ASCII (fallback)
 
@@ -203,7 +212,7 @@ The trigger (fn_booking_guard) and RLS (bookings_update_roles) jointly ensure on
 
 6) Error Handling & Common Pitfalls
 
-Client/Controller conventions
+Client/ViewModel conventions
 	•	Map Postgres error codes (e.g., 23505 unique violation) → user-friendly messages:
 	•	“This time slot is already booked. Please choose another.”
 	•	For overlap trigger errors on slot creation:
@@ -214,7 +223,7 @@ Common pitfalls
 	•	RLS denials:
 	•	Creating a slot with mismatched provider_id (must be auth.uid()).
 	•	Inserting a booking with client_id != auth.uid().
-	•	Ordering + Pagination: Apply filters before .order(); use range() instead of client-side slicing.
+	•	Ordering + Pagination: Apply filters before `.order()`. Use `.limit()` with time-based cursors (e.g., `gt/lt` on `starts_at` or `created_at`) instead of client-side slicing.
 	•	Double booking race: Unique partial index on bookings(slot_id) with active statuses prevents it.
 
 ⸻
