@@ -5,8 +5,10 @@ import '../models/task_model.dart';
 class TaskFilterViewModel extends ChangeNotifier {
   final List<Task> _allTasks = [];
   List<Task> _filteredTasks = [];
+  String _selectedCategory = '';
 
   List<Task> get filteredTasks => List.unmodifiable(_filteredTasks);
+  String get selectedCategory => _selectedCategory;
 
   void setTasks(List<Task> tasks) {
     _allTasks
@@ -30,6 +32,7 @@ class TaskFilterViewModel extends ChangeNotifier {
   }
 
   void filterByCategory(String category) {
+    _selectedCategory = category;
     if (category.isEmpty) {
       _filteredTasks = List.from(_allTasks);
     } else {
@@ -40,6 +43,7 @@ class TaskFilterViewModel extends ChangeNotifier {
   }
 
   void clearFilters() {
+    _selectedCategory = '';
     _filteredTasks = List.from(_allTasks);
     notifyListeners();
   }

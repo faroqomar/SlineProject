@@ -18,6 +18,7 @@ class AppTextField extends StatelessWidget {
   final Widget? prefixIcon;
   final Widget? suffixIcon;
   final bool enabled;
+  final int maxLines; // Added
 
   const AppTextField({
     super.key,
@@ -30,6 +31,7 @@ class AppTextField extends StatelessWidget {
     this.prefixIcon,
     this.suffixIcon,
     this.enabled = true,
+    this.maxLines = 1, // Default 1
   });
 
   @override
@@ -47,6 +49,7 @@ class AppTextField extends StatelessWidget {
       onChanged: onChanged,
       validator: validator,
       enabled: enabled,
+      maxLines: maxLines, // Pass to TextFormField
       style: textTheme.bodyMedium?.copyWith(
         color: colorScheme.text,
       ),

@@ -1,19 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:sline_app/features/tasks/view/widgets/requests/requests_list_screen.dart';
-import '../../../../core/services/logger_service.dart';
-import '../../models/task_model.dart';
-import '../../../chat/viewmodels/chat_view_model.dart';
-import '../../../chat/view/chat_screen.dart';
-import '../../../../core/utils/format_price.dart';
-import '../../../../core/theme/app_colors.dart';
-import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
-import '../../../../features/favorites/data/favorites_service.dart';
-import 'package:sline_app/core/widgets/signed_avatar.dart';
-import 'package:sline_app/core/widgets/signed_image.dart';
-import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
+import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_decorations.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/utils/format_price.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
 
-/// A card widget to display basic info about a task.
+/// A card widget to display basic info about a task with Glassmorphism design.
 class TaskCard extends StatelessWidget {
   final Task task;
   final VoidCallback onTap;
@@ -26,286 +20,230 @@ class TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isTender = task.isTender == true;
-    final bool isBooking = task.isBooking == true;
-    final Color cardBg = isTender
-        ? AppColors.tenderCardBg(context)
-        : isBooking
-            ? AppColors.bookingCardBg(context)
-            : Theme.of(context).colorScheme.surface;
-    final Color borderColor = isTender
-        ? AppColors.tenderBorder(context)
-        : isBooking
-            ? AppColors.bookingBorder(context)
-            : Theme.of(context).dividerColor.withValues(alpha: 0.2);
-    final String? currentUserId = context.select<TaskViewModel, String?>((vm) => vm.currentUserId);
+    final AppColorScheme colorScheme = context.colorScheme;
+    final bool isTender = task.isTender;
+    // final bool isBooking = task.isBooking; // Unused
 
-    final bool isOwner = currentUserId == task.userId;
-    final bool isAssigned = task.assignedFreelancerId != null;
-    final String primaryCtaLabel = isBooking ? 'Book' : 'Offer';
+    // Semantic Colors based on Task Type
+    final Color badgeBg = isTender
+        ? AppColors.tenderChipBg(context)
+        : AppColors.bookingChipBg(context);
+    final Color badgeText = isTender ? AppColors.lightRed : AppColors.teal;
+    final IconData badgeIcon = isTender ? Icons.assignment : Icons.calendar_today;
+    final String badgeLabel = isTender ? 'TENDER' : 'BOOKING';
 
-    return Card(
-      elevation: 0,
-      color: cardBg,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: borderColor),
+    // Dynamic Avatar Color (simple hash based on name)
+    final List<Color> avatarColors = [
+      AppColors.teal,
+      AppColors.gold,
+      AppColors.lightRed,
+      AppColors.lightTeal,
+    ];
+    final int colorIndex = (task.userName ?? 'User').hashCode.abs() % avatarColors.length;
+    final Color avatarBg = avatarColors[colorIndex];
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppDimens.p12),
+      decoration: AppDecorations.glassBoxDecoration(
+        colorScheme: colorScheme,
+        borderRadius: BorderRadius.circular(AppDimens.r18),
+      ).copyWith(
+        // Add subtle type-based tint override if needed, or stick to glass
+        // color: isTender ? AppColors.tenderCardBg(context) : AppColors.bookingCardBg(context),
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  SignedAvatar(
-                    storagePathOrUrl: task.userAvatar,
-                    radius: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      task.userName ?? 'Unknown User',
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: isTender
-                          ? AppColors.tenderChipBg(context)
-                          : isBooking
-                              ? AppColors.bookingChipBg(context)
-                              : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: borderColor),
-                    ),
-                    child: Text(
-                      isTender ? 'TENDER' : (isBooking ? 'BOOKING' : 'TASK'),
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                    ),
-                  ),
-                  if (task.assignedFreelancerId != null) ...[
-                    const SizedBox(width: 6),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AppDimens.r18),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppDimens.r18),
+          child: Padding(
+            padding: const EdgeInsets.all(AppDimens.p16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // --- Header ---
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Avatar
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      width: 36, // w-9
+                      height: 36, // h-9
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.tertiaryContainer,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.5)),
+                        color: avatarBg,
+                        shape: BoxShape.circle,
                       ),
-                      child: Text(
-                        'ASSIGNED',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
+                      child: Center(
+                        child: Text(
+                          _getInitials(task.userName),
+                          style: AppTypography.bodySmall.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.white, // Assuming dark text on bright colors or white on dark
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppDimens.p8),
+                    
+                    // User Info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  task.userName ?? 'Unknown User',
+                                  style: AppTypography.bodySmall.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: colorScheme.text,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              // Verification check could go here
+                            ],
+                          ),
+                          Text(
+                            _formatTimeAgo(task.createdAt),
+                            style: AppTypography.micro.copyWith(
+                              color: colorScheme.textSecondary,
+                              fontWeight: FontWeight.w500,
                             ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Type Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimens.p10,
+                        vertical: AppDimens.p4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: badgeBg,
+                        borderRadius: BorderRadius.circular(AppDimens.r8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            badgeIcon,
+                            size: 12,
+                            color: badgeText,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            badgeLabel,
+                            style: AppTypography.micro.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: badgeText,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                task.title,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 4),
-
-              // Show resolved category name (from embedded join) with fallback
-              Text(
-                'Category: ${task.categoryName ?? 'Uncategorized'}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-
-              const SizedBox(height: 6),
-              if (task.imagePaths.isNotEmpty) ...[
-                SignedImage(
-                  storagePathOrUrl: task.imagePaths.first,
-                  width: double.infinity,
-                  height: 160,
-                  borderRadius: 12,
-                  fit: BoxFit.cover,
                 ),
-                const SizedBox(height: 8),
-              ],
-              Text(task.description),
-              const SizedBox(height: 6),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('💰 ${PriceFormatter.formatPrice(task.budget)}'),
-                  Row(
+                const SizedBox(height: AppDimens.p12),
+
+                // --- Content ---
+                Text(
+                  task.title,
+                  style: AppTypography.h6.copyWith(
+                    color: colorScheme.text,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppDimens.p4),
+                Text(
+                  task.description,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: colorScheme.textSecondary,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppDimens.p12),
+
+                // --- Footer ---
+                Container(
+                  padding: const EdgeInsets.only(top: AppDimens.p12),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      top: BorderSide(color: colorScheme.cardBorder),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Bookmark toggle
-                      Builder(
-                        builder: (context) {
-                          final savedVm = context.watch<SavedTasksViewModel>();
-                          final isSaved = savedVm.isSaved(task.id);
-                          return IconButton(
-                            tooltip: isSaved ? 'Remove bookmark' : 'Save task',
-                            icon: Icon(isSaved ? Icons.bookmark : Icons.bookmark_border),
-                            onPressed: () async {
-                              final nowSaved = await savedVm.toggle(task.id);
-                              if (!context.mounted) return;
-                              final snackBar = SnackBar(
-                                content: Text(nowSaved ? 'Task saved' : 'Bookmark removed'),
-                                action: nowSaved
-                                    ? SnackBarAction(
-                                        label: 'Add freelancer to favorites',
-                                        onPressed: () async {
-                                          try {
-                                            await FavoritesService().addFavorite(task.userId);
-                                            if (!context.mounted) return;
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(content: Text('Freelancer added to favorites')),
-                                            );
-                                          } catch (e) {
-                                            if (!context.mounted) return;
-                                            final msg = e.toString().contains('23505')
-                                                ? 'Already in favorites'
-                                                : e.toString().toLowerCase().contains('rls')
-                                                    ? 'Not allowed for your role'
-                                                    : 'Failed to add favorite';
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(content: Text(msg)),
-                                            );
-                                          }
-                                        },
-                                      )
-                                    : null,
-                                duration: const Duration(seconds: 4),
-                              );
-                              ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                            },
-                          );
-                        },
+                      // Time Left / Offers
+                      Row(
+                        children: [
+                          Text(
+                            task.deadline != null
+                                ? _formatDeadline(task.deadline!)
+                                : 'No deadline',
+                            style: AppTypography.captionBold.copyWith(
+                              color: isTender ? AppColors.lightRed : AppColors.teal,
+                            ),
+                          ),
+                          if (task.taskType == TaskType.tender) ...[
+                            const SizedBox(width: AppDimens.p8),
+                            Text(
+                              '•  0 offers', // Placeholder for offers count
+                              style: AppTypography.captionBold.copyWith(
+                                color: colorScheme.text,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
-                      TextButton.icon(
-                        onPressed: () async {
-                          final me = context.read<TaskViewModel>().currentUserId;
-                          if (me == null) {
-                            AppLogger.e('❌ No authenticated user found');
-                            return;
-                          }
-                          if (isOwner) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("You can't start a chat on your own task. Open offers or share your task to get bids."),
-                                  duration: Duration(seconds: 3),
-                                ),
-                              );
-                            }
-                            return; // do not proceed to create a conversation
-                          }
 
-                          try {
-                            final chatVM = context.read<ChatViewModel>();
-
-                            AppLogger.i('🚀 TaskCard Chat pressed - creating or fetching conversation...');
-                            final conversation = await chatVM.createOrGetConversation(
-                              taskId: task.id,
-                              user1Id: me,
-                              user2Id: task.userId,
-                            );
-
-                            AppLogger.i('✅ Conversation ready: ${conversation.id}');
-                            chatVM.activeConversation = conversation;
-                            await chatVM.fetchMessages(conversation.id);
-
-                            if (context.mounted) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => ChatScreen(conversation: conversation),
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            AppLogger.e('❌ Error starting conversation from TaskCard: $e');
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error starting chat: $e')),
-                              );
-                            }
-                          }
-                        },
-                        icon: const Icon(Icons.chat_bubble_outline),
-                        label: const Text('Chat'),
-                      ),
-                      TextButton.icon(
-                        onPressed: () async {
-                          if (isOwner) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("You can't book or offer on your own task.")),
-                              );
-                            }
-                            return;
-                          }
-                          if (isAssigned && isTender) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('This task is already assigned.')),
-                              );
-                            }
-                            return;
-                          }
-                          try {
-                            if (isBooking) {
-                              // Navigate to booking availability for the task owner (freelancer)
-                              if (context.mounted) {
-                                Navigator.of(context).pushNamed(
-                                  '/availability',
-                                  arguments: {'freelancerId': task.userId, 'taskId': task.id},
-                                );
-                              }
-                            } else {
-                              // Tender → navigate to Requests screen and auto-open submit sheet
-                              if (context.mounted) {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => RequestsListScreen(
-                                      taskId: task.id,
-                                      autoOpenSubmitSheet: true,
-                                      isTender: true,
-                                      isOwner: isOwner,
-                                    ),
-                                  ),
-                                );
-                              }
-                            }
-                          } catch (e) {
-                            AppLogger.e('❌ Primary CTA error: $e');
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Something went wrong: $e')),
-                              );
-                            }
-                          }
-                        },
-                        icon: Icon(isBooking ? Icons.book_online_outlined : Icons.local_offer_outlined),
-                        label: Text(primaryCtaLabel),
+                      // Budget
+                      Text(
+                        PriceFormatter.formatPrice(task.budget),
+                        style: AppTypography.h5.copyWith(
+                          color: AppColors.teal,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                     ],
                   ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  String _getInitials(String? name) {
+    if (name == null || name.isEmpty) return 'U';
+    final parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return name[0].toUpperCase();
+  }
+
+  String _formatTimeAgo(DateTime date) {
+    final diff = DateTime.now().difference(date);
+    if (diff.inDays > 0) return '${diff.inDays}d ago';
+    if (diff.inHours > 0) return '${diff.inHours}h ago';
+    if (diff.inMinutes > 0) return '${diff.inMinutes}m ago';
+    return 'Just now';
+  }
+
+  String _formatDeadline(DateTime date) {
+    final diff = date.difference(DateTime.now());
+    if (diff.isNegative) return 'Expired';
+    if (diff.inDays > 0) return '${diff.inDays}d left';
+    return '${diff.inHours}h left';
   }
 }

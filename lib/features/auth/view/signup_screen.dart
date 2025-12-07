@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/widgets/app_button.dart';
+import 'package:sline_app/core/widgets/app_text_field.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
 
-/// Signup screen (MVVM)
+/// Signup screen (MVVM) with Glassmorphism design.
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -27,124 +33,272 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colorScheme = context.colorScheme;
+
     return ChangeNotifierProvider(
       create: (_) => AuthViewModel(),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Sign Up')),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-            child: Consumer<AuthViewModel>(
-              builder: (context, authVM, _) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Image.asset(
-                      'assets/images/logo.png',
-                      height: 200,
-                    ),
-                    const SizedBox(height: 32),
-                    const Text(
-                      'Create Your Account',
-                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Sign up to get started with SLine',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 32),
-                    TextField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Full Name',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.person),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.email),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _passwordController,
-                      decoration: const InputDecoration(
-                        labelText: 'Password',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.lock),
-                      ),
-                      obscureText: true,
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _confirmPasswordController,
-                      decoration: const InputDecoration(
-                        labelText: 'Confirm Password',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.lock_outline),
-                      ),
-                      obscureText: true,
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: authVM.isLoading
-                          ? null
-                          : () async {
-                              final name = _nameController.text.trim();
-                              final email = _emailController.text.trim();
-                              final password = _passwordController.text.trim();
-                              final confirm = _confirmPasswordController.text.trim();
-
-                              if (name.isEmpty || email.isEmpty || password.isEmpty || confirm.isEmpty) {
-                                if (!context.mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('All fields are required')),
-                                );
-                                return;
-                              }
-                              if (password != confirm) {
-                                if (!context.mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Passwords do not match')),
-                                );
-                                return;
-                              }
-                              await authVM.register(
-                                state: this,
-                                email: email,
-                                password: password,
-                                fullName: name,
-                              );
-                            },
-                      child: authVM.isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 14.0),
-                              child: Text('Sign Up', style: TextStyle(fontSize: 16)),
+        body: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                colorScheme.authGradientStart,
+                colorScheme.authGradientEnd,
+              ],
+            ),
+          ),
+          child: SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: AppDimens.p32, vertical: AppDimens.p24),
+                child: Consumer<AuthViewModel>(
+                  builder: (context, authVM, _) {
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // --- Header ---
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: AppColors.teal,
+                            borderRadius: BorderRadius.circular(AppDimens.r20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.teal.withValues(alpha: 0.3),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Text(
+                              'S',
+                              style: AppTypography.h1.copyWith(
+                                fontSize: 36,
+                                color: AppColors.offWhite,
+                              ),
                             ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: const Text('Already have an account? Log In'),
-                    ),
-                  ],
-                );
-              },
+                          ),
+                        ),
+                        const SizedBox(height: AppDimens.p24),
+                        
+                        Text(
+                          'Create Account',
+                          style: AppTypography.h1.copyWith(
+                            color: colorScheme.text,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: AppDimens.p8),
+                        
+                        Text(
+                          'Join SLine today',
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: colorScheme.textSecondary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: AppDimens.p32),
+
+                        // --- Form Fields ---
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Full Name',
+                            style: AppTypography.bodySmall.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.text,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppDimens.p8),
+                        AppTextField(
+                          controller: _nameController,
+                          hintText: 'John Doe',
+                        ),
+                        const SizedBox(height: AppDimens.p16),
+
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Email',
+                            style: AppTypography.bodySmall.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.text,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppDimens.p8),
+                        AppTextField(
+                          controller: _emailController,
+                          hintText: 'your@email.com',
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        const SizedBox(height: AppDimens.p16),
+
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Password',
+                            style: AppTypography.bodySmall.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.text,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppDimens.p8),
+                        AppTextField(
+                          controller: _passwordController,
+                          hintText: 'Create a password',
+                          obscureText: true,
+                        ),
+                        const SizedBox(height: AppDimens.p16),
+
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Confirm Password',
+                            style: AppTypography.bodySmall.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.text,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppDimens.p8),
+                        AppTextField(
+                          controller: _confirmPasswordController,
+                          hintText: 'Confirm password',
+                          obscureText: true,
+                        ),
+                        const SizedBox(height: AppDimens.p24),
+
+                        // --- Actions ---
+                        AppButton(
+                          text: 'Create Account',
+                          isLoading: authVM.isLoading,
+                          width: double.infinity,
+                          onPressed: () async {
+                            final name = _nameController.text.trim();
+                            final email = _emailController.text.trim();
+                            final password = _passwordController.text.trim();
+                            final confirm = _confirmPasswordController.text.trim();
+
+                            if (name.isEmpty || email.isEmpty || password.isEmpty || confirm.isEmpty) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('All fields are required')),
+                              );
+                              return;
+                            }
+                            if (password != confirm) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Passwords do not match')),
+                              );
+                              return;
+                            }
+                            await authVM.register(
+                              state: this,
+                              email: email,
+                              password: password,
+                              fullName: name,
+                            );
+                          },
+                        ),
+                        const SizedBox(height: AppDimens.p24),
+
+                        // Divider
+                        Row(
+                          children: [
+                            Expanded(child: Divider(color: colorScheme.divider)),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: AppDimens.p8),
+                              child: Text(
+                                'OR',
+                                style: AppTypography.captionBold.copyWith(
+                                  color: colorScheme.textSecondary,
+                                ),
+                              ),
+                            ),
+                            Expanded(child: Divider(color: colorScheme.divider)),
+                          ],
+                        ),
+                        const SizedBox(height: AppDimens.p24),
+
+                        // Social Logins
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildSocialButton(context, '🔍'), // Google
+                            const SizedBox(width: AppDimens.p12),
+                            _buildSocialButton(context, '📘'), // Facebook
+                            const SizedBox(width: AppDimens.p12),
+                            _buildSocialButton(context, '🍎'), // Apple
+                          ],
+                        ),
+                        const SizedBox(height: AppDimens.p24),
+
+                        // Sign In Link
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Already have an account? ',
+                              style: AppTypography.bodySmall.copyWith(
+                                color: colorScheme.textSecondary,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pop(context);
+                              },
+                              child: Text(
+                                'Sign In',
+                                style: AppTypography.bodySmall.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSocialButton(BuildContext context, String icon) {
+    final AppColorScheme colorScheme = context.colorScheme;
+    return Container(
+      width: 50,
+      height: 50,
+      decoration: BoxDecoration(
+        color: colorScheme.authInputBackground,
+        borderRadius: BorderRadius.circular(AppDimens.r14),
+        border: Border.all(color: colorScheme.authInputBorder),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AppDimens.r14),
+        child: InkWell(
+          onTap: () {},
+          borderRadius: BorderRadius.circular(AppDimens.r14),
+          child: Center(
+            child: Text(
+              icon,
+              style: const TextStyle(fontSize: 20),
             ),
           ),
         ),

@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/widgets/app_text_field.dart';
+import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/core/widgets/signed_avatar.dart';
+import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
+import 'package:sline_app/features/saved/data/saved_tasks_service.dart';
+import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
+import 'package:sline_app/features/tasks/view/task_details_screen.dart';
 import 'package:sline_app/features/tasks/view/widgets/task_card.dart';
-import '../viewmodels/home_view_model.dart';
-import '../../tasks/view/create_task_screen.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
 import 'package:sline_app/shared/constants/categories.dart';
-import 'package:sline_app/features/tasks/view/task_details_screen.dart';
-import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
-import 'package:sline_app/features/saved/data/saved_tasks_service.dart';
-import 'package:sline_app/features/saved/view/saved_tasks_screen.dart';
+import '../viewmodels/home_view_model.dart';
 
-/// Home screen - main dashboard for the app (MVVM)
+/// Home screen - main dashboard for the app (MVVM) with Glassmorphism design.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -27,11 +33,15 @@ class _HomeScreenState extends State<HomeScreen> {
       context.read<HomeViewModel>().loadFeaturedTasks(
             filterController: context.read<TaskFilterViewModel>(),
           );
+      // Ensure profile is loaded for the header
+      context.read<ProfileViewModel>().loadProfile();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final AppColorScheme colorScheme = context.colorScheme;
+
     return ChangeNotifierProvider(
       create: (_) {
         final vm = SavedTasksViewModel(service: SavedTasksService());
@@ -39,62 +49,13 @@ class _HomeScreenState extends State<HomeScreen> {
         vm.load();
         return vm;
       },
-      // IMPORTANT: use `builder` (not `child`) so descendants use the scoped context
       builder: (context, _) {
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('SLine'),
-            backgroundColor: Theme.of(context).primaryColor,
-            foregroundColor: Colors.white,
-            actions: [
-              IconButton(
-                tooltip: 'Saved Tasks',
-                icon: const Icon(Icons.bookmark_outline),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const SavedTasksScreen()),
-                  );
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: () async {
-                  // Refresh tasks
-                  final filter = context.read<TaskFilterViewModel>();
-                  final home = context.read<HomeViewModel>();
-                  final saved = context.read<SavedTasksViewModel>();
-                  await home.refresh(filterController: filter);
-                  // Refresh saved cache to keep icons in sync
-                  if (!context.mounted) return;
-                  await saved.refresh();
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.add),
-                onPressed: () async {
-                  // Pre-capture providers before awaiting navigation
-                  final preFilter = context.read<TaskFilterViewModel>();
-                  final preHome = context.read<HomeViewModel>();
-                  final preSaved = context.read<SavedTasksViewModel>();
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const CreateTaskScreen()),
-                  );
-                  if (result == true) {
-                    if (!context.mounted) return;
-                    await preHome.refresh(filterController: preFilter);
-                    if (!context.mounted) return;
-                    await preSaved.refresh();
-                  }
-                },
-              ),
-            ],
-          ),
-          body: Consumer2<HomeViewModel, TaskFilterViewModel>(
-            builder: (context, homeViewModel, filterController, child) {
-              if (homeViewModel.isLoading) {
-                return const Center(child: CircularProgressIndicator());
-              }
+          backgroundColor: Colors.transparent, // Allow main gradient to show through
+          body: Consumer3<HomeViewModel, TaskFilterViewModel, ProfileViewModel>(
+            builder: (context, homeViewModel, filterController, profileVM, child) {
+              // Safe Area padding for the header
+              final topPadding = MediaQuery.of(context).padding.top;
 
               return RefreshIndicator(
                 onRefresh: () async {
@@ -102,56 +63,148 @@ class _HomeScreenState extends State<HomeScreen> {
                   await homeViewModel.refresh(
                     filterController: filterController,
                   );
+                  await profileVM.loadProfile();
                   if (!context.mounted) return;
                   await saved.refresh();
                 },
                 child: CustomScrollView(
                   slivers: [
-                    // Search and filter section
+                    // --- Custom Header Section ---
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.all(16.0),
+                        padding: EdgeInsets.fromLTRB(
+                          AppDimens.p24,
+                          topPadding + AppDimens.p24,
+                          AppDimens.p24,
+                          AppDimens.p16,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            TextField(
-                              decoration: const InputDecoration(
-                                prefixIcon: Icon(Icons.search),
-                                hintText: 'Search tasks...',
-                                border: OutlineInputBorder(),
-                              ),
-                              onChanged: filterController.searchTasks,
-                            ),
-                            const SizedBox(height: 12),
-                            DropdownButtonFormField<String>(
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                labelText: 'Filter by Category',
-                              ),
-                              items: [
-                                const DropdownMenuItem(
-                                  value: '',
-                                  child: Text('All'),
+                            // 1. User Info & Bell
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: AppColors.offWhite.withValues(alpha: 0.2), width: 2),
+                                        borderRadius: BorderRadius.circular(AppDimens.r18),
+                                      ),
+                                      child: SignedAvatar(
+                                        storagePathOrUrl: profileVM.avatarUrl,
+                                        radius: 26, // 52px size
+                                        
+                                      ),
+                                    ),
+                                    const SizedBox(width: AppDimens.p12),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Good Morning 👋',
+                                          style: AppTypography.bodySmall.copyWith(
+                                            color: colorScheme.textSecondary,
+                                          ),
+                                        ),
+                                        Text(
+                                          profileVM.fullName ?? 'Guest',
+                                          style: AppTypography.h4.copyWith(
+                                            color: colorScheme.text,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                                ...taskCategories.map(
-                                  (category) => DropdownMenuItem(
-                                    value: category,
-                                    child: Text(category),
+                                GestureDetector(
+                                  onTap: () {
+                                    // TODO: Show notifications
+                                  },
+                                  child: GlassContainer(
+                                    borderRadius: BorderRadius.circular(AppDimens.r16),
+                                    padding: const EdgeInsets.all(AppDimens.p12),
+                                    child: Icon(
+                                      Icons.notifications_outlined,
+                                      color: colorScheme.text,
+                                      size: AppDimens.p24,
+                                    ),
                                   ),
                                 ),
                               ],
-                              onChanged: (value) {
-                                if (value != null) {
-                                  filterController.filterByCategory(value);
-                                }
-                              },
                             ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'Featured Tasks',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
+                            const SizedBox(height: AppDimens.p24),
+
+                            // 2. Search & Filter
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: AppTextField(
+                                    hintText: 'Search amazing projects...',
+                                    prefixIcon: Icon(Icons.search, color: colorScheme.textSecondary),
+                                    onChanged: filterController.searchTasks,
+                                  ),
+                                ),
+                                const SizedBox(width: AppDimens.p12),
+                                GestureDetector(
+                                  onTap: () {
+                                    // TODO: Show advanced filters
+                                  },
+                                  child: Container(
+                                    width: 50,
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.teal,
+                                      borderRadius: BorderRadius.circular(AppDimens.r14),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.teal.withValues(alpha: 0.3),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 5),
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Icon(Icons.filter_list, color: Colors.white),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: AppDimens.p24),
+
+                            // 3. Categories
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              clipBehavior: Clip.none,
+                              child: Row(
+                                children: [
+                                  _buildCategoryChip(
+                                    context,
+                                    label: '✨ All',
+                                    isSelected: filterController.selectedCategory == '',
+                                    onTap: () => filterController.filterByCategory(''),
+                                  ),
+                                  ...taskCategories.map((category) {
+                                    // Add emoji based on category
+                                    String label = category;
+                                    if (category == 'Design') {
+                                      label = '🎨 Design';
+                                    } else if (category == 'Development') {
+                                      label = '💻 Dev';
+                                    } else if (category == 'Writing') {
+                                      label = '✍️ Writing';
+                                    } else if (category == 'Marketing') {
+                                      label = '🎯 Marketing';
+                                    }
+                                    
+                                    return _buildCategoryChip(
+                                      context,
+                                      label: label,
+                                      isSelected: filterController.selectedCategory == category,
+                                      onTap: () => filterController.filterByCategory(category),
+                                    );
+                                  }),
+                                ],
                               ),
                             ),
                           ],
@@ -159,8 +212,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
 
-                    if (filterController.filteredTasks.isEmpty)
+                    // --- Task List ---
+                    if (homeViewModel.isLoading)
                       const SliverFillRemaining(
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (filterController.filteredTasks.isEmpty)
+                      SliverFillRemaining(
                         hasScrollBody: false,
                         child: Center(
                           child: Column(
@@ -169,14 +227,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               Icon(
                                 Icons.work_outline,
                                 size: 64,
-                                color: Colors.grey,
+                                color: colorScheme.textSecondary.withValues(alpha: 0.5),
                               ),
-                              SizedBox(height: 16),
+                              const SizedBox(height: 16),
                               Text(
                                 'No tasks found',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.grey,
+                                style: AppTypography.h5.copyWith(
+                                  color: colorScheme.textSecondary,
                                 ),
                               ),
                             ],
@@ -184,20 +241,31 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       )
                     else
-                      SliverList(
-                        delegate: SliverChildBuilderDelegate((context, index) {
-                          final task = filterController.filteredTasks[index];
-                          return TaskCard(
-                            task: task,
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => TaskDetailsScreen(task: task),
-                                ),
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppDimens.p16,
+                          0,
+                          AppDimens.p16,
+                          AppDimens.p100, // Bottom padding for nav bar
+                        ),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              final task = filterController.filteredTasks[index];
+                              return TaskCard(
+                                task: task,
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => TaskDetailsScreen(task: task),
+                                    ),
+                                  );
+                                },
                               );
                             },
-                          );
-                        }, childCount: filterController.filteredTasks.length),
+                            childCount: filterController.filteredTasks.length,
+                          ),
+                        ),
                       ),
                   ],
                 ),
@@ -206,6 +274,53 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildCategoryChip(
+    BuildContext context, {
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    final AppColorScheme colorScheme = context.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(right: AppDimens.p8),
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimens.p16,
+            vertical: AppDimens.p10,
+          ),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppColors.teal
+                : colorScheme.inputBackground, // Glass-like
+            borderRadius: BorderRadius.circular(AppDimens.r12),
+            border: Border.all(
+              color: isSelected ? AppColors.teal : colorScheme.inputBorder,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: AppColors.teal.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    )
+                  ]
+                : [],
+          ),
+          child: Text(
+            label,
+            style: AppTypography.bodySmall.copyWith(
+              fontWeight: FontWeight.bold,
+              color: isSelected ? AppColors.offWhite : colorScheme.text,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

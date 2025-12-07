@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/app_typography.dart';
 
-/// WhatsApp-like message bubble.
-/// Shows text, time, and optional tick status icon.
-/// Keeps max width to ~70% of screen.
+/// WhatsApp-like message bubble updated for Glassmorphism design.
 class MessageBubble extends StatelessWidget {
   final String text;
   final String time; // already formatted
@@ -20,31 +22,36 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Use withValues to avoid precision loss warnings in newer Flutter versions.
+    final colorScheme = context.colorScheme;
+    
     final bg = isMine
-        ? Theme.of(context).primaryColor.withValues(alpha: 0.85)
-        : Colors.grey.shade300;
-    final fg = isMine ? Colors.white : Colors.black87;
+        ? AppColors.teal
+        : colorScheme.cardBackground; // or inputBackground
+    
+    final fg = isMine ? AppColors.offWhite : colorScheme.text;
+    final metaColor = isMine ? AppColors.offWhite.withValues(alpha: 0.7) : colorScheme.textSecondary;
 
     final radius = BorderRadius.only(
-      topLeft: Radius.circular(isMine ? 16 : 4),
-      topRight: Radius.circular(isMine ? 4 : 16),
-      bottomLeft: const Radius.circular(16),
-      bottomRight: const Radius.circular(16),
+      topLeft: Radius.circular(isMine ? AppDimens.r18 : AppDimens.r4),
+      topRight: Radius.circular(isMine ? AppDimens.r4 : AppDimens.r18),
+      bottomLeft: const Radius.circular(AppDimens.r18),
+      bottomRight: const Radius.circular(AppDimens.r18),
     );
 
     return Align(
       alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.7,
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
         ),
         child: Container(
           margin: const EdgeInsets.symmetric(vertical: 4),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: bg,
             borderRadius: radius,
+            // Add subtle border for 'other' messages to stand out against glass bg if needed
+            border: isMine ? null : Border.all(color: colorScheme.cardBorder),
           ),
           child: Column(
             crossAxisAlignment:
@@ -53,7 +60,7 @@ class MessageBubble extends StatelessWidget {
             children: [
               Text(
                 text,
-                style: TextStyle(color: fg, fontSize: 15),
+                style: AppTypography.bodyMedium.copyWith(color: fg),
               ),
               const SizedBox(height: 4),
               Row(
@@ -63,14 +70,11 @@ class MessageBubble extends StatelessWidget {
                 children: [
                   Text(
                     time,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: isMine ? Colors.white70 : Colors.black54,
-                    ),
+                    style: AppTypography.micro.copyWith(color: metaColor),
                   ),
                   if (isMine && status != null) ...[
                     const SizedBox(width: 6),
-                    _statusIcon(status!, isMine),
+                    _statusIcon(status!, isMine, metaColor),
                   ],
                 ],
               ),
@@ -81,18 +85,15 @@ class MessageBubble extends StatelessWidget {
     );
   }
 
-  /// Map status strings to WhatsApp-like icons
-  /// Why: UX parity — single check = sent, double grey = delivered, double blue = read.
-  static Widget _statusIcon(String status, bool isMine) {
-    final neutral = isMine ? Colors.white70 : Colors.black54;
+  static Widget _statusIcon(String status, bool isMine, Color color) {
     switch (status) {
       case 'read':
-        return Icon(Icons.done_all, size: 16, color: Colors.blue);
+        return const Icon(Icons.done_all, size: 16, color: Colors.blue); // Keep blue for read
       case 'delivered':
-        return Icon(Icons.done_all, size: 16, color: neutral);
+        return Icon(Icons.done_all, size: 16, color: color);
       case 'sent':
       default:
-        return Icon(Icons.check, size: 16, color: neutral);
+        return Icon(Icons.check, size: 16, color: color);
     }
   }
 }

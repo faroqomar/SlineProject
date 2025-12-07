@@ -22,9 +22,16 @@ class ProfileViewModel extends ChangeNotifier {
   String? avatarSignedUrl;
   bool avatarUploading = false;
 
+  // Getters for UI convenience
+  String? get avatarUrl => avatarSignedUrl;
+  String? get fullName => nameController.text.isEmpty ? null : nameController.text;
+
   // Tasks state
   final List<Task> myTasks = [];
   bool isLoadingMyTasks = false;
+
+  // Alias for loadUserData to match HomeScreen usage
+  Future<void> loadProfile() => loadUserData();
 
   // Load current user data into controllers
   Future<void> loadUserData() async {
