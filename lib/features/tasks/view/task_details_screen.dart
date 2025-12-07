@@ -8,7 +8,7 @@ import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/core/widgets/signed_image.dart';
-import 'package:sline_app/features/profile/view/public_profile_modal.dart';
+import 'package:sline_app/features/profile/view/public_profile_screen.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:sline_app/features/tasks/view/widgets/requests/requests_list_screen.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
@@ -66,7 +66,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const PublicProfileModal()),
+                        MaterialPageRoute(builder: (_) => PublicProfileScreen(userId: task.userId)),
                       );
                     },
                     child: Row(

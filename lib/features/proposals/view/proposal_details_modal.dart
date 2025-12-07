@@ -5,7 +5,7 @@ import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
-import 'package:sline_app/features/profile/view/public_profile_modal.dart';
+import 'package:sline_app/features/profile/view/public_profile_screen.dart';
 
 class ProposalDetailsModal extends StatelessWidget {
   final Map<String, dynamic>? proposal; // Pass mock proposal or real one later
@@ -19,6 +19,7 @@ class ProposalDetailsModal extends StatelessWidget {
     // Mock Data if null
     final data = proposal ?? {
       'freelancer': {
+        'id': 'mock-1',
         'initials': 'DC',
         'name': 'David Chen',
         'location': 'Toronto, Canada',
@@ -74,7 +75,11 @@ class ProposalDetailsModal extends StatelessWidget {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const PublicProfileModal()),
+                          MaterialPageRoute(
+                            builder: (_) => PublicProfileScreen(
+                              userId: freelancer['id'] as String? ?? 'mock-1',
+                            ),
+                          ),
                         );
                       },
                       child: Container(
