@@ -729,7 +729,7 @@ export default function App() {
                     </label>
                     <input
                       type="email"
-                      placeholder="your @email.com"
+                      placeholder="your@email.com"
                       className={`w-full h-[52px] ${theme.authInputBg} backdrop-blur-lg border-[1.5px] ${theme.authInputBorder} rounded-[14px] px-4 text-[14px] placeholder:text-[${theme.authTextSecondary}] outline-none ${theme.inputFocusBg} focus:border-[#146068] transition-all duration-300`}
                       style={{ color: theme.authInputText }}
                     />
@@ -852,7 +852,7 @@ export default function App() {
                     </label>
                     <input
                       type="email"
-                      placeholder="your @email.com"
+                      placeholder="your@email.com"
                       className={`w-full h-[52px] ${theme.authInputBg} backdrop-blur-lg border-[1.5px] ${theme.authInputBorder} rounded-[14px] px-4 text-[14px] placeholder:text-[${theme.authTextSecondary}] outline-none ${theme.inputFocusBg} focus:border-[#146068] transition-all duration-300`}
                       style={{ color: theme.authInputText }}
                     />
@@ -2149,7 +2149,7 @@ export default function App() {
                                   </button>
                                   <button onClick={() => setTaskForm({...taskForm, type: "Booking"})} className={`h-[100px] rounded-[18px] border-2 transition-all duration-300 hover:scale-[1.02] active:scale-95 ${taskForm.type === "Booking" ? "bg-[#146068]/20 border-[#146068]" : `${theme.cardBg} border-transparent`}`}>
                                      <div className="flex flex-col items-center justify-center gap-2">
-                                        <span className="text-[28px]"></span>
+                                        <span className="text-[28px]">📅</span>
                                         <span className="text-[14px] font-bold" style={{ color: taskForm.type === "Booking" ? "#146068" : theme.text }}>Booking</span>
                                         <span className="text-[10px]" style={{ color: theme.textSecondary }}>Direct hire</span>
                                      </div>
