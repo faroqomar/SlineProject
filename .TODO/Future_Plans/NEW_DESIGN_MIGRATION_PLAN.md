@@ -108,8 +108,7 @@ The simple screens are done. Now we tackle the complex, multi-state modals.
 *   **Chat Offers:**
     *   [ ] DB: Create `chat_offers` table.
     *   [ ] Logic: Update `ChatService` to handle offer messages types.
-*   **Video Call:**
-    *   [ ] Logic: Integrate Agora or WebRTC signaling.
+
 *   **Notifications:**
     *   [ ] DB: Create `notifications` table with RLS.
     *   [ ] Logic: Real-time subscription.

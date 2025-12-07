@@ -15,7 +15,7 @@ import '../../chat/models/message_model.dart';
 import '../../../core/utils/format_date.dart';
 import '../../../core/services/logger_service.dart';
 
-import 'package:sline_app/features/chat/view/video_call_modal.dart';
+
 import 'widgets/message_bubble.dart';
 import '../attachments/widgets/attachment_message_tile.dart';
 
@@ -235,20 +235,6 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                     Row(
                       children: [
-                        IconButton(
-                          icon: Icon(Icons.videocam, color: AppColors.teal),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => VideoCallModal(
-                                  name: widget.conversation.otherUserName ?? 'User',
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(width: 8),
                         GestureDetector(
                           onTap: _showCreateOfferModal,
                           child: Container(

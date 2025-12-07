@@ -74,6 +74,10 @@ class Task {
   /// Storage paths (NOT URLs) for task images in the private `task-images` bucket.
   final List<String> imagePaths;
 
+  /// Packages for booking tasks (Basic/Standard/Premium details).
+  /// Structure: { 'Basic': {...}, 'Standard': {...}, 'Premium': {...} }
+  final Map<String, dynamic>? packages;
+
   const Task({
     required this.id,
     required this.title,
@@ -92,6 +96,7 @@ class Task {
     this.categoryName,
     this.assignedFreelancerId,
     this.imagePaths = const [],
+    this.packages,
   });
 
   /// Create Task from JSON
@@ -136,6 +141,7 @@ class Task {
       userAvatar: null,
       assignedFreelancerId: (json['assigned_freelancer_id'] as String?) ?? (json['freelancer_id'] as String?),
       imagePaths: parsedImagePaths,
+      packages: json['packages'] as Map<String, dynamic>?,
     );
   }
 
@@ -155,6 +161,7 @@ class Task {
       if (category != null) 'category': category,
       'image_paths': imagePaths,
       if (assignedFreelancerId != null) 'assigned_freelancer_id': assignedFreelancerId,
+      if (packages != null) 'packages': packages,
     };
     if (includeSystemFields) {
       map['id'] = id;
@@ -188,6 +195,7 @@ class Task {
     String? categoryName,
     String? assignedFreelancerId,
     List<String>? imagePaths,
+    Map<String, dynamic>? packages,
   }) {
     return Task(
       id: id ?? this.id,
@@ -207,6 +215,7 @@ class Task {
       categoryName: categoryName ?? this.categoryName,
       assignedFreelancerId: assignedFreelancerId ?? this.assignedFreelancerId,
       imagePaths: imagePaths ?? this.imagePaths,
+      packages: packages ?? this.packages,
     );
   }
 }

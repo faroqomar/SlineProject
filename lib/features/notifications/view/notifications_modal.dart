@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/features/notifications/models/notification_model.dart';
+import 'package:sline_app/features/notifications/viewmodels/notification_view_model.dart';
 
 class NotificationsModal extends StatelessWidget {
   const NotificationsModal({super.key});
@@ -11,102 +14,78 @@ class NotificationsModal extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppColorScheme colorScheme = context.colorScheme;
 
-    // Mock Data
-    final List<Map<String, dynamic>> notifications = [
-      {
-        'id': 1,
-        'type': 'order',
-        'title': 'Order Update',
-        'message': 'Nexus Corp marked your order as Completed.',
-        'time': '2m ago',
-        'isRead': false,
-        'group': 'Today'
-      },
-      {
-        'id': 2,
-        'type': 'proposal',
-        'title': 'New Proposal',
-        'message': 'David Chen applied to your Logo Design job.',
-        'time': '1h ago',
-        'isRead': false,
-        'group': 'Today'
-      },
-      {
-        'id': 3,
-        'type': 'system',
-        'title': 'System Alert',
-        'message': 'Your password was changed successfully.',
-        'time': '3h ago',
-        'isRead': true,
-        'group': 'Today'
-      },
-      {
-        'id': 4,
-        'type': 'payment',
-        'title': 'Payment Received',
-        'message': 'You received \$250.00 from TravelLife.',
-        'time': 'Yesterday',
-        'isRead': true,
-        'group': 'Yesterday'
-      },
-    ];
-
-    final today = notifications.where((n) => n['group'] == 'Today').toList();
-    final yesterday = notifications.where((n) => n['group'] == 'Yesterday').toList();
-
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
-      decoration: BoxDecoration(
-        color: colorScheme.cardBackground,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimens.r30)),
-        border: Border(top: BorderSide(color: colorScheme.cardBorder)),
-      ),
-      child: Column(
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(AppDimens.p24, AppDimens.p24, AppDimens.p24, AppDimens.p12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Notifications',
-                  style: AppTypography.h4.copyWith(color: colorScheme.text),
-                ),
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: CircleAvatar(
-                    radius: 16,
-                    backgroundColor: Colors.white.withValues(alpha: 0.05),
-                    child: Icon(Icons.close, size: 18, color: colorScheme.text),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          
-          // List
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppDimens.p24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return ChangeNotifierProvider(
+      create: (_) => NotificationViewModel()..loadNotifications(),
+      child: Container(
+        height: MediaQuery.of(context).size.height * 0.85,
+        decoration: BoxDecoration(
+          color: colorScheme.cardBackground,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimens.r30)),
+          border: Border(top: BorderSide(color: colorScheme.cardBorder)),
+        ),
+        child: Column(
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(AppDimens.p24, AppDimens.p24, AppDimens.p24, AppDimens.p12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  if (today.isNotEmpty) ...[
-                    _buildGroupLabel('TODAY', colorScheme),
-                    ...today.map((n) => _buildNotificationItem(n, colorScheme)),
-                    const SizedBox(height: AppDimens.p24),
-                  ],
-                  if (yesterday.isNotEmpty) ...[
-                    _buildGroupLabel('YESTERDAY', colorScheme),
-                    ...yesterday.map((n) => _buildNotificationItem(n, colorScheme)),
-                  ],
+                  Text(
+                    'Notifications',
+                    style: AppTypography.h4.copyWith(color: colorScheme.text),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: CircleAvatar(
+                      radius: 16,
+                      backgroundColor: Colors.white.withValues(alpha: 0.05),
+                      child: Icon(Icons.close, size: 18, color: colorScheme.text),
+                    ),
+                  ),
                 ],
               ),
             ),
-          ),
-        ],
+            const Divider(height: 1),
+            
+            // List
+            Expanded(
+              child: Consumer<NotificationViewModel>(
+                builder: (context, vm, child) {
+                  if (vm.isLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  
+                  return RefreshIndicator(
+                    onRefresh: vm.loadNotifications,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(AppDimens.p24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (vm.notifications.isEmpty)
+                            Center(child: Text('No notifications', style: AppTypography.bodyMedium.copyWith(color: colorScheme.textSecondary))),
+                          
+                          ...vm.groups.map((group) {
+                            final groupItems = vm.notifications.where((n) => n.group == group).toList();
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildGroupLabel(group.toUpperCase(), colorScheme),
+                                ...groupItems.map((n) => _buildNotificationItem(n, colorScheme)),
+                                const SizedBox(height: AppDimens.p24),
+                              ],
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -123,23 +102,20 @@ class NotificationsModal extends StatelessWidget {
     );
   }
 
-  Widget _buildNotificationItem(Map<String, dynamic> n, AppColorScheme colorScheme) {
-    final isRead = n['isRead'] as bool;
-    final type = n['type'] as String;
-    
+  Widget _buildNotificationItem(NotificationModel n, AppColorScheme colorScheme) {
     Color iconColor;
     IconData icon;
     
-    switch (type) {
-      case 'order':
+    switch (n.type) {
+      case NotificationType.order:
         iconColor = AppColors.teal;
         icon = Icons.shopping_bag;
         break;
-      case 'proposal':
+      case NotificationType.proposal:
         iconColor = AppColors.lightTeal;
         icon = Icons.description;
         break;
-      case 'payment':
+      case NotificationType.payment:
         iconColor = AppColors.gold;
         icon = Icons.attach_money;
         break;
@@ -147,6 +123,9 @@ class NotificationsModal extends StatelessWidget {
         iconColor = Colors.grey;
         icon = Icons.info;
     }
+
+    // Using time ago logic (simplified for now or use util)
+    final timeString = '${n.time.hour}:${n.time.minute.toString().padLeft(2, '0')}';
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimens.p12),
@@ -177,14 +156,14 @@ class NotificationsModal extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      n['title'],
+                      n.title,
                       style: AppTypography.bodySmall.copyWith(
                         fontWeight: FontWeight.bold,
                         color: colorScheme.text,
                       ),
                     ),
                     Text(
-                      n['time'],
+                      timeString,
                       style: AppTypography.micro.copyWith(
                         color: colorScheme.textSecondary,
                       ),
@@ -193,7 +172,7 @@ class NotificationsModal extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  n['message'],
+                  n.message,
                   style: AppTypography.micro.copyWith(
                     color: colorScheme.textSecondary,
                     height: 1.4,
@@ -202,7 +181,7 @@ class NotificationsModal extends StatelessWidget {
               ],
             ),
           ),
-          if (!isRead)
+          if (!n.isRead)
             Padding(
               padding: const EdgeInsets.only(left: 8),
               child: CircleAvatar(radius: 4, backgroundColor: AppColors.lightRed),

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
+import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
 
 class FiltersModal extends StatefulWidget {
   const FiltersModal({super.key});
@@ -21,6 +23,19 @@ class _FiltersModalState extends State<FiltersModal> {
   final _maxBudgetController = TextEditingController();
   final List<String> _deliveryTimes = [];
   final List<String> _sellerLevels = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize local state from ViewModel
+    final vm = context.read<TaskFilterViewModel>();
+    _sortBy = vm.sortBy;
+    _maxBudget = vm.maxBudget ?? 1000;
+    _minBudgetController.text = vm.minBudget?.toInt().toString() ?? '';
+    _maxBudgetController.text = vm.maxBudget?.toInt().toString() ?? '1000';
+    _deliveryTimes.addAll(vm.deliveryTimes);
+    _sellerLevels.addAll(vm.sellerLevels);
+  }
 
   @override
   void dispose() {
@@ -62,6 +77,9 @@ class _FiltersModalState extends State<FiltersModal> {
                       _deliveryTimes.clear();
                       _sellerLevels.clear();
                     });
+                    // Optional: Apply clear immediately or wait for Apply button?
+                    // Usually "Reset" implies action.
+                    context.read<TaskFilterViewModel>().clearFilters();
                   },
                   child: Text(
                     'Reset All',
@@ -118,7 +136,10 @@ class _FiltersModalState extends State<FiltersModal> {
                     max: 5000,
                     activeColor: AppColors.teal,
                     inactiveColor: colorScheme.textSecondary.withValues(alpha: 0.2),
-                    onChanged: (v) => setState(() => _maxBudget = v),
+                    onChanged: (v) => setState(() {
+                      _maxBudget = v;
+                      _maxBudgetController.text = v.toInt().toString();
+                    }),
                   ),
                   Row(
                     children: [
@@ -137,9 +158,13 @@ class _FiltersModalState extends State<FiltersModal> {
                       Expanded(
                         child: AppTextField(
                           hintText: 'Max',
-                          controller: _maxBudgetController..text = _maxBudget.toInt().toString(),
+                          controller: _maxBudgetController,
                           keyboardType: TextInputType.number,
                           prefixIcon: const Icon(Icons.attach_money, size: 16),
+                          onChanged: (val) {
+                            final v = double.tryParse(val);
+                            if (v != null) setState(() => _maxBudget = v);
+                          },
                         ),
                       ),
                     ],
@@ -229,8 +254,13 @@ class _FiltersModalState extends State<FiltersModal> {
             child: AppButton(
               text: 'Apply Filters',
               onPressed: () {
-                // Apply logic here (call ViewModel)
-                // context.read<TaskFilterViewModel>().applyFilters(...);
+                context.read<TaskFilterViewModel>().applyAdvancedFilters(
+                  minBudget: double.tryParse(_minBudgetController.text),
+                  maxBudget: double.tryParse(_maxBudgetController.text),
+                  deliveryTimes: _deliveryTimes,
+                  sellerLevels: _sellerLevels,
+                  sortBy: _sortBy,
+                );
                 Navigator.pop(context);
               },
             ),

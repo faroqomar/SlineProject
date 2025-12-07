@@ -126,7 +126,27 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     try {
       // Use package price if booking, else budget
       double budget = double.tryParse(_budgetController.text) ?? 0;
+      
+      Map<String, dynamic>? packages;
       if (_selectedTaskType == TaskType.booking) {
+        // Construct Packages Map (Simplified for single selected tier for now, or map all if UI supported it)
+        // Assuming we are editing the currently selected tier in the UI
+        final currentTierName = ['Basic', 'Standard', 'Premium'][_selectedPackageTier];
+        
+        // In a real wizard, you'd probably have state for all 3 tiers. 
+        // For this prototype, we'll just save the one being edited as the "Basic" one or similar logic, 
+        // OR we assume the user fills out one package.
+        // Let's construct a simple map with the current data.
+        packages = {
+          currentTierName: {
+            'price': _packagePriceController.text,
+            'delivery': _packageDeliveryController.text,
+            'revisions': _packageRevisionsController.text,
+            'description': _packageDescriptionController.text,
+          }
+        };
+        
+        // Also update main budget display to match the package price
         budget = double.tryParse(_packagePriceController.text) ?? 0;
       }
 
@@ -143,12 +163,18 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         categoryId: _selectedCategoryId,
         category: null,
         skills: _tagsController.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList(),
+        packages: packages,
       );
 
       if (widget.task == null) {
         await vm.createTask(task);
       } else {
-        await vm.updateTask(task.id, task.toJson());
+        final updateData = task.toJson();
+        // Ensure packages are included in update if present
+        if (packages != null) {
+          updateData['packages'] = packages;
+        }
+        await vm.updateTask(task.id, updateData);
       }
 
       if (!mounted) return;
