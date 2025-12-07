@@ -1,4 +1,3 @@
-import { LucideIcon } from "lucide-react";
 
 export type NavView = "home" | "tender" | "booking" | "messages" | "profile" | "orders" | "wallet";
 export type AuthView = "login" | "signup";
