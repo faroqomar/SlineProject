@@ -95,13 +95,14 @@ erDiagram
   CONVERSATIONS ||--o{ MESSAGES : "conversation_id"
 ```
 
+
 ### Textual Representation
 
 ```text
 auth.users (id)
   ├─→ profiles (id)
       ├─< tasks (user_id)
-      │    ├─< task_requests (task_id, bidder_id)
+      │    ├─< task_requests (task_id, bidder_id
       │    └─< bookings (task_id)
       ├─< favorites (client_id → freelancer_id)
       ├─< conversations (user1_id, user2_id, [task_id], initiated_by)

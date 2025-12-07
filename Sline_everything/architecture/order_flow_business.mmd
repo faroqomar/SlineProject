@@ -1,0 +1,32 @@
+```mermaid
+flowchart TD
+    A[Client accepts freelancer offer\non a Tender] --> B[Create Order\nstatus: PENDING_PAYMENT]
+
+    B --> C[Review and Pay screen]
+
+    C -->|Payment success| D[Order ACTIVE\nIn progress\nFunds in ESCROW]
+    C -->|Payment failed| E[Payment failed\nShow error and retry]
+    C -->|Client cancels| X[CANCELLED_UNPAID\nOrder closed]
+
+    E --> C
+
+    D --> F[Work in progress\nChat and files]
+
+    F --> G[Freelancer clicks Deliver work]
+
+    G --> H[DELIVERED_PENDING_REVIEW\nDelivered, waiting for review]
+
+    H --> I[Client chooses action]
+
+    I -->|Approve and release| J[Release payment\nOrder COMPLETED]
+    I -->|Ask for changes| F
+    I -->|Open dispute| K[Order DISPUTE\nAdmin review]
+
+    H --> L[No client action for X days\nAuto complete]
+    L --> J
+
+    K --> M{Admin decision}
+    M -->|Refund client| N[Order REFUNDED]
+    M -->|Pay freelancer| J
+    M -->|Split escrow| O[Order RESOLVED_SPLIT]
+```
