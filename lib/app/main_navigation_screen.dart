@@ -3,9 +3,14 @@ import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/features/booking/view/bookings_discovery_screen.dart';
 import 'package:sline_app/features/chat/view/messages_screen.dart';
 import 'package:sline_app/features/home/view/home_screen.dart';
+import 'package:sline_app/features/orders/view/orders_dashboard_screen.dart';
 import 'package:sline_app/features/profile/view/profile_screen.dart';
+import 'package:sline_app/features/tasks/view/create_task_screen.dart';
+import 'package:sline_app/features/tasks/view/tenders_screen.dart';
+import 'package:sline_app/features/wallet/view/wallet_dashboard_screen.dart';
 import '../core/providers/navigation_provider.dart';
 import '../core/widgets/custom_bottom_nav_bar.dart';
 
@@ -20,12 +25,12 @@ class MainNavigationScreen extends StatelessWidget {
     // Screens matching NavView enum order: home, tender, booking, orders, messages, profile, wallet
     final List<Widget> screens = [
       const HomeScreen(),
-      const Center(child: Text('Tenders')), // Placeholder
-      const Center(child: Text('Bookings')), // Placeholder
-      const Center(child: Text('Orders')), // Placeholder
+      const TendersScreen(),
+      const BookingsDiscoveryScreen(),
+      const OrdersDashboardScreen(),
       const MessagesScreen(),
       const ProfileScreen(),
-      const Center(child: Text('Wallet')), // Placeholder
+      const WalletDashboardScreen(),
     ];
 
     return Consumer<NavigationProvider>(
@@ -68,9 +73,11 @@ class MainNavigationScreen extends StatelessWidget {
                 right: AppDimens.p24,
                 child: GestureDetector(
                   onTap: () {
-                    // TODO: Show Create Task Overlay
-                    // For now, we can navigate to the old create task screen or show a modal
-                    // Navigator.pushNamed(context, '/create-task');
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const CreateTaskScreen(),
+                      ),
+                    );
                   },
                   child: Container(
                     width: 56,

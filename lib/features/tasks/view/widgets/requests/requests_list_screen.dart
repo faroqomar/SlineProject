@@ -12,12 +12,15 @@ class RequestsListScreen extends StatefulWidget {
   final bool isTender;
   /// True when the viewer is the owner of the task (can accept/reject)
   final bool isOwner;
+  final String? budget; // Added budget
+
   const RequestsListScreen({
     super.key,
     required this.taskId,
     this.autoOpenSubmitSheet = false,
     this.isTender = true,
     this.isOwner = false,
+    this.budget,
   });
 
   @override
@@ -83,6 +86,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
               ctx,
               taskId: widget.taskId,
               controller: c,
+              budget: widget.budget ?? '0',
             );
           }
         });
@@ -101,6 +105,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
                     prov,
                     taskId: widget.taskId,
                     controller: c,
+                    budget: widget.budget ?? '0',
                   );
                 },
                 icon: const Icon(Icons.add),

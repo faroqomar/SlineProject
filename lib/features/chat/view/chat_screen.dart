@@ -15,6 +15,7 @@ import '../../chat/models/message_model.dart';
 import '../../../core/utils/format_date.dart';
 import '../../../core/services/logger_service.dart';
 
+import 'package:sline_app/features/chat/view/video_call_modal.dart';
 import 'widgets/message_bubble.dart';
 import '../attachments/widgets/attachment_message_tile.dart';
 
@@ -232,25 +233,43 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                       ],
                     ),
-                    GestureDetector(
-                      onTap: _showCreateOfferModal,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppColors.teal,
-                          borderRadius: BorderRadius.circular(20),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.videocam, color: AppColors.teal),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => VideoCallModal(
+                                  name: widget.conversation.otherUserName ?? 'User',
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.attach_money, color: Colors.white, size: 16),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Offer',
-                              style: AppTypography.captionBold.copyWith(color: Colors.white),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: _showCreateOfferModal,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AppColors.teal,
+                              borderRadius: BorderRadius.circular(20),
                             ),
-                          ],
+                            child: Row(
+                              children: [
+                                const Icon(Icons.attach_money, color: Colors.white, size: 16),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Offer',
+                                  style: AppTypography.captionBold.copyWith(color: Colors.white),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),

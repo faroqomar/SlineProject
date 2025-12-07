@@ -19,7 +19,8 @@ class AppButton extends StatelessWidget {
   final Color? backgroundColor;
   final Color? foregroundColor;
   final List<BoxShadow>? boxShadow;
-  final BorderRadius? borderRadius; // Changed from BorderRadiusGeometry?
+  final BorderRadius? borderRadius;
+  final IconData? icon;
 
   const AppButton({
     super.key,
@@ -34,6 +35,7 @@ class AppButton extends StatelessWidget {
     this.foregroundColor,
     this.boxShadow,
     this.borderRadius,
+    this.icon,
   });
 
   @override
@@ -73,27 +75,41 @@ class AppButton extends StatelessWidget {
             borderRadius: effectiveBorderRadius,
             child: InkWell(
               onTap: isLoading ? null : onPressed,
-              borderRadius: effectiveBorderRadius,          child: Center(
-            child: isLoading
-                ? SizedBox(
-                    width: AppDimens.p24,
-                    height: AppDimens.p24,
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(effectiveForegroundColor),
-                      strokeWidth: 2,
-                    ),
-                  )
-                : Text(
-                    text,
-                    style: textStyle ??
-                        textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: effectiveForegroundColor,
+              borderRadius: effectiveBorderRadius,
+              child: Center(
+                child: isLoading
+                    ? SizedBox(
+                        width: AppDimens.p24,
+                        height: AppDimens.p24,
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(effectiveForegroundColor),
+                          strokeWidth: 2,
                         ),
-                  ),
+                      )
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            text,
+                            style: textStyle ??
+                                textTheme.bodyLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: effectiveForegroundColor,
+                                ),
+                          ),
+                          if (icon != null) ...[
+                            const SizedBox(width: 8),
+                            Icon(
+                              icon,
+                              color: effectiveForegroundColor,
+                              size: 20,
+                            ),
+                          ],
+                        ],
+                      ),
+              ),
+            ),
           ),
-        ),
-      ),
-    );
+        );
   }
 }
