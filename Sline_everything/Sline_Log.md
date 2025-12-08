@@ -1,6 +1,6 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2025-09-19
+**Last Updated:** 2025-12-08
 
 ---
 
@@ -19,6 +19,64 @@
 ---
 
 ## 📋 Version History
+
+### 🟢 Version 2.1 — Theme System Dashboard, iOS 26 Liquid Glass Nav & CodeGuard Agent
+**Date:** 2025-12-08
+**Commit:** _Pending_ — "feat(theme): centralized theme dashboard, liquid glass nav bar, CodeGuard agent"
+
+#### ✅ Implemented
+
+- **Theme System Dashboard**
+  - Created `lib/core/theme/theme_dashboard.dart` - comprehensive single source of truth for all theme values
+  - Documents all `AppColors`, `AppTypography`, `AppDimens`, `AppDecorations` with usage examples
+  - Includes design token mapping from Figma/design to Flutter
+  - Added anti-patterns guide to prevent hardcoded values
+
+- **iOS 26 Liquid Glass Bottom Navigation**
+  - Redesigned `lib/core/widgets/custom_bottom_nav_bar.dart` with frosted glass effect
+  - Features: `BackdropFilter` blur (sigma: 25), animated pill indicator, scale animations
+  - Theme-adaptive: works in both light and dark modes with different opacity values
+  - Notification badge support with glow effect
+
+- **CodeGuard Agent** (New)
+  - Created `.cursor/Agents/CodeGuard.md` - Performance, Security & Compatibility Auditor
+  - Focus: Code reviews, performance optimization, security hardening, dependency updates
+  - Triggers: `@CodeGuard`, "review code", "performance check", "security audit", "update dependencies"
+  - Features: Review report template, automated checks, anti-pattern tables
+
+- **Feature Inventory System**
+  - Created `.TODO/Future_Plans/FEATURE_INVENTORY.md` - tracks design vs implementation status
+  - Documents all features from `.TODO/New_Design/` matched to Flutter implementation
+  - Categorizes features as: Implemented, Partially Implemented, Not Implemented
+
+- **Video Call Feature Removal**
+  - Removed `lib/features/chat/view/video_call_modal.dart`
+  - Removed video call button from `chat_screen.dart` header
+  - Removed `VideoCallModal` references from design files
+  - Removed `ActiveCall` interface from types
+
+- **Designer References**
+  - Added `Sline_everything/designer_references/liquid_glass.md` - iOS 26 liquid glass documentation
+
+#### 📊 Impact
+- Theme changes now centralized - edit once, apply everywhere
+- Bottom navigation matches iOS 26 design language with premium feel
+- Code quality improvements via CodeGuard agent audits
+- Clear roadmap for remaining design implementation work
+
+#### 🗂️ Files Touched
+- **Theme:** `lib/core/theme/theme_dashboard.dart` (new), `lib/core/theme/app_typography.dart`, `lib/core/theme/app_dimens.dart`
+- **Navigation:** `lib/core/widgets/custom_bottom_nav_bar.dart`, `lib/app/main_navigation_screen.dart`
+- **Agents:** `.cursor/Agents/CodeGuard.md` (new)
+- **Documentation:** `GEMINI.md`, `.cursorrules`, `.cursor/PROJECT_CONTEXT.md`
+- **Removed:** `lib/features/chat/view/video_call_modal.dart`, video call references in chat
+
+#### 🔜 Next
+- Audit `Colors.*` usage → migrate to `AppColors`
+- Update Supabase Flutter to v2.x (major version migration)
+- Implement remaining features from FEATURE_INVENTORY.md
+
+---
 
 ### 🟢 Version 2.0 — Visual Parity & Task Card Redesign
 **Date:** 2025-12-08

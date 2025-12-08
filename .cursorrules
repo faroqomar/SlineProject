@@ -38,6 +38,7 @@ Use agents for specialized tasks:
 - `@Sentinel` - QA, security, testing
 - `@SlineDocs` - Documentation updates
 - `@SlinePlanner` - Implementation planning
+- `@CodeGuard` - Code reviews, performance, security, dependency updates
 
 See `GEMINI.md` and `.cursor/Agents/` for agent definitions.
 

@@ -2,7 +2,7 @@
 
 This document tracks the implementation status of features from `.TODO/New_Design/` compared to the Flutter app in `lib/features/`.
 
-**Last Updated:** 2024
+**Last Updated:** 2025-12-08
 
 ---
 

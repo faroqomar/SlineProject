@@ -37,6 +37,7 @@ Agents are defined in `.cursor/Agents/` and can be invoked using triggers:
 | **@Sentinel** | `Agents/Sentinel.md` | "@Sentinel", "check this", "run tests" | QA, security, documentation sync |
 | **@SlineDocs** | `Agents/Sline_Docs.md` | "@SlineDocs", "document this", "update changelog" | Documentation updates |
 | **@SlinePlanner** | `Agents/Sline_Planner.md` | "@SlinePlanner", "plan this feature" | Implementation planning |
+| **@CodeGuard** | `Agents/CodeGuard.md` | "@CodeGuard", "review code", "performance check" | Code reviews, performance, security, dependencies |
 
 **Reference**: See `GEMINI.md` for complete agent definitions.
 
@@ -223,5 +224,5 @@ Current version: **2.0** (as of 2025-12-08)
 1. Check `Sline_everything/DEVELOPER_GUIDE.md` for feature-specific docs
 2. Check `Sline_everything/SUPABASE_SETUP.md` for database questions
 3. Check `.cursor/rules/` for coding patterns
-4. Invoke appropriate agent: `@Architect`, `@Pixel`, `@Supabase_Ops`, etc.
+4. Invoke appropriate agent: `@Architect`, `@Pixel`, `@Supabase_Ops`, `@CodeGuard`, etc.
 
