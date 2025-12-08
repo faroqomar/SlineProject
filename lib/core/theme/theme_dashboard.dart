@@ -9,6 +9,8 @@
 ///
 /// **Last Updated:** 2024
 
+// ignore_for_file: unused_import
+
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
