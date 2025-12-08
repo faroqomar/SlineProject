@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, DollarSign, Clock, Paperclip, Send, Video } from 'lucide-react';
+import { ChevronLeft, DollarSign, Clock, Paperclip, Send } from 'lucide-react';
 import { Message, ChatMessage } from '../Common/types';
 
 interface ChatModalProps {
@@ -11,11 +11,10 @@ interface ChatModalProps {
   offerForm: any;
   setOfferForm: (f: any) => void;
   handleSendOffer: () => void;
-  handleStartVideoCall: () => void;
 }
 
 export default function ChatModal({
-  selectedChat, theme, setSelectedChat, showOfferModal, setShowOfferModal, offerForm, setOfferForm, handleSendOffer, handleStartVideoCall
+  selectedChat, theme, setSelectedChat, showOfferModal, setShowOfferModal, offerForm, setOfferForm, handleSendOffer
 }: ChatModalProps) {
   return (
     <div className="absolute inset-0 z-50 flex flex-col transition-colors duration-500 animate-slide-up overflow-hidden" style={{ backgroundColor: theme.phoneBg }}>
@@ -25,7 +24,6 @@ export default function ChatModal({
              <h2 className="text-[15px] font-bold">{selectedChat.name}</h2>
           </div>
           <div className="flex gap-2">
-             <button onClick={handleStartVideoCall} className="w-10 h-10 rounded-full bg-[#146068]/10 flex items-center justify-center text-[#146068] hover:bg-[#146068]/20 transition-colors active:scale-95"><Video className="w-5 h-5" /></button>
              <button onClick={() => setShowOfferModal(true)} className="flex items-center gap-1 bg-[#146068] px-3 py-1.5 rounded-full text-white active:scale-95 transition-transform"><DollarSign className="w-4 h-4" /><span className="text-[11px] font-bold">Offer</span></button>
           </div>
        </div>

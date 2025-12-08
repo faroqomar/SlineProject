@@ -16,6 +16,13 @@ class AppTypography {
   );
 
   // --- Headings ---
+  // Logo size (used in auth screen)
+  static TextStyle get logo => _baseTextStyle.copyWith(
+        fontSize: 36,
+        fontWeight: FontWeight.w900, // Extrabold from design
+        letterSpacing: -0.5,
+      );
+
   static TextStyle get h1 => _baseTextStyle.copyWith(
         fontSize: 32,
         fontWeight: FontWeight.w900, // Extrabold from design
@@ -42,6 +49,12 @@ class AppTypography {
 
   static TextStyle get h5 => _baseTextStyle.copyWith(
         fontSize: 18,
+        fontWeight: FontWeight.w700, // Bold from design
+      );
+
+  // Subtitle (17px from design - used in modals)
+  static TextStyle get subtitle => _baseTextStyle.copyWith(
+        fontSize: 17,
         fontWeight: FontWeight.w700, // Bold from design
       );
 

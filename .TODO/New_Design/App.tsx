@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Search, Filter, Bell, Plus } from "lucide-react";
 import { 
   Task, Message, NavView, CategoryId, TaskFormState, ServiceTier,
-  ChatMessage, Proposal, ProposalFormState, OrderStatus, FilterState, FreelancerProfile, ActiveCall
+  ChatMessage, Proposal, ProposalFormState, OrderStatus, FilterState, FreelancerProfile
 } from "./Common/types";
 import { getTheme } from "./Common/Theme";
 import * as Data from "./Common/Data";
@@ -23,7 +23,6 @@ import ProfileView from "./Profile/ProfileView";
 // Modals
 import TaskDetailsModal from "./TaskDetails/TaskDetailsModal";
 import ChatModal from "./Messages/ChatModal";
-import VideoCallModal from "./Messages/VideoCallModal";
 import CreateTaskModal from "./CreateTask/CreateTaskModal";
 import NotificationsModal from "./Notifications/NotificationsModal";
 import FiltersModal from "./Filters/FiltersModal";
@@ -69,8 +68,6 @@ export default function App() {
     }
   });
 
-  const [activeCall, setActiveCall] = useState<ActiveCall | null>(null);
-
   const theme = getTheme(isDarkMode);
 
   const toggleLike = (taskId: number) => {
@@ -106,18 +103,6 @@ export default function App() {
     const current = filters[type];
     const newValues = current.includes(value) ? current.filter(i => i !== value) : [...current, value];
     setFilters({...filters, [type]: newValues});
-  };
-
-  const handleStartVideoCall = () => {
-    if (!selectedChat) return;
-    setActiveCall({
-      id: 1,
-      name: selectedChat.name,
-      avatar: selectedChat.initials,
-      status: 'calling',
-      isMuted: false,
-      isVideoOn: true
-    });
   };
 
   return (
@@ -207,9 +192,7 @@ export default function App() {
             {showFilters && <FiltersModal theme={theme} setShowFilters={setShowFilters} filters={filters} setFilters={setFilters} toggleFilter={toggleFilter} />}
             {showCreateTask && <CreateTaskModal theme={theme} handleCloseCreateTask={handleCloseCreateTask} createStep={createStep} setCreateStep={setCreateStep} taskForm={taskForm} setTaskForm={setTaskForm} popularCategories={Data.popularCategories} activePackageTab={activePackageTab} setActivePackageTab={setActivePackageTab} />}
             
-            {selectedChat && <ChatModal selectedChat={selectedChat} theme={theme} setSelectedChat={setSelectedChat} showOfferModal={showOfferModal} setShowOfferModal={setShowOfferModal} offerForm={offerForm} setOfferForm={setOfferForm} handleSendOffer={handleSendOffer} handleStartVideoCall={handleStartVideoCall} />}
-            
-            {activeCall && <VideoCallModal theme={theme} activeCall={activeCall} setActiveCall={setActiveCall} />}
+            {selectedChat && <ChatModal selectedChat={selectedChat} theme={theme} setSelectedChat={setSelectedChat} showOfferModal={showOfferModal} setShowOfferModal={setShowOfferModal} offerForm={offerForm} setOfferForm={setOfferForm} handleSendOffer={handleSendOffer} />}
 
             {selectedTask && !selectedProposal && (
               <TaskDetailsModal 

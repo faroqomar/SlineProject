@@ -224,12 +224,3 @@ export interface FilterState {
   sellerLevel: string[];
   sortBy: string;
 }
-
-export interface ActiveCall {
-  id: number;
-  name: string;
-  avatar: string; // Color or URL
-  status: 'calling' | 'connected';
-  isMuted: boolean;
-  isVideoOn: boolean;
-}
