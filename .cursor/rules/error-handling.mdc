@@ -1,0 +1,277 @@
+---
+description: Error handling patterns and user-friendly error mapping
+globs: ["**/*.dart"]
+alwaysApply: false
+---
+
+# Error Handling Rules
+
+## Error Mapping Convention
+
+All technical errors must be mapped to user-friendly messages before showing to users.
+
+### Standard Error Mapping Function
+
+```dart
+String _mapError(dynamic error) {
+  if (error is PostgrestException) {
+    switch (error.code) {
+      case '42501': // RLS denied
+        return 'Session expired. Please log in again.';
+      case '23505': // Unique violation
+        return 'This item already exists.';
+      case '23503': // Foreign key violation
+        return 'Related item does not exist.';
+      case '23514': // Check constraint violation
+        return 'Invalid data provided.';
+      case '22P02': // Invalid input syntax (UUID, etc.)
+        return 'Invalid identifier provided.';
+      default:
+        return 'Database error occurred. Please try again.';
+    }
+  }
+  
+  if (error is AuthException) {
+    if (error.message.contains('Invalid login credentials')) {
+      return 'Email or password is incorrect.';
+    }
+    if (error.message.contains('Email already registered')) {
+      return 'An account with this email already exists.';
+    }
+    return 'Authentication error. Please try again.';
+  }
+  
+  if (error is StorageException) {
+    if (error.statusCode == 404) {
+      return 'File not available.';
+    }
+    return 'Upload failed. Please try again.';
+  }
+  
+  if (error is SocketException || error is TimeoutException) {
+    return 'Cannot reach the server. Check your connection and retry.';
+  }
+  
+  // Fallback
+  return 'An error occurred. Please try again.';
+}
+```
+
+## Common Error Codes
+
+### Database Errors (PostgrestException)
+
+| Code | Meaning | User Message |
+|------|---------|--------------|
+| `42501` | RLS denied | "Session expired. Please log in again." |
+| `23505` | Unique violation | "This item already exists." |
+| `23503` | Foreign key violation | "Related item does not exist." |
+| `23514` | Check constraint violation | "Invalid data provided." |
+| `22P02` | Invalid input syntax | "Invalid identifier provided." |
+| `42P01` | Table does not exist | "Service unavailable. Please contact support." |
+
+### Auth Errors (AuthException)
+
+| Error | User Message |
+|-------|--------------|
+| Invalid login credentials | "Email or password is incorrect." |
+| Email already registered | "An account with this email already exists." |
+| Weak password | "Password is too weak. Use at least 8 characters." |
+| Invalid email | "Please enter a valid email address." |
+
+### Storage Errors (StorageException)
+
+| Status Code | User Message |
+|-------------|--------------|
+| 404 | "File not available." |
+| 413 | "File is too large. Please choose a smaller file." |
+| 400 | "Invalid file type. Please choose a different file." |
+
+### Network Errors
+
+| Error Type | User Message |
+|------------|--------------|
+| SocketException | "Cannot reach the server. Check your connection and retry." |
+| TimeoutException | "Request timed out. Please try again." |
+| HttpException | "Network error occurred. Please try again." |
+
+## ViewModel Error Handling Pattern
+
+```dart
+class ExampleViewModel extends ChangeNotifier {
+  String? _error;
+  bool _isLoading = false;
+  
+  String? get error => _error;
+  bool get isLoading => _isLoading;
+  
+  Future<void> performAction() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    
+    try {
+      await _service.performAction();
+      AppLogger.i('Action completed successfully');
+    } catch (e) {
+      _error = _mapError(e);
+      AppLogger.e('Action failed', e);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+  
+  String _mapError(dynamic e) {
+    // Use standard error mapping function
+    // ...
+  }
+  
+  void clearError() {
+    _error = null;
+    notifyListeners();
+  }
+}
+```
+
+## UI Error Display
+
+### SnackBar Pattern
+
+```dart
+// In ViewModel
+void _showError(String message) {
+  // Store error in ViewModel
+  _error = message;
+  notifyListeners();
+}
+
+// In View
+Consumer<ExampleViewModel>(
+  builder: (context, viewModel, child) {
+    if (viewModel.error != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(viewModel.error!),
+            backgroundColor: AppColors.lightRed,
+            action: SnackBarAction(
+              label: 'Dismiss',
+              onPressed: () => viewModel.clearError(),
+            ),
+          ),
+        );
+      });
+    }
+    return YourWidget();
+  },
+)
+```
+
+### Error Widget Pattern
+
+```dart
+if (viewModel.error != null)
+  Container(
+    padding: const EdgeInsets.all(AppDimens.p16),
+    color: AppColors.lightRed.withValues(alpha: 0.1),
+    child: Row(
+      children: [
+        Icon(Icons.error_outline, color: AppColors.lightRed),
+        SizedBox(width: AppDimens.p8),
+        Expanded(
+          child: Text(
+            viewModel.error!,
+            style: AppTypography.body.copyWith(
+              color: AppColors.lightRed,
+            ),
+          ),
+        ),
+        IconButton(
+          icon: Icon(Icons.close),
+          onPressed: () => viewModel.clearError(),
+        ),
+      ],
+    ),
+  )
+```
+
+## RLS Error Handling
+
+RLS errors (42501) typically mean:
+1. User session expired
+2. User doesn't have permission
+3. Invalid user context
+
+**Always handle RLS errors gracefully**:
+
+```dart
+try {
+  await supabase.from('profiles').select().eq('id', userId);
+} on PostgrestException catch (e) {
+  if (e.code == '42501') {
+    // Session expired - redirect to login
+    Navigator.pushReplacementNamed(context, '/login');
+    return;
+  }
+  rethrow;
+}
+```
+
+## Logging Errors
+
+Always log errors with context:
+
+```dart
+try {
+  await _service.performAction();
+} catch (e, stackTrace) {
+  AppLogger.e(
+    'Failed to perform action: userId=$userId, action=$actionName',
+    e,
+    stackTrace,
+  );
+  _error = _mapError(e);
+}
+```
+
+**Important**: Never log sensitive data (passwords, tokens, etc.)
+
+## Error Recovery
+
+### Retry Pattern
+
+```dart
+Future<T> retryOperation<T>(
+  Future<T> Function() operation, {
+  int maxRetries = 3,
+  Duration delay = const Duration(seconds: 1),
+}) async {
+  for (int i = 0; i < maxRetries; i++) {
+    try {
+      return await operation();
+    } catch (e) {
+      if (i == maxRetries - 1) rethrow;
+      await Future.delayed(delay * (i + 1));
+    }
+  }
+  throw Exception('Max retries exceeded');
+}
+```
+
+### Offline Handling
+
+```dart
+try {
+  await _service.syncData();
+} on SocketException catch (e) {
+  // Store for later sync
+  await _localStorage.savePendingSync(data);
+  _error = 'No internet connection. Data will sync when online.';
+}
+```
+
+## References
+
+- `Sline_everything/DEVELOPER_GUIDE.md` - Feature-specific error handling
+- `Sline_everything/SUPABASE_SETUP.md` - Database error codes and triggers

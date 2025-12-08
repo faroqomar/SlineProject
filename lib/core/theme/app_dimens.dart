@@ -1,0 +1,55 @@
+
+
+/// Defines common dimension values for spacing, padding, and border radii
+/// throughout the application, consistent with the design system.
+///
+/// This class provides static constant values to ensure a consistent visual
+/// rhythm and simplifies UI development by centralizing these frequently
+/// used measurements.
+class AppDimens {
+  AppDimens._(); // Private constructor to prevent instantiation
+
+  // --- Spacing / Padding (Multiples of 4 and 8 for a consistent grid) ---
+  static const double p0 = 0.0;
+  static const double p2 = 2.0;
+  static const double p4 = 4.0;
+  static const double p6 = 6.0;
+  static const double p8 = 8.0;
+  static const double p10 = 10.0;
+  static const double p12 = 12.0;
+  static const double p14 = 14.0;
+  static const double p16 = 16.0;
+  static const double p18 = 18.0;
+  static const double p20 = 20.0;
+  static const double p22 = 22.0; // Added for icon size
+  static const double p24 = 24.0;
+  static const double p28 = 28.0;
+  static const double p32 = 32.0;
+  static const double p40 = 40.0;
+  static const double p48 = 48.0;
+  static const double p50 = 50.0;
+  static const double p52 = 52.0;
+  static const double p54 = 54.0;
+  static const double p60 = 60.0;
+  static const double p70 = 70.0;
+  static const double p80 = 80.0;
+  static const double p100 = 100.0;
+
+  // --- Border Radii ---
+  static const double r4 = 4.0;
+  static const double r8 = 8.0;
+  static const double r10 = 10.0;
+  static const double r12 = 12.0; // rounded-[12px]
+  static const double r14 = 14.0; // rounded-[14px]
+  static const double r16 = 16.0; // rounded-[16px]
+  static const double r18 = 18.0; // rounded-[18px]
+  static const double r20 = 20.0; // rounded-[20px]
+  static const double r24 = 24.0; // rounded-[24px]
+  static const double r30 = 30.0; // rounded-[30px]
+  static const double r50 = 50.0; // rounded-[50px] (phone mockup border)
+
+  // --- Icon Sizes ---
+  static const double iconSizeSmall = 16.0;
+  static const double iconSizeMedium = 24.0;
+  static const double iconSizeLarge = 32.0;
+}

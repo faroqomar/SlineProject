@@ -20,6 +20,27 @@
 
 ## 📋 Version History
 
+### 🟢 Version 2.0 — Visual Parity & Task Card Redesign
+**Date:** 2025-12-08
+**Commit:** _Pending_ — "feat(ui): TaskCard redesign, isHot/bgColor support, offer count trigger"
+
+#### ✅ Implemented
+- **Task Visuals (DB)**
+  - Added `is_hot` (boolean), `bg_color` (text), `offers` (int) to `tasks` table.
+  - Added trigger `update_task_offer_count` to auto-update `offers` when requests are added/removed.
+- **Task Visuals (Flutter)**
+  - Updated `Task` model to include new fields (safe null handling).
+  - Updated `TaskService` to select all columns (`*`).
+  - **Redesigned `TaskCard`**: now matches React `HomeList` design with header color block, floating badges, and rich footer.
+- **Theme**
+  - Added `AppDimens.p128` for card headers.
+  - Added `toHex` utility for colors.
+
+#### 📊 Impact
+- Achieved 100% visual parity with the new Glassmorphism design for Task Cards.
+- Home, Tenders, and Bookings screens now look consistent and premium.
+- Offer counts are now cached on the task record for instant display.
+
 ### 🟢 Version 1.9 — Private Avatars & Task Images (Signed URLs)
 **Date:** 2025-09-20  
 **Commit:** _Pending_ — "feat(storage): avatars & task-images buckets + signed render; show task images; unify ProfileController"
