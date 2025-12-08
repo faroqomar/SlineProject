@@ -36,7 +36,6 @@ This document tracks the implementation status of features from `.TODO/New_Desig
 - **Design:** `.TODO/New_Design/Messages/MessagesList.tsx`, `.TODO/New_Design/Messages/ChatModal.tsx`
 - **Flutter:** `lib/features/chat/view/messages_screen.dart`, `lib/features/chat/view/chat_screen.dart`
 - **Status:** ✅ Implemented & Linked
-- **Notes:** Chat functionality with offers support. **Video call removed** (Phase 1 cleanup)
 
 ### 6. Orders
 - **Design:** `.TODO/New_Design/Orders/OrdersScreen.tsx`
@@ -195,7 +194,6 @@ This document tracks the implementation status of features from `.TODO/New_Desig
 
 - **Total Features in New_Design:** ~16 major features
 - **Implemented & Linked:** ~14 features
-- **Not Implemented:** 1 (Video Call - removed)
 - **Needs Verification:** 2 features
 - **Partially Implemented:** Design consistency review needed
 
