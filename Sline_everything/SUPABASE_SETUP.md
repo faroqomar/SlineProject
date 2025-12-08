@@ -1076,6 +1076,34 @@ CREATE TRIGGER trg_booking_guard
   FOR EACH ROW EXECUTE FUNCTION public.fn_booking_guard();
 ```
 
+### 7.8 Tasks: Auto-Update Offer Count
+
+Maintains the `offers` count on the tasks table when requests are added or removed.
+
+```sql
+CREATE OR REPLACE FUNCTION update_task_offer_count()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF (TG_OP = 'INSERT') THEN
+        UPDATE public.tasks
+        SET offers = offers + 1
+        WHERE id = NEW.task_id;
+    ELSIF (TG_OP = 'DELETE') THEN
+        UPDATE public.tasks
+        SET offers = GREATEST(0, offers - 1)
+        WHERE id = OLD.task_id;
+    END IF;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS update_offers_count ON public.task_requests;
+CREATE TRIGGER update_offers_count
+AFTER INSERT OR DELETE ON public.task_requests
+FOR EACH ROW
+EXECUTE FUNCTION update_task_offer_count();
+```
+
 ---
 
 ## 8. Storage Buckets
@@ -1384,6 +1412,10 @@ INSERT INTO public.categories (name) VALUES ('ShouldFail');
 ---
 
 ## 12. Changelog
+
+### Version 2.0 (December 2025)
+- **Task Visuals**: Added `is_hot`, `bg_color`, and `offers` columns to `tasks`.
+- **Triggers**: Added `update_task_offer_count` to auto-sync offer counts.
 
 ### Version 1.9+ (October 2024)
 - **MVVM Restructure**: Complete re-architecture to strict MVVM pattern
