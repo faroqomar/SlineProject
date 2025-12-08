@@ -13,11 +13,11 @@ interface ProfileViewProps {
 }
 
 export default function ProfileView({ profileStats, profileMenuItems, theme, setActiveNav, isDarkMode, setIsDarkMode, setIsLoggedIn }: ProfileViewProps) {
-    const renderIcon = (iconName: string, className: string) => {
+    const renderIcon = (iconName: string, className: string, color?: string) => {
         const iconMap: { [key: string]: React.ReactNode } = {
-          User: <User className={className} strokeWidth={2} />,
-          Heart: <Heart className={className} strokeWidth={2} />,
-          Clock: <div className={className}>🕒</div>, // Fallback for simple
+          User: <User className={className} style={{ color }} strokeWidth={2} />,
+          Heart: <Heart className={className} style={{ color }} strokeWidth={2} />,
+          Clock: <div className={className} style={{ color }}>🕒</div>, // Fallback for simple
         };
         return iconMap[iconName] || <span className="text-[20px]">{iconName}</span>;
     };
@@ -59,7 +59,7 @@ export default function ProfileView({ profileStats, profileMenuItems, theme, set
                   className={`${theme.cardBg} backdrop-blur-lg rounded-[16px] p-4 border ${theme.cardBorder} hover:${theme.cardBorderHover} transition-all duration-300 cursor-pointer hover:-translate-y-0.5 flex items-center gap-3 active:scale-[0.98]`}
                >
                   <div className="w-11 h-11 rounded-[12px] flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${item.color}20` }}>
-                     {renderIcon(item.icon, `w-5 h-5 text-[${item.color}]`)}
+                     {renderIcon(item.icon, "w-5 h-5", item.color)}
                   </div>
                   <div className="flex-1 min-w-0">
                      <h3 className="text-[14px] font-bold leading-tight mb-0.5" style={{ color: theme.text }}>{item.label}</h3>
