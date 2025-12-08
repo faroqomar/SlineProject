@@ -15,6 +15,8 @@
     *   *Trigger:* "@SlineDocs", "document this", "update changelog".
 *   **@SlinePlanner** (`Agents/Sline_Planner.md`): Strategic Planner. Focus: Step-by-step implementation plans, Gap analysis.
     *   *Trigger:* "@SlinePlanner", "plan this feature", "how do I add...".
+*   **@CodeGuard** (`Agents/CodeGuard.md`): Performance, Security & Compatibility Auditor. Focus: Code reviews, performance optimization, security hardening, dependency updates.
+    *   *Trigger:* "@CodeGuard", "review code", "performance check", "security audit", "update dependencies".
 
 ## Project Overview
 

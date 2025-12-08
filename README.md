@@ -2,14 +2,14 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.9-blue.svg)
+![Version](https://img.shields.io/badge/version-2.1-blue.svg)
 ![Flutter](https://img.shields.io/badge/Flutter-3.8.1+-02569B?logo=flutter)
 ![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase)
 ![License](https://img.shields.io/badge/license-Private-red.svg)
 
 **A modern, cross-platform freelance marketplace connecting clients with service providers**
 
-[Features](#-features) • [Tech Stack](#-tech-stack) • [Getting Started](#-getting-started) • [Documentation](#-documentation) • [Architecture](#-architecture)
+[Features](#-features) • [Tech Stack](#-tech-stack) • [Getting Started](#-getting-started) • [Documentation](#-documentation) • [AI Agents](#-ai-agents)
 
 </div>
 
@@ -87,10 +87,11 @@ Two-sided marketplace with:
 - Public gallery (visible to all authenticated users)
 - Project URL and description support
 
-### 🏷️ Categories System
-- Database-first category management
-- Predefined categories (Design, Development, Marketing, etc.)
-- Read-only for regular users
+### 🎨 Theme System (v2.1)
+- Centralized theme dashboard (`theme_dashboard.dart`)
+- iOS 26-inspired liquid glass bottom navigation
+- Material Design 3 with Glassmorphism effects
+- AppColors, AppTypography, AppDimens, AppDecorations
 
 ---
 
@@ -99,7 +100,7 @@ Two-sided marketplace with:
 ### Frontend
 - **Flutter 3.8.1+** — Cross-platform UI framework (iOS, Android, Web, Desktop)
 - **Dart 3.8.1+** — Programming language
-- **Material Design 3** — Modern UI components
+- **Material Design 3** — Modern UI components with Glassmorphism
 - **Provider** — State management (ChangeNotifier pattern)
 
 ### Backend (Supabase BaaS)
@@ -120,32 +121,48 @@ Two-sided marketplace with:
 ## 📂 Project Structure
 
 ```
-lib/
-├── app/                          # Application-level configuration
-│   └── main_navigation_screen.dart   # Bottom nav + routing
-├── core/                         # Shared resources
-│   ├── models/                   # Global models (user_profile)
-│   ├── services/                 # Cross-cutting services
-│   │   ├── supabase_config.dart  # Supabase initialization
-│   │   └── logger_service.dart   # AppLogger (debug-only)
-│   ├── widgets/                  # Shared UI components
-│   │   ├── signed_avatar.dart    # Avatar with signed URLs
-│   │   └── signed_image.dart     # Image with signed URLs
-│   ├── theme/                    # App theming
-│   └── utils/                    # Helper functions
-├── features/                     # Feature modules (MVVM)
-│   ├── auth/                     # Authentication
-│   ├── home/                     # Home feed/dashboard
-│   ├── tasks/                    # Task management
-│   ├── chat/                     # Real-time messaging
-│   ├── profile/                  # User profiles
-│   ├── portfolio/                # Freelancer portfolio
-│   ├── booking/                  # Booking & availability
-│   ├── favorites/                # Saved freelancers
-│   ├── saved/                    # Saved tasks
-│   └── categories/               # Service categories
-├── shared/                       # Shared constants
-└── main.dart                     # App entry point
+sline_app/
+├── lib/                          # Flutter source code
+│   ├── app/                      # Application-level configuration
+│   │   └── main_navigation_screen.dart
+│   ├── core/                     # Shared resources
+│   │   ├── models/               # Global models
+│   │   ├── services/             # Cross-cutting services
+│   │   ├── widgets/              # Shared UI components
+│   │   ├── theme/                # 🎨 Centralized theme system
+│   │   │   ├── app_colors.dart
+│   │   │   ├── app_typography.dart
+│   │   │   ├── app_dimens.dart
+│   │   │   ├── app_decorations.dart
+│   │   │   ├── app_theme.dart
+│   │   │   └── theme_dashboard.dart  # Single source of truth
+│   │   ├── providers/            # Global state
+│   │   └── utils/                # Helper functions
+│   ├── features/                 # Feature modules (MVVM)
+│   │   ├── auth/                 # Authentication
+│   │   ├── home/                 # Home feed/dashboard
+│   │   ├── tasks/                # Task management
+│   │   ├── chat/                 # Real-time messaging
+│   │   ├── profile/              # User profiles
+│   │   ├── portfolio/            # Freelancer portfolio
+│   │   ├── booking/              # Booking & availability
+│   │   ├── wallet/               # Wallet & transactions
+│   │   ├── orders/               # Order management
+│   │   ├── notifications/        # Notifications
+│   │   ├── favorites/            # Saved freelancers
+│   │   ├── saved/                # Saved tasks
+│   │   └── categories/           # Service categories
+│   └── main.dart                 # App entry point
+├── .cursor/                      # 🤖 Cursor AI configuration
+│   ├── Agents/                   # AI agent definitions (7 agents)
+│   ├── rules/                    # Coding rules (.mdc files)
+│   └── PROJECT_CONTEXT.md        # Quick reference
+├── .TODO/                        # Design & planning
+│   ├── New_Design/               # React Native design references
+│   └── Future_Plans/             # Feature inventory
+├── Sline_everything/             # 📚 Project documentation
+├── GEMINI.md                     # Project overview & agent triggers
+└── .cursorrules                  # Always-active rules
 ```
 
 ### Feature Structure (MVVM)
@@ -167,7 +184,7 @@ features/<feature>/
 - [Flutter SDK 3.8.1+](https://flutter.dev/docs/get-started/install)
 - [Dart SDK 3.8.1+](https://dart.dev/get-dart)
 - Supabase account ([supabase.com](https://supabase.com))
-- IDE: VS Code or Android Studio with Flutter extension
+- IDE: VS Code or Cursor with Flutter extension
 
 ### Installation
 
@@ -211,6 +228,9 @@ flutter format .
 # Run tests
 flutter test
 
+# Check outdated packages
+flutter pub outdated
+
 # Build for production
 flutter build apk                    # Android APK
 flutter build ios                    # iOS (requires Xcode)
@@ -222,15 +242,45 @@ flutter clean && flutter pub get
 
 ---
 
+## 🤖 AI Agents
+
+SLine uses specialized AI agents (in `.cursor/Agents/`) for different tasks:
+
+| Agent | Trigger | Focus |
+|-------|---------|-------|
+| **@Architect** | `@Architect`, "fix logic", "refactor" | Logic, MVVM compliance, refactoring |
+| **@Pixel** | `@Pixel`, "design this", "make it pretty" | UI/UX, Glassmorphism, themes |
+| **@Supabase_Ops** | `@Supabase`, "add table", "secure db" | Database, RLS, SQL, storage |
+| **@Sentinel** | `@Sentinel`, "check this", "run tests" | QA, security, testing |
+| **@SlineDocs** | `@SlineDocs`, "document this" | Documentation updates |
+| **@SlinePlanner** | `@SlinePlanner`, "plan this feature" | Implementation planning |
+| **@CodeGuard** | `@CodeGuard`, "review code", "performance check" | Code reviews, performance, security, dependencies |
+
+### Cursor Configuration
+
+```
+.cursor/
+├── Agents/                 # Agent definitions (.md files)
+├── rules/                  # Coding rules (.mdc files)
+│   ├── flutter-mvvm.mdc    # MVVM pattern rules
+│   ├── supabase-database.mdc # Database rules
+│   ├── ui-theme.mdc        # Theme system rules
+│   ├── error-handling.mdc  # Error handling patterns
+│   └── code-quality.mdc    # Code quality standards
+└── PROJECT_CONTEXT.md      # Quick reference guide
+```
+
+---
+
 ## 📚 Documentation
 
 ### 📖 Essential Docs (Start Here)
 
-| Document | Purpose | Audience |
-|----------|---------|----------|
-| **[CLAUDE.md](./CLAUDE.md)** | Complete development guide for AI assistants | Developers, Claude Code |
-| **[AI_PROJECT_PROMPT.md](./AI_PROJECT_PROMPT.md)** | Comprehensive project context for AI (1200+ lines) | AI Assistants, New Developers |
-| **[Sline_everything/DEVELOPER_GUIDE.md](./Sline_everything/DEVELOPER_GUIDE.md)** | System architecture & feature map | All Developers |
+| Document | Purpose |
+|----------|---------|
+| **[GEMINI.md](./GEMINI.md)** | Project overview, agents, building instructions |
+| **[Sline_everything/DEVELOPER_GUIDE.md](./Sline_everything/DEVELOPER_GUIDE.md)** | System architecture & feature map |
+| **[.cursor/PROJECT_CONTEXT.md](./.cursor/PROJECT_CONTEXT.md)** | Quick reference for development |
 
 ### 📋 Core Documentation
 
@@ -239,7 +289,8 @@ flutter clean && flutter pub get
 | [STRUCTURE.md](./Sline_everything/STRUCTURE.md) | Project folder structure & conventions |
 | [SUPABASE_SETUP.md](./Sline_everything/SUPABASE_SETUP.md) | Database schema, RLS policies, triggers (executable SQL) |
 | [MVP_ROADMAP.md](./Sline_everything/MVP_ROADMAP.md) | Feature roadmap & completion status |
-| [Sline_Log.md](./Sline_everything/Sline_Log.md) | Complete version history (200+ lines) |
+| [Sline_Log.md](./Sline_everything/Sline_Log.md) | Complete version history |
+| [CODE_REVIEW.md](./Sline_everything/CODE_REVIEW.md) | Code quality patterns & best practices |
 
 ### 🎓 Feature-Specific Guides
 
@@ -250,20 +301,7 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 - Booking Feature.md
 - Profile Feature.md
 - Portfolio Feature.md
-- Favorites Feature.md
-- Saved Feature.md
-- Categories Feature.md
-- Home Feature.md
-- Core Module.md
-
-### 📊 Analysis & Review (October 2024)
-
-| Document | Purpose |
-|----------|---------|
-| [CODE_REVIEW.md](./Sline_everything/CODE_REVIEW.md) | Code quality assessment (7.5/10 → 9/10) |
-| [ARCHITECTURE_ANALYSIS.md](./Sline_everything/ARCHITECTURE_ANALYSIS.md) | Scalability & performance analysis |
-| [FEATURE_ENHANCEMENTS.md](./Sline_everything/FEATURE_ENHANCEMENTS.md) | 18 feature proposals with roadmap |
-| [COMPREHENSIVE_ANALYSIS_SUMMARY.md](./Sline_everything/COMPREHENSIVE_ANALYSIS_SUMMARY.md) | Executive overview |
+- And more...
 
 ---
 
@@ -301,126 +339,53 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 - ALL tables have RLS enabled
 - Session-based access control (`auth.uid()`)
 - Policies: owner-only, participant-based, role-based
-- Queries fail without valid session
 
 **Private Storage**:
 - All user uploads in private buckets
 - Signed URLs (1-hour TTL, cached ~90min)
 - Storage paths in database, NOT URLs
-- RLS on storage objects
-
-**Database Triggers**:
-- Business rules enforced at database level
-- Prevent offers on booking tasks
-- Auto-assign task on offer acceptance
-- Prevent overlapping availability slots
-- Enforce DM requires favorite relationship
-- Validate offer message payloads
 
 ---
 
 ## 🎯 Current Status
 
-### Version 1.9 (November 2025)
+### Version 2.1 (December 2025)
 
-**Completed Features** ✅:
+**Latest Changes**:
+- ✅ Theme System Dashboard (centralized theme management)
+- ✅ iOS 26 Liquid Glass Bottom Navigation
+- ✅ CodeGuard Agent (code reviews, performance, security)
+- ✅ Feature Inventory System
+- ✅ Video Call Feature Removed (scope reduction)
+
+**Completed Features**:
 - Auth & Profiles (with private avatar storage)
 - Tasks (tender/booking, images, CRUD, search/filter)
-- Real-time Chat (DM + task-linked, attachments, typed messages)
-- Offers/Bids (unique pending per bidder, accept/reject)
-- Booking System (availability slots, reservations, timezone-safe)
-- Favorites & Saved Tasks (optimistic updates)
+- Real-time Chat (DM + task-linked, attachments)
+- Offers/Bids (unique pending per bidder)
+- Booking System (availability slots, timezone-safe)
+- Favorites & Saved Tasks
 - Portfolio (CRUD, public gallery)
-- Categories (DB-first, read-only)
-- Infrastructure (AppLogger, signed images, error mapping)
-
-**Code Quality**: 7.5/10 (targeting 9/10 after Sprint 1-2 fixes)
+- Wallet & Orders Dashboard
+- Notifications System
+- Theme System (centralized)
+- 7 AI Agents for development
 
 ### Priority Roadmap
 
-**Immediate (1-3 weeks) — Performance Sprint**:
-- 🔴 **CRITICAL**: Fix N+1 query in TaskService (50x performance improvement)
-- Add caching layer (in-memory + SQLite)
-- Pull-to-refresh on all list screens
-- Lifecycle-aware realtime subscriptions
-- Shimmer skeleton loaders
-- Enhanced empty states
+**Immediate**:
+- Audit `Colors.*` → `AppColors` migration
+- Update Supabase Flutter to v2.x
 
-**Short-term (1-3 months)**:
+**Short-term**:
+- Localization (Arabic RTL + English LTR)
 - Push notifications (FCM)
 - User ratings & reviews
-- Advanced task filters
-- Role switching UI
-- Theme system (Light/Dark mode)
-- Localization (Arabic RTL + English LTR)
-- Admin Dashboard (React/TypeScript)
 
-**Medium-term (3-6 months)**:
+**Medium-term**:
 - Payment integration & escrow
-- Video/voice calls (Agora/Twilio)
-- Location-based search
 - Analytics dashboard
-- Content moderation tools
-
-**Long-term (6-12 months)**:
-- AI-powered freelancer matching
-- Subscription tiers
-- Event sourcing for audit trails
-- Microservices extraction
-- Offline-first architecture
-
----
-
-## 🧪 Testing
-
-### Testing Strategy
-
-**Unit Tests**:
-- Repositories/Services (mock Supabase)
-- ViewModels (state transitions)
-- Utilities (formatting, pagination)
-
-**Widget Tests**:
-- Forms, validation, error display
-- Image widgets, placeholders, fallbacks
-- Lists (empty states, loading, pull-to-refresh)
-
-**Integration Tests** (staging DB):
-- Full user flows (auth → task → offer → chat → booking)
-- RLS enforcement (negative tests)
-- File storage lifecycle
-
-**Non-Functional**:
-- Performance (cold start, scrolling FPS)
-- Battery (realtime subscriptions)
-- Network (offline behavior, retries)
-
-### Testing Checklist (Per Feature)
-- [ ] Happy path works end-to-end
-- [ ] RLS enforced (unauthorized access fails)
-- [ ] Unique constraints handled gracefully
-- [ ] Error states render correctly
-- [ ] UI states (loading/error/empty) work
-- [ ] Optimistic updates + rollback on failure
-- [ ] Timestamps display in local timezone
-- [ ] Pagination works without duplicates
-
----
-
-## 📈 Key Performance Indicators
-
-| Metric | Target | Priority |
-|--------|--------|----------|
-| DAU/MAU Ratio | >20% | HIGH |
-| Task Completion Rate | >60% | HIGH |
-| 30-Day User Retention | >40% | HIGH |
-| Avg Session Length | >10 min | MEDIUM |
-| Crash-Free Rate | >99% | CRITICAL |
-
-**Post-Monetization KPIs**:
-- GMV (Gross Merchandise Value)
-- Take Rate (commission %)
-- LTV/CAC Ratio (target >3:1)
+- Admin Dashboard
 
 ---
 
@@ -439,13 +404,13 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 - ✅ Store paths, not URLs (for storage)
 - ✅ UTC timestamps (store UTC, display local)
 - ✅ Cursor pagination (not offset)
-- ✅ Error mapping (user-friendly messages)
+- ✅ Use `AppColors`, not hardcoded colors
 
 **Architecture Rules**:
 - ❌ NO Supabase calls in View layer
 - ❌ NO business logic in View layer
 - ❌ NO storing signed URLs in database
-- ❌ NO skipping RLS considerations
+- ❌ NO hardcoded colors (`Color(0xFF...)`)
 
 ### Adding a New Feature
 
@@ -456,20 +421,7 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 5. **ViewModels**: State management + business logic
 6. **Views**: UI screens + widgets
 7. **Wire Providers**: Add to `main.dart`
-8. **Tests**: Unit + widget + integration
-9. **Documentation**: Update `Sline_Log.md` + create feature guide
-
----
-
-## 🛡️ Security & Privacy
-
-- **RLS Enabled** on all tables (database-level security)
-- **Private Storage** with short-lived signed URLs
-- **Session Validation** on every query
-- **Input Validation** client-side + database constraints
-- **Error Masking** (no raw SQL errors exposed to users)
-- **Audit Trails** via database triggers
-- **Data Encryption** at rest (Supabase default) + in transit (TLS)
+8. **Documentation**: Update `Sline_Log.md` + create feature guide
 
 ---
 
@@ -480,32 +432,25 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 flutter run                         # Run app
 flutter analyze                     # Static analysis
 flutter test                        # Run tests
+flutter pub outdated                # Check dependencies
 AppLogger.d('message')              # Debug logging
 AppLogger.i('message')              # Info logging
 ```
 
-**Database**: Supabase Dashboard → Tables / SQL / Policies
-**Storage**: Supabase Dashboard → Storage → Buckets
-**Auth**: Supabase Dashboard → Authentication → Users
+**Key Files**:
+- **Theme**: `lib/core/theme/theme_dashboard.dart`
+- **Config**: `lib/core/services/supabase_config.dart`
+- **Navigation**: `lib/app/main_navigation_screen.dart`
+- **Agents**: `.cursor/Agents/`
+- **Rules**: `.cursor/rules/`
 
 **Documentation Root**: `/Sline_everything/`
-**Core Code**: `/lib/core/`
-**Features**: `/lib/features/`
 
 ---
 
 ## 📄 License
 
 Private - All Rights Reserved
-
----
-
-## 📧 Contact & Support
-
-For questions about architecture, features, or contributing:
-- Review documentation in `Sline_everything/`
-- Check `CLAUDE.md` for development patterns
-- Read feature-specific guides in `DEVELOPER_GUIDE/`
 
 ---
 

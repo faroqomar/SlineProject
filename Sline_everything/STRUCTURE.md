@@ -3,17 +3,83 @@
 
 This document explains the folder structure used in the SLine freelance marketplace app built with Flutter, Supabase, and FastAPI.
 
+**Last Updated:** 2025-12-08
+
 ---
 
 ## 🔰 Top-Level Overview
 
 ```
-lib/
-├── app/
-├── core/
-├── features/
-├── generated/
-└── main.dart
+sline_app/
+├── lib/                    # Flutter source code
+│   ├── app/               # Main navigation, app-level configs
+│   ├── core/              # Shared resources (theme, services, widgets)
+│   ├── features/          # Feature modules (MVVM)
+│   └── main.dart          # App entry point
+├── .cursor/               # Cursor AI configuration
+│   ├── Agents/            # AI agent definitions (7 agents)
+│   ├── rules/             # Coding rules (.mdc files)
+│   └── PROJECT_CONTEXT.md # Quick reference guide
+├── .TODO/                 # Design & planning
+│   ├── New_Design/        # React Native design reference files
+│   └── Future_Plans/      # Feature inventory & roadmap
+├── Sline_everything/      # 📚 Project documentation (SINGLE SOURCE OF TRUTH)
+├── GEMINI.md              # Project overview & agent triggers
+└── .cursorrules           # Always-active rules
+```
+
+---
+
+## 📂 `.cursor/` — Cursor AI Configuration
+
+Contains AI agents and coding rules:
+
+### `.cursor/Agents/`
+| Agent | File | Focus |
+|-------|------|-------|
+| @Architect | `Architect.md` | Logic, MVVM, refactoring |
+| @Pixel | `Pixel.md` | UI/UX, Glassmorphism, themes |
+| @Supabase_Ops | `Supabase_Ops.md` | Database, RLS, SQL |
+| @Sentinel | `Sentinel.md` | QA, security, testing |
+| @SlineDocs | `Sline_Docs.md` | Documentation updates |
+| @SlinePlanner | `Sline_Planner.md` | Implementation planning |
+| @CodeGuard | `CodeGuard.md` | Code reviews, performance, security |
+
+### `.cursor/rules/`
+- `flutter-mvvm.mdc` - MVVM pattern enforcement
+- `supabase-database.mdc` - Database & RLS rules
+- `ui-theme.mdc` - Theme system rules
+- `code-quality.mdc` - Code quality standards
+- `error-handling.mdc` - Error handling patterns
+
+---
+
+## 📂 `.TODO/` — Design & Planning
+
+### `.TODO/New_Design/`
+React Native/TypeScript design reference files from the designer. Used as visual reference for Flutter implementation.
+
+### `.TODO/Future_Plans/`
+- `FEATURE_INVENTORY.md` - Tracks implementation status of all design features
+
+---
+
+## 📂 `Sline_everything/` — Documentation Hub
+
+The **single source of truth** for all project documentation:
+
+```
+Sline_everything/
+├── SUPABASE_SETUP.md       # Database schema, RLS, triggers (CRITICAL)
+├── DEVELOPER_GUIDE.md      # Complete feature documentation
+├── Sline_Log.md            # Version history & changelog
+├── MVP_ROADMAP.md          # Feature status tracker
+├── STRUCTURE.md            # This file - folder organization
+├── CODE_REVIEW.md          # Code quality patterns
+├── ARCHITECTURE_ANALYSIS.md # Architecture decisions
+├── designer_references/    # Design documentation
+│   └── liquid_glass.md     # iOS 26 liquid glass reference
+└── DEVELOPER_GUIDE/        # Feature-specific deep-dives
 ```
 
 ---
@@ -32,11 +98,28 @@ Contains global application configurations such as:
 Houses shared logic, services, and UI elements across the app.
 
 - `models/`: Global data models (e.g., user model).
-    - `services/`: Supabase service (including Realtime subscriptions for messages & conversations), image picker, **logger (AppLogger for debug-only logs)**, etc.
+- `services/`: Supabase service (including Realtime subscriptions for messages & conversations), image picker, **logger (AppLogger for debug-only logs)**, etc.
 - `repositories/`: Abstract business logic layer over services.
-- `widgets/`: Shared UI widgets like buttons, nav bars, etc.
+- `widgets/`: Shared UI widgets like buttons, nav bars, `custom_bottom_nav_bar.dart` (iOS 26 liquid glass effect).
 - `providers/`: Global state (like navigation).
 - `utils/`: Helper functions (e.g., date/price formatters).
+- `theme/`: **Centralized Theme System** (see below).
+
+### 📂 `lib/core/theme/` — Theme System
+
+The theme system is centralized for easy customization:
+
+```
+theme/
+├── app_colors.dart       # Color palette (AppColors.teal, AppColors.offWhite, etc.)
+├── app_typography.dart   # Text styles (AppTypography.heading1, body, etc.)
+├── app_dimens.dart       # Spacing, padding, border radii (AppDimens.p16, r20, etc.)
+├── app_decorations.dart  # BoxDecoration presets (Glassmorphism, shadows)
+├── app_theme.dart        # ThemeData configuration, AppColorScheme extension
+└── theme_dashboard.dart  # 📋 SINGLE SOURCE OF TRUTH - comprehensive theme reference
+```
+
+**Important:** Always reference `theme_dashboard.dart` before adding new values. Use existing theme tokens instead of hardcoding values.
 
 ---
 
