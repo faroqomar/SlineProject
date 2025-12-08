@@ -1,243 +1,296 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
-import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 
-/// A card widget to display basic info about a task with Glassmorphism design.
+/// A card widget to display task info matching the new design system.
+/// Features: colored header, HOT badge, type badge, glassmorphism.
 class TaskCard extends StatelessWidget {
   final Task task;
   final VoidCallback onTap;
+  final bool isHot;
 
   const TaskCard({
     super.key,
     required this.task,
     required this.onTap,
+    this.isHot = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colorScheme = context.colorScheme;
     final bool isTender = task.isTender;
-    // final bool isBooking = task.isBooking; // Unused
 
-    // Semantic Colors based on Task Type
-    final Color badgeBg = isTender
-        ? AppColors.tenderChipBg(context)
-        : AppColors.bookingChipBg(context);
-    final Color badgeText = isTender ? AppColors.lightRed : AppColors.teal;
-    final IconData badgeIcon = isTender ? Icons.assignment : Icons.calendar_today;
-    final String badgeLabel = isTender ? 'TENDER' : 'BOOKING';
-
-    // Dynamic Avatar Color (simple hash based on name)
-    final List<Color> avatarColors = [
-      AppColors.teal,
-      AppColors.gold,
-      AppColors.lightRed,
-      AppColors.lightTeal,
-    ];
-    final int colorIndex = (task.userName ?? 'User').hashCode.abs() % avatarColors.length;
-    final Color avatarBg = avatarColors[colorIndex];
+    // Card header background color based on task type or category
+    final Color headerBgColor = _getHeaderColor();
 
     return Container(
-      margin: const EdgeInsets.only(bottom: AppDimens.p12),
-      decoration: AppDecorations.glassBoxDecoration(
-        colorScheme: colorScheme,
-        borderRadius: BorderRadius.circular(AppDimens.r18),
-      ).copyWith(
-        // Add subtle type-based tint override if needed, or stick to glass
-        // color: isTender ? AppColors.tenderCardBg(context) : AppColors.bookingCardBg(context),
+      margin: const EdgeInsets.only(bottom: AppDimens.p16),
+      decoration: BoxDecoration(
+        color: colorScheme.cardBackground,
+        borderRadius: BorderRadius.circular(AppDimens.r20),
+        border: Border.all(
+          color: colorScheme.cardBorder,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.isDark
+                ? AppColors.almostBlack.withValues(alpha: 0.3)
+                : AppColors.almostBlack.withValues(alpha: 0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(AppDimens.r18),
+        borderRadius: BorderRadius.circular(AppDimens.r20),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(AppDimens.r18),
-          child: Padding(
-            padding: const EdgeInsets.all(AppDimens.p16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // --- Header ---
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Avatar
-                    Container(
-                      width: 36, // w-9
-                      height: 36, // h-9
-                      decoration: BoxDecoration(
-                        color: avatarBg,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          _getInitials(task.userName),
-                          style: AppTypography.bodySmall.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.white, // Assuming dark text on bright colors or white on dark
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: AppDimens.p8),
-                    
-                    // User Info
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  task.userName ?? 'Unknown User',
-                                  style: AppTypography.bodySmall.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: colorScheme.text,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              // Verification check could go here
-                            ],
-                          ),
-                          Text(
-                            _formatTimeAgo(task.createdAt),
-                            style: AppTypography.micro.copyWith(
-                              color: colorScheme.textSecondary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+          borderRadius: BorderRadius.circular(AppDimens.r20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // --- Colored Header Section ---
+              _buildHeader(context, headerBgColor, isTender),
 
-                    // Type Badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimens.p10,
-                        vertical: AppDimens.p4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: badgeBg,
-                        borderRadius: BorderRadius.circular(AppDimens.r8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            badgeIcon,
-                            size: 12,
-                            color: badgeText,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            badgeLabel,
-                            style: AppTypography.micro.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: badgeText,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppDimens.p12),
-
-                // --- Content ---
-                Text(
-                  task.title,
-                  style: AppTypography.h6.copyWith(
-                    color: colorScheme.text,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: AppDimens.p4),
-                Text(
-                  task.description,
-                  style: AppTypography.bodySmall.copyWith(
-                    color: colorScheme.textSecondary,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: AppDimens.p12),
-
-                // --- Footer ---
-                Container(
-                  padding: const EdgeInsets.only(top: AppDimens.p12),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      top: BorderSide(color: colorScheme.cardBorder),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Time Left / Offers
-                      Row(
-                        children: [
-                          Text(
-                            task.deadline != null
-                                ? _formatDeadline(task.deadline!)
-                                : 'No deadline',
-                            style: AppTypography.captionBold.copyWith(
-                              color: isTender ? AppColors.lightRed : AppColors.teal,
-                            ),
-                          ),
-                          if (task.taskType == TaskType.tender) ...[
-                            const SizedBox(width: AppDimens.p8),
-                            Text(
-                              '•  0 offers', // Placeholder for offers count
-                              style: AppTypography.captionBold.copyWith(
-                                color: colorScheme.text,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-
-                      // Budget
-                      Text(
-                        PriceFormatter.formatPrice(task.budget),
-                        style: AppTypography.h5.copyWith(
-                          color: AppColors.teal,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              // --- Content Section ---
+              _buildContent(context, colorScheme, isTender),
+            ],
           ),
         ),
       ),
     );
   }
 
-  String _getInitials(String? name) {
-    if (name == null || name.isEmpty) return 'U';
-    final parts = name.trim().split(' ');
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    return name[0].toUpperCase();
+  Widget _buildHeader(BuildContext context, Color bgColor, bool isTender) {
+    return Container(
+      height: 120,
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(AppDimens.r20),
+          topRight: Radius.circular(AppDimens.r20),
+        ),
+      ),
+      child: Stack(
+        children: [
+          // Gradient overlay
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(AppDimens.r20),
+                  topRight: Radius.circular(AppDimens.r20),
+                ),
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    AppColors.almostBlack.withValues(alpha: 0.5),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // HOT Badge (top-left)
+          if (isHot)
+            Positioned(
+              top: AppDimens.p12,
+              left: AppDimens.p12,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimens.p10,
+                  vertical: AppDimens.p4,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.lightRed,
+                  borderRadius: BorderRadius.circular(AppDimens.r8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.lightRed.withValues(alpha: 0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      '🔥',
+                      style: TextStyle(fontSize: 10),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'HOT',
+                      style: AppTypography.micro.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.offWhite,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          // Type Badge (top-right)
+          Positioned(
+            top: AppDimens.p12,
+            right: AppDimens.p12,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimens.p12,
+                vertical: AppDimens.p6,
+              ),
+              decoration: BoxDecoration(
+                color: isTender
+                    ? AppColors.lightRed.withValues(alpha: 0.9)
+                    : AppColors.teal.withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(AppDimens.r8),
+                border: Border.all(
+                  color: isTender
+                      ? AppColors.offWhite.withValues(alpha: 0.3)
+                      : AppColors.lightTeal.withValues(alpha: 0.3),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.almostBlack.withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Text(
+                isTender ? 'TENDER' : 'BOOKING',
+                style: AppTypography.micro.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.offWhite,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  String _formatTimeAgo(DateTime date) {
-    final diff = DateTime.now().difference(date);
-    if (diff.inDays > 0) return '${diff.inDays}d ago';
-    if (diff.inHours > 0) return '${diff.inHours}h ago';
-    if (diff.inMinutes > 0) return '${diff.inMinutes}m ago';
-    return 'Just now';
+  Widget _buildContent(
+      BuildContext context, AppColorScheme colorScheme, bool isTender) {
+    return Padding(
+      padding: const EdgeInsets.all(AppDimens.p16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Title
+          Text(
+            task.title,
+            style: AppTypography.h6.copyWith(
+              color: colorScheme.text,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: AppDimens.p8),
+
+          // Description
+          Text(
+            task.description,
+            style: AppTypography.bodySmall.copyWith(
+              color: colorScheme.textSecondary,
+              height: 1.4,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: AppDimens.p12),
+
+          // Footer with divider
+          Container(
+            padding: const EdgeInsets.only(top: AppDimens.p12),
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(color: colorScheme.cardBorder),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Time Left / Offers info
+                Row(
+                  children: [
+                    if (task.deadline != null) ...[
+                      Icon(
+                        Icons.schedule,
+                        size: 14,
+                        color: isTender ? AppColors.lightRed : AppColors.teal,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _formatDeadline(task.deadline!),
+                        style: AppTypography.captionBold.copyWith(
+                          color:
+                              isTender ? AppColors.lightRed : AppColors.teal,
+                        ),
+                      ),
+                    ] else
+                      Text(
+                        isTender ? 'Open' : 'Available',
+                        style: AppTypography.captionBold.copyWith(
+                          color:
+                              isTender ? AppColors.lightRed : AppColors.teal,
+                        ),
+                      ),
+                  ],
+                ),
+
+                // Budget
+                Text(
+                  PriceFormatter.formatPrice(task.budget),
+                  style: AppTypography.h5.copyWith(
+                    color: AppColors.teal,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Get header color based on task category or type
+  Color _getHeaderColor() {
+    // Use category-based colors if available
+    final category = task.categoryName?.toLowerCase() ?? task.category?.toLowerCase() ?? '';
+
+    switch (category) {
+      case 'design':
+        return AppColors.lightRed;
+      case 'development':
+      case 'dev':
+        return AppColors.lightTeal;
+      case 'writing':
+        return const Color(0xFFF7D69C); // Sand/beige color
+      case 'marketing':
+        return AppColors.mediumGreyBlue;
+      case 'mobile':
+        return AppColors.gold;
+      default:
+        // Fallback to type-based color
+        return task.isTender ? AppColors.lightRed : AppColors.lightTeal;
+    }
   }
 
   String _formatDeadline(DateTime date) {

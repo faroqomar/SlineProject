@@ -300,6 +300,16 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
   // --- Step 1: Concept ---
   Widget _buildStep1(AppColorScheme colorScheme) {
+    // Popular categories with emojis for fallback
+    final popularCategories = [
+      {'icon': '🎨', 'name': 'Design', 'color': AppColors.lightRed},
+      {'icon': '💻', 'name': 'Development', 'color': AppColors.lightTeal},
+      {'icon': '✍️', 'name': 'Writing', 'color': const Color(0xFFF7D69C)},
+      {'icon': '📱', 'name': 'Mobile', 'color': AppColors.gold},
+      {'icon': '🎯', 'name': 'Marketing', 'color': AppColors.mediumGreyBlue},
+      {'icon': '🎬', 'name': 'Video', 'color': AppColors.teal},
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -309,7 +319,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           children: [
             Expanded(
               child: _buildTypeCard(
-                icon: Icons.assignment_outlined,
+                emoji: '📋',
                 label: 'Tender',
                 subLabel: 'Open proposals',
                 type: TaskType.tender,
@@ -320,7 +330,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
             const SizedBox(width: AppDimens.p12),
             Expanded(
               child: _buildTypeCard(
-                icon: Icons.calendar_today_outlined,
+                emoji: '📅',
                 label: 'Booking',
                 subLabel: 'Direct hire',
                 type: TaskType.booking,
@@ -344,46 +354,104 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                   mainAxisSpacing: AppDimens.p10,
                   childAspectRatio: 1.0,
                 ),
-                itemCount: _categories.length,
+                itemCount: _categories.isNotEmpty ? _categories.length : popularCategories.length,
                 itemBuilder: (context, index) {
-                  final cat = _categories[index];
-                  final isSelected = _selectedCategoryId == cat.id;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedCategoryId = cat.id),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: isSelected ? AppColors.teal.withValues(alpha: 0.1) : colorScheme.cardBackground,
-                        borderRadius: BorderRadius.circular(AppDimens.r16),
-                        border: Border.all(
-                          color: isSelected ? AppColors.teal : Colors.transparent,
-                          width: 2,
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // Placeholder Icon since cat.iconUrl might be null or SVG
-                          Icon(Icons.category, size: 24, color: AppColors.teal),
-                          const SizedBox(height: 4),
-                          Text(
-                            cat.name,
-                            style: AppTypography.captionBold.copyWith(color: colorScheme.text),
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
+                  // Use actual categories if available, otherwise fallback
+                  if (_categories.isNotEmpty) {
+                    final cat = _categories[index];
+                    final isSelected = _selectedCategoryId == cat.id;
+                    final emoji = _getCategoryEmoji(cat.name);
+                    final catColor = _getCategoryColor(cat.name);
+                    
+                    return _buildCategoryCard(
+                      emoji: emoji,
+                      name: cat.name,
+                      isSelected: isSelected,
+                      color: catColor,
+                      colorScheme: colorScheme,
+                      onTap: () => setState(() => _selectedCategoryId = cat.id),
+                    );
+                  } else {
+                    final cat = popularCategories[index];
+                    final isSelected = _selectedCategoryId == cat['name'] as String?;
+                    
+                    return _buildCategoryCard(
+                      emoji: cat['icon'] as String,
+                      name: cat['name'] as String,
+                      isSelected: isSelected,
+                      color: cat['color'] as Color,
+                      colorScheme: colorScheme,
+                      onTap: () => setState(() => _selectedCategoryId = cat['name'] as String),
+                    );
+                  }
                 },
               ),
       ],
     );
   }
 
+  Widget _buildCategoryCard({
+    required String emoji,
+    required String name,
+    required bool isSelected,
+    required Color color,
+    required AppColorScheme colorScheme,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withValues(alpha: 0.2) : colorScheme.cardBackground,
+          borderRadius: BorderRadius.circular(AppDimens.r16),
+          border: Border.all(
+            color: isSelected ? color : Colors.transparent,
+            width: 2,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 24)),
+            const SizedBox(height: 6),
+            Text(
+              name,
+              style: AppTypography.captionBold.copyWith(color: colorScheme.text),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getCategoryEmoji(String name) {
+    final lowerName = name.toLowerCase();
+    if (lowerName.contains('design')) return '🎨';
+    if (lowerName.contains('dev') || lowerName.contains('code')) return '💻';
+    if (lowerName.contains('writ') || lowerName.contains('content')) return '✍️';
+    if (lowerName.contains('mobile') || lowerName.contains('app')) return '📱';
+    if (lowerName.contains('market') || lowerName.contains('seo')) return '🎯';
+    if (lowerName.contains('video') || lowerName.contains('media')) return '🎬';
+    return '📁';
+  }
+
+  Color _getCategoryColor(String name) {
+    final lowerName = name.toLowerCase();
+    if (lowerName.contains('design')) return AppColors.lightRed;
+    if (lowerName.contains('dev') || lowerName.contains('code')) return AppColors.lightTeal;
+    if (lowerName.contains('writ') || lowerName.contains('content')) return const Color(0xFFF7D69C);
+    if (lowerName.contains('mobile') || lowerName.contains('app')) return AppColors.gold;
+    if (lowerName.contains('market') || lowerName.contains('seo')) return AppColors.mediumGreyBlue;
+    if (lowerName.contains('video') || lowerName.contains('media')) return AppColors.teal;
+    return AppColors.teal;
+  }
+
   Widget _buildTypeCard({
-    required IconData icon,
+    required String emoji,
     required String label,
     required String subLabel,
     required TaskType type,
@@ -397,7 +465,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         duration: const Duration(milliseconds: 200),
         height: 100,
         decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.1) : colorScheme.cardBackground,
+          color: isSelected ? color.withValues(alpha: 0.2) : colorScheme.cardBackground,
           borderRadius: BorderRadius.circular(AppDimens.r18),
           border: Border.all(
             color: isSelected ? color : Colors.transparent,
@@ -407,7 +475,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 28, color: isSelected ? color : colorScheme.textSecondary),
+            Text(emoji, style: const TextStyle(fontSize: 28)),
             const SizedBox(height: 8),
             Text(
               label,

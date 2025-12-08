@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/utils/app_animations.dart';
 import 'package:sline_app/features/booking/view/bookings_discovery_screen.dart';
 import 'package:sline_app/features/chat/view/messages_screen.dart';
 import 'package:sline_app/features/home/view/home_screen.dart';
@@ -67,11 +68,12 @@ class MainNavigationScreen extends StatelessWidget {
                 children: screens,
               ),
 
-              // 5. Floating Action Button (Create Task)
+              // 5. Floating Action Button (Create Task) with rotation animation
               Positioned(
                 bottom: 100,
                 right: AppDimens.p24,
-                child: GestureDetector(
+                child: AnimatedRotationButton(
+                  rotationAngle: 0.125, // 45 degrees
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(

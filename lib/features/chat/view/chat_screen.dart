@@ -5,8 +5,6 @@ import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/widgets/app_button.dart';
-import 'package:sline_app/core/widgets/app_text_field.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
 
 import '../viewmodels/chat_view_model.dart';
@@ -15,11 +13,13 @@ import '../../chat/models/message_model.dart';
 import '../../../core/utils/format_date.dart';
 import '../../../core/services/logger_service.dart';
 
-
 import 'widgets/message_bubble.dart';
+import 'widgets/offer_message_bubble.dart';
+import 'widgets/create_offer_sheet.dart';
 import '../attachments/widgets/attachment_message_tile.dart';
+import 'video_call_modal.dart';
 
-/// Chat screen with Glassmorphism design.
+/// Chat screen with Glassmorphism design matching the new design system.
 class ChatScreen extends StatefulWidget {
   final Conversation conversation;
   const ChatScreen({super.key, required this.conversation});
@@ -31,12 +31,6 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final _messageController = TextEditingController();
   late final ChatViewModel _chatCtrl;
-
-  // Offer Form Controllers
-  final _offerTitleCtrl = TextEditingController();
-  final _offerDescCtrl = TextEditingController();
-  final _offerPriceCtrl = TextEditingController();
-  final _offerTimeCtrl = TextEditingController(text: '3');
 
   @override
   void initState() {
@@ -56,10 +50,6 @@ class _ChatScreenState extends State<ChatScreen> {
     AppLogger.d('[CHAT] closed: convo=${widget.conversation.id}');
     _chatCtrl.unsubscribeFromConversation();
     _messageController.dispose();
-    _offerTitleCtrl.dispose();
-    _offerDescCtrl.dispose();
-    _offerPriceCtrl.dispose();
-    _offerTimeCtrl.dispose();
     super.dispose();
   }
 
@@ -68,7 +58,7 @@ class _ChatScreenState extends State<ChatScreen> {
       await _chatCtrl.sendImageForActive();
       AppLogger.i('[CHAT] image sent via usecase for convo=${widget.conversation.id}');
     } catch (e) {
-      AppLogger.e('❌ sendImageAttachment failed: $e');
+      AppLogger.e('sendImageAttachment failed: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to send image')),
@@ -77,66 +67,29 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _showCreateOfferModal() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => SingleChildScrollView(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: GlassContainer(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimens.r30)),
-          padding: const EdgeInsets.all(AppDimens.p24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppDimens.p24),
-              Text('Create Custom Offer', style: AppTypography.h4),
-              const SizedBox(height: AppDimens.p16),
-              AppTextField(controller: _offerTitleCtrl, hintText: 'Title'),
-              const SizedBox(height: AppDimens.p12),
-              AppTextField(controller: _offerDescCtrl, hintText: 'Description', maxLines: 3), // Assumes AppTextField supports maxLines, if not need update
-              const SizedBox(height: AppDimens.p12),
-              Row(
-                children: [
-                  Expanded(child: AppTextField(controller: _offerPriceCtrl, hintText: 'Price (\$)', keyboardType: TextInputType.number)),
-                  const SizedBox(width: AppDimens.p12),
-                  Expanded(child: AppTextField(controller: _offerTimeCtrl, hintText: 'Days', keyboardType: TextInputType.number)),
-                ],
-              ),
-              const SizedBox(height: AppDimens.p24),
-              AppButton(
-                text: 'Send Offer',
-                width: double.infinity,
-                onPressed: () {
-                  // Mock sending offer as JSON string
-                  final offerData = {
-                    'type': 'offer',
-                    'title': _offerTitleCtrl.text,
-                    'description': _offerDescCtrl.text,
-                    'price': _offerPriceCtrl.text,
-                    'delivery': _offerTimeCtrl.text,
-                  };
-                  _chatCtrl.sendMessage(jsonEncode(offerData));
-                  Navigator.pop(context);
-                  _offerTitleCtrl.clear();
-                  _offerDescCtrl.clear();
-                  _offerPriceCtrl.clear();
-                  _offerTimeCtrl.text = '3';
-                },
-              ),
-            ],
-          ),
+    showCreateOfferSheet(
+      context,
+      onSubmit: (title, description, price, delivery) {
+        final offerData = {
+          'type': 'offer',
+          'title': title,
+          'description': description,
+          'price': price,
+          'delivery': delivery,
+          'status': 'pending',
+        };
+        _chatCtrl.sendMessage(jsonEncode(offerData));
+      },
+    );
+  }
+
+  void _startVideoCall() {
+    // Navigate to video call modal
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => VideoCallModal(
+          userName: widget.conversation.otherUserName ?? 'User',
+          userAvatar: widget.conversation.otherUserAvatar,
         ),
       ),
     );
@@ -148,7 +101,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final AppColorScheme colorScheme = context.colorScheme;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: colorScheme.phoneBackground,
       body: Stack(
         children: [
           // --- Messages List ---
@@ -158,9 +111,9 @@ class _ChatScreenState extends State<ChatScreen> {
                 return ListView.builder(
                   padding: EdgeInsets.fromLTRB(
                     AppDimens.p16,
-                    AppDimens.p100, // Top padding for header
+                    AppDimens.p100,
                     AppDimens.p16,
-                    AppDimens.p100, // Bottom padding for input
+                    AppDimens.p100,
                   ),
                   itemCount: controller.currentMessages.length,
                   itemBuilder: (context, index) {
@@ -170,11 +123,25 @@ class _ChatScreenState extends State<ChatScreen> {
                         ? 'read'
                         : (msg.deliveredAt != null ? 'delivered' : 'sent');
 
-                    // Check for Custom Offer (Mock JSON)
+                    // Check for Custom Offer (JSON format)
                     if (msg.content.trim().startsWith('{"type":"offer"')) {
                       try {
                         final offerData = jsonDecode(msg.content);
-                        return _buildOfferBubble(context, offerData, isMine, msg.createdAt);
+                        return OfferMessageBubble(
+                          title: offerData['title'] ?? '',
+                          description: offerData['description'] ?? '',
+                          price: offerData['price'] ?? '0',
+                          deliveryDays: offerData['delivery'] ?? '3',
+                          status: _parseOfferStatus(offerData['status']),
+                          isMine: isMine,
+                          time: formatFriendlyTime(msg.createdAt),
+                          onAccept: () {
+                            // TODO: Accept offer logic
+                          },
+                          onDecline: () {
+                            // TODO: Decline offer logic
+                          },
+                        );
                       } catch (_) {
                         // Fallback if parsing fails
                       }
@@ -209,58 +176,7 @@ class _ChatScreenState extends State<ChatScreen> {
             top: 0,
             left: 0,
             right: 0,
-            child: ClipRect(
-              child: GlassContainer(
-                borderRadius: BorderRadius.zero,
-                padding: EdgeInsets.fromLTRB(
-                  AppDimens.p16,
-                  MediaQuery.of(context).padding.top + AppDimens.p8,
-                  AppDimens.p16,
-                  AppDimens.p12,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.arrow_back_ios, color: colorScheme.text, size: 20),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                        Text(
-                          widget.conversation.otherUserName ?? 'Chat',
-                          style: AppTypography.h5.copyWith(color: colorScheme.text),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        GestureDetector(
-                          onTap: _showCreateOfferModal,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: AppColors.teal,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.attach_money, color: Colors.white, size: 16),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Offer',
-                                  style: AppTypography.captionBold.copyWith(color: Colors.white),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            child: _buildHeader(context, colorScheme),
           ),
 
           // --- Input Area ---
@@ -268,58 +184,174 @@ class _ChatScreenState extends State<ChatScreen> {
             bottom: 0,
             left: 0,
             right: 0,
-            child: GlassContainer(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimens.r24)),
-              padding: EdgeInsets.fromLTRB(
-                AppDimens.p16,
-                AppDimens.p12,
-                AppDimens.p16,
-                MediaQuery.of(context).padding.bottom + AppDimens.p12,
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.image, color: AppColors.teal),
-                    onPressed: _onPickImage,
+            child: _buildInputArea(context, colorScheme),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, AppColorScheme colorScheme) {
+    return ClipRect(
+      child: GlassContainer(
+        borderRadius: BorderRadius.zero,
+        padding: EdgeInsets.fromLTRB(
+          AppDimens.p8,
+          MediaQuery.of(context).padding.top + AppDimens.p8,
+          AppDimens.p16,
+          AppDimens.p12,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Back button and name
+            Row(
+              children: [
+                IconButton(
+                  icon: Icon(Icons.arrow_back_ios, color: colorScheme.text, size: 20),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                Text(
+                  widget.conversation.otherUserName ?? 'Chat',
+                  style: AppTypography.bodyLarge.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.text,
                   ),
-                  Expanded(
-                    child: Container(
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: colorScheme.inputBackground,
-                        borderRadius: BorderRadius.circular(23),
-                        border: Border.all(color: colorScheme.inputBorder),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: TextField(
-                        controller: _messageController,
-                        style: TextStyle(color: colorScheme.text),
-                        decoration: InputDecoration(
-                          hintText: 'Type a message...',
-                          hintStyle: TextStyle(color: colorScheme.textSecondary),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.only(bottom: 10), // Center align vertically roughly
+                ),
+              ],
+            ),
+
+            // Action buttons
+            Row(
+              children: [
+                // Video call button
+                GestureDetector(
+                  onTap: _startVideoCall,
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.teal.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.videocam,
+                      color: AppColors.teal,
+                      size: 20,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppDimens.p8),
+
+                // Offer button
+                GestureDetector(
+                  onTap: _showCreateOfferModal,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimens.p12,
+                      vertical: AppDimens.p6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.teal,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.attach_money,
+                          color: Colors.white,
+                          size: 16,
                         ),
-                      ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Offer',
+                          style: AppTypography.captionBold.copyWith(
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: () {
-                      final text = _messageController.text.trim();
-                      if (text.isNotEmpty) {
-                        _chatCtrl.sendMessage(text);
-                        _messageController.clear();
-                      }
-                    },
-                    child: CircleAvatar(
-                      backgroundColor: AppColors.teal,
-                      radius: 23,
-                      child: const Icon(Icons.send, color: Colors.white, size: 20),
-                    ),
-                  ),
-                ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputArea(BuildContext context, AppColorScheme colorScheme) {
+    return GlassContainer(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimens.r24)),
+      padding: EdgeInsets.fromLTRB(
+        AppDimens.p16,
+        AppDimens.p12,
+        AppDimens.p16,
+        MediaQuery.of(context).padding.bottom + AppDimens.p12,
+      ),
+      child: Row(
+        children: [
+          // Attachment button
+          GestureDetector(
+            onTap: _onPickImage,
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                shape: BoxShape.circle,
               ),
+              child: Icon(
+                Icons.attach_file,
+                color: AppColors.teal,
+                size: 22,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppDimens.p8),
+
+          // Text input
+          Expanded(
+            child: Container(
+              height: 46,
+              decoration: BoxDecoration(
+                color: colorScheme.inputBackground,
+                borderRadius: BorderRadius.circular(23),
+                border: Border.all(color: colorScheme.inputBorder),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextField(
+                controller: _messageController,
+                style: TextStyle(color: colorScheme.text),
+                decoration: InputDecoration(
+                  hintText: 'Type a message...',
+                  hintStyle: TextStyle(color: colorScheme.textSecondary),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.only(bottom: 10),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: AppDimens.p8),
+
+          // Send button
+          GestureDetector(
+            onTap: () {
+              final text = _messageController.text.trim();
+              if (text.isNotEmpty) {
+                _chatCtrl.sendMessage(text);
+                _messageController.clear();
+              }
+            },
+            child: Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: AppColors.teal,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.send, color: Colors.white, size: 20),
             ),
           ),
         ],
@@ -327,79 +359,15 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildOfferBubble(BuildContext context, Map<String, dynamic> offer, bool isMine, DateTime time) {
-    return Align(
-      alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.75,
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        child: GlassContainer(
-          padding: const EdgeInsets.all(16),
-          borderRadius: BorderRadius.circular(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.teal,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      'CUSTOM OFFER',
-                      style: AppTypography.micro.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  Text(
-                    '\$${offer['price']}',
-                    style: AppTypography.h5.copyWith(color: AppColors.teal, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(offer['title'] ?? '', style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
-              Text(offer['description'] ?? '', style: AppTypography.micro),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  const Icon(Icons.schedule, size: 14, color: Colors.grey),
-                  const SizedBox(width: 4),
-                  Text('${offer['delivery']} Days Delivery', style: AppTypography.micro),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: AppButton(
-                      text: 'Accept',
-                      height: 36,
-                      onPressed: () {
-                        // TODO: Accept Offer Logic
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: AppButton(
-                      text: 'Decline',
-                      height: 36,
-                      isPrimary: false,
-                      onPressed: () {
-                        // TODO: Decline Offer Logic
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  OfferStatus _parseOfferStatus(String? status) {
+    switch (status) {
+      case 'accepted':
+        return OfferStatus.accepted;
+      case 'declined':
+        return OfferStatus.declined;
+      default:
+        return OfferStatus.pending;
+    }
   }
 }
+
