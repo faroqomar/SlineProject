@@ -17,7 +17,6 @@ import 'widgets/message_bubble.dart';
 import 'widgets/offer_message_bubble.dart';
 import 'widgets/create_offer_sheet.dart';
 import '../attachments/widgets/attachment_message_tile.dart';
-import 'video_call_modal.dart';
 
 /// Chat screen with Glassmorphism design matching the new design system.
 class ChatScreen extends StatefulWidget {
@@ -80,18 +79,6 @@ class _ChatScreenState extends State<ChatScreen> {
         };
         _chatCtrl.sendMessage(jsonEncode(offerData));
       },
-    );
-  }
-
-  void _startVideoCall() {
-    // Navigate to video call modal
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => VideoCallModal(
-          userName: widget.conversation.otherUserName ?? 'User',
-          userAvatar: widget.conversation.otherUserAvatar,
-        ),
-      ),
     );
   }
 
@@ -224,25 +211,6 @@ class _ChatScreenState extends State<ChatScreen> {
             // Action buttons
             Row(
               children: [
-                // Video call button
-                GestureDetector(
-                  onTap: _startVideoCall,
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: AppColors.teal.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.videocam,
-                      color: AppColors.teal,
-                      size: 20,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppDimens.p8),
-
                 // Offer button
                 GestureDetector(
                   onTap: _showCreateOfferModal,
@@ -253,20 +221,20 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.teal,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(AppDimens.r20),
                     ),
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.attach_money,
-                          color: Colors.white,
-                          size: 16,
+                          color: AppColors.white,
+                          size: AppDimens.iconSizeSmall,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: AppDimens.p4),
                         Text(
                           'Offer',
                           style: AppTypography.captionBold.copyWith(
-                            color: Colors.white,
+                            color: AppColors.white,
                           ),
                         ),
                       ],
@@ -296,8 +264,8 @@ class _ChatScreenState extends State<ChatScreen> {
           GestureDetector(
             onTap: _onPickImage,
             child: Container(
-              width: 40,
-              height: 40,
+              width: AppDimens.p40,
+              height: AppDimens.p40,
               decoration: BoxDecoration(
                 color: Colors.transparent,
                 shape: BoxShape.circle,
@@ -305,7 +273,7 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Icon(
                 Icons.attach_file,
                 color: AppColors.teal,
-                size: 22,
+                size: AppDimens.p22,
               ),
             ),
           ),
@@ -314,13 +282,13 @@ class _ChatScreenState extends State<ChatScreen> {
           // Text input
           Expanded(
             child: Container(
-              height: 46,
+              height: 46, // Standard input height from design
               decoration: BoxDecoration(
                 color: colorScheme.inputBackground,
-                borderRadius: BorderRadius.circular(23),
+                borderRadius: BorderRadius.circular(AppDimens.r23),
                 border: Border.all(color: colorScheme.inputBorder),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: AppDimens.p16),
               child: TextField(
                 controller: _messageController,
                 style: TextStyle(color: colorScheme.text),
@@ -328,7 +296,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   hintText: 'Type a message...',
                   hintStyle: TextStyle(color: colorScheme.textSecondary),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.only(bottom: 10),
+                  contentPadding: const EdgeInsets.only(bottom: AppDimens.p10),
                 ),
               ),
             ),
@@ -345,13 +313,13 @@ class _ChatScreenState extends State<ChatScreen> {
               }
             },
             child: Container(
-              width: 46,
-              height: 46,
+              width: 46, // Standard icon button size from design
+              height: 46, // Standard icon button size from design
               decoration: BoxDecoration(
                 color: AppColors.teal,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.send, color: Colors.white, size: 20),
+              child: Icon(Icons.send, color: AppColors.white, size: AppDimens.p20),
             ),
           ),
         ],

@@ -44,6 +44,7 @@ class AppDimens {
   static const double r16 = 16.0; // rounded-[16px]
   static const double r18 = 18.0; // rounded-[18px]
   static const double r20 = 20.0; // rounded-[20px]
+  static const double r23 = 23.0; // rounded-[23px] (chat input)
   static const double r24 = 24.0; // rounded-[24px]
   static const double r30 = 30.0; // rounded-[30px]
   static const double r50 = 50.0; // rounded-[50px] (phone mockup border)
