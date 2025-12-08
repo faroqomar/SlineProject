@@ -1,16 +1,19 @@
-library;
-import 'dart:ui'; // For ImageFilter
-
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
-import 'package:sline_app/core/theme/app_decorations.dart';
+import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/theme/app_colors.dart'; // NEW import
 import 'package:sline_app/core/providers/navigation_provider.dart';
 
-/// Custom bottom navigation bar component for the main app navigation
+/// Custom bottom navigation bar with iOS 26-inspired liquid glass effect.
+/// 
+/// Features:
+/// - Frosted glass background with blur effect
+/// - Animated pill indicator for active tab
+/// - Smooth transitions and scaling animations
+/// - Notification badges support
 class CustomBottomNavBar extends StatelessWidget {
   const CustomBottomNavBar({super.key});
 
@@ -18,90 +21,44 @@ class CustomBottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppColorScheme colorScheme = context.colorScheme;
 
-    // Define navigation items with their corresponding NavView, IconData, and potential notification status
-    final List<Map<String, dynamic>> navItems = [
-      {'id': NavView.home, 'icon': Icons.home},
-      {'id': NavView.tender, 'icon': Icons.assignment}, // Changed from Icons.description
-      {'id': NavView.booking, 'icon': Icons.calendar_today},
-      {'id': NavView.orders, 'icon': Icons.business_center}, // Changed from Icons.work_briefcase
-      {'id': NavView.messages, 'icon': Icons.message, 'hasNotification': true},
-      {'id': NavView.profile, 'icon': Icons.person},
+    // Navigation items configuration
+    final List<_NavItem> navItems = [
+      _NavItem(NavView.home, Icons.home_outlined, Icons.home, 'Home'),
+      _NavItem(NavView.tender, Icons.assignment_outlined, Icons.assignment, 'Tenders'),
+      _NavItem(NavView.booking, Icons.calendar_today_outlined, Icons.calendar_today, 'Bookings'),
+      _NavItem(NavView.orders, Icons.business_center_outlined, Icons.business_center, 'Orders'),
+      _NavItem(NavView.messages, Icons.message_outlined, Icons.message, 'Messages', hasNotification: true),
+      _NavItem(NavView.profile, Icons.person_outline, Icons.person, 'Profile'),
     ];
 
     return Consumer<NavigationProvider>(
       builder: (context, navigationProvider, child) {
+        final int currentIndex = navigationProvider.currentIndex.clamp(0, navItems.length - 1);
+
         return Positioned(
-          bottom: AppDimens.p24, // bottom-6
-          left: AppDimens.p24, // left-6
-          right: AppDimens.p24, // right-6
+          bottom: AppDimens.p16,
+          left: AppDimens.p16,
+          right: AppDimens.p16,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(AppDimens.r30),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: AppDimens.p20, sigmaY: AppDimens.p20), // blur(20px)
+              // iOS 26 style blur - systemThinMaterial effect
+              filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
               child: Container(
-                height: AppDimens.p80, // h-[80px]
-                padding: const EdgeInsets.symmetric(horizontal: AppDimens.p4), // px-1
-                decoration: AppDecorations.bottomNavBarDecoration(colorScheme: colorScheme),
+                height: 70,
+                decoration: _buildLiquidGlassDecoration(colorScheme),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: navItems.asMap().entries.map((entry) {
                     final int index = entry.key;
-                    final Map<String, dynamic> item = entry.value;
-                    // final NavView navView = item['id']; // Unused
-                    final IconData icon = item['icon'];
-                    final bool hasNotification = item['hasNotification'] ?? false;
-                    final bool isActive = navigationProvider.currentIndex == index;
+                    final _NavItem item = entry.value;
+                    final bool isActive = currentIndex == index;
 
-                    return Expanded(
-                      child: InkWell(
-                        onTap: () => navigationProvider.setCurrentIndex(index),
-                        borderRadius: BorderRadius.circular(AppDimens.r20), // rounded-2xl
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                AnimatedContainer(
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeInOut,
-                                  transform: Matrix4.identity()
-                                    ..scale(isActive ? 1.1 : 1.0), // scale-110
-                                  child: Icon(
-                                    icon,
-                                    size: AppDimens.p22, // w-[22px] h-[22px]
-                                    color: isActive
-                                        ? AppColors.offWhite // text-[#f4f3f1]
-                                        : AppColors.offWhite.withValues(alpha: 0.6), // text-[#f4f3f1]/60
-                                  ),
-                                ),
-                                if (hasNotification)
-                                  Positioned(
-                                    top: -AppDimens.p2, // top-1
-                                    right: -AppDimens.p8, // right-2
-                                    child: Container(
-                                      width: AppDimens.p8, // w-2
-                                      height: AppDimens.p8, // h-2
-                                      decoration: BoxDecoration(
-                                        color: AppColors.lightRed, // bg-[#f49d9d]
-                                        shape: BoxShape.circle,
-                                        border: Border.all(color: colorScheme.phoneBackground, width: 2), // ADDED BORDER
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            // If labels are ever needed again, they would go here
-                            // Text(
-                            //   navView.toString().split('.').last, // 'home' from NavView.home
-                            //   style: TextStyle(
-                            //     color: isActive ? colorScheme.text : colorScheme.textSecondary,
-                            //     fontSize: 10,
-                            //   ),
-                            // ),
-                          ],
-                        ),
-                      ),
+                    return _LiquidGlassNavItem(
+                      item: item,
+                      isActive: isActive,
+                      onTap: () => navigationProvider.setCurrentIndex(index),
+                      colorScheme: colorScheme,
                     );
                   }).toList(),
                 ),
@@ -112,4 +69,225 @@ class CustomBottomNavBar extends StatelessWidget {
       },
     );
   }
+
+  /// Build iOS 26 liquid glass decoration
+  BoxDecoration _buildLiquidGlassDecoration(AppColorScheme colorScheme) {
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(AppDimens.r30),
+      // Liquid glass gradient - mimics iOS systemThinMaterial
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: colorScheme.isDark
+            ? [
+                Colors.white.withValues(alpha: 0.12),
+                Colors.white.withValues(alpha: 0.05),
+              ]
+            : [
+                Colors.white.withValues(alpha: 0.85),
+                Colors.white.withValues(alpha: 0.6),
+              ],
+      ),
+      // Inner border glow effect
+      border: Border.all(
+        color: colorScheme.isDark
+            ? Colors.white.withValues(alpha: 0.15)
+            : Colors.white.withValues(alpha: 0.8),
+        width: 0.5,
+      ),
+      // Subtle shadow for depth
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: colorScheme.isDark ? 0.4 : 0.1),
+          blurRadius: 30,
+          spreadRadius: -5,
+          offset: const Offset(0, 10),
+        ),
+        // Top highlight (simulates iOS inset effect)
+        BoxShadow(
+          color: Colors.white.withValues(alpha: colorScheme.isDark ? 0.1 : 0.5),
+          blurRadius: 0,
+          spreadRadius: 0,
+          offset: const Offset(0, -0.5),
+        ),
+      ],
+    );
+  }
+}
+
+/// Individual navigation item with liquid glass pill effect
+class _LiquidGlassNavItem extends StatefulWidget {
+  final _NavItem item;
+  final bool isActive;
+  final VoidCallback onTap;
+  final AppColorScheme colorScheme;
+
+  const _LiquidGlassNavItem({
+    required this.item,
+    required this.isActive,
+    required this.onTap,
+    required this.colorScheme,
+  });
+
+  @override
+  State<_LiquidGlassNavItem> createState() => _LiquidGlassNavItemState();
+}
+
+class _LiquidGlassNavItemState extends State<_LiquidGlassNavItem>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _pillAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
+    );
+    _pillAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+    );
+
+    if (widget.isActive) {
+      _controller.forward();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _LiquidGlassNavItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive != oldWidget.isActive) {
+      if (widget.isActive) {
+        _controller.forward();
+      } else {
+        _controller.reverse();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Stack(
+              alignment: Alignment.center,
+              clipBehavior: Clip.none,
+              children: [
+                // Liquid glass pill background (active state)
+                if (widget.isActive)
+                  Positioned.fill(
+                    child: Transform.scale(
+                      scale: _pillAnimation.value,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          // Liquid glass pill effect
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: widget.colorScheme.isDark
+                                ? [
+                                    AppColors.teal.withValues(alpha: 0.4),
+                                    AppColors.teal.withValues(alpha: 0.2),
+                                  ]
+                                : [
+                                    AppColors.teal.withValues(alpha: 0.25),
+                                    AppColors.teal.withValues(alpha: 0.15),
+                                  ],
+                          ),
+                          border: Border.all(
+                            color: AppColors.teal.withValues(alpha: 0.3),
+                            width: 0.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.teal.withValues(alpha: 0.3),
+                              blurRadius: 12,
+                              spreadRadius: -2,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                // Icon
+                Transform.scale(
+                  scale: _scaleAnimation.value,
+                  child: Icon(
+                    widget.isActive ? widget.item.activeIcon : widget.item.icon,
+                    size: 24,
+                    color: widget.isActive
+                        ? (widget.colorScheme.isDark ? AppColors.offWhite : AppColors.teal)
+                        : (widget.colorScheme.isDark
+                            ? AppColors.offWhite.withValues(alpha: 0.5)
+                            : AppColors.almostBlack.withValues(alpha: 0.5)),
+                  ),
+                ),
+                // Notification badge
+                if (widget.item.hasNotification)
+                  Positioned(
+                    top: -2,
+                    right: -2,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: AppColors.lightRed,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: widget.colorScheme.isDark
+                              ? AppColors.almostBlack
+                              : AppColors.white,
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.lightRed.withValues(alpha: 0.5),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Navigation item data model
+class _NavItem {
+  final NavView id;
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  final bool hasNotification;
+
+  const _NavItem(
+    this.id,
+    this.icon,
+    this.activeIcon,
+    this.label, {
+    this.hasNotification = false,
+  });
 }

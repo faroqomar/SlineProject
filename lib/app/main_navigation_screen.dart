@@ -37,6 +37,9 @@ class MainNavigationScreen extends StatelessWidget {
     return Consumer<NavigationProvider>(
       builder: (context, navigationProvider, child) {
         return Scaffold(
+          // IMPORTANT: extendBody must be true for the liquid glass effect to work
+          // This allows the body to paint behind the bottom navigation bar
+          extendBody: true,
           body: Stack(
             children: [
               // 1. Global Background
@@ -55,22 +58,22 @@ class MainNavigationScreen extends StatelessWidget {
               ),
               
               // 2. Phone Background (The "Mockup" inner container)
-              // In a real app, we might just use the full screen, but preserving the design's layering
               Container(
                 color: colorScheme.phoneBackground,
               ),
 
-              // 3. Global Noise Texture (Optional - skipping for performance/asset dependency)
-
-              // 4. Active Screen
+              // 3. Active Screen
               IndexedStack(
                 index: navigationProvider.currentIndex,
                 children: screens,
               ),
 
+              // 4. iOS 26 Liquid Glass Bottom Navigation Bar
+              const CustomBottomNavBar(),
+
               // 5. Floating Action Button (Create Task) with rotation animation
               Positioned(
-                bottom: 100,
+                bottom: 100, // Above liquid glass bottom bar
                 right: AppDimens.p24,
                 child: AnimatedRotationButton(
                   rotationAngle: 0.125, // 45 degrees
@@ -95,19 +98,17 @@ class MainNavigationScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.add,
-                      color: Colors.white,
+                      color: AppColors.white,
                       size: 30,
                     ),
                   ),
                 ),
               ),
-
-              // 6. Custom Bottom Navigation (Floating Island)
-              const CustomBottomNavBar(),
             ],
           ),
+          // Note: CustomBottomNavBar is positioned inside the Stack, not as bottomNavigationBar
         );
       },
     );

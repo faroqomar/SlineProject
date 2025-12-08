@@ -56,35 +56,73 @@ class AppDecorations {
 
   /// Returns a [BoxDecoration] specifically for the floating bottom navigation bar.
   ///
-  /// This mimics the `bottomNavBg` style from the React design, including
-  /// a gradient and a subtle border.
+  /// This implements the liquid glass effect from the new design with:
+  /// - Gradient backgrounds (top to bottom)
+  /// - Inset-like shadows for depth
+  /// - Enhanced border styling
+  /// - Outer shadow for elevation
   static BoxDecoration bottomNavBarDecoration({
     required AppColorScheme colorScheme,
   }) {
+    // Liquid glass gradient colors from new design
+    final List<Color> gradientColors = colorScheme.isDark
+        ? [
+            // Dark mode: rgba(20, 96, 104, 0.2) to rgba(0, 0, 0, 0.4)
+            AppColors.teal.withValues(alpha: 0.2),
+            AppColors.almostBlack.withValues(alpha: 0.4),
+          ]
+        : [
+            // Light mode: rgba(255, 255, 255, 0.7) to rgba(255, 255, 255, 0.4)
+            AppColors.white.withValues(alpha: 0.7),
+            AppColors.white.withValues(alpha: 0.4),
+          ];
+
+    // Border color from new design
+    final Color borderColor = colorScheme.isDark
+        ? AppColors.white.withValues(alpha: 0.08) // rgba(255,255,255,0.08)
+        : AppColors.white.withValues(alpha: 0.6); // rgba(255,255,255,0.6)
+
     return BoxDecoration(
       borderRadius: BorderRadius.circular(AppDimens.r30),
       gradient: LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [
-          colorScheme.bottomNavBackground,
-          colorScheme.bottomNavBackground.withValues(alpha: 0.6),
-        ],
+        colors: gradientColors,
+      ),
+      border: Border.all(
+        color: borderColor,
+        width: 1.0,
       ),
       boxShadow: [
+        // Outer shadow for elevation
         BoxShadow(
           color: colorScheme.isDark
-              ? AppColors.almostBlack.withValues(alpha: 0.5)
-              : AppColors.lightTeal.withValues(alpha: 0.4), // from React design
+              ? AppColors.almostBlack.withValues(alpha: 0.5) // 0 20px 40px -10px rgba(0,0,0,0.5)
+              : AppColors.lightTeal.withValues(alpha: 0.4), // 0 20px 40px -10px rgba(147, 204, 206, 0.4)
           blurRadius: 40.0,
           spreadRadius: -10.0,
           offset: const Offset(0, 20),
         ),
+        // Top inset-like shadow (simulated with inner glow)
+        // Note: Flutter doesn't support inset shadows, so we use a subtle inner border effect
+        BoxShadow(
+          color: colorScheme.isDark
+              ? AppColors.white.withValues(alpha: 0.1) // inset 0 1px 0 rgba(255,255,255,0.1)
+              : AppColors.white.withValues(alpha: 0.8), // inset 0 1px 0 rgba(255,255,255,0.8)
+          blurRadius: 0,
+          spreadRadius: 0,
+          offset: const Offset(0, 1),
+        ),
+        // Bottom inset-like shadow
+        BoxShadow(
+          color: colorScheme.isDark
+              ? AppColors.almostBlack.withValues(alpha: 0.2) // inset 0 -1px 0 rgba(0,0,0,0.2)
+              : Colors.transparent, // No bottom inset in light mode
+          blurRadius: 0,
+          spreadRadius: 0,
+          offset: const Offset(0, -1),
+        ),
       ],
-      border: Border.all(
-        color: colorScheme.bottomNavBorder,
-        width: 1.0,
-      ),
     );
   }
 
