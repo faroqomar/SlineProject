@@ -97,15 +97,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         Row(
                           children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                border: Border.all(color: AppColors.gold, width: 3),
-                                borderRadius: BorderRadius.circular(AppDimens.r16),
-                              ),
-                              child: SignedAvatar(
-                                storagePathOrUrl: vm.avatarUrl,
-                                radius: 35,
-                              ),
+                            SignedAvatar(
+                              storagePathOrUrl: vm.avatarUrl,
+                              size: 70,
+                              borderRadius: BorderRadius.circular(AppDimens.r16),
+                              borderColor: AppColors.gold,
+                              borderWidth: 3,
                             ),
                             const SizedBox(width: AppDimens.p16),
                             Expanded(

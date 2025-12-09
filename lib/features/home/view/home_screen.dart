@@ -89,16 +89,12 @@ class _HomeScreenState extends State<HomeScreen> {
                               children: [
                                 Row(
                                   children: [
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        border: Border.all(color: AppColors.offWhite.withValues(alpha: 0.2), width: 2),
-                                        borderRadius: BorderRadius.circular(AppDimens.r18),
-                                      ),
-                                      child: SignedAvatar(
-                                        storagePathOrUrl: profileVM.avatarUrl,
-                                        radius: 26, // 52px size
-                                        
-                                      ),
+                                    SignedAvatar(
+                                      storagePathOrUrl: profileVM.avatarUrl,
+                                      size: 52,
+                                      borderRadius: BorderRadius.circular(AppDimens.r16),
+                                      borderColor: AppColors.offWhite.withValues(alpha: 0.2),
+                                      borderWidth: 2,
                                     ),
                                     const SizedBox(width: AppDimens.p12),
                                     Column(
