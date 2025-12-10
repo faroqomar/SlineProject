@@ -1,11 +1,27 @@
-// HomeViewModel: MVVM state holder for Home feature
-// Migrated logic from HomeController to ViewModel using ChangeNotifier.
+// HomeViewModel: MVVM state holder for Home feature.
+//
+// Architecture: This ViewModel loads tasks for the home feed and coordinates
+// with TaskFilterViewModel for search/filter functionality.
+//
+// Design Decision - Dual ViewModel Coordination:
+// The Home screen uses two ViewModels:
+// 1. HomeViewModel (this) - owns the raw task data and loading state
+// 2. TaskFilterViewModel - owns filtered view of tasks, search query, category filter
+//
+// Why separate? The filter state needs to persist across tab switches,
+// while the raw data fetch is specific to the Home screen.
+//
+// Data Flow:
+// 1. HomeViewModel.loadFeaturedTasks() fetches tasks
+// 2. Results are passed to TaskFilterViewModel.setTasks()
+// 3. UI uses TaskFilterViewModel.filteredTasks for display
 
 import 'package:flutter/foundation.dart';
-import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/features/tasks/models/task_model.dart';
-import 'package:sline_app/features/tasks/services/task_service.dart';
-import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
+
+import '../../../core/services/logger_service.dart';
+import '../../tasks/models/task_model.dart';
+import '../../tasks/services/task_service.dart';
+import '../../tasks/viewmodels/task_filter_view_model.dart';
 
 class HomeViewModel extends ChangeNotifier {
   final TaskService _taskService;

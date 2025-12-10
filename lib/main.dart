@@ -1,5 +1,8 @@
+import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:sline_app/features/auth/view/signup_screen.dart';
+import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 import 'package:sline_app/features/home/viewmodels/home_view_model.dart';
@@ -18,17 +21,44 @@ import 'core/providers/navigation_provider.dart';
 import 'package:provider/provider.dart';
 import 'features/booking/viewmodels/booking_view_model.dart';
 import 'features/booking/view/availability_screen.dart';
-import 'package:sline_app/core/theme/app_theme.dart'; // NEW
-import 'package:sline_app/core/providers/theme_mode_provider.dart'; // NEW
+import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/providers/theme_mode_provider.dart';
 
+/// App entry point with global error handling.
+///
+/// Why error boundary: Catches uncaught exceptions and logs them centrally,
+/// preventing silent failures and enabling future crash reporting integration.
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await SupabaseConfig.init();
+  // Wrap entire app in error zone to catch async exceptions
+  await runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  // Set logger level (info = clean logs, debug = verbose logs)
-  AppLogger.currentLevel = LogLevel.info;
+    // Global Flutter framework error handler (widget build errors, etc.)
+    FlutterError.onError = (FlutterErrorDetails details) {
+      AppLogger.e(
+        'Flutter Error: ${details.summary}',
+        tag: 'System',
+        error: details.exception,
+        stackTrace: details.stack,
+      );
+    };
 
-  runApp(const SLineApp());
+    // Global platform error handler (native crashes, isolate errors)
+    PlatformDispatcher.instance.onError = (error, stack) {
+      AppLogger.e('Platform Error', tag: 'System', error: error, stackTrace: stack);
+      return true; // Prevent app termination
+    };
+
+    await SupabaseConfig.init();
+
+    // Set logger level (info = clean logs, debug = verbose logs)
+    AppLogger.currentLevel = LogLevel.info;
+
+    runApp(const SLineApp());
+  }, (error, stack) {
+    // Catches any uncaught async exceptions outside the Flutter framework
+    AppLogger.e('Uncaught Zone Error', tag: 'System', error: error, stackTrace: stack);
+  });
 }
 
 class SLineApp extends StatelessWidget {
@@ -38,13 +68,23 @@ class SLineApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        // Auth - needed globally for logout from any screen
+        ChangeNotifierProvider(create: (_) => AuthViewModel()),
+        // Profile - user profile state
         ChangeNotifierProvider(create: (_) => ProfileViewModel()),
+        // Navigation - bottom nav state
         ChangeNotifierProvider(create: (_) => NavigationProvider()),
-        ChangeNotifierProvider(create: (_) => ThemeModeProvider()), // NEW
+        // Theme - light/dark mode toggle
+        ChangeNotifierProvider(create: (_) => ThemeModeProvider()),
+        // Home screen state
         ChangeNotifierProvider(create: (_) => HomeViewModel()),
+        // Task filtering state (shared between screens)
         ChangeNotifierProvider(create: (_) => TaskFilterViewModel()),
+        // Task CRUD operations
         ChangeNotifierProvider(create: (_) => TaskViewModel()),
+        // Chat/messaging state
         ChangeNotifierProvider(create: (_) => ChatViewModel()),
+        // Booking/scheduling state
         ChangeNotifierProvider(create: (_) => BookingViewModel()),
       ],
       child: Consumer<ThemeModeProvider>(

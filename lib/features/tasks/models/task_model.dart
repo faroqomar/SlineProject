@@ -99,7 +99,13 @@ class Task {
     this.packages,
   });
 
-  /// Create Task from JSON
+  /// Create Task from JSON (supports both flat and JOIN-embedded profile data)
+  ///
+  /// Why this parsing logic: Supabase returns nested objects for JOINed relations.
+  /// The `profiles` key contains user data when fetched with:
+  /// `.select('*, profiles!tasks_user_id_fkey(full_name, avatar_url)')`
+  ///
+  /// This avoids N+1 queries by getting all data in a single request.
   factory Task.fromJson(Map<String, dynamic> json) {
     // Map database string to TaskType enum; default to tender for backward compatibility
     final String? typeStr = json['task_type'] as String?;
@@ -111,6 +117,14 @@ class Task {
         .map((e) => e?.toString() ?? '')
         .where((s) => s.isNotEmpty)
         .toList();
+
+    // Extract profile data from JOIN (nested under 'profiles' key)
+    // or from flat fields (for backward compatibility with existing code)
+    final profileData = json['profiles'] as Map<String, dynamic>?;
+    final String? parsedUserName = profileData?['full_name'] as String? ??
+        json['user_name'] as String?;
+    final String? parsedUserAvatar = profileData?['avatar_url'] as String? ??
+        json['user_avatar'] as String?;
 
     return Task(
       id: json['id'] as String,
@@ -137,8 +151,8 @@ class Task {
       category: json['category'] as String?,
       // Resolved name from embedded relation (if present), fallback to legacy text
       categoryName: ((json['categories'] as Map?)?['name'] as String?) ?? (json['category'] as String?),
-      userName: null,
-      userAvatar: null,
+      userName: parsedUserName,
+      userAvatar: parsedUserAvatar,
       assignedFreelancerId: (json['assigned_freelancer_id'] as String?) ?? (json['freelancer_id'] as String?),
       imagePaths: parsedImagePaths,
       packages: json['packages'] as Map<String, dynamic>?,

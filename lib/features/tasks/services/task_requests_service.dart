@@ -2,18 +2,20 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/logger_service.dart';
 import '../models/task_request_model.dart';
 
+/// Service for handling task offer/bid operations.
 class TaskRequestsService {
   final SupabaseClient _client;
 
   TaskRequestsService({SupabaseClient? client})
       : _client = client ?? Supabase.instance.client;
 
+  /// List offers for a task with pagination.
   Future<List<TaskRequest>> listByTask({
     required String taskId,
     int limit = 20,
     DateTime? before,
   }) async {
-    AppLogger.d('[TaskRequestsService] listByTask start taskId=$taskId before=$before limit=$limit');
+    AppLogger.d('Fetching offers for task $taskId', tag: 'Offers');
 
     try {
       final query = _client
@@ -33,30 +35,27 @@ class TaskRequestsService {
           .map((e) => TaskRequest.fromMap(e as Map<String, dynamic>))
           .toList();
 
-      AppLogger.i('[TaskRequestsService] listByTask ok count=${result.length}');
+      AppLogger.i('Loaded ${result.length} offers', tag: 'Offers');
       return result;
-    } on PostgrestException catch (e, st) {
-      AppLogger.e('[TaskRequestsService] listByTask PostgrestException', e, st);
-      rethrow;
     } catch (e, st) {
-      AppLogger.e('[TaskRequestsService] listByTask Unknown error', e, st);
+      AppLogger.e('Failed to list offers', tag: 'Offers', error: e, stackTrace: st);
       rethrow;
     }
   }
 
+  /// Submit a new offer for a task.
   Future<TaskRequest> submitOffer({
     required String taskId,
     required double price,
     required int days,
     String? note,
   }) async {
-    AppLogger.d('[TaskRequestsService] submitOffer start taskId=$taskId price=$price days=$days');
+    AppLogger.d('Submitting offer for task $taskId', tag: 'Offers');
 
     final uid = _client.auth.currentUser?.id;
     if (uid == null) {
-      final err = Exception('Not authenticated');
-      AppLogger.e('[TaskRequestsService] submitOffer no auth user', err);
-      throw err;
+      AppLogger.e('Not authenticated', tag: 'Offers');
+      throw Exception('Not authenticated');
     }
 
     try {
@@ -75,37 +74,36 @@ class TaskRequestsService {
           .single();
 
       final model = TaskRequest.fromMap(inserted as Map<String, dynamic>);
-      AppLogger.i('[TaskRequestsService] submitOffer ok id=${model.id}');
+      AppLogger.i('Offer submitted: ${model.id}', tag: 'Offers');
       return model;
     } on PostgrestException catch (e, st) {
       final msg = (e.message).toLowerCase();
       if (msg.contains('ux_task_requests_pending_per_user') ||
           (msg.contains('duplicate key') && msg.contains('task_id') && msg.contains('bidder_id'))) {
-        final friendly = Exception('You already have a pending offer on this task.');
-        AppLogger.w('[TaskRequestsService] submitOffer duplicate pending');
-        throw friendly;
+        AppLogger.w('Duplicate pending offer', tag: 'Offers');
+        throw Exception('You already have a pending offer on this task.');
       }
-      AppLogger.e('[TaskRequestsService] submitOffer PostgrestException', e, st);
+      AppLogger.e('Failed to submit offer', tag: 'Offers', error: e, stackTrace: st);
       rethrow;
     } catch (e, st) {
-      AppLogger.e('[TaskRequestsService] submitOffer Unknown error', e, st);
+      AppLogger.e('Failed to submit offer', tag: 'Offers', error: e, stackTrace: st);
       rethrow;
     }
   }
 
+  /// Replace an existing offer with new values.
   Future<TaskRequest> replaceOffer({
     required String taskId,
     required double price,
     required int days,
     String? note,
   }) async {
-    AppLogger.d('[TaskRequestsService] replaceOffer start taskId=$taskId price=$price days=$days');
+    AppLogger.d('Replacing offer for task $taskId', tag: 'Offers');
 
     final uid = _client.auth.currentUser?.id;
     if (uid == null) {
-      final err = Exception('Not authenticated');
-      AppLogger.e('[TaskRequestsService] replaceOffer no auth user', err);
-      throw err;
+      AppLogger.e('Not authenticated', tag: 'Offers');
+      throw Exception('Not authenticated');
     }
 
     try {
@@ -118,19 +116,17 @@ class TaskRequestsService {
       });
 
       final model = TaskRequest.fromMap(res as Map<String, dynamic>);
-      AppLogger.i('[TaskRequestsService] replaceOffer ok id=${model.id}');
+      AppLogger.i('Offer replaced: ${model.id}', tag: 'Offers');
       return model;
-    } on PostgrestException catch (e, st) {
-      AppLogger.e('[TaskRequestsService] replaceOffer PostgrestException', e, st);
-      rethrow;
     } catch (e, st) {
-      AppLogger.e('[TaskRequestsService] replaceOffer Unknown error', e, st);
+      AppLogger.e('Failed to replace offer', tag: 'Offers', error: e, stackTrace: st);
       rethrow;
     }
   }
 
+  /// Accept an offer (task owner action).
   Future<TaskRequest> accept(String requestId) async {
-    AppLogger.d('[TaskRequestsService] accept start requestId=$requestId');
+    AppLogger.d('Accepting offer $requestId', tag: 'Offers');
     try {
       final res = await _client.rpc('accept_task_request', params: {
         'p_request_id': requestId,
@@ -146,19 +142,17 @@ class TaskRequestsService {
       }
 
       final model = TaskRequest.fromMap(map);
-      AppLogger.i('[TaskRequestsService] accept ok id=${model.id}');
+      AppLogger.i('Offer accepted: ${model.id}', tag: 'Offers');
       return model;
-    } on PostgrestException catch (e, st) {
-      AppLogger.e('[TaskRequestsService] accept PostgrestException', e, st);
-      rethrow;
     } catch (e, st) {
-      AppLogger.e('[TaskRequestsService] accept Unknown error', e, st);
+      AppLogger.e('Failed to accept offer', tag: 'Offers', error: e, stackTrace: st);
       rethrow;
     }
   }
 
+  /// Reject an offer (task owner action).
   Future<TaskRequest> reject(String requestId) async {
-    AppLogger.d('[TaskRequestsService] reject start requestId=$requestId');
+    AppLogger.d('Rejecting offer $requestId', tag: 'Offers');
     try {
       final res = await _client.rpc('reject_task_request', params: {
         'p_request_id': requestId,
@@ -174,13 +168,10 @@ class TaskRequestsService {
       }
 
       final model = TaskRequest.fromMap(map);
-      AppLogger.i('[TaskRequestsService] reject ok id=${model.id}');
+      AppLogger.i('Offer rejected: ${model.id}', tag: 'Offers');
       return model;
-    } on PostgrestException catch (e, st) {
-      AppLogger.e('[TaskRequestsService] reject PostgrestException', e, st);
-      rethrow;
     } catch (e, st) {
-      AppLogger.e('[TaskRequestsService] reject Unknown error', e, st);
+      AppLogger.e('Failed to reject offer', tag: 'Offers', error: e, stackTrace: st);
       rethrow;
     }
   }

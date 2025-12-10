@@ -1,8 +1,5 @@
-// SavedTaskModel
-// Represents a bookmark entry for a task by a specific user.
-import 'package:logger/logger.dart';
-
-final _savedModelLogger = Logger();
+// SavedTaskModel - Represents a bookmark entry for a task by a specific user.
+import 'package:sline_app/core/services/logger_service.dart';
 
 class SavedTaskModel {
   /// Primary key id in `saved_tasks`.
@@ -34,7 +31,7 @@ class SavedTaskModel {
         createdAt: DateTime.parse(map['created_at'] as String),
       );
     } catch (e, st) {
-      _savedModelLogger.e('Failed to parse SavedTaskModel.fromMap', error: e, stackTrace: st);
+      AppLogger.e('Failed to parse SavedTaskModel', tag: 'Saved', error: e, stackTrace: st);
       rethrow;
     }
   }

@@ -179,10 +179,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _buildDarkModeToggle(context),
                     const SizedBox(height: AppDimens.p24),
 
-                    // Logout
+                    // Logout button - uses global AuthViewModel
                     GestureDetector(
-                      onTap: () {
-                        context.read<AuthViewModel>().logout(context);
+                      onTap: () async {
+                        final authVM = context.read<AuthViewModel>();
+                        final success = await authVM.logout();
+                        if (!context.mounted) return;
+                        if (success) {
+                          Navigator.of(context).pushReplacementNamed('/login');
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(authVM.error ?? 'Logout failed')),
+                          );
+                        }
                       },
                       child: Container(
                         height: 54,

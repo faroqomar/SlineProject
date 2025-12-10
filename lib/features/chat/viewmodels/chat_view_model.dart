@@ -9,6 +9,21 @@ import '../../../core/services/logger_service.dart';
 import '../attachments/services/send_attachment_usecase.dart';
 
 /// ChatViewModel — MVVM state holder for Chat feature.
+///
+/// Architecture:
+/// - Uses ChatRepository for data access (never calls Supabase directly)
+/// - Manages realtime subscriptions for live message updates
+/// - Tracks subscription state via `_mounted` flag to prevent memory leaks
+///
+/// Memory Management:
+/// - Subscriptions are stored in `_msgSub` and `_convoSub`
+/// - dispose() cancels all subscriptions and sets `_mounted = false`
+/// - `_notify()` checks `_mounted` before calling notifyListeners()
+///
+/// Why separate conversation/message subscriptions:
+/// - Conversation list subscription runs while on messages list screen
+/// - Active conversation subscription runs only when viewing a specific chat
+/// - This prevents unnecessary updates and conserves resources
 class ChatViewModel extends ChangeNotifier {
   ChatViewModel({SupabaseClient? client})
       : _repo = ChatRepository(client ?? Supabase.instance.client);

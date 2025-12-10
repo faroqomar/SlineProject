@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
-import '../../../../models/task_request_model.dart';
+
 import '../../../../../../core/utils/format_price.dart';
 import '../../../../../favorites/data/favorites_service.dart';
+import '../../../../../favorites/viewmodels/favorites_view_model.dart';
+import '../../../../models/task_request_model.dart';
 
 /// One row/tile for a TaskRequest in the offers list.
+///
+/// Note: This widget needs a FavoritesViewModel available in the widget tree
+/// to handle the "Add to favorites" action properly via MVVM pattern.
 class RequestTile extends StatelessWidget {
   final TaskRequest request;
   final VoidCallback? onAccept;
   final VoidCallback? onReject;
   final bool isOwner;
+  
+  /// Optional FavoritesViewModel. If null, favorites will be added via direct
+  /// service call (legacy behavior). Prefer providing a ViewModel for testability.
+  final FavoritesViewModel? favoritesVM;
 
   const RequestTile({
     super.key,
@@ -16,6 +25,7 @@ class RequestTile extends StatelessWidget {
     this.onAccept,
     this.onReject,
     required this.isOwner,
+    this.favoritesVM,
   });
 
   @override
@@ -37,25 +47,7 @@ class RequestTile extends StatelessWidget {
               IconButton(
                 tooltip: 'Add to favorites',
                 icon: const Icon(Icons.favorite_border),
-                onPressed: () async {
-                  try {
-                    await FavoritesService().addFavorite(request.bidderId);
-                    // ignore: use_build_context_synchronously
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Added to favorites')),
-                    );
-                  } catch (e) {
-                    final msg = e.toString().contains('23505')
-                        ? 'Already in favorites'
-                        : e.toString().toLowerCase().contains('rls')
-                            ? 'Not allowed for your role'
-                            : 'Failed to add favorite';
-                    // ignore: use_build_context_synchronously
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(msg)),
-                    );
-                  }
-                },
+                onPressed: () => _handleAddFavorite(context),
               ),
             if (isOwner && canAct) ...[
               IconButton(
@@ -73,5 +65,46 @@ class RequestTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Handle adding the bidder to favorites.
+  ///
+  /// If a FavoritesViewModel is provided, use it (preferred MVVM approach).
+  /// Otherwise, fall back to direct service call (legacy compatibility).
+  Future<void> _handleAddFavorite(BuildContext context) async {
+    try {
+      if (favoritesVM != null) {
+        // Preferred: Use ViewModel for proper state management
+        await favoritesVM!.add(request.bidderId);
+        if (!context.mounted) return;
+        final error = favoritesVM!.error;
+        if (error != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error)),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Added to favorites')),
+          );
+        }
+      } else {
+        // Legacy fallback: Direct service call
+        await FavoritesService().addFavorite(request.bidderId);
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Added to favorites')),
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      final msg = e.toString().contains('23505')
+          ? 'Already in favorites'
+          : e.toString().toLowerCase().contains('rls')
+              ? 'Not allowed for your role'
+              : 'Failed to add favorite';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg)),
+      );
+    }
   }
 }

@@ -1,10 +1,4 @@
-
-
-// Import the logger package for error logging
-import 'package:logger/logger.dart';
-
-// Create a top-level logger instance to log errors throughout the file
-final logger = Logger();
+import 'package:sline_app/core/services/logger_service.dart';
 
 /// Model representing a Favorite item
 class FavoriteModel {
@@ -32,8 +26,7 @@ class FavoriteModel {
         createdAt: DateTime.parse(map['created_at'] as String),
       );
     } catch (e, st) {
-      // Log error with stack trace for debugging
-      logger.e("Failed to parse FavoriteModel.fromMap", error: e, stackTrace: st);
+      AppLogger.e('Failed to parse FavoriteModel', tag: 'Favorites', error: e, stackTrace: st);
       rethrow;
     }
   }

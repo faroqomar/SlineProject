@@ -1,15 +1,14 @@
-// SavedTasksViewModel
-// MVVM: Holds UI state and business logic for saved (bookmarked) tasks.
-// This replaces the old SavedTasksController logic while keeping
-// a thin wrapper for backward compatibility.
+// SavedTasksViewModel: MVVM state holder for saved (bookmarked) tasks.
+//
+// Manages the list of tasks the current user has bookmarked.
+// Provides optimistic updates (local cache updated immediately)
+// and toggle functionality for save/unsave operations.
 
 import 'package:flutter/foundation.dart';
-import 'package:logger/logger.dart';
-import 'package:sline_app/features/tasks/models/task_model.dart';
 
+import '../../../core/services/logger_service.dart';
+import '../../tasks/models/task_model.dart';
 import '../data/saved_tasks_service.dart';
-
-final _savedVmLogger = Logger();
 
 class SavedTasksViewModel extends ChangeNotifier {
   final SavedTasksService service;
@@ -41,7 +40,7 @@ class SavedTasksViewModel extends ChangeNotifier {
         ..clear()
         ..addAll(list.map((e) => e.id));
     } catch (e, st) {
-      _savedVmLogger.e('SavedTasksViewModel.load failed', error: e, stackTrace: st);
+      AppLogger.e('Failed to load saved tasks', tag: 'Saved', error: e, stackTrace: st);
       _setError(_humanize(e));
     } finally {
       _setLoading(false);
@@ -68,7 +67,7 @@ class SavedTasksViewModel extends ChangeNotifier {
       }
       return nowSaved;
     } catch (e, st) {
-      _savedVmLogger.e('SavedTasksViewModel.toggle failed', error: e, stackTrace: st);
+      AppLogger.e('Failed to toggle saved task', tag: 'Saved', error: e, stackTrace: st);
       _setError(_humanize(e));
       rethrow;
     }

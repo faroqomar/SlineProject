@@ -1,9 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:sline_app/core/utils/signed_url_cache.dart';
 import 'package:sline_app/features/tasks/services/task_image_service.dart';
 
-/// Renders an image from either a public URL (legacy) or a private
-/// Supabase Storage **path** in the `task-images` bucket by generating
-/// a short-lived signed URL.
+/// Renders an image from either a public URL or a private Supabase Storage path.
+///
+/// Why this widget: Handles the complexity of displaying task images that may be
+/// stored as either legacy public URLs or private storage paths requiring signed
+/// URL generation. Uses shared caching to prevent redundant API calls.
+///
+/// Example:
+/// ```dart
+/// SignedImage(
+///   storagePathOrUrl: task.imagePaths.first,
+///   width: 120,
+///   height: 80,
+///   borderRadius: 12,
+/// )
+/// ```
 class SignedImage extends StatefulWidget {
   final String? storagePathOrUrl;
   final double width;
@@ -27,7 +40,6 @@ class SignedImage extends StatefulWidget {
 }
 
 class _SignedImageState extends State<SignedImage> {
-  static final Map<String, _CacheEntry> _cache = {};
   String? _resolvedUrl;
   bool _loading = true;
 
@@ -37,6 +49,12 @@ class _SignedImageState extends State<SignedImage> {
     _resolve();
   }
 
+  /// Resolves the storage path to a displayable URL.
+  ///
+  /// Why this logic: Handles three cases:
+  /// 1. Null/empty path -> show placeholder
+  /// 2. Full URL (legacy) -> use directly
+  /// 3. Storage path -> generate signed URL with caching
   Future<void> _resolve() async {
     final v = widget.storagePathOrUrl;
     if (v == null || v.isEmpty) {
@@ -44,7 +62,7 @@ class _SignedImageState extends State<SignedImage> {
       return;
     }
 
-    // Legacy: already a public URL
+    // Legacy public URLs can be used directly
     if (v.startsWith('http')) {
       setState(() {
         _resolvedUrl = v;
@@ -53,20 +71,26 @@ class _SignedImageState extends State<SignedImage> {
       return;
     }
 
-    final now = DateTime.now();
-    final hit = _cache[v];
-    if (hit != null && hit.expiry.isAfter(now)) {
+    // Check shared cache first to avoid redundant API calls
+    final cached = SignedUrlCache.get(v);
+    if (cached != null) {
       setState(() {
-        _resolvedUrl = hit.url;
+        _resolvedUrl = cached;
         _loading = false;
       });
       return;
     }
 
+    // Generate new signed URL and cache it
     try {
       final signer = TaskImageService();
-      final signed = await signer.createSignedUrl(v, expire: const Duration(hours: 2));
-      _cache[v] = _CacheEntry(url: signed ?? '', expiry: now.add(const Duration(minutes: 90)));
+      final signed = await signer.createSignedUrl(
+        v,
+        expire: const Duration(hours: 2),
+      );
+      if (signed != null && signed.isNotEmpty) {
+        SignedUrlCache.set(v, signed);
+      }
       if (!mounted) return;
       setState(() {
         _resolvedUrl = signed;
@@ -122,10 +146,4 @@ class _SignedImageState extends State<SignedImage> {
       ),
     );
   }
-}
-
-class _CacheEntry {
-  final String url;
-  final DateTime expiry;
-  _CacheEntry({required this.url, required this.expiry});
 }

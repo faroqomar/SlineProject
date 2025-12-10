@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/notifications/data/notification_service.dart';
 import 'package:sline_app/features/notifications/models/notification_model.dart';
 
@@ -19,9 +20,9 @@ class NotificationViewModel extends ChangeNotifier {
 
     try {
       _notifications = await _service.getNotifications();
-    } catch (e) {
-      // Handle error
-      if (kDebugMode) print(e);
+      AppLogger.i('Loaded ${_notifications.length} notifications', tag: 'Notifications');
+    } catch (e, st) {
+      AppLogger.e('Failed to load notifications', tag: 'Notifications', error: e, stackTrace: st);
     } finally {
       _isLoading = false;
       notifyListeners();

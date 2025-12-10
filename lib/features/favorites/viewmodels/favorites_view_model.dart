@@ -1,13 +1,14 @@
-// FavoritesViewModel: MVVM state holder for user's favorites
-// Moves business logic out of UI and into a ChangeNotifier ViewModel.
+// FavoritesViewModel: MVVM state holder for user's favorites.
+//
+// Manages the list of freelancers the current user has favorited.
+// Uses FavoritesService for data access and provides error mapping
+// for user-friendly messages.
 
 import 'package:flutter/foundation.dart';
-import 'package:logger/logger.dart';
 
+import '../../../core/services/logger_service.dart';
 import '../data/favorites_service.dart';
 import '../models/favorite_model.dart';
-
-final _favVmLogger = Logger();
 
 class FavoritesViewModel extends ChangeNotifier {
   final FavoritesService service;
@@ -32,7 +33,7 @@ class FavoritesViewModel extends ChangeNotifier {
       final enriched = await service.listFavoritesWithProfile();
       _itemsWithProfile = enriched.map((row) => FavoriteWithProfile.fromMap(row)).toList();
     } catch (e, st) {
-      _favVmLogger.e('FavoritesViewModel.load failed', error: e, stackTrace: st);
+      AppLogger.e('Failed to load favorites', tag: 'Favorites', error: e, stackTrace: st);
       _setError(_humanizeError(e));
     } finally {
       _setLoading(false);
@@ -47,7 +48,7 @@ class FavoritesViewModel extends ChangeNotifier {
       await service.addFavorite(freelancerId);
       await load();
     } catch (e, st) {
-      _favVmLogger.e('FavoritesViewModel.add failed', error: e, stackTrace: st);
+      AppLogger.e('Failed to add favorite', tag: 'Favorites', error: e, stackTrace: st);
       _setError(_humanizeError(e));
     }
   }
@@ -60,7 +61,7 @@ class FavoritesViewModel extends ChangeNotifier {
       _itemsWithProfile = _itemsWithProfile.where((f) => f.freelancerId != freelancerId).toList();
       notifyListeners();
     } catch (e, st) {
-      _favVmLogger.e('FavoritesViewModel.remove failed', error: e, stackTrace: st);
+      AppLogger.e('Failed to remove favorite', tag: 'Favorites', error: e, stackTrace: st);
       _setError(_humanizeError(e));
     }
   }

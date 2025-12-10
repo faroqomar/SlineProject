@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/app/main_navigation_screen.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
@@ -9,6 +10,10 @@ import 'package:sline_app/core/widgets/app_text_field.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
 
 /// Login screen for user authentication (MVVM) with Glassmorphism design.
+///
+/// Architecture: Uses a local AuthViewModel provider for scoped state.
+/// The View handles navigation and SnackBar display based on ViewModel state,
+/// keeping the ViewModel framework-agnostic.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -26,6 +31,33 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  /// Handle login action - calls ViewModel and manages navigation/feedback.
+  Future<void> _handleLogin(AuthViewModel authVM) async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final success = await authVM.login(
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Login successful')),
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+      );
+    } else {
+      // Show error from ViewModel
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(authVM.error ?? 'Login failed')),
+      );
+    }
   }
 
   @override
@@ -181,15 +213,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             text: 'Sign In',
                             isLoading: authVM.isLoading,
                             width: double.infinity,
-                            onPressed: () {
-                              if (_formKey.currentState!.validate()) {
-                                authVM.login(
-                                  state: this,
-                                  email: _emailController.text,
-                                  password: _passwordController.text,
-                                );
-                              }
-                            },
+                            onPressed: () => _handleLogin(authVM),
                           );
                         },
                       ),

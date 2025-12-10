@@ -1,6 +1,4 @@
-import 'package:logger/logger.dart';
-
-final logger = Logger();
+import 'package:sline_app/core/services/logger_service.dart';
 
 /// Enum representing different types of messages.
 /// Why: Distinguishes message content types for handling and UI rendering.
@@ -146,8 +144,7 @@ class Message {
         payload: payloadJson,
       );
     } catch (e, st) {
-      // Log parsing errors for debugging and monitoring
-      logger.e("Failed to parse Message.fromJson", error: e, stackTrace: st);
+      AppLogger.e('Failed to parse Message', tag: 'Chat', error: e, stackTrace: st);
       rethrow;
     }
   }

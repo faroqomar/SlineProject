@@ -1,12 +1,8 @@
-// SavedTasksService
-// CRUD utilities for the `saved_tasks` table (bookmarking tasks per user).
-import 'package:logger/logger.dart';
+// SavedTasksService - CRUD for the `saved_tasks` table (bookmarking tasks).
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import '../models/saved_task_model.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
-
-final _savedServiceLogger = Logger();
+import '../models/saved_task_model.dart';
 
 class SavedTasksService {
   final SupabaseClient _client;
@@ -17,7 +13,7 @@ class SavedTasksService {
   String _requireUid() {
     final uid = _client.auth.currentUser?.id;
     if (uid == null) {
-      _savedServiceLogger.e('SavedTasksService: not authenticated');
+      AppLogger.e('Not authenticated', tag: 'Saved');
       throw StateError('Not authenticated');
     }
     return uid;

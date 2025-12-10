@@ -1,15 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/utils/signed_url_cache.dart';
 import 'package:sline_app/features/profile/services/avatar_service.dart';
 
-/// A helper widget that renders a user avatar from either
-/// a public URL (legacy) or a private Supabase Storage **path**.
-/// If a storage path is provided, a short-lived signed URL is generated.
-/// 
+/// Renders a user avatar from either a public URL or a private Supabase Storage path.
+///
+/// Why this widget: Abstracts the complexity of handling both legacy public URLs
+/// and private storage paths that require signed URL generation. Includes caching
+/// to prevent redundant API calls on widget rebuilds.
+///
 /// Supports two modes:
-/// - **Circular**: Uses `radius` parameter (default behavior for backward compatibility)
+/// - **Circular**: Uses `radius` parameter (default, backward compatible)
 /// - **Rounded Rectangle**: Uses `size` and `borderRadius` parameters
+///
+/// Example:
+/// ```dart
+/// SignedAvatar(
+///   storagePathOrUrl: profile.avatarUrl, // Can be path or full URL
+///   size: 48,
+///   borderRadius: BorderRadius.circular(12),
+/// )
+/// ```
 class SignedAvatar extends StatefulWidget {
   final String? storagePathOrUrl;
   
@@ -53,7 +65,6 @@ class SignedAvatar extends StatefulWidget {
 }
 
 class _SignedAvatarState extends State<SignedAvatar> {
-  static final Map<String, _CacheEntry> _cache = {};
   late final AvatarService _avatarService;
   String? _resolvedUrl;
   bool _loading = true;
@@ -76,6 +87,12 @@ class _SignedAvatarState extends State<SignedAvatar> {
     }
   }
 
+  /// Resolves the storage path to a displayable URL.
+  ///
+  /// Why this logic: Handles three cases:
+  /// 1. Null/empty path -> show placeholder
+  /// 2. Full URL (legacy) -> use directly
+  /// 3. Storage path -> generate signed URL with caching
   Future<void> _resolve() async {
     final v = widget.storagePathOrUrl;
     if (v == null || v.isEmpty) {
@@ -83,7 +100,8 @@ class _SignedAvatarState extends State<SignedAvatar> {
       return;
     }
 
-    if (v.startsWith('http')) { // legacy public URL
+    // Legacy public URLs can be used directly
+    if (v.startsWith('http')) {
       setState(() {
         _resolvedUrl = v;
         _loading = false;
@@ -91,19 +109,23 @@ class _SignedAvatarState extends State<SignedAvatar> {
       return;
     }
 
-    final now = DateTime.now();
-    final hit = _cache[v];
-    if (hit != null && hit.expiry.isAfter(now)) {
+    // Check shared cache first to avoid redundant API calls
+    final cached = SignedUrlCache.get(v);
+    if (cached != null) {
       setState(() {
-        _resolvedUrl = hit.url;
+        _resolvedUrl = cached;
         _loading = false;
       });
       return;
     }
 
+    // Generate new signed URL and cache it
     try {
-      final signed = await _avatarService.createSignedUrl(v, expire: const Duration(hours: 2));
-      _cache[v] = _CacheEntry(url: signed, expiry: now.add(const Duration(minutes: 90)));
+      final signed = await _avatarService.createSignedUrl(
+        v,
+        expire: const Duration(hours: 2),
+      );
+      SignedUrlCache.set(v, signed);
       if (!mounted) return;
       setState(() {
         _resolvedUrl = signed;
@@ -238,10 +260,4 @@ class _SignedAvatarState extends State<SignedAvatar> {
       onBackgroundImageError: (exception, stackTrace) {},
     );
   }
-}
-
-class _CacheEntry {
-  final String url;
-  final DateTime expiry;
-  _CacheEntry({required this.url, required this.expiry});
 }

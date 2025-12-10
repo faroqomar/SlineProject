@@ -1,18 +1,8 @@
 // Task Requests (Offers/Bids) domain model.
-// ------------------------------------------------------------
-// What:
-//   Represents a freelancer's offer on a task, including price,
-//   estimated days, an optional note, status, and timestamps.
-//
-// Why:
-//   Keeps UI/Services strongly-typed and consistent with DB schema,
-//   avoids map/stringly-typed bugs, and centralizes conversions.
-// ------------------------------------------------------------
-
+// Represents a freelancer's offer on a task, including price,
+// estimated days, an optional note, status, and timestamps.
 import 'package:flutter/foundation.dart';
-import 'package:logger/logger.dart'; // Import logger for error logging
-
-final logger = Logger(); // Logger instance for capturing errors
+import 'package:sline_app/core/services/logger_service.dart';
 
 /// Status values must match DB CHECK constraint:
 /// 'pending' | 'accepted' | 'rejected'
@@ -90,8 +80,7 @@ class TaskRequest {
         createdAt: DateTime.parse(map['created_at'] as String),
       );
     } catch (e, st) {
-      // Log parsing errors for debugging and rethrow
-      logger.e("Failed to parse TaskRequest.fromMap", error: e, stackTrace: st);
+      AppLogger.e('Failed to parse TaskRequest', tag: 'Tasks', error: e, stackTrace: st);
       rethrow;
     }
   }

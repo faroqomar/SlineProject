@@ -4,7 +4,27 @@ import '../models/slot_model.dart';
 import '../models/booking_model.dart';
 import '../data/booking_repository.dart';
 
-/// ChangeNotifier that holds UI state for booking/slots screens.
+/// BookingViewModel — MVVM state holder for Booking/Scheduling feature.
+///
+/// This ViewModel demonstrates several BEST PRACTICES that should be
+/// followed across the codebase:
+///
+/// 1. **Cursor-Based Pagination**: Uses ISO timestamps as cursors instead of
+///    offsets. This is more efficient and handles concurrent updates correctly.
+///    See `slotsCursor`, `bookingsClientCursor`, `bookingsProviderCursor`.
+///
+/// 2. **User-Friendly Error Mapping**: The `_mapError()` method translates
+///    technical Supabase/Postgres errors into readable messages.
+///    Error code 23505 = unique violation = "already booked"
+///
+/// 3. **Optimistic Updates**: After `bookSlot()`, the new booking is immediately
+///    prepended to `bookingsAsClient` without waiting for a refetch.
+///
+/// 4. **Separate Loading States**: Each data type has its own loading flag
+///    (`slotsLoading`, `bookingsLoading`) to prevent UI flicker.
+///
+/// 5. **hasMore Flags**: Tracks whether more pages are available to prevent
+///    unnecessary API calls when scrolling past the end.
 class BookingViewModel extends ChangeNotifier {
   BookingViewModel({SupabaseClient? client})
       : _repo = BookingRepository(client ?? Supabase.instance.client);
