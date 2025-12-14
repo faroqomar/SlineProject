@@ -180,4 +180,12 @@ class ProfileViewModel extends ChangeNotifier {
       AppLogger.e('Error updating task: $e');
     }
   }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    bioController.dispose();
+    super.dispose();
+  }
 }
