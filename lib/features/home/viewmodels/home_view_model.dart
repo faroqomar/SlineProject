@@ -15,6 +15,9 @@
 // 1. HomeViewModel.loadFeaturedTasks() fetches tasks
 // 2. Results are passed to TaskFilterViewModel.setTasks()
 // 3. UI uses TaskFilterViewModel.filteredTasks for display
+//
+// Performance: Uses cursor-based pagination to load tasks incrementally,
+// preventing the app from loading all tasks at once.
 
 import 'package:flutter/foundation.dart';
 
@@ -30,36 +33,87 @@ class HomeViewModel extends ChangeNotifier {
 
   final List<Task> _featuredTasks = [];
   bool _isLoading = false;
+  bool _isLoadingMore = false;
+
+  // Pagination state
+  String? _cursor; // ISO timestamp of last task's created_at
+  bool _hasMore = true;
 
   // List of featured tasks for home screen
   List<Task> get featuredTasks => List.unmodifiable(_featuredTasks);
 
-  // Current loading state
+  // Current loading state (initial load)
   bool get isLoading => _isLoading;
 
-  void _setLoading(bool loading) {
-    _isLoading = loading;
-    notifyListeners();
-  }
+  // Loading state for pagination (load more)
+  bool get isLoadingMore => _isLoadingMore;
 
-  // Load featured tasks for home screen, optionally update a filter view model
+  // Whether more tasks are available to load
+  bool get hasMore => _hasMore;
+
+  // Load featured tasks for home screen (first page)
+  // Optionally update a filter view model
   Future<void> loadFeaturedTasks({TaskFilterViewModel? filterController}) async {
-    _setLoading(true);
+    if (_isLoading) return;
+
+    _isLoading = true;
+    _cursor = null;
+    _hasMore = true;
+    notifyListeners();
+
     try {
       final tasks = await _taskService.getOpenTasksForHome();
       _featuredTasks
         ..clear()
         ..addAll(tasks);
 
+      // Update cursor for next page
+      if (tasks.isNotEmpty) {
+        _cursor = tasks.last.createdAt.toUtc().toIso8601String();
+      }
+      
+      // Check if we have more data
+      _hasMore = tasks.length >= TaskService.defaultPageSize;
+
       if (filterController != null) {
         filterController.setTasks(_featuredTasks);
       }
-
-      notifyListeners();
     } catch (e) {
       AppLogger.e('Error loading featured tasks: $e');
     } finally {
-      _setLoading(false);
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Load more tasks (next page) - for infinite scroll
+  Future<void> loadMoreTasks({TaskFilterViewModel? filterController}) async {
+    if (_isLoadingMore || !_hasMore || _cursor == null) return;
+
+    _isLoadingMore = true;
+    notifyListeners();
+
+    try {
+      final tasks = await _taskService.getOpenTasksForHome(
+        cursorCreatedAtIso: _cursor,
+      );
+
+      if (tasks.isNotEmpty) {
+        _featuredTasks.addAll(tasks);
+        _cursor = tasks.last.createdAt.toUtc().toIso8601String();
+      }
+
+      // Check if we have more data
+      _hasMore = tasks.length >= TaskService.defaultPageSize;
+
+      if (filterController != null) {
+        filterController.setTasks(_featuredTasks);
+      }
+    } catch (e) {
+      AppLogger.e('Error loading more tasks: $e');
+    } finally {
+      _isLoadingMore = false;
+      notifyListeners();
     }
   }
 

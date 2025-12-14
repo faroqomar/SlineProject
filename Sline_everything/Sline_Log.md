@@ -1,6 +1,6 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2025-12-08
+**Last Updated:** 2025-12-14
 
 ---
 
@@ -19,6 +19,73 @@
 ---
 
 ## 📋 Version History
+
+### 🟢 Version 2.2 — Phase 1 Foundation: Performance, Error Handling & Session Management
+**Date:** 2025-12-14
+**Commit:** _Pending_ — "feat(core): Phase 1 foundation - performance, error handling, session management"
+
+#### ✅ Implemented
+
+- **Phase 1.1: Task Card Image Display** (BUG FIX)
+  - Updated `lib/features/tasks/view/widgets/task_card.dart` to display task images using `SignedImage` widget
+  - Added conditional rendering: shows task image when `task.imagePaths` is not empty, falls back to colored header
+  - Proper gradient overlay and placeholder sizing for loading/error states
+
+- **Phase 1.2: App Performance Optimization**
+  - Added `cached_network_image: ^3.4.1` to `pubspec.yaml` for image disk/memory caching
+  - Updated `lib/core/widgets/signed_image.dart` to use `CachedNetworkImage` - reduced network calls on subsequent loads
+  - Updated `lib/core/widgets/signed_avatar.dart` to use `CachedNetworkImage` and `CachedNetworkImageProvider`
+  - Implemented cursor-based pagination in `lib/features/tasks/services/task_service.dart` via `getOpenTasksForHome(limit, cursorCreatedAtIso)`
+  - Updated `lib/features/home/viewmodels/home_view_model.dart` with `loadMoreTasks()` for infinite scroll, pagination state (`_cursor`, `_hasMore`, `_isLoadingMore`)
+  - Optimized `lib/features/tasks/viewmodels/task_view_model.dart` to minimize redundant `notifyListeners()` calls
+
+- **Phase 1.3: Supabase Connection Verification** (AUDIT)
+  - Created `lib/core/utils/error_mapper.dart` - centralized error-to-user-message mapping following `.cursor/rules/error-handling.mdc`
+  - Updated `lib/features/tasks/services/task_service.dart` with proper `PostgrestException` handling and `ErrorMapper.map()` for all methods
+  - Enhanced `lib/features/tasks/services/task_image_service.dart` with:
+    - Authentication validation before upload
+    - User-friendly error messages for storage errors
+    - Added `deleteImage()` method for cleanup
+    - Proper logging with `[TaskImages]` tag
+  - Implemented session expiry handling in `lib/features/auth/viewmodels/auth_view_model.dart`:
+    - Added Supabase auth state listener (`onAuthStateChange`)
+    - Added `onSessionExpired` callback with pending queue to prevent race conditions
+    - Proper subscription cleanup in `dispose()`
+  - Updated `lib/main.dart` with `_AppWithAuthListener` wrapper for session expiry navigation
+
+#### 📊 Impact
+- **Performance**: Image caching reduces network calls significantly; cursor pagination prevents loading all tasks at once
+- **UX**: User-friendly error messages instead of technical exceptions
+- **Reliability**: Session expiry properly detected and handled with redirect to login
+- **Maintainability**: Centralized `ErrorMapper` utility for consistent error handling
+
+#### 🗂️ Files Touched
+- **New Files:**
+  - `lib/core/utils/error_mapper.dart` - Error mapping utility
+- **Modified:**
+  - `lib/features/tasks/view/widgets/task_card.dart` - Image display in headers
+  - `lib/features/tasks/services/task_service.dart` - Pagination, error handling
+  - `lib/features/tasks/services/task_image_service.dart` - Enhanced error handling
+  - `lib/features/home/viewmodels/home_view_model.dart` - Pagination support
+  - `lib/features/tasks/viewmodels/task_view_model.dart` - Optimized notifications
+  - `lib/features/auth/viewmodels/auth_view_model.dart` - Session listener
+  - `lib/core/widgets/signed_image.dart` - CachedNetworkImage
+  - `lib/core/widgets/signed_avatar.dart` - CachedNetworkImage
+  - `lib/main.dart` - Auth listener wrapper
+  - `pubspec.yaml` - Added cached_network_image
+
+#### 🔧 Technical Notes
+- Cursor pagination uses `created_at` timestamps (ISO 8601) per project rules (no offset pagination)
+- `ErrorMapper` handles `PostgrestException`, `AuthException`, `StorageException`, and network errors
+- Session expiry events are queued if they occur before callback is set (prevents startup race condition)
+- Image caching uses disk + memory cache via `flutter_cache_manager` (transitive dependency)
+
+#### 🔜 Next
+- Phase 2.1: Differentiate Tender vs Booking Cards
+- Phase 2.2: Orders Dashboard Overhaul
+- Plan `supabase_flutter` v2.x migration (30 outdated packages detected)
+
+---
 
 ### 🟢 Version 2.1 — Theme System Dashboard, iOS 26 Liquid Glass Nav & CodeGuard Agent
 **Date:** 2025-12-08

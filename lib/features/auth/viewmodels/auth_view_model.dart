@@ -6,16 +6,87 @@
 // Design Decision: Navigation and SnackBar callbacks are passed from the View
 // rather than holding BuildContext, making this ViewModel testable and avoiding
 // context-related lifecycle issues.
+//
+// Session Handling: Listens to Supabase auth state changes to detect session
+// expiry and trigger logout/navigation as needed.
 
+import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/auth/data/auth_repository.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final AuthRepository _authRepo;
+  StreamSubscription<AuthState>? _authSubscription;
+  
+  /// Tracks if a session error occurred before callback was set.
+  /// Ensures errors during startup aren't silently ignored.
+  bool _pendingSessionExpired = false;
+  
+  /// Callback to trigger when session expires (set by app wrapper).
+  /// UI should set this to navigate to login screen.
+  VoidCallback? _onSessionExpired;
+  
+  /// Setter that processes any queued session expiry events.
+  set onSessionExpired(VoidCallback? callback) {
+    _onSessionExpired = callback;
+    // Process any pending session expiry that occurred before callback was set
+    if (_pendingSessionExpired && callback != null) {
+      AppLogger.i('Processing pending session expiry', tag: 'Auth');
+      _pendingSessionExpired = false;
+      callback();
+    }
+  }
+  
+  VoidCallback? get onSessionExpired => _onSessionExpired;
 
   AuthViewModel({AuthRepository? authRepo})
-      : _authRepo = authRepo ?? AuthRepository();
+      : _authRepo = authRepo ?? AuthRepository() {
+    _initAuthListener();
+  }
+
+  /// Initialize auth state listener to handle session expiry.
+  void _initAuthListener() {
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen(
+      (AuthState state) {
+        AppLogger.d('Auth state changed: ${state.event}', tag: 'Auth');
+        
+        switch (state.event) {
+          case AuthChangeEvent.signedOut:
+            AppLogger.i('User signed out', tag: 'Auth');
+            notifyListeners();
+            break;
+          case AuthChangeEvent.tokenRefreshed:
+            AppLogger.d('Token refreshed successfully', tag: 'Auth');
+            break;
+          case AuthChangeEvent.userUpdated:
+            AppLogger.i('User profile updated', tag: 'Auth');
+            notifyListeners();
+            break;
+          default:
+            break;
+        }
+      },
+      onError: (error) {
+        AppLogger.e('Auth state error', tag: 'Auth', error: error);
+        // On auth errors, trigger session expired callback or queue for later
+        if (_onSessionExpired != null) {
+          _onSessionExpired!();
+        } else {
+          // Queue the expiry for when callback is set
+          AppLogger.w('Session expiry queued - callback not yet set', tag: 'Auth');
+          _pendingSessionExpired = true;
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
+  }
 
   // --- State ---
   bool _isLoading = false;

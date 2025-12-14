@@ -87,42 +87,82 @@ class SLineApp extends StatelessWidget {
         // Booking/scheduling state
         ChangeNotifierProvider(create: (_) => BookingViewModel()),
       ],
-      child: Consumer<ThemeModeProvider>(
-        builder: (context, themeModeProvider, child) {
-          return MaterialApp(
-            title: 'SLine App',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.light(), // NEW
-            darkTheme: AppTheme.dark(), // NEW
-            themeMode: themeModeProvider.themeMode, // NEW
-            home: Supabase.instance.client.auth.currentUser != null
-                ? const MainNavigationScreen()
-                : const LoginScreen(),
-            routes: {
-              '/login': (_) => const LoginScreen(),
-              '/main': (_) => const MainNavigationScreen(),
-              '/signup': (_) => const SignupScreen(),
-              '/home': (_) => const HomeScreen(), 
-              '/categories': (_) => const CategoriesScreen(),
-              FavoritesRoutes.routeName: (_) => const FavoritesScreen(),
-              '/availability': (ctx) {
-                final args = ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>?;
-                final providerId = (args?['providerId'] ?? args?['freelancerId']) as String?;
-                final taskId = args?['taskId'] as String?;
-                if (providerId == null || taskId == null) {
-                  return const Scaffold(
-                    body: Center(child: Text('Missing arguments for Availability')),
-                  );
-                }
-                return AvailabilityScreen(
-                  providerId: providerId,
-                  taskId: taskId,
+      child: const _AppWithAuthListener(),
+    );
+  }
+}
+
+/// Wrapper widget that sets up auth state listening.
+///
+/// Why separate widget: MaterialApp needs to be inside the Provider tree
+/// so we can access AuthViewModel to set up session expiry callback.
+class _AppWithAuthListener extends StatefulWidget {
+  const _AppWithAuthListener();
+
+  @override
+  State<_AppWithAuthListener> createState() => _AppWithAuthListenerState();
+}
+
+class _AppWithAuthListenerState extends State<_AppWithAuthListener> {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    // Set up session expiry callback after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authVm = context.read<AuthViewModel>();
+      authVm.onSessionExpired = _handleSessionExpired;
+    });
+  }
+
+  void _handleSessionExpired() {
+    AppLogger.w('Session expired - redirecting to login', tag: 'Auth');
+    // Clear navigation stack and go to login
+    _navigatorKey.currentState?.pushNamedAndRemoveUntil(
+      '/login',
+      (route) => false,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ThemeModeProvider>(
+      builder: (context, themeModeProvider, child) {
+        return MaterialApp(
+          navigatorKey: _navigatorKey,
+          title: 'SLine App',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light(),
+          darkTheme: AppTheme.dark(),
+          themeMode: themeModeProvider.themeMode,
+          home: Supabase.instance.client.auth.currentUser != null
+              ? const MainNavigationScreen()
+              : const LoginScreen(),
+          routes: {
+            '/login': (_) => const LoginScreen(),
+            '/main': (_) => const MainNavigationScreen(),
+            '/signup': (_) => const SignupScreen(),
+            '/home': (_) => const HomeScreen(),
+            '/categories': (_) => const CategoriesScreen(),
+            FavoritesRoutes.routeName: (_) => const FavoritesScreen(),
+            '/availability': (ctx) {
+              final args = ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>?;
+              final providerId = (args?['providerId'] ?? args?['freelancerId']) as String?;
+              final taskId = args?['taskId'] as String?;
+              if (providerId == null || taskId == null) {
+                return const Scaffold(
+                  body: Center(child: Text('Missing arguments for Availability')),
                 );
-              },
+              }
+              return AvailabilityScreen(
+                providerId: providerId,
+                taskId: taskId,
+              );
             },
-          );
-        },
-      ),
+          },
+        );
+      },
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
@@ -9,6 +10,9 @@ import 'package:sline_app/features/profile/services/avatar_service.dart';
 /// Why this widget: Abstracts the complexity of handling both legacy public URLs
 /// and private storage paths that require signed URL generation. Includes caching
 /// to prevent redundant API calls on widget rebuilds.
+///
+/// Performance: Uses CachedNetworkImage for disk/memory caching of downloaded
+/// images, reducing network calls on subsequent loads.
 ///
 /// Supports two modes:
 /// - **Circular**: Uses `radius` parameter (default, backward compatible)
@@ -188,26 +192,39 @@ class _SignedAvatarState extends State<SignedAvatar> {
     } else {
       avatar = ClipRRect(
         borderRadius: widget.borderRadius!,
-        child: Image.network(
-          _resolvedUrl!,
+        child: CachedNetworkImage(
+          imageUrl: _resolvedUrl!,
           width: avatarSize,
           height: avatarSize,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              width: avatarSize,
-              height: avatarSize,
-              decoration: BoxDecoration(
-                color: bgColor,
-                borderRadius: widget.borderRadius,
+          placeholder: (context, url) => Container(
+            width: avatarSize,
+            height: avatarSize,
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: widget.borderRadius,
+            ),
+            child: Center(
+              child: SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.offWhite),
               ),
-              child: Icon(
-                Icons.person,
-                color: AppColors.offWhite,
-                size: avatarSize * 0.5,
-              ),
-            );
-          },
+            ),
+          ),
+          errorWidget: (context, url, error) => Container(
+            width: avatarSize,
+            height: avatarSize,
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: widget.borderRadius,
+            ),
+            child: Icon(
+              Icons.person,
+              color: AppColors.offWhite,
+              size: avatarSize * 0.5,
+            ),
+          ),
         ),
       );
     }
@@ -254,9 +271,11 @@ class _SignedAvatarState extends State<SignedAvatar> {
           );
     }
 
+    // Use CachedNetworkImageProvider for circular avatars
     return CircleAvatar(
       radius: widget.radius,
-      backgroundImage: NetworkImage(_resolvedUrl!),
+      backgroundColor: bgColor,
+      backgroundImage: CachedNetworkImageProvider(_resolvedUrl!),
       onBackgroundImageError: (exception, stackTrace) {},
     );
   }

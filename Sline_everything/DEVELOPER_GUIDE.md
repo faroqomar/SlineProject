@@ -127,14 +127,32 @@ Each feature has a dedicated deep‑dive under `Sline_everything/DEVELOPER_GUIDE
 | `portfolio` | Public (current) | Portfolio items | Store public URL (or switch to private + signed URLs) |
 
 ## 8. Error Mapping (Common)
+
+**Centralized Utility**: Use `lib/core/utils/error_mapper.dart` for consistent error handling:
+
+```dart
+import 'package:sline_app/core/utils/error_mapper.dart';
+
+try {
+  await supabaseOperation();
+} on PostgrestException catch (e, st) {
+  AppLogger.e('Operation failed', tag: 'Service', error: e, stackTrace: st);
+  throw Exception(ErrorMapper.map(e));  // Returns user-friendly message
+}
+```
+
 | Area | Error | Map to |
 | --- | --- | --- |
-| Auth | `AuthException(Invalid login credentials)` | “Email or password is incorrect.” |
-| RLS | `Postgrest 42501` | “Session expired / Not allowed. Please sign in.” |
-| Unique | `23505` (duplicate) | “Already exists.” (favorites, offers) |
-| FK | `23503` | “Related item does not exist.” |
-| Storage | 404 | “File not available.” |
-| Chat | Trigger payload checks | “Offer requires price and days.” |
+| Auth | `AuthException(Invalid login credentials)` | "Email or password is incorrect." |
+| RLS | `Postgrest 42501` | "Session expired / Not allowed. Please sign in." |
+| Unique | `23505` (duplicate) | "Already exists." (favorites, offers) |
+| FK | `23503` | "Related item does not exist." |
+| Storage | 404 | "File not available." |
+| Storage | 413 | "File is too large. Please choose a smaller file." |
+| Network | `SocketException` | "Cannot reach the server. Check your connection." |
+| Chat | Trigger payload checks | "Offer requires price and days." |
+
+**Reference**: See `.cursor/rules/error-handling.mdc` for complete error mapping conventions.
 
 ## 9. How to Add a New Feature (Playbook)
 - **Schema**: add tables/columns in `SUPABASE_SETUP.md` (DDL, RLS, indexes, triggers). Apply to Supabase.

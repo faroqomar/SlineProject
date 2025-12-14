@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/logger_service.dart';
+import '../../../core/utils/error_mapper.dart';
 import '../models/task_model.dart';
 
 /// Service for handling task operations with Supabase.
@@ -86,11 +87,14 @@ class TaskService {
       final profilesMap = await _fetchProfilesByIds(userIds);
       final tasks = _parseTasksWithProfiles(rows, profilesMap);
 
-      AppLogger.i('Successfully fetched ${tasks.length} tasks');
+      AppLogger.i('Successfully fetched ${tasks.length} tasks', tag: 'Tasks');
       return tasks;
-    } catch (e) {
-      AppLogger.e('Failed to get tasks: $e');
-      throw Exception('Failed to get tasks: $e');
+    } on PostgrestException catch (e, st) {
+      AppLogger.e('Failed to get tasks', tag: 'Tasks', error: e, stackTrace: st);
+      throw Exception(ErrorMapper.map(e));
+    } catch (e, st) {
+      AppLogger.e('Failed to get tasks', tag: 'Tasks', error: e, stackTrace: st);
+      throw Exception(ErrorMapper.map(e));
     }
   }
 
@@ -120,9 +124,12 @@ class TaskService {
       final createdTask = Task.fromJson(taskJson);
       AppLogger.i('Task created successfully: ${createdTask.title}');
       return createdTask;
-    } catch (e) {
-      AppLogger.e('Failed to create task: $e');
-      throw Exception('Failed to create task: $e');
+    } on PostgrestException catch (e, st) {
+      AppLogger.e('Failed to create task', tag: 'Tasks', error: e, stackTrace: st);
+      throw Exception(ErrorMapper.map(e));
+    } catch (e, st) {
+      AppLogger.e('Failed to create task', tag: 'Tasks', error: e, stackTrace: st);
+      throw Exception(ErrorMapper.map(e));
     }
   }
 
@@ -133,8 +140,13 @@ class TaskService {
           .from('tasks')
           .update({'status': status.name})
           .eq('id', taskId);
-    } catch (e) {
-      throw Exception('Failed to update task status: $e');
+      AppLogger.i('Task status updated: $taskId → ${status.name}', tag: 'Tasks');
+    } on PostgrestException catch (e, st) {
+      AppLogger.e('Failed to update task status', tag: 'Tasks', error: e, stackTrace: st);
+      throw Exception(ErrorMapper.map(e));
+    } catch (e, st) {
+      AppLogger.e('Failed to update task status', tag: 'Tasks', error: e, stackTrace: st);
+      throw Exception(ErrorMapper.map(e));
     }
   }
 
@@ -144,8 +156,13 @@ class TaskService {
   Future<void> updateTask(String taskId, Map<String, dynamic> updates) async {
     try {
       await _client.from('tasks').update(updates).eq('id', taskId);
-    } catch (e) {
-      throw Exception('Failed to update task: $e');
+      AppLogger.i('Task updated: $taskId', tag: 'Tasks');
+    } on PostgrestException catch (e, st) {
+      AppLogger.e('Failed to update task', tag: 'Tasks', error: e, stackTrace: st);
+      throw Exception(ErrorMapper.map(e));
+    } catch (e, st) {
+      AppLogger.e('Failed to update task', tag: 'Tasks', error: e, stackTrace: st);
+      throw Exception(ErrorMapper.map(e));
     }
   }
 
@@ -168,8 +185,12 @@ class TaskService {
 
       final profilesMap = await _fetchProfilesByIds(userIds);
       return _parseTasksWithProfiles(rows, profilesMap);
-    } catch (e) {
-      throw Exception('Failed to get tasks by user: $e');
+    } on PostgrestException catch (e, st) {
+      AppLogger.e('Failed to get tasks by user', tag: 'Tasks', error: e, stackTrace: st);
+      throw Exception(ErrorMapper.map(e));
+    } catch (e, st) {
+      AppLogger.e('Failed to get tasks by user', tag: 'Tasks', error: e, stackTrace: st);
+      throw Exception(ErrorMapper.map(e));
     }
   }
 
@@ -192,34 +213,70 @@ class TaskService {
 
       final profilesMap = await _fetchProfilesByIds(userIds);
       return _parseTasksWithProfiles(rows, profilesMap);
-    } catch (e) {
-      throw Exception('Failed to get tasks by status: $e');
+    } on PostgrestException catch (e, st) {
+      AppLogger.e('Failed to get tasks by status', tag: 'Tasks', error: e, stackTrace: st);
+      throw Exception(ErrorMapper.map(e));
+    } catch (e, st) {
+      AppLogger.e('Failed to get tasks by status', tag: 'Tasks', error: e, stackTrace: st);
+      throw Exception(ErrorMapper.map(e));
     }
   }
 
   /// Delete a task by ID.
   Future<void> deleteTask(String taskId) async {
-    AppLogger.i('Deleting task with ID: $taskId');
+    AppLogger.d('Deleting task with ID: $taskId', tag: 'Tasks');
     try {
       await _client.from('tasks').delete().eq('id', taskId);
-      AppLogger.i('Task deleted successfully: $taskId');
-    } catch (e) {
-      AppLogger.e('Failed to delete task: $e');
-      throw Exception('Failed to delete task: $e');
+      AppLogger.i('Task deleted successfully: $taskId', tag: 'Tasks');
+    } on PostgrestException catch (e, st) {
+      AppLogger.e('Failed to delete task', tag: 'Tasks', error: e, stackTrace: st);
+      throw Exception(ErrorMapper.map(e));
+    } catch (e, st) {
+      AppLogger.e('Failed to delete task', tag: 'Tasks', error: e, stackTrace: st);
+      throw Exception(ErrorMapper.map(e));
     }
   }
 
-  /// Get open tasks for the Home screen with profile data.
+  /// Default page size for paginated queries.
+  static const int defaultPageSize = 20;
+
+  /// Get open tasks for the Home screen with profile data and pagination.
   ///
   /// Performance: 2 queries (tasks + profiles batch) - no N+1 issue.
   /// This is the primary method for the home feed.
-  Future<List<Task>> getOpenTasksForHome() async {
+  ///
+  /// Pagination: Uses cursor-based pagination with `created_at` timestamps.
+  /// Pass `cursorCreatedAtIso` from the last task's `createdAt.toIso8601String()`
+  /// to fetch the next page.
+  ///
+  /// Example:
+  /// ```dart
+  /// // First page
+  /// final page1 = await taskService.getOpenTasksForHome(limit: 20);
+  /// // Next page
+  /// final page2 = await taskService.getOpenTasksForHome(
+  ///   limit: 20,
+  ///   cursorCreatedAtIso: page1.last.createdAt.toUtc().toIso8601String(),
+  /// );
+  /// ```
+  Future<List<Task>> getOpenTasksForHome({
+    int limit = defaultPageSize,
+    String? cursorCreatedAtIso,
+  }) async {
     try {
-      final response = await _client
+      var query = _client
           .from('tasks')
           .select(_selectBasic)
-          .eq('status', TaskStatus.open.name)
-          .order('created_at', ascending: false);
+          .eq('status', TaskStatus.open.name);
+
+      // Apply cursor for pagination (fetch tasks created before the cursor)
+      if (cursorCreatedAtIso != null && cursorCreatedAtIso.isNotEmpty) {
+        query = query.lt('created_at', cursorCreatedAtIso);
+      }
+
+      final response = await query
+          .order('created_at', ascending: false)
+          .limit(limit);
 
       final rows = response as List;
       final userIds = rows
@@ -229,8 +286,12 @@ class TaskService {
 
       final profilesMap = await _fetchProfilesByIds(userIds);
       return _parseTasksWithProfiles(rows, profilesMap);
-    } catch (e) {
-      throw Exception('Failed to get open tasks for home: $e');
+    } on PostgrestException catch (e, st) {
+      AppLogger.e('Failed to get open tasks for home', tag: 'Tasks', error: e, stackTrace: st);
+      throw Exception(ErrorMapper.map(e));
+    } catch (e, st) {
+      AppLogger.e('Failed to get open tasks for home', tag: 'Tasks', error: e, stackTrace: st);
+      throw Exception(ErrorMapper.map(e));
     }
   }
 
@@ -258,9 +319,12 @@ class TaskService {
       }
 
       return Task.fromJson(taskJson);
-    } catch (e) {
-      AppLogger.e('Failed to get task by ID: $e');
-      throw Exception('Failed to get task by ID: $e');
+    } on PostgrestException catch (e, st) {
+      AppLogger.e('Failed to get task by ID', tag: 'Tasks', error: e, stackTrace: st);
+      throw Exception(ErrorMapper.map(e));
+    } catch (e, st) {
+      AppLogger.e('Failed to get task by ID', tag: 'Tasks', error: e, stackTrace: st);
+      throw Exception(ErrorMapper.map(e));
     }
   }
 }

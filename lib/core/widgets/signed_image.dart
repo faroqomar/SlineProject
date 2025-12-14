@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/utils/signed_url_cache.dart';
 import 'package:sline_app/features/tasks/services/task_image_service.dart';
@@ -7,6 +8,9 @@ import 'package:sline_app/features/tasks/services/task_image_service.dart';
 /// Why this widget: Handles the complexity of displaying task images that may be
 /// stored as either legacy public URLs or private storage paths requiring signed
 /// URL generation. Uses shared caching to prevent redundant API calls.
+///
+/// Performance: Uses CachedNetworkImage for disk/memory caching of downloaded
+/// images, reducing network calls on subsequent loads.
 ///
 /// Example:
 /// ```dart
@@ -104,7 +108,7 @@ class _SignedImageState extends State<SignedImage> {
 
   @override
   Widget build(BuildContext context) {
-    final placeholder = widget.placeholder ??
+    final defaultPlaceholder = widget.placeholder ??
         Container(
           width: widget.width,
           height: widget.height,
@@ -116,6 +120,7 @@ class _SignedImageState extends State<SignedImage> {
           child: const Icon(Icons.image_outlined, size: 22),
         );
 
+    // Loading state while resolving signed URL
     if (_loading) {
       return Container(
         width: widget.width,
@@ -132,17 +137,33 @@ class _SignedImageState extends State<SignedImage> {
       );
     }
 
+    // No URL resolved - show placeholder
     if (_resolvedUrl == null || _resolvedUrl!.isEmpty) {
-      return placeholder;
+      return defaultPlaceholder;
     }
 
+    // Use CachedNetworkImage for disk/memory caching
     return ClipRRect(
       borderRadius: BorderRadius.circular(widget.borderRadius),
-      child: Image.network(
-        _resolvedUrl!,
+      child: CachedNetworkImage(
+        imageUrl: _resolvedUrl!,
         width: widget.width,
         height: widget.height,
         fit: widget.fit,
+        placeholder: (context, url) => Container(
+          width: widget.width,
+          height: widget.height,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(widget.borderRadius),
+            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.3),
+          ),
+          child: const SizedBox(
+            width: 16, height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+        errorWidget: (context, url, error) => defaultPlaceholder,
       ),
     );
   }

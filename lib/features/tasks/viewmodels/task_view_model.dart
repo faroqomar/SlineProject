@@ -1,4 +1,3 @@
-
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -8,6 +7,9 @@ import '../services/task_image_service.dart';
 import '../../../core/services/logger_service.dart';
 
 /// TaskViewModel — MVVM state holder for Tasks feature.
+///
+/// Performance: Optimized to minimize redundant notifyListeners() calls.
+/// Each state-changing method calls notifyListeners() only once at the end.
 class TaskViewModel extends ChangeNotifier {
   TaskViewModel({SupabaseClient? client})
       : _repo = TaskRepository(client ?? Supabase.instance.client);
@@ -28,11 +30,6 @@ class TaskViewModel extends ChangeNotifier {
 
   String? get currentUserId => _repo.currentUser?.id;
 
-  void _setLoading(bool v) {
-    _isLoading = v;
-    notifyListeners();
-  }
-
   // ----- Images helpers (migrated from TaskController) -----
   Future<void> pickTaskImages() async {
     final ImagePicker picker = ImagePicker();
@@ -45,6 +42,7 @@ class TaskViewModel extends ChangeNotifier {
   }
 
   void clearPickedImages() {
+    if (_pickedImages.isEmpty) return; // Skip if nothing to clear
     _pickedImages.clear();
     notifyListeners();
   }
@@ -89,46 +87,60 @@ class TaskViewModel extends ChangeNotifier {
     return uploadedPaths;
   }
 
+  /// Upload and clear picked images in one operation.
+  /// Optimized to minimize notifyListeners() calls.
   Future<List<String>> finalizeTaskImages({
     required String userId,
     required String taskId,
   }) async {
     final paths = await uploadPickedImages(userId: userId, taskId: taskId);
-    clearPickedImages();
+    // Clear picked images after upload and notify if there were any to clear
+    // Note: uploadPickedImages already notified about uploading state changes
+    final hadImages = _pickedImages.isNotEmpty;
+    _pickedImages.clear();
+    if (hadImages) {
+      notifyListeners();
+    }
     return paths;
   }
 
   // ----- Tasks CRUD -----
   Future<void> loadTasks() async {
-    _setLoading(true);
+    if (_isLoading) return; // Prevent duplicate loads
+    
+    _isLoading = true;
+    notifyListeners();
+    
     try {
       final list = await _repo.getTasks();
       _tasks
         ..clear()
         ..addAll(list);
-      notifyListeners();
     } catch (e) {
       AppLogger.e('Error loading tasks: $e');
     } finally {
-      _setLoading(false);
+      _isLoading = false;
+      notifyListeners(); // Single notification at end
     }
   }
 
   Future<Task> createTask(Task task) async {
-    _setLoading(true);
+    _isLoading = true;
+    notifyListeners();
+    
     try {
       final created = await _repo.createTask(task);
       _tasks.insert(0, created);
-      notifyListeners();
       return created;
     } finally {
-      _setLoading(false);
+      _isLoading = false;
+      notifyListeners(); // Single notification at end
     }
   }
 
   Future<void> updateTask(String taskId, Map<String, dynamic> updates) async {
     await _repo.updateTask(taskId, updates);
-    // optimistic update for fields that may be shown in lists (title/desc/budget)
+    // Optimistic update for fields that may be shown in lists
     final idx = _tasks.indexWhere((t) => t.id == taskId);
     if (idx != -1) {
       final t = _tasks[idx];

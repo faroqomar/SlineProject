@@ -453,6 +453,7 @@ lib/core/providers/navigation_provider.dart
 lib/core/services/logger_service.dart
 lib/core/services/supabase_config.dart
 lib/core/theme/app_colors.dart
+lib/core/utils/error_mapper.dart
 lib/core/utils/format_date.dart
 lib/core/utils/format_price.dart
 lib/core/widgets/custom_bottom_nav_bar.dart

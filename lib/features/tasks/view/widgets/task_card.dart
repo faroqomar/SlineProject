@@ -4,6 +4,7 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_price.dart';
+import 'package:sline_app/core/widgets/signed_image.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 
 /// A card widget to display task info matching the new design system.
@@ -69,118 +70,133 @@ class TaskCard extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context, Color bgColor, bool isTender) {
-    return Container(
-      height: 120,
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(AppDimens.r20),
-          topRight: Radius.circular(AppDimens.r20),
-        ),
+    final bool hasImage = task.imagePaths.isNotEmpty;
+
+    return ClipRRect(
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(AppDimens.r20),
+        topRight: Radius.circular(AppDimens.r20),
       ),
-      child: Stack(
-        children: [
-          // Gradient overlay
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(AppDimens.r20),
-                  topRight: Radius.circular(AppDimens.r20),
+      child: SizedBox(
+        height: 120,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Background: Image or solid color
+            if (hasImage)
+              SignedImage(
+                storagePathOrUrl: task.imagePaths.first,
+                width: double.infinity,
+                height: 120,
+                borderRadius: 0, // ClipRRect handles the corners
+                fit: BoxFit.cover,
+                placeholder: Container(
+                  width: double.infinity,
+                  height: 120,
+                  color: bgColor,
                 ),
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    AppColors.almostBlack.withValues(alpha: 0.5),
-                    Colors.transparent,
-                  ],
+              )
+            else
+              Container(color: bgColor),
+
+            // Gradient overlay (for both image and color backgrounds)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      AppColors.almostBlack.withValues(alpha: 0.6),
+                      Colors.transparent,
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
 
-          // HOT Badge (top-left)
-          if (isHot)
+            // HOT Badge (top-left)
+            if (isHot)
+              Positioned(
+                top: AppDimens.p12,
+                left: AppDimens.p12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.p10,
+                    vertical: AppDimens.p4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.lightRed,
+                    borderRadius: BorderRadius.circular(AppDimens.r8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.lightRed.withValues(alpha: 0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        '🔥',
+                        style: TextStyle(fontSize: 10),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'HOT',
+                        style: AppTypography.micro.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.offWhite,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+            // Type Badge (top-right)
             Positioned(
               top: AppDimens.p12,
-              left: AppDimens.p12,
+              right: AppDimens.p12,
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimens.p10,
-                  vertical: AppDimens.p4,
+                  horizontal: AppDimens.p12,
+                  vertical: AppDimens.p6,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.lightRed,
+                  color: isTender
+                      ? AppColors.lightRed.withValues(alpha: 0.9)
+                      : AppColors.teal.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(AppDimens.r8),
+                  border: Border.all(
+                    color: isTender
+                        ? AppColors.offWhite.withValues(alpha: 0.3)
+                        : AppColors.lightTeal.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.lightRed.withValues(alpha: 0.4),
+                      color: AppColors.almostBlack.withValues(alpha: 0.2),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      '🔥',
-                      style: TextStyle(fontSize: 10),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'HOT',
-                      style: AppTypography.micro.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.offWhite,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-          // Type Badge (top-right)
-          Positioned(
-            top: AppDimens.p12,
-            right: AppDimens.p12,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimens.p12,
-                vertical: AppDimens.p6,
-              ),
-              decoration: BoxDecoration(
-                color: isTender
-                    ? AppColors.lightRed.withValues(alpha: 0.9)
-                    : AppColors.teal.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(AppDimens.r8),
-                border: Border.all(
-                  color: isTender
-                      ? AppColors.offWhite.withValues(alpha: 0.3)
-                      : AppColors.lightTeal.withValues(alpha: 0.3),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.almostBlack.withValues(alpha: 0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+                child: Text(
+                  isTender ? 'TENDER' : 'BOOKING',
+                  style: AppTypography.micro.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.offWhite,
+                    letterSpacing: 0.5,
                   ),
-                ],
-              ),
-              child: Text(
-                isTender ? 'TENDER' : 'BOOKING',
-                style: AppTypography.micro.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.offWhite,
-                  letterSpacing: 0.5,
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
