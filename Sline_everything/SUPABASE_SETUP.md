@@ -1,75 +1,104 @@
-# Supabase Setup for SLine — Database + RLS + Realtime + Storage
+# Supabase Setup for SLine — Complete Database Reference
 
-**Last Updated**: 2025-11-01
-**Version**: 1.9+
+**Last Updated**: 2025-12-14 (Auto-generated from MCP Server)
+**Version**: 2.1
+**Database Version**: PostgreSQL 17.4.1
+**Project ID**: `isddrknbjsgaantjojhm`
+**Region**: `eu-north-1` (Stockholm)
+**API URL**: `https://isddrknbjsgaantjojhm.supabase.co`
 
-This document is the single source of truth for all Supabase backend setup: tables, enums, relationships, indexes, RLS policies, triggers/functions, storage, and Realtime configuration for the SLine freelance marketplace app.
-
-All SQL scripts in this document are idempotent (safe to re-run).
+This document is the **single source of truth** for all Supabase backend setup: tables, enums, relationships, indexes, RLS policies, triggers/functions, storage, views, and Realtime configuration for the SLine freelance marketplace app.
 
 ---
 
 ## Table of Contents
+
 1. [Quick Reference (TL;DR)](#1-quick-reference-tldr)
-2. [Important Constants](#2-important-constants)
+2. [Project Configuration](#2-project-configuration)
 3. [Data Model Overview](#3-data-model-overview)
 4. [Enums](#4-enums)
 5. [Tables](#5-tables)
-6. [RLS Policies](#6-rls-policies)
-7. [Triggers & Functions](#7-triggers--functions)
-8. [Storage Buckets](#8-storage-buckets)
-9. [Realtime Configuration](#9-realtime-configuration)
-10. [Testing & Validation](#10-testing--validation)
-11. [Troubleshooting](#11-troubleshooting)
-12. [Changelog](#12-changelog)
+6. [Views](#6-views)
+7. [RLS Policies](#7-rls-policies)
+8. [Triggers](#8-triggers)
+9. [Functions & RPC](#9-functions--rpc)
+10. [Indexes](#10-indexes)
+11. [Storage Buckets](#11-storage-buckets)
+12. [Realtime Configuration](#12-realtime-configuration)
+13. [Extensions](#13-extensions)
+14. [Security Advisories](#14-security-advisories)
+15. [Testing & Validation](#15-testing--validation)
+16. [Troubleshooting](#16-troubleshooting)
+17. [Changelog](#17-changelog)
 
 ---
 
 ## 1. Quick Reference (TL;DR)
 
-### Core Tables
-- **Identity**: `profiles` (linked to `auth.users`)
-- **Tasks**: `tasks`, `task_requests`, `categories`
-- **Chat**: `conversations`, `messages`
-- **Booking**: `availability_slots`, `bookings`
-- **Social**: `favorites`, `saved_tasks`, `portfolio_items`
+### Core Tables (Public Schema)
+| Table | RLS | Rows | Purpose |
+|-------|-----|------|---------|
+| `profiles` | ✅ | 0 | User profiles linked to auth.users |
+| `tasks` | ✅ | 1 | Job postings (tender/booking) |
+| `task_requests` | ✅ | 0 | Bids/proposals on tasks |
+| `conversations` | ✅ | 0 | Chat threads |
+| `messages` | ✅ | 1 | Chat messages |
+| `conversation_presence` | ✅ | 0 | Typing indicators |
+| `categories` | ✅ | 0 | Service categories |
+| `favorites` | ✅ | 0 | Client's saved freelancers |
+| `saved_tasks` | ✅ | 0 | Bookmarked tasks |
+| `availability_slots` | ✅ | 0 | Provider availability |
+| `bookings` | ✅ | 1 | Session bookings |
+| `portfolio_items` | ✅ | 0 | Freelancer portfolio |
 
 ### Enums
-- `task_type_enum`: `tender` | `booking`
-- `booking_status_enum`: `pending` | `confirmed` | `canceled` | `completed`
-- `message_type_enum`: `text` | `offer` | `offer_update` | `offer_accepted` | `offer_rejected` | `delivery_submitted` | `end_early_request` | `dispute_report`
+| Enum | Values |
+|------|--------|
+| `task_type_enum` | `tender`, `booking` |
+| `booking_status_enum` | `pending`, `confirmed`, `canceled`, `completed` |
+| `message_type_enum` | `text`, `system`, `offer`, `offer_update`, `offer_accepted`, `offer_rejected`, `delivery_submitted`, `end_early_request`, `dispute_report` |
 
 ### Storage Buckets
-- `avatars` (Private) — Profile pictures with signed URLs
-- `task-images` (Private) — Task attachments with signed URLs
-- `chat-attachments` (Private) — Message files with signed URLs
-- `portfolio` (Public/Private) — Portfolio work images
+| Bucket | Public | Purpose |
+|--------|--------|---------|
+| `avatars` | ❌ Private | Profile pictures (signed URLs) |
+| `task-images` | ❌ Private | Task attachments (signed URLs) |
+| `chat-attachments` | ❌ Private | Message files (signed URLs) |
+| `portfolio` | ✅ Public | Portfolio work images |
 
 ### Realtime
-- Enabled on: `messages`, `conversations`
+- **Enabled on**: `messages`
 
-### Key Guards & Triggers
-- Offers only allowed on `tender` tasks
-- DM conversations require `favorites` relationship
-- Task-linked conversations: non-owner starts chat
-- Booking status transitions enforced by trigger
-- Slot overlap prevention for providers
-- Auto-assign freelancer on offer acceptance
+### Key Business Rules (Enforced by Triggers)
+- ✅ Bids only allowed on `tender` tasks (not `booking`)
+- ✅ DM conversations require `favorites` relationship
+- ✅ Task-linked conversations: non-owner starts chat
+- ✅ Booking status transitions enforced
+- ✅ Slot overlap prevention for providers
+- ✅ Auto-assign freelancer on offer acceptance
+- ✅ Client ID is immutable on tasks
 
 ---
 
-## 2. Important Constants
+## 2. Project Configuration
 
-```sql
--- NIL UUID for unique constraints
-NIL_UUID = '00000000-0000-0000-0000-000000000000'
+### Connection Details
+```
+Project ID: isddrknbjsgaantjojhm
+API URL: https://isddrknbjsgaantjojhm.supabase.co
+Database Host: db.isddrknbjsgaantjojhm.supabase.co
+Region: eu-north-1 (Stockholm)
+Postgres Version: 17.4.1
+Status: ACTIVE_HEALTHY
+Created: 2025-07-16
 ```
 
-**Conventions:**
-- All timestamps stored in **UTC** (convert to local in UI)
-- Identity comes from `auth.users`; profile data in `public.profiles`
-- Store **storage paths** in database, generate **signed URLs** at render time
-- Session-based access control via RLS on all tables
+### Conventions
+- **Timestamps**: Store in **UTC**, convert to local in UI via `formatUtcToLocal()`
+- **Identity**: Comes from `auth.users`; profile data in `public.profiles`
+- **Storage**: Store **paths** in database, generate **signed URLs** at render time
+- **Session**: All RLS-protected queries require valid session (`auth.uid()`)
+- **NIL UUID**: `'00000000-0000-0000-0000-000000000000'` used for unique constraints
 
 ---
 
@@ -80,10 +109,11 @@ NIL_UUID = '00000000-0000-0000-0000-000000000000'
 ```mermaid
 erDiagram
   AUTH_USERS ||--|| PROFILES : "id=id"
-  PROFILES ||--o{ TASKS : "user_id"
+  PROFILES ||--o{ TASKS : "client_id"
+  PROFILES ||--o{ TASKS : "freelancer_id"
   CATEGORIES ||--o{ TASKS : "category_id"
   TASKS ||--o{ TASK_REQUESTS : "task_id"
-  PROFILES ||--o{ TASK_REQUESTS : "bidder_id"
+  PROFILES ||--o{ TASK_REQUESTS : "freelancer_id/bidder_id"
   PROFILES ||--o{ AVAILABILITY_SLOTS : "provider_id"
   AVAILABILITY_SLOTS ||--o{ BOOKINGS : "slot_id"
   PROFILES ||--o{ BOOKINGS : "provider_id/client_id"
@@ -93,20 +123,25 @@ erDiagram
   PROFILES ||--o{ CONVERSATIONS : "user1_id/user2_id"
   TASKS ||--o{ CONVERSATIONS : "task_id (optional)"
   CONVERSATIONS ||--o{ MESSAGES : "conversation_id"
+  CONVERSATIONS ||--o{ CONVERSATION_PRESENCE : "conversation_id"
+  PROFILES ||--o{ SAVED_TASKS : "user_id"
+  TASKS ||--o{ SAVED_TASKS : "task_id"
 ```
-
 
 ### Textual Representation
 
 ```text
 auth.users (id)
-  ├─→ profiles (id)
-      ├─< tasks (user_id)
-      │    ├─< task_requests (task_id, bidder_id
-      │    └─< bookings (task_id)
+  └─→ profiles (id)
+      ├─< tasks (client_id, freelancer_id, assigned_freelancer_id)
+      │    ├─< task_requests (task_id, freelancer_id, bidder_id)
+      │    ├─< conversations (task_id)
+      │    ├─< bookings (task_id)
+      │    └─< saved_tasks (task_id)
       ├─< favorites (client_id → freelancer_id)
-      ├─< conversations (user1_id, user2_id, [task_id], initiated_by)
-      │    └─< messages (conversation_id, sender_id, receiver_id)
+      ├─< conversations (user1_id, user2_id, initiated_by)
+      │    ├─< messages (conversation_id, sender_id, receiver_id)
+      │    └─< conversation_presence (conversation_id, user_id)
       ├─< availability_slots (provider_id)
       │    └─< bookings (slot_id, provider_id, client_id)
       └─< portfolio_items (owner_id)
@@ -115,70 +150,78 @@ categories (id) ──< tasks (category_id)
 ```
 
 ### Key Unique Constraints
-- **Conversations**: One conversation per `(user pair, task)` via unique index on `(least(user1_id,user2_id), greatest(user1_id,user2_id), coalesce(task_id, NIL_UUID))`
-- **Bookings**: One active booking per slot via partial unique index `WHERE status IN ('pending','confirmed')`
-- **Task Requests**: One pending offer per `(task_id, bidder_id)` via partial unique index `WHERE status = 'pending'`
-- **Favorites**: One favorite per `(client_id, freelancer_id)` pair
-- **Categories**: Case-insensitive unique name via `UNIQUE INDEX ON categories(LOWER(name))`
+| Table | Constraint | Purpose |
+|-------|------------|---------|
+| `conversations` | `(LEAST(user1_id,user2_id), GREATEST(user1_id,user2_id), COALESCE(task_id, NIL_UUID))` | One conversation per user pair per task |
+| `conversations` | `ux_convo_pair_direct` (WHERE task_id IS NULL) | One direct DM per user pair |
+| `conversations` | `ux_convo_pair_task` (WHERE task_id IS NOT NULL) | One conversation per task per user pair |
+| `task_requests` | `(task_id, freelancer_id) WHERE deleted_at IS NULL` | One active offer per freelancer per task |
+| `favorites` | `(client_id, freelancer_id)` | One favorite per client-freelancer pair |
+| `saved_tasks` | `(user_id, task_id)` | One save per user per task |
+| `categories` | `UNIQUE(name)` | Unique category names |
 
 ---
 
 ## 4. Enums
 
-### 4.1 Task Type Enum
+### 4.1 `task_type_enum`
 
 ```sql
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'task_type_enum') THEN
-    CREATE TYPE public.task_type_enum AS ENUM ('tender', 'booking');
-  END IF;
-END$$;
+CREATE TYPE public.task_type_enum AS ENUM ('tender', 'booking');
 ```
 
-**Values:**
-- `tender` — Traditional bidding/offer tasks (default)
-- `booking` — Scheduled appointment tasks
+| Value | Description | Use Case |
+|-------|-------------|----------|
+| `tender` | Traditional bidding task | Freelancers submit proposals, client selects one |
+| `booking` | Scheduled appointment | Client books provider's time slot |
 
-### 4.2 Booking Status Enum
+### 4.2 `booking_status_enum`
 
 ```sql
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'booking_status_enum') THEN
-    CREATE TYPE public.booking_status_enum AS ENUM (
-      'pending',
-      'confirmed',
-      'canceled',
-      'completed'
-    );
-  END IF;
-END$$;
+CREATE TYPE public.booking_status_enum AS ENUM (
+  'pending',
+  'confirmed',
+  'canceled',
+  'completed'
+);
 ```
 
-**Status Transitions** (enforced by trigger):
-- `pending` → `confirmed` (provider) or `canceled` (client/provider)
-- `confirmed` → `completed` (provider) or `canceled` (client/provider)
+**Status Transitions** (enforced by `fn_booking_guard` trigger):
+```
+pending ──┬──→ confirmed (by provider)
+          └──→ canceled  (by either party)
 
-### 4.3 Message Type Enum
+confirmed ──┬──→ completed (by provider)
+            └──→ canceled  (by either party)
+```
+
+### 4.3 `message_type_enum`
 
 ```sql
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'message_type_enum') THEN
-    CREATE TYPE public.message_type_enum AS ENUM (
-      'text',
-      'offer',
-      'offer_update',
-      'offer_accepted',
-      'offer_rejected',
-      'delivery_submitted',
-      'end_early_request',
-      'dispute_report'
-    );
-  END IF;
-END$$;
+CREATE TYPE public.message_type_enum AS ENUM (
+  'text',
+  'system',
+  'offer',
+  'offer_update',
+  'offer_accepted',
+  'offer_rejected',
+  'delivery_submitted',
+  'end_early_request',
+  'dispute_report'
+);
 ```
+
+| Type | Sender | Description | Payload Required |
+|------|--------|-------------|------------------|
+| `text` | Any participant | Regular message | No |
+| `system` | System | Auto-generated notification | No |
+| `offer` | Freelancer | Initial offer | `{price, days}` |
+| `offer_update` | Freelancer | Modified offer | `{price, days}` |
+| `offer_accepted` | Client | Acceptance notification | No |
+| `offer_rejected` | Client | Rejection notification | No |
+| `delivery_submitted` | Freelancer | Work submission | Optional attachments |
+| `end_early_request` | Either | Request to end early | `{reason}` |
+| `dispute_report` | Either | Dispute filing | `{reason}` |
 
 ---
 
@@ -188,1079 +231,688 @@ END$$;
 
 User profile information linked to Supabase Auth.
 
-```sql
-CREATE TABLE IF NOT EXISTS public.profiles (
-  id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  full_name text,
-  email text,
-  avatar_url text,  -- Storage path in private 'avatars' bucket
-  phone text,
-  bio text,
-  role text DEFAULT 'client',  -- 'client' | 'freelancer'
-  language text DEFAULT 'en',
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `id` | uuid | ❌ | - | PK, FK to auth.users(id) ON DELETE CASCADE |
+| `full_name` | text | ✅ | - | Display name |
+| `email` | text | ✅ | - | Email address |
+| `avatar_url` | text | ✅ | - | Storage path in 'avatars' bucket |
+| `roles` | text[] | ✅ | `['client']` | Available roles array |
+| `active_role` | text | ✅ | `'client'` | Current active role ('client' or 'freelancer') |
+| `created_at` | timestamptz | ✅ | `now()` | Creation timestamp (UTC) |
 
--- Index for faster lookups
-CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles(role);
+**Key Relations:**
+- Primary source for user identity across the app
+- Referenced by: tasks, conversations, messages, favorites, portfolio_items, saved_tasks, task_requests, bookings
 
--- Enable RLS
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-```
-
-**RLS Policies:**
-- SELECT: All authenticated users can view profiles
-- INSERT/UPDATE/DELETE: Owner only (`auth.uid() = id`)
+---
 
 ### 5.2 `tasks`
 
 Job postings (tender or booking type).
 
-```sql
-CREATE TABLE IF NOT EXISTS public.tasks (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  title text NOT NULL,
-  description text NOT NULL,
-  budget numeric NOT NULL,
-  deadline timestamptz,
-  category text,  -- Legacy field, kept for backward compatibility
-  skills text[],
-  status text NOT NULL DEFAULT 'open',  -- 'open' | 'assigned' | 'closed' | 'inProgress'
-  task_type public.task_type_enum NOT NULL DEFAULT 'tender',
-  session_price_bigint bigint,  -- For booking tasks
-  hour_rate_bigint bigint,  -- For booking tasks
-  assigned_freelancer_id uuid REFERENCES public.profiles(id),
-  category_id uuid REFERENCES public.categories(id),
-  image_paths text[],  -- Storage paths in private 'task-images' bucket
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
+| `user_id` | uuid | ❌ | - | FK to auth.users (legacy) |
+| `client_id` | uuid | ✅ | - | FK to profiles (task owner) |
+| `freelancer_id` | uuid | ✅ | - | FK to profiles (assigned) |
+| `assigned_freelancer_id` | uuid | ✅ | - | FK to profiles (assigned via offer) |
+| `title` | text | ❌ | - | Task title |
+| `description` | text | ❌ | - | Task details |
+| `budget` | numeric | ❌ | - | Task budget |
+| `budget_cents` | bigint | ✅ | Generated | Budget in cents (computed) |
+| `deadline` | timestamp | ✅ | - | Due date |
+| `category` | text | ✅ | - | Legacy category string |
+| `category_id` | uuid | ✅ | - | FK to categories |
+| `skills` | text[] | ✅ | `'{}'` | Required skills array |
+| `status` | text | ❌ | `'open'` | Status (open/assigned/closed/in_progress/canceled) |
+| `task_type` | task_type_enum | ❌ | `'tender'` | Task type |
+| `session_price_bigint` | bigint | ✅ | - | Booking session price |
+| `hour_rate_bigint` | bigint | ✅ | - | Booking hourly rate |
+| `image_paths` | text[] | ✅ | `'{}'` | Storage paths in 'task-images' bucket |
+| `owner_id` | uuid | ✅ | Generated | `COALESCE(client_id, user_id)` |
+| `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
 
--- Indexes for performance
-CREATE INDEX IF NOT EXISTS idx_tasks_user_status_created
-  ON public.tasks (user_id, status, created_at DESC);
+**Status Values:**
+- `open` - Accepting proposals/bookings
+- `assigned` - Freelancer assigned
+- `in_progress` - Work in progress
+- `closed` - Completed
+- `canceled` - Canceled
 
-CREATE INDEX IF NOT EXISTS idx_tasks_type_created_at
-  ON public.tasks (task_type, created_at DESC);
+**Check Constraints:**
+- `status IN ('open', 'assigned', 'closed', 'in_progress', 'canceled')`
 
-CREATE INDEX IF NOT EXISTS idx_tasks_assigned_freelancer
-  ON public.tasks (assigned_freelancer_id);
-
-CREATE INDEX IF NOT EXISTS idx_tasks_category_id
-  ON public.tasks (category_id);
-
--- Enable RLS
-ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
-```
-
-**Columns:**
-| Column | Type | Purpose | Notes |
-|--------|------|---------|-------|
-| `id` | uuid | Primary key | Auto-generated |
-| `user_id` | uuid | Task owner (client) | FK to `auth.users.id` |
-| `title` | text | Task title | Required |
-| `description` | text | Task details | Required |
-| `budget` | numeric | Task budget | Required |
-| `deadline` | timestamptz | Optional due date | UTC |
-| `category` | text | Legacy category | For backward compatibility |
-| `skills` | text[] | Required skills | Optional array |
-| `status` | text | Task status | open/assigned/closed/inProgress |
-| `task_type` | task_type_enum | Task type | tender/booking (default: tender) |
-| `session_price_bigint` | bigint | Booking session price | For booking tasks only |
-| `hour_rate_bigint` | bigint | Booking hourly rate | For booking tasks only |
-| `assigned_freelancer_id` | uuid | Assigned freelancer | Set when offer accepted |
-| `category_id` | uuid | Category FK | FK to categories table |
-| `image_paths` | text[] | Task images | Storage paths (private bucket) |
-| `created_at` | timestamptz | Creation time | UTC, auto-set |
+---
 
 ### 5.3 `task_requests`
 
-Offers/bids on tender tasks only.
+Offers/bids on tender tasks.
 
-```sql
-CREATE TABLE IF NOT EXISTS public.task_requests (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  task_id uuid NOT NULL REFERENCES public.tasks(id) ON DELETE CASCADE,
-  bidder_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  price bigint NOT NULL CHECK (price > 0),
-  days int NOT NULL CHECK (days > 0),
-  note text,
-  status text NOT NULL DEFAULT 'pending',  -- 'pending' | 'accepted' | 'rejected'
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
+| `task_id` | uuid | ❌ | - | FK to tasks |
+| `freelancer_id` | uuid | ✅ | - | FK to profiles (bidder) |
+| `bidder_id` | uuid | ✅ | - | FK to profiles (legacy) |
+| `price` | numeric | ❌ | - | Proposed price |
+| `days` | integer | ❌ | - | Proposed duration in days |
+| `duration_days` | integer | ✅ | - | Duration (synced to days) |
+| `amount` | numeric | ✅ | - | Alternative amount field |
+| `message` | text | ✅ | - | Proposal message |
+| `note` | text | ✅ | - | Additional notes |
+| `status` | text | ❌ | `'pending'` | Status (pending/accepted/rejected) |
+| `initiated_by` | uuid | ✅ | - | FK to auth.users (who last acted) |
+| `deleted_at` | timestamptz | ✅ | - | Soft delete timestamp |
+| `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
 
--- Index for listing offers by task
-CREATE INDEX IF NOT EXISTS idx_task_requests_task_created
-  ON public.task_requests (task_id, created_at DESC);
+**Check Constraints:**
+- `days > 0`
+- `status IN ('pending', 'accepted', 'rejected')`
 
--- Unique constraint: one pending offer per (task, bidder)
-CREATE UNIQUE INDEX IF NOT EXISTS uq_task_requests_unique_pending_per_user
-  ON public.task_requests (task_id, bidder_id)
-  WHERE status = 'pending';
-
--- Enable RLS
-ALTER TABLE public.task_requests ENABLE ROW LEVEL SECURITY;
-```
+---
 
 ### 5.4 `categories`
 
 Service categories (database-first approach).
 
-```sql
-CREATE TABLE IF NOT EXISTS public.categories (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  icon_url text,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
+| `name` | text | ❌ | - | Category name (unique) |
+| `icon_url` | text | ✅ | - | Icon URL/path |
+| `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
 
--- Case-insensitive unique name
-CREATE UNIQUE INDEX IF NOT EXISTS uq_categories_name
-  ON public.categories (LOWER(name));
+---
 
-CREATE INDEX IF NOT EXISTS idx_categories_name_lower
-  ON public.categories (LOWER(name));
-
--- Enable RLS
-ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
-
--- Seed categories (idempotent)
-INSERT INTO public.categories (id, name) VALUES
-  ('6ec632a0-e5f1-426e-ba6a-839167f9b6ae', 'Design'),
-  ('fe47be26-cf55-4918-9032-f75314341492', 'Development'),
-  ('1b11a22a-1d65-4da8-9ebf-faca877c15fd', 'Marketing'),
-  ('9550c76b-9096-4aca-b310-560b019582da', 'Photography'),
-  ('8c357ad7-4f90-4999-b685-38f356384068', 'Writing'),
-  ('5a4767ab-ef09-4c4a-8dde-6b45c2b040e3', 'Cleaning'),
-  ('870360da-1eea-4a36-bdd4-2dc0f35c77f6', 'Other')
-ON CONFLICT (id) DO NOTHING;
-```
-
-### 5.5 `favorites`
-
-Client's saved freelancers (enables DM creation).
-
-```sql
-CREATE TABLE IF NOT EXISTS public.favorites (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  client_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  freelancer_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (client_id, freelancer_id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_favorites_client ON public.favorites(client_id);
-CREATE INDEX IF NOT EXISTS idx_favorites_freelancer ON public.favorites(freelancer_id);
-
--- Enable RLS
-ALTER TABLE public.favorites ENABLE ROW LEVEL SECURITY;
-```
-
-### 5.6 `conversations`
+### 5.5 `conversations`
 
 Chat threads between two users (optional task context).
 
-```sql
-CREATE TABLE IF NOT EXISTS public.conversations (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  task_id uuid REFERENCES public.tasks(id) ON DELETE CASCADE,
-  user1_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  user2_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  initiated_by uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
+| `task_id` | uuid | ✅ | - | FK to tasks (optional) |
+| `user1_id` | uuid | ✅ | - | FK to profiles (normalized: smaller UUID) |
+| `user2_id` | uuid | ✅ | - | FK to profiles (normalized: larger UUID) |
+| `initiated_by` | uuid | ✅ | - | FK to profiles (who started) |
+| `last_message_at` | timestamptz | ✅ | - | Last message timestamp |
+| `created_at` | timestamptz | ✅ | `now()` | Creation timestamp |
 
--- Unique constraint: one conversation per (user pair, task)
-CREATE UNIQUE INDEX IF NOT EXISTS uq_conversations_pair_task
-ON public.conversations (
-  LEAST(user1_id, user2_id),
-  GREATEST(user1_id, user2_id),
-  COALESCE(task_id, '00000000-0000-0000-0000-000000000000'::uuid)
-);
+**Important Notes:**
+- `user1_id` and `user2_id` are normalized (user1_id < user2_id) by trigger
+- Task-linked conversations: Only non-owner can initiate
+- Direct DMs: Requires favorites relationship
 
-CREATE INDEX IF NOT EXISTS idx_conversations_task ON public.conversations(task_id);
-CREATE INDEX IF NOT EXISTS idx_conversations_user1 ON public.conversations(user1_id);
-CREATE INDEX IF NOT EXISTS idx_conversations_user2 ON public.conversations(user2_id);
+---
 
--- Enable RLS
-ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
-```
-
-### 5.7 `messages`
+### 5.6 `messages`
 
 Chat messages with attachments and offer support.
 
-```sql
-CREATE TABLE IF NOT EXISTS public.messages (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  conversation_id uuid NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
-  sender_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  receiver_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  content text DEFAULT '',
-  attachment_url text,  -- Storage path in private 'chat-attachments' bucket
-  attachment_type text,  -- 'image' | 'file'
-  attachment_name text,
-  attachment_size int,
-  message_type public.message_type_enum NOT NULL DEFAULT 'text',
-  payload jsonb DEFAULT '{}',  -- For offer data: {price, days, note}
-  delivered_at timestamptz,
-  seen_at timestamptz,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
+| `conversation_id` | uuid | ✅ | - | FK to conversations |
+| `sender_id` | uuid | ✅ | - | FK to profiles/auth.users |
+| `receiver_id` | uuid | ✅ | - | FK to profiles/auth.users |
+| `content` | text | ❌ | - | Message text |
+| `message_type` | message_type_enum | ❌ | `'text'` | Message type |
+| `payload` | jsonb | ❌ | `'{}'` | Structured data (offer details, etc.) |
+| `attachment_url` | text | ✅ | - | Storage path in 'chat-attachments' |
+| `attachment_type` | text | ✅ | - | 'image' or 'file' |
+| `attachment_name` | text | ✅ | - | Original filename |
+| `attachment_size` | bigint | ✅ | - | File size in bytes |
+| `delivered_at` | timestamptz | ✅ | - | When delivered to receiver |
+| `seen_at` | timestamptz | ✅ | - | When seen by receiver |
+| `created_at` | timestamptz | ✅ | `now()` | Creation timestamp |
 
-CREATE INDEX IF NOT EXISTS idx_messages_convo_created
-  ON public.messages (conversation_id, created_at);
+**Check Constraints:**
+- `attachment_type IN ('image', 'file')`
 
--- Enable RLS
-ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+**Payload Examples:**
+```json
+// offer / offer_update
+{ "price": 50000, "days": 5, "note": "Optional message" }
+
+// end_early_request / dispute_report
+{ "reason": "Explanation text" }
+
+// delivery_submitted
+{ "note": "Delivery message", "attachments": [...] }
 ```
+
+---
+
+### 5.7 `conversation_presence`
+
+Typing indicators for real-time chat.
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `conversation_id` | uuid | ❌ | - | FK to conversations (PK part) |
+| `user_id` | uuid | ❌ | - | FK to profiles (PK part) |
+| `is_typing` | boolean | ❌ | `false` | Currently typing |
+| `updated_at` | timestamptz | ❌ | `now()` | Last update timestamp |
+
+**Note:** Presence records are automatically expired after 15 seconds by `expire_typing_presence` trigger.
+
+---
 
 ### 5.8 `availability_slots`
 
 Provider availability windows for booking tasks.
 
-```sql
-CREATE TABLE IF NOT EXISTS public.availability_slots (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  provider_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  starts_at timestamptz NOT NULL,
-  ends_at timestamptz NOT NULL,
-  is_blocked boolean NOT NULL DEFAULT false,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT chk_slot_time CHECK (ends_at > starts_at)
-);
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
+| `provider_id` | uuid | ❌ | - | FK to auth.users |
+| `starts_at` | timestamptz | ❌ | - | Slot start time (UTC) |
+| `ends_at` | timestamptz | ❌ | - | Slot end time (UTC) |
+| `is_blocked` | boolean | ❌ | `false` | Whether slot is blocked |
+| `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
 
-CREATE INDEX IF NOT EXISTS idx_slots_provider_starts
-  ON public.availability_slots (provider_id, starts_at);
+**Business Rules:**
+- Non-overlapping open slots enforced by `fn_reject_overlapping_slots` trigger
+- Uses GiST index with `tstzrange` for efficient overlap detection
 
--- Enable RLS
-ALTER TABLE public.availability_slots ENABLE ROW LEVEL SECURITY;
-```
+---
 
 ### 5.9 `bookings`
 
 Client bookings on provider slots.
 
-```sql
-CREATE TABLE IF NOT EXISTS public.bookings (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  task_id uuid NOT NULL REFERENCES public.tasks(id) ON DELETE CASCADE,
-  provider_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  client_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  slot_id uuid NOT NULL REFERENCES public.availability_slots(id) ON DELETE CASCADE,
-  status public.booking_status_enum NOT NULL DEFAULT 'pending',
-  note text,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
+| `task_id` | uuid | ✅ | - | FK to tasks |
+| `provider_id` | uuid | ❌ | - | FK to auth.users |
+| `client_id` | uuid | ❌ | - | FK to auth.users |
+| `slot_id` | uuid | ❌ | - | FK to availability_slots |
+| `status` | booking_status_enum | ❌ | `'pending'` | Booking status |
+| `note` | text | ✅ | - | Booking notes |
+| `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
 
-CREATE INDEX IF NOT EXISTS idx_bookings_client_created
-  ON public.bookings (client_id, created_at DESC);
-
-CREATE INDEX IF NOT EXISTS idx_bookings_provider_created
-  ON public.bookings (provider_id, created_at DESC);
-
--- Unique constraint: one active booking per slot
-CREATE UNIQUE INDEX IF NOT EXISTS uq_bookings_slot_active
-  ON public.bookings (slot_id)
-  WHERE status IN ('pending', 'confirmed');
-
--- Enable RLS
-ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
-```
+---
 
 ### 5.10 `portfolio_items`
 
 Freelancer work gallery.
 
-```sql
-CREATE TABLE IF NOT EXISTS public.portfolio_items (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  owner_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  title text NOT NULL,
-  description text,
-  image_path text,  -- Storage path in 'portfolio' bucket
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
+| `owner_id` | uuid | ❌ | - | FK to profiles |
+| `title` | text | ❌ | - | Item title |
+| `description` | text | ✅ | - | Item description |
+| `image_url` | text | ✅ | - | Storage path in 'portfolio' bucket |
+| `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
 
-CREATE INDEX IF NOT EXISTS idx_portfolio_owner_created
-  ON public.portfolio_items (owner_id, created_at DESC);
+---
 
--- Enable RLS
-ALTER TABLE public.portfolio_items ENABLE ROW LEVEL SECURITY;
-```
+### 5.11 `favorites`
 
-### 5.11 `saved_tasks`
+Client's saved freelancers (enables DM creation).
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
+| `client_id` | uuid | ❌ | - | FK to profiles |
+| `freelancer_id` | uuid | ❌ | - | FK to profiles |
+| `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
+
+---
+
+### 5.12 `saved_tasks`
 
 User's bookmarked tasks.
 
-```sql
-CREATE TABLE IF NOT EXISTS public.saved_tasks (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  task_id uuid NOT NULL REFERENCES public.tasks(id) ON DELETE CASCADE,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (user_id, task_id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_saved_tasks_user ON public.saved_tasks(user_id);
-
--- Enable RLS
-ALTER TABLE public.saved_tasks ENABLE ROW LEVEL SECURITY;
-```
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
+| `user_id` | uuid | ❌ | - | FK to profiles |
+| `task_id` | uuid | ❌ | - | FK to tasks |
+| `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
 
 ---
 
-## 6. RLS Policies
+## 6. Views
 
-### 6.1 `profiles`
+### 6.1 `tasks_mvp`
 
-```sql
--- SELECT: All authenticated users can view profiles
-CREATE POLICY IF NOT EXISTS profiles_select_all
-ON public.profiles FOR SELECT
-TO authenticated
-USING (true);
-
--- INSERT/UPDATE/DELETE: Owner only
-CREATE POLICY IF NOT EXISTS profiles_owner_only
-ON public.profiles FOR ALL
-TO authenticated
-USING (auth.uid() = id)
-WITH CHECK (auth.uid() = id);
-```
-
-### 6.2 `tasks`
+Simplified task view for MVP queries.
 
 ```sql
--- SELECT: All authenticated users can view tasks
-CREATE POLICY IF NOT EXISTS tasks_select_all
-ON public.tasks FOR SELECT
-TO authenticated
-USING (true);
-
--- INSERT/UPDATE/DELETE: Owner only
-CREATE POLICY IF NOT EXISTS tasks_owner_only
-ON public.tasks FOR ALL
-TO authenticated
-USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
+SELECT 
+  id,
+  owner_id AS client_id,
+  title,
+  description,
+  category_id,
+  budget_cents,
+  status,
+  created_at,
+  image_paths,
+  assigned_freelancer_id,
+  deadline,
+  skills,
+  task_type
+FROM tasks;
 ```
 
-### 6.3 `task_requests`
+**⚠️ Security Warning:** This view uses `SECURITY DEFINER` which bypasses RLS. Consider changing to `SECURITY INVOKER`.
+
+### 6.2 `user_conversations`
+
+Filtered conversations for current user.
 
 ```sql
--- SELECT: Task owner (tender only) or bidder
-CREATE POLICY IF NOT EXISTS owner_selects_offers
-ON public.task_requests FOR SELECT
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM public.tasks t
-    WHERE t.id = task_requests.task_id
-      AND t.user_id = auth.uid()
-      AND t.task_type = 'tender'::task_type_enum
-  )
-);
-
-CREATE POLICY IF NOT EXISTS bidder_selects_own_offers
-ON public.task_requests FOR SELECT
-TO authenticated
-USING (bidder_id = auth.uid());
-
--- INSERT: Bidder only (tender tasks only)
-CREATE POLICY IF NOT EXISTS bidder_inserts_offer
-ON public.task_requests FOR INSERT
-TO authenticated
-WITH CHECK (
-  bidder_id = auth.uid()
-  AND EXISTS (
-    SELECT 1 FROM public.tasks t
-    WHERE t.id = task_requests.task_id
-      AND t.task_type = 'tender'::task_type_enum
-  )
-);
-
--- UPDATE: Task owner only
-CREATE POLICY IF NOT EXISTS owner_updates_offer_status
-ON public.task_requests FOR UPDATE
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM public.tasks t
-    WHERE t.id = task_requests.task_id
-      AND t.user_id = auth.uid()
-      AND t.task_type = 'tender'::task_type_enum
-  )
-);
+SELECT id, task_id, user1_id, user2_id, created_at
+FROM conversations c
+WHERE user1_id = auth.uid() OR user2_id = auth.uid();
 ```
 
-### 6.4 `categories`
+**⚠️ Security Warning:** Uses `SECURITY DEFINER`.
+
+### 6.3 `users` ⚠️ SECURITY RISK
 
 ```sql
--- SELECT: All authenticated users (read-only)
-CREATE POLICY IF NOT EXISTS categories_select_auth
-ON public.categories FOR SELECT
-TO authenticated
-USING (true);
+SELECT id, email, 
+  raw_user_meta_data->>'full_name' AS full_name,
+  raw_user_meta_data->>'avatar_url' AS avatar_url
+FROM auth.users u;
 ```
 
-### 6.5 `favorites`
-
-```sql
--- SELECT/INSERT/DELETE: Client only
-CREATE POLICY IF NOT EXISTS favorites_select_own
-ON public.favorites FOR SELECT
-TO authenticated
-USING (client_id = auth.uid());
-
-CREATE POLICY IF NOT EXISTS favorites_insert_own
-ON public.favorites FOR INSERT
-TO authenticated
-WITH CHECK (client_id = auth.uid());
-
-CREATE POLICY IF NOT EXISTS favorites_delete_own
-ON public.favorites FOR DELETE
-TO authenticated
-USING (client_id = auth.uid());
-```
-
-### 6.6 `conversations`
-
-```sql
--- SELECT: Participants only
-CREATE POLICY IF NOT EXISTS conversations_select_participants
-ON public.conversations FOR SELECT
-TO authenticated
-USING (auth.uid() = user1_id OR auth.uid() = user2_id);
-
--- INSERT: Complex guard (see trigger for full enforcement)
-CREATE POLICY IF NOT EXISTS conversations_insert_client_only
-ON public.conversations FOR INSERT
-TO authenticated
-WITH CHECK (
-  initiated_by = auth.uid()
-  AND (user1_id = auth.uid() OR user2_id = auth.uid())
-  AND (
-    -- Task-linked: requires task owner as other participant
-    (task_id IS NOT NULL AND EXISTS (
-      SELECT 1 FROM public.tasks t
-      WHERE t.id = task_id AND t.user_id = auth.uid()
-    ))
-    OR
-    -- DM: requires freelancer in favorites
-    (task_id IS NULL AND EXISTS (
-      SELECT 1 FROM public.favorites f
-      WHERE f.client_id = auth.uid()
-        AND f.freelancer_id = CASE
-          WHEN user1_id = auth.uid() THEN user2_id
-          ELSE user1_id
-        END
-    ))
-  )
-);
-```
-
-### 6.7 `messages`
-
-```sql
--- SELECT: Participants only (via conversation)
-CREATE POLICY IF NOT EXISTS messages_select_participants
-ON public.messages FOR SELECT
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM public.conversations c
-    WHERE c.id = messages.conversation_id
-      AND (c.user1_id = auth.uid() OR c.user2_id = auth.uid())
-  )
-);
-
--- INSERT: Participants only, sender must be current user
-CREATE POLICY IF NOT EXISTS messages_insert_participants_only
-ON public.messages FOR INSERT
-TO authenticated
-WITH CHECK (
-  sender_id = auth.uid()
-  AND EXISTS (
-    SELECT 1 FROM public.conversations c
-    WHERE c.id = messages.conversation_id
-      AND (c.user1_id = auth.uid() OR c.user2_id = auth.uid())
-  )
-  AND (
-    -- Offer acceptance/rejection: task owner or initiator only
-    message_type NOT IN ('offer_accepted', 'offer_rejected')
-    OR EXISTS (
-      SELECT 1 FROM public.conversations c
-      LEFT JOIN public.tasks t ON t.id = c.task_id
-      WHERE c.id = messages.conversation_id
-        AND (
-          (c.task_id IS NOT NULL AND t.user_id = auth.uid())  -- Task owner
-          OR
-          (c.task_id IS NULL AND c.initiated_by = auth.uid()) -- DM initiator
-        )
-    )
-  )
-);
-```
-
-### 6.8 `availability_slots`
-
-```sql
--- SELECT: All authenticated users
-CREATE POLICY IF NOT EXISTS slots_select_all
-ON public.availability_slots FOR SELECT
-TO authenticated
-USING (true);
-
--- INSERT/UPDATE/DELETE: Provider only
-CREATE POLICY IF NOT EXISTS slots_cud_owner
-ON public.availability_slots FOR ALL
-TO authenticated
-USING (provider_id = auth.uid())
-WITH CHECK (provider_id = auth.uid());
-```
-
-### 6.9 `bookings`
-
-```sql
--- SELECT: Provider or client
-CREATE POLICY IF NOT EXISTS bookings_select_owner_or_client
-ON public.bookings FOR SELECT
-TO authenticated
-USING (provider_id = auth.uid() OR client_id = auth.uid());
-
--- INSERT: Client only (no double booking)
-CREATE POLICY IF NOT EXISTS bookings_insert_client_only
-ON public.bookings FOR INSERT
-TO authenticated
-WITH CHECK (
-  client_id = auth.uid()
-  AND NOT EXISTS (
-    SELECT 1 FROM public.bookings b
-    WHERE b.slot_id = bookings.slot_id
-      AND b.status IN ('pending', 'confirmed')
-  )
-);
-
--- UPDATE: Role-based status changes
-CREATE POLICY IF NOT EXISTS bookings_update_roles
-ON public.bookings FOR UPDATE
-TO authenticated
-USING (provider_id = auth.uid() OR client_id = auth.uid())
-WITH CHECK (
-  (provider_id = auth.uid() AND NEW.status IN ('confirmed', 'completed'))
-  OR (client_id = auth.uid() AND NEW.status = 'canceled')
-);
-```
-
-### 6.10 `portfolio_items`
-
-```sql
--- SELECT: Public (all authenticated users)
-CREATE POLICY IF NOT EXISTS portfolio_select_owner_or_public
-ON public.portfolio_items FOR SELECT
-TO authenticated
-USING (true);
-
--- INSERT/UPDATE/DELETE: Owner only
-CREATE POLICY IF NOT EXISTS portfolio_crud_owner
-ON public.portfolio_items FOR ALL
-TO authenticated
-USING (auth.uid() = owner_id)
-WITH CHECK (auth.uid() = owner_id);
-```
-
-### 6.11 `saved_tasks`
-
-```sql
--- SELECT/INSERT/DELETE: User only
-CREATE POLICY IF NOT EXISTS saved_tasks_select_own
-ON public.saved_tasks FOR SELECT
-TO authenticated
-USING (user_id = auth.uid());
-
-CREATE POLICY IF NOT EXISTS saved_tasks_insert_own
-ON public.saved_tasks FOR INSERT
-TO authenticated
-WITH CHECK (user_id = auth.uid());
-
-CREATE POLICY IF NOT EXISTS saved_tasks_delete_own
-ON public.saved_tasks FOR DELETE
-TO authenticated
-USING (user_id = auth.uid());
-```
+**🚨 CRITICAL:** This view exposes `auth.users` to the `anon` role. **Should be removed or restricted immediately.**
 
 ---
 
-## 7. Triggers & Functions
+## 7. RLS Policies
 
-### 7.1 Task Requests: Tender-Only Guard
+All tables have Row Level Security (RLS) enabled. Below are the actual policies from the database.
 
-Ensures offers are only submitted on `tender` tasks with positive values.
+### 7.1 `profiles` Policies
 
-```sql
-CREATE OR REPLACE FUNCTION public.trg_check_task_is_tender()
-RETURNS trigger AS $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM public.tasks t
-    WHERE t.id = NEW.task_id
-      AND t.task_type = 'tender'
-  ) THEN
-    RAISE EXCEPTION 'Offers are only allowed on tender tasks';
-  END IF;
+| Policy | Command | Rule |
+|--------|---------|------|
+| `Profiles are viewable by everyone` | SELECT | `true` (public can view) |
+| `Users can read their own profile` | SELECT | `auth.uid() = id` |
+| `Allow insert for authenticated users` | INSERT | `auth.uid() = id` |
+| `Users can insert their own profile` | INSERT | `auth.uid() = id` |
+| `Users can update their own profile` | UPDATE | `auth.uid() = id` |
+| `Users can delete their own profile` | DELETE | `auth.uid() = id` |
 
-  IF NEW.price <= 0 OR NEW.days <= 0 THEN
-    RAISE EXCEPTION 'Offer price and days must be positive';
-  END IF;
+### 7.2 `tasks` Policies
 
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+| Policy | Command | Rule |
+|--------|---------|------|
+| `Allow read tasks` | SELECT | `true` (all authenticated) |
+| `Allow select for all users` | SELECT | `true` |
+| `Allow read access with join` | SELECT | `true` |
+| `tasks_select_all_auth` | SELECT | `auth.role() = 'authenticated'` |
+| `tasks_select_open` | SELECT | `status = 'open' OR client_id = auth.uid() OR freelancer_id = auth.uid()` |
+| `tasks_select_policy` | SELECT | Same as above |
+| `Allow insert own tasks` | INSERT | `auth.uid() = user_id` |
+| `tasks_insert_policy` | INSERT | `is_client(auth.uid()) AND client_id = auth.uid()` |
+| `tasks_insert_self` | INSERT | `client_id = auth.uid()` |
+| `tasks_insert_owner` | INSERT | `owner_id = auth.uid()` |
+| `Allow update own tasks` | UPDATE | `auth.uid() = user_id` |
+| `tasks_update_policy` | UPDATE | `client_id = auth.uid()` |
+| `tasks_update_involved` | UPDATE | `client_id = auth.uid() OR freelancer_id = auth.uid()` |
+| `tasks_update_owner` | UPDATE | `owner_id = auth.uid()` |
+| `Allow delete own tasks` | DELETE | `auth.uid() = user_id` |
+| `tasks_delete_policy` | DELETE | `client_id = auth.uid()` |
 
-DROP TRIGGER IF EXISTS trg_task_requests_only_for_tender ON public.task_requests;
-CREATE TRIGGER trg_task_requests_only_for_tender
-  BEFORE INSERT ON public.task_requests
-  FOR EACH ROW EXECUTE FUNCTION public.trg_check_task_is_tender();
-```
+### 7.3 `task_requests` Policies
 
-### 7.2 Conversations: Guard for DM and Task-Linked Chats
+| Policy | Command | Rule |
+|--------|---------|------|
+| `tr_select` | SELECT | `freelancer_id = auth.uid() OR EXISTS(task owner check)` |
+| `tr_insert` | INSERT | `is_freelancer(uid) AND freelancer_id = uid AND task is open AND not own task` |
+| `tr_update` | UPDATE | `freelancer_id = uid AND status = 'pending'` |
+| `tr_update_by_owner` | UPDATE | Task owner can update |
+| `tr_delete` | DELETE | `freelancer_id = uid AND status = 'pending'` |
 
-Enforces business rules for conversation creation.
+### 7.4 `conversations` Policies
 
-```sql
-CREATE OR REPLACE FUNCTION public.conversations_before_insert_guard()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO 'public'
-AS $$
-DECLARE
-  v_other       uuid;
-  v_task_owner  uuid;
-  v_me          uuid := auth.uid();
-  tmp           uuid;
-BEGIN
-  IF v_me IS NULL THEN
-    RAISE EXCEPTION 'unauthenticated';
-  END IF;
+| Policy | Command | Rule |
+|--------|---------|------|
+| `conversations_select` | SELECT | Participant only |
+| `conversations_select_by_participant` | SELECT | `auth.uid() = user1_id OR auth.uid() = user2_id` |
+| `conversations_insert` | INSERT | Client can insert if participant |
+| `conversations_insert_client_only` | INSERT | Complex: task-linked or favorites DM |
+| `conversations_update` | UPDATE | Participant only |
 
-  -- Set initiated_by to current user
-  IF NEW.initiated_by IS NULL THEN
-    NEW.initiated_by := v_me;
-  END IF;
-  IF NEW.initiated_by IS DISTINCT FROM v_me THEN
-    RAISE EXCEPTION 'initiated_by must equal current user';
-  END IF;
+### 7.5 `messages` Policies
 
-  -- Initiator must be one of the participants
-  IF NOT (NEW.user1_id = v_me OR NEW.user2_id = v_me) THEN
-    RAISE EXCEPTION 'initiator must be one of the participants';
-  END IF;
+| Policy | Command | Rule |
+|--------|---------|------|
+| `messages_select` | SELECT | `is_conversation_participant(conversation_id, uid)` |
+| `messages_select_by_participant` | SELECT | Via conversation join |
+| `messages_select_participants` | SELECT | Via conversation join |
+| `Users can view their messages` | SELECT | `sender_id = uid OR receiver_id = uid` |
+| `messages_insert` | INSERT | Participant and sender = uid |
+| `messages_insert_by_sender` | INSERT | sender_id = uid and participant |
+| `messages_insert_participants_only` | INSERT | Complex with offer acceptance rules |
+| `messages_update` | UPDATE | `sender_id = uid` |
+| `messages_update_by_receiver` | UPDATE | `receiver_id = uid` (for seen_at) |
+| `messages_delete` | DELETE | `sender_id = uid` |
 
-  -- Task-linked: non-owner starts, other must be task owner
-  IF NEW.task_id IS NOT NULL THEN
-    SELECT t.user_id INTO v_task_owner
-    FROM public.tasks t
-    WHERE t.id = NEW.task_id;
+### 7.6 `availability_slots` Policies
 
-    IF v_task_owner IS NULL THEN
-      RAISE EXCEPTION 'linked task not found';
-    END IF;
+| Policy | Command | Rule |
+|--------|---------|------|
+| `slots_select_read` | SELECT | `true` (all authenticated) |
+| `slots_write_owner` | ALL | `provider_id = auth.uid()` |
 
-    IF v_task_owner = v_me THEN
-      RAISE EXCEPTION 'task owner cannot start a task-linked conversation';
-    END IF;
+### 7.7 `bookings` Policies
 
-    v_other := CASE WHEN NEW.user1_id = v_me THEN NEW.user2_id ELSE NEW.user1_id END;
-    IF v_other IS DISTINCT FROM v_task_owner THEN
-      RAISE EXCEPTION 'for a task-linked chat, the other participant must be the task owner';
-    END IF;
+| Policy | Command | Rule |
+|--------|---------|------|
+| `bookings_select_by_parties` | SELECT | `client_id = uid OR provider_id = uid` |
+| `bookings_insert_by_client` | INSERT | Client can book if slot not blocked |
+| `bookings_update_by_provider` | UPDATE | `provider_id = uid` |
+| `bookings_cancel_by_client` | UPDATE | `client_id = uid AND status = 'canceled'` |
 
-    -- Normalize order to avoid duplicates
-    IF NEW.user1_id > NEW.user2_id THEN
-      tmp := NEW.user1_id;
-      NEW.user1_id := NEW.user2_id;
-      NEW.user2_id := tmp;
-    END IF;
+### 7.8 `favorites` Policies
 
-  -- Non-task DM: requires favorite
-  ELSE
-    v_other := CASE WHEN NEW.user1_id = v_me THEN NEW.user2_id ELSE NEW.user1_id END;
-    IF NOT EXISTS (
-      SELECT 1 FROM public.favorites f
-      WHERE f.client_id = v_me
-        AND f.freelancer_id = v_other
-    ) THEN
-      RAISE EXCEPTION 'to start a non-task chat, the other user must be in your favorites';
-    END IF;
-  END IF;
+| Policy | Command | Rule |
+|--------|---------|------|
+| `favorites_select_own` | SELECT | `client_id = auth.uid()` |
+| `favorites_insert_self` | INSERT | `client_id = auth.uid()` |
+| `favorites_delete_self` | DELETE | `client_id = auth.uid()` |
 
-  RETURN NEW;
-END;
-$$;
+### 7.9 `saved_tasks` Policies
 
-DROP TRIGGER IF EXISTS trg_conversations_before_insert_guard ON public.conversations;
-CREATE TRIGGER trg_conversations_before_insert_guard
-  BEFORE INSERT ON public.conversations
-  FOR EACH ROW EXECUTE FUNCTION public.conversations_before_insert_guard();
-```
+| Policy | Command | Rule |
+|--------|---------|------|
+| `saved_tasks_select_own` | SELECT | `user_id = auth.uid()` |
+| `saved_tasks_insert_own` | INSERT | `user_id = auth.uid()` |
+| `saved_tasks_delete_own` | DELETE | `user_id = auth.uid()` |
 
-### 7.3 RPC: Start Task Conversation (v1)
+### 7.10 `portfolio_items` Policies
 
-Helper RPC for non-owners to start task-linked conversations.
+| Policy | Command | Rule |
+|--------|---------|------|
+| `portfolio_select_all_auth` | SELECT | `true` (public view) |
+| `portfolio_insert_owner` | INSERT | `owner_id = auth.uid()` |
+| `portfolio_update_owner` | UPDATE | `owner_id = auth.uid()` |
+| `portfolio_delete_owner` | DELETE | `owner_id = auth.uid()` |
 
-```sql
-DROP FUNCTION IF EXISTS public.start_task_conversation_v1(uuid);
+### 7.11 `categories` Policies
 
-CREATE OR REPLACE FUNCTION public.start_task_conversation_v1(p_task_id uuid)
-RETURNS conversations
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO 'public'
-AS $$
-DECLARE
-  v_owner uuid;
-  v_me    uuid := auth.uid();
-  v_a     uuid;
-  v_b     uuid;
-  v_convo conversations;
-BEGIN
-  SELECT t.user_id INTO v_owner FROM tasks t WHERE t.id = p_task_id;
-  IF v_owner IS NULL THEN
-    RAISE EXCEPTION 'task not found' USING ERRCODE = 'P0001';
-  END IF;
+| Policy | Command | Rule |
+|--------|---------|------|
+| `categories_select_all` | SELECT | `true` (read-only for all) |
 
-  IF v_owner = v_me THEN
-    RAISE EXCEPTION 'task owner cannot start a task-linked conversation' USING ERRCODE = 'P0001';
-  END IF;
+### 7.12 `conversation_presence` Policies
 
-  v_a := LEAST(v_owner, v_me);
-  v_b := GREATEST(v_owner, v_me);
-
-  SELECT * INTO v_convo
-  FROM conversations
-  WHERE task_id = p_task_id
-    AND LEAST(user1_id, user2_id) = v_a
-    AND GREATEST(user1_id, user2_id) = v_b
-  LIMIT 1;
-
-  IF FOUND THEN
-    RETURN v_convo;
-  END IF;
-
-  INSERT INTO conversations (id, task_id, user1_id, user2_id, initiated_by)
-  VALUES (gen_random_uuid(), p_task_id, v_a, v_b, v_me)
-  RETURNING * INTO v_convo;
-
-  RETURN v_convo;
-END;
-$$;
-
-GRANT EXECUTE ON FUNCTION public.start_task_conversation_v1(uuid) TO authenticated;
-```
-
-### 7.4 Messages: Payload Validation
-
-Validates offer messages have required payload fields.
-
-```sql
-CREATE OR REPLACE FUNCTION public.trg_messages_validate_payload()
-RETURNS trigger AS $$
-BEGIN
-  IF NEW.message_type IN ('offer', 'offer_update') THEN
-    IF NOT (NEW.payload ? 'price' AND NEW.payload ? 'days') THEN
-      RAISE EXCEPTION 'Offer messages require price and days in payload';
-    END IF;
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS trg_messages_validate_payload ON public.messages;
-CREATE TRIGGER trg_messages_validate_payload
-  BEFORE INSERT ON public.messages
-  FOR EACH ROW EXECUTE FUNCTION public.trg_messages_validate_payload();
-```
-
-### 7.5 Messages: Auto-Assign on Offer Accepted
-
-Automatically assigns freelancer to task when offer is accepted.
-
-```sql
-CREATE OR REPLACE FUNCTION public.trg_messages_offer_accepted()
-RETURNS trigger AS $$
-BEGIN
-  IF NEW.message_type = 'offer_accepted' THEN
-    UPDATE public.tasks
-    SET assigned_freelancer_id = NEW.sender_id,
-        status = 'assigned'
-    WHERE id = (
-      SELECT c.task_id
-      FROM public.conversations c
-      WHERE c.id = NEW.conversation_id
-    );
-  END IF;
-  RETURN NULL;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS trg_messages_offer_accepted ON public.messages;
-CREATE TRIGGER trg_messages_offer_accepted
-  AFTER INSERT ON public.messages
-  FOR EACH ROW EXECUTE FUNCTION public.trg_messages_offer_accepted();
-```
-
-### 7.6 Availability Slots: Prevent Overlap
-
-Prevents providers from creating overlapping open slots.
-
-```sql
-CREATE OR REPLACE FUNCTION public.fn_reject_overlapping_slots()
-RETURNS trigger
-LANGUAGE plpgsql AS $$
-BEGIN
-  IF NEW.is_blocked = FALSE THEN
-    IF EXISTS (
-      SELECT 1 FROM public.availability_slots s
-      WHERE s.provider_id = NEW.provider_id
-        AND s.is_blocked = FALSE
-        AND tstzrange(s.starts_at, s.ends_at, '[)') &&
-            tstzrange(NEW.starts_at, NEW.ends_at, '[)')
-        AND s.id <> COALESCE(NEW.id, '00000000-0000-0000-0000-000000000000'::uuid)
-    ) THEN
-      RAISE EXCEPTION 'Overlapping availability slot for provider %', NEW.provider_id;
-    END IF;
-  END IF;
-  RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS trg_no_overlap_slots ON public.availability_slots;
-CREATE TRIGGER trg_no_overlap_slots
-  BEFORE INSERT OR UPDATE ON public.availability_slots
-  FOR EACH ROW EXECUTE FUNCTION public.fn_reject_overlapping_slots();
-```
-
-### 7.7 Bookings: Status Transition Guard
-
-Enforces valid booking status transitions.
-
-```sql
-CREATE OR REPLACE FUNCTION public.fn_booking_guard()
-RETURNS trigger
-LANGUAGE plpgsql AS $$
-DECLARE
-  old_status public.booking_status_enum := COALESCE(OLD.status, 'pending');
-  new_status public.booking_status_enum := NEW.status;
-BEGIN
-  IF TG_OP = 'UPDATE' AND old_status <> new_status THEN
-    -- Allowed transitions
-    IF old_status = 'pending' AND new_status IN ('confirmed', 'canceled') THEN
-      RETURN NEW;
-    END IF;
-    IF old_status = 'confirmed' AND new_status IN ('completed', 'canceled') THEN
-      RETURN NEW;
-    END IF;
-
-    RAISE EXCEPTION 'Invalid booking status transition: % -> %', old_status, new_status;
-  END IF;
-  RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS trg_booking_guard ON public.bookings;
-CREATE TRIGGER trg_booking_guard
-  BEFORE UPDATE ON public.bookings
-  FOR EACH ROW EXECUTE FUNCTION public.fn_booking_guard();
-```
-
-### 7.8 Tasks: Auto-Update Offer Count
-
-Maintains the `offers` count on the tasks table when requests are added or removed.
-
-```sql
-CREATE OR REPLACE FUNCTION update_task_offer_count()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF (TG_OP = 'INSERT') THEN
-        UPDATE public.tasks
-        SET offers = offers + 1
-        WHERE id = NEW.task_id;
-    ELSIF (TG_OP = 'DELETE') THEN
-        UPDATE public.tasks
-        SET offers = GREATEST(0, offers - 1)
-        WHERE id = OLD.task_id;
-    END IF;
-    RETURN NULL;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS update_offers_count ON public.task_requests;
-CREATE TRIGGER update_offers_count
-AFTER INSERT OR DELETE ON public.task_requests
-FOR EACH ROW
-EXECUTE FUNCTION update_task_offer_count();
-```
+| Policy | Command | Rule |
+|--------|---------|------|
+| `presence_select_participant` | SELECT | Conversation participant |
+| `presence_upsert_self` | INSERT | `user_id = auth.uid()` |
+| `presence_update_self` | UPDATE | `user_id = auth.uid()` |
 
 ---
 
-## 8. Storage Buckets
+## 8. Triggers
 
-### 8.1 Create Buckets
+### 8.1 Availability Slots Triggers
 
+| Trigger | Event | Function | Purpose |
+|---------|-------|----------|---------|
+| `trg_no_overlap_slots` | BEFORE INSERT/UPDATE | `fn_reject_overlapping_slots()` | Prevent overlapping open slots |
+
+### 8.2 Bookings Triggers
+
+| Trigger | Event | Function | Purpose |
+|---------|-------|----------|---------|
+| `trg_booking_guard` | BEFORE UPDATE | `fn_booking_guard()` | Enforce valid status transitions |
+
+### 8.3 Conversations Triggers
+
+| Trigger | Event | Function | Purpose |
+|---------|-------|----------|---------|
+| `trg_conversations_before_insert_guard` | BEFORE INSERT | `conversations_before_insert_guard()` | Validate DM/task-linked rules |
+| `trg_normalize_conversation_users` | BEFORE INSERT/UPDATE | `normalize_conversation_users()` | Normalize user1_id < user2_id |
+
+### 8.4 Messages Triggers
+
+| Trigger | Event | Function | Purpose |
+|---------|-------|----------|---------|
+| `trg_messages_before_insert_validate` | BEFORE INSERT | `messages_before_insert_validate()` | Validate payload for offer types |
+| `trg_messages_after_insert_offer_accept` | AFTER INSERT | `messages_after_insert_offer_accept()` | Auto-assign on offer_accepted |
+
+### 8.5 Task Requests Triggers
+
+| Trigger | Event | Function | Purpose |
+|---------|-------|----------|---------|
+| `trg_task_requests_before_insert_guard` | BEFORE INSERT | `task_requests_before_insert_guard()` | Validate tender-only, set freelancer_id |
+| `trg_sync_days_from_duration` | BEFORE INSERT | `trg_sync_days_from_duration()` | Sync days from duration_days |
+| `trg_task_requests_status_only` | BEFORE UPDATE | `trg_task_requests_allow_status_only()` | Set initiated_by on update |
+| `aaa_set_initiated_by_before_update` | BEFORE UPDATE | `aaa_set_initiated_by_before_update()` | Set initiated_by on update |
+
+### 8.6 Tasks Triggers
+
+| Trigger | Event | Function | Purpose |
+|---------|-------|----------|---------|
+| `trg_lock_tasks_client_id` | BEFORE INSERT/UPDATE | `lock_tasks_client_id()` | Make client_id immutable |
+
+### 8.7 Conversation Presence Triggers
+
+| Trigger | Event | Function | Purpose |
+|---------|-------|----------|---------|
+| `trg_expire_presence` | AFTER INSERT/UPDATE | `expire_typing_presence()` | Clean up old presence records |
+
+---
+
+## 9. Functions & RPC
+
+### 9.1 Helper Functions
+
+#### `is_client(uid uuid) → boolean`
+Check if user's active role is 'client'.
 ```sql
--- Avatars (Private)
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('avatars', 'avatars', false)
-ON CONFLICT (id) DO NOTHING;
-
--- Task Images (Private)
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('task-images', 'task-images', false)
-ON CONFLICT (id) DO NOTHING;
-
--- Chat Attachments (Private)
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('chat-attachments', 'chat-attachments', false)
-ON CONFLICT (id) DO NOTHING;
-
--- Portfolio (Public or Private)
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('portfolio', 'portfolio', false)
-ON CONFLICT (id) DO NOTHING;
+SELECT is_client(auth.uid());  -- true/false
 ```
 
-### 8.2 Storage Policies
-
-**Avatars Bucket:**
-
+#### `is_freelancer(uid uuid) → boolean`
+Check if user's active role is 'freelancer'.
 ```sql
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE policyname = 'avatars_insert_own'
-      AND schemaname = 'storage'
-      AND tablename = 'objects'
-  ) THEN
-    CREATE POLICY "avatars_insert_own"
-    ON storage.objects FOR INSERT TO authenticated
-    WITH CHECK (bucket_id = 'avatars' AND owner = auth.uid());
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE policyname = 'avatars_select_own'
-      AND schemaname = 'storage'
-      AND tablename = 'objects'
-  ) THEN
-    CREATE POLICY "avatars_select_own"
-    ON storage.objects FOR SELECT TO authenticated
-    USING (bucket_id = 'avatars' AND owner = auth.uid());
-  END IF;
-END$$;
+SELECT is_freelancer(auth.uid());  -- true/false
 ```
 
-**Task Images Bucket:**
-
+#### `is_conversation_participant(convo_id uuid, uid uuid) → boolean`
+Check if user is participant in conversation.
 ```sql
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE policyname = 'task_images_insert_auth'
-      AND schemaname = 'storage'
-      AND tablename = 'objects'
-  ) THEN
-    CREATE POLICY "task_images_insert_auth"
-    ON storage.objects FOR INSERT TO authenticated
-    WITH CHECK (bucket_id = 'task-images' AND owner = auth.uid());
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE policyname = 'task_images_select_auth'
-      AND schemaname = 'storage'
-      AND tablename = 'objects'
-  ) THEN
-    CREATE POLICY "task_images_select_auth"
-    ON storage.objects FOR SELECT TO authenticated
-    USING (bucket_id = 'task-images');
-  END IF;
-END$$;
+SELECT is_conversation_participant('...', auth.uid());  -- true/false
 ```
 
-**Chat Attachments Bucket:**
+### 9.2 RPC Functions
 
-```sql
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE policyname = 'chat_attach_insert_auth'
-      AND schemaname = 'storage'
-      AND tablename = 'objects'
-  ) THEN
-    CREATE POLICY "chat_attach_insert_auth"
-    ON storage.objects FOR INSERT TO authenticated
-    WITH CHECK (bucket_id = 'chat-attachments' AND owner = auth.uid());
-  END IF;
+#### `start_task_conversation_v1(p_task_id uuid) → conversations`
+Start or get existing conversation for a task.
 
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE policyname = 'chat_attach_select_auth'
-      AND schemaname = 'storage'
-      AND tablename = 'objects'
-  ) THEN
-    CREATE POLICY "chat_attach_select_auth"
-    ON storage.objects FOR SELECT TO authenticated
-    USING (bucket_id = 'chat-attachments');
-  END IF;
-END$$;
+**Rules:**
+- Only non-owner can start
+- Returns existing if already exists
+- Creates with normalized user order
+
+**Usage:**
+```dart
+final convo = await supabase.rpc('start_task_conversation_v1', params: {
+  'p_task_id': taskId,
+});
 ```
 
-**Portfolio Bucket:**
+#### `accept_task_request(p_request_id uuid) → task_requests`
+Accept a pending offer.
 
-```sql
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE policyname = 'portfolio_insert_auth'
-      AND schemaname = 'storage'
-      AND tablename = 'objects'
-  ) THEN
-    CREATE POLICY "portfolio_insert_auth"
-    ON storage.objects FOR INSERT TO authenticated
-    WITH CHECK (bucket_id = 'portfolio' AND owner = auth.uid());
-  END IF;
+**What it does:**
+1. Validates caller is task owner
+2. Rejects all other pending offers
+3. Accepts this offer
+4. Updates task status to 'assigned'
+5. Sets assigned_freelancer_id
 
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE policyname = 'portfolio_select_auth'
-      AND schemaname = 'storage'
-      AND tablename = 'objects'
-  ) THEN
-    CREATE POLICY "portfolio_select_auth"
-    ON storage.objects FOR SELECT TO authenticated
-    USING (bucket_id = 'portfolio');
-  END IF;
-END$$;
+**Usage:**
+```dart
+final result = await supabase.rpc('accept_task_request', params: {
+  'p_request_id': requestId,
+});
 ```
 
-### 8.3 Verify Storage Policies
+#### `accept_task_request(p_task_id uuid, p_request_id uuid) → uuid`
+Alternative signature that also creates conversation and logs message.
 
-```sql
-SELECT policyname, schemaname, tablename, cmd
-FROM pg_policies
-WHERE schemaname = 'storage'
-  AND tablename = 'objects'
-ORDER BY policyname;
-```
+#### `reject_task_request(p_request_id uuid) → task_requests`
+Reject a pending offer.
 
-### 8.4 Signed URL Usage (Flutter)
+#### `reject_task_request(p_task_id uuid, p_request_id uuid) → uuid`
+Alternative signature with conversation creation.
+
+#### `replace_task_request(...)` 
+Archive previous offer and create new one.
+
+**Parameters:**
+- `p_task_id uuid` - Task ID
+- `p_freelancer_id uuid` - Freelancer ID (must = auth.uid())
+- `p_message text` - Message
+- `p_price integer` - Price
+- `p_days integer` - Duration
+
+#### `mark_conversation_seen(p_conversation_id uuid) → void`
+Mark all messages in conversation as seen for current user.
+
+#### `mark_conversation_delivered(p_conversation_id uuid) → void`
+Mark all messages in conversation as delivered for current user.
+
+---
+
+## 10. Indexes
+
+### 10.1 Tasks Indexes
+
+| Index | Columns | Purpose |
+|-------|---------|---------|
+| `tasks_pkey` | `(id)` | Primary key |
+| `idx_tasks_client` | `(client_id)` | Filter by client |
+| `idx_tasks_freelancer` | `(freelancer_id)` | Filter by freelancer |
+| `idx_tasks_assigned_freelancer` | `(assigned_freelancer_id)` | Filter by assigned |
+| `idx_tasks_status` | `(status)` | Filter by status |
+| `idx_tasks_status_created` | `(status, created_at DESC)` | List open tasks |
+| `idx_tasks_category_id` | `(category_id)` | Filter by category |
+| `idx_tasks_type_created_at` | `(task_type, created_at DESC)` | Filter by type |
+| `idx_tasks_user_created` | `(user_id, created_at DESC)` | User's tasks |
+| `idx_tasks_user_status_created` | `(user_id, status, created_at DESC)` | User's tasks by status |
+| `idx_tasks_owner_created` | `(owner_id, created_at DESC)` | Owner's tasks |
+
+### 10.2 Messages Indexes
+
+| Index | Columns | Purpose |
+|-------|---------|---------|
+| `messages_pkey` | `(id)` | Primary key |
+| `idx_messages_conv_created` | `(conversation_id, created_at DESC)` | Message list |
+| `idx_messages_conversation_created` | `(conversation_id, created_at DESC)` | Message list |
+| `idx_messages_conversation_created_at` | `(conversation_id, created_at DESC)` | Message list |
+| `idx_messages_convo_created` | `(conversation_id, created_at)` | Message list (ASC) |
+| `idx_messages_participants` | `(sender_id, receiver_id)` | DM queries |
+| `idx_messages_type` | `(message_type)` | Filter by type |
+| `idx_messages_payload_gin` | `(payload) GIN` | JSONB search |
+| `idx_messages_receiver_unseen` | `(receiver_id) WHERE seen_at IS NULL` | Unread count |
+| `idx_messages_conv_type` | `(conversation_id, attachment_type)` | Attachments |
+
+### 10.3 Conversations Indexes
+
+| Index | Columns | Purpose |
+|-------|---------|---------|
+| `conversations_pkey` | `(id)` | Primary key |
+| `idx_conversations_task` | `(task_id)` | Task conversations |
+| `idx_conversations_user1` | `(user1_id)` | User queries |
+| `idx_conversations_user2` | `(user2_id)` | User queries |
+| `uq_conversations_pair_task` | `(LEAST, GREATEST, COALESCE(task_id, NIL))` | Unique constraint |
+| `ux_convo_pair_direct` | `(LEAST, GREATEST) WHERE task_id IS NULL` | Direct DMs |
+| `ux_convo_pair_task` | `(LEAST, GREATEST, task_id) WHERE task_id IS NOT NULL` | Task convos |
+| `ux_convo_unique` | `(task_id, user1_id, user2_id)` | Legacy unique |
+
+### 10.4 Task Requests Indexes
+
+| Index | Columns | Purpose |
+|-------|---------|---------|
+| `task_requests_pkey` | `(id)` | Primary key |
+| `idx_task_requests_task` | `(task_id)` | Task's offers |
+| `idx_task_requests_freelancer` | `(freelancer_id)` | Freelancer's offers |
+| `idx_task_requests_task_created` | `(task_id, created_at DESC)` | Task's offers sorted |
+| `ix_tr_task_freelancer` | `(task_id, freelancer_id)` | Composite |
+| `ix_tr_task_bidder_status` | `(task_id, bidder_id, status)` | Status check |
+| `uq_task_requests_one_active_per_freelancer` | `(task_id, freelancer_id) WHERE deleted_at IS NULL` | One active offer |
+
+### 10.5 Availability Slots Indexes
+
+| Index | Columns | Purpose |
+|-------|---------|---------|
+| `availability_slots_pkey` | `(id)` | Primary key |
+| `excl_slots_provider_time` | `(provider_id, tstzrange) GIST WHERE is_blocked = false` | Overlap detection |
+
+### 10.6 Other Key Indexes
+
+| Table | Index | Purpose |
+|-------|-------|---------|
+| `favorites` | `idx_favorites_client`, `idx_favorites_freelancer` | Quick lookups |
+| `favorites` | `uq_favorites_client_freelancer` | Unique pair |
+| `saved_tasks` | `idx_saved_tasks_user`, `idx_saved_tasks_task` | Quick lookups |
+| `saved_tasks` | `uq_saved_tasks_user_task` | Unique pair |
+| `categories` | `uq_categories_name` | Unique name |
+| `categories` | `idx_categories_name_lower` | Case-insensitive search |
+| `portfolio_items` | `idx_portfolio_owner_created` | Owner's portfolio |
+
+---
+
+## 11. Storage Buckets
+
+### 11.1 Bucket Configuration
+
+| Bucket | ID | Public | Size Limit | MIME Types | Created |
+|--------|-----|--------|------------|------------|---------|
+| avatars | `avatars` | ❌ Private | Unlimited | Any | 2025-09-19 |
+| task-images | `task-images` | ❌ Private | Unlimited | Any | 2025-09-20 |
+| chat-attachments | `chat-attachments` | ❌ Private | Unlimited | Any | 2025-08-16 |
+| portfolio | `portfolio` | ✅ Public | Unlimited | Any | 2025-08-23 |
+
+### 11.2 Storage Policies
+
+#### Avatars Bucket
+| Policy | Command | Rule |
+|--------|---------|------|
+| `avatars_select_authenticated` | SELECT | `bucket_id = 'avatars'` |
+| `avatars_insert_own_folder` | INSERT | `bucket_id = 'avatars' AND name LIKE uid || '/%'` |
+| `avatars_update_own_folder` | UPDATE | `bucket_id = 'avatars' AND name LIKE uid || '/%'` |
+| `avatars_delete_own_folder` | DELETE | `bucket_id = 'avatars' AND name LIKE uid || '/%'` |
+
+#### Task Images Bucket
+| Policy | Command | Rule |
+|--------|---------|------|
+| `task_images_select_authenticated` | SELECT | `bucket_id = 'task-images'` |
+| `task_images_insert_own_folder` | INSERT | `bucket_id = 'task-images' AND name LIKE uid || '/%'` |
+| `task_images_update_own_folder` | UPDATE | Same as insert |
+| `task_images_delete_own_folder` | DELETE | Same as insert |
+
+#### Chat Attachments Bucket
+| Policy | Command | Rule |
+|--------|---------|------|
+| `chat_attach_select_auth` | SELECT | `bucket_id = 'chat-attachments'` |
+| `chat_attach_insert_auth` | INSERT | `bucket_id = 'chat-attachments' AND owner = auth.uid()` |
+
+#### Portfolio Bucket
+| Policy | Command | Rule |
+|--------|---------|------|
+| `storage_portfolio_select_all` | SELECT | `bucket_id = 'portfolio'` (public) |
+| `storage_portfolio_insert_owner` | INSERT | `bucket_id = 'portfolio' AND split_part(name, '/', 1) = uid` |
+| `storage_portfolio_update_owner` | UPDATE | Same as insert |
+| `storage_portfolio_delete_owner` | DELETE | Same as insert |
+
+### 11.3 Signed URL Usage (Flutter)
 
 ```dart
 // Generate signed URL for private bucket (1 hour TTL)
@@ -1278,16 +930,27 @@ SignedAvatar(
 
 ---
 
-## 9. Realtime Configuration
+## 12. Realtime Configuration
 
-Enable Realtime for messages and conversations:
+### Enabled Tables
 
 ```sql
-ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
+-- Currently enabled for realtime
+SELECT schemaname, tablename 
+FROM pg_publication_tables 
+WHERE pubname = 'supabase_realtime';
+
+-- Result:
+-- public | messages
+```
+
+**Note:** Only `messages` table is currently in the realtime publication. Add `conversations` if needed:
+
+```sql
 ALTER PUBLICATION supabase_realtime ADD TABLE public.conversations;
 ```
 
-**Flutter Integration:**
+### Flutter Integration
 
 ```dart
 // Subscribe to messages in a conversation
@@ -1297,11 +960,10 @@ final messagesStream = supabase
   .eq('conversation_id', conversationId)
   .order('created_at');
 
-// Subscribe to conversation list updates
-final conversationsStream = supabase
-  .from('conversations')
-  .stream(primaryKey: ['id'])
-  .order('created_at', ascending: false);
+// Listen for new messages
+messagesStream.listen((List<Map<String, dynamic>> data) {
+  // Handle new messages
+});
 ```
 
 **Important Notes:**
@@ -1312,167 +974,154 @@ final conversationsStream = supabase
 
 ---
 
-## 10. Testing & Validation
+## 13. Extensions
 
-### 10.1 Test Offers (Tender vs Booking)
+### 13.1 Installed Extensions
+
+| Extension | Schema | Version | Purpose |
+|-----------|--------|---------|---------|
+| `pg_stat_statements` | extensions | 1.11 | Query performance monitoring |
+| `pg_graphql` | graphql | 1.5.11 | GraphQL API support |
+| `pgcrypto` | extensions | 1.3 | Cryptographic functions |
+| `uuid-ossp` | extensions | 1.1 | UUID generation |
+| `btree_gist` | public | 1.7 | GiST index support (for range overlap) |
+| `supabase_vault` | vault | 0.3.1 | Secret management |
+| `plpgsql` | pg_catalog | 1.0 | Procedural language |
+
+### 13.2 Available Extensions (Not Installed)
+
+The following extensions are available but not currently installed:
+- `postgis` - Geospatial support
+- `pg_trgm` - Text similarity (fuzzy search)
+- `vector` - Vector embeddings (AI/ML)
+- `http` - HTTP client
+- `pg_cron` - Job scheduling
+
+---
+
+## 14. Security Advisories
+
+### 14.1 Critical Issues (Must Fix)
+
+| Issue | Severity | Description | Remediation |
+|-------|----------|-------------|-------------|
+| Exposed Auth Users | 🔴 ERROR | View `public.users` exposes `auth.users` to anon role | [Fix Guide](https://supabase.com/docs/guides/database/database-linter?lint=0002_auth_users_exposed) |
+| Security Definer Views | 🔴 ERROR | Views `tasks_mvp`, `users`, `user_conversations` use SECURITY DEFINER | [Fix Guide](https://supabase.com/docs/guides/database/database-linter?lint=0010_security_definer_view) |
+
+**Immediate Actions Required:**
+1. Drop or restrict the `public.users` view
+2. Change views to `SECURITY INVOKER` or add proper RLS
+
+### 14.2 Warnings
+
+| Issue | Count | Description |
+|-------|-------|-------------|
+| Mutable search_path | 16 | Functions without explicit `search_path` |
+| Extension in public | 1 | `btree_gist` should be moved to `extensions` schema |
+| Leaked password protection | 1 | Password leak detection disabled |
+| Postgres version | 1 | Security patches available |
+
+---
+
+## 15. Testing & Validation
+
+### 15.1 Test Offers (Tender vs Booking)
 
 ```sql
--- Impersonate a bidder
-SELECT set_config('request.jwt.claims',
-  json_build_object('sub', '<bidder-uuid>', 'role', 'authenticated')::text,
-  true);
-SET ROLE authenticated;
+-- As freelancer, try offer on tender task → should SUCCEED
+SELECT * FROM rpc('replace_task_request', json_build_object(
+  'p_task_id', '<tender-task-id>',
+  'p_freelancer_id', auth.uid(),
+  'p_message', 'Test offer',
+  'p_price', 10000,
+  'p_days', 3
+));
 
--- Try offer on booking task → should FAIL
-INSERT INTO public.task_requests(task_id, bidder_id, price, days, note)
-VALUES ('<booking-task-id>', '<bidder-uuid>', 10000, 3, 'test');
-
--- Try offer on tender task → should SUCCEED
-INSERT INTO public.task_requests(task_id, bidder_id, price, days, note)
-VALUES ('<tender-task-id>', '<bidder-uuid>', 15000, 5, 'fast delivery');
+-- Offer on booking task → should FAIL
+-- (task_requests_before_insert_guard enforces tender-only)
 ```
 
-### 10.2 Test Bookings
+### 15.2 Test Bookings
 
 ```sql
 -- As provider: create slot
-SELECT set_config('request.jwt.claims',
-  json_build_object('sub', '<provider-uuid>', 'role', 'authenticated')::text,
-  true);
-INSERT INTO public.availability_slots(provider_id, starts_at, ends_at)
-VALUES ('<provider-uuid>', now() + interval '1 day', now() + interval '1 day 1 hour')
-RETURNING *;
+INSERT INTO availability_slots(provider_id, starts_at, ends_at)
+VALUES (auth.uid(), now() + interval '1 day', now() + interval '1 day 1 hour');
 
 -- As client: book slot
-SELECT set_config('request.jwt.claims',
-  json_build_object('sub', '<client-uuid>', 'role', 'authenticated')::text,
-  true);
-INSERT INTO public.bookings(provider_id, client_id, task_id, slot_id, note)
-VALUES ('<provider-uuid>', '<client-uuid>', '<task-id>', '<slot-id>', 'demo')
-RETURNING id, status;
-
--- Try booking same slot again → should FAIL (unique constraint)
+INSERT INTO bookings(provider_id, client_id, slot_id, note)
+VALUES ('<provider-uuid>', auth.uid(), '<slot-id>', 'Test booking');
 ```
 
-### 10.3 Test Categories (Read-Only)
+### 15.3 Test Conversation Guards
 
 ```sql
-SELECT set_config('request.jwt.claims',
-  json_build_object('sub', '<user-uuid>', 'role', 'authenticated')::text,
-  true);
+-- DM without favorites → should FAIL
+INSERT INTO conversations (user1_id, user2_id, initiated_by)
+VALUES (auth.uid(), '<other-user>', auth.uid());
 
--- SELECT: should succeed
-SELECT id, name FROM public.categories ORDER BY name LIMIT 10;
-
--- INSERT: should fail (RLS)
-INSERT INTO public.categories (name) VALUES ('ShouldFail');
-```
-
-### 10.4 Test Conversations
-
-```sql
--- DM: requires favorite relationship
--- Task chat: non-owner starts conversation
-
--- Use Flutter client or RPC function to test
+-- Task-linked as owner → should FAIL
+-- (Only non-owner can start task conversations)
 ```
 
 ---
 
-## 11. Troubleshooting
+## 16. Troubleshooting
 
-### Common Errors
+### 16.1 Common Errors
 
 | Error Code | Meaning | Solution |
-|-----------|---------|----------|
+|------------|---------|----------|
 | `42501` | RLS permission denied | Ensure valid session; check RLS policies |
 | `23505` | Unique violation | Duplicate entry (favorites, offers, etc.) |
 | `23503` | Foreign key violation | Referenced row doesn't exist |
 | `22P02` | Invalid UUID | Validate UUID format client-side |
 | `PGRST116` | Multiple rows returned | Use `.single()` or `.maybeSingle()` |
+| `P0001` | User-defined exception | Check trigger error message |
 
-### Storage Issues
+### 16.2 Storage Issues
 
-- **404 errors**: Regenerate signed URLs (they expire)
+- **404 errors**: Regenerate signed URLs (they expire after TTL)
 - **Upload fails**: Check RLS policy on `storage.objects` for correct bucket
 - **Permission denied**: Ensure using `authenticated` role, not `anon`
+- **Path format**: Use `{uid}/{filename}` pattern for user-specific files
 
-### Realtime Issues
+### 16.3 Realtime Issues
 
+- **No events received**: Verify table is in `supabase_realtime` publication
 - **Duplicate messages**: Use upsert by ID instead of re-fetching all
-- **Subscription not working**: Verify table added to `supabase_realtime` publication
 - **Memory leaks**: Always cancel subscriptions in `dispose()`
-
-### SDK Issues (Flutter/Dart)
-
-- Use `.in_()` instead of deprecated `inFilter()`
-- Order nested queries: `.order('created_at', foreignTable: 'messages')`
-- Handle nullable `last_message` safely (may be Map, List, or null)
+- **Connection drops**: Implement reconnection logic
 
 ---
 
-## 12. Changelog
+## 17. Changelog
+
+### Version 2.1 (December 2025)
+- **Documentation**: Complete rewrite from MCP server data
+- **Security**: Documented all security advisories
+- **Indexes**: Complete index documentation
+- **Policies**: All actual RLS policies documented
+- **Triggers**: All triggers with source code
+- **Functions**: All RPC functions documented
 
 ### Version 2.0 (December 2025)
-- **Task Visuals**: Added `is_hot`, `bg_color`, and `offers` columns to `tasks`.
-- **Triggers**: Added `update_task_offer_count` to auto-sync offer counts.
+- **Task Visuals**: Added computed columns
+- **Triggers**: Added `lock_tasks_client_id`
 
 ### Version 1.9+ (October 2024)
-- **MVVM Restructure**: Complete re-architecture to strict MVVM pattern
-- **Private Storage**: Migrated avatars and task-images to private buckets with signed URLs
-- **Unified Profile**: Consolidated profile management via ProfileController
-- **Documentation**: Comprehensive guides added for all features
-
-### Sprint 3 (September 2024)
-- Added `favorites` table with client-only DM guard
-- Unique constraint for conversations per (user pair, task)
-- Added `message_type` enum and `payload` jsonb field
-- Auto-assignment trigger on `offer_accepted`
-- Tightened `task_requests` policies (tender-only + positive values)
-
-### Sprint 2 (August 2024)
-- Booking system: `availability_slots` + `bookings` tables
-- Status transition guard for bookings
-- Slot overlap prevention trigger
-- Categories database-first with seed data
-- Category FK in tasks table
-
-### Previous Releases
-- Chat attachments with signed URLs
-- Realtime subscriptions for messaging
-- `assigned_freelancer_id` field in tasks
-- Portfolio items with storage integration
-
----
-
-## Security Notes
-
-### RLS Best Practices
-- All tables have RLS enabled
-- Session-based access control via `auth.uid()`
-- Private storage requires signed URLs
-- Triggers enforce business logic at database level
-
-### Grant Recommendations
-Consider tightening grants on `anon` role before production:
-
-```sql
-REVOKE ALL ON TABLE public.tasks FROM anon;
-REVOKE ALL ON TABLE public.messages FROM anon;
-REVOKE ALL ON TABLE public.conversations FROM anon;
-```
-
-Keep `service_role` for server-side operations only (never expose in client).
+- **MVVM Restructure**: Complete re-architecture
+- **Private Storage**: Migrated to private buckets
+- **Chat System**: Added conversation presence, message types
 
 ---
 
 ## Additional Resources
 
-For detailed feature-specific documentation, see:
-- `Sline_everything/DEVELOPER_GUIDE.md` — System map and overview
-- `Sline_everything/DEVELOPER_GUIDE/<Feature>.md` — Feature deep dives
-- `CLAUDE.md` — Development patterns and best practices
-- `Sline_Log.md` — Complete version history
+- **DEVELOPER_GUIDE.md** - Feature-specific documentation
+- **CODE_REVIEW.md** - Common mistakes and fixes
+- **GEMINI.md** - Development patterns and agents
+- **`.cursor/rules/`** - Rule files for specific patterns
 
 ---
 

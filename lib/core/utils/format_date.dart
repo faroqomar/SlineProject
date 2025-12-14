@@ -43,3 +43,14 @@ String formatUtcToLocal(DateTime utc) {
   String hm(DateTime x) => '${two(x.hour)}:${two(x.minute)}';
   return '${ymd(d)}  ${hm(d)}';
 }
+
+/// Formats a deadline [date] to a "Time Left" string like "2d 4h left" or "Expired".
+String formatTimeLeft(DateTime date) {
+  final now = DateTime.now().toUtc();
+  final diff = date.difference(now);
+
+  if (diff.isNegative) return 'Expired';
+  if (diff.inDays > 0) return '${diff.inDays}d left';
+  if (diff.inHours > 0) return '${diff.inHours}h left';
+  return '${diff.inMinutes}m left';
+}

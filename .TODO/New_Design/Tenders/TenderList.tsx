@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText } from 'lucide-react';
+import { Clock, Users, ArrowUpRight } from 'lucide-react';
 import { Task } from '../Common/types';
 
 interface TenderListProps {
@@ -10,34 +10,53 @@ interface TenderListProps {
 
 export default function TenderList({ tasks, theme, setSelectedTask }: TenderListProps) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {tasks?.filter(t => t.type === 'Tender').map(task => (
-        <div key={task.id} onClick={() => setSelectedTask(task)} className={`${theme.cardBg} backdrop-blur-lg rounded-[18px] p-4 border ${theme.cardBorder} relative overflow-hidden cursor-pointer active:scale-[0.98]`}>
-          <div className="flex items-start justify-between mb-3 relative">
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-[14px] text-white" style={{ backgroundColor: task.bgColor }}>{task.author.initials}</div>
-              <div>
-                <div className="flex items-center gap-1">
-                  <span className="text-[13px] font-bold" style={{ color: theme.text }}>{task.author.name}</span>
-                  {task.author.verified && <span className="text-[12px]">✓</span>}
+        <div
+            key={task.id}
+            onClick={() => setSelectedTask(task)}
+            className={`group relative overflow-hidden rounded-[20px] ${theme.cardBg} backdrop-blur-xl border ${theme.cardBorder} hover:border-[#f49d9d]/40 transition-all duration-300 cursor-pointer active:scale-[0.99]`}
+        >
+            {/* Left Accent */}
+            <div className="absolute left-0 top-0 bottom-0 w-[4px] bg-[#f49d9d] opacity-80" />
+            
+            <div className="p-4 pl-6">
+                <div className="flex justify-between items-start mb-2">
+                   <div className="flex gap-2 mb-1">
+                      {task.tags.slice(0, 2).map((tag, i) => (
+                          <span key={i} className={`px-2 py-0.5 rounded-[6px] text-[10px] font-bold uppercase tracking-wide border ${theme.tagBorder} ${theme.tagBg}`} style={{ color: theme.textSecondary }}>
+                             {tag}
+                          </span>
+                      ))}
+                   </div>
+                   <span className="text-[11px] font-medium" style={{ color: theme.textSecondary }}>{task.author.time}</span>
                 </div>
-                <span className="text-[10px] font-medium" style={{ color: theme.textSecondary }}>{task.author.time}</span>
-              </div>
+
+                <h3 className="text-[16px] font-bold leading-snug mb-2 pr-4 group-hover:text-[#f49d9d] transition-colors" style={{ color: theme.text }}>
+                    {task.title}
+                </h3>
+                
+                <p className="text-[13px] leading-relaxed line-clamp-2 mb-4 opacity-80" style={{ color: theme.textSecondary }}>
+                    {task.description}
+                </p>
+
+                <div className={`pt-3 border-t ${theme.dividerBg} flex justify-between items-center`}>
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1.5" style={{ color: theme.textSecondary }}>
+                            <Clock className="w-3.5 h-3.5" />
+                            <span className="text-[11px] font-bold">{task.timeLeft}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5" style={{ color: theme.textSecondary }}>
+                            <Users className="w-3.5 h-3.5" />
+                            <span className="text-[11px] font-bold">{task.offers || 0} bids</span>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-[#f49d9d]">
+                        <span className="text-[15px] font-black">{task.budget}</span>
+                        <ArrowUpRight className="w-4 h-4" />
+                    </div>
+                </div>
             </div>
-            <div className="bg-[#f49d9d]/20 px-2.5 py-1 rounded-lg flex items-center gap-1">
-              <FileText className="w-3 h-3 text-[#f49d9d]" strokeWidth={2.5} />
-              <span className="text-[10px] font-bold text-[#f49d9d]">TENDER</span>
-            </div>
-          </div>
-          <h3 className="text-[15px] font-extrabold mb-1.5" style={{ color: theme.text }}>{task.title}</h3>
-          <p className="text-[12px] mb-3 line-clamp-2" style={{ color: theme.textSecondary }}>{task.description}</p>
-          <div className="flex justify-between items-center pt-3 border-t" style={{ borderColor: theme.cardBorder }}>
-            <div className="flex items-center gap-3">
-              <span className="text-[11px] font-bold text-[#f49d9d]">{task.timeLeft}</span>
-              <span className="text-[11px] font-bold" style={{ color: theme.text }}>{task.offers || 0} offers</span>
-            </div>
-            <span className="text-[15px] font-extrabold text-[#146068]">{task.budget}</span>
-          </div>
         </div>
       ))}
     </div>

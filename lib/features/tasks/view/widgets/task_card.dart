@@ -6,23 +6,43 @@ import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/widgets/signed_image.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
+import 'package:sline_app/features/tasks/view/widgets/tender_task_card.dart';
+import 'package:sline_app/features/tasks/view/widgets/booking_task_card.dart';
 
 /// A card widget to display task info matching the new design system.
-/// Features: colored header, HOT badge, type badge, glassmorphism.
+/// Delegates to [TenderTaskCard] or [BookingTaskCard] based on task type.
+/// 
+/// For backwards compatibility, you can set [useLegacyLayout] to true
+/// to use the original header-based card layout.
 class TaskCard extends StatelessWidget {
   final Task task;
   final VoidCallback onTap;
   final bool isHot;
+  
+  /// If true, uses the original card layout with colored header and image.
+  /// If false (default), delegates to TenderTaskCard or BookingTaskCard.
+  final bool useLegacyLayout;
 
   const TaskCard({
     super.key,
     required this.task,
     required this.onTap,
     this.isHot = false,
+    this.useLegacyLayout = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Delegate to type-specific cards unless legacy layout is requested
+    if (!useLegacyLayout) {
+      if (task.isTender) {
+        return TenderTaskCard(task: task, onTap: onTap, isHot: isHot);
+      } else {
+        return BookingTaskCard(task: task, onTap: onTap, isHot: isHot);
+      }
+    }
+
+    // Legacy layout below
     final AppColorScheme colorScheme = context.colorScheme;
     final bool isTender = task.isTender;
 

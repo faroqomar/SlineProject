@@ -26,6 +26,7 @@ This comprehensive guide consolidates all feature-specific documentation into a 
 ### Part II: Feature Deep-Dives
 - [Auth Feature](#auth-feature-reference)
 - [Tasks Module](#tasks-module-addendum-mvvm--schema-sync)
+- [Orders Feature](#orders-feature-reference)
 - [Chat Feature](#chat-feature-reference)
 - [Booking Feature](#booking-feature-reference)
 - [Profile Feature](#profile-feature-reference)

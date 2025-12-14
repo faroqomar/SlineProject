@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 /// This provider allows the application to switch between different theme modes
 /// and notifies its listeners (e.g., [MaterialApp]) about these changes.
 class ThemeModeProvider extends ChangeNotifier {
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode _themeMode = ThemeMode.dark;
 
   /// The currently selected theme mode.
   ThemeMode get themeMode => _themeMode;

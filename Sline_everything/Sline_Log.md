@@ -20,6 +20,57 @@
 
 ## 📋 Version History
 
+### 🟢 Version 2.3 — Phase 2: Orders Dashboard & Task Card Differentiation
+**Date:** 2025-12-14
+**Commit:** _Pending_ — "feat(orders): Orders dashboard, Tender/Booking cards, offer management"
+
+#### ✅ Implemented
+
+- **Phase 2.1: Tender vs Booking Cards** (UI/UX)
+  - Created specialized `TenderTaskCard`: Coral theme, author info, offer count, deadline countdown.
+  - Created specialized `BookingTaskCard`: Teal theme, provider info, availability status.
+  - Updated `TaskCard` to dynamically delegate to the correct widget based on `task.taskType`.
+  - Added visual cues (icons, badges) to clearly distinguish task types.
+
+- **Phase 2.2: Orders Dashboard Overhaul** (Client View)
+  - Implemented `OrdersDashboardScreen` to manage published tasks.
+  - Features:
+    - **Status Tabs**: Open, In Progress, Completed, Cancelled.
+    - **Offer Management**: View offers in `OfferListSheet`, accept/reject bids.
+    - **Task Management**: Edit and Delete actions via `OrderCard` menu.
+  - Architecture: Added `OrdersViewModel` and `OrdersService` (aggregating Task/Request services).
+
+- **Critical Bug Fixes** (Stability)
+  - **Fixed PGRST204 Crash**: Removed `packages` and `offers` fields from `Task.toJson` updates, as these columns do not yet exist in the DB or are computed.
+  - **Task Editing Fix**: Updated `CreateTaskScreen` to properly handle category selection (UUID vs legacy Name) to prevent `22P02` invalid input syntax errors.
+  - **Offer List Crash**: Fixed `RangeError` in `OfferListSheet` when bidder name is empty.
+
+#### 📊 Impact
+- **UX**: Clients can now fully manage their task lifecycle (Post -> Review Offers -> Assign -> Complete).
+- **Clarity**: Distinct visual languages for Tenders vs Bookings help users understand context immediately.
+- **Stability**: Resolved blocking crashes in the "Create/Edit Task" flow.
+
+#### 🗂️ Files Touched
+- **New Features:**
+  - `lib/features/orders/` (entire module: view, viewmodels, services, widgets)
+  - `lib/features/tasks/view/widgets/tender_task_card.dart`
+  - `lib/features/tasks/view/widgets/booking_task_card.dart`
+- **Modified:**
+  - `lib/features/tasks/models/task_model.dart` (removed problematic fields from toJson)
+  - `lib/features/tasks/view/create_task_screen.dart` (fixed update logic)
+  - `lib/features/tasks/view/widgets/task_card.dart` (delegation logic)
+  - `lib/features/tasks/services/task_requests_service.dart` (added profile join)
+
+#### 🔧 Technical Notes
+- `TaskRequest` model updated to include `bidderName` and `bidderAvatar` from joined profile data to avoid N+1 queries in the offer list.
+- `OrderCard` uses `PopupMenuButton` for Edit/Delete actions.
+
+#### 🔜 Next
+- **Phase 2.3**: Chat System Overhaul
+- **Phase 2.4**: Profile Screen Enhancement
+
+---
+
 ### 🟢 Version 2.2 — Phase 1 Foundation: Performance, Error Handling & Session Management
 **Date:** 2025-12-14
 **Commit:** _Pending_ — "feat(core): Phase 1 foundation - performance, error handling, session management"

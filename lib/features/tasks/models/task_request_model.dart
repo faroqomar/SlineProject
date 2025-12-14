@@ -48,6 +48,10 @@ class TaskRequest {
   final String? note;
   final TaskRequestStatus status;
   final DateTime createdAt;
+  
+  // Joined fields from profiles table
+  final String? bidderName;
+  final String? bidderAvatar;
 
   const TaskRequest({
     required this.id,
@@ -58,6 +62,8 @@ class TaskRequest {
     this.note,
     required this.status,
     required this.createdAt,
+    this.bidderName,
+    this.bidderAvatar,
   });
 
   bool get isPending => status.isPending;
@@ -68,6 +74,11 @@ class TaskRequest {
     try {
       // Parsing price as int to match DB BIGINT type
       final priceValue = (map['price'] as num).toInt();
+      
+      // Extract profile data from nested 'profiles' object if it exists (from JOIN)
+      final profileData = map['profiles'] as Map<String, dynamic>?;
+      final String? parsedBidderName = profileData?['full_name'] as String?;
+      final String? parsedBidderAvatar = profileData?['avatar_url'] as String?;
 
       return TaskRequest(
         id: map['id'] as String,
@@ -78,6 +89,8 @@ class TaskRequest {
         note: map['note'] as String?,
         status: TaskRequestStatusX.fromDb(map['status'] as String?),
         createdAt: DateTime.parse(map['created_at'] as String),
+        bidderName: parsedBidderName,
+        bidderAvatar: parsedBidderAvatar,
       );
     } catch (e, st) {
       AppLogger.e('Failed to parse TaskRequest', tag: 'Tasks', error: e, stackTrace: st);
@@ -119,6 +132,8 @@ class TaskRequest {
     String? note,
     TaskRequestStatus? status,
     DateTime? createdAt,
+    String? bidderName,
+    String? bidderAvatar,
   }) {
     return TaskRequest(
       id: id ?? this.id,
@@ -129,12 +144,14 @@ class TaskRequest {
       note: note ?? this.note,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
+      bidderName: bidderName ?? this.bidderName,
+      bidderAvatar: bidderAvatar ?? this.bidderAvatar,
     );
   }
 
   @override
   String toString() =>
-      'TaskRequest(id: $id, taskId: $taskId, bidderId: $bidderId, price: $price, days: $days, status: ${status.dbValue})';
+      'TaskRequest(id: $id, taskId: $taskId, bidderId: $bidderId, price: $price, days: $days, status: ${status.dbValue}, bidderName: $bidderName)';
 
   @override
   bool operator ==(Object other) =>
@@ -147,9 +164,11 @@ class TaskRequest {
           other.days == days &&
           other.note == note &&
           other.status == status &&
-          other.createdAt == createdAt);
+          other.createdAt == createdAt &&
+          other.bidderName == bidderName &&
+          other.bidderAvatar == bidderAvatar);
 
   @override
   int get hashCode =>
-      Object.hash(id, taskId, bidderId, price, days, note, status, createdAt);
+      Object.hash(id, taskId, bidderId, price, days, note, status, createdAt, bidderName, bidderAvatar);
 }

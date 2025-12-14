@@ -70,31 +70,31 @@ Tasks are organized in **dependency order** - complete each phase before moving 
   - `.TODO/New_Design/Tenders/TenderList.tsx` - Tender cards show author info, offers count
   - `.TODO/New_Design/Bookings/BookingList.tsx` - Booking cards show availability-focused info
 - **Tasks:**
-  - [ ] Create `TenderTaskCard` widget with:
+  - [x] Create `TenderTaskCard` widget with:
     - Author avatar + name + verified badge
     - Time left (deadline countdown)
     - Red/coral color scheme
     - FileText icon badge
-  - [ ] Create `BookingTaskCard` widget with:
+  - [x] Create `BookingTaskCard` widget with:
     - Provider avatar + name
     - Availability slots indicator
     - Teal/green color scheme
     - Calendar icon badge
-  - [ ] Update `TaskCard` to delegate to appropriate card type
-  - [ ] Update Home/Tender/Booking screens to use correct cards
+  - [x] Update `TaskCard` to delegate to appropriate card type
+  - [x] Update Home/Tender/Booking screens to use correct cards
 
 ### 2.2 Orders Dashboard Overhaul [FEATURE FIX]
 - **Issue:** Orders screen should work as dashboard for published tenders/bookings
 - **Location:** `lib/features/orders/view/orders_dashboard_screen.dart`
 - **Required functionality:**
-  - [ ] View all my published tenders with status
-  - [ ] View all my published bookings with status
-  - [ ] See who made offers on my tenders
-  - [ ] Edit published tasks (title, description, budget, etc.)
-  - [ ] Delete/close published tasks
-  - [ ] View offer details (freelancer info, bid amount, delivery time)
-  - [ ] Accept/reject offers
-  - [ ] Status tabs: Open, In Progress, Completed, Cancelled
+  - [x] View all my published tenders with status
+  - [x] View all my published bookings with status
+  - [x] See who made offers on my tenders
+  - [x] Edit published tasks (title, description, budget, etc.)
+  - [x] Delete/close published tasks
+  - [x] View offer details (freelancer info, bid amount, delivery time)
+  - [x] Accept/reject offers
+  - [x] Status tabs: Open, In Progress, Completed, Cancelled
 - **UI Reference:** `.TODO/New_Design/Orders/OrdersScreen.tsx`
 - **New files needed:**
   - `lib/features/orders/viewmodels/orders_view_model.dart`

@@ -27,16 +27,16 @@ export default function AuthScreen({ authScreen, setAuthScreen, setIsLoggedIn, t
         {authScreen === 'signup' && (
            <div>
               <label className="text-[13px] font-semibold mb-2 block transition-colors duration-500" style={{ color: theme.authText }}>Full Name</label>
-              <input type="text" placeholder="John Doe" className={`w-full h-[52px] ${theme.authInputBg} backdrop-blur-lg border-[1.5px] ${theme.authInputBorder} rounded-[14px] px-4 text-[14px] outline-none ${theme.inputFocusBg} focus:border-[#146068] transition-all duration-300`} style={{ color: theme.authInputText, '--placeholder-color': theme.authTextSecondary } as React.CSSProperties} />
+              <input type="text" placeholder="John Doe" className={`w-full h-[52px] ${theme.authInputBg} backdrop-blur-lg border-[1.5px] ${theme.authInputBorder} rounded-[14px] px-4 text-[14px] placeholder:text-[${theme.authTextSecondary}] outline-none ${theme.inputFocusBg} focus:border-[#146068] transition-all duration-300`} style={{ color: theme.authInputText }} />
            </div>
         )}
         <div>
           <label className="text-[13px] font-semibold mb-2 block transition-colors duration-500" style={{ color: theme.authText }}>Email</label>
-          <input type="email" placeholder="your@email.com" className={`w-full h-[52px] ${theme.authInputBg} backdrop-blur-lg border-[1.5px] ${theme.authInputBorder} rounded-[14px] px-4 text-[14px] outline-none ${theme.inputFocusBg} focus:border-[#146068] transition-all duration-300`} style={{ color: theme.authInputText, '--placeholder-color': theme.authTextSecondary } as React.CSSProperties} />
+          <input type="email" placeholder="your@email.com" className={`w-full h-[52px] ${theme.authInputBg} backdrop-blur-lg border-[1.5px] ${theme.authInputBorder} rounded-[14px] px-4 text-[14px] placeholder:text-[${theme.authTextSecondary}] outline-none ${theme.inputFocusBg} focus:border-[#146068] transition-all duration-300`} style={{ color: theme.authInputText }} />
         </div>
         <div>
           <label className="text-[13px] font-semibold mb-2 block transition-colors duration-500" style={{ color: theme.authText }}>Password</label>
-          <input type="password" placeholder={authScreen === 'login' ? "Enter your password" : "Create a password"} className={`w-full h-[52px] ${theme.authInputBg} backdrop-blur-lg border-[1.5px] ${theme.authInputBorder} rounded-[14px] px-4 text-[14px] outline-none ${theme.inputFocusBg} focus:border-[#146068] transition-all duration-300`} style={{ color: theme.authInputText, '--placeholder-color': theme.authTextSecondary } as React.CSSProperties} />
+          <input type="password" placeholder={authScreen === 'login' ? "Enter your password" : "Create a password"} className={`w-full h-[52px] ${theme.authInputBg} backdrop-blur-lg border-[1.5px] ${theme.authInputBorder} rounded-[14px] px-4 text-[14px] placeholder:text-[${theme.authTextSecondary}] outline-none ${theme.inputFocusBg} focus:border-[#146068] transition-all duration-300`} style={{ color: theme.authInputText }} />
         </div>
         {authScreen === 'login' && (
            <button className="text-[13px] font-semibold text-[#146068] hover:text-[#93ccce] transition-colors text-right w-full">Forgot Password?</button>

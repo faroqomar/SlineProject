@@ -18,9 +18,10 @@ class TaskRequestsService {
     AppLogger.d('Fetching offers for task $taskId', tag: 'Offers');
 
     try {
+      // Select * from task_requests and join profiles for bidder info
       final query = _client
           .from('task_requests')
-          .select()
+          .select('*, profiles(full_name, avatar_url)')
           .eq('task_id', taskId);
 
       if (before != null) {

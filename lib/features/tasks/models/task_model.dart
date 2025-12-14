@@ -78,6 +78,10 @@ class Task {
   /// Structure: { 'Basic': {...}, 'Standard': {...}, 'Premium': {...} }
   final Map<String, dynamic>? packages;
 
+  /// Number of offers/requests on this task (maintained by DB trigger).
+  /// Only relevant for tender tasks.
+  final int offers;
+
   const Task({
     required this.id,
     required this.title,
@@ -97,6 +101,7 @@ class Task {
     this.assignedFreelancerId,
     this.imagePaths = const [],
     this.packages,
+    this.offers = 0,
   });
 
   /// Create Task from JSON (supports both flat and JOIN-embedded profile data)
@@ -156,6 +161,7 @@ class Task {
       assignedFreelancerId: (json['assigned_freelancer_id'] as String?) ?? (json['freelancer_id'] as String?),
       imagePaths: parsedImagePaths,
       packages: json['packages'] as Map<String, dynamic>?,
+      offers: (json['offers'] as int?) ?? 0,
     );
   }
 
@@ -175,7 +181,6 @@ class Task {
       if (category != null) 'category': category,
       'image_paths': imagePaths,
       if (assignedFreelancerId != null) 'assigned_freelancer_id': assignedFreelancerId,
-      if (packages != null) 'packages': packages,
     };
     if (includeSystemFields) {
       map['id'] = id;
@@ -210,6 +215,7 @@ class Task {
     String? assignedFreelancerId,
     List<String>? imagePaths,
     Map<String, dynamic>? packages,
+    int? offers,
   }) {
     return Task(
       id: id ?? this.id,
@@ -230,6 +236,7 @@ class Task {
       assignedFreelancerId: assignedFreelancerId ?? this.assignedFreelancerId,
       imagePaths: imagePaths ?? this.imagePaths,
       packages: packages ?? this.packages,
+      offers: offers ?? this.offers,
     );
   }
 }

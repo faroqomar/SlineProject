@@ -21,6 +21,7 @@ import 'core/providers/navigation_provider.dart';
 import 'package:provider/provider.dart';
 import 'features/booking/viewmodels/booking_view_model.dart';
 import 'features/booking/view/availability_screen.dart';
+import 'features/orders/viewmodels/orders_view_model.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/providers/theme_mode_provider.dart';
 
@@ -86,6 +87,8 @@ class SLineApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ChatViewModel()),
         // Booking/scheduling state
         ChangeNotifierProvider(create: (_) => BookingViewModel()),
+        // Orders dashboard state
+        ChangeNotifierProvider(create: (_) => OrdersViewModel()),
       ],
       child: const _AppWithAuthListener(),
     );
