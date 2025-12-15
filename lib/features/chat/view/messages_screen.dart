@@ -4,12 +4,11 @@ import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/widgets/signed_avatar.dart';
-import '../../../core/services/logger_service.dart';
-import '../../../core/utils/format_date.dart' as date_utils;
+import 'package:sline_app/core/services/logger_service.dart';
 import '../viewmodels/chat_view_model.dart';
 import '../../chat/models/conversation_model.dart';
 import '../view/chat_screen.dart';
+import 'widgets/conversation_list_tile.dart';
 
 class MessagesScreen extends StatefulWidget {
   const MessagesScreen({super.key});
@@ -106,7 +105,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
                           Icon(
                             Icons.chat_bubble_outline,
                             size: 64,
-                            color: colorScheme.textSecondary.withValues(alpha: 0.5),
+                            color: colorScheme.textSecondary.withValues(
+                              alpha: 0.5,
+                            ),
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -135,16 +136,92 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       AppDimens.p100,
                     ),
                     sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final Conversation convo = controller.conversations[index];
-                          return _MessageTile(
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final Conversation convo =
+                            controller.conversations[index];
+                        return Dismissible(
+                          key: ValueKey(convo.id),
+                          direction: DismissDirection.endToStart,
+                          background: Container(
+                            margin: const EdgeInsets.only(
+                              bottom: AppDimens.p12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.lightRed,
+                              borderRadius: BorderRadius.circular(
+                                AppDimens.r18,
+                              ),
+                            ),
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.only(
+                              right: AppDimens.p24,
+                            ),
+                            child: const Icon(
+                              Icons.delete_outline,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                          ),
+                          confirmDismiss: (direction) async {
+                            return await showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                backgroundColor: colorScheme.cardBackground,
+                                title: Text(
+                                  'Delete Conversation?',
+                                  style: AppTypography.h3,
+                                ),
+                                content: Text(
+                                  'This will hide the conversation until a new message is sent.',
+                                  style: AppTypography.bodyMedium,
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(false),
+                                    child: Text(
+                                      'Cancel',
+                                      style: TextStyle(
+                                        color: colorScheme.textSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(true),
+                                    child: Text(
+                                      'Delete',
+                                      style: TextStyle(
+                                        color: AppColors.lightRed,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                          onDismissed: (direction) {
+                            controller.deleteConversation(convo.id).catchError((
+                              e,
+                            ) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Failed to delete: $e'),
+                                  ),
+                                );
+                                // Force refresh if failed to restore item
+                                controller.fetchConversations();
+                              }
+                            });
+                          },
+                          child: ConversationListTile(
                             conversation: convo,
                             onTap: () => _openChat(context, convo, controller),
-                          );
-                        },
-                        childCount: controller.conversations.length,
-                      ),
+                          ),
+                        );
+                      }, childCount: controller.conversations.length),
                     ),
                   ),
               ],
@@ -156,8 +233,12 @@ class _MessagesScreenState extends State<MessagesScreen> {
   }
 
   bool _isUnread(Conversation convo) {
-    // Mock unread logic - in real app, check against last read timestamp
-    return (convo.lastMessage?.length ?? 0) % 5 == 0;
+    final myId = context.read<ChatViewModel>().currentUserId;
+    if (myId == null) return false;
+    final isFromOther =
+        convo.lastMessageSenderId != null && convo.lastMessageSenderId != myId;
+    if (!isFromOther) return false;
+    return convo.lastMessageSeenAt == null;
   }
 
   Future<void> _openChat(
@@ -171,209 +252,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
     if (context.mounted) {
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (_) => ChatScreen(conversation: convo),
-        ),
+        MaterialPageRoute(builder: (_) => ChatScreen(conversation: convo)),
       );
     }
-  }
-}
-
-/// Individual message tile widget matching the new design.
-class _MessageTile extends StatelessWidget {
-  final Conversation conversation;
-  final VoidCallback onTap;
-
-  const _MessageTile({
-    required this.conversation,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
-    // Mock values for demo - in real app, these would come from the model
-    final bool isUnread = (conversation.lastMessage?.length ?? 0) % 5 == 0;
-    final bool isOnline = (conversation.otherUserName?.length ?? 0) % 2 == 0;
-    final bool isVerified = (conversation.otherUserName?.length ?? 0) > 5;
-    final int unreadCount = isUnread ? 1 + (conversation.lastMessage?.length ?? 0) % 3 : 0;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(bottom: AppDimens.p12),
-        padding: const EdgeInsets.all(AppDimens.p16),
-        decoration: BoxDecoration(
-          color: isUnread
-              ? AppColors.teal.withValues(alpha: 0.05)
-              : colorScheme.cardBackground,
-          borderRadius: BorderRadius.circular(AppDimens.r18),
-          border: Border.all(
-            color: isUnread
-                ? AppColors.teal.withValues(alpha: 0.4)
-                : colorScheme.cardBorder,
-            width: isUnread ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            // Avatar with online indicator
-            _buildAvatar(colorScheme, isOnline),
-            const SizedBox(width: AppDimens.p12),
-
-            // Content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Name row with time
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                conversation.otherUserName ?? 'User',
-                                style: AppTypography.bodySmall.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: colorScheme.text,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (isVerified) ...[
-                              const SizedBox(width: 4),
-                              Icon(
-                                Icons.verified,
-                                size: 14,
-                                color: AppColors.lightTeal,
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      if (conversation.lastMessageTime != null)
-                        Text(
-                          date_utils.formatFriendlyTime(conversation.lastMessageTime!),
-                          style: AppTypography.micro.copyWith(
-                            color: colorScheme.textSecondary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-
-                  // Last message
-                  Text(
-                    conversation.lastMessage ?? 'No messages yet',
-                    style: AppTypography.bodySmall.copyWith(
-                      color: isUnread ? colorScheme.text : colorScheme.textSecondary,
-                      fontWeight: isUnread ? FontWeight.w600 : FontWeight.normal,
-                      height: 1.4,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-
-            // Unread badge
-            if (unreadCount > 0) ...[
-              const SizedBox(width: AppDimens.p8),
-              Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: AppColors.teal,
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    unreadCount > 9 ? '9+' : unreadCount.toString(),
-                    style: AppTypography.micro.copyWith(
-                      color: AppColors.offWhite,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAvatar(AppColorScheme colorScheme, bool isOnline) {
-    final initials = _getInitials(conversation.otherUserName);
-
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        // Avatar container with gold background and initials
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: AppColors.gold,
-            borderRadius: BorderRadius.circular(AppDimens.r14),
-            border: Border.all(
-              color: AppColors.offWhite.withValues(alpha: 0.2),
-              width: 2,
-            ),
-          ),
-          child: conversation.otherUserAvatar != null
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(AppDimens.r12),
-                  child: SignedAvatar(
-                    storagePathOrUrl: conversation.otherUserAvatar,
-                    radius: 22,
-                  ),
-                )
-              : Center(
-                  child: Text(
-                    initials,
-                    style: AppTypography.bodyLarge.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.almostBlack,
-                    ),
-                  ),
-                ),
-        ),
-
-        // Online indicator
-        if (isOnline)
-          Positioned(
-            bottom: -2,
-            right: -2,
-            child: Container(
-              width: 14,
-              height: 14,
-              decoration: BoxDecoration(
-                color: AppColors.lightTeal,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: colorScheme.phoneBackground,
-                  width: 2,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  String _getInitials(String? name) {
-    if (name == null || name.isEmpty) return 'U';
-    final parts = name.trim().split(' ');
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    return name[0].toUpperCase();
   }
 }

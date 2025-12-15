@@ -74,7 +74,33 @@ class MessageService {
     return Conversation.fromJson(Map<String, dynamic>.from(response as Map));
   }
 
-  /// Get conversations for user (kept as-is)
+  /// Delete (archive) conversation for a user.
+  /// It will reappear if a new message is received (checked via timestamp).
+  Future<void> deleteConversation(String conversationId, String userId) async {
+    // First, find out if user is user1 or user2
+    final convo = await _client
+        .from('conversations')
+        .select('user1_id, user2_id')
+        .eq('id', conversationId)
+        .single();
+    
+    final user1 = convo['user1_id'];
+    final user2 = convo['user2_id'];
+
+    if (userId == user1) {
+      await _client.from('conversations').update({
+        'deleted_at_user1': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', conversationId);
+    } else if (userId == user2) {
+      await _client.from('conversations').update({
+        'deleted_at_user2': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', conversationId);
+    } else {
+      throw Exception('User is not a participant in this conversation');
+    }
+  }
+
+  /// Get conversations for user, filtering out deleted ones unless new messages arrived.
   Future<List<Conversation>> getUserConversations(String userId) async {
     try {
       final response = await _client
@@ -85,10 +111,12 @@ class MessageService {
             user1_id,
             user2_id,
             created_at,
+            deleted_at_user1,
+            deleted_at_user2,
             tasks(title),
             user1:profiles!conversations_user1_id_fkey(full_name, avatar_url),
             user2:profiles!conversations_user2_id_fkey(full_name, avatar_url),
-            last_message:messages!conversation_id(content, created_at)
+            last_message:messages!conversation_id(content, created_at, seen_at, sender_id)
           ''')
           .or('user1_id.eq.$userId,user2_id.eq.$userId')
           .order('created_at', foreignTable: 'messages', ascending: false)
@@ -97,19 +125,49 @@ class MessageService {
 
       if (response is List) {
         AppLogger.d('📦 Conversations response count: ${response.length}');
-        return response.map((raw) {
-          final json = Map<String, dynamic>.from(raw as Map);
-          final isUser1 = json['user1_id'] == userId;
-          final otherUser = isUser1 ? json['user2'] : json['user1'];
-          return Conversation.fromJson({
+        final List<Conversation> validConversations = [];
+
+        for (final raw in response) {
+           final json = Map<String, dynamic>.from(raw as Map);
+           
+           // Check deletion status
+           final isUser1 = json['user1_id'] == userId;
+           final deletedAtStr = isUser1 ? json['deleted_at_user1'] : json['deleted_at_user2'];
+           
+           if (deletedAtStr != null) {
+             final deletedAt = DateTime.parse(deletedAtStr);
+             final lastMsg = json['last_message'];
+             // If no messages, or last message was before deletion, skip it
+             if (lastMsg == null || (lastMsg is List && lastMsg.isEmpty)) {
+               continue;
+             }
+             final msgData = lastMsg is List ? lastMsg.first : lastMsg;
+             final msgTime = DateTime.parse(msgData['created_at']);
+             
+             if (msgTime.isBefore(deletedAt)) {
+               continue; // Still deleted
+             }
+           }
+
+           final otherUser = isUser1 ? json['user2'] : json['user1'];
+           validConversations.add(Conversation.fromJson({
             ...json,
             'task_title': json['tasks']?['title'] ?? 'Untitled Task',
             'user1_name': json['user1']?['full_name'] ?? 'User',
             'user2_name': json['user2']?['full_name'] ?? 'User',
             'other_user_name': otherUser?['full_name'],
             'other_user_avatar': otherUser?['avatar_url'],
-          });
-        }).toList();
+          }));
+        }
+        
+        // Sort by last message time descending
+        validConversations.sort((a, b) {
+            final aTime = a.lastMessageTime ?? a.createdAt;
+            final bTime = b.lastMessageTime ?? b.createdAt;
+            return bTime.compareTo(aTime);
+        });
+        
+        return validConversations;
       } else {
         AppLogger.w('⚠️ Unexpected response type: $response');
         return [];
@@ -124,7 +182,7 @@ class MessageService {
   Future<List<Message>> getMessages(String conversationId) async {
     final response = await _client
         .from('messages')
-        .select('id, conversation_id, sender_id, receiver_id, content, created_at, attachment_url, attachment_type, attachment_name, attachment_size, delivered_at, seen_at')
+        .select('id, conversation_id, sender_id, receiver_id, content, created_at, attachment_url, attachment_type, attachment_name, attachment_size, delivered_at, seen_at, message_type, payload')
         .eq('conversation_id', conversationId)
         .order('created_at', ascending: true);
 
@@ -143,12 +201,16 @@ class MessageService {
     String? attachmentType,
     String? attachmentName,
     int? attachmentSize,
+    String? messageType, // e.g. 'text', 'offer', etc.
+    Map<String, dynamic>? payload,
   }) async {
     final insertMap = <String, dynamic>{
       'conversation_id': conversationId,
       'sender_id': senderId,
       'receiver_id': receiverId,
       'content': content,
+      'message_type': messageType ?? 'text',
+      'payload': payload ?? {},
     };
     if (attachmentUrl != null) insertMap['attachment_url'] = attachmentUrl;
     if (attachmentType != null) insertMap['attachment_type'] = attachmentType;
@@ -158,7 +220,7 @@ class MessageService {
     final response = await _client
         .from('messages')
         .insert(insertMap)
-        .select('id, conversation_id, sender_id, receiver_id, content, created_at, attachment_url, attachment_type, attachment_name, attachment_size, delivered_at, seen_at')
+        .select('id, conversation_id, sender_id, receiver_id, content, created_at, attachment_url, attachment_type, attachment_name, attachment_size, delivered_at, seen_at, message_type, payload')
         .single();
 
     return Message.fromJson(Map<String, dynamic>.from(response as Map));
@@ -209,6 +271,12 @@ class MessageService {
         .order('created_at')
         .asyncMap((rows) async {
           if (rows.isEmpty) return <Map<String, dynamic>>[];
+          // We need to re-fetch with relationships to get full details
+          // And ideally apply deletion logic (though realtime often used for just updates, 
+          // a full refresh via fetchConversations is often triggered on open).
+          // For now, we return raw stream, but ViewModel should probably re-fetch to respect deletion status.
+          // Or we implement the fetch logic here.
+          
           final convoIds = rows.map((row) => (row as Map)['id']).toList();
           final response = await _client
               .from('conversations')
@@ -218,6 +286,8 @@ class MessageService {
                 user1_id,
                 user2_id,
                 created_at,
+                deleted_at_user1,
+                deleted_at_user2,
                 tasks(title),
                 user1:profiles!conversations_user1_id_fkey(full_name, avatar_url),
                 user2:profiles!conversations_user2_id_fkey(full_name, avatar_url),
@@ -230,7 +300,36 @@ class MessageService {
 
           return (response as List)
               .map((raw) => Map<String, dynamic>.from(raw as Map))
-              .toList();
+              .where((json) {
+                 // Apply deletion filter
+                 final isUser1 = json['user1_id'] == userId;
+                 final deletedAtStr = isUser1 ? json['deleted_at_user1'] : json['deleted_at_user2'];
+                 if (deletedAtStr != null) {
+                   final deletedAt = DateTime.parse(deletedAtStr);
+                   final lastMsg = json['last_message'];
+                   if (lastMsg == null || (lastMsg is List && lastMsg.isEmpty)) return false;
+                   final msgData = lastMsg is List ? lastMsg.first : lastMsg;
+                   final msgTime = DateTime.parse(msgData['created_at']);
+                   return msgTime.isAfter(deletedAt);
+                 }
+                 return true;
+              })
+              .toList()
+              ..sort((a, b) {
+                // Parse timestamps for sorting
+                DateTime getTime(Map<String, dynamic> json) {
+                   final lastMsg = json['last_message'];
+                   if (lastMsg != null && lastMsg is List && lastMsg.isNotEmpty) {
+                     return DateTime.parse(lastMsg.first['created_at']);
+                   } else if (lastMsg != null && lastMsg is Map) { // handle single object if changed
+                     return DateTime.parse(lastMsg['created_at']);
+                   }
+                   return DateTime.parse(json['created_at']);
+                }
+                final aTime = getTime(a);
+                final bTime = getTime(b);
+                return bTime.compareTo(aTime);
+              });
         });
   }
 

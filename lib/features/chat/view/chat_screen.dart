@@ -70,14 +70,18 @@ class _ChatScreenState extends State<ChatScreen> {
       context,
       onSubmit: (title, description, price, delivery) {
         final offerData = {
-          'type': 'offer',
           'title': title,
           'description': description,
           'price': price,
           'delivery': delivery,
           'status': 'pending',
         };
-        _chatCtrl.sendMessage(jsonEncode(offerData));
+        // Send as structured message
+        _chatCtrl.sendMessage(
+          'Offer: $title', // Fallback text
+          messageType: 'offer',
+          payload: offerData,
+        );
       },
     );
   }
@@ -110,28 +114,30 @@ class _ChatScreenState extends State<ChatScreen> {
                         ? 'read'
                         : (msg.deliveredAt != null ? 'delivered' : 'sent');
 
-                    // Check for Custom Offer (JSON format)
-                    if (msg.content.trim().startsWith('{"type":"offer"')) {
-                      try {
-                        final offerData = jsonDecode(msg.content);
+                    // Check for Offer (Structured or Legacy JSON)
+                    if (msg.messageType == MessageType.offer || msg.content.trim().startsWith('{"type":"offer"')) {
+                       Map<String, dynamic> offerData = {};
+                       if (msg.messageType == MessageType.offer) {
+                         offerData = msg.payload;
+                       } else {
+                         try {
+                           offerData = jsonDecode(msg.content);
+                         } catch (_) {}
+                       }
+
+                       if (offerData.isNotEmpty) {
                         return OfferMessageBubble(
                           title: offerData['title'] ?? '',
                           description: offerData['description'] ?? '',
-                          price: offerData['price'] ?? '0',
-                          deliveryDays: offerData['delivery'] ?? '3',
+                          price: offerData['price']?.toString() ?? '0',
+                          deliveryDays: offerData['delivery']?.toString() ?? '3',
                           status: _parseOfferStatus(offerData['status']),
                           isMine: isMine,
                           time: formatFriendlyTime(msg.createdAt),
-                          onAccept: () {
-                            // TODO: Accept offer logic
-                          },
-                          onDecline: () {
-                            // TODO: Decline offer logic
-                          },
+                          onAccept: () => _chatCtrl.acceptOffer(msg),
+                          onDecline: () => _chatCtrl.rejectOffer(msg),
                         );
-                      } catch (_) {
-                        // Fallback if parsing fails
-                      }
+                       }
                     }
 
                     final hasImage = (msg.attachmentType == 'image') &&

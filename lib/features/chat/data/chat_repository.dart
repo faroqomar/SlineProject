@@ -60,6 +60,8 @@ class ChatRepository {
     String? attachmentType,
     String? attachmentName,
     int? attachmentSize,
+    String? messageType,
+    Map<String, dynamic>? payload,
   }) =>
       _service.sendMessage(
         conversationId: conversationId,
@@ -70,6 +72,8 @@ class ChatRepository {
         attachmentType: attachmentType,
         attachmentName: attachmentName,
         attachmentSize: attachmentSize,
+        messageType: messageType,
+        payload: payload,
       );
 
   // Receipts
@@ -80,4 +84,10 @@ class ChatRepository {
   // Realtime
   Stream<Message?> subscribeToMessages(String conversationId) =>
       _service.subscribeToMessages(conversationId);
+
+  Future<void> deleteConversation(String conversationId) async {
+    final uid = currentUser?.id;
+    if (uid == null) throw Exception('User not logged in');
+    return _service.deleteConversation(conversationId, uid);
+  }
 }

@@ -124,6 +124,7 @@ class ChatViewModel extends ChangeNotifier {
     _convoSub = null;
   }
 
+
   // Utility to start or fetch a conversation (kept simple for UI usage)
   Future<Conversation> createOrGetConversation({
     String? taskId,
@@ -131,6 +132,18 @@ class ChatViewModel extends ChangeNotifier {
     required String user2Id,
   }) {
     return _repo.createOrGetConversation(taskId: taskId, user1Id: user1Id, user2Id: user2Id);
+  }
+
+  Future<void> deleteConversation(String conversationId) async {
+    try {
+      await _repo.deleteConversation(conversationId);
+      conversations.removeWhere((c) => c.id == conversationId);
+      _notify(); // Update UI immediately
+      AppLogger.i('Deleted conversation: $conversationId');
+    } catch (e) {
+      AppLogger.e('Error deleting conversation: $e');
+      rethrow;
+    }
   }
 
   // --- Messages ---
@@ -158,6 +171,8 @@ class ChatViewModel extends ChangeNotifier {
     String? attachmentType,
     String? attachmentName,
     int? attachmentSize,
+    String? messageType,
+    Map<String, dynamic>? payload,
   }) async {
     final user = _repo.currentUser;
     if (user == null || activeConversation == null) return;
@@ -176,12 +191,33 @@ class ChatViewModel extends ChangeNotifier {
         attachmentType: attachmentType,
         attachmentName: attachmentName,
         attachmentSize: attachmentSize,
+        messageType: messageType,
+        payload: payload,
       );
       currentMessages.add(message);
-      _notify();
+      _notify(); // Update UI
     } catch (e) {
       AppLogger.e('Error sending message: $e');
     }
+  }
+
+  Future<void> acceptOffer(Message offerMsg) async {
+    // Send "Offer Accepted" message
+    await sendMessage(
+      'Offer Accepted',
+      messageType: 'offerAccepted',
+      payload: {'original_offer_id': offerMsg.id},
+    );
+    // TODO: The backend trigger 'trg_messages_after_insert_offer_accept' handles the rest
+  }
+
+  Future<void> rejectOffer(Message offerMsg) async {
+    // Send "Offer Rejected" message
+    await sendMessage(
+      'Offer Rejected',
+      messageType: 'offerRejected',
+      payload: {'original_offer_id': offerMsg.id},
+    );
   }
 
   void subscribeToActiveConversation() {

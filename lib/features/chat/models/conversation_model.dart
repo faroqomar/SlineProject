@@ -14,6 +14,8 @@ class Conversation {
   final String? user2Name;
   final String? lastMessage;
   final DateTime? lastMessageTime;
+  final String? lastMessageSenderId;
+  final DateTime? lastMessageSeenAt;
 
   /// The display name of the other participant in the conversation
   final String? otherUserName;
@@ -32,6 +34,8 @@ class Conversation {
     this.user2Name,
     this.lastMessage,
     this.lastMessageTime,
+    this.lastMessageSenderId,
+    this.lastMessageSeenAt,
     this.otherUserName,
     this.otherUserAvatar,
   });
@@ -39,6 +43,8 @@ class Conversation {
   factory Conversation.fromJson(Map<String, dynamic> json) {
     String? lastMessage;
     DateTime? lastMessageTime;
+    String? lastMessageSenderId;
+    DateTime? lastMessageSeenAt;
 
     final rawLastMessage = json['last_message'];
     // Add debug printing to inspect the shape of last_message
@@ -46,20 +52,26 @@ class Conversation {
     // Debug: Processing last message data
     AppLogger.d('🔎 last_message raw: $rawLastMessage');
 
-    if (rawLastMessage is Map) {
-      lastMessage = rawLastMessage['content'] as String?;
-      if (rawLastMessage['created_at'] != null) {
-        lastMessageTime = DateTime.tryParse(rawLastMessage['created_at'] as String);
+    void parseMsg(Map<String, dynamic> m) {
+      lastMessage = m['content'] as String?;
+      if (m['created_at'] != null) {
+        lastMessageTime = DateTime.tryParse(m['created_at'] as String);
       }
-    } else if (rawLastMessage is List && rawLastMessage.isNotEmpty) {
-      final msg = rawLastMessage.last;
-      lastMessage = msg['content'] as String?;
-      if (msg['created_at'] != null) {
-        lastMessageTime = DateTime.tryParse(msg['created_at'] as String);
+      lastMessageSenderId = m['sender_id'] as String?;
+      if (m['seen_at'] != null) {
+        lastMessageSeenAt = DateTime.tryParse(m['seen_at'] as String);
       }
     }
 
-    AppLogger.d('👤 Parsed other user: ${json['other_user_name']} | avatar: ${json['other_user_avatar']}');
+    if (rawLastMessage is Map) {
+      parseMsg(Map<String, dynamic>.from(rawLastMessage));
+    } else if (rawLastMessage is List && rawLastMessage.isNotEmpty) {
+      parseMsg(Map<String, dynamic>.from(rawLastMessage.last));
+    }
+
+    AppLogger.d(
+      '👤 Parsed other user: ${json['other_user_name']} | avatar: ${json['other_user_avatar']}',
+    );
 
     return Conversation(
       id: json['id'] as String,
@@ -72,6 +84,8 @@ class Conversation {
       user2Name: json['user2_name'] as String?,
       lastMessage: lastMessage,
       lastMessageTime: lastMessageTime,
+      lastMessageSenderId: lastMessageSenderId,
+      lastMessageSeenAt: lastMessageSeenAt,
       otherUserName: json['other_user_name'] as String?,
       otherUserAvatar: json['other_user_avatar'] as String?,
     );

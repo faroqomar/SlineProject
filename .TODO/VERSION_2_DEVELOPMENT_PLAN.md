@@ -14,9 +14,11 @@ Tasks are organized in **dependency order** - complete each phase before moving 
 ---
 
 ## ✅ PHASE 1: Critical Bug Fixes & Foundation — COMPLETE
-*Completed December 14, 2025*
+
+> Completed December 14, 2025
 
 ### 1.1 Task Card Image Display [BUG - HIGH PRIORITY] ✅ COMPLETE
+
 - **Issue:** Task cards don't display images even when `image_paths` are provided
 - **Location:** `lib/features/tasks/view/widgets/task_card.dart`
 - **Current:** Header shows solid color only (lines 71-186)
@@ -31,6 +33,7 @@ Tasks are organized in **dependency order** - complete each phase before moving 
 - **Reference:** New_Design shows image-based headers with gradient overlay
 
 ### 1.2 App Performance Optimization [BUG - HIGH PRIORITY] ✅ COMPLETE
+
 - **Issue:** App is slow/laggy
 - **Tasks:**
   - [x] Audit N+1 query patterns in services (JOINs vs loops)
@@ -46,6 +49,7 @@ Tasks are organized in **dependency order** - complete each phase before moving 
   - Home screen load sequence
 
 ### 1.3 Supabase Connection Verification [AUDIT] ✅ COMPLETE
+
 - **Issue:** Uncertain if all features properly connect to Supabase
 - **Tasks:**
   - [x] Audit Create Task screen - verify all fields save to DB
@@ -61,9 +65,11 @@ Tasks are organized in **dependency order** - complete each phase before moving 
 ---
 
 ## 🟡 PHASE 2: Core Feature Fixes
-*Fix existing features before adding new ones*
+
+> Fix existing features before adding new ones
 
 ### 2.1 Differentiate Tender vs Booking Cards [UI/UX]
+
 - **Issue:** Tender and Booking task cards look too similar
 - **Current:** Both use same `TaskCard` widget with only badge difference
 - **New Design Reference:**
@@ -84,6 +90,7 @@ Tasks are organized in **dependency order** - complete each phase before moving 
   - [x] Update Home/Tender/Booking screens to use correct cards
 
 ### 2.2 Orders Dashboard Overhaul [FEATURE FIX]
+
 - **Issue:** Orders screen should work as dashboard for published tenders/bookings
 - **Location:** `lib/features/orders/view/orders_dashboard_screen.dart`
 - **Required functionality:**
@@ -103,15 +110,16 @@ Tasks are organized in **dependency order** - complete each phase before moving 
   - `lib/features/orders/view/widgets/offer_list_sheet.dart`
 
 ### 2.3 Chat System Overhaul [FEATURE FIX]
+
 - **Issue:** Chat is messy and can't delete previous chats
 - **Location:** `lib/features/chat/`
 - **Current files:** 19 files in chat module
 - **Tasks:**
-  - [ ] Add delete conversation functionality
+  - [x] Add delete conversation functionality
     - Service method to delete/archive conversation
     - UI swipe-to-delete or long-press menu
-  - [ ] Fix message list ordering and realtime updates
-  - [ ] Fix offer message display/accept/reject flow
+  - [x] Fix message list ordering and realtime updates
+  - [] Fix offer message display/accept/reject flow
   - [ ] Improve conversation list UI (per `MessagesList.tsx`)
   - [ ] Add unread message badges
   - [ ] Fix attachment sending/receiving
@@ -120,6 +128,7 @@ Tasks are organized in **dependency order** - complete each phase before moving 
 - **Reference:** `.TODO/New_Design/Messages/` folder
 
 ### 2.4 Profile Screen Enhancement [FEATURE FIX]
+
 - **Issue:** Profile doesn't show portfolio, edit profile not functional
 - **Location:** `lib/features/profile/`
 - **Tasks:**
@@ -141,6 +150,7 @@ Tasks are organized in **dependency order** - complete each phase before moving 
 - **Reference:** `.TODO/New_Design/Profile/ProfileView.tsx`
 
 ### 2.5 Saved Projects Feature [FEATURE FIX]
+
 - **Issue:** Saved projects in profile doesn't work
 - **Location:** `lib/features/saved/`
 - **Tasks:**
@@ -152,6 +162,7 @@ Tasks are organized in **dependency order** - complete each phase before moving 
 - **Already exists:** `lib/features/saved/` module is implemented but may not be wired
 
 ### 2.6 Forgot Password Flow [AUTH FIX]
+
 - **Issue:** Forgot password doesn't work
 - **Location:** `lib/features/auth/`
 - **Tasks:**
@@ -166,9 +177,11 @@ Tasks are organized in **dependency order** - complete each phase before moving 
 ---
 
 ## 🟢 PHASE 3: Design System Updates
-*After features work, polish the design*
+
+> After features work, polish the design
 
 ### 3.1 Liquid Glass Effect Implementation [UI OVERHAUL]
+
 - **Note:** `liquid_glass.md` file needs to be created with design specs
 - **Reference:** `.TODO/New_Design/Theme.ts` shows glassmorphism patterns
 - **Tasks:**
@@ -185,6 +198,7 @@ Tasks are organized in **dependency order** - complete each phase before moving 
   - [ ] Ensure dark/light mode consistency
 
 ### 3.2 New Design Alignment Audit [UI AUDIT]
+
 - **Reference:** `.TODO/New_Design/` folder contains complete design reference
 - **Missing/Different from current implementation:**
   - [ ] **Auth screens:** Gradient backgrounds, refined input styling
@@ -195,12 +209,13 @@ Tasks are organized in **dependency order** - complete each phase before moving 
   - [ ] **Public Profile:** Portfolio grid, reviews section
   - [ ] **Notifications:** Group by Today/Yesterday, icons per type
   - [ ] **Wallet:** Transaction history styling, card display
-- **Per FEATURE_INVENTORY.md:** 
+- **Per FEATURE_INVENTORY.md:**
   - Proposal Submit Modal - needs verification
   - Bottom Navigation - needs verification
   - Design consistency review needed across all screens
 
 ### 3.3 Typography & Spacing Consistency
+
 - [ ] Audit all screens for hardcoded fonts/sizes
 - [ ] Use `AppTypography` everywhere
 - [ ] Use `AppDimens` for all spacing
@@ -209,9 +224,11 @@ Tasks are organized in **dependency order** - complete each phase before moving 
 ---
 
 ## 🔵 PHASE 4: New Features
-*Add new functionality*
+
+> Add new functionality
 
 ### 4.1 Notification System [NEW FEATURE]
+
 - **Issue:** No notification system for status updates
 - **Required notifications:**
   - [ ] New offer received on your task
@@ -232,11 +249,13 @@ Tasks are organized in **dependency order** - complete each phase before moving 
 - **UI Reference:** `.TODO/New_Design/Notifications/NotificationsModal.tsx`
 
 ### 4.2 Complete Order Flow System [NEW FEATURE]
+
 - **Issue:** No end-to-end order flow defined
 - **Flows to implement:**
 
 #### 4.2.1 Tender Order Flow
-```
+
+```text
 Client posts tender
     ↓
 Freelancers submit offers
@@ -257,7 +276,8 @@ Payment released → Review exchange
 ```
 
 #### 4.2.2 Booking Order Flow
-```
+
+```text
 Client views provider slots
     ↓
 Client books slot → 'pending'
@@ -272,7 +292,8 @@ Payment released → Review exchange
 ```
 
 #### 4.2.3 Payment Flow
-```
+
+```text
 Client has wallet balance
     ↓
 Client accepts offer/books slot
@@ -287,7 +308,8 @@ Platform fee deducted
 ```
 
 #### 4.2.4 Cancellation Flow
-```
+
+```text
 Before work starts:
     - Client cancels → Full refund
     - Freelancer cancels → No penalty (first time)
@@ -309,24 +331,27 @@ Dispute:
   - [ ] Add `cancelled_reason`, `cancelled_by` to tasks/bookings
   - [ ] Create `reviews` table if not exists
 
-
 ---
 
 ## 🟣 PHASE 5: Polish & Quality
-*Final touches*
+
+> Final touches
 
 ### 5.1 Error Handling Audit
+
 - [ ] Verify all services map errors to user-friendly messages
 - [ ] Add retry mechanisms for network failures
 - [ ] Implement offline mode indicators
 - [ ] Add proper loading states everywhere
 
 ### 5.2 Testing
+
 - [ ] Add unit tests for critical services
 - [ ] Add widget tests for main screens
 - [ ] Integration tests for auth and order flows
 
 ### 5.3 Documentation
+
 - [ ] Update DEVELOPER_GUIDE.md with new features
 - [ ] Update SUPABASE_SETUP.md with new tables
 - [ ] Create user guide/help section in app
@@ -335,18 +360,21 @@ Dispute:
 
 ## 📝 Additional Items Identified
 
-### From Code Analysis:
+### From Code Analysis
+
 1. **Service Card widget** exists but may not be used: `lib/features/home/view/widgets/service_card.dart`
 2. **Favorite Card** exists: `lib/features/favorites/view/widgets/favorite_card.dart`
 3. **Portfolio feature** exists but may not show on profile
 4. **Categories feature** implemented but needs design polish
 
-### From FEATURE_INVENTORY.md:
+### From FEATURE_INVENTORY.md
+
 1. Theme Dashboard (`theme_dashboard.dart`) - TO BE CREATED for Phase 3
 2. Proposal Submit Modal - needs implementation verification
 3. Design consistency review needed
 
-### Missing from New_Design that exists in Flutter:
+### Missing from New_Design that exists in Flutter
+
 1. Portfolio Management - not in design reference
 2. Saved/Favorites - not in design reference  
 3. Categories Management - not in design reference
@@ -377,7 +405,7 @@ Dispute:
 
 ## 🔧 Quick Reference - Files to Touch Most
 
-```
+```text
 lib/features/tasks/view/widgets/task_card.dart      # Phase 1.1, 2.1
 lib/features/tasks/services/task_service.dart       # Phase 1.3
 lib/features/orders/                                # Phase 2.2 (mostly new)
@@ -394,6 +422,7 @@ lib/features/notifications/                         # Phase 4.1
 ## 📋 Daily Workflow
 
 When you open this file each day:
+
 1. Check which Phase you're on
 2. Pick the next unchecked item `[ ]`
 3. Mark as `[x]` when complete
@@ -404,11 +433,13 @@ When you open this file each day:
 ## 📊 Progress Tracking
 
 ### Phase 1: Foundation ✅ COMPLETE
+
 - [x] 1.1 Task Card Images
 - [x] 1.2 Performance Optimization
 - [x] 1.3 Supabase Verification
 
 ### Phase 2: Core Features
+
 - [ ] 2.1 Tender/Booking Cards
 - [ ] 2.2 Orders Dashboard
 - [ ] 2.3 Chat System
@@ -417,16 +448,19 @@ When you open this file each day:
 - [ ] 2.6 Forgot Password
 
 ### Phase 3: Design
+
 - [ ] 3.1 Liquid Glass Effect
 - [ ] 3.2 Design Alignment
 - [ ] 3.3 Typography/Spacing
 
 ### Phase 4: New Features
+
 - [ ] 4.1 Notifications
 - [ ] 4.2 Order Flows
 - [ ] 4.3 Video Call (Optional)
 
 ### Phase 5: Polish
+
 - [ ] 5.1 Error Handling
 - [ ] 5.2 Testing
 - [ ] 5.3 Documentation
