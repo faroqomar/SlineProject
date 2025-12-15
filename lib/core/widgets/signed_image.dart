@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/utils/signed_url_cache.dart';
 import 'package:sline_app/features/tasks/services/task_image_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Renders an image from either a public URL or a private Supabase Storage path.
 ///
@@ -29,6 +30,8 @@ class SignedImage extends StatefulWidget {
   final BoxFit fit;
   final Widget? placeholder;
 
+  final String? bucket;
+
   const SignedImage({
     super.key,
     required this.storagePathOrUrl,
@@ -37,6 +40,7 @@ class SignedImage extends StatefulWidget {
     this.borderRadius = 12,
     this.fit = BoxFit.cover,
     this.placeholder,
+    this.bucket,
   });
 
   @override
@@ -87,11 +91,21 @@ class _SignedImageState extends State<SignedImage> {
 
     // Generate new signed URL and cache it
     try {
-      final signer = TaskImageService();
-      final signed = await signer.createSignedUrl(
-        v,
-        expire: const Duration(hours: 2),
-      );
+      String? signed;
+      if (widget.bucket != null) {
+        // Use specified bucket
+        signed = await Supabase.instance.client.storage
+            .from(widget.bucket!)
+            .createSignedUrl(v, 7200); // 2 hours
+      } else {
+        // Default to TaskImageService (legacy behavior for task-images)
+        final signer = TaskImageService();
+        signed = await signer.createSignedUrl(
+          v,
+          expire: const Duration(hours: 2),
+        );
+      }
+
       if (signed != null && signed.isNotEmpty) {
         SignedUrlCache.set(v, signed);
       }
@@ -108,14 +122,17 @@ class _SignedImageState extends State<SignedImage> {
 
   @override
   Widget build(BuildContext context) {
-    final defaultPlaceholder = widget.placeholder ??
+    final defaultPlaceholder =
+        widget.placeholder ??
         Container(
           width: widget.width,
           height: widget.height,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(widget.borderRadius),
             color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.3),
-            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.2)),
+            border: Border.all(
+              color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
+            ),
           ),
           child: const Icon(Icons.image_outlined, size: 22),
         );
@@ -131,7 +148,8 @@ class _SignedImageState extends State<SignedImage> {
           color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.3),
         ),
         child: const SizedBox(
-          width: 16, height: 16,
+          width: 16,
+          height: 16,
           child: CircularProgressIndicator(strokeWidth: 2),
         ),
       );
@@ -142,7 +160,16 @@ class _SignedImageState extends State<SignedImage> {
       return defaultPlaceholder;
     }
 
-    // Use CachedNetworkImage for disk/memory caching
+    // Use CachedNetworkImage for disk/memory caching with memory optimization
+    // We determine cache size based on render size to avoid OOM on large images
+    final pixelRatio = MediaQuery.of(context).devicePixelRatio;
+    final int? cacheWidth = widget.width.isFinite
+        ? (widget.width * pixelRatio).toInt()
+        : null;
+    final int? cacheHeight = widget.height.isFinite
+        ? (widget.height * pixelRatio).toInt()
+        : null;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(widget.borderRadius),
       child: CachedNetworkImage(
@@ -150,6 +177,9 @@ class _SignedImageState extends State<SignedImage> {
         width: widget.width,
         height: widget.height,
         fit: widget.fit,
+        // CRITICAL: Optimize memory usage by decoding only to display size
+        memCacheWidth: cacheWidth,
+        memCacheHeight: cacheHeight,
         placeholder: (context, url) => Container(
           width: widget.width,
           height: widget.height,
@@ -159,7 +189,8 @@ class _SignedImageState extends State<SignedImage> {
             color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.3),
           ),
           child: const SizedBox(
-            width: 16, height: 16,
+            width: 16,
+            height: 16,
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
         ),

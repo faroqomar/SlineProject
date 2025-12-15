@@ -1,7 +1,7 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.0 (Consolidated from individual feature guides)
-**Last Updated**: 2025-11-03
+**Version**: 2.1 (Updated with Portfolio v2.4 integration)
+**Last Updated**: 2025-12-16
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
 
@@ -10,6 +10,7 @@ This comprehensive guide consolidates all feature-specific documentation into a 
 ## 📑 Table of Contents
 
 ### Part I: System Overview
+
 1. [Project Overview](#1-project-overview)
 2. [Runbook (Local Dev)](#2-runbook-local-dev)
 3. [Architecture (MVVM)](#3-architecture-mvvm-per-feature)
@@ -24,6 +25,7 @@ This comprehensive guide consolidates all feature-specific documentation into a 
 12. [Gotchas & Tips](#12-gotchas--tips)
 
 ### Part II: Feature Deep-Dives
+
 - [Auth Feature](#auth-feature-reference)
 - [Tasks Module](#tasks-module-addendum-mvvm--schema-sync)
 - [Orders Feature](#orders-feature-reference)
@@ -46,6 +48,7 @@ This comprehensive guide consolidates all feature-specific documentation into a 
 This section gives any new contributor a complete map of the SLine app: how it’s built, how data flows through Supabase, and how to safely extend it. Use this as your birds‑eye guide; each feature also has its own deep‑dive document under `Sline_everything/DEVELOPER_GUIDE/`.
 
 ## 1. Project Overview
+
 - **Framework**: Flutter (Material 3)
 - **Backend**: Supabase (Auth, Postgres, Storage, Realtime, RPC)
 - **State Mgmt**: Provider + ChangeNotifier (MVVM per feature)
@@ -53,23 +56,27 @@ This section gives any new contributor a complete map of the SLine app: how it�
 - **Security**: Row Level Security (RLS) on all app tables; UI interacts through repositories/services only.
 
 ## 2. Runbook (Local Dev)
+
 - **Prereqs**: Flutter SDK, Dart, Supabase project (URL + anon key)
 - **Bootstrap Supabase**: ensure DDL/policies in `Sline_everything/SUPABASE_SETUP.md` are applied
 - **Configure client**: initialize Supabase once (see `lib/core/services/supabase_config.dart`)
 - **Run**: `flutter run -d <device>`
 
 ## 3. Architecture (MVVM, per feature)
+
 - **View (`view/`)**: Widgets/screens, local state only (forms), Material 3. No direct backend calls.
 - **ViewModel (`viewmodels/`)**: ChangeNotifier with business logic and UI state. Calls repository/service.
 - **Repository/Service (`data/`, `services/`)**: Encapsulate Supabase queries, error mapping, and Storage ops.
 - **Models (`models/`)**: Immutable data models mirroring DB rows (UTC timestamps).
 
 Conventions
+
 - **English code/comments** only. **Mounted** checks after async in widgets.
 - Store **Storage paths** in DB, not signed URLs; generate signed URLs at render time (if bucket private).
 - Use **time-based cursors** for paging (ISO timestamps); convert UTC → local for display.
 
 ## 4. Data Model (Key Tables)
+
 | Area | Tables (FKs) | Notes |
 | --- | --- | --- |
 | Identity | `auth.users` → `public.profiles(id)` | App identity row per user; RLS owner-only update. |
@@ -82,6 +89,7 @@ Conventions
 | Portfolio | `portfolio_items(owner_id)` | Public bucket by default; can switch to private + signed URLs. |
 
 ### Mini ERD
+
 ```mermaid
 erDiagram
   AUTH_USERS ||--|| PROFILES : "id=id"
@@ -101,6 +109,7 @@ erDiagram
 ```
 
 ## 5. Feature Map (Where to look)
+
 - **Core**: `lib/core/` – Supabase bootstrap, logging, theme, utils, shared widgets (signed avatar/image)
 - **Auth**: `lib/features/auth/` – signup/login, session
 - **Profile**: `lib/features/profile/` – profile edit, avatar upload, role switch, my tasks
@@ -115,11 +124,13 @@ erDiagram
 Each feature has a dedicated deep‑dive under `Sline_everything/DEVELOPER_GUIDE/<Feature>.md` with DB mapping, ERD, snippets, and testing.
 
 ## 6. RLS/Policies (Golden Rules)
+
 - Always run under a valid **session**; otherwise every RLS‑protected query fails (42501).
 - Insert/update checks use `auth.uid()`: set owner fields server‑side where possible (e.g., `provider_id`, `client_id`, `user_id`).
 - Follow setup SQL in `SUPABASE_SETUP.md`: DDL, indexes, policies, and triggers (offers tender‑only, booking guard, slot overlap, DM guard via favorites).
 
 ## 7. Storage (Buckets)
+
 | Bucket | Visibility | Used by | Access Pattern |
 | --- | --- | --- | --- |
 | `avatars` | Private | Profile avatars | Store path; create signed URL at render |
@@ -156,6 +167,7 @@ try {
 **Reference**: See `.cursor/rules/error-handling.mdc` for complete error mapping conventions.
 
 ## 9. How to Add a New Feature (Playbook)
+
 - **Schema**: add tables/columns in `SUPABASE_SETUP.md` (DDL, RLS, indexes, triggers). Apply to Supabase.
 - **Module skeleton**: `lib/features/new_feature/{view,viewmodels,services,models,data}`.
 - **Models**: mirror DB names; timestamps in UTC.
@@ -165,12 +177,14 @@ try {
 - **Docs**: create `Sline_everything/DEVELOPER_GUIDE/New Feature.md` using the existing template (overview → DB mapping → inventory → ERD → snippets → errors → tests).
 
 ## 10. Testing & Quality
+
 - **Unit**: services (mock Supabase), viewmodels state transitions.
 - **Widget**: screen interactions (form validation, loading states, snackbars).
 - **Integration**: happy‑paths against staging Supabase (auth, RLS, flows).
 - **Checklists**: each feature doc ends with a testing checklist; follow it before merging.
 
 ## 11. Quick Links (Deep Dives)
+
 - Core: `DEVELOPER_GUIDE/Core Module.md`
 - Auth: `DEVELOPER_GUIDE/Auth Feature.md`
 - Profile: `DEVELOPER_GUIDE/Profile Feature.md`
@@ -183,6 +197,7 @@ try {
 - Categories: `DEVELOPER_GUIDE/Categories Feature.md`
 
 ## 12. Gotchas & Tips
+
 - **Offer flow**: only for `task_type='tender'`; unique pending per (task,bidder).
 - **DMs**: client‑only; requires freelancer in **favorites**; enforced by triggers.
 - **Signed URLs**: keep TTL short; regenerate on demand; never persist signed URLs in DB.
@@ -190,7 +205,6 @@ try {
 - **Localization**: profile `language` can power a global locale provider.
 
 With this map and the linked deep‑dives, a new engineer can navigate, extend, and debug SLine safely and productively.
-
 
 ---
 
@@ -200,11 +214,12 @@ Each section below provides complete documentation for a specific feature module
 
 ---
 
-
 # Profile Feature Reference
 
 ## 1. Human Explanation
+
 The Profile feature manages a user’s app identity beyond `auth.users`. It loads and edits `profiles` (name, bio, role, avatar path), changes email/password through Supabase Auth, and shows the user’s own tasks. MVVM flow:
+
 - UI in `lib/features/profile/view/` renders the form and actions.
 - `ProfileViewModel` orchestrates reads/writes, avatar upload, and navigation.
 - `ProfileRepository` performs DB updates and delegates avatar upload to `AvatarService` (private storage + signed URLs).
@@ -212,6 +227,7 @@ The Profile feature manages a user’s app identity beyond `auth.users`. It load
 ## 2. Database & Supabase Mapping
 
 ### 2.1 `public.profiles`
+
 | Column | Type | Purpose / Usage | Notes |
 | --- | --- | --- | --- |
 | `id` | `uuid` (PK, FK → `auth.users.id`) | Identity link to Supabase Auth | Primary join key across modules |
@@ -225,11 +241,13 @@ The Profile feature manages a user’s app identity beyond `auth.users`. It load
 RLS (summary): Users can `SELECT/UPDATE` only their row (`auth.uid() = id`). Any mutation requires a valid session.
 
 ### 2.2 Storage buckets (private)
+
 | Bucket | Purpose | Used by | Notes |
 | --- | --- | --- | --- |
 | `avatars` | Profile images | `AvatarService` and `SignedAvatar` | Store path only; generate signed URL for display |
 
 ## 3. File Inventory
+
 | File | Layer | Description |
 | --- | --- | --- |
 | `lib/features/profile/data/profile_repository.dart` | Repository | Wraps Supabase calls for profile load/update, email updates, role change, password reset, avatar upload, and my-tasks helpers. |
@@ -239,6 +257,7 @@ RLS (summary): Users can `SELECT/UPDATE` only their row (`auth.uid() = id`). Any
 | `lib/features/profile/view/widgets/profile_avatar_widget.dart` | Widget | Renders a profile avatar via a signed URL for a private storage path. |
 
 ## 4. ERD Diagram (Context)
+
 ```mermaid
 erDiagram
   AUTH_USERS ||--|| PROFILES : "id = id"
@@ -261,6 +280,7 @@ auth.users (id, email)
 ## 5. Supabase Snippets
 
 ### 5.1 SQL (core operations)
+
 ```sql
 -- Load my profile
 select id, full_name, email, bio, role, avatar_url
@@ -279,6 +299,7 @@ where id = auth.uid();
 ```
 
 ### 5.2 Dart (supabase_flutter)
+
 ```dart
 final supabase = Supabase.instance.client;
 
@@ -309,6 +330,7 @@ final signed = await AvatarService(supabase).createSignedUrl(path);
 ```
 
 ## 6. Error Handling
+
 | Origin | Error | User-Facing Message | Mitigation |
 | --- | --- | --- | --- |
 | Profiles update | `42501` RLS denied | "Session expired. Please log in again." | Re-authenticate and retry. |
@@ -318,12 +340,14 @@ final signed = await AvatarService(supabase).createSignedUrl(path);
 | IDs | `22P02` invalid UUID | "Invalid identifier." | Validate IDs before requests. |
 
 ## 7. Extra Notes & Testing Checklist
+
 - **Store paths, not signed URLs** in `profiles.avatar_url`; generate signed URLs at render time.
 - **UTC**: All timestamps are UTC; convert with `toLocal()` where needed.
 - **Session required**: All RLS-protected queries require an active session.
 - **Home/Tasks impact**: Updating `role` affects Home/Tasks UX next load.
 
 Testing checklist:
+
 - Load profile → fields populate in `ProfileViewModel` controllers.
 - Update name/bio → persisted in `public.profiles` and reflected in UI.
 - Upload avatar → path saved, signed URL generated, and image renders.
@@ -334,7 +358,19 @@ Testing checklist:
 # Portfolio Feature Reference
 
 ## 1. Human Explanation
-The Portfolio feature lets freelancers showcase their work via items containing title, description, and an image. Items are owned by the profile (`owner_id`) and images are stored under the `portfolio` bucket. MVVM flow:
+
+The Portfolio feature lets freelancers showcase their work via items containing title, description, and an image. Items are owned by the profile (`owner_id`) and images are stored under the `portfolio` bucket.
+
+**v2.4 Update (2025-12-16)**: Portfolio management is now also integrated into the Profile module:
+
+- **UI**: `lib/features/profile/view/manage_portfolio_screen.dart` (accessible from Settings)
+- **ViewModel**: `ProfileViewModel` handles portfolio CRUD via `fetchPortfolio()`, `addPortfolioItem()`, `updatePortfolioItem()`, `deletePortfolioItem()`
+- **Repository**: `ProfileRepository` includes portfolio methods + `uploadPortfolioImage()`
+- **Image Picker**: Uses `FilePicker` instead of `ImagePicker` for iOS stability, with `FlutterImageCompress` for optimization
+- **Dialog Workaround**: After upload, dialog shows checkmark (not image preview) to avoid iOS native crash
+
+Legacy MVVM flow (if using standalone module):
+
 - UI in `lib/features/portfolio/view/` (screen + sheets + widgets).
 - `PortfolioViewModel` orchestrates listing, add, edit, and delete.
 - `PortfolioRepository` wraps `PortfolioService` (Storage + PostgREST) and exposes a stable API.
@@ -342,6 +378,7 @@ The Portfolio feature lets freelancers showcase their work via items containing 
 ## 2. Database & Supabase Mapping
 
 ### 2.1 `public.portfolio_items`
+
 | Column | Type | Purpose / Usage | Notes |
 | --- | --- | --- | --- |
 | `id` | `uuid` (PK) | Portfolio item id | Default `gen_random_uuid()` |
@@ -352,20 +389,24 @@ The Portfolio feature lets freelancers showcase their work via items containing 
 | `created_at` | `timestamptz` | When created (UTC) | Default `now()` |
 
 Indexes
+
 - `idx_portfolio_owner_created (owner_id, created_at DESC)` for fast listing.
 
 RLS Policies (Summary)
+
 | Table | Action | Policy | Rule |
 | --- | --- | --- | --- |
 | `portfolio_items` | SELECT | `portfolio_select_owner_or_public` | `USING (true)` (public-readable) |
 | `portfolio_items` | ALL | `portfolio_crud_owner` | `USING/CHECK (auth.uid() = owner_id)` |
 
 ### 2.2 Storage bucket
+
 | Bucket | Visibility | Purpose | Notes |
 | --- | --- | --- | --- |
 | `portfolio` | Public | Host portfolio images | Service stores a public URL via `getPublicUrl()`; if switching to private, use signed URLs instead.
 
 ## 3. File Inventory
+
 | File | Layer | Description |
 | --- | --- | --- |
 | `lib/features/portfolio/data/portfolio_repository.dart` | Repository | Wraps `PortfolioService` and exposes list/add/delete/update methods; surfaces `currentUser`. |
@@ -379,6 +420,7 @@ RLS Policies (Summary)
 | `lib/features/portfolio/view/widgets/portfolio_tile.dart` | Widget | Card per item (image + title). |
 
 ## 4. ERD Diagram
+
 ```mermaid
 erDiagram
   PROFILES ||--o{ PORTFOLIO_ITEMS : "owner_id"
@@ -404,6 +446,7 @@ profiles (id) ──< portfolio_items (owner_id)
 ## 5. Supabase Snippets
 
 ### 5.1 SQL
+
 ```sql
 -- Insert a portfolio item (owner-only by RLS)
 insert into public.portfolio_items (owner_id, title, description, image_url)
@@ -428,6 +471,7 @@ where id = '<item_id>' and owner_id = auth.uid();
 ```
 
 ### 5.2 Dart (supabase_flutter)
+
 ```dart
 final supabase = Supabase.instance.client;
 
@@ -479,6 +523,7 @@ Future<void> deletePortfolioItem(String id, {String? publicUrl}) async {
 ```
 
 ## 6. Error Handling
+
 | Origin | Error | User-Facing Message | Mitigation |
 | --- | --- | --- | --- |
 | Upload | `StorageException` | "Upload failed. Please try again." | Validate file size/type; retry safely. |
@@ -487,21 +532,24 @@ Future<void> deletePortfolioItem(String id, {String? publicUrl}) async {
 | IDs | `22P02` invalid UUID | "Invalid identifier." | Validate IDs before requests. |
 
 ## 7. Extra Notes & Testing Checklist
+
 - **Public vs Private**: Current implementation stores a public URL; if privacy is required, store the path and generate signed URLs instead.
 - **Paging**: Consider time-based cursors (`created_at`) on the server once SDK supports it.
 - **UTC**: All timestamps are UTC; convert to local for display.
 
 Testing checklist:
+
 - Add item (upload + insert) → appears in grid and opens in details.
 - Edit title/description → changes persist and reflect in list.
 - Delete item → row removed; image cleanup attempted.
 - Attempt to edit/delete other user’s item → denied by RLS.
 
-
 # Favorites Feature Reference
 
 ## 1. Human Explanation
+
 The Favorites feature lets a Client bookmark a Freelancer for quick access. It streamlines repeat collaborations and enables a shortcut to start a direct chat (DM) without creating a task first. The implementation follows MVVM:
+
 - UI in `lib/features/favorites/view/` (screen + widgets) stays declarative.
 - `FavoritesViewModel` handles list state, add/remove actions, and error surface.
 - `FavoritesService` executes Supabase queries under RLS.
@@ -509,6 +557,7 @@ The Favorites feature lets a Client bookmark a Freelancer for quick access. It s
 ## 2. Database & Supabase Mapping
 
 ### 2.1 `public.favorites`
+
 | Column | Type | Purpose / Usage | Notes |
 | --- | --- | --- | --- |
 | `id` | `uuid` (PK) | Favorite record id | Default `gen_random_uuid()` |
@@ -517,10 +566,12 @@ The Favorites feature lets a Client bookmark a Freelancer for quick access. It s
 | `created_at` | `timestamptz` | When the favorite was created (UTC) | Default `now()` |
 
 Indexes & Constraints
+
 - Unique `(client_id, freelancer_id)` to prevent duplicates.
 - Indexes on `client_id` and `freelancer_id` for lookups (see `SUPABASE_SETUP.md`).
 
 RLS Policies (Summary)
+
 | Table | Action | Policy | Rule |
 | --- | --- | --- | --- |
 | `favorites` | SELECT | `favorites_select_own` | `client_id = auth.uid()` |
@@ -528,9 +579,11 @@ RLS Policies (Summary)
 | `favorites` | DELETE | `favorites_delete_own` | `client_id = auth.uid()` |
 
 Related Policies
+
 - Chat DM creation references `favorites` via `trg_conversations_guard`: only a client can start a non-task conversation with someone in their favorites.
 
 ## 3. File Inventory
+
 | File | Layer | Description |
 | --- | --- | --- |
 | `lib/features/favorites/data/favorites_service.dart` | Service | CRUD for `favorites` with RLS-safe patterns; joins profiles for display. |
@@ -541,6 +594,7 @@ Related Policies
 | `lib/features/favorites/routes/favorites_routes.dart` | Routes | Navigation entry-points to favorites UI. |
 
 ## 4. ERD Diagram
+
 ```mermaid
 erDiagram
   PROFILES ||--o{ FAVORITES : "client_id"
@@ -567,6 +621,7 @@ profiles (id) ──< favorites (freelancer_id)
 ## 5. Supabase Snippets
 
 ### 5.1 SQL
+
 ```sql
 -- Add a favorite (RLS ensures client_id = auth.uid())
 insert into public.favorites (client_id, freelancer_id)
@@ -585,6 +640,7 @@ where client_id = auth.uid() and freelancer_id = '<freelancer_id>';
 ```
 
 ### 5.2 Dart (supabase_flutter)
+
 ```dart
 final supabase = Supabase.instance.client;
 
@@ -641,6 +697,7 @@ Future<void> safeAddFavorite(String freelancerId) async {
 ```
 
 ## 6. Error Handling
+
 | Origin | Error | User-Facing Message | Mitigation |
 | --- | --- | --- | --- |
 | Add favorite | `23505` unique violation | "This freelancer is already in your favorites." | Disable button or show success state if already present. |
@@ -648,11 +705,13 @@ Future<void> safeAddFavorite(String freelancerId) async {
 | Fetch join | Missing profile row | "Profile unavailable." | Render placeholder name/avatar. |
 
 ## 7. Extra Notes & Testing Checklist
+
 - **DM integration**: Starting a non-task conversation requires the freelancer to be in the client’s favorites; enforced by triggers/policies in conversations.
 - **UTC**: `created_at` is UTC; format with `formatUtcToLocal()` for display.
 - **Performance**: Use the simple list for most screens; join with profiles only when fields are needed.
 
 Testing checklist:
+
 - Add → list shows the freelancer at top.
 - Add same freelancer again → unique violation mapped to friendly copy.
 - Remove → disappears from list and server.
@@ -662,7 +721,9 @@ Testing checklist:
 # Saved Feature Reference
 
 ## 1. Human Explanation
+
 The Saved feature lets an authenticated user bookmark tasks for quick access. It is private per-user and shows a list with navigation to task details. Architecture:
+
 - UI in `lib/features/saved/view/` renders saved tasks and toggles.
 - `SavedTasksViewModel` manages state (ids + full tasks), loading, and friendly errors.
 - `SavedTasksService` performs PostgREST calls to `saved_tasks` and joins `tasks` when needed.
@@ -670,6 +731,7 @@ The Saved feature lets an authenticated user bookmark tasks for quick access. It
 ## 2. Database & Supabase Mapping
 
 ### 2.1 `public.saved_tasks`
+
 | Column | Type | Purpose / Usage | Notes |
 | --- | --- | --- | --- |
 | `id` | `uuid` (PK) | Saved entry id | Default `gen_random_uuid()` |
@@ -678,10 +740,12 @@ The Saved feature lets an authenticated user bookmark tasks for quick access. It
 | `created_at` | `timestamptz` | When saved (UTC) | Default `now()` |
 
 Indexes & Constraints
+
 - Unique `(user_id, task_id)` prevents duplicates.
 - (Typical) index on `user_id` for listing performance.
 
 RLS Policies (Summary)
+
 | Table | Action | Policy | Rule |
 | --- | --- | --- | --- |
 | `saved_tasks` | SELECT | owner-only | `user_id = auth.uid()` |
@@ -689,6 +753,7 @@ RLS Policies (Summary)
 | `saved_tasks` | DELETE | owner-only | `user_id = auth.uid()` |
 
 ## 3. File Inventory
+
 | File | Layer | Description |
 | --- | --- | --- |
 | `lib/features/saved/data/saved_tasks_service.dart` | Service | CRUD: listMine, isSaved, add, remove, toggle, listMineWithDetails (join tasks). |
@@ -699,6 +764,7 @@ RLS Policies (Summary)
 | `lib/features/saved/routes/saved_routes.dart` | Routes | Navigation to Saved screen. |
 
 ## 4. ERD Diagram
+
 ```mermaid
 erDiagram
   PROFILES ||--o{ SAVED_TASKS : "user_id"
@@ -717,6 +783,7 @@ tasks (id)    ──< saved_tasks (task_id)
 ## 5. Supabase Snippets
 
 ### 5.1 SQL
+
 ```sql
 -- Save a task (owner-only by RLS)
 insert into public.saved_tasks (user_id, task_id)
@@ -733,6 +800,7 @@ where user_id = auth.uid() and task_id = '<task_id>';
 ```
 
 ### 5.2 Dart (supabase_flutter)
+
 ```dart
 final supabase = Supabase.instance.client;
 
@@ -785,6 +853,7 @@ class SavedTasksService {
 ```
 
 ## 6. Error Handling
+
 | Origin | Error | User-Facing Message | Mitigation |
 | --- | --- | --- | --- |
 | Add duplicate | `23505` unique violation | "This task is already in your saved list." | Treat as success (already saved). |
@@ -792,11 +861,13 @@ class SavedTasksService {
 | Join details | Missing task row | "This task is no longer available." | Hide card; allow cleanup removal. |
 
 ## 7. Extra Notes & Testing Checklist
+
 - **Privacy**: Saved entries are per-user; never expose other users’ saved tasks.
 - **UX**: Toggle should optimistically update the icon, with background refresh of full list.
 - **UTC**: Use `formatUtcToLocal()` when displaying `created_at`.
 
 Testing checklist:
+
 - Save → appears in list; icon toggles immediately.
 - Save the same task twice → duplicate is handled gracefully.
 - Remove → disappears; toggle syncs across Home/Saved screens.
@@ -804,42 +875,48 @@ Testing checklist:
 ⸻
 
   ✅ That’s the full documentation for Categories.
- 
+
  ⸻
- 
- # Categories Feature Reference
- 
- ## 1. Human Explanation
+
+# Categories Feature Reference
+
+## 1. Human Explanation
+
  The categories module provides a read-mostly catalog of service categories (e.g., "Design", "Development"). It powers dropdowns and filters in `tasks` creation and browsing. Admins seed and manage categories; regular users only read them. The feature is implemented with MVVM: `CategoriesViewModel` coordinates reads via `CategoriesRepository` → `CategoriesService`, and UI in `categories_screen.dart` remains declarative.
- 
- ## 2. Database & Supabase Mapping
- 
- ### 2.1 `public.categories`
+
+## 2. Database & Supabase Mapping
+
+### 2.1 `public.categories`
+
  | Column | Type | Purpose / Usage | Notes |
  | --- | --- | --- | --- |
  | `id` | `uuid` (PK) | Category identifier | Default `gen_random_uuid()` |
  | `name` | `text` | Human-readable name | Unique (case-insensitive) via index on `lower(name)` |
  | `icon_url` | `text` | Optional icon path/URL | Nullable |
  | `created_at` | `timestamptz` | Created timestamp | Default `now()` (UTC) |
- 
- ### 2.2 `public.tasks` (relevant FK)
+
+### 2.2 `public.tasks` (relevant FK)
+
  | Column | Type | Purpose / Usage | Notes |
  | --- | --- | --- | --- |
  | `category_id` | `uuid` (FK → `categories.id`) | Tasks link to a category | Indexed as `idx_tasks_category_id` |
- 
- ### 2.3 Indexes & Constraints
- - `uq_categories_name`: `UNIQUE (lower(name))` prevents duplicates with different cases.
- - `idx_categories_name_lower`: index on `lower(name)` accelerates search/sort.
- - `idx_tasks_category_id`: speeds up task filtering by category.
- 
- ### 2.4 RLS Policies (Summary)
+
+### 2.3 Indexes & Constraints
+
+- `uq_categories_name`: `UNIQUE (lower(name))` prevents duplicates with different cases.
+- `idx_categories_name_lower`: index on `lower(name)` accelerates search/sort.
+- `idx_tasks_category_id`: speeds up task filtering by category.
+
+### 2.4 RLS Policies (Summary)
+
  | Table | Action | Who | Rule / Notes |
  | --- | --- | --- | --- |
  | `public.categories` | SELECT | Authenticated | Read-only for app users |
  | `public.categories` | INSERT/UPDATE/DELETE | Admin/Service role | Managed via seeds/Dashboard (not by clients) |
  | `public.tasks` | SELECT | Authenticated | Standard app-wide policy |
- 
- ## 3. File Inventory
+
+## 3. File Inventory
+
  | File | Layer | Description |
  | --- | --- | --- |
  | `lib/features/categories/services/categories_service.dart` | Service | Executes PostgREST reads from `public.categories`, provides simple in-memory cache, and client-side search fallback. |
@@ -847,8 +924,9 @@ Testing checklist:
  | `lib/features/categories/viewmodels/categories_view_model.dart` | ViewModel | `ChangeNotifier` handling loading state, errors, search query, and list data. |
  | `lib/features/categories/view/categories_screen.dart` | View | Material 3 UI for listing/searching categories using the ViewModel. |
  | `lib/features/categories/models/category_model.dart` | Model | Immutable model mapping DB columns (`id`, `name`, `icon_url`, `created_at`) with UTC handling. |
- 
- ## 4. ERD Diagram
+
+## 4. ERD Diagram
+
  ```mermaid
  erDiagram
    CATEGORIES ||--o{ TASKS : "category_id"
@@ -864,16 +942,17 @@ Testing checklist:
      uuid category_id FK
    }
  ```
- 
+
  ```text
  categories (id, name, icon_url)
       │
       └──< tasks (category_id)
  ```
- 
- ## 5. Supabase Snippets
- 
- ### 5.1 SQL
+
+## 5. Supabase Snippets
+
+### 5.1 SQL
+
  ```sql
  -- Read categories (app users)
  select id, name, icon_url from public.categories order by name asc;
@@ -893,8 +972,9 @@ Testing checklist:
  join public.categories c on c.id = t.category_id
  where lower(c.name) = lower('Design');
  ```
- 
- ### 5.2 Dart (supabase_flutter)
+
+### 5.2 Dart (supabase_flutter)
+
  ```dart
  final supabase = Supabase.instance.client;
  
@@ -939,41 +1019,47 @@ Testing checklist:
    }
  }
  ```
- 
- ## 6. Error Handling
+
+## 6. Error Handling
+
  | Origin | Error | User Message | Mitigation |
  | --- | --- | --- | --- |
  | Read categories | Network/timeout | "Unable to fetch categories. Check your connection." | Retry with cached data if available. |
  | Admin writes | 23505 (unique violation) | "A category with that name already exists." | Suggest a different name. |
  | Admin writes | 42501 (RLS/permission denied) | "You do not have permission to modify categories." | Use service role/admin tools. |
  | Any | 22P02 (invalid input syntax) | "Invalid identifier provided." | Validate IDs before sending. |
- 
- ## 7. Extra Notes & Testing Checklist
- - **Caching**: `CategoriesService` maintains a simple in-memory cache; call `clearCache()` to refresh.
- - **UTC**: `created_at` is UTC; no conversion needed for display beyond human formatting.
- - **Search**: Service performs client-side search when SDK lacks `.ilike`; consider server-side search later.
- - **Seeding**: See `SUPABASE_SETUP.md` for seed values and indexes (`uq_categories_name`, `idx_categories_name_lower`).
- 
- Testing checklist:
- - **List**: Fetch categories and verify alphabetical ordering.
- - **Search**: Apply a search query and confirm client-side filter works.
- - **Cache**: Verify `getCachedOrFetch()` returns cached data after a first load.
- - **Tasks join**: Query tasks by `category_id` and ensure correct filtering.
- - **Permission**: Attempt a write with a user token and confirm RLS denial.
 
+## 7. Extra Notes & Testing Checklist
+
+- **Caching**: `CategoriesService` maintains a simple in-memory cache; call `clearCache()` to refresh.
+- **UTC**: `created_at` is UTC; no conversion needed for display beyond human formatting.
+- **Search**: Service performs client-side search when SDK lacks `.ilike`; consider server-side search later.
+- **Seeding**: See `SUPABASE_SETUP.md` for seed values and indexes (`uq_categories_name`, `idx_categories_name_lower`).
+
+ Testing checklist:
+
+- **List**: Fetch categories and verify alphabetical ordering.
+- **Search**: Apply a search query and confirm client-side filter works.
+- **Cache**: Verify `getCachedOrFetch()` returns cached data after a first load.
+- **Tasks join**: Query tasks by `category_id` and ensure correct filtering.
+- **Permission**: Attempt a write with a user token and confirm RLS denial.
 
 # Home Feature Reference
 
 ## 1. Human Explanation
+
 The Home feature is the authenticated landing page. It shows a searchable, filterable feed of featured/open tasks and routes to other modules (create task, saved tasks, task details). It follows MVVM:
+
 - UI in `lib/features/home/view/` renders search/filter controls and task list.
 - `HomeViewModel` loads/refreshes featured tasks and updates `TaskFilterViewModel`.
 - `TaskService` provides the Supabase reads for tasks and joins `profiles` for author display.
 
 ## 2. Database & Supabase Mapping
+
 Home does not own tables; it reads from feature tables to populate the dashboard.
 
 ### 2.1 `public.tasks` (consumed)
+
 | Column | Type | Purpose / Usage | Notes |
 | --- | --- | --- | --- |
 | `id` | `uuid` | Task id | Used for navigation/details |
@@ -992,6 +1078,7 @@ Related tables: `public.profiles` for author name/avatar, `public.categories` fo
 RLS: Reads allowed for authenticated users; writes follow feature-specific policies in Tasks.
 
 ## 3. File Inventory
+
 | File | Layer | Description |
 | --- | --- | --- |
 | `lib/features/home/view/home_screen.dart` | View | Dashboard UI with search, category filter, refresh, and navigation to details/create/saved tasks. |
@@ -1000,6 +1087,7 @@ RLS: Reads allowed for authenticated users; writes follow feature-specific polic
 | `lib/features/tasks/viewmodels/task_filter_view_model.dart` | ViewModel | Holds filtered list, search text, and category filter state used by `HomeScreen`. |
 
 ## 4. ERD Diagram (Context)
+
 ```mermaid
 erDiagram
   PROFILES ||--o{ TASKS : "user_id"
@@ -1018,6 +1106,7 @@ categories (id) ──< tasks (category_id)
 ## 5. Supabase Snippets
 
 ### 5.1 Dart (reads used by Home)
+
 ```dart
 final supabase = Supabase.instance.client;
 
@@ -1030,12 +1119,14 @@ final rows = await supabase
 ```
 
 ### 5.2 Filter logic (ViewModel collaboration)
+
 ```dart
 // HomeViewModel.loadFeaturedTasks(...) populates TaskFilterViewModel
 await homeViewModel.loadFeaturedTasks(filterController: context.read<TaskFilterViewModel>());
 ```
 
 ## 6. Error Handling
+
 | Origin | Error | User Message | Mitigation |
 | --- | --- | --- | --- |
 | Task fetch | Network/PostgREST | "Unable to load tasks." | Retry with pull-to-refresh; log via `AppLogger`. |
@@ -1043,11 +1134,13 @@ await homeViewModel.loadFeaturedTasks(filterController: context.read<TaskFilterV
 | RLS | Permission denied | "Please sign in to view tasks." | Ensure valid session. |
 
 ## 7. Extra Notes & Testing Checklist
+
 - **Performance**: Avoid N+1 joins in UI; TaskService already batches and hydrates author names/avatars.
 - **UTC**: Times are UTC; convert with `formatUtcToLocal()` for display.
 - **Saved tasks**: Home integrates with `SavedTasksViewModel` to sync bookmark icons after refresh.
 
 Testing checklist:
+
 - Home loads with featured open tasks on first display.
 - Search and category filter update the list immediately.
 - Pull-to-refresh reloads tasks and syncs saved-state icons.
@@ -1057,7 +1150,9 @@ Testing checklist:
 # Core Module Reference
 
 ## 1. Human Explanation
+
 The core module (`lib/core/`) provides shared infrastructure used across all features:
+
 - **Supabase bootstrapping** via `supabase_config.dart`.
 - **Global state** like navigation via `providers/`.
 - **Cross-cutting utilities** (date/price formatting), **theme** constants, and **shared widgets** (signed images/avatars, bottom nav).
@@ -1065,9 +1160,11 @@ The core module (`lib/core/`) provides shared infrastructure used across all fea
 This keeps feature modules small and focused while centralizing common concerns.
 
 ## 2. Database & Supabase Mapping
+
 Core does not own tables, but it integrates with key Supabase resources used throughout the app.
 
 ### 2.1 `public.profiles` (consumed by core model/widgets)
+
 | Column | Type | Purpose / Usage | Notes |
 | --- | --- | --- | --- |
 | `id` | `uuid` | User identity (FK → `auth.users.id`) | Mirrors Supabase Auth user id |
@@ -1079,6 +1176,7 @@ Core does not own tables, but it integrates with key Supabase resources used thr
 RLS: Users can read/update only their own row (`auth.uid() = id`). This affects any profile reads from core helpers/widgets.
 
 ### 2.2 Storage buckets (private)
+
 | Bucket | Purpose | Used by | Notes |
 | --- | --- | --- | --- |
 | `avatars` | Store profile avatars | `SignedAvatar` | Private; generate short-lived signed URLs before rendering |
@@ -1087,10 +1185,12 @@ RLS: Users can read/update only their own row (`auth.uid() = id`). This affects 
 Policies: Buckets are private; reads require signed URLs. Writes require authenticated user and policy compliance (feature-specific).
 
 ### 2.3 Supabase client (SDK)
+
 - Core exposes a single configured client from `supabase_config.dart` for the rest of the app.
 - All repositories/services import it to perform queries and to ensure consistent session handling for RLS.
 
 ## 3. File Inventory
+
 | File | Layer | Description |
 | --- | --- | --- |
 | `lib/core/services/supabase_config.dart` | Service bootstrap | Initializes Supabase SDK once; exposes `Supabase.instance.client`. |
@@ -1105,6 +1205,7 @@ Policies: Buckets are private; reads require signed URLs. Writes require authent
 | `lib/core/models/user_profile.dart` | Model | Maps DB `profiles` row to a typed object used across features. |
 
 ## 4. ERD Diagram (context)
+
 ```mermaid
 erDiagram
   AUTH_USERS ||--|| PROFILES : "id=id"
@@ -1126,6 +1227,7 @@ auth.users (id)
 ## 5. Supabase Snippets
 
 ### 5.1 Initialize Supabase client once
+
 ```dart
 // lib/core/services/supabase_config.dart
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -1142,6 +1244,7 @@ final supabase = Supabase.instance.client;
 ```
 
 ### 5.2 Fetch profile for current user (RLS requires session)
+
 ```dart
 final user = Supabase.instance.client.auth.currentUser;
 if (user != null) {
@@ -1154,6 +1257,7 @@ if (user != null) {
 ```
 
 ### 5.3 Create a signed URL for a private avatar path
+
 ```dart
 // Given a storage path like 'avatars/<uid>/<file>.jpg'
 final storage = Supabase.instance.client.storage.from('avatars');
@@ -1161,6 +1265,7 @@ final String signedUrl = await storage.createSignedUrl(path, 60 * 10); // 10 min
 ```
 
 ## 6. Error Handling
+
 | Origin | Error | User Message | Mitigation |
 | --- | --- | --- | --- |
 | Profiles read | `42501` (RLS denied) | "Session expired. Please log in again." | Refresh session, re-authenticate. |
@@ -1169,22 +1274,27 @@ final String signedUrl = await storage.createSignedUrl(path, 60 * 10); // 10 min
 | Supabase init | Invalid URL/key | "App configuration error." | Validate env vars; avoid hardcoding secrets in code. |
 
 ## 7. Extra Notes & Testing Checklist
+
 - **Secrets**: Do not hardcode the Supabase anon key in source for production. Prefer env/CI secrets.
 - **UTC**: All timestamps are UTC; use `formatUtcToLocal()` for display.
 - **Caching**: `SignedAvatar/SignedImage` may cache signed URLs for a short time to reduce churn.
 - **RLS**: Ensure `auth.currentUser` is present before any RLS-protected fetch.
 
 Testing checklist:
+
 - Initialize Supabase on app start and verify a simple `select` from `profiles` works only when logged in.
 - Render `SignedAvatar` with a valid private `avatar_url` path and confirm the image loads.
 - Expire a signed URL and confirm the widget regenerates it and rerenders.
 - Navigate tabs with `NavigationProvider` and confirm `CustomBottomNavBar` syncs state.
+
 # Auth Feature Reference
 
 ## 1. Human Explanation
+
 The authentication module gates the entire SLine marketplace. It lets prospective clients or freelancers sign up, seeds their `profiles` row, signs them into Supabase Auth, and exposes the active session to downstream features like tasks, chat, bookings, and profile management. Unauthenticated users are redirected to `LoginScreen`/`SignupScreen`; once `AuthViewModel` confirms credentials, navigation jumps to `MainNavigationScreen` and the rest of the app becomes accessible under RLS.
 
 ## 2. Database & Supabase Mapping
+
 | Column | Type | Purpose / Usage | Notes |
 | --- | --- | --- | --- |
 | `auth.users.id` | `uuid` | Primary Supabase identity | Immutable; referenced by every feature table |
@@ -1199,11 +1309,13 @@ The authentication module gates the entire SLine marketplace. It lets prospectiv
 | `auth.sessions` | Built-in | Active session in SDK | Required for any RLS-protected query |
 
 **RLS summary**
+
 - `profiles` **SELECT/UPDATE/DELETE**: allowed only when `auth.uid() = id`.
 - `profiles` **INSERT**: new row must satisfy `id = auth.uid()`.
 - Supabase Auth APIs bypass RLS but depend on configured email templates, reset links, and security policies.
 
 ## 3. File Inventory
+
 | File | Layer | Description |
 | --- | --- | --- |
 | `lib/features/auth/view/login_screen.dart` | View | Material 3 login form with validation, `ChangeNotifierProvider`, and call to `AuthViewModel.login()`.
@@ -1213,6 +1325,7 @@ The authentication module gates the entire SLine marketplace. It lets prospectiv
 | `lib/features/auth/data/auth_repository.dart` | Repository | Optional abstraction mirroring service calls for future error mapping or caching; currently unused by the ViewModel.
 
 ## 4. ERD Diagram
+
 ```mermaid
 erDiagram
     AUTH_USERS ||--|| PROFILES : "id = id"
@@ -1265,6 +1378,7 @@ auth.users (id PK, email, created_at)
 ```
 
 ## 5. Supabase Snippets
+
 ```sql
 -- Seed profile after a successful signup
 insert into public.profiles (id, full_name, email)
@@ -1343,6 +1457,7 @@ Future<void> logoutUser() async {
 ```
 
 ## 6. Error Handling
+
 | Origin | System Error | User-Facing Message | Mitigation |
 | --- | --- | --- | --- |
 | `supabase.auth.signUp` | `AuthException` (duplicate email / rate limit) | “An account with that email already exists. Try logging in.” | Prompt password reset |
@@ -1353,11 +1468,13 @@ Future<void> logoutUser() async {
 | `supabase.auth.signOut` | `AuthException: Session not found` | Silent success | Navigation still returns to `/login` |
 
 **Mapping tips**
+
 - `23505` → Duplicate record; surface “already exists”.
 - `42501` → Permission denied; prompt re-login.
 - `AuthException` → Map library message to curated copy before showing to the user.
 
 ## 7. Extra Notes & Testing Checklist
+
 - **Session-first logic**: Always verify `supabase.auth.currentUser` before inserting into `profiles`; RLS rejects anonymous inserts.
 - **UTC timestamps**: Convert `auth.users.created_at` and `profiles.created_at` with `toLocal()` for presentation.
 - **Logging**: `AuthService` uses `AppLogger`; avoid logging PII such as passwords or tokens.
@@ -1365,14 +1482,17 @@ Future<void> logoutUser() async {
 - **Storage integration**: Avatar uploads are delegated to `AvatarService`; auth feature only stores the resulting path.
 
 **Testing checklist**
+
 - **Signup happy path**: Register user, confirm `profiles` row exists, navigate to `MainNavigationScreen`.
 - **Duplicate signup**: Expect friendly duplicate email message and prompt to log in.
 - **Login failure**: Buttons re-enable after error, snackbar shows mapped copy.
 - **Logout flow**: Session cleared and navigation returns to `/login`.
 - **Profile fetch post-login**: `AuthService.getCurrentUserProfile()` succeeds with current JWT and returns latest data.
+
 # Tasks Module Addendum (MVVM + Schema Sync)
 
 ## 1. MVVM Alignment (current code)
+
 - **ViewModels**: `lib/features/tasks/viewmodels/`
   - `task_view_model.dart` – orchestrates core task flows.
   - `task_requests_view_model.dart` – submit/update offers, list requests.
@@ -1388,6 +1508,7 @@ Future<void> logoutUser() async {
 ## 2. Database & Supabase Mapping (from SUPABASE_SETUP.md)
 
 ### 2.1 `public.tasks`
+
 | Column | Type | Purpose / Usage | Notes |
 | --- | --- | --- | --- |
 | `id` | `uuid` (PK) | Task id | Default `gen_random_uuid()` |
@@ -1407,9 +1528,11 @@ Future<void> logoutUser() async {
 | `created_at` | `timestamptz` | Created (UTC) | Default `now()` |
 
 Indexes
+
 - `idx_tasks_category_id` on `(category_id)`
 
 ### 2.2 `public.task_requests`
+
 | Column | Type | Purpose / Usage | Notes |
 | --- | --- | --- | --- |
 | `id` | `uuid` (PK) | Request id | Default `gen_random_uuid()` |
@@ -1422,13 +1545,16 @@ Indexes
 | `created_at` | `timestamptz` | Created (UTC) | Default `now()` |
 
 Indexes & Constraints
+
 - `idx_task_requests_task_created (task_id, created_at DESC)`
 - `uq_task_requests_unique_pending_per_user (task_id, bidder_id) WHERE status = 'pending'`
 
 ### 2.3 Enums
+
 - `task_type_enum`: `tender`, `booking`
 
 ### 2.4 RLS (summary)
+
 - **tasks**: RLS ON. Owner-only insert/update/delete (`auth.uid() = user_id`). Authenticated users may select/browse.
 - **task_requests**: RLS ON. Policies:
   - Owner selects offers for their tasks (tender only).
@@ -1437,10 +1563,12 @@ Indexes & Constraints
   - Owner updates offer status.
 
 ### 2.5 Triggers/Guards
+
 - `trg_task_requests_only_for_tender` → rejects offers on `booking` tasks.
 - (Optional) Guard for positive `price` and `days` (documented in setup notes).
 
 ## 3. ERD (Addendum)
+
 ```mermaid
 erDiagram
   PROFILES ||--o{ TASKS : "user_id"
@@ -1462,6 +1590,7 @@ tasks (id) ──< task_requests (task_id)
 ```
 
 ## 4. Supabase Snippets (accurate to schema)
+
 ```sql
 -- Create tender task (owner-only)
 insert into public.tasks (user_id, title, description, budget, task_type, category_id)
@@ -1510,6 +1639,7 @@ await supabase.from('task_requests').insert({
 ```
 
 ## 5. Error Handling (addendum)
+
 | Origin | Error | User-Facing Message | Mitigation |
 | --- | --- | --- | --- |
 | task_requests insert | `uq_task_requests_unique_pending_per_user` | "You already have a pending offer for this task." | Disable duplicate submit while pending. |
@@ -1518,23 +1648,27 @@ await supabase.from('task_requests').insert({
 | FK violations | `23503` | "Task or category does not exist." | Validate IDs, guard deletes. |
 
 ## 6. Extra Notes & Testing
+
 - **Task types**: UI should hide offer flow when `task_type = 'booking'`.
 - **Indexes**: Keep category and request ordering snappy via provided indexes.
 - **UTC**: Convert `created_at` to local when displaying.
 
 Testing checklist:
+
 - Create tender task → appears in open list.
 - Submit offer → one pending per (task, bidder) enforced.
 - Accept offer as owner → status updates; downstream chat/booking flows proceed.
 - Try offer on booking task → rejected by trigger.
 - Non-owner updates → denied by RLS.
 
-
 ?
+
 # Chat Feature Reference
 
 ## 1. Human Explanation
+
 The chat module provides one-to-one messaging between a client and a freelancer. Conversations may be tied to a `task` (job discussion) or be a client-initiated direct message (DM) to a favorite freelancer. The feature follows MVVM:
+
 - UI in `lib/features/chat/view/` stays declarative.
 - `ChatViewModel` orchestrates state, subscriptions, and actions.
 - `ChatRepository` wraps `MessageService`, which performs Supabase queries, RPC calls, and Realtime streaming.
@@ -1542,6 +1676,7 @@ The chat module provides one-to-one messaging between a client and a freelancer.
 ## 2. Database & Supabase Mapping
 
 ### 2.1 `public.conversations`
+
 | Column | Type | Purpose / Usage | Notes |
 | --- | --- | --- | --- |
 | `id` | `uuid` (PK) | Conversation id | Generated on insert |
@@ -1552,13 +1687,16 @@ The chat module provides one-to-one messaging between a client and a freelancer.
 | `created_at` | `timestamptz` | Creation timestamp (UTC) | Default `now()` |
 
 Indexes/Constraints
+
 - `uq_conversations_pair_task` on `(least(user1_id,user2_id), greatest(user1_id,user2_id), coalesce(task_id, '00000000-0000-0000-0000-000000000000'))` prevents duplicates for the same pair/task.
 - `idx_conversations_task`, `idx_conversations_user1`, `idx_conversations_user2` for fast lookups.
 
 ### 2.2 `public.message_type_enum`
+
 Values: `text`, `offer`, `offer_update`, `offer_accepted`, `offer_rejected`, `delivery_submitted`, `end_early_request`, `dispute_report`.
 
 ### 2.3 `public.messages`
+
 | Column | Type | Purpose / Usage | Notes |
 | --- | --- | --- | --- |
 | `id` | `uuid` (PK) | Message id | Generated on insert |
@@ -1575,12 +1713,15 @@ Values: `text`, `offer`, `offer_update`, `offer_accepted`, `offer_rejected`, `de
 | `created_at` | `timestamptz` | Creation timestamp (UTC) | Default `now()` |
 
 Index
+
 - `idx_messages_convo_created` on `(conversation_id, created_at)`.
 
 ### 2.4 Storage (private)
+
 - Bucket: `chat-attachments` (private). Store object path; create signed URLs on demand.
 
 ### 2.5 RLS Policies (Summary)
+
 | Table | Action | Policy Summary | Notes |
 | --- | --- | --- | --- |
 | `conversations` | SELECT | Only participants can read | `auth.uid() = user1_id OR auth.uid() = user2_id` |
@@ -1589,11 +1730,13 @@ Index
 | `messages` | INSERT | Only participants can send | `sender_id = auth.uid()`, plus guard for `offer_accepted/offer_rejected` (task owner or initiator) |
 
 Triggers/Functions
+
 - `trg_conversations_guard`: Only clients can start non-task DMs with favorites; task-linked requires task owner.
 - `trg_messages_validate_payload`: Offer messages require `price` and `days` in `payload`.
 - `trg_messages_offer_accepted`: On `offer_accepted`, sets `tasks.assigned_freelancer_id` and moves task `status = 'assigned'`.
 
 ## 3. File Inventory
+
 | File | Layer | Description |
 | --- | --- | --- |
 | `lib/features/chat/data/chat_repository.dart` | Repository | Wraps `MessageService`; exposes conversation/message APIs, receipts, and Realtime streams. |
@@ -1607,6 +1750,7 @@ Triggers/Functions
 | `lib/features/chat/attachments/` | Submodule | Upload/compress/pick utils and widgets for attachment UX. |
 
 ## 4. ERD Diagram
+
 ```mermaid
 erDiagram
   PROFILES ||--o{ CONVERSATIONS : "user1_id/user2_id"
@@ -1657,6 +1801,7 @@ tasks (id) ──< conversations (task_id, optional)
 ## 5. Supabase Snippets
 
 ### 5.1 SQL
+
 ```sql
 -- Create or fetch a DM conversation (server enforces initiator/participants via policies/triggers)
 insert into public.conversations (user1_id, user2_id, initiated_by)
@@ -1675,6 +1820,7 @@ order by created_at asc;
 ```
 
 ### 5.2 Dart (supabase_flutter)
+
 ```dart
 final supabase = Supabase.instance.client;
 
@@ -1715,6 +1861,7 @@ Future<void> sendImage({required String convId, required String receiverId, requ
 ```
 
 ## 6. Error Handling
+
 | Origin | Error | User-Facing Message | Mitigation |
 | --- | --- | --- | --- |
 | Start conversation | `23505` (unique `uq_conversations_pair_task`) | "Conversation already exists." | Fetch and open the existing conversation. |
@@ -1725,6 +1872,7 @@ Future<void> sendImage({required String convId, required String receiverId, requ
 | IDs | `22P02` invalid UUID | "Invalid chat identifier." | Validate IDs before calling APIs. |
 
 ## 7. Extra Notes & Testing Checklist
+
 - **Realtime**: Subscribe to `messages` and `conversations` streams for live updates.
 - **Signed URLs**: Keep attachments private; generate signed URLs on demand and cache short-term.
 - **Time zones**: `created_at` stored in UTC; format locally in UI.
@@ -1732,6 +1880,7 @@ Future<void> sendImage({required String convId, required String receiverId, requ
 - **DM vs Task**: DM requires the freelancer to be in client's `favorites`; task chat requires task owner.
 
 Testing checklist
+
 - Create/fetch conversation (DM and task-linked) as allowed roles.
 - Send/receive text; stream updates in UI.
 - Upload attachment; confirm access via signed URLs when reading.
@@ -1744,13 +1893,13 @@ Testing checklist
 
 The Booking feature lets a client reserve a provider’s available time slot for a task.
 It covers two flows:
-	•	Provider flow: create/manage availability slots (open or blocked), see incoming bookings, confirm or complete work.
-	•	Client flow: browse a provider’s available slots, request a booking for a specific task, and cancel if needed.
+ • Provider flow: create/manage availability slots (open or blocked), see incoming bookings, confirm or complete work.
+ • Client flow: browse a provider’s available slots, request a booking for a specific task, and cancel if needed.
 
 Key design choices:
-	•	All timestamps are stored in UTC; UI always displays local time.
-	•	A slot can be booked by at most one active booking (pending/confirmed) — enforced with a unique partial index.
-	•	RLS ensures each party only sees/edits what they own (provider vs. client rules).
+ • All timestamps are stored in UTC; UI always displays local time.
+ • A slot can be booked by at most one active booking (pending/confirmed) — enforced with a unique partial index.
+ • RLS ensures each party only sees/edits what they own (provider vs. client rules).
 
 ⸻
 
@@ -1759,6 +1908,7 @@ Key design choices:
 2.1 Tables & Columns
 
 ### availability_slots
+
 | Column | Type | Purpose / Usage | Notes |
 | --- | --- | --- | --- |
 | `id` | `uuid` (PK) | Slot identifier | Default `gen_random_uuid()` |
@@ -1769,6 +1919,7 @@ Key design choices:
 | `created_at` | `timestamptz` | Audit timestamp | Default `now()` (UTC) |
 
 ### bookings
+
 | Column | Type | Purpose / Usage | Notes |
 | --- | --- | --- | --- |
 | `id` | `uuid` (PK) | Booking identifier | Default `gen_random_uuid()` |
@@ -1787,17 +1938,16 @@ Key design choices:
 | `booking_status_enum` | `pending`, `confirmed`, `canceled`, `completed` | Guarded by trigger `fn_booking_guard` for valid transitions |
 
 2.3 Indexes & Constraints
-	•	No double booking on the same slot:
+ • No double booking on the same slot:
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_bookings_slot_active
   ON public.bookings (slot_id)
   WHERE status IN ('pending','confirmed');
 
-
-	•	Performance indexes:
-	•	idx_slots_provider_starts (provider_id, starts_at)
-	•	idx_bookings_client_created (client_id, created_at desc)
-	•	idx_bookings_provider_created (provider_id, created_at desc)
+ • Performance indexes:
+ • idx_slots_provider_starts (provider_id, starts_at)
+ • idx_bookings_client_created (client_id, created_at desc)
+ • idx_bookings_provider_created (provider_id, created_at desc)
 
 2.4 RLS Policies (Summary)
 
@@ -1810,26 +1960,26 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_bookings_slot_active
 | `bookings` | `bookings_update_roles` | authenticated | UPDATE | Provider can confirm/complete; Client can cancel |
 
 2.5 Triggers / Business Guards
-	•	No overlapping open slots for the same provider:
-	•	Trigger: trg_no_overlap_slots → fn_reject_overlapping_slots
-	•	Booking status transitions guard:
-	•	Trigger: trg_booking_guard → fn_booking_guard
-	•	Allowed:
-	•	pending → confirmed (provider) / canceled (client)
-	•	confirmed → completed (provider) / canceled (client)
+ • No overlapping open slots for the same provider:
+ • Trigger: trg_no_overlap_slots → fn_reject_overlapping_slots
+ • Booking status transitions guard:
+ • Trigger: trg_booking_guard → fn_booking_guard
+ • Allowed:
+ • pending → confirmed (provider) / canceled (client)
+ • confirmed → completed (provider) / canceled (client)
 
 ⸻
 
 3) File Inventory (Flutter)
 
-File	Layer	Description
-lib/features/booking/data/booking_repository.dart	Repository	Wraps BookingService and exposes methods for slots/bookings; surfaces current user.
-lib/features/booking/services/booking_service.dart	Service	Executes PostgREST calls for `availability_slots` and `bookings` (list/create/update) and maps to models.
-lib/features/booking/viewmodels/booking_view_model.dart	ViewModel	ChangeNotifier holding UI state, pagination cursors, optimistic updates, and friendly error mapping.
-lib/features/booking/view/availability_screen.dart	View	Provider availability browser with pull-to-refresh, infinite scroll, and + button for `AddSlotSheet`.
-lib/features/booking/view/add_slot_sheet.dart	View	Bottom sheet to pick local start/end, convert to UTC, and call `BookingViewModel.createSlot()`.
-lib/features/booking/view/booking_sheet.dart	View	Client booking sheet with optional note; calls `BookingViewModel.bookSlot()`.
-lib/features/booking/view/bookings_list_screen.dart	View	Dual-tab history (As Client / As Provider) with filters, pagination, and action buttons (future confirm/complete/cancel).
+File Layer Description
+lib/features/booking/data/booking_repository.dart Repository Wraps BookingService and exposes methods for slots/bookings; surfaces current user.
+lib/features/booking/services/booking_service.dart Service Executes PostgREST calls for `availability_slots` and `bookings` (list/create/update) and maps to models.
+lib/features/booking/viewmodels/booking_view_model.dart ViewModel ChangeNotifier holding UI state, pagination cursors, optimistic updates, and friendly error mapping.
+lib/features/booking/view/availability_screen.dart View Provider availability browser with pull-to-refresh, infinite scroll, and + button for `AddSlotSheet`.
+lib/features/booking/view/add_slot_sheet.dart View Bottom sheet to pick local start/end, convert to UTC, and call `BookingViewModel.createSlot()`.
+lib/features/booking/view/booking_sheet.dart View Client booking sheet with optional note; calls `BookingViewModel.bookSlot()`.
+lib/features/booking/view/bookings_list_screen.dart View Dual-tab history (As Client / As Provider) with filters, pagination, and action buttons (future confirm/complete/cancel).
 
 Convention: Service owns Supabase calls, ViewModel owns UI state + orchestration, UI is dumb (reads state, triggers ViewModel methods).
 
@@ -1877,7 +2027,6 @@ profiles (id) ──< availability_slots (provider_id)
      │                     └─< bookings (slot_id, provider_id, client_id)
      │
 tasks (id) ────────────────────────────────┘ (task_id)
-
 
 ⸻
 
@@ -1952,44 +2101,44 @@ The trigger (fn_booking_guard) and RLS (bookings_update_roles) jointly ensure on
 6) Error Handling & Common Pitfalls
 
 Client/ViewModel conventions
-	•	Map Postgres error codes (e.g., 23505 unique violation) → user-friendly messages:
-	•	“This time slot is already booked. Please choose another.”
-	•	For overlap trigger errors on slot creation:
-	•	“This slot overlaps with an existing one.”
+ • Map Postgres error codes (e.g., 23505 unique violation) → user-friendly messages:
+ • “This time slot is already booked. Please choose another.”
+ • For overlap trigger errors on slot creation:
+ • “This slot overlaps with an existing one.”
 
 Common pitfalls
-	•	Timezone bugs: Always convert UI local → UTC before insert; and UTC → local for display.
-	•	RLS denials:
-	•	Creating a slot with mismatched provider_id (must be auth.uid()).
-	•	Inserting a booking with client_id != auth.uid().
-	•	Ordering + Pagination: Apply filters before `.order()`. Use `.limit()` with time-based cursors (e.g., `gt/lt` on `starts_at` or `created_at`) instead of client-side slicing.
-	•	Double booking race: Unique partial index on bookings(slot_id) with active statuses prevents it.
+ • Timezone bugs: Always convert UI local → UTC before insert; and UTC → local for display.
+ • RLS denials:
+ • Creating a slot with mismatched provider_id (must be auth.uid()).
+ • Inserting a booking with client_id != auth.uid().
+ • Ordering + Pagination: Apply filters before `.order()`. Use `.limit()` with time-based cursors (e.g., `gt/lt` on `starts_at` or `created_at`) instead of client-side slicing.
+ • Double booking race: Unique partial index on bookings(slot_id) with active statuses prevents it.
 
 ⸻
 
 7) Testing Checklist (Manual / Automated)
-	•	Provider creates a non-overlapping open slot → appears in list.
-	•	Provider tries overlapping slot → fails with friendly error.
-	•	Client books an open slot → status pending.
-	•	Provider confirms, then completes → allowed.
-	•	Client cancels from pending/confirmed → allowed.
-	•	Second client tries to book the same slot while active → fails.
-	•	Lists (as Client / as Provider) show correct items with correct sorting & pagination.
-	•	All date/times render in local timezone.
+ • Provider creates a non-overlapping open slot → appears in list.
+ • Provider tries overlapping slot → fails with friendly error.
+ • Client books an open slot → status pending.
+ • Provider confirms, then completes → allowed.
+ • Client cancels from pending/confirmed → allowed.
+ • Second client tries to book the same slot while active → fails.
+ • Lists (as Client / as Provider) show correct items with correct sorting & pagination.
+ • All date/times render in local timezone.
 
 ⸻
 
 8) UI Flow (High-level)
-	•	AvailabilityScreen (provider):
-	•	FAB → AddSlotSheet → create open/blocked slot → refresh → list updates.
-	•	TaskDetails → BookingSheet (client):
-	•	Pick provider slot → submit booking (pending) → success SnackBar.
-	•	BookingsListScreen:
-	•	Tabs: As Client / As Provider → action chips (Confirm, Complete, Cancel).
+ • AvailabilityScreen (provider):
+ • FAB → AddSlotSheet → create open/blocked slot → refresh → list updates.
+ • TaskDetails → BookingSheet (client):
+ • Pick provider slot → submit booking (pending) → success SnackBar.
+ • BookingsListScreen:
+ • Tabs: As Client / As Provider → action chips (Confirm, Complete, Cancel).
 
 ⸻
 
 9) Integration Notes
-	•	Works alongside Tasks: A booking always references a task (task_id).
-	•	Compatible with Chat: You can later notify participants on status changes with Realtime or Notifications.
-	•	Plays well with Profile: Avatars, names, etc., pulled via joins or client caches.
+ • Works alongside Tasks: A booking always references a task (task_id).
+ • Compatible with Chat: You can later notify participants on status changes with Realtime or Notifications.
+ • Plays well with Profile: Avatars, names, etc., pulled via joins or client caches.

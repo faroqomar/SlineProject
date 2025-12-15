@@ -36,6 +36,7 @@ This document is the **single source of truth** for all Supabase backend setup: 
 ## 1. Quick Reference (TL;DR)
 
 ### Core Tables (Public Schema)
+
 | Table | RLS | Rows | Purpose |
 |-------|-----|------|---------|
 | `profiles` | ✅ | 0 | User profiles linked to auth.users |
@@ -52,6 +53,7 @@ This document is the **single source of truth** for all Supabase backend setup: 
 | `portfolio_items` | ✅ | 0 | Freelancer portfolio |
 
 ### Enums
+
 | Enum | Values |
 |------|--------|
 | `task_type_enum` | `tender`, `booking` |
@@ -59,6 +61,7 @@ This document is the **single source of truth** for all Supabase backend setup: 
 | `message_type_enum` | `text`, `system`, `offer`, `offer_update`, `offer_accepted`, `offer_rejected`, `delivery_submitted`, `end_early_request`, `dispute_report` |
 
 ### Storage Buckets
+
 | Bucket | Public | Purpose |
 |--------|--------|---------|
 | `avatars` | ❌ Private | Profile pictures (signed URLs) |
@@ -67,9 +70,11 @@ This document is the **single source of truth** for all Supabase backend setup: 
 | `portfolio` | ✅ Public | Portfolio work images |
 
 ### Realtime
+
 - **Enabled on**: `messages`
 
 ### Key Business Rules (Enforced by Triggers)
+
 - ✅ Bids only allowed on `tender` tasks (not `booking`)
 - ✅ DM conversations require `favorites` relationship
 - ✅ Task-linked conversations: non-owner starts chat
@@ -83,6 +88,7 @@ This document is the **single source of truth** for all Supabase backend setup: 
 ## 2. Project Configuration
 
 ### Connection Details
+
 ```
 Project ID: isddrknbjsgaantjojhm
 API URL: https://isddrknbjsgaantjojhm.supabase.co
@@ -94,6 +100,7 @@ Created: 2025-07-16
 ```
 
 ### Conventions
+
 - **Timestamps**: Store in **UTC**, convert to local in UI via `formatUtcToLocal()`
 - **Identity**: Comes from `auth.users`; profile data in `public.profiles`
 - **Storage**: Store **paths** in database, generate **signed URLs** at render time
@@ -150,6 +157,7 @@ categories (id) ──< tasks (category_id)
 ```
 
 ### Key Unique Constraints
+
 | Table | Constraint | Purpose |
 |-------|------------|---------|
 | `conversations` | `(LEAST(user1_id,user2_id), GREATEST(user1_id,user2_id), COALESCE(task_id, NIL_UUID))` | One conversation per user pair per task |
@@ -187,6 +195,7 @@ CREATE TYPE public.booking_status_enum AS ENUM (
 ```
 
 **Status Transitions** (enforced by `fn_booking_guard` trigger):
+
 ```
 pending ──┬──→ confirmed (by provider)
           └──→ canceled  (by either party)
@@ -239,9 +248,11 @@ User profile information linked to Supabase Auth.
 | `avatar_url` | text | ✅ | - | Storage path in 'avatars' bucket |
 | `roles` | text[] | ✅ | `['client']` | Available roles array |
 | `active_role` | text | ✅ | `'client'` | Current active role ('client' or 'freelancer') |
+| `skills` | text[] | ✅ | `'{}'` | List of professional skills |
 | `created_at` | timestamptz | ✅ | `now()` | Creation timestamp (UTC) |
 
 **Key Relations:**
+
 - Primary source for user identity across the app
 - Referenced by: tasks, conversations, messages, favorites, portfolio_items, saved_tasks, task_requests, bookings
 
@@ -275,6 +286,7 @@ Job postings (tender or booking type).
 | `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
 
 **Status Values:**
+
 - `open` - Accepting proposals/bookings
 - `assigned` - Freelancer assigned
 - `in_progress` - Work in progress
@@ -282,6 +294,7 @@ Job postings (tender or booking type).
 - `canceled` - Canceled
 
 **Check Constraints:**
+
 - `status IN ('open', 'assigned', 'closed', 'in_progress', 'canceled')`
 
 ---
@@ -308,6 +321,7 @@ Offers/bids on tender tasks.
 | `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
 
 **Check Constraints:**
+
 - `days > 0`
 - `status IN ('pending', 'accepted', 'rejected')`
 
@@ -341,6 +355,7 @@ Chat threads between two users (optional task context).
 | `created_at` | timestamptz | ✅ | `now()` | Creation timestamp |
 
 **Important Notes:**
+
 - `user1_id` and `user2_id` are normalized (user1_id < user2_id) by trigger
 - Task-linked conversations: Only non-owner can initiate
 - Direct DMs: Requires favorites relationship
@@ -369,9 +384,11 @@ Chat messages with attachments and offer support.
 | `created_at` | timestamptz | ✅ | `now()` | Creation timestamp |
 
 **Check Constraints:**
+
 - `attachment_type IN ('image', 'file')`
 
 **Payload Examples:**
+
 ```json
 // offer / offer_update
 { "price": 50000, "days": 5, "note": "Optional message" }
@@ -414,6 +431,7 @@ Provider availability windows for booking tasks.
 | `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
 
 **Business Rules:**
+
 - Non-overlapping open slots enforced by `fn_reject_overlapping_slots` trigger
 - Uses GiST index with `tstzrange` for efficient overlap detection
 
@@ -712,19 +730,25 @@ All tables have Row Level Security (RLS) enabled. Below are the actual policies 
 ### 9.1 Helper Functions
 
 #### `is_client(uid uuid) → boolean`
+
 Check if user's active role is 'client'.
+
 ```sql
 SELECT is_client(auth.uid());  -- true/false
 ```
 
 #### `is_freelancer(uid uuid) → boolean`
+
 Check if user's active role is 'freelancer'.
+
 ```sql
 SELECT is_freelancer(auth.uid());  -- true/false
 ```
 
 #### `is_conversation_participant(convo_id uuid, uid uuid) → boolean`
+
 Check if user is participant in conversation.
+
 ```sql
 SELECT is_conversation_participant('...', auth.uid());  -- true/false
 ```
@@ -732,14 +756,17 @@ SELECT is_conversation_participant('...', auth.uid());  -- true/false
 ### 9.2 RPC Functions
 
 #### `start_task_conversation_v1(p_task_id uuid) → conversations`
+
 Start or get existing conversation for a task.
 
 **Rules:**
+
 - Only non-owner can start
 - Returns existing if already exists
 - Creates with normalized user order
 
 **Usage:**
+
 ```dart
 final convo = await supabase.rpc('start_task_conversation_v1', params: {
   'p_task_id': taskId,
@@ -747,9 +774,11 @@ final convo = await supabase.rpc('start_task_conversation_v1', params: {
 ```
 
 #### `accept_task_request(p_request_id uuid) → task_requests`
+
 Accept a pending offer.
 
 **What it does:**
+
 1. Validates caller is task owner
 2. Rejects all other pending offers
 3. Accepts this offer
@@ -757,6 +786,7 @@ Accept a pending offer.
 5. Sets assigned_freelancer_id
 
 **Usage:**
+
 ```dart
 final result = await supabase.rpc('accept_task_request', params: {
   'p_request_id': requestId,
@@ -764,18 +794,23 @@ final result = await supabase.rpc('accept_task_request', params: {
 ```
 
 #### `accept_task_request(p_task_id uuid, p_request_id uuid) → uuid`
+
 Alternative signature that also creates conversation and logs message.
 
 #### `reject_task_request(p_request_id uuid) → task_requests`
+
 Reject a pending offer.
 
 #### `reject_task_request(p_task_id uuid, p_request_id uuid) → uuid`
+
 Alternative signature with conversation creation.
 
-#### `replace_task_request(...)` 
+#### `replace_task_request(...)`
+
 Archive previous offer and create new one.
 
 **Parameters:**
+
 - `p_task_id uuid` - Task ID
 - `p_freelancer_id uuid` - Freelancer ID (must = auth.uid())
 - `p_message text` - Message
@@ -783,9 +818,11 @@ Archive previous offer and create new one.
 - `p_days integer` - Duration
 
 #### `mark_conversation_seen(p_conversation_id uuid) → void`
+
 Mark all messages in conversation as seen for current user.
 
 #### `mark_conversation_delivered(p_conversation_id uuid) → void`
+
 Mark all messages in conversation as delivered for current user.
 
 ---
@@ -883,6 +920,7 @@ Mark all messages in conversation as delivered for current user.
 ### 11.2 Storage Policies
 
 #### Avatars Bucket
+
 | Policy | Command | Rule |
 |--------|---------|------|
 | `avatars_select_authenticated` | SELECT | `bucket_id = 'avatars'` |
@@ -891,6 +929,7 @@ Mark all messages in conversation as delivered for current user.
 | `avatars_delete_own_folder` | DELETE | `bucket_id = 'avatars' AND name LIKE uid || '/%'` |
 
 #### Task Images Bucket
+
 | Policy | Command | Rule |
 |--------|---------|------|
 | `task_images_select_authenticated` | SELECT | `bucket_id = 'task-images'` |
@@ -899,12 +938,14 @@ Mark all messages in conversation as delivered for current user.
 | `task_images_delete_own_folder` | DELETE | Same as insert |
 
 #### Chat Attachments Bucket
+
 | Policy | Command | Rule |
 |--------|---------|------|
 | `chat_attach_select_auth` | SELECT | `bucket_id = 'chat-attachments'` |
 | `chat_attach_insert_auth` | INSERT | `bucket_id = 'chat-attachments' AND owner = auth.uid()` |
 
 #### Portfolio Bucket
+
 | Policy | Command | Rule |
 |--------|---------|------|
 | `storage_portfolio_select_all` | SELECT | `bucket_id = 'portfolio'` (public) |
@@ -967,6 +1008,7 @@ messagesStream.listen((List<Map<String, dynamic>> data) {
 ```
 
 **Important Notes:**
+
 - Realtime subscriptions respect RLS policies
 - Use `primaryKey` parameter for proper stream updates
 - Clean up subscriptions in `dispose()` to prevent memory leaks
@@ -991,6 +1033,7 @@ messagesStream.listen((List<Map<String, dynamic>> data) {
 ### 13.2 Available Extensions (Not Installed)
 
 The following extensions are available but not currently installed:
+
 - `postgis` - Geospatial support
 - `pg_trgm` - Text similarity (fuzzy search)
 - `vector` - Vector embeddings (AI/ML)
@@ -1009,6 +1052,7 @@ The following extensions are available but not currently installed:
 | Security Definer Views | 🔴 ERROR | Views `tasks_mvp`, `users`, `user_conversations` use SECURITY DEFINER | [Fix Guide](https://supabase.com/docs/guides/database/database-linter?lint=0010_security_definer_view) |
 
 **Immediate Actions Required:**
+
 1. Drop or restrict the `public.users` view
 2. Change views to `SECURITY INVOKER` or add proper RLS
 
@@ -1098,6 +1142,7 @@ VALUES (auth.uid(), '<other-user>', auth.uid());
 ## 17. Changelog
 
 ### Version 2.1 (December 2025)
+
 - **Documentation**: Complete rewrite from MCP server data
 - **Security**: Documented all security advisories
 - **Indexes**: Complete index documentation
@@ -1106,10 +1151,12 @@ VALUES (auth.uid(), '<other-user>', auth.uid());
 - **Functions**: All RPC functions documented
 
 ### Version 2.0 (December 2025)
+
 - **Task Visuals**: Added computed columns
 - **Triggers**: Added `lock_tasks_client_id`
 
 ### Version 1.9+ (October 2024)
+
 - **MVVM Restructure**: Complete re-architecture
 - **Private Storage**: Migrated to private buckets
 - **Chat System**: Added conversation presence, message types
@@ -1125,4 +1172,4 @@ VALUES (auth.uid(), '<other-user>', auth.uid());
 
 ---
 
-**End of Supabase Setup Documentation**
+End of Supabase Setup Documentation

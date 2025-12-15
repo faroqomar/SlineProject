@@ -132,21 +132,21 @@ Tasks are organized in **dependency order** - complete each phase before moving 
 - **Issue:** Profile doesn't show portfolio, edit profile not functional
 - **Location:** `lib/features/profile/`
 - **Tasks:**
-  - [ ] Display portfolio grid on profile (link to Portfolio feature)
-  - [ ] Make Edit Profile functional:
+  - [x] Display portfolio grid on profile (link to Portfolio feature)
+  - [x] Make Edit Profile functional:
     - Edit full name
     - Edit bio
     - Change avatar
     - Change email
     - Update skills/tags
-  - [ ] Add Settings section:
+  - [x] Add Settings section:
     - Dark mode toggle
     - Notification preferences
     - Language selection
     - Privacy settings
     - Account deletion
-  - [ ] Display stats (jobs completed, rating, earnings)
-  - [ ] Add badges display (Top Rated, Rising Talent, etc.)
+  - [x] Display stats (jobs completed, rating, earnings)
+  - [x] Add badges display (Top Rated, Rising Talent, etc.)
 - **Reference:** `.TODO/New_Design/Profile/ProfileView.tsx`
 
 ### 2.5 Saved Projects Feature [FEATURE FIX]

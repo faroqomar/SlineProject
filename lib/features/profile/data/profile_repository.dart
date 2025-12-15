@@ -3,14 +3,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/avatar_service.dart';
 import '../../tasks/services/task_service.dart';
 import '../../tasks/models/task_model.dart';
+import '../models/profile_model.dart';
 
 /// Repository layer for Profile feature.
 /// Encapsulates all Supabase and storage calls.
 class ProfileRepository {
   ProfileRepository(SupabaseClient client)
-      : _client = client,
-        _avatarService = AvatarService(client),
-        _taskService = TaskService();
+    : _client = client,
+      _avatarService = AvatarService(client),
+      _taskService = TaskService();
 
   final SupabaseClient _client;
   final AvatarService _avatarService;
@@ -18,13 +19,13 @@ class ProfileRepository {
 
   User? get currentUser => _client.auth.currentUser;
 
-  Future<Map<String, dynamic>> fetchProfile(String userId) async {
+  Future<ProfileModel> fetchProfile(String userId) async {
     final res = await _client
         .from('profiles')
         .select()
         .eq('id', userId)
         .single();
-    return (res as Map<String, dynamic>);
+    return ProfileModel.fromJson(res);
   }
 
   Future<void> updateProfileFields({
@@ -32,10 +33,17 @@ class ProfileRepository {
     required String fullName,
     required String bio,
   }) async {
-    await _client.from('profiles').update({
-      'full_name': fullName,
-      'bio': bio,
-    }).eq('id', userId);
+    await _client
+        .from('profiles')
+        .update({'full_name': fullName, 'bio': bio})
+        .eq('id', userId);
+  }
+
+  Future<void> updateProfileSkills({
+    required String userId,
+    required List<String> skills,
+  }) async {
+    await _client.from('profiles').update({'skills': skills}).eq('id', userId);
   }
 
   Future<void> updateUserEmail(String email) async {
@@ -46,7 +54,10 @@ class ProfileRepository {
     await _client.auth.signOut();
   }
 
-  Future<void> changeRole({required String userId, required String newRole}) async {
+  Future<void> changeRole({
+    required String userId,
+    required String newRole,
+  }) async {
     await _client.from('profiles').update({'role': newRole}).eq('id', userId);
   }
 
@@ -66,7 +77,10 @@ class ProfileRepository {
       contentType: contentType,
       fileExt: fileExt,
     );
-    await _client.from('profiles').update({'avatar_url': path}).eq('id', userId);
+    await _client
+        .from('profiles')
+        .update({'avatar_url': path})
+        .eq('id', userId);
     return path;
   }
 
@@ -84,7 +98,64 @@ class ProfileRepository {
   }
 
   // Tasks related
-  Future<List<Task>> getTasksByUser(String userId) => _taskService.getTasksByUser(userId);
+  Future<List<Task>> getTasksByUser(String userId) =>
+      _taskService.getTasksByUser(userId);
   Future<void> deleteTask(String taskId) => _taskService.deleteTask(taskId);
-  Future<void> updateTask(String taskId, Map<String, dynamic> updates) => _taskService.updateTask(taskId, updates);
+  Future<void> updateTask(String taskId, Map<String, dynamic> updates) =>
+      _taskService.updateTask(taskId, updates);
+
+  // Portfolio related
+  Future<List<Map<String, dynamic>>> getPortfolioItems(String userId) async {
+    final res = await _client
+        .from('portfolio_items')
+        .select()
+        .eq('owner_id', userId)
+        .order('created_at', ascending: false);
+    return List<Map<String, dynamic>>.from(res as List);
+  }
+
+  Future<void> addPortfolioItem({
+    required String userId,
+    required String title,
+    String? description,
+    String? imageUrl,
+  }) async {
+    await _client.from('portfolio_items').insert({
+      'owner_id': userId,
+      'title': title,
+      'description': description,
+      'image_url': imageUrl,
+    });
+  }
+
+  Future<void> updatePortfolioItem({
+    required String itemId,
+    Map<String, dynamic>? updates,
+  }) async {
+    if (updates == null || updates.isEmpty) return;
+    await _client.from('portfolio_items').update(updates).eq('id', itemId);
+  }
+
+  Future<void> deletePortfolioItem(String itemId) async {
+    await _client.from('portfolio_items').delete().eq('id', itemId);
+  }
+
+  Future<String> uploadPortfolioImage({
+    required String userId,
+    required Uint8List bytes,
+    required String contentType,
+    required String fileExt,
+  }) async {
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+    final path = '$userId/$fileName';
+
+    await _client.storage
+        .from('portfolio')
+        .uploadBinary(
+          path,
+          bytes,
+          fileOptions: FileOptions(contentType: contentType),
+        );
+    return path;
+  }
 }

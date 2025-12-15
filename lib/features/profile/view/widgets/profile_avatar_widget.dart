@@ -4,20 +4,31 @@ import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 
 /// Widget for displaying and editing user profile avatar
 class ProfileAvatarWidget extends StatelessWidget {
-  const ProfileAvatarWidget({super.key});
+  final double radius;
+  final bool enableEdit;
+
+  const ProfileAvatarWidget({
+    super.key,
+    this.radius = 60,
+    this.enableEdit = true,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Consumer<ProfileViewModel>(
       builder: (context, controller, child) {
-        final hasImage = controller.avatarSignedUrl != null && controller.avatarSignedUrl!.isNotEmpty;
+        final hasImage =
+            controller.avatarSignedUrl != null &&
+            controller.avatarSignedUrl!.isNotEmpty;
+        final diameter = radius * 2;
+
         return Center(
           child: Stack(
             alignment: Alignment.center,
             children: [
               Container(
-                width: 120,
-                height: 120,
+                width: diameter,
+                height: diameter,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.grey.shade200,
@@ -34,31 +45,28 @@ class ProfileAvatarWidget extends StatelessWidget {
                 ),
                 child: hasImage
                     ? null
-                    : const Icon(
-                        Icons.person,
-                        size: 60,
-                        color: Colors.grey,
-                      ),
+                    : Icon(Icons.person, size: radius, color: Colors.grey),
               ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.camera_alt,
-                      color: Colors.white,
-                      size: 20,
+              if (enableEdit)
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
                     ),
-                    onPressed: () => controller.pickAndUploadAvatar(context),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.camera_alt,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      onPressed: () => controller.pickAndUploadAvatar(context),
+                    ),
                   ),
                 ),
-              ),
               if (controller.avatarUploading)
                 Container(
                   width: 124,

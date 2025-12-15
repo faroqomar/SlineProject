@@ -1,5 +1,4 @@
 
-
 # 📌 Sline MVP Roadmap
 
 Each feature below is broken down step-by-step for clarity.  
@@ -118,8 +117,11 @@ Each feature below is broken down step-by-step for clarity.
 ---
 
 ## 🔹 1. Project Initialization — ✅ Completed
+
 ## 🔹 2. App Navigation — ✅ Completed
+
 ## 🔹 3. Authentication — ✅ Completed
+
 ## 🔹 4. Tasks Module — ✅ Completed
 
 ---
@@ -173,8 +175,10 @@ Step | Feature | Description | Status
 ---
 
 # 🎯 Summary
+
 - ✅ Messaging now supports **attachments** with private storage + signed URLs.
 - 🔜 Next: **Read receipts** (5.6) ثم **Typing indicators** (5.7).
+
 # 📌 Sline MVP Roadmap (Up-to-date)
 
 **Last Updated:** 2025-08-17
@@ -184,13 +188,17 @@ This file is the single source of truth for MVP progress. Each step is bite-size
 ---
 
 ## 🔹 1) Project Initialization — ✅ Completed
+
 ## 🔹 2) App Navigation — ✅ Completed
+
 ## 🔹 3) Authentication — ✅ Completed
+
 ## 🔹 4) Tasks Module — ✅ Completed
 
 ---
 
 ## 🔹 5) Messaging System
+
 Step | Feature | Description | Status
 --- | --- | --- | ---
 5.1 | Message model | `sender_id`, `receiver_id`, `content`, timestamps | ✅ Completed
@@ -205,25 +213,28 @@ Step | Feature | Description | Status
 ---
 
 ## 🔹 6) Task Requests Management — ⏳ Planned
+
 - Requests screen, accept/reject, auto-create chat
 
 ## 🔹 7) Profile & Settings — 🟡 Mixed
+
 - Profile view/edit, avatar upload — ✅
 - My Tasks — ✅
+- **Portfolio Management — ✅ Completed (v2.4)**
 - Switch role — ⏳ Planned
 - Account management (logout/reset/delete) — ⏳ Planned
 
 ## 🔹 8) Infrastructure — 🟡 Mixed
+
 - Logger service (AppLogger) — ✅
 - Constants & config — ✅
 - Theme (M3 Light/Dark) — ⏳ Planned
-- Localization (AR/EN) — ⏳ Planned
-- Documentation kept current — ✅
 
----
+# 🎯 Summary (v2.4)
 
-# 🎯 Summary
 - ✅ Attachments with private storage & signed URLs
 - ✅ Realtime optimized (no full list refetch)
 - ✅ Immediate image bubble rendering on send
+- ✅ **Portfolio Management with image upload** (v2.4)
+- ✅ **iOS stability fixes** (FilePicker, memory optimization)
 - 🔜 Read receipts & requests flow next
