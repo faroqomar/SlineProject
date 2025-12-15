@@ -1,0 +1,35 @@
+---
+description: Git commit message standards and branch naming
+alwaysApply: false
+---
+
+# Git Standards
+
+## Commit Messages (Conventional Commits)
+
+Format: `<type>(<scope>): <description>`
+
+Types:
+- **feat**: New feature
+- **fix**: Bug fix
+- **docs**: Documentation changes
+- **style**: Formatting, missing semi-colons, etc.
+- **refactor**: Code change that neither fixes a bug nor adds a feature
+- **test**: Adding missing tests
+- **chore**: Maintenance tasks
+
+Example:
+```
+feat(auth): implement login screen
+fix(tasks): resolve N+1 query in task list
+docs(readme): update installation steps
+```
+
+## Branch Naming
+
+Format: `<type>/<description>`
+
+Examples:
+- `feature/user-profile`
+- `fix/login-crash`
+- `hotfix/production-bug`

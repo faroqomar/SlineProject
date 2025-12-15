@@ -1,0 +1,375 @@
+---
+trigger: always_on
+---
+
+---
+description: Code quality rules - logging, formatting, N+1 prevention, best practices
+globs: ["**/*.dart"]
+alwaysApply: false
+---
+
+# Code Quality Rules
+
+## Logging
+
+### Use AppLogger, Never print()
+
+**WRONG**:
+```dart
+// ❌ NEVER DO THIS
+print('User logged in');
+debugPrint('Loading tasks...');
+```
+
+**CORRECT**:
+```dart
+// ✅ CORRECT
+import 'package:sline_app/core/services/logger_service.dart';
+
+AppLogger.i('User logged in: ${user.email}');
+AppLogger.d('Loading tasks for user: $userId');
+AppLogger.w('Cache miss for task: $taskId');
+AppLogger.e('Failed to load tasks', error, stackTrace);
+```
+
+### Logging Levels
+
+- `AppLogger.d()` - Debug (verbose, development only)
+- `AppLogger.i()` - Info (general information)
+- `AppLogger.w()` - Warning (unexpected but handled)
+- `AppLogger.e()` - Error (exceptions, failures)
+
+**Reference**: See `lib/core/services/logger_service.dart` for implementation.
+
+## Code Formatting
+
+### Always Format Code
+
+Before committing:
+```bash
+flutter format .
+flutter analyze
+```
+
+### Lint Rules
+
+Follow `analysis_options.yaml` rules. Common requirements:
+- No unused imports
+- No unused variables
+- Prefer const constructors
+- Use trailing commas in multi-line lists
+- Prefer single quotes for strings
+
+## Language and Comments
+
+### English Only
+
+- All code in English
+- All comments in English
+- All variable/function names in English
+- All user-facing strings in English (for now)
+
+### Comment Guidelines
+
+```dart
+/// Document public APIs with triple-slash comments
+/// 
+/// Explains what the function does, parameters, and return value.
+Future<List<Task>> getTasks({String? categoryId}) async {
+  // Single-line comments for complex logic
+  // Multi-line comments for detailed explanations
+}
+```
+
+## Data Handling
+
+### UTC Timestamps
+
+**CRITICAL**: All timestamps stored in UTC, converted to local in UI.
+
+```dart
+// ✅ CORRECT - Store UTC
+final createdAt = DateTime.now().toUtc();
+
+// ✅ CORRECT - Display local
+final localTime = utcTime.toLocal();
+final formatted = formatUtcToLocal(utcTime); // Using utility
+```
+
+**Reference**: See `lib/core/utils/format_date.dart` for date formatting utilities.
+
+### Pagination
+
+**CRITICAL**: Use cursor-based pagination, NOT offsets.
+
+**WRONG** - Offset Pagination:
+```dart
+// ❌ NEVER DO THIS
+final tasks = await supabase
+    .from('tasks')
+    .select()
+    .range(offset, offset + limit); // BAD!
+```
+
+**CORRECT** - Cursor Pagination:
+```dart
+// ✅ CORRECT - Time-based cursor
+Future<List<Task>> loadMore(String? cursorIso) async {
+  var query = supabase
+      .from('tasks')
+      .select()
+      .order('created_at', ascending: false)
+      .limit(20);
+  
+  if (cursorIso != null) {
+    query = query.lt('created_at', cursorIso);
+  }
+  
+  return (await query).map((json) => Task.fromJson(json)).toList();
+}
+```
+
+## N+1 Query Prevention
+
+### CRITICAL: Always Use JOINs
+
+**WRONG** - N+1 Pattern:
+```dart
+// ❌ Makes 1 + N queries (e.g., 51 queries for 50 tasks)
+final tasks = await supabase.from('tasks').select();
+for (var task in tasks) {
+  final user = await supabase
+      .from('profiles')
+      .select()
+      .eq('id', task['user_id'])
+      .single(); // BAD!
+}
+```
+
+**CORRECT** - JOIN Query:
+```dart
+// ✅ Single query with JOIN
+final rows = await supabase
+    .from('tasks')
+    .select('''
+      *,
+      profiles!tasks_user_id_fkey(full_name, avatar_url),
+      categories(name)
+    ''')
+    .order('created_at', ascending: false);
+```
+
+**Reference**: See `Sline_everything/CODE_REVIEW.md` for detailed N+1 examples and fixes.
+
+### Batch Fetching Alternative
+
+If JOINs aren't possible, batch fetch:
+
+```dart
+// ✅ Batch fetch all related data
+final tasks = await supabase.from('tasks').select();
+final userIds = tasks.map((t) => t['user_id']).toSet().toList();
+final profiles = await supabase
+    .from('profiles')
+    .select()
+    .in_('id', userIds); // Single query for all profiles
+
+final profileMap = {for (var p in profiles) p['id']: p};
+// Use profileMap to enrich tasks
+```
+
+## Performance Best Practices
+
+### Avoid Unnecessary Rebuilds
+
+```dart
+// ✅ Use Consumer for selective rebuilds
+Consumer<TaskViewModel>(
+  builder: (context, viewModel, child) {
+    // Only rebuilds when viewModel changes
+    return TaskList(tasks: viewModel.tasks);
+  },
+)
+
+// ✅ Use const constructors
+const TaskCard(task: task) // Rebuilds only if task changes
+```
+
+### Lazy Loading
+
+```dart
+// ✅ Load data only when needed
+class TaskDetailsScreen extends StatefulWidget {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<TaskViewModel>().loadTaskDetails(widget.taskId);
+    });
+  }
+}
+```
+
+### Dispose Resources
+
+```dart
+class TaskScreen extends StatefulWidget {
+  @override
+  _TaskScreenState createState() => _TaskScreenState();
+}
+
+class _TaskScreenState extends State<TaskScreen> {
+  StreamSubscription? _subscription;
+  TextEditingController? _controller;
+  
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+    _subscription = viewModel.messagesStream.listen((_) {});
+  }
+  
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    _controller?.dispose();
+    super.dispose();
+  }
+}
+```
+
+## Security Best Practices
+
+### Never Expose Secrets
+
+```dart
+// ❌ NEVER DO THIS
+const String serviceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // BAD!
+
+// ✅ CORRECT - Use environment variables or secure storage
+final url = const String.fromEnvironment('SUPABASE_URL');
+final anonKey = const String.fromEnvironment('SUPABASE_ANON_KEY');
+```
+
+### Validate Input
+
+```dart
+// ✅ Always validate user input
+String? validateEmail(String? value) {
+  if (value == null || value.isEmpty) {
+    return 'Email is required';
+  }
+  if (!value.contains('@')) {
+    return 'Please enter a valid email';
+  }
+  return null;
+}
+```
+
+### Check Mounted After Async
+
+```dart
+// ✅ Always check mounted after async operations
+Future<void> loadData() async {
+  final data = await _service.fetchData();
+  if (!mounted) return; // Widget disposed, don't update
+  setState(() {
+    _data = data;
+  });
+}
+```
+
+## Code Organization
+
+### File Naming
+
+- Use snake_case for file names: `task_view_model.dart`
+- Match class name to file name: `TaskViewModel` in `task_view_model.dart`
+
+### Import Organization
+
+```dart
+// 1. Dart imports
+import 'dart:async';
+import 'dart:io';
+
+// 2. Flutter imports
+import 'package:flutter/material.dart';
+
+// 3. Package imports
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+// 4. App imports
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
+```
+
+### Class Organization
+
+```dart
+class ExampleViewModel extends ChangeNotifier {
+  // 1. Private fields
+  final ExampleService _service;
+  List<ExampleModel> _items = [];
+  
+  // 2. Public getters
+  List<ExampleModel> get items => List.unmodifiable(_items);
+  
+  // 3. Constructor
+  ExampleViewModel(this._service);
+  
+  // 4. Public methods
+  Future<void> loadItems() async { }
+  
+  // 5. Private methods
+  String _mapError(dynamic e) { }
+}
+```
+
+## Testing
+
+### Unit Tests
+
+```dart
+// test/features/tasks/viewmodels/task_view_model_test.dart
+void main() {
+  group('TaskViewModel', () {
+    test('loads tasks successfully', () async {
+      final mockService = MockTaskService();
+      final viewModel = TaskViewModel(mockService);
+      
+      await viewModel.loadTasks();
+      
+      expect(viewModel.tasks.length, greaterThan(0));
+      expect(viewModel.isLoading, false);
+    });
+  });
+}
+```
+
+### Widget Tests
+
+```dart
+// test/features/tasks/view/widgets/task_card_test.dart
+void main() {
+  testWidgets('TaskCard displays task title', (tester) async {
+    final task = Task(id: '1', title: 'Test Task', ...);
+    
+    await tester.pumpWidget(
+      MaterialApp(
+        home: TaskCard(task: task),
+      ),
+    );
+    
+    expect(find.text('Test Task'), findsOneWidget);
+  });
+}
+```
+
+## References
+
+- `Sline_everything/CODE_REVIEW.md` - Common mistakes and fixes
+- `analysis_options.yaml` - Lint rules
+- `lib/core/services/logger_service.dart` - Logging implementation
+- `lib/core/utils/format_date.dart` - Date formatting utilities

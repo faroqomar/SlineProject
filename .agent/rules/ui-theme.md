@@ -1,0 +1,268 @@
+---
+trigger: always_on
+---
+
+---
+description: UI and theme rules - Glassmorphism, Material 3, no hardcoded colors
+globs: ["**/view/**", "**/widgets/**"]
+alwaysApply: false
+---
+
+# UI and Theme Rules
+
+## Theme System
+
+### Core Theme Files
+
+- `lib/core/theme/app_colors.dart` - Color palette (`AppColors.teal`, `AppColors.gold`, etc.)
+- `lib/core/theme/app_theme.dart` - Material 3 theme (`AppTheme.light()`, `AppTheme.dark()`)
+- `lib/core/theme/app_dimens.dart` - Spacing and sizing constants (`AppDimens.p12`, `AppDimens.r20`, etc.)
+- `lib/core/theme/app_typography.dart` - Text styles (`AppTypography.h1`, `AppTypography.body`, etc.)
+- `lib/core/theme/app_decorations.dart` - Box decorations (`AppDecorations.glassBoxDecoration()`)
+
+### CRITICAL RULE: No Hardcoded Colors
+
+**WRONG** - Hardcoded Colors:
+```dart
+// ❌ NEVER DO THIS
+Container(
+  color: Color(0xFF146068), // BAD!
+  child: Text('Hello', style: TextStyle(color: Colors.black)), // BAD!
+)
+```
+
+**CORRECT** - Theme Colors:
+```dart
+// ✅ CORRECT - Use theme system
+Container(
+  color: AppColors.teal, // or context.colorScheme.primary
+  child: Text(
+    'Hello',
+    style: AppTypography.body.copyWith(
+      color: context.colorScheme.text,
+    ),
+  ),
+)
+```
+
+### Accessing Theme
+
+```dart
+// Extension method available via AppTheme
+final colorScheme = context.colorScheme; // AppColorScheme
+final textColor = colorScheme.text;
+final textSecondary = colorScheme.textSecondary;
+final cardBg = colorScheme.cardBg;
+```
+
+## Glassmorphism Design Pattern
+
+### GlassContainer Widget
+
+Use the `GlassContainer` widget for glassmorphism effects:
+
+```dart
+import 'package:sline_app/core/widgets/glass_container.dart';
+
+GlassContainer(
+  padding: const EdgeInsets.all(AppDimens.p16),
+  borderRadius: BorderRadius.circular(AppDimens.r20),
+  child: YourContent(),
+)
+```
+
+### Manual Glassmorphism
+
+If you need custom glassmorphism:
+
+```dart
+import 'dart:ui';
+import 'package:sline_app/core/theme/app_decorations.dart';
+
+Container(
+  decoration: AppDecorations.glassBoxDecoration(
+    colorScheme: context.colorScheme,
+    borderRadius: BorderRadius.circular(AppDimens.r20),
+  ),
+  child: ClipRRect(
+    borderRadius: BorderRadius.circular(AppDimens.r20),
+    child: BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: AppDimens.p20, sigmaY: AppDimens.p20),
+      child: YourContent(),
+    ),
+  ),
+)
+```
+
+## Material 3 Conventions
+
+### Using Material 3 Components
+
+```dart
+// Material 3 buttons
+FilledButton(
+  onPressed: () {},
+  child: Text('Submit'),
+)
+
+// Material 3 cards
+Card(
+  child: ListTile(
+    title: Text('Title'),
+    subtitle: Text('Subtitle'),
+  ),
+)
+```
+
+### Custom Components
+
+Use app-specific widgets from `lib/core/widgets/`:
+
+- `AppButton` - Custom button with theme support
+- `AppTextField` - Custom text field with validation
+- `GlassContainer` - Glassmorphism container
+- `SignedAvatar` - Avatar with signed URL support
+- `SignedImage` - Image with signed URL support
+- `ScaleButton` - Button with scale animation
+
+## Spacing and Sizing
+
+### Use AppDimens Constants
+
+```dart
+import 'package:sline_app/core/theme/app_dimens.dart';
+
+// Padding
+padding: const EdgeInsets.all(AppDimens.p12),
+padding: const EdgeInsets.symmetric(
+  horizontal: AppDimens.p16,
+  vertical: AppDimens.p8,
+),
+
+// Border Radius
+borderRadius: BorderRadius.circular(AppDimens.r20),
+borderRadius: BorderRadius.circular(AppDimens.r16),
+
+// Sizes
+width: AppDimens.p128,
+height: AppDimens.p64,
+```
+
+**Reference**: See `lib/core/theme/app_dimens.dart` for all available constants.
+
+## Typography
+
+### Use AppTypography
+
+```dart
+import 'package:sline_app/core/theme/app_typography.dart';
+
+Text(
+  'Heading',
+  style: AppTypography.h1,
+)
+
+Text(
+  'Body text',
+  style: AppTypography.body.copyWith(
+    color: context.colorScheme.textSecondary,
+  ),
+)
+```
+
+**Reference**: See `lib/core/theme/app_typography.dart` for all text styles.
+
+## Animations
+
+### Standard Animation Patterns
+
+```dart
+// Scale animation on press
+ScaleButton(
+  onPressed: () {},
+  child: YourWidget(),
+)
+
+// Slide up route (for modals)
+Navigator.push(
+  context,
+  SlideUpRoute(page: YourModal()),
+)
+
+// Fade route (for transitions)
+Navigator.push(
+  context,
+  FadeRoute(page: YourScreen()),
+)
+```
+
+**Reference**: See `lib/core/utils/transitions/custom_route_transitions.dart` for route animations.
+
+## Responsive Design
+
+### Screen Size Considerations
+
+```dart
+// Use MediaQuery for responsive layouts
+final screenWidth = MediaQuery.of(context).size.width;
+final isTablet = screenWidth > 600;
+
+// Use LayoutBuilder for adaptive layouts
+LayoutBuilder(
+  builder: (context, constraints) {
+    if (constraints.maxWidth > 600) {
+      return TabletLayout();
+    }
+    return MobileLayout();
+  },
+)
+```
+
+## Color Usage Guidelines
+
+### Primary Colors
+
+- `AppColors.teal` - Primary brand color (#146068)
+- `AppColors.lightTeal` - Secondary teal (#93ccce)
+- `AppColors.gold` - Accent color (#f3bb19)
+- `AppColors.lightRed` - Hot badges, errors (#f49d9d)
+
+### Neutral Colors
+
+- `AppColors.almostBlack` - Dark text (#0c0c0c)
+- `AppColors.offWhite` - Light backgrounds (#f4f3f1)
+- `AppColors.white` - Pure white (#ffffff)
+- `AppColors.mediumGrey` - Secondary text (#a9a8a7)
+
+### Theme-Aware Colors
+
+Always use theme-aware colors that adapt to light/dark mode:
+
+```dart
+// ✅ CORRECT
+Text(
+  'Hello',
+  style: TextStyle(
+    color: context.colorScheme.text, // Adapts to theme
+  ),
+)
+
+Container(
+  color: context.colorScheme.cardBg, // Adapts to theme
+  child: YourContent(),
+)
+```
+
+## Anti-Patterns
+
+1. **Hardcoded Colors**: Never use `Color(0xFF...)` or `Colors.black`
+2. **Hardcoded Sizes**: Never use magic numbers like `16.0` - use `AppDimens.p16`
+3. **Direct Material Colors**: Prefer `context.colorScheme` over `Theme.of(context).colorScheme`
+4. **Inline Styles**: Extract repeated styles to `AppTypography` or constants
+5. **No Theme Support**: Always ensure UI works in both light and dark mode
+
+## References
+
+- `lib/core/theme/` - All theme files
+- `lib/core/widgets/` - Reusable UI components
+- `Sline_everything/DEVELOPER_GUIDE.md` - UI patterns per feature
