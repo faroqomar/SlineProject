@@ -1,93 +1,155 @@
-# GEMINI.md
+# GEMINI.md — Project Brain & Active Context
+
+# SLine Project Rules - Always Active
+
+This file ensures Cursor always references the project rules and documentation.
+
+## CRITICAL: Always Reference Documentation
+
+When working on this project, ALWAYS reference these documentation files:
+
+1. **`GEMINI.md`** - Project overview, agents, building instructions
+2. **`Sline_everything/DEVELOPER_GUIDE.md`** - Complete feature documentation
+3. **`Sline_everything/SUPABASE_SETUP.md`** - Database schema and RLS
+4. **`Sline_everything/STRUCTURE.md`** - File organization
+5. **`.cursor/PROJECT_CONTEXT.md`** - Quick reference guide
+6. **`.cursor/rules/`** - All rule files for specific patterns
+
+## Architecture Rules
+
+- **MVVM Pattern**: View → ViewModel → Service → Supabase (NEVER direct Supabase in UI)
+- **No Hardcoded Colors**: Use `AppColors` or `context.colorScheme`
+- **No print()**: Use `AppLogger` from `lib/core/services/logger_service.dart`
+- **No N+1 Queries**: Use JOINs, not loops with async calls
+- **UTC Timestamps**: Store UTC, convert to local in UI
+- **Cursor Pagination**: Use time-based cursors, NOT offsets
+
+## Before Making Changes
+
+1. Check `Sline_everything/SUPABASE_SETUP.md` for database schema
+2. Check `Sline_everything/DEVELOPER_GUIDE.md` for feature patterns
+3. Check `.cursor/rules/` for specific rules (flutter-mvvm.mdc, supabase-database.mdc, etc.)
+4. Check `Sline_everything/CODE_REVIEW.md` for common mistakes to avoid
+
+## Agent System
+
+Use agents for specialized tasks:
+- `@Architect` - Logic, MVVM, refactoring
+- `@Pixel` - UI, themes, Glassmorphism
+- `@Supabase_Ops` - Database, RLS, SQL
+- `@Sentinel` - QA, security, testing
+- `@SlineDocs` - Documentation updates
+- `@SlinePlanner` - Implementation planning
+- `@CodeGuard` - Code reviews, performance, security, dependency updates
+
+See `GEMINI.md` and `.cursor/Agents/` for agent definitions.
+
+## File Structure
+
+- `lib/features/[feature]/view/` - UI (NO Supabase calls)
+- `lib/features/[feature]/viewmodels/` - Business logic
+- `lib/features/[feature]/services/` - Supabase API calls
+- `lib/features/[feature]/models/` - Data models
+- `lib/core/` - Shared resources (theme, services, widgets)
+
+See `Sline_everything/STRUCTURE.md` for complete structure guide.
+
+> [!IMPORTANT]
+> This file is the **Single Source of Truth** for the SLine project (v2.1).
+> All agents and developers must reference this file for architectural standards, active agents, and project status.
+
+---
 
 ## 🤖 Active Agents (Invoke via @Name)
-*The following agents are defined in the `Agents/` directory. When invoked, I will adopt their persona.*
+*The following agents are defined in the `.cursor/Agents/` directory. When invoked, I will adopt their persona.*
 
-*   **@Architect** (`Agents/Architect.md`): Technical Lead. Focus: Logic, MVVM, Refactoring, Database integrity.
-    *   *Trigger:* "@Architect", "fix logic", "refactor".
-*   **@Pixel** (`Agents/Pixel.md`): UI/UX Artist. Focus: Glassmorphism, Animations, Themes, Widgets.
-    *   *Trigger:* "@Pixel", "design this", "make it pretty".
-*   **@Supabase_Ops** (`Agents/Supabase_Ops.md`): Backend DBA. Focus: SQL, RLS, Edge Functions.
-    *   *Trigger:* "@Supabase", "add table", "secure db".
-*   **@Sentinel** (`Agents/Sentinel.md`): QA & Safety. Focus: Tests, Documentation, Analyzers.
-    *   *Trigger:* "@Sentinel", "check this", "run tests".
-*   **@SlineDocs** (`Agents/Sline_Docs.md`): Documentation Scribe. Focus: `Sline_everything` folder, Logs, Roadmap.
-    *   *Trigger:* "@SlineDocs", "document this", "update changelog".
-*   **@SlinePlanner** (`Agents/Sline_Planner.md`): Strategic Planner. Focus: Step-by-step implementation plans, Gap analysis.
-    *   *Trigger:* "@SlinePlanner", "plan this feature", "how do I add...".
-*   **@CodeGuard** (`Agents/CodeGuard.md`): Performance, Security & Compatibility Auditor. Focus: Code reviews, performance optimization, security hardening, dependency updates.
-    *   *Trigger:* "@CodeGuard", "review code", "performance check", "security audit", "update dependencies".
+| Agent | Trigger | Focus |
+|-------|---------|-------|
+| **@Architect** | `@Architect`, "fix logic" | Technical Lead. Logic, MVVM compliance, Refactoring. |
+| **@Pixel** | `@Pixel`, "design this" | UI/UX Artist. Glassmorphism, Animations, Themes. |
+| **@Supabase_Ops** | `@Supabase`, "db schema" | Backend DBA. SQL, RLS, Storage, Edge Functions. |
+| **@Sentinel** | `@Sentinel`, "run tests" | QA & Safety. Reviews, Documentation, Testing. |
+| **@SlineDocs** | `@SlineDocs`, "update docs" | Docs Scribe. Maintains `Sline_everything/`. |
+| **@SlinePlanner** | `@SlinePlanner`, "plan feature" | Strategic Planner. Implementation steps. |
+| **@CodeGuard** | `@CodeGuard`, "review code" | Auditor. Performance, Security, Dependencies. |
 
-## Project Overview
+---
 
-This is a Flutter-based mobile application for a freelance marketplace called SLine. It connects clients with service providers, allowing them to post jobs, submit bids, and communicate in real-time. The backend is powered by Supabase, utilizing its database, authentication, and storage services. The app follows a strict MVVM (Model-View-ViewModel) architecture with a feature-based modular structure.
+## 🎯 Project Overview (Version 2.1)
 
-## Building and Running
+**SLine** is a production-grade freelance marketplace mobile application built with **Flutter** and **Supabase**.
+It employs a strict **MVVM** architecture and feature-based modularity.
 
-### Prerequisites
+### Core Features (v2.1)
+- **Theme System**: Centralized `theme_dashboard.dart` with iOS 26-inspired Liquid Glass navigation.
+- **Authentication**: Supabase Auth with Role selection (Client/Freelancer).
+- **Tasks**: Tender & Booking systems with private image storage.
+- **Messaging**: Real-time chat with attachments (Private Buckets + Signed URLs).
+- **Portfolio**: Public gallery for freelancers.
+- **Security**: 100% RLS on all tables. Private storage buckets.
 
-*   Flutter SDK 3.8.1+
-*   Dart SDK 3.8.1+
-*   A Supabase account
+---
 
-### Installation and Setup
+## 🛠️ Architecture & Standards
 
-1.  **Clone the repository:**
-    ```bash
-    git clone <repository-url>
-    cd sline_app
-    ```
+### 1. MVVM Pattern (Strict)
+- **View (`view/`)**: Pure UI. `Consumer<ViewModel>`. **NO Supabase calls.**
+- **ViewModel (`viewmodels/`)**: `ChangeNotifier`. Business logic. Holds state.
+- **Repository (`data/` & `services/`)**: DIRECT Supabase calls. Error handling.
 
-2.  **Install dependencies:**
-    ```bash
-    flutter pub get
-    ```
+### 2. Database & Security
+- **RLS**: Enabled on ALL tables. Policies based on `auth.uid()`.
+- **Storage**: files in `private` buckets. Access via Signed URLs only.
+- **Timestamps**: Stored in UTC, displayed in Local time.
 
-3.  **Configure Supabase:**
-    *   Create a new project on [supabase.com](https://supabase.com).
-    *   Run the SQL schema from `Sline_everything/SUPABASE_SETUP.md`.
-    *   Update `lib/core/services/supabase_config.dart` with your Supabase URL and anon key.
+### 3. Coding Style
+- **No `print()`**: Use `AppLogger` (d/i/w/e).
+- **Colors**: Use `AppColors.*` from `lib/core/theme/`. No hardcoded hex.
+- **Formatting**: `flutter format .` and `flutter analyze` are mandatory.
 
-### Running the App
+---
 
-*   **To run the app on a connected device:**
-    ```bash
-    flutter run
-    ```
+## 📂 Project Structure
 
-*   **To list available devices:**
-    ```bash
-    flutter devices
-    ```
+```text
+sline_app/
+├── lib/
+│   ├── core/theme/           # 🎨 Centralized Theme (AppColors, ThemeDashboard)
+│   ├── features/             # 📦 Feature features (auth, tasks, chat, etc.)
+│   │   └── <feature>/        # MVVM: view/, viewmodels/, data/, models/
+│   └── main.dart             # App Entry
+├── .cursor/                  # 🤖 AI Configuration
+│   ├── Agents/               # Agent Personas
+│   └── rules/                # .mdc Rule files
+├── Sline_everything/         # 📚 Documentation Archive
+│   ├── MVP_ROADMAP.md        # Feature Status
+│   └── SUPABASE_SETUP.md     # SQL Schema
+└── GEMINI.md                 # 👈 YOU ARE HERE
+```
 
-*   **To run on a specific device:**
-    ```bash
-    flutter run -d <device_id>
-    ```
-    (e.g., `flutter run -d chrome`)
+---
 
-### Testing the App
+## 🚀 Quick Reference
 
-*   **Run code analysis:**
-    ```bash
-    flutter analyze
-    ```
+### Developer Commands
+```bash
+flutter run                 # Run App
+flutter analyze             # Check Lints
+flutter test                # Run Unit Tests
+flutter format .            # Format Code
+```
 
-*   **Run tests:**
-    ```bash
-    flutter test
-    ```
+### Critical Files
+- **Theme Truth**: [`lib/core/theme/theme_dashboard.dart`](file:///Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/core/theme/theme_dashboard.dart)
+- **Supabase Config**: [`lib/core/services/supabase_config.dart`](file:///Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/core/services/supabase_config.dart)
+- **Navigation**: [`lib/app/main_navigation_screen.dart`](file:///Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/app/main_navigation_screen.dart)
 
-## Development Conventions
+---
 
-*   **Architecture:** The project follows a strict Model-View-ViewModel (MVVM) pattern. The codebase is organized into feature-based modules.
-*   **State Management:** `provider` is used for state management, following the `ChangeNotifier` pattern.
-*   **Backend:** All backend services are provided by Supabase. Direct interaction with the Supabase client is encapsulated within the `repository/service` layer.
-*   **Security:** Row-Level Security (RLS) is enabled on all database tables. File storage is kept in private buckets with access provided through signed URLs.
-*   **Coding Style:**
-    *   Code and comments are in English.
-    *   `AppLogger` is used for logging instead of `print()`.
-    *   Code should be lint-clean (`flutter analyze`) and formatted (`flutter format .`).
-    *   Timestamps are stored in UTC and converted to local time in the UI.
-    *   Pagination is implemented using cursors, not offsets.
-    *   Error messages are mapped to be user-friendly.
+## 📊 Roadmap Status (Dec 2025)
+- [x] **Project Init & Auth**
+- [x] **Tasks Module** (CRUD, Search, Images)
+- [x] **Chat System** (Realtime, Attachments, Optimization)
+- [x] **Theme Dashboard** (v2.1)
+- [ ] **Localization** (Arabic RTL)
+- [ ] **Push Notifications**
