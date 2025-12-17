@@ -159,6 +159,7 @@ Step | Feature | Description | Status
 7.3 | Switch role | Toggle Client ↔ Freelancer | ⏳ Planned
 7.4 | My Tasks | List and manage user’s posted tasks | ✅ Completed
 7.5 | Account management | Logout, delete account, reset password | ⏳ Planned
+7.6 | Saved Tasks | Bookmark/Unsaving, Badge Count, List Screen | ✅ Completed (v2.5)
 
 ---
 
@@ -236,5 +237,6 @@ Step | Feature | Description | Status
 - ✅ Realtime optimized (no full list refetch)
 - ✅ Immediate image bubble rendering on send
 - ✅ **Portfolio Management with image upload** (v2.4)
+- ✅ **Saved Tasks Feature** (Global State + UI Toggles) (v2.5)
 - ✅ **iOS stability fixes** (FilePicker, memory optimization)
 - 🔜 Read receipts & requests flow next

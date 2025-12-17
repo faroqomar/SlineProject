@@ -4,7 +4,6 @@ import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/features/saved/data/saved_tasks_service.dart';
 import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
 import 'package:sline_app/features/tasks/view/task_details_screen.dart';
 import 'package:sline_app/features/tasks/view/widgets/task_card.dart';
@@ -19,30 +18,24 @@ class SavedTasksScreen extends StatefulWidget {
 }
 
 class _SavedTasksScreenState extends State<SavedTasksScreen> {
-  late final SavedTasksViewModel _vm;
-
   @override
   void initState() {
     super.initState();
-    _vm = SavedTasksViewModel(service: SavedTasksService())..load();
+    // VM is now global, we just refresh it on enter if needed, or rely on auto-sync
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Optional: force refresh when screen opens
+      context.read<SavedTasksViewModel>().load();
+    });
   }
 
   @override
   void dispose() {
-    // Don't dispose VM if provided from parent, but here we create it locally so we should?
-    // Actually the previous implementation manually disposed it.
-    // However, ChangeNotifierProvider usually handles disposal.
-    // But here we are passing .value, so we must dispose manually.
-    _vm.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<SavedTasksViewModel>.value(
-      value: _vm,
-      child: const _SavedTasksView(),
-    );
+    return const _SavedTasksView();
   }
 }
 
@@ -56,11 +49,11 @@ class _SavedTasksView extends StatelessWidget {
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
-      backgroundColor: colorScheme.phoneBackground, // Or transparent if global bg is visible
+      backgroundColor:
+          colorScheme.phoneBackground, // Or transparent if global bg is visible
       body: Stack(
         children: [
           // Gradient Background (if needed, or rely on phoneBackground)
-          
           CustomScrollView(
             slivers: [
               // --- Header ---
@@ -85,11 +78,14 @@ class _SavedTasksView extends StatelessWidget {
                       ),
                       Text(
                         'Saved Tasks',
-                        style: AppTypography.h4.copyWith(color: colorScheme.text),
+                        style: AppTypography.h4.copyWith(
+                          color: colorScheme.text,
+                        ),
                       ),
                       IconButton(
                         icon: Icon(Icons.refresh, color: colorScheme.text),
-                        onPressed: () => context.read<SavedTasksViewModel>().refresh(),
+                        onPressed: () =>
+                            context.read<SavedTasksViewModel>().refresh(),
                       ),
                     ],
                   ),
@@ -109,7 +105,9 @@ class _SavedTasksView extends StatelessWidget {
                       child: Text(
                         vm.error!,
                         textAlign: TextAlign.center,
-                        style: AppTypography.bodySmall.copyWith(color: AppColors.lightRed),
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.lightRed,
+                        ),
                       ),
                     ),
                   ),
@@ -124,7 +122,9 @@ class _SavedTasksView extends StatelessWidget {
                         Icon(
                           Icons.bookmark_border,
                           size: 64,
-                          color: colorScheme.textSecondary.withValues(alpha: 0.5),
+                          color: colorScheme.textSecondary.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -146,20 +146,19 @@ class _SavedTasksView extends StatelessWidget {
                     AppDimens.p24,
                   ),
                   sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final task = vm.savedTasks[index];
-                        return TaskCard(
-                          task: task,
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => TaskDetailsScreen(task: task)),
-                            );
-                          },
-                        );
-                      },
-                      childCount: vm.savedTasks.length,
-                    ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final task = vm.savedTasks[index];
+                      return TaskCard(
+                        task: task,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => TaskDetailsScreen(task: task),
+                            ),
+                          );
+                        },
+                      );
+                    }, childCount: vm.savedTasks.length),
                   ),
                 ),
             ],

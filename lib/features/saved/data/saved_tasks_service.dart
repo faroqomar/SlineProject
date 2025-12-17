@@ -8,7 +8,7 @@ class SavedTasksService {
   final SupabaseClient _client;
 
   SavedTasksService({SupabaseClient? client})
-      : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client;
 
   String _requireUid() {
     final uid = _client.auth.currentUser?.id;
@@ -81,19 +81,62 @@ class SavedTasksService {
       return true;
     }
   }
-  
+
   /// List saved tasks joined with full task details (newest first).
   Future<List<Task>> listMineWithDetails() async {
     final uid = _requireUid();
+    // 1. Fetch saved tasks with their task details
     final res = await _client
         .from('saved_tasks')
         .select('task:tasks(*)')
         .eq('user_id', uid)
         .order('created_at', ascending: false);
 
-    // Each row has shape: { task: { ...task fields... } }
-    return (res as List)
-        .map((row) => Task.fromJson(row['task'] as Map<String, dynamic>))
+    final List<dynamic> rows = res as List<dynamic>;
+    if (rows.isEmpty) return [];
+
+    // 2. Extract distinct user IDs from tasks to fetch profiles
+    // tasks.user_id references auth.users which matches profiles.id
+    final userIds = rows
+        .map((r) => r['task']['user_id'] as String?)
+        .where((id) => id != null)
+        .toSet()
         .toList();
+
+    // 3. Fetch profiles for these users
+    final Map<String, Map<String, dynamic>> profileMap = {};
+    if (userIds.isNotEmpty) {
+      final profiles = await _client
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in_('id', userIds);
+
+      for (final p in profiles) {
+        profileMap[p['id'] as String] = p;
+      }
+    }
+
+    // 4. Merge profile data into Task objects
+    return rows.map((row) {
+      final taskJson = row['task'] as Map<String, dynamic>;
+      final userId = taskJson['user_id'] as String?;
+
+      // Look up profile data
+      final profile = userId != null ? profileMap[userId] : null;
+
+      // Create Task, injecting profile info if available
+      // We use copyWith after creation or inject into json, but simpler to use copyWith
+      // because Task.fromJson looks for specific nested 'profiles' structure or flat keys.
+      // Let's manually override.
+      var task = Task.fromJson(taskJson);
+
+      if (profile != null) {
+        task = task.copyWith(
+          userName: profile['full_name'],
+          userAvatar: profile['avatar_url'],
+        );
+      }
+      return task;
+    }).toList();
   }
 }

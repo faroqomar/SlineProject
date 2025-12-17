@@ -21,6 +21,56 @@
 
 ## 📋 Version History
 
+### 🟢 Version 2.5 — Saved Projects Feature Fix & Optimization
+
+**Date:** 2025-12-17
+**Commit:** _Pending_ — "feat(saved): global state, UI toggles, profile badge optimization"
+
+#### ✅ Implemented
+
+- **Global Saved Tasks State**
+  - Promoted `SavedTasksViewModel` to a global provider in `main.dart`.
+  - Added `_initAuthListener` to automatically load/clear tasks on login/logout.
+  - Ensures bookmark state is consistent across Home, Search, and Profile screens.
+
+- **Saved Projects UI**
+  - **Profile Screen**: Added "Saved Projects" menu item with live counter badge.
+  - **Optimization**: Used `Selector` for the badge to preventing full-screen rebuilds on toggle.
+  - **Task Cards**: Added bookmark (heart) icon to `TenderTaskCard` and `BookingTaskCard` header.
+  - **Saved Screen**: `SavedTasksScreen` now consumes the global ViewModel.
+
+- **Critical Bug Fix (PGRST200)**
+  - **Issue**: "Unknown User" and app crash due to missing foreign key relationship between `saved_tasks` and `profiles` via `tasks` table.
+  - **Fix**: Updated `SavedTasksService.listMineWithDetails` to perform a robust 2-step fetch:
+    1. Fetch saved tasks.
+    2. Extract user IDs and fetch profiles in a batch.
+    3. Merge profile data (name/avatar) into Task objects manually.
+  - **Result**: Eliminates schema dependency risks and ensures author data always loads.
+
+#### 📊 Impact
+
+- **UX**: Users can bookmark tasks instantly from any card; state reflects immediately.
+- **Performance**: Zero-rebuild updates for the Profile screen badge.
+- **Stability**: Database schema looseness no longer causes "Unknown User" crashes.
+
+#### 🗂️ Files Touched
+
+- **Modified:**
+  - `lib/features/saved/viewmodels/saved_tasks_view_model.dart` (Auth listener)
+  - `lib/features/saved/data/saved_tasks_service.dart` (Manual join fix)
+  - `lib/features/profile/view/profile_screen.dart` (Selector optimization)
+  - `lib/features/tasks/view/widgets/tender_task_card.dart` (Toggle UI)
+  - `lib/features/tasks/view/widgets/booking_task_card.dart` (Toggle UI)
+  - `lib/main.dart` (Global provider)
+
+#### 🔧 Technical Notes
+
+- `SavedTasksService` manual join pattern works around the missing `tasks.user_id` FK reference in the generated Postgrest client, preventing `PGRST200` errors.
+
+#### 🔜 Next
+
+- **Localization**: RTL support.
+
 ### 🟢 Version 2.4 — Portfolio Management & iOS Stability
 
 **Date:** 2025-12-16

@@ -35,6 +35,10 @@ You own the following files and must keep them synchronized with reality:
   - Sections: System Overview, Feature References
   - Reference: Current version 2.0 (as of 2025-11-03)
 
+- **`Sline_everything/DEVELOPER_GUIDE/`**: Directory containing specific deep-dive documentation for each feature (`Auth Feature.md`, `Saved Feature.md`, etc.).
+  - **CRITICAL:** These files MUST be kept updated when their respective features change.
+  - Contains: Feature-specific DB mapping, file inventory, snippets, and testing checklists.
+
 - **`STRUCTURE.md`**: The file tree. Update if folders are renamed or added.
   - Contains: Folder structure explanation
   - Updates: When new features or folders are added
@@ -208,6 +212,7 @@ When summoned (or at the end of a complex task):
     - Database changes → `SUPABASE_SETUP.md`
     - Feature completion → `MVP_ROADMAP.md`, `Sline_Log.md`
     - Architecture changes → `DEVELOPER_GUIDE.md`, `ARCHITECTURE_ANALYSIS.md`
+    - Feature logic changes → Check valid deep-dive in `Sline_everything/DEVELOPER_GUIDE/<Feature>.md`
     - File structure → `STRUCTURE.md`
 4.  **Update** the corresponding documentation:
     - Be specific: include file paths, code snippets, SQL scripts

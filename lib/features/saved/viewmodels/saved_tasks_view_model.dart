@@ -7,13 +7,17 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/services/logger_service.dart';
+import 'dart:async';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../tasks/models/task_model.dart';
 import '../data/saved_tasks_service.dart';
 
 class SavedTasksViewModel extends ChangeNotifier {
   final SavedTasksService service;
 
-  SavedTasksViewModel({required this.service});
+  SavedTasksViewModel({required this.service}) {
+    _initAuthListener();
+  }
 
   final Set<String> _savedTaskIds = <String>{};
   bool _loading = false;
@@ -40,7 +44,12 @@ class SavedTasksViewModel extends ChangeNotifier {
         ..clear()
         ..addAll(list.map((e) => e.id));
     } catch (e, st) {
-      AppLogger.e('Failed to load saved tasks', tag: 'Saved', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to load saved tasks',
+        tag: 'Saved',
+        error: e,
+        stackTrace: st,
+      );
       _setError(_humanize(e));
     } finally {
       _setLoading(false);
@@ -67,7 +76,12 @@ class SavedTasksViewModel extends ChangeNotifier {
       }
       return nowSaved;
     } catch (e, st) {
-      AppLogger.e('Failed to toggle saved task', tag: 'Saved', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to toggle saved task',
+        tag: 'Saved',
+        error: e,
+        stackTrace: st,
+      );
       _setError(_humanize(e));
       rethrow;
     }
@@ -95,5 +109,38 @@ class SavedTasksViewModel extends ChangeNotifier {
       return 'Not allowed.';
     }
     return 'Something went wrong.';
+  }
+
+  StreamSubscription<AuthState>? _authSubscription;
+
+  void _initAuthListener() {
+    // Initial load if already logged in
+    if (Supabase.instance.client.auth.currentUser != null) {
+      load();
+    }
+
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((
+      data,
+    ) {
+      final event = data.event;
+      if (event == AuthChangeEvent.signedIn) {
+        load();
+      } else if (event == AuthChangeEvent.signedOut) {
+        clear();
+      }
+    });
+  }
+
+  void clear() {
+    _savedTasks = [];
+    _savedTaskIds.clear();
+    _error = null;
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
   }
 }

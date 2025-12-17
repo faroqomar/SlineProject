@@ -8,6 +8,8 @@ import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 import 'package:sline_app/features/home/viewmodels/home_view_model.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
+import 'features/saved/viewmodels/saved_tasks_view_model.dart';
+import 'features/saved/data/saved_tasks_service.dart';
 import 'core/services/supabase_config.dart';
 import 'core/services/logger_service.dart';
 import 'features/auth/view/login_screen.dart';
@@ -31,35 +33,48 @@ import 'package:sline_app/core/providers/theme_mode_provider.dart';
 /// preventing silent failures and enabling future crash reporting integration.
 void main() async {
   // Wrap entire app in error zone to catch async exceptions
-  await runZonedGuarded(() async {
-    WidgetsFlutterBinding.ensureInitialized();
+  await runZonedGuarded(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
 
-    // Global Flutter framework error handler (widget build errors, etc.)
-    FlutterError.onError = (FlutterErrorDetails details) {
+      // Global Flutter framework error handler (widget build errors, etc.)
+      FlutterError.onError = (FlutterErrorDetails details) {
+        AppLogger.e(
+          'Flutter Error: ${details.summary}',
+          tag: 'System',
+          error: details.exception,
+          stackTrace: details.stack,
+        );
+      };
+
+      // Global platform error handler (native crashes, isolate errors)
+      PlatformDispatcher.instance.onError = (error, stack) {
+        AppLogger.e(
+          'Platform Error',
+          tag: 'System',
+          error: error,
+          stackTrace: stack,
+        );
+        return true; // Prevent app termination
+      };
+
+      await SupabaseConfig.init();
+
+      // Set logger level (info = clean logs, debug = verbose logs)
+      AppLogger.currentLevel = LogLevel.info;
+
+      runApp(const SLineApp());
+    },
+    (error, stack) {
+      // Catches any uncaught async exceptions outside the Flutter framework
       AppLogger.e(
-        'Flutter Error: ${details.summary}',
+        'Uncaught Zone Error',
         tag: 'System',
-        error: details.exception,
-        stackTrace: details.stack,
+        error: error,
+        stackTrace: stack,
       );
-    };
-
-    // Global platform error handler (native crashes, isolate errors)
-    PlatformDispatcher.instance.onError = (error, stack) {
-      AppLogger.e('Platform Error', tag: 'System', error: error, stackTrace: stack);
-      return true; // Prevent app termination
-    };
-
-    await SupabaseConfig.init();
-
-    // Set logger level (info = clean logs, debug = verbose logs)
-    AppLogger.currentLevel = LogLevel.info;
-
-    runApp(const SLineApp());
-  }, (error, stack) {
-    // Catches any uncaught async exceptions outside the Flutter framework
-    AppLogger.e('Uncaught Zone Error', tag: 'System', error: error, stackTrace: stack);
-  });
+    },
+  );
 }
 
 class SLineApp extends StatelessWidget {
@@ -77,6 +92,10 @@ class SLineApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => NavigationProvider()),
         // Theme - light/dark mode toggle
         ChangeNotifierProvider(create: (_) => ThemeModeProvider()),
+        // Saved Tasks - global bookmark state
+        ChangeNotifierProvider(
+          create: (_) => SavedTasksViewModel(service: SavedTasksService()),
+        ),
         // Home screen state
         ChangeNotifierProvider(create: (_) => HomeViewModel()),
         // Task filtering state (shared between screens)
@@ -150,18 +169,20 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener> {
             '/categories': (_) => const CategoriesScreen(),
             FavoritesRoutes.routeName: (_) => const FavoritesScreen(),
             '/availability': (ctx) {
-              final args = ModalRoute.of(ctx)!.settings.arguments as Map<String, dynamic>?;
-              final providerId = (args?['providerId'] ?? args?['freelancerId']) as String?;
+              final args =
+                  ModalRoute.of(ctx)!.settings.arguments
+                      as Map<String, dynamic>?;
+              final providerId =
+                  (args?['providerId'] ?? args?['freelancerId']) as String?;
               final taskId = args?['taskId'] as String?;
               if (providerId == null || taskId == null) {
                 return const Scaffold(
-                  body: Center(child: Text('Missing arguments for Availability')),
+                  body: Center(
+                    child: Text('Missing arguments for Availability'),
+                  ),
                 );
               }
-              return AvailabilityScreen(
-                providerId: providerId,
-                taskId: taskId,
-              );
+              return AvailabilityScreen(providerId: providerId, taskId: taskId);
             },
           },
         );

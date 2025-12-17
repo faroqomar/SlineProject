@@ -2,10 +2,10 @@
 # Saved Feature Reference
 
 ## 1. Human Explanation
-The Saved feature lets an authenticated user bookmark tasks for quick access. It is private per-user and shows a list with navigation to task details. Architecture:
-- UI in `lib/features/saved/view/` renders saved tasks and toggles.
-- `SavedTasksViewModel` manages state (ids + full tasks), loading, and friendly errors.
-- `SavedTasksService` performs PostgREST calls to `saved_tasks` and joins `tasks` when needed.
+The Saved feature lets an authenticated user bookmark tasks for quick access. It is private per-user and synced globally across the app. Architecture:
+- UI: `SavedTasksScreen` (list), `ProfileScreen` (badge), and `TaskCard` (toggle).
+- `SavedTasksViewModel`: Global Provider that manages state, listens to Auth changes, and updates UI instantly.
+- `SavedTasksService`: Handles complex data fetching (Tasks + Profiles manual join) to bypass schema limitations.
 
 ## 2. Database & Supabase Mapping
 
@@ -77,52 +77,46 @@ where user_id = auth.uid() and task_id = '<task_id>';
 final supabase = Supabase.instance.client;
 
 class SavedTasksService {
-  Future<List<Map<String, dynamic>>> listMine() async {
-    final rows = await supabase
+  // ... basic CRUD methods (add, remove, etc.) ...
+
+  // List Mine with Manual Join (Fixes PGRST200)
+  // We fetch tasks first, then fetch profiles for those tasks, and merge manually.
+  Future<List<Task>> listMineWithDetails() async {
+    // 1. Fetch saved tasks with basic task details
+    final res = await _client
         .from('saved_tasks')
-        .select()
-        .eq('user_id', supabase.auth.currentUser!.id)
+        .select('task:tasks(*)') 
+        .eq('user_id', uid)
         .order('created_at', ascending: false);
-    return (rows as List).cast<Map<String, dynamic>>();
-  }
 
-  Future<bool> isSaved(String taskId) async {
-    final row = await supabase
-        .from('saved_tasks')
-        .select('id')
-        .eq('user_id', supabase.auth.currentUser!.id)
-        .eq('task_id', taskId)
-        .maybeSingle();
-    return row != null;
-  }
+    // 2. Extract user IDs
+    final userIds = res.map((r) => r['task']['user_id']).toSet().toList();
 
-  Future<void> add(String taskId) async {
-    await supabase.from('saved_tasks').insert({
-      'user_id': supabase.auth.currentUser!.id,
-      'task_id': taskId,
-    });
-  }
+    // 3. Fetch profiles
+    final profiles = await _client.from('profiles').select().in_('id', userIds);
+    final profileMap = {for (var p in profiles) p['id']: p};
 
-  Future<void> remove(String taskId) async {
-    await supabase
-        .from('saved_tasks')
-        .delete()
-        .eq('user_id', supabase.auth.currentUser!.id)
-        .eq('task_id', taskId);
-  }
-
-  Future<bool> toggle(String taskId) async {
-    final already = await isSaved(taskId);
-    if (already) { await remove(taskId); return false; }
-    try {
-      await add(taskId); return true;
-    } on PostgrestException catch (e) {
-      if (e.code == '23505') return true; // unique violation → already saved
-      rethrow;
-    }
+    // 4. Merge
+    return res.map((row) {
+      final taskJson = row['task'];
+      final profile = profileMap[taskJson['user_id']];
+      var task = Task.fromJson(taskJson);
+      if (profile != null) {
+        task = task.copyWith(
+          userName: profile['full_name'],
+          userAvatar: profile['avatar_url'],
+        );
+      }
+      return task;
+    }).toList();
   }
 }
 ```
+
+### 5.3 Workarounds (PGRST200)
+
+- **Issue**: A direct join `.select('task:tasks(*, profiles!tasks_user_id_fkey(*))')` fails with `PGRST200` because the foreign key isn't exposed correctly to the Postgrest client in the current schema configuration.
+- **Fix**: We use the **manual 2-step fetch** pattern (shown above) to reliably get author details for saved tasks. This fetches tasks first, then profiles, and merges them in Dart. It ensures robust data loading without schema metadata errors.
 
 ## 6. Error Handling
 | Origin | Error | User-Facing Message | Mitigation |

@@ -12,6 +12,8 @@ import 'package:sline_app/features/profile/view/edit_profile_screen.dart';
 import 'package:sline_app/features/profile/view/settings_screen.dart';
 import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 import 'package:sline_app/core/providers/theme_mode_provider.dart';
+import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
+import 'package:sline_app/features/saved/view/saved_tasks_screen.dart';
 
 /// Profile screen - user profile management and settings with Glassmorphism design.
 class ProfileScreen extends StatefulWidget {
@@ -379,12 +381,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       },
                     ),
                     const SizedBox(height: AppDimens.p8),
-                    _buildMenuItem(
-                      context,
-                      'Saved Projects',
-                      Icons.favorite,
-                      AppColors.lightRed,
-                      badge: '12',
+                    Selector<SavedTasksViewModel, int>(
+                      selector: (_, vm) => vm.savedTasks.length,
+                      builder: (context, count, _) {
+                        return _buildMenuItem(
+                          context,
+                          'Saved Projects',
+                          Icons.favorite,
+                          AppColors.lightRed,
+                          badge: count > 0 ? '$count' : null,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const SavedTasksScreen(),
+                              ),
+                            );
+                          },
+                        );
+                      },
                     ),
                     const SizedBox(height: AppDimens.p8),
                     _buildMenuItem(

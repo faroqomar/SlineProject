@@ -6,6 +6,8 @@ import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/core/widgets/signed_image.dart';
+import 'package:provider/provider.dart';
+import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 
 class BookingTaskCard extends StatelessWidget {
@@ -31,10 +33,7 @@ class BookingTaskCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.cardBackground,
         borderRadius: BorderRadius.circular(24), // Matches rounded-[24px]
-        border: Border.all(
-          color: colorScheme.cardBorder,
-          width: 1,
-        ),
+        border: Border.all(color: colorScheme.cardBorder, width: 1),
         boxShadow: [
           BoxShadow(
             color: colorScheme.isDark
@@ -54,7 +53,7 @@ class BookingTaskCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- Header Section (Gradient + Featured Badge) ---
+              // --- Header Section (Gradient + Featured Badge + Bookmark) ---
               SizedBox(
                 height: 90,
                 width: double.infinity,
@@ -92,8 +91,8 @@ class BookingTaskCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                    
-                    // Gradient Overlay (for text readability if needed, or style)
+
+                    // Gradient Overlay
                     if (task.imagePaths.isNotEmpty)
                       Container(
                         decoration: BoxDecoration(
@@ -112,24 +111,28 @@ class BookingTaskCard extends StatelessWidget {
                         ),
                       ),
 
-                    // Noise overlay (optional - skipping for simplicity or can add image asset later)
-                    
-                    // Featured Badge (if applicable)
+                    // Featured Badge (Left now)
                     if (isHot)
                       Positioned(
                         top: 12,
-                        right: 12,
+                        left: 12,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(8),
-                            // backdrop filter if supported
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.auto_awesome, size: 12, color: AppColors.gold),
+                              Icon(
+                                Icons.auto_awesome,
+                                size: 12,
+                                color: AppColors.gold,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 'Featured',
@@ -143,6 +146,38 @@ class BookingTaskCard extends StatelessWidget {
                           ),
                         ),
                       ),
+
+                    // Bookmark Button (Right)
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: Consumer<SavedTasksViewModel>(
+                        builder: (context, savedVM, child) {
+                          final isSaved = savedVM.isSaved(task.id);
+                          return GestureDetector(
+                            onTap: () {
+                              savedVM.toggle(task.id);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: isSaved
+                                    ? AppColors.lightRed
+                                    : Colors.black.withValues(alpha: 0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                isSaved
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                size: 18,
+                                color: Colors.white,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -155,7 +190,10 @@ class BookingTaskCard extends StatelessWidget {
                   children: [
                     // Avatar + Rating Row (Avatar overlaps header)
                     Transform.translate(
-                      offset: const Offset(0, -24), // Negative margin to overlap
+                      offset: const Offset(
+                        0,
+                        -24,
+                      ), // Negative margin to overlap
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -168,7 +206,8 @@ class BookingTaskCard extends StatelessWidget {
                               color: AppColors.gold,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: colorScheme.cardBackground, // Matches card bg to look like cutout
+                                color: colorScheme
+                                    .cardBackground, // Matches card bg to look like cutout
                                 width: 4,
                               ),
                               boxShadow: [
@@ -179,9 +218,13 @@ class BookingTaskCard extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            child: task.userAvatar != null && task.userAvatar!.isNotEmpty
+                            child:
+                                task.userAvatar != null &&
+                                    task.userAvatar!.isNotEmpty
                                 ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(12), // Inner radius
+                                    borderRadius: BorderRadius.circular(
+                                      12,
+                                    ), // Inner radius
                                     child: SignedAvatar(
                                       storagePathOrUrl: task.userAvatar!,
                                       size: 48, // 56 - border
@@ -202,7 +245,10 @@ class BookingTaskCard extends StatelessWidget {
 
                           // Rating Pill
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             margin: const EdgeInsets.only(bottom: 4),
                             decoration: BoxDecoration(
                               color: AppColors.gold.withValues(alpha: 0.1),
@@ -213,7 +259,11 @@ class BookingTaskCard extends StatelessWidget {
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.star, size: 12, color: AppColors.gold),
+                                Icon(
+                                  Icons.star,
+                                  size: 12,
+                                  color: AppColors.gold,
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   '4.9', // Placeholder rating
@@ -247,7 +297,11 @@ class BookingTaskCard extends StatelessWidget {
                     // Author Name
                     Row(
                       children: [
-                        Icon(Icons.person_outline, size: 12, color: colorScheme.textSecondary),
+                        Icon(
+                          Icons.person_outline,
+                          size: 12,
+                          color: colorScheme.textSecondary,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           authorName,
@@ -265,21 +319,29 @@ class BookingTaskCard extends StatelessWidget {
                     Wrap(
                       spacing: 8,
                       runSpacing: 4,
-                      children: task.skills.take(3).map((tag) => Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          tag,
-                          style: AppTypography.micro.copyWith(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: colorScheme.textSecondary,
-                          ),
-                        ),
-                      )).toList(),
+                      children: task.skills
+                          .take(3)
+                          .map(
+                            (tag) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                tag,
+                                style: AppTypography.micro.copyWith(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: colorScheme.textSecondary,
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(),
                     ),
 
                     const SizedBox(height: 16),
@@ -305,7 +367,9 @@ class BookingTaskCard extends StatelessWidget {
                                 style: AppTypography.micro.copyWith(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
-                                  color: colorScheme.textSecondary.withValues(alpha: 0.6),
+                                  color: colorScheme.textSecondary.withValues(
+                                    alpha: 0.6,
+                                  ),
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -345,7 +409,11 @@ class BookingTaskCard extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                const Icon(Icons.arrow_forward, size: 14, color: Colors.white),
+                                const Icon(
+                                  Icons.arrow_forward,
+                                  size: 14,
+                                  color: Colors.white,
+                                ),
                               ],
                             ),
                           ),

@@ -795,9 +795,42 @@ where user_id = auth.uid()
 order by created_at desc;
 
 -- Remove a saved task
-delete from public.saved_tasks
-where user_id = auth.uid() and task_id = '<task_id>';
+// List Mine with Manual Join (Fixes PGRST200)
+// We fetch tasks first, then fetch profiles for those tasks, and merge manually.
+Future<List<Task>> listMineWithDetails() async {
+  // 1. Fetch saved tasks with basic task details
+  final res = await _client
+      .from('saved_tasks')
+      .select('task:tasks(*)') 
+      .eq('user_id', uid)
+      .order('created_at', ascending: false);
+
+  // 2. Extract user IDs
+  final userIds = res.map((r) => r['task']['user_id']).toSet().toList();
+
+  // 3. Fetch profiles
+  final profiles = await _client.from('profiles').select().in_('id', userIds);
+  final profileMap = {for (var p in profiles) p['id']: p};
+
+  // 4. Merge
+  return res.map((row) {
+    final taskJson = row['task'];
+    final profile = profileMap[taskJson['user_id']];
+    var task = Task.fromJson(taskJson);
+    if (profile != null) {
+      task = task.copyWith(
+        userName: profile['full_name'],
+        userAvatar: profile['avatar_url'],
+      );
+    }
+    return task;
+  }).toList();
+}
 ```
+
+### 5.3 Workarounds
+
+- **PGRST200 on Join**: The direct join `.select('task:tasks(*, profiles!tasks_user_id_fkey(*))')` fails because the foreign key isn't exposed correctly to the Postgrest client in this specific schema configuration. We use the **manual 2-step fetch** pattern (shown above) to reliably get author details for saved tasks. This is slightly less efficient but 100% robust against schema metadata quirks.
 
 ### 5.2 Dart (supabase_flutter)
 
