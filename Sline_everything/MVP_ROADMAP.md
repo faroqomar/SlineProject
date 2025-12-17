@@ -160,6 +160,7 @@ Step | Feature | Description | Status
 7.4 | My Tasks | List and manage user’s posted tasks | ✅ Completed
 7.5 | Account management | Logout, delete account, reset password | ⏳ Planned
 7.6 | Saved Tasks | Bookmark/Unsaving, Badge Count, List Screen | ✅ Completed (v2.5)
+7.7 | Forgot Password | Reset link request flow | ✅ Completed (v2.6)
 
 ---
 

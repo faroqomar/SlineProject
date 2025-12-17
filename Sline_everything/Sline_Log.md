@@ -21,6 +21,27 @@
 
 ## 📋 Version History
 
+### 🟢 Version 2.6 — Forgot Password Flow
+
+**Date:** 2025-12-17
+**Commit:** _Pending_ — "feat(auth): forgot password flow with glassmorphism UI"
+
+#### ✅ Implemented
+- **Forgot Password UI**
+  - Created `ForgotPasswordScreen` with matching Glassmorphism design.
+  - Added "Forgot Password?" button to `LoginScreen` with navigation.
+- **Backend Logic**
+  - Updated `AuthRepository` to wrap `resetPasswordForEmail`.
+  - Updated `AuthViewModel` with `resetPassword` method and error mapping.
+
+#### 📊 Impact
+- **UX**: Users can now self-serve password recovery vs. getting stuck.
+- **Completeness**: Closes a critical gap in the authentication lifecycle.
+
+#### 🔧 Technical Notes
+- Uses Supabase's built-in email recovery flow.
+- Deep linking is handled by the OS/Supabase default for now; app just triggers the email.
+
 ### 🟢 Version 2.5 — Saved Projects Feature Fix & Optimization
 
 **Date:** 2025-12-17

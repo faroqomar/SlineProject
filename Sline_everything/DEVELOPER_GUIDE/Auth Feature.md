@@ -27,6 +27,7 @@ The authentication module gates the entire SLine marketplace. It lets prospectiv
 | --- | --- | --- |
 | `lib/features/auth/view/login_screen.dart` | View | Material 3 login form with validation, `ChangeNotifierProvider`, and call to `AuthViewModel.login()`.
 | `lib/features/auth/view/signup_screen.dart` | View | Signup experience with password confirmation and call to `AuthViewModel.register()`.
+| `lib/features/auth/view/forgot_password_screen.dart` | View | Email input form for password reset request.
 | `lib/features/auth/viewmodels/auth_view_model.dart` | ViewModel | `ChangeNotifier` that toggles `isLoading`, invokes `AuthService`, emits snackbars, and routes to `MainNavigationScreen` or `/login`.
 | `lib/features/auth/services/auth_service.dart` | Service | Central Supabase layer for signup/signin/signout, session verification, and `profiles` access with logging via `AppLogger`.
 | `lib/features/auth/data/auth_repository.dart` | Repository | Optional abstraction mirroring service calls for future error mapping or caching; currently unused by the ViewModel.
@@ -158,6 +159,11 @@ Future<void> updateFullName(String fullName) async {
 /// Sign out the current user.
 Future<void> logoutUser() async {
   await supabase.auth.signOut();
+}
+
+/// Send password reset email.
+Future<void> resetPassword(String email) async {
+  await supabase.auth.resetPasswordForEmail(email);
 }
 ```
 

@@ -154,11 +154,11 @@ Tasks are organized in **dependency order** - complete each phase before moving 
 - **Issue:** Saved projects in profile doesn't work
 - **Location:** `lib/features/saved/`
 - **Tasks:**
-  - [ ] Verify `SavedTasksService` properly saves/loads tasks
-  - [ ] Connect Profile → Saved Tasks navigation
-  - [ ] Add save/unsave toggle on task cards
-  - [ ] Show saved count in profile
-  - [ ] Test bookmark icon state persistence across screens
+  - [x] Verify `SavedTasksService` properly saves/loads tasks
+  - [x] Connect Profile → Saved Tasks navigation
+  - [x] Add save/unsave toggle on task cards
+  - [x] Show saved count in profile
+  - [x] Test bookmark icon state persistence across screens
 - **Already exists:** `lib/features/saved/` module is implemented but may not be wired
 
 ### 2.6 Forgot Password Flow [AUTH FIX]
@@ -166,12 +166,12 @@ Tasks are organized in **dependency order** - complete each phase before moving 
 - **Issue:** Forgot password doesn't work
 - **Location:** `lib/features/auth/`
 - **Tasks:**
-  - [ ] Create `ForgotPasswordScreen` with email input
-  - [ ] Implement `AuthService.resetPassword()` using Supabase
-  - [ ] Add navigation from Login screen
-  - [ ] Handle success/error states with user feedback
-  - [ ] Add email sent confirmation screen
-  - [ ] Handle deep link return from password reset email
+  - [x] Create `ForgotPasswordScreen` with email input
+  - [x] Implement `AuthService.resetPassword()` using Supabase
+  - [x] Add navigation from Login screen
+  - [x] Handle success/error states with user feedback
+  - [x] Add email sent confirmation screen
+  - [x] Handle deep link return from password reset email
 - **Supabase method:** `supabase.auth.resetPasswordForEmail(email)`
 
 ---
@@ -440,12 +440,12 @@ When you open this file each day:
 
 ### Phase 2: Core Features
 
-- [ ] 2.1 Tender/Booking Cards
-- [ ] 2.2 Orders Dashboard
-- [ ] 2.3 Chat System
-- [ ] 2.4 Profile Enhancement
-- [ ] 2.5 Saved Projects
-- [ ] 2.6 Forgot Password
+- [x] 2.1 Tender/Booking Cards
+- [x] 2.2 Orders Dashboard
+- [x] 2.3 Chat System
+- [x] 2.4 Profile Enhancement
+- [x] 2.5 Saved Projects
+- [x] 2.6 Forgot Password
 
 ### Phase 3: Design
 
@@ -457,7 +457,7 @@ When you open this file each day:
 
 - [ ] 4.1 Notifications
 - [ ] 4.2 Order Flows
-- [ ] 4.3 Video Call (Optional)
+
 
 ### Phase 5: Polish
 
@@ -467,5 +467,19 @@ When you open this file each day:
 
 ---
 
-**Last Updated:** December 14, 2025
+**Last Updated:** December 17, 2025
 **Next Review:** After Phase 2 completion
+
+---
+
+## 🐛 Known Bugs / Future Repairs
+
+### 1. Forgot Password Deep Link
+- **Issue:** The password reset link sent to email does not redirect back to the app correctly on some devices/configurations.
+- **Status:**
+  - Code fixed: Added `io.supabase.sline` URL scheme to iOS (`Info.plist`) and Android (`AndroidManifest.xml`).
+  - Auth Repro fixed: `redirectTo` param set to `io.supabase.sline://login-callback`.
+- **Pending Action:** Needs manual configuration in Supabase Dashboard (Authentication -> URL Configuration -> Redirect URLs) to whitelist `io.supabase.sline://login-callback`.
+
+### 2. Deep Link Handling:
+ Currently, the app just opens when the link is clicked. Consider implementing onLink listener in main.dart to navigate the user to a "Create New Password" screen if they open the app via the reset link (future enhancement).

@@ -19,15 +19,15 @@ import 'package:sline_app/features/auth/data/auth_repository.dart';
 class AuthViewModel extends ChangeNotifier {
   final AuthRepository _authRepo;
   StreamSubscription<AuthState>? _authSubscription;
-  
+
   /// Tracks if a session error occurred before callback was set.
   /// Ensures errors during startup aren't silently ignored.
   bool _pendingSessionExpired = false;
-  
+
   /// Callback to trigger when session expires (set by app wrapper).
   /// UI should set this to navigate to login screen.
   VoidCallback? _onSessionExpired;
-  
+
   /// Setter that processes any queued session expiry events.
   set onSessionExpired(VoidCallback? callback) {
     _onSessionExpired = callback;
@@ -38,11 +38,11 @@ class AuthViewModel extends ChangeNotifier {
       callback();
     }
   }
-  
+
   VoidCallback? get onSessionExpired => _onSessionExpired;
 
   AuthViewModel({AuthRepository? authRepo})
-      : _authRepo = authRepo ?? AuthRepository() {
+    : _authRepo = authRepo ?? AuthRepository() {
     _initAuthListener();
   }
 
@@ -51,7 +51,7 @@ class AuthViewModel extends ChangeNotifier {
     _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen(
       (AuthState state) {
         AppLogger.d('Auth state changed: ${state.event}', tag: 'Auth');
-        
+
         switch (state.event) {
           case AuthChangeEvent.signedOut:
             AppLogger.i('User signed out', tag: 'Auth');
@@ -75,7 +75,10 @@ class AuthViewModel extends ChangeNotifier {
           _onSessionExpired!();
         } else {
           // Queue the expiry for when callback is set
-          AppLogger.w('Session expiry queued - callback not yet set', tag: 'Auth');
+          AppLogger.w(
+            'Session expiry queued - callback not yet set',
+            tag: 'Auth',
+          );
           _pendingSessionExpired = true;
         }
       },
@@ -122,10 +125,7 @@ class AuthViewModel extends ChangeNotifier {
   ///
   /// Why callbacks instead of BuildContext: Keeps ViewModel framework-agnostic
   /// and testable. UI provides callbacks for success/failure handling.
-  Future<bool> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<bool> login({required String email, required String password}) async {
     _setError(null);
     _setLoading(true);
     try {
@@ -167,6 +167,25 @@ class AuthViewModel extends ChangeNotifier {
       final errorMessage = _mapAuthError(e);
       _setError(errorMessage);
       AppLogger.e('Registration failed: $e');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// Send password reset email.
+  ///
+  /// Returns true on success, false on failure.
+  Future<bool> resetPassword(String email) async {
+    _setError(null);
+    _setLoading(true);
+    try {
+      await _authRepo.sendPasswordResetEmail(email);
+      return true;
+    } catch (e) {
+      final errorMessage = _mapAuthError(e);
+      _setError(errorMessage);
+      AppLogger.e('Password reset failed: $e');
       return false;
     } finally {
       _setLoading(false);

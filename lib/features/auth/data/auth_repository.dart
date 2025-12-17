@@ -12,8 +12,11 @@ class AuthRepository {
     required String fullName,
   }) async {
     // Info: Starting user registration process
-    AppLogger.i('Starting user registration for: $email');
-    final response = await _client.auth.signUp(email: email, password: password);
+    AppLogger.i('Starting user registration for: ${_maskEmail(email)}');
+    final response = await _client.auth.signUp(
+      email: email,
+      password: password,
+    );
 
     // تأكد من وجود session، إذا لا، قم بتسجيل الدخول
     final session = response.session;
@@ -29,24 +32,41 @@ class AuthRepository {
       'full_name': fullName,
       'email': email,
     });
-    
+
     // Info: User registration completed successfully
-    AppLogger.i('User registration completed for: $email');
+    AppLogger.i('User registration completed for: ${_maskEmail(email)}');
   }
 
-  Future<AuthResponse> signIn({required String email, required String password}) async {
+  Future<AuthResponse> signIn({
+    required String email,
+    required String password,
+  }) async {
     // Info: User attempting to sign in
-    AppLogger.i('User attempting to sign in: $email');
-    final response = await _client.auth.signInWithPassword(email: email, password: password);
+    AppLogger.i('User attempting to sign in: ${_maskEmail(email)}');
+    final response = await _client.auth.signInWithPassword(
+      email: email,
+      password: password,
+    );
     // Info: User signed in successfully
-    AppLogger.i('User signed in successfully: $email');
+    AppLogger.i('User signed in successfully: ${_maskEmail(email)}');
     return response;
+  }
+
+  Future<void> sendPasswordResetEmail(String email) async {
+    AppLogger.i('Sending password reset email to: ${_maskEmail(email)}');
+    await _client.auth.resetPasswordForEmail(
+      email,
+      redirectTo: 'io.supabase.sline://login-callback',
+    );
+    AppLogger.i('Password reset email sent to: ${_maskEmail(email)}');
   }
 
   Future<void> signOut() async {
     final userEmail = _client.auth.currentUser?.email;
     // Info: User signing out
-    AppLogger.i('User signing out: ${userEmail ?? 'Unknown'}');
+    AppLogger.i(
+      'User signing out: ${userEmail != null ? _maskEmail(userEmail) : 'Unknown'}',
+    );
     await _client.auth.signOut();
   }
 
@@ -63,5 +83,14 @@ class AuthRepository {
         .single();
 
     return response;
+  }
+
+  String _maskEmail(String email) {
+    if (email.isEmpty) return '***';
+    final parts = email.split('@');
+    if (parts.length != 2) return '***';
+    final name = parts[0];
+    if (name.length <= 2) return '***@${parts[1]}';
+    return '${name.substring(0, 2)}***@${parts[1]}';
   }
 }

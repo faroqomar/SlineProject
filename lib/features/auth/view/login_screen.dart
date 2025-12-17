@@ -8,6 +8,7 @@ import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
+import 'package:sline_app/features/auth/view/forgot_password_screen.dart';
 
 /// Login screen for user authentication (MVVM) with Glassmorphism design.
 ///
@@ -45,18 +46,18 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login successful')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Login successful')));
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
       );
     } else {
       // Show error from ViewModel
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(authVM.error ?? 'Login failed')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(authVM.error ?? 'Login failed')));
     }
   }
 
@@ -116,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: AppDimens.p24),
-                      
+
                       // Title
                       Text(
                         'Welcome Back',
@@ -126,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: AppDimens.p8),
-                      
+
                       // Subtitle
                       Text(
                         'Sign in to continue to SLine',
@@ -186,13 +187,18 @@ class _LoginScreenState extends State<LoginScreen> {
                           return null;
                         },
                       ),
-                      
+
                       // Forgot Password
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: () {
-                            // TODO: Implement forgot password
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ForgotPasswordScreen(),
+                              ),
+                            );
                           },
                           child: Text(
                             'Forgot Password?',
@@ -224,7 +230,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           Expanded(child: Divider(color: colorScheme.divider)),
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: AppDimens.p8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppDimens.p8,
+                            ),
                             child: Text(
                               'OR',
                               style: AppTypography.captionBold.copyWith(
@@ -302,10 +310,7 @@ class _LoginScreenState extends State<LoginScreen> {
           onTap: () {},
           borderRadius: BorderRadius.circular(AppDimens.r14),
           child: Center(
-            child: Text(
-              icon,
-              style: const TextStyle(fontSize: 20),
-            ),
+            child: Text(icon, style: const TextStyle(fontSize: 20)),
           ),
         ),
       ),
