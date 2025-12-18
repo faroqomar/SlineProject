@@ -7,11 +7,7 @@ class ServiceCard extends StatelessWidget {
   final Task task;
   final VoidCallback? onTap;
 
-  const ServiceCard({
-    super.key,
-    required this.task,
-    this.onTap,
-  });
+  const ServiceCard({super.key, required this.task, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +37,10 @@ class ServiceCard extends StatelessWidget {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.green.shade100,
                       borderRadius: BorderRadius.circular(12),
@@ -61,9 +60,9 @@ class ServiceCard extends StatelessWidget {
               // Description
               Text(
                 task.description,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey.shade600,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -76,7 +75,10 @@ class ServiceCard extends StatelessWidget {
                   runSpacing: 4,
                   children: task.skills.take(3).map((skill) {
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.blue.shade50,
                         borderRadius: BorderRadius.circular(8),
@@ -106,9 +108,14 @@ class ServiceCard extends StatelessWidget {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(task.status).withValues(alpha: 0.1),
+                      color: _getStatusColor(
+                        task.status,
+                      ).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(

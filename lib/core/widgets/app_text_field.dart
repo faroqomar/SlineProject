@@ -50,9 +50,7 @@ class AppTextField extends StatelessWidget {
       validator: validator,
       enabled: enabled,
       maxLines: maxLines, // Pass to TextFormField
-      style: textTheme.bodyMedium?.copyWith(
-        color: colorScheme.text,
-      ),
+      style: textTheme.bodyMedium?.copyWith(color: colorScheme.text),
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: textTheme.bodyMedium?.copyWith(
@@ -63,9 +61,11 @@ class AppTextField extends StatelessWidget {
         // The default styles for border, enabledBorder, focusedBorder, filled, fillColor
         // are already defined in `app_theme.dart` within `InputDecorationTheme`.
         // We only override what's necessary here.
-        fillColor: colorScheme.inputBackground, // Ensure the background is consistent
+        fillColor:
+            colorScheme.inputBackground, // Ensure the background is consistent
       ),
-      cursorColor: colorScheme.primary, // Cursor color matches primary focus color
+      cursorColor:
+          colorScheme.primary, // Cursor color matches primary focus color
     );
   }
 }

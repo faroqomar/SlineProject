@@ -17,7 +17,7 @@ Tasks are organized in **dependency order** - complete each phase before moving 
 
 > Completed December 14, 2025
 
-### 1.1 Task Card Image Display [BUG - HIGH PRIORITY] ✅ COMPLETE
+### 1.1 Task Card Image Display (BUG - HIGH PRIORITY) ✅ COMPLETE
 
 - **Issue:** Task cards don't display images even when `image_paths` are provided
 - **Location:** `lib/features/tasks/view/widgets/task_card.dart`
@@ -32,7 +32,7 @@ Tasks are organized in **dependency order** - complete each phase before moving 
   - `lib/features/tasks/models/task_model.dart` (verify `imagePaths` parsing)
 - **Reference:** New_Design shows image-based headers with gradient overlay
 
-### 1.2 App Performance Optimization [BUG - HIGH PRIORITY] ✅ COMPLETE
+### 1.2 App Performance Optimization (BUG - HIGH PRIORITY) ✅ COMPLETE
 
 - **Issue:** App is slow/laggy
 - **Tasks:**
@@ -48,7 +48,7 @@ Tasks are organized in **dependency order** - complete each phase before moving 
   - All Services for N+1 queries
   - Home screen load sequence
 
-### 1.3 Supabase Connection Verification [AUDIT] ✅ COMPLETE
+### 1.3 Supabase Connection Verification (AUDIT) ✅ COMPLETE
 
 - **Issue:** Uncertain if all features properly connect to Supabase
 - **Tasks:**
@@ -64,11 +64,11 @@ Tasks are organized in **dependency order** - complete each phase before moving 
 
 ---
 
-## 🟡 PHASE 2: Core Feature Fixes
+## 🟡 PHASE 2: Core Feature Fixes ✅ COMPLETE
 
 > Fix existing features before adding new ones
 
-### 2.1 Differentiate Tender vs Booking Cards [UI/UX]
+### 2.1 Differentiate Tender vs Booking Cards (UI/UX)
 
 - **Issue:** Tender and Booking task cards look too similar
 - **Current:** Both use same `TaskCard` widget with only badge difference
@@ -89,7 +89,7 @@ Tasks are organized in **dependency order** - complete each phase before moving 
   - [x] Update `TaskCard` to delegate to appropriate card type
   - [x] Update Home/Tender/Booking screens to use correct cards
 
-### 2.2 Orders Dashboard Overhaul [FEATURE FIX]
+### 2.2 Orders Dashboard Overhaul (FEATURE FIX) ✅ COMPLETE
 
 - **Issue:** Orders screen should work as dashboard for published tenders/bookings
 - **Location:** `lib/features/orders/view/orders_dashboard_screen.dart`
@@ -109,7 +109,7 @@ Tasks are organized in **dependency order** - complete each phase before moving 
   - `lib/features/orders/view/widgets/order_card.dart`
   - `lib/features/orders/view/widgets/offer_list_sheet.dart`
 
-### 2.3 Chat System Overhaul [FEATURE FIX]
+### 2.3 Chat System Overhaul (FEATURE FIX)
 
 - **Issue:** Chat is messy and can't delete previous chats
 - **Location:** `lib/features/chat/`
@@ -127,7 +127,7 @@ Tasks are organized in **dependency order** - complete each phase before moving 
   - [ ] Clean up code structure - consolidate duplicates
 - **Reference:** `.TODO/New_Design/Messages/` folder
 
-### 2.4 Profile Screen Enhancement [FEATURE FIX]
+### 2.4 Profile Screen Enhancement (FEATURE FIX) ✅ COMPLETE
 
 - **Issue:** Profile doesn't show portfolio, edit profile not functional
 - **Location:** `lib/features/profile/`
@@ -149,7 +149,7 @@ Tasks are organized in **dependency order** - complete each phase before moving 
   - [x] Add badges display (Top Rated, Rising Talent, etc.)
 - **Reference:** `.TODO/New_Design/Profile/ProfileView.tsx`
 
-### 2.5 Saved Projects Feature [FEATURE FIX]
+### 2.5 Saved Projects Feature (FEATURE FIX) ✅ COMPLETE
 
 - **Issue:** Saved projects in profile doesn't work
 - **Location:** `lib/features/saved/`
@@ -161,7 +161,7 @@ Tasks are organized in **dependency order** - complete each phase before moving 
   - [x] Test bookmark icon state persistence across screens
 - **Already exists:** `lib/features/saved/` module is implemented but may not be wired
 
-### 2.6 Forgot Password Flow [AUTH FIX]
+### 2.6 Forgot Password Flow (AUTH FIX) ✅ COMPLETE
 
 - **Issue:** Forgot password doesn't work
 - **Location:** `lib/features/auth/`
@@ -180,7 +180,7 @@ Tasks are organized in **dependency order** - complete each phase before moving 
 
 > After features work, polish the design
 
-### 3.1 Liquid Glass Effect Implementation [UI OVERHAUL]
+### 3.1 Liquid Glass Effect Implementation (UI OVERHAUL)
 
 - **Note:** `liquid_glass.md` file needs to be created with design specs
 - **Reference:** `.TODO/New_Design/Theme.ts` shows glassmorphism patterns
@@ -197,7 +197,7 @@ Tasks are organized in **dependency order** - complete each phase before moving 
   - [ ] Add subtle animations for glass effects
   - [ ] Ensure dark/light mode consistency
 
-### 3.2 New Design Alignment Audit [UI AUDIT]
+### 3.2 New Design Alignment Audit (UI AUDIT)
 
 - **Reference:** `.TODO/New_Design/` folder contains complete design reference
 - **Missing/Different from current implementation:**
@@ -227,7 +227,7 @@ Tasks are organized in **dependency order** - complete each phase before moving 
 
 > Add new functionality
 
-### 4.1 Notification System [NEW FEATURE]
+### 4.1 Notification System (NEW FEATURE)
 
 - **Issue:** No notification system for status updates
 - **Required notifications:**
@@ -248,7 +248,7 @@ Tasks are organized in **dependency order** - complete each phase before moving 
   - [ ] Real-time subscription for new notifications
 - **UI Reference:** `.TODO/New_Design/Notifications/NotificationsModal.tsx`
 
-### 4.2 Complete Order Flow System [NEW FEATURE]
+### 4.2 Complete Order Flow System (NEW FEATURE)
 
 - **Issue:** No end-to-end order flow defined
 - **Flows to implement:**
@@ -358,6 +358,36 @@ Dispute:
 
 ---
 
+## 🧪 PHASE 6: Testing Implementation Strategy
+
+> Comprehensive testing from unit to integration
+
+### 6.1 Phase 1: Core Logic (Unit Tests)
+
+- **Goal:** Verify "brain" works without UI/DB
+- **Tasks:**
+  - [ ] Setup Test Environment (Mockito/Mocktail)
+  - [ ] `AuthViewModel` Tests (Login, Register, Logout)
+  - [ ] `TaskViewModel` Tests (Parsing, Error handling)
+  - [ ] `ProfileViewModel` Tests (Updates)
+
+### 6.2 Phase 2: Critical UI Components (Widget Tests)
+
+- **Goal:** Verify pixels and interactions
+- **Tasks:**
+  - [ ] Reusable Widgets (AppButton, AppTextField, GlassContainer)
+  - [ ] Task Cards (Display data, handle taps)
+  - [ ] Chat Message Bubbles (Styling correctness)
+
+### 6.3 Phase 3: User Flows (Integration Tests)
+
+- **Goal:** Verify complete user journeys
+- **Tasks:**
+  - [ ] Authentication Flow (Start -> Login -> Home)
+  - [ ] Task Creation Flow (Post -> List)
+
+---
+
 ## 📝 Additional Items Identified
 
 ### From Code Analysis
@@ -398,8 +428,9 @@ Dispute:
 | 10 | 3.x | Design Updates | 12-16 hours |
 | 11 | 4.1 | Notifications | 8-12 hours |
 | 12 | 4.2 | Order Flows | 16-24 hours |
+| 13 | 6.x | Testing Implementation | 12-16 hours |
 
-**Total Estimated Time:** ~80-110 hours
+**Total Estimated Time:** ~92-126 hours
 
 ---
 
@@ -464,6 +495,14 @@ When you open this file each day:
 - [ ] 5.1 Error Handling
 - [ ] 5.2 Testing
 - [ ] 5.3 Documentation
+
+### Phase 6: Testing Strategy
+
+- [ ] 6.1 Core Logic (Unit)
+- [ ] 6.2 Critical UI (Widget)
+- [ ] 6.3 User Flows (Integration)
+
+---
 
 ---
 

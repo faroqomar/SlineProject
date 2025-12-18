@@ -33,8 +33,10 @@ class OrderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppColorScheme colorScheme = context.colorScheme;
     final bool isOpen = task.status == TaskStatus.open;
-    final bool isAssigned = task.status == TaskStatus.assigned || task.status == TaskStatus.inProgress;
-    
+    final bool isAssigned =
+        task.status == TaskStatus.assigned ||
+        task.status == TaskStatus.inProgress;
+
     // Determine status badge color
     Color statusBg;
     Color statusText;
@@ -68,8 +70,8 @@ class OrderCard extends StatelessWidget {
         border: Border.all(color: colorScheme.cardBorder),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.isDark 
-                ? Colors.black.withValues(alpha: 0.2) 
+            color: colorScheme.isDark
+                ? Colors.black.withValues(alpha: 0.2)
                 : Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
@@ -98,7 +100,9 @@ class OrderCard extends StatelessWidget {
                       child: Center(
                         child: Icon(
                           isAssigned ? Icons.person : Icons.assignment,
-                          color: isAssigned ? AppColors.almostBlack : Colors.white,
+                          color: isAssigned
+                              ? AppColors.almostBlack
+                              : Colors.white,
                           size: 20,
                         ),
                       ),
@@ -120,8 +124,8 @@ class OrderCard extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             // Show freelancer name if assigned, otherwise offers count
-                            isAssigned 
-                                ? 'Freelancer: ${task.assignedFreelancerId != null ? "Assigned" : "..."}' 
+                            isAssigned
+                                ? 'Freelancer: ${task.assignedFreelancerId != null ? "Assigned" : "..."}'
                                 : '${task.offers} Offers',
                             style: AppTypography.micro.copyWith(
                               color: colorScheme.textSecondary,
@@ -139,7 +143,10 @@ class OrderCard extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: statusBg,
                       borderRadius: BorderRadius.circular(8),
@@ -160,7 +167,11 @@ class OrderCard extends StatelessWidget {
                       height: 24,
                       child: PopupMenuButton<String>(
                         padding: EdgeInsets.zero,
-                        icon: Icon(Icons.more_vert, size: 20, color: colorScheme.textSecondary),
+                        icon: Icon(
+                          Icons.more_vert,
+                          size: 20,
+                          color: colorScheme.textSecondary,
+                        ),
                         onSelected: (value) {
                           if (value == 'edit') onEdit?.call();
                           if (value == 'delete') onDelete?.call();
@@ -182,9 +193,16 @@ class OrderCard extends StatelessWidget {
                               value: 'delete',
                               child: Row(
                                 children: [
-                                  Icon(Icons.delete, size: 16, color: Colors.red),
+                                  Icon(
+                                    Icons.delete,
+                                    size: 16,
+                                    color: Colors.red,
+                                  ),
                                   SizedBox(width: 8),
-                                  Text('Delete', style: TextStyle(color: Colors.red)),
+                                  Text(
+                                    'Delete',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
                                 ],
                               ),
                             ),
@@ -218,7 +236,9 @@ class OrderCard extends StatelessWidget {
                         Icon(Icons.schedule, size: 16, color: AppColors.teal),
                         const SizedBox(height: 4),
                         Text(
-                          task.deadline != null ? formatTimeLeft(task.deadline!) : 'No Deadline',
+                          task.deadline != null
+                              ? formatTimeLeft(task.deadline!)
+                              : 'No Deadline',
                           style: AppTypography.bodySmall.copyWith(
                             color: AppColors.teal,
                             fontWeight: FontWeight.w800,
@@ -285,9 +305,7 @@ class OrderCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.only(top: AppDimens.p12),
             decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(color: colorScheme.divider),
-              ),
+              border: Border(top: BorderSide(color: colorScheme.divider)),
             ),
             child: Row(
               children: [
@@ -319,7 +337,7 @@ class OrderCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                
+
                 if (showChatButton) ...[
                   const SizedBox(width: AppDimens.p12),
                   // Chat button
@@ -350,10 +368,14 @@ class OrderCard extends StatelessWidget {
 
   String _getStatusLabel(TaskStatus status) {
     switch (status) {
-      case TaskStatus.open: return 'OPEN';
-      case TaskStatus.assigned: return 'ASSIGNED';
-      case TaskStatus.inProgress: return 'IN PROGRESS';
-      case TaskStatus.closed: return 'COMPLETED';
+      case TaskStatus.open:
+        return 'OPEN';
+      case TaskStatus.assigned:
+        return 'ASSIGNED';
+      case TaskStatus.inProgress:
+        return 'IN PROGRESS';
+      case TaskStatus.closed:
+        return 'COMPLETED';
     }
   }
 }

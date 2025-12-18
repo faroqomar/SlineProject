@@ -11,14 +11,14 @@ import 'package:sline_app/features/tasks/view/widgets/booking_task_card.dart';
 
 /// A card widget to display task info matching the new design system.
 /// Delegates to [TenderTaskCard] or [BookingTaskCard] based on task type.
-/// 
+///
 /// For backwards compatibility, you can set [useLegacyLayout] to true
 /// to use the original header-based card layout.
 class TaskCard extends StatelessWidget {
   final Task task;
   final VoidCallback onTap;
   final bool isHot;
-  
+
   /// If true, uses the original card layout with colored header and image.
   /// If false (default), delegates to TenderTaskCard or BookingTaskCard.
   final bool useLegacyLayout;
@@ -54,10 +54,7 @@ class TaskCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.cardBackground,
         borderRadius: BorderRadius.circular(AppDimens.r20),
-        border: Border.all(
-          color: colorScheme.cardBorder,
-          width: 1,
-        ),
+        border: Border.all(color: colorScheme.cardBorder, width: 1),
         boxShadow: [
           BoxShadow(
             color: colorScheme.isDark
@@ -159,10 +156,7 @@ class TaskCard extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(
-                        '🔥',
-                        style: TextStyle(fontSize: 10),
-                      ),
+                      const Text('🔥', style: TextStyle(fontSize: 10)),
                       const SizedBox(width: 4),
                       Text(
                         'HOT',
@@ -222,7 +216,10 @@ class TaskCard extends StatelessWidget {
   }
 
   Widget _buildContent(
-      BuildContext context, AppColorScheme colorScheme, bool isTender) {
+    BuildContext context,
+    AppColorScheme colorScheme,
+    bool isTender,
+  ) {
     return Padding(
       padding: const EdgeInsets.all(AppDimens.p16),
       child: Column(
@@ -231,9 +228,7 @@ class TaskCard extends StatelessWidget {
           // Title
           Text(
             task.title,
-            style: AppTypography.h6.copyWith(
-              color: colorScheme.text,
-            ),
+            style: AppTypography.h6.copyWith(color: colorScheme.text),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -255,9 +250,7 @@ class TaskCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.only(top: AppDimens.p12),
             decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(color: colorScheme.cardBorder),
-              ),
+              border: Border(top: BorderSide(color: colorScheme.cardBorder)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -275,16 +268,14 @@ class TaskCard extends StatelessWidget {
                       Text(
                         _formatDeadline(task.deadline!),
                         style: AppTypography.captionBold.copyWith(
-                          color:
-                              isTender ? AppColors.lightRed : AppColors.teal,
+                          color: isTender ? AppColors.lightRed : AppColors.teal,
                         ),
                       ),
                     ] else
                       Text(
                         isTender ? 'Open' : 'Available',
                         style: AppTypography.captionBold.copyWith(
-                          color:
-                              isTender ? AppColors.lightRed : AppColors.teal,
+                          color: isTender ? AppColors.lightRed : AppColors.teal,
                         ),
                       ),
                   ],
@@ -309,7 +300,8 @@ class TaskCard extends StatelessWidget {
   /// Get header color based on task category or type
   Color _getHeaderColor() {
     // Use category-based colors if available
-    final category = task.categoryName?.toLowerCase() ?? task.category?.toLowerCase() ?? '';
+    final category =
+        task.categoryName?.toLowerCase() ?? task.category?.toLowerCase() ?? '';
 
     switch (category) {
       case 'design':

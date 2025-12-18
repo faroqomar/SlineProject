@@ -8,7 +8,7 @@ import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/providers/navigation_provider.dart';
 
 /// Custom bottom navigation bar with iOS 26-inspired liquid glass effect.
-/// 
+///
 /// Features:
 /// - Frosted glass background with blur effect
 /// - Animated pill indicator for active tab
@@ -24,16 +24,40 @@ class CustomBottomNavBar extends StatelessWidget {
     // Navigation items configuration
     final List<_NavItem> navItems = [
       _NavItem(NavView.home, Icons.home_outlined, Icons.home, 'Home'),
-      _NavItem(NavView.tender, Icons.assignment_outlined, Icons.assignment, 'Tenders'),
-      _NavItem(NavView.booking, Icons.calendar_today_outlined, Icons.calendar_today, 'Bookings'),
-      _NavItem(NavView.orders, Icons.business_center_outlined, Icons.business_center, 'Orders'),
-      _NavItem(NavView.messages, Icons.message_outlined, Icons.message, 'Messages', hasNotification: true),
+      _NavItem(
+        NavView.tender,
+        Icons.assignment_outlined,
+        Icons.assignment,
+        'Tenders',
+      ),
+      _NavItem(
+        NavView.booking,
+        Icons.calendar_today_outlined,
+        Icons.calendar_today,
+        'Bookings',
+      ),
+      _NavItem(
+        NavView.orders,
+        Icons.business_center_outlined,
+        Icons.business_center,
+        'Orders',
+      ),
+      _NavItem(
+        NavView.messages,
+        Icons.message_outlined,
+        Icons.message,
+        'Messages',
+        hasNotification: true,
+      ),
       _NavItem(NavView.profile, Icons.person_outline, Icons.person, 'Profile'),
     ];
 
     return Consumer<NavigationProvider>(
       builder: (context, navigationProvider, child) {
-        final int currentIndex = navigationProvider.currentIndex.clamp(0, navItems.length - 1);
+        final int currentIndex = navigationProvider.currentIndex.clamp(
+          0,
+          navItems.length - 1,
+        );
 
         return Positioned(
           bottom: AppDimens.p16,
@@ -146,12 +170,14 @@ class _LiquidGlassNavItemState extends State<_LiquidGlassNavItem>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
-    );
-    _pillAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.15,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
+    _pillAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
     if (widget.isActive) {
       _controller.forward();
@@ -234,10 +260,12 @@ class _LiquidGlassNavItemState extends State<_LiquidGlassNavItem>
                     widget.isActive ? widget.item.activeIcon : widget.item.icon,
                     size: 24,
                     color: widget.isActive
-                        ? (widget.colorScheme.isDark ? AppColors.offWhite : AppColors.teal)
+                        ? (widget.colorScheme.isDark
+                              ? AppColors.offWhite
+                              : AppColors.teal)
                         : (widget.colorScheme.isDark
-                            ? AppColors.offWhite.withValues(alpha: 0.5)
-                            : AppColors.almostBlack.withValues(alpha: 0.5)),
+                              ? AppColors.offWhite.withValues(alpha: 0.5)
+                              : AppColors.almostBlack.withValues(alpha: 0.5)),
                   ),
                 ),
                 // Notification badge

@@ -23,13 +23,13 @@ class CreateTaskScreen extends StatefulWidget {
 
 class _CreateTaskScreenState extends State<CreateTaskScreen> {
   int _currentStep = 1;
-  
+
   // Form State
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _tagsController = TextEditingController(); // Comma separated
   final _budgetController = TextEditingController();
-  
+
   // Booking Packages State (Visual placeholders for now)
   int _selectedPackageTier = 0; // 0: Basic, 1: Standard, 2: Premium
   final _packagePriceController = TextEditingController();
@@ -42,7 +42,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   String? _selectedCategoryId;
   String? _selectedCategoryName; // Add this to track name separately
   DateTime? _selectedDeadline;
-  
+
   // Data
   List<CategoryModel> _categories = [];
   bool _categoriesLoading = false;
@@ -57,7 +57,8 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       _budgetController.text = widget.task!.budget.toString();
       _selectedDeadline = widget.task!.deadline;
       _selectedCategoryId = widget.task!.categoryId;
-      _selectedCategoryName = widget.task!.categoryName ?? widget.task!.category;
+      _selectedCategoryName =
+          widget.task!.categoryName ?? widget.task!.category;
       _selectedTaskType = widget.task!.taskType;
       // Tags not in model yet, ignoring
     }
@@ -128,20 +129,24 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     try {
       // Use package price if booking, else budget
       double budget = double.tryParse(_budgetController.text) ?? 0;
-      
+
       Map<String, dynamic>? packages;
       if (_selectedTaskType == TaskType.booking) {
         // Construct Packages Map (Simplified for single selected tier for now)
-        final currentTierName = ['Basic', 'Standard', 'Premium'][_selectedPackageTier];
+        final currentTierName = [
+          'Basic',
+          'Standard',
+          'Premium',
+        ][_selectedPackageTier];
         packages = {
           currentTierName: {
             'price': _packagePriceController.text,
             'delivery': _packageDeliveryController.text,
             'revisions': _packageRevisionsController.text,
             'description': _packageDescriptionController.text,
-          }
+          },
         };
-        
+
         // Also update main budget display to match the package price
         budget = double.tryParse(_packagePriceController.text) ?? 0;
       }
@@ -152,13 +157,19 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         description: _descriptionController.text.trim(),
         budget: budget,
         userId: userId,
-        status: widget.task?.status ?? TaskStatus.open, // Preserve status on edit
+        status:
+            widget.task?.status ?? TaskStatus.open, // Preserve status on edit
         taskType: _selectedTaskType,
-        createdAt: widget.task?.createdAt ?? DateTime.now(), // Preserve createdAt
+        createdAt:
+            widget.task?.createdAt ?? DateTime.now(), // Preserve createdAt
         deadline: _selectedDeadline,
         categoryId: _selectedCategoryId,
         category: _selectedCategoryName, // Use the selected name
-        skills: _tagsController.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList(),
+        skills: _tagsController.text
+            .split(',')
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .toList(),
         packages: packages,
         offers: widget.task?.offers ?? 0, // Preserve offers count
       );
@@ -170,17 +181,19 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         // Remove fields that shouldn't be updated or cause issues
         updateData.remove('id');
         updateData.remove('created_at');
-        updateData.remove('user_id'); // RLS might block if it looks like a change (even if same)
-        
+        updateData.remove(
+          'user_id',
+        ); // RLS might block if it looks like a change (even if same)
+
         await vm.updateTask(task.id, updateData);
       }
 
       if (!mounted) return;
       Navigator.pop(context);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
       setState(() => _isLoading = false);
     }
@@ -189,7 +202,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colorScheme = context.colorScheme;
-    
+
     return Scaffold(
       backgroundColor: colorScheme.phoneBackground,
       body: SafeArea(
@@ -216,7 +229,10 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
   Widget _buildHeader(AppColorScheme colorScheme) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimens.p24, vertical: AppDimens.p16),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimens.p24,
+        vertical: AppDimens.p16,
+      ),
       decoration: BoxDecoration(
         color: colorScheme.headerBackground,
         border: Border(bottom: BorderSide(color: colorScheme.headerBorder)),
@@ -285,11 +301,18 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     }
   }
 
-  Widget _buildLabeledInput(String label, Widget input, AppColorScheme colorScheme) {
+  Widget _buildLabeledInput(
+    String label,
+    Widget input,
+    AppColorScheme colorScheme,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTypography.captionBold.copyWith(color: colorScheme.text)),
+        Text(
+          label,
+          style: AppTypography.captionBold.copyWith(color: colorScheme.text),
+        ),
         const SizedBox(height: AppDimens.p8),
         input,
       ],
@@ -311,7 +334,10 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Select Task Type', style: AppTypography.h5.copyWith(color: colorScheme.text)),
+        Text(
+          'Select Task Type',
+          style: AppTypography.h5.copyWith(color: colorScheme.text),
+        ),
         const SizedBox(height: AppDimens.p12),
         Row(
           children: [
@@ -339,7 +365,10 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           ],
         ),
         const SizedBox(height: AppDimens.p24),
-        Text('Choose Category', style: AppTypography.h5.copyWith(color: colorScheme.text)),
+        Text(
+          'Choose Category',
+          style: AppTypography.h5.copyWith(color: colorScheme.text),
+        ),
         const SizedBox(height: AppDimens.p12),
         _categoriesLoading
             ? const Center(child: CircularProgressIndicator())
@@ -352,7 +381,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                   mainAxisSpacing: AppDimens.p10,
                   childAspectRatio: 1.0,
                 ),
-                itemCount: _categories.isNotEmpty ? _categories.length : popularCategories.length,
+                itemCount: _categories.isNotEmpty
+                    ? _categories.length
+                    : popularCategories.length,
                 itemBuilder: (context, index) {
                   // Use actual categories if available, otherwise fallback
                   if (_categories.isNotEmpty) {
@@ -360,7 +391,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                     final isSelected = _selectedCategoryId == cat.id;
                     final emoji = _getCategoryEmoji(cat.name);
                     final catColor = _getCategoryColor(cat.name);
-                    
+
                     return _buildCategoryCard(
                       emoji: emoji,
                       name: cat.name,
@@ -375,8 +406,10 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                   } else {
                     final cat = popularCategories[index];
                     final catName = cat['name'] as String;
-                    final isSelected = _selectedCategoryName == catName; // Check name for fallback
-                    
+                    final isSelected =
+                        _selectedCategoryName ==
+                        catName; // Check name for fallback
+
                     return _buildCategoryCard(
                       emoji: cat['icon'] as String,
                       name: catName,
@@ -384,7 +417,8 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                       color: cat['color'] as Color,
                       colorScheme: colorScheme,
                       onTap: () => setState(() {
-                        _selectedCategoryId = null; // Clear UUID as we don't have one
+                        _selectedCategoryId =
+                            null; // Clear UUID as we don't have one
                         _selectedCategoryName = catName;
                       }),
                     );
@@ -408,7 +442,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.2) : colorScheme.cardBackground,
+          color: isSelected
+              ? color.withValues(alpha: 0.2)
+              : colorScheme.cardBackground,
           borderRadius: BorderRadius.circular(AppDimens.r16),
           border: Border.all(
             color: isSelected ? color : Colors.transparent,
@@ -422,7 +458,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
             const SizedBox(height: 6),
             Text(
               name,
-              style: AppTypography.captionBold.copyWith(color: colorScheme.text),
+              style: AppTypography.captionBold.copyWith(
+                color: colorScheme.text,
+              ),
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -437,7 +475,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     final lowerName = name.toLowerCase();
     if (lowerName.contains('design')) return '🎨';
     if (lowerName.contains('dev') || lowerName.contains('code')) return '💻';
-    if (lowerName.contains('writ') || lowerName.contains('content')) return '✍️';
+    if (lowerName.contains('writ') || lowerName.contains('content')) {
+      return '✍️';
+    }
     if (lowerName.contains('mobile') || lowerName.contains('app')) return '📱';
     if (lowerName.contains('market') || lowerName.contains('seo')) return '🎯';
     if (lowerName.contains('video') || lowerName.contains('media')) return '🎬';
@@ -447,11 +487,20 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   Color _getCategoryColor(String name) {
     final lowerName = name.toLowerCase();
     if (lowerName.contains('design')) return AppColors.lightRed;
-    if (lowerName.contains('dev') || lowerName.contains('code')) return AppColors.lightTeal;
-    if (lowerName.contains('writ') || lowerName.contains('content')) return const Color(0xFFF7D69C);
-    if (lowerName.contains('mobile') || lowerName.contains('app')) return AppColors.gold;
-    if (lowerName.contains('market') || lowerName.contains('seo')) return AppColors.mediumGreyBlue;
-    if (lowerName.contains('video') || lowerName.contains('media')) return AppColors.teal;
+    if (lowerName.contains('dev') || lowerName.contains('code'))
+      return AppColors.lightTeal;
+    if (lowerName.contains('writ') || lowerName.contains('content')) {
+      return const Color(0xFFF7D69C);
+    }
+    if (lowerName.contains('mobile') || lowerName.contains('app')) {
+      return AppColors.gold;
+    }
+    if (lowerName.contains('market') || lowerName.contains('seo')) {
+      return AppColors.mediumGreyBlue;
+    }
+    if (lowerName.contains('video') || lowerName.contains('media')) {
+      return AppColors.teal;
+    }
     return AppColors.teal;
   }
 
@@ -470,7 +519,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         duration: const Duration(milliseconds: 200),
         height: 100,
         decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.2) : colorScheme.cardBackground,
+          color: isSelected
+              ? color.withValues(alpha: 0.2)
+              : colorScheme.cardBackground,
           borderRadius: BorderRadius.circular(AppDimens.r18),
           border: Border.all(
             color: isSelected ? color : Colors.transparent,
@@ -491,7 +542,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
             ),
             Text(
               subLabel,
-              style: AppTypography.micro.copyWith(color: colorScheme.textSecondary),
+              style: AppTypography.micro.copyWith(
+                color: colorScheme.textSecondary,
+              ),
             ),
           ],
         ),
@@ -553,32 +606,50 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           colorScheme,
         ),
         const SizedBox(height: AppDimens.p16),
-        Text('Deadline', style: AppTypography.captionBold.copyWith(color: colorScheme.text)),
+        Text(
+          'Deadline',
+          style: AppTypography.captionBold.copyWith(color: colorScheme.text),
+        ),
         const SizedBox(height: AppDimens.p8),
         // Simple Deadline Chips
         Row(
           children: [3, 7, 14, 30].map((days) {
             final date = DateTime.now().add(Duration(days: days));
-            final isSelected = _selectedDeadline != null && 
-                               _selectedDeadline!.difference(DateTime.now()).inDays + 1 == days; // approx check
-            
+            final isSelected =
+                _selectedDeadline != null &&
+                _selectedDeadline!.difference(DateTime.now()).inDays + 1 ==
+                    days; // approx check
+
             return Padding(
               padding: const EdgeInsets.only(right: AppDimens.p8),
               child: GestureDetector(
                 onTap: () => setState(() => _selectedDeadline = date),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: AppDimens.p12, vertical: AppDimens.p10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.p12,
+                    vertical: AppDimens.p10,
+                  ),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.teal.withValues(alpha: 0.1) : colorScheme.cardBackground,
+                    color: isSelected
+                        ? AppColors.teal.withValues(alpha: 0.1)
+                        : colorScheme.cardBackground,
                     borderRadius: BorderRadius.circular(AppDimens.r12),
                     border: Border.all(
                       color: isSelected ? AppColors.teal : Colors.transparent,
                     ),
                   ),
                   child: Text(
-                    days == 7 ? '1 Week' : days == 14 ? '2 Weeks' : days == 30 ? '1 Month' : '$days Days',
+                    days == 7
+                        ? '1 Week'
+                        : days == 14
+                        ? '2 Weeks'
+                        : days == 30
+                        ? '1 Month'
+                        : '$days Days',
                     style: AppTypography.captionBold.copyWith(
-                      color: isSelected ? AppColors.teal : colorScheme.textSecondary,
+                      color: isSelected
+                          ? AppColors.teal
+                          : colorScheme.textSecondary,
                     ),
                   ),
                 ),
@@ -603,7 +674,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
             border: Border.all(color: colorScheme.inputBorder),
           ),
           child: Row(
-            children: ['Basic', 'Standard', 'Premium'].asMap().entries.map((entry) {
+            children: ['Basic', 'Standard', 'Premium'].asMap().entries.map((
+              entry,
+            ) {
               final index = entry.key;
               final label = entry.value;
               final isSelected = _selectedPackageTier == index;
@@ -612,19 +685,28 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                   onTap: () => setState(() => _selectedPackageTier = index),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(vertical: AppDimens.p10),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppDimens.p10,
+                    ),
                     decoration: BoxDecoration(
                       color: isSelected ? AppColors.teal : Colors.transparent,
                       borderRadius: BorderRadius.circular(AppDimens.r10),
                       boxShadow: isSelected
-                          ? [BoxShadow(color: AppColors.teal.withValues(alpha: 0.3), blurRadius: 8)]
+                          ? [
+                              BoxShadow(
+                                color: AppColors.teal.withValues(alpha: 0.3),
+                                blurRadius: 8,
+                              ),
+                            ]
                           : [],
                     ),
                     child: Text(
                       label,
                       textAlign: TextAlign.center,
                       style: AppTypography.captionBold.copyWith(
-                        color: isSelected ? Colors.white : colorScheme.textSecondary,
+                        color: isSelected
+                            ? Colors.white
+                            : colorScheme.textSecondary,
                       ),
                     ),
                   ),
@@ -642,7 +724,8 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                 'Price (\$)',
                 AppTextField(
                   hintText: '0',
-                  controller: _packagePriceController, // Note: Shared controller for now (simplified)
+                  controller:
+                      _packagePriceController, // Note: Shared controller for now (simplified)
                   keyboardType: TextInputType.number,
                 ),
                 colorScheme,
@@ -712,7 +795,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
             ),
           Expanded(
             child: AppButton(
-              text: _currentStep == 3 ? (widget.task != null ? 'Save Changes' : 'Create Task') : 'Next Step',
+              text: _currentStep == 3
+                  ? (widget.task != null ? 'Save Changes' : 'Create Task')
+                  : 'Next Step',
               onPressed: _isLoading ? null : _nextStep,
               isLoading: _isLoading,
               icon: _currentStep < 3 ? Icons.chevron_right : null,

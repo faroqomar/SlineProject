@@ -56,11 +56,9 @@ class MainNavigationScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              
+
               // 2. Phone Background (The "Mockup" inner container)
-              Container(
-                color: colorScheme.phoneBackground,
-              ),
+              Container(color: colorScheme.phoneBackground),
 
               // 3. Active Screen
               IndexedStack(
@@ -98,11 +96,7 @@ class MainNavigationScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: Icon(
-                      Icons.add,
-                      color: AppColors.white,
-                      size: 30,
-                    ),
+                    child: Icon(Icons.add, color: AppColors.white, size: 30),
                   ),
                 ),
               ),

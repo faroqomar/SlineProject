@@ -44,6 +44,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   mime: ^1.0.6
   google_fonts: ^6.3.2
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:

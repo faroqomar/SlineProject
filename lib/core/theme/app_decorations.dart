@@ -18,7 +18,8 @@ class AppDecorations {
   static BoxDecoration glassBoxDecoration({
     required AppColorScheme colorScheme,
     BorderRadius? borderRadius,
-    double borderWidth = 1.0, // This border is likely to be a BoxShadow or part of the gradient
+    double borderWidth =
+        1.0, // This border is likely to be a BoxShadow or part of the gradient
   }) {
     return BoxDecoration(
       borderRadius: borderRadius ?? BorderRadius.circular(AppDimens.r20),
@@ -27,16 +28,15 @@ class AppDecorations {
         end: Alignment.bottomRight,
         colors: colorScheme.glassCardGradient,
       ),
-      border: Border.all(
-        color: colorScheme.cardBorder,
-        width: borderWidth,
-      ),
+      border: Border.all(color: colorScheme.cardBorder, width: borderWidth),
       boxShadow: [
         // 1px border-like shadow
         BoxShadow(
           color: colorScheme.isDark
               ? AppColors.white.withValues(alpha: 0.1) // rgba(255,255,255,0.1)
-              : AppColors.almostBlack.withValues(alpha: 0.05), // rgba(0,0,0,0.05)
+              : AppColors.almostBlack.withValues(
+                  alpha: 0.05,
+                ), // rgba(0,0,0,0.05)
           spreadRadius: 0,
           blurRadius: 0,
           offset: Offset.zero,
@@ -89,16 +89,17 @@ class AppDecorations {
         end: Alignment.bottomCenter,
         colors: gradientColors,
       ),
-      border: Border.all(
-        color: borderColor,
-        width: 1.0,
-      ),
+      border: Border.all(color: borderColor, width: 1.0),
       boxShadow: [
         // Outer shadow for elevation
         BoxShadow(
           color: colorScheme.isDark
-              ? AppColors.almostBlack.withValues(alpha: 0.5) // 0 20px 40px -10px rgba(0,0,0,0.5)
-              : AppColors.lightTeal.withValues(alpha: 0.4), // 0 20px 40px -10px rgba(147, 204, 206, 0.4)
+              ? AppColors.almostBlack.withValues(
+                  alpha: 0.5,
+                ) // 0 20px 40px -10px rgba(0,0,0,0.5)
+              : AppColors.lightTeal.withValues(
+                  alpha: 0.4,
+                ), // 0 20px 40px -10px rgba(147, 204, 206, 0.4)
           blurRadius: 40.0,
           spreadRadius: -10.0,
           offset: const Offset(0, 20),
@@ -107,8 +108,12 @@ class AppDecorations {
         // Note: Flutter doesn't support inset shadows, so we use a subtle inner border effect
         BoxShadow(
           color: colorScheme.isDark
-              ? AppColors.white.withValues(alpha: 0.1) // inset 0 1px 0 rgba(255,255,255,0.1)
-              : AppColors.white.withValues(alpha: 0.8), // inset 0 1px 0 rgba(255,255,255,0.8)
+              ? AppColors.white.withValues(
+                  alpha: 0.1,
+                ) // inset 0 1px 0 rgba(255,255,255,0.1)
+              : AppColors.white.withValues(
+                  alpha: 0.8,
+                ), // inset 0 1px 0 rgba(255,255,255,0.8)
           blurRadius: 0,
           spreadRadius: 0,
           offset: const Offset(0, 1),
@@ -116,7 +121,9 @@ class AppDecorations {
         // Bottom inset-like shadow
         BoxShadow(
           color: colorScheme.isDark
-              ? AppColors.almostBlack.withValues(alpha: 0.2) // inset 0 -1px 0 rgba(0,0,0,0.2)
+              ? AppColors.almostBlack.withValues(
+                  alpha: 0.2,
+                ) // inset 0 -1px 0 rgba(0,0,0,0.2)
               : Colors.transparent, // No bottom inset in light mode
           blurRadius: 0,
           spreadRadius: 0,
@@ -153,10 +160,7 @@ class AppDecorations {
     return BoxDecoration(
       borderRadius: borderRadius ?? BorderRadius.circular(AppDimens.r8),
       color: colorScheme.hotBadgeBackground,
-      border: Border.all(
-        color: colorScheme.hotBadgeBorder,
-        width: 1.0,
-      ),
+      border: Border.all(color: colorScheme.hotBadgeBorder, width: 1.0),
     );
   }
 

@@ -71,7 +71,7 @@ class SettingsScreen extends StatelessWidget {
                       subtitle: isDark ? 'On' : 'Off',
                       trailing: Switch(
                         value: isDark,
-                        activeColor: AppColors.teal,
+                        activeThumbColor: AppColors.teal,
                         onChanged: (value) => themeProvider.toggleThemeMode(),
                       ),
                     );

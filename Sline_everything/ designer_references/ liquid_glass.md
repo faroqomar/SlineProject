@@ -1,259 +1,421 @@
-https://berkaypng.medium.com/recreating-the-ios-26-liquid-glass-ui-with-flutter-a-complete-guide-f6b7c505529c
+This site uses cookies from Google to deliver and enhance the quality of its services and to analyze traffic.
+Learn more
+OK, got it
+cupertino_native 0.1.1 copy "cupertino_native: ^0.1.1" to clipboard
+Published 3 months ago • verified publisherserverpod.dev
+SDKFlutter
+PlatformiOSmacOS
+239
 
-Our implementation leverages Flutter’s platform channel architecture combined with platform views to embed genuine UIKit components directly into the Flutter widget tree. Here’s how the magic happens:
+    Readme
+    Changelog
+    Example
+    Installing
+    Versions
+    Scores
 
-Alert Dialog
-// Flutter side - Clean, familiar API
-AdaptiveAlertDialog.show(
-  context: context,
-  title: 'Authentication Required',
-  message: 'Use this code to complete your authentication.',
-  icon: 'lock.shield.fill',
-  
-  iconSize: 48,
-  iconColor: Colors.blue,
-  oneTimeCode: '987654',
-  actions: [
-    AlertAction(
-      title: 'Copy & Continue',
-      onPressed: () {
-        debugPrint('Copy & Continue pressed');
-      },
-      style: AlertActionStyle.primary,
-    ),
-    AlertAction(
-      title: 'Cancel',
-      onPressed: () {
-        debugPrint('Cancel pressed');
-      },
-      style: AlertActionStyle.cancel,
-    ),
-  ],
-);
-Press enter or click to view image in full size
+Serverpod Liquid Glass Flutter banner
 
-Flutter iOS 26 Liquid Glass Alert Dialog
-Under the hood, this triggers a method channel call that serializes the alert parameters and sends them to the native iOS platform code.
+This package is part of Serverpod's open-source initiative. Serverpod is the ultimate backend for Flutter - all written in Dart, free, and open-source. 👉 Check it out
+Liquid Glass for Flutter
 
-Native Implementation: Where the Real Magic Happens
-On the iOS side, we create authentic UIAlertController instances with iOS 26's liquid glass materials:
+Native Liquid Glass widgets for iOS and macOS in Flutter with pixel‑perfect fidelity.
 
-// iOS Implementation - Real UIAlertController with liquid glass
-let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+This plugin hosts real UIKit/AppKit controls inside Flutter using Platform Views and method channels. It matches native look/feel perfectly while still fitting naturally into Flutter code.
 
-// Apply authentic iOS 26 liquid glass effects
-alert.view.layer.cornerRadius = 28.0  // 13pt with 2x scale factor
-alert.view.layer.cornerCurve = .continuous
+Does it work and is it fast? Yes. Is it a vibe-coded Frankenstein's monster patched together with duct tape? Also yes.
 
-// Use systemThinMaterial for authentic blur
-if #available(iOS 15.0, *) {
-  let blurEffect = UIBlurEffect(style: isDark ? .systemThinMaterialDark : .systemThinMaterialLight)
-  let blurView = UIVisualEffectView(effect: blurEffect)
-  blurView.frame = alert.view.bounds
-  blurView.layer.cornerRadius = 28.0
-  blurView.layer.cornerCurve = .continuous
-  alert.view.insertSubview(blurView, at: 0)
-}
-This approach delivers pixel-perfect native fidelity while maintaining Flutter’s declarative development experience. The result is alert dialogs that are indistinguishable from those in native iOS 26 apps, complete with authentic material effects, proper corner curves, and dynamic theme adaptation.
+This package is a proof of concept for bringing Liquid Glass to Flutter. Contributions are most welcome. What we have here can serve as a great starting point for building a complete, polished library. The vision for this package is to bridge the gap until we have a good, new Cupertino library written entirely in Flutter. To move toward completeness, we can also improve parts that are easy to write in Flutter to match the new Liquid Glass style (e.g., improved CupertinoScaffold, theme, etc.).
 
-Popup Menu — Native Dropdown Menus
-Popup menu is a native component that allows users to select from a menu that opens from a button. It automatically adapts to platform-appropriate appearance on iOS and macOS.
+Read the release blogpost: 👉 Is it time for Flutter to leave the uncanny valley?
+Installation
 
-Press enter or click to view image in full size
+Add the dependency in your app’s pubspec.yaml:
 
-Flutter iOS 26 Liquid Glass Popup Menu
-// Simple popup menu example
-AdaptivePopupMenuButton.text<String>(
-  label: 'File',
-  items: const [
-    AdaptivePopupMenuItem(
-      label: 'New',
-      icon: 'doc.badge.plus',
-      value: 'new',
-    ),
-    AdaptivePopupMenuItem(
-      label: 'Open',
-      icon: 'folder',
-      value: 'open',
-    ),
-    AdaptivePopupMenuDivider(),
-    AdaptivePopupMenuItem(
-      label: 'Save',
-      icon: 'square.and.arrow.down',
-      value: 'save',
-    ),
-    AdaptivePopupMenuItem(
-      label: 'Save As...',
-      icon: 'square.and.arrow.down.on.square',
-      value: 'save_as',
-    ),
-    AdaptivePopupMenuDivider(),
-    AdaptivePopupMenuItem(
-      label: 'Close',
-      icon: 'xmark',
-      value: 'close',
-    ),
-  ],
-  onSelected: (index, item) {
-    setState(() {
-      _selectedAction = item.label;
-      _selectedValue = item.value ?? '';
-    });
-  },
-  buttonStyle: PopupButtonStyle.bordered,
-),
-Button — Native Liquid Glass Buttons
-Native buttons with iOS 26 liquid glass effects that automatically adapt to platform design guidelines. Available in multiple styles with SF Symbol icon support.
+flutter pub add cupertino_native
 
-Press enter or click to view image in full size
+Then run flutter pub get.
 
-Flutter iOS 26 Liquid Glass Buttons
-AdaptiveButton(
-  style: AdaptiveButtonStyle.prominentGlass,
-  textColor: Colors.white,
-  onPressed: () {},
-  label: 'Click Me',
-),
+Ensure your platform minimums are compatible:
 
-// Icon-only button
-AdaptiveButton.sfSymbol(
-  style: AdaptiveButtonStyle.prominentGlass,
-  onPressed: () {},
-  sfSymbol: SFSymbol('heart.fill', size: 20),
-),
+    iOS platform :ios, '14.0'
+    macOS 11.0+
 
-// With custom widget
-AdaptiveButton.child(
-  child: Widget,
-  style: AdaptiveButtonStyle.prominentGlass,
-  onPressed: () {},
-),
-Tab Bar — Native Bottom Navigation
-Native tab bar component that provides iOS-style bottom navigation with liquid glass effects and advanced layout options. Integrates seamlessly with Flutter TabBarView for smooth page transitions.
+You will also need to install the Xcode 26 beta and use xcode-select to set it as your default.
 
-Press enter or click to view image in full size
+sudo xcode-select -s /Applications/Xcode-beta.app
 
-Flutter iOS 26 Liquid Glass Bottom Navigation Bar
-AdaptiveScaffold(
-    title: 'Tabbar Demos',
-    selectedIndex: _selectedIndex,
-    onDestinationSelected: (index) {
-      setState(() {
-        if (kDebugMode) {
-          print('Index selected: $index');
-        }
-        _selectedIndex = index;
-      });
-    },
-    destinations: [
-      AdaptiveNavigationDestination(
-        icon: PlatformInfo.isIOS26OrHigher()
-            ? "house.fill"
-            : PlatformInfo.isIOS
-            ? CupertinoIcons.home
-            : Icons.home_outlined,
-        selectedIcon: PlatformInfo.isIOS26OrHigher()
-            ? "house.fill"
-            : PlatformInfo.isIOS
-            ? CupertinoIcons.home
-            : Icons.home,
-        label: 'Home',
-      ),
-      AdaptiveNavigationDestination(
-        icon: PlatformInfo.isIOS26OrHigher()
-            ? "person.fill"
-            : PlatformInfo.isIOS
-            ? CupertinoIcons.person
-            : Icons.person_outline,
-        selectedIcon: PlatformInfo.isIOS26OrHigher()
-            ? "person.fill"
-            : PlatformInfo.isIOS
-            ? CupertinoIcons.person_fill
-            : Icons.person,
-        label: 'Profile',
-      ),
-      AdaptiveNavigationDestination(
-        icon: PlatformInfo.isIOS26OrHigher()
-            ? "magnifyingglass"
-            : PlatformInfo.isIOS
-            ? CupertinoIcons.search
-            : Icons.search,
-        label: 'Search',
-        isSearch: true,
-      ),
-    ],
-    // child is automatically wrapped into a single-item children list for iOS26Scaffold
-    // The scaffold handles showing the content based on selectedIndex
-    child: _buildPageForIndex(_selectedIndex),
-  )
-Press enter or click to view image in full size
+What's in the package
 
-Segmented Control — Native Multi-Choice Selector
-Native segmented control component that provides iOS-style multi-choice selection with liquid glass effects. Perfect for switching between related options or filter controls.
+This package ships a handful of native Liquid Glass widgets. Each widget exposes a simple, Flutter‑friendly API and falls back to a reasonable Flutter implementation on non‑Apple platforms.
+Slider
 
-Press enter or click to view image in full size
+Liquid Glass Slider
 
-Flutter iOS 26 Liquid Glass Segmented Control
-AdaptiveSegmentedControl(
-  labels: const ['One', 'Two', 'Three'],
-  selectedIndex: _basicSegmentedControlIndex,
-  onValueChanged: (i) =>
-      setState(() => _basicSegmentedControlIndex = i),
-),
+double _value = 50;
 
-AdaptiveSegmentedControl(
-  labels: const [],
-  sfSymbols: const [
-    'house.fill',
-    'leaf.arrow.trianglehead.clockwise',
-    'figure.walk.diamond',
-  ],
-  selectedIndex: _iconSegmentedControlIndex,
-  iconColor: CupertinoColors.systemBlue,
-  shrinkWrap: true,
-  onValueChanged: (i) =>
-      setState(() => _iconSegmentedControlIndex = i),
-  height: 48,
-),
-Slider — Native Value Selector
-Native slider component that provides iOS-style value selection with liquid glass effects and smooth animations. Perfect for adjusting settings, volume controls, or any continuous value input.
-
-Press enter or click to view image in full size
-
-Flutter iOS 26 Liquid Glass Slider
-AdaptiveSlider(
-  value: _rangeValue,
+CNSlider(
+  value: _value,
   min: 0,
   max: 100,
-  onChanged: (value) => setState(() => _rangeValue = value),
-  activeColor: Colors.purple,
-),
-Native switch component that provides iOS-style toggle functionality with liquid glass effects and smooth animations. Perfect for binary settings, feature toggles, and on/off controls.
+  onChanged: (v) => setState(() => _value = v),
+)
 
-Press enter or click to view image in full size
+Switch
 
-Flutter iOS 26 Liquid Glass Alert Switch
-Row(
-  mainAxisAlignment: MainAxisAlignment.center,
-  children: [
-    Text(switchValue ? 'ON' : 'OFF'),
-    SizedBox(
-      width: 20,
-    ),
-    AdaptiveSwitch(
-      value: value,
-      onChanged: onChanged,
-      activeColor: activeColor,
-    ),
+Liquid Glass Switch
+
+bool _on = true;
+
+CNSwitch(
+  value: _on,
+  onChanged: (v) => setState(() => _on = v),
+)
+
+Segmented Control
+
+Liquid Glass Segmented Control
+
+int _index = 0;
+
+CNSegmentedControl(
+  labels: const ['One', 'Two', 'Three'],
+  selectedIndex: _index,
+  onValueChanged: (i) => setState(() => _index = i),
+)
+
+Button
+
+Liquid Glass Button
+
+CNButton(
+  label: 'Press me',
+  onPressed: () {},
+)
+
+// Icon button variant
+CNButton.icon(
+  icon: const CNSymbol('heart.fill'),
+  onPressed: () {},
+)
+
+Icon (SF Symbols)
+
+Liquid Glass Icon
+
+// Monochrome symbol
+const CNIcon(symbol: CNSymbol('star'));
+
+// Multicolor / hierarchical options are also supported
+const CNIcon(
+  symbol: CNSymbol('paintpalette.fill'),
+  mode: CNSymbolRenderingMode.multicolor,
+)
+
+Popup Menu Button
+
+Liquid Glass Popup Menu Button
+
+final items = [
+  const CNPopupMenuItem(label: 'New File', icon: CNSymbol('doc', size: 18)),
+  const CNPopupMenuItem(label: 'New Folder', icon: CNSymbol('folder', size: 18)),
+  const CNPopupMenuDivider(),
+  const CNPopupMenuItem(label: 'Rename', icon: CNSymbol('rectangle.and.pencil.and.ellipsis', size: 18)),
+];
+
+CNPopupMenuButton(
+  buttonLabel: 'Actions',
+  items: items,
+  onSelected: (index) {
+    // Handle selection
+  },
+)
+
+Tab Bar
+
+Liquid Glass Tab Bar
+
+int _tabIndex = 0;
+
+// Overlay this at the bottom of your page
+CNTabBar(
+  items: const [
+    CNTabBarItem(label: 'Home', icon: CNSymbol('house.fill')),
+    CNTabBarItem(label: 'Profile', icon: CNSymbol('person.crop.circle')),
+    CNTabBarItem(label: 'Settings', icon: CNSymbol('gearshape.fill')),
   ],
-),
-And of course, we can’t wrap this up without a huge shout-out to the adaptive_platform_ui package. The developers behind this library have done an incredible job bringing some of iOS’s coolest features directly to Flutter. Without their hard work, creating a realistic and fluid experience like this would be nearly impossible. So, as you use this package in your own projects, don’t forget to give the developers a small “thank you” or offer your support. Their motivation means better tools for all of us.
+  currentIndex: _tabIndex,
+  onTap: (i) => setState(() => _tabIndex = i),
+)
 
-Hopefully, this guide has inspired you to go beyond the Liquid Glass effect and explore the many other possibilities that Flutter and native features offer. Happy coding!
+What's left to do?
 
-To use the components, add the following lines to your pubspec.yaml file:
+So far, this is more of a proof of concept than a full package (although the included components do work). Future improvements include:
 
-adaptive_platform_ui: ^0.1.6 #check the latest version
-adaptive_platform_ui | Flutter package
-Adaptive platform-specific widgets for Flutter. Automatically renders native iOS 26+ designs, traditional Cupertino…
-pub.dev
+    Cleaning up the code. Probably by someone who knows a bit about Swift.
+    Adding more native components.
+    Reviewing the Flutter APIs to ensure consistency and eliminate redundancies.
+    Extending the flexibility and styling options of the widgets.
+    Investigate how to best combine scroll views with the native components.
+    macOS compiles and runs, but it's untested with Liquid Glass and generally doesn't look great.
+
+How was this done?
+
+Pretty much vibe-coded with Codex and GPT-5. 😅
+239
+likes
+160
+points
+1.55k
+downloads
+Publisher
+
+verified publisherserverpod.dev
+Weekly Downloads
+2025.01.21 - 2025.12.16
+Metadata
+
+Native Liquid Glass widgets for iOS and macOS with pixel-perfect fidelity.
+
+Repository (GitHub)
+View/report issues
+Documentation
+
+API reference
+License
+
+BSD-3-Clause (license)
+Dependencies
+
+flutter, plugin_platform_interface
+More
+
+Packages that depend on cupertino_native
+
+Packages that implement cupertino_native
+Dart languageReport packagePolicyTermsAPI TermsSecurityPrivacyHelpRSSbug report
+example :
+import 'package:cupertino_native/cupertino_native.dart';
+import 'package:flutter/cupertino.dart';
+import 'demos/slider.dart';
+import 'demos/switch.dart';
+import 'demos/segmented_control.dart';
+import 'demos/tab_bar.dart';
+import 'demos/icon.dart';
+import 'demos/popup_menu_button.dart';
+import 'demos/button.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool _isDarkMode = false;
+  Color _accentColor = CupertinoColors.systemBlue;
+
+  void _toggleTheme() {
+    setState(() {
+      _isDarkMode = !_isDarkMode;
+    });
+  }
+
+  void _setAccentColor(Color color) {
+    setState(() {
+      _accentColor = color;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoApp(
+      theme: CupertinoThemeData(
+        brightness: _isDarkMode ? Brightness.dark : Brightness.light,
+        primaryColor: _accentColor,
+      ),
+      home: HomePage(
+        isDarkMode: _isDarkMode,
+        onToggleTheme: _toggleTheme,
+        accentColor: _accentColor,
+        onSelectAccentColor: _setAccentColor,
+      ),
+    );
+  }
+}
+
+class HomePage extends StatelessWidget {
+  const HomePage({
+    super.key,
+    required this.isDarkMode,
+    required this.onToggleTheme,
+    required this.accentColor,
+    required this.onSelectAccentColor,
+  });
+
+  final bool isDarkMode;
+  final VoidCallback onToggleTheme;
+  final Color accentColor;
+  final ValueChanged<Color> onSelectAccentColor;
+
+  static const _systemColors = <MapEntry<String, Color>>[
+    MapEntry('Red', CupertinoColors.systemRed),
+    MapEntry('Orange', CupertinoColors.systemOrange),
+    MapEntry('Yellow', CupertinoColors.systemYellow),
+    MapEntry('Green', CupertinoColors.systemGreen),
+    MapEntry('Teal', CupertinoColors.systemTeal),
+    MapEntry('Blue', CupertinoColors.systemBlue),
+    MapEntry('Indigo', CupertinoColors.systemIndigo),
+    MapEntry('Purple', CupertinoColors.systemPurple),
+    MapEntry('Pink', CupertinoColors.systemPink),
+    MapEntry('Gray', CupertinoColors.systemGrey),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.systemGroupedBackground,
+      navigationBar: CupertinoNavigationBar(
+        backgroundColor: CupertinoColors.systemGroupedBackground,
+        border: null,
+        // middle: const Text('Cupertino Native'),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CNPopupMenuButton.icon(
+              buttonIcon: CNSymbol(
+                'paintpalette.fill',
+                size: 18,
+                mode: CNSymbolRenderingMode.multicolor,
+              ),
+              tint: accentColor,
+              items: [
+                for (final entry in _systemColors)
+                  CNPopupMenuItem(
+                    label: entry.key,
+                    icon: CNSymbol('circle.fill', size: 18, color: entry.value),
+                  ),
+              ],
+              onSelected: (index) {
+                if (index >= 0 && index < _systemColors.length) {
+                  onSelectAccentColor(_systemColors[index].value);
+                }
+              },
+            ),
+            const SizedBox(width: 8),
+            CNButton.icon(
+              icon: CNSymbol(isDarkMode ? 'sun.max' : 'moon', size: 18),
+              onPressed: onToggleTheme,
+            ),
+          ],
+        ),
+      ),
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          CupertinoListSection.insetGrouped(
+            header: Text('Components'),
+            children: [
+              CupertinoListTile(
+                title: Text('Slider'),
+                leading: CNIcon(
+                  symbol: CNSymbol('slider.horizontal.3', color: accentColor),
+                ),
+                trailing: CupertinoListTileChevron(),
+                onTap: () {
+                  Navigator.of(context).push(
+                    CupertinoPageRoute(builder: (_) => const SliderDemoPage()),
+                  );
+                },
+              ),
+              CupertinoListTile(
+                title: Text('Switch'),
+                leading: CNIcon(
+                  symbol: CNSymbol('switch.2', color: accentColor),
+                ),
+                trailing: CupertinoListTileChevron(),
+                onTap: () {
+                  Navigator.of(context).push(
+                    CupertinoPageRoute(builder: (_) => const SwitchDemoPage()),
+                  );
+                },
+              ),
+              CupertinoListTile(
+                title: Text('Segmented Control'),
+                leading: CNIcon(
+                  symbol: CNSymbol('rectangle.split.3x1', color: accentColor),
+                ),
+                trailing: CupertinoListTileChevron(),
+                onTap: () {
+                  Navigator.of(context).push(
+                    CupertinoPageRoute(
+                      builder: (_) => const SegmentedControlDemoPage(),
+                    ),
+                  );
+                },
+              ),
+              CupertinoListTile(
+                title: Text('Icon'),
+                leading: CNIcon(symbol: CNSymbol('app', color: accentColor)),
+                trailing: CupertinoListTileChevron(),
+                onTap: () {
+                  Navigator.of(context).push(
+                    CupertinoPageRoute(builder: (_) => const IconDemoPage()),
+                  );
+                },
+              ),
+              CupertinoListTile(
+                title: Text('Popup Menu Button'),
+                leading: CNIcon(
+                  symbol: CNSymbol('ellipsis.circle', color: accentColor),
+                ),
+                trailing: CupertinoListTileChevron(),
+                onTap: () {
+                  Navigator.of(context).push(
+                    CupertinoPageRoute(
+                      builder: (_) => const PopupMenuButtonDemoPage(),
+                    ),
+                  );
+                },
+              ),
+              CupertinoListTile(
+                title: Text('Button'),
+                leading: CNIcon(
+                  symbol: CNSymbol('hand.tap', color: accentColor),
+                ),
+                trailing: CupertinoListTileChevron(),
+                onTap: () {
+                  Navigator.of(context).push(
+                    CupertinoPageRoute(builder: (_) => const ButtonDemoPage()),
+                  );
+                },
+              ),
+            ],
+          ),
+          CupertinoListSection.insetGrouped(
+            header: Text('Navigation'),
+            children: [
+              CupertinoListTile(
+                title: Text('Tab Bar'),
+                leading: CNIcon(
+                  symbol: CNSymbol('square.grid.2x2', color: accentColor),
+                ),
+                trailing: CupertinoListTileChevron(),
+                onTap: () {
+                  Navigator.of(context).push(
+                    CupertinoPageRoute(builder: (_) => const TabBarDemoPage()),
+                  );
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}

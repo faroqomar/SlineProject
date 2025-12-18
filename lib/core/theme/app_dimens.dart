@@ -1,5 +1,3 @@
-
-
 /// Defines common dimension values for spacing, padding, and border radii
 /// throughout the application, consistent with the design system.
 ///

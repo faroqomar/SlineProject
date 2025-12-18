@@ -26,18 +26,18 @@ This comprehensive guide consolidates all feature-specific documentation into a 
 
 ### Part II: Feature Deep-Dives
 
-- [Auth Feature](#auth-feature-reference)
-- [Tasks Module](#tasks-module-addendum-mvvm--schema-sync)
-- [Orders Feature](#orders-feature-reference)
-- [Chat Feature](#chat-feature-reference)
-- [Booking Feature](#booking-feature-reference)
-- [Profile Feature](#profile-feature-reference)
-- [Portfolio Feature](#portfolio-feature-reference)
-- [Favorites Feature](#favorites-feature-reference)
-- [Saved Feature](#saved-feature-reference)
-- [Categories Feature](#categories-feature-reference)
-- [Home Feature](#home-feature-reference)
-- [Core Module](#core-module-reference)
+- [Auth Feature](DEVELOPER_GUIDE/Auth%20Feature.md)
+- [Tasks Module](DEVELOPER_GUIDE/Task%20Feature.md)
+- [Orders Feature](DEVELOPER_GUIDE/Orders%20Feature.md)
+- [Chat Feature](DEVELOPER_GUIDE/Chat%20Feature.md)
+- [Booking Feature](DEVELOPER_GUIDE/Booking%20Feature.md)
+- [Profile Feature](DEVELOPER_GUIDE/Profile%20Feature.md)
+- [Portfolio Feature](DEVELOPER_GUIDE/Portfolio%20Feature.md)
+- [Favorites Feature](DEVELOPER_GUIDE/Favorites%20Feature.md)
+- [Saved Feature](DEVELOPER_GUIDE/Saved%20Feature.md)
+- [Categories Feature](DEVELOPER_GUIDE/Categories%20Feature.md)
+- [Home Feature](DEVELOPER_GUIDE/Home%20Feature.md)
+- [Core Module](DEVELOPER_GUIDE/Core%20Module.md)
 
 ---
 
@@ -193,7 +193,7 @@ try {
 - Chat: `DEVELOPER_GUIDE/Chat Feature.md`
 - Favorites: `DEVELOPER_GUIDE/Favorites Feature.md`
 - Saved: `DEVELOPER_GUIDE/Saved Feature.md`
-- Portfolio: `DEVELOPER_GUIDE/Protfolio Feature.md`
+- Portfolio: `DEVELOPER_GUIDE/Portfolio Feature.md`
 - Categories: `DEVELOPER_GUIDE/Categories Feature.md`
 
 ## 12. Gotchas & Tips
@@ -1694,7 +1694,38 @@ Testing checklist:
 - Try offer on booking task → rejected by trigger.
 - Non-owner updates → denied by RLS.
 
-?
+# Orders Feature Reference
+
+## 1. Human Explanation
+
+The Orders feature (often referred to as "My Published Tasks" or "Dashboard") allows clients to manage the tasks they have created. It aggregates functionality from the Tasks module to list published tasks, view incoming offers (requests), and accept/reject them.
+
+- **UI**: `lib/features/orders/view/` contains the dashboard and offer management sheets.
+- **Service**: `OrdersService` allows fetching "my tasks" and delegating offer actions to `TaskRequestsService`.
+
+## 2. Database & Supabase Mapping
+
+This feature primarily acts as a view over the `tasks` and `task_requests` tables. It does not introduce new tables.
+
+- **Reads**: `tasks` where `user_id = auth.uid()`.
+- **Offers**: `task_requests` linked to those tasks.
+
+## 3. File Inventory
+
+| File | Layer | Description |
+| --- | --- | --- |
+| `lib/features/orders/services/orders_service.dart` | Service | Aggregator for `TaskService` and `TaskRequestsService` to manage my tasks/offers. |
+| `lib/features/orders/view/orders_dashboard_screen.dart` | View | Dashboard showing published tasks and their status. |
+| `lib/features/orders/view/widgets/offer_list_sheet.dart` | View | Sheet to view and act on offers for a specific task. |
+| `lib/features/orders/viewmodels/orders_view_model.dart` | ViewModel | State management for the dashboard. |
+
+## 4. Testing Checklist
+
+- **List**: Verify all my created tasks appear.
+- **Offers**: Check that incoming offers for my tasks are visible.
+- **Actions**: Accept/Reject offer updates the status in `task_requests` and `tasks` (if accepted).
+
+---
 
 # Chat Feature Reference
 

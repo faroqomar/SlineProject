@@ -44,13 +44,15 @@ class AppButton extends StatelessWidget {
     final TextTheme textTheme = context.appTextTheme;
 
     // Determine colors based on primary/secondary and theme
-    final Color effectiveBackgroundColor = backgroundColor ??
+    final Color effectiveBackgroundColor =
+        backgroundColor ??
         (isPrimary ? colorScheme.primary : colorScheme.cardBackground);
-    final Color effectiveForegroundColor = foregroundColor ??
-        (isPrimary ? AppColors.offWhite : colorScheme.text);
+    final Color effectiveForegroundColor =
+        foregroundColor ?? (isPrimary ? AppColors.offWhite : colorScheme.text);
 
     // Default boxShadow mimicking shadow-xl from Tailwind, but adapted
-    final List<BoxShadow> effectiveBoxShadow = boxShadow ??
+    final List<BoxShadow> effectiveBoxShadow =
+        boxShadow ??
         (isPrimary
             ? [
                 BoxShadow(
@@ -61,55 +63,55 @@ class AppButton extends StatelessWidget {
               ]
             : []);
 
-    final BorderRadius effectiveBorderRadius = borderRadius ?? BorderRadius.circular(AppDimens.r14);
-    
-        return Container(
-          width: width,
-          height: height ?? AppDimens.p54, // Matches h-[54px]
-          decoration: BoxDecoration(
-            borderRadius: effectiveBorderRadius,
-            boxShadow: effectiveBoxShadow,
-          ),
-          child: Material(
-            color: effectiveBackgroundColor,
-            borderRadius: effectiveBorderRadius,
-            child: InkWell(
-              onTap: isLoading ? null : onPressed,
-              borderRadius: effectiveBorderRadius,
-              child: Center(
-                child: isLoading
-                    ? SizedBox(
-                        width: AppDimens.p24,
-                        height: AppDimens.p24,
-                        child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(effectiveForegroundColor),
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            text,
-                            style: textStyle ??
-                                textTheme.bodyLarge?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: effectiveForegroundColor,
-                                ),
-                          ),
-                          if (icon != null) ...[
-                            const SizedBox(width: 8),
-                            Icon(
-                              icon,
-                              color: effectiveForegroundColor,
-                              size: 20,
-                            ),
-                          ],
-                        ],
+    final BorderRadius effectiveBorderRadius =
+        borderRadius ?? BorderRadius.circular(AppDimens.r14);
+
+    return Container(
+      width: width,
+      height: height ?? AppDimens.p54, // Matches h-[54px]
+      decoration: BoxDecoration(
+        borderRadius: effectiveBorderRadius,
+        boxShadow: effectiveBoxShadow,
+      ),
+      child: Material(
+        color: effectiveBackgroundColor,
+        borderRadius: effectiveBorderRadius,
+        child: InkWell(
+          onTap: isLoading ? null : onPressed,
+          borderRadius: effectiveBorderRadius,
+          child: Center(
+            child: isLoading
+                ? SizedBox(
+                    width: AppDimens.p24,
+                    height: AppDimens.p24,
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        effectiveForegroundColor,
                       ),
-              ),
-            ),
+                      strokeWidth: 2,
+                    ),
+                  )
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        text,
+                        style:
+                            textStyle ??
+                            textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: effectiveForegroundColor,
+                            ),
+                      ),
+                      if (icon != null) ...[
+                        const SizedBox(width: 8),
+                        Icon(icon, color: effectiveForegroundColor, size: 20),
+                      ],
+                    ],
+                  ),
           ),
-        );
+        ),
+      ),
+    );
   }
 }

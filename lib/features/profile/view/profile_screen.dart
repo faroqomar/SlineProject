@@ -635,7 +635,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             Switch(
               value: isDark,
-              activeColor: AppColors.teal,
+              activeThumbColor: AppColors.teal,
               onChanged: (value) => themeProvider.toggleThemeMode(),
             ),
           ],

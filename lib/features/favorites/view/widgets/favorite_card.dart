@@ -25,9 +25,12 @@ class FavoriteCard extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 22,
-              backgroundImage:
-                  favorite.freelancerAvatar != null ? NetworkImage(favorite.freelancerAvatar!) : null,
-              child: favorite.freelancerAvatar == null ? const Icon(Icons.person, size: 28) : null,
+              backgroundImage: favorite.freelancerAvatar != null
+                  ? NetworkImage(favorite.freelancerAvatar!)
+                  : null,
+              child: favorite.freelancerAvatar == null
+                  ? const Icon(Icons.person, size: 28)
+                  : null,
             ),
             const SizedBox(width: 12),
             Expanded(

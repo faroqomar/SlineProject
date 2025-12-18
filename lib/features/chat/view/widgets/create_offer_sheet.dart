@@ -9,12 +9,15 @@ import 'package:sline_app/core/widgets/app_text_field.dart';
 /// A bottom sheet for creating custom offers in chat.
 /// Matches the new design system.
 class CreateOfferSheet extends StatefulWidget {
-  final Function(String title, String description, String price, String deliveryDays) onSubmit;
+  final Function(
+    String title,
+    String description,
+    String price,
+    String deliveryDays,
+  )
+  onSubmit;
 
-  const CreateOfferSheet({
-    super.key,
-    required this.onSubmit,
-  });
+  const CreateOfferSheet({super.key, required this.onSubmit});
 
   @override
   State<CreateOfferSheet> createState() => _CreateOfferSheetState();
@@ -92,9 +95,7 @@ class _CreateOfferSheetState extends State<CreateOfferSheet> {
             // Title
             Text(
               'Create Custom Offer',
-              style: AppTypography.h4.copyWith(
-                color: colorScheme.text,
-              ),
+              style: AppTypography.h4.copyWith(color: colorScheme.text),
             ),
             const SizedBox(height: AppDimens.p20),
 
@@ -191,7 +192,13 @@ class _CreateOfferSheetState extends State<CreateOfferSheet> {
 /// Show the create offer sheet as a modal bottom sheet.
 void showCreateOfferSheet(
   BuildContext context, {
-  required Function(String title, String description, String price, String deliveryDays) onSubmit,
+  required Function(
+    String title,
+    String description,
+    String price,
+    String deliveryDays,
+  )
+  onSubmit,
 }) {
   showModalBottomSheet(
     context: context,
@@ -200,4 +207,3 @@ void showCreateOfferSheet(
     builder: (context) => CreateOfferSheet(onSubmit: onSubmit),
   );
 }
-

@@ -8,21 +8,20 @@ import 'package:sline_app/core/theme/app_typography.dart';
 /// within the widget tree using `Theme.of(context).extension<AppThemeExtension>()`.
 @immutable
 class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
-  const AppThemeExtension({
-    required this.colors,
-  });
+  const AppThemeExtension({required this.colors});
 
   final AppColorScheme colors;
 
   @override
   AppThemeExtension copyWith({AppColorScheme? colors}) {
-    return AppThemeExtension(
-      colors: colors ?? this.colors,
-    );
+    return AppThemeExtension(colors: colors ?? this.colors);
   }
 
   @override
-  AppThemeExtension lerp(covariant ThemeExtension<AppThemeExtension>? other, double t) {
+  AppThemeExtension lerp(
+    covariant ThemeExtension<AppThemeExtension>? other,
+    double t,
+  ) {
     if (other is! AppThemeExtension) {
       return this;
     }
@@ -81,19 +80,35 @@ class AppTheme {
         headlineMedium: AppTypography.h5.copyWith(color: appColorScheme.text),
         headlineSmall: AppTypography.h6.copyWith(color: appColorScheme.text),
         bodyLarge: AppTypography.bodyLarge.copyWith(color: appColorScheme.text),
-        bodyMedium: AppTypography.bodyMedium.copyWith(color: appColorScheme.text),
-        bodySmall: AppTypography.bodySmall.copyWith(color: appColorScheme.textSecondary),
-        labelLarge: AppTypography.captionBold.copyWith(color: appColorScheme.primary),
-        labelMedium: AppTypography.caption.copyWith(color: appColorScheme.textSecondary),
-        labelSmall: AppTypography.overline.copyWith(color: appColorScheme.textTertiary),
-        titleLarge: AppTypography.bodyLarge.copyWith(color: appColorScheme.text),
-        titleMedium: AppTypography.bodyMedium.copyWith(color: appColorScheme.text),
-        titleSmall: AppTypography.bodySmall.copyWith(color: appColorScheme.text),
+        bodyMedium: AppTypography.bodyMedium.copyWith(
+          color: appColorScheme.text,
+        ),
+        bodySmall: AppTypography.bodySmall.copyWith(
+          color: appColorScheme.textSecondary,
+        ),
+        labelLarge: AppTypography.captionBold.copyWith(
+          color: appColorScheme.primary,
+        ),
+        labelMedium: AppTypography.caption.copyWith(
+          color: appColorScheme.textSecondary,
+        ),
+        labelSmall: AppTypography.overline.copyWith(
+          color: appColorScheme.textTertiary,
+        ),
+        titleLarge: AppTypography.bodyLarge.copyWith(
+          color: appColorScheme.text,
+        ),
+        titleMedium: AppTypography.bodyMedium.copyWith(
+          color: appColorScheme.text,
+        ),
+        titleSmall: AppTypography.bodySmall.copyWith(
+          color: appColorScheme.text,
+        ),
       ),
 
       // Scaffold background (main screen background)
       scaffoldBackgroundColor: appColorScheme.background,
-      
+
       // AppBar Theme
       appBarTheme: AppBarTheme(
         backgroundColor: appColorScheme.headerBackground,
@@ -103,8 +118,6 @@ class AppTheme {
         titleTextStyle: AppTypography.h5.copyWith(color: appColorScheme.text),
         iconTheme: IconThemeData(color: appColorScheme.text),
       ),
-
-
 
       // ElevatedButton Theme
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -118,7 +131,9 @@ class AppTheme {
             horizontal: AppDimens.p24,
             vertical: AppDimens.p16,
           ),
-          textStyle: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.bold),
+          textStyle: AppTypography.bodyMedium.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
           elevation: 5, // Matching some design elements
           shadowColor: appColorScheme.primary.withValues(alpha: 0.3),
         ),
@@ -128,8 +143,12 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: appColorScheme.inputBackground,
-        hintStyle: AppTypography.bodyMedium.copyWith(color: appColorScheme.textSecondary),
-        labelStyle: AppTypography.bodySmall.copyWith(color: appColorScheme.text),
+        hintStyle: AppTypography.bodyMedium.copyWith(
+          color: appColorScheme.textSecondary,
+        ),
+        labelStyle: AppTypography.bodySmall.copyWith(
+          color: appColorScheme.text,
+        ),
         floatingLabelBehavior: FloatingLabelBehavior.never,
         contentPadding: EdgeInsets.symmetric(
           horizontal: AppDimens.p16,
@@ -145,7 +164,10 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimens.r14),
-          borderSide: BorderSide(color: appColorScheme.primary, width: 1.5), // Focus color from React
+          borderSide: BorderSide(
+            color: appColorScheme.primary,
+            width: 1.5,
+          ), // Focus color from React
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimens.r14),
@@ -167,7 +189,8 @@ class AppTheme {
 
 // Helper to access custom theme extension
 extension BuildContextExtension on BuildContext {
-  AppThemeExtension get appTheme => Theme.of(this).extension<AppThemeExtension>()!;
+  AppThemeExtension get appTheme =>
+      Theme.of(this).extension<AppThemeExtension>()!;
   AppColorScheme get colorScheme => appTheme.colors;
   TextTheme get appTextTheme => Theme.of(this).textTheme;
 }

@@ -55,13 +55,15 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _onPickImage() async {
     try {
       await _chatCtrl.sendImageForActive();
-      AppLogger.i('[CHAT] image sent via usecase for convo=${widget.conversation.id}');
+      AppLogger.i(
+        '[CHAT] image sent via usecase for convo=${widget.conversation.id}',
+      );
     } catch (e) {
       AppLogger.e('sendImageAttachment failed: $e');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to send image')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to send image')));
     }
   }
 
@@ -115,33 +117,37 @@ class _ChatScreenState extends State<ChatScreen> {
                         : (msg.deliveredAt != null ? 'delivered' : 'sent');
 
                     // Check for Offer (Structured or Legacy JSON)
-                    if (msg.messageType == MessageType.offer || msg.content.trim().startsWith('{"type":"offer"')) {
-                       Map<String, dynamic> offerData = {};
-                       if (msg.messageType == MessageType.offer) {
-                         offerData = msg.payload;
-                       } else {
-                         try {
-                           offerData = jsonDecode(msg.content);
-                         } catch (_) {}
-                       }
+                    if (msg.messageType == MessageType.offer ||
+                        msg.content.trim().startsWith('{"type":"offer"')) {
+                      Map<String, dynamic> offerData = {};
+                      if (msg.messageType == MessageType.offer) {
+                        offerData = msg.payload;
+                      } else {
+                        try {
+                          offerData = jsonDecode(msg.content);
+                        } catch (_) {}
+                      }
 
-                       if (offerData.isNotEmpty) {
+                      if (offerData.isNotEmpty) {
                         return OfferMessageBubble(
                           title: offerData['title'] ?? '',
                           description: offerData['description'] ?? '',
                           price: offerData['price']?.toString() ?? '0',
-                          deliveryDays: offerData['delivery']?.toString() ?? '3',
+                          deliveryDays:
+                              offerData['delivery']?.toString() ?? '3',
                           status: _parseOfferStatus(offerData['status']),
                           isMine: isMine,
                           time: formatFriendlyTime(msg.createdAt),
                           onAccept: () => _chatCtrl.acceptOffer(msg),
                           onDecline: () => _chatCtrl.rejectOffer(msg),
                         );
-                       }
+                      }
                     }
 
-                    final hasImage = (msg.attachmentType == 'image') &&
-                        (msg.attachmentUrl != null && msg.attachmentUrl!.isNotEmpty);
+                    final hasImage =
+                        (msg.attachmentType == 'image') &&
+                        (msg.attachmentUrl != null &&
+                            msg.attachmentUrl!.isNotEmpty);
 
                     if (hasImage) {
                       return AttachmentMessageTile(
@@ -201,7 +207,11 @@ class _ChatScreenState extends State<ChatScreen> {
             Row(
               children: [
                 IconButton(
-                  icon: Icon(Icons.arrow_back_ios, color: colorScheme.text, size: 20),
+                  icon: Icon(
+                    Icons.arrow_back_ios,
+                    color: colorScheme.text,
+                    size: 20,
+                  ),
                   onPressed: () => Navigator.pop(context),
                 ),
                 Text(
@@ -257,7 +267,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildInputArea(BuildContext context, AppColorScheme colorScheme) {
     return GlassContainer(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimens.r24)),
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(AppDimens.r24),
+      ),
       padding: EdgeInsets.fromLTRB(
         AppDimens.p16,
         AppDimens.p12,
@@ -325,7 +337,11 @@ class _ChatScreenState extends State<ChatScreen> {
                 color: AppColors.teal,
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.send, color: AppColors.white, size: AppDimens.p20),
+              child: Icon(
+                Icons.send,
+                color: AppColors.white,
+                size: AppDimens.p20,
+              ),
             ),
           ),
         ],
@@ -344,4 +360,3 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 }
-

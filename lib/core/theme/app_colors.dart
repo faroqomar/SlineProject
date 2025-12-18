@@ -13,7 +13,9 @@ extension HexColor on Color {
       buffer.write('ff'); // Add full opacity if not specified
     }
     buffer.write(cleanHex);
-    return Color(int.parse(buffer.toString(), radix: 16)).withValues(alpha: opacity);
+    return Color(
+      int.parse(buffer.toString(), radix: 16),
+    ).withValues(alpha: opacity);
   }
 }
 
@@ -29,7 +31,9 @@ class AppColors {
   static final Color teal = HexColor.fromHex('#146068');
   static final Color lightTeal = HexColor.fromHex('#93ccce');
   static final Color gold = HexColor.fromHex('#f3bb19');
-  static final Color lightRed = HexColor.fromHex('#f49d9d'); // Often used for "hot" badges or error states
+  static final Color lightRed = HexColor.fromHex(
+    '#f49d9d',
+  ); // Often used for "hot" badges or error states
 
   // --- Grayscale & Neutrals ---
   static final Color almostBlack = HexColor.fromHex('#0c0c0c');
@@ -41,25 +45,70 @@ class AppColors {
 
   // --- Specific UI Element Colors (derived from base hues with opacities) ---
   // These are often intermediate colors that carry a specific opacity from the design.
-  static final Color tealTransparent5 = HexColor.fromHex('#146068', opacity: 0.05); // from-[#146068]/5
-  static final Color lightTealTransparent15 = HexColor.fromHex('#93ccce', opacity: 0.15); // from-[#93ccce]/15
-  static final Color lightTealTransparent20 = HexColor.fromHex('#93ccce', opacity: 0.20); // border-[#93ccce]/20
+  static final Color tealTransparent5 = HexColor.fromHex(
+    '#146068',
+    opacity: 0.05,
+  ); // from-[#146068]/5
+  static final Color lightTealTransparent15 = HexColor.fromHex(
+    '#93ccce',
+    opacity: 0.15,
+  ); // from-[#93ccce]/15
+  static final Color lightTealTransparent20 = HexColor.fromHex(
+    '#93ccce',
+    opacity: 0.20,
+  ); // border-[#93ccce]/20
 
-  static final Color offWhiteTransparent8 = HexColor.fromHex('#f4f3f1', opacity: 0.08); // bg-[#f4f3f1]/8 (dark card bg)
-  static final Color offWhiteTransparent10 = HexColor.fromHex('#f4f3f1', opacity: 0.10); // bg-[#f4f3f1]/10 (dark input bg)
-  static final Color offWhiteTransparent15 = HexColor.fromHex('#f4f3f1', opacity: 0.15); // focus:bg-[#f4f3f1]/15
+  static final Color offWhiteTransparent8 = HexColor.fromHex(
+    '#f4f3f1',
+    opacity: 0.08,
+  ); // bg-[#f4f3f1]/8 (dark card bg)
+  static final Color offWhiteTransparent10 = HexColor.fromHex(
+    '#f4f3f1',
+    opacity: 0.10,
+  ); // bg-[#f4f3f1]/10 (dark input bg)
+  static final Color offWhiteTransparent15 = HexColor.fromHex(
+    '#f4f3f1',
+    opacity: 0.15,
+  ); // focus:bg-[#f4f3f1]/15
 
-  static final Color tealTransparent15 = HexColor.fromHex('#146068', opacity: 0.15); // border-[#146068]/15
-  static final Color tealTransparent20 = HexColor.fromHex('#146068', opacity: 0.20); // bg-[#146068]/20 (dark header bg)
-  static final Color tealTransparent30 = HexColor.fromHex('#146068', opacity: 0.30); // for buttons
-  static final Color tealTransparent40 = HexColor.fromHex('#146068', opacity: 0.40); // hover border
+  static final Color tealTransparent15 = HexColor.fromHex(
+    '#146068',
+    opacity: 0.15,
+  ); // border-[#146068]/15
+  static final Color tealTransparent20 = HexColor.fromHex(
+    '#146068',
+    opacity: 0.20,
+  ); // bg-[#146068]/20 (dark header bg)
+  static final Color tealTransparent30 = HexColor.fromHex(
+    '#146068',
+    opacity: 0.30,
+  ); // for buttons
+  static final Color tealTransparent40 = HexColor.fromHex(
+    '#146068',
+    opacity: 0.40,
+  ); // hover border
 
-  static final Color goldTransparent20 = HexColor.fromHex('#f3bb19', opacity: 0.20); // hotBadgeBg
-  static final Color goldTransparent30 = HexColor.fromHex('#f3bb19', opacity: 0.30); // hotBadgeBorder
+  static final Color goldTransparent20 = HexColor.fromHex(
+    '#f3bb19',
+    opacity: 0.20,
+  ); // hotBadgeBg
+  static final Color goldTransparent30 = HexColor.fromHex(
+    '#f3bb19',
+    opacity: 0.30,
+  ); // hotBadgeBorder
 
-  static final Color almostBlackTransparent70 = HexColor.fromHex('#0c0c0c', opacity: 0.70); // contentGradient to
-  static final Color almostBlackTransparent60 = HexColor.fromHex('#0c0c0c', opacity: 0.60); // taskGradient from
-  static final Color almostBlackTransparent40 = HexColor.fromHex('#0c0c0c', opacity: 0.40); // New: taskGradient from in light mode
+  static final Color almostBlackTransparent70 = HexColor.fromHex(
+    '#0c0c0c',
+    opacity: 0.70,
+  ); // contentGradient to
+  static final Color almostBlackTransparent60 = HexColor.fromHex(
+    '#0c0c0c',
+    opacity: 0.60,
+  ); // taskGradient from
+  static final Color almostBlackTransparent40 = HexColor.fromHex(
+    '#0c0c0c',
+    opacity: 0.40,
+  ); // New: taskGradient from in light mode
 
   // --- Glassmorphism Gradients ---
   static final List<Color> glassCardGradientLight = [
@@ -73,15 +122,21 @@ class AppColors {
 
   // --- Semantic Colors for Task Types (Tender vs Booking) ---
   // These methods maintain the signature expected by existing code.
-  
-  static Color tenderCardBg(BuildContext context) => AppColors.lightRed.withValues(alpha: 0.05);
-  static Color bookingCardBg(BuildContext context) => AppColors.teal.withValues(alpha: 0.05);
 
-  static Color tenderBorder(BuildContext context) => AppColors.lightRed.withValues(alpha: 0.3);
-  static Color bookingBorder(BuildContext context) => AppColors.teal.withValues(alpha: 0.3);
+  static Color tenderCardBg(BuildContext context) =>
+      AppColors.lightRed.withValues(alpha: 0.05);
+  static Color bookingCardBg(BuildContext context) =>
+      AppColors.teal.withValues(alpha: 0.05);
 
-  static Color tenderChipBg(BuildContext context) => AppColors.lightRed.withValues(alpha: 0.15);
-  static Color bookingChipBg(BuildContext context) => AppColors.teal.withValues(alpha: 0.15);
+  static Color tenderBorder(BuildContext context) =>
+      AppColors.lightRed.withValues(alpha: 0.3);
+  static Color bookingBorder(BuildContext context) =>
+      AppColors.teal.withValues(alpha: 0.3);
+
+  static Color tenderChipBg(BuildContext context) =>
+      AppColors.lightRed.withValues(alpha: 0.15);
+  static Color bookingChipBg(BuildContext context) =>
+      AppColors.teal.withValues(alpha: 0.15);
 }
 
 /// Defines a complete color scheme for the application, tailored for
@@ -171,7 +226,9 @@ class AppColorScheme {
   final bool isDark;
 
   static AppColorScheme lerp(AppColorScheme? a, AppColorScheme? b, double t) {
-    if (a == null && b == null) return AppColorScheme.light(); // Default to light if both are null
+    if (a == null && b == null) {
+      return AppColorScheme.light(); // Default to light if both are null
+    }
     if (a == null) return b!;
     if (b == null) return a;
     return AppColorScheme(
@@ -183,38 +240,76 @@ class AppColorScheme {
       text: Color.lerp(a.text, b.text, t)!,
       textSecondary: Color.lerp(a.textSecondary, b.textSecondary, t)!,
       textTertiary: Color.lerp(a.textTertiary, b.textTertiary, t)!,
-      authGradientStart: Color.lerp(a.authGradientStart, b.authGradientStart, t)!,
+      authGradientStart: Color.lerp(
+        a.authGradientStart,
+        b.authGradientStart,
+        t,
+      )!,
       authGradientEnd: Color.lerp(a.authGradientEnd, b.authGradientEnd, t)!,
-      authInputBackground: Color.lerp(a.authInputBackground, b.authInputBackground, t)!,
+      authInputBackground: Color.lerp(
+        a.authInputBackground,
+        b.authInputBackground,
+        t,
+      )!,
       authInputBorder: Color.lerp(a.authInputBorder, b.authInputBorder, t)!,
       cardBackground: Color.lerp(a.cardBackground, b.cardBackground, t)!,
       cardBorder: Color.lerp(a.cardBorder, b.cardBorder, t)!,
       cardBorderHover: Color.lerp(a.cardBorderHover, b.cardBorderHover, t)!,
       inputBackground: Color.lerp(a.inputBackground, b.inputBackground, t)!,
       inputBorder: Color.lerp(a.inputBorder, b.inputBorder, t)!,
-      inputFocusBackground: Color.lerp(a.inputFocusBackground, b.inputFocusBackground, t)!,
+      inputFocusBackground: Color.lerp(
+        a.inputFocusBackground,
+        b.inputFocusBackground,
+        t,
+      )!,
       tagBackground: Color.lerp(a.tagBackground, b.tagBackground, t)!,
       tagBorder: Color.lerp(a.tagBorder, b.tagBorder, t)!,
-      hotBadgeBackground: Color.lerp(a.hotBadgeBackground, b.hotBadgeBackground, t)!,
+      hotBadgeBackground: Color.lerp(
+        a.hotBadgeBackground,
+        b.hotBadgeBackground,
+        t,
+      )!,
       hotBadgeBorder: Color.lerp(a.hotBadgeBorder, b.hotBadgeBorder, t)!,
       headerBackground: Color.lerp(a.headerBackground, b.headerBackground, t)!,
       headerBorder: Color.lerp(a.headerBorder, b.headerBorder, t)!,
-      contentGradientEnd: Color.lerp(a.contentGradientEnd, b.contentGradientEnd, t)!,
-      scrollbarColorThumb: Color.lerp(a.scrollbarColorThumb, b.scrollbarColorThumb, t)!,
-      bottomNavBackground: Color.lerp(a.bottomNavBackground, b.bottomNavBackground, t)!,
+      contentGradientEnd: Color.lerp(
+        a.contentGradientEnd,
+        b.contentGradientEnd,
+        t,
+      )!,
+      scrollbarColorThumb: Color.lerp(
+        a.scrollbarColorThumb,
+        b.scrollbarColorThumb,
+        t,
+      )!,
+      bottomNavBackground: Color.lerp(
+        a.bottomNavBackground,
+        b.bottomNavBackground,
+        t,
+      )!,
       bottomNavBorder: Color.lerp(a.bottomNavBorder, b.bottomNavBorder, t)!,
-      bottomNavInactive: Color.lerp(a.bottomNavInactive, b.bottomNavInactive, t)!,
+      bottomNavInactive: Color.lerp(
+        a.bottomNavInactive,
+        b.bottomNavInactive,
+        t,
+      )!,
       divider: Color.lerp(a.divider, b.divider, t)!,
       taskGradientFrom: Color.lerp(a.taskGradientFrom, b.taskGradientFrom, t)!,
       glassCardGradient: List.generate(
         a.glassCardGradient.length,
-        (index) => Color.lerp(a.glassCardGradient[index], b.glassCardGradient[index], t)!,
+        (index) => Color.lerp(
+          a.glassCardGradient[index],
+          b.glassCardGradient[index],
+          t,
+        )!,
       ),
       error: Color.lerp(a.error, b.error, t)!,
       success: Color.lerp(a.success, b.success, t)!,
       warning: Color.lerp(a.warning, b.warning, t)!,
       info: Color.lerp(a.info, b.info, t)!,
-      isDark: t < 0.5 ? (a.isDark) : (b.isDark), // Boolean lerp is not meaningful, pick based on interpolation factor
+      isDark: t < 0.5
+          ? (a.isDark)
+          : (b.isDark), // Boolean lerp is not meaningful, pick based on interpolation factor
     );
   }
 
@@ -235,7 +330,10 @@ class AppColorScheme {
       authInputBorder: AppColors.tealTransparent20,
       cardBackground: AppColors.white,
       cardBorder: AppColors.tealTransparent15,
-      cardBorderHover: HexColor.fromHex('#146068', opacity: 0.50), // border-[#146068]/50
+      cardBorderHover: HexColor.fromHex(
+        '#146068',
+        opacity: 0.50,
+      ), // border-[#146068]/50
       inputBackground: AppColors.white,
       inputBorder: AppColors.tealTransparent20,
       inputFocusBackground: AppColors.white,
@@ -274,13 +372,19 @@ class AppColorScheme {
       authInputBackground: AppColors.offWhiteTransparent10,
       authInputBorder: AppColors.lightTealTransparent20,
       cardBackground: AppColors.offWhiteTransparent8,
-      cardBorder: HexColor.fromHex('#93ccce', opacity: 0.10), // border-[#93ccce]/10
+      cardBorder: HexColor.fromHex(
+        '#93ccce',
+        opacity: 0.10,
+      ), // border-[#93ccce]/10
       cardBorderHover: AppColors.tealTransparent40, // border-[#146068]/40
       inputBackground: AppColors.offWhiteTransparent10,
       inputBorder: AppColors.lightTealTransparent20,
       inputFocusBackground: AppColors.offWhiteTransparent15,
       tagBackground: AppColors.offWhiteTransparent10,
-      tagBorder: HexColor.fromHex('#93ccce', opacity: 0.10), // border-[#93ccce]/10
+      tagBorder: HexColor.fromHex(
+        '#93ccce',
+        opacity: 0.10,
+      ), // border-[#93ccce]/10
       hotBadgeBackground: AppColors.goldTransparent20,
       hotBadgeBorder: AppColors.goldTransparent30,
       headerBackground: AppColors.tealTransparent20,

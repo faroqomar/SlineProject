@@ -49,9 +49,7 @@ class _FavoritesView extends StatelessWidget {
     final vm = context.watch<FavoritesViewModel>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Favorites'),
-      ),
+      appBar: AppBar(title: const Text('Favorites')),
       body: RefreshIndicator(
         onRefresh: vm.refresh,
         child: Builder(
@@ -66,10 +64,9 @@ class _FavoritesView extends StatelessWidget {
                   Center(
                     child: Text(
                       vm.error!,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(color: Theme.of(context).colorScheme.error),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
                     ),
                   ),
                 ],
@@ -99,7 +96,9 @@ class _FavoritesView extends StatelessWidget {
                       if (clientId == null) {
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Please sign in to start chat')),
+                          const SnackBar(
+                            content: Text('Please sign in to start chat'),
+                          ),
                         );
                         return;
                       }
