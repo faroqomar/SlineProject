@@ -63,9 +63,9 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
         controller: ctrl,
         onCreated: () {
           Navigator.of(ctx).pop();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Portfolio item added')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Portfolio item added')));
         },
       ),
     );
@@ -154,17 +154,31 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                     context: context,
                     builder: (ctx) => AlertDialog(
                       title: const Text('Delete item?'),
-                      content: const Text('This will remove the portfolio entry.'),
+                      content: const Text(
+                        'This will remove the portfolio entry.',
+                      ),
                       actions: [
-                        TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-                        FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Delete')),
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(false),
+                          child: const Text('Cancel'),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.of(ctx).pop(true),
+                          child: const Text('Delete'),
+                        ),
                       ],
                     ),
                   );
                   if (ok == true) {
                     final success = await ctrl.deleteItem(item.id);
                     messenger.showSnackBar(
-                      SnackBar(content: Text(success ? 'Deleted' : 'Delete failed: ${ctrl.error ?? ''}')),
+                      SnackBar(
+                        content: Text(
+                          success
+                              ? 'Deleted'
+                              : 'Delete failed: ${ctrl.error ?? ''}',
+                        ),
+                      ),
                     );
                   }
                 },
@@ -188,9 +202,16 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.image_outlined, size: 48, color: Theme.of(context).colorScheme.primary),
+            Icon(
+              Icons.image_outlined,
+              size: 48,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             const SizedBox(height: 12),
-            const Text('No portfolio items yet', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+            const Text(
+              'No portfolio items yet',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            ),
             const SizedBox(height: 8),
             Text(
               'Tap the + button to add your first work sample.',
@@ -211,7 +232,9 @@ class _LoadingTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(12),
       ),
       child: const Center(child: CircularProgressIndicator()),

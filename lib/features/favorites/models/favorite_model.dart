@@ -26,7 +26,12 @@ class FavoriteModel {
         createdAt: DateTime.parse(map['created_at'] as String),
       );
     } catch (e, st) {
-      AppLogger.e('Failed to parse FavoriteModel', tag: 'Favorites', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to parse FavoriteModel',
+        tag: 'Favorites',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }

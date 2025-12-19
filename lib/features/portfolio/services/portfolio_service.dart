@@ -64,7 +64,9 @@ class PortfolioService {
     final path = '$ownerId/$safeName';
 
     // Upload (no upsert so we don't overwrite existing files)
-    await _client.storage.from(_bucket).uploadBinary(
+    await _client.storage
+        .from(_bucket)
+        .uploadBinary(
           path,
           bytes,
           fileOptions: FileOptions(contentType: contentType, upsert: false),
@@ -97,12 +99,16 @@ class PortfolioService {
       imageUrl = res.publicUrl;
     }
 
-    final row = await _client.from(_table).insert({
-      'owner_id': ownerId,
-      'title': title,
-      'description': description,
-      'image_url': imageUrl,
-    }).select().single();
+    final row = await _client
+        .from(_table)
+        .insert({
+          'owner_id': ownerId,
+          'title': title,
+          'description': description,
+          'image_url': imageUrl,
+        })
+        .select()
+        .single();
 
     return PortfolioItem.fromJson(row as Map<String, dynamic>);
   }

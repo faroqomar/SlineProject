@@ -36,14 +36,13 @@ class AvatarService {
   }) async {
     final path = '$userId/${DateTime.now().millisecondsSinceEpoch}.$fileExt';
 
-    await _supabase.storage.from(bucket).uploadBinary(
-      path,
-      bytes,
-      fileOptions: FileOptions(
-        contentType: contentType,
-        upsert: true,
-      ),
-    );
+    await _supabase.storage
+        .from(bucket)
+        .uploadBinary(
+          path,
+          bytes,
+          fileOptions: FileOptions(contentType: contentType, upsert: true),
+        );
 
     return path;
   }

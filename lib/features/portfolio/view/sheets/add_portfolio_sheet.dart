@@ -6,7 +6,11 @@ import '../../viewmodels/portfolio_view_model.dart';
 
 /// Bottom sheet for adding a portfolio item (supports optional image).
 class AddPortfolioSheet extends StatefulWidget {
-  const AddPortfolioSheet({super.key, required this.controller, required this.onCreated});
+  const AddPortfolioSheet({
+    super.key,
+    required this.controller,
+    required this.onCreated,
+  });
   final PortfolioViewModel controller;
   final VoidCallback onCreated;
 
@@ -44,7 +48,9 @@ class _AddPortfolioSheetState extends State<AddPortfolioSheet> {
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Image pick failed: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Image pick failed: $e')));
     }
   }
 
@@ -73,7 +79,11 @@ class _AddPortfolioSheetState extends State<AddPortfolioSheet> {
       widget.onCreated();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed: ${widget.controller.error ?? 'Unknown error'}')),
+        SnackBar(
+          content: Text(
+            'Failed: ${widget.controller.error ?? 'Unknown error'}',
+          ),
+        ),
       );
     }
   }
@@ -100,19 +110,25 @@ class _AddPortfolioSheetState extends State<AddPortfolioSheet> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Text('Add Portfolio Item', style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  'Add Portfolio Item',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _title,
                   decoration: const InputDecoration(labelText: 'Title'),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? 'Required' : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _desc,
                   minLines: 2,
                   maxLines: 5,
-                  decoration: const InputDecoration(labelText: 'Description (optional)'),
+                  decoration: const InputDecoration(
+                    labelText: 'Description (optional)',
+                  ),
                 ),
                 const SizedBox(height: 12),
                 ListTile(
@@ -129,7 +145,11 @@ class _AddPortfolioSheetState extends State<AddPortfolioSheet> {
                   const SizedBox(height: 12),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.memory(_imageBytes!, height: 160, fit: BoxFit.cover),
+                    child: Image.memory(
+                      _imageBytes!,
+                      height: 160,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ],
                 const SizedBox(height: 16),
@@ -138,7 +158,11 @@ class _AddPortfolioSheetState extends State<AddPortfolioSheet> {
                   child: FilledButton(
                     onPressed: _submitting ? null : _submit,
                     child: _submitting
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
                         : const Text('Create'),
                   ),
                 ),

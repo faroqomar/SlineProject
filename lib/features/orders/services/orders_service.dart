@@ -56,4 +56,3 @@ class OrdersService {
     await _taskService.updateTaskStatus(taskId, TaskStatus.closed);
   }
 }
-

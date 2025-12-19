@@ -35,12 +35,12 @@ class AppLogger {
 
   // ANSI color codes for terminal output
   static const String _reset = '\x1B[0m';
-  static const String _cyan = '\x1B[36m';    // Debug
-  static const String _green = '\x1B[32m';   // Info
-  static const String _yellow = '\x1B[33m';  // Warning
-  static const String _red = '\x1B[31m';     // Error
-  static const String _gray = '\x1B[90m';    // Timestamp/Tag
-  static const String _blue = '\x1B[34m';    // API
+  static const String _cyan = '\x1B[36m'; // Debug
+  static const String _green = '\x1B[32m'; // Info
+  static const String _yellow = '\x1B[33m'; // Warning
+  static const String _red = '\x1B[31m'; // Error
+  static const String _gray = '\x1B[90m'; // Timestamp/Tag
+  static const String _blue = '\x1B[34m'; // API
 
   /// Format: "HH:mm:ss" for clean timestamps
   static String _timestamp() {
@@ -109,23 +109,43 @@ class AppLogger {
   }
 
   /// Error: Critical failures that need attention.
-  static void e(String message, {String? tag, dynamic error, StackTrace? stackTrace}) {
-    _log(LogLevel.error, message, tag: tag, error: error, stackTrace: stackTrace);
+  static void e(
+    String message, {
+    String? tag,
+    dynamic error,
+    StackTrace? stackTrace,
+  }) {
+    _log(
+      LogLevel.error,
+      message,
+      tag: tag,
+      error: error,
+      stackTrace: stackTrace,
+    );
   }
 
   /// API: Log API calls with status codes.
   /// Usage: AppLogger.api('GET /tasks', 200, tag: 'Tasks');
-  static void api(String endpoint, int? statusCode, {String? tag, Duration? duration}) {
+  static void api(
+    String endpoint,
+    int? statusCode, {
+    String? tag,
+    Duration? duration,
+  }) {
     if (!kDebugMode || currentLevel.index > LogLevel.info.index) return;
 
     final status = statusCode ?? 0;
     final color = status >= 200 && status < 300 ? _green : _red;
     final emoji = status >= 200 && status < 300 ? '🌐' : '🚫';
-    final durationStr = duration != null ? ' (${duration.inMilliseconds}ms)' : '';
+    final durationStr = duration != null
+        ? ' (${duration.inMilliseconds}ms)'
+        : '';
     final tagStr = tag != null ? '$_gray[$tag]$_reset ' : '';
     final timeStr = '$_gray${_timestamp()}$_reset';
 
-    debugPrint('$timeStr $tagStr$_blue$emoji$_reset $endpoint $color$status$_reset$durationStr');
+    debugPrint(
+      '$timeStr $tagStr$_blue$emoji$_reset $endpoint $color$status$_reset$durationStr',
+    );
   }
 
   /// State: Log state changes in ViewModels.

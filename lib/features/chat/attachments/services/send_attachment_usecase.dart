@@ -30,7 +30,9 @@ Future<void> sendImageAttachment({
     }
 
     // 3) Compress (mobile only)
-    final compressed = await CompressService().maybeCompressImage(payload.bytes);
+    final compressed = await CompressService().maybeCompressImage(
+      payload.bytes,
+    );
 
     // 4) Upload to Storage
     final uploader = SupabaseAttachmentUploader();
@@ -39,7 +41,6 @@ Future<void> sendImageAttachment({
       filename: payload.name,
       bytes: compressed,
     );
-
 
     // 5) Insert message with attachment info
     final msgService = MessageService();
@@ -54,7 +55,9 @@ Future<void> sendImageAttachment({
       attachmentSize: compressed.length,
     );
 
-    AppLogger.i('[ATTACH] image uploaded + message created: path=$storagePath size=${compressed.length}');
+    AppLogger.i(
+      '[ATTACH] image uploaded + message created: path=$storagePath size=${compressed.length}',
+    );
   } on AttachmentPickCancelled {
     AppLogger.d('[ATTACH] user cancelled picking');
     return;

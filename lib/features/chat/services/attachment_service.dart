@@ -18,17 +18,24 @@ class AttachmentService {
     final randomId = _randomId(10);
     final path = '$conversationId/${randomId}_$safeName';
 
-    await _client.storage.from(_bucket).uploadBinary(
-      path,
-      Uint8List.fromList(bytes),
-      fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
-    );
+    await _client.storage
+        .from(_bucket)
+        .uploadBinary(
+          path,
+          Uint8List.fromList(bytes),
+          fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
+        );
     return path;
   }
 
   /// Create a short-lived signed URL to view/download a private object.
-  Future<String> createSignedUrl(String path, {int expiresInSeconds = 3600}) async {
-    final res = await _client.storage.from(_bucket).createSignedUrl(path, expiresInSeconds);
+  Future<String> createSignedUrl(
+    String path, {
+    int expiresInSeconds = 3600,
+  }) async {
+    final res = await _client.storage
+        .from(_bucket)
+        .createSignedUrl(path, expiresInSeconds);
     return res;
   }
 
@@ -40,6 +47,9 @@ class AttachmentService {
   String _randomId(int length) {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     final rand = Random.secure();
-    return List.generate(length, (_) => chars[rand.nextInt(chars.length)]).join();
+    return List.generate(
+      length,
+      (_) => chars[rand.nextInt(chars.length)],
+    ).join();
   }
 }

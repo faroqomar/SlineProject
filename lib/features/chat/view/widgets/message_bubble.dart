@@ -9,6 +9,7 @@ class MessageBubble extends StatelessWidget {
   final String text;
   final String time; // already formatted
   final bool isMine;
+
   /// Optional status: 'sent' | 'delivered' | 'read'
   final String? status;
 
@@ -23,13 +24,15 @@ class MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    
+
     final bg = isMine
         ? AppColors.teal
         : colorScheme.cardBackground; // or inputBackground
-    
+
     final fg = isMine ? AppColors.offWhite : colorScheme.text;
-    final metaColor = isMine ? AppColors.offWhite.withValues(alpha: 0.7) : colorScheme.textSecondary;
+    final metaColor = isMine
+        ? AppColors.offWhite.withValues(alpha: 0.7)
+        : colorScheme.textSecondary;
 
     final radius = BorderRadius.only(
       topLeft: Radius.circular(isMine ? AppDimens.r18 : AppDimens.r4),
@@ -54,19 +57,18 @@ class MessageBubble extends StatelessWidget {
             border: isMine ? null : Border.all(color: colorScheme.cardBorder),
           ),
           child: Column(
-            crossAxisAlignment:
-                isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            crossAxisAlignment: isMine
+                ? CrossAxisAlignment.end
+                : CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                text,
-                style: AppTypography.bodyMedium.copyWith(color: fg),
-              ),
+              Text(text, style: AppTypography.bodyMedium.copyWith(color: fg)),
               const SizedBox(height: 4),
               Row(
                 mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment:
-                    isMine ? MainAxisAlignment.end : MainAxisAlignment.start,
+                mainAxisAlignment: isMine
+                    ? MainAxisAlignment.end
+                    : MainAxisAlignment.start,
                 children: [
                   Text(
                     time,
@@ -88,7 +90,11 @@ class MessageBubble extends StatelessWidget {
   static Widget _statusIcon(String status, bool isMine, Color color) {
     switch (status) {
       case 'read':
-        return const Icon(Icons.done_all, size: 16, color: Colors.blue); // Keep blue for read
+        return const Icon(
+          Icons.done_all,
+          size: 16,
+          color: Colors.blue,
+        ); // Keep blue for read
       case 'delivered':
         return Icon(Icons.done_all, size: 16, color: color);
       case 'sent':

@@ -12,7 +12,9 @@ class ImagePlaceholder extends StatelessWidget {
       color: color,
       child: Center(
         child: Text(
-          title.isNotEmpty ? title.characters.take(2).toString().toUpperCase() : '—',
+          title.isNotEmpty
+              ? title.characters.take(2).toString().toUpperCase()
+              : '—',
           style: Theme.of(context).textTheme.titleLarge,
         ),
       ),

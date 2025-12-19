@@ -8,7 +8,7 @@ class OrdersViewModel extends ChangeNotifier {
   final OrdersService _ordersService;
 
   OrdersViewModel({OrdersService? ordersService})
-      : _ordersService = ordersService ?? OrdersService();
+    : _ordersService = ordersService ?? OrdersService();
 
   // State
   List<Task> _allOrders = [];
@@ -24,9 +24,17 @@ class OrdersViewModel extends ChangeNotifier {
       case 'Open':
         return _allOrders.where((t) => t.status == TaskStatus.open).toList();
       case 'In Progress':
-        return _allOrders.where((t) => t.status == TaskStatus.inProgress || t.status == TaskStatus.assigned).toList();
+        return _allOrders
+            .where(
+              (t) =>
+                  t.status == TaskStatus.inProgress ||
+                  t.status == TaskStatus.assigned,
+            )
+            .toList();
       case 'Completed':
-        return _allOrders.where((t) => t.status == TaskStatus.closed).toList(); // Assuming closed = completed for now
+        return _allOrders
+            .where((t) => t.status == TaskStatus.closed)
+            .toList(); // Assuming closed = completed for now
       case 'Cancelled':
         // TODO: Add TaskStatus.cancelled enum
         return [];
@@ -101,4 +109,3 @@ class OrdersViewModel extends ChangeNotifier {
     }
   }
 }
-

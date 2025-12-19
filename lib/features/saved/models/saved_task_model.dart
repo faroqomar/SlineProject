@@ -31,7 +31,12 @@ class SavedTaskModel {
         createdAt: DateTime.parse(map['created_at'] as String),
       );
     } catch (e, st) {
-      AppLogger.e('Failed to parse SavedTaskModel', tag: 'Saved', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to parse SavedTaskModel',
+        tag: 'Saved',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }

@@ -1,10 +1,5 @@
 /// Enum for task status
-enum TaskStatus {
-  open,
-  assigned,
-  closed,
-  inProgress,
-}
+enum TaskStatus { open, assigned, closed, inProgress, canceled }
 
 /// Enum for task type (bidding vs. scheduling)
 enum TaskType {
@@ -114,8 +109,9 @@ class Task {
   factory Task.fromJson(Map<String, dynamic> json) {
     // Map database string to TaskType enum; default to tender for backward compatibility
     final String? typeStr = json['task_type'] as String?;
-    final TaskType parsedTaskType =
-        (typeStr == 'booking') ? TaskType.booking : TaskType.tender;
+    final TaskType parsedTaskType = (typeStr == 'booking')
+        ? TaskType.booking
+        : TaskType.tender;
 
     final rawPaths = (json['image_paths'] as List?) ?? const [];
     final parsedImagePaths = rawPaths
@@ -126,10 +122,10 @@ class Task {
     // Extract profile data from JOIN (nested under 'profiles' key)
     // or from flat fields (for backward compatibility with existing code)
     final profileData = json['profiles'] as Map<String, dynamic>?;
-    final String? parsedUserName = profileData?['full_name'] as String? ??
-        json['user_name'] as String?;
-    final String? parsedUserAvatar = profileData?['avatar_url'] as String? ??
-        json['user_avatar'] as String?;
+    final String? parsedUserName =
+        profileData?['full_name'] as String? ?? json['user_name'] as String?;
+    final String? parsedUserAvatar =
+        profileData?['avatar_url'] as String? ?? json['user_avatar'] as String?;
 
     return Task(
       id: json['id'] as String,
@@ -146,7 +142,8 @@ class Task {
       deadline: json['deadline'] != null
           ? DateTime.parse(json['deadline'] as String)
           : null,
-      skills: (json['skills'] as List<dynamic>?)
+      skills:
+          (json['skills'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           [],
@@ -155,10 +152,14 @@ class Task {
       // Legacy text (nullable for rollback/fallback)
       category: json['category'] as String?,
       // Resolved name from embedded relation (if present), fallback to legacy text
-      categoryName: ((json['categories'] as Map?)?['name'] as String?) ?? (json['category'] as String?),
+      categoryName:
+          ((json['categories'] as Map?)?['name'] as String?) ??
+          (json['category'] as String?),
       userName: parsedUserName,
       userAvatar: parsedUserAvatar,
-      assignedFreelancerId: (json['assigned_freelancer_id'] as String?) ?? (json['freelancer_id'] as String?),
+      assignedFreelancerId:
+          (json['assigned_freelancer_id'] as String?) ??
+          (json['freelancer_id'] as String?),
       imagePaths: parsedImagePaths,
       packages: json['packages'] as Map<String, dynamic>?,
       offers: (json['offers'] as int?) ?? 0,
@@ -180,7 +181,8 @@ class Task {
       'category_id': categoryId,
       if (category != null) 'category': category,
       'image_paths': imagePaths,
-      if (assignedFreelancerId != null) 'assigned_freelancer_id': assignedFreelancerId,
+      if (assignedFreelancerId != null)
+        'assigned_freelancer_id': assignedFreelancerId,
     };
     if (includeSystemFields) {
       map['id'] = id;

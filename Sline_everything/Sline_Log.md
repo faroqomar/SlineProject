@@ -21,6 +21,51 @@
 
 ## 📋 Version History
 
+### 🔧 Version 2.7.1 — CodeGuard Maintenance Audit
+**Date:** 2025-12-19
+**Agent:** @CodeGuard
+**Status:** ✅ Passed
+
+#### ✅ Maintenance Updates
+- **Lint Fixes**: Resolved `curly_braces_in_flow_control_structures` in 4 files (`booking_view_model.dart`, `message_model.dart`, etc).
+- **Formatting**: Applied `dart format .` to 142 files.
+- **Analysis**: `flutter analyze` is now clean (0 issues).
+
+#### ⚠️ Dependency Audit
+- **Critical**: `supabase_flutter` needs update (1.10.x -> 2.12.x). High risk.
+- **Warning**: `js` package is discontinued (transitive dependency).
+
+---
+
+### 🟢 Version 2.7 — Notification System End-to-End
+**Date:** 2025-12-19
+**Commit:** _Pending_ — "feat(notifications): Realtime notifications system, TaskStatus enum expansion, and UI integration"
+
+#### ✅ Implemented
+- **Notification System Core**
+  - Database: `notifications` table + RLS policies (insert_any, select_own, update_own).
+  - Service: `NotificationService` for realtime listening, fetching, and "mark as read".
+  - State: `NotificationViewModel` with badge count tracking.
+- **Task Notifications**
+  - Logic: Notifications triggered for Task Completion (`TaskStatus.closed`) and Cancellation (`TaskStatus.canceled`).
+  - Integration: `TaskService` now notifies relevant parties (Owner ↔ Freelancer).
+- **UI Enhancements**
+  - `NotificationBadgeButton`: Realtime unread count indicator in app bar.
+  - `Tasks` Models & Widgets: Added `canceled` status to `TaskStatus` enum.
+  - `ServiceCard` & `OrderCard`: UI support for `TaskStatus.canceled` (Gray theme).
+
+#### 📊 Impact
+- **Engagement**: Users are instantly notified of critical task events.
+- **Completeness**: Handling of 'Cancellation' and 'Completion' closes the task lifecycle loop.
+- **Robustness**: Enum alignment prevents runtime errors with database status values.
+
+#### 🔧 Technical Notes
+- `notifications` table uses Realtime subscription for instant badge updates.
+- `TaskService` performs a pre-fetch before status updates to determine the correct recipient ID.
+- `TaskStatus` enum now fully matches Supabase constraints (`open`, `assigned`, `in_progress`, `closed`, `canceled`).
+
+---
+
 ### 🟢 Version 2.6 — Forgot Password Flow
 
 **Date:** 2025-12-17

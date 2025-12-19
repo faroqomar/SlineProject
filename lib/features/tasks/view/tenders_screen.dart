@@ -59,7 +59,7 @@ class TendersScreen extends StatelessWidget {
 
               // List
               if (tenders.isEmpty)
-                 SliverFillRemaining(
+                SliverFillRemaining(
                   hasScrollBody: false,
                   child: Center(
                     child: Column(
@@ -68,7 +68,9 @@ class TendersScreen extends StatelessWidget {
                         Icon(
                           Icons.assignment_outlined,
                           size: 64,
-                          color: colorScheme.textSecondary.withValues(alpha: 0.5),
+                          color: colorScheme.textSecondary.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -90,22 +92,19 @@ class TendersScreen extends StatelessWidget {
                     AppDimens.p100, // Bottom padding for nav bar
                   ),
                   sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final task = tenders[index];
-                        return TaskCard(
-                          task: task,
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => TaskDetailsScreen(task: task),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                      childCount: tenders.length,
-                    ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final task = tenders[index];
+                      return TaskCard(
+                        task: task,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => TaskDetailsScreen(task: task),
+                            ),
+                          );
+                        },
+                      );
+                    }, childCount: tenders.length),
                   ),
                 ),
             ],

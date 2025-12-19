@@ -2,14 +2,18 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/logger_service.dart';
 import '../models/conversation_model.dart';
 import '../models/message_model.dart';
+import '../../notifications/services/notification_service.dart';
+import '../../notifications/models/notification_model.dart';
 
 /// Why this service exists: encapsulates Supabase queries/streams so UI/controllers remain clean
 /// and to centralize schema changes (attachments, receipts, typing) in one place.
 class MessageService {
   /// Encapsulated Supabase client; allows injection for testing.
   final SupabaseClient _client;
+  final NotificationService _notificationService = NotificationService();
 
-  MessageService([SupabaseClient? client]) : _client = client ?? Supabase.instance.client;
+  MessageService([SupabaseClient? client])
+    : _client = client ?? Supabase.instance.client;
 
   /// Create or get conversation (order-insensitive pair). taskId can be null.
   Future<Conversation> createOrGetConversation({
@@ -28,7 +32,9 @@ class MessageService {
             .select()
             .single();
         AppLogger.i('🧭 RPC start_task_conversation_v1 returned conversation');
-        return Conversation.fromJson(Map<String, dynamic>.from(response as Map));
+        return Conversation.fromJson(
+          Map<String, dynamic>.from(response as Map),
+        );
       } catch (e) {
         AppLogger.e('❌ RPC start_task_conversation failed: $e');
         rethrow;
@@ -47,10 +53,14 @@ class MessageService {
 
     final existing = await query;
 
-    AppLogger.d('🔎 Existing DM conversations found: ${existing is List ? existing.length : 'n/a'}');
+    AppLogger.d(
+      '🔎 Existing DM conversations found: ${existing is List ? existing.length : 'n/a'}',
+    );
     if (existing is List && existing.isNotEmpty) {
       AppLogger.i('📌 Using existing DM conversation: ${existing.first['id']}');
-      return Conversation.fromJson(Map<String, dynamic>.from(existing.first as Map));
+      return Conversation.fromJson(
+        Map<String, dynamic>.from(existing.first as Map),
+      );
     }
 
     // Create new DM conversation; initiator is user1Id (caller)
@@ -83,18 +93,24 @@ class MessageService {
         .select('user1_id, user2_id')
         .eq('id', conversationId)
         .single();
-    
+
     final user1 = convo['user1_id'];
     final user2 = convo['user2_id'];
 
     if (userId == user1) {
-      await _client.from('conversations').update({
-        'deleted_at_user1': DateTime.now().toUtc().toIso8601String(),
-      }).eq('id', conversationId);
+      await _client
+          .from('conversations')
+          .update({
+            'deleted_at_user1': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', conversationId);
     } else if (userId == user2) {
-      await _client.from('conversations').update({
-        'deleted_at_user2': DateTime.now().toUtc().toIso8601String(),
-      }).eq('id', conversationId);
+      await _client
+          .from('conversations')
+          .update({
+            'deleted_at_user2': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', conversationId);
     } else {
       throw Exception('User is not a participant in this conversation');
     }
@@ -128,45 +144,49 @@ class MessageService {
         final List<Conversation> validConversations = [];
 
         for (final raw in response) {
-           final json = Map<String, dynamic>.from(raw as Map);
-           
-           // Check deletion status
-           final isUser1 = json['user1_id'] == userId;
-           final deletedAtStr = isUser1 ? json['deleted_at_user1'] : json['deleted_at_user2'];
-           
-           if (deletedAtStr != null) {
-             final deletedAt = DateTime.parse(deletedAtStr);
-             final lastMsg = json['last_message'];
-             // If no messages, or last message was before deletion, skip it
-             if (lastMsg == null || (lastMsg is List && lastMsg.isEmpty)) {
-               continue;
-             }
-             final msgData = lastMsg is List ? lastMsg.first : lastMsg;
-             final msgTime = DateTime.parse(msgData['created_at']);
-             
-             if (msgTime.isBefore(deletedAt)) {
-               continue; // Still deleted
-             }
-           }
+          final json = Map<String, dynamic>.from(raw as Map);
 
-           final otherUser = isUser1 ? json['user2'] : json['user1'];
-           validConversations.add(Conversation.fromJson({
-            ...json,
-            'task_title': json['tasks']?['title'] ?? 'Untitled Task',
-            'user1_name': json['user1']?['full_name'] ?? 'User',
-            'user2_name': json['user2']?['full_name'] ?? 'User',
-            'other_user_name': otherUser?['full_name'],
-            'other_user_avatar': otherUser?['avatar_url'],
-          }));
+          // Check deletion status
+          final isUser1 = json['user1_id'] == userId;
+          final deletedAtStr = isUser1
+              ? json['deleted_at_user1']
+              : json['deleted_at_user2'];
+
+          if (deletedAtStr != null) {
+            final deletedAt = DateTime.parse(deletedAtStr);
+            final lastMsg = json['last_message'];
+            // If no messages, or last message was before deletion, skip it
+            if (lastMsg == null || (lastMsg is List && lastMsg.isEmpty)) {
+              continue;
+            }
+            final msgData = lastMsg is List ? lastMsg.first : lastMsg;
+            final msgTime = DateTime.parse(msgData['created_at']);
+
+            if (msgTime.isBefore(deletedAt)) {
+              continue; // Still deleted
+            }
+          }
+
+          final otherUser = isUser1 ? json['user2'] : json['user1'];
+          validConversations.add(
+            Conversation.fromJson({
+              ...json,
+              'task_title': json['tasks']?['title'] ?? 'Untitled Task',
+              'user1_name': json['user1']?['full_name'] ?? 'User',
+              'user2_name': json['user2']?['full_name'] ?? 'User',
+              'other_user_name': otherUser?['full_name'],
+              'other_user_avatar': otherUser?['avatar_url'],
+            }),
+          );
         }
-        
+
         // Sort by last message time descending
         validConversations.sort((a, b) {
-            final aTime = a.lastMessageTime ?? a.createdAt;
-            final bTime = b.lastMessageTime ?? b.createdAt;
-            return bTime.compareTo(aTime);
+          final aTime = a.lastMessageTime ?? a.createdAt;
+          final bTime = b.lastMessageTime ?? b.createdAt;
+          return bTime.compareTo(aTime);
         });
-        
+
         return validConversations;
       } else {
         AppLogger.w('⚠️ Unexpected response type: $response');
@@ -182,7 +202,9 @@ class MessageService {
   Future<List<Message>> getMessages(String conversationId) async {
     final response = await _client
         .from('messages')
-        .select('id, conversation_id, sender_id, receiver_id, content, created_at, attachment_url, attachment_type, attachment_name, attachment_size, delivered_at, seen_at, message_type, payload')
+        .select(
+          'id, conversation_id, sender_id, receiver_id, content, created_at, attachment_url, attachment_type, attachment_name, attachment_size, delivered_at, seen_at, message_type, payload',
+        )
         .eq('conversation_id', conversationId)
         .order('created_at', ascending: true);
 
@@ -220,27 +242,62 @@ class MessageService {
     final response = await _client
         .from('messages')
         .insert(insertMap)
-        .select('id, conversation_id, sender_id, receiver_id, content, created_at, attachment_url, attachment_type, attachment_name, attachment_size, delivered_at, seen_at, message_type, payload')
+        .select(
+          'id, conversation_id, sender_id, receiver_id, content, created_at, attachment_url, attachment_type, attachment_name, attachment_size, delivered_at, seen_at, message_type, payload',
+        )
         .single();
 
-    return Message.fromJson(Map<String, dynamic>.from(response as Map));
+    final msg = Message.fromJson(Map<String, dynamic>.from(response as Map));
+
+    // Create notification for receiver
+    String notifTitle = 'New Message';
+    String notifBody = content;
+    NotificationType notifType = NotificationType.message;
+
+    if (messageType == 'offer') {
+      notifTitle = 'New Offer Received';
+      notifBody = 'You received an offer of ${payload?['price'] ?? '?'}';
+      notifType = NotificationType.offer;
+    } else if (messageType == 'offer_accepted') {
+      notifTitle = 'Offer Accepted';
+      notifBody = 'Your offer has been accepted!';
+      notifType = NotificationType.offer;
+    } else if (messageType == 'offer_rejected') {
+      notifTitle = 'Offer Rejected';
+      notifBody = 'Your offer has been rejected.';
+      notifType = NotificationType.offer;
+    }
+
+    // Fire and forget notification creation (don't await to block UI)
+    _notificationService.createNotification(
+      userId: receiverId,
+      title: notifTitle,
+      message: notifBody,
+      type: notifType,
+      relatedEntityId: conversationId,
+      relatedEntityType: 'conversation',
+    );
+
+    return msg;
   }
 
   /// Mark all messages in a conversation as delivered for the current receiver.
   /// Why: switch UI status from single tick (sent) to double-grey (delivered).
   Future<void> markDelivered(String conversationId) async {
-    await _client.rpc('mark_conversation_delivered', params: {
-      'p_conversation_id': conversationId,
-    });
+    await _client.rpc(
+      'mark_conversation_delivered',
+      params: {'p_conversation_id': conversationId},
+    );
     AppLogger.d('[RECEIPTS] delivered marked for convo=$conversationId');
   }
 
   /// Mark all messages in a conversation as seen for the current receiver.
   /// Why: switch UI status from double-grey to double-blue (read).
   Future<void> markSeen(String conversationId) async {
-    await _client.rpc('mark_conversation_seen', params: {
-      'p_conversation_id': conversationId,
-    });
+    await _client.rpc(
+      'mark_conversation_seen',
+      params: {'p_conversation_id': conversationId},
+    );
     AppLogger.d('[RECEIPTS] seen marked for convo=$conversationId');
   }
 
@@ -272,11 +329,11 @@ class MessageService {
         .asyncMap((rows) async {
           if (rows.isEmpty) return <Map<String, dynamic>>[];
           // We need to re-fetch with relationships to get full details
-          // And ideally apply deletion logic (though realtime often used for just updates, 
+          // And ideally apply deletion logic (though realtime often used for just updates,
           // a full refresh via fetchConversations is often triggered on open).
           // For now, we return raw stream, but ViewModel should probably re-fetch to respect deletion status.
           // Or we implement the fetch logic here.
-          
+
           final convoIds = rows.map((row) => (row as Map)['id']).toList();
           final response = await _client
               .from('conversations')
@@ -301,35 +358,41 @@ class MessageService {
           return (response as List)
               .map((raw) => Map<String, dynamic>.from(raw as Map))
               .where((json) {
-                 // Apply deletion filter
-                 final isUser1 = json['user1_id'] == userId;
-                 final deletedAtStr = isUser1 ? json['deleted_at_user1'] : json['deleted_at_user2'];
-                 if (deletedAtStr != null) {
-                   final deletedAt = DateTime.parse(deletedAtStr);
-                   final lastMsg = json['last_message'];
-                   if (lastMsg == null || (lastMsg is List && lastMsg.isEmpty)) return false;
-                   final msgData = lastMsg is List ? lastMsg.first : lastMsg;
-                   final msgTime = DateTime.parse(msgData['created_at']);
-                   return msgTime.isAfter(deletedAt);
-                 }
-                 return true;
+                // Apply deletion filter
+                final isUser1 = json['user1_id'] == userId;
+                final deletedAtStr = isUser1
+                    ? json['deleted_at_user1']
+                    : json['deleted_at_user2'];
+                if (deletedAtStr != null) {
+                  final deletedAt = DateTime.parse(deletedAtStr);
+                  final lastMsg = json['last_message'];
+                  if (lastMsg == null || (lastMsg is List && lastMsg.isEmpty)) {
+                    return false;
+                  }
+                  final msgData = lastMsg is List ? lastMsg.first : lastMsg;
+                  final msgTime = DateTime.parse(msgData['created_at']);
+                  return msgTime.isAfter(deletedAt);
+                }
+                return true;
               })
               .toList()
-              ..sort((a, b) {
-                // Parse timestamps for sorting
-                DateTime getTime(Map<String, dynamic> json) {
-                   final lastMsg = json['last_message'];
-                   if (lastMsg != null && lastMsg is List && lastMsg.isNotEmpty) {
-                     return DateTime.parse(lastMsg.first['created_at']);
-                   } else if (lastMsg != null && lastMsg is Map) { // handle single object if changed
-                     return DateTime.parse(lastMsg['created_at']);
-                   }
-                   return DateTime.parse(json['created_at']);
+            ..sort((a, b) {
+              // Parse timestamps for sorting
+              DateTime getTime(Map<String, dynamic> json) {
+                final lastMsg = json['last_message'];
+                if (lastMsg != null && lastMsg is List && lastMsg.isNotEmpty) {
+                  return DateTime.parse(lastMsg.first['created_at']);
+                } else if (lastMsg != null && lastMsg is Map) {
+                  // handle single object if changed
+                  return DateTime.parse(lastMsg['created_at']);
                 }
-                final aTime = getTime(a);
-                final bTime = getTime(b);
-                return bTime.compareTo(aTime);
-              });
+                return DateTime.parse(json['created_at']);
+              }
+
+              final aTime = getTime(a);
+              final bTime = getTime(b);
+              return bTime.compareTo(aTime);
+            });
         });
   }
 

@@ -19,7 +19,9 @@ class PortfolioTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final border = RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
+    final border = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    );
     return Material(
       color: Theme.of(context).colorScheme.surface,
       shape: border,
@@ -32,12 +34,15 @@ class PortfolioTile extends StatelessWidget {
           children: [
             Expanded(
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
                 child: item.imageUrl != null
                     ? Image.network(
                         item.imageUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => ImagePlaceholder(title: item.title),
+                        errorBuilder: (_, __, ___) =>
+                            ImagePlaceholder(title: item.title),
                       )
                     : ImagePlaceholder(title: item.title),
               ),

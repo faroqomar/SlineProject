@@ -48,12 +48,16 @@ class PublicProfilePortfolio extends StatelessWidget {
             // Left column
             Expanded(
               child: Column(
-                children: portfolio.asMap().entries
+                children: portfolio
+                    .asMap()
+                    .entries
                     .where((e) => e.key % 2 == 0)
-                    .map((e) => _PortfolioCard(
-                          item: e.value,
-                          aspectRatio: e.key == 0 ? 0.8 : 1.0,
-                        ))
+                    .map(
+                      (e) => _PortfolioCard(
+                        item: e.value,
+                        aspectRatio: e.key == 0 ? 0.8 : 1.0,
+                      ),
+                    )
                     .toList(),
               ),
             ),
@@ -61,12 +65,16 @@ class PublicProfilePortfolio extends StatelessWidget {
             // Right column
             Expanded(
               child: Column(
-                children: portfolio.asMap().entries
+                children: portfolio
+                    .asMap()
+                    .entries
                     .where((e) => e.key % 2 == 1)
-                    .map((e) => _PortfolioCard(
-                          item: e.value,
-                          aspectRatio: e.key == 1 ? 1.2 : 0.9,
-                        ))
+                    .map(
+                      (e) => _PortfolioCard(
+                        item: e.value,
+                        aspectRatio: e.key == 1 ? 1.2 : 0.9,
+                      ),
+                    )
                     .toList(),
               ),
             ),
@@ -82,10 +90,7 @@ class _PortfolioCard extends StatelessWidget {
   final PortfolioItem item;
   final double aspectRatio;
 
-  const _PortfolioCard({
-    required this.item,
-    this.aspectRatio = 1.0,
-  });
+  const _PortfolioCard({required this.item, this.aspectRatio = 1.0});
 
   @override
   Widget build(BuildContext context) {

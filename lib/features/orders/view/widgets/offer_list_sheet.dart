@@ -35,7 +35,9 @@ class _OfferListSheetState extends State<OfferListSheet> {
     return Container(
       decoration: BoxDecoration(
         color: colorScheme.background,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimens.r24)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppDimens.r24),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -43,7 +45,10 @@ class _OfferListSheetState extends State<OfferListSheet> {
           // Handle
           Center(
             child: Container(
-              margin: const EdgeInsets.only(top: AppDimens.p12, bottom: AppDimens.p8),
+              margin: const EdgeInsets.only(
+                top: AppDimens.p12,
+                bottom: AppDimens.p8,
+              ),
               width: 40,
               height: 4,
               decoration: BoxDecoration(
@@ -55,7 +60,10 @@ class _OfferListSheetState extends State<OfferListSheet> {
 
           // Header
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppDimens.p24, vertical: AppDimens.p16),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimens.p24,
+              vertical: AppDimens.p16,
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -81,7 +89,7 @@ class _OfferListSheetState extends State<OfferListSheet> {
                 if (context.watch<OrdersViewModel>().isLoading) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                
+
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
@@ -90,7 +98,9 @@ class _OfferListSheetState extends State<OfferListSheet> {
                   return Center(
                     child: Text(
                       'Failed to load offers',
-                      style: AppTypography.bodySmall.copyWith(color: colorScheme.error),
+                      style: AppTypography.bodySmall.copyWith(
+                        color: colorScheme.error,
+                      ),
                     ),
                   );
                 }
@@ -104,11 +114,17 @@ class _OfferListSheetState extends State<OfferListSheet> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.inbox_outlined, size: 48, color: colorScheme.textSecondary),
+                          Icon(
+                            Icons.inbox_outlined,
+                            size: 48,
+                            color: colorScheme.textSecondary,
+                          ),
                           const SizedBox(height: AppDimens.p16),
                           Text(
                             'No offers yet',
-                            style: AppTypography.bodyMedium.copyWith(color: colorScheme.textSecondary),
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: colorScheme.textSecondary,
+                            ),
                           ),
                         ],
                       ),
@@ -120,7 +136,8 @@ class _OfferListSheetState extends State<OfferListSheet> {
                   padding: const EdgeInsets.all(AppDimens.p24),
                   shrinkWrap: true,
                   itemCount: offers.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: AppDimens.p16),
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(height: AppDimens.p16),
                   itemBuilder: (context, index) {
                     final offer = offers[index];
                     return _OfferItem(offer: offer);
@@ -168,7 +185,10 @@ class _OfferItem extends StatelessWidget {
                     (offer.bidderName != null && offer.bidderName!.isNotEmpty)
                         ? offer.bidderName![0].toUpperCase()
                         : 'U',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               const SizedBox(width: AppDimens.p12),
@@ -185,7 +205,9 @@ class _OfferItem extends StatelessWidget {
                     ),
                     Text(
                       formatFriendlyTime(offer.createdAt),
-                      style: AppTypography.micro.copyWith(color: colorScheme.textSecondary),
+                      style: AppTypography.micro.copyWith(
+                        color: colorScheme.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -202,7 +224,9 @@ class _OfferItem extends StatelessWidget {
                   ),
                   Text(
                     '${offer.days} Days',
-                    style: AppTypography.micro.copyWith(color: colorScheme.textSecondary),
+                    style: AppTypography.micro.copyWith(
+                      color: colorScheme.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -229,7 +253,9 @@ class _OfferItem extends StatelessWidget {
                   child: OutlinedButton(
                     onPressed: () {
                       vm.rejectOffer(offer.id).then((_) {
-                        if (context.mounted) Navigator.pop(context); // Close or refresh?
+                        if (context.mounted) {
+                          Navigator.pop(context); // Close or refresh?
+                        }
                         // Ideally refresh list but pop is safer for MVP
                       });
                     },
@@ -237,7 +263,9 @@ class _OfferItem extends StatelessWidget {
                       foregroundColor: AppColors.lightRed,
                       side: BorderSide(color: AppColors.lightRed),
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: const Text('Reject'),
                   ),
@@ -254,7 +282,9 @@ class _OfferItem extends StatelessWidget {
                       backgroundColor: AppColors.teal,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       elevation: 0,
                     ),
                     child: const Text('Accept'),
@@ -276,7 +306,9 @@ class _OfferItem extends StatelessWidget {
                 child: Text(
                   offer.status.name.toUpperCase(),
                   style: AppTypography.captionBold.copyWith(
-                    color: offer.isAccepted ? AppColors.teal : AppColors.lightRed,
+                    color: offer.isAccepted
+                        ? AppColors.teal
+                        : AppColors.lightRed,
                   ),
                 ),
               ),

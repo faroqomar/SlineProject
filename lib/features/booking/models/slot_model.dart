@@ -1,4 +1,3 @@
-
 /// Domain model for an availability slot.
 /// All timestamps are stored/handled in UTC.
 class SlotModel {

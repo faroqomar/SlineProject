@@ -147,6 +147,8 @@ class ServiceCard extends StatelessWidget {
         return Colors.blue;
       case TaskStatus.inProgress:
         return Colors.red;
+      case TaskStatus.canceled:
+        return Colors.grey;
     }
   }
 
@@ -161,6 +163,8 @@ class ServiceCard extends StatelessWidget {
         return 'Closed';
       case TaskStatus.assigned:
         return 'Assigned';
+      case TaskStatus.canceled:
+        return 'Cancelled';
     }
   }
 }

@@ -7,8 +7,8 @@ import '../services/categories_service.dart';
 /// for ViewModels and UI to consume.
 class CategoriesRepository {
   CategoriesRepository(SupabaseClient client)
-      : _client = client,
-        _service = CategoriesService(client);
+    : _client = client,
+      _service = CategoriesService(client);
 
   final SupabaseClient _client;
   final CategoriesService _service;

@@ -67,15 +67,19 @@ class _BookingSheetState extends State<BookingSheet> {
         widget.onSubmitted?.call();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to request booking: ${vm.bookingsError ?? 'Unknown error'}')),
+          SnackBar(
+            content: Text(
+              'Failed to request booking: ${vm.bookingsError ?? 'Unknown error'}',
+            ),
+          ),
         );
       }
     } catch (e) {
       if (!mounted) return;
       setState(() => _sending = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 

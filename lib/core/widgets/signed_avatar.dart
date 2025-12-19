@@ -28,27 +28,27 @@ import 'package:sline_app/features/profile/services/avatar_service.dart';
 /// ```
 class SignedAvatar extends StatefulWidget {
   final String? storagePathOrUrl;
-  
+
   /// Radius for circular avatars (used when borderRadius is null)
   final double radius;
-  
+
   /// Size for rectangular avatars (width and height)
   /// When provided with borderRadius, creates a rounded rectangle avatar
   final double? size;
-  
+
   /// Border radius for rounded rectangle avatars
   /// When null, uses CircleAvatar (circular)
   final BorderRadius? borderRadius;
-  
+
   /// Border color around the avatar
   final Color? borderColor;
-  
+
   /// Border width around the avatar
   final double borderWidth;
-  
+
   /// Custom placeholder widget when no avatar is available
   final Widget? placeholder;
-  
+
   /// Background color for the placeholder
   final Color? backgroundColor;
 
@@ -147,7 +147,7 @@ class _SignedAvatarState extends State<SignedAvatar> {
     if (widget.borderRadius != null) {
       return _buildRoundedRectAvatar();
     }
-    
+
     // Default: circular avatar (backward compatible)
     return _buildCircularAvatar();
   }
@@ -156,9 +156,9 @@ class _SignedAvatarState extends State<SignedAvatar> {
   Widget _buildRoundedRectAvatar() {
     final avatarSize = widget.size ?? (widget.radius * 2);
     final bgColor = widget.backgroundColor ?? AppColors.teal;
-    
+
     Widget avatar;
-    
+
     if (_loading) {
       avatar = Container(
         width: avatarSize,
@@ -171,24 +171,29 @@ class _SignedAvatarState extends State<SignedAvatar> {
           child: SizedBox(
             width: 14,
             height: 14,
-            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.offWhite),
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.offWhite,
+            ),
           ),
         ),
       );
     } else if (_resolvedUrl == null) {
-      avatar = widget.placeholder ?? Container(
-        width: avatarSize,
-        height: avatarSize,
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: widget.borderRadius,
-        ),
-        child: Icon(
-          Icons.person,
-          color: AppColors.offWhite,
-          size: avatarSize * 0.5,
-        ),
-      );
+      avatar =
+          widget.placeholder ??
+          Container(
+            width: avatarSize,
+            height: avatarSize,
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: widget.borderRadius,
+            ),
+            child: Icon(
+              Icons.person,
+              color: AppColors.offWhite,
+              size: avatarSize * 0.5,
+            ),
+          );
     } else {
       avatar = ClipRRect(
         borderRadius: widget.borderRadius!,
@@ -208,7 +213,10 @@ class _SignedAvatarState extends State<SignedAvatar> {
               child: SizedBox(
                 width: 14,
                 height: 14,
-                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.offWhite),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.offWhite,
+                ),
               ),
             ),
           ),
@@ -228,7 +236,7 @@ class _SignedAvatarState extends State<SignedAvatar> {
         ),
       );
     }
-    
+
     // Wrap with border if borderColor is provided
     if (widget.borderColor != null) {
       return Container(
@@ -242,14 +250,14 @@ class _SignedAvatarState extends State<SignedAvatar> {
         child: avatar,
       );
     }
-    
+
     return avatar;
   }
 
   /// Builds a circular avatar (original behavior)
   Widget _buildCircularAvatar() {
     final bgColor = widget.backgroundColor ?? AppColors.teal;
-    
+
     if (_loading) {
       return CircleAvatar(
         radius: widget.radius,
@@ -257,7 +265,10 @@ class _SignedAvatarState extends State<SignedAvatar> {
         child: SizedBox(
           width: 14,
           height: 14,
-          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.offWhite),
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: AppColors.offWhite,
+          ),
         ),
       );
     }
@@ -267,7 +278,11 @@ class _SignedAvatarState extends State<SignedAvatar> {
           CircleAvatar(
             radius: widget.radius,
             backgroundColor: bgColor,
-            child: Icon(Icons.person, color: AppColors.offWhite, size: widget.radius),
+            child: Icon(
+              Icons.person,
+              color: AppColors.offWhite,
+              size: widget.radius,
+            ),
           );
     }
 

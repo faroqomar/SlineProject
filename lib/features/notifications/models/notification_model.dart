@@ -1,47 +1,67 @@
-enum NotificationType { order, proposal, system, payment }
+import 'package:flutter/foundation.dart';
 
-class NotificationModel {
+enum NotificationType { offer, message, system, booking, task, payment, review }
+
+@immutable
+class NotificationItem {
   final String id;
+  final String userId;
   final String title;
   final String message;
   final NotificationType type;
-  final DateTime time;
+  final String? relatedEntityId;
+  final String? relatedEntityType;
   final bool isRead;
-  final String group; // 'Today', 'Yesterday', etc.
+  final DateTime createdAt;
+  final Map<String, dynamic> metadata;
 
-  const NotificationModel({
+  const NotificationItem({
     required this.id,
+    required this.userId,
     required this.title,
     required this.message,
     required this.type,
-    required this.time,
-    this.isRead = false,
-    required this.group,
+    this.relatedEntityId,
+    this.relatedEntityType,
+    required this.isRead,
+    required this.createdAt,
+    this.metadata = const {},
   });
 
-  factory NotificationModel.fromJson(Map<String, dynamic> json) {
-    return NotificationModel(
-      id: json['id'].toString(),
+  factory NotificationItem.fromJson(Map<String, dynamic> json) {
+    return NotificationItem(
+      id: json['id'] as String,
+      userId: json['user_id'] as String,
       title: json['title'] as String,
       message: json['message'] as String,
-      type: NotificationType.values.firstWhere(
-        (e) => e.name == json['type'],
-        orElse: () => NotificationType.system,
-      ),
-      time: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+      type: _parseType(json['type'] as String),
+      relatedEntityId: json['related_entity_id'] as String?,
+      relatedEntityType: json['related_entity_type'] as String?,
       isRead: json['is_read'] as bool? ?? false,
-      group: _calculateGroup(DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now()),
+      createdAt: DateTime.parse(json['created_at'] as String).toUtc(),
+      metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
     );
   }
 
-  static String _calculateGroup(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
-    final check = DateTime(date.year, date.month, date.day);
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'user_id': userId,
+      'title': title,
+      'message': message,
+      'type': type.name,
+      'related_entity_id': relatedEntityId,
+      'related_entity_type': relatedEntityType,
+      'is_read': isRead,
+      'created_at': createdAt.toIso8601String(),
+      'metadata': metadata,
+    };
+  }
 
-    if (check == today) return 'Today';
-    if (check == yesterday) return 'Yesterday';
-    return 'Earlier';
+  static NotificationType _parseType(String type) {
+    return NotificationType.values.firstWhere(
+      (e) => e.name == type,
+      orElse: () => NotificationType.system,
+    );
   }
 }

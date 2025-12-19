@@ -17,21 +17,24 @@ class ProposalDetailsModal extends StatelessWidget {
     final AppColorScheme colorScheme = context.colorScheme;
 
     // Mock Data if null
-    final data = proposal ?? {
-      'freelancer': {
-        'id': 'mock-1',
-        'initials': 'DC',
-        'name': 'David Chen',
-        'location': 'Toronto, Canada',
-        'rating': '4.9',
-        'verified': true,
-        'online': true,
-      },
-      'bidAmount': '\$700',
-      'deliveryTime': '4 Days',
-      'coverLetter': 'Hi, I have 5 years of experience in logo design and branding for tech startups. I utilize Adobe Illustrator and can provide vector files. I\'ve worked with AI companies before and understand the aesthetic you\'re looking for.',
-      'attachments': ['portfolio_v1.pdf', 'concept_sketch.jpg'],
-    };
+    final data =
+        proposal ??
+        {
+          'freelancer': {
+            'id': 'mock-1',
+            'initials': 'DC',
+            'name': 'David Chen',
+            'location': 'Toronto, Canada',
+            'rating': '4.9',
+            'verified': true,
+            'online': true,
+          },
+          'bidAmount': '\$700',
+          'deliveryTime': '4 Days',
+          'coverLetter':
+              'Hi, I have 5 years of experience in logo design and branding for tech startups. I utilize Adobe Illustrator and can provide vector files. I\'ve worked with AI companies before and understand the aesthetic you\'re looking for.',
+          'attachments': ['portfolio_v1.pdf', 'concept_sketch.jpg'],
+        };
 
     final freelancer = data['freelancer'] as Map<String, dynamic>;
 
@@ -98,12 +101,16 @@ class ProposalDetailsModal extends StatelessWidget {
                                   height: 60,
                                   decoration: BoxDecoration(
                                     color: AppColors.gold,
-                                    borderRadius: BorderRadius.circular(AppDimens.r16),
+                                    borderRadius: BorderRadius.circular(
+                                      AppDimens.r16,
+                                    ),
                                   ),
                                   child: Center(
                                     child: Text(
                                       freelancer['initials'],
-                                      style: AppTypography.h4.copyWith(color: Colors.black),
+                                      style: AppTypography.h4.copyWith(
+                                        color: Colors.black,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -117,7 +124,10 @@ class ProposalDetailsModal extends StatelessWidget {
                                       decoration: BoxDecoration(
                                         color: AppColors.lightTeal,
                                         shape: BoxShape.circle,
-                                        border: Border.all(color: colorScheme.cardBackground, width: 2),
+                                        border: Border.all(
+                                          color: colorScheme.cardBackground,
+                                          width: 2,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -130,28 +140,44 @@ class ProposalDetailsModal extends StatelessWidget {
                                 children: [
                                   Text(
                                     freelancer['name'],
-                                    style: AppTypography.h5.copyWith(color: colorScheme.text),
+                                    style: AppTypography.h5.copyWith(
+                                      color: colorScheme.text,
+                                    ),
                                   ),
                                   const SizedBox(height: 4),
                                   Row(
                                     children: [
-                                      Icon(Icons.star, size: 14, color: AppColors.gold),
+                                      Icon(
+                                        Icons.star,
+                                        size: 14,
+                                        color: AppColors.gold,
+                                      ),
                                       Text(
                                         ' ${freelancer['rating']}',
-                                        style: AppTypography.captionBold.copyWith(color: AppColors.gold),
+                                        style: AppTypography.captionBold
+                                            .copyWith(color: AppColors.gold),
                                       ),
                                       const SizedBox(width: 8),
-                                      Icon(Icons.location_on, size: 14, color: colorScheme.textSecondary),
+                                      Icon(
+                                        Icons.location_on,
+                                        size: 14,
+                                        color: colorScheme.textSecondary,
+                                      ),
                                       Text(
                                         ' ${freelancer['location']}',
-                                        style: AppTypography.micro.copyWith(color: colorScheme.textSecondary),
+                                        style: AppTypography.micro.copyWith(
+                                          color: colorScheme.textSecondary,
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ],
                               ),
                             ),
-                            Icon(Icons.chevron_right, color: colorScheme.textSecondary),
+                            Icon(
+                              Icons.chevron_right,
+                              color: colorScheme.textSecondary,
+                            ),
                           ],
                         ),
                       ),
@@ -162,18 +188,31 @@ class ProposalDetailsModal extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: _buildInfoCard('Bid Amount', data['bidAmount'], AppColors.teal, colorScheme),
+                          child: _buildInfoCard(
+                            'Bid Amount',
+                            data['bidAmount'],
+                            AppColors.teal,
+                            colorScheme,
+                          ),
                         ),
                         const SizedBox(width: AppDimens.p16),
                         Expanded(
-                          child: _buildInfoCard('Delivery', data['deliveryTime'], colorScheme.text, colorScheme),
+                          child: _buildInfoCard(
+                            'Delivery',
+                            data['deliveryTime'],
+                            colorScheme.text,
+                            colorScheme,
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: AppDimens.p24),
 
                     // Cover Letter
-                    Text('Cover Letter', style: AppTypography.h5.copyWith(color: colorScheme.text)),
+                    Text(
+                      'Cover Letter',
+                      style: AppTypography.h5.copyWith(color: colorScheme.text),
+                    ),
                     const SizedBox(height: AppDimens.p12),
                     Container(
                       padding: const EdgeInsets.all(AppDimens.p16),
@@ -193,34 +232,54 @@ class ProposalDetailsModal extends StatelessWidget {
                     const SizedBox(height: AppDimens.p24),
 
                     // Attachments
-                    Text('Attachments', style: AppTypography.h5.copyWith(color: colorScheme.text)),
+                    Text(
+                      'Attachments',
+                      style: AppTypography.h5.copyWith(color: colorScheme.text),
+                    ),
                     const SizedBox(height: AppDimens.p12),
                     if (data['attachments'] != null)
-                      ...(data['attachments'] as List).map((file) => Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.all(AppDimens.p12),
-                        decoration: BoxDecoration(
-                          color: colorScheme.cardBackground,
-                          borderRadius: BorderRadius.circular(AppDimens.r12),
-                          border: Border.all(color: colorScheme.cardBorder),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: AppColors.lightRed.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
+                      ...(data['attachments'] as List).map(
+                        (file) => Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(AppDimens.p12),
+                          decoration: BoxDecoration(
+                            color: colorScheme.cardBackground,
+                            borderRadius: BorderRadius.circular(AppDimens.r12),
+                            border: Border.all(color: colorScheme.cardBorder),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.lightRed.withValues(
+                                    alpha: 0.1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  Icons.attach_file,
+                                  size: 18,
+                                  color: AppColors.lightRed,
+                                ),
                               ),
-                              child: Icon(Icons.attach_file, size: 18, color: AppColors.lightRed),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(file, style: AppTypography.bodySmall.copyWith(color: colorScheme.text)),
-                            const Spacer(),
-                            Icon(Icons.download, size: 18, color: colorScheme.textSecondary),
-                          ],
+                              const SizedBox(width: 12),
+                              Text(
+                                file,
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: colorScheme.text,
+                                ),
+                              ),
+                              const Spacer(),
+                              Icon(
+                                Icons.download,
+                                size: 18,
+                                color: colorScheme.textSecondary,
+                              ),
+                            ],
+                          ),
                         ),
-                      )),
+                      ),
                   ],
                 ),
               ),
@@ -233,10 +292,7 @@ class ProposalDetailsModal extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                    child: AppButton(
-                      text: 'Accept Offer',
-                      onPressed: () {},
-                    ),
+                    child: AppButton(text: 'Accept Offer', onPressed: () {}),
                   ),
                   const SizedBox(width: AppDimens.p16),
                   Expanded(
@@ -245,9 +301,17 @@ class ProposalDetailsModal extends StatelessWidget {
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: colorScheme.cardBorder),
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimens.r16)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppDimens.r16),
+                        ),
                       ),
-                      child: Text('Decline', style: TextStyle(color: colorScheme.text, fontWeight: FontWeight.bold)),
+                      child: Text(
+                        'Decline',
+                        style: TextStyle(
+                          color: colorScheme.text,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -259,26 +323,40 @@ class ProposalDetailsModal extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoCard(String label, String value, Color valueColor, AppColorScheme colorScheme) {
+  Widget _buildInfoCard(
+    String label,
+    String value,
+    Color valueColor,
+    AppColorScheme colorScheme,
+  ) {
     return Container(
       padding: const EdgeInsets.all(AppDimens.p16),
       decoration: BoxDecoration(
-        color: label == 'Bid Amount' ? AppColors.teal.withValues(alpha: 0.1) : colorScheme.cardBackground,
+        color: label == 'Bid Amount'
+            ? AppColors.teal.withValues(alpha: 0.1)
+            : colorScheme.cardBackground,
         borderRadius: BorderRadius.circular(AppDimens.r16),
         border: Border.all(
-          color: label == 'Bid Amount' ? AppColors.teal.withValues(alpha: 0.2) : colorScheme.cardBorder,
+          color: label == 'Bid Amount'
+              ? AppColors.teal.withValues(alpha: 0.2)
+              : colorScheme.cardBorder,
         ),
       ),
       child: Column(
         children: [
           Text(
             label,
-            style: AppTypography.captionBold.copyWith(color: colorScheme.textSecondary),
+            style: AppTypography.captionBold.copyWith(
+              color: colorScheme.textSecondary,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             value,
-            style: AppTypography.h5.copyWith(color: valueColor, fontWeight: FontWeight.w900),
+            style: AppTypography.h5.copyWith(
+              color: valueColor,
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ],
       ),

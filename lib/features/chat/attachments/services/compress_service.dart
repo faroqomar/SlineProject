@@ -1,5 +1,3 @@
-
-
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_image_compress/flutter_image_compress.dart';
@@ -7,7 +5,10 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 /// Optionally compress images to keep uploads snappy.
 class CompressService {
   /// Returns compressed bytes (or original if compression not beneficial/supported).
-  Future<Uint8List> maybeCompressImage(Uint8List input, {int quality = 85}) async {
+  Future<Uint8List> maybeCompressImage(
+    Uint8List input, {
+    int quality = 85,
+  }) async {
     if (kIsWeb) return input; // plugin not supported on web
     try {
       final out = await FlutterImageCompress.compressWithList(

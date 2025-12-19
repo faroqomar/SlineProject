@@ -55,9 +55,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                   // Title
                   Text(
                     task.title,
-                    style: AppTypography.h3.copyWith(
-                      color: colorScheme.text,
-                    ),
+                    style: AppTypography.h3.copyWith(color: colorScheme.text),
                   ),
                   const SizedBox(height: AppDimens.p16),
 
@@ -66,7 +64,10 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => PublicProfileScreen(userId: task.userId)),
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              PublicProfileScreen(userId: task.userId),
+                        ),
                       );
                     },
                     child: Row(
@@ -174,7 +175,11 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                                 color: colorScheme.text,
                               ),
                             ),
-                            Icon(Icons.arrow_forward_ios, size: 16, color: colorScheme.textSecondary),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              size: 16,
+                              color: colorScheme.textSecondary,
+                            ),
                           ],
                         ),
                       ),
@@ -203,13 +208,15 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: Icon(Icons.arrow_back_ios, color: colorScheme.text, size: 20),
+                      child: Icon(
+                        Icons.arrow_back_ios,
+                        color: colorScheme.text,
+                        size: 20,
+                      ),
                     ),
                     Text(
                       isBooking ? 'Booking Details' : 'Job Details',
-                      style: AppTypography.h5.copyWith(
-                        color: colorScheme.text,
-                      ),
+                      style: AppTypography.h5.copyWith(color: colorScheme.text),
                     ),
                     Icon(Icons.share, color: colorScheme.text, size: 20),
                   ],
@@ -224,7 +231,9 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
             left: 0,
             right: 0,
             child: GlassContainer(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimens.r30)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AppDimens.r30),
+              ),
               padding: EdgeInsets.fromLTRB(
                 AppDimens.p24,
                 AppDimens.p16,
@@ -236,7 +245,12 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                   Expanded(
                     child: AppButton(
                       text: _getButtonLabel(isOwner, isTender, isBooking),
-                      onPressed: () => _handlePrimaryAction(context, isOwner, isTender, isBooking),
+                      onPressed: () => _handlePrimaryAction(
+                        context,
+                        isOwner,
+                        isTender,
+                        isBooking,
+                      ),
                     ),
                   ),
                   const SizedBox(width: AppDimens.p12),
@@ -290,7 +304,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                             color: AppColors.teal.withValues(alpha: 0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
-                          )
+                          ),
                         ]
                       : [],
                 ),
@@ -298,7 +312,9 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                   child: Text(
                     tier,
                     style: AppTypography.captionBold.copyWith(
-                      color: isSelected ? AppColors.offWhite : colorScheme.textSecondary,
+                      color: isSelected
+                          ? AppColors.offWhite
+                          : colorScheme.textSecondary,
                     ),
                   ),
                 ),
@@ -316,18 +332,21 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     String price = '\$200';
     String delivery = '2 Days';
     String revisions = '1 Revision';
-    String desc = '1-hour video consultation + brief summary report. Perfect for quick questions.';
+    String desc =
+        '1-hour video consultation + brief summary report. Perfect for quick questions.';
 
     if (_selectedPackageTier == 'Standard') {
       price = '\$450';
       delivery = '5 Days';
       revisions = '2 Revisions';
-      desc = '1-hour consultation + code review + detailed architectural roadmap.';
+      desc =
+          '1-hour consultation + code review + detailed architectural roadmap.';
     } else if (_selectedPackageTier == 'Premium') {
       price = '\$900';
       delivery = '10 Days';
       revisions = 'Unlimited';
-      desc = 'Everything in Standard + 5 hours of dedicated implementation support.';
+      desc =
+          'Everything in Standard + 5 hours of dedicated implementation support.';
     }
 
     return GlassContainer(
@@ -362,18 +381,30 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
           const SizedBox(height: AppDimens.p12),
           Text(
             desc,
-            style: AppTypography.bodySmall.copyWith(color: colorScheme.textSecondary),
+            style: AppTypography.bodySmall.copyWith(
+              color: colorScheme.textSecondary,
+            ),
           ),
           const SizedBox(height: AppDimens.p16),
           Row(
             children: [
               Icon(Icons.schedule, size: 14, color: AppColors.teal),
               const SizedBox(width: 4),
-              Text(delivery, style: AppTypography.captionBold.copyWith(color: colorScheme.text)),
+              Text(
+                delivery,
+                style: AppTypography.captionBold.copyWith(
+                  color: colorScheme.text,
+                ),
+              ),
               const SizedBox(width: 16),
               Icon(Icons.refresh, size: 14, color: AppColors.teal),
               const SizedBox(width: 4),
-              Text(revisions, style: AppTypography.captionBold.copyWith(color: colorScheme.text)),
+              Text(
+                revisions,
+                style: AppTypography.captionBold.copyWith(
+                  color: colorScheme.text,
+                ),
+              ),
             ],
           ),
         ],
@@ -387,32 +418,40 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     return 'Apply Now';
   }
 
-  void _handlePrimaryAction(BuildContext context, bool isOwner, bool isTender, bool isBooking) {
+  void _handlePrimaryAction(
+    BuildContext context,
+    bool isOwner,
+    bool isTender,
+    bool isBooking,
+  ) {
     if (isOwner) {
-        // Owner logic (maybe edit or view offers)
-        return;
+      // Owner logic (maybe edit or view offers)
+      return;
     }
 
     if (isBooking) {
-        // Navigate to availability
-        Navigator.of(context).pushNamed(
-            '/availability',
-            arguments: {'freelancerId': widget.task.userId, 'taskId': widget.task.id},
-        );
+      // Navigate to availability
+      Navigator.of(context).pushNamed(
+        '/availability',
+        arguments: {
+          'freelancerId': widget.task.userId,
+          'taskId': widget.task.id,
+        },
+      );
     } else {
-        // Tender -> Open Proposal Sheet
-        // For now, just push the RequestsListScreen with autoOpen (or we can implement the modal later)
-        Navigator.of(context).push(
-            MaterialPageRoute(
-            builder: (_) => RequestsListScreen(
-                taskId: widget.task.id,
-                autoOpenSubmitSheet: true,
-                isTender: true,
-                isOwner: false,
-                budget: widget.task.budget.toString(),
-            ),
-            ),
-        );
+      // Tender -> Open Proposal Sheet
+      // For now, just push the RequestsListScreen with autoOpen (or we can implement the modal later)
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => RequestsListScreen(
+            taskId: widget.task.id,
+            autoOpenSubmitSheet: true,
+            isTender: true,
+            isOwner: false,
+            budget: widget.task.budget.toString(),
+          ),
+        ),
+      );
     }
   }
 }

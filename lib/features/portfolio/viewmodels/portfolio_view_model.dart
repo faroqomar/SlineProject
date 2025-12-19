@@ -6,7 +6,7 @@ import '../models/portfolio_item.dart';
 /// PortfolioViewModel — MVVM state holder for Portfolio feature.
 class PortfolioViewModel extends ChangeNotifier {
   PortfolioViewModel({SupabaseClient? client})
-      : _repo = PortfolioRepository(client ?? Supabase.instance.client);
+    : _repo = PortfolioRepository(client ?? Supabase.instance.client);
 
   final PortfolioRepository _repo;
 
@@ -155,12 +155,19 @@ class PortfolioViewModel extends ChangeNotifier {
     }
   }
 
-  Future<bool> updateItem({required String id, required String title, String? description}) async {
+  Future<bool> updateItem({
+    required String id,
+    required String title,
+    String? description,
+  }) async {
     try {
       await _repo.updateItem(id: id, title: title, description: description);
       final idx = _items.indexWhere((it) => it.id == id);
       if (idx != -1) {
-        _items[idx] = _items[idx].copyWith(title: title, description: description);
+        _items[idx] = _items[idx].copyWith(
+          title: title,
+          description: description,
+        );
       }
       _notify();
       return true;

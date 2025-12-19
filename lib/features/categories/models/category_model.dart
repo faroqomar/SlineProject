@@ -1,5 +1,3 @@
-
-
 /// CategoryModel
 ///
 /// Immutable model representing a category row from `public.categories`.

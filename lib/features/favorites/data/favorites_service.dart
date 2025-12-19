@@ -7,7 +7,7 @@ class FavoritesService {
   final SupabaseClient _client;
 
   FavoritesService({SupabaseClient? client})
-      : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client;
 
   String _requireUid() {
     final uid = _client.auth.currentUser?.id;
@@ -33,7 +33,12 @@ class FavoritesService {
           .map(FavoriteModel.fromMap)
           .toList();
     } catch (e, st) {
-      AppLogger.e('Failed to list favorites', tag: 'Favorites', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to list favorites',
+        tag: 'Favorites',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
@@ -44,13 +49,20 @@ class FavoritesService {
     try {
       final res = await _client
           .from('favorites')
-          .select('created_at, freelancer:freelancer_id (id, full_name, avatar_url)')
+          .select(
+            'created_at, freelancer:freelancer_id (id, full_name, avatar_url)',
+          )
           .eq('client_id', uid)
           .order('created_at', ascending: false);
 
       return (res as List).cast<Map<String, dynamic>>();
     } catch (e, st) {
-      AppLogger.e('Failed to list favorites with profile', tag: 'Favorites', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to list favorites with profile',
+        tag: 'Favorites',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
@@ -64,7 +76,12 @@ class FavoritesService {
         'freelancer_id': freelancerId,
       });
     } catch (e, st) {
-      AppLogger.e('Failed to add favorite', tag: 'Favorites', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to add favorite',
+        tag: 'Favorites',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
@@ -79,7 +96,12 @@ class FavoritesService {
           .eq('client_id', uid)
           .eq('freelancer_id', freelancerId);
     } catch (e, st) {
-      AppLogger.e('Failed to remove favorite', tag: 'Favorites', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to remove favorite',
+        tag: 'Favorites',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }

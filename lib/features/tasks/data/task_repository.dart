@@ -6,8 +6,8 @@ import '../services/task_service.dart';
 /// Encapsulates TaskService and exposes a stable API to ViewModels/UI.
 class TaskRepository {
   TaskRepository(SupabaseClient client)
-      : _service = TaskService(),
-        _client = client;
+    : _service = TaskService(),
+      _client = client;
 
   final TaskService _service;
   final SupabaseClient _client;

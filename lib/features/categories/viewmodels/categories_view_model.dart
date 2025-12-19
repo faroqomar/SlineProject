@@ -8,7 +8,8 @@ import '../models/category_model.dart';
 /// MVVM state holder for listing and searching categories.
 class CategoriesViewModel extends ChangeNotifier {
   CategoriesViewModel({CategoriesRepository? repository})
-      : _repository = repository ?? CategoriesRepository(Supabase.instance.client);
+    : _repository =
+          repository ?? CategoriesRepository(Supabase.instance.client);
 
   final CategoriesRepository _repository;
 
@@ -48,7 +49,8 @@ class CategoriesViewModel extends ChangeNotifier {
   }
 
   /// Refreshes using the current search query.
-  Future<void> refresh() => load(search: _searchQuery.isEmpty ? null : _searchQuery);
+  Future<void> refresh() =>
+      load(search: _searchQuery.isEmpty ? null : _searchQuery);
 
   /// Updates the current search query and reloads the list.
   Future<void> setSearchQuery(String q) async {

@@ -7,7 +7,8 @@ class PortfolioItem {
   final String ownerId;
   final String title;
   final String? description;
-  final String? imageUrl; // Public URL (for public bucket) or signed URL (if private)
+  final String?
+  imageUrl; // Public URL (for public bucket) or signed URL (if private)
   final DateTime createdAt;
 
   const PortfolioItem({

@@ -26,7 +26,7 @@ import '../attachments/services/send_attachment_usecase.dart';
 /// - This prevents unnecessary updates and conserves resources
 class ChatViewModel extends ChangeNotifier {
   ChatViewModel({SupabaseClient? client})
-      : _repo = ChatRepository(client ?? Supabase.instance.client);
+    : _repo = ChatRepository(client ?? Supabase.instance.client);
 
   final ChatRepository _repo;
 
@@ -58,7 +58,10 @@ class ChatViewModel extends ChangeNotifier {
   String? get currentUserId => _repo.currentUser?.id;
 
   // --- Receipts ---
-  Future<void> markReceiptsForActive({bool delivered = true, bool seen = false}) async {
+  Future<void> markReceiptsForActive({
+    bool delivered = true,
+    bool seen = false,
+  }) async {
     if (activeConversation == null) return;
     try {
       if (delivered) await _repo.markDelivered(activeConversation!.id);
@@ -92,31 +95,38 @@ class ChatViewModel extends ChangeNotifier {
     final user = _repo.currentUser;
     if (user == null) return;
     _convoSub?.cancel();
-    _convoSub = _repo.subscribeToConversations(user.id).listen((rows) {
-      try {
-        final updated = rows.map((json) {
-          final isUser1 = json['user1_id'] == user.id;
-          final otherUser = isUser1 ? json['user2'] : json['user1'];
-          return Conversation.fromJson({
-            ...json,
-            'task_title': json['tasks']?['title'] ?? 'Untitled Task',
-            'user1_name': json['user1']?['full_name'] ?? 'User',
-            'user2_name': json['user2']?['full_name'] ?? 'User',
-            'other_user_name': otherUser?['full_name'],
-            'other_user_avatar': otherUser?['avatar_url'],
-          });
-        }).toList();
-        conversations
-          ..clear()
-          ..addAll(updated);
-        AppLogger.i('✅ Conversations updated in viewmodel: ${conversations.length}');
-        _notify();
-      } catch (e) {
-        AppLogger.e('Error parsing realtime conversations: $e');
-      }
-    }, onError: (error) {
-      AppLogger.e('Realtime conversation subscription error: $error');
-    });
+    _convoSub = _repo
+        .subscribeToConversations(user.id)
+        .listen(
+          (rows) {
+            try {
+              final updated = rows.map((json) {
+                final isUser1 = json['user1_id'] == user.id;
+                final otherUser = isUser1 ? json['user2'] : json['user1'];
+                return Conversation.fromJson({
+                  ...json,
+                  'task_title': json['tasks']?['title'] ?? 'Untitled Task',
+                  'user1_name': json['user1']?['full_name'] ?? 'User',
+                  'user2_name': json['user2']?['full_name'] ?? 'User',
+                  'other_user_name': otherUser?['full_name'],
+                  'other_user_avatar': otherUser?['avatar_url'],
+                });
+              }).toList();
+              conversations
+                ..clear()
+                ..addAll(updated);
+              AppLogger.i(
+                '✅ Conversations updated in viewmodel: ${conversations.length}',
+              );
+              _notify();
+            } catch (e) {
+              AppLogger.e('Error parsing realtime conversations: $e');
+            }
+          },
+          onError: (error) {
+            AppLogger.e('Realtime conversation subscription error: $error');
+          },
+        );
   }
 
   void unsubscribeFromUserConversations() {
@@ -124,14 +134,17 @@ class ChatViewModel extends ChangeNotifier {
     _convoSub = null;
   }
 
-
   // Utility to start or fetch a conversation (kept simple for UI usage)
   Future<Conversation> createOrGetConversation({
     String? taskId,
     required String user1Id,
     required String user2Id,
   }) {
-    return _repo.createOrGetConversation(taskId: taskId, user1Id: user1Id, user2Id: user2Id);
+    return _repo.createOrGetConversation(
+      taskId: taskId,
+      user1Id: user1Id,
+      user2Id: user2Id,
+    );
   }
 
   Future<void> deleteConversation(String conversationId) async {
@@ -223,22 +236,30 @@ class ChatViewModel extends ChangeNotifier {
   void subscribeToActiveConversation() {
     if (activeConversation == null) return;
     _msgSub?.cancel();
-    _msgSub = _repo.subscribeToMessages(activeConversation!.id).listen((message) async {
-      if (message == null) return;
-      if (activeConversation != null && message.conversationId == activeConversation!.id) {
-        final i = currentMessages.indexWhere((m) => m.id == message.id);
-        if (i >= 0) {
-          currentMessages[i] = message;
-        } else {
-          currentMessages.add(message);
-          currentMessages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-        }
-        await markReceiptsForActive(delivered: true, seen: false);
-        _notify();
-      }
-    }, onError: (error) {
-      AppLogger.e('Realtime subscription error: $error');
-    });
+    _msgSub = _repo
+        .subscribeToMessages(activeConversation!.id)
+        .listen(
+          (message) async {
+            if (message == null) return;
+            if (activeConversation != null &&
+                message.conversationId == activeConversation!.id) {
+              final i = currentMessages.indexWhere((m) => m.id == message.id);
+              if (i >= 0) {
+                currentMessages[i] = message;
+              } else {
+                currentMessages.add(message);
+                currentMessages.sort(
+                  (a, b) => a.createdAt.compareTo(b.createdAt),
+                );
+              }
+              await markReceiptsForActive(delivered: true, seen: false);
+              _notify();
+            }
+          },
+          onError: (error) {
+            AppLogger.e('Realtime subscription error: $error');
+          },
+        );
 
     // On open: mark delivered immediately
     unawaited(markReceiptsForActive(delivered: true, seen: false));

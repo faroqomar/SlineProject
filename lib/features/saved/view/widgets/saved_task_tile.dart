@@ -16,7 +16,11 @@ class SavedTaskTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: const Icon(Icons.bookmark),
-      title: Text('Task: $taskId', maxLines: 1, overflow: TextOverflow.ellipsis),
+      title: Text(
+        'Task: $taskId',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
       trailing: IconButton(
         tooltip: 'Remove',
         onPressed: onRemove,

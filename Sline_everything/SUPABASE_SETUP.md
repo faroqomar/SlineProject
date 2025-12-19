@@ -51,6 +51,7 @@ This document is the **single source of truth** for all Supabase backend setup: 
 | `availability_slots` | ✅ | 0 | Provider availability |
 | `bookings` | ✅ | 1 | Session bookings |
 | `portfolio_items` | ✅ | 0 | Freelancer portfolio |
+| `notifications` | ✅ | 1 | User notifications |
 
 ### Enums
 
@@ -71,7 +72,7 @@ This document is the **single source of truth** for all Supabase backend setup: 
 
 ### Realtime
 
-- **Enabled on**: `messages`
+- **Enabled on**: `messages`, `notifications`
 
 ### Key Business Rules (Enforced by Triggers)
 
@@ -465,6 +466,25 @@ Freelancer work gallery.
 | `title` | text | ❌ | - | Item title |
 | `description` | text | ✅ | - | Item description |
 | `image_url` | text | ✅ | - | Storage path in 'portfolio' bucket |
+| `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
+
+---
+
+### 5.13 `notifications`
+
+User notifications for messages, offers, and system events.
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
+| `user_id` | uuid | ❌ | - | FK to profiles (recipient) |
+| `title` | text | ❌ | - | Notification title |
+| `message` | text | ❌ | - | Notification body |
+| `type` | text | ❌ | - | 'offer', 'message', 'system', 'booking', 'task' |
+| `related_entity_id` | uuid | ✅ | - | ID of related object |
+| `related_entity_type` | text | ✅ | - | Table name of related object |
+| `is_read` | boolean | ❌ | `false` | Read status |
+| `metadata` | jsonb | ✅ | `'{}'` | Extra data |
 | `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
 
 ---

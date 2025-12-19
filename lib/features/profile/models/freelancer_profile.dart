@@ -47,17 +47,45 @@ class FreelancerProfile {
       jobSuccess: '98%',
       jobsCompleted: 142,
       hourlyRate: '\$65/hr',
-      bio: 'Award-winning developer with 7+ years of experience crafting scalable web applications. I specialize in React, Node.js, and Flutter.',
+      bio:
+          'Award-winning developer with 7+ years of experience crafting scalable web applications. I specialize in React, Node.js, and Flutter.',
       skills: ['Flutter', 'React', 'Node.js', 'Firebase', 'UI/UX'],
       portfolio: [
-        PortfolioItem(title: 'E-commerce App', category: 'Mobile App', color: AppColors.teal),
-        PortfolioItem(title: 'SaaS Dashboard', category: 'Web App', color: AppColors.gold),
-        PortfolioItem(title: 'Finance Wallet', category: 'Fintech', color: AppColors.lightRed),
-        PortfolioItem(title: 'Social Network', category: 'Mobile App', color: AppColors.lightTeal),
+        PortfolioItem(
+          title: 'E-commerce App',
+          category: 'Mobile App',
+          color: AppColors.teal,
+        ),
+        PortfolioItem(
+          title: 'SaaS Dashboard',
+          category: 'Web App',
+          color: AppColors.gold,
+        ),
+        PortfolioItem(
+          title: 'Finance Wallet',
+          category: 'Fintech',
+          color: AppColors.lightRed,
+        ),
+        PortfolioItem(
+          title: 'Social Network',
+          category: 'Mobile App',
+          color: AppColors.lightTeal,
+        ),
       ],
       reviews: [
-        ReviewItem(client: 'Nexus Corp', rating: 5, comment: 'Sarah is incredibly talented! She delivered a stunning app.', date: '2 weeks ago'),
-        ReviewItem(client: 'TechFlow Inc', rating: 5, comment: 'Professional, fast, and high quality. Highly recommended.', date: '1 month ago'),
+        ReviewItem(
+          client: 'Nexus Corp',
+          rating: 5,
+          comment:
+              'Sarah is incredibly talented! She delivered a stunning app.',
+          date: '2 weeks ago',
+        ),
+        ReviewItem(
+          client: 'TechFlow Inc',
+          rating: 5,
+          comment: 'Professional, fast, and high quality. Highly recommended.',
+          date: '1 month ago',
+        ),
       ],
     );
   }

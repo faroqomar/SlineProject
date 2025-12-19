@@ -104,8 +104,8 @@ Step | Feature | Description | Status
 
 # 🎯 Summary
 
-- ✅ Completed: Initialization, Navigation, Authentication, Tasks, Theme System, AI Agents
-- 🔜 Next focus: Localization (RTL support), Supabase v2 migration
+- ✅ Completed: Initialization, Navigation, Authentication, Tasks, Theme System, AI Agents, Messaging, **Notifications**
+- 🔜 Next focus: Localization (RTL support), Supabase v2 migration, CodeGuard Audit
 - 📦 This roadmap ensures Sline MVP is production-ready once remaining features are complete.
 
 # 📌 Sline MVP Roadmap (Updated)
@@ -230,6 +230,7 @@ Step | Feature | Description | Status
 
 - Logger service (AppLogger) — ✅
 - Constants & config — ✅
+- **Notification System (Realtime) — ✅ Completed (v2.7)**
 - Theme (M3 Light/Dark) — ⏳ Planned
 
 # 🎯 Summary (v2.4)
@@ -239,5 +240,7 @@ Step | Feature | Description | Status
 - ✅ Immediate image bubble rendering on send
 - ✅ **Portfolio Management with image upload** (v2.4)
 - ✅ **Saved Tasks Feature** (Global State + UI Toggles) (v2.5)
+- ✅ **Forgot Password Flow** (v2.6)
+- ✅ **Notification System** (Realtime + Task Lifecycle) (v2.7)
 - ✅ **iOS stability fixes** (FilePicker, memory optimization)
 - 🔜 Read receipts & requests flow next

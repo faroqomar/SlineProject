@@ -59,7 +59,9 @@ class _OrdersDashboardScreenState extends State<OrdersDashboardScreen> {
                       children: [
                         Text(
                           'My Published Tasks',
-                          style: AppTypography.h2.copyWith(color: colorScheme.text),
+                          style: AppTypography.h2.copyWith(
+                            color: colorScheme.text,
+                          ),
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -71,7 +73,10 @@ class _OrdersDashboardScreenState extends State<OrdersDashboardScreen> {
                       ],
                     ),
                     IconButton(
-                      icon: Icon(Icons.refresh, color: colorScheme.textSecondary),
+                      icon: Icon(
+                        Icons.refresh,
+                        color: colorScheme.textSecondary,
+                      ),
                       onPressed: () => vm.loadOrders(),
                     ),
                   ],
@@ -94,17 +99,25 @@ class _OrdersDashboardScreenState extends State<OrdersDashboardScreen> {
                           onTap: () => vm.setActiveTab(tab),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 300),
-                            padding: const EdgeInsets.symmetric(vertical: AppDimens.p8),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: AppDimens.p8,
+                            ),
                             decoration: BoxDecoration(
-                              color: isActive ? AppColors.teal : Colors.transparent,
-                              borderRadius: BorderRadius.circular(AppDimens.r10),
+                              color: isActive
+                                  ? AppColors.teal
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(
+                                AppDimens.r10,
+                              ),
                               boxShadow: isActive
                                   ? [
                                       BoxShadow(
-                                        color: AppColors.teal.withValues(alpha: 0.3),
+                                        color: AppColors.teal.withValues(
+                                          alpha: 0.3,
+                                        ),
                                         blurRadius: 8,
                                         offset: const Offset(0, 4),
-                                      )
+                                      ),
                                     ]
                                   : [],
                             ),
@@ -134,36 +147,40 @@ class _OrdersDashboardScreenState extends State<OrdersDashboardScreen> {
             child: vm.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : vm.filteredOrders.isEmpty
-                    ? _buildEmptyState(colorScheme, vm.activeTab)
-                    : RefreshIndicator(
-                        onRefresh: vm.loadOrders,
-                        child: ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(
-                            AppDimens.p24,
-                            0,
-                            AppDimens.p24,
-                            AppDimens.p100,
-                          ),
-                          itemCount: vm.filteredOrders.length,
-                          itemBuilder: (context, index) {
-                            final task = vm.filteredOrders[index];
-                            return OrderCard(
-                              task: task,
-                              actionLabel: _getActionLabel(task),
-                              showChatButton: task.status == TaskStatus.inProgress || task.status == TaskStatus.assigned,
-                              onActionTap: () => _handleActionTap(context, task),
-                              onChatTap: () {
-                                // TODO: Navigate to chat
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Chat not implemented yet')),
-                                );
-                              },
-                              onEdit: () => _handleEdit(context, task),
-                              onDelete: () => _handleDelete(context, task),
+                ? _buildEmptyState(colorScheme, vm.activeTab)
+                : RefreshIndicator(
+                    onRefresh: vm.loadOrders,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppDimens.p24,
+                        0,
+                        AppDimens.p24,
+                        AppDimens.p100,
+                      ),
+                      itemCount: vm.filteredOrders.length,
+                      itemBuilder: (context, index) {
+                        final task = vm.filteredOrders[index];
+                        return OrderCard(
+                          task: task,
+                          actionLabel: _getActionLabel(task),
+                          showChatButton:
+                              task.status == TaskStatus.inProgress ||
+                              task.status == TaskStatus.assigned,
+                          onActionTap: () => _handleActionTap(context, task),
+                          onChatTap: () {
+                            // TODO: Navigate to chat
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Chat not implemented yet'),
+                              ),
                             );
                           },
-                        ),
-                      ),
+                          onEdit: () => _handleEdit(context, task),
+                          onDelete: () => _handleDelete(context, task),
+                        );
+                      },
+                    ),
+                  ),
           ),
         ],
       ),
@@ -212,7 +229,8 @@ class _OrdersDashboardScreenState extends State<OrdersDashboardScreen> {
       } else {
         return 'View Bookings'; // Booking type not fully implemented in UI yet
       }
-    } else if (task.status == TaskStatus.assigned || task.status == TaskStatus.inProgress) {
+    } else if (task.status == TaskStatus.assigned ||
+        task.status == TaskStatus.inProgress) {
       return 'View Status';
     } else if (task.status == TaskStatus.closed) {
       return 'View Details';
@@ -233,24 +251,20 @@ class _OrdersDashboardScreenState extends State<OrdersDashboardScreen> {
       );
     } else {
       // Default to task details
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => TaskDetailsScreen(task: task),
-        ),
-      );
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => TaskDetailsScreen(task: task)));
     }
   }
 
   void _handleEdit(BuildContext context, Task task) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => CreateTaskScreen(task: task),
-      ),
-    ).then((_) {
-      if (context.mounted) {
-        context.read<OrdersViewModel>().loadOrders();
-      }
-    });
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => CreateTaskScreen(task: task)))
+        .then((_) {
+          if (context.mounted) {
+            context.read<OrdersViewModel>().loadOrders();
+          }
+        });
   }
 
   void _handleDelete(BuildContext context, Task task) {
@@ -258,7 +272,9 @@ class _OrdersDashboardScreenState extends State<OrdersDashboardScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Task'),
-        content: const Text('Are you sure you want to delete this task? This action cannot be undone.'),
+        content: const Text(
+          'Are you sure you want to delete this task? This action cannot be undone.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -270,9 +286,9 @@ class _OrdersDashboardScreenState extends State<OrdersDashboardScreen> {
               try {
                 await context.read<OrdersViewModel>().deleteTask(task.id);
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Task deleted')),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('Task deleted')));
                 }
               } catch (e) {
                 if (context.mounted) {

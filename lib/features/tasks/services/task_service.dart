@@ -2,6 +2,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/logger_service.dart';
 import '../../../core/utils/error_mapper.dart';
 import '../models/task_model.dart';
+import '../../notifications/services/notification_service.dart';
+import '../../notifications/models/notification_model.dart';
 
 /// Service for handling task operations with Supabase.
 ///
@@ -13,9 +15,10 @@ import '../models/task_model.dart';
 /// profiles.id, which doesn't exist in the current schema.
 class TaskService {
   final SupabaseClient _client;
+  final NotificationService _notificationService = NotificationService();
 
   TaskService([SupabaseClient? client])
-      : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client;
 
   /// Standard SELECT clause for tasks (without profile JOIN).
   ///
@@ -33,7 +36,8 @@ class TaskService {
   /// Why batch: Fetching profiles for N tasks requires 2 queries total
   /// (1 for tasks, 1 for profiles) instead of N+1 queries.
   Future<Map<String, Map<String, dynamic>>> _fetchProfilesByIds(
-      Set<String> userIds) async {
+    Set<String> userIds,
+  ) async {
     if (userIds.isEmpty) return {};
 
     try {
@@ -56,7 +60,9 @@ class TaskService {
 
   /// Merge profile data into task JSON before parsing.
   List<Task> _parseTasksWithProfiles(
-      List<dynamic> rows, Map<String, Map<String, dynamic>> profilesMap) {
+    List<dynamic> rows,
+    Map<String, Map<String, dynamic>> profilesMap,
+  ) {
     return rows.map((json) {
       final taskJson = Map<String, dynamic>.from(json as Map);
       final userId = taskJson['user_id'] as String?;
@@ -90,10 +96,20 @@ class TaskService {
       AppLogger.i('Successfully fetched ${tasks.length} tasks', tag: 'Tasks');
       return tasks;
     } on PostgrestException catch (e, st) {
-      AppLogger.e('Failed to get tasks', tag: 'Tasks', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to get tasks',
+        tag: 'Tasks',
+        error: e,
+        stackTrace: st,
+      );
       throw Exception(ErrorMapper.map(e));
     } catch (e, st) {
-      AppLogger.e('Failed to get tasks', tag: 'Tasks', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to get tasks',
+        tag: 'Tasks',
+        error: e,
+        stackTrace: st,
+      );
       throw Exception(ErrorMapper.map(e));
     }
   }
@@ -125,27 +141,101 @@ class TaskService {
       AppLogger.i('Task created successfully: ${createdTask.title}');
       return createdTask;
     } on PostgrestException catch (e, st) {
-      AppLogger.e('Failed to create task', tag: 'Tasks', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to create task',
+        tag: 'Tasks',
+        error: e,
+        stackTrace: st,
+      );
       throw Exception(ErrorMapper.map(e));
     } catch (e, st) {
-      AppLogger.e('Failed to create task', tag: 'Tasks', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to create task',
+        tag: 'Tasks',
+        error: e,
+        stackTrace: st,
+      );
       throw Exception(ErrorMapper.map(e));
     }
   }
 
   /// Update task status (simple update, no profile data needed).
+  ///
+  /// Also triggers notifications for important status changes (completed, cancelled).
   Future<void> updateTaskStatus(String taskId, TaskStatus status) async {
     try {
+      // 1. Fetch task details BEFORE update to know who to notify
+      final taskRes = await _client
+          .from('tasks')
+          .select('user_id, assigned_freelancer_id, title')
+          .eq('id', taskId)
+          .single();
+
+      final ownerId = taskRes['user_id'] as String;
+      final freelancerId = taskRes['assigned_freelancer_id'] as String?;
+      final taskTitle = taskRes['title'] as String;
+      final currentUid = _client.auth.currentUser?.id;
+
+      // 2. Perform the update
       await _client
           .from('tasks')
           .update({'status': status.name})
           .eq('id', taskId);
-      AppLogger.i('Task status updated: $taskId → ${status.name}', tag: 'Tasks');
+      AppLogger.i(
+        'Task status updated: $taskId → ${status.name}',
+        tag: 'Tasks',
+      );
+
+      // 3. Send Notifications
+      if (freelancerId != null && currentUid != null) {
+        String? notifyUserId;
+        String? title;
+        String? message;
+
+        // If Owner changed status -> Notify Freelancer
+        if (currentUid == ownerId) {
+          notifyUserId = freelancerId;
+          if (status == TaskStatus.closed) {
+            title = 'Task Completed';
+            message = 'The client has marked "$taskTitle" as completed.';
+          } else if (status == TaskStatus.canceled) {
+            title = 'Task Cancelled';
+            message = 'The client has cancelled "$taskTitle".';
+          }
+        }
+        // If Freelancer changed status (e.g. if we allow them to mark as complete?)
+        // Currently typically only client updates status to complete, but if freelancer does:
+        else if (currentUid == freelancerId) {
+          notifyUserId = ownerId;
+          // Add logic here if freelancer can change status (e.g. to 'submitted' or 'completed')
+        }
+
+        if (notifyUserId != null && title != null && message != null) {
+          _notificationService.createNotification(
+            userId: notifyUserId,
+            title: title,
+            message: message,
+            type: NotificationType.task,
+            relatedEntityId: taskId,
+            relatedEntityType: 'task',
+          );
+        }
+      }
     } on PostgrestException catch (e, st) {
-      AppLogger.e('Failed to update task status', tag: 'Tasks', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to update task status',
+        tag: 'Tasks',
+        error: e,
+        stackTrace: st,
+      );
       throw Exception(ErrorMapper.map(e));
     } catch (e, st) {
-      AppLogger.e('Failed to update task status', tag: 'Tasks', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to update task status',
+        tag: 'Tasks',
+        error: e,
+        stackTrace: st,
+      );
       throw Exception(ErrorMapper.map(e));
     }
   }
@@ -158,10 +248,20 @@ class TaskService {
       await _client.from('tasks').update(updates).eq('id', taskId);
       AppLogger.i('Task updated: $taskId', tag: 'Tasks');
     } on PostgrestException catch (e, st) {
-      AppLogger.e('Failed to update task', tag: 'Tasks', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to update task',
+        tag: 'Tasks',
+        error: e,
+        stackTrace: st,
+      );
       throw Exception(ErrorMapper.map(e));
     } catch (e, st) {
-      AppLogger.e('Failed to update task', tag: 'Tasks', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to update task',
+        tag: 'Tasks',
+        error: e,
+        stackTrace: st,
+      );
       throw Exception(ErrorMapper.map(e));
     }
   }
@@ -186,10 +286,20 @@ class TaskService {
       final profilesMap = await _fetchProfilesByIds(userIds);
       return _parseTasksWithProfiles(rows, profilesMap);
     } on PostgrestException catch (e, st) {
-      AppLogger.e('Failed to get tasks by user', tag: 'Tasks', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to get tasks by user',
+        tag: 'Tasks',
+        error: e,
+        stackTrace: st,
+      );
       throw Exception(ErrorMapper.map(e));
     } catch (e, st) {
-      AppLogger.e('Failed to get tasks by user', tag: 'Tasks', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to get tasks by user',
+        tag: 'Tasks',
+        error: e,
+        stackTrace: st,
+      );
       throw Exception(ErrorMapper.map(e));
     }
   }
@@ -214,10 +324,20 @@ class TaskService {
       final profilesMap = await _fetchProfilesByIds(userIds);
       return _parseTasksWithProfiles(rows, profilesMap);
     } on PostgrestException catch (e, st) {
-      AppLogger.e('Failed to get tasks by status', tag: 'Tasks', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to get tasks by status',
+        tag: 'Tasks',
+        error: e,
+        stackTrace: st,
+      );
       throw Exception(ErrorMapper.map(e));
     } catch (e, st) {
-      AppLogger.e('Failed to get tasks by status', tag: 'Tasks', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to get tasks by status',
+        tag: 'Tasks',
+        error: e,
+        stackTrace: st,
+      );
       throw Exception(ErrorMapper.map(e));
     }
   }
@@ -229,10 +349,20 @@ class TaskService {
       await _client.from('tasks').delete().eq('id', taskId);
       AppLogger.i('Task deleted successfully: $taskId', tag: 'Tasks');
     } on PostgrestException catch (e, st) {
-      AppLogger.e('Failed to delete task', tag: 'Tasks', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to delete task',
+        tag: 'Tasks',
+        error: e,
+        stackTrace: st,
+      );
       throw Exception(ErrorMapper.map(e));
     } catch (e, st) {
-      AppLogger.e('Failed to delete task', tag: 'Tasks', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to delete task',
+        tag: 'Tasks',
+        error: e,
+        stackTrace: st,
+      );
       throw Exception(ErrorMapper.map(e));
     }
   }
@@ -287,10 +417,20 @@ class TaskService {
       final profilesMap = await _fetchProfilesByIds(userIds);
       return _parseTasksWithProfiles(rows, profilesMap);
     } on PostgrestException catch (e, st) {
-      AppLogger.e('Failed to get open tasks for home', tag: 'Tasks', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to get open tasks for home',
+        tag: 'Tasks',
+        error: e,
+        stackTrace: st,
+      );
       throw Exception(ErrorMapper.map(e));
     } catch (e, st) {
-      AppLogger.e('Failed to get open tasks for home', tag: 'Tasks', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to get open tasks for home',
+        tag: 'Tasks',
+        error: e,
+        stackTrace: st,
+      );
       throw Exception(ErrorMapper.map(e));
     }
   }
@@ -320,10 +460,20 @@ class TaskService {
 
       return Task.fromJson(taskJson);
     } on PostgrestException catch (e, st) {
-      AppLogger.e('Failed to get task by ID', tag: 'Tasks', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to get task by ID',
+        tag: 'Tasks',
+        error: e,
+        stackTrace: st,
+      );
       throw Exception(ErrorMapper.map(e));
     } catch (e, st) {
-      AppLogger.e('Failed to get task by ID', tag: 'Tasks', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to get task by ID',
+        tag: 'Tasks',
+        error: e,
+        stackTrace: st,
+      );
       throw Exception(ErrorMapper.map(e));
     }
   }

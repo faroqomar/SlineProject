@@ -5,11 +5,19 @@ import '../../models/portfolio_item.dart';
 
 /// Bottom sheet for editing an existing portfolio item (title/description only).
 class EditPortfolioSheet extends StatefulWidget {
-  const EditPortfolioSheet({super.key, required this.item, required this.controller});
+  const EditPortfolioSheet({
+    super.key,
+    required this.item,
+    required this.controller,
+  });
   final PortfolioItem item;
   final PortfolioViewModel controller;
 
-  static Future<bool?> open(BuildContext context, PortfolioItem item, PortfolioViewModel controller) {
+  static Future<bool?> open(
+    BuildContext context,
+    PortfolioItem item,
+    PortfolioViewModel controller,
+  ) {
     return showModalBottomSheet<bool>(
       context: context,
       useSafeArea: true,
@@ -24,8 +32,12 @@ class EditPortfolioSheet extends StatefulWidget {
 
 class _EditPortfolioSheetState extends State<EditPortfolioSheet> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _title = TextEditingController(text: widget.item.title);
-  late final TextEditingController _desc = TextEditingController(text: widget.item.description ?? '');
+  late final TextEditingController _title = TextEditingController(
+    text: widget.item.title,
+  );
+  late final TextEditingController _desc = TextEditingController(
+    text: widget.item.description ?? '',
+  );
   bool _saving = false;
 
   @override
@@ -47,9 +59,13 @@ class _EditPortfolioSheetState extends State<EditPortfolioSheet> {
       if (!mounted) return;
       if (ok) {
         Navigator.of(context).pop(true);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Updated')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Updated')));
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Update failed')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Update failed')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -78,19 +94,25 @@ class _EditPortfolioSheetState extends State<EditPortfolioSheet> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Text('Edit Portfolio Item', style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  'Edit Portfolio Item',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _title,
                   decoration: const InputDecoration(labelText: 'Title'),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? 'Required' : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _desc,
                   minLines: 2,
                   maxLines: 5,
-                  decoration: const InputDecoration(labelText: 'Description (optional)'),
+                  decoration: const InputDecoration(
+                    labelText: 'Description (optional)',
+                  ),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
@@ -98,7 +120,11 @@ class _EditPortfolioSheetState extends State<EditPortfolioSheet> {
                   child: FilledButton(
                     onPressed: _saving ? null : _save,
                     child: _saving
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
                         : const Text('Save'),
                   ),
                 ),

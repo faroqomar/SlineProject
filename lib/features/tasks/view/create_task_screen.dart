@@ -122,7 +122,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
     final vm = context.read<TaskViewModel>();
     final userId = vm.currentUserId;
-    if (userId == null) return;
+    if (userId == null) {
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -487,8 +489,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   Color _getCategoryColor(String name) {
     final lowerName = name.toLowerCase();
     if (lowerName.contains('design')) return AppColors.lightRed;
-    if (lowerName.contains('dev') || lowerName.contains('code'))
+    if (lowerName.contains('dev') || lowerName.contains('code')) {
       return AppColors.lightTeal;
+    }
     if (lowerName.contains('writ') || lowerName.contains('content')) {
       return const Color(0xFFF7D69C);
     }

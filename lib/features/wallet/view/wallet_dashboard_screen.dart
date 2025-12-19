@@ -143,16 +143,16 @@ class WalletDashboardScreen extends StatelessWidget {
                 ),
                 Text(
                   'View All',
-                  style: AppTypography.captionBold.copyWith(color: AppColors.teal),
+                  style: AppTypography.captionBold.copyWith(
+                    color: AppColors.teal,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: AppDimens.p16),
 
             // Transaction list
-            ..._transactions.map(
-              (tx) => _TransactionItem(transaction: tx),
-            ),
+            ..._transactions.map((tx) => _TransactionItem(transaction: tx)),
           ],
         ),
       ),
@@ -188,9 +188,7 @@ class _GlassCreditCard extends StatelessWidget {
             offset: const Offset(0, 15),
           ),
         ],
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.1),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: Stack(
         children: [
@@ -268,9 +266,17 @@ class _GlassCreditCard extends StatelessWidget {
                     // Balances
                     Row(
                       children: [
-                        _buildBalanceItem('Available', '\$${data['availableBalance']}', Colors.white),
+                        _buildBalanceItem(
+                          'Available',
+                          '\$${data['availableBalance']}',
+                          Colors.white,
+                        ),
                         const SizedBox(width: AppDimens.p32),
-                        _buildBalanceItem('In Escrow', '\$${data['escrowBalance']}', AppColors.gold),
+                        _buildBalanceItem(
+                          'In Escrow',
+                          '\$${data['escrowBalance']}',
+                          AppColors.gold,
+                        ),
                       ],
                     ),
                     const SizedBox(height: AppDimens.p16),
@@ -497,7 +503,9 @@ class _TransactionItem extends StatelessWidget {
               Text(
                 status.toUpperCase(),
                 style: AppTypography.micro.copyWith(
-                  color: status == 'completed' ? AppColors.lightTeal : AppColors.gold,
+                  color: status == 'completed'
+                      ? AppColors.lightTeal
+                      : AppColors.gold,
                   fontWeight: FontWeight.bold,
                   fontSize: 10,
                 ),

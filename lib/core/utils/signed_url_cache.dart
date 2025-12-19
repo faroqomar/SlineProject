@@ -54,11 +54,7 @@ class SignedUrlCache {
   }
 
   /// Cache a signed URL for the given storage path
-  static void set(
-    String storagePath,
-    String signedUrl, {
-    Duration? duration,
-  }) {
+  static void set(String storagePath, String signedUrl, {Duration? duration}) {
     _cache[storagePath] = SignedUrlCacheEntry(
       url: signedUrl,
       expiry: DateTime.now().add(duration ?? defaultCacheDuration),
@@ -78,4 +74,3 @@ class SignedUrlCache {
   /// Get current cache size (for debugging)
   static int get size => _cache.length;
 }
-

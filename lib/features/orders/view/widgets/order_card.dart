@@ -59,6 +59,11 @@ class OrderCard extends StatelessWidget {
         statusText = AppColors.lightTeal;
         statusBorder = AppColors.lightTeal.withValues(alpha: 0.3);
         break;
+      case TaskStatus.canceled:
+        statusBg = AppColors.mediumGrey.withValues(alpha: 0.1);
+        statusText = AppColors.mediumGrey;
+        statusBorder = AppColors.mediumGrey.withValues(alpha: 0.3);
+        break;
     }
 
     return Container(
@@ -376,6 +381,8 @@ class OrderCard extends StatelessWidget {
         return 'IN PROGRESS';
       case TaskStatus.closed:
         return 'COMPLETED';
+      case TaskStatus.canceled:
+        return 'CANCELLED';
     }
   }
 }

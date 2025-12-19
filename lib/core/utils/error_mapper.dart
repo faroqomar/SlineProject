@@ -95,7 +95,8 @@ class ErrorMapper {
     if (message.contains('email not confirmed')) {
       return 'Please verify your email address first.';
     }
-    if (message.contains('session expired') || message.contains('refresh token')) {
+    if (message.contains('session expired') ||
+        message.contains('refresh token')) {
       return 'Session expired. Please log in again.';
     }
 
@@ -142,5 +143,3 @@ class ErrorMapper {
     return false;
   }
 }
-
-

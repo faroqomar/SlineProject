@@ -1,6 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/slot_model.dart';
 import '../models/booking_model.dart';
+import '../../notifications/services/notification_service.dart';
+import '../../notifications/models/notification_model.dart';
 
 /// Low-level service that talks to Supabase (PostgREST) only.
 /// No UI state here; RLS is assumed to be enforced by the backend.
@@ -12,6 +14,8 @@ class BookingService {
   static const String _slotsTable = 'availability_slots';
   static const String _bookingsTable = 'bookings';
 
+  final NotificationService _notificationService = NotificationService();
+
   /// List slots by provider and optional time window. Ordered by starts_at ASC.
   Future<List<SlotModel>> listSlots({
     required String providerId,
@@ -20,7 +24,10 @@ class BookingService {
     int limit = 50,
     String? cursorStartsAtIso, // simple cursor based on starts_at
   }) async {
-    final query = _client.from(_slotsTable).select().eq('provider_id', providerId);
+    final query = _client
+        .from(_slotsTable)
+        .select()
+        .eq('provider_id', providerId);
 
     if (fromUtc != null) {
       query.gte('starts_at', fromUtc.toUtc().toIso8601String());
@@ -55,12 +62,16 @@ class BookingService {
       throw StateError('Not signed in');
     }
 
-    final insert = await _client.from(_slotsTable).insert({
-      'provider_id': uid, // <-- required by RLS
-      'starts_at': startsAtUtc.toUtc().toIso8601String(),
-      'ends_at': endsAtUtc.toUtc().toIso8601String(),
-      'is_blocked': isBlocked,
-    }).select().single();
+    final insert = await _client
+        .from(_slotsTable)
+        .insert({
+          'provider_id': uid, // <-- required by RLS
+          'starts_at': startsAtUtc.toUtc().toIso8601String(),
+          'ends_at': endsAtUtc.toUtc().toIso8601String(),
+          'is_blocked': isBlocked,
+        })
+        .select()
+        .single();
 
     return SlotModel.fromJson(insert as Map<String, dynamic>);
   }
@@ -78,15 +89,31 @@ class BookingService {
       throw StateError('Not signed in');
     }
 
-    final res = await _client.from(_bookingsTable).insert({
-      'task_id': taskId,
-      'slot_id': slotId,
-      'note': note,
-      'provider_id': providerId,
-      'client_id': uid, // <-- required by RLS
-    }).select().single();
+    final res = await _client
+        .from(_bookingsTable)
+        .insert({
+          'task_id': taskId,
+          'slot_id': slotId,
+          'note': note,
+          'provider_id': providerId,
+          'client_id': uid, // <-- required by RLS
+        })
+        .select()
+        .single();
 
-    return BookingModel.fromJson(res as Map<String, dynamic>);
+    final booking = BookingModel.fromJson(res as Map<String, dynamic>);
+
+    // Notify Provider
+    _notificationService.createNotification(
+      userId: providerId,
+      title: 'New Booking Request',
+      message: 'You have a new booking request for a task.',
+      type: NotificationType.booking,
+      relatedEntityId: booking.id,
+      relatedEntityType: 'booking',
+    );
+
+    return booking;
   }
 
   /// List bookings where the current user is the CLIENT.
@@ -135,6 +162,33 @@ class BookingService {
         .select()
         .single();
 
-    return BookingModel.fromJson(res as Map<String, dynamic>);
+    final booking = BookingModel.fromJson(res as Map<String, dynamic>);
+
+    // Notify the other party
+    final uid = _client.auth.currentUser?.id;
+    if (uid != null) {
+      String? targetUserId;
+      String title = 'Booking Update';
+      String message = 'Booking status changed to ${newStatus.name}';
+
+      if (uid == booking.providerId) {
+        targetUserId = booking.clientId;
+      } else if (uid == booking.clientId) {
+        targetUserId = booking.providerId;
+      }
+
+      if (targetUserId != null) {
+        _notificationService.createNotification(
+          userId: targetUserId,
+          title: title,
+          message: message,
+          type: NotificationType.booking,
+          relatedEntityId: booking.id,
+          relatedEntityType: 'booking',
+        );
+      }
+    }
+
+    return booking;
   }
 }

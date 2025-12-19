@@ -49,9 +49,9 @@ class _SignupScreenState extends State<SignupScreen> {
     // Client-side validation
     if (password != confirm) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
       return;
     }
 
@@ -119,7 +119,9 @@ class _SignupScreenState extends State<SignupScreen> {
                             height: 80,
                             decoration: BoxDecoration(
                               color: AppColors.teal,
-                              borderRadius: BorderRadius.circular(AppDimens.r20),
+                              borderRadius: BorderRadius.circular(
+                                AppDimens.r20,
+                              ),
                               boxShadow: [
                                 BoxShadow(
                                   color: AppColors.teal.withValues(alpha: 0.3),
@@ -139,7 +141,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             ),
                           ),
                           const SizedBox(height: AppDimens.p24),
-                          
+
                           Text(
                             'Create Account',
                             style: AppTypography.h1.copyWith(
@@ -148,7 +150,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: AppDimens.p8),
-                          
+
                           Text(
                             'Join SLine today',
                             style: AppTypography.bodyMedium.copyWith(
@@ -272,9 +274,13 @@ class _SignupScreenState extends State<SignupScreen> {
                           // Divider
                           Row(
                             children: [
-                              Expanded(child: Divider(color: colorScheme.divider)),
+                              Expanded(
+                                child: Divider(color: colorScheme.divider),
+                              ),
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: AppDimens.p8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppDimens.p8,
+                                ),
                                 child: Text(
                                   'OR',
                                   style: AppTypography.captionBold.copyWith(
@@ -282,7 +288,9 @@ class _SignupScreenState extends State<SignupScreen> {
                                   ),
                                 ),
                               ),
-                              Expanded(child: Divider(color: colorScheme.divider)),
+                              Expanded(
+                                child: Divider(color: colorScheme.divider),
+                              ),
                             ],
                           ),
                           const SizedBox(height: AppDimens.p24),
@@ -354,10 +362,7 @@ class _SignupScreenState extends State<SignupScreen> {
           onTap: () {},
           borderRadius: BorderRadius.circular(AppDimens.r14),
           child: Center(
-            child: Text(
-              icon,
-              style: const TextStyle(fontSize: 20),
-            ),
+            child: Text(icon, style: const TextStyle(fontSize: 20)),
           ),
         ),
       ),

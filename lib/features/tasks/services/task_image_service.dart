@@ -15,7 +15,7 @@ class TaskImageService {
   final String bucket = 'task-images';
 
   TaskImageService([SupabaseClient? client])
-      : _supabase = client ?? Supabase.instance.client;
+    : _supabase = client ?? Supabase.instance.client;
 
   /// Upload raw bytes for a task image.
   ///
@@ -55,7 +55,9 @@ class TaskImageService {
     AppLogger.d('Uploading task image: $path', tag: 'TaskImages');
 
     try {
-      await _supabase.storage.from(bucket).uploadBinary(
+      await _supabase.storage
+          .from(bucket)
+          .uploadBinary(
             path,
             bytes,
             fileOptions: const FileOptions(upsert: true),
@@ -64,12 +66,19 @@ class TaskImageService {
       AppLogger.i('Task image uploaded: $path', tag: 'TaskImages');
       return path; // return storage path only
     } on StorageException catch (e, st) {
-      AppLogger.e('Storage error uploading image', tag: 'TaskImages', error: e, stackTrace: st);
-      
+      AppLogger.e(
+        'Storage error uploading image',
+        tag: 'TaskImages',
+        error: e,
+        stackTrace: st,
+      );
+
       // Map common storage errors to user-friendly messages
       final message = e.message.toLowerCase();
       if (message.contains('bucket not found')) {
-        throw Exception('Image storage is not configured. Please contact support.');
+        throw Exception(
+          'Image storage is not configured. Please contact support.',
+        );
       }
       if (message.contains('payload too large') || message.contains('size')) {
         throw Exception('Image is too large. Please use a smaller image.');
@@ -77,10 +86,15 @@ class TaskImageService {
       if (message.contains('permission') || message.contains('policy')) {
         throw Exception('You do not have permission to upload this image.');
       }
-      
+
       throw Exception('Failed to upload image. Please try again.');
     } catch (e, st) {
-      AppLogger.e('Unexpected error uploading image', tag: 'TaskImages', error: e, stackTrace: st);
+      AppLogger.e(
+        'Unexpected error uploading image',
+        tag: 'TaskImages',
+        error: e,
+        stackTrace: st,
+      );
       throw Exception('Failed to upload image. Please try again.');
     }
   }
@@ -103,10 +117,18 @@ class TaskImageService {
           .createSignedUrl(path, expire.inSeconds);
       return res;
     } on StorageException catch (e) {
-      AppLogger.w('Failed to create signed URL for $path', tag: 'TaskImages', error: e);
+      AppLogger.w(
+        'Failed to create signed URL for $path',
+        tag: 'TaskImages',
+        error: e,
+      );
       return null;
     } catch (e) {
-      AppLogger.w('Unexpected error creating signed URL', tag: 'TaskImages', error: e);
+      AppLogger.w(
+        'Unexpected error creating signed URL',
+        tag: 'TaskImages',
+        error: e,
+      );
       return null;
     }
   }
@@ -125,7 +147,11 @@ class TaskImageService {
       AppLogger.i('Task image deleted: $path', tag: 'TaskImages');
       return true;
     } catch (e) {
-      AppLogger.w('Failed to delete task image: $path', tag: 'TaskImages', error: e);
+      AppLogger.w(
+        'Failed to delete task image: $path',
+        tag: 'TaskImages',
+        error: e,
+      );
       return false;
     }
   }

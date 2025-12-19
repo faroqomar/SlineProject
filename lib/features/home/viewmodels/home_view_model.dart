@@ -29,7 +29,8 @@ import '../../tasks/viewmodels/task_filter_view_model.dart';
 class HomeViewModel extends ChangeNotifier {
   final TaskService _taskService;
 
-  HomeViewModel({TaskService? taskService}) : _taskService = taskService ?? TaskService();
+  HomeViewModel({TaskService? taskService})
+    : _taskService = taskService ?? TaskService();
 
   final List<Task> _featuredTasks = [];
   bool _isLoading = false;
@@ -53,7 +54,9 @@ class HomeViewModel extends ChangeNotifier {
 
   // Load featured tasks for home screen (first page)
   // Optionally update a filter view model
-  Future<void> loadFeaturedTasks({TaskFilterViewModel? filterController}) async {
+  Future<void> loadFeaturedTasks({
+    TaskFilterViewModel? filterController,
+  }) async {
     if (_isLoading) return;
 
     _isLoading = true;
@@ -71,7 +74,7 @@ class HomeViewModel extends ChangeNotifier {
       if (tasks.isNotEmpty) {
         _cursor = tasks.last.createdAt.toUtc().toIso8601String();
       }
-      
+
       // Check if we have more data
       _hasMore = tasks.length >= TaskService.defaultPageSize;
 

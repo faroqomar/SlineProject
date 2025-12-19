@@ -59,7 +59,7 @@ class BookingsDiscoveryScreen extends StatelessWidget {
 
               // List
               if (bookings.isEmpty)
-                 SliverFillRemaining(
+                SliverFillRemaining(
                   hasScrollBody: false,
                   child: Center(
                     child: Column(
@@ -68,7 +68,9 @@ class BookingsDiscoveryScreen extends StatelessWidget {
                         Icon(
                           Icons.calendar_today_outlined,
                           size: 64,
-                          color: colorScheme.textSecondary.withValues(alpha: 0.5),
+                          color: colorScheme.textSecondary.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -90,22 +92,19 @@ class BookingsDiscoveryScreen extends StatelessWidget {
                     AppDimens.p100, // Bottom padding for nav bar
                   ),
                   sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final task = bookings[index];
-                        return TaskCard(
-                          task: task,
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => TaskDetailsScreen(task: task),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                      childCount: bookings.length,
-                    ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final task = bookings[index];
+                      return TaskCard(
+                        task: task,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => TaskDetailsScreen(task: task),
+                            ),
+                          );
+                        },
+                      );
+                    }, childCount: bookings.length),
                   ),
                 ),
             ],

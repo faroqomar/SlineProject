@@ -6,7 +6,9 @@ import '../services/portfolio_service.dart';
 /// Repository layer for Portfolio feature.
 /// Encapsulates Supabase data/storage through PortfolioService.
 class PortfolioRepository {
-  PortfolioRepository(SupabaseClient client) : _service = PortfolioService(client), _client = client;
+  PortfolioRepository(SupabaseClient client)
+    : _service = PortfolioService(client),
+      _client = client;
 
   final PortfolioService _service;
   final SupabaseClient _client;
@@ -18,7 +20,11 @@ class PortfolioRepository {
     int limit = 30,
     String? cursorCreatedAtIso,
   }) {
-    return _service.listItems(ownerId: ownerId, limit: limit, cursorCreatedAtIso: cursorCreatedAtIso);
+    return _service.listItems(
+      ownerId: ownerId,
+      limit: limit,
+      cursorCreatedAtIso: cursorCreatedAtIso,
+    );
   }
 
   Future<PortfolioItem> addItem({
@@ -42,10 +48,21 @@ class PortfolioRepository {
   }
 
   /// Optional update for editing title/description only.
-  Future<void> updateItem({required String id, required String title, String? description}) async {
-    await _client.from('portfolio_items').update({
-      'title': title,
-      'description': (description?.trim().isEmpty ?? true) ? null : description?.trim(),
-    }).eq('id', id).select().single();
+  Future<void> updateItem({
+    required String id,
+    required String title,
+    String? description,
+  }) async {
+    await _client
+        .from('portfolio_items')
+        .update({
+          'title': title,
+          'description': (description?.trim().isEmpty ?? true)
+              ? null
+              : description?.trim(),
+        })
+        .eq('id', id)
+        .select()
+        .single();
   }
 }

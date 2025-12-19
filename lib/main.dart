@@ -26,6 +26,7 @@ import 'features/booking/view/availability_screen.dart';
 import 'features/orders/viewmodels/orders_view_model.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/providers/theme_mode_provider.dart';
+import 'features/notifications/viewmodels/notification_view_model.dart';
 
 /// App entry point with global error handling.
 ///
@@ -108,6 +109,8 @@ class SLineApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => BookingViewModel()),
         // Orders dashboard state
         ChangeNotifierProvider(create: (_) => OrdersViewModel()),
+        // Notifications state
+        ChangeNotifierProvider(create: (_) => NotificationViewModel()),
       ],
       child: const _AppWithAuthListener(),
     );

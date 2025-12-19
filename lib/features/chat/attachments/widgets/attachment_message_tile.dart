@@ -26,8 +26,10 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
   @override
   void initState() {
     super.initState();
-    _signedUrlFuture = SupabaseAttachmentUploader()
-        .createSignedUrl(widget.storagePath, expiresInSeconds: 3600);
+    _signedUrlFuture = SupabaseAttachmentUploader().createSignedUrl(
+      widget.storagePath,
+      expiresInSeconds: 3600,
+    );
   }
 
   @override
@@ -57,8 +59,9 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
           child: ClipRRect(
             borderRadius: radius,
             child: Column(
-              crossAxisAlignment:
-                  widget.isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment: widget.isMine
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 FutureBuilder<String>(
@@ -77,8 +80,9 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
                         height: 180,
                         width: double.infinity,
                         fit: BoxFit.cover,
-                        loadingBuilder: (c, child, progress) =>
-                            progress == null ? child : _placeholder(height: 180),
+                        loadingBuilder: (c, child, progress) => progress == null
+                            ? child
+                            : _placeholder(height: 180),
                         errorBuilder: (c, e, st) => _errorBox('Image error'),
                       ),
                     );
@@ -93,17 +97,23 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
                     child: Text(widget.caption!, style: TextStyle(color: fg)),
                   ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment:
-                        widget.isMine ? MainAxisAlignment.end : MainAxisAlignment.start,
+                    mainAxisAlignment: widget.isMine
+                        ? MainAxisAlignment.end
+                        : MainAxisAlignment.start,
                     children: [
                       Text(
                         widget.time,
                         style: TextStyle(
                           fontSize: 10,
-                          color: widget.isMine ? Colors.white70 : Colors.black54,
+                          color: widget.isMine
+                              ? Colors.white70
+                              : Colors.black54,
                         ),
                       ),
                     ],
@@ -118,27 +128,27 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
   }
 
   Widget _placeholder({required double height}) => Container(
-        height: height,
-        width: double.infinity,
-        color: Colors.black12,
-        alignment: Alignment.center,
-        child: const SizedBox(
-          height: 20,
-          width: 20,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      );
+    height: height,
+    width: double.infinity,
+    color: Colors.black12,
+    alignment: Alignment.center,
+    child: const SizedBox(
+      height: 20,
+      width: 20,
+      child: CircularProgressIndicator(strokeWidth: 2),
+    ),
+  );
 
   Widget _errorBox(String msg) => Container(
-        height: 180,
-        color: Colors.black12,
-        alignment: Alignment.center,
-        padding: const EdgeInsets.all(12),
-        child: Text(
-          msg,
-          style: const TextStyle(fontSize: 12, color: Colors.black54),
-        ),
-      );
+    height: 180,
+    color: Colors.black12,
+    alignment: Alignment.center,
+    padding: const EdgeInsets.all(12),
+    child: Text(
+      msg,
+      style: const TextStyle(fontSize: 12, color: Colors.black54),
+    ),
+  );
 
   void _showFullScreen(BuildContext context, String url) {
     showDialog(

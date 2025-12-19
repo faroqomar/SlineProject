@@ -49,9 +49,7 @@ class _CategoriesView extends StatelessWidget {
     final vm = context.watch<CategoriesViewModel>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Categories'),
-      ),
+      appBar: AppBar(title: const Text('Categories')),
       body: RefreshIndicator(
         onRefresh: vm.refresh,
         child: ListView(
@@ -75,10 +73,9 @@ class _CategoriesView extends StatelessWidget {
               Center(
                 child: Text(
                   vm.error!,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(color: Theme.of(context).colorScheme.error),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                 ),
               ),
             ] else ...[
@@ -87,20 +84,24 @@ class _CategoriesView extends StatelessWidget {
                 const Center(child: Text('No categories found.')),
               ] else ...[
                 // Simple list of categories
-                ...vm.items.map((c) => ListTile(
-                      leading: CircleAvatar(
-                        child: Text(
-                          c.name.isNotEmpty ? c.name.substring(0, 1).toUpperCase() : '?',
-                        ),
+                ...vm.items.map(
+                  (c) => ListTile(
+                    leading: CircleAvatar(
+                      child: Text(
+                        c.name.isNotEmpty
+                            ? c.name.substring(0, 1).toUpperCase()
+                            : '?',
                       ),
-                      title: Text(c.name),
-                      subtitle: Text(c.id),
-                      onTap: () {
-                        // TODO: handle selection/navigation if needed
-                      },
-                    )),
-              ]
-            ]
+                    ),
+                    title: Text(c.name),
+                    subtitle: Text(c.id),
+                    onTap: () {
+                      // TODO: handle selection/navigation if needed
+                    },
+                  ),
+                ),
+              ],
+            ],
           ],
         ),
       ),

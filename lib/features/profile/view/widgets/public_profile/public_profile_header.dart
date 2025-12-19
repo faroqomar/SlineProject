@@ -47,7 +47,10 @@ class PublicProfileHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.gold,
                 borderRadius: BorderRadius.circular(AppDimens.r20),
-                border: Border.all(color: colorScheme.phoneBackground, width: 4),
+                border: Border.all(
+                  color: colorScheme.phoneBackground,
+                  width: 4,
+                ),
               ),
               child: Center(
                 child: Text(
@@ -68,7 +71,10 @@ class PublicProfileHeader extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.lightTeal,
                   shape: BoxShape.circle,
-                  border: Border.all(color: colorScheme.phoneBackground, width: 2),
+                  border: Border.all(
+                    color: colorScheme.phoneBackground,
+                    width: 2,
+                  ),
                 ),
               ),
             ),

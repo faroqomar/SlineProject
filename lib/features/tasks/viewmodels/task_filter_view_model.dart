@@ -5,7 +5,7 @@ import '../models/task_model.dart';
 class TaskFilterViewModel extends ChangeNotifier {
   final List<Task> _allTasks = [];
   List<Task> _filteredTasks = [];
-  
+
   // Basic Filters
   String _searchQuery = '';
   String _selectedCategory = '';
@@ -19,7 +19,7 @@ class TaskFilterViewModel extends ChangeNotifier {
 
   List<Task> get filteredTasks => List.unmodifiable(_filteredTasks);
   String get selectedCategory => _selectedCategory;
-  
+
   // Advanced Filter Getters
   double? get minBudget => _minBudget;
   double? get maxBudget => _maxBudget;
@@ -75,19 +75,27 @@ class TaskFilterViewModel extends ChangeNotifier {
 
     // 1. Search Query
     if (_searchQuery.isNotEmpty) {
-      results = results.where((task) =>
-          task.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          task.description.toLowerCase().contains(_searchQuery.toLowerCase())
-      ).toList();
+      results = results
+          .where(
+            (task) =>
+                task.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                task.description.toLowerCase().contains(
+                  _searchQuery.toLowerCase(),
+                ),
+          )
+          .toList();
     }
 
     // 2. Category
     if (_selectedCategory.isNotEmpty) {
       // Match category name (e.g., "Design") or category ID
-      results = results.where((task) => 
-        task.category == _selectedCategory || 
-        task.categoryName == _selectedCategory
-      ).toList();
+      results = results
+          .where(
+            (task) =>
+                task.category == _selectedCategory ||
+                task.categoryName == _selectedCategory,
+          )
+          .toList();
     }
 
     // 3. Budget Range

@@ -1,5 +1,3 @@
-
-
 // Minimal MIME helpers without adding external dependencies.
 // Why: avoid importing `package:mime` across the app and keep logic local.
 String guessMimeFromExt(String ext) {

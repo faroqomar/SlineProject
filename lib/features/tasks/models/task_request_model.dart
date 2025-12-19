@@ -48,7 +48,7 @@ class TaskRequest {
   final String? note;
   final TaskRequestStatus status;
   final DateTime createdAt;
-  
+
   // Joined fields from profiles table
   final String? bidderName;
   final String? bidderAvatar;
@@ -74,7 +74,7 @@ class TaskRequest {
     try {
       // Parsing price as int to match DB BIGINT type
       final priceValue = (map['price'] as num).toInt();
-      
+
       // Extract profile data from nested 'profiles' object if it exists (from JOIN)
       final profileData = map['profiles'] as Map<String, dynamic>?;
       final String? parsedBidderName = profileData?['full_name'] as String?;
@@ -93,7 +93,12 @@ class TaskRequest {
         bidderAvatar: parsedBidderAvatar,
       );
     } catch (e, st) {
-      AppLogger.e('Failed to parse TaskRequest', tag: 'Tasks', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to parse TaskRequest',
+        tag: 'Tasks',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
@@ -169,6 +174,16 @@ class TaskRequest {
           other.bidderAvatar == bidderAvatar);
 
   @override
-  int get hashCode =>
-      Object.hash(id, taskId, bidderId, price, days, note, status, createdAt, bidderName, bidderAvatar);
+  int get hashCode => Object.hash(
+    id,
+    taskId,
+    bidderId,
+    price,
+    days,
+    note,
+    status,
+    createdAt,
+    bidderName,
+    bidderAvatar,
+  );
 }

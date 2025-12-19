@@ -52,7 +52,9 @@ class _FiltersModalState extends State<FiltersModal> {
       height: MediaQuery.of(context).size.height * 0.85,
       decoration: BoxDecoration(
         color: colorScheme.cardBackground,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimens.r30)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppDimens.r30),
+        ),
         border: Border(top: BorderSide(color: colorScheme.cardBorder)),
       ),
       child: Column(
@@ -83,13 +85,15 @@ class _FiltersModalState extends State<FiltersModal> {
                   },
                   child: Text(
                     'Reset All',
-                    style: AppTypography.captionBold.copyWith(color: AppColors.teal),
+                    style: AppTypography.captionBold.copyWith(
+                      color: AppColors.teal,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          
+
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: AppDimens.p24),
@@ -97,45 +101,74 @@ class _FiltersModalState extends State<FiltersModal> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Sort By
-                  Text('Sort By', style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.bold, color: colorScheme.text)),
+                  Text(
+                    'Sort By',
+                    style: AppTypography.bodySmall.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.text,
+                    ),
+                  ),
                   const SizedBox(height: AppDimens.p12),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
-                      children: ['Relevance', 'Newest', 'Price: Low to High', 'Price: High to Low'].map((sort) {
-                        final isSelected = _sortBy == sort;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: ChoiceChip(
-                            label: Text(sort),
-                            selected: isSelected,
-                            onSelected: (v) => setState(() => _sortBy = sort),
-                            selectedColor: AppColors.teal,
-                            backgroundColor: colorScheme.inputBackground,
-                            labelStyle: TextStyle(
-                              color: isSelected ? Colors.white : colorScheme.textSecondary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppDimens.r12),
-                              side: BorderSide(color: isSelected ? AppColors.teal : colorScheme.inputBorder),
-                            ),
-                            showCheckmark: false,
-                          ),
-                        );
-                      }).toList(),
+                      children:
+                          [
+                            'Relevance',
+                            'Newest',
+                            'Price: Low to High',
+                            'Price: High to Low',
+                          ].map((sort) {
+                            final isSelected = _sortBy == sort;
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: ChoiceChip(
+                                label: Text(sort),
+                                selected: isSelected,
+                                onSelected: (v) =>
+                                    setState(() => _sortBy = sort),
+                                selectedColor: AppColors.teal,
+                                backgroundColor: colorScheme.inputBackground,
+                                labelStyle: TextStyle(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : colorScheme.textSecondary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimens.r12,
+                                  ),
+                                  side: BorderSide(
+                                    color: isSelected
+                                        ? AppColors.teal
+                                        : colorScheme.inputBorder,
+                                  ),
+                                ),
+                                showCheckmark: false,
+                              ),
+                            );
+                          }).toList(),
                     ),
                   ),
                   const SizedBox(height: AppDimens.p24),
 
                   // Budget Range
-                  Text('Budget Range', style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.bold, color: colorScheme.text)),
+                  Text(
+                    'Budget Range',
+                    style: AppTypography.bodySmall.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.text,
+                    ),
+                  ),
                   Slider(
                     value: _maxBudget,
                     min: 0,
                     max: 5000,
                     activeColor: AppColors.teal,
-                    inactiveColor: colorScheme.textSecondary.withValues(alpha: 0.2),
+                    inactiveColor: colorScheme.textSecondary.withValues(
+                      alpha: 0.2,
+                    ),
                     onChanged: (v) => setState(() {
                       _maxBudget = v;
                       _maxBudgetController.text = v.toInt().toString();
@@ -172,76 +205,124 @@ class _FiltersModalState extends State<FiltersModal> {
                   const SizedBox(height: AppDimens.p24),
 
                   // Delivery Time
-                  Text('Delivery Time', style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.bold, color: colorScheme.text)),
+                  Text(
+                    'Delivery Time',
+                    style: AppTypography.bodySmall.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.text,
+                    ),
+                  ),
                   const SizedBox(height: AppDimens.p12),
                   Wrap(
                     spacing: 8,
-                    children: ['Up to 24h', 'Up to 3 days', 'Up to 7 days', 'Anytime'].map((time) {
-                      final isSelected = _deliveryTimes.contains(time);
-                      return ChoiceChip(
-                        label: Text(time),
-                        selected: isSelected,
-                        onSelected: (v) => setState(() {
-                          if (v) {
-                            _deliveryTimes.add(time);
-                          } else {
-                            _deliveryTimes.remove(time);
-                          }
-                        }),
-                        selectedColor: AppColors.teal,
-                        backgroundColor: colorScheme.inputBackground,
-                        labelStyle: TextStyle(
-                          color: isSelected ? Colors.white : colorScheme.textSecondary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppDimens.r12),
-                          side: BorderSide(color: isSelected ? AppColors.teal : colorScheme.inputBorder),
-                        ),
-                        showCheckmark: false,
-                      );
-                    }).toList(),
+                    children:
+                        [
+                          'Up to 24h',
+                          'Up to 3 days',
+                          'Up to 7 days',
+                          'Anytime',
+                        ].map((time) {
+                          final isSelected = _deliveryTimes.contains(time);
+                          return ChoiceChip(
+                            label: Text(time),
+                            selected: isSelected,
+                            onSelected: (v) => setState(() {
+                              if (v) {
+                                _deliveryTimes.add(time);
+                              } else {
+                                _deliveryTimes.remove(time);
+                              }
+                            }),
+                            selectedColor: AppColors.teal,
+                            backgroundColor: colorScheme.inputBackground,
+                            labelStyle: TextStyle(
+                              color: isSelected
+                                  ? Colors.white
+                                  : colorScheme.textSecondary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppDimens.r12,
+                              ),
+                              side: BorderSide(
+                                color: isSelected
+                                    ? AppColors.teal
+                                    : colorScheme.inputBorder,
+                              ),
+                            ),
+                            showCheckmark: false,
+                          );
+                        }).toList(),
                   ),
                   const SizedBox(height: AppDimens.p24),
 
                   // Seller Level
-                  Text('Seller Level', style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.bold, color: colorScheme.text)),
+                  Text(
+                    'Seller Level',
+                    style: AppTypography.bodySmall.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.text,
+                    ),
+                  ),
                   const SizedBox(height: AppDimens.p12),
                   Column(
-                    children: ['Top Rated Seller', 'Level 2', 'Level 1', 'New Seller'].map((level) {
-                      final isSelected = _sellerLevels.contains(level);
-                      return GestureDetector(
-                        onTap: () => setState(() {
-                          if (isSelected) {
-                            _sellerLevels.remove(level);
-                          } else {
-                            _sellerLevels.add(level);
-                          }
-                        }),
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.all(AppDimens.p12),
-                          decoration: BoxDecoration(
-                            color: isSelected ? AppColors.teal.withValues(alpha: 0.1) : colorScheme.inputBackground,
-                            border: Border.all(color: isSelected ? AppColors.teal : colorScheme.inputBorder),
-                            borderRadius: BorderRadius.circular(AppDimens.r14),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                level,
-                                style: AppTypography.bodySmall.copyWith(
-                                  fontWeight: FontWeight.w500,
-                                  color: isSelected ? AppColors.teal : colorScheme.text,
+                    children:
+                        [
+                          'Top Rated Seller',
+                          'Level 2',
+                          'Level 1',
+                          'New Seller',
+                        ].map((level) {
+                          final isSelected = _sellerLevels.contains(level);
+                          return GestureDetector(
+                            onTap: () => setState(() {
+                              if (isSelected) {
+                                _sellerLevels.remove(level);
+                              } else {
+                                _sellerLevels.add(level);
+                              }
+                            }),
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.all(AppDimens.p12),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.teal.withValues(alpha: 0.1)
+                                    : colorScheme.inputBackground,
+                                border: Border.all(
+                                  color: isSelected
+                                      ? AppColors.teal
+                                      : colorScheme.inputBorder,
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                  AppDimens.r14,
                                 ),
                               ),
-                              if (isSelected) Icon(Icons.check, color: AppColors.teal, size: 18),
-                            ],
-                          ),
-                        ),
-                      );
-                    }).toList(),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    level,
+                                    style: AppTypography.bodySmall.copyWith(
+                                      fontWeight: FontWeight.w500,
+                                      color: isSelected
+                                          ? AppColors.teal
+                                          : colorScheme.text,
+                                    ),
+                                  ),
+                                  if (isSelected)
+                                    Icon(
+                                      Icons.check,
+                                      color: AppColors.teal,
+                                      size: 18,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
                   ),
                 ],
               ),

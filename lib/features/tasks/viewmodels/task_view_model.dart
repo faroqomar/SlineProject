@@ -12,7 +12,7 @@ import '../../../core/services/logger_service.dart';
 /// Each state-changing method calls notifyListeners() only once at the end.
 class TaskViewModel extends ChangeNotifier {
   TaskViewModel({SupabaseClient? client})
-      : _repo = TaskRepository(client ?? Supabase.instance.client);
+    : _repo = TaskRepository(client ?? Supabase.instance.client);
 
   final TaskRepository _repo;
 
@@ -74,8 +74,12 @@ class TaskViewModel extends ChangeNotifier {
       for (final img in _pickedImages) {
         final bytes = await img.readAsBytes();
         final ext = img.path.split('.').last;
-        final path = await TaskImageService()
-            .uploadBytes(bytes: bytes, fileExt: ext, userId: userId, taskId: taskId);
+        final path = await TaskImageService().uploadBytes(
+          bytes: bytes,
+          fileExt: ext,
+          userId: userId,
+          taskId: taskId,
+        );
         uploadedPaths.add(path);
       }
     } catch (e) {
@@ -107,10 +111,10 @@ class TaskViewModel extends ChangeNotifier {
   // ----- Tasks CRUD -----
   Future<void> loadTasks() async {
     if (_isLoading) return; // Prevent duplicate loads
-    
+
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       final list = await _repo.getTasks();
       _tasks
@@ -127,7 +131,7 @@ class TaskViewModel extends ChangeNotifier {
   Future<Task> createTask(Task task) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       final created = await _repo.createTask(task);
       _tasks.insert(0, created);

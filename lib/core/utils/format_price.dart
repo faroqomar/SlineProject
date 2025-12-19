@@ -10,7 +10,11 @@ class PriceFormatter {
   }
 
   /// Format price range (min - max)
-  static String formatPriceRange(double minPrice, double maxPrice, {String currency = 'IQD '}) {
+  static String formatPriceRange(
+    double minPrice,
+    double maxPrice, {
+    String currency = 'IQD ',
+  }) {
     return '${formatPrice(minPrice, currency: currency)} - ${formatPrice(maxPrice, currency: currency)}';
   }
 }

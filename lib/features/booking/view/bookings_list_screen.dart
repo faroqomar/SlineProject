@@ -117,10 +117,7 @@ class _BookingsListView extends StatelessWidget {
 
     return Column(
       children: [
-        _FilterBar(
-          value: filter,
-          onChanged: onFilterChanged,
-        ),
+        _FilterBar(value: filter, onChanged: onFilterChanged),
         Expanded(
           child: ListView.separated(
             padding: const EdgeInsets.all(12),
@@ -134,9 +131,9 @@ class _BookingsListView extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(
-                    color: Theme.of(context)
-                        .dividerColor
-                        .withValues(alpha: 0.2),
+                    color: Theme.of(
+                      context,
+                    ).dividerColor.withValues(alpha: 0.2),
                   ),
                 ),
                 title: Text(
@@ -210,10 +207,7 @@ class _BookingsListView extends StatelessWidget {
 }
 
 class _FilterBar extends StatelessWidget {
-  const _FilterBar({
-    required this.value,
-    required this.onChanged,
-  });
+  const _FilterBar({required this.value, required this.onChanged});
 
   final BookingStatus? value;
   final ValueChanged<BookingStatus?> onChanged;
@@ -231,13 +225,21 @@ class _FilterBar extends StatelessWidget {
             items: const [
               DropdownMenuItem(value: null, child: Text('All')),
               DropdownMenuItem(
-                  value: BookingStatus.pending, child: Text('Pending')),
+                value: BookingStatus.pending,
+                child: Text('Pending'),
+              ),
               DropdownMenuItem(
-                  value: BookingStatus.confirmed, child: Text('Confirmed')),
+                value: BookingStatus.confirmed,
+                child: Text('Confirmed'),
+              ),
               DropdownMenuItem(
-                  value: BookingStatus.completed, child: Text('Completed')),
+                value: BookingStatus.completed,
+                child: Text('Completed'),
+              ),
               DropdownMenuItem(
-                  value: BookingStatus.canceled, child: Text('Canceled')),
+                value: BookingStatus.canceled,
+                child: Text('Canceled'),
+              ),
             ],
             onChanged: onChanged,
           ),

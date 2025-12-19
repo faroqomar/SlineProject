@@ -1,5 +1,3 @@
-
-
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/category_model.dart';
 
@@ -22,10 +20,7 @@ class CategoriesService {
   /// Returns all categories ordered by `name ASC`.
   /// - Optional [search] will filter by name on the client (case-insensitive).
   /// - Limits to [limit] rows (defaults to 200).
-  Future<List<CategoryModel>> getAll({
-    String? search,
-    int limit = 200,
-  }) async {
+  Future<List<CategoryModel>> getAll({String? search, int limit = 200}) async {
     final query = _client
         .from(_table)
         .select()
@@ -64,11 +59,7 @@ class CategoriesService {
     );
     if (local != null && local.id.isNotEmpty) return local;
 
-    final row = await _client
-        .from(_table)
-        .select()
-        .eq('id', id)
-        .maybeSingle();
+    final row = await _client.from(_table).select().eq('id', id).maybeSingle();
 
     if (row == null) return null;
     return CategoryModel.fromJson(row as Map<String, dynamic>);

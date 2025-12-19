@@ -186,7 +186,9 @@ class OfferMessageBubble extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              status == OfferStatus.accepted ? Icons.check_circle : Icons.cancel,
+              status == OfferStatus.accepted
+                  ? Icons.check_circle
+                  : Icons.cancel,
               size: 16,
               color: status == OfferStatus.accepted
                   ? AppColors.lightTeal
@@ -263,21 +265,14 @@ class OfferMessageBubble extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.schedule,
-            size: 16,
-            color: AppColors.gold,
-          ),
+          Icon(Icons.schedule, size: 16, color: AppColors.gold),
           const SizedBox(width: 6),
           Text(
             'Pending Response',
-            style: AppTypography.captionBold.copyWith(
-              color: AppColors.gold,
-            ),
+            style: AppTypography.captionBold.copyWith(color: AppColors.gold),
           ),
         ],
       ),
     );
   }
 }
-

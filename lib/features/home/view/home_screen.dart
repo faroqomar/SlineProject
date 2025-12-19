@@ -33,8 +33,8 @@ class _HomeScreenState extends State<HomeScreen> {
     // Load featured tasks and notify filter controller when screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<HomeViewModel>().loadFeaturedTasks(
-            filterController: context.read<TaskFilterViewModel>(),
-          );
+        filterController: context.read<TaskFilterViewModel>(),
+      );
       // Ensure profile is loaded for the header
       context.read<ProfileViewModel>().loadProfile();
     });
@@ -53,232 +53,268 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       builder: (context, _) {
         return Scaffold(
-          backgroundColor: Colors.transparent, // Allow main gradient to show through
+          backgroundColor:
+              Colors.transparent, // Allow main gradient to show through
           body: Consumer3<HomeViewModel, TaskFilterViewModel, ProfileViewModel>(
-            builder: (context, homeViewModel, filterController, profileVM, child) {
-              // Safe Area padding for the header
-              final topPadding = MediaQuery.of(context).padding.top;
+            builder:
+                (context, homeViewModel, filterController, profileVM, child) {
+                  // Safe Area padding for the header
+                  final topPadding = MediaQuery.of(context).padding.top;
 
-              return RefreshIndicator(
-                onRefresh: () async {
-                  final saved = context.read<SavedTasksViewModel>();
-                  await homeViewModel.refresh(
-                    filterController: filterController,
-                  );
-                  await profileVM.loadProfile();
-                  if (!context.mounted) return;
-                  await saved.refresh();
-                },
-                child: CustomScrollView(
-                  slivers: [
-                    // --- Custom Header Section ---
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          AppDimens.p24,
-                          topPadding + AppDimens.p24,
-                          AppDimens.p24,
-                          AppDimens.p16,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // 1. User Info & Bell
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      final saved = context.read<SavedTasksViewModel>();
+                      await homeViewModel.refresh(
+                        filterController: filterController,
+                      );
+                      await profileVM.loadProfile();
+                      if (!context.mounted) return;
+                      await saved.refresh();
+                    },
+                    child: CustomScrollView(
+                      slivers: [
+                        // --- Custom Header Section ---
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              AppDimens.p24,
+                              topPadding + AppDimens.p24,
+                              AppDimens.p24,
+                              AppDimens.p16,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                // 1. User Info & Bell
                                 Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    SignedAvatar(
-                                      storagePathOrUrl: profileVM.avatarUrl,
-                                      size: 52,
-                                      borderRadius: BorderRadius.circular(AppDimens.r16),
-                                      borderColor: AppColors.offWhite.withValues(alpha: 0.2),
-                                      borderWidth: 2,
-                                    ),
-                                    const SizedBox(width: AppDimens.p12),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                    Row(
                                       children: [
-                                        Text(
-                                          'Good Morning 👋',
-                                          style: AppTypography.bodySmall.copyWith(
-                                            color: colorScheme.textSecondary,
+                                        SignedAvatar(
+                                          storagePathOrUrl: profileVM.avatarUrl,
+                                          size: 52,
+                                          borderRadius: BorderRadius.circular(
+                                            AppDimens.r16,
                                           ),
+                                          borderColor: AppColors.offWhite
+                                              .withValues(alpha: 0.2),
+                                          borderWidth: 2,
                                         ),
-                                        Text(
-                                          profileVM.fullName ?? 'Guest',
-                                          style: AppTypography.h4.copyWith(
-                                            color: colorScheme.text,
-                                          ),
+                                        const SizedBox(width: AppDimens.p12),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Good Morning 👋',
+                                              style: AppTypography.bodySmall
+                                                  .copyWith(
+                                                    color: colorScheme
+                                                        .textSecondary,
+                                                  ),
+                                            ),
+                                            Text(
+                                              profileVM.fullName ?? 'Guest',
+                                              style: AppTypography.h4.copyWith(
+                                                color: colorScheme.text,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ],
+                                    ),
+                                    GestureDetector(
+                                      onTap: () {
+                                        showModalBottomSheet(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder: (_) =>
+                                              const NotificationsModal(),
+                                        );
+                                      },
+                                      child: GlassContainer(
+                                        borderRadius: BorderRadius.circular(
+                                          AppDimens.r16,
+                                        ),
+                                        padding: const EdgeInsets.all(
+                                          AppDimens.p12,
+                                        ),
+                                        child: Icon(
+                                          Icons.notifications_outlined,
+                                          color: colorScheme.text,
+                                          size: AppDimens.p24,
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),
-                                GestureDetector(
-                                  onTap: () {
-                                    showModalBottomSheet(
-                                      context: context,
-                                      isScrollControlled: true,
-                                      backgroundColor: Colors.transparent,
-                                      builder: (_) => const NotificationsModal(),
-                                    );
-                                  },
-                                  child: GlassContainer(
-                                    borderRadius: BorderRadius.circular(AppDimens.r16),
-                                    padding: const EdgeInsets.all(AppDimens.p12),
-                                    child: Icon(
-                                      Icons.notifications_outlined,
-                                      color: colorScheme.text,
-                                      size: AppDimens.p24,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: AppDimens.p24),
+                                const SizedBox(height: AppDimens.p24),
 
-                            // 2. Search & Filter
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: AppTextField(
-                                    hintText: 'Search amazing projects...',
-                                    prefixIcon: Icon(Icons.search, color: colorScheme.textSecondary),
-                                    onChanged: filterController.searchTasks,
-                                  ),
-                                ),
-                                const SizedBox(width: AppDimens.p12),
-                                GestureDetector(
-                                  onTap: () {
-                                    showModalBottomSheet(
-                                      context: context,
-                                      isScrollControlled: true,
-                                      backgroundColor: Colors.transparent,
-                                      builder: (_) => const FiltersModal(),
-                                    );
-                                  },
-                                  child: Container(
-                                    width: 50,
-                                    height: 50,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.teal,
-                                      borderRadius: BorderRadius.circular(AppDimens.r14),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: AppColors.teal.withValues(alpha: 0.3),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 5),
+                                // 2. Search & Filter
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: AppTextField(
+                                        hintText: 'Search amazing projects...',
+                                        prefixIcon: Icon(
+                                          Icons.search,
+                                          color: colorScheme.textSecondary,
                                         ),
-                                      ],
+                                        onChanged: filterController.searchTasks,
+                                      ),
                                     ),
-                                    child: const Icon(Icons.filter_list, color: Colors.white),
+                                    const SizedBox(width: AppDimens.p12),
+                                    GestureDetector(
+                                      onTap: () {
+                                        showModalBottomSheet(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder: (_) => const FiltersModal(),
+                                        );
+                                      },
+                                      child: Container(
+                                        width: 50,
+                                        height: 50,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.teal,
+                                          borderRadius: BorderRadius.circular(
+                                            AppDimens.r14,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: AppColors.teal.withValues(
+                                                alpha: 0.3,
+                                              ),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 5),
+                                            ),
+                                          ],
+                                        ),
+                                        child: const Icon(
+                                          Icons.filter_list,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: AppDimens.p24),
+
+                                // 3. Categories
+                                SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  clipBehavior: Clip.none,
+                                  child: Row(
+                                    children: [
+                                      _buildCategoryChip(
+                                        context,
+                                        label: '✨ All',
+                                        isSelected:
+                                            filterController.selectedCategory ==
+                                            '',
+                                        onTap: () => filterController
+                                            .filterByCategory(''),
+                                      ),
+                                      ...taskCategories.map((category) {
+                                        // Add emoji based on category
+                                        String label = category;
+                                        if (category == 'Design') {
+                                          label = '🎨 Design';
+                                        } else if (category == 'Development') {
+                                          label = '💻 Dev';
+                                        } else if (category == 'Writing') {
+                                          label = '✍️ Writing';
+                                        } else if (category == 'Marketing') {
+                                          label = '🎯 Marketing';
+                                        }
+
+                                        return _buildCategoryChip(
+                                          context,
+                                          label: label,
+                                          isSelected:
+                                              filterController
+                                                  .selectedCategory ==
+                                              category,
+                                          onTap: () => filterController
+                                              .filterByCategory(category),
+                                        );
+                                      }),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: AppDimens.p24),
+                          ),
+                        ),
 
-                            // 3. Categories
-                            SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              clipBehavior: Clip.none,
-                              child: Row(
+                        // --- Task List ---
+                        if (homeViewModel.isLoading)
+                          const SliverFillRemaining(
+                            child: Center(child: CircularProgressIndicator()),
+                          )
+                        else if (filterController.filteredTasks.isEmpty)
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  _buildCategoryChip(
-                                    context,
-                                    label: '✨ All',
-                                    isSelected: filterController.selectedCategory == '',
-                                    onTap: () => filterController.filterByCategory(''),
+                                  Icon(
+                                    Icons.work_outline,
+                                    size: 64,
+                                    color: colorScheme.textSecondary.withValues(
+                                      alpha: 0.5,
+                                    ),
                                   ),
-                                  ...taskCategories.map((category) {
-                                    // Add emoji based on category
-                                    String label = category;
-                                    if (category == 'Design') {
-                                      label = '🎨 Design';
-                                    } else if (category == 'Development') {
-                                      label = '💻 Dev';
-                                    } else if (category == 'Writing') {
-                                      label = '✍️ Writing';
-                                    } else if (category == 'Marketing') {
-                                      label = '🎯 Marketing';
-                                    }
-                                    
-                                    return _buildCategoryChip(
-                                      context,
-                                      label: label,
-                                      isSelected: filterController.selectedCategory == category,
-                                      onTap: () => filterController.filterByCategory(category),
-                                    );
-                                  }),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No tasks found',
+                                    style: AppTypography.h5.copyWith(
+                                      color: colorScheme.textSecondary,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    // --- Task List ---
-                    if (homeViewModel.isLoading)
-                      const SliverFillRemaining(
-                        child: Center(child: CircularProgressIndicator()),
-                      )
-                    else if (filterController.filteredTasks.isEmpty)
-                      SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.work_outline,
-                                size: 64,
-                                color: colorScheme.textSecondary.withValues(alpha: 0.5),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'No tasks found',
-                                style: AppTypography.h5.copyWith(
-                                  color: colorScheme.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    else
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(
-                          AppDimens.p16,
-                          0,
-                          AppDimens.p16,
-                          AppDimens.p100, // Bottom padding for nav bar
-                        ),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final task = filterController.filteredTasks[index];
-                              return TaskCard(
-                                task: task,
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => TaskDetailsScreen(task: task),
-                                    ),
+                          )
+                        else
+                          SliverPadding(
+                            padding: const EdgeInsets.fromLTRB(
+                              AppDimens.p16,
+                              0,
+                              AppDimens.p16,
+                              AppDimens.p100, // Bottom padding for nav bar
+                            ),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  final task =
+                                      filterController.filteredTasks[index];
+                                  return TaskCard(
+                                    task: task,
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              TaskDetailsScreen(task: task),
+                                        ),
+                                      );
+                                    },
                                   );
                                 },
-                              );
-                            },
-                            childCount: filterController.filteredTasks.length,
+                                childCount:
+                                    filterController.filteredTasks.length,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            },
+                      ],
+                    ),
+                  );
+                },
           ),
         );
       },
@@ -316,7 +352,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: AppColors.teal.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
-                    )
+                    ),
                   ]
                 : [],
           ),

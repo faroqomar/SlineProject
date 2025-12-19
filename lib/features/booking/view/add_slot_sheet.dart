@@ -34,7 +34,13 @@ class _AddSlotSheetState extends State<AddSlotSheet> {
     if (!mounted) return;
     if (time == null) return;
     setState(() {
-      _startLocal = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+      _startLocal = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
     });
   }
 
@@ -55,16 +61,22 @@ class _AddSlotSheetState extends State<AddSlotSheet> {
     if (!mounted) return;
     if (time == null) return;
     setState(() {
-      _endLocal = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+      _endLocal = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
     });
   }
 
   Future<void> _submit() async {
     if (_startLocal == null || _endLocal == null) return;
     if (!_endLocal!.isAfter(_startLocal!)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('End must be after start')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('End must be after start')));
       return;
     }
     setState(() => _sending = true);
@@ -80,9 +92,9 @@ class _AddSlotSheetState extends State<AddSlotSheet> {
       if (created != null) {
         widget.onCreated?.call(true);
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Slot created')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Slot created')));
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(vm.slotsError ?? 'Failed to create slot')),
@@ -91,9 +103,9 @@ class _AddSlotSheetState extends State<AddSlotSheet> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _sending = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
@@ -119,9 +131,9 @@ class _AddSlotSheetState extends State<AddSlotSheet> {
                 child: OutlinedButton.icon(
                   onPressed: _pickStart,
                   icon: const Icon(Icons.schedule),
-                  label: Text(_startLocal == null
-                      ? 'Pick start'
-                      : _startLocal.toString()),
+                  label: Text(
+                    _startLocal == null ? 'Pick start' : _startLocal.toString(),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -129,9 +141,9 @@ class _AddSlotSheetState extends State<AddSlotSheet> {
                 child: OutlinedButton.icon(
                   onPressed: _pickEnd,
                   icon: const Icon(Icons.schedule),
-                  label: Text(_endLocal == null
-                      ? 'Pick end'
-                      : _endLocal.toString()),
+                  label: Text(
+                    _endLocal == null ? 'Pick end' : _endLocal.toString(),
+                  ),
                 ),
               ),
             ],

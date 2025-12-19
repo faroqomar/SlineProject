@@ -8,8 +8,8 @@ import '../services/message_service.dart';
 /// to higher layers (ViewModels / Controllers).
 class ChatRepository {
   ChatRepository(SupabaseClient client)
-      : _service = MessageService(client),
-        _client = client;
+    : _service = MessageService(client),
+      _client = client;
 
   final MessageService _service;
   final SupabaseClient _client;
@@ -27,12 +27,11 @@ class ChatRepository {
     String? taskId,
     required String user1Id,
     required String user2Id,
-  }) =>
-      _service.createOrGetConversation(
-        taskId: taskId,
-        user1Id: user1Id,
-        user2Id: user2Id,
-      );
+  }) => _service.createOrGetConversation(
+    taskId: taskId,
+    user1Id: user1Id,
+    user2Id: user2Id,
+  );
 
   Future<String> startConversationByClient({
     String? taskId,
@@ -62,24 +61,24 @@ class ChatRepository {
     int? attachmentSize,
     String? messageType,
     Map<String, dynamic>? payload,
-  }) =>
-      _service.sendMessage(
-        conversationId: conversationId,
-        senderId: senderId,
-        receiverId: receiverId,
-        content: content,
-        attachmentUrl: attachmentUrl,
-        attachmentType: attachmentType,
-        attachmentName: attachmentName,
-        attachmentSize: attachmentSize,
-        messageType: messageType,
-        payload: payload,
-      );
+  }) => _service.sendMessage(
+    conversationId: conversationId,
+    senderId: senderId,
+    receiverId: receiverId,
+    content: content,
+    attachmentUrl: attachmentUrl,
+    attachmentType: attachmentType,
+    attachmentName: attachmentName,
+    attachmentSize: attachmentSize,
+    messageType: messageType,
+    payload: payload,
+  );
 
   // Receipts
   Future<void> markDelivered(String conversationId) =>
       _service.markDelivered(conversationId);
-  Future<void> markSeen(String conversationId) => _service.markSeen(conversationId);
+  Future<void> markSeen(String conversationId) =>
+      _service.markSeen(conversationId);
 
   // Realtime
   Stream<Message?> subscribeToMessages(String conversationId) =>

@@ -8,8 +8,8 @@ import '../services/booking_service.dart';
 /// interface to higher layers (ViewModels / Controllers).
 class BookingRepository {
   BookingRepository(SupabaseClient client)
-      : _service = BookingService(client),
-        _client = client;
+    : _service = BookingService(client),
+      _client = client;
 
   final BookingService _service;
   final SupabaseClient _client;

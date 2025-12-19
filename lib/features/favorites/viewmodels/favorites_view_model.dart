@@ -31,9 +31,16 @@ class FavoritesViewModel extends ChangeNotifier {
     try {
       _items = await service.listFavorites();
       final enriched = await service.listFavoritesWithProfile();
-      _itemsWithProfile = enriched.map((row) => FavoriteWithProfile.fromMap(row)).toList();
+      _itemsWithProfile = enriched
+          .map((row) => FavoriteWithProfile.fromMap(row))
+          .toList();
     } catch (e, st) {
-      AppLogger.e('Failed to load favorites', tag: 'Favorites', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to load favorites',
+        tag: 'Favorites',
+        error: e,
+        stackTrace: st,
+      );
       _setError(_humanizeError(e));
     } finally {
       _setLoading(false);
@@ -48,7 +55,12 @@ class FavoritesViewModel extends ChangeNotifier {
       await service.addFavorite(freelancerId);
       await load();
     } catch (e, st) {
-      AppLogger.e('Failed to add favorite', tag: 'Favorites', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to add favorite',
+        tag: 'Favorites',
+        error: e,
+        stackTrace: st,
+      );
       _setError(_humanizeError(e));
     }
   }
@@ -58,10 +70,17 @@ class FavoritesViewModel extends ChangeNotifier {
     try {
       await service.removeFavorite(freelancerId);
       _items = _items.where((f) => f.freelancerId != freelancerId).toList();
-      _itemsWithProfile = _itemsWithProfile.where((f) => f.freelancerId != freelancerId).toList();
+      _itemsWithProfile = _itemsWithProfile
+          .where((f) => f.freelancerId != freelancerId)
+          .toList();
       notifyListeners();
     } catch (e, st) {
-      AppLogger.e('Failed to remove favorite', tag: 'Favorites', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to remove favorite',
+        tag: 'Favorites',
+        error: e,
+        stackTrace: st,
+      );
       _setError(_humanizeError(e));
     }
   }

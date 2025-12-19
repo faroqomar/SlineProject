@@ -48,7 +48,12 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                     PublicProfileHeader(profile: profile),
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(AppDimens.p24, 50, AppDimens.p24, 100),
+                        padding: const EdgeInsets.fromLTRB(
+                          AppDimens.p24,
+                          50,
+                          AppDimens.p24,
+                          100,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -60,12 +65,18 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                   children: [
                                     Text(
                                       profile.name,
-                                      style: AppTypography.h3.copyWith(color: colorScheme.text),
+                                      style: AppTypography.h3.copyWith(
+                                        color: colorScheme.text,
+                                      ),
                                     ),
                                     if (profile.verified)
                                       Padding(
                                         padding: const EdgeInsets.only(left: 4),
-                                        child: Icon(Icons.check_circle, color: AppColors.lightTeal, size: 20),
+                                        child: Icon(
+                                          Icons.check_circle,
+                                          color: AppColors.lightTeal,
+                                          size: 20,
+                                        ),
                                       ),
                                   ],
                                 ),
@@ -73,7 +84,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                   children: [
                                     _buildIconButton(Icons.share, colorScheme),
                                     const SizedBox(width: 8),
-                                    _buildIconButton(Icons.favorite_border, colorScheme),
+                                    _buildIconButton(
+                                      Icons.favorite_border,
+                                      colorScheme,
+                                    ),
                                   ],
                                 ),
                               ],
@@ -88,11 +102,17 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                Icon(Icons.location_on, size: 14, color: colorScheme.textSecondary),
+                                Icon(
+                                  Icons.location_on,
+                                  size: 14,
+                                  color: colorScheme.textSecondary,
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   profile.location,
-                                  style: AppTypography.micro.copyWith(color: colorScheme.textSecondary),
+                                  style: AppTypography.micro.copyWith(
+                                    color: colorScheme.textSecondary,
+                                  ),
                                 ),
                               ],
                             ),
@@ -102,7 +122,12 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             const SizedBox(height: AppDimens.p24),
 
                             // About
-                            Text('About', style: AppTypography.h5.copyWith(color: colorScheme.text)),
+                            Text(
+                              'About',
+                              style: AppTypography.h5.copyWith(
+                                color: colorScheme.text,
+                              ),
+                            ),
                             const SizedBox(height: AppDimens.p8),
                             Text(
                               profile.bio,
@@ -114,29 +139,45 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             const SizedBox(height: AppDimens.p24),
 
                             // Skills
-                            Text('Skills', style: AppTypography.h5.copyWith(color: colorScheme.text)),
+                            Text(
+                              'Skills',
+                              style: AppTypography.h5.copyWith(
+                                color: colorScheme.text,
+                              ),
+                            ),
                             const SizedBox(height: AppDimens.p8),
                             Wrap(
                               spacing: 8,
                               runSpacing: 8,
                               children: profile.skills.map((skill) {
                                 return Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: colorScheme.cardBackground,
-                                    borderRadius: BorderRadius.circular(AppDimens.r8),
-                                    border: Border.all(color: colorScheme.cardBorder),
+                                    borderRadius: BorderRadius.circular(
+                                      AppDimens.r8,
+                                    ),
+                                    border: Border.all(
+                                      color: colorScheme.cardBorder,
+                                    ),
                                   ),
                                   child: Text(
                                     skill,
-                                    style: AppTypography.captionBold.copyWith(color: colorScheme.text),
+                                    style: AppTypography.captionBold.copyWith(
+                                      color: colorScheme.text,
+                                    ),
                                   ),
                                 );
                               }).toList(),
                             ),
                             const SizedBox(height: AppDimens.p24),
 
-                            PublicProfilePortfolio(portfolio: profile.portfolio),
+                            PublicProfilePortfolio(
+                              portfolio: profile.portfolio,
+                            ),
                             const SizedBox(height: AppDimens.p24),
 
                             PublicProfileReviews(reviews: profile.reviews),
@@ -153,17 +194,27 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                   left: AppDimens.p24,
                   right: AppDimens.p24,
                   child: GlassContainer(
-                    padding: const EdgeInsets.symmetric(horizontal: AppDimens.p8, vertical: AppDimens.p8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimens.p8,
+                      vertical: AppDimens.p8,
+                    ),
                     child: Row(
                       children: [
                         Expanded(
                           child: TextButton.icon(
                             onPressed: () {},
                             icon: Icon(Icons.message, color: colorScheme.text),
-                            label: Text('Message', style: TextStyle(color: colorScheme.text)),
+                            label: Text(
+                              'Message',
+                              style: TextStyle(color: colorScheme.text),
+                            ),
                           ),
                         ),
-                        Container(width: 1, height: 24, color: Colors.grey.withValues(alpha: 0.3)),
+                        Container(
+                          width: 1,
+                          height: 24,
+                          color: Colors.grey.withValues(alpha: 0.3),
+                        ),
                         Expanded(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 8),

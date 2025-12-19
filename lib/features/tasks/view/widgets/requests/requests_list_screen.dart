@@ -10,6 +10,7 @@ class RequestsListScreen extends StatefulWidget {
   final String taskId;
   final bool autoOpenSubmitSheet;
   final bool isTender;
+
   /// True when the viewer is the owner of the task (can accept/reject)
   final bool isOwner;
   final String? budget; // Added budget
@@ -36,6 +37,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
     super.initState();
     _scroll = ScrollController()..addListener(_onScroll);
   }
+
   @override
   void dispose() {
     _scroll.removeListener(_onScroll);
@@ -98,19 +100,21 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
                 onRefresh: () async => c.loadInitial(),
                 child: _buildBody(c),
               ),
-              floatingActionButton: widget.isOwner ? null : FloatingActionButton.extended(
-                onPressed: () {
-                  final prov = _providerCtx ?? context;
-                  showSubmitRequestSheet(
-                    prov,
-                    taskId: widget.taskId,
-                    controller: c,
-                    budget: widget.budget ?? '0',
-                  );
-                },
-                icon: const Icon(Icons.add),
-                label: const Text('New Offer'),
-              ),
+              floatingActionButton: widget.isOwner
+                  ? null
+                  : FloatingActionButton.extended(
+                      onPressed: () {
+                        final prov = _providerCtx ?? context;
+                        showSubmitRequestSheet(
+                          prov,
+                          taskId: widget.taskId,
+                          controller: c,
+                          budget: widget.budget ?? '0',
+                        );
+                      },
+                      icon: const Icon(Icons.add),
+                      label: const Text('New Offer'),
+                    ),
             );
           },
         );
@@ -154,7 +158,8 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
         return RequestTile(
           request: req,
           onAccept: c.canActOn(req) ? () => c.accept(req.id) : null,
-          onReject: c.canActOn(req) ? () => c.reject(req.id) : null, isOwner: widget.isOwner,
+          onReject: c.canActOn(req) ? () => c.reject(req.id) : null,
+          isOwner: widget.isOwner,
         );
       },
     );

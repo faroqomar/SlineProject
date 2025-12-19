@@ -27,7 +27,7 @@ import '../data/booking_repository.dart';
 ///    unnecessary API calls when scrolling past the end.
 class BookingViewModel extends ChangeNotifier {
   BookingViewModel({SupabaseClient? client})
-      : _repo = BookingRepository(client ?? Supabase.instance.client);
+    : _repo = BookingRepository(client ?? Supabase.instance.client);
 
   final BookingRepository _repo;
 
@@ -90,7 +90,11 @@ class BookingViewModel extends ChangeNotifier {
   DateTimeRange? slotsRange;
 
   /// Load first page of slots for a provider.
-  Future<void> loadSlots({required String providerId, DateTime? fromUtc, DateTime? toUtc}) async {
+  Future<void> loadSlots({
+    required String providerId,
+    DateTime? fromUtc,
+    DateTime? toUtc,
+  }) async {
     slotsLoading = true;
     slotsError = null;
     slots.clear();
@@ -212,7 +216,11 @@ class BookingViewModel extends ChangeNotifier {
   }
 
   Future<void> loadMoreBookingsAsClient() async {
-    if (bookingsLoading || bookingsClientCursor == null || !bookingsClientHasMore) return;
+    if (bookingsLoading ||
+        bookingsClientCursor == null ||
+        !bookingsClientHasMore) {
+      return;
+    }
     bookingsLoading = true;
     notifyListeners();
     try {
@@ -243,7 +251,9 @@ class BookingViewModel extends ChangeNotifier {
       final data = await _repo.listBookingsAsProvider(limit: _pageSize);
       bookingsAsProvider.addAll(data);
       if (data.isNotEmpty) {
-        bookingsProviderCursor = data.last.createdAtUtc.toUtc().toIso8601String();
+        bookingsProviderCursor = data.last.createdAtUtc
+            .toUtc()
+            .toIso8601String();
       }
       bookingsProviderHasMore = data.length == _pageSize;
     } catch (e) {
@@ -255,7 +265,11 @@ class BookingViewModel extends ChangeNotifier {
   }
 
   Future<void> loadMoreBookingsAsProvider() async {
-    if (bookingsLoading || bookingsProviderCursor == null || !bookingsProviderHasMore) return;
+    if (bookingsLoading ||
+        bookingsProviderCursor == null ||
+        !bookingsProviderHasMore) {
+      return;
+    }
     bookingsLoading = true;
     notifyListeners();
     try {
@@ -265,7 +279,9 @@ class BookingViewModel extends ChangeNotifier {
       );
       bookingsAsProvider.addAll(data);
       if (data.isNotEmpty) {
-        bookingsProviderCursor = data.last.createdAtUtc.toUtc().toIso8601String();
+        bookingsProviderCursor = data.last.createdAtUtc
+            .toUtc()
+            .toIso8601String();
       }
       bookingsProviderHasMore = data.length == _pageSize;
     } catch (e) {
@@ -276,9 +292,15 @@ class BookingViewModel extends ChangeNotifier {
     }
   }
 
-  Future<bool> updateBookingStatus({required String bookingId, required BookingStatus newStatus}) async {
+  Future<bool> updateBookingStatus({
+    required String bookingId,
+    required BookingStatus newStatus,
+  }) async {
     try {
-      final updated = await _repo.updateBookingStatus(bookingId: bookingId, newStatus: newStatus);
+      final updated = await _repo.updateBookingStatus(
+        bookingId: bookingId,
+        newStatus: newStatus,
+      );
       // Update in-memory lists if present
       int idx = bookingsAsClient.indexWhere((e) => e.id == bookingId);
       if (idx != -1) bookingsAsClient[idx] = updated;
@@ -293,4 +315,3 @@ class BookingViewModel extends ChangeNotifier {
     }
   }
 }
-

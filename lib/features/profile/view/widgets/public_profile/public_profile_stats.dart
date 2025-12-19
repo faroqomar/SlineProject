@@ -25,7 +25,11 @@ class PublicProfileStats extends StatelessWidget {
         children: [
           _buildStatItem('Job Success', profile.jobSuccess, colorScheme),
           _buildDivider(),
-          _buildStatItem('Total Jobs', profile.jobsCompleted.toString(), colorScheme),
+          _buildStatItem(
+            'Total Jobs',
+            profile.jobsCompleted.toString(),
+            colorScheme,
+          ),
           _buildDivider(),
           _buildStatItem('Hourly', profile.hourlyRate, colorScheme),
         ],
@@ -33,7 +37,11 @@ class PublicProfileStats extends StatelessWidget {
     );
   }
 
-  Widget _buildStatItem(String label, String value, AppColorScheme colorScheme) {
+  Widget _buildStatItem(
+    String label,
+    String value,
+    AppColorScheme colorScheme,
+  ) {
     return Expanded(
       child: Column(
         children: [
@@ -56,6 +64,10 @@ class PublicProfileStats extends StatelessWidget {
   }
 
   Widget _buildDivider() {
-    return Container(width: 1, height: 30, color: Colors.grey.withValues(alpha: 0.1));
+    return Container(
+      width: 1,
+      height: 30,
+      color: Colors.grey.withValues(alpha: 0.1),
+    );
   }
 }

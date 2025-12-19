@@ -6,7 +6,6 @@ import '../../../core/utils/format_date.dart';
 import '../viewmodels/booking_view_model.dart';
 import '../models/slot_model.dart';
 
-
 /// Shows provider availability slots, supports pagination, error handling,
 /// and role-based guard for adding new slots (provider-only).
 class AvailabilityScreen extends StatefulWidget {
@@ -36,9 +35,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     super.initState();
     // First load once the widget has a valid context under the global Provider.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<BookingViewModel>().loadSlots(
-        providerId: widget.providerId,
-      );
+      context.read<BookingViewModel>().loadSlots(providerId: widget.providerId);
     });
     // Infinite scroll: fetch more when approaching the bottom.
     _scroll.addListener(() {
@@ -94,21 +91,21 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
                     );
                   }
                 : null,
-                icon: const Icon(Icons.add),
-              ),
-              // Toggle grid/list
-              IconButton(
-                tooltip: _asGrid ? 'List view' : 'Grid view',
-                onPressed: () => setState(() => _asGrid = !_asGrid),
-                icon: Icon(_asGrid ? Icons.view_list : Icons.grid_view),
-              ),
-            ],
+            icon: const Icon(Icons.add),
           ),
-          body: RefreshIndicator(
-            onRefresh: _reload,
-            child: _buildBody(context, vm, isProviderOwner),
+          // Toggle grid/list
+          IconButton(
+            tooltip: _asGrid ? 'List view' : 'Grid view',
+            onPressed: () => setState(() => _asGrid = !_asGrid),
+            icon: Icon(_asGrid ? Icons.view_list : Icons.grid_view),
           ),
-        );
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: _reload,
+        child: _buildBody(context, vm, isProviderOwner),
+      ),
+    );
   }
 
   /// Builds the body with error/empty states, list/grid, and "load more".
@@ -224,7 +221,8 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
             child: Align(
               alignment: Alignment.centerRight,
               child: OutlinedButton.icon(
-                onPressed: () => vm.loadMoreSlots(providerId: widget.providerId),
+                onPressed: () =>
+                    vm.loadMoreSlots(providerId: widget.providerId),
                 icon: const Icon(Icons.more_horiz),
                 label: const Text('Load more'),
               ),
@@ -233,6 +231,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
       ],
     );
   }
+
   void _onTapSlot(BuildContext context, SlotModel slot) {
     showModalBottomSheet(
       context: context,
@@ -247,8 +246,9 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
         isBlocked: slot.isBlocked,
         onSubmitted: () {
           Navigator.of(ctx).pop();
-          ScaffoldMessenger.of(context)
-              .showSnackBar(const SnackBar(content: Text('Booking requested')));
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Booking requested')));
         },
       ),
     );

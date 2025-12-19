@@ -14,7 +14,7 @@ class RequestTile extends StatelessWidget {
   final VoidCallback? onAccept;
   final VoidCallback? onReject;
   final bool isOwner;
-  
+
   /// Optional FavoritesViewModel. If null, favorites will be added via direct
   /// service call (legacy behavior). Prefer providing a ViewModel for testability.
   final FavoritesViewModel? favoritesVM;
@@ -38,7 +38,10 @@ class RequestTile extends StatelessWidget {
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
-        title: Text(priceText, style: const TextStyle(fontWeight: FontWeight.w600)),
+        title: Text(
+          priceText,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
         subtitle: Text(subtitle),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
@@ -79,32 +82,30 @@ class RequestTile extends StatelessWidget {
         if (!context.mounted) return;
         final error = favoritesVM!.error;
         if (error != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(error)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(error)));
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Added to favorites')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Added to favorites')));
         }
       } else {
         // Legacy fallback: Direct service call
         await FavoritesService().addFavorite(request.bidderId);
         if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Added to favorites')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Added to favorites')));
       }
     } catch (e) {
       if (!context.mounted) return;
       final msg = e.toString().contains('23505')
           ? 'Already in favorites'
           : e.toString().toLowerCase().contains('rls')
-              ? 'Not allowed for your role'
-              : 'Failed to add favorite';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg)),
-      );
+          ? 'Not allowed for your role'
+          : 'Failed to add favorite';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     }
   }
 }
