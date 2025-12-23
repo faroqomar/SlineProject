@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/slot_model.dart';
 import '../models/booking_model.dart';
 import '../data/booking_repository.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 
 /// BookingViewModel — MVVM state holder for Booking/Scheduling feature.
 ///
@@ -112,8 +113,13 @@ class BookingViewModel extends ChangeNotifier {
         slotsCursor = data.last.startsAtUtc.toUtc().toIso8601String();
       }
       slotsHasMore = data.length == _pageSize;
+      AppLogger.i(
+        'Loaded ${data.length} slots for provider $providerId',
+        tag: 'Booking',
+      );
     } catch (e) {
       slotsError = _mapError(e);
+      AppLogger.e('Failed to load slots', tag: 'Booking', error: e);
     } finally {
       slotsLoading = false;
       notifyListeners();
@@ -138,6 +144,7 @@ class BookingViewModel extends ChangeNotifier {
       slotsHasMore = data.length == _pageSize;
     } catch (e) {
       slotsError = _mapError(e);
+      AppLogger.e('Failed to load more slots', tag: 'Booking', error: e);
     } finally {
       slotsLoading = false;
       notifyListeners();
@@ -161,9 +168,11 @@ class BookingViewModel extends ChangeNotifier {
       if (providerIdForRefresh != null) {
         await loadSlots(providerId: providerIdForRefresh);
       }
+      AppLogger.i('Created slot: ${slot.id}', tag: 'Booking');
       return slot;
     } catch (e) {
       slotsError = _mapError(e);
+      AppLogger.e('Failed to create slot', tag: 'Booking', error: e);
       notifyListeners();
       return null;
     }
@@ -185,10 +194,12 @@ class BookingViewModel extends ChangeNotifier {
       );
       // Optimistically prepend to client list
       bookingsAsClient.insert(0, b);
+      AppLogger.i('Booked slot ${b.id} for task $taskId', tag: 'Booking');
       notifyListeners();
       return b;
     } catch (e) {
       bookingsError = _mapError(e);
+      AppLogger.e('Failed to book slot', tag: 'Booking', error: e);
       notifyListeners();
       return null;
     }

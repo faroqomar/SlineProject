@@ -22,6 +22,10 @@ class SupabaseConfig {
 
   /// Initialize Supabase SDK - must be called before runApp()
   static Future<void> init() async {
-    await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
+    await Supabase.initialize(
+      url: supabaseUrl,
+      anonKey: supabaseAnonKey,
+      debug: false, // Disable verbose internal logging
+    );
   }
 }

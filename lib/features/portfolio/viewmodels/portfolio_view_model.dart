@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/portfolio_repository.dart';
 import '../models/portfolio_item.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 
 /// PortfolioViewModel — MVVM state holder for Portfolio feature.
 class PortfolioViewModel extends ChangeNotifier {
@@ -66,8 +67,10 @@ class PortfolioViewModel extends ChangeNotifier {
         _cursorCreatedAtIso = _items.last.createdAt.toIso8601String();
       }
       _hasMore = page.length >= pageSize;
+      AppLogger.i('Loaded ${page.length} portfolio items', tag: 'Portfolio');
     } catch (e) {
       _setError(e);
+      AppLogger.e('Failed to load portfolio', tag: 'Portfolio', error: e);
       _hasMore = false;
     } finally {
       _initialLoading = false;
@@ -97,6 +100,11 @@ class PortfolioViewModel extends ChangeNotifier {
       _hasMore = page.length >= pageSize;
     } catch (e) {
       _setError(e);
+      AppLogger.e(
+        'Failed to load more portfolio items',
+        tag: 'Portfolio',
+        error: e,
+      );
       _hasMore = false;
     } finally {
       _loadingMore = false;
@@ -130,10 +138,12 @@ class PortfolioViewModel extends ChangeNotifier {
       if (_cursorCreatedAtIso == null && _items.isNotEmpty) {
         _cursorCreatedAtIso = _items.last.createdAt.toIso8601String();
       }
+      AppLogger.i('Added portfolio item: ${created.id}', tag: 'Portfolio');
       _notify();
       return true;
     } catch (e) {
       _setError(e);
+      AppLogger.e('Failed to add portfolio item', tag: 'Portfolio', error: e);
       _notify();
       return false;
     }
@@ -146,10 +156,12 @@ class PortfolioViewModel extends ChangeNotifier {
       await _repo.deleteItem(id: id, alsoDeleteImage: true);
       final idx = _items.indexWhere((it) => it.id == id);
       if (idx != -1) _items.removeAt(idx);
+      AppLogger.i('Deleted portfolio item: $id', tag: 'Portfolio');
       _notify();
       return true;
     } catch (e) {
       _setError(e);
+      AppLogger.e('Failed to delete item $id', tag: 'Portfolio', error: e);
       _notify();
       return false;
     }
@@ -173,6 +185,7 @@ class PortfolioViewModel extends ChangeNotifier {
       return true;
     } catch (e) {
       _setError(e);
+      AppLogger.e('Failed to update item $id', tag: 'Portfolio', error: e);
       _notify();
       return false;
     }

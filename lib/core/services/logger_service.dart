@@ -1,48 +1,33 @@
 /// Centralized logging utility for clean, filterable console output.
 ///
-/// Why this exists:
-/// 1. Single point of control for log formatting and verbosity
-/// 2. Feature tags for easy filtering (e.g., [Auth], [Chat], [Tasks])
-/// 3. Only logs in debug mode - safe for production
-/// 4. Clean, minimal output that doesn't flood the console
-///
-/// Usage:
-/// ```dart
-/// AppLogger.i('User logged in', tag: 'Auth');
-/// AppLogger.e('Failed to load', tag: 'Tasks', error: e);
-/// AppLogger.api('GET /tasks', 200, tag: 'Tasks');
-/// ```
-///
-/// Configure in main.dart:
-/// ```dart
-/// AppLogger.currentLevel = LogLevel.info;   // Normal (default)
-/// AppLogger.currentLevel = LogLevel.debug;  // Verbose
-/// AppLogger.currentLevel = LogLevel.error;  // Errors only
-/// ```
+/// Features:
+/// 1. JSON Pretty Printing & Token Masking
+/// 2. Feature tags for easy filtering
+/// 3. Clean emojis and time formatting
+/// 4. No raw ANSI codes by default (to prevent console garbage)
 library;
 
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
-/// Logging levels - higher index = more severe, fewer logs shown.
+/// Logging levels - higher index = more severe.
 enum LogLevel { debug, info, warning, error }
 
-/// Centralized logger for the app.
-///
-/// IMPORTANT: Always use this instead of `print()` or direct `Logger()` calls.
 class AppLogger {
-  /// Current log level (default: info). Set in main.dart.
+  /// Current log level (default: info)
   static LogLevel currentLevel = LogLevel.info;
 
-  // ANSI color codes for terminal output
-  static const String _reset = '\x1B[0m';
-  static const String _cyan = '\x1B[36m'; // Debug
-  static const String _green = '\x1B[32m'; // Info
-  static const String _yellow = '\x1B[33m'; // Warning
-  static const String _red = '\x1B[31m'; // Error
-  static const String _gray = '\x1B[90m'; // Timestamp/Tag
-  static const String _blue = '\x1B[34m'; // API
+  /// Enable if your terminal supports ANSI colors.
+  /// Default false to ensure clean output on all platforms.
+  static bool useColors = false;
 
-  /// Format: "HH:mm:ss" for clean timestamps
+  static const String _reset = '\x1B[0m';
+  static const String _cyan = '\x1B[36m';
+  static const String _green = '\x1B[32m';
+  static const String _yellow = '\x1B[33m';
+  static const String _red = '\x1B[31m';
+  static const String _gray = '\x1B[90m';
+
   static String _timestamp() {
     final now = DateTime.now();
     return '${now.hour.toString().padLeft(2, '0')}:'
@@ -50,13 +35,55 @@ class AppLogger {
         '${now.second.toString().padLeft(2, '0')}';
   }
 
-  /// Core log method - all others delegate here.
+  /// Pretty-prints JSON and masks sensitive fields
+  static String _formatJson(dynamic json) {
+    if (json == null) return 'null';
+    try {
+      // Decode if string
+      var data = json;
+      if (json is String) {
+        if (json.trim().startsWith('{') || json.trim().startsWith('[')) {
+          try {
+            data = jsonDecode(json);
+          } catch (_) {
+            return json; // Return raw string if not valid JSON
+          }
+        } else {
+          return json;
+        }
+      }
+
+      // Encode with indentation
+      final encoder = JsonEncoder.withIndent('  ', (object) {
+        if (object.toString().contains('access_token')) return '***MASKED***';
+        return object;
+      });
+
+      String pretty = encoder.convert(data);
+
+      // Manual masking for known keys in the string output
+      pretty = pretty.replaceAll(
+        RegExp(r'"access_token": "[^"]+"'),
+        '"access_token": "***MASKED***"',
+      );
+      pretty = pretty.replaceAll(
+        RegExp(r'"refresh_token": "[^"]+"'),
+        '"refresh_token": "***MASKED***"',
+      );
+
+      return pretty;
+    } catch (e) {
+      return json.toString();
+    }
+  }
+
   static void _log(
     LogLevel level,
     String message, {
     String? tag,
     dynamic error,
     StackTrace? stackTrace,
+    dynamic jsonPayload,
   }) {
     if (!kDebugMode) return;
     if (level.index < currentLevel.index) return;
@@ -68,47 +95,68 @@ class AppLogger {
       LogLevel.error => '❌',
     };
 
-    final color = switch (level) {
-      LogLevel.debug => _cyan,
-      LogLevel.info => _green,
-      LogLevel.warning => _yellow,
-      LogLevel.error => _red,
-    };
+    final color = useColors
+        ? switch (level) {
+            LogLevel.debug => _cyan,
+            LogLevel.info => _green,
+            LogLevel.warning => _yellow,
+            LogLevel.error => _red,
+          }
+        : '';
 
-    final tagStr = tag != null ? '$_gray[$tag]$_reset ' : '';
-    final timeStr = '$_gray${_timestamp()}$_reset';
+    final reset = useColors ? _reset : '';
+    final gray = useColors ? _gray : '';
 
-    // Clean single-line format: "HH:mm:ss [Tag] ✅ Message"
-    debugPrint('$timeStr $tagStr$color$emoji $message$_reset');
+    final tagStr = tag != null ? '$gray[$tag]$reset ' : '';
+    final timeStr = '$gray${_timestamp()}$reset';
 
-    // For errors, print error and first few stack lines
-    if (error != null) {
-      debugPrint('$_red   └─ $error$_reset');
+    // Main line
+    debugPrint('$timeStr $tagStr$color$emoji $message$reset');
+
+    // Optional JSON payload
+    if (jsonPayload != null) {
+      final pretty = _formatJson(jsonPayload);
+      final prefix = useColors ? '$gray  │$reset' : '  │';
+      debugPrint('$prefix JSON Payload:');
+      pretty.split('\n').forEach((line) => debugPrint('$prefix $line'));
     }
+
+    // Errors
+    if (error != null) {
+      final errPrefix = useColors ? '$color  └─$reset' : '  └─';
+      // Attempt to clean up common verbose errors (e.g. Supabase)
+      var errorStr = error.toString();
+      if (errorStr.contains('PostgrestException')) {
+        // Extract basic message to reduce noise
+        final match = RegExp(r'message: (.*?), code:').firstMatch(errorStr);
+        if (match != null) {
+          errorStr = 'DB Error: ${match.group(1)} (Full trace below)';
+        }
+      }
+      debugPrint('$errPrefix $errorStr');
+    }
+
     if (stackTrace != null && level == LogLevel.error) {
-      final lines = stackTrace.toString().split('\n').take(3);
+      final tracePrefix = useColors ? '$gray      $reset' : '      ';
+      final lines = stackTrace.toString().split('\n').take(5);
       for (final line in lines) {
-        debugPrint('$_gray      $line$_reset');
+        debugPrint('$tracePrefix$line');
       }
     }
   }
 
-  /// Debug: Verbose info for development only.
-  static void d(String message, {String? tag}) {
-    _log(LogLevel.debug, message, tag: tag);
+  static void d(String message, {String? tag, dynamic json}) {
+    _log(LogLevel.debug, message, tag: tag, jsonPayload: json);
   }
 
-  /// Info: General app flow, successful operations.
-  static void i(String message, {String? tag}) {
-    _log(LogLevel.info, message, tag: tag);
+  static void i(String message, {String? tag, dynamic json}) {
+    _log(LogLevel.info, message, tag: tag, jsonPayload: json);
   }
 
-  /// Warning: Potential issues, recoverable errors.
-  static void w(String message, {String? tag, dynamic error}) {
-    _log(LogLevel.warning, message, tag: tag, error: error);
+  static void w(String message, {String? tag, dynamic error, dynamic json}) {
+    _log(LogLevel.warning, message, tag: tag, error: error, jsonPayload: json);
   }
 
-  /// Error: Critical failures that need attention.
   static void e(
     String message, {
     String? tag,
@@ -124,8 +172,6 @@ class AppLogger {
     );
   }
 
-  /// API: Log API calls with status codes.
-  /// Usage: AppLogger.api('GET /tasks', 200, tag: 'Tasks');
   static void api(
     String endpoint,
     int? statusCode, {
@@ -135,27 +181,19 @@ class AppLogger {
     if (!kDebugMode || currentLevel.index > LogLevel.info.index) return;
 
     final status = statusCode ?? 0;
-    final color = status >= 200 && status < 300 ? _green : _red;
-    final emoji = status >= 200 && status < 300 ? '🌐' : '🚫';
+    final isSuccess = status >= 200 && status < 300;
+    final emoji = isSuccess ? '🌐' : '🚫';
     final durationStr = duration != null
         ? ' (${duration.inMilliseconds}ms)'
         : '';
-    final tagStr = tag != null ? '$_gray[$tag]$_reset ' : '';
-    final timeStr = '$_gray${_timestamp()}$_reset';
 
-    debugPrint(
-      '$timeStr $tagStr$_blue$emoji$_reset $endpoint $color$status$_reset$durationStr',
+    final color = useColors ? (isSuccess ? _green : _red) : '';
+    final reset = useColors ? _reset : '';
+
+    _log(
+      LogLevel.info,
+      '$color$emoji $endpoint -> $status$reset$durationStr',
+      tag: tag,
     );
-  }
-
-  /// State: Log state changes in ViewModels.
-  /// Usage: AppLogger.state('isLoading', true, tag: 'Auth');
-  static void state(String field, dynamic value, {String? tag}) {
-    if (!kDebugMode || currentLevel != LogLevel.debug) return;
-
-    final tagStr = tag != null ? '$_gray[$tag]$_reset ' : '';
-    final timeStr = '$_gray${_timestamp()}$_reset';
-
-    debugPrint('$timeStr $tagStr$_cyan📊 $field = $value$_reset');
   }
 }

@@ -9,7 +9,6 @@
 
 **A modern, cross-platform freelance marketplace connecting clients with service providers**
 
-[Features](#-features) • [Tech Stack](#-tech-stack) • [Getting Started](#-getting-started) • [Documentation](#-documentation) • [AI Agents](#-ai-agents)
 
 </div>
 
@@ -36,7 +35,7 @@ Two-sided marketplace with:
 
 ---
 
-## ✨ Features
+## Features
 
 ### 🔐 Authentication & Profiles
 - Email/password authentication via Supabase Auth
@@ -95,7 +94,7 @@ Two-sided marketplace with:
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Frontend
 - **Flutter 3.8.1+** — Cross-platform UI framework (iOS, Android, Web, Desktop)
@@ -178,7 +177,7 @@ features/<feature>/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - [Flutter SDK 3.8.1+](https://flutter.dev/docs/get-started/install)
@@ -242,7 +241,7 @@ flutter clean && flutter pub get
 
 ---
 
-## 🤖 AI Agents
+## AI Agents
 
 SLine uses specialized AI agents (in `.cursor/Agents/`) for different tasks:
 
@@ -272,7 +271,7 @@ SLine uses specialized AI agents (in `.cursor/Agents/`) for different tasks:
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 ### 📖 Essential Docs (Start Here)
 
@@ -457,7 +456,5 @@ Private - All Rights Reserved
 <div align="center">
 
 **Built with ❤️ using Flutter & Supabase**
-
-[⬆ Back to Top](#sline--freelance-marketplace-platform)
 
 </div>

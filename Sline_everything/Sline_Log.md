@@ -926,7 +926,7 @@ lib/
 
 ### 📋 Next Priority Features
 
-- [Update] B1 (Categories DB) is provisioned in DB; upcoming step is to switch Task form dropdown to use CategoriesService.
+- **Update** B1 (Categories DB) is provisioned in DB; upcoming step is to switch Task form dropdown to use CategoriesService.
 
 #### Version 1.1 - Task Management System
 

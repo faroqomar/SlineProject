@@ -231,21 +231,21 @@ Tasks are organized in **dependency order** - complete each phase before moving 
 
 - **Issue:** No notification system for status updates
 - **Required notifications:**
-  - [ ] New offer received on your task
-  - [ ] Offer accepted/rejected
-  - [ ] New message received
-  - [ ] Task status changed (assigned, completed, cancelled)
-  - [ ] Booking confirmed/cancelled
-  - [ ] Payment received
-  - [ ] Review received
+  - [x] New offer received on your task
+  - [x] Offer accepted/rejected
+  - [x] New message received
+  - [x] Task status changed (assigned, completed, cancelled)
+  - [x] Booking confirmed/cancelled
+  - [x] Payment received
+  - [x] Review received
 - **Implementation:**
-  - [ ] Create `notifications` table in Supabase
-  - [ ] Create `NotificationService` for CRUD
-  - [ ] Create `NotificationViewModel`
-  - [ ] Implement push notifications (FCM)
-  - [ ] Implement in-app notification center
-  - [ ] Add unread badge to nav icon
-  - [ ] Real-time subscription for new notifications
+  - [x] Create `notifications` table in Supabase
+  - [x] Create `NotificationService` for CRUD
+  - [x] Create `NotificationViewModel`
+  - [x] Implement push notifications (FCM)
+  - [x] Implement in-app notification center
+  - [x] Add unread badge to nav icon
+  - [x] Real-time subscription for new notifications
 - **UI Reference:** `.TODO/New_Design/Notifications/NotificationsModal.tsx`
 
 ### 4.2 Complete Order Flow System (NEW FEATURE)
@@ -358,35 +358,6 @@ Dispute:
 
 ---
 
-## 🧪 PHASE 6: Testing Implementation Strategy
-
-> Comprehensive testing from unit to integration
-
-### 6.1 Phase 1: Core Logic (Unit Tests)
-
-- **Goal:** Verify "brain" works without UI/DB
-- **Tasks:**
-  - [ ] Setup Test Environment (Mockito/Mocktail)
-  - [ ] `AuthViewModel` Tests (Login, Register, Logout)
-  - [ ] `TaskViewModel` Tests (Parsing, Error handling)
-  - [ ] `ProfileViewModel` Tests (Updates)
-
-### 6.2 Phase 2: Critical UI Components (Widget Tests)
-
-- **Goal:** Verify pixels and interactions
-- **Tasks:**
-  - [ ] Reusable Widgets (AppButton, AppTextField, GlassContainer)
-  - [ ] Task Cards (Display data, handle taps)
-  - [ ] Chat Message Bubbles (Styling correctness)
-
-### 6.3 Phase 3: User Flows (Integration Tests)
-
-- **Goal:** Verify complete user journeys
-- **Tasks:**
-  - [ ] Authentication Flow (Start -> Login -> Home)
-  - [ ] Task Creation Flow (Post -> List)
-
----
 
 ## 📝 Additional Items Identified
 
@@ -496,11 +467,7 @@ When you open this file each day:
 - [ ] 5.2 Testing
 - [ ] 5.3 Documentation
 
-### Phase 6: Testing Strategy
 
-- [ ] 6.1 Core Logic (Unit)
-- [ ] 6.2 Critical UI (Widget)
-- [ ] 6.3 User Flows (Integration)
 
 ---
 
