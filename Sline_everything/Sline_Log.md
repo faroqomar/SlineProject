@@ -21,6 +21,46 @@
 
 ## 📋 Version History
 
+### 🟢 Version 2.7.2 — UI Polish: Skeleton Loading & Tab Transitions
+**Date:** 2026-01-02
+**Agent:** @Pixel, @CodeGuard
+**Status:** ✅ Complete
+
+#### ✅ Implemented
+- **Skeleton Loading States**
+  - Created `lib/core/widgets/skeleton_loader.dart` — Reusable shimmer animation base with `SkeletonLoader`, `SkeletonText`, `SkeletonAvatar`.
+  - Created `lib/core/widgets/skeleton_card.dart` — Pre-built skeleton cards:
+    - `SkeletonTaskCard`: Matches `TenderTaskCard` layout (left accent bar, date, title, description, footer).
+    - `SkeletonBookingCard`: Matches `BookingTaskCard` layout (header gradient, overlapping avatar, rating pill, tags, price + button).
+    - `SkeletonOfferCard`, `SkeletonConversationTile`, `SkeletonDetailsScreen`.
+  - Integrated skeleton loading in:
+    - `home_screen.dart` — 5 skeleton cards on initial load.
+    - `tenders_screen.dart` — Uses `Consumer2` with `HomeViewModel.isLoading`.
+    - `bookings_discovery_screen.dart` — Uses `SkeletonBookingCard`.
+    - `requests_list_screen.dart`, `messages_screen.dart`, `bookings_list_screen.dart`.
+
+- **Smooth Tab Transitions**
+  - Updated `main_navigation_screen.dart` — Replaced `IndexedStack` with `AnimatedSwitcher` for fade transitions (250ms, `Curves.easeInOut`).
+
+- **Layout Fixes**
+  - Fixed `task_details_screen.dart` — Refactored to `Column` layout (Header + Scrollable Content + Footer) for correct bottom bar positioning.
+
+#### 📊 Impact
+- **UX**: Loading states now show content-shaped placeholders instead of generic spinners, reducing perceived load time.
+- **Polish**: Tab transitions feel smoother and more premium.
+- **Stability**: Detail screen layouts now correctly anchor bottom bars.
+
+#### 🗂️ Files Touched
+- **New:** `lib/core/widgets/skeleton_loader.dart`, `lib/core/widgets/skeleton_card.dart`
+- **Modified:** `home_screen.dart`, `tenders_screen.dart`, `bookings_discovery_screen.dart`, `main_navigation_screen.dart`, `task_details_screen.dart`, `requests_list_screen.dart`, `messages_screen.dart`, `bookings_list_screen.dart`
+
+#### 🔧 Technical Notes
+- Skeleton cards use theme-aware colors (`colorScheme.cardBackground`, `colorScheme.divider`) for automatic dark/light mode support.
+- `AnimatedSwitcher` uses `KeyedSubtree` with `ValueKey<int>` to trigger transitions on index change.
+- Skeleton animations use `AnimationController` with `AutomaticKeepAliveClientMixin` for smooth shimmer effects.
+
+---
+
 ### 🔧 Version 2.7.1 — CodeGuard Maintenance Audit
 **Date:** 2025-12-19
 **Agent:** @CodeGuard

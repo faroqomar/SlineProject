@@ -233,7 +233,7 @@ Step | Feature | Description | Status
 - **Notification System (Realtime) — ✅ Completed (v2.7)**
 - Theme (M3 Light/Dark) — ⏳ Planned
 
-# 🎯 Summary (v2.4)
+# 🎯 Summary (v2.7.2)
 
 - ✅ Attachments with private storage & signed URLs
 - ✅ Realtime optimized (no full list refetch)
@@ -242,5 +242,7 @@ Step | Feature | Description | Status
 - ✅ **Saved Tasks Feature** (Global State + UI Toggles) (v2.5)
 - ✅ **Forgot Password Flow** (v2.6)
 - ✅ **Notification System** (Realtime + Task Lifecycle) (v2.7)
+- ✅ **Skeleton Loading States** (Home, Tenders, Bookings, Messages) (v2.7.2)
+- ✅ **Smooth Tab Transitions** (AnimatedSwitcher) (v2.7.2)
 - ✅ **iOS stability fixes** (FilePicker, memory optimization)
 - 🔜 Read receipts & requests flow next

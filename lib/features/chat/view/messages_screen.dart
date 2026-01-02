@@ -5,6 +5,7 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/widgets/skeleton_card.dart';
 import '../viewmodels/chat_view_model.dart';
 import '../../chat/models/conversation_model.dart';
 import '../view/chat_screen.dart';
@@ -92,8 +93,16 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
                 // --- List ---
                 if (controller.isLoadingConversations)
-                  const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator()),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimens.p16,
+                    ),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (_, __) => const SkeletonConversationTile(),
+                        childCount: 6,
+                      ),
+                    ),
                   )
                 else if (controller.conversations.isEmpty)
                   SliverFillRemaining(

@@ -61,10 +61,18 @@ class MainNavigationScreen extends StatelessWidget {
               // 2. Phone Background (The "Mockup" inner container)
               Container(color: colorScheme.phoneBackground),
 
-              // 3. Active Screen
-              IndexedStack(
-                index: navigationProvider.currentIndex,
-                children: screens,
+              // 3. Active Screen with smooth fade transition
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                switchInCurve: Curves.easeInOut,
+                switchOutCurve: Curves.easeInOut,
+                transitionBuilder: (child, animation) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                child: KeyedSubtree(
+                  key: ValueKey<int>(navigationProvider.currentIndex),
+                  child: screens[navigationProvider.currentIndex],
+                ),
               ),
 
               // 4. iOS 26 Liquid Glass Bottom Navigation Bar

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/widgets/skeleton_card.dart';
 import '../viewmodels/booking_view_model.dart';
 import '../models/booking_model.dart';
 import '../../../core/utils/format_date.dart';
@@ -101,7 +102,14 @@ class _BookingsListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (loading) {
-      return const Center(child: CircularProgressIndicator());
+      return ListView.builder(
+        padding: const EdgeInsets.all(12),
+        itemCount: 5,
+        itemBuilder: (_, __) => const Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: SkeletonTaskCard(),
+        ),
+      );
     }
     if (error != null) {
       return Center(child: Text('Failed to load: $error'));
@@ -180,7 +188,7 @@ class _BookingsListView extends StatelessWidget {
         if (loading && items.isNotEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
-            child: Center(child: CircularProgressIndicator()),
+            child: SkeletonTaskCard(),
           ),
         if (hasMore && !loading)
           Padding(

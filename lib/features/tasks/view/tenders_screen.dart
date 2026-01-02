@@ -4,6 +4,8 @@ import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/widgets/skeleton_card.dart';
+import 'package:sline_app/features/home/viewmodels/home_view_model.dart';
 import 'package:sline_app/features/tasks/view/task_details_screen.dart';
 import 'package:sline_app/features/tasks/view/widgets/task_card.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
@@ -18,8 +20,8 @@ class TendersScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Consumer<TaskFilterViewModel>(
-        builder: (context, filterVM, child) {
+      body: Consumer2<HomeViewModel, TaskFilterViewModel>(
+        builder: (context, homeVM, filterVM, child) {
           // Filter for Tenders only
           final tenders = filterVM.filteredTasks
               .where((t) => t.isTender)
@@ -57,8 +59,24 @@ class TendersScreen extends StatelessWidget {
                 ),
               ),
 
-              // List
-              if (tenders.isEmpty)
+              // Show skeleton while loading
+              if (homeVM.isLoading)
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppDimens.p16,
+                    0,
+                    AppDimens.p16,
+                    AppDimens.p100,
+                  ),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (_, __) => const SkeletonTaskCard(),
+                      childCount: 5,
+                    ),
+                  ),
+                )
+              // Show empty state
+              else if (tenders.isEmpty)
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: Center(
@@ -83,6 +101,7 @@ class TendersScreen extends StatelessWidget {
                     ),
                   ),
                 )
+              // Show actual tender list
               else
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(

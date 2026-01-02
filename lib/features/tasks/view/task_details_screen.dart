@@ -37,18 +37,41 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
 
     return Scaffold(
       backgroundColor: colorScheme.phoneBackground,
-      body: Stack(
+      body: Column(
         children: [
-          // --- Body Content ---
-          SafeArea(
-            bottom: false, // Let content scroll behind bottom bar
+          // --- Header ---
+          GlassContainer(
+            borderRadius: BorderRadius.zero,
+            padding: EdgeInsets.fromLTRB(
+              AppDimens.p24,
+              MediaQuery.of(context).padding.top + AppDimens.p16,
+              AppDimens.p24,
+              AppDimens.p16,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Icon(
+                    Icons.arrow_back_ios,
+                    color: colorScheme.text,
+                    size: 20,
+                  ),
+                ),
+                Text(
+                  isBooking ? 'Booking Details' : 'Job Details',
+                  style: AppTypography.h5.copyWith(color: colorScheme.text),
+                ),
+                Icon(Icons.share, color: colorScheme.text, size: 20),
+              ],
+            ),
+          ),
+
+          // --- Scrollable Content ---
+          Expanded(
             child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(
-                AppDimens.p24,
-                AppDimens.p80, // Space for header
-                AppDimens.p24,
-                AppDimens.p100, // Space for bottom bar
-              ),
+              padding: const EdgeInsets.all(AppDimens.p24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -189,83 +212,42 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
             ),
           ),
 
-          // --- Header ---
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: ClipRect(
-              child: GlassContainer(
-                borderRadius: BorderRadius.zero, // Full width
-                padding: EdgeInsets.fromLTRB(
-                  AppDimens.p24,
-                  MediaQuery.of(context).padding.top + AppDimens.p16,
-                  AppDimens.p24,
-                  AppDimens.p16,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Icon(
-                        Icons.arrow_back_ios,
-                        color: colorScheme.text,
-                        size: 20,
-                      ),
-                    ),
-                    Text(
-                      isBooking ? 'Booking Details' : 'Job Details',
-                      style: AppTypography.h5.copyWith(color: colorScheme.text),
-                    ),
-                    Icon(Icons.share, color: colorScheme.text, size: 20),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
           // --- Bottom Bar ---
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: GlassContainer(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(AppDimens.r30),
-              ),
-              padding: EdgeInsets.fromLTRB(
-                AppDimens.p24,
-                AppDimens.p16,
-                AppDimens.p24,
-                MediaQuery.of(context).padding.bottom + AppDimens.p16,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: AppButton(
-                      text: _getButtonLabel(isOwner, isTender, isBooking),
-                      onPressed: () => _handlePrimaryAction(
-                        context,
-                        isOwner,
-                        isTender,
-                        isBooking,
-                      ),
+          GlassContainer(
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppDimens.r30),
+            ),
+            padding: EdgeInsets.fromLTRB(
+              AppDimens.p24,
+              AppDimens.p16,
+              AppDimens.p24,
+              MediaQuery.of(context).padding.bottom + AppDimens.p16,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: AppButton(
+                    text: _getButtonLabel(isOwner, isTender, isBooking),
+                    onPressed: () => _handlePrimaryAction(
+                      context,
+                      isOwner,
+                      isTender,
+                      isBooking,
                     ),
                   ),
-                  const SizedBox(width: AppDimens.p12),
-                  Container(
-                    width: 54,
-                    height: 54,
-                    decoration: BoxDecoration(
-                      color: colorScheme.cardBackground,
-                      borderRadius: BorderRadius.circular(AppDimens.r14),
-                      border: Border.all(color: colorScheme.cardBorder),
-                    ),
-                    child: Icon(Icons.favorite_border, color: colorScheme.text),
+                ),
+                const SizedBox(width: AppDimens.p12),
+                Container(
+                  width: 54,
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: colorScheme.cardBackground,
+                    borderRadius: BorderRadius.circular(AppDimens.r14),
+                    border: Border.all(color: colorScheme.cardBorder),
                   ),
-                ],
-              ),
+                  child: Icon(Icons.favorite_border, color: colorScheme.text),
+                ),
+              ],
             ),
           ),
         ],

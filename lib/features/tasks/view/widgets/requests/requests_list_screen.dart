@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/widgets/skeleton_card.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_requests_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'widgets/request_tile.dart';
@@ -124,7 +125,11 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
 
   Widget _buildBody(TaskRequestsViewModel c) {
     if (c.isLoadingInitial) {
-      return const Center(child: CircularProgressIndicator());
+      return ListView.builder(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+        itemCount: 5,
+        itemBuilder: (_, __) => const SkeletonOfferCard(),
+      );
     }
     if (c.errorMessage != null) {
       return Center(
@@ -151,7 +156,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
         if (index >= c.items.length) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
-            child: Center(child: CircularProgressIndicator()),
+            child: SkeletonOfferCard(),
           );
         }
         final TaskRequest req = c.items[index];
