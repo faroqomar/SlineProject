@@ -1,8 +1,0 @@
-{
-  "name": "SLine Freelance Marketplace",
-  "description": "A modern, mobile-first freelance marketplace application featuring task tenders, direct bookings, and real-time messaging with a sleek dark/light mode UI.",
-  "requestFramePermissions": [
-    "camera",
-    "microphone"
-  ]
-}
