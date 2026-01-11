@@ -310,25 +310,21 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
 
   Widget _buildPackageDetails(BuildContext context) {
     final AppColorScheme colorScheme = context.colorScheme;
-    // Mock Data based on tier
-    String price = '\$200';
-    String delivery = '2 Days';
-    String revisions = '1 Revision';
-    String desc =
-        '1-hour video consultation + brief summary report. Perfect for quick questions.';
+    // Real Data from Task
+    String price = 'N/A';
+    String delivery = 'N/A';
+    String revisions = 'N/A';
+    String desc = 'No description provided.';
 
-    if (_selectedPackageTier == 'Standard') {
-      price = '\$450';
-      delivery = '5 Days';
-      revisions = '2 Revisions';
-      desc =
-          '1-hour consultation + code review + detailed architectural roadmap.';
-    } else if (_selectedPackageTier == 'Premium') {
-      price = '\$900';
-      delivery = '10 Days';
-      revisions = 'Unlimited';
-      desc =
-          'Everything in Standard + 5 hours of dedicated implementation support.';
+    if (widget.task.packages != null &&
+        widget.task.packages!.containsKey(_selectedPackageTier)) {
+      final pkg = widget.task.packages![_selectedPackageTier];
+      if (pkg != null) {
+        price = '\$${pkg['price'] ?? '0'}';
+        delivery = '${pkg['delivery'] ?? '0'} Days';
+        revisions = '${pkg['revisions'] ?? '0'} Revisions';
+        desc = pkg['description'] ?? '';
+      }
     }
 
     return GlassContainer(
@@ -418,6 +414,10 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
         arguments: {
           'freelancerId': widget.task.userId,
           'taskId': widget.task.id,
+          'packageTier': _selectedPackageTier,
+          'packagePrice':
+              widget.task.packages?[_selectedPackageTier]?['price'] ?? '0',
+          'packageData': widget.task.packages?[_selectedPackageTier],
         },
       );
     } else {

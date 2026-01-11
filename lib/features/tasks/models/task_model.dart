@@ -183,6 +183,7 @@ class Task {
       'image_paths': imagePaths,
       if (assignedFreelancerId != null)
         'assigned_freelancer_id': assignedFreelancerId,
+      'packages': packages,
     };
     if (includeSystemFields) {
       map['id'] = id;

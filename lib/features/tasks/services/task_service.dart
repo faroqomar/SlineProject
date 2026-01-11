@@ -27,7 +27,7 @@ class TaskService {
   static const String _selectBasic = '''
     id, title, description, budget, user_id, status, task_type,
     category_id, category, created_at, deadline, skills, image_paths,
-    assigned_freelancer_id,
+    assigned_freelancer_id, packages,
     categories(name)
   ''';
 

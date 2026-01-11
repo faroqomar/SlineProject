@@ -11,25 +11,6 @@ This document is the **single source of truth** for all Supabase backend setup: 
 
 ---
 
-## Table of Contents
-
-1. [Quick Reference (TL;DR)](#1-quick-reference-tldr)
-2. [Project Configuration](#2-project-configuration)
-3. [Data Model Overview](#3-data-model-overview)
-4. [Enums](#4-enums)
-5. [Tables](#5-tables)
-6. [Views](#6-views)
-7. [RLS Policies](#7-rls-policies)
-8. [Triggers](#8-triggers)
-9. [Functions & RPC](#9-functions--rpc)
-10. [Indexes](#10-indexes)
-11. [Storage Buckets](#11-storage-buckets)
-12. [Realtime Configuration](#12-realtime-configuration)
-13. [Extensions](#13-extensions)
-14. [Security Advisories](#14-security-advisories)
-15. [Testing & Validation](#15-testing--validation)
-16. [Troubleshooting](#16-troubleshooting)
-17. [Changelog](#17-changelog)
 
 ---
 
@@ -283,6 +264,7 @@ Job postings (tender or booking type).
 | `session_price_bigint` | bigint | ✅ | - | Booking session price |
 | `hour_rate_bigint` | bigint | ✅ | - | Booking hourly rate |
 | `image_paths` | text[] | ✅ | `'{}'` | Storage paths in 'task-images' bucket |
+| `packages` | jsonb | ✅ | - | Booking packages (Basic/Standard/Premium) |
 | `owner_id` | uuid | ✅ | Generated | `COALESCE(client_id, user_id)` |
 | `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
 

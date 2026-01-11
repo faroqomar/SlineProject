@@ -13,6 +13,9 @@ class AvailabilityScreen extends StatefulWidget {
     super.key,
     required this.providerId,
     required this.taskId,
+    this.packageTier,
+    this.packagePrice,
+    this.packageData,
   });
 
   /// Provider (freelancer) id whose availability we display.
@@ -20,6 +23,15 @@ class AvailabilityScreen extends StatefulWidget {
 
   /// Task id that the booking will be tied to.
   final String taskId;
+
+  /// Optional: Selected package tier (e.g., 'Basic', 'Standard')
+  final String? packageTier;
+
+  /// Optional: Price associated with the package
+  final String? packagePrice;
+
+  /// Optional: Full package data
+  final Map<String, dynamic>? packageData;
 
   @override
   State<AvailabilityScreen> createState() => _AvailabilityScreenState();
@@ -241,6 +253,9 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
         slotId: slot.id,
         providerId: widget.providerId,
         taskId: widget.taskId,
+        packageTier: widget.packageTier,
+        packagePrice: widget.packagePrice,
+        packageData: widget.packageData,
         startUtc: slot.startsAtUtc,
         endUtc: slot.endsAtUtc,
         isBlocked: slot.isBlocked,

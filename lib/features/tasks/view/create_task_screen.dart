@@ -30,12 +30,52 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   final _tagsController = TextEditingController(); // Comma separated
   final _budgetController = TextEditingController();
 
-  // Booking Packages State (Visual placeholders for now)
+  // Booking Packages State
   int _selectedPackageTier = 0; // 0: Basic, 1: Standard, 2: Premium
   final _packagePriceController = TextEditingController();
   final _packageDeliveryController = TextEditingController();
   final _packageRevisionsController = TextEditingController();
   final _packageDescriptionController = TextEditingController();
+
+  // Store data for each tier: 0->Basic, 1->Standard, 2->Premium
+  final Map<int, Map<String, String>> _packagesData = {
+    0: {'price': '', 'delivery': '', 'revisions': '', 'description': ''},
+    1: {'price': '', 'delivery': '', 'revisions': '', 'description': ''},
+    2: {'price': '', 'delivery': '', 'revisions': '', 'description': ''},
+  };
+
+  void _loadPackageDataFromModel(Map<String, dynamic> packages) {
+    void loadTier(int tier, String key) {
+      if (packages.containsKey(key)) {
+        final data = packages[key] as Map<String, dynamic>;
+        _packagesData[tier] = {
+          'price': data['price']?.toString() ?? '',
+          'delivery': data['delivery']?.toString() ?? '',
+          'revisions': data['revisions']?.toString() ?? '',
+          'description': data['description']?.toString() ?? '',
+        };
+      }
+    }
+
+    loadTier(0, 'Basic');
+    loadTier(1, 'Standard');
+    loadTier(2, 'Premium');
+
+    // Load initial values for currently selected tier (0)
+    _updateControllersFromState(0);
+  }
+
+  void _updatePackageState(String key, String value) {
+    _packagesData[_selectedPackageTier]?[key] = value;
+  }
+
+  void _updateControllersFromState(int tier) {
+    final data = _packagesData[tier]!;
+    _packagePriceController.text = data['price'] ?? '';
+    _packageDeliveryController.text = data['delivery'] ?? '';
+    _packageRevisionsController.text = data['revisions'] ?? '';
+    _packageDescriptionController.text = data['description'] ?? '';
+  }
 
   // Selection State
   TaskType _selectedTaskType = TaskType.tender;
@@ -60,9 +100,30 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       _selectedCategoryName =
           widget.task!.categoryName ?? widget.task!.category;
       _selectedTaskType = widget.task!.taskType;
-      // Tags not in model yet, ignoring
+
+      // Load packages if exist
+      if (widget.task!.packages != null) {
+        _loadPackageDataFromModel(widget.task!.packages!);
+      }
     }
     _loadCategories();
+
+    // Listeners to sync controllers to state
+    _packagePriceController.addListener(
+      () => _updatePackageState('price', _packagePriceController.text),
+    );
+    _packageDeliveryController.addListener(
+      () => _updatePackageState('delivery', _packageDeliveryController.text),
+    );
+    _packageRevisionsController.addListener(
+      () => _updatePackageState('revisions', _packageRevisionsController.text),
+    );
+    _packageDescriptionController.addListener(
+      () => _updatePackageState(
+        'description',
+        _packageDescriptionController.text,
+      ),
+    );
   }
 
   Future<void> _loadCategories() async {
@@ -134,23 +195,22 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
       Map<String, dynamic>? packages;
       if (_selectedTaskType == TaskType.booking) {
-        // Construct Packages Map (Simplified for single selected tier for now)
-        final currentTierName = [
-          'Basic',
-          'Standard',
-          'Premium',
-        ][_selectedPackageTier];
+        // Construct Packages Map from all tiers
         packages = {
-          currentTierName: {
-            'price': _packagePriceController.text,
-            'delivery': _packageDeliveryController.text,
-            'revisions': _packageRevisionsController.text,
-            'description': _packageDescriptionController.text,
-          },
+          'Basic': _packagesData[0],
+          'Standard': _packagesData[1],
+          'Premium': _packagesData[2],
         };
 
-        // Also update main budget display to match the package price
-        budget = double.tryParse(_packagePriceController.text) ?? 0;
+        // Use lowest package price as "starting at" budget
+        double? minPrice;
+        for (var tierInfo in _packagesData.values) {
+          final p = double.tryParse(tierInfo['price'] ?? '');
+          if (p != null) {
+            if (minPrice == null || p < minPrice) minPrice = p;
+          }
+        }
+        budget = minPrice ?? 0;
       }
 
       final task = Task(
@@ -685,7 +745,10 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
               final isSelected = _selectedPackageTier == index;
               return Expanded(
                 child: GestureDetector(
-                  onTap: () => setState(() => _selectedPackageTier = index),
+                  onTap: () {
+                    setState(() => _selectedPackageTier = index);
+                    _updateControllersFromState(index);
+                  },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(

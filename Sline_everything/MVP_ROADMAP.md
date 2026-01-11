@@ -246,3 +246,21 @@ Step | Feature | Description | Status
 - ✅ **Smooth Tab Transitions** (AnimatedSwitcher) (v2.7.2)
 - ✅ **iOS stability fixes** (FilePicker, memory optimization)
 - 🔜 Read receipts & requests flow next
+
+## 🔹 9) Booking & Payment (v2.8) — ✅ Completed
+
+Step | Feature | Description | Status
+--- | --- | --- | ---
+9.1 | **Booking Packages** | JSONB structure in Tasks for Basic/Standard/Premium tiers | ✅ Completed
+9.2 | **Availability Logic** | Slots overlapping, booking guard triggers | ✅ Completed
+9.3 | **Payment UI** | `PaymentMethodScreen` with Credit Card input (Demo) | ✅ Completed
+9.4 | **Payment Service** | `PaymentService` abstraction + `DemoPaymentService` | ✅ Completed
+9.5 | **Integration** | Booking flow -> Payment -> Confirmed Booking | ✅ Completed
+
+# 🎯 Summary (v2.8)
+
+- ✅ **Booking Packages System** (3-tier pricing)
+- ✅ **Payment Infrastructure** (Demo Service + UI)
+- ✅ **Sentinel Workflow** optimized (Verification only)
+- ✅ **Documentation** fully synced
+- 🔜 Next: Localization & Real Payment Integration

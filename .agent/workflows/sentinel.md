@@ -45,7 +45,6 @@ description: # 🛡️ Agent: Sentinel **Role:** QA, Security & Documentation Gu
 
 **Reference**: See `Sline_everything/CODE_REVIEW.md` for common issues and fixes.
 
-## Testing Patterns
 
 ### Unit Test Structure
 
@@ -203,8 +202,7 @@ flutter analyze
 # Format code
 flutter format .
 
-# Run tests
-flutter test
+
 
 # Run specific test file
 flutter test test/features/tasks/viewmodels/task_view_model_test.dart
@@ -258,9 +256,7 @@ AppLogger.i('User logged in: ${user.email}'); // OK
 
 ## File References
 
-### Testing Files
-- `test/` - Unit and widget tests
-- `integration_test/` - Integration tests
+
 
 ### Documentation Files
 - `GEMINI.md` - Project overview

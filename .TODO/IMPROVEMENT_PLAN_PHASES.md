@@ -8,31 +8,31 @@ This document tracks the step-by-step execution plan for Sline v2.0.
 ## 🏗️ Phase 1: Critical UI & Stability Repairs
 *Fix the "broken windows" first. The app must look and feel broken-free before adding complex logic.*
 
-- [ ] **1.1 Fix Layout Rendering Issues**
-    - [ ] Tender Details Screen: Ensure layout matches design screenshots.
-    - [ ] Booking Details Screen: Fix constrained box/overflow errors.
-- [ ] **1.2 Add Skeleton Loading States**
-    - [ ] Tender Details (replace spinners).
-    - [ ] Booking Details.
-    - [ ] Offers List.
-    - [ ] Chat Thread.
-- [ ] **1.3 Visual Polish**
-    - [ ] Add smooth tab transitions (animations between main tabs).
+- [x] **1.1 Fix Layout Rendering Issues**
+    - [x] Tender Details Screen: Ensure layout matches design screenshots.
+    - [x] Booking Details Screen: Fix constrained box/overflow errors.
+- [x] **1.2 Add Skeleton Loading States**
+    - [x] Tender Details (replace spinners).
+    - [x] Booking Details.
+    - [x] Offers List.
+    - [x] Chat Thread.
+- [x] **1.3 Visual Polish**
+    - [x] Add smooth tab transitions (animations between main tabs).
 
 ---
 
 ## 🔌 Phase 2: Data Wiring & Core Dependencies
 *Ensure the plumbing works. Real data must flow before we build complex flows on top of it.*
 
-- [ ] **2.1 Categories System**
-    - [ ] Ensure "Create Task" properly loads categories from Supabase.
-    - [ ] Ensure selected category is saved correctly to the Task record.
-- [ ] **2.2 Booking Packages**
-    - [ ] Ensure Basic/Standard/Premium packages are stored in Supabase.
-    - [ ] Display package details correctly in the Booking UI.
-- [ ] **2.3 Demo Payment Infrastructure** (Internal Testing Tool)
-    - [ ] Implement `DemoPaymentService` (mock success/failure).
-    - [ ] Ensure architecture allows swapping this for Stripe/Gateway later.
+- [x] **2.1 Categories System**
+    - [x] Ensure "Create Task" properly loads categories from Supabase.
+    - [x] Ensure selected category is saved correctly to the Task record.
+- [x] **2.2 Booking Packages**
+    - [x] Ensure Basic/Standard/Premium packages are stored in Supabase.
+    - [x] Display package details correctly in the Booking UI.
+- [x] **2.3 Demo Payment Infrastructure** (Internal Testing Tool)
+    - [x] Implement `DemoPaymentService` (mock success/failure).
+    - [x] Ensure architecture allows swapping this for Stripe/Gateway later.
 
 ---
 

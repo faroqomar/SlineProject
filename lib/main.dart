@@ -185,7 +185,13 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener> {
                   ),
                 );
               }
-              return AvailabilityScreen(providerId: providerId, taskId: taskId);
+              return AvailabilityScreen(
+                providerId: providerId,
+                taskId: taskId,
+                packageTier: args?['packageTier'] as String?,
+                packagePrice: args?['packagePrice']?.toString(),
+                packageData: args?['packageData'] as Map<String, dynamic>?,
+              );
             },
           },
         );

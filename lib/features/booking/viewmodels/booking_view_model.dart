@@ -4,6 +4,8 @@ import '../models/slot_model.dart';
 import '../models/booking_model.dart';
 import '../data/booking_repository.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/services/payment_service.dart';
+import 'package:sline_app/core/services/demo_payment_service.dart';
 
 /// BookingViewModel — MVVM state holder for Booking/Scheduling feature.
 ///
@@ -27,10 +29,12 @@ import 'package:sline_app/core/services/logger_service.dart';
 /// 5. **hasMore Flags**: Tracks whether more pages are available to prevent
 ///    unnecessary API calls when scrolling past the end.
 class BookingViewModel extends ChangeNotifier {
-  BookingViewModel({SupabaseClient? client})
-    : _repo = BookingRepository(client ?? Supabase.instance.client);
+  BookingViewModel({SupabaseClient? client, PaymentService? paymentService})
+    : _repo = BookingRepository(client ?? Supabase.instance.client),
+      _paymentService = paymentService ?? DemoPaymentService();
 
   final BookingRepository _repo;
+  final PaymentService _paymentService;
 
   static const int _pageSize = 50;
 
@@ -202,6 +206,37 @@ class BookingViewModel extends ChangeNotifier {
       AppLogger.e('Failed to book slot', tag: 'Booking', error: e);
       notifyListeners();
       return null;
+    }
+  }
+
+  // Payment state
+  bool _isProcessingPayment = false;
+  bool get isProcessingPayment => _isProcessingPayment;
+
+  /// Process a payment through the payment service.
+  Future<String?> processPayment({
+    required double amount,
+    required String currency,
+    required String description,
+  }) async {
+    _isProcessingPayment = true;
+    bookingsError = null;
+    notifyListeners();
+    try {
+      final txnId = await _paymentService.processPayment(
+        amount: amount,
+        currency: currency,
+        description: description,
+      );
+      return txnId;
+    } catch (e) {
+      bookingsError = _mapError(e);
+      AppLogger.e('Payment failed', tag: 'Booking', error: e);
+      notifyListeners();
+      return null;
+    } finally {
+      _isProcessingPayment = false;
+      notifyListeners();
     }
   }
 
