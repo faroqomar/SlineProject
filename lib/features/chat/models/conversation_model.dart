@@ -10,6 +10,7 @@ class Conversation {
 
   // Extra fields for display
   final String? taskTitle;
+  final String? taskType; // Added
   final String? user1Name;
   final String? user2Name;
   final String? lastMessage;
@@ -30,6 +31,7 @@ class Conversation {
     required this.user2Id,
     required this.createdAt,
     this.taskTitle,
+    this.taskType,
     this.user1Name,
     this.user2Name,
     this.lastMessage,
@@ -79,7 +81,8 @@ class Conversation {
       user1Id: json['user1_id'] as String,
       user2Id: json['user2_id'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
-      taskTitle: json['task_title'] as String?,
+      taskTitle: json['task_title'] ?? json['tasks']?['title'] as String?,
+      taskType: json['tasks']?['task_type'] as String?, // Parse task_type
       user1Name: json['user1_name'] as String?,
       user2Name: json['user2_name'] as String?,
       lastMessage: lastMessage,
@@ -99,6 +102,7 @@ class Conversation {
       'user2_id': user2Id,
       'created_at': createdAt.toIso8601String(),
       'task_title': taskTitle,
+      'task_type': taskType,
       'user1_name': user1Name,
       'user2_name': user2Name,
       'last_message': lastMessage,

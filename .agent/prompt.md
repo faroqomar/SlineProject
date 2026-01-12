@@ -3,3 +3,11 @@ the refrences :-
 
 alwyes use 
 @workflows for better implamintion
+
+
+in the plan consider putuing what agents you will work with from 
+@.agent/workflows 
+ 
+and alwayes read the documntation 
+@docs 
+and use @mcp:supabase-mcp-server: MCP server if you see its need it

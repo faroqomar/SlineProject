@@ -263,4 +263,11 @@ Step | Feature | Description | Status
 - ✅ **Payment Infrastructure** (Demo Service + UI)
 - ✅ **Sentinel Workflow** optimized (Verification only)
 - ✅ **Documentation** fully synced
+
 - 🔜 Next: Localization & Real Payment Integration
+
+# 🎯 Summary (v2.8.2)
+
+- ✅ **Chat Context UX**: Glassmorphism redesign & Task navigation
+- ✅ **UX Responsiveness**: `LoadingUtils` blocking loader for async actions
+- ✅ **List Polish**: Context row in Conversation Tiles

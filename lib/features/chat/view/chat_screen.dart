@@ -9,6 +9,7 @@ import 'package:sline_app/core/widgets/glass_container.dart';
 
 import '../viewmodels/chat_view_model.dart';
 import '../../chat/models/conversation_model.dart';
+import 'widgets/chat_context_widget.dart'; // Added
 import '../../chat/models/message_model.dart';
 import '../../../core/utils/format_date.dart';
 import '../../../core/services/logger_service.dart';
@@ -191,77 +192,83 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildHeader(BuildContext context, AppColorScheme colorScheme) {
-    return ClipRect(
-      child: GlassContainer(
-        borderRadius: BorderRadius.zero,
-        padding: EdgeInsets.fromLTRB(
-          AppDimens.p8,
-          MediaQuery.of(context).padding.top + AppDimens.p8,
-          AppDimens.p16,
-          AppDimens.p12,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // Back button and name
-            Row(
-              children: [
-                IconButton(
-                  icon: Icon(
-                    Icons.arrow_back_ios,
-                    color: colorScheme.text,
-                    size: 20,
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                Text(
-                  widget.conversation.otherUserName ?? 'Chat',
-                  style: AppTypography.bodyLarge.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.text,
-                  ),
-                ),
-              ],
+    return Column(
+      children: [
+        ClipRect(
+          child: GlassContainer(
+            borderRadius: BorderRadius.zero,
+            padding: EdgeInsets.fromLTRB(
+              AppDimens.p8,
+              MediaQuery.of(context).padding.top + AppDimens.p8,
+              AppDimens.p16,
+              AppDimens.p12,
             ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Back button and name
+                Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        Icons.arrow_back_ios,
+                        color: colorScheme.text,
+                        size: 20,
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    Text(
+                      widget.conversation.otherUserName ?? 'Chat',
+                      style: AppTypography.bodyLarge.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.text,
+                      ),
+                    ),
+                  ],
+                ),
 
-            // Action buttons
-            Row(
-              children: [
-                // Offer button
-                GestureDetector(
-                  onTap: _showCreateOfferModal,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimens.p12,
-                      vertical: AppDimens.p6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.teal,
-                      borderRadius: BorderRadius.circular(AppDimens.r20),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.attach_money,
-                          color: AppColors.white,
-                          size: AppDimens.iconSizeSmall,
+                // Action buttons
+                Row(
+                  children: [
+                    // Offer button
+                    GestureDetector(
+                      onTap: _showCreateOfferModal,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppDimens.p12,
+                          vertical: AppDimens.p6,
                         ),
-                        const SizedBox(width: AppDimens.p4),
-                        Text(
-                          'Offer',
-                          style: AppTypography.captionBold.copyWith(
-                            color: AppColors.white,
-                          ),
+                        decoration: BoxDecoration(
+                          color: AppColors.teal,
+                          borderRadius: BorderRadius.circular(AppDimens.r20),
                         ),
-                      ],
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.attach_money,
+                              color: AppColors.white,
+                              size: AppDimens.iconSizeSmall,
+                            ),
+                            const SizedBox(width: AppDimens.p4),
+                            Text(
+                              'Offer',
+                              style: AppTypography.captionBold.copyWith(
+                                color: AppColors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
-      ),
+        // Context Widget
+        ChatContextWidget(conversation: widget.conversation),
+      ],
     );
   }
 

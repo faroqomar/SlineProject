@@ -165,4 +165,8 @@ class TaskViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<Task?> getTaskById(String taskId) async {
+    return _repo.getTaskById(taskId);
+  }
 }

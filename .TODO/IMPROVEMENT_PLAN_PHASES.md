@@ -39,12 +39,12 @@ This document tracks the step-by-step execution plan for Sline v2.0.
 ## 💬 Phase 3: Communication Infrastructure
 *The backbone of the marketplace. Chat logic first, then notifications link to it.*
 
-- [ ] **3.1 Chat Integration Logic (Foundation)**
-    - [ ] **Booking -> Chat Entry:** Add "Start Conversation" button on Booking Details.
-    - [ ] **Idempotency:** Logic to check `if (chatExists) openIt else createNew`.
-    - [ ] **Context Widget:** Show pinned context at top of chat:
-        - [ ] If Task chat → show Task title + status
-        - [ ] If Booking chat → show Booking date/time + selected package
+- [x] **3.1 Chat Integration Logic (Foundation)**
+    - [x] **Booking -> Chat Entry:** Add "Start Conversation" button on Booking Details.
+    - [x] **Idempotency:** Logic to check `if (chatExists) openIt else createNew`.
+    - [x] **Context Widget:** Show pinned context at top of chat:
+        - [x] If Task chat → show Task title + status
+        - [x] If Booking chat → show Booking date/time + selected package
 - [ ] **3.2 Notification System Fixes**
     - [ ] Fix Deep Links: Tapping "New Offer" -> Opens Offer List.
     - [ ] Fix Deep Links: Tapping "New Message" -> Opens the specific Chat thread (using logic from 3.1).

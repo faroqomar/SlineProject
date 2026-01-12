@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/slot_model.dart';
 import '../models/booking_model.dart';
+import '../../chat/data/chat_repository.dart';
+import '../../chat/models/conversation_model.dart'; // Added
 import '../data/booking_repository.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/services/payment_service.dart';
@@ -31,9 +33,11 @@ import 'package:sline_app/core/services/demo_payment_service.dart';
 class BookingViewModel extends ChangeNotifier {
   BookingViewModel({SupabaseClient? client, PaymentService? paymentService})
     : _repo = BookingRepository(client ?? Supabase.instance.client),
+      _chatRepository = ChatRepository(client ?? Supabase.instance.client),
       _paymentService = paymentService ?? DemoPaymentService();
 
   final BookingRepository _repo;
+  final ChatRepository _chatRepository;
   final PaymentService _paymentService;
 
   static const int _pageSize = 50;
@@ -358,6 +362,39 @@ class BookingViewModel extends ChangeNotifier {
       bookingsError = _mapError(e);
       notifyListeners();
       return false;
+    }
+  }
+  // --- Chat Integration ---
+
+  Future<Conversation?> contactProvider(
+    BookingModel booking,
+    String currentUserId,
+  ) async {
+    try {
+      bookingsLoading = true;
+      notifyListeners();
+
+      // We pass the CLIENT ID and FREELANCER ID explicitly to startConversationByClient.
+      // If current user is Provider, then 'clientId' is the other guy.
+      // If current user is Client, then 'clientId' is ME.
+
+      final String realClientId = booking.clientId;
+      final String realProviderId = booking.providerId;
+
+      final conversation = await _chatRepository.startConversationByClient(
+        taskId: booking.taskId,
+        clientId: realClientId,
+        freelancerId: realProviderId,
+      );
+
+      return conversation;
+    } catch (e) {
+      bookingsError = _mapError(e);
+      notifyListeners();
+      return null;
+    } finally {
+      bookingsLoading = false;
+      notifyListeners();
     }
   }
 }

@@ -279,8 +279,6 @@ SLine uses specialized AI agents (in `.cursor/Agents/`) for different tasks:
 |----------|---------|
 | **[GEMINI.md](./GEMINI.md)** | Project overview, agents, building instructions |
 | **[Sline_everything/DEVELOPER_GUIDE.md](./Sline_everything/DEVELOPER_GUIDE.md)** | System architecture & feature map |
-| **[.cursor/PROJECT_CONTEXT.md](./.cursor/PROJECT_CONTEXT.md)** | Quick reference for development |
-
 ### 📋 Core Documentation
 
 | Document | Description |

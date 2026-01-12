@@ -32,4 +32,6 @@ class TaskRepository {
 
   Future<List<Task>> getTasksByStatus(TaskStatus status) =>
       _service.getTasksByStatus(status);
+
+  Future<Task?> getTaskById(String taskId) => _service.getTaskById(taskId);
 }

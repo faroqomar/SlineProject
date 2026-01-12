@@ -69,6 +69,39 @@ class ConversationListTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Context Row (Task/Booking)
+                  if (conversation.taskTitle != null) ...[
+                    Row(
+                      children: [
+                        Icon(
+                          conversation.taskType == 'booking'
+                              ? Icons.calendar_today
+                              : Icons.assignment_outlined,
+                          size: 10,
+                          color: conversation.taskType == 'booking'
+                              ? AppColors.gold
+                              : AppColors.teal,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            conversation.taskTitle!.toUpperCase(),
+                            style: AppTypography.micro.copyWith(
+                              color: conversation.taskType == 'booking'
+                                  ? AppColors.gold
+                                  : AppColors.teal,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 9,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                  ],
+
                   // Name row with time
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

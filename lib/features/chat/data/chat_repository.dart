@@ -33,7 +33,7 @@ class ChatRepository {
     user2Id: user2Id,
   );
 
-  Future<String> startConversationByClient({
+  Future<Conversation> startConversationByClient({
     String? taskId,
     required String clientId,
     required String freelancerId,
@@ -43,7 +43,7 @@ class ChatRepository {
       user1Id: clientId,
       user2Id: freelancerId,
     );
-    return convo.id;
+    return convo;
   }
 
   // Messages

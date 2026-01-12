@@ -4,6 +4,8 @@ import 'package:sline_app/core/widgets/skeleton_card.dart';
 import '../viewmodels/booking_view_model.dart';
 import '../models/booking_model.dart';
 import '../../../core/utils/format_date.dart';
+import '../../chat/view/chat_screen.dart'; // Added
+import 'package:sline_app/core/theme/app_colors.dart'; // Added
 
 class BookingsListScreen extends StatefulWidget {
   const BookingsListScreen({super.key});
@@ -154,32 +156,52 @@ class _BookingsListView extends StatelessWidget {
                 ),
                 trailing: Wrap(
                   spacing: 8,
-                  children: asProvider
-                      ? [
-                          Tooltip(
-                            message: 'Confirm (coming soon) — provider only',
-                            child: FilledButton(
-                              onPressed: null,
-                              child: const Text('Confirm'),
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.chat_bubble_outline),
+                      color: AppColors.teal,
+                      tooltip: 'Message',
+                      onPressed: () async {
+                        final vm = context.read<BookingViewModel>();
+                        final uid = vm.currentUserId;
+                        if (uid == null) return;
+
+                        final convo = await vm.contactProvider(b, uid);
+                        if (context.mounted && convo != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ChatScreen(conversation: convo),
                             ),
-                          ),
-                          Tooltip(
-                            message: 'Complete (coming soon) — provider only',
-                            child: OutlinedButton(
-                              onPressed: null,
-                              child: const Text('Complete'),
-                            ),
-                          ),
-                        ]
-                      : [
-                          Tooltip(
-                            message: 'Cancel (coming soon) — client only',
-                            child: OutlinedButton(
-                              onPressed: null,
-                              child: const Text('Cancel'),
-                            ),
-                          ),
-                        ],
+                          );
+                        }
+                      },
+                    ),
+                    if (asProvider) ...[
+                      Tooltip(
+                        message: 'Confirm (coming soon) — provider only',
+                        child: FilledButton(
+                          onPressed: null,
+                          child: const Text('Confirm'),
+                        ),
+                      ),
+                      Tooltip(
+                        message: 'Complete (coming soon) — provider only',
+                        child: OutlinedButton(
+                          onPressed: null,
+                          child: const Text('Complete'),
+                        ),
+                      ),
+                    ] else ...[
+                      Tooltip(
+                        message: 'Cancel (coming soon) — client only',
+                        child: OutlinedButton(
+                          onPressed: null,
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               );
             },

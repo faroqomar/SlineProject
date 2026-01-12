@@ -29,7 +29,9 @@ class MessageService {
       try {
         final response = await _client
             .rpc('start_task_conversation_v1', params: {'p_task_id': taskId})
-            .select()
+            .select(
+              '*, tasks(title, task_type), user1:profiles!conversations_user1_id_fkey(full_name, avatar_url), user2:profiles!conversations_user2_id_fkey(full_name, avatar_url)',
+            )
             .single();
         AppLogger.i('🧭 RPC start_task_conversation_v1 returned conversation');
         return Conversation.fromJson(
@@ -129,7 +131,7 @@ class MessageService {
             created_at,
             deleted_at_user1,
             deleted_at_user2,
-            tasks(title),
+            tasks(title, task_type),
             user1:profiles!conversations_user1_id_fkey(full_name, avatar_url),
             user2:profiles!conversations_user2_id_fkey(full_name, avatar_url),
             last_message:messages!conversation_id(content, created_at, seen_at, sender_id)
@@ -172,6 +174,7 @@ class MessageService {
             Conversation.fromJson({
               ...json,
               'task_title': json['tasks']?['title'] ?? 'Untitled Task',
+              'task_type': json['tasks']?['task_type'],
               'user1_name': json['user1']?['full_name'] ?? 'User',
               'user2_name': json['user2']?['full_name'] ?? 'User',
               'other_user_name': otherUser?['full_name'],

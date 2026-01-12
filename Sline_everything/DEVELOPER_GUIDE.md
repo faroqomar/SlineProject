@@ -9,35 +9,7 @@ This comprehensive guide consolidates all feature-specific documentation into a 
 
 ## 📑 Table of Contents
 
-### Part I: System Overview
 
-1. [Project Overview](#1-project-overview)
-2. [Runbook (Local Dev)](#2-runbook-local-dev)
-3. [Architecture (MVVM)](#3-architecture-mvvm-per-feature)
-4. [Data Model (Key Tables)](#4-data-model-key-tables)
-5. [Feature Map](#5-feature-map-where-to-look)
-6. [RLS/Policies](#6-rlspolicies-golden-rules)
-7. [Storage (Buckets)](#7-storage-buckets)
-8. [Error Mapping](#8-error-mapping-common)
-9. [How to Add a New Feature](#9-how-to-add-a-new-feature-playbook)
-10. [Testing & Quality](#10-testing--quality)
-11. [Quick Links](#11-quick-links-deep-dives)
-12. [Gotchas & Tips](#12-gotchas--tips)
-
-### Part II: Feature Deep-Dives
-
-- [Auth Feature](DEVELOPER_GUIDE/Auth%20Feature.md)
-- [Tasks Module](DEVELOPER_GUIDE/Task%20Feature.md)
-- [Orders Feature](DEVELOPER_GUIDE/Orders%20Feature.md)
-- [Chat Feature](DEVELOPER_GUIDE/Chat%20Feature.md)
-- [Booking Feature](DEVELOPER_GUIDE/Booking%20Feature.md)
-- [Profile Feature](DEVELOPER_GUIDE/Profile%20Feature.md)
-- [Portfolio Feature](DEVELOPER_GUIDE/Portfolio%20Feature.md)
-- [Favorites Feature](DEVELOPER_GUIDE/Favorites%20Feature.md)
-- [Saved Feature](DEVELOPER_GUIDE/Saved%20Feature.md)
-- [Categories Feature](DEVELOPER_GUIDE/Categories%20Feature.md)
-- [Home Feature](DEVELOPER_GUIDE/Home%20Feature.md)
-- [Core Module](DEVELOPER_GUIDE/Core%20Module.md)
 
 ---
 
@@ -1230,6 +1202,7 @@ Policies: Buckets are private; reads require signed URLs. Writes require authent
 | `lib/core/services/logger_service.dart` | Utility | Centralized logging (`AppLogger`) with safe formatting. |
 | `lib/core/providers/navigation_provider.dart` | Provider | App-wide bottom navigation state (`ChangeNotifier`). |
 | `lib/core/utils/format_date.dart` | Utility | UTC-to-local formatting (`formatUtcToLocal`, `formatRangeUtcToLocal`). |
+| `lib/core/utils/loading_utils.dart` | Utility | Blocking loading overlay (`show/hide`) for async UI actions. |
 | `lib/core/utils/format_price.dart` | Utility | Integer-to-currency formatting for budgets/prices. |
 | `lib/core/theme/app_colors.dart` | Theme | Material 3 color constants used across features. |
 | `lib/core/widgets/custom_bottom_nav_bar.dart` | Widget | Bottom navigation bar bound to `NavigationProvider`. |
@@ -1735,7 +1708,12 @@ The chat module provides one-to-one messaging between a client and a freelancer.
 
 - UI in `lib/features/chat/view/` stays declarative.
 - `ChatViewModel` orchestrates state, subscriptions, and actions.
+
 - `ChatRepository` wraps `MessageService`, which performs Supabase queries, RPC calls, and Realtime streaming.
+
+**New in v2.8.2**:
+- `ChatContextWidget`: Glassmorphism banner linking chat to its task. Tapping navigates to Task Details.
+- `LoadingUtils`: Used to show blocking loaders during navigation or heavy actions.
 
 ## 2. Database & Supabase Mapping
 
@@ -1809,6 +1787,7 @@ Triggers/Functions
 | `lib/features/chat/viewmodels/chat_view_model.dart` | ViewModel | `ChangeNotifier` managing conversation list, active conversation, message list, subscriptions, and receipts. |
 | `lib/features/chat/view/messages_screen.dart` | View | Conversations list with previews via joined selects. |
 | `lib/features/chat/view/chat_screen.dart` | View | Single conversation UI (messages + composer). |
+| `lib/features/chat/view/widgets/chat_context_widget.dart` | Widget | Glassmorphic banner showing task context + navigation. |
 | `lib/features/chat/models/conversation_model.dart` | Model | Conversation with display fields (other user name/avatar, last message). |
 | `lib/features/chat/models/message_model.dart` | Model | Message with attachments, type, payload, and optional receipt fields. |
 | `lib/features/chat/attachments/` | Submodule | Upload/compress/pick utils and widgets for attachment UX. |

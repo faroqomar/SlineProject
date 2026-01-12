@@ -12,6 +12,9 @@ import 'package:sline_app/features/profile/view/public_profile_screen.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:sline_app/features/tasks/view/widgets/requests/requests_list_screen.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
+import 'package:sline_app/features/chat/view/chat_screen.dart'; // Added
+import 'package:sline_app/core/utils/loading_utils.dart';
+import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart'; // Added
 
 /// Shows details of a task with Glassmorphism design.
 class TaskDetailsScreen extends StatefulWidget {
@@ -225,6 +228,30 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
             ),
             child: Row(
               children: [
+                if (!isOwner) ...[
+                  Container(
+                    width: 54,
+                    height: 54,
+                    decoration: BoxDecoration(
+                      color: colorScheme.cardBackground,
+                      borderRadius: BorderRadius.circular(AppDimens.r14),
+                      border: Border.all(color: colorScheme.cardBorder),
+                    ),
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.chat_bubble_outline,
+                        color: colorScheme.text,
+                      ),
+                      onPressed: () => _handleChatAction(
+                        context,
+                        task.id,
+                        task.userId,
+                        currentUserId,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppDimens.p12),
+                ],
                 Expanded(
                   child: AppButton(
                     text: _getButtonLabel(isOwner, isTender, isBooking),
@@ -253,6 +280,46 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _handleChatAction(
+    BuildContext context,
+    String taskId,
+    String ownerId,
+    String? currentUserId,
+  ) async {
+    if (currentUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You must be logged in to chat.')),
+      );
+      return;
+    }
+
+    final chatVm = context.read<ChatViewModel>();
+    try {
+      LoadingUtils.show(context);
+      final conversation = await chatVm.createOrGetConversation(
+        taskId: taskId,
+        user1Id: currentUserId,
+        user2Id: ownerId,
+      );
+
+      if (!context.mounted) return;
+      LoadingUtils.hide(context);
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(conversation: conversation),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      LoadingUtils.hide(context);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error starting chat: $e')));
+    }
   }
 
   // --- Mock UI Helpers ---
