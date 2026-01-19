@@ -75,6 +75,23 @@ See `Sline_everything/STRUCTURE.md` for complete structure guide.
 
 ---
 
+## 🧠 Specialized Skills (in `.agent/skills/`)
+*These reuseable skill modules can be invoked by agents or directly.*
+
+| Skill | Folder | Purpose |
+|-------|--------|---------|
+| **Architecture Enforcer** | `architecture_guard` | Prevents UI direct-DB calls & MVVM drift. |
+| **Feature Scaffolder** | `feature_scaffolder` | Generates strict MVVM boilerplate (Model, VM, Service, View). |
+| **Supabase Ops** | `supabase_migration` | Generates SQL, RLS Policies, Indexes & Migration Logs. |
+| **CRUD Builder** | `crud_generator` | Builds List, Detail, and Form screens wired to VM. |
+| **Bug Triage** | `bug_fixer` | Systematic workflow: Reproduce → Isolate → Fix → Verify. |
+| **Code Reviewer** | `code_reviewer` | Anti-pattern hunter (Logic leaks, Performance, Naming). |
+| **Commit Helper** | `commit_helper` | Standardizes commit messages & update changelogs. |
+| **Docs Sync** | `docs_sync` | Keeps `DEVELOPER_GUIDE.md` and `STRUCTURE.md` up to date. |
+| **Asset Manager** | `asset_manager` | Type-safe asset management to replace raw strings. |
+
+---
+
 ## 🎯 Project Overview (Version 2.1)
 
 **SLine** is a production-grade freelance marketplace mobile application built with **Flutter** and **Supabase**.
@@ -143,6 +160,7 @@ flutter format .            # Format Code
 - **Theme Truth**: [`lib/core/theme/theme_dashboard.dart`](file:///Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/core/theme/theme_dashboard.dart)
 - **Supabase Config**: [`lib/core/services/supabase_config.dart`](file:///Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/core/services/supabase_config.dart)
 - **Navigation**: [`lib/app/main_navigation_screen.dart`](file:///Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/app/main_navigation_screen.dart)
+- **Commenting**: [`agent/rules/comment_guidelines.md`](file:///Users/eros/Dev/Eros_Projects/Sline/sline_app/.agent/rules/comment_guidelines.md)
 
 ---
 
