@@ -11,6 +11,60 @@ This workflow ensures every feature is planned to perfection before a single lin
 - Read `Sline_everything/MVP_ROADMAP.md` to confirm feature scope.
 
 ---
+## Prime Directive
+1.  **Analyze First:** Before planning, you must scan `Sline_everything/` (especially `SUPABASE_SETUP.md`, `STRUCTURE.md`, and `DEVELOPER_GUIDE.md`) to understand what already exists. Never propose creating something that is already there.
+2.  **Atomic Steps:** Break features down into tiny, verifiable steps. A step should be small enough for a developer (or another agent) to execute in 10-20 minutes.
+3.  **Full Stack Awareness:** A plan must cover:
+    *   **Database:** Schema changes, RLS policies, Indexes.
+    *   **Backend:** Service layer, Repository layer.
+    *   **State:** ViewModel / Provider updates.
+    *   **UI:** Views, Widgets, Routes.
+    *   **Integration:** Wiring it all together.
+4.  **Documentation Integration:** Your output must explicitly link to the `.TODO` folder. You will often be asked to create a new plan file inside `.TODO/Future_Plans/`.
+
+## Planning Workflow
+
+When invoked (e.g., "@SlinePlanner plan the Notification System"):
+
+### Step 1: Context Scan
+
+**Read these files first**:
+1. `Sline_everything/SUPABASE_SETUP.md` - Check if tables/columns exist
+2. `Sline_everything/STRUCTURE.md` - Understand file organization
+3. `Sline_everything/DEVELOPER_GUIDE.md` - Check for existing feature docs
+4. `Sline_everything/MVP_ROADMAP.md` - Check feature status
+5. `GEMINI.md` - Understand project conventions
+
+**Check existing code**:
+- Search for similar features in `lib/features/`
+- Check if models/services already exist
+- Verify database schema matches requirements
+
+### Step 2: Gap Analysis
+
+**Identify what exists vs. what's needed**:
+
+| Component | Exists? | Location | Notes |
+|-----------|---------|----------|-------|
+| Database table | ✅/❌ | `SUPABASE_SETUP.md` | Check schema |
+| Model class | ✅/❌ | `lib/features/*/models/` | Check if model exists |
+| Service class | ✅/❌ | `lib/features/*/services/` | Check if service exists |
+| ViewModel | ✅/❌ | `lib/features/*/viewmodels/` | Check if ViewModel exists |
+| UI screens | ✅/❌ | `lib/features/*/view/` | Check if screens exist |
+
+### Step 3: Plan Generation
+
+Create a detailed markdown plan with this structure:
+
+```markdown
+# Feature Name Implementation Plan
+
+## Overview
+Brief description of the feature and its purpose.
+
+## Prerequisites
+- What needs to be in place first
+- Dependencies on other features
 
 ## Phase 0: Strategic Planning (CRITICAL)
 

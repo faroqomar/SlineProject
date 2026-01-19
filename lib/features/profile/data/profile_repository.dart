@@ -4,6 +4,7 @@ import '../services/avatar_service.dart';
 import '../../tasks/services/task_service.dart';
 import '../../tasks/models/task_model.dart';
 import '../models/profile_model.dart';
+import '../models/freelancer_profile.dart';
 
 /// Repository layer for Profile feature.
 /// Encapsulates all Supabase and storage calls.
@@ -157,5 +158,44 @@ class ProfileRepository {
           fileOptions: FileOptions(contentType: contentType),
         );
     return path;
+  }
+
+  Future<FreelancerProfile> getPublicProfile(String userId) async {
+    // 1. Fetch Profile Data
+    final profileData = await _client
+        .from('profiles')
+        .select()
+        .eq('id', userId)
+        .single();
+    final profileModel = ProfileModel.fromJson(profileData);
+
+    // 2. Fetch Portfolio Items
+    final portfolioData = await _client
+        .from('portfolio_items')
+        .select()
+        .eq('owner_id', userId)
+        .order('created_at', ascending: false);
+
+    final portfolioItems = (portfolioData as List)
+        .map((e) => PortfolioItem.fromJson(e as Map<String, dynamic>))
+        .toList();
+
+    // 3. Mock Reviews (for now, as table doesn't exist)
+    // TODO: Implement reviews table and fetching
+    final reviews = [
+      ReviewItem(
+        client: 'Previous Client',
+        rating: 5.0,
+        comment: 'Great to work with! Delivered on time.',
+        date: '1 month ago',
+      ),
+    ];
+
+    // 4. Construct FreelancerProfile
+    return FreelancerProfile.fromModel(
+      profile: profileModel,
+      portfolio: portfolioItems,
+      reviews: reviews,
+    );
   }
 }

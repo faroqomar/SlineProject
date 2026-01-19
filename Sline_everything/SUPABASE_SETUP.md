@@ -58,7 +58,7 @@ This document is the **single source of truth** for all Supabase backend setup: 
 ### Key Business Rules (Enforced by Triggers)
 
 - ✅ Bids only allowed on `tender` tasks (not `booking`)
-- ✅ DM conversations require `favorites` relationship
+- ❌ DM conversations NO LONGER require `favorites` relationship (Changed v2.1)
 - ✅ Task-linked conversations: non-owner starts chat
 - ✅ Booking status transitions enforced
 - ✅ Slot overlap prevention for providers
@@ -341,7 +341,7 @@ Chat threads between two users (optional task context).
 
 - `user1_id` and `user2_id` are normalized (user1_id < user2_id) by trigger
 - Task-linked conversations: Only non-owner can initiate
-- Direct DMs: Requires favorites relationship
+- Direct DMs: No longer requires favorites relationship (v2.1 update)
 
 ---
 
@@ -1102,7 +1102,7 @@ VALUES ('<provider-uuid>', auth.uid(), '<slot-id>', 'Test booking');
 ### 15.3 Test Conversation Guards
 
 ```sql
--- DM without favorites → should FAIL
+-- DM without favorites → should SUCCEED (Restriction removed v2.1)
 INSERT INTO conversations (user1_id, user2_id, initiated_by)
 VALUES (auth.uid(), '<other-user>', auth.uid());
 

@@ -16,6 +16,8 @@ import 'features/auth/view/login_screen.dart';
 import 'features/home/view/home_screen.dart';
 import 'features/favorites/routes/favorites_routes.dart';
 import 'features/favorites/view/favorites_screen.dart';
+import 'features/favorites/viewmodels/favorites_view_model.dart';
+import 'features/favorites/data/favorites_service.dart';
 import 'features/categories/view/categories_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app/main_navigation_screen.dart';
@@ -111,6 +113,10 @@ class SLineApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => OrdersViewModel()),
         // Notifications state
         ChangeNotifierProvider(create: (_) => NotificationViewModel()),
+        // Favorites state
+        ChangeNotifierProvider(
+          create: (_) => FavoritesViewModel(service: FavoritesService()),
+        ),
       ],
       child: const _AppWithAuthListener(),
     );

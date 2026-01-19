@@ -3,6 +3,7 @@ import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/features/profile/models/freelancer_profile.dart';
 
 class PublicProfileHeader extends StatelessWidget {
@@ -52,10 +53,21 @@ class PublicProfileHeader extends StatelessWidget {
                   width: 4,
                 ),
               ),
-              child: Center(
-                child: Text(
-                  profile.initials,
-                  style: AppTypography.h3.copyWith(color: Colors.black),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppDimens.r20 - 4),
+                child: SignedAvatar(
+                  storagePathOrUrl: profile.avatarUrl,
+                  size: 80,
+                  borderRadius: BorderRadius.circular(AppDimens.r20 - 4),
+                  placeholder: Container(
+                    color: AppColors.gold,
+                    child: Center(
+                      child: Text(
+                        profile.initials,
+                        style: AppTypography.h3.copyWith(color: Colors.black),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),

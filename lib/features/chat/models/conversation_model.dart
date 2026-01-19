@@ -3,7 +3,7 @@ import '../../../core/services/logger_service.dart';
 /// Represents a conversation between two users about a specific task
 class Conversation {
   final String id;
-  final String taskId;
+  final String? taskId;
   final String user1Id;
   final String user2Id;
   final DateTime createdAt;
@@ -26,7 +26,7 @@ class Conversation {
 
   Conversation({
     required this.id,
-    required this.taskId,
+    this.taskId,
     required this.user1Id,
     required this.user2Id,
     required this.createdAt,
@@ -77,7 +77,7 @@ class Conversation {
 
     return Conversation(
       id: json['id'] as String,
-      taskId: json['task_id'] as String,
+      taskId: json['task_id'] as String?,
       user1Id: json['user1_id'] as String,
       user2Id: json['user2_id'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),

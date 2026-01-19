@@ -266,8 +266,9 @@ Step | Feature | Description | Status
 
 - 🔜 Next: Localization & Real Payment Integration
 
-# 🎯 Summary (v2.8.2)
+# 🎯 Summary (v2.8.3)
 
-- ✅ **Chat Context UX**: Glassmorphism redesign & Task navigation
-- ✅ **UX Responsiveness**: `LoadingUtils` blocking loader for async actions
-- ✅ **List Polish**: Context row in Conversation Tiles
+- ✅ **Open Messaging**: Removed "Favorite" restriction (Any-to-Any DM).
+- ✅ **Public Profile Preview**: Modal preview with Bio, Skills, Portfolio.
+- ✅ **Code Refactoring**: `CircleIconButton` component & CodeGuard audit.
+

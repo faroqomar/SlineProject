@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/features/profile/models/profile_model.dart';
+import 'dart:math';
 
 class FreelancerProfile {
   final String id;
@@ -16,6 +18,7 @@ class FreelancerProfile {
   final List<String> skills;
   final List<PortfolioItem> portfolio;
   final List<ReviewItem> reviews;
+  final String? avatarUrl;
 
   const FreelancerProfile({
     required this.id,
@@ -32,75 +35,91 @@ class FreelancerProfile {
     required this.skills,
     required this.portfolio,
     required this.reviews,
+    this.avatarUrl,
   });
 
-  // Factory for mock data
-  factory FreelancerProfile.mock() {
+  factory FreelancerProfile.fromModel({
+    required ProfileModel profile,
+    required List<PortfolioItem> portfolio,
+    List<ReviewItem> reviews = const [],
+  }) {
+    // Extract initials
+    String initials = '';
+    if (profile.fullName != null && profile.fullName!.isNotEmpty) {
+      final parts = profile.fullName!.split(' ');
+      if (parts.length >= 2) {
+        initials = '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+      } else if (parts.isNotEmpty) {
+        initials = parts[0][0].toUpperCase();
+      }
+    }
+
+    // Determine title based on role or skills (mock logic for now as title isn't in DB)
+    String displayTitle = profile.activeRole == 'freelancer'
+        ? 'Freelancer'
+        : 'Client';
+    if (profile.skills.isNotEmpty) {
+      displayTitle = profile.skills.first;
+    }
+
     return FreelancerProfile(
-      id: 'mock-1',
-      initials: 'SM',
-      name: 'Sarah Miller',
-      verified: true,
-      online: true,
-      title: 'Full Stack Developer',
-      location: 'Toronto, Canada',
-      jobSuccess: '98%',
-      jobsCompleted: 142,
-      hourlyRate: '\$65/hr',
-      bio:
-          'Award-winning developer with 7+ years of experience crafting scalable web applications. I specialize in React, Node.js, and Flutter.',
-      skills: ['Flutter', 'React', 'Node.js', 'Firebase', 'UI/UX'],
-      portfolio: [
-        PortfolioItem(
-          title: 'E-commerce App',
-          category: 'Mobile App',
-          color: AppColors.teal,
-        ),
-        PortfolioItem(
-          title: 'SaaS Dashboard',
-          category: 'Web App',
-          color: AppColors.gold,
-        ),
-        PortfolioItem(
-          title: 'Finance Wallet',
-          category: 'Fintech',
-          color: AppColors.lightRed,
-        ),
-        PortfolioItem(
-          title: 'Social Network',
-          category: 'Mobile App',
-          color: AppColors.lightTeal,
-        ),
-      ],
-      reviews: [
-        ReviewItem(
-          client: 'Nexus Corp',
-          rating: 5,
-          comment:
-              'Sarah is incredibly talented! She delivered a stunning app.',
-          date: '2 weeks ago',
-        ),
-        ReviewItem(
-          client: 'TechFlow Inc',
-          rating: 5,
-          comment: 'Professional, fast, and high quality. Highly recommended.',
-          date: '1 month ago',
-        ),
-      ],
+      id: profile.id,
+      initials: initials,
+      name: profile.fullName ?? 'Unknown User',
+      verified: profile.email != null, // Simple proxy for verification
+      online: false, // Placeholder
+      title: displayTitle,
+      location: 'Remote', // Placeholder
+      jobSuccess: '100%', // Placeholder
+      jobsCompleted: 0, // Placeholder
+      hourlyRate: '-', // Placeholder
+      bio: profile.bio ?? 'No bio available.',
+      skills: profile.skills,
+      portfolio: portfolio,
+      reviews: reviews,
+      avatarUrl: profile.avatarUrl,
     );
   }
+
+  // Keeping mock for testing/previews if needed, but updated to use new structure if necessary
 }
 
 class PortfolioItem {
+  final String id;
   final String title;
   final String category;
   final Color color;
+  final String? imageUrl;
+  final String? description;
 
   const PortfolioItem({
+    required this.id,
     required this.title,
     required this.category,
     required this.color,
+    this.imageUrl,
+    this.description,
   });
+
+  factory PortfolioItem.fromJson(Map<String, dynamic> json) {
+    // Assign a random color for UI variation
+    final colors = [
+      AppColors.teal,
+      AppColors.gold,
+      AppColors.lightRed,
+      AppColors.lightTeal,
+    ];
+    final color = colors[Random().nextInt(colors.length)];
+
+    return PortfolioItem(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      category: 'Project', // Placeholder as not in DB
+      color: color,
+      imageUrl: json['image_url'] as String?,
+      description: json['description'] as String?,
+    );
+  }
 }
 
 class ReviewItem {

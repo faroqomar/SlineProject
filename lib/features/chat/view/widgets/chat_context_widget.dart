@@ -20,7 +20,7 @@ class ChatContextWidget extends StatelessWidget {
 
   Future<void> _handleTap(BuildContext context) async {
     final taskId = conversation.taskId;
-    if (taskId.isEmpty) return;
+    if (taskId == null || taskId.isEmpty) return;
 
     final taskVm = context.read<TaskViewModel>();
 
@@ -56,7 +56,8 @@ class ChatContextWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (conversation.taskId.isEmpty ||
+    if (conversation.taskId == null ||
+        conversation.taskId!.isEmpty ||
         conversation.taskId == '00000000-0000-0000-0000-000000000000') {
       return const SizedBox.shrink();
     }

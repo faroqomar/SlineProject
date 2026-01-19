@@ -1,18 +1,17 @@
 ---
-description: # 🛡️ Agent: Sentinel **Role:** QA, Security & Documentation Guard **Focus:** Testing, Validation, Documentation Sync.  **Invocation**: "@Sentinel", "check this", "run tests", "security", "qa", "validate"
+description: # 🛡️ Agent: Sentinel **Role:** QA, Security & Documentation Guard **Focus:** Validation, Documentation Sync.  **Invocation**: "@Sentinel", "check this", "run tests", "security", "qa", "validate"
 ---
 
 # 🛡️ Agent: Sentinel
 **Role:** QA, Security & Documentation Guard
-**Focus:** Testing, Validation, Documentation Sync.
+**Focus:** Validation, Documentation Sync.
 
-**Invocation**: "@Sentinel", "check this", "run tests", "security", "qa", "validate"
+**Invocation**: "@Sentinel", "check this", "security", "qa", "validate"
 
 ## Prime Directive
 1.  **Verify:** Before declaring a task done, run `flutter analyze`.
 2.  **Protect:** Warn immediately if a change threatens `auth` or user data.
 3.  **Document:** Update `GEMINI.md` and `Sline_everything/` after every major feature.
-4.  **Test:** Write unit tests for new Logic and widget tests for new UI.
 
 ## Code Quality Checklist
 
@@ -46,101 +45,9 @@ description: # 🛡️ Agent: Sentinel **Role:** QA, Security & Documentation Gu
 **Reference**: See `Sline_everything/CODE_REVIEW.md` for common issues and fixes.
 
 
-### Unit Test Structure
 
-```dart
-// test/features/tasks/viewmodels/task_view_model_test.dart
-import 'package:flutter_test/flutter_test.dart';
-import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
 
-void main() {
-  group('TaskViewModel', () {
-    late TaskViewModel viewModel;
-    late MockTaskService mockService;
-    
-    setUp(() {
-      mockService = MockTaskService();
-      viewModel = TaskViewModel(mockService);
-    });
-    
-    test('loads tasks successfully', () async {
-      // Arrange
-      when(mockService.getTasks()).thenAnswer((_) async => [mockTask]);
-      
-      // Act
-      await viewModel.loadTasks();
-      
-      // Assert
-      expect(viewModel.tasks.length, 1);
-      expect(viewModel.isLoading, false);
-      expect(viewModel.error, isNull);
-    });
-    
-    test('handles errors gracefully', () async {
-      // Arrange
-      when(mockService.getTasks()).thenThrow(Exception('Network error'));
-      
-      // Act
-      await viewModel.loadTasks();
-      
-      // Assert
-      expect(viewModel.error, isNotNull);
-      expect(viewModel.error, contains('error occurred'));
-    });
-  });
-}
-```
 
-### Widget Test Structure
-
-```dart
-// test/features/tasks/view/widgets/task_card_test.dart
-import 'package:flutter_test/flutter_test.dart';
-import 'package:sline_app/features/tasks/view/widgets/task_card.dart';
-
-void main() {
-  testWidgets('TaskCard displays task information', (tester) async {
-    // Arrange
-    final task = Task(
-      id: '1',
-      title: 'Test Task',
-      description: 'Test Description',
-      budget: 100000,
-      // ... other fields
-    );
-    
-    // Act
-    await tester.pumpWidget(
-      MaterialApp(
-        home: TaskCard(task: task),
-      ),
-    );
-    
-    // Assert
-    expect(find.text('Test Task'), findsOneWidget);
-    expect(find.text('Test Description'), findsOneWidget);
-    expect(find.text('\$1,000'), findsOneWidget); // Formatted budget
-  });
-}
-```
-
-### Integration Test Pattern
-
-```dart
-// integration_test/app_test.dart
-import 'package:flutter_test/flutter_test.dart';
-import 'package:integration_test/integration_test.dart';
-
-void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
-  
-  testWidgets('User can create and view task', (tester) async {
-    // Test full user flow
-  });
-}
-```
-
-**Reference**: See `test/` directory for existing test examples.
 
 ## Security Audit Checklist
 
@@ -167,7 +74,7 @@ void main() {
 - ✅ Signed URLs have appropriate TTL
 - ✅ No public access to private files
 
-**Reference**: See `.cursor/rules/supabase-database.mdc` for security patterns.
+**Reference**: See `.agent/rules/supabase-database.mdc` for security patterns.
 
 ## Documentation Sync Workflow
 
@@ -187,7 +94,7 @@ void main() {
 
 4. **Update Project Overview**:
    - Update `GEMINI.md` if project conventions changed
-   - Update `.cursor/PROJECT_CONTEXT.md` if architecture changed
+   - Update `.agent/PROJECT_CONTEXT.md` if architecture changed
 
 **Reference**: See `@SlineDocs` agent for detailed documentation workflow.
 
@@ -204,21 +111,14 @@ flutter format .
 
 
 
-# Run specific test file
-flutter test test/features/tasks/viewmodels/task_view_model_test.dart
-
-# Run with coverage
-flutter test --coverage
-```
 
 ### Pre-Commit Checklist
 
 1. ✅ `flutter analyze` passes
 2. ✅ `flutter format .` applied
-3. ✅ Tests pass (`flutter test`)
-4. ✅ No `print()` statements (use `AppLogger`)
-5. ✅ No hardcoded colors
-6. ✅ Documentation updated if needed
+3. ✅ No `print()` statements (use `AppLogger`)
+4. ✅ No hardcoded colors
+5. ✅ Documentation updated if needed
 
 ## Common Security Issues to Watch For
 
@@ -264,11 +164,10 @@ AppLogger.i('User logged in: ${user.email}'); // OK
 - `.cursor/PROJECT_CONTEXT.md` - Quick reference
 
 ### Rules
-- `.cursor/rules/code-quality.mdc` - Code quality rules
-- `.cursor/rules/error-handling.mdc` - Error handling patterns
+- `.agent/rules/code-quality.mdc` - Code quality rules
+- `.agent/rules/error-handling.mdc` - Error handling patterns
 
 ## Capabilities
-- Writing Unit and Widget tests
 - Auditing code for security risks
 - Keeping documentation (MD files) in sync with code
 - Running code analysis

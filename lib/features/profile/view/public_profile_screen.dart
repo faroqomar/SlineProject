@@ -7,10 +7,17 @@ import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
 import 'package:sline_app/features/profile/viewmodels/public_profile_view_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sline_app/features/profile/data/profile_repository.dart';
 import 'widgets/public_profile/public_profile_header.dart';
 import 'widgets/public_profile/public_profile_stats.dart';
 import 'widgets/public_profile/public_profile_portfolio.dart';
 import 'widgets/public_profile/public_profile_reviews.dart';
+import 'package:sline_app/core/widgets/circle_icon_button.dart';
+import 'package:sline_app/features/chat/view/chat_screen.dart';
+import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
+import 'package:sline_app/core/utils/loading_utils.dart';
+import 'package:sline_app/features/favorites/viewmodels/favorites_view_model.dart';
 
 class PublicProfileScreen extends StatefulWidget {
   final String userId;
@@ -27,7 +34,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     final AppColorScheme colorScheme = context.colorScheme;
 
     return ChangeNotifierProvider(
-      create: (_) => PublicProfileViewModel()..loadProfile(widget.userId),
+      create: (_) =>
+          PublicProfileViewModel(ProfileRepository(Supabase.instance.client))
+            ..loadProfile(widget.userId),
       child: Scaffold(
         backgroundColor: colorScheme.phoneBackground,
         body: Consumer<PublicProfileViewModel>(
@@ -82,11 +91,39 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                 ),
                                 Row(
                                   children: [
-                                    _buildIconButton(Icons.share, colorScheme),
+                                    CircleIconButton(
+                                      icon: Icons.share,
+                                      onTap: () {
+                                        // TODO: Implement share
+                                      },
+                                    ),
                                     const SizedBox(width: 8),
-                                    _buildIconButton(
-                                      Icons.favorite_border,
-                                      colorScheme,
+                                    Consumer<FavoritesViewModel>(
+                                      builder: (context, favoritesVm, _) {
+                                        final isFavorited = favoritesVm.items
+                                            .any(
+                                              (f) =>
+                                                  f.freelancerId == profile.id,
+                                            );
+                                        final icon = isFavorited
+                                            ? Icons.favorite
+                                            : Icons.favorite_border;
+                                        final color = isFavorited
+                                            ? AppColors.lightRed
+                                            : colorScheme.textSecondary;
+
+                                        return CircleIconButton(
+                                          icon: icon,
+                                          iconColor: color,
+                                          onTap: () {
+                                            if (isFavorited) {
+                                              favoritesVm.remove(profile.id);
+                                            } else {
+                                              favoritesVm.add(profile.id);
+                                            }
+                                          },
+                                        );
+                                      },
                                     ),
                                   ],
                                 ),
@@ -202,18 +239,21 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                       children: [
                         Expanded(
                           child: TextButton.icon(
-                            onPressed: () {},
+                            onPressed: () =>
+                                _handleMessageAction(context, profile.id),
                             icon: Icon(Icons.message, color: colorScheme.text),
                             label: Text(
                               'Message',
-                              style: TextStyle(color: colorScheme.text),
+                              style: AppTypography.bodyLarge.copyWith(
+                                color: colorScheme.text,
+                              ),
                             ),
                           ),
                         ),
                         Container(
                           width: 1,
                           height: 24,
-                          color: Colors.grey.withValues(alpha: 0.3),
+                          color: Colors.grey.withAlpha(76),
                         ),
                         Expanded(
                           child: Padding(
@@ -237,16 +277,50 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     );
   }
 
-  Widget _buildIconButton(IconData icon, AppColorScheme colorScheme) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: colorScheme.cardBackground,
-        shape: BoxShape.circle,
-        border: Border.all(color: colorScheme.cardBorder),
-      ),
-      child: Icon(icon, size: 20, color: colorScheme.textSecondary),
-    );
+  Future<void> _handleMessageAction(
+    BuildContext context,
+    String targetUserId,
+  ) async {
+    final chatVm = context.read<ChatViewModel>();
+    final currentUserId = chatVm.currentUserId;
+
+    if (currentUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You must be logged in to message.')),
+      );
+      return;
+    }
+
+    if (currentUserId == targetUserId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You cannot message yourself.')),
+      );
+      return;
+    }
+
+    try {
+      LoadingUtils.show(context);
+      final conversation = await chatVm.createOrGetConversation(
+        user1Id: currentUserId,
+        user2Id: targetUserId,
+      );
+
+      if (!context.mounted) return;
+      LoadingUtils.hide(context);
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(conversation: conversation),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      LoadingUtils.hide(context);
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error starting chat: $e')));
+    }
   }
 }

@@ -224,6 +224,7 @@ RLS (summary): Users can `SELECT/UPDATE` only their row (`auth.uid() = id`). Any
 | --- | --- | --- |
 | `lib/features/profile/data/profile_repository.dart` | Repository | Wraps Supabase calls for profile load/update, email updates, role change, password reset, avatar upload, and my-tasks helpers. |
 | `lib/features/profile/services/avatar_service.dart` | Service | Uploads avatar to `avatars` bucket and creates short-lived signed URLs. Stores only the storage path in DB. |
+| `lib/features/profile/view/widgets/profile_preview_modal.dart` | Widget | Helper `showProfilePreview(context, userId)` to launch public profile in a modal sheet. |
 | `lib/features/profile/viewmodels/profile_view_model.dart` | ViewModel | `ChangeNotifier` that binds form controllers, updates profile, uploads avatar, handles logout/role change, and loads user tasks. |
 | `lib/features/profile/view/profile_screen.dart` | View | Material 3 profile UI with form fields, avatar, role toggle, password reset, and sign out. |
 | `lib/features/profile/view/widgets/profile_avatar_widget.dart` | Widget | Renders a profile avatar via a signed URL for a private storage path. |

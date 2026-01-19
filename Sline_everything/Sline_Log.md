@@ -21,6 +21,36 @@
 
 ## 📋 Version History
 
+### 🟢 Version 2.8.3 — Open Messaging & Profile Previews
+**Date:** 2026-01-19
+**Agent:** @Architect, @CodeGuard
+**Status:** ✅ Complete
+
+#### ✅ Implemented
+- **Open Direct Messaging**
+  - **Restriction Removed**: Users no longer need to "Favorite" a profile before messaging them.
+  - **Backend**: Updated `conversations_before_insert_guard` trigger to allow non-task-linked DM creation.
+  - **Error Handling**: Removed `P0001` error catching in `PublicProfileScreen`.
+- **Public Profile Preview**
+  - **Feature**: View a freelancer's public profile (Bio, Skills, Portfolio) via a modal without leaving the current screen.
+  - **UI**: Added `showProfilePreview` modal logic.
+  - **Component**: Refactored `PublicProfileScreen` into modular widgets (`PublicProfileHeader`, `PublicProfileStats`, etc.).
+- **Code Refactoring & Stability**
+  - **Fixes**: Resolved `taskId` nullability crash in `Conversation` model for DMs.
+  - **Refactor**: Created reusable `CircleIconButton` widget.
+  - **Audit**: CodeGuard audit passed for performance and security.
+
+#### 📊 Impact
+- **UX**: Frictionless communication—users can reach out to freelancers immediately.
+- **Engagement**: Profile previews encourage exploration without navigating away from tasks/bookings.
+- **Maintainability**: Cleaner, more modular profile code.
+
+#### 🔧 Technical Notes
+- `Conversation.taskId` is now nullable (`String?`) to correctly model Direct Messages.
+- **Security Note**: Open messaging increases potential for spam; monitoring recommended.
+
+---
+
 ### 🟢 Version 2.8 — Booking Packages & Payment UI
 **Date:** 2026-01-11
 **Agent:** @Architect, @SlineDocs

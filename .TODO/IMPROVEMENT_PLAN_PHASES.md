@@ -45,6 +45,7 @@ This document tracks the step-by-step execution plan for Sline v2.0.
     - [x] **Context Widget:** Show pinned context at top of chat:
         - [x] If Task chat → show Task title + status
         - [x] If Booking chat → show Booking date/time + selected package
+
 - [ ] **3.2 Notification System Fixes**
     - [ ] Fix Deep Links: Tapping "New Offer" -> Opens Offer List.
     - [ ] Fix Deep Links: Tapping "New Message" -> Opens the specific Chat thread (using logic from 3.1).
@@ -73,9 +74,9 @@ This document tracks the step-by-step execution plan for Sline v2.0.
 ## 👤 Phase 5: Profiles, Trust & Social Proof
 *Enhancing the human element. Who am I hiring?*
 
-- [ ] **5.1 Publisher Profile Preview**
-    - [ ] Entry point: Tap avatar in Tender/Booking details.
-    - [ ] Profile View: Show basic info, portfolio summary.
+- [x] **5.1 Publisher Profile Preview**
+    - [x] Entry point: Tap avatar in Tender/Booking details.
+    - [x] Profile View: Show basic info, portfolio summary.
 - [ ] **5.2 Ratings & Reviews**
     - [ ] Database: Create `reviews` table and sql functions.
     - [ ] UI: "Write Review" screen after order completion.
