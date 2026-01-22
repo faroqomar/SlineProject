@@ -19,7 +19,13 @@ import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart'; // Add
 /// Shows details of a task with Glassmorphism design.
 class TaskDetailsScreen extends StatefulWidget {
   final Task task;
-  const TaskDetailsScreen({super.key, required this.task});
+  final bool showProposalsInitially;
+
+  const TaskDetailsScreen({
+    super.key,
+    required this.task,
+    this.showProposalsInitially = false,
+  });
 
   @override
   State<TaskDetailsScreen> createState() => _TaskDetailsScreenState();
@@ -27,6 +33,30 @@ class TaskDetailsScreen extends StatefulWidget {
 
 class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
   String _selectedPackageTier = 'Basic';
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.showProposalsInitially) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _openProposals();
+      });
+    }
+  }
+
+  void _openProposals() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => RequestsListScreen(
+          taskId: widget.task.id,
+          autoOpenSubmitSheet: false, // Just list
+          isTender: true,
+          isOwner: true,
+          budget: widget.task.budget.toString(),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

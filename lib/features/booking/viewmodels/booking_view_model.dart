@@ -192,6 +192,7 @@ class BookingViewModel extends ChangeNotifier {
     required String slotId,
     required String providerId,
     String? note,
+    BookingStatus status = BookingStatus.pending,
   }) async {
     try {
       final b = await _repo.bookSlot(
@@ -199,6 +200,7 @@ class BookingViewModel extends ChangeNotifier {
         slotId: slotId,
         note: note,
         providerId: providerId,
+        status: status,
       );
       // Optimistically prepend to client list
       bookingsAsClient.insert(0, b);
@@ -209,6 +211,17 @@ class BookingViewModel extends ChangeNotifier {
       bookingsError = _mapError(e);
       AppLogger.e('Failed to book slot', tag: 'Booking', error: e);
       notifyListeners();
+      return null;
+    }
+  }
+
+  /// Fetch a single booking by ID (for details screen/deep linking).
+  Future<BookingModel?> getBookingById(String bookingId) async {
+    try {
+      final data = await _repo.getBookingById(bookingId);
+      return data;
+    } catch (e) {
+      AppLogger.e('Failed to get booking $bookingId', tag: 'Booking', error: e);
       return null;
     }
   }

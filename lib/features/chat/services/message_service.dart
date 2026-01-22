@@ -118,6 +118,32 @@ class MessageService {
     }
   }
 
+  /// Fetch a single conversation by ID (used for Deep Linking).
+  Future<Conversation> getConversationById(String conversationId) async {
+    final response = await _client
+        .from('conversations')
+        .select('''
+          *,
+          tasks(title, task_type),
+          user1:profiles!conversations_user1_id_fkey(full_name, avatar_url),
+          user2:profiles!conversations_user2_id_fkey(full_name, avatar_url)
+        ''')
+        .eq('id', conversationId)
+        .single();
+
+    final json = Map<String, dynamic>.from(response as Map);
+    final currentUserId = _client.auth.currentUser?.id;
+
+    if (currentUserId != null) {
+      final isUser1 = json['user1_id'] == currentUserId;
+      final otherUser = isUser1 ? json['user2'] : json['user1'];
+      json['other_user_name'] = otherUser?['full_name'];
+      json['other_user_avatar'] = otherUser?['avatar_url'];
+    }
+
+    return Conversation.fromJson(json);
+  }
+
   /// Get conversations for user, filtering out deleted ones unless new messages arrived.
   Future<List<Conversation>> getUserConversations(String userId) async {
     try {
@@ -272,7 +298,8 @@ class MessageService {
     }
 
     // Fire and forget notification creation (don't await to block UI)
-    _notificationService.createNotification(
+    // Use createOrUpdate to prevent spamming notifications for active chats
+    _notificationService.createOrUpdateNotification(
       userId: receiverId,
       title: notifTitle,
       message: notifBody,

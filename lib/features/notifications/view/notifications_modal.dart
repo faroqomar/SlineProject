@@ -52,8 +52,9 @@ class NotificationsModal extends StatelessWidget {
                         return NotificationTile(
                           notification: notification,
                           onTap: () {
-                            vm.markAsRead(notification.id);
-                            // TODO: Navigate to related entity
+                            // Close modal FIRST before navigating (critical for deep links)
+                            Navigator.pop(context);
+                            vm.handleNotificationTap(context, notification);
                           },
                         );
                       },

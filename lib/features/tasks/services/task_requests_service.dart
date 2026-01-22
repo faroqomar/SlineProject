@@ -21,10 +21,12 @@ class TaskRequestsService {
     AppLogger.d('Fetching offers for task $taskId', tag: 'Offers');
 
     try {
-      // Select * from task_requests and join profiles for bidder info
+      // Select * from task_requests and join profiles using explicit FK
       final query = _client
           .from('task_requests')
-          .select('*, profiles(full_name, avatar_url)')
+          .select(
+            '*, profiles!task_requests_freelancer_id_fkey(full_name, avatar_url)',
+          )
           .eq('task_id', taskId);
 
       if (before != null) {
@@ -68,9 +70,29 @@ class TaskRequestsService {
     }
 
     try {
+      // RLS Policy Enforcer: Ensure active_role is 'freelancer'
+      final profile = await _client
+          .from('profiles')
+          .select('active_role')
+          .eq('id', uid)
+          .single();
+
+      final activeRole = profile['active_role'] as String?;
+      if (activeRole != 'freelancer') {
+        AppLogger.i(
+          'Switching active_role to freelancer for offer submission',
+          tag: 'Offers',
+        );
+        await _client
+            .from('profiles')
+            .update({'active_role': 'freelancer'})
+            .eq('id', uid);
+      }
+
       final insertData = <String, dynamic>{
         'task_id': taskId,
         'bidder_id': uid,
+        'freelancer_id': uid, // Required for RLS
         'price': price,
         'days': days,
         if (note != null && note.trim().isNotEmpty) 'note': note.trim(),

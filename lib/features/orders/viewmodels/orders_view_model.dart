@@ -32,12 +32,11 @@ class OrdersViewModel extends ChangeNotifier {
             )
             .toList();
       case 'Completed':
-        return _allOrders
-            .where((t) => t.status == TaskStatus.closed)
-            .toList(); // Assuming closed = completed for now
+        return _allOrders.where((t) => t.status == TaskStatus.closed).toList();
       case 'Cancelled':
-        // TODO: Add TaskStatus.cancelled enum
-        return [];
+        return _allOrders
+            .where((t) => t.status == TaskStatus.canceled)
+            .toList();
       default:
         return _allOrders;
     }

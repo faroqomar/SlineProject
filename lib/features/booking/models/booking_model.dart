@@ -9,6 +9,7 @@ class BookingModel {
   final BookingStatus status;
   final String? note;
   final DateTime createdAtUtc;
+  final Map<String, dynamic>? taskData; // Joined task data
 
   const BookingModel({
     required this.id,
@@ -19,6 +20,7 @@ class BookingModel {
     required this.status,
     required this.note,
     required this.createdAtUtc,
+    this.taskData,
   });
 
   factory BookingModel.fromJson(Map<String, dynamic> json) {
@@ -31,6 +33,7 @@ class BookingModel {
       status: BookingStatusX.fromString(json['status'] as String?),
       note: json['note'] as String?,
       createdAtUtc: DateTime.parse(json['created_at'] as String).toUtc(),
+      taskData: json['tasks'] as Map<String, dynamic>?,
     );
   }
 
@@ -49,7 +52,7 @@ class BookingModel {
 }
 
 /// Booking status enum aligned with DB `booking_status_enum`.
-enum BookingStatus { pending, confirmed, canceled, completed }
+enum BookingStatus { pending, confirmed, canceled, completed, noShow }
 
 extension BookingStatusX on BookingStatus {
   static BookingStatus fromString(String? value) {

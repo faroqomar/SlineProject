@@ -10,6 +10,7 @@ import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
 import 'features/saved/viewmodels/saved_tasks_view_model.dart';
 import 'features/saved/data/saved_tasks_service.dart';
+import 'features/tasks/services/task_requests_service.dart';
 import 'core/services/supabase_config.dart';
 import 'core/services/logger_service.dart';
 import 'features/auth/view/login_screen.dart';
@@ -19,7 +20,7 @@ import 'features/favorites/view/favorites_screen.dart';
 import 'features/favorites/viewmodels/favorites_view_model.dart';
 import 'features/favorites/data/favorites_service.dart';
 import 'features/categories/view/categories_screen.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
 import 'app/main_navigation_screen.dart';
 import 'core/providers/navigation_provider.dart';
 import 'package:provider/provider.dart';
@@ -113,6 +114,8 @@ class SLineApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => OrdersViewModel()),
         // Notifications state
         ChangeNotifierProvider(create: (_) => NotificationViewModel()),
+        // Task Requests Service (Stateless)
+        Provider(create: (_) => TaskRequestsService()),
         // Favorites state
         ChangeNotifierProvider(
           create: (_) => FavoritesViewModel(service: FavoritesService()),

@@ -46,10 +46,10 @@ This document tracks the step-by-step execution plan for Sline v2.0.
         - [x] If Task chat → show Task title + status
         - [x] If Booking chat → show Booking date/time + selected package
 
-- [ ] **3.2 Notification System Fixes**
-    - [ ] Fix Deep Links: Tapping "New Offer" -> Opens Offer List.
-    - [ ] Fix Deep Links: Tapping "New Message" -> Opens the specific Chat thread (using logic from 3.1).
-    - [ ] Fix Spam: Group messages (don't push notify for *every* message if app is open).
+- [x] **3.2 Notification System Fixes**
+    - [x] Fix Deep Links: Tapping "New Offer" -> Opens Offer List.
+    - [x] Fix Deep Links: Tapping "New Message" -> Opens the specific Chat thread (using logic from 3.1).
+    - [x] Fix Spam: Group messages (don't push notify for *every* message if app is open).
 
 ---
 

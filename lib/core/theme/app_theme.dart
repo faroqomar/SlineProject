@@ -70,6 +70,7 @@ class AppTheme {
       ),
       useMaterial3: true,
       fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
+      fontFamilyFallback: [GoogleFonts.notoSans().fontFamily!],
 
       // Custom TextTheme
       textTheme: TextTheme(

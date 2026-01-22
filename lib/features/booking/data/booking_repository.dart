@@ -49,12 +49,14 @@ class BookingRepository {
     required String slotId,
     String? note,
     required String providerId,
+    BookingStatus status = BookingStatus.pending,
   }) {
     return _service.bookSlot(
       taskId: taskId,
       slotId: slotId,
       note: note,
       providerId: providerId,
+      status: status,
     );
   }
 
@@ -86,5 +88,9 @@ class BookingRepository {
       bookingId: bookingId,
       newStatus: newStatus,
     );
+  }
+
+  Future<BookingModel> getBookingById(String bookingId) {
+    return _service.getBookingById(bookingId);
   }
 }

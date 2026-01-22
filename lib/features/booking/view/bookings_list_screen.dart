@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
+import 'package:sline_app/features/booking/view/widgets/booking_card.dart';
+import 'package:sline_app/features/booking/view/booking_details_screen.dart';
 import '../viewmodels/booking_view_model.dart';
 import '../models/booking_model.dart';
-import '../../../core/utils/format_date.dart';
-import '../../chat/view/chat_screen.dart'; // Added
-import 'package:sline_app/core/theme/app_colors.dart'; // Added
 
 class BookingsListScreen extends StatefulWidget {
   const BookingsListScreen({super.key});
@@ -99,11 +98,9 @@ class _BookingsListView extends StatelessWidget {
   final bool hasMore;
   final bool asProvider;
 
-  String _fmtDate(DateTime createdAtUtc) => formatUtcToLocal(createdAtUtc);
-
   @override
   Widget build(BuildContext context) {
-    if (loading) {
+    if (loading && items.isEmpty) {
       return ListView.builder(
         padding: const EdgeInsets.all(12),
         itemCount: 5,
@@ -113,7 +110,7 @@ class _BookingsListView extends StatelessWidget {
         ),
       );
     }
-    if (error != null) {
+    if (error != null && items.isEmpty) {
       return Center(child: Text('Failed to load: $error'));
     }
 
@@ -122,6 +119,7 @@ class _BookingsListView extends StatelessWidget {
         : items.where((e) => e.status == filter).toList();
 
     if (filtered.isEmpty) {
+      if (loading) return const Center(child: CircularProgressIndicator());
       return const Center(child: Text('No bookings'));
     }
 
@@ -131,106 +129,45 @@ class _BookingsListView extends StatelessWidget {
         Expanded(
           child: ListView.separated(
             padding: const EdgeInsets.all(12),
-            itemCount: filtered.length,
+            itemCount: filtered.length + (hasMore ? 1 : 0),
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, i) {
-              final b = filtered[i];
-              final roleLabel = asProvider ? 'AS PROVIDER' : 'AS CLIENT';
-
-              return ListTile(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(
-                    color: Theme.of(
-                      context,
-                    ).dividerColor.withValues(alpha: 0.2),
-                  ),
-                ),
-                title: Text(
-                  '${b.status.name.toUpperCase()} · $roleLabel',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                subtitle: Text(
-                  'Created: ${_fmtDate(b.createdAtUtc)}\n'
-                  'Slot: ${b.slotId}',
-                ),
-                trailing: Wrap(
-                  spacing: 8,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.chat_bubble_outline),
-                      color: AppColors.teal,
-                      tooltip: 'Message',
-                      onPressed: () async {
+              if (i == filtered.length) {
+                // Load More Indicator
+                return Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Center(
+                    child: OutlinedButton(
+                      onPressed: () {
                         final vm = context.read<BookingViewModel>();
-                        final uid = vm.currentUserId;
-                        if (uid == null) return;
-
-                        final convo = await vm.contactProvider(b, uid);
-                        if (context.mounted && convo != null) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ChatScreen(conversation: convo),
-                            ),
-                          );
+                        if (asProvider) {
+                          vm.loadMoreBookingsAsProvider();
+                        } else {
+                          vm.loadMoreBookingsAsClient();
                         }
                       },
+                      child: const Text('Load More'),
                     ),
-                    if (asProvider) ...[
-                      Tooltip(
-                        message: 'Confirm (coming soon) — provider only',
-                        child: FilledButton(
-                          onPressed: null,
-                          child: const Text('Confirm'),
-                        ),
-                      ),
-                      Tooltip(
-                        message: 'Complete (coming soon) — provider only',
-                        child: OutlinedButton(
-                          onPressed: null,
-                          child: const Text('Complete'),
-                        ),
-                      ),
-                    ] else ...[
-                      Tooltip(
-                        message: 'Cancel (coming soon) — client only',
-                        child: OutlinedButton(
-                          onPressed: null,
-                          child: const Text('Cancel'),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
+                  ),
+                );
+              }
+
+              final b = filtered[i];
+              return BookingCard(
+                booking: b,
+                asProvider: asProvider,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BookingDetailsScreen(booking: b),
+                    ),
+                  );
+                },
               );
             },
           ),
         ),
-        if (loading && items.isNotEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: SkeletonTaskCard(),
-          ),
-        if (hasMore && !loading)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  final vm = context.read<BookingViewModel>();
-                  if (asProvider) {
-                    vm.loadMoreBookingsAsProvider();
-                  } else {
-                    vm.loadMoreBookingsAsClient();
-                  }
-                },
-                icon: const Icon(Icons.more_horiz),
-                label: const Text('Load more'),
-              ),
-            ),
-          ),
       ],
     );
   }

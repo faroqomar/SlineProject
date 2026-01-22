@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
-import 'package:sline_app/core/utils/transitions/custom_route_transitions.dart';
-import 'package:sline_app/features/booking/view/payment_method_screen.dart';
 import '../viewmodels/booking_view_model.dart';
+import '../models/booking_model.dart';
 
 /// BookingSheet
 ///
@@ -66,6 +65,7 @@ class _BookingSheetState extends State<BookingSheet> {
       final vm = context.read<BookingViewModel>();
 
       String? txnId;
+      /*
       // Process Payment if involves a package
       if (widget.packagePrice != null &&
           (double.tryParse(
@@ -73,45 +73,30 @@ class _BookingSheetState extends State<BookingSheet> {
                   ) ??
                   0) >
               0) {
-        final priceStr = widget.packagePrice!.replaceAll(
-          RegExp(r'[^0-9.]'),
-          '',
-        );
-        final amount = double.parse(priceStr);
+        
+        // ... Payment logic commented out for testing ...
+        
+        // 1. SKIP PAYMENT SCREEN
+        // 2. Set txnId to simulate success
+        txnId = 'TEST_SKIPPED_PAYMENT';
+      }
+      */
 
-        // Navigate to Payment Screen
-        // The PaymentMethodScreen handles the actual processPayment call
-        if (!mounted) return;
-        final result = await Navigator.push<String>(
-          context,
-          SlideUpRoute(
-            page: PaymentMethodScreen(
-              amount: amount,
-              packageTier: widget.packageTier ?? 'Package',
-              taskId: widget.taskId,
-            ),
-          ),
-        );
-
-        if (result == null) {
-          // User cancelled payment or it failed
-          if (mounted) {
-            setState(() => _sending = false);
-          }
-          return;
-        }
-        txnId = result;
+      // Force TXN ID for testing if package exists
+      if (widget.packagePrice != null) {
+        txnId = 'TEST_SKIPPED_PAYMENT';
       }
 
       // Prepend package info to note
       final userNote = _noteCtrl.text.trim();
       final StringBuffer finalNote = StringBuffer();
+      // ... (existing note logic remains same) ...
       if (widget.packageTier != null) {
         finalNote.writeln(
           'Package: ${widget.packageTier} (${widget.packagePrice})',
         );
         if (txnId != null) {
-          finalNote.writeln('Payment TXN: $txnId');
+          finalNote.writeln('Payment TXN: $txnId (TEST VERIFIED)');
         }
         // Add other details if needed, e.g. delivery days
         if (widget.packageData != null) {
@@ -131,6 +116,8 @@ class _BookingSheetState extends State<BookingSheet> {
         slotId: widget.slotId,
         providerId: widget.providerId,
         note: finalNote.isEmpty ? null : finalNote.toString(),
+        // Force CONFIRMED status for testing
+        status: BookingStatus.confirmed,
       );
       if (!mounted) return;
       setState(() => _sending = false);

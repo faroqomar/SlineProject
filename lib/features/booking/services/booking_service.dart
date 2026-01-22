@@ -83,6 +83,7 @@ class BookingService {
     required String slotId,
     String? note,
     required String providerId,
+    BookingStatus status = BookingStatus.pending,
   }) async {
     final uid = _client.auth.currentUser?.id;
     if (uid == null) {
@@ -96,7 +97,8 @@ class BookingService {
           'slot_id': slotId,
           'note': note,
           'provider_id': providerId,
-          'client_id': uid, // <-- required by RLS
+          'client_id': uid,
+          'status': status.name,
         })
         .select()
         .single();
@@ -116,12 +118,11 @@ class BookingService {
     return booking;
   }
 
-  /// List bookings where the current user is the CLIENT.
   Future<List<BookingModel>> listBookingsAsClient({
     int limit = 50,
     String? cursorCreatedAtIso,
   }) async {
-    final query = _client.from(_bookingsTable).select();
+    final query = _client.from(_bookingsTable).select('*, tasks(*)');
 
     if (cursorCreatedAtIso != null) {
       query.lt('created_at', cursorCreatedAtIso);
@@ -138,7 +139,7 @@ class BookingService {
     int limit = 50,
     String? cursorCreatedAtIso,
   }) async {
-    final query = _client.from(_bookingsTable).select();
+    final query = _client.from(_bookingsTable).select('*, tasks(*)');
 
     if (cursorCreatedAtIso != null) {
       query.lt('created_at', cursorCreatedAtIso);
@@ -190,5 +191,15 @@ class BookingService {
     }
 
     return booking;
+  }
+
+  /// Get a single booking by ID.
+  Future<BookingModel> getBookingById(String bookingId) async {
+    final res = await _client
+        .from(_bookingsTable)
+        .select()
+        .eq('id', bookingId)
+        .single();
+    return BookingModel.fromJson(res);
   }
 }
