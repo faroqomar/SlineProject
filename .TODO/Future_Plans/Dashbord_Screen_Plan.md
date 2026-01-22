@@ -52,9 +52,9 @@ This document serves as the **FINAL MASTER CHECKLIST** for rebuilding the Dashbo
 
 - [ ] **0.9 Demo Details Screens**
     - [ ] `BookingDetailsDemo`.
-    - `TaskDetailsDemo`.
-    - `WorkDetailsDemo`.
-    - `ActivityListDemo`.
+    - [ ] `TaskDetailsDemo`.
+    - [ ] `WorkDetailsDemo`.
+    - [ ] `ActivityListDemo`.
 
 - [ ] **0.10 Acceptance**
     - [ ] Visually matches app design system perfection.
@@ -88,6 +88,8 @@ This document serves as the **FINAL MASTER CHECKLIST** for rebuilding the Dashbo
         - [ ] `InProgress` → `Completed` (Freelancer only).
         - [ ] `Completed` → `Closed` (Client approval required? **Yes, consistency with Tasks**).
         - [ ] `Confirmed` → `Canceled` (Both, requires reason).
+        - [ ] **Data Update Rules:**
+            - [ ] `Reschedule`: Update `scheduledAt`, store `rescheduled_by`, `reschedule_note`, emit `booking_rescheduled`.
 
 - [ ] **1.3 Unified "Active Work" Model (Enhanced)**
     - [ ] Create `WorkItem` model to unify Tasks and Bookings for the UI.
@@ -98,6 +100,7 @@ This document serves as the **FINAL MASTER CHECKLIST** for rebuilding the Dashbo
         - `sourceId` (Original entity ID).
         - `statusRaw` (Original Enum), `statusUiBucket` (Active, Waiting, Done).
         - `createdAt`, `dueAt` / `scheduledAt`.
+        - `completedAt`.
         - `lastUpdate`.
         - `primaryActionType` (Enum: Start, Pay, Review, etc.).
         - `deepLinkRoute`.
@@ -134,7 +137,7 @@ This document serves as the **FINAL MASTER CHECKLIST** for rebuilding the Dashbo
         - `id`, `actor_id`, `actor_role`, `target_type`, `target_id`, `event_type`, `metadata`, `created_at`.
     - [ ] **Writer:** Database Triggers (for status changes) + Service Layer (manual events).
     - [ ] **Minimum Events:**
-        - Booking: `created`, `confirmed`, `canceled`, `declined`, `started`, `completed`, `closed`.
+        - Booking: `created`, `confirmed`, `canceled`, `declined`, `started`, `completed`, `closed`, `rescheduled`.
         - Task: `created`, `assigned`, `started`, `completed`, `closed`, `canceled`.
         - Offer: `submitted`, `withdrawn`, `accepted`, `rejected`.
     - [ ] **UI:** Last 5-10 items with deep links.
@@ -160,7 +163,7 @@ This document serves as the **FINAL MASTER CHECKLIST** for rebuilding the Dashbo
 
 - [ ] **4.1 Bookings List Filters**
     - [ ] **Filters:** `Pending`, `Confirmed`, `InProgress`, `Completed`, `Canceled/Declined`.
-    - [ ] **Sorting:** By `scheduledAt` descending (future first).
+    - [ ] **Sorting:** `scheduledAt` ASC (upcoming first). Separate into "Upcoming" and "Past" sections.
 
 - [ ] **4.2 Booking Actions (Role-Based)**
     - [ ] **Freelancer:** Confirm, Decline, Propose New Time.
@@ -188,7 +191,7 @@ This document serves as the **FINAL MASTER CHECKLIST** for rebuilding the Dashbo
 **Goal:** Offers and pre-contract discussions. **NO MESSAGES HERE.**
 
 - [ ] **6.1 Offers Scope**
-    - [ ] **Client:** Offers Received (grouped by Task).
+    - [ ] **Client:** Offers Received (grouped by `taskId`, sorted by newest `created_at`).
     - [ ] **Freelancer:** My Submitted Offers.
     - [ ] **Strict Rule:** Chat/Messages live in `ChatModule`, not here.
 
@@ -202,10 +205,10 @@ This document serves as the **FINAL MASTER CHECKLIST** for rebuilding the Dashbo
 **Goal:** Notifications work perfectly.
 
 - [ ] **7.1 Route Mapping**
-    - [ ] `booking_created` -> `Dashboard(Bookings) -> BookingDetails`.
-    - [ ] `task_assigned` -> `Dashboard(ActiveWork) -> WorkDetails`.
-    - [ ] `offer_received` -> `Dashboard(Inbox) -> TaskOffers`.
-    - [ ] `message_new` -> `ChatScreen`.
+    - [ ] `booking_created` -> `Dashboard(Bookings) -> BookingDetails(bookingId)`.
+    - [ ] `task_assigned` -> `Dashboard(ActiveWork) -> WorkDetails(type=task, id=taskId)`.
+    - [ ] `offer_received` -> `Dashboard(Inbox) -> TaskOffers(taskId)`.
+    - [ ] `message_new` -> `ChatScreen(conversationId)`.
 
 - [ ] **7.2 Fallback Rules**
     - [ ] Target Not Found -> `Dashboard(Overview)` with snackbar "Item not available".

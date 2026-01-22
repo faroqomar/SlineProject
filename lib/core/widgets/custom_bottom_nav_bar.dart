@@ -38,9 +38,9 @@ class CustomBottomNavBar extends StatelessWidget {
       ),
       _NavItem(
         NavView.orders,
-        Icons.business_center_outlined,
-        Icons.business_center,
-        'Orders',
+        Icons.dashboard_outlined,
+        Icons.dashboard,
+        'Dashboard',
       ),
       _NavItem(
         NavView.messages,

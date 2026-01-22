@@ -7,7 +7,8 @@ import 'package:sline_app/core/utils/app_animations.dart';
 import 'package:sline_app/features/booking/view/bookings_discovery_screen.dart';
 import 'package:sline_app/features/chat/view/messages_screen.dart';
 import 'package:sline_app/features/home/view/home_screen.dart';
-import 'package:sline_app/features/orders/view/orders_dashboard_screen.dart';
+import 'package:sline_app/features/dashboard/view/dashboard_screen.dart';
+// import 'package:sline_app/features/orders/view/orders_dashboard_screen.dart';
 import 'package:sline_app/features/profile/view/profile_screen.dart';
 import 'package:sline_app/features/tasks/view/create_task_screen.dart';
 import 'package:sline_app/features/tasks/view/tenders_screen.dart';
@@ -29,7 +30,7 @@ class MainNavigationScreen extends StatelessWidget {
       const HomeScreen(),
       const TendersScreen(),
       const BookingsDiscoveryScreen(),
-      const OrdersDashboardScreen(),
+      const DashboardScreen(),
       const MessagesScreen(),
       const ProfileScreen(),
       const WalletDashboardScreen(),
