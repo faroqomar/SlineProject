@@ -29,8 +29,14 @@ class AppColors {
 
   // --- Primary Hues ---
   static final Color teal = HexColor.fromHex('#146068');
+  static final Color darkTeal = HexColor.fromHex(
+    '#0c3b40',
+  ); // Darker teal for gradients
   static final Color lightTeal = HexColor.fromHex('#93ccce');
   static final Color gold = HexColor.fromHex('#f3bb19');
+  static final Color sand = HexColor.fromHex(
+    '#F7D69C',
+  ); // Sand/beige for UI elements
   static final Color lightRed = HexColor.fromHex(
     '#f49d9d',
   ); // Often used for "hot" badges or error states

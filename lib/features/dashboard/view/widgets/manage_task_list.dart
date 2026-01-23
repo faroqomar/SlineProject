@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
+import '../../viewmodels/dashboard_view_model.dart';
 
 class ManageTaskList extends StatelessWidget {
   final String status;
@@ -9,13 +12,11 @@ class ManageTaskList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Mock Data
-    final tasks = [
-      _MockTask("Mobile App MVP", "25 Proposals", "Open"),
-      _MockTask("Website Redesign", "8 Proposals", "Open"),
-    ];
+    // Bind to real data
+    final vm = context.watch<DashboardViewModel>();
+    final tasks = vm.myTasks.where((t) => t.status.name == status).toList();
 
-    if (status != "Open") {
+    if (tasks.isEmpty) {
       return Center(
         child: Text(
           "No $status tasks",
@@ -34,21 +35,17 @@ class ManageTaskList extends StatelessWidget {
   }
 }
 
-class _MockTask {
-  final String title;
-  final String proposals;
-  final String status;
-  _MockTask(this.title, this.proposals, this.status);
-}
-
 class _TaskCard extends StatelessWidget {
-  final _MockTask task;
+  final Task task;
 
   const _TaskCard({required this.task});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final offerText = task.offers == 1
+        ? "1 Proposal"
+        : "${task.offers} Proposals";
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimens.p16),
@@ -78,7 +75,7 @@ class _TaskCard extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  task.status.toUpperCase(),
+                  task.status.name.toUpperCase(),
                   style: AppTypography.captionBold.copyWith(
                     color: Colors.green,
                   ),
@@ -88,7 +85,7 @@ class _TaskCard extends StatelessWidget {
           ),
           const SizedBox(height: AppDimens.p8),
           Text(
-            task.proposals,
+            offerText,
             style: AppTypography.bodyMedium.copyWith(
               color: colorScheme.primary,
             ),
@@ -98,14 +95,14 @@ class _TaskCard extends StatelessWidget {
             children: [
               Expanded(
                 child: FilledButton(
-                  onPressed: () {},
+                  onPressed: () {}, // Todo: View Offers Logic
                   child: const Text("View Offers"),
                 ),
               ),
               const SizedBox(width: AppDimens.p12),
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () {}, // Todo: Edit
                   child: const Text("Edit"),
                 ),
               ),

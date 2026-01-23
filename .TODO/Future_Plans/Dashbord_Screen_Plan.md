@@ -7,93 +7,93 @@ This document serves as the **FINAL MASTER CHECKLIST** for rebuilding the Dashbo
 ## 🎨 Phase 0: Dashboard UI/UX Design (Prototype Only)
 **Goal:** Build a complete Dashboard design that matches the existing app design matching, with all current + planned features visible as a demo. **No backend integration.**
 
-- [ ] **0.1 Design Consistency Setup**
-    - [ ] Reuse existing app theme (colors, gradients, shadows, typography, radius, spacing).
-    - [ ] Reuse existing UI components (`AppButton`, `GlassContainer`, `AppCard`, etc.).
-    - [ ] Confirm layout patterns match the current app (padding, headers).
+- [x] **0.1 Design Consistency Setup**
+    - [x] Reuse existing app theme (colors, gradients, shadows, typography, radius, spacing).
+    - [x] Reuse existing UI components (`AppButton`, `GlassContainer`, `AppCard`, etc.).
+    - [x] Confirm layout patterns match the current app (padding, headers).
 
-- [ ] **0.2 Fake Data Layer (Mock Repository)**
-    - [ ] Create a local mock provider returning:
-        - [ ] Counters (randomized for testing).
-        - [ ] Bookings list (covering all statuses: Pending/Confirmed/etc).
-        - [ ] Tasks list (Open/Assigned/etc).
-        - [ ] Offers list (Accepted/Rejected/etc).
-        - [ ] Activity Log items.
+- [x] **0.2 Fake Data Layer (Mock Repository)**
+    - [x] Create a local mock provider returning:
+        - [x] Counters (randomized for testing).
+        - [x] Bookings list (covering all statuses: Pending/Confirmed/etc).
+        - [x] Tasks list (Open/Assigned/etc).
+        - [x] Offers list (Accepted/Rejected/etc).
+        - [x] Activity Log items.
 
-- [ ] **0.3 Dashboard Shell (UI Only)**
-    - [ ] Implement `DashboardScreen` scaffold.
-    - [ ] persistent `BottomNavigationBar` (5 tabs).
-    - [ ] `RoleSwitch` in AppBar (updates UI specific content immediately using mock data).
+- [x] **0.3 Dashboard Shell (UI Only)**
+    - [x] Implement `DashboardScreen` scaffold.
+    - [x] persistent `BottomNavigationBar` (5 tabs).
+    - [x] `RoleSwitch` in AppBar (updates UI specific content immediately using mock data).
 
-- [ ] **0.4 Tab 1: Overview (UI Prototype)**
-    - [ ] **Counters:** Cards for both roles.
-    - [ ] **Next Actions:** List of "to-do" items (mock deep navigation).
-    - [ ] **Activity Feed:** Preview list (last 5 items) + "See All" button.
+- [x] **0.4 Tab 1: Overview (UI Prototype)**
+    - [x] **Counters:** Cards for both roles.
+    - [x] **Next Actions:** List of "to-do" items (mock deep navigation).
+    - [x] **Activity Feed:** Preview list (last 5 items) + "See All" button.
 
-- [ ] **0.5 Tab 2: Manage (UI Prototype)**
-    - [ ] **Freelancer:** "My Services" list with tabs (Active/Paused/Drafts).
-    - [ ] **Client:** "My Tasks" list with tabs (Open/Assigned/History).
-    - [ ] **Note:** Buttons (Edit/Pause/Cancel) are visual demo only.
+- [x] **0.5 Tab 2: Manage (UI Prototype)**
+    - [x] **Freelancer:** "My Services" list with tabs (Active/Paused/Drafts).
+    - [x] **Client:** "My Tasks" list with tabs (Open/Assigned/History).
+    - [x] **Note:** Buttons (Edit/Pause/Cancel) are visual demo only.
 
-- [ ] **0.6 Tab 3: Bookings (UI Prototype)**
-    - [ ] **Filters:** Pending, Confirmed, InProgress, Completed, etc.
-    - [ ] **Card UI:** `scheduledAt` prominent, status badge, action buttons.
-    - [ ] **Demo Actions:** Confirm/Decline (Freelancer), Edit/Cancel (Client).
+- [x] **0.6 Tab 3: Bookings (UI Prototype)**
+    - [x] **Filters:** Pending, Confirmed, InProgress, Completed, etc.
+    - [x] **Card UI:** `scheduledAt` prominent, status badge, action buttons.
+    - [x] **Demo Actions:** Confirm/Decline (Freelancer), Edit/Cancel (Client).
 
-- [ ] **0.7 Tab 4: Active Work (UI Prototype)**
-    - [ ] Unified `WorkItem` list (Tasks + Bookings mixed).
-    - [ ] **Sections:** Up Next, In Progress, In Review.
-    - [ ] **Demo Actions:** Start Work, Mark Completed, Approve & Close, Chat.
+- [x] **0.7 Tab 4: Active Work (UI Prototype)**
+    - [x] Unified `WorkItem` list (Tasks + Bookings mixed).
+    - [x] **Sections:** Up Next, In Progress, In Review.
+    - [x] **Demo Actions:** Start Work, Mark Completed, Approve & Close, Chat.
 
-- [ ] **0.8 Tab 5: Inbox (UI Prototype - Offers Only)**
-    - [ ] **Client:** Offers grouped by Task.
-    - [ ] **Freelancer:** My Submitted Offers.
-    - [ ] **Demo Actions:** Accept/Reject, Withdraw.
+- [x] **0.8 Tab 5: Inbox (UI Prototype - Offers Only)**
+    - [x] **Client:** Offers grouped by Task.
+    - [x] **Freelancer:** My Submitted Offers.
+    - [x] **Demo Actions:** Accept/Reject, Withdraw.
 
-- [ ] **0.9 Demo Details Screens**
-    - [ ] `BookingDetailsDemo`.
-    - [ ] `TaskDetailsDemo`.
-    - [ ] `WorkDetailsDemo`.
-    - [ ] `ActivityListDemo`.
+- [x] **0.9 Demo Details Screens**
+    - [x] `BookingDetailsDemo`.
+    - [x] `TaskDetailsDemo`.
+    - [x] `WorkDetailsDemo`.
+    - [x] `ActivityListDemo`.
 
-- [ ] **0.10 Acceptance**
-    - [ ] Visually matches app design system perfection.
-    - [ ] Navigate to all 5 tabs.
-    - [ ] Switch roles and see content change.
-    - [ ] All statuses visualized.
+- [x] **0.10 Acceptance**
+    - [x] Visually matches app design system perfection.
+    - [x] Navigate to all 5 tabs.
+    - [x] Switch roles and see content change.
+    - [x] All statuses visualized.
 
 ---
 
 ## 🎯 Phase 1: Foundation, Logic & State
 **Goal:** Define the "Source of Truth" for statuses, transitions, and data models before touching UI.
 
-- [ ] **1.1 Define Enums & Constants**
-    - [ ] Update `TaskStatus`: `Open`, `Assigned`, `InProgress`, `Completed`, `Closed`, `Canceled`.
-    - [ ] Update `BookingStatus`: `Pending`, `Confirmed`, `InProgress`, `Completed`, `Canceled`, `NoShow`, `Declined`.
-    - [ ] Define `OfferStatus`: `Pending`, `Accepted`, `Rejected`, `Withdrawn`.
-    - [ ] Create `UserRole` enum: `Client`, `Freelancer`.
-    - [ ] Create `DashboardTab` enum: `Overview`, `Manage`, `Bookings`, `ActiveWork`, `Inbox`.
+- [x] **1.1 Define Enums & Constants**
+    - [x] Update `TaskStatus`: `Open`, `Assigned`, `InProgress`, `Completed`, `Closed`, `Canceled`.
+    - [x] Update `BookingStatus`: `Pending`, `Confirmed`, `InProgress`, `Completed`, `Canceled`, `NoShow`, `Declined`.
+    - [x] Define `OfferStatus`: `Pending`, `Accepted`, `Rejected`, `Withdrawn`.
+    - [x] Create `UserRole` enum: `Client`, `Freelancer`.
+    - [x] Create `DashboardTab` enum: `Overview`, `Manage`, `Bookings`, `ActiveWork`, `Inbox`.
 
-- [ ] **1.2 Define Transition Rules & Permissions (Backend Enforced)**
-    - [ ] **Task Rules:**
-        - [ ] `Open` / `Assigned` → `Canceled` (Client only, requires reason).
-        - [ ] `InProgress` → `Canceled` (Restricted: requires Admin or Mutual Agreement - *Defer to Dispute System*).
-        - [ ] `Completed` → `Canceled` (Disallowed).
-        - [ ] `Completed` → `Closed` (Client only).
-    - [ ] **Booking Rules:**
-        - [ ] `Pending` → `Confirmed` (Freelancer only).
-        - [ ] `Pending` → `Declined` (Freelancer only).
-        - [ ] `Pending` → `Canceled` (Client only).
-        - [ ] `Confirmed` → `InProgress` (Freelancer when starting).
-        - [ ] `InProgress` → `Completed` (Freelancer only).
-        - [ ] `Completed` → `Closed` (Client approval required? **Yes, consistency with Tasks**).
-        - [ ] `Confirmed` → `Canceled` (Both, requires reason).
-        - [ ] **Data Update Rules:**
-            - [ ] `Reschedule`: Update `scheduledAt`, store `rescheduled_by`, `reschedule_note`, emit `booking_rescheduled`.
+- [x] **1.2 Define Transition Rules & Permissions (Backend Enforced)**
+    - [x] **Task Rules:**
+        - [x] `Open` / `Assigned` → `Canceled` (Client only, requires reason).
+        - [x] `InProgress` → `Canceled` (Restricted: requires Admin or Mutual Agreement - *Defer to Dispute System*).
+        - [x] `Completed` → `Canceled` (Disallowed).
+        - [x] `Completed` → `Closed` (Client only).
+    - [x] **Booking Rules:**
+        - [x] `Pending` → `Confirmed` (Freelancer only).
+        - [x] `Pending` → `Declined` (Freelancer only).
+        - [x] `Pending` → `Canceled` (Client only).
+        - [x] `Confirmed` → `InProgress` (Freelancer when starting).
+        - [x] `InProgress` → `Completed` (Freelancer only).
+        - [x] `Completed` → `Closed` (Client approval required? **Yes, consistency with Tasks**).
+        - [x] `Confirmed` → `Canceled` (Both, requires reason).
+        - [x] **Data Update Rules:**
+            - [x] `Reschedule`: Update `scheduledAt`, store `rescheduled_by`, `reschedule_note`, emit `booking_rescheduled`.
 
-- [ ] **1.3 Unified "Active Work" Model (Enhanced)**
-    - [ ] Create `WorkItem` model to unify Tasks and Bookings for the UI.
-    - [ ] **Fields**:
+- [x] **1.3 Unified "Active Work" Model (Enhanced)**
+    - [x] Create `WorkItem` model to unify Tasks and Bookings for the UI.
+    - [x] **Fields**:
         - `id`, `type` (Task/Booking).
         - `title`.
         - `counterpartyId`, `counterpartyName`, `counterpartyAvatar`, `counterpartyRole`.
@@ -106,124 +106,124 @@ This document serves as the **FINAL MASTER CHECKLIST** for rebuilding the Dashbo
         - `deepLinkRoute`.
         - `permissions` (Computed object: `canStart`, `canComplete`, `canApprove`, `canCancel`, `canReschedule`).
 
-- [ ] **1.4 Dashboard Navigation Shell**
-    - [ ] Create `DashboardScreen` scaffold with persistent `BottomNavigationBar`.
-    - [ ] Implement `RoleSwitch` (Client ↔ Freelancer) persisting to local storage.
-    - [ ] Ensure role switch triggers full viewmodel refresh.
+- [x] **1.4 Dashboard Navigation Shell**
+    - [x] Create `DashboardScreen` scaffold with persistent `BottomNavigationBar`.
+    - [x] Implement `RoleSwitch` (Client ↔ Freelancer) persisting to local storage.
+    - [x] Ensure role switch triggers full viewmodel refresh.
 
 ---
 
 ## 📊 Phase 2: Tab 1 - Overview (The Hub)
 **Goal:** Immediate insight.
 
-- [ ] **2.1 Summary Counters (Role-Corrected)**
-    - [ ] **Freelancer View:**
-        - [ ] `Pending Bookings` (Received, waiting my confirm).
-        - [ ] `Active Work` (InProgress count).
-        - [ ] `New Messages` (Unread count).
-        - [ ] `New Offers` (On my posted tasks - *If applicable*).
-    - [ ] **Client View:**
-        - [ ] `Active Bookings` (Confirmed/InProgress).
-        - [ ] `Open Tasks` (Waiting for offers).
-        - [ ] `New Offers` (Received on tasks).
-        - [ ] `Unread Messages`.
+- [x] **2.1 Summary Counters (Role-Corrected)**
+    - [x] **Freelancer View:**
+        - [x] `Pending Bookings` (Received, waiting my confirm).
+        - [x] `Active Work` (InProgress count).
+        - [x] `New Messages` (Unread count).
+        - [x] `New Offers` (On my posted tasks - *If applicable*).
+    - [x] **Client View:**
+        - [x] `Active Bookings` (Confirmed/InProgress).
+        - [x] `Open Tasks` (Waiting for offers).
+        - [x] `New Offers` (Received on tasks).
+        - [x] `Unread Messages`.
 
-- [ ] **2.2 "Next Actions" Widget**
-    - [ ] Query high-priority items based on Phase 1.2 rules.
-    - [ ] Example: "Confirm Booking #123", "Approve Work".
+- [x] **2.2 "Next Actions" Widget**
+    - [x] Query high-priority items based on Phase 1.2 rules.
+    - [x] Example: "Confirm Booking #123", "Approve Work".
 
-- [ ] **2.3 Activity Feed (Integrated Source)**
-    - [ ] **Schema Definition (`activity_log`):**
+- [x] **2.3 Activity Feed (Integrated Source)**
+    - [x] **Schema Definition (`activity_log`):**
         - `id`, `actor_id`, `actor_role`, `target_type`, `target_id`, `event_type`, `metadata`, `created_at`.
-    - [ ] **Writer:** Database Triggers (for status changes) + Service Layer (manual events).
-    - [ ] **Minimum Events:**
+    - [x] **Writer:** Database Triggers (for status changes) + Service Layer (manual events).
+    - [x] **Minimum Events:**
         - Booking: `created`, `confirmed`, `canceled`, `declined`, `started`, `completed`, `closed`, `rescheduled`.
         - Task: `created`, `assigned`, `started`, `completed`, `closed`, `canceled`.
         - Offer: `submitted`, `withdrawn`, `accepted`, `rejected`.
-    - [ ] **UI:** Last 5-10 items with deep links.
+    - [x] **UI:** Last 5-10 items with deep links.
 
 ---
 
 ## 📝 Phase 3: Tab 2 - Management (Supply & Demand)
 **Goal:** Manage what I sell (Services) or buy (Tasks).
 
-- [ ] **3.1 Freelancer: "My Services"**
-    - [ ] List views for `services` table.
-    - [ ] Tabs: `Active`, `Drafts`, `Paused` (Archived).
+- [x] **3.1 Freelancer: "My Services"**
+    - [x] List views for `services` table.
+    - [x] Tabs: `Active`, `Drafts`, `Paused` (Archived).
 
-- [ ] **3.2 Client: "My Tasks"**
-    - [ ] List views for `tasks` table.
-    - [ ] Tabs: `Open`, `Assigned`, `History` (Completed/Closed).
-    - [ ] Actions: View Offers (for Open), Cancel.
+- [x] **3.2 Client: "My Tasks"**
+    - [x] List views for `tasks` table.
+    - [x] Tabs: `Open`, `Assigned`, `History` (Completed/Closed).
+    - [x] Actions: View Offers (for Open), Cancel.
 
 ---
 
 ## 📅 Phase 4: Tab 3 - Bookings (Calendar)
 **Goal:** Reservation management.
 
-- [ ] **4.1 Bookings List Filters**
-    - [ ] **Filters:** `Pending`, `Confirmed`, `InProgress`, `Completed`, `Canceled/Declined`.
-    - [ ] **Sorting:** `scheduledAt` ASC (upcoming first). Separate into "Upcoming" and "Past" sections.
+- [x] **4.1 Bookings List Filters**
+    - [x] **Filters:** `Pending`, `Confirmed`, `InProgress`, `Completed`, `Canceled/Declined`.
+    - [x] **Sorting:** `scheduledAt` ASC (upcoming first). Separate into "Upcoming" and "Past" sections.
 
-- [ ] **4.2 Booking Actions (Role-Based)**
-    - [ ] **Freelancer:** Confirm, Decline, Propose New Time.
-    - [ ] **Client:** Edit Note, Cancel, Reschedule.
+- [x] **4.2 Booking Actions (Role-Based)**
+    - [x] **Freelancer:** Confirm, Decline, Propose New Time.
+    - [x] **Client:** Edit Note, Cancel, Reschedule.
 
 ---
 
 ## 🚀 Phase 5: Tab 4 - Active Work (Execution)
 **Goal:** The Unified Workspace.
 
-- [ ] **5.1 Merged List & Logic**
-    - [ ] Merge `Tasks` and `Bookings` into `WorkItem` list.
-    - [ ] **Sorting Rules:**
+- [x] **5.1 Merged List & Logic**
+    - [x] Merge `Tasks` and `Bookings` into `WorkItem` list.
+    - [x] **Sorting Rules:**
         - `Up Next`: Sort by `dueAt` ASC.
         - `In Progress`: Sort by `lastUpdate` DESC.
         - `In Review`: Sort by `completedAt` DESC.
 
-- [ ] **5.2 Primary Execution Actions (One Click)**
-    - [ ] Derived from `WorkItem.permissions`.
-    - [ ] `Start Work`, `Mark Completed`, `Approve & Close`.
+- [x] **5.2 Primary Execution Actions (One Click)**
+    - [x] Derived from `WorkItem.permissions`.
+    - [x] `Start Work`, `Mark Completed`, `Approve & Close`.
 
 ---
 
 ## 📬 Phase 6: Tab 5 - Inbox (Negotiation Only)
 **Goal:** Offers and pre-contract discussions. **NO MESSAGES HERE.**
 
-- [ ] **6.1 Offers Scope**
-    - [ ] **Client:** Offers Received (grouped by `taskId`, sorted by newest `created_at`).
-    - [ ] **Freelancer:** My Submitted Offers.
-    - [ ] **Strict Rule:** Chat/Messages live in `ChatModule`, not here.
+- [x] **6.1 Offers Scope**
+    - [x] **Client:** Offers Received (grouped by `taskId`, sorted by newest `created_at`).
+    - [x] **Freelancer:** My Submitted Offers.
+    - [x] **Strict Rule:** Chat/Messages live in `ChatModule`, not here.
 
-- [ ] **6.2 Actions**
-    - [ ] Accept/Reject (Client).
-    - [ ] Withdraw (Freelancer).
+- [x] **6.2 Actions**
+    - [x] Accept/Reject (Client).
+    - [x] Withdraw (Freelancer).
 
 ---
 
 ## 🔗 Phase 7: Deep Linking & Routing
 **Goal:** Notifications work perfectly.
 
-- [ ] **7.1 Route Mapping**
-    - [ ] `booking_created` -> `Dashboard(Bookings) -> BookingDetails(bookingId)`.
-    - [ ] `task_assigned` -> `Dashboard(ActiveWork) -> WorkDetails(type=task, id=taskId)`.
-    - [ ] `offer_received` -> `Dashboard(Inbox) -> TaskOffers(taskId)`.
-    - [ ] `message_new` -> `ChatScreen(conversationId)`.
+- [x] **7.1 Route Mapping**
+    - [x] `booking_created` -> `Dashboard(Bookings) -> BookingDetails(bookingId)`.
+    - [x] `task_assigned` -> `Dashboard(ActiveWork) -> WorkDetails(type=task, id=taskId)`.
+    - [x] `offer_received` -> `Dashboard(Inbox) -> TaskOffers(taskId)`.
+    - [x] `message_new` -> `ChatScreen(conversationId)`.
 
-- [ ] **7.2 Fallback Rules**
-    - [ ] Target Not Found -> `Dashboard(Overview)` with snackbar "Item not available".
-    - [ ] Access Denied -> `Dashboard(Overview)` with snackbar "Access denied".
+- [x] **7.2 Fallback Rules**
+    - [x] Target Not Found -> `Dashboard(Overview)` with snackbar "Item not available".
+    - [x] Access Denied -> `Dashboard(Overview)` with snackbar "Access denied".
 
 ---
 
 ## ⚙️ Phase 8: Polish & Performance
 **Goal:** Production ready.
 
-- [ ] **8.1 Performance Rules**
-    - [ ] **Single Fetch Rule:** Each tab uses max 1 list fetch + 1 counters fetch.
-    - [ ] **Realtime Scope:** Strictly limited to counters (unread, pending, new offers).
-    - [ ] **Caching:** Cache last result locally to show instantly on load.
+- [x] **8.1 Performance Rules**
+    - [x] **Single Fetch Rule:** Each tab uses max 1 list fetch + 1 counters fetch.
+    - [x] **Realtime Scope:** Strictly limited to counters (unread, pending, new offers).
+    - [x] **Caching:** Cache last result locally to show instantly on load.
 
-- [ ] **8.2 Empty States**
-    - [ ] "No Bookings? Create a Service." (Freelancer).
-    - [ ] "No Active Work? Find a Freelancer." (Client).
+- [x] **8.2 Empty States**
+    - [x] "No Bookings? Create a Service." (Freelancer).
+    - [x] "No Active Work? Find a Freelancer." (Client).

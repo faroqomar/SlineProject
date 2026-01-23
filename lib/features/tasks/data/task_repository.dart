@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sline_app/core/app_enums.dart';
 import '../models/task_model.dart';
 import '../services/task_service.dart';
 

@@ -310,7 +310,7 @@ class TaskCard extends StatelessWidget {
       case 'dev':
         return AppColors.lightTeal;
       case 'writing':
-        return const Color(0xFFF7D69C); // Sand/beige color
+        return AppColors.sand; // Sand/beige color
       case 'marketing':
         return AppColors.mediumGreyBlue;
       case 'mobile':

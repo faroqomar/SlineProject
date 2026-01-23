@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 
-import '../../models/dashboard_enums.dart';
+import 'package:sline_app/core/app_enums.dart';
 import '../../viewmodels/dashboard_view_model.dart';
 import '../widgets/manage_service_list.dart';
 import '../widgets/manage_task_list.dart';
@@ -36,6 +36,9 @@ class _ManageTabState extends State<ManageTab>
     final isFreelancer = vm.currentRole == UserRole.freelancer;
     final colorScheme = context.colorScheme;
 
+    // Trigger lazy loading of management data if empty?
+    // VM handles it in _loadData which is called on init/role switch.
+
     final tabs = isFreelancer
         ? const [Tab(text: "Active"), Tab(text: "Drafts"), Tab(text: "Paused")]
         : const [
@@ -63,14 +66,14 @@ class _ManageTabState extends State<ManageTab>
             controller: _tabController,
             children: isFreelancer
                 ? const [
-                    ManageServiceList(status: "Active"),
-                    ManageServiceList(status: "Drafts"),
-                    ManageServiceList(status: "Paused"),
+                    ManageServiceList(status: "active"),
+                    ManageServiceList(status: "draft"),
+                    ManageServiceList(status: "paused"),
                   ]
                 : const [
-                    ManageTaskList(status: "Open"),
-                    ManageTaskList(status: "Assigned"),
-                    ManageTaskList(status: "History"),
+                    ManageTaskList(status: "open"),
+                    ManageTaskList(status: "assigned"),
+                    ManageTaskList(status: "closed"), // Using DB status
                   ],
           ),
         ),

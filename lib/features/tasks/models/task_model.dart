@@ -1,5 +1,4 @@
-/// Enum for task status
-enum TaskStatus { open, assigned, closed, inProgress, canceled }
+import 'package:sline_app/core/app_enums.dart';
 
 /// Enum for task type (bidding vs. scheduling)
 enum TaskType {

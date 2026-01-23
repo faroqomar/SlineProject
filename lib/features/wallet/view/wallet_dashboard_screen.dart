@@ -178,7 +178,7 @@ class _GlassCreditCard extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             AppColors.teal,
-            const Color(0xFF0c3b40), // Darker teal
+            AppColors.darkTeal, // Darker teal
           ],
         ),
         boxShadow: [

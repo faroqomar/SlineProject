@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sline_app/core/app_enums.dart';
 import '../models/slot_model.dart';
 import '../models/booking_model.dart';
 import '../../notifications/services/notification_service.dart';
@@ -98,7 +99,7 @@ class BookingService {
           'note': note,
           'provider_id': providerId,
           'client_id': uid,
-          'status': status.name,
+          'status': _mapStatusToDb(status),
         })
         .select()
         .single();
@@ -122,7 +123,13 @@ class BookingService {
     int limit = 50,
     String? cursorCreatedAtIso,
   }) async {
-    final query = _client.from(_bookingsTable).select('*, tasks(*)');
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return [];
+
+    final query = _client
+        .from(_bookingsTable)
+        .select('*, tasks(*), availability_slots(starts_at)')
+        .eq('client_id', uid);
 
     if (cursorCreatedAtIso != null) {
       query.lt('created_at', cursorCreatedAtIso);
@@ -139,7 +146,13 @@ class BookingService {
     int limit = 50,
     String? cursorCreatedAtIso,
   }) async {
-    final query = _client.from(_bookingsTable).select('*, tasks(*)');
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return [];
+
+    final query = _client
+        .from(_bookingsTable)
+        .select('*, tasks(*), availability_slots(starts_at)')
+        .eq('provider_id', uid);
 
     if (cursorCreatedAtIso != null) {
       query.lt('created_at', cursorCreatedAtIso);
@@ -158,7 +171,7 @@ class BookingService {
   }) async {
     final res = await _client
         .from(_bookingsTable)
-        .update({'status': newStatus.name})
+        .update({'status': _mapStatusToDb(newStatus)})
         .eq('id', bookingId)
         .select()
         .single();
@@ -201,5 +214,18 @@ class BookingService {
         .eq('id', bookingId)
         .single();
     return BookingModel.fromJson(res);
+  }
+
+  String _mapStatusToDb(BookingStatus status) {
+    switch (status) {
+      case BookingStatus.inProgress:
+        return 'in_progress';
+      case BookingStatus.noShow:
+        return 'no_show';
+      case BookingStatus.declined:
+        return 'canceled';
+      default:
+        return status.name;
+    }
   }
 }

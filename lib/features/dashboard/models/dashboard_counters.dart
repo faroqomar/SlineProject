@@ -1,18 +1,39 @@
 class DashboardCounters {
-  final int pendingBookings;
   final int activeWork;
-  final int unreadMessages;
-  final int
-  newOffers; // For client: offers received. For freelancer: offers on own tasks (rare)
-  final int openTasks; // Client only
-  final int activeBookings; // Client only
+  final int pendingRequests;
+  final int newMessages;
+  final int newOffers;
 
   const DashboardCounters({
-    this.pendingBookings = 0,
     this.activeWork = 0,
-    this.unreadMessages = 0,
+    this.pendingRequests = 0,
+    this.newMessages = 0,
     this.newOffers = 0,
-    this.openTasks = 0,
-    this.activeBookings = 0,
   });
+
+  bool get isEmpty =>
+      activeWork == 0 &&
+      pendingRequests == 0 &&
+      newMessages == 0 &&
+      newOffers == 0;
+
+  /// Serialize to Map for caching
+  Map<String, int> toMap() {
+    return {
+      'activeWork': activeWork,
+      'pendingRequests': pendingRequests,
+      'newMessages': newMessages,
+      'newOffers': newOffers,
+    };
+  }
+
+  /// Deserialize from Map for cache retrieval
+  factory DashboardCounters.fromMap(Map<String, int> map) {
+    return DashboardCounters(
+      activeWork: map['activeWork'] ?? 0,
+      pendingRequests: map['pendingRequests'] ?? 0,
+      newMessages: map['newMessages'] ?? 0,
+      newOffers: map['newOffers'] ?? 0,
+    );
+  }
 }

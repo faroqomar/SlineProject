@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sline_app/core/app_enums.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
@@ -237,6 +238,14 @@ class BookingDetailsScreen extends StatelessWidget {
       case BookingStatus.noShow:
         color = AppColors.lightRed;
         text = 'No Show';
+        break;
+      case BookingStatus.inProgress:
+        color = AppColors.teal;
+        text = 'In Progress';
+        break;
+      case BookingStatus.declined:
+        color = AppColors.lightRed;
+        text = 'Declined';
         break;
     }
 

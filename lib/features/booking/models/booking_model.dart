@@ -1,5 +1,9 @@
 /// Booking model for the `bookings` table.
 /// All timestamps are UTC.
+library;
+
+import 'package:sline_app/core/app_enums.dart';
+
 class BookingModel {
   final String id;
   final String? taskId;
@@ -9,6 +13,8 @@ class BookingModel {
   final BookingStatus status;
   final String? note;
   final DateTime createdAtUtc;
+  final DateTime? scheduledAt; // Derived from availability_slots.starts_at
+  final DateTime? completedAt; // Auto-set when status changes to 'completed'
   final Map<String, dynamic>? taskData; // Joined task data
 
   const BookingModel({
@@ -20,6 +26,8 @@ class BookingModel {
     required this.status,
     required this.note,
     required this.createdAtUtc,
+    this.scheduledAt,
+    this.completedAt,
     this.taskData,
   });
 
@@ -30,9 +38,17 @@ class BookingModel {
       providerId: json['provider_id'] as String,
       clientId: json['client_id'] as String,
       slotId: json['slot_id'] as String,
-      status: BookingStatusX.fromString(json['status'] as String?),
+      status: _mapDbStatusToEnum(json['status'] as String),
       note: json['note'] as String?,
       createdAtUtc: DateTime.parse(json['created_at'] as String).toUtc(),
+      scheduledAt: json['availability_slots']?['starts_at'] != null
+          ? DateTime.parse(
+              json['availability_slots']['starts_at'] as String,
+            ).toUtc()
+          : null,
+      completedAt: json['completed_at'] != null
+          ? DateTime.parse(json['completed_at'] as String).toUtc()
+          : null,
       taskData: json['tasks'] as Map<String, dynamic>?,
     );
   }
@@ -49,23 +65,21 @@ class BookingModel {
       'created_at': createdAtUtc.toUtc().toIso8601String(),
     };
   }
-}
 
-/// Booking status enum aligned with DB `booking_status_enum`.
-enum BookingStatus { pending, confirmed, canceled, completed, noShow }
-
-extension BookingStatusX on BookingStatus {
-  static BookingStatus fromString(String? value) {
-    switch (value) {
-      case 'confirmed':
-        return BookingStatus.confirmed;
-      case 'canceled':
+  static BookingStatus _mapDbStatusToEnum(String status) {
+    switch (status) {
+      case 'in_progress':
+        return BookingStatus.inProgress;
+      case 'no_show':
+        return BookingStatus.noShow;
+      case 'canceled': // Handle alternative spelling if needed
+      case 'cancelled':
         return BookingStatus.canceled;
-      case 'completed':
-        return BookingStatus.completed;
-      case 'pending':
       default:
-        return BookingStatus.pending;
+        return BookingStatus.values.firstWhere(
+          (e) => e.name == status,
+          orElse: () => BookingStatus.pending,
+        );
     }
   }
 }

@@ -1,9 +1,12 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/logger_service.dart';
 import '../../../core/utils/error_mapper.dart';
+import '../../../core/app_enums.dart';
 import '../models/task_model.dart';
 import '../../notifications/services/notification_service.dart';
 import '../../notifications/models/notification_model.dart';
+
+import '../models/task_request_model.dart';
 
 /// Service for handling task operations with Supabase.
 ///
@@ -179,7 +182,7 @@ class TaskService {
       // 2. Perform the update
       await _client
           .from('tasks')
-          .update({'status': status.name})
+          .update({'status': _mapStatusToDb(status)})
           .eq('id', taskId);
       AppLogger.i(
         'Task status updated: $taskId → ${status.name}',
@@ -271,9 +274,10 @@ class TaskService {
   /// Performance: 2 queries (tasks + profiles batch) - no N+1 issue.
   Future<List<Task>> getTasksByUser(String userId) async {
     try {
+      // Custom select to include offer count
       final response = await _client
           .from('tasks')
-          .select(_selectBasic)
+          .select('$_selectBasic, task_requests(count)')
           .eq('user_id', userId)
           .order('created_at', ascending: false);
 
@@ -284,7 +288,26 @@ class TaskService {
           .toSet();
 
       final profilesMap = await _fetchProfilesByIds(userIds);
-      return _parseTasksWithProfiles(rows, profilesMap);
+
+      return rows.map((json) {
+        final taskJson = Map<String, dynamic>.from(json as Map);
+
+        // Profiles Mapping
+        final userId = taskJson['user_id'] as String?;
+        if (userId != null && profilesMap.containsKey(userId)) {
+          taskJson['profiles'] = profilesMap[userId];
+        }
+
+        // Offers Mapping (Flatten count)
+        if (taskJson['task_requests'] != null) {
+          final requests = taskJson['task_requests'] as List;
+          if (requests.isNotEmpty && requests[0] is Map) {
+            taskJson['offers'] = requests[0]['count'];
+          }
+        }
+
+        return Task.fromJson(taskJson);
+      }).toList();
     } on PostgrestException catch (e, st) {
       AppLogger.e(
         'Failed to get tasks by user',
@@ -474,6 +497,133 @@ class TaskService {
         error: e,
         stackTrace: st,
       );
+      throw Exception(ErrorMapper.map(e));
+    }
+  }
+
+  String _mapStatusToDb(TaskStatus status) {
+    switch (status) {
+      case TaskStatus.inProgress:
+        return 'in_progress';
+      default:
+        return status.name;
+    }
+  }
+
+  // --- Offer Management (Phase 6) ---
+
+  /// Get offers received for a client's tasks.
+  ///
+  /// Returns a flat list of pending offers on tasks owned by [userId].
+  Future<List<TaskRequest>> getOffersReceived(String userId) async {
+    try {
+      // Fetch pending offers where task owner is userId
+      // Strategy:
+      // 1. Fetch tasks owned by user IDs
+      // 2. Or specialized query on task_requests joining tasks
+      //
+      // Supabase query:
+      // select *, tasks!inner(user_id) where tasks.user_id = uid AND status = pending
+      final response = await _client
+          .from('task_requests')
+          .select(
+            '*, tasks!inner(user_id, title), profiles!task_requests_freelancer_id_fkey(full_name, avatar_url)',
+          )
+          .eq('status', 'pending')
+          .eq('tasks.user_id', userId)
+          .order('created_at', ascending: false);
+
+      return (response as List).map((json) {
+        // Map Task Title and Profile for UI convenience
+        // Profiles is joined as 'profiles' object
+        // Tasks is joined as 'tasks' object
+        // TaskRequest.fromMap handles profiles mapping?
+        // We might need to augment the map or update model
+        // Actually TaskRequest model expects profiles flat or nested?
+        return TaskRequest.fromMap(json as Map<String, dynamic>);
+      }).toList();
+    } on PostgrestException catch (e, st) {
+      AppLogger.e('Failed to get offers received', error: e, stackTrace: st);
+      return [];
+    } catch (e) {
+      AppLogger.e('Failed to get offers received', error: e);
+      return [];
+    }
+  }
+
+  /// Get offers submitted by a freelancer.
+  Future<List<TaskRequest>> getOffersSubmitted(String freelancerId) async {
+    try {
+      final response = await _client
+          .from('task_requests')
+          .select('*, tasks(title, user_id)') // Join task to show Title
+          .eq('freelancer_id', freelancerId)
+          .order('created_at', ascending: false);
+
+      return (response as List)
+          .map((json) => TaskRequest.fromMap(json as Map<String, dynamic>))
+          .toList();
+    } on PostgrestException catch (e, st) {
+      AppLogger.e('Failed to get offers submitted', error: e, stackTrace: st);
+      return [];
+    } catch (e) {
+      AppLogger.e('Failed to get offers submitted', error: e);
+      return [];
+    }
+  }
+
+  /// Withdraw (delete) a pending offer.
+  Future<void> withdrawOffer(String requestId) async {
+    try {
+      // RLS policy `tr_delete` allows deletion if status is pending and owner matches
+      await _client.from('task_requests').delete().eq('id', requestId);
+      AppLogger.i('Offer withdrawn: $requestId');
+    } on PostgrestException catch (e, st) {
+      AppLogger.e('Failed to withdraw offer', error: e, stackTrace: st);
+      throw Exception(ErrorMapper.map(e));
+    } catch (e) {
+      AppLogger.e('Failed to withdraw offer', error: e);
+      rethrow;
+    }
+  }
+
+  /// Accepts an offer using atomic RPC
+  Future<void> acceptOffer(String offerId) async {
+    try {
+      await _client.rpc(
+        'accept_task_request',
+        params: {'p_request_id': offerId},
+      );
+      AppLogger.i('Offer accepted via RPC: $offerId');
+    } on PostgrestException catch (e, st) {
+      if (e.message.contains('not the task owner')) {
+        throw Exception('Only task owner can accept offers');
+      }
+      if (e.message.contains('already assigned')) {
+        throw Exception('Task already assigned');
+      }
+      AppLogger.e('Failed to accept offer', error: e, stackTrace: st);
+      throw Exception(ErrorMapper.map(e));
+    }
+  }
+
+  /// Rejects an offer
+  Future<void> rejectOffer(String offerId) async {
+    try {
+      // Try direct update (RLS policy tr_update_by_owner allows task owner)
+      await _client
+          .from('task_requests')
+          .update({'status': 'rejected'})
+          .eq('id', offerId);
+
+      AppLogger.i('Offer rejected: $offerId');
+    } on PostgrestException catch (e, st) {
+      if (e.code == '42501') {
+        // RLS blocks direct update, log clear error
+        AppLogger.w('Need reject_task_request RPC - RLS blocks direct update');
+        throw Exception('Need reject_task_request RPC - contact backend team');
+      }
+      AppLogger.e('Failed to reject offer', error: e, stackTrace: st);
       throw Exception(ErrorMapper.map(e));
     }
   }

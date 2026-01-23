@@ -1,34 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:sline_app/core/services/deep_link_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/utils/format_date.dart';
+import '../../viewmodels/dashboard_view_model.dart';
+import '../../models/activity_log.dart';
 
 class ActivityFeedPreview extends StatelessWidget {
   const ActivityFeedPreview({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Mock Data
-    final activities = [
-      _ActivityInfo(
-        "Booking Confirmed",
-        "Alice confirmed your booking",
-        "15m ago",
-        Icons.check_circle_outline,
-      ),
-      _ActivityInfo(
-        "New Offer",
-        "Received offer for 'Logo Design'",
-        "2h ago",
-        Icons.local_offer_outlined,
-      ),
-      _ActivityInfo(
-        "Work Started",
-        "You started work on 'App MVP'",
-        "1d ago",
-        Icons.play_circle_outline,
-      ),
-    ];
+    final vm = context.watch<DashboardViewModel>();
+    final activities = vm.activityFeed;
+
+    if (vm.isLoading && activities.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (activities.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(AppDimens.p16),
+        child: Text(
+          "No recent activity.",
+          style: AppTypography.caption.copyWith(
+            color: context.colorScheme.textSecondary,
+          ),
+        ),
+      );
+    }
 
     return ListView.builder(
       shrinkWrap: true,
@@ -44,17 +46,8 @@ class ActivityFeedPreview extends StatelessWidget {
   }
 }
 
-class _ActivityInfo {
-  final String title;
-  final String description;
-  final String time;
-  final IconData icon;
-
-  _ActivityInfo(this.title, this.description, this.time, this.icon);
-}
-
 class _ActivityRow extends StatelessWidget {
-  final _ActivityInfo item;
+  final ActivityLog item;
   final bool isLast;
 
   const _ActivityRow({required this.item, required this.isLast});
@@ -62,68 +55,110 @@ class _ActivityRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final info = _mapActivityToInfo(item);
+    final deepLinkService = context.read<DeepLinkService>();
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: colorScheme.inputBackground,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                item.icon,
-                size: 16,
-                color: colorScheme.textSecondary,
-              ),
-            ),
-            if (!isLast)
+    return InkWell(
+      onTap: () => deepLinkService.handleActivity(context, item),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            children: [
               Container(
-                width: 1,
-                height: 30, // Connect line
-                color: colorScheme.divider,
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colorScheme.inputBackground,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  info.icon,
+                  size: 16,
+                  color: colorScheme.textSecondary,
+                ),
               ),
-          ],
-        ),
-        const SizedBox(width: AppDimens.p12),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 4, bottom: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      item.title,
-                      style: AppTypography.bodySmall.copyWith(
-                        fontWeight: FontWeight.bold,
+              if (!isLast)
+                Container(width: 1, height: 40, color: colorScheme.divider),
+            ],
+          ),
+          const SizedBox(width: AppDimens.p12),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4, bottom: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        info.title,
+                        style: AppTypography.bodySmall.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    Text(
-                      item.time,
-                      style: AppTypography.caption.copyWith(
-                        color: colorScheme.textTertiary,
+                      Text(
+                        formatFriendlyTime(item.createdAt),
+                        style: AppTypography.caption.copyWith(
+                          color: colorScheme.textTertiary,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  item.description,
-                  style: AppTypography.caption.copyWith(
-                    color: colorScheme.textSecondary,
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 2),
+                  Text(
+                    info.description,
+                    style: AppTypography.caption.copyWith(
+                      color: colorScheme.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
+
+  _ActivityInfo _mapActivityToInfo(ActivityLog log) {
+    // Map event type to UI text and icon
+    String title = "Notification";
+    String description = "New activity";
+    IconData icon = Icons.notifications_none;
+
+    final type = log.eventType;
+    final entity = log.entityType;
+
+    if (entity == 'booking') {
+      icon = Icons.calendar_today;
+      if (type == 'created') {
+        title = "New Booking Request";
+        description = "You have a new booking request.";
+      } else if (type == 'status_change') {
+        final newStatus = log.metadata['new_status'];
+        title = "Booking $newStatus"; // e.g. Booking confirmed
+        description = "Booking status changed to $newStatus.";
+        if (newStatus == 'confirmed') icon = Icons.check_circle_outline;
+        if (newStatus == 'canceled') icon = Icons.cancel_outlined;
+      }
+    } else if (entity == 'task') {
+      icon = Icons.assignment;
+      if (type == 'status_change') {
+        final newStatus = log.metadata['new_status'];
+        description = "Task status updated to $newStatus.";
+        title = "Task Update";
+      }
+    }
+
+    return _ActivityInfo(title, description, icon);
+  }
+}
+
+class _ActivityInfo {
+  final String title;
+  final String description;
+  final IconData icon;
+
+  _ActivityInfo(this.title, this.description, this.icon);
 }

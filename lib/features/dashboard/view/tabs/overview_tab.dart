@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import '../../models/dashboard_enums.dart';
+import 'package:sline_app/core/app_enums.dart';
 import '../../viewmodels/dashboard_view_model.dart';
 import '../widgets/activity_feed_preview.dart';
 import '../widgets/dashboard_counters_grid.dart';

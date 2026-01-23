@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sline_app/core/app_enums.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
 import 'package:sline_app/features/booking/view/widgets/booking_card.dart';

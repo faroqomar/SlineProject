@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/slot_model.dart';
 import '../models/booking_model.dart';
+import 'package:sline_app/core/app_enums.dart';
 import '../../chat/data/chat_repository.dart';
 import '../../chat/models/conversation_model.dart'; // Added
 import '../data/booking_repository.dart';

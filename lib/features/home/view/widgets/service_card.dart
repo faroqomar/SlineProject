@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 
@@ -143,10 +144,12 @@ class ServiceCard extends StatelessWidget {
         return Colors.green;
       case TaskStatus.assigned:
         return Colors.orange;
+      case TaskStatus.completed: // Treated same as closed for color
       case TaskStatus.closed:
         return Colors.blue;
       case TaskStatus.inProgress:
         return Colors.red;
+      case TaskStatus.draft:
       case TaskStatus.canceled:
         return Colors.grey;
     }
@@ -163,6 +166,10 @@ class ServiceCard extends StatelessWidget {
         return 'Closed';
       case TaskStatus.assigned:
         return 'Assigned';
+      case TaskStatus.completed:
+        return 'Completed';
+      case TaskStatus.draft:
+        return 'Draft';
       case TaskStatus.canceled:
         return 'Cancelled';
     }

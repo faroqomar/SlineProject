@@ -4,6 +4,7 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/signed_image.dart';
+import 'package:sline_app/core/app_enums.dart'; // Added
 import 'package:sline_app/features/booking/models/booking_model.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 
@@ -161,6 +162,14 @@ class BookingCard extends StatelessWidget {
       case BookingStatus.noShow:
         color = AppColors.lightRed;
         text = 'NO SHOW';
+        break;
+      case BookingStatus.inProgress:
+        color = AppColors.teal;
+        text = 'IN PROGRESS';
+        break;
+      case BookingStatus.declined:
+        color = AppColors.lightRed;
+        text = 'DECLINED';
         break;
     }
 

@@ -3,11 +3,13 @@ import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import '../models/dashboard_enums.dart';
+import 'package:sline_app/core/app_enums.dart';
 import '../viewmodels/dashboard_view_model.dart';
 import 'tabs/overview_tab.dart';
 import 'tabs/manage_tab.dart';
 import 'tabs/bookings_tab.dart';
+import 'tabs/active_work_tab.dart';
+import 'tabs/inbox_tab.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -127,8 +129,8 @@ class _DashboardContentState extends State<_DashboardContent>
             const OverviewTab(),
             const ManageTab(),
             const BookingsTab(),
-            Center(child: Text("Active Work Tab Placeholder")),
-            Center(child: Text("Inbox Tab Placeholder")),
+            const ActiveWorkTab(),
+            const InboxTab(),
           ],
         ),
       ),

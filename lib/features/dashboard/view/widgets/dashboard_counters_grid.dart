@@ -4,7 +4,7 @@ import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/features/dashboard/models/dashboard_enums.dart';
+import 'package:sline_app/core/app_enums.dart';
 import '../../viewmodels/dashboard_view_model.dart';
 
 class DashboardCountersGrid extends StatelessWidget {

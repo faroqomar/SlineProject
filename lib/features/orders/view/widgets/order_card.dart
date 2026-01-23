@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
@@ -58,6 +59,16 @@ class OrderCard extends StatelessWidget {
         statusBg = AppColors.lightTeal.withValues(alpha: 0.1);
         statusText = AppColors.lightTeal;
         statusBorder = AppColors.lightTeal.withValues(alpha: 0.3);
+        break;
+      case TaskStatus.completed:
+        statusBg = AppColors.lightTeal.withValues(alpha: 0.1);
+        statusText = AppColors.lightTeal;
+        statusBorder = AppColors.lightTeal.withValues(alpha: 0.3);
+        break;
+      case TaskStatus.draft:
+        statusBg = AppColors.mediumGrey.withValues(alpha: 0.1);
+        statusText = AppColors.mediumGrey;
+        statusBorder = AppColors.mediumGrey.withValues(alpha: 0.3);
         break;
       case TaskStatus.canceled:
         statusBg = AppColors.mediumGrey.withValues(alpha: 0.1);
@@ -380,7 +391,11 @@ class OrderCard extends StatelessWidget {
       case TaskStatus.inProgress:
         return 'IN PROGRESS';
       case TaskStatus.closed:
+        return 'CLOSED';
+      case TaskStatus.completed:
         return 'COMPLETED';
+      case TaskStatus.draft:
+        return 'DRAFT';
       case TaskStatus.canceled:
         return 'CANCELLED';
     }

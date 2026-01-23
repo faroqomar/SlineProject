@@ -1,101 +1,100 @@
 import 'package:flutter/material.dart';
-
+import 'package:provider/provider.dart';
+import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import '../../models/dashboard_enums.dart';
+import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 import '../widgets/booking_card.dart';
 
-class BookingsTab extends StatefulWidget {
+class BookingsTab extends StatelessWidget {
   const BookingsTab({super.key});
 
   @override
-  State<BookingsTab> createState() => _BookingsTabState();
+  Widget build(BuildContext context) {
+    return Consumer<DashboardViewModel>(
+      builder: (context, vm, child) {
+        if (vm.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final bookings = vm.bookings;
+
+        if (bookings.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.calendar_today,
+                  size: 48,
+                  color: context.colorScheme.textSecondary,
+                ),
+                const SizedBox(height: AppDimens.p16),
+                Text(
+                  "No bookings yet",
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: context.colorScheme.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // Split into Upcoming and Past
+        final now = DateTime.now().toUtc();
+        final upcoming = bookings.where((b) {
+          // If scheduledAt is null, check createdAt or treat as upcoming/pending
+          if (b.scheduledAt != null) {
+            return b.scheduledAt!.isAfter(now);
+          }
+          // Fallback: Pending items are "Upcoming" regardless of date mostly?
+          return b.status == BookingStatus.pending ||
+              b.status == BookingStatus.confirmed;
+        }).toList();
+
+        final past = bookings.where((b) => !upcoming.contains(b)).toList();
+
+        return ListView(
+          padding: const EdgeInsets.all(AppDimens.p16),
+          children: [
+            if (upcoming.isNotEmpty) ...[
+              _SectionHeader(title: "Upcoming"),
+              ...upcoming.map(
+                (b) => BookingCard(
+                  booking: b,
+                  isProvider: vm.currentRole == UserRole.freelancer,
+                ),
+              ),
+              const SizedBox(height: AppDimens.p24),
+            ],
+
+            if (past.isNotEmpty) ...[
+              _SectionHeader(title: "Past"),
+              ...past.map(
+                (b) => BookingCard(
+                  booking: b,
+                  isProvider: vm.currentRole == UserRole.freelancer,
+                ),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
 }
 
-class _BookingsTabState extends State<BookingsTab> {
-  // Mock filter state
-  String _selectedFilter = 'All';
-  final List<String> _filters = [
-    'All',
-    'Pending',
-    'Confirmed',
-    'In Progress',
-    'Completed',
-  ];
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  const _SectionHeader({required this.title});
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-
-    // Mock Data
-    final bookings = [
-      MockBookingDisplay(
-        "Logo Design Session",
-        "Alice Client",
-        DateTime.now().add(const Duration(hours: 2)),
-        BookingStatus.confirmed,
-        UserRole.freelancer,
-      ),
-      MockBookingDisplay(
-        "Website Consultation",
-        "Bob Startup",
-        DateTime.now().add(const Duration(days: 1)),
-        BookingStatus.pending,
-        UserRole.freelancer,
-      ),
-    ];
-
-    return Column(
-      children: [
-        // Filter Chips
-        Container(
-          height: 60,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: AppDimens.p16),
-            scrollDirection: Axis.horizontal,
-            itemCount: _filters.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
-            itemBuilder: (context, index) {
-              final filter = _filters[index];
-              final isSelected = filter == _selectedFilter;
-              return ChoiceChip(
-                label: Text(filter),
-                selected: isSelected,
-                onSelected: (selected) {
-                  setState(() {
-                    _selectedFilter = filter;
-                  });
-                },
-                selectedColor: colorScheme.primary.withValues(alpha: 0.2),
-                backgroundColor: colorScheme.cardBackground,
-                labelStyle: AppTypography.captionBold.copyWith(
-                  color: isSelected
-                      ? colorScheme.primary
-                      : colorScheme.textSecondary,
-                ),
-                side: BorderSide(
-                  color: isSelected
-                      ? colorScheme.primary
-                      : colorScheme.cardBorder,
-                ),
-              );
-            },
-          ),
-        ),
-
-        // List
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(AppDimens.p16),
-            itemCount: bookings.length,
-            itemBuilder: (context, index) {
-              return BookingCard(booking: bookings[index]);
-            },
-          ),
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppDimens.p12, left: AppDimens.p4),
+      child: Text(title, style: AppTypography.h3),
     );
   }
 }

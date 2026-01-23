@@ -3,40 +3,7 @@
 // estimated days, an optional note, status, and timestamps.
 import 'package:flutter/foundation.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-
-/// Status values must match DB CHECK constraint:
-/// 'pending' | 'accepted' | 'rejected'
-enum TaskRequestStatus { pending, accepted, rejected }
-
-extension TaskRequestStatusX on TaskRequestStatus {
-  String get dbValue {
-    switch (this) {
-      case TaskRequestStatus.pending:
-        return 'pending';
-      case TaskRequestStatus.accepted:
-        return 'accepted';
-      case TaskRequestStatus.rejected:
-        return 'rejected';
-    }
-  }
-
-  bool get isPending => this == TaskRequestStatus.pending;
-  bool get isAccepted => this == TaskRequestStatus.accepted;
-  bool get isRejected => this == TaskRequestStatus.rejected;
-
-  static TaskRequestStatus fromDb(String? value) {
-    switch (value) {
-      case 'pending':
-        return TaskRequestStatus.pending;
-      case 'accepted':
-        return TaskRequestStatus.accepted;
-      case 'rejected':
-        return TaskRequestStatus.rejected;
-      default:
-        return TaskRequestStatus.pending;
-    }
-  }
-}
+import 'package:sline_app/core/app_enums.dart';
 
 @immutable
 class TaskRequest {
@@ -46,12 +13,15 @@ class TaskRequest {
   final int price; // Use int for price as DB schema uses BIGINT
   final int days;
   final String? note;
-  final TaskRequestStatus status;
+  final OfferStatus status;
   final DateTime createdAt;
 
   // Joined fields from profiles table
   final String? bidderName;
   final String? bidderAvatar;
+
+  // Joined fields from tasks table
+  final String? taskTitle;
 
   const TaskRequest({
     required this.id,
@@ -64,11 +34,12 @@ class TaskRequest {
     required this.createdAt,
     this.bidderName,
     this.bidderAvatar,
+    this.taskTitle,
   });
 
-  bool get isPending => status.isPending;
-  bool get isAccepted => status.isAccepted;
-  bool get isRejected => status.isRejected;
+  bool get isPending => status == OfferStatus.pending;
+  bool get isAccepted => status == OfferStatus.accepted;
+  bool get isRejected => status == OfferStatus.rejected;
 
   factory TaskRequest.fromMap(Map<String, dynamic> map) {
     try {
@@ -80,17 +51,30 @@ class TaskRequest {
       final String? parsedBidderName = profileData?['full_name'] as String?;
       final String? parsedBidderAvatar = profileData?['avatar_url'] as String?;
 
+      // Extract task title from nested 'tasks' object if it exists (from JOIN)
+      final taskData = map['tasks'] as Map<String, dynamic>?;
+      final String? parsedTaskTitle = taskData?['title'] as String?;
+
       return TaskRequest(
         id: map['id'] as String,
         taskId: map['task_id'] as String,
-        bidderId: map['bidder_id'] as String,
+        // Map from freelancer_id (canonical) or bidder_id (legacy)
+        // Handle null case safely
+        bidderId:
+            (map['freelancer_id'] as String?) ??
+            (map['bidder_id'] as String?) ??
+            '', // Fallback to empty string if both are null
         price: priceValue,
         days: map['days'] as int,
         note: map['note'] as String?,
-        status: TaskRequestStatusX.fromDb(map['status'] as String?),
+        status: OfferStatus.values.firstWhere(
+          (e) => e.name == map['status'],
+          orElse: () => OfferStatus.pending,
+        ),
         createdAt: DateTime.parse(map['created_at'] as String),
         bidderName: parsedBidderName,
         bidderAvatar: parsedBidderAvatar,
+        taskTitle: parsedTaskTitle,
       );
     } catch (e, st) {
       AppLogger.e(
@@ -107,18 +91,20 @@ class TaskRequest {
     final data = <String, dynamic>{
       'id': id,
       'task_id': taskId,
-      'bidder_id': bidderId,
+      'freelancer_id': bidderId, // Write to canonical column
+      'bidder_id': bidderId, // Write to legacy column for backward compat
       'price': price, // price remains int
       'days': days,
       'note': note,
-      'status': status.dbValue,
+      'status': status.name,
       'created_at': createdAt.toIso8601String(),
     };
 
     if (forInsert) {
       return <String, dynamic>{
         'task_id': taskId,
-        'bidder_id': bidderId,
+        'freelancer_id': bidderId, // Write to canonical column
+        'bidder_id': bidderId, // Write to legacy column for backward compat
         'price': price, // price remains int
         'days': days,
         if (note != null && note!.trim().isNotEmpty) 'note': note,
@@ -135,10 +121,11 @@ class TaskRequest {
     int? price, // price is int to match DB
     int? days,
     String? note,
-    TaskRequestStatus? status,
+    OfferStatus? status,
     DateTime? createdAt,
     String? bidderName,
     String? bidderAvatar,
+    String? taskTitle,
   }) {
     return TaskRequest(
       id: id ?? this.id,
@@ -151,12 +138,13 @@ class TaskRequest {
       createdAt: createdAt ?? this.createdAt,
       bidderName: bidderName ?? this.bidderName,
       bidderAvatar: bidderAvatar ?? this.bidderAvatar,
+      taskTitle: taskTitle ?? this.taskTitle,
     );
   }
 
   @override
   String toString() =>
-      'TaskRequest(id: $id, taskId: $taskId, bidderId: $bidderId, price: $price, days: $days, status: ${status.dbValue}, bidderName: $bidderName)';
+      'TaskRequest(id: $id, taskId: $taskId, bidderId: $bidderId, price: $price, days: $days, status: ${status.name}, bidderName: $bidderName)';
 
   @override
   bool operator ==(Object other) =>
@@ -185,5 +173,6 @@ class TaskRequest {
     createdAt,
     bidderName,
     bidderAvatar,
+    taskTitle,
   );
 }

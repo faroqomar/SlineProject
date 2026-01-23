@@ -4,6 +4,7 @@ import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
@@ -387,7 +388,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     final popularCategories = [
       {'icon': '🎨', 'name': 'Design', 'color': AppColors.lightRed},
       {'icon': '💻', 'name': 'Development', 'color': AppColors.lightTeal},
-      {'icon': '✍️', 'name': 'Writing', 'color': const Color(0xFFF7D69C)},
+      {'icon': '✍️', 'name': 'Writing', 'color': AppColors.sand},
       {'icon': '📱', 'name': 'Mobile', 'color': AppColors.gold},
       {'icon': '🎯', 'name': 'Marketing', 'color': AppColors.mediumGreyBlue},
       {'icon': '🎬', 'name': 'Video', 'color': AppColors.teal},
@@ -553,7 +554,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       return AppColors.lightTeal;
     }
     if (lowerName.contains('writ') || lowerName.contains('content')) {
-      return const Color(0xFFF7D69C);
+      return AppColors.sand;
     }
     if (lowerName.contains('mobile') || lowerName.contains('app')) {
       return AppColors.gold;

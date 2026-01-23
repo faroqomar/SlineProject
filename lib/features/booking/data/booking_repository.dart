@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sline_app/core/app_enums.dart';
 import '../models/slot_model.dart';
 import '../models/booking_model.dart';
 import '../services/booking_service.dart';

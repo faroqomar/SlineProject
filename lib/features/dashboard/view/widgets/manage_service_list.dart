@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/features/services/models/service_model.dart';
+import '../../viewmodels/dashboard_view_model.dart';
 
 class ManageServiceList extends StatelessWidget {
   final String status;
@@ -9,13 +12,11 @@ class ManageServiceList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Mock Data
-    final services = [
-      _MockService("Logo Design Standard", "\$500", "5 Active Orders", "4.9 ⭐"),
-      _MockService("Brand Identity Pack", "\$1200", "1 Active Order", "5.0 ⭐"),
-    ];
+    // Bind to real data
+    final vm = context.watch<DashboardViewModel>();
+    final services = vm.myServices.where((s) => s.status == status).toList();
 
-    if (status != "Active") {
+    if (services.isEmpty) {
       return Center(
         child: Text(
           "No $status services",
@@ -34,16 +35,8 @@ class ManageServiceList extends StatelessWidget {
   }
 }
 
-class _MockService {
-  final String title;
-  final String price;
-  final String activeOrders;
-  final String rating;
-  _MockService(this.title, this.price, this.activeOrders, this.rating);
-}
-
 class _ServiceCard extends StatelessWidget {
-  final _MockService service;
+  final ServiceModel service;
 
   const _ServiceCard({required this.service});
 
@@ -74,7 +67,7 @@ class _ServiceCard extends StatelessWidget {
           ),
           const SizedBox(height: AppDimens.p8),
           Text(
-            service.price,
+            service.price != null ? '\$${service.price}' : 'No Price',
             style: AppTypography.bodyMedium.copyWith(
               color: colorScheme.primary,
               fontWeight: FontWeight.bold,
@@ -83,9 +76,16 @@ class _ServiceCard extends StatelessWidget {
           const SizedBox(height: AppDimens.p16),
           Row(
             children: [
-              _Badge(text: service.activeOrders, color: colorScheme.accent),
+              _Badge(
+                text: '${service.activeOrdersCount} Active',
+                color: colorScheme.accent,
+              ),
               const SizedBox(width: AppDimens.p8),
-              _Badge(text: service.rating, color: colorScheme.textSecondary),
+              if (service.rating > 0)
+                _Badge(
+                  text: '${service.rating} ⭐',
+                  color: colorScheme.textSecondary,
+                ),
             ],
           ),
           const SizedBox(height: AppDimens.p16),
@@ -93,17 +93,19 @@ class _ServiceCard extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () {}, // Todo: Edit
                   child: const Text("Edit"),
                 ),
               ),
               const SizedBox(width: AppDimens.p12),
               Expanded(
                 child: OutlinedButton(
-                  onPressed: null,
-                  child: const Text("Share"),
+                  onPressed: null, // Todo: Share/Pause
+                  child: Text(
+                    service.status == 'active' ? "Pause" : "Activate",
+                  ),
                 ),
-              ), // Demo disabled
+              ),
             ],
           ),
         ],

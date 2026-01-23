@@ -67,7 +67,7 @@ class SavedTasksViewModel extends ChangeNotifier {
       } else {
         _savedTaskIds.remove(taskId);
       }
-      notifyListeners();
+      if (!_disposed) notifyListeners();
       // Also reload full tasks list
       try {
         _savedTasks = await service.listMineWithDetails();
@@ -85,16 +85,6 @@ class SavedTasksViewModel extends ChangeNotifier {
       _setError(_humanize(e));
       rethrow;
     }
-  }
-
-  void _setLoading(bool v) {
-    _loading = v;
-    notifyListeners();
-  }
-
-  void _setError(String? msg) {
-    _error = msg;
-    notifyListeners();
   }
 
   String _humanize(Object e) {
@@ -132,15 +122,31 @@ class SavedTasksViewModel extends ChangeNotifier {
   }
 
   void clear() {
+    if (_disposed) return;
     _savedTasks = [];
     _savedTaskIds.clear();
     _error = null;
     notifyListeners();
   }
 
+  bool _disposed = false;
+
   @override
   void dispose() {
+    _disposed = true;
     _authSubscription?.cancel();
     super.dispose();
+  }
+
+  void _setLoading(bool v) {
+    if (_disposed) return;
+    _loading = v;
+    notifyListeners();
+  }
+
+  void _setError(String? msg) {
+    if (_disposed) return;
+    _error = msg;
+    notifyListeners();
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sline_app/features/auth/view/signup_screen.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
@@ -30,6 +31,8 @@ import 'features/orders/viewmodels/orders_view_model.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/providers/theme_mode_provider.dart';
 import 'features/notifications/viewmodels/notification_view_model.dart';
+import 'core/services/deep_link_service.dart';
+import 'core/services/dashboard_cache_service.dart';
 
 /// App entry point with global error handling.
 ///
@@ -67,7 +70,11 @@ void main() async {
       // Set logger level (info = clean logs, debug = verbose logs)
       AppLogger.currentLevel = LogLevel.info;
 
-      runApp(const SLineApp());
+      // Initialize SharedPreferences for caching
+      final prefs = await SharedPreferences.getInstance();
+      AppLogger.i('✅ Cache service ready');
+
+      runApp(SLineApp(prefs: prefs));
     },
     (error, stack) {
       // Catches any uncaught async exceptions outside the Flutter framework
@@ -82,7 +89,9 @@ void main() async {
 }
 
 class SLineApp extends StatelessWidget {
-  const SLineApp({super.key});
+  final SharedPreferences prefs;
+
+  const SLineApp({super.key, required this.prefs});
 
   @override
   Widget build(BuildContext context) {
@@ -120,6 +129,10 @@ class SLineApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => FavoritesViewModel(service: FavoritesService()),
         ),
+        // Deep Link Service (Stateless)
+        Provider(create: (_) => DeepLinkService()),
+        // Dashboard Cache Service (Stateless)
+        Provider(create: (_) => DashboardCacheService(prefs)),
       ],
       child: const _AppWithAuthListener(),
     );

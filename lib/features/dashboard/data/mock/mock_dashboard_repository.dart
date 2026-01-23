@@ -1,24 +1,26 @@
 import 'package:sline_app/features/dashboard/models/dashboard_counters.dart';
-import 'package:sline_app/features/dashboard/models/dashboard_enums.dart';
+import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/features/dashboard/models/work_item.dart';
 import 'package:sline_app/features/dashboard/models/activity_item.dart';
+
+import 'package:sline_app/features/dashboard/services/dashboard_permission_service.dart';
 
 class MockDashboardRepository {
   Future<DashboardCounters> getCounters(UserRole role) async {
     await Future.delayed(const Duration(milliseconds: 500));
     if (role == UserRole.freelancer) {
       return const DashboardCounters(
-        pendingBookings: 3,
+        pendingRequests: 3,
         activeWork: 2,
-        unreadMessages: 5,
+        newMessages: 5,
         newOffers: 0,
       );
     } else {
       return const DashboardCounters(
-        activeBookings: 1,
-        openTasks: 2,
+        activeWork: 1,
+        pendingRequests: 2,
         newOffers: 4,
-        unreadMessages: 1,
+        newMessages: 1,
       );
     }
   }
@@ -42,8 +44,16 @@ class MockDashboardRepository {
           createdAt: now.subtract(const Duration(days: 1)),
           scheduledAt: now.add(const Duration(hours: 2)),
           lastUpdate: now.subtract(const Duration(hours: 1)),
-          primaryActionType: PrimaryActionType.startWork,
-          permissions: WorkItemPermissions(canStart: true, canCancel: true),
+          primaryActionType: DashboardPermissionService.getPrimaryAction(
+            userRole: role,
+            type: WorkItemType.booking,
+            status: BookingStatus.confirmed,
+          ),
+          permissions: DashboardPermissionService.calculatePermissions(
+            userRole: role,
+            type: WorkItemType.booking,
+            status: BookingStatus.confirmed,
+          ),
         ),
         WorkItem(
           id: '2',
@@ -57,8 +67,16 @@ class MockDashboardRepository {
           statusUiBucket: 'Active',
           createdAt: now.subtract(const Duration(days: 5)),
           lastUpdate: now.subtract(const Duration(days: 1)),
-          primaryActionType: PrimaryActionType.markCompleted,
-          permissions: WorkItemPermissions(canComplete: true),
+          primaryActionType: DashboardPermissionService.getPrimaryAction(
+            userRole: role,
+            type: WorkItemType.task,
+            status: TaskStatus.inProgress,
+          ),
+          permissions: DashboardPermissionService.calculatePermissions(
+            userRole: role,
+            type: WorkItemType.task,
+            status: TaskStatus.inProgress,
+          ),
         ),
       ];
     } else {
@@ -77,8 +95,16 @@ class MockDashboardRepository {
           createdAt: now.subtract(const Duration(days: 2)),
           completedAt: now.subtract(const Duration(hours: 4)),
           lastUpdate: now,
-          primaryActionType: PrimaryActionType.approveClose,
-          permissions: WorkItemPermissions(canApprove: true),
+          primaryActionType: DashboardPermissionService.getPrimaryAction(
+            userRole: role,
+            type: WorkItemType.booking,
+            status: BookingStatus.completed,
+          ),
+          permissions: DashboardPermissionService.calculatePermissions(
+            userRole: role,
+            type: WorkItemType.booking,
+            status: BookingStatus.completed,
+          ),
         ),
       ];
     }
