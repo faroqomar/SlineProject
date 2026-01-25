@@ -5,7 +5,7 @@ the booking screen shuld not be havving the slot for the booking shuld imedaitly
 fix the UI in the creat task screen. 
 .
 fix the creat task screen dont have an upload image button. for the booking or task.
-
+.
 Spam Risk (Business Logic)
 
 Location: conversations_before_insert_guard (Database Trigger)
