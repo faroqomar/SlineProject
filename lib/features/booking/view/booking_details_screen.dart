@@ -143,10 +143,13 @@ class BookingDetailsScreen extends StatelessWidget {
                 children: [
                   Icon(Icons.calendar_today, size: 20, color: AppColors.teal),
                   const SizedBox(width: AppDimens.p12),
-                  Text(
-                    'Slot ID: ${booking.slotId}',
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: colorScheme.text,
+                  Expanded(
+                    child: Text(
+                      'Slot ID: ${booking.slotId}',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: colorScheme.text,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
