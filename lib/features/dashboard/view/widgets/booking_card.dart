@@ -30,6 +30,24 @@ class BookingCard extends StatelessWidget {
     // or passing it down. Let's use generic for now or task title.
     final taskTitle = booking.taskData?['title'] ?? 'Task';
 
+    // Parse note to hide metadata if present
+    String? displayNote = booking.note;
+    if (displayNote != null && displayNote.contains('---')) {
+      final parts = displayNote.split('---');
+      if (parts.length > 1) {
+        displayNote = parts.last.trim();
+      } else {
+        // If split failed or nothing after, keep original or empty?
+        // If it starts with Package:, it's likely metadata only.
+        if (displayNote.trim().startsWith('Package:')) {
+          displayNote = '';
+        }
+      }
+    }
+    if (displayNote != null && displayNote.isEmpty) {
+      displayNote = null;
+    }
+
     // Status Color
     Color statusColor;
     switch (booking.status) {
@@ -98,16 +116,17 @@ class BookingCard extends StatelessWidget {
               ),
             ],
           ),
-          if (booking.note != null) ...[
+          if (displayNote != null) ...[
             const SizedBox(height: AppDimens.p12),
             Container(
+              width: double.infinity,
               padding: const EdgeInsets.all(AppDimens.p8),
               decoration: BoxDecoration(
                 color: colorScheme.cardBackground,
                 borderRadius: BorderRadius.circular(AppDimens.r8),
               ),
               child: Text(
-                '"${booking.note}"',
+                '"$displayNote"',
                 style: AppTypography.bodySmall.copyWith(
                   fontStyle: FontStyle.italic,
                   color: colorScheme.textSecondary,
