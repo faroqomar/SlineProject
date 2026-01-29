@@ -1,0 +1,2 @@
+the freelancer should be able to group their tasks and to divide them into categories and subcategories and he should have the freedom waht to name the list , e.g. a group of in-progress tasks , a group of completed tasks , a group of cancelled tasks , a group of tasks that are waiting for the client to confirm , etc.
+or a group of tasks that are related to a specific client , a group of tasks that are related to t-shirts or and one for making keychains , etc.

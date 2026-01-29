@@ -1,129 +1,156 @@
-# Sline Improvement Plan & Checklist
+# SLine Execution Checklist (v2.1)
 
-This document tracks the step-by-step execution plan for Sline v2.0.
-**Status**: Planning / Ready for Execution
-
----
-
-## 🏗️ Phase 1: Critical UI & Stability Repairs
-*Fix the "broken windows" first. The app must look and feel broken-free before adding complex logic.*
-
-- [x] **1.1 Fix Layout Rendering Issues**
-    - [x] Tender Details Screen: Ensure layout matches design screenshots.
-    - [x] Booking Details Screen: Fix constrained box/overflow errors.
-- [x] **1.2 Add Skeleton Loading States**
-    - [x] Tender Details (replace spinners).
-    - [x] Booking Details.
-    - [x] Offers List.
-    - [x] Chat Thread.
-- [x] **1.3 Visual Polish**
-    - [x] Add smooth tab transitions (animations between main tabs).
+> **Generated from**: Improvement Plan v6 + Review (Final)
+> **Architecture**: Strict MVVM + Supabase
 
 ---
 
-## 🔌 Phase 2: Data Wiring & Core Dependencies
-*Ensure the plumbing works. Real data must flow before we build complex flows on top of it.*
+## Phase 1: Booking Core Overhaul (Logic, Schema & Critical UI)
 
-- [x] **2.1 Categories System**
-    - [x] Ensure "Create Task" properly loads categories from Supabase.
-    - [x] Ensure selected category is saved correctly to the Task record.
-- [x] **2.2 Booking Packages**
-    - [x] Ensure Basic/Standard/Premium packages are stored in Supabase.
-    - [x] Display package details correctly in the Booking UI.
-- [x] **2.3 Demo Payment Infrastructure** (Internal Testing Tool)
-    - [x] Implement `DemoPaymentService` (mock success/failure).
-    - [x] Ensure architecture allows swapping this for Stripe/Gateway later.
+### 1) Database (DDL/Migrations)
+- [ ] Create `payment_status_enum` (unpaid, held, released, refunded) using `DO` block with `pg_enum` check.
+- [ ] Update `booking_status_enum` adding `paid_request_pending`, `active`, `delivered`, `completed`, `cancelled`, `refunded`, `expired_unanswered` using `DO` block.
+- [ ] Alter table `bookings`: Drop `slot_id` NOT NULL constraint.
+- [ ] Alter table `bookings`: Add `payment_status` column (default 'unpaid').
+- [ ] Alter table `bookings`: Add `requirements` column (jsonb).
+- [ ] Alter table `bookings`: Add `package_id` column (text).
+- [ ] **Security**: `REVOKE UPDATE(payment_status) ON public.bookings FROM authenticated;` (Prevent manual changes).
+- [ ] **Action**: Enable RLS on `bookings` explicitly.
 
----
+### 2) RLS Policies
+- [ ] Create `bookings_select_parties`: `FOR SELECT USING (auth.uid() = client_id OR auth.uid() = provider_id)`.
+- [ ] Create `bookings_insert_client`: `FOR INSERT WITH CHECK (auth.uid() = client_id)`.
+- [ ] Create `bookings_update_provider`: `FOR UPDATE USING (auth.uid() = provider_id) WITH CHECK (auth.uid() = provider_id AND status IN ('active', 'delivered', 'cancelled'))` (Cannot set refunded/completed).
+- [ ] Create `bookings_update_client`: `FOR UPDATE USING (auth.uid() = client_id) WITH CHECK (auth.uid() = client_id AND status = 'cancelled')`.
+- [ ] Create `bookings_deny_delete`: `FOR DELETE USING (false)`.
+- [ ] **Verify**: Status updates tightly controlled.
 
-## 💬 Phase 3: Communication Infrastructure
-*The backbone of the marketplace. Chat logic first, then notifications link to it.*
+### 3) RPC / Edge Functions
+- [ ] Add `is_admin_check` function (SECURITY DEFINER, SET search_path=public) to verify role.
+- [ ] Create `process_expired_requests` (Admin-only):
+    - [ ] Secure with `IF NOT is_admin_check() THEN RAISE EXCEPTION`.
+    - [ ] Logic: Call `process_payment_event(id, 'booking', 'refund')`.
+    - [ ] Logic: Update status `expired_unanswered`.
 
-- [x] **3.1 Chat Integration Logic (Foundation)**
-    - [x] **Booking -> Chat Entry:** Add "Start Conversation" button on Booking Details.
-    - [x] **Idempotency:** Logic to check `if (chatExists) openIt else createNew`.
-    - [x] **Context Widget:** Show pinned context at top of chat:
-        - [x] If Task chat → show Task title + status
-        - [x] If Booking chat → show Booking date/time + selected package
+### 4) Backend Services
+- [ ] Update `BookingService`: `createBooking(package)` -> Insert + Call RPC 'escrow'.
+- [ ] Update `BookingService`: `approveAndRelease(id)` -> Call RPC 'release'.
+- [ ] Update `BookingService`: `declineBooking(id)` -> Update status to 'cancelled' (RLS allows) -> Call RPC 'refund'. (**Decision 1**: Provider sets cancelled, RPC sets refunded payment AND status 'refunded').
+- [ ] Update `BookingService`: `markDelivered(id)` -> Update status 'delivered'.
 
-- [x] **3.2 Notification System Fixes**
-    - [x] Fix Deep Links: Tapping "New Offer" -> Opens Offer List.
-    - [x] Fix Deep Links: Tapping "New Message" -> Opens the specific Chat thread (using logic from 3.1).
-    - [x] Fix Spam: Group messages (don't push notify for *every* message if app is open).
+### 5) ViewModels
+- [ ] Refactor `BookingViewModel`: Remove slot logic, handle Option B.
 
----
+### 6) UI Screens/Widgets
+- [ ] Update `BookingScreen`: Remove "Select Slot".
+- [ ] Update `CreateTaskScreen`: Remove "Upload Image".
+- [ ] Fix `BookingCardSkeleton`.
 
-## 🔄 Phase 4: Order & Transaction Workflows
-*The core business logic. Statuses > Transactions > UI.*
+### 7) QA
+- [ ] Manual: Decline Booking -> Verify final DB row status='refunded' (NOT cancelled) and payment='refunded'.
 
-- [ ] **4.1 Flow Audit & Technical Prep**
-    - [ ] List all missing screens for Tender & Booking flows.
-    - [ ] **Blocker Fix:** Update `OrdersViewModel` with proper Enum handling for all Task Statuses.
-    - [ ] Map out missing transitions (e.g., "After Accept -> Go to where?").
-- [ ] **4.2 Core Logic Implementation** (Statuses & Transitions)
-    - [ ] **Tender Flow:** Assigned -> Delivered -> Revision -> Completed.
-    - [ ] **Booking Flow:** Pending -> Confirmed -> Completed.
-    - [ ] **Payment Flow:** escrow_held -> released_to_freelancer / refunded_to_client (+ frozen during dispute).
-    - [ ] **Dispute Flow:** Cancellation logic & 'Dispute' status handling.
-- [ ] **4.3 Transactional Chat Elements** (UI)
-    - [ ] **Offer Cards:** Display "New Offer" bubble inside Chat stream.
-    - [ ] **Action Buttons:** Add "Accept" / "Pay Now" buttons directly in Chat (linked to 4.2 logic).
-
----
-
-## 👤 Phase 5: Profiles, Trust & Social Proof
-*Enhancing the human element. Who am I hiring?*
-
-- [x] **5.1 Publisher Profile Preview**
-    - [x] Entry point: Tap avatar in Tender/Booking details.
-    - [x] Profile View: Show basic info, portfolio summary.
-- [ ] **5.2 Ratings & Reviews**
-    - [ ] Database: Create `reviews` table and sql functions.
-    - [ ] UI: "Write Review" screen after order completion.
-    - [ ] UI: Display Star Ratings on User Profiles and Command Cards.
+### 8) Docs
+- [ ] Update `SUPABASE_SETUP.md`.
 
 ---
 
-## 🔍 Phase 6: Discovery & Organization
-*Helping users find what they need faster.*
+## Phase 2: Unified Management & Notes System
 
-- [ ] **6.1 Search Enhancements**
-    - [ ] Implement Local Search History.
-    - [ ] Implement "Trending Tags" suggestions.
-- [ ] **6.2 Advanced Filters**
-    - [ ] Build Multi-criteria Filter Modal (Budget, Skills, Location).
-- [ ] **6.3 Task Templates**
-    - [ ] "Save as Template" feature for frequent posters.
+### 1) Database
+- [ ] Create table `work_logs`.
+- [ ] Index on `(related_entity_id, related_entity_type)`.
+- [ ] Function `is_work_log_participant(type, entity_id, uid) -> bool` mapping rules.
+- [ ] Function `is_provider_of_entity(type, entity_id, uid) -> bool` mapping rules (for private checks).
+- [ ] Enable RLS on `work_logs`.
 
----
+### 2) RLS Policies
+- [ ] Create `logs_select_private`: `FOR SELECT USING (auth.uid() = author_id AND is_private = true)`.
+- [ ] Create `logs_select_public`: `FOR SELECT USING (is_private = false AND (auth.uid() = author_id OR is_work_log_participant(...)))`.
+- [ ] Create `logs_insert_participants`: `FOR INSERT WITH CHECK (is_work_log_participant(...) AND (is_private = false OR (is_private = true AND is_provider_of_entity(...))))`. (**Decision 2**: Private logs restricted to Provider).
+- [ ] Create `logs_deny_update`: `FOR UPDATE USING (false)`.
+- [ ] Create `logs_deny_delete`: `FOR DELETE USING (false)`.
 
-## 🚀 Phase 7: Launch Readiness (Onboarding & Global)
-*Critical items for App Store approval and first-time user experience.*
+### 3) RPC
+- [ ] (None).
 
-- [ ] **7.1 Onboarding Flow**
-    - [ ] Intro Slides (Carousel explaining Tenders vs Bookings).
-    - [ ] Role Selection (Graphic screen: Client vs Freelancer).
-- [ ] **7.2 Safety & Compliance**
-    - [ ] Implement "Report User/Content" menu actions.
-    - [ ] Implement "Block User" logic (hide messages).
-    - [ ] Add "Delete Account" flow (GDPR/Apple requirement).
-    - [ ] Add Static Pages: Privacy Policy & Terms link/view.
-- [ ] **7.3 Localization (Arabic/MENA)**
-    - [ ] Set up `flutter_localizations` & ARB files.
-    - [ ] Extract hardcoded strings.
-    - [ ] Verify & Fix RTL Layouts (Mirroring icons, alignment).
-    - [ ] Add Language Toggle in Settings.
+### 4) Services
+- [ ] Create `WorkLogService`.
+- [ ] Map `task_requests` queries in `TaskService`.
 
----
+### 5) ViewModels
+- [ ] Create `WorkLogViewModel`.
 
-## 🔮 Phase 8: Future / Advanced Features
-*Nice-to-haves for v2.1+*
+### 6) UI
+- [ ] Create `OrderManagementPanel`.
+- [ ] Update `BookingDetailsScreen`: Embed Panel.
+- [ ] Update `TaskDetailsScreen`: Embed Panel (for `task_requests`).
 
-- [ ] **8.1 In-App Media Viewer** (Replace external browser).
-- [ ] **8.2 Video Consultations** (Agora/Twilio integration).
+### 7) QA
+- [ ] Manual: Client attempt private log -> Error.
+- [ ] Manual: Freelancer private log -> Success (Client can't see).
 
 ---
 
-## 🛠 Appendix: Clean Code & Roadmap Debts
-- [ ] Implement `ConversationListTile` online presence logic (when presence service ready).
-- [ ] Verify Social Login implementation plan.
+## Phase 3: Dashboard Restructuring
+
+### 6) UI
+- [ ] `FreelancerDashboard`: Work tab (Active = active + delivered).
+- [ ] `ClientDashboard`: Tasks tab (Awarded = assigned/pending_payment).
+
+---
+
+## Phase 4: Freelancer Wallet MVP
+
+### 1) Database
+- [ ] Create `wallet_transactions` (id, user_id, amount, type, status, related_entity*, related_txn_id, created_at).
+- [ ] Enable RLS.
+
+### 2) RLS Policies
+- [ ] `wallet_select_own`: `FOR SELECT USING (auth.uid() = user_id)`.
+- [ ] `wallet_deny_insert`: `FOR INSERT WITH CHECK (false)`.
+- [ ] `wallet_deny_updates`: `FOR UPDATE USING (false)`.
+- [ ] `wallet_deny_delete`: `FOR DELETE USING (false)`.
+
+### 3) RPC
+- [ ] Create `process_payment_event(p_entity_id, p_type, p_event)`: `SECURITY DEFINER`.
+    - [ ] `SET search_path = public` (Security best practice).
+    - [ ] `REVOKE ALL` from PUBLIC; `GRANT EXECUTE` to authenticated.
+    - [ ] Logic (Escrow): Insert `type='escrow', status='pending'`. Entity `payment_status='held'`.
+    - [ ] Logic (Release): Look up pending escrow (idempotency). Update it `status='completed'`. Insert `type='release', status='completed', related_txn_id=escrow_id`. Entity `status='completed', payment_status='released'`.
+    - [ ] Logic (Refund): Look up pending escrow. Update it `status='refunded'`. Insert `type='refund', status='completed', related_txn_id=escrow_id`. Entity `status='refunded', payment_status='refunded'`.
+
+### 4) Services
+- [ ] `WalletService`: Read-only.
+
+### 5) ViewModels
+- [ ] `WalletViewModel`: Calculate via `released` (completed sum) and `escrow` (pending sum).
+
+---
+
+## Phase 5: Monitoring & Polish
+
+### 1) Database
+- [ ] Create `audit_logs` (including receiver_id, is_read, etc fields if reusing? No, separate).
+- [ ] **Action**: Enable RLS on `audit_logs`.
+
+### 2) RLS Policies
+- [ ] `audit_insert_auth`: `FOR INSERT WITH CHECK (auth.uid() IS NOT NULL)`.
+- [ ] `audit_select_admin`: `FOR SELECT USING (is_admin_check())`.
+- [ ] `audit_deny_update`: `FOR UPDATE USING (false)`.
+- [ ] `audit_deny_delete`: `FOR DELETE USING (false)`.
+
+### 5) ViewModels
+- [ ] Update `NotificationViewModel`: Query `messages` table for count.
+    - [ ] **Schema Check**: `messages` must have `receiver_id`, `is_read` (bool), and index `(receiver_id, is_read)`.
+
+### 6) UI
+- [ ] Notification Top Bar (Red/Gray icon).
+
+---
+
+## Release Gate
+
+- [ ] **Escrow Lifecycle**: Pay -> Pending Escrow. Release -> Escrow Completed + Release txn created. Refund -> Escrow Cancelled + Refund txn created.
+- [ ] **Data Integrity**: `bookings.payment_status` perfectly mirrors wallet state.
+- [ ] **Security**: No client inserts to wallet. No manual `payment_status` updates allowed (revoked).
+- [ ] **Decisions Implemented**: Provider private logs strictly enforced via function. Decline sets 'cancelled' (RPC completes refund loop).
