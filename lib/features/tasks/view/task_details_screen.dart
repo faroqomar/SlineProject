@@ -14,7 +14,9 @@ import 'package:sline_app/features/tasks/view/widgets/requests/requests_list_scr
 import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
 import 'package:sline_app/features/chat/view/chat_screen.dart'; // Added
 import 'package:sline_app/core/utils/loading_utils.dart';
-import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart'; // Added
+import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
+import 'package:sline_app/features/management/view/order_management_panel.dart';
+import 'package:sline_app/features/management/viewmodels/order_management_view_model.dart';
 
 /// Shows details of a task with Glassmorphism design.
 class TaskDetailsScreen extends StatefulWidget {
@@ -196,6 +198,20 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                     ),
                     const SizedBox(height: AppDimens.p24),
                   ],
+
+                  // Order Management (Notes & Timeline)
+                  if (currentUserId != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppDimens.p24),
+                      child: ChangeNotifierProvider(
+                        create: (_) => OrderManagementViewModel(),
+                        child: OrderManagementPanel(
+                          entityId: task.id,
+                          entityType: 'task',
+                          currentUserId: currentUserId,
+                        ),
+                      ),
+                    ),
 
                   // Proposals Link (Owner of Tender)
                   if (isOwner && isTender)

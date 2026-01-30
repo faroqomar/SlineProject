@@ -478,6 +478,25 @@ Wallet ledger for Pay-First flow.
 | `user_id` | uuid | ❌ | - | FK to profiles |
 | `amount` | numeric | ❌ | - | Transaction amount |
 | `type` | text | ❌ | - | 'escrow', 'release', 'refund' |
+
+---
+
+### 5.15 `work_logs`
+
+Centralized immutable record of notes and system events.
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
+| `author_id` | uuid | ❌ | - | FK to profiles |
+| `related_entity_id` | uuid | ❌ | - | task_id or booking_id |
+| `related_entity_type` | text | ❌ | - | 'task' or 'booking' |
+| `content` | text | ❌ | - | Note content or event label |
+| `is_private` | boolean | ❌ | `false` | Access control flag |
+| `metadata` | jsonb | ✅ | `'{}'` | Event metadata |
+| `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
+
+**Indexes:** `idx_work_logs_entity` (related_entity_id, created_at desc)
 | `status` | text | ❌ | - | 'held', 'released', 'completed', 'refunded' |
 | `related_entity_id` | uuid | ✅ | - | Linked entity ID (booking) |
 | `related_entity_type` | text | ✅ | - | Linked entity type ('booking', 'task') |
@@ -691,6 +710,15 @@ All tables have Row Level Security (RLS) enabled. Below are the actual policies 
 | `wallet_select_own` | SELECT | `user_id = auth.uid()` |
 | `wallet_deny_mod` | ALL | `false` (System only) |
 
+### 7.14 `work_logs` Policies
+
+| Policy | Command | Rule |
+|--------|---------|------|
+| `work_logs_select` | SELECT | Private: `author_id=uid`, Shared: `is_work_log_participant` |
+| `work_logs_insert` | INSERT | `author_id=uid AND is_work_log_participant` |
+| `work_logs_deny_update` | UPDATE | `false` (Immutable) |
+| `work_logs_deny_delete` | DELETE | `false` (Immutable) |
+
 ### 7.8 `favorites` Policies
 
 | Policy | Command | Rule |
@@ -786,6 +814,24 @@ All tables have Row Level Security (RLS) enabled. Below are the actual policies 
 ## 9. Functions & RPC
 
 ### 9.1 Helper Functions
+
+#### `is_work_log_participant()`
+
+Returns true if user is client/freelancer/provider of the entity.
+
+```sql
+create or replace function public.is_work_log_participant(p_id uuid, p_type text, p_uid uuid)
+returns boolean as $$
+begin
+  if p_type = 'task' then
+    return exists (select 1 from public.tasks where id = p_id and (client_id = p_uid or freelancer_id = p_uid));
+  elsif p_type = 'booking' then
+    return exists (select 1 from public.bookings where id = p_id and (client_id = p_uid or provider_id = p_uid));
+  end if;
+  return false;
+end;
+$$ language plpgsql security definer;
+```
 
 #### `fn_booking_guard()`
 

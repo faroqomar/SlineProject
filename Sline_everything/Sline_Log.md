@@ -21,6 +21,29 @@
 
 ## 📋 Version History
 
+### 🟢 Version 2.10 — Unified Management System (Phase 1)
+**Date:** 2026-01-31
+**Agent:** @Architect, @Supabase_Ops, @Pixel
+**Status:** ✅ Complete
+
+#### ✅ Implemented
+- **Unified Management & Notes**
+  - **Database**: Created `work_logs` table for immutable notes/events with RLS.
+  - **Logic**: Implemented `OrderManagementViewModel` to manage private notes and timeline events.
+  - **UI**: Added generic `OrderManagementPanel` widget (Glassmorphic) for centralized order tracking.
+  - **Integration**: Embedded panel into `BookingDetailsScreen` and `TaskDetailsScreen`.
+
+#### 📊 Impact
+- **Truth**: Single source of truth for "what happened" on an order.
+- **Privacy**: Private notes allow users to keep personal records without sharing.
+- **Consistency**: Unified UI for both Task and Booking management.
+
+#### 🔧 Technical Notes
+- **Polymorphic Relation**: `work_logs` links to either `tasks` or `bookings` via `related_entity_id`/`type`.
+- **Helper Function**: `is_work_log_participant` DB function simplifies RLS logic for shared logs.
+
+---
+
 ### 🟢 Version 2.9 — Phase 1: Pay-First Booking Flow & Wallet
 **Date:** 2026-01-31
 **Agent:** @Supabase_Ops, @Architect, @Pixel

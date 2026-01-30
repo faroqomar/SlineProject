@@ -13,6 +13,8 @@ import 'package:sline_app/features/booking/viewmodels/booking_view_model.dart';
 import 'package:sline_app/features/chat/view/chat_screen.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/core/utils/format_date.dart';
+import 'package:sline_app/features/management/view/order_management_panel.dart';
+import 'package:sline_app/features/management/viewmodels/order_management_view_model.dart';
 
 class BookingDetailsScreen extends StatelessWidget {
   final BookingModel booking;
@@ -156,7 +158,20 @@ class BookingDetailsScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: AppDimens.p48),
+            const SizedBox(height: AppDimens.p24),
+
+            // Order Management
+            ChangeNotifierProvider(
+              create: (_) => OrderManagementViewModel(),
+              child: OrderManagementPanel(
+                entityId: booking.id,
+                entityType: 'booking',
+                currentUserId:
+                    context.read<BookingViewModel>().currentUserId ?? '',
+              ),
+            ),
+
+            const SizedBox(height: AppDimens.p24),
 
             // Actions
             if (isProvider && booking.status == BookingStatus.pending)

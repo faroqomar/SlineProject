@@ -167,6 +167,8 @@ try {
 - Saved: `DEVELOPER_GUIDE/Saved Feature.md`
 - Portfolio: `DEVELOPER_GUIDE/Portfolio Feature.md`
 - Categories: `DEVELOPER_GUIDE/Categories Feature.md`
+- Inventory: `DEVELOPER_GUIDE/Inventory Feature.md` (Planned)
+- Order Management: `DEVELOPER_GUIDE/Order_Management_Feature.md`
 
 ## 12. Gotchas & Tips
 

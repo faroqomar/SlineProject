@@ -417,6 +417,7 @@ features/chat/
 
 ### Other Features
 - `auth/`, `tasks/`, `profile/`, `booking/` — same pattern
+- `management/` — Order Management (Private Notes, Timelines, Work Logs)
 
 ---
 
