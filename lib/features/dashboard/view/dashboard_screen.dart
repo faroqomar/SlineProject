@@ -6,9 +6,10 @@ import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/app_enums.dart';
 import '../viewmodels/dashboard_view_model.dart';
 import 'tabs/overview_tab.dart';
-import 'tabs/manage_tab.dart';
+// import 'tabs/manage_tab.dart'; // Removed
 import 'tabs/bookings_tab.dart';
-import 'tabs/active_work_tab.dart';
+import 'tabs/work_tab.dart';
+// ... (in imports section)
 import 'tabs/inbox_tab.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -37,7 +38,7 @@ class _DashboardContentState extends State<_DashboardContent>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -110,7 +111,7 @@ class _DashboardContentState extends State<_DashboardContent>
             onTap: (index) => vm.setTab(index),
             tabs: const [
               Tab(icon: Icon(Icons.dashboard_outlined), text: "Overview"),
-              Tab(icon: Icon(Icons.inventory_2_outlined), text: "Manage"),
+              // Manage tab removed
               Tab(icon: Icon(Icons.calendar_month_outlined), text: "Bookings"),
               Tab(icon: Icon(Icons.work_history_outlined), text: "Work"),
               Tab(icon: Icon(Icons.inbox_outlined), text: "Inbox"),
@@ -127,9 +128,9 @@ class _DashboardContentState extends State<_DashboardContent>
               const NeverScrollableScrollPhysics(), // Disable swipe to avoid conflict with internal tabs
           children: [
             const OverviewTab(),
-            const ManageTab(),
+            // ManageTab removed
             const BookingsTab(),
-            const ActiveWorkTab(),
+            const WorkTab(),
             const InboxTab(),
           ],
         ),

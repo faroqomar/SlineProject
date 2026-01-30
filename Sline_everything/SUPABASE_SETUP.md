@@ -39,7 +39,8 @@ This document is the **single source of truth** for all Supabase backend setup: 
 | Enum | Values |
 |------|--------|
 | `task_type_enum` | `tender`, `booking` |
-| `booking_status_enum` | `pending`, `confirmed`, `canceled`, `completed` |
+| `booking_status_enum` | `pending`, `confirmed`, `active`, `delivered`, `completed`, `canceled`, `refunded`, `paid_request_pending`, `expired_unanswered` |
+| `payment_status_enum` | `unpaid`, `held`, `released`, `refunded` |
 | `message_type_enum` | `text`, `system`, `offer`, `offer_update`, `offer_accepted`, `offer_rejected`, `delivery_submitted`, `end_early_request`, `dispute_report` |
 
 ### Storage Buckets
@@ -168,22 +169,38 @@ CREATE TYPE public.task_type_enum AS ENUM ('tender', 'booking');
 ### 4.2 `booking_status_enum`
 
 ```sql
+### 4.2 `booking_status_enum`
+
+```sql
 CREATE TYPE public.booking_status_enum AS ENUM (
   'pending',
   'confirmed',
+  'active',
+  'delivered',
+  'completed',
   'canceled',
-  'completed'
+  'declined',
+  'refunded',
+  'paid_request_pending',
+  'expired_unanswered'
 );
 ```
 
 **Status Transitions** (enforced by `fn_booking_guard` trigger):
 
 ```
-pending ──┬──→ confirmed (by provider)
-          └──→ canceled  (by either party)
+pending ──┬──→ paid_request_pending (via "Pay" action)
+          └──→ canceled (by client)
 
-confirmed ──┬──→ completed (by provider)
-            └──→ canceled  (by either party)
+paid_request_pending ──┬──→ active (via "Accept" by provider)
+                       ├──→ refunded (via "Decline" by provider)
+                       └──→ expired_unanswered (via system cron)
+
+active ──┬──→ delivered (by provider)
+         └──→ canceled (by either side, triggers refund)
+
+delivered ──┬──→ completed (by client approval)
+            └──→ canceled (by client, triggers refund)
 ```
 
 ### 4.3 `message_type_enum`
@@ -213,6 +230,16 @@ CREATE TYPE public.message_type_enum AS ENUM (
 | `delivery_submitted` | Freelancer | Work submission | Optional attachments |
 | `end_early_request` | Either | Request to end early | `{reason}` |
 | `dispute_report` | Either | Dispute filing | `{reason}` |
+
+### 4.4 `payment_status_enum`
+
+### 4.4 `payment_status_enum`
+
+```sql
+CREATE TYPE public.payment_status_enum AS ENUM ('unpaid', 'held', 'released', 'refunded');
+```
+
+**Note:** Added in v2.9 for Wallet/Escrow flow.
 
 ---
 
@@ -430,9 +457,31 @@ Client bookings on provider slots.
 | `task_id` | uuid | ✅ | - | FK to tasks |
 | `provider_id` | uuid | ❌ | - | FK to auth.users |
 | `client_id` | uuid | ❌ | - | FK to auth.users |
-| `slot_id` | uuid | ❌ | - | FK to availability_slots |
+| `slot_id` | uuid | ✅ | - | FK to availability_slots |
 | `status` | booking_status_enum | ❌ | `'pending'` | Booking status |
+| `payment_status` | payment_status_enum | ❌ | `'unpaid'` | Payment status |
+| `price` | numeric | ✅ | `0` | Agreed price |
+| `package_id` | text | ✅ | - | Chosen package ID |
+| `requirements` | jsonb | ✅ | `'{}'` | Client requirements |
 | `note` | text | ✅ | - | Booking notes |
+| `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
+
+---
+
+### 5.14 `wallet_transactions`
+
+Wallet ledger for Pay-First flow.
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
+| `user_id` | uuid | ❌ | - | FK to profiles |
+| `amount` | numeric | ❌ | - | Transaction amount |
+| `type` | text | ❌ | - | 'escrow', 'release', 'refund' |
+| `status` | text | ❌ | - | 'held', 'released', 'completed', 'refunded' |
+| `related_entity_id` | uuid | ✅ | - | Linked entity ID (booking) |
+| `related_entity_type` | text | ✅ | - | Linked entity type ('booking', 'task') |
+| `related_txn_id` | uuid | ✅ | - | Parent transaction ID |
 | `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
 
 ---
@@ -630,10 +679,17 @@ All tables have Row Level Security (RLS) enabled. Below are the actual policies 
 
 | Policy | Command | Rule |
 |--------|---------|------|
-| `bookings_select_by_parties` | SELECT | `client_id = uid OR provider_id = uid` |
-| `bookings_insert_by_client` | INSERT | Client can book if slot not blocked |
-| `bookings_update_by_provider` | UPDATE | `provider_id = uid` |
-| `bookings_cancel_by_client` | UPDATE | `client_id = uid AND status = 'canceled'` |
+| `bookings_select_parties` | SELECT | `client_id = uid OR provider_id = uid` |
+| `bookings_insert_client` | INSERT | `client_id = uid` |
+| `bookings_update_status_only` | UPDATE | `client_id = uid OR provider_id = uid` (Cols locked via REVOKE) |
+| `bookings_deny_delete` | DELETE | `false` |
+
+### 7.13 `wallet_transactions` Policies
+
+| Policy | Command | Rule |
+|--------|---------|------|
+| `wallet_select_own` | SELECT | `user_id = auth.uid()` |
+| `wallet_deny_mod` | ALL | `false` (System only) |
 
 ### 7.8 `favorites` Policies
 
@@ -731,6 +787,72 @@ All tables have Row Level Security (RLS) enabled. Below are the actual policies 
 
 ### 9.1 Helper Functions
 
+#### `fn_booking_guard()`
+
+Enforces valid booking status transitions (Pay-First Flow).
+
+```sql
+CREATE OR REPLACE FUNCTION public.fn_booking_guard()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+DECLARE
+    v_is_client boolean;
+    v_is_provider boolean;
+BEGIN
+    v_is_client := (auth.uid() = OLD.client_id);
+    v_is_provider := (auth.uid() = OLD.provider_id);
+
+    -- 1. Pending -> Paid Request Pending (Simulated Pay)
+    IF OLD.status = 'pending' AND NEW.status = 'paid_request_pending' THEN
+       RETURN NEW;
+    END IF;
+
+    -- 2. Paid Request -> Active (Provider Accepts)
+    IF OLD.status = 'paid_request_pending' AND NEW.status = 'active' THEN
+        IF NOT v_is_provider THEN
+            RAISE EXCEPTION 'Only provider can accept a booking';
+        END IF;
+        RETURN NEW;
+    END IF;
+
+    -- 3. Paid Request -> Refunded (Provider Declines)
+    IF OLD.status = 'paid_request_pending' AND NEW.status = 'refunded' THEN
+        RETURN NEW; -- Allow decline
+    END IF;
+
+    -- 4. Active -> Delivered (Provider Marks Done)
+    IF OLD.status = 'active' AND NEW.status = 'delivered' THEN
+        IF NOT v_is_provider THEN
+             RAISE EXCEPTION 'Only provider can mark delivered';
+        END IF;
+        RETURN NEW;
+    END IF;
+
+    -- 5. Delivered -> Completed (Client Approves)
+    IF OLD.status = 'delivered' AND NEW.status = 'completed' THEN
+        IF NOT v_is_client THEN
+            RAISE EXCEPTION 'Only client can approve/complete';
+        END IF;
+        RETURN NEW;
+    END IF;
+
+    -- Allow Cancellation
+    IF NEW.status = 'canceled' THEN
+       RETURN NEW;
+    END IF;
+    
+    -- Legacy / Fallback
+    IF OLD.status = NEW.status THEN
+        RETURN NEW;
+    END IF;
+
+    RAISE EXCEPTION 'Invalid booking status transition: % -> %', OLD.status, NEW.status;
+END;
+$function$
+```
+
 #### `is_client(uid uuid) → boolean`
 
 Check if user's active role is 'client'.
@@ -798,6 +920,17 @@ final result = await supabase.rpc('accept_task_request', params: {
 #### `accept_task_request(p_task_id uuid, p_request_id uuid) → uuid`
 
 Alternative signature that also creates conversation and logs message.
+
+#### `process_payment_event(p_entity_id uuid, p_type text, p_event text) → jsonb`
+
+Handles wallet ledger and status updates safely.
+- `escrow`: Inserts held txn, updates booking->paid_request_pending
+- `release`: Inserts released txn, updates booking->completed
+- `refund`: Inserts refund txn, updates booking->refunded
+
+#### `process_expired_requests() → jsonb`
+
+Finds >24h pending requests, expires them, and triggers refund.
 
 #### `reject_task_request(p_request_id uuid) → task_requests`
 
@@ -1142,6 +1275,15 @@ VALUES (auth.uid(), '<other-user>', auth.uid());
 ---
 
 ## 17. Changelog
+
+### Version 2.9 (January 2026) -> Current
+
+- **Booking Flow v2**: "Pay First, Book Later"
+- **Enums**: Added `paid_request_pending`, `active`, `delivered` to `booking_status_enum`.
+- **Enums**: Added `payment_status_enum` ('unpaid', 'held', 'released', 'refunded').
+- **Table**: Added `wallet_transactions` table with RLS.
+- **Trigger**: Updated `fn_booking_guard` to support new flow transitions.
+- **RPC**: Added `process_payment_event` and `process_expired_requests`.
 
 ### Version 2.1 (December 2025)
 

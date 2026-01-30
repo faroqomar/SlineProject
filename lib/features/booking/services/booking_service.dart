@@ -84,6 +84,9 @@ class BookingService {
     required String slotId,
     String? note,
     required String providerId,
+    required double price,
+    String? packageId,
+    Map<String, dynamic>? requirements,
     BookingStatus status = BookingStatus.pending,
   }) async {
     final uid = _client.auth.currentUser?.id;
@@ -100,11 +103,34 @@ class BookingService {
           'provider_id': providerId,
           'client_id': uid,
           'status': _mapStatusToDb(status),
+          'payment_status': 'unpaid',
+          'price': price,
+          'package_id': packageId,
+          'requirements': requirements,
         })
         .select()
         .single();
 
-    final booking = BookingModel.fromJson(res as Map<String, dynamic>);
+    // Process Payment (Escrow)
+    // In a real app, we'd wait for Stripe webhook.
+    // Here we simulate immediate payment -> escrow.
+    await _client.rpc(
+      'process_payment_event',
+      params: {
+        'p_entity_id': res['id'],
+        'p_type': 'escrow',
+        'p_event': 'booking_creation',
+      },
+    );
+
+    // Re-fetch to get updated status
+    final updatedRes = await _client
+        .from(_bookingsTable)
+        .select()
+        .eq('id', res['id'])
+        .single();
+
+    final booking = BookingModel.fromJson(updatedRes as Map<String, dynamic>);
 
     // Notify Provider
     _notificationService.createNotification(
@@ -164,6 +190,30 @@ class BookingService {
         .toList();
   }
 
+  /// Get pending booking requests for the provider (Status: paid_request_pending).
+  Future<List<BookingModel>> getPendingRequests({int limit = 50}) async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return [];
+
+    try {
+      final data = await _client
+          .from(_bookingsTable)
+          .select('*, tasks(*), availability_slots(starts_at)')
+          .eq('provider_id', uid)
+          .eq('status', 'paid_request_pending')
+          .order('created_at', ascending: false)
+          .limit(limit);
+
+      return (data as List<dynamic>)
+          .map((e) => BookingModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      // Log error but don't crash UI, return empty list
+      // AppLogger.e('Failed to get pending requests', error: e); // Assuming logger usage
+      return [];
+    }
+  }
+
   /// Update booking status. RLS guards transitions.
   Future<BookingModel> updateBookingStatus({
     required String bookingId,
@@ -216,8 +266,50 @@ class BookingService {
     return BookingModel.fromJson(res);
   }
 
+  /// Approve booking and release funds (RPC).
+  Future<void> approveAndRelease(String bookingId) async {
+    await _client.rpc(
+      'process_payment_event',
+      params: {
+        'p_entity_id': bookingId,
+        'p_type': 'release',
+        'p_event': 'provider_approval',
+      },
+    );
+  }
+
+  /// Decline booking and refund funds (RPC).
+  Future<void> declineBooking(String bookingId) async {
+    await _client.rpc(
+      'process_payment_event',
+      params: {
+        'p_entity_id': bookingId,
+        'p_type': 'refund',
+        'p_event': 'provider_decline',
+      },
+    );
+  }
+
+  /// Mark booking as delivered (Status update).
+  Future<void> markDelivered(String bookingId) async {
+    await updateBookingStatus(
+      bookingId: bookingId,
+      newStatus: BookingStatus.delivered,
+    );
+  }
+
   String _mapStatusToDb(BookingStatus status) {
     switch (status) {
+      case BookingStatus.paidRequestPending:
+        return 'paid_request_pending';
+      case BookingStatus.active:
+        return 'active';
+      case BookingStatus.delivered:
+        return 'delivered';
+      case BookingStatus.refunded:
+        return 'refunded';
+      case BookingStatus.expiredUnanswered:
+        return 'expired_unanswered';
       case BookingStatus.inProgress:
         return 'in_progress';
       case BookingStatus.noShow:

@@ -171,6 +171,26 @@ class BookingCard extends StatelessWidget {
         color = AppColors.lightRed;
         text = 'DECLINED';
         break;
+      case BookingStatus.active:
+        color = AppColors.teal;
+        text = 'ACTIVE';
+        break;
+      case BookingStatus.paidRequestPending:
+        color = AppColors.gold;
+        text = 'NEW REQUEST';
+        break;
+      case BookingStatus.delivered:
+        color = AppColors.teal;
+        text = 'DELIVERED';
+        break;
+      case BookingStatus.refunded:
+        color = AppColors.mediumGrey;
+        text = 'REFUNDED';
+        break;
+      case BookingStatus.expiredUnanswered:
+        color = AppColors.mediumGrey;
+        text = 'EXPIRED';
+        break;
     }
 
     return Container(

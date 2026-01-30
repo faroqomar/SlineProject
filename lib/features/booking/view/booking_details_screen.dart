@@ -195,15 +195,73 @@ class BookingDetailsScreen extends StatelessWidget {
                     _updateStatus(context, booking, BookingStatus.canceled),
               ),
 
-            if (booking.status == BookingStatus.confirmed)
-              Center(
-                child: Text(
-                  'This booking is active.',
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.teal,
+            // --- Phase 1 Payment/Flow Actions ---
+
+            // 1. Provider Actions
+            if (isProvider) ...[
+              // Accept Request (Funds held)
+              if (booking.status == BookingStatus.paidRequestPending) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppButton(
+                        text: 'Decline',
+                        isPrimary: false,
+                        onPressed: () => context
+                            .read<BookingViewModel>()
+                            .declineBooking(booking.id),
+                      ),
+                    ),
+                    const SizedBox(width: AppDimens.p16),
+                    Expanded(
+                      child: AppButton(
+                        text: 'Accept Job',
+                        onPressed: () => context
+                            .read<BookingViewModel>()
+                            .acceptBooking(booking.id),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              // Mark Delivered
+              if (booking.status == BookingStatus.active) ...[
+                AppButton(
+                  text: 'Mark Delivered',
+                  onPressed: () => context
+                      .read<BookingViewModel>()
+                      .markDelivered(booking.id),
+                ),
+              ],
+            ],
+
+            // 2. Client Actions
+            if (!isProvider) ...[
+              // Approve & Release (Funds released)
+              if (booking.status == BookingStatus.delivered) ...[
+                AppButton(
+                  text: 'Approve & Release Funds',
+                  onPressed: () => context
+                      .read<BookingViewModel>()
+                      .approveBooking(booking.id),
+                ),
+              ],
+              // Dispute/Cancel (If needed)
+              if (booking.status == BookingStatus.delivered) ...[
+                const SizedBox(height: AppDimens.p12),
+                Center(
+                  child: TextButton(
+                    onPressed: () {}, // TODO: Dispute Flow
+                    child: Text(
+                      'Report Issue',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.lightRed,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              ],
+            ],
           ],
         ),
       ),
@@ -249,6 +307,26 @@ class BookingDetailsScreen extends StatelessWidget {
       case BookingStatus.declined:
         color = AppColors.lightRed;
         text = 'Declined';
+        break;
+      case BookingStatus.active:
+        color = AppColors.teal;
+        text = 'Active';
+        break;
+      case BookingStatus.paidRequestPending:
+        color = AppColors.gold;
+        text = 'Request Pending';
+        break;
+      case BookingStatus.delivered:
+        color = AppColors.teal;
+        text = 'Delivered (Review)';
+        break;
+      case BookingStatus.refunded:
+        color = AppColors.mediumGrey;
+        text = 'Refunded';
+        break;
+      case BookingStatus.expiredUnanswered:
+        color = AppColors.mediumGrey;
+        text = 'Expired';
         break;
     }
 

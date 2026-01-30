@@ -19,15 +19,25 @@ enum TaskStatus {
 }
 
 /// Status of a Booking execution.
+/// Status of a Booking execution.
 enum BookingStatus {
   pending,
   confirmed,
-  inProgress,
+  active, // Replaces inProgress
+  delivered,
   completed,
-  canceled,
+  canceled, // Also covers declined
+  refunded,
+  paidRequestPending,
+  expiredUnanswered,
+  // Legacy/UI specific (map to DB equivalents)
+  inProgress,
   noShow,
   declined,
 }
+
+/// Status of the payment linked to a Booking.
+enum PaymentStatus { unpaid, held, released, refunded }
 
 /// Status of an Offer (Task Request).
 enum OfferStatus { pending, accepted, rejected, withdrawn }

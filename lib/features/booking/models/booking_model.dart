@@ -11,7 +11,11 @@ class BookingModel {
   final String clientId;
   final String slotId;
   final BookingStatus status;
+  final PaymentStatus paymentStatus;
   final String? note;
+  final num? price;
+  final String? packageId;
+  final Map<String, dynamic>? requirements;
   final DateTime createdAtUtc;
   final DateTime? scheduledAt; // Derived from availability_slots.starts_at
   final DateTime? completedAt; // Auto-set when status changes to 'completed'
@@ -24,7 +28,11 @@ class BookingModel {
     required this.clientId,
     required this.slotId,
     required this.status,
+    required this.paymentStatus,
     required this.note,
+    this.price,
+    this.packageId,
+    this.requirements,
     required this.createdAtUtc,
     this.scheduledAt,
     this.completedAt,
@@ -37,9 +45,17 @@ class BookingModel {
       taskId: json['task_id'] as String?,
       providerId: json['provider_id'] as String,
       clientId: json['client_id'] as String,
-      slotId: json['slot_id'] as String,
+      slotId:
+          json['slot_id'] as String? ??
+          '00000000-0000-0000-0000-000000000000', // Handle null slot_id
       status: _mapDbStatusToEnum(json['status'] as String),
+      paymentStatus: _mapDbPaymentStatusToEnum(
+        json['payment_status'] as String?,
+      ),
       note: json['note'] as String?,
+      price: json['price'] as num?,
+      packageId: json['package_id'] as String?,
+      requirements: json['requirements'] as Map<String, dynamic>?,
       createdAtUtc: DateTime.parse(json['created_at'] as String).toUtc(),
       scheduledAt: json['availability_slots']?['starts_at'] != null
           ? DateTime.parse(
@@ -61,15 +77,37 @@ class BookingModel {
       'client_id': clientId,
       'slot_id': slotId,
       'status': status.name,
+      'payment_status': paymentStatus.name,
       'note': note,
+      'price': price,
+      'package_id': packageId,
+      'requirements': requirements,
       'created_at': createdAtUtc.toUtc().toIso8601String(),
     };
   }
 
+  static PaymentStatus _mapDbPaymentStatusToEnum(String? status) {
+    if (status == null) return PaymentStatus.unpaid;
+    return PaymentStatus.values.firstWhere(
+      (e) => e.name == status,
+      orElse: () => PaymentStatus.unpaid,
+    );
+  }
+
   static BookingStatus _mapDbStatusToEnum(String status) {
     switch (status) {
+      case 'paid_request_pending':
+        return BookingStatus.paidRequestPending;
+      case 'active':
+        return BookingStatus.active;
+      case 'delivered':
+        return BookingStatus.delivered;
+      case 'refunded':
+        return BookingStatus.refunded;
+      case 'expired_unanswered':
+        return BookingStatus.expiredUnanswered;
       case 'in_progress':
-        return BookingStatus.inProgress;
+        return BookingStatus.active; // Map legacy/alternative to active
       case 'no_show':
         return BookingStatus.noShow;
       case 'canceled': // Handle alternative spelling if needed

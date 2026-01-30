@@ -9,12 +9,18 @@ import '../../viewmodels/dashboard_view_model.dart';
 import '../../models/activity_log.dart';
 
 class ActivityFeedPreview extends StatelessWidget {
-  const ActivityFeedPreview({super.key});
+  final int? limit;
+
+  const ActivityFeedPreview({super.key, this.limit});
 
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<DashboardViewModel>();
-    final activities = vm.activityFeed;
+    var activities = vm.activityFeed;
+
+    if (limit != null && activities.length > limit!) {
+      activities = activities.sublist(0, limit);
+    }
 
     if (vm.isLoading && activities.isEmpty) {
       return const Center(child: CircularProgressIndicator());

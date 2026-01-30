@@ -127,7 +127,9 @@ Brief description of the feature and its purpose.
     -   Create `lib/features/[feature]/services/[feature]_service.dart`.
     -   Implement methods matching the plan.
     -   **Rule**: Use `.select('*, related!inner(*)')` for JOINs to prevent N+1 issues.
-    -   **Rule**: Use `AppLogger` for all errors.
+    -   **Rule**: Use `AppLogger` for all errors and critical state changes.
+        -   `AppLogger.e('Failed to fetch ...', error, stackTrace)` for errors.
+        -   `AppLogger.i('Service initialized / Data fetched count: $count')` for distinct events.
 
 ---
 
@@ -142,6 +144,9 @@ Brief description of the feature and its purpose.
     -   Inject `Service` via constructor.
     -   Handle `isLoading`, `error`, and data states.
     -   **Rule**: Never expose mutable lists (use `UnmodifiableListView`).
+    -   **Rule**: Log significant user actions or state transitions:
+        -   `AppLogger.i('User performed action: $action')`
+        -   `AppLogger.w('Validation failed for input: $input')`
 
 2.  **Registration**:
     -   Register the strictly typed Provider in `lib/main.dart` or local scope.

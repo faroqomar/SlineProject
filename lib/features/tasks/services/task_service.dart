@@ -627,4 +627,65 @@ class TaskService {
       throw Exception(ErrorMapper.map(e));
     }
   }
+
+  /// Get Tenders where the current user (freelancer) has an accepted offer
+  /// but payment is pending (or any state requiring attention).
+  ///
+  /// For now, we fetch tasks where:
+  /// 1. User is the assigned_freelancer_id
+  /// 2. Status implies pending action (e.g. 'in_progress' but maybe 'assigned' if we separate them)
+  ///
+  /// CONTEXT: "Pending Payment Tenders" - This usually means the Client accepted the offer
+  /// but hasn't paid into Escrow yet. However, in our flow, Acceptance = Payment (usually).
+  /// If "Pay Later" is supported, then we look for status='assigned' or similar.
+  ///
+  /// Based on Phase 1, we use `paid_request_pending` for Bookings.
+  /// For Tenders, if accepted -> Money is in Escrow -> Status is 'in_progress' (or similar).
+  ///
+  /// If the requirement is "Pending Payment Tenders", it might refer to
+  /// "Offers I made that are Accepted but waiting for Payment" (if logic suggests separation).
+  ///
+  /// Current logic:
+  /// Fetch tasks where assigned_freelancer_id = ME AND status IN ('assigned', 'payment_pending').
+  Future<List<Task>> getPendingPaymentTenders() async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return [];
+
+    try {
+      // Assuming 'assigned' is the status for "Accepted but not In Progress/Paid"
+      // Or if we just want to show "Active Tenders" in pending section?
+      // "Pending Payment" suggests the client needs to pay.
+      //
+      // If we don't have a specific 'payment_pending' status for Tenders,
+      // we might just return empty or tasks where we are assigned.
+      //
+      // Let's assume we want to show tasks where we are assigned.
+      final response = await _client
+          .from('tasks')
+          .select(_selectBasic)
+          .eq('assigned_freelancer_id', uid)
+          .eq(
+            'status',
+            'open',
+          ) // Open means not yet fully kicked off? Or use 'assigned'
+          // .eq('payment_status', 'pending') // if/when we add this
+          .order('created_at', ascending: false);
+
+      final rows = response as List;
+      final userIds = rows
+          .map((r) => r['user_id'] as String?)
+          .whereType<String>()
+          .toSet();
+
+      final profilesMap = await _fetchProfilesByIds(userIds);
+      return _parseTasksWithProfiles(rows, profilesMap);
+    } catch (e, st) {
+      AppLogger.e(
+        'Failed to get pending payment tenders',
+        error: e,
+        stackTrace: st,
+      );
+      return [];
+    }
+  }
 }

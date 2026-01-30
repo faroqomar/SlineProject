@@ -134,12 +134,59 @@ class DashboardViewModel extends ChangeNotifier {
 
   List<WorkItem> get nextActions => _calculateNextActions();
 
-  // Active Work Buckets
+  // Phase 7: Pending Actions (New for restructuring)
+  List<BookingModel> _pendingRequests = [];
+  List<BookingModel> get pendingRequests => _pendingRequests;
+
+  List<Task> _pendingPaymentTenders = [];
+  List<Task> get pendingPaymentTenders => _pendingPaymentTenders;
+
+  // --- Filtered Work Buckets ---
+
+  /// Active Work: Open, Assigned, Pending, Confirmed, InProgress
+  List<WorkItem> get activeWork {
+    return _workItems.where((i) {
+      final s = i.statusRaw.toLowerCase();
+      return s == 'open' ||
+          s == 'assigned' ||
+          s == 'pending' ||
+          s == 'confirmed' ||
+          s == 'paid_request_pending' || // Added this
+          s == 'inprogress';
+    }).toList()..sort((a, b) {
+      // Urgency sort
+      if (a.scheduledAt != null && b.scheduledAt != null) {
+        return a.scheduledAt!.compareTo(b.scheduledAt!);
+      }
+      return b.createdAt.compareTo(a.createdAt);
+    });
+  }
+
+  /// Completed Work: Completed, Paid, Reviewed
+  List<WorkItem> get completedWork {
+    return _workItems.where((i) {
+      final s = i.statusRaw.toLowerCase();
+      return s == 'completed' || s == 'paid' || s == 'reviewed';
+    }).toList()..sort((a, b) {
+      final timeA = a.completedAt ?? a.lastUpdate;
+      final timeB = b.completedAt ?? b.lastUpdate;
+      return timeB.compareTo(timeA);
+    });
+  }
+
+  /// Cancelled Work: Cancelled, Rejected, Declined
+  List<WorkItem> get cancelledWork {
+    return _workItems.where((i) {
+      final s = i.statusRaw.toLowerCase();
+      return s == 'cancelled' || s == 'rejected' || s == 'declined';
+    }).toList()..sort((a, b) => b.lastUpdate.compareTo(a.lastUpdate));
+  }
+
+  // Active Work Buckets (Keep for backward compatibility if needed, else deprecate)
   List<WorkItem> get activeUpNext => _calculateActiveUpNext();
   List<WorkItem> get activeInProgress => _calculateActiveInProgress();
   List<WorkItem> get activeInReview => _calculateActiveInReview();
 
-  // Getters for filtered buckets (Legacy placeholders)
   List<WorkItem> get activeItems => _workItems;
 
   /// Switches the active role with persistence
@@ -294,6 +341,9 @@ class DashboardViewModel extends ChangeNotifier {
       // 6. Load Inbox Offers (lazy)
       await _fetchInbox();
 
+      // 7. Load Pending Items
+      await _fetchPendingItems();
+
       AppLogger.i('✅ Dashboard refreshed from API');
     } catch (e) {
       AppLogger.e('Dashboard load error', error: e);
@@ -349,6 +399,30 @@ class DashboardViewModel extends ChangeNotifier {
       AppLogger.d('Fetched ${_inboxOffers.length} inbox offers');
     } catch (e) {
       AppLogger.e('Failed to fetch inbox offers', error: e);
+    }
+  }
+
+  Future<void> _fetchPendingItems() async {
+    // Current user check
+    final uid = _repository.currentUser?.id; // Assuming access to repo user
+    // OR: Supabase.instance.client.auth.currentUser?.id
+    // Since _repository is initialized with client, we can assume it works if called after auth.
+    // Safe check:
+    if (uid == null) return;
+
+    try {
+      if (_currentRole == UserRole.freelancer) {
+        _pendingRequests = await _bookingService.getPendingRequests();
+        _pendingPaymentTenders = await _taskService.getPendingPaymentTenders();
+      } else {
+        _pendingRequests = [];
+        _pendingPaymentTenders = [];
+      }
+      AppLogger.d(
+        'Fetched pending items: ${_pendingRequests.length} requests, ${_pendingPaymentTenders.length} tenders',
+      );
+    } catch (e) {
+      AppLogger.e('Failed to fetch pending items', error: e);
     }
   }
 

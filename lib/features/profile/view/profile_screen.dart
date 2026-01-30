@@ -9,6 +9,7 @@ import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/core/widgets/signed_image.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
 import 'package:sline_app/features/profile/view/edit_profile_screen.dart';
+import 'package:sline_app/features/profile/view/my_services_screen.dart';
 import 'package:sline_app/features/profile/view/settings_screen.dart';
 import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 import 'package:sline_app/core/providers/theme_mode_provider.dart';
@@ -376,6 +377,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (_) => const EditProfileScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: AppDimens.p8),
+                    _buildMenuItem(
+                      context,
+                      'My Services',
+                      Icons.design_services_outlined,
+                      AppColors.gold,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const MyServicesScreen(),
                           ),
                         );
                       },

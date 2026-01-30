@@ -21,6 +21,36 @@
 
 ## 📋 Version History
 
+### 🟢 Version 2.9 — Phase 1: Pay-First Booking Flow & Wallet
+**Date:** 2026-01-31
+**Agent:** @Supabase_Ops, @Architect, @Pixel
+**Status:** ✅ Complete
+
+#### ✅ Implemented
+- **Booking Flow v2 ("Pay-First")**
+  - **Database**: Updated `booking_status_enum` with detailed lifecycle (`pending` → `paid_request_pending` → `active` → `delivered` → `completed`).
+  - **Security**: Updated `fn_booking_guard` trigger to strictly enforce these transitions.
+  - **Logic**: Implemented `BookingService` methods to handle simulated payment (Escrow), Provider Acceptance (Active), and Completion (Release).
+- **Wallet System Foundation**
+  - **Database**: Created `wallet_transactions` table with RLS Policies.
+  - **Backend**: Implemented `process_payment_event` RPC to handle atomic Escrow/Release/Refund transactions.
+  - **UI**: Added `WalletScreen` displaying transaction history and balance.
+  - **Logic**: Added `WalletViewModel` to fetch and display financial data.
+- **UI & UX**
+  - **Booking**: Updated `BookingSheet` to simulate payment process before booking confirmation.
+  - **Details**: `BookingDetailsScreen` now shows context-aware banners and buttons for every status (e.g., "Mark Delivered", "Release Funds").
+
+#### 📊 Impact
+- **Trust & Safety**: Funds are now logically "held" in escrow (simulated) before work starts.
+- **Clarity**: Both parties see the exact state of the booking (Paid Request, Active, Delivered).
+- **Architecture**: Solid foundation for integrating real payment gateways (Stripe) in Phase 2.
+
+#### 🔧 Technical Notes
+- **RPC Usage**: Use `process_payment_event` for all financial state changes to ensure atomicity.
+- **Status Mapping**: Dart `BookingStatus` enum mapped precisely to DB strings (e.g., `paidRequestPending` -> `paid_request_pending`).
+
+---
+
 ### 🟢 Version 2.8.3 — Open Messaging & Profile Previews
 **Date:** 2026-01-19
 **Agent:** @Architect, @CodeGuard

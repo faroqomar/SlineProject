@@ -193,14 +193,23 @@ class BookingViewModel extends ChangeNotifier {
     required String slotId,
     required String providerId,
     String? note,
+    String? packageId, // Added
+    Map<String, dynamic>? requirements, // Added
+    double? price, // Added
     BookingStatus status = BookingStatus.pending,
   }) async {
+    // Default price logic if null
+    final double finalPrice =
+        price ?? 100.0; // Hardcoded default for Phase 1 simulation
     try {
       final b = await _repo.bookSlot(
         taskId: taskId,
         slotId: slotId,
         note: note,
         providerId: providerId,
+        price: finalPrice,
+        packageId: packageId,
+        requirements: requirements,
         status: status,
       );
       // Optimistically prepend to client list
@@ -224,6 +233,64 @@ class BookingViewModel extends ChangeNotifier {
     } catch (e) {
       AppLogger.e('Failed to get booking $bookingId', tag: 'Booking', error: e);
       return null;
+    }
+  }
+
+  /// Approve booking (Provider).
+  Future<void> approveBooking(String bookingId) async {
+    try {
+      await _repo.approveAndRelease(bookingId);
+      // Optimistic update
+      await updateBookingStatus(
+        bookingId: bookingId,
+        newStatus: BookingStatus.completed, // Logic sets it to completed in RPC
+      );
+    } catch (e) {
+      bookingsError = _mapError(e);
+      notifyListeners();
+    }
+  }
+
+  /// Accept booking (Provider).
+  Future<void> acceptBooking(String bookingId) async {
+    try {
+      await updateBookingStatus(
+        bookingId: bookingId,
+        newStatus: BookingStatus.active,
+      );
+    } catch (e) {
+      bookingsError = _mapError(e);
+      notifyListeners();
+    }
+  }
+
+  /// Decline booking (Provider).
+  Future<void> declineBooking(String bookingId) async {
+    try {
+      await _repo.declineBooking(bookingId);
+      // Optimistic update
+      await updateBookingStatus(
+        bookingId: bookingId,
+        newStatus: BookingStatus.refunded, // Logic sets it to refunded/canceled
+      );
+    } catch (e) {
+      bookingsError = _mapError(e);
+      notifyListeners();
+    }
+  }
+
+  /// Mark booking as delivered (Provider).
+  Future<void> markDelivered(String bookingId) async {
+    try {
+      await _repo.markDelivered(bookingId);
+      // Optimistic update handled by updateBookingStatus underneath or manually
+      await updateBookingStatus(
+        bookingId: bookingId,
+        newStatus: BookingStatus.delivered,
+      );
+    } catch (e) {
+      bookingsError = _mapError(e);
+      notifyListeners();
     }
   }
 

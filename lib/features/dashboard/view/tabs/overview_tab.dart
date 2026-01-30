@@ -9,16 +9,20 @@ import '../widgets/activity_feed_preview.dart';
 import '../widgets/dashboard_counters_grid.dart';
 import '../widgets/next_actions_list.dart';
 
-class OverviewTab extends StatelessWidget {
+class OverviewTab extends StatefulWidget {
   const OverviewTab({super.key});
+
+  @override
+  State<OverviewTab> createState() => _OverviewTabState();
+}
+
+class _OverviewTabState extends State<OverviewTab> {
+  bool _showAllActivity = false;
 
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<DashboardViewModel>();
     final colorScheme = context.colorScheme;
-
-    // In a real app, we would fetch data here or in VM init
-    // final counters = vm.counters;
 
     return ListView(
       padding: const EdgeInsets.all(AppDimens.p16),
@@ -48,11 +52,18 @@ class OverviewTab extends StatelessWidget {
 
         _SectionHeader(
           title: "Recent Activity",
-          action: TextButton(onPressed: () {}, child: const Text("See All")),
+          action: TextButton(
+            onPressed: () {
+              setState(() {
+                _showAllActivity = !_showAllActivity;
+              });
+            },
+            child: Text(_showAllActivity ? "Show Less" : "See All"),
+          ),
         ),
-        const ActivityFeedPreview(),
+        ActivityFeedPreview(limit: _showAllActivity ? null : 3),
         // Add some bottom padding for navigation bar
-        const SizedBox(height: AppDimens.p48),
+        const SizedBox(height: AppDimens.p100),
       ],
     );
   }

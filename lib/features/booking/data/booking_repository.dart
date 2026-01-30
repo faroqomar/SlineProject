@@ -50,6 +50,9 @@ class BookingRepository {
     required String slotId,
     String? note,
     required String providerId,
+    required double price,
+    String? packageId,
+    Map<String, dynamic>? requirements,
     BookingStatus status = BookingStatus.pending,
   }) {
     return _service.bookSlot(
@@ -57,6 +60,9 @@ class BookingRepository {
       slotId: slotId,
       note: note,
       providerId: providerId,
+      price: price,
+      packageId: packageId,
+      requirements: requirements,
       status: status,
     );
   }
@@ -93,5 +99,17 @@ class BookingRepository {
 
   Future<BookingModel> getBookingById(String bookingId) {
     return _service.getBookingById(bookingId);
+  }
+
+  Future<void> approveAndRelease(String bookingId) {
+    return _service.approveAndRelease(bookingId);
+  }
+
+  Future<void> declineBooking(String bookingId) {
+    return _service.declineBooking(bookingId);
+  }
+
+  Future<void> markDelivered(String bookingId) {
+    return _service.markDelivered(bookingId);
   }
 }

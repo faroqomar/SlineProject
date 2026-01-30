@@ -266,6 +266,15 @@ Step | Feature | Description | Status
 
 - 🔜 Next: Localization & Real Payment Integration
 
+# 🎯 Summary (v2.9)
+
+- ✅ **Booking Flow v2**: "Pay First" logic with `paid_request_pending` and `active` states.
+- ✅ **Wallet Foundation**: `wallet_transactions` table and `WalletScreen`.
+- ✅ **Secure Infrastructure**: RPC-based state transitions (`escrow`, `release`, `refund`).
+- ✅ **UI Updates**: Status banners and simulated payment flow in `BookingDetailsScreen`.
+
+
+
 # 🎯 Summary (v2.8.3)
 
 - ✅ **Open Messaging**: Removed "Favorite" restriction (Any-to-Any DM).
