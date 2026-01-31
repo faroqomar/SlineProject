@@ -290,11 +290,18 @@ class BookingService {
     );
   }
 
-  /// Mark booking as delivered (Status update).
   Future<void> markDelivered(String bookingId) async {
     await updateBookingStatus(
       bookingId: bookingId,
       newStatus: BookingStatus.delivered,
+    );
+  }
+
+  /// Accept booking (Provider).
+  Future<void> acceptBooking(String bookingId) async {
+    await updateBookingStatus(
+      bookingId: bookingId,
+      newStatus: BookingStatus.active,
     );
   }
 

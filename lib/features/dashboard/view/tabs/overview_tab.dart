@@ -8,6 +8,7 @@ import '../../viewmodels/dashboard_view_model.dart';
 import '../widgets/activity_feed_preview.dart';
 import '../widgets/dashboard_counters_grid.dart';
 import '../widgets/next_actions_list.dart';
+import '../widgets/wallet_snapshot_card.dart';
 
 class OverviewTab extends StatefulWidget {
   const OverviewTab({super.key});
@@ -41,7 +42,11 @@ class _OverviewTabState extends State<OverviewTab> {
         ),
         const SizedBox(height: AppDimens.p20),
 
-        const DashboardCountersGrid(),
+        const SizedBox(height: AppDimens.p20),
+        const WalletSnapshotCard(),
+        const SizedBox(height: AppDimens.p20),
+
+        DashboardCountersGrid(),
 
         const SizedBox(height: AppDimens.p24),
 

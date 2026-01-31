@@ -9,6 +9,11 @@ This comprehensive guide consolidates all feature-specific documentation into a 
 
 ## 📑 Table of Contents
 
+- [Order Management Feature Reference](DEVELOPER_GUIDE/Order_Management_Feature.md)
+- [Wallet Feature Reference](DEVELOPER_GUIDE/Wallet_Feature.md)
+
+---
+
 
 
 ---

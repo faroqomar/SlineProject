@@ -80,22 +80,7 @@ class DashboardRepository {
       final List<WorkItem> items = [];
 
       if (role == UserRole.freelancer) {
-        // Freelancer:
-        // 1. Tasks assigned to me
-        // 2. Bookings where I am provider
-
-        // Note: TaskService.getTasksByUser gets tasks CREATED by user.
-        // We need tasks ASSIGNED to user.
-        // TaskService doesn't have getAssignedTasks? Let's check.
-        // If not, we might need to add it or fetch manually.
-        // For now preventing error, let's assume getTasksByUser is owner.
-        // We need a way to get assigned tasks.
-
-        // Let's implement fetching assigned tasks directly here for now if needed,
-        // or just focus on Bookings for freelancer as Proof of Concept if TaskService is limited.
-        // Actually, let's look at TaskService again. It has getTasksByStatus but not by assigned_freelancer_id.
-        // I'll add a simple query here for assigned tasks.
-
+        // Freelancer: Tasks assigned to me + Bookings I provide
         final assignedTasks = await _fetchAssignedTasks(uid);
         items.addAll(assignedTasks.map((t) => _mapTaskToWorkItem(t, role)));
 
@@ -105,11 +90,12 @@ class DashboardRepository {
         await _enrichBookingsWithProfiles(bookings, isProviderView: true);
         items.addAll(bookings.map((b) => _mapBookingToWorkItem(b, role)));
       } else {
-        // Client:
-        // 1. Tasks created by me (My Orders)
-        // 2. Bookings where I am client
-
+        // Client: My Orders (Tasks) + My Bookings
         final myTasks = await _taskService.getTasksByUser(uid);
+
+        // Enrich tasks with Assigned Freelancer profiles
+        await _enrichTasksWithFreelancers(myTasks);
+
         items.addAll(myTasks.map((t) => _mapTaskToWorkItem(t, role)));
 
         final bookings = await _bookingService.listBookingsAsClient(limit: 50);
@@ -117,7 +103,7 @@ class DashboardRepository {
         items.addAll(bookings.map((b) => _mapBookingToWorkItem(b, role)));
       }
 
-      // Sort by last update or created at
+      // Sort: Most recently updated/created first
       items.sort((a, b) => b.lastUpdate.compareTo(a.lastUpdate));
       AppLogger.i('Fetched ${items.length} work items');
 
@@ -125,6 +111,18 @@ class DashboardRepository {
     } catch (e, st) {
       AppLogger.e('Failed to fetch dashboard items', error: e, stackTrace: st);
       return [];
+    }
+  }
+
+  Future<void> _enrichTasksWithFreelancers(List<Task> tasks) async {
+    final freelancerIds = tasks
+        .where((t) => t.assignedFreelancerId != null)
+        .map((t) => t.assignedFreelancerId!)
+        .toSet();
+
+    if (freelancerIds.isNotEmpty) {
+      final profiles = await _fetchProfiles(freelancerIds);
+      _tempProfilesCache.addAll(profiles);
     }
   }
 
@@ -159,38 +157,96 @@ class DashboardRepository {
     UserRole role,
     List<WorkItem> currentItems,
   ) async {
-    // Optimization: Calculate from currentItems where possible to save queries.
-    // Counters needed:
-    // Freelancer: Active Work (InProgress), Pending Bookings/Requests, Unread Messages
-    // Client: Active Bookings, Open Tasks, Unread Messages
-
-    // 1. Messages (Server fetch needed ideally, or just mocked for now/use MsgService)
-    int unreadMessages = 0;
-    // Todo: Hook up to MessageService unread count logic.
+    // Phase 1.2: Strict Stats Definitions
+    // 1. Pending Actions (Red Dot)
+    // 2. Active Work
+    // 3. Offers (Needs separate fetch usually)
+    // 4. Messages (Needs separate fetch)
 
     int active = 0;
     int pending = 0;
     int offers = 0;
+    int unreadMessages = 0; // TODO: Connect MessageService
 
-    if (role == UserRole.freelancer) {
-      // Active Work: Status InProgress or Confirmed Booking
-      active = currentItems.where((i) => i.statusUiBucket == 'Active').length;
+    // Active Work: Booking(Active|Delivered) + Order(Active|Delivered)
+    // Note: statusUiBucket 'Active' covers: assigned, in_progress, confirmed, paid_request_pending
+    // We also need 'delivered' here as per plan.
+    active = currentItems.where((i) {
+      final s = i.statusRaw.toLowerCase();
+      // Active states + Delivered
+      return i.statusUiBucket == 'Active' ||
+          s == 'delivered' ||
+          s == 'in_progress' ||
+          s == 'assigned' ||
+          s == 'confirmed';
+    }).length;
 
-      // Pending: Received Bookings pending confirmation
-      pending = currentItems
-          .where(
-            (i) => i.statusRaw == 'pending' && i.type == WorkItemType.booking,
-          )
-          .length;
+    if (role == UserRole.client) {
+      // Client Pending Actions:
+      // - unpaid bookings
+      // - active orders (assignments) pending payment (if applicable) -> 'assigned' often implies pending work or payment
+      // - delivered work (awaiting review)
+      // - paid_request_pending bookings (manual confirm)
+      pending = currentItems.where((i) {
+        final s = i.statusRaw.toLowerCase();
+        // Payment status check for bookings handling:
+        // Checking status mainly for now.
+        // 'delivered' -> Review needed
+        // 'paid_request_pending' -> Confirm needed
+        // 'assigned' -> Check if paid? (Assuming 'assigned' task needs funding logic later)
+        if (s == 'delivered') return true;
+
+        // For bookings:
+        if (i.type == WorkItemType.booking) {
+          if (s == 'paid_request_pending') {
+            return true; // Provider asked for payment/confirm
+          }
+          // 'pending' booking needs payment?
+          if (s == 'pending') return true; // Often "Unpaid" state
+        }
+        return false;
+      }).length;
+
+      // Client Offers: Proposals on open tasks
+      // Fetching separately as it's not in WorkItems
+      try {
+        final proposals = await _taskService.getOffersReceived(
+          _client.auth.currentUser?.id ?? '',
+        );
+        offers = proposals.where((p) => p.status == OfferStatus.pending).length;
+      } catch (_) {}
     } else {
-      // Client
-      active = currentItems.where((i) => i.statusUiBucket == 'Active').length;
+      // Freelancer Pending Actions:
+      // - paid_request_pending bookings (Action: Accept/Decline)
+      // - overdue deliverables (deadline passed & active)
+      // - revisions_requested
+      pending = currentItems.where((i) {
+        final s = i.statusRaw.toLowerCase();
+        if (s == 'paid_request_pending') return true;
+        if (s == 'revision_requested') return true; // If we add this status
 
-      // Open Tasks (waiting for offers)
-      // Pending here might mean tasks that are OPEN.
-      // Or offers received?
-      // Let's count Open Tasks as 'Pending' in general sense or use newOffers counter.
-      pending = currentItems.where((i) => i.statusRaw == 'open').length;
+        // Overdue check
+        if ((s == 'assigned' || s == 'in_progress' || s == 'confirmed') &&
+            i.scheduledAt != null) {
+          if (i.scheduledAt!.isBefore(DateTime.now())) return true;
+        }
+        return false;
+      }).length;
+
+      // Freelancer Offers: My Proposals (Submitted/Shortlisted)
+      try {
+        final myProposals = await _taskService.getOffersSubmitted(
+          _client.auth.currentUser?.id ?? '',
+        );
+        offers = myProposals
+            .where(
+              (p) =>
+                  p.status == OfferStatus.pending ||
+                  p.status == OfferStatus.accepted,
+            )
+            .length;
+        // Note: Accepted proposals usually become WorkItems, so counting 'pending' mainly.
+      } catch (_) {}
     }
 
     final counters = DashboardCounters(
@@ -199,7 +255,9 @@ class DashboardRepository {
       newMessages: unreadMessages,
       newOffers: offers,
     );
-    AppLogger.d('Calculated counters: active=$active, pending=$pending');
+    AppLogger.d(
+      'Calculated counters: active=$active, pending=$pending, offers=$offers',
+    );
     return counters;
   }
 
@@ -297,13 +355,18 @@ class DashboardRepository {
       // Task model has 'profiles' which is the OWNER (Client).
       // It does NOT have Freelancer profile joined usually unless we fetched it.
       // TaskService.getTasksByUser fetches User (Owner) profile.
-      // If assigned_freelancer_id is present, we might haven't fetched their profile?
-      // For MVP, if freelancer is assigned, we might show "Assigned" or fetch profile.
-      // Let's rely on tasks view having sufficient specific data or generic "Freelancer".
-      // Actually TaskService doesn't fetch freelancer profile.
-      // For now, use generic or Task Title focused.
-      cpName = 'Freelancer'; // TODO: Fetch freelancer profile
-      cpId = task.assignedFreelancerId ?? '';
+      // If assigned_freelancer_id is present, we try to use cached profile.
+      if (task.assignedFreelancerId != null &&
+          _tempProfilesCache.containsKey(task.assignedFreelancerId)) {
+        final profile = _tempProfilesCache[task.assignedFreelancerId!];
+        cpName = profile?['full_name'] ?? 'Freelancer';
+        cpAvatar = profile?['avatar_url'] ?? '';
+        cpId = task.assignedFreelancerId!;
+      } else {
+        // Fallback if not assigned or not fetched
+        cpName = 'Freelancer';
+        cpId = task.assignedFreelancerId ?? '';
+      }
     } else {
       // I am freelancer, counterparty is Client (Owner)
       // Task model (from _fetchAssignedTasks) has User profile flattened

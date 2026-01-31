@@ -9,6 +9,7 @@ import 'package:sline_app/core/widgets/signed_image.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
+import 'package:sline_app/core/app_enums.dart'; // Added for TaskStatus
 
 class BookingTaskCard extends StatelessWidget {
   final Task task;
@@ -384,39 +385,68 @@ class BookingTaskCard extends StatelessWidget {
                             ],
                           ),
 
-                          // Book Now Button
-                          Container(
-                            height: 36,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: AppColors.teal,
-                              borderRadius: BorderRadius.circular(18),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.teal.withValues(alpha: 0.2),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                Text(
-                                  'Book Now',
-                                  style: AppTypography.captionBold.copyWith(
-                                    fontSize: 12,
+                          // Action Button (Book Now or Completed)
+                          if (task.status == TaskStatus.completed ||
+                              task.status == TaskStatus.closed)
+                            Container(
+                              height: 36,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: colorScheme.background,
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(color: colorScheme.divider),
+                              ),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    'Completed',
+                                    style: AppTypography.captionBold.copyWith(
+                                      fontSize: 12,
+                                      color: colorScheme.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else
+                            Container(
+                              height: 36,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.teal,
+                                borderRadius: BorderRadius.circular(18),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.teal.withValues(
+                                      alpha: 0.2,
+                                    ),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    'Book Now',
+                                    style: AppTypography.captionBold.copyWith(
+                                      fontSize: 12,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Icon(
+                                    Icons.arrow_forward,
+                                    size: 14,
                                     color: Colors.white,
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                const Icon(
-                                  Icons.arrow_forward,
-                                  size: 14,
-                                  color: Colors.white,
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     ),

@@ -7,6 +7,7 @@ import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
+import 'package:sline_app/core/app_enums.dart'; // Added for TaskStatus
 import 'package:sline_app/features/tasks/models/task_model.dart';
 
 class TenderTaskCard extends StatelessWidget {
@@ -292,6 +293,9 @@ class TenderTaskCard extends StatelessWidget {
   }
 
   String _formatDeadline(DateTime date) {
+    if (task.status == TaskStatus.completed) return 'Completed';
+    if (task.status == TaskStatus.closed) return 'Closed';
+
     final diff = date.difference(DateTime.now().toUtc());
     if (diff.isNegative) return 'Expired';
     if (diff.inDays > 0) return '${diff.inDays}d left';

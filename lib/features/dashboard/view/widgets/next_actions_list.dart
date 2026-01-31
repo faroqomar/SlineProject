@@ -10,7 +10,8 @@ class NextActionsList extends StatelessWidget {
   Widget build(BuildContext context) {
     // In Phase 2, we consume the VM directly
     final vm = context.watch<DashboardViewModel>();
-    final items = vm.workItems; // Use activeItems later for filtering
+    // Use calculated priority actions (Phase 1.3 Logic)
+    final items = vm.nextActions;
 
     if (vm.isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -29,7 +30,9 @@ class NextActionsList extends StatelessWidget {
             (item) => WorkItemCard(
               item: item,
               onPrimaryAction: () {
-                // Todo: Handle action
+                // TODO: Wire up action properly based on type
+                // For now, WorkItemCard handles deep link on tap
+                // Primary action could be distinct
               },
             ),
           )

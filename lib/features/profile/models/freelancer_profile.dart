@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/features/profile/models/profile_model.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'dart:math';
 
 class FreelancerProfile {
@@ -18,6 +19,7 @@ class FreelancerProfile {
   final List<String> skills;
   final List<PortfolioItem> portfolio;
   final List<ReviewItem> reviews;
+  final List<Task> history; // Added
   final String? avatarUrl;
 
   const FreelancerProfile({
@@ -35,6 +37,7 @@ class FreelancerProfile {
     required this.skills,
     required this.portfolio,
     required this.reviews,
+    this.history = const [], // Added
     this.avatarUrl,
   });
 
@@ -42,6 +45,7 @@ class FreelancerProfile {
     required ProfileModel profile,
     required List<PortfolioItem> portfolio,
     List<ReviewItem> reviews = const [],
+    List<Task> history = const [], // Added
   }) {
     // Extract initials
     String initials = '';
@@ -77,6 +81,7 @@ class FreelancerProfile {
       skills: profile.skills,
       portfolio: portfolio,
       reviews: reviews,
+      history: history,
       avatarUrl: profile.avatarUrl,
     );
   }

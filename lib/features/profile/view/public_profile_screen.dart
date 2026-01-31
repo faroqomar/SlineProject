@@ -6,6 +6,7 @@ import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/core/widgets/sliver_tab_bar_delegate.dart';
 import 'package:sline_app/features/profile/viewmodels/public_profile_view_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/features/profile/data/profile_repository.dart';
@@ -18,17 +19,42 @@ import 'package:sline_app/features/chat/view/chat_screen.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/features/favorites/viewmodels/favorites_view_model.dart';
+import 'package:sline_app/features/tasks/view/widgets/task_card.dart';
 
 class PublicProfileScreen extends StatefulWidget {
   final String userId;
+  final int initialTabIndex;
 
-  const PublicProfileScreen({super.key, required this.userId});
+  const PublicProfileScreen({
+    super.key,
+    required this.userId,
+    this.initialTabIndex = 0,
+  });
 
   @override
   State<PublicProfileScreen> createState() => _PublicProfileScreenState();
 }
 
-class _PublicProfileScreenState extends State<PublicProfileScreen> {
+class _PublicProfileScreenState extends State<PublicProfileScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(
+      length: 4,
+      vsync: this,
+      initialIndex: widget.initialTabIndex,
+    );
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colorScheme = context.colorScheme;
@@ -52,119 +78,162 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 
             return Stack(
               children: [
-                CustomScrollView(
-                  slivers: [
-                    PublicProfileHeader(profile: profile),
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          AppDimens.p24,
-                          50,
-                          AppDimens.p24,
-                          100,
+                NestedScrollView(
+                  headerSliverBuilder: (context, innerBoxIsScrolled) {
+                    return [
+                      // 1. Visual Header (Gradient + Avatar) using existing component
+                      // We wrap it in SliverToBoxAdapter because it wasn't designed as a FlexibleSpaceBar
+                      PublicProfileHeader(profile: profile),
+
+                      // 2. Profile Info (Name, Title, Location, Actions)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            left: AppDimens.p24,
+                            right: AppDimens.p24,
+                            bottom: AppDimens.p24,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Push content down below the absolute positioned avatar/header
+                              // PublicProfileHeader height is 120, plus avatar positioning...
+                              // We need about 50-60px separation from top of this sliver
+                              const SizedBox(height: 60),
+
+                              // Name & Verification
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        profile.name,
+                                        style: AppTypography.h3.copyWith(
+                                          color: colorScheme.text,
+                                        ),
+                                      ),
+                                      if (profile.verified)
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            left: 4,
+                                          ),
+                                          child: Icon(
+                                            Icons.check_circle,
+                                            color: AppColors.lightTeal,
+                                            size: 20,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      CircleIconButton(
+                                        icon: Icons.share,
+                                        onTap: () {
+                                          // TODO: Implement share
+                                        },
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Consumer<FavoritesViewModel>(
+                                        builder: (context, favoritesVm, _) {
+                                          final isFavorited = favoritesVm.items
+                                              .any(
+                                                (f) =>
+                                                    f.freelancerId ==
+                                                    profile.id,
+                                              );
+                                          final icon = isFavorited
+                                              ? Icons.favorite
+                                              : Icons.favorite_border;
+                                          final color = isFavorited
+                                              ? AppColors.lightRed
+                                              : colorScheme.textSecondary;
+
+                                          return CircleIconButton(
+                                            icon: icon,
+                                            iconColor: color,
+                                            onTap: () {
+                                              if (isFavorited) {
+                                                favoritesVm.remove(profile.id);
+                                              } else {
+                                                favoritesVm.add(profile.id);
+                                              }
+                                            },
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                profile.title,
+                                style: AppTypography.bodyMedium.copyWith(
+                                  color: colorScheme.textSecondary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.location_on,
+                                    size: 14,
+                                    color: colorScheme.textSecondary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    profile.location,
+                                    style: AppTypography.micro.copyWith(
+                                      color: colorScheme.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: AppDimens.p24),
+                              PublicProfileStats(profile: profile),
+                            ],
+                          ),
                         ),
+                      ),
+
+                      // 3. Pinned TabBar
+                      SliverPersistentHeader(
+                        pinned: true,
+                        delegate: SliverTabBarDelegate(
+                          TabBar(
+                            controller: _tabController,
+                            labelColor: AppColors.teal,
+                            unselectedLabelColor: colorScheme.textSecondary,
+                            labelStyle: AppTypography.bodySmall.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                            indicatorColor: AppColors.teal,
+                            indicatorSize: TabBarIndicatorSize.label,
+                            tabs: const [
+                              Tab(text: 'About'),
+                              Tab(text: 'Portfolio'),
+                              Tab(text: 'History'),
+                              Tab(text: 'Reviews'),
+                            ],
+                          ),
+                          backgroundColor: colorScheme.phoneBackground,
+                        ),
+                      ),
+                    ];
+                  },
+                  body: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      // --- About Tab ---
+                      SingleChildScrollView(
+                        padding: const EdgeInsets.all(AppDimens.p24),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Name & Verification
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      profile.name,
-                                      style: AppTypography.h3.copyWith(
-                                        color: colorScheme.text,
-                                      ),
-                                    ),
-                                    if (profile.verified)
-                                      Padding(
-                                        padding: const EdgeInsets.only(left: 4),
-                                        child: Icon(
-                                          Icons.check_circle,
-                                          color: AppColors.lightTeal,
-                                          size: 20,
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    CircleIconButton(
-                                      icon: Icons.share,
-                                      onTap: () {
-                                        // TODO: Implement share
-                                      },
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Consumer<FavoritesViewModel>(
-                                      builder: (context, favoritesVm, _) {
-                                        final isFavorited = favoritesVm.items
-                                            .any(
-                                              (f) =>
-                                                  f.freelancerId == profile.id,
-                                            );
-                                        final icon = isFavorited
-                                            ? Icons.favorite
-                                            : Icons.favorite_border;
-                                        final color = isFavorited
-                                            ? AppColors.lightRed
-                                            : colorScheme.textSecondary;
-
-                                        return CircleIconButton(
-                                          icon: icon,
-                                          iconColor: color,
-                                          onTap: () {
-                                            if (isFavorited) {
-                                              favoritesVm.remove(profile.id);
-                                            } else {
-                                              favoritesVm.add(profile.id);
-                                            }
-                                          },
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            Text(
-                              profile.title,
-                              style: AppTypography.bodyMedium.copyWith(
-                                color: colorScheme.textSecondary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.location_on,
-                                  size: 14,
-                                  color: colorScheme.textSecondary,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  profile.location,
-                                  style: AppTypography.micro.copyWith(
-                                    color: colorScheme.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: AppDimens.p24),
-
-                            PublicProfileStats(profile: profile),
-                            const SizedBox(height: AppDimens.p24),
-
-                            // About
-                            Text(
-                              'About',
-                              style: AppTypography.h5.copyWith(
-                                color: colorScheme.text,
-                              ),
-                            ),
+                            Text('Bio', style: AppTypography.h5),
                             const SizedBox(height: AppDimens.p8),
                             Text(
                               profile.bio,
@@ -174,14 +243,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                               ),
                             ),
                             const SizedBox(height: AppDimens.p24),
-
-                            // Skills
-                            Text(
-                              'Skills',
-                              style: AppTypography.h5.copyWith(
-                                color: colorScheme.text,
-                              ),
-                            ),
+                            Text('Skills', style: AppTypography.h5),
                             const SizedBox(height: AppDimens.p8),
                             Wrap(
                               spacing: 8,
@@ -210,22 +272,70 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                 );
                               }).toList(),
                             ),
-                            const SizedBox(height: AppDimens.p24),
-
-                            PublicProfilePortfolio(
-                              portfolio: profile.portfolio,
-                            ),
-                            const SizedBox(height: AppDimens.p24),
-
-                            PublicProfileReviews(reviews: profile.reviews),
+                            // Add extra padding at bottom to avoid floating bar overlap
+                            const SizedBox(height: 100),
                           ],
                         ),
                       ),
-                    ),
-                  ],
+
+                      // --- Portfolio Tab ---
+                      SingleChildScrollView(
+                        padding: const EdgeInsets.all(AppDimens.p24),
+                        child: Column(
+                          children: [
+                            PublicProfilePortfolio(
+                              portfolio: profile.portfolio,
+                            ),
+                            const SizedBox(height: 100),
+                          ],
+                        ),
+                      ),
+
+                      // --- History Tab ---
+                      profile.history.isEmpty
+                          ? Center(
+                              child: Text(
+                                'No completed work yet.',
+                                style: AppTypography.bodyMedium.copyWith(
+                                  color: colorScheme.textSecondary,
+                                ),
+                              ),
+                            )
+                          : ListView.separated(
+                              padding: const EdgeInsets.fromLTRB(
+                                AppDimens.p24,
+                                AppDimens.p24,
+                                AppDimens.p24,
+                                100,
+                              ),
+                              itemCount: profile.history.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: AppDimens.p12),
+                              itemBuilder: (context, index) {
+                                return TaskCard(
+                                  task: profile.history[index],
+                                  onTap: () {
+                                    // Navigate to task details
+                                  },
+                                );
+                              },
+                            ),
+
+                      // --- Reviews Tab ---
+                      SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppDimens.p24,
+                          AppDimens.p24,
+                          AppDimens.p24,
+                          100,
+                        ),
+                        child: PublicProfileReviews(reviews: profile.reviews),
+                      ),
+                    ],
+                  ),
                 ),
 
-                // Sticky Bottom Bar
+                // Sticky Bottom Bar (Hire / Message)
                 Positioned(
                   bottom: AppDimens.p24,
                   left: AppDimens.p24,
@@ -253,7 +363,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                         Container(
                           width: 1,
                           height: 24,
-                          color: Colors.grey.withAlpha(76),
+                          color: Colors.grey.withValues(alpha: 0.3),
                         ),
                         Expanded(
                           child: Padding(

@@ -50,3 +50,12 @@ enum PrimaryActionType { startWork, markCompleted, approveClose }
 
 /// Tabs in the Unified Dashboard.
 enum DashboardTab { overview, manage, bookings, activeWork, inbox }
+
+/// Tabs for the Search Screen
+enum SearchTab {
+  /// Find Tasks (for freelancers)
+  findWork,
+
+  /// Find Freelancers (for clients)
+  findTalent,
+}

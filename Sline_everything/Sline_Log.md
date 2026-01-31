@@ -21,6 +21,47 @@
 
 ## 📋 Version History
 
+### 🟢 Version 2.12 — Unified Profile & Search Polish (Phase 4)
+**Date:** 2026-02-01
+**Agent:** @Architect, @Pixel, @CodeGuard
+**Status:** ✅ Complete
+
+#### ✅ Implemented
+- **Profile Refactor**
+  - **Structure**: Converted to `NestedScrollView` with pinned `TabBar` (About, Portfolio, History, Reviews).
+  - **History Tab**: Displays completed tasks/bookings with correct status ("Completed" vs "Expired").
+  - **Navigation**: Added "Work History" shortcut menu item to navigate directly to the History tab.
+- **Search Polish**
+  - **UI**: Added empty states, improved gradient backgrounds, and refined `SearchResultProfileCard`.
+  - **Avatars**: Switched to `SignedAvatar` for secure, cached profile images in search results.
+  - **Logic**: Implemented batch fetching in `SearchService` to prevent N+1 queries during results enrichment.
+- **Code Quality**
+  - **Linting**: Fixed all lint errors in search module (relative imports, deprecations).
+  - **Architecture**: Enforced MVVM pattern in Profile and Search features.
+
+#### 📊 Impact
+- **UX**: Profile feels like a complete professional identity with history and portfolio.
+- **Performance**: Search results load efficiently without slamming the database for every profile/category.
+
+---
+
+### 🟢 Version 2.11 — Freelancer Wallet MVP (Phase 4)
+**Date:** 2026-01-31
+**Agent:** @Supabase_Ops, @Architect, @Pixel
+**Status:** ✅ Complete
+
+#### ✅ Implemented
+- **Wallet Dashboard**
+  - **Database**: Created secure view `wallet_balances` to aggregate `released` vs `held` funds.
+  - **Logic**: Updated `WalletService` to use the view for accurate "Net Worth" calculation.
+  - **UI**: Updated `WalletScreen` with split balance cards (Teal for Available, Amber for Escrow) and clear transaction history.
+
+#### 📊 Impact
+- **Financial Clarity**: Zero ambiguity between "money I have" and "money coming soon".
+- **Security**: Aggregation logic moved to database layer (View) prevents client-side math errors.
+
+---
+
 ### 🟢 Version 2.10 — Unified Management System (Phase 1)
 **Date:** 2026-01-31
 **Agent:** @Architect, @Supabase_Ops, @Pixel

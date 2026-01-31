@@ -31,6 +31,7 @@ import 'features/orders/viewmodels/orders_view_model.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/providers/theme_mode_provider.dart';
 import 'features/notifications/viewmodels/notification_view_model.dart';
+import 'features/wallet/viewmodels/wallet_view_model.dart';
 import 'core/services/deep_link_service.dart';
 import 'core/services/dashboard_cache_service.dart';
 
@@ -133,6 +134,8 @@ class SLineApp extends StatelessWidget {
         Provider(create: (_) => DeepLinkService()),
         // Dashboard Cache Service (Stateless)
         Provider(create: (_) => DashboardCacheService(prefs)),
+        // Wallet state
+        ChangeNotifierProvider(create: (_) => WalletViewModel()),
       ],
       child: const _AppWithAuthListener(),
     );

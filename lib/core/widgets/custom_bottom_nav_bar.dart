@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
@@ -65,29 +66,51 @@ class CustomBottomNavBar extends StatelessWidget {
           right: AppDimens.p16,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(AppDimens.r30),
-            child: BackdropFilter(
-              // iOS 26 style blur - systemThinMaterial effect
-              filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-              child: Container(
-                height: 70,
-                decoration: _buildLiquidGlassDecoration(colorScheme),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: navItems.asMap().entries.map((entry) {
-                    final int index = entry.key;
-                    final _NavItem item = entry.value;
-                    final bool isActive = currentIndex == index;
+            child: kIsWeb
+                ? Container(
+                    height: 70,
+                    decoration: _buildLiquidGlassDecoration(colorScheme),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: navItems.asMap().entries.map((entry) {
+                        final int index = entry.key;
+                        final _NavItem item = entry.value;
+                        final bool isActive = currentIndex == index;
 
-                    return _LiquidGlassNavItem(
-                      item: item,
-                      isActive: isActive,
-                      onTap: () => navigationProvider.setCurrentIndex(index),
-                      colorScheme: colorScheme,
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
+                        return _LiquidGlassNavItem(
+                          item: item,
+                          isActive: isActive,
+                          onTap: () =>
+                              navigationProvider.setCurrentIndex(index),
+                          colorScheme: colorScheme,
+                        );
+                      }).toList(),
+                    ),
+                  )
+                : BackdropFilter(
+                    // iOS 26 style blur - systemThinMaterial effect
+                    filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+                    child: Container(
+                      height: 70,
+                      decoration: _buildLiquidGlassDecoration(colorScheme),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: navItems.asMap().entries.map((entry) {
+                          final int index = entry.key;
+                          final _NavItem item = entry.value;
+                          final bool isActive = currentIndex == index;
+
+                          return _LiquidGlassNavItem(
+                            item: item,
+                            isActive: isActive,
+                            onTap: () =>
+                                navigationProvider.setCurrentIndex(index),
+                            colorScheme: colorScheme,
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
           ),
         );
       },

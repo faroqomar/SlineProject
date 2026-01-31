@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/wallet_transaction_model.dart';
+import '../models/wallet_balance_model.dart';
 
 class WalletService {
   WalletService(this._client);
@@ -31,13 +32,22 @@ class WalletService {
   /// Phase 1 Plan did not specify a balance view, so we'll sum client-side or assume 0 for now.
   /// Actually, RPC `get_wallet_balance` would be better but I didn't create it.
   /// I'll do a simple query for now.
-  Future<num> getBalance() async {
+  Future<WalletBalanceModel> getWalletBalance() async {
     final uid = _client.auth.currentUser?.id;
-    if (uid == null) return 0;
+    if (uid == null) return WalletBalanceModel.zero();
 
-    // Naive implementation: fetch all 'released'/'completed' credit types?
-    // This is expensive.
-    // Let's just return 0 placeholder or sum latest.
-    return 0;
+    try {
+      final data = await _client
+          .from('wallet_balances')
+          .select()
+          .eq('user_id', uid)
+          .maybeSingle();
+
+      if (data == null) return WalletBalanceModel.zero();
+      return WalletBalanceModel.fromJson(data);
+    } catch (e) {
+      // In case view doesn't exist yet or connection error
+      return WalletBalanceModel.zero();
+    }
   }
 }

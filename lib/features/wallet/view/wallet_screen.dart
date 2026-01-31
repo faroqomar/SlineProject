@@ -64,7 +64,7 @@ class _WalletScreenState extends State<WalletScreen> {
           return ListView(
             padding: const EdgeInsets.all(AppDimens.p24),
             children: [
-              // Balance Card
+              // Balance Cards
               GlassContainer(
                 padding: const EdgeInsets.all(AppDimens.p24),
                 child: Column(
@@ -77,12 +77,38 @@ class _WalletScreenState extends State<WalletScreen> {
                     ),
                     const SizedBox(height: AppDimens.p8),
                     Text(
-                      '\$${vm.balance.toStringAsFixed(2)}',
+                      '\$${vm.balance.availableBalance.toStringAsFixed(2)}',
                       style: AppTypography.h1.copyWith(color: AppColors.teal),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(height: AppDimens.p12),
+
+              if (vm.balance.heldBalance > 0)
+                GlassContainer(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: AppDimens.p16,
+                    horizontal: AppDimens.p24,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.lock_clock, color: AppColors.gold, size: 20),
+                      const SizedBox(width: AppDimens.p8),
+                      Text(
+                        'Pending Escrow: ',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: colorScheme.textSecondary,
+                        ),
+                      ),
+                      Text(
+                        '\$${vm.balance.heldBalance.toStringAsFixed(2)}',
+                        style: AppTypography.h3.copyWith(color: AppColors.gold),
+                      ),
+                    ],
+                  ),
+                ),
               const SizedBox(height: AppDimens.p24),
 
               Text(

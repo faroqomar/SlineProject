@@ -5,6 +5,7 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/widgets/glass_card.dart';
 import '../../viewmodels/dashboard_view_model.dart';
 
 class DashboardCountersGrid extends StatelessWidget {
@@ -14,42 +15,69 @@ class DashboardCountersGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final vm = context.watch<DashboardViewModel>();
     final isFreelancer = vm.currentRole == UserRole.freelancer;
+    final counters = vm.counters;
 
-    // TODO: Connect to VM real data (mock)
-    // For now hardcoding mock values for UI Prototype until VM is fully wired
-
-    final counters = isFreelancer
+    // Map counters to UI cards
+    final List<_CounterData> items = isFreelancer
         ? [
-            _CounterData("Pending", "3", AppColors.gold, Icons.pending_actions),
+            _CounterData(
+              "Pending Requests",
+              counters.pendingRequests.toString(),
+              AppColors.gold,
+              Icons.pending_actions,
+              () => vm.setTab(DashboardTab.activeWork.index),
+            ),
             _CounterData(
               "Active Work",
-              "2",
+              counters.activeWork.toString(),
               AppColors.teal,
               Icons.work,
-            ), // Using teal
+              () => vm.setTab(DashboardTab.activeWork.index),
+            ),
             _CounterData(
               "Messages",
-              "5",
+              counters.newMessages.toString(),
               AppColors.lightTeal,
               Icons.chat,
-            ), // Using lightTeal
+              () => vm.setTab(DashboardTab.inbox.index),
+            ),
             _CounterData(
-              "Offers",
-              "0",
+              "New Offers",
+              counters.newOffers.toString(),
               AppColors.mediumGrey,
               Icons.local_offer,
+              () => vm.setTab(DashboardTab.activeWork.index),
             ),
           ]
         : [
-            _CounterData("Active", "1", AppColors.teal, Icons.calendar_today),
-            _CounterData("Open Tasks", "2", AppColors.gold, Icons.list_alt),
+            _CounterData(
+              "Active Bookings",
+              counters.activeWork.toString(),
+              AppColors.teal,
+              Icons.calendar_today,
+              () => vm.setTab(DashboardTab.bookings.index),
+            ),
+            _CounterData(
+              "Pending Approvals",
+              counters.pendingRequests.toString(),
+              AppColors.gold,
+              Icons.gavel,
+              () => vm.setTab(DashboardTab.bookings.index),
+            ),
             _CounterData(
               "New Offers",
-              "4",
+              counters.newOffers.toString(),
               AppColors.lightRed,
               Icons.notifications_active,
-            ), // Using lightRed
-            _CounterData("Messages", "1", AppColors.lightTeal, Icons.chat),
+              () => vm.setTab(DashboardTab.activeWork.index),
+            ),
+            _CounterData(
+              "Messages",
+              counters.newMessages.toString(),
+              AppColors.lightTeal,
+              Icons.chat,
+              () => vm.setTab(DashboardTab.inbox.index),
+            ),
           ];
 
     return GridView.builder(
@@ -61,9 +89,9 @@ class DashboardCountersGrid extends StatelessWidget {
         mainAxisSpacing: AppDimens.p12,
         childAspectRatio: 1.5,
       ),
-      itemCount: counters.length,
+      itemCount: items.length,
       itemBuilder: (context, index) {
-        return _CounterCard(data: counters[index]);
+        return _CounterCard(data: items[index]);
       },
     );
   }
@@ -74,8 +102,9 @@ class _CounterData {
   final String count;
   final Color color;
   final IconData icon;
+  final VoidCallback onTap;
 
-  _CounterData(this.label, this.count, this.color, this.icon);
+  _CounterData(this.label, this.count, this.color, this.icon, this.onTap);
 }
 
 class _CounterCard extends StatelessWidget {
@@ -87,20 +116,9 @@ class _CounterCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
 
-    return Container(
+    return GlassCard(
+      onTap: data.onTap,
       padding: const EdgeInsets.all(AppDimens.p16),
-      decoration: BoxDecoration(
-        color: colorScheme.cardBackground,
-        borderRadius: BorderRadius.circular(AppDimens.r16),
-        border: Border.all(color: colorScheme.cardBorder),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.primary.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -124,6 +142,8 @@ class _CounterCard extends StatelessWidget {
               color: colorScheme.textSecondary,
               fontWeight: FontWeight.w600,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

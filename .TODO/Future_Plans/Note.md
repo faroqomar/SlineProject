@@ -1,215 +1,377 @@
+You are my Product + Engineering assistant for SLine (two-sided marketplace: Client + Freelancer).
+Your job: produce a complete, implementation-ready Software Requirements + UI/Logic spec for ALL screens, with role-based visibility, and break it into small, verifiable tasks (each task with acceptance criteria).
+Do NOT invent new features outside scope. Keep UX minimal, extremely clear, and consistent with the "Liquid Glass" style below.
+Use the provided flow rules: Booking is Pay-first; Tender(Task) acceptance creates pending payment order; Work lifecycle is unified (Order/Booking -> delivered -> review -> completed/revisions/dispute).
 
-A) Global UI Rules (Applies Everywhere)
+=====================
+A) GLOBAL DESIGN STYLE (MUST FOLLOW)
+=====================
+Style: "Liquid Glass" Glassmorphism. Ultra-modern, clean, airy, expensive tech aesthetic.
+Font: Plus Jakarta Sans.
+Color Palette:
+- Primary Teal: #146068
+- Accent Gold: #f3bb19
+- Background Off-White: #f4f3f1
+- Surface: translucent white glass with blur, subtle border, soft shadow
+- Text: near-black #0c0c0c
+Rules:
+- Light mode only.
+- High readability: enforce contrast; avoid text over heavy blur; use solid glass panels behind text.
+- Every card has ONE primary CTA + optional "Chat" secondary CTA only.
+- Every counter is clickable and opens the matching filtered list.
+- Progressive disclosure: Overview shows summary; details in dedicated screens.
 
-A1) Notifications (UI + Behavior)
-	•	Delete floating notification icon
-	•	Merge notifications into the existing top bar icon (Home screen top bar)
-	•	Top bar notification icon state:
-	•	Red = there is at least 1 unread notification
-	•	Gray = no unread notifications
+=====================
+B) CORE DEFINITIONS (NO CONFUSION)
+=====================
+Entities:
+1) Service = a freelancer listing (bookable). Not "work" itself.
+2) Booking = client books a service package (Pay-first, escrow held, then activation).
+3) Task (Tender) = client posts a task; freelancers send proposals (bids/offers).
+4) Proposal/Offer = freelancer proposal on a task.
+5) Order (Task Order) = created ONLY after client accepts a proposal; status starts pending_payment; when paid -> ACTIVE with escrow held.
+6) Work Item = unified execution object: Booking ACTIVE or Order ACTIVE. Work lifecycle applies here.
 
-A2) Skeleton Loader (Booking Screen)
-	•	Fix booking screen skeleton loader:
-	•	Must be identical to the real booking/task card layout
-	•	Same padding, same lines, same structure (no “generic skeleton”)
+Perspective tags (MUST display everywhere):
+- Requester = the one requesting/ordering (Client)
+- Provider = the one delivering (Freelancer)
+Each Work card must show: "You are: Requester/Provider" + the counterpart name.
 
-⸻
+=====================
+C) STATES (MUST MATCH DIAGRAM)
+=====================
+1) Booking Status:
+- paid_request_pending (escrow held)
+- active
+- delivered
+- completed
+- cancelled
+- refunded
+- expired_unanswered
 
-B) Booking Model (No Slot, Pay First) — Core Logic
+Payment Status:
+- unpaid
+- held
+- released
+- refunded
 
-B1) Booking UX Decision
-	•	The booking screen must NOT have slot selection.
-	•	Client flow:
-	•	Open booking → choose package → fill requirements → pay immediately
-	•	No slot, no confirmation step before payment.
+2) Task Status (Tender listing):
+- draft
+- open
+- awarded (proposal chosen, but NOT yet active work)
+- cancelled
+- expired
+(Do NOT use in_progress/delivered for the listing itself if you have Order.)
 
-B2) Record Creation Timing
-	•	Booking/Order record is created only AFTER payment is completed.
+3) Proposal Status:
+- submitted
+- shortlisted (optional)
+- rejected
+- accepted (creates Order pending_payment)
 
-B3) Paid Request Intermediate State (Required)
+4) Order Status (Task execution object):
+- pending_payment
+- active
+- delivered
+- completed
+- cancelled
+- disputed (optional)
+Order payment is escrow:
+- when paid: held
+- when completed: released
+- when cancelled/refund: refunded
 
-Because the booking record is created after payment, add:
-	•	PAID_REQUEST_PENDING_REVIEW
-	•	This exists after payment, before booking creation.
+Unified Work Lifecycle (for Booking ACTIVE or Order ACTIVE):
+active -> delivered -> (client approves -> completed + release) OR (revision -> back to active) OR (dispute -> admin decision -> refund/pay/split)
 
-B4) Freelancer Review Rules
-	•	Freelancer can:
-	•	Accept → booking record created → BOOKING_ACTIVE
-	•	Decline (if request not logical / not aligned with package) → Refund flow
-	•	Optional (if you want negotiation): Change Proposal (price/time/scope)
+=====================
+D) NAVIGATION MAP (ALL SCREENS)
+=====================
+Bottom Navigation (4):
+1) Dashboard (Tabs inside)
+2) Search
+3) My Projects
+4) Profile
 
-B5) Refund + Timeout Rules (Must be defined)
-	•	If freelancer declines:
-	•	Define: Full refund / partial refund / wallet credit
-	•	Freelancer response deadline:
-	•	Freelancer must respond within X hours
-	•	If no response → Auto-refund (recommended for safety)
+Dashboard Tabs (4):
+- Overview
+- Bookings
+- Work
+- Inbox
 
-B6) Minimum Requirements Validation (Before Payment)
-	•	Prevent empty/abusive paid requests:
-	•	Required fields before payment (e.g., description, answers, attachments if needed)
-	•	Otherwise block payment or mark request “Incomplete” and expire with refund
+Additional screens reachable:
+- Wallet
+- Notifications center (if separated)
+- Booking Details
+- Order Details (Task Order)
+- Task Details (Tender)
+- Proposals List (for a Task)
+- Proposal Details
+- Service Details
+- Chat Thread
+- Dispute Flow (optional MVP if already planned)
+- Settings
 
-⸻
+=====================
+E) ROLE-BASED CONTENT: WHAT EACH ROLE SEES (STRICT)
+=====================
+For EVERY screen, specify:
+- Visible sections
+- Data shown per section
+- Primary CTA per card
+- Role differences (Client vs Freelancer)
+- How Booking/Task/Order appear (Requester vs Provider)
+- Empty states + error states
 
-C) Orders & Bookings Management (Inside Card) — Both Roles
+=====================
+F) SCREEN-BY-SCREEN REQUIREMENTS
+=====================
 
-C1) Unified “Management Panel” inside Task/Booking Card
+---------------------
+1) DASHBOARD > OVERVIEW
+---------------------
+Purpose: answer in 5 seconds: what should I do now, what is active, what's new, where is my money.
 
-After entering a task booking card / order card, show management actions.
+Sections (top-to-bottom):
+A) Wallet Snapshot (MUST EXIST)  [Fix problem #1]
+- Show: Available balance, Held balance
+- Client CTA: "Add funds" and/or "Pay now" when there is any unpaid/pending payment
+- Freelancer CTA: "View wallet" (and "Withdraw" only if exists)
 
-Freelancer must have full access to manage client orders & bookings:
-	•	Chat with client
-	•	Private notes (freelancer-only)
-	•	Client update notes (visible to client, updated continuously)
-	•	Cancel order/booking (policy-based)
-	•	Request time extension
-	•	Request price change
-	•	(Optional) custom offer / upgrades
-	•	Dispute + evidence
+B) Stats Grid (4 counters, clickable)
+Counters are role-aware:
+1) Pending Actions:
+- Client: unpaid bookings; delivered work awaiting review (booking/order); tasks open with new proposals; orders pending_payment
+- Freelancer: bookings paid_request_pending waiting response; active work near/overdue; revisions requested; critical account blockers
+2) Active Work:
+- Client: bookings active/delivered + orders active/delivered
+- Freelancer: bookings active/delivered + orders active/delivered
+3) Messages: unread chat count
+4) Offers:
+- Client: new proposals on open tasks
+- Freelancer: my submitted proposals not yet decided (and shortlisted if used)
 
-Client must have full access to manage his orders & bookings:
-	•	Chat
-	•	View freelancer updates
-	•	Approve / request revision
-	•	Accept/decline time extension
-	•	Accept/decline price change
-	•	Cancel request (policy-based)
-	•	Dispute + evidence
+C) Next Actions (1–3 items only, strict priority)
+Priority: Money/Trust > Time > Growth
+Examples:
+- Client: "Pay for Order pending_payment", "Review delivery", "Review 6 proposals"
+- Freelancer: "Respond to paid booking request", "Deliver overdue order", "Complete profile"
+Each action routes to exact screen.
 
-Goal: more user-friendly and efficient for both sides.
+D) Recent Activity (last 20 events)
+Events: booking/order status changes, payment changes, delivery submitted, proposal accepted/rejected, messages.
 
-⸻
+Acceptance criteria:
+- Wallet is visible on Overview.
+- All counters open filtered pages matching counts.
+- Next Actions prioritizes pay/review/deliver over profile.
 
-D) Freelancer Dashboard (Final Structure)
+---------------------
+2) DASHBOARD > BOOKINGS TAB
+---------------------
+Shows Booking list ONLY (service bookings).
+Filters (chips): All, paid_request_pending, active, delivered, completed, cancelled, refunded, expired_unanswered
+Card fields (MUST):
+- Type badge: BOOKING
+- Perspective: Requester/Provider
+- Counterpart name (Client sees freelancer; Freelancer sees client) [Fix problem #4]
+- Booking status + payment status
+- Price
+- Scheduled/deadline
+- Primary CTA (role+status):
+  Client:
+  - unpaid -> Pay
+  - paid_request_pending -> Waiting/Cancel policy
+  - active -> View/Chat
+  - delivered -> Review
+  Freelancer:
+  - paid_request_pending -> Accept/Decline
+  - active -> Deliver
+  - delivered -> Waiting approval
+Secondary CTA: Chat only
+Booking Details screen sections:
+- Summary
+- Requirements
+- Timeline
+- Deliverables
+- Payment panel
+- Actions (matrix)
+- Dispute link (if allowed)
 
-D1) Overview (Clean UI)
-	•	Show only compact summary cards (counts)
-	•	Recent Activity list is hidden by default
-	•	Button: “View Recent Activity” to expand/collapse
+---------------------
+3) DASHBOARD > WORK TAB (MUST FIX MESS)  [Fix problem #3 + #4]
+---------------------
+Work MUST be separated clearly into sections, different per role.
 
-D2) Booking Section (Active Only)
-	•	Delete “Manage” section and merge into Booking section (see D3)
-	•	Booking section shows ONLY active bookings
-	•	Completed bookings move to Work section
+3A) Client Work Tab sections:
+Section 1: "My Active Work" (execution items)
+- Includes: Bookings(active/delivered) + Orders(active/delivered)
+- Card MUST show:
+  - Type: BOOKING/ORDER
+  - "Assigned to: FreelancerName"
+  - Status (active/delivered)
+  - Price
+  - Payment status (held/released)
+  - Primary CTA: View / Review if delivered
+  - Secondary: Chat
+Section 2: "My Posted Tasks" (tenders I created)
+- Shows: Tasks (draft/open/awarded/cancelled/expired)
+- Card MUST show:
+  - Type: TASK (POSTED)
+  - Proposals count (new + total)
+  - Status
+  - Budget
+  - Primary CTA:
+    open -> Review proposals
+    awarded -> Pay now (creates/opens Order pending_payment)
+Section 3: "Offers Inbox" (proposal comparison)
+- Grouped by task
+- For each proposal: freelancer, price, time, rating, CTA Accept/Chat
+- Must support sorting: best match, price, fastest
+Section 4: History (completed/cancelled bookings/orders)
 
-D3) Dashboard IA Change
-	•	Delete “Manage”
-	•	Merge Manage into Booking (all booking-related management entry points live under Booking/Work cards)
+3B) Freelancer Work Tab sections:
+Section 1: "My Deliverables" (execution items)
+- Includes: Bookings(active/delivered) + Orders(active/delivered)
+- Card MUST show:
+  - Type: BOOKING/ORDER
+  - "Booked by: ClientName" [Fix problem #4]
+  - Status
+  - Price
+  - Deadline
+  - Primary CTA: Deliver (if active), View (if delivered)
+  - Secondary: Chat
+Section 2: "My Proposals" (marketplace bids I submitted)
+- Shows proposals with status: submitted/shortlisted/rejected/accepted
+- Card: task title, my price, status, CTA View/Edit/Withdraw (if allowed)
+Section 3: "My Services" (listings management)
+- Shows services + packages + booking count per service
+- CTA: Edit/Publish/Pause
+Section 4: History
 
-D4) Work Section (With Top Navigation Tabs)
+Acceptance criteria:
+- Work tab is NOT a mixed list. It is clearly separated by: Active Work vs Posted Tasks vs Offers (client) / Deliverables vs Proposals vs Services (freelancer).
+- Every card shows counterpart (who booked/assigned).
+- Every card shows price + status + type badge.
 
-Work section must have a top navigation bar to switch:
-	•	Active
-	•	Completed
-	•	Cancelled
+---------------------
+4) DASHBOARD > INBOX TAB (CHATS + NOTIFICATIONS ONLY)
+---------------------
+Inbox must not be used as Offers center.
+Sections:
+A) Chats
+- threads linked to booking/order/task
+- unread count, last message, badge type
+B) Notifications (system/financial)
+- critical (pay/review/deadline), normal, info
+Acceptance criteria:
+- Offers are removed from Inbox logic; offers live in Work tab sections.
 
-Work contains:
-	•	Tender orders (active/completed/cancelled)
-	•	Completed bookings (moved here)
-	•	Cancelled bookings (if applicable)
+=====================
+G) BOTTOM NAV SCREENS
+=====================
 
-⸻
+---------------------
+5) SEARCH
+---------------------
+Client:
+- Search services/freelancers/tasks
+- Filters: category, rating, price, availability
+- CTA: View profile, Book service, Invite to task (optional)
+Freelancer:
+- Search tasks (open only)
+- Filters: category, budget, deadline
+- CTA: Apply (create proposal), Save
 
-E) Client Dashboard (Final Structure)
+---------------------
+6) MY PROJECTS (My assets & history)
+---------------------
+Client:
+- All posted tasks + proposals overview
+- All orders/bookings history
+- Saved freelancers/services
+Freelancer:
+- All proposals history
+- All orders/bookings history
+- Portfolio (if exists)
 
-E1) Overview (Clean UI)
-	•	Compact summary cards
-	•	Recent Activity hidden by default + “View Recent Activity”
+---------------------
+7) PROFILE
+---------------------
+Common:
+- Edit profile
+- Role management (if dual)
+- Wallet shortcut
+- Settings, Support, Security
+Freelancer extras:
+- Portfolio
+- Availability
+- Services management shortcut
 
-E2) Tasks (Client Tender Posting)
+---------------------
+8) WALLET (MUST FIX BALANCE)  [Fix problem #2]
+---------------------
+Wallet must have:
+A) Balance header:
+- Available balance
+- Held balance
+B) Transactions list:
+- credit/debit/hold/release/refund
+C) Deep links:
+- tap transaction -> related booking/order details
+Rules:
+- Wallet is source-of-truth: balances computed from ledger or maintained by triggers/RPC.
+- RLS must allow user to read ONLY their wallet and transactions.
+Acceptance criteria:
+- Wallet screen always shows the balance (no empty balance bug).
+- Dashboard wallet snapshot matches wallet screen balance.
 
-Client can:
-	•	Create task
-	•	Receive proposals
-	•	Compare proposals
-	•	Accept proposal → order pending payment
-	•	Pay → order becomes active
-	•	Track active/completed/cancelled
+=====================
+H) REQUIRED FIXES (CURRENT PROBLEMS) — TASK BREAKDOWN
+=====================
+Break into small tasks with acceptance criteria:
 
-Suggested tabs:
-	•	Open
-	•	Awarded / Pending Payment
-	•	Active
-	•	Completed
-	•	Cancelled / Expired
+Task 1: Wallet snapshot on Overview
+- Add fetchWalletSnapshot in DashboardViewModel init
+- Render wallet card on Overview
+- Acceptance: wallet visible + values non-null
 
-E3) Work (Client)
+Task 2: Wallet screen balance not showing
+- Diagnose: missing wallet row vs RLS vs query
+- Implement: create wallet on signup OR use RPC/view for balances
+- Acceptance: wallet shows available+held for any user
 
-Top tabs:
-	•	Active
-	•	Completed
-	•	Cancelled
+Task 3: Work tab restructuring
+- Implement sections per role exactly as above
+- Create unified WorkCard schema (type, perspective, counterpart, status, price, payment, CTA)
+- Acceptance: no mixed list; each item appears in correct section
 
-Includes:
-	•	Tender orders
-	•	Active bookings (after freelancer accepts)
+Task 4: Show who booked/assigned everywhere
+- Ensure every Booking/Order card displays counterpartName + role label
+- Acceptance: user always sees who is on the other side
 
-E4) Bookings (Client) — No Slot + Pay First
+Task 5: Tender accepted -> Order pending_payment -> paid -> active
+- Ensure after accepting proposal, create Order pending_payment
+- Add Pay now action for client
+- Acceptance: task acceptance never becomes active until payment
 
-Tabs:
-	•	Paid Requests (Pending Freelancer Review)
-	•	Active Bookings
-	•	Completed
-	•	Cancelled / Refunded
+Task 6: Delivery & review for Orders and Bookings
+- Provider can mark delivered
+- Client can approve or request revision
+- Acceptance: unified lifecycle works end-to-end
 
-⸻
+Task 7: Inbox separation
+- Remove offers from Inbox logic
+- Chats + Notifications only
+- Acceptance: Inbox is clean and message-focused
 
-F) Create Task Screen UI Fixes
+=====================
+I) OUTPUT FORMAT (WHAT YOU MUST DELIVER)
+=====================
+1) A complete screen list with role-based sections and CTAs (like above but finalized and consistent).
+2) A navigation map (routes + entry points).
+3) A state machine summary for Booking/Task/Order.
+4) A task plan split into small tasks (1–4 hours each) with acceptance criteria.
+5) A "Definition of Done" checklist for the dashboard and wallet.
 
-F1) Fix overall UI in Create Task screen
-	•	Fix layout consistency, spacing, sections, and validation UX (no broken alignment)
-
-F2) Details Section — Remove Upload Image Button
-	•	In Create Task screen Details section:
-	•	No upload image button (for booking or task)
-	•	Only keep images where they are truly part of the model (if needed elsewhere)
-
-⸻
-
-G) Booking Screen Navigation Fix
-	•	Booking screen must not show slot UI
-	•	Booking flow must go directly to payment screen after requirements/package selection
-
-⸻
-
-H) Spam Risk (Business Logic)
-
-H1) Identified risk
-	•	Trigger: conversations_before_insert_guard
-	•	Removing Favorites requirement for DMs → any user can DM anyone → spam risk
-
-H2) Plan action
-	•	Monitor spam
-	•	Future mitigation (if spam appears):
-	•	Message Request system
-	•	(Optional) rate limits + report/block
-
-⸻
-
-I) Freelancer Wallet (MVP, Simple)
-
-I1) هدف المحفظة
-	•	Simple but functional to connect flows and test everything.
-
-I2) Wallet must show
-	•	Total earnings (released)
-	•	Pending earnings (in escrow / waiting approval)
-	•	Number of projects worked on
-	•	Per project breakdown:
-	•	Project/order name
-	•	Status (active/completed/cancelled)
-	•	Amount
-	•	Released vs pending
-
-I3) Transactions (simple)
-	•	Escrow hold created
-	•	Payment released
-	•	Refund
-	•	(Optional) withdrawal mock
-
-No complex payout integration الآن.
-
-⸻
-
-
+Important: Do not propose UI redesign beyond the Liquid Glass style. Focus on clarity, role separation, correct business rules, and fixing the listed problems.

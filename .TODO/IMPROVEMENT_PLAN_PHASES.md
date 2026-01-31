@@ -88,15 +88,15 @@ This checklist enforces a strict execution order: **Phase 1 → Phase 3 → Phas
 **Goal**: Centralized panel.
 
 ### 1) Database
-- [ ] **Table**: `work_logs` (id, author_id, related_entity_id, related_entity_type, content, is_private, metadata `jsonb`, created_at).
-- [ ] **Functions**: `is_work_log_participant`, `is_provider_of_entity`.
-- [ ] **Events**: Define metadata for: `extension_request`, `price_change_proposal`, `cancel_request` (+ accept/reject).
+- [x] **Table**: `work_logs` (id, author_id, related_entity_id, related_entity_type, content, is_private, metadata `jsonb`, created_at).
+- [x] **Functions**: `is_work_log_participant`, `is_provider_of_entity`.
+- [x] **Events**: Define metadata for: `extension_request`, `price_change_proposal`, `cancel_request` (+ accept/reject).
 
 ### 2) Feature UI
-- [ ] **OrderManagementPanel**:
-    - [ ] Embed in Booking/Task Detials.
-    - [ ] Actions: Request Extension (Log event), Propose Price Change (Log event).
-    - [ ] Chat/Notes.
+- [x] **OrderManagementPanel**:
+    - [x] Embed in Booking/Task Detials.
+    - [x] Actions: Request Extension (Log event), Propose Price Change (Log event).
+    - [x] Chat/Notes.
 
 ---
 
@@ -104,10 +104,10 @@ This checklist enforces a strict execution order: **Phase 1 → Phase 3 → Phas
 **Goal**: Visual Truth.
 
 ### 1) UI
-- [ ] **WalletScreen**:
-    - [ ] Show Provider Balance (Released).
-    - [ ] Show Pending Escrow (Held).
-    - [ ] Transaction History (Merged view of owned transactions).
+- [] **WalletScreen**:
+    - [x] Show Provider Balance (Released).
+    - [x] Show Pending Escrow (Held).
+    - [x] Transaction History (Merged view of owned transactions).
 
 ---
 

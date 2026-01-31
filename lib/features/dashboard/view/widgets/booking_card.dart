@@ -5,6 +5,8 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_date.dart';
+import 'package:sline_app/core/widgets/glass_card.dart';
+import 'package:sline_app/core/widgets/status_badge.dart';
 import 'package:sline_app/features/booking/models/booking_model.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 import '../../../../core/app_enums.dart';
@@ -24,10 +26,7 @@ class BookingCard extends StatelessWidget {
     final colorScheme = context.colorScheme;
     final vm = context.read<DashboardViewModel>();
 
-    // Determine counterparty name/avatar
-    // final counterpartyName = booking.taskData?['profiles']?['full_name'] ?? 'User';
-    // For now we don't have avatar URL easily accessible without extra fetch in service
-    // or passing it down. Let's use generic for now or task title.
+    // Determine task title
     final taskTitle = booking.taskData?['title'] ?? 'Task';
 
     // Parse note to hide metadata if present
@@ -37,8 +36,6 @@ class BookingCard extends StatelessWidget {
       if (parts.length > 1) {
         displayNote = parts.last.trim();
       } else {
-        // If split failed or nothing after, keep original or empty?
-        // If it starts with Package:, it's likely metadata only.
         if (displayNote.trim().startsWith('Package:')) {
           displayNote = '';
         }
@@ -48,31 +45,27 @@ class BookingCard extends StatelessWidget {
       displayNote = null;
     }
 
-    // Status Color
-    Color statusColor;
-    switch (booking.status) {
-      case BookingStatus.confirmed:
-        statusColor = AppColors.teal;
-        break;
-      case BookingStatus.pending:
-        statusColor = AppColors.gold;
-        break;
-      case BookingStatus.canceled:
-      case BookingStatus.declined:
-        statusColor = AppColors.lightRed;
-        break;
-      default:
-        statusColor = colorScheme.textSecondary;
+    // Status Color Helper
+    Color getStatusColor(BookingStatus status) {
+      switch (status) {
+        case BookingStatus.confirmed:
+        case BookingStatus.active:
+          return AppColors.teal;
+        case BookingStatus.pending:
+          return AppColors.gold;
+        case BookingStatus.canceled:
+        case BookingStatus.declined:
+          return AppColors.lightRed;
+        default:
+          return colorScheme.textSecondary;
+      }
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppDimens.p16),
+    final statusColor = getStatusColor(booking.status);
+
+    return GlassCard(
       padding: const EdgeInsets.all(AppDimens.p16),
-      decoration: BoxDecoration(
-        color: colorScheme.cardBackground,
-        borderRadius: BorderRadius.circular(AppDimens.r16),
-        border: Border.all(color: colorScheme.cardBorder),
-      ),
+      margin: const EdgeInsets.only(bottom: AppDimens.p16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -102,17 +95,10 @@ class BookingCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: statusColor.withValues(alpha: 0.3)),
-                ),
-                child: Text(
-                  booking.status.name.toUpperCase(),
-                  style: AppTypography.captionBold.copyWith(color: statusColor),
-                ),
+              StatusBadge(
+                text: booking.status.name.toUpperCase(),
+                color: statusColor,
+                isSmall: true,
               ),
             ],
           ),
@@ -122,7 +108,7 @@ class BookingCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(AppDimens.p8),
               decoration: BoxDecoration(
-                color: colorScheme.cardBackground,
+                color: colorScheme.background.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(AppDimens.r8),
               ),
               child: Text(
@@ -134,7 +120,9 @@ class BookingCard extends StatelessWidget {
               ),
             ),
           ],
+
           const SizedBox(height: AppDimens.p16),
+
           // Actions
           if (booking.status == BookingStatus.pending)
             Row(
@@ -161,6 +149,7 @@ class BookingCard extends StatelessWidget {
                       ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.lightRed,
+                        side: BorderSide(color: AppColors.lightRed),
                       ),
                       child: const Text("Decline"),
                     ),
@@ -174,6 +163,7 @@ class BookingCard extends StatelessWidget {
                       ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.lightRed,
+                        side: BorderSide(color: AppColors.lightRed),
                       ),
                       child: const Text("Cancel Request"),
                     ),
@@ -190,6 +180,9 @@ class BookingCard extends StatelessWidget {
                     onPressed: () {
                       // Todo: Open Chat logic
                     },
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: colorScheme.primary),
+                    ),
                     child: const Text("Message"),
                   ),
                 ),
@@ -203,6 +196,7 @@ class BookingCard extends StatelessWidget {
                       ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.lightRed,
+                        side: BorderSide(color: AppColors.lightRed),
                       ),
                       child: const Text("Cancel"),
                     ),

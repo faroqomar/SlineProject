@@ -280,6 +280,18 @@ Step | Feature | Description | Status
   - ✅ **UI**: `OrderManagementPanel` for private notes and timeline events.
   - ✅ **Integration**: Added to Booking and Task details screens.
 
+# 🎯 Summary (v2.11)
+
+- ✅ **Freelancer Wallet MVP**:
+  - ✅ **Database**: `wallet_balances` secure view.
+  - ✅ **UI**: Split "Available" vs "Escrow" balance dashboard.
+
+# 🎯 Summary (v2.12)
+
+- ✅ **Unified Profile**: Tabs for Portfolio, History, Reviews.
+- ✅ **Search Polish**: Visual consistency and performance optimization.
+- ✅ **Lint Cleanliness**: Zero analysis issues.
+
 
 
 # 🎯 Summary (v2.8.3)

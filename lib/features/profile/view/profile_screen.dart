@@ -10,11 +10,13 @@ import 'package:sline_app/core/widgets/signed_image.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
 import 'package:sline_app/features/profile/view/edit_profile_screen.dart';
 import 'package:sline_app/features/profile/view/my_services_screen.dart';
+import 'package:sline_app/features/profile/view/public_profile_screen.dart'; // Added
 import 'package:sline_app/features/profile/view/settings_screen.dart';
 import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 import 'package:sline_app/core/providers/theme_mode_provider.dart';
 import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
 import 'package:sline_app/features/saved/view/saved_tasks_screen.dart';
+import 'package:sline_app/features/wallet/view/wallet_screen.dart';
 
 /// Profile screen - user profile management and settings with Glassmorphism design.
 class ProfileScreen extends StatefulWidget {
@@ -423,6 +425,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       'Work History',
                       Icons.history,
                       AppColors.lightTeal,
+                      onTap: () {
+                        final userId = context
+                            .read<AuthViewModel>()
+                            .currentUserId;
+                        if (userId != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PublicProfileScreen(
+                                userId: userId,
+                                initialTabIndex: 2, // History Tab
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                    const SizedBox(height: AppDimens.p8),
+                    _buildMenuItem(
+                      context,
+                      'Wallet',
+                      Icons.account_balance_wallet,
+                      AppColors.teal,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WalletScreen(),
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: AppDimens.p8),
                     _buildMenuItem(

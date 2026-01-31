@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/avatar_service.dart';
+import 'package:sline_app/core/app_enums.dart';
 import '../../tasks/services/task_service.dart';
 import '../../tasks/models/task_model.dart';
 import '../models/profile_model.dart';
@@ -191,11 +192,24 @@ class ProfileRepository {
       ),
     ];
 
-    // 4. Construct FreelancerProfile
+    // 4. Fetch History (Completed Tasks)
+    // We assume getTasksByUser returns tasks where user is involved.
+    // Ideally we filter for completed/closed tasks where they were the freelancer.
+    final allTasks = await _taskService.getTasksByUser(userId);
+    final history = allTasks.where((t) {
+      final isCompleted =
+          t.status == TaskStatus.completed || t.status == TaskStatus.closed;
+      // Also check if they were the freelancer (not client) if strictly for freelancer profile
+      // For now, listing all completed involvement is fine or refine logic later.
+      return isCompleted;
+    }).toList();
+
+    // 5. Construct FreelancerProfile
     return FreelancerProfile.fromModel(
       profile: profileModel,
       portfolio: portfolioItems,
       reviews: reviews,
+      history: history,
     );
   }
 }

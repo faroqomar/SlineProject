@@ -580,26 +580,54 @@ class DashboardViewModel extends ChangeNotifier {
   }
 
   List<WorkItem> _calculateNextActions() {
-    // Phase 2 Rule: High Priority Items
-    return _workItems.where((item) {
-      // Filter conditions
-      final isPending = item.statusRaw == 'pending' || item.statusRaw == 'open';
-      final isActive = item.statusUiBucket == 'Active';
-      // Add logic: e.g., Due Soon
-      // Fix: Don't show inactive tasks here?
-      // For now, simple logic:
-      return isPending || (isActive && item.scheduledAt != null);
-    }).toList()..sort((a, b) {
-      // Sort by urgency: Scheduled ASC, then Created DESC
-      if (a.scheduledAt != null && b.scheduledAt != null) {
-        return a.scheduledAt!.compareTo(b.scheduledAt!);
-      } else if (a.scheduledAt != null) {
-        return -1; // Specific date higher priority
-      } else if (b.scheduledAt != null) {
-        return 1;
-      }
-      return b.createdAt.compareTo(a.createdAt);
+    // Phase 1.3: Strict Sorting (Money/Trust > Urgency > CreatedAt)
+    // 1. Pending Actions (Money/Trust)
+    final pendingItems = _workItems.where((i) {
+      final s = i.statusRaw.toLowerCase();
+      // Client Money: 'pending' booking (unpaid), 'delivered' (Trust/Review)
+      // Freelancer Money: 'paid_request_pending' (Accept/Decline)
+      return s == 'pending' ||
+          s == 'paid_request_pending' ||
+          s == 'delivered' ||
+          s == 'revision_requested';
+    }).toList();
+
+    // 2. Urgent Active Work (Deadline approaching)
+    final urgentItems = _workItems.where((i) {
+      if (pendingItems.contains(i)) return false; // Avoid dupes
+      if (i.statusUiBucket != 'Active') return false;
+      if (i.scheduledAt == null) return false;
+      // Urgent if due within 48 hours or overdue
+      final hoursUntil = i.scheduledAt!.difference(DateTime.now()).inHours;
+      return hoursUntil < 48;
+    }).toList();
+
+    // 3. Recent Active Work (Everything else active)
+    final otherItems = _workItems.where((i) {
+      if (pendingItems.contains(i)) return false;
+      if (urgentItems.contains(i)) return false;
+      return i.statusUiBucket == 'Active';
+    }).toList();
+
+    // Sort Groups
+    pendingItems.sort((a, b) {
+      // Delivered > Money Pending
+      if (a.statusRaw == 'delivered' && b.statusRaw != 'delivered') return -1;
+      if (b.statusRaw == 'delivered' && a.statusRaw != 'delivered') return 1;
+      return b.lastUpdate.compareTo(a.lastUpdate);
     });
+
+    urgentItems.sort(
+      (a, b) => a.scheduledAt!.compareTo(b.scheduledAt!),
+    ); // Closest first
+
+    otherItems.sort(
+      (a, b) => b.lastUpdate.compareTo(a.lastUpdate),
+    ); // Most recent activity first
+
+    // Combine Top 3
+    final combined = [...pendingItems, ...urgentItems, ...otherItems];
+    return combined.take(3).toList();
   }
 
   // --- Active Work Buckets ---

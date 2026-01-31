@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/wallet_transaction_model.dart';
+import '../models/wallet_balance_model.dart';
 import '../services/wallet_service.dart';
 
 class WalletRepository {
@@ -17,7 +18,7 @@ class WalletRepository {
     );
   }
 
-  Future<num> getBalance() {
-    return _service.getBalance();
+  Future<WalletBalanceModel> getWalletBalance() {
+    return _service.getWalletBalance();
   }
 }

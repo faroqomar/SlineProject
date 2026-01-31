@@ -1,6 +1,7 @@
 import 'dart:ui'; // For ImageFilter
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
@@ -35,14 +36,23 @@ class GlassContainer extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: borderRadius ?? BorderRadius.circular(AppDimens.r20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: blurRadius, sigmaY: blurRadius),
-          child: Container(
-            padding: padding,
-            alignment: Alignment.topLeft, // Default alignment for content
-            child: child,
-          ),
-        ),
+        child: kIsWeb
+            ? Container(
+                padding: padding,
+                alignment: Alignment.topLeft,
+                child: child,
+              )
+            : BackdropFilter(
+                filter: ImageFilter.blur(
+                  sigmaX: blurRadius,
+                  sigmaY: blurRadius,
+                ),
+                child: Container(
+                  padding: padding,
+                  alignment: Alignment.topLeft,
+                  child: child,
+                ),
+              ),
       ),
     );
   }

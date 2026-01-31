@@ -9,6 +9,7 @@ import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/core/services/deep_link_service.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/widgets/glass_card.dart';
 import '../../models/work_item.dart';
 
 class WorkItemCard extends StatelessWidget {
@@ -52,147 +53,131 @@ class WorkItemCard extends StatelessWidget {
         statusColor = AppColors.mediumGrey;
     }
 
-    return InkWell(
+    return GlassCard(
       onTap: () =>
           deepLinkService.handleWorkItem(context, item.type.name, item.id),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: AppDimens.p16),
-        decoration: BoxDecoration(
-          color: colorScheme.cardBackground,
-          borderRadius: BorderRadius.circular(AppDimens.r16),
-          border: Border.all(color: colorScheme.cardBorder),
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.primary.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+      margin: const EdgeInsets.only(bottom: AppDimens.p16),
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          // Removed extra closing stuff
+          // Header
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimens.p16,
+              vertical: AppDimens.p12,
             ),
-          ],
-        ),
-        child: Column(
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimens.p16,
-                vertical: AppDimens.p12,
-              ),
-              decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.1),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(AppDimens.r16),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Icon(
-                          isBooking ? Icons.calendar_today : Icons.assignment,
-                          size: 16,
-                          color: statusColor,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          item.type == WorkItemType.booking
-                              ? 'BOOKING'
-                              : 'TASK',
-                          style: AppTypography.captionBold.copyWith(
-                            color: statusColor,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            item.scheduledAt != null
-                                ? '• ${DateFormat('MMM d, h:mm a').format(item.scheduledAt!.toLocal())}'
-                                : '• Posted ${formatFriendlyTime(item.createdAt)}',
-                            style: AppTypography.caption.copyWith(
-                              color: statusColor.withValues(alpha: 0.8),
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    item.statusRaw.toUpperCase(),
-                    style: AppTypography.captionBold.copyWith(
-                      color: statusColor,
-                    ),
-                  ),
-                ],
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.1),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AppDimens.r16),
               ),
             ),
-
-            // Body
-            Padding(
-              padding: const EdgeInsets.all(AppDimens.p16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.title,
-                    style: AppTypography.h5.copyWith(color: colorScheme.text),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Row(
                     children: [
-                      // Avatar
-                      SignedAvatar(
-                        storagePathOrUrl: item.counterpartyAvatar,
-                        radius: 12,
-                        placeholder: CircleAvatar(
-                          radius: 12,
-                          backgroundColor: colorScheme.textSecondary,
-                          child: Icon(
-                            Icons.person,
-                            size: 14,
-                            color: AppColors.white,
-                          ),
+                      Icon(
+                        isBooking ? Icons.calendar_today : Icons.assignment,
+                        size: 16,
+                        color: statusColor,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        item.type == WorkItemType.booking ? 'BOOKING' : 'TASK',
+                        style: AppTypography.captionBold.copyWith(
+                          color: statusColor,
                         ),
                       ),
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
-                          "${item.counterpartyRole}: ${item.counterpartyName}",
-                          style: AppTypography.bodySmall.copyWith(
-                            color: colorScheme.textSecondary,
+                          item.scheduledAt != null
+                              ? '• ${DateFormat('MMM d, h:mm a').format(item.scheduledAt!.toLocal())}'
+                              : '• Posted ${formatFriendlyTime(item.createdAt)}',
+                          style: AppTypography.caption.copyWith(
+                            color: statusColor.withValues(alpha: 0.8),
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
+                ),
+                Text(
+                  item.statusRaw.toUpperCase(),
+                  style: AppTypography.captionBold.copyWith(color: statusColor),
+                ),
+              ],
+            ),
+          ),
 
-                  const SizedBox(height: AppDimens.p16),
-
-                  // Actions
-                  if (item.permissions.canStart ||
-                      item.permissions.canComplete ||
-                      item.permissions.canApprove)
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: onPrimaryAction,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.teal,
-                        ),
-                        child: Text(
-                          _getPrimaryButtonLabel(item.primaryActionType),
+          // Body
+          Padding(
+            padding: const EdgeInsets.all(AppDimens.p16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.title,
+                  style: AppTypography.h5.copyWith(color: colorScheme.text),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    // Avatar
+                    SignedAvatar(
+                      storagePathOrUrl: item.counterpartyAvatar,
+                      radius: 12,
+                      placeholder: CircleAvatar(
+                        radius: 12,
+                        backgroundColor: colorScheme.textSecondary,
+                        child: Icon(
+                          Icons.person,
+                          size: 14,
+                          color: AppColors.white,
                         ),
                       ),
                     ),
-                ],
-              ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        "${item.counterpartyRole}: ${item.counterpartyName}",
+                        style: AppTypography.bodySmall.copyWith(
+                          color: colorScheme.textSecondary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: AppDimens.p16),
+
+                // Actions
+                if (item.permissions.canStart ||
+                    item.permissions.canComplete ||
+                    item.permissions.canApprove)
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: onPrimaryAction,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.teal,
+                      ),
+                      child: Text(
+                        _getPrimaryButtonLabel(item.primaryActionType),
+                      ),
+                    ),
+                  ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

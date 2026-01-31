@@ -598,6 +598,22 @@ Filtered conversations for current user.
 ```sql
 SELECT id, task_id, user1_id, user2_id, created_at
 FROM conversations c
+WHERE auth.uid() = user1_id OR auth.uid() = user2_id;
+```
+
+### 6.3 `wallet_balances`
+
+Aggregates `available` (released) and `held` (escrow) funds per user.
+
+```sql
+create or replace view public.wallet_balances with (security_invoker=on) as
+select 
+  user_id,
+  coalesce(sum(amount) filter (where status = 'held'), 0) as held_balance,
+  coalesce(sum(amount) filter (where status = 'released'), 0) as available_balance
+from public.wallet_transactions
+group by user_id;
+```
 WHERE user1_id = auth.uid() OR user2_id = auth.uid();
 ```
 
@@ -782,6 +798,37 @@ All tables have Row Level Security (RLS) enabled. Below are the actual policies 
 | `trg_normalize_conversation_users` | BEFORE INSERT/UPDATE | `normalize_conversation_users()` | Normalize user1_id < user2_id |
 
 ### 8.4 Messages Triggers
+
+| Trigger | Event | Function | Purpose |
+|---------|-------|----------|---------|
+| `trg_messages_notify` | AFTER INSERT | `fn_notify_message()` | Send push notification for new messages |
+
+---
+
+## 9. RPC Functions
+
+### 9.1 Search
+
+**`search_tasks(query, limit_val, offset_val)`**
+- Full-text search on `title` and `description`
+- Filters: `status = 'open'`
+- Returns: `setof tasks`
+
+**`search_profiles(query, role_filter, limit_val, offset_val)`**
+- Full-text search on `full_name`
+- Filters: Optional `role` filter
+- Returns: `setof profiles`
+
+---
+
+## 10. Indexes
+
+| Table | Columns | Type | Purpose |
+|-------|---------|------|---------|
+| `tasks` | `(to_tsvector('english', title \|\| ' ' \|\| description))` | GIN | Full-text search |
+| `tasks` | `(skills)` | GIN | Skills filtering |
+| `profiles` | `(to_tsvector('english', full_name))` | GIN | Full-text search |
+| `profiles` | `(skills)` | GIN | Skills filtering |
 
 | Trigger | Event | Function | Purpose |
 |---------|-------|----------|---------|

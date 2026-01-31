@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/wallet_repository.dart';
 import '../models/wallet_transaction_model.dart';
+import '../models/wallet_balance_model.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 
 class WalletViewModel extends ChangeNotifier {
@@ -15,7 +16,7 @@ class WalletViewModel extends ChangeNotifier {
   final List<WalletTransactionModel> transactions = [];
   String? _cursor;
   bool hasMore = true;
-  num balance = 0;
+  WalletBalanceModel balance = WalletBalanceModel.zero();
 
   Future<void> loadWallet() async {
     isLoading = true;
@@ -28,11 +29,11 @@ class WalletViewModel extends ChangeNotifier {
       // Parallel fetch
       final results = await Future.wait([
         _repo.getTransactions(limit: 20),
-        _repo.getBalance(),
+        _repo.getWalletBalance(),
       ]);
 
       final txns = results[0] as List<WalletTransactionModel>;
-      balance = results[1] as num;
+      balance = results[1] as WalletBalanceModel;
 
       transactions.addAll(txns);
       if (txns.isNotEmpty) {
