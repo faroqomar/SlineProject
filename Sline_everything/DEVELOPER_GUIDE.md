@@ -1,7 +1,7 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.1 (Updated with Portfolio v2.4 integration)
-**Last Updated**: 2025-12-16
+**Version**: 2.2 (Updated with Freelancer Unified Flow v2.13)
+**Last Updated**: 2026-02-16
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
 
@@ -11,10 +11,9 @@ This comprehensive guide consolidates all feature-specific documentation into a 
 
 - [Order Management Feature Reference](DEVELOPER_GUIDE/Order_Management_Feature.md)
 - [Wallet Feature Reference](DEVELOPER_GUIDE/Wallet_Feature.md)
+- [Work Management (Unified Flow)](#work-management-unified-flow)
 
 ---
-
-
 
 ---
 
@@ -54,16 +53,16 @@ Conventions
 
 ## 4. Data Model (Key Tables)
 
-| Area | Tables (FKs) | Notes |
-| --- | --- | --- |
-| Identity | `auth.users` → `public.profiles(id)` | App identity row per user; RLS owner-only update. |
-| Tasks | `tasks(user_id → profiles.id)` | `task_type_enum` = `tender`/`booking`; `status` open/assigned/closed. |
-| Requests | `task_requests(task_id, bidder_id → profiles.id)` | Tender only; unique pending per (task,bidder); guarded triggers. |
-| Booking | `availability_slots(provider_id)` → `bookings(task_id, provider_id, client_id, slot_id)` | RLS enforces roles; status guard trigger. |
-| Categories | `categories` → `tasks(category_id)` | DB‑first with unique lower(name). |
-| Chat | `conversations(user1_id,user2_id,task_id,initiated_by)` → `messages(conversation_id)` | RLS: participants only; DM requires favorite. |
-| Favorites | `favorites(client_id, freelancer_id)` | Unique per pair; used to allow DM creation. |
-| Portfolio | `portfolio_items(owner_id)` | Public bucket by default; can switch to private + signed URLs. |
+| Area       | Tables (FKs)                                                                             | Notes                                                                 |
+| ---------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Identity   | `auth.users` → `public.profiles(id)`                                                     | App identity row per user; RLS owner-only update.                     |
+| Tasks      | `tasks(user_id → profiles.id)`                                                           | `task_type_enum` = `tender`/`booking`; `status` open/assigned/closed. |
+| Requests   | `task_requests(task_id, bidder_id → profiles.id)`                                        | Tender only; unique pending per (task,bidder); guarded triggers.      |
+| Booking    | `availability_slots(provider_id)` → `bookings(task_id, provider_id, client_id, slot_id)` | RLS enforces roles; status guard trigger.                             |
+| Categories | `categories` → `tasks(category_id)`                                                      | DB‑first with unique lower(name).                                     |
+| Chat       | `conversations(user1_id,user2_id,task_id,initiated_by)` → `messages(conversation_id)`    | RLS: participants only; DM requires favorite.                         |
+| Favorites  | `favorites(client_id, freelancer_id)`                                                    | Unique per pair; used to allow DM creation.                           |
+| Portfolio  | `portfolio_items(owner_id)`                                                              | Public bucket by default; can switch to private + signed URLs.        |
 
 ### Mini ERD
 
@@ -108,12 +107,12 @@ Each feature has a dedicated deep‑dive under `Sline_everything/DEVELOPER_GUIDE
 
 ## 7. Storage (Buckets)
 
-| Bucket | Visibility | Used by | Access Pattern |
-| --- | --- | --- | --- |
-| `avatars` | Private | Profile avatars | Store path; create signed URL at render |
-| `task-images` | Private | Task images | Store path; signed URL per image |
-| `chat-attachments` | Private | Message attachments | Store path; short‑lived signed URLs |
-| `portfolio` | Public (current) | Portfolio items | Store public URL (or switch to private + signed URLs) |
+| Bucket             | Visibility       | Used by             | Access Pattern                                        |
+| ------------------ | ---------------- | ------------------- | ----------------------------------------------------- |
+| `avatars`          | Private          | Profile avatars     | Store path; create signed URL at render               |
+| `task-images`      | Private          | Task images         | Store path; signed URL per image                      |
+| `chat-attachments` | Private          | Message attachments | Store path; short‑lived signed URLs                   |
+| `portfolio`        | Public (current) | Portfolio items     | Store public URL (or switch to private + signed URLs) |
 
 ## 8. Error Mapping (Common)
 
@@ -130,16 +129,16 @@ try {
 }
 ```
 
-| Area | Error | Map to |
-| --- | --- | --- |
-| Auth | `AuthException(Invalid login credentials)` | "Email or password is incorrect." |
-| RLS | `Postgrest 42501` | "Session expired / Not allowed. Please sign in." |
-| Unique | `23505` (duplicate) | "Already exists." (favorites, offers) |
-| FK | `23503` | "Related item does not exist." |
-| Storage | 404 | "File not available." |
-| Storage | 413 | "File is too large. Please choose a smaller file." |
-| Network | `SocketException` | "Cannot reach the server. Check your connection." |
-| Chat | Trigger payload checks | "Offer requires price and days." |
+| Area    | Error                                      | Map to                                             |
+| ------- | ------------------------------------------ | -------------------------------------------------- |
+| Auth    | `AuthException(Invalid login credentials)` | "Email or password is incorrect."                  |
+| RLS     | `Postgrest 42501`                          | "Session expired / Not allowed. Please sign in."   |
+| Unique  | `23505` (duplicate)                        | "Already exists." (favorites, offers)              |
+| FK      | `23503`                                    | "Related item does not exist."                     |
+| Storage | 404                                        | "File not available."                              |
+| Storage | 413                                        | "File is too large. Please choose a smaller file." |
+| Network | `SocketException`                          | "Cannot reach the server. Check your connection."  |
+| Chat    | Trigger payload checks                     | "Offer requires price and days."                   |
 
 **Reference**: See `.cursor/rules/error-handling.mdc` for complete error mapping conventions.
 
@@ -207,34 +206,34 @@ The Profile feature manages a user’s app identity beyond `auth.users`. It load
 
 ### 2.1 `public.profiles`
 
-| Column | Type | Purpose / Usage | Notes |
-| --- | --- | --- | --- |
-| `id` | `uuid` (PK, FK → `auth.users.id`) | Identity link to Supabase Auth | Primary join key across modules |
-| `full_name` | `text` | Display name | Editable in Profile screen |
-| `email` | `text` | Cached email for quick reads | Updated alongside Auth when changed |
-| `bio` | `text` | Short description | Editable in Profile screen |
-| `role` | `text` | `client` or `freelancer` | Toggles Home/Tasks UX |
-| `avatar_url` | `text` | Private storage path in `avatars` bucket | Use signed URLs for display |
-| `created_at` | `timestamptz` | Creation time (UTC) | Default `now()` |
+| Column       | Type                              | Purpose / Usage                          | Notes                               |
+| ------------ | --------------------------------- | ---------------------------------------- | ----------------------------------- |
+| `id`         | `uuid` (PK, FK → `auth.users.id`) | Identity link to Supabase Auth           | Primary join key across modules     |
+| `full_name`  | `text`                            | Display name                             | Editable in Profile screen          |
+| `email`      | `text`                            | Cached email for quick reads             | Updated alongside Auth when changed |
+| `bio`        | `text`                            | Short description                        | Editable in Profile screen          |
+| `role`       | `text`                            | `client` or `freelancer`                 | Toggles Home/Tasks UX               |
+| `avatar_url` | `text`                            | Private storage path in `avatars` bucket | Use signed URLs for display         |
+| `created_at` | `timestamptz`                     | Creation time (UTC)                      | Default `now()`                     |
 
 RLS (summary): Users can `SELECT/UPDATE` only their row (`auth.uid() = id`). Any mutation requires a valid session.
 
 ### 2.2 Storage buckets (private)
 
-| Bucket | Purpose | Used by | Notes |
-| --- | --- | --- | --- |
+| Bucket    | Purpose        | Used by                            | Notes                                            |
+| --------- | -------------- | ---------------------------------- | ------------------------------------------------ |
 | `avatars` | Profile images | `AvatarService` and `SignedAvatar` | Store path only; generate signed URL for display |
 
 ## 3. File Inventory
 
-| File | Layer | Description |
-| --- | --- | --- |
-| `lib/features/profile/data/profile_repository.dart` | Repository | Wraps Supabase calls for profile load/update, email updates, role change, password reset, avatar upload, and my-tasks helpers. |
-| `lib/features/profile/services/avatar_service.dart` | Service | Uploads avatar to `avatars` bucket and creates short-lived signed URLs. Stores only the storage path in DB. |
-| `lib/features/profile/view/widgets/profile_preview_modal.dart` | Widget | Helper `showProfilePreview(context, userId)` to launch public profile in a modal sheet. |
-| `lib/features/profile/viewmodels/profile_view_model.dart` | ViewModel | `ChangeNotifier` that binds form controllers, updates profile, uploads avatar, handles logout/role change, and loads user tasks. |
-| `lib/features/profile/view/profile_screen.dart` | View | Material 3 profile UI with form fields, avatar, role toggle, password reset, and sign out. |
-| `lib/features/profile/view/widgets/profile_avatar_widget.dart` | Widget | Renders a profile avatar via a signed URL for a private storage path. |
+| File                                                           | Layer      | Description                                                                                                                      |
+| -------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `lib/features/profile/data/profile_repository.dart`            | Repository | Wraps Supabase calls for profile load/update, email updates, role change, password reset, avatar upload, and my-tasks helpers.   |
+| `lib/features/profile/services/avatar_service.dart`            | Service    | Uploads avatar to `avatars` bucket and creates short-lived signed URLs. Stores only the storage path in DB.                      |
+| `lib/features/profile/view/widgets/profile_preview_modal.dart` | Widget     | Helper `showProfilePreview(context, userId)` to launch public profile in a modal sheet.                                          |
+| `lib/features/profile/viewmodels/profile_view_model.dart`      | ViewModel  | `ChangeNotifier` that binds form controllers, updates profile, uploads avatar, handles logout/role change, and loads user tasks. |
+| `lib/features/profile/view/profile_screen.dart`                | View       | Material 3 profile UI with form fields, avatar, role toggle, password reset, and sign out.                                       |
+| `lib/features/profile/view/widgets/profile_avatar_widget.dart` | Widget     | Renders a profile avatar via a signed URL for a private storage path.                                                            |
 
 ## 4. ERD Diagram (Context)
 
@@ -311,13 +310,13 @@ final signed = await AvatarService(supabase).createSignedUrl(path);
 
 ## 6. Error Handling
 
-| Origin | Error | User-Facing Message | Mitigation |
-| --- | --- | --- | --- |
-| Profiles update | `42501` RLS denied | "Session expired. Please log in again." | Re-authenticate and retry. |
-| Auth email change | `AuthException` | "Unable to change email right now." | Prompt to retry; ensure email is valid and unique. |
-| Avatar upload | `StorageException` | "Upload failed. Please try again." | Validate file type/size; retry. |
-| Signed URL | Expired URL | "Image link expired. Refreshing…" | Regenerate signed URL lazily. |
-| IDs | `22P02` invalid UUID | "Invalid identifier." | Validate IDs before requests. |
+| Origin            | Error                | User-Facing Message                     | Mitigation                                         |
+| ----------------- | -------------------- | --------------------------------------- | -------------------------------------------------- |
+| Profiles update   | `42501` RLS denied   | "Session expired. Please log in again." | Re-authenticate and retry.                         |
+| Auth email change | `AuthException`      | "Unable to change email right now."     | Prompt to retry; ensure email is valid and unique. |
+| Avatar upload     | `StorageException`   | "Upload failed. Please try again."      | Validate file type/size; retry.                    |
+| Signed URL        | Expired URL          | "Image link expired. Refreshing…"       | Regenerate signed URL lazily.                      |
+| IDs               | `22P02` invalid UUID | "Invalid identifier."                   | Validate IDs before requests.                      |
 
 ## 7. Extra Notes & Testing Checklist
 
@@ -359,14 +358,14 @@ Legacy MVVM flow (if using standalone module):
 
 ### 2.1 `public.portfolio_items`
 
-| Column | Type | Purpose / Usage | Notes |
-| --- | --- | --- | --- |
-| `id` | `uuid` (PK) | Portfolio item id | Default `gen_random_uuid()` |
-| `owner_id` | `uuid` (FK → `profiles.id`) | Owner profile id | `ON DELETE CASCADE` |
-| `title` | `text` | Work title | Required |
-| `description` | `text` | Details | Optional |
-| `image_path` | `text` | Storage path (if private) | In schema: `image_path`; app currently uses `image_url` (public) |
-| `created_at` | `timestamptz` | When created (UTC) | Default `now()` |
+| Column        | Type                        | Purpose / Usage           | Notes                                                            |
+| ------------- | --------------------------- | ------------------------- | ---------------------------------------------------------------- |
+| `id`          | `uuid` (PK)                 | Portfolio item id         | Default `gen_random_uuid()`                                      |
+| `owner_id`    | `uuid` (FK → `profiles.id`) | Owner profile id          | `ON DELETE CASCADE`                                              |
+| `title`       | `text`                      | Work title                | Required                                                         |
+| `description` | `text`                      | Details                   | Optional                                                         |
+| `image_path`  | `text`                      | Storage path (if private) | In schema: `image_path`; app currently uses `image_url` (public) |
+| `created_at`  | `timestamptz`               | When created (UTC)        | Default `now()`                                                  |
 
 Indexes
 
@@ -374,30 +373,30 @@ Indexes
 
 RLS Policies (Summary)
 
-| Table | Action | Policy | Rule |
-| --- | --- | --- | --- |
-| `portfolio_items` | SELECT | `portfolio_select_owner_or_public` | `USING (true)` (public-readable) |
-| `portfolio_items` | ALL | `portfolio_crud_owner` | `USING/CHECK (auth.uid() = owner_id)` |
+| Table             | Action | Policy                             | Rule                                  |
+| ----------------- | ------ | ---------------------------------- | ------------------------------------- |
+| `portfolio_items` | SELECT | `portfolio_select_owner_or_public` | `USING (true)` (public-readable)      |
+| `portfolio_items` | ALL    | `portfolio_crud_owner`             | `USING/CHECK (auth.uid() = owner_id)` |
 
 ### 2.2 Storage bucket
 
-| Bucket | Visibility | Purpose | Notes |
-| --- | --- | --- | --- |
-| `portfolio` | Public | Host portfolio images | Service stores a public URL via `getPublicUrl()`; if switching to private, use signed URLs instead.
+| Bucket      | Visibility | Purpose               | Notes                                                                                               |
+| ----------- | ---------- | --------------------- | --------------------------------------------------------------------------------------------------- |
+| `portfolio` | Public     | Host portfolio images | Service stores a public URL via `getPublicUrl()`; if switching to private, use signed URLs instead. |
 
 ## 3. File Inventory
 
-| File | Layer | Description |
-| --- | --- | --- |
-| `lib/features/portfolio/data/portfolio_repository.dart` | Repository | Wraps `PortfolioService` and exposes list/add/delete/update methods; surfaces `currentUser`. |
-| `lib/features/portfolio/services/portfolio_service.dart` | Service | Uploads bytes to `portfolio` bucket, produces public URL, inserts/reads/deletes rows in `portfolio_items`. |
-| `lib/features/portfolio/models/portfolio_item.dart` | Model | Immutable item with `id`, `owner_id`, `title`, `description`, `image_url`, `created_at`. |
-| `lib/features/portfolio/viewmodels/portfolio_view_model.dart` | ViewModel | `ChangeNotifier` that manages paging cursor, adds/edits/deletes and updates the list. |
-| `lib/features/portfolio/view/portfolio_screen.dart` | View | Grid/List of items with pull-to-refresh and load-more. |
-| `lib/features/portfolio/view/sheets/add_portfolio_sheet.dart` | View | Form to pick image + enter title/description; calls ViewModel add. |
-| `lib/features/portfolio/view/sheets/edit_portfolio_sheet.dart` | View | Form to edit title/description; calls ViewModel update. |
-| `lib/features/portfolio/view/sheets/portfolio_details_sheet.dart` | View | Full-screen preview with details. |
-| `lib/features/portfolio/view/widgets/portfolio_tile.dart` | Widget | Card per item (image + title). |
+| File                                                              | Layer      | Description                                                                                                |
+| ----------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
+| `lib/features/portfolio/data/portfolio_repository.dart`           | Repository | Wraps `PortfolioService` and exposes list/add/delete/update methods; surfaces `currentUser`.               |
+| `lib/features/portfolio/services/portfolio_service.dart`          | Service    | Uploads bytes to `portfolio` bucket, produces public URL, inserts/reads/deletes rows in `portfolio_items`. |
+| `lib/features/portfolio/models/portfolio_item.dart`               | Model      | Immutable item with `id`, `owner_id`, `title`, `description`, `image_url`, `created_at`.                   |
+| `lib/features/portfolio/viewmodels/portfolio_view_model.dart`     | ViewModel  | `ChangeNotifier` that manages paging cursor, adds/edits/deletes and updates the list.                      |
+| `lib/features/portfolio/view/portfolio_screen.dart`               | View       | Grid/List of items with pull-to-refresh and load-more.                                                     |
+| `lib/features/portfolio/view/sheets/add_portfolio_sheet.dart`     | View       | Form to pick image + enter title/description; calls ViewModel add.                                         |
+| `lib/features/portfolio/view/sheets/edit_portfolio_sheet.dart`    | View       | Form to edit title/description; calls ViewModel update.                                                    |
+| `lib/features/portfolio/view/sheets/portfolio_details_sheet.dart` | View       | Full-screen preview with details.                                                                          |
+| `lib/features/portfolio/view/widgets/portfolio_tile.dart`         | Widget     | Card per item (image + title).                                                                             |
 
 ## 4. ERD Diagram
 
@@ -504,12 +503,12 @@ Future<void> deletePortfolioItem(String id, {String? publicUrl}) async {
 
 ## 6. Error Handling
 
-| Origin | Error | User-Facing Message | Mitigation |
-| --- | --- | --- | --- |
-| Upload | `StorageException` | "Upload failed. Please try again." | Validate file size/type; retry safely. |
-| Insert/Update/Delete | `42501` RLS denied | "You can only manage your own portfolio." | Ensure session; check ownership. |
-| Delete image | Storage 404 | "Image already removed." | Ignore silently to keep UX smooth. |
-| IDs | `22P02` invalid UUID | "Invalid identifier." | Validate IDs before requests. |
+| Origin               | Error                | User-Facing Message                       | Mitigation                             |
+| -------------------- | -------------------- | ----------------------------------------- | -------------------------------------- |
+| Upload               | `StorageException`   | "Upload failed. Please try again."        | Validate file size/type; retry safely. |
+| Insert/Update/Delete | `42501` RLS denied   | "You can only manage your own portfolio." | Ensure session; check ownership.       |
+| Delete image         | Storage 404          | "Image already removed."                  | Ignore silently to keep UX smooth.     |
+| IDs                  | `22P02` invalid UUID | "Invalid identifier."                     | Validate IDs before requests.          |
 
 ## 7. Extra Notes & Testing Checklist
 
@@ -538,12 +537,12 @@ The Favorites feature lets a Client bookmark a Freelancer for quick access. It s
 
 ### 2.1 `public.favorites`
 
-| Column | Type | Purpose / Usage | Notes |
-| --- | --- | --- | --- |
-| `id` | `uuid` (PK) | Favorite record id | Default `gen_random_uuid()` |
-| `client_id` | `uuid` (FK → `profiles.id`) | Who favorites | Must equal `auth.uid()` under RLS |
-| `freelancer_id` | `uuid` (FK → `profiles.id`) | Who is favorited | Used to gate DM creation |
-| `created_at` | `timestamptz` | When the favorite was created (UTC) | Default `now()` |
+| Column          | Type                        | Purpose / Usage                     | Notes                             |
+| --------------- | --------------------------- | ----------------------------------- | --------------------------------- |
+| `id`            | `uuid` (PK)                 | Favorite record id                  | Default `gen_random_uuid()`       |
+| `client_id`     | `uuid` (FK → `profiles.id`) | Who favorites                       | Must equal `auth.uid()` under RLS |
+| `freelancer_id` | `uuid` (FK → `profiles.id`) | Who is favorited                    | Used to gate DM creation          |
+| `created_at`    | `timestamptz`               | When the favorite was created (UTC) | Default `now()`                   |
 
 Indexes & Constraints
 
@@ -552,8 +551,8 @@ Indexes & Constraints
 
 RLS Policies (Summary)
 
-| Table | Action | Policy | Rule |
-| --- | --- | --- | --- |
+| Table       | Action | Policy                 | Rule                     |
+| ----------- | ------ | ---------------------- | ------------------------ |
 | `favorites` | SELECT | `favorites_select_own` | `client_id = auth.uid()` |
 | `favorites` | INSERT | `favorites_insert_own` | `client_id = auth.uid()` |
 | `favorites` | DELETE | `favorites_delete_own` | `client_id = auth.uid()` |
@@ -564,14 +563,14 @@ Related Policies
 
 ## 3. File Inventory
 
-| File | Layer | Description |
-| --- | --- | --- |
-| `lib/features/favorites/data/favorites_service.dart` | Service | CRUD for `favorites` with RLS-safe patterns; joins profiles for display. |
-| `lib/features/favorites/models/favorite_model.dart` | Model | `FavoriteModel` and `FavoriteWithProfile` (joined row with freelancer profile). |
-| `lib/features/favorites/viewmodels/favorites_view_model.dart` | ViewModel | `ChangeNotifier` holding list, loading state, and calling service methods. |
-| `lib/features/favorites/view/favorites_screen.dart` | View | List of favorited freelancers with add/remove actions. |
-| `lib/features/favorites/view/widgets/` | Widgets | Cards/widgets for rendering favorites (if present). |
-| `lib/features/favorites/routes/favorites_routes.dart` | Routes | Navigation entry-points to favorites UI. |
+| File                                                          | Layer     | Description                                                                     |
+| ------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------- |
+| `lib/features/favorites/data/favorites_service.dart`          | Service   | CRUD for `favorites` with RLS-safe patterns; joins profiles for display.        |
+| `lib/features/favorites/models/favorite_model.dart`           | Model     | `FavoriteModel` and `FavoriteWithProfile` (joined row with freelancer profile). |
+| `lib/features/favorites/viewmodels/favorites_view_model.dart` | ViewModel | `ChangeNotifier` holding list, loading state, and calling service methods.      |
+| `lib/features/favorites/view/favorites_screen.dart`           | View      | List of favorited freelancers with add/remove actions.                          |
+| `lib/features/favorites/view/widgets/`                        | Widgets   | Cards/widgets for rendering favorites (if present).                             |
+| `lib/features/favorites/routes/favorites_routes.dart`         | Routes    | Navigation entry-points to favorites UI.                                        |
 
 ## 4. ERD Diagram
 
@@ -678,11 +677,11 @@ Future<void> safeAddFavorite(String freelancerId) async {
 
 ## 6. Error Handling
 
-| Origin | Error | User-Facing Message | Mitigation |
-| --- | --- | --- | --- |
+| Origin       | Error                    | User-Facing Message                             | Mitigation                                               |
+| ------------ | ------------------------ | ----------------------------------------------- | -------------------------------------------------------- |
 | Add favorite | `23505` unique violation | "This freelancer is already in your favorites." | Disable button or show success state if already present. |
-| Any CRUD | `42501` RLS denied | "You can only manage your own favorites." | Ensure session and use current `auth.uid()`. |
-| Fetch join | Missing profile row | "Profile unavailable." | Render placeholder name/avatar. |
+| Any CRUD     | `42501` RLS denied       | "You can only manage your own favorites."       | Ensure session and use current `auth.uid()`.             |
+| Fetch join   | Missing profile row      | "Profile unavailable."                          | Render placeholder name/avatar.                          |
 
 ## 7. Extra Notes & Testing Checklist
 
@@ -712,12 +711,12 @@ The Saved feature lets an authenticated user bookmark tasks for quick access. It
 
 ### 2.1 `public.saved_tasks`
 
-| Column | Type | Purpose / Usage | Notes |
-| --- | --- | --- | --- |
-| `id` | `uuid` (PK) | Saved entry id | Default `gen_random_uuid()` |
-| `user_id` | `uuid` (FK → `profiles.id`) | Owner of the bookmark | Must equal `auth.uid()` (RLS) |
-| `task_id` | `uuid` (FK → `tasks.id`) | Bookmarked task | Unique with `user_id` |
-| `created_at` | `timestamptz` | When saved (UTC) | Default `now()` |
+| Column       | Type                        | Purpose / Usage       | Notes                         |
+| ------------ | --------------------------- | --------------------- | ----------------------------- |
+| `id`         | `uuid` (PK)                 | Saved entry id        | Default `gen_random_uuid()`   |
+| `user_id`    | `uuid` (FK → `profiles.id`) | Owner of the bookmark | Must equal `auth.uid()` (RLS) |
+| `task_id`    | `uuid` (FK → `tasks.id`)    | Bookmarked task       | Unique with `user_id`         |
+| `created_at` | `timestamptz`               | When saved (UTC)      | Default `now()`               |
 
 Indexes & Constraints
 
@@ -726,22 +725,22 @@ Indexes & Constraints
 
 RLS Policies (Summary)
 
-| Table | Action | Policy | Rule |
-| --- | --- | --- | --- |
+| Table         | Action | Policy     | Rule                   |
+| ------------- | ------ | ---------- | ---------------------- |
 | `saved_tasks` | SELECT | owner-only | `user_id = auth.uid()` |
 | `saved_tasks` | INSERT | owner-only | `user_id = auth.uid()` |
 | `saved_tasks` | DELETE | owner-only | `user_id = auth.uid()` |
 
 ## 3. File Inventory
 
-| File | Layer | Description |
-| --- | --- | --- |
-| `lib/features/saved/data/saved_tasks_service.dart` | Service | CRUD: listMine, isSaved, add, remove, toggle, listMineWithDetails (join tasks). |
-| `lib/features/saved/models/saved_task_model.dart` | Model | Maps `saved_tasks` rows; typed fields `id`, `user_id`, `task_id`, `created_at`. |
+| File                                                        | Layer     | Description                                                                      |
+| ----------------------------------------------------------- | --------- | -------------------------------------------------------------------------------- |
+| `lib/features/saved/data/saved_tasks_service.dart`          | Service   | CRUD: listMine, isSaved, add, remove, toggle, listMineWithDetails (join tasks).  |
+| `lib/features/saved/models/saved_task_model.dart`           | Model     | Maps `saved_tasks` rows; typed fields `id`, `user_id`, `task_id`, `created_at`.  |
 | `lib/features/saved/viewmodels/saved_tasks_view_model.dart` | ViewModel | Holds saved ids and full tasks; load/refresh/toggle with friendly error mapping. |
-| `lib/features/saved/view/saved_tasks_screen.dart` | View | List UI with remove/open actions; uses ViewModel. |
-| `lib/features/saved/view/widgets/saved_task_tile.dart` | Widget | Renders one saved task card/tile. |
-| `lib/features/saved/routes/saved_routes.dart` | Routes | Navigation to Saved screen. |
+| `lib/features/saved/view/saved_tasks_screen.dart`           | View      | List UI with remove/open actions; uses ViewModel.                                |
+| `lib/features/saved/view/widgets/saved_task_tile.dart`      | Widget    | Renders one saved task card/tile.                                                |
+| `lib/features/saved/routes/saved_routes.dart`               | Routes    | Navigation to Saved screen.                                                      |
 
 ## 4. ERD Diagram
 
@@ -781,7 +780,7 @@ Future<List<Task>> listMineWithDetails() async {
   // 1. Fetch saved tasks with basic task details
   final res = await _client
       .from('saved_tasks')
-      .select('task:tasks(*)') 
+      .select('task:tasks(*)')
       .eq('user_id', uid)
       .order('created_at', ascending: false);
 
@@ -867,11 +866,11 @@ class SavedTasksService {
 
 ## 6. Error Handling
 
-| Origin | Error | User-Facing Message | Mitigation |
-| --- | --- | --- | --- |
-| Add duplicate | `23505` unique violation | "This task is already in your saved list." | Treat as success (already saved). |
-| Any CRUD | `42501` RLS denied | "Please sign in to manage saved tasks." | Ensure session; map to friendly copy. |
-| Join details | Missing task row | "This task is no longer available." | Hide card; allow cleanup removal. |
+| Origin        | Error                    | User-Facing Message                        | Mitigation                            |
+| ------------- | ------------------------ | ------------------------------------------ | ------------------------------------- |
+| Add duplicate | `23505` unique violation | "This task is already in your saved list." | Treat as success (already saved).     |
+| Any CRUD      | `42501` RLS denied       | "Please sign in to manage saved tasks."    | Ensure session; map to friendly copy. |
+| Join details  | Missing task row         | "This task is no longer available."        | Hide card; allow cleanup removal.     |
 
 ## 7. Extra Notes & Testing Checklist
 
@@ -885,34 +884,34 @@ Testing checklist:
 - Save the same task twice → duplicate is handled gracefully.
 - Remove → disappears; toggle syncs across Home/Saved screens.
 - Access when signed out → friendly prompt and no data leakage.
-⸻
+  ⸻
 
   ✅ That’s the full documentation for Categories.
 
- ⸻
+⸻
 
 # Categories Feature Reference
 
 ## 1. Human Explanation
 
- The categories module provides a read-mostly catalog of service categories (e.g., "Design", "Development"). It powers dropdowns and filters in `tasks` creation and browsing. Admins seed and manage categories; regular users only read them. The feature is implemented with MVVM: `CategoriesViewModel` coordinates reads via `CategoriesRepository` → `CategoriesService`, and UI in `categories_screen.dart` remains declarative.
+The categories module provides a read-mostly catalog of service categories (e.g., "Design", "Development"). It powers dropdowns and filters in `tasks` creation and browsing. Admins seed and manage categories; regular users only read them. The feature is implemented with MVVM: `CategoriesViewModel` coordinates reads via `CategoriesRepository` → `CategoriesService`, and UI in `categories_screen.dart` remains declarative.
 
 ## 2. Database & Supabase Mapping
 
 ### 2.1 `public.categories`
 
- | Column | Type | Purpose / Usage | Notes |
- | --- | --- | --- | --- |
- | `id` | `uuid` (PK) | Category identifier | Default `gen_random_uuid()` |
- | `name` | `text` | Human-readable name | Unique (case-insensitive) via index on `lower(name)` |
- | `icon_url` | `text` | Optional icon path/URL | Nullable |
- | `created_at` | `timestamptz` | Created timestamp | Default `now()` (UTC) |
+| Column       | Type          | Purpose / Usage        | Notes                                                |
+| ------------ | ------------- | ---------------------- | ---------------------------------------------------- |
+| `id`         | `uuid` (PK)   | Category identifier    | Default `gen_random_uuid()`                          |
+| `name`       | `text`        | Human-readable name    | Unique (case-insensitive) via index on `lower(name)` |
+| `icon_url`   | `text`        | Optional icon path/URL | Nullable                                             |
+| `created_at` | `timestamptz` | Created timestamp      | Default `now()` (UTC)                                |
 
 ### 2.2 `public.tasks` (relevant FK)
 
- | Column | Type | Purpose / Usage | Notes |
- | --- | --- | --- | --- |
- | `category_id` | `uuid` (FK → `categories.id`) | Tasks link to a category | Indexed as `idx_tasks_category_id` |
+| Column        | Type                          | Purpose / Usage          | Notes                              |
+| ------------- | ----------------------------- | ------------------------ | ---------------------------------- |
+| `category_id` | `uuid` (FK → `categories.id`) | Tasks link to a category | Indexed as `idx_tasks_category_id` |
 
 ### 2.3 Indexes & Constraints
 
@@ -922,125 +921,125 @@ Testing checklist:
 
 ### 2.4 RLS Policies (Summary)
 
- | Table | Action | Who | Rule / Notes |
- | --- | --- | --- | --- |
- | `public.categories` | SELECT | Authenticated | Read-only for app users |
- | `public.categories` | INSERT/UPDATE/DELETE | Admin/Service role | Managed via seeds/Dashboard (not by clients) |
- | `public.tasks` | SELECT | Authenticated | Standard app-wide policy |
+| Table               | Action               | Who                | Rule / Notes                                 |
+| ------------------- | -------------------- | ------------------ | -------------------------------------------- |
+| `public.categories` | SELECT               | Authenticated      | Read-only for app users                      |
+| `public.categories` | INSERT/UPDATE/DELETE | Admin/Service role | Managed via seeds/Dashboard (not by clients) |
+| `public.tasks`      | SELECT               | Authenticated      | Standard app-wide policy                     |
 
 ## 3. File Inventory
 
- | File | Layer | Description |
- | --- | --- | --- |
- | `lib/features/categories/services/categories_service.dart` | Service | Executes PostgREST reads from `public.categories`, provides simple in-memory cache, and client-side search fallback. |
- | `lib/features/categories/data/categories_repository.dart` | Repository | Wraps the service, exposes `getAll`, `getById`, `getCachedOrFetch`, and surfaces `currentUser`. |
- | `lib/features/categories/viewmodels/categories_view_model.dart` | ViewModel | `ChangeNotifier` handling loading state, errors, search query, and list data. |
- | `lib/features/categories/view/categories_screen.dart` | View | Material 3 UI for listing/searching categories using the ViewModel. |
- | `lib/features/categories/models/category_model.dart` | Model | Immutable model mapping DB columns (`id`, `name`, `icon_url`, `created_at`) with UTC handling. |
+| File                                                            | Layer      | Description                                                                                                          |
+| --------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------- |
+| `lib/features/categories/services/categories_service.dart`      | Service    | Executes PostgREST reads from `public.categories`, provides simple in-memory cache, and client-side search fallback. |
+| `lib/features/categories/data/categories_repository.dart`       | Repository | Wraps the service, exposes `getAll`, `getById`, `getCachedOrFetch`, and surfaces `currentUser`.                      |
+| `lib/features/categories/viewmodels/categories_view_model.dart` | ViewModel  | `ChangeNotifier` handling loading state, errors, search query, and list data.                                        |
+| `lib/features/categories/view/categories_screen.dart`           | View       | Material 3 UI for listing/searching categories using the ViewModel.                                                  |
+| `lib/features/categories/models/category_model.dart`            | Model      | Immutable model mapping DB columns (`id`, `name`, `icon_url`, `created_at`) with UTC handling.                       |
 
 ## 4. ERD Diagram
 
- ```mermaid
- erDiagram
-   CATEGORIES ||--o{ TASKS : "category_id"
- 
-   CATEGORIES {
-     uuid id PK
-     text name
-     text icon_url
-   }
- 
-   TASKS {
-     uuid id PK
-     uuid category_id FK
-   }
- ```
+```mermaid
+erDiagram
+  CATEGORIES ||--o{ TASKS : "category_id"
 
- ```text
- categories (id, name, icon_url)
-      │
-      └──< tasks (category_id)
- ```
+  CATEGORIES {
+    uuid id PK
+    text name
+    text icon_url
+  }
+
+  TASKS {
+    uuid id PK
+    uuid category_id FK
+  }
+```
+
+```text
+categories (id, name, icon_url)
+     │
+     └──< tasks (category_id)
+```
 
 ## 5. Supabase Snippets
 
 ### 5.1 SQL
 
- ```sql
- -- Read categories (app users)
- select id, name, icon_url from public.categories order by name asc;
- 
- -- Insert a category (admin/service role only)
- insert into public.categories (name, icon_url) values ('Design', 'icons/design.png');
- 
- -- Update a category name (admin only)
- update public.categories set name = 'UI/UX Design' where id = '...';
- 
- -- Delete a category (admin only)
- delete from public.categories where id = '...';
- 
- -- Tasks by category name
- select t.*
- from public.tasks t
- join public.categories c on c.id = t.category_id
- where lower(c.name) = lower('Design');
- ```
+```sql
+-- Read categories (app users)
+select id, name, icon_url from public.categories order by name asc;
+
+-- Insert a category (admin/service role only)
+insert into public.categories (name, icon_url) values ('Design', 'icons/design.png');
+
+-- Update a category name (admin only)
+update public.categories set name = 'UI/UX Design' where id = '...';
+
+-- Delete a category (admin only)
+delete from public.categories where id = '...';
+
+-- Tasks by category name
+select t.*
+from public.tasks t
+join public.categories c on c.id = t.category_id
+where lower(c.name) = lower('Design');
+```
 
 ### 5.2 Dart (supabase_flutter)
 
- ```dart
- final supabase = Supabase.instance.client;
- 
- // Fetch all categories ordered by name (matches CategoriesService.getAll)
- Future<List<CategoryModel>> fetchCategories({int limit = 200}) async {
-   final rows = await supabase
-       .from('categories')
-       .select()
-       .order('name', ascending: true)
-       .limit(limit);
- 
-   return (rows as List<dynamic>)
-       .map((e) => CategoryModel.fromJson(e as Map<String, dynamic>))
-       .toList();
- }
- 
- // Get a single category by id (may return null)
- Future<CategoryModel?> getCategoryById(String id) async {
-   final row = await supabase
-       .from('categories')
-       .select()
-       .eq('id', id)
-       .maybeSingle();
-   return row == null ? null : CategoryModel.fromJson(row as Map<String, dynamic>);
- }
- 
- // Friendly error mapping example for a write (admin-only path)
- Future<void> adminRenameCategory(String id, String newName) async {
-   try {
-     await supabase
-         .from('categories')
-         .update({'name': newName})
-         .eq('id', id);
-   } on PostgrestException catch (e) {
-     if (e.code == '23505') {
-       throw const FormatException('A category with that name already exists.');
-     }
-     if (e.code == '42501') {
-       throw const FormatException('You do not have permission to modify categories.');
-     }
-     rethrow;
-   }
- }
- ```
+```dart
+final supabase = Supabase.instance.client;
+
+// Fetch all categories ordered by name (matches CategoriesService.getAll)
+Future<List<CategoryModel>> fetchCategories({int limit = 200}) async {
+  final rows = await supabase
+      .from('categories')
+      .select()
+      .order('name', ascending: true)
+      .limit(limit);
+
+  return (rows as List<dynamic>)
+      .map((e) => CategoryModel.fromJson(e as Map<String, dynamic>))
+      .toList();
+}
+
+// Get a single category by id (may return null)
+Future<CategoryModel?> getCategoryById(String id) async {
+  final row = await supabase
+      .from('categories')
+      .select()
+      .eq('id', id)
+      .maybeSingle();
+  return row == null ? null : CategoryModel.fromJson(row as Map<String, dynamic>);
+}
+
+// Friendly error mapping example for a write (admin-only path)
+Future<void> adminRenameCategory(String id, String newName) async {
+  try {
+    await supabase
+        .from('categories')
+        .update({'name': newName})
+        .eq('id', id);
+  } on PostgrestException catch (e) {
+    if (e.code == '23505') {
+      throw const FormatException('A category with that name already exists.');
+    }
+    if (e.code == '42501') {
+      throw const FormatException('You do not have permission to modify categories.');
+    }
+    rethrow;
+  }
+}
+```
 
 ## 6. Error Handling
 
- | Origin | Error | User Message | Mitigation |
- | --- | --- | --- | --- |
- | Read categories | Network/timeout | "Unable to fetch categories. Check your connection." | Retry with cached data if available. |
- | Admin writes | 23505 (unique violation) | "A category with that name already exists." | Suggest a different name. |
- | Admin writes | 42501 (RLS/permission denied) | "You do not have permission to modify categories." | Use service role/admin tools. |
- | Any | 22P02 (invalid input syntax) | "Invalid identifier provided." | Validate IDs before sending. |
+| Origin          | Error                         | User Message                                         | Mitigation                           |
+| --------------- | ----------------------------- | ---------------------------------------------------- | ------------------------------------ |
+| Read categories | Network/timeout               | "Unable to fetch categories. Check your connection." | Retry with cached data if available. |
+| Admin writes    | 23505 (unique violation)      | "A category with that name already exists."          | Suggest a different name.            |
+| Admin writes    | 42501 (RLS/permission denied) | "You do not have permission to modify categories."   | Use service role/admin tools.        |
+| Any             | 22P02 (invalid input syntax)  | "Invalid identifier provided."                       | Validate IDs before sending.         |
 
 ## 7. Extra Notes & Testing Checklist
 
@@ -1049,7 +1048,7 @@ Testing checklist:
 - **Search**: Service performs client-side search when SDK lacks `.ilike`; consider server-side search later.
 - **Seeding**: See `SUPABASE_SETUP.md` for seed values and indexes (`uq_categories_name`, `idx_categories_name_lower`).
 
- Testing checklist:
+Testing checklist:
 
 - **List**: Fetch categories and verify alphabetical ordering.
 - **Search**: Apply a search query and confirm client-side filter works.
@@ -1073,18 +1072,18 @@ Home does not own tables; it reads from feature tables to populate the dashboard
 
 ### 2.1 `public.tasks` (consumed)
 
-| Column | Type | Purpose / Usage | Notes |
-| --- | --- | --- | --- |
-| `id` | `uuid` | Task id | Used for navigation/details |
-| `title` | `text` | Headline | Shown in list cards |
-| `description` | `text` | Summary | Displayed in `TaskCard` |
-| `budget` | `numeric`/`bigint` | Price field | Formatted via `format_price.dart` |
-| `user_id` | `uuid` (FK → `profiles.id`) | Author | Joined to display name/avatar |
-| `status` | `text`/enum | Filters (e.g., `open`) | Home fetch uses `status = 'open'` |
-| `task_type` | enum | Context | E.g., `tender` |
-| `category_id` | `uuid` (FK) | Category filter | Joined to `categories(name)` |
-| `created_at` | `timestamptz` | Sort by newest | UTC |
-| `image_paths` | `text[]` | Thumbnails | Shown by `TaskCard` via signed images |
+| Column        | Type                        | Purpose / Usage        | Notes                                 |
+| ------------- | --------------------------- | ---------------------- | ------------------------------------- |
+| `id`          | `uuid`                      | Task id                | Used for navigation/details           |
+| `title`       | `text`                      | Headline               | Shown in list cards                   |
+| `description` | `text`                      | Summary                | Displayed in `TaskCard`               |
+| `budget`      | `numeric`/`bigint`          | Price field            | Formatted via `format_price.dart`     |
+| `user_id`     | `uuid` (FK → `profiles.id`) | Author                 | Joined to display name/avatar         |
+| `status`      | `text`/enum                 | Filters (e.g., `open`) | Home fetch uses `status = 'open'`     |
+| `task_type`   | enum                        | Context                | E.g., `tender`                        |
+| `category_id` | `uuid` (FK)                 | Category filter        | Joined to `categories(name)`          |
+| `created_at`  | `timestamptz`               | Sort by newest         | UTC                                   |
+| `image_paths` | `text[]`                    | Thumbnails             | Shown by `TaskCard` via signed images |
 
 Related tables: `public.profiles` for author name/avatar, `public.categories` for name label.
 
@@ -1092,12 +1091,12 @@ RLS: Reads allowed for authenticated users; writes follow feature-specific polic
 
 ## 3. File Inventory
 
-| File | Layer | Description |
-| --- | --- | --- |
-| `lib/features/home/view/home_screen.dart` | View | Dashboard UI with search, category filter, refresh, and navigation to details/create/saved tasks. |
-| `lib/features/home/view/widgets/service_card.dart` | Widget | Reusable card (if used in home) for linking to modules. |
-| `lib/features/home/viewmodels/home_view_model.dart` | ViewModel | `ChangeNotifier` that loads/refreshes featured tasks and passes them to `TaskFilterViewModel`. |
-| `lib/features/tasks/viewmodels/task_filter_view_model.dart` | ViewModel | Holds filtered list, search text, and category filter state used by `HomeScreen`. |
+| File                                                        | Layer     | Description                                                                                       |
+| ----------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------- |
+| `lib/features/home/view/home_screen.dart`                   | View      | Dashboard UI with search, category filter, refresh, and navigation to details/create/saved tasks. |
+| `lib/features/home/view/widgets/service_card.dart`          | Widget    | Reusable card (if used in home) for linking to modules.                                           |
+| `lib/features/home/viewmodels/home_view_model.dart`         | ViewModel | `ChangeNotifier` that loads/refreshes featured tasks and passes them to `TaskFilterViewModel`.    |
+| `lib/features/tasks/viewmodels/task_filter_view_model.dart` | ViewModel | Holds filtered list, search text, and category filter state used by `HomeScreen`.                 |
 
 ## 4. ERD Diagram (Context)
 
@@ -1140,11 +1139,11 @@ await homeViewModel.loadFeaturedTasks(filterController: context.read<TaskFilterV
 
 ## 6. Error Handling
 
-| Origin | Error | User Message | Mitigation |
-| --- | --- | --- | --- |
-| Task fetch | Network/PostgREST | "Unable to load tasks." | Retry with pull-to-refresh; log via `AppLogger`. |
-| Profile join | Missing profile | "Author profile unavailable." | Render placeholder name/avatar. |
-| RLS | Permission denied | "Please sign in to view tasks." | Ensure valid session. |
+| Origin       | Error             | User Message                    | Mitigation                                       |
+| ------------ | ----------------- | ------------------------------- | ------------------------------------------------ |
+| Task fetch   | Network/PostgREST | "Unable to load tasks."         | Retry with pull-to-refresh; log via `AppLogger`. |
+| Profile join | Missing profile   | "Author profile unavailable."   | Render placeholder name/avatar.                  |
+| RLS          | Permission denied | "Please sign in to view tasks." | Ensure valid session.                            |
 
 ## 7. Extra Notes & Testing Checklist
 
@@ -1170,7 +1169,7 @@ The core module (`lib/core/`) provides shared infrastructure used across all fea
 - **Global state** like navigation via `providers/`.
 - **Cross-cutting utilities** (date/price formatting), **theme** constants, and **shared widgets** (signed images/avatars, bottom nav).
 - **Lightweight models** reused across features (e.g., `UserProfile`).
-This keeps feature modules small and focused while centralizing common concerns.
+  This keeps feature modules small and focused while centralizing common concerns.
 
 ## 2. Database & Supabase Mapping
 
@@ -1178,22 +1177,22 @@ Core does not own tables, but it integrates with key Supabase resources used thr
 
 ### 2.1 `public.profiles` (consumed by core model/widgets)
 
-| Column | Type | Purpose / Usage | Notes |
-| --- | --- | --- | --- |
-| `id` | `uuid` | User identity (FK → `auth.users.id`) | Mirrors Supabase Auth user id |
-| `full_name` | `text` | Display name | Optional |
-| `email` | `text` | Cached email for display | Should mirror `auth.users.email` |
-| `avatar_url` | `text` | Private storage path to avatar | Used by `SignedAvatar` to create signed URL |
-| `created_at` | `timestamptz` | Profile creation time (UTC) | Default `now()` |
+| Column       | Type          | Purpose / Usage                      | Notes                                       |
+| ------------ | ------------- | ------------------------------------ | ------------------------------------------- |
+| `id`         | `uuid`        | User identity (FK → `auth.users.id`) | Mirrors Supabase Auth user id               |
+| `full_name`  | `text`        | Display name                         | Optional                                    |
+| `email`      | `text`        | Cached email for display             | Should mirror `auth.users.email`            |
+| `avatar_url` | `text`        | Private storage path to avatar       | Used by `SignedAvatar` to create signed URL |
+| `created_at` | `timestamptz` | Profile creation time (UTC)          | Default `now()`                             |
 
 RLS: Users can read/update only their own row (`auth.uid() = id`). This affects any profile reads from core helpers/widgets.
 
 ### 2.2 Storage buckets (private)
 
-| Bucket | Purpose | Used by | Notes |
-| --- | --- | --- | --- |
-| `avatars` | Store profile avatars | `SignedAvatar` | Private; generate short-lived signed URLs before rendering |
-| `task-images` | Store task images | `SignedImage` | Private; signed URL generation on demand |
+| Bucket        | Purpose               | Used by        | Notes                                                      |
+| ------------- | --------------------- | -------------- | ---------------------------------------------------------- |
+| `avatars`     | Store profile avatars | `SignedAvatar` | Private; generate short-lived signed URLs before rendering |
+| `task-images` | Store task images     | `SignedImage`  | Private; signed URL generation on demand                   |
 
 Policies: Buckets are private; reads require signed URLs. Writes require authenticated user and policy compliance (feature-specific).
 
@@ -1204,19 +1203,19 @@ Policies: Buckets are private; reads require signed URLs. Writes require authent
 
 ## 3. File Inventory
 
-| File | Layer | Description |
-| --- | --- | --- |
-| `lib/core/services/supabase_config.dart` | Service bootstrap | Initializes Supabase SDK once; exposes `Supabase.instance.client`. |
-| `lib/core/services/logger_service.dart` | Utility | Centralized logging (`AppLogger`) with safe formatting. |
-| `lib/core/providers/navigation_provider.dart` | Provider | App-wide bottom navigation state (`ChangeNotifier`). |
-| `lib/core/utils/format_date.dart` | Utility | UTC-to-local formatting (`formatUtcToLocal`, `formatRangeUtcToLocal`). |
-| `lib/core/utils/loading_utils.dart` | Utility | Blocking loading overlay (`show/hide`) for async UI actions. |
-| `lib/core/utils/format_price.dart` | Utility | Integer-to-currency formatting for budgets/prices. |
-| `lib/core/theme/app_colors.dart` | Theme | Material 3 color constants used across features. |
-| `lib/core/widgets/custom_bottom_nav_bar.dart` | Widget | Bottom navigation bar bound to `NavigationProvider`. |
-| `lib/core/widgets/signed_avatar.dart` | Widget | Renders a profile avatar from a private storage path via signed URL. |
-| `lib/core/widgets/signed_image.dart` | Widget | Renders an image from a private storage path via signed URL. |
-| `lib/core/models/user_profile.dart` | Model | Maps DB `profiles` row to a typed object used across features. |
+| File                                          | Layer             | Description                                                            |
+| --------------------------------------------- | ----------------- | ---------------------------------------------------------------------- |
+| `lib/core/services/supabase_config.dart`      | Service bootstrap | Initializes Supabase SDK once; exposes `Supabase.instance.client`.     |
+| `lib/core/services/logger_service.dart`       | Utility           | Centralized logging (`AppLogger`) with safe formatting.                |
+| `lib/core/providers/navigation_provider.dart` | Provider          | App-wide bottom navigation state (`ChangeNotifier`).                   |
+| `lib/core/utils/format_date.dart`             | Utility           | UTC-to-local formatting (`formatUtcToLocal`, `formatRangeUtcToLocal`). |
+| `lib/core/utils/loading_utils.dart`           | Utility           | Blocking loading overlay (`show/hide`) for async UI actions.           |
+| `lib/core/utils/format_price.dart`            | Utility           | Integer-to-currency formatting for budgets/prices.                     |
+| `lib/core/theme/app_colors.dart`              | Theme             | Material 3 color constants used across features.                       |
+| `lib/core/widgets/custom_bottom_nav_bar.dart` | Widget            | Bottom navigation bar bound to `NavigationProvider`.                   |
+| `lib/core/widgets/signed_avatar.dart`         | Widget            | Renders a profile avatar from a private storage path via signed URL.   |
+| `lib/core/widgets/signed_image.dart`          | Widget            | Renders an image from a private storage path via signed URL.           |
+| `lib/core/models/user_profile.dart`           | Model             | Maps DB `profiles` row to a typed object used across features.         |
 
 ## 4. ERD Diagram (context)
 
@@ -1280,12 +1279,12 @@ final String signedUrl = await storage.createSignedUrl(path, 60 * 10); // 10 min
 
 ## 6. Error Handling
 
-| Origin | Error | User Message | Mitigation |
-| --- | --- | --- | --- |
-| Profiles read | `42501` (RLS denied) | "Session expired. Please log in again." | Refresh session, re-authenticate. |
-| Storage read | 404 (object missing) | "Image not available." | Show placeholder; allow re-upload. |
-| Signed URL | Expired URL | "Session for image expired. Refreshing…" | Regenerate signed URL lazily. |
-| Supabase init | Invalid URL/key | "App configuration error." | Validate env vars; avoid hardcoding secrets in code. |
+| Origin        | Error                | User Message                             | Mitigation                                           |
+| ------------- | -------------------- | ---------------------------------------- | ---------------------------------------------------- |
+| Profiles read | `42501` (RLS denied) | "Session expired. Please log in again."  | Refresh session, re-authenticate.                    |
+| Storage read  | 404 (object missing) | "Image not available."                   | Show placeholder; allow re-upload.                   |
+| Signed URL    | Expired URL          | "Session for image expired. Refreshing…" | Regenerate signed URL lazily.                        |
+| Supabase init | Invalid URL/key      | "App configuration error."               | Validate env vars; avoid hardcoding secrets in code. |
 
 ## 7. Extra Notes & Testing Checklist
 
@@ -1309,18 +1308,18 @@ The authentication module gates the entire SLine marketplace. It lets prospectiv
 
 ## 2. Database & Supabase Mapping
 
-| Column | Type | Purpose / Usage | Notes |
-| --- | --- | --- | --- |
-| `auth.users.id` | `uuid` | Primary Supabase identity | Immutable; referenced by every feature table |
-| `auth.users.email` | `text` | Login credential | Unique; Supabase handles verification/reset |
-| `auth.users.created_at` | `timestamptz` | Account creation timestamp | Stored in UTC |
-| `profiles.id` | `uuid` | FK → `auth.users.id`; local profile key | Inserted during signup to unlock features |
-| `profiles.full_name` | `text` | Display name across UI | Captured at signup; editable later |
-| `profiles.email` | `text` | Cached email for quick reads | Should mirror `auth.users.email` |
-| `profiles.avatar_url` | `text` | Storage path for avatar | Signed URLs generated via `AvatarService` |
-| `profiles.role` | `text` | Current persona (client/freelancer) | Can be changed in profile settings |
-| `profiles.created_at` | `timestamptz` | Profile row creation | Default `now()` in UTC |
-| `auth.sessions` | Built-in | Active session in SDK | Required for any RLS-protected query |
+| Column                  | Type          | Purpose / Usage                         | Notes                                        |
+| ----------------------- | ------------- | --------------------------------------- | -------------------------------------------- |
+| `auth.users.id`         | `uuid`        | Primary Supabase identity               | Immutable; referenced by every feature table |
+| `auth.users.email`      | `text`        | Login credential                        | Unique; Supabase handles verification/reset  |
+| `auth.users.created_at` | `timestamptz` | Account creation timestamp              | Stored in UTC                                |
+| `profiles.id`           | `uuid`        | FK → `auth.users.id`; local profile key | Inserted during signup to unlock features    |
+| `profiles.full_name`    | `text`        | Display name across UI                  | Captured at signup; editable later           |
+| `profiles.email`        | `text`        | Cached email for quick reads            | Should mirror `auth.users.email`             |
+| `profiles.avatar_url`   | `text`        | Storage path for avatar                 | Signed URLs generated via `AvatarService`    |
+| `profiles.role`         | `text`        | Current persona (client/freelancer)     | Can be changed in profile settings           |
+| `profiles.created_at`   | `timestamptz` | Profile row creation                    | Default `now()` in UTC                       |
+| `auth.sessions`         | Built-in      | Active session in SDK                   | Required for any RLS-protected query         |
 
 **RLS summary**
 
@@ -1330,13 +1329,13 @@ The authentication module gates the entire SLine marketplace. It lets prospectiv
 
 ## 3. File Inventory
 
-| File | Layer | Description |
-| --- | --- | --- |
-| `lib/features/auth/view/login_screen.dart` | View | Material 3 login form with validation, `ChangeNotifierProvider`, and call to `AuthViewModel.login()`.
-| `lib/features/auth/view/signup_screen.dart` | View | Signup experience with password confirmation and call to `AuthViewModel.register()`.
-| `lib/features/auth/viewmodels/auth_view_model.dart` | ViewModel | `ChangeNotifier` that toggles `isLoading`, invokes `AuthService`, emits snackbars, and routes to `MainNavigationScreen` or `/login`.
-| `lib/features/auth/services/auth_service.dart` | Service | Central Supabase layer for signup/signin/signout, session verification, and `profiles` access with logging via `AppLogger`.
-| `lib/features/auth/data/auth_repository.dart` | Repository | Optional abstraction mirroring service calls for future error mapping or caching; currently unused by the ViewModel.
+| File                                                | Layer      | Description                                                                                                                          |
+| --------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `lib/features/auth/view/login_screen.dart`          | View       | Material 3 login form with validation, `ChangeNotifierProvider`, and call to `AuthViewModel.login()`.                                |
+| `lib/features/auth/view/signup_screen.dart`         | View       | Signup experience with password confirmation and call to `AuthViewModel.register()`.                                                 |
+| `lib/features/auth/viewmodels/auth_view_model.dart` | ViewModel  | `ChangeNotifier` that toggles `isLoading`, invokes `AuthService`, emits snackbars, and routes to `MainNavigationScreen` or `/login`. |
+| `lib/features/auth/services/auth_service.dart`      | Service    | Central Supabase layer for signup/signin/signout, session verification, and `profiles` access with logging via `AppLogger`.          |
+| `lib/features/auth/data/auth_repository.dart`       | Repository | Optional abstraction mirroring service calls for future error mapping or caching; currently unused by the ViewModel.                 |
 
 ## 4. ERD Diagram
 
@@ -1472,14 +1471,14 @@ Future<void> logoutUser() async {
 
 ## 6. Error Handling
 
-| Origin | System Error | User-Facing Message | Mitigation |
-| --- | --- | --- | --- |
-| `supabase.auth.signUp` | `AuthException` (duplicate email / rate limit) | “An account with that email already exists. Try logging in.” | Prompt password reset |
-| `supabase.auth.signInWithPassword` | `AuthException: Invalid login credentials` | “Email or password is incorrect.” | Keep fields intact for retry |
-| `public.profiles` insert/update | `PostgrestException code=42501` (RLS) | “Session expired. Please log in again.” | Force re-authentication |
-| `public.profiles` insert` | `PostgrestException code=23505` (duplicate PK)` | “Profile already initialized. Please log in.” | Skip insert, continue login |
-| Network failure | `SocketException` / timeout | “Cannot reach the server. Check your connection and retry.” | Offer retry action |
-| `supabase.auth.signOut` | `AuthException: Session not found` | Silent success | Navigation still returns to `/login` |
+| Origin                             | System Error                                    | User-Facing Message                                          | Mitigation                           |
+| ---------------------------------- | ----------------------------------------------- | ------------------------------------------------------------ | ------------------------------------ |
+| `supabase.auth.signUp`             | `AuthException` (duplicate email / rate limit)  | “An account with that email already exists. Try logging in.” | Prompt password reset                |
+| `supabase.auth.signInWithPassword` | `AuthException: Invalid login credentials`      | “Email or password is incorrect.”                            | Keep fields intact for retry         |
+| `public.profiles` insert/update    | `PostgrestException code=42501` (RLS)           | “Session expired. Please log in again.”                      | Force re-authentication              |
+| `public.profiles` insert`          | `PostgrestException code=23505` (duplicate PK)` | “Profile already initialized. Please log in.”                | Skip insert, continue login          |
+| Network failure                    | `SocketException` / timeout                     | “Cannot reach the server. Check your connection and retry.”  | Offer retry action                   |
+| `supabase.auth.signOut`            | `AuthException: Session not found`              | Silent success                                               | Navigation still returns to `/login` |
 
 **Mapping tips**
 
@@ -1523,23 +1522,23 @@ Future<void> logoutUser() async {
 
 ### 2.1 `public.tasks`
 
-| Column | Type | Purpose / Usage | Notes |
-| --- | --- | --- | --- |
-| `id` | `uuid` (PK) | Task id | Default `gen_random_uuid()` |
-| `user_id` | `uuid` (FK → `auth.users.id`) | Task owner (client) | RLS owner-only write |
-| `title` | `text` | Title | Required |
-| `description` | `text` | Details | Required |
-| `budget` | `numeric`/`bigint` | Price field | Render with `format_price.dart` |
-| `deadline` | `timestamptz` | Optional due date | UTC |
-| `category` | `text` (legacy) | Pre-FK category label | Kept for back-compat |
-| `skills` | `text[]` | Tags/skills | Optional |
-| `status` | `text` | `open`/`assigned`/`closed` | Drives visibility/flows |
-| `task_type` | `task_type_enum` | `tender` or `booking` | Default `tender` |
-| `session_price_bigint` | `bigint` | Booking pricing (opt) | Only for booking-type tasks |
-| `hour_rate_bigint` | `bigint` | Booking hourly (opt) | Only for booking-type tasks |
-| `assigned_freelancer_id` | `uuid` (FK → `profiles.id`, null) | Winner | Set on accept/assign |
-| `category_id` | `uuid` (FK → `categories.id`, null) | Category FK | Indexed |
-| `created_at` | `timestamptz` | Created (UTC) | Default `now()` |
+| Column                   | Type                                | Purpose / Usage            | Notes                           |
+| ------------------------ | ----------------------------------- | -------------------------- | ------------------------------- |
+| `id`                     | `uuid` (PK)                         | Task id                    | Default `gen_random_uuid()`     |
+| `user_id`                | `uuid` (FK → `auth.users.id`)       | Task owner (client)        | RLS owner-only write            |
+| `title`                  | `text`                              | Title                      | Required                        |
+| `description`            | `text`                              | Details                    | Required                        |
+| `budget`                 | `numeric`/`bigint`                  | Price field                | Render with `format_price.dart` |
+| `deadline`               | `timestamptz`                       | Optional due date          | UTC                             |
+| `category`               | `text` (legacy)                     | Pre-FK category label      | Kept for back-compat            |
+| `skills`                 | `text[]`                            | Tags/skills                | Optional                        |
+| `status`                 | `text`                              | `open`/`assigned`/`closed` | Drives visibility/flows         |
+| `task_type`              | `task_type_enum`                    | `tender` or `booking`      | Default `tender`                |
+| `session_price_bigint`   | `bigint`                            | Booking pricing (opt)      | Only for booking-type tasks     |
+| `hour_rate_bigint`       | `bigint`                            | Booking hourly (opt)       | Only for booking-type tasks     |
+| `assigned_freelancer_id` | `uuid` (FK → `profiles.id`, null)   | Winner                     | Set on accept/assign            |
+| `category_id`            | `uuid` (FK → `categories.id`, null) | Category FK                | Indexed                         |
+| `created_at`             | `timestamptz`                       | Created (UTC)              | Default `now()`                 |
 
 Indexes
 
@@ -1547,16 +1546,16 @@ Indexes
 
 ### 2.2 `public.task_requests`
 
-| Column | Type | Purpose / Usage | Notes |
-| --- | --- | --- | --- |
-| `id` | `uuid` (PK) | Request id | Default `gen_random_uuid()` |
-| `task_id` | `uuid` (FK → `tasks.id`) | Target task | Indexed with created_at |
-| `bidder_id` | `uuid` (FK → `profiles.id`) | Freelancer | Must equal `auth.uid()` on insert |
-| `price` | `bigint` | Offer price (cents) | Positive required (guard) |
-| `days` | `int` | Delivery days | Positive required (guard) |
-| `note` | `text` | Optional message | Optional |
-| `status` | `text` | `pending`/`accepted`/`rejected` | Default `pending` |
-| `created_at` | `timestamptz` | Created (UTC) | Default `now()` |
+| Column       | Type                        | Purpose / Usage                 | Notes                             |
+| ------------ | --------------------------- | ------------------------------- | --------------------------------- |
+| `id`         | `uuid` (PK)                 | Request id                      | Default `gen_random_uuid()`       |
+| `task_id`    | `uuid` (FK → `tasks.id`)    | Target task                     | Indexed with created_at           |
+| `bidder_id`  | `uuid` (FK → `profiles.id`) | Freelancer                      | Must equal `auth.uid()` on insert |
+| `price`      | `bigint`                    | Offer price (cents)             | Positive required (guard)         |
+| `days`       | `int`                       | Delivery days                   | Positive required (guard)         |
+| `note`       | `text`                      | Optional message                | Optional                          |
+| `status`     | `text`                      | `pending`/`accepted`/`rejected` | Default `pending`                 |
+| `created_at` | `timestamptz`               | Created (UTC)                   | Default `now()`                   |
 
 Indexes & Constraints
 
@@ -1654,12 +1653,12 @@ await supabase.from('task_requests').insert({
 
 ## 5. Error Handling (addendum)
 
-| Origin | Error | User-Facing Message | Mitigation |
-| --- | --- | --- | --- |
-| task_requests insert | `uq_task_requests_unique_pending_per_user` | "You already have a pending offer for this task." | Disable duplicate submit while pending. |
-| task_requests insert | Trigger (not tender) | "Offers are only allowed on tender tasks." | Check `task_type` before enabling submit. |
-| tasks/task_requests | `42501` (RLS) | "You don’t have permission for this action." | Verify role/ownership and session. |
-| FK violations | `23503` | "Task or category does not exist." | Validate IDs, guard deletes. |
+| Origin               | Error                                      | User-Facing Message                               | Mitigation                                |
+| -------------------- | ------------------------------------------ | ------------------------------------------------- | ----------------------------------------- |
+| task_requests insert | `uq_task_requests_unique_pending_per_user` | "You already have a pending offer for this task." | Disable duplicate submit while pending.   |
+| task_requests insert | Trigger (not tender)                       | "Offers are only allowed on tender tasks."        | Check `task_type` before enabling submit. |
+| tasks/task_requests  | `42501` (RLS)                              | "You don’t have permission for this action."      | Verify role/ownership and session.        |
+| FK violations        | `23503`                                    | "Task or category does not exist."                | Validate IDs, guard deletes.              |
 
 ## 6. Extra Notes & Testing
 
@@ -1693,12 +1692,12 @@ This feature primarily acts as a view over the `tasks` and `task_requests` table
 
 ## 3. File Inventory
 
-| File | Layer | Description |
-| --- | --- | --- |
-| `lib/features/orders/services/orders_service.dart` | Service | Aggregator for `TaskService` and `TaskRequestsService` to manage my tasks/offers. |
-| `lib/features/orders/view/orders_dashboard_screen.dart` | View | Dashboard showing published tasks and their status. |
-| `lib/features/orders/view/widgets/offer_list_sheet.dart` | View | Sheet to view and act on offers for a specific task. |
-| `lib/features/orders/viewmodels/orders_view_model.dart` | ViewModel | State management for the dashboard. |
+| File                                                     | Layer     | Description                                                                       |
+| -------------------------------------------------------- | --------- | --------------------------------------------------------------------------------- |
+| `lib/features/orders/services/orders_service.dart`       | Service   | Aggregator for `TaskService` and `TaskRequestsService` to manage my tasks/offers. |
+| `lib/features/orders/view/orders_dashboard_screen.dart`  | View      | Dashboard showing published tasks and their status.                               |
+| `lib/features/orders/view/widgets/offer_list_sheet.dart` | View      | Sheet to view and act on offers for a specific task.                              |
+| `lib/features/orders/viewmodels/orders_view_model.dart`  | ViewModel | State management for the dashboard.                                               |
 
 ## 4. Testing Checklist
 
@@ -1720,6 +1719,7 @@ The chat module provides one-to-one messaging between a client and a freelancer.
 - `ChatRepository` wraps `MessageService`, which performs Supabase queries, RPC calls, and Realtime streaming.
 
 **New in v2.8.2**:
+
 - `ChatContextWidget`: Glassmorphism banner linking chat to its task. Tapping navigates to Task Details.
 - `LoadingUtils`: Used to show blocking loaders during navigation or heavy actions.
 
@@ -1727,14 +1727,14 @@ The chat module provides one-to-one messaging between a client and a freelancer.
 
 ### 2.1 `public.conversations`
 
-| Column | Type | Purpose / Usage | Notes |
-| --- | --- | --- | --- |
-| `id` | `uuid` (PK) | Conversation id | Generated on insert |
-| `task_id` | `uuid` (FK → `tasks.id`, nullable) | Optional task context | Enables task-linked chats |
-| `user1_id` | `uuid` (FK → `profiles.id`) | First participant | Used by RLS checks |
-| `user2_id` | `uuid` (FK → `profiles.id`) | Second participant | Used by RLS checks |
-| `initiated_by` | `uuid` (FK → `profiles.id`) | Who started the conversation | Used by guard trigger/policies |
-| `created_at` | `timestamptz` | Creation timestamp (UTC) | Default `now()` |
+| Column         | Type                               | Purpose / Usage              | Notes                          |
+| -------------- | ---------------------------------- | ---------------------------- | ------------------------------ |
+| `id`           | `uuid` (PK)                        | Conversation id              | Generated on insert            |
+| `task_id`      | `uuid` (FK → `tasks.id`, nullable) | Optional task context        | Enables task-linked chats      |
+| `user1_id`     | `uuid` (FK → `profiles.id`)        | First participant            | Used by RLS checks             |
+| `user2_id`     | `uuid` (FK → `profiles.id`)        | Second participant           | Used by RLS checks             |
+| `initiated_by` | `uuid` (FK → `profiles.id`)        | Who started the conversation | Used by guard trigger/policies |
+| `created_at`   | `timestamptz`                      | Creation timestamp (UTC)     | Default `now()`                |
 
 Indexes/Constraints
 
@@ -1747,20 +1747,20 @@ Values: `text`, `offer`, `offer_update`, `offer_accepted`, `offer_rejected`, `de
 
 ### 2.3 `public.messages`
 
-| Column | Type | Purpose / Usage | Notes |
-| --- | --- | --- | --- |
-| `id` | `uuid` (PK) | Message id | Generated on insert |
-| `conversation_id` | `uuid` (FK → `conversations.id`) | Parent conversation | Indexed |
-| `sender_id` | `uuid` (FK → `profiles.id`) | Sender | Must equal `auth.uid()` on insert (RLS) |
-| `receiver_id` | `uuid` (FK → `profiles.id`, nullable) | Receiver | Optional for some flows |
-| `content` | `text` | Text body | May be empty for attachment-only |
-| `attachment_url` | `text` | Storage path in private bucket | Generate signed URLs for reads |
-| `attachment_type` | `text` | 'image' or 'file' | Optional |
-| `attachment_name` | `text` | Original filename | Optional |
-| `attachment_size` | `int` | Size in bytes | Optional |
-| `message_type` | `message_type_enum` | Message semantics | Default `text` |
-| `payload` | `jsonb` | Extra fields (e.g., `{price, days, note}`) | Default `{}` |
-| `created_at` | `timestamptz` | Creation timestamp (UTC) | Default `now()` |
+| Column            | Type                                  | Purpose / Usage                            | Notes                                   |
+| ----------------- | ------------------------------------- | ------------------------------------------ | --------------------------------------- |
+| `id`              | `uuid` (PK)                           | Message id                                 | Generated on insert                     |
+| `conversation_id` | `uuid` (FK → `conversations.id`)      | Parent conversation                        | Indexed                                 |
+| `sender_id`       | `uuid` (FK → `profiles.id`)           | Sender                                     | Must equal `auth.uid()` on insert (RLS) |
+| `receiver_id`     | `uuid` (FK → `profiles.id`, nullable) | Receiver                                   | Optional for some flows                 |
+| `content`         | `text`                                | Text body                                  | May be empty for attachment-only        |
+| `attachment_url`  | `text`                                | Storage path in private bucket             | Generate signed URLs for reads          |
+| `attachment_type` | `text`                                | 'image' or 'file'                          | Optional                                |
+| `attachment_name` | `text`                                | Original filename                          | Optional                                |
+| `attachment_size` | `int`                                 | Size in bytes                              | Optional                                |
+| `message_type`    | `message_type_enum`                   | Message semantics                          | Default `text`                          |
+| `payload`         | `jsonb`                               | Extra fields (e.g., `{price, days, note}`) | Default `{}`                            |
+| `created_at`      | `timestamptz`                         | Creation timestamp (UTC)                   | Default `now()`                         |
 
 Index
 
@@ -1772,12 +1772,12 @@ Index
 
 ### 2.5 RLS Policies (Summary)
 
-| Table | Action | Policy Summary | Notes |
-| --- | --- | --- | --- |
-| `conversations` | SELECT | Only participants can read | `auth.uid() = user1_id OR auth.uid() = user2_id` |
-| `conversations` | INSERT | Client-only creation | Must be initiator and participant; task-linked requires task owner; DM requires freelancer in client favorites |
-| `messages` | SELECT | Only participants can read | Checked via parent conversation |
-| `messages` | INSERT | Only participants can send | `sender_id = auth.uid()`, plus guard for `offer_accepted/offer_rejected` (task owner or initiator) |
+| Table           | Action | Policy Summary             | Notes                                                                                                          |
+| --------------- | ------ | -------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `conversations` | SELECT | Only participants can read | `auth.uid() = user1_id OR auth.uid() = user2_id`                                                               |
+| `conversations` | INSERT | Client-only creation       | Must be initiator and participant; task-linked requires task owner; DM requires freelancer in client favorites |
+| `messages`      | SELECT | Only participants can read | Checked via parent conversation                                                                                |
+| `messages`      | INSERT | Only participants can send | `sender_id = auth.uid()`, plus guard for `offer_accepted/offer_rejected` (task owner or initiator)             |
 
 Triggers/Functions
 
@@ -1787,18 +1787,18 @@ Triggers/Functions
 
 ## 3. File Inventory
 
-| File | Layer | Description |
-| --- | --- | --- |
-| `lib/features/chat/data/chat_repository.dart` | Repository | Wraps `MessageService`; exposes conversation/message APIs, receipts, and Realtime streams. |
-| `lib/features/chat/services/message_service.dart` | Service | PostgREST + Realtime for conversations/messages, RPCs for receipts and task chats. |
-| `lib/features/chat/services/attachment_service.dart` | Service | Storage upload/delete/signed URL helpers for attachments. |
-| `lib/features/chat/viewmodels/chat_view_model.dart` | ViewModel | `ChangeNotifier` managing conversation list, active conversation, message list, subscriptions, and receipts. |
-| `lib/features/chat/view/messages_screen.dart` | View | Conversations list with previews via joined selects. |
-| `lib/features/chat/view/chat_screen.dart` | View | Single conversation UI (messages + composer). |
-| `lib/features/chat/view/widgets/chat_context_widget.dart` | Widget | Glassmorphic banner showing task context + navigation. |
-| `lib/features/chat/models/conversation_model.dart` | Model | Conversation with display fields (other user name/avatar, last message). |
-| `lib/features/chat/models/message_model.dart` | Model | Message with attachments, type, payload, and optional receipt fields. |
-| `lib/features/chat/attachments/` | Submodule | Upload/compress/pick utils and widgets for attachment UX. |
+| File                                                      | Layer      | Description                                                                                                  |
+| --------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------ |
+| `lib/features/chat/data/chat_repository.dart`             | Repository | Wraps `MessageService`; exposes conversation/message APIs, receipts, and Realtime streams.                   |
+| `lib/features/chat/services/message_service.dart`         | Service    | PostgREST + Realtime for conversations/messages, RPCs for receipts and task chats.                           |
+| `lib/features/chat/services/attachment_service.dart`      | Service    | Storage upload/delete/signed URL helpers for attachments.                                                    |
+| `lib/features/chat/viewmodels/chat_view_model.dart`       | ViewModel  | `ChangeNotifier` managing conversation list, active conversation, message list, subscriptions, and receipts. |
+| `lib/features/chat/view/messages_screen.dart`             | View       | Conversations list with previews via joined selects.                                                         |
+| `lib/features/chat/view/chat_screen.dart`                 | View       | Single conversation UI (messages + composer).                                                                |
+| `lib/features/chat/view/widgets/chat_context_widget.dart` | Widget     | Glassmorphic banner showing task context + navigation.                                                       |
+| `lib/features/chat/models/conversation_model.dart`        | Model      | Conversation with display fields (other user name/avatar, last message).                                     |
+| `lib/features/chat/models/message_model.dart`             | Model      | Message with attachments, type, payload, and optional receipt fields.                                        |
+| `lib/features/chat/attachments/`                          | Submodule  | Upload/compress/pick utils and widgets for attachment UX.                                                    |
 
 ## 4. ERD Diagram
 
@@ -1913,14 +1913,14 @@ Future<void> sendImage({required String convId, required String receiverId, requ
 
 ## 6. Error Handling
 
-| Origin | Error | User-Facing Message | Mitigation |
-| --- | --- | --- | --- |
-| Start conversation | `23505` (unique `uq_conversations_pair_task`) | "Conversation already exists." | Fetch and open the existing conversation. |
-| Insert conversation | RLS (client-only) / trigger guard | "You are not allowed to start this conversation." | Ensure initiator is the client and favorite/task owner checks pass. |
-| Send message | `42501` (permission denied) | "You are not a participant in this conversation." | Verify membership and session. |
-| Offer messages | Trigger validation | "Offer requires price and days." | Validate payload before sending. |
-| Attachment | Storage error or expired signed URL | "Attachment unavailable. Please re-upload or refresh." | Recreate signed URL or re-upload. |
-| IDs | `22P02` invalid UUID | "Invalid chat identifier." | Validate IDs before calling APIs. |
+| Origin              | Error                                         | User-Facing Message                                    | Mitigation                                                          |
+| ------------------- | --------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------- |
+| Start conversation  | `23505` (unique `uq_conversations_pair_task`) | "Conversation already exists."                         | Fetch and open the existing conversation.                           |
+| Insert conversation | RLS (client-only) / trigger guard             | "You are not allowed to start this conversation."      | Ensure initiator is the client and favorite/task owner checks pass. |
+| Send message        | `42501` (permission denied)                   | "You are not a participant in this conversation."      | Verify membership and session.                                      |
+| Offer messages      | Trigger validation                            | "Offer requires price and days."                       | Validate payload before sending.                                    |
+| Attachment          | Storage error or expired signed URL           | "Attachment unavailable. Please re-upload or refresh." | Recreate signed URL or re-upload.                                   |
+| IDs                 | `22P02` invalid UUID                          | "Invalid chat identifier."                             | Validate IDs before calling APIs.                                   |
 
 ## 7. Extra Notes & Testing Checklist
 
@@ -1940,88 +1940,88 @@ Testing checklist
 
 # Booking Feature Reference
 
-1) Human-Readable Overview
+1. Human-Readable Overview
 
 The Booking feature lets a client reserve a provider’s available time slot for a task.
 It covers two flows:
- • Provider flow: create/manage availability slots (open or blocked), see incoming bookings, confirm or complete work.
- • Client flow: browse a provider’s available slots, request a booking for a specific task, and cancel if needed.
+• Provider flow: create/manage availability slots (open or blocked), see incoming bookings, confirm or complete work.
+• Client flow: browse a provider’s available slots, request a booking for a specific task, and cancel if needed.
 
 Key design choices:
- • All timestamps are stored in UTC; UI always displays local time.
- • A slot can be booked by at most one active booking (pending/confirmed) — enforced with a unique partial index.
- • RLS ensures each party only sees/edits what they own (provider vs. client rules).
+• All timestamps are stored in UTC; UI always displays local time.
+• A slot can be booked by at most one active booking (pending/confirmed) — enforced with a unique partial index.
+• RLS ensures each party only sees/edits what they own (provider vs. client rules).
 
 ⸻
 
-2) Supabase Mapping (Tables, Columns, Policies)
+2. Supabase Mapping (Tables, Columns, Policies)
 
 2.1 Tables & Columns
 
 ### availability_slots
 
-| Column | Type | Purpose / Usage | Notes |
-| --- | --- | --- | --- |
-| `id` | `uuid` (PK) | Slot identifier | Default `gen_random_uuid()` |
+| Column        | Type                        | Purpose / Usage                | Notes                                              |
+| ------------- | --------------------------- | ------------------------------ | -------------------------------------------------- |
+| `id`          | `uuid` (PK)                 | Slot identifier                | Default `gen_random_uuid()`                        |
 | `provider_id` | `uuid` (FK → `profiles.id`) | Owner of the slot (freelancer) | RLS requires `auth.uid() = provider_id` for writes |
-| `starts_at` | `timestamptz` | UTC start time | Convert local → UTC before insert |
-| `ends_at` | `timestamptz` | UTC end time | `chk_slot_time` enforces `ends_at > starts_at` |
-| `is_blocked` | `boolean` | Not bookable when true | Default `false` |
-| `created_at` | `timestamptz` | Audit timestamp | Default `now()` (UTC) |
+| `starts_at`   | `timestamptz`               | UTC start time                 | Convert local → UTC before insert                  |
+| `ends_at`     | `timestamptz`               | UTC end time                   | `chk_slot_time` enforces `ends_at > starts_at`     |
+| `is_blocked`  | `boolean`                   | Not bookable when true         | Default `false`                                    |
+| `created_at`  | `timestamptz`               | Audit timestamp                | Default `now()` (UTC)                              |
 
 ### bookings
 
-| Column | Type | Purpose / Usage | Notes |
-| --- | --- | --- | --- |
-| `id` | `uuid` (PK) | Booking identifier | Default `gen_random_uuid()` |
-| `task_id` | `uuid` (FK → `tasks.id`) | Linked task context | ON DELETE CASCADE |
-| `provider_id` | `uuid` (FK → `profiles.id`) | Provider receiving the booking | Scopes provider views |
-| `client_id` | `uuid` (FK → `profiles.id`) | Client making the booking | Must equal `auth.uid()` on insert (RLS) |
-| `slot_id` | `uuid` (FK → `availability_slots.id`) | The reserved slot | Unique while status in ('pending','confirmed') |
-| `status` | `booking_status_enum` | Lifecycle | Default `pending` |
-| `note` | `text` | Optional message | Nullable |
-| `created_at` | `timestamptz` | Audit timestamp | Default `now()` (UTC) |
+| Column        | Type                                  | Purpose / Usage                | Notes                                          |
+| ------------- | ------------------------------------- | ------------------------------ | ---------------------------------------------- |
+| `id`          | `uuid` (PK)                           | Booking identifier             | Default `gen_random_uuid()`                    |
+| `task_id`     | `uuid` (FK → `tasks.id`)              | Linked task context            | ON DELETE CASCADE                              |
+| `provider_id` | `uuid` (FK → `profiles.id`)           | Provider receiving the booking | Scopes provider views                          |
+| `client_id`   | `uuid` (FK → `profiles.id`)           | Client making the booking      | Must equal `auth.uid()` on insert (RLS)        |
+| `slot_id`     | `uuid` (FK → `availability_slots.id`) | The reserved slot              | Unique while status in ('pending','confirmed') |
+| `status`      | `booking_status_enum`                 | Lifecycle                      | Default `pending`                              |
+| `note`        | `text`                                | Optional message               | Nullable                                       |
+| `created_at`  | `timestamptz`                         | Audit timestamp                | Default `now()` (UTC)                          |
 
 2.2 Enums
 
-| Enum | Values | Notes |
-| --- | --- | --- |
+| Enum                  | Values                                          | Notes                                                       |
+| --------------------- | ----------------------------------------------- | ----------------------------------------------------------- |
 | `booking_status_enum` | `pending`, `confirmed`, `canceled`, `completed` | Guarded by trigger `fn_booking_guard` for valid transitions |
 
 2.3 Indexes & Constraints
- • No double booking on the same slot:
+• No double booking on the same slot:
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_bookings_slot_active
-  ON public.bookings (slot_id)
-  WHERE status IN ('pending','confirmed');
+ON public.bookings (slot_id)
+WHERE status IN ('pending','confirmed');
 
- • Performance indexes:
- • idx_slots_provider_starts (provider_id, starts_at)
- • idx_bookings_client_created (client_id, created_at desc)
- • idx_bookings_provider_created (provider_id, created_at desc)
+• Performance indexes:
+• idx_slots_provider_starts (provider_id, starts_at)
+• idx_bookings_client_created (client_id, created_at desc)
+• idx_bookings_provider_created (provider_id, created_at desc)
 
 2.4 RLS Policies (Summary)
 
-| Table | Policy | Who | Action | Rule |
-| --- | --- | --- | --- | --- |
-| `availability_slots` | `slots_select_all` | authenticated | SELECT | `true` |
-| `availability_slots` | `slots_cud_owner` | authenticated | INSERT/UPDATE/DELETE | `provider_id = auth.uid()` |
-| `bookings` | `bookings_select_owner_or_client` | authenticated | SELECT | `provider_id = auth.uid() OR client_id = auth.uid()` |
-| `bookings` | `bookings_insert_client_only` | authenticated | INSERT | `client_id = auth.uid()` AND slot not already active |
-| `bookings` | `bookings_update_roles` | authenticated | UPDATE | Provider can confirm/complete; Client can cancel |
+| Table                | Policy                            | Who           | Action               | Rule                                                 |
+| -------------------- | --------------------------------- | ------------- | -------------------- | ---------------------------------------------------- |
+| `availability_slots` | `slots_select_all`                | authenticated | SELECT               | `true`                                               |
+| `availability_slots` | `slots_cud_owner`                 | authenticated | INSERT/UPDATE/DELETE | `provider_id = auth.uid()`                           |
+| `bookings`           | `bookings_select_owner_or_client` | authenticated | SELECT               | `provider_id = auth.uid() OR client_id = auth.uid()` |
+| `bookings`           | `bookings_insert_client_only`     | authenticated | INSERT               | `client_id = auth.uid()` AND slot not already active |
+| `bookings`           | `bookings_update_roles`           | authenticated | UPDATE               | Provider can confirm/complete; Client can cancel     |
 
 2.5 Triggers / Business Guards
- • No overlapping open slots for the same provider:
- • Trigger: trg_no_overlap_slots → fn_reject_overlapping_slots
- • Booking status transitions guard:
- • Trigger: trg_booking_guard → fn_booking_guard
- • Allowed:
- • pending → confirmed (provider) / canceled (client)
- • confirmed → completed (provider) / canceled (client)
+• No overlapping open slots for the same provider:
+• Trigger: trg_no_overlap_slots → fn_reject_overlapping_slots
+• Booking status transitions guard:
+• Trigger: trg_booking_guard → fn_booking_guard
+• Allowed:
+• pending → confirmed (provider) / canceled (client)
+• confirmed → completed (provider) / canceled (client)
 
 ⸻
 
-3) File Inventory (Flutter)
+3. File Inventory (Flutter)
 
 File Layer Description
 lib/features/booking/data/booking_repository.dart Repository Wraps BookingService and exposes methods for slots/bookings; surfaces current user.
@@ -2036,7 +2036,7 @@ Convention: Service owns Supabase calls, ViewModel owns UI state + orchestration
 
 ⸻
 
-4) ERD (Mini)
+4. ERD (Mini)
 
 ```mermaid
 erDiagram
@@ -2074,65 +2074,65 @@ erDiagram
 ASCII (fallback)
 
 profiles (id) ──< availability_slots (provider_id)
-     │                     │
-     │                     └─< bookings (slot_id, provider_id, client_id)
-     │
+│ │
+│ └─< bookings (slot_id, provider_id, client_id)
+│
 tasks (id) ────────────────────────────────┘ (task_id)
 
 ⸻
 
-5) Example SQL & Supabase Dart Snippets
+5. Example SQL & Supabase Dart Snippets
 
 5.1 Create Slot (Provider)
 
 Dart (Service)
 
 final insert = await supabase
-  .from('availability_slots')
-  .insert({
-    'provider_id': providerId, // must equal auth.uid() under RLS
-    'starts_at'  : startsUtc.toIso8601String(),
-    'ends_at'    : endsUtc.toIso8601String(),
-    'is_blocked' : isBlocked,
-  })
-  .select()
-  .single();
+.from('availability_slots')
+.insert({
+'provider_id': providerId, // must equal auth.uid() under RLS
+'starts_at' : startsUtc.toIso8601String(),
+'ends_at' : endsUtc.toIso8601String(),
+'is_blocked' : isBlocked,
+})
+.select()
+.single();
 
 5.2 List Provider Slots (Paged)
 
 final rows = await supabase
-  .from('availability_slots')
-  .select()
-  .eq('provider_id', providerId)
-  .gte('starts_at', sinceUtc.toIso8601String())
-  .order('starts_at')               // server-side sort
-  .range(offset, offset + limit - 1);
+.from('availability_slots')
+.select()
+.eq('provider_id', providerId)
+.gte('starts_at', sinceUtc.toIso8601String())
+.order('starts_at') // server-side sort
+.range(offset, offset + limit - 1);
 
 5.3 Book a Slot (Client)
 
 final row = await supabase
-  .from('bookings')
-  .insert({
-    'task_id'    : taskId,
-    'provider_id': providerId,
-    'client_id'  : clientId,   // must equal auth.uid() under RLS
-    'slot_id'    : slotId,
-    'note'       : note,
-  })
-  .select()
-  .single();
+.from('bookings')
+.insert({
+'task_id' : taskId,
+'provider_id': providerId,
+'client_id' : clientId, // must equal auth.uid() under RLS
+'slot_id' : slotId,
+'note' : note,
+})
+.select()
+.single();
 
 5.4 List My Bookings (As Client)
 
 final rows = await supabase
-  .from('bookings')
-  .select("""
-    *,
-    availability_slots!inner(*)
-  """)
-  .eq('client_id', myId) // RLS also enforces this
-  .order('created_at', ascending: false)
-  .range(offset, offset + limit - 1);
+.from('bookings')
+.select("""
+_,
+availability_slots!inner(_)
+""")
+.eq('client_id', myId) // RLS also enforces this
+.order('created_at', ascending: false)
+.range(offset, offset + limit - 1);
 
 5.5 Confirm / Complete (Provider) & Cancel (Client)
 
@@ -2149,47 +2149,121 @@ The trigger (fn_booking_guard) and RLS (bookings_update_roles) jointly ensure on
 
 ⸻
 
-6) Error Handling & Common Pitfalls
+6. Error Handling & Common Pitfalls
 
 Client/ViewModel conventions
- • Map Postgres error codes (e.g., 23505 unique violation) → user-friendly messages:
- • “This time slot is already booked. Please choose another.”
- • For overlap trigger errors on slot creation:
- • “This slot overlaps with an existing one.”
+• Map Postgres error codes (e.g., 23505 unique violation) → user-friendly messages:
+• “This time slot is already booked. Please choose another.”
+• For overlap trigger errors on slot creation:
+• “This slot overlaps with an existing one.”
 
 Common pitfalls
- • Timezone bugs: Always convert UI local → UTC before insert; and UTC → local for display.
- • RLS denials:
- • Creating a slot with mismatched provider_id (must be auth.uid()).
- • Inserting a booking with client_id != auth.uid().
- • Ordering + Pagination: Apply filters before `.order()`. Use `.limit()` with time-based cursors (e.g., `gt/lt` on `starts_at` or `created_at`) instead of client-side slicing.
- • Double booking race: Unique partial index on bookings(slot_id) with active statuses prevents it.
+• Timezone bugs: Always convert UI local → UTC before insert; and UTC → local for display.
+• RLS denials:
+• Creating a slot with mismatched provider_id (must be auth.uid()).
+• Inserting a booking with client_id != auth.uid().
+• Ordering + Pagination: Apply filters before `.order()`. Use `.limit()` with time-based cursors (e.g., `gt/lt` on `starts_at` or `created_at`) instead of client-side slicing.
+• Double booking race: Unique partial index on bookings(slot_id) with active statuses prevents it.
 
 ⸻
 
-7) Testing Checklist (Manual / Automated)
- • Provider creates a non-overlapping open slot → appears in list.
- • Provider tries overlapping slot → fails with friendly error.
- • Client books an open slot → status pending.
- • Provider confirms, then completes → allowed.
- • Client cancels from pending/confirmed → allowed.
- • Second client tries to book the same slot while active → fails.
- • Lists (as Client / as Provider) show correct items with correct sorting & pagination.
- • All date/times render in local timezone.
+7. Testing Checklist (Manual / Automated)
+   • Provider creates a non-overlapping open slot → appears in list.
+   • Provider tries overlapping slot → fails with friendly error.
+   • Client books an open slot → status pending.
+   • Provider confirms, then completes → allowed.
+   • Client cancels from pending/confirmed → allowed.
+   • Second client tries to book the same slot while active → fails.
+   • Lists (as Client / as Provider) show correct items with correct sorting & pagination.
+   • All date/times render in local timezone.
 
 ⸻
 
-8) UI Flow (High-level)
- • AvailabilityScreen (provider):
- • FAB → AddSlotSheet → create open/blocked slot → refresh → list updates.
- • TaskDetails → BookingSheet (client):
- • Pick provider slot → submit booking (pending) → success SnackBar.
- • BookingsListScreen:
- • Tabs: As Client / As Provider → action chips (Confirm, Complete, Cancel).
+8. UI Flow (High-level)
+   • AvailabilityScreen (provider):
+   • FAB → AddSlotSheet → create open/blocked slot → refresh → list updates.
+   • TaskDetails → BookingSheet (client):
+   • Pick provider slot → submit booking (pending) → success SnackBar.
+   • BookingsListScreen:
+   • Tabs: As Client / As Provider → action chips (Confirm, Complete, Cancel).
 
 ⸻
 
-9) Integration Notes
- • Works alongside Tasks: A booking always references a task (task_id).
- • Compatible with Chat: You can later notify participants on status changes with Realtime or Notifications.
- • Plays well with Profile: Avatars, names, etc., pulled via joins or client caches.
+9. Integration Notes
+   • Works alongside Tasks: A booking always references a task (task_id).
+   • Compatible with Chat: You can later notify participants on status changes with Realtime or Notifications.
+   • Plays well with Profile: Avatars, names, etc., pulled via joins or client caches.
+
+---
+
+# Work Management (Unified Flow)
+
+**Added in v2.13** — 2026-02-16
+
+## Purpose
+
+Provides freelancers with a **single view** to manage all active work — both tender-based tasks and booking-based jobs — using a normalized model. The module introduces versioned work contracts for accountability and change/extension request workflows.
+
+## Architecture
+
+```
+lib/features/work/
+├── models/
+│   ├── unified_work_item_model.dart     # Maps vw_unified_work_items view
+│   ├── work_contract_model.dart         # Versioned scope snapshot
+│   ├── change_request_model.dart        # Scope/price/days change proposal
+│   └── extension_request_model.dart     # Deadline extension proposal
+├── services/
+│   └── work_management_service.dart     # All Supabase queries (sole data source)
+├── viewmodels/
+│   └── work_item_details_view_model.dart  # Screen-scoped ChangeNotifier
+└── view/
+    ├── work_item_details_screen.dart     # 3-tab interface (Overview, Extensions, Contract)
+    ├── submit_delivery_modal.dart        # Bottom sheet for delivery submission
+    └── request_extension_modal.dart      # Bottom sheet for extension requests
+```
+
+## Data Flow
+
+```
+UI (WorkItemDetailsScreen)
+  └── Consumer<WorkItemDetailsViewModel>
+        └── WorkItemDetailsViewModel (ChangeNotifier)
+              └── WorkManagementService
+                    └── Supabase (vw_unified_work_items, work_contracts, RPCs)
+```
+
+**Key:** The ViewModel is registered at **screen scope** via `ChangeNotifierProvider` inside the screen's `build()` method. It is NOT a global provider.
+
+## Database Objects
+
+| Object                       | Type    | Purpose                                                 |
+| ---------------------------- | ------- | ------------------------------------------------------- |
+| `vw_unified_work_items`      | View    | UNION ALL of tasks + bookings with normalized status    |
+| `work_contracts`             | Table   | Versioned scope snapshots (price, days, description)    |
+| `change_requests`            | Table   | Scope/price/days change proposals                       |
+| `extension_requests`         | Table   | Deadline extension proposals                            |
+| `rpc_submit_delivery`        | RPC     | Atomic delivery: status + timestamp + contract snapshot |
+| `rpc_request_revision`       | RPC     | Client revision with limit check                        |
+| `rpc_accept_change_request`  | RPC     | Accept change, create new contract version              |
+| `rpc_finalize_auto_approval` | RPC     | Auto-approve after review window                        |
+| `trg_activate_contract`      | Trigger | Auto-create contract on booking confirmation            |
+| `trg_freeze_contract_fields` | Trigger | Block direct scope changes on active work               |
+
+## Enums (app_enums.dart)
+
+- `WorkItemType` — `task`, `booking`
+- `UnifiedWorkStatus` — `pending`, `active`, `delivered`, `revision`, `completed`, `canceled`, `disputed`, `unknown`
+
+## Key Patterns
+
+1. **Parallel Data Fetching**: `loadData()` uses `Future.wait` with 5 concurrent queries
+2. **Fallback Mapper**: When `vw_unified_work_items` has refresh lag, creates a temporary model from raw booking data
+3. **Status Mapping**: `declineBooking` maps to DB `refunded` status (per `fn_booking_guard` transitions)
+4. **Error Handling**: All errors mapped via `_mapError()` — no raw exceptions in UI
+
+## Verification
+
+- Plan: `.TODO/PLAN_Freelancer_Unified_Flow_2026-02-16.md`
+- Architect Patch: `.TODO/ARCHITECT_PATCH_2026-02-16_Unified_Flow.md`
+- CodeGuard Review: `.TODO/CODEGUARD_REVIEW_2026-02-16_Freelancer_Unified_Flow.md`

@@ -1,4 +1,6 @@
-## Freelancer Digram :-
+# **Client Diagram:-**
+
+```mermaid
 ---
 config:
   look: neo
@@ -7,80 +9,82 @@ config:
 ---
 flowchart LR
 
-F(("Freelancer"))
 C(("Client"))
+F(("Freelancer"))
 
 %% =========================
-%% ENTRY POINTS (Freelancer)
+%% ENTRY POINTS (Client)
 %% =========================
-subgraph ENTRY_F["Entry Points"]
+subgraph ENTRY_C["Entry Points"]
 direction TB
 
-%% Tender entry
-F1["Tender: Browse → Propose (task_requests)"] --> F2{"Awarded + Paid?"}
-F2 -- "No (rejected / not paid yet)" --> F3["Stay in Inbox (Sent Proposal)"]
-F2 -- "Yes" --> W_ACTIVE
+%% Tender entry (award + pay gate)
+C1["Tender: Post → Review proposals (task_requests)"] --> C2{"Award freelancer?"}
+C2 -- "No" --> C3["Edit / Close tender"]
+C2 -- "Yes" --> C4["Pay (escrow held)\nActivate work"] --> W_ACTIVE
 
-%% Booking entry (Pay-first)
-F4["Booking: Publish service"] --> F5["Client pays & requests"]
-F5 --> W_REQ_PENDING["Request Pending (escrow held)\npaid_request_pending"]
-W_REQ_PENDING --> F6{"Accept?"}
-F6 -- "Decline / timeout" --> F_REFUND["Refund & Close"]
-F6 -- "Accept" --> W_ACTIVE
+%% Booking entry (Pay-first then provider accept)
+C5["Booking: Browse services"] --> C6["Select package + requirements"] --> C7["Pay & Request (escrow held)"]
+C7 --> C8{"Freelancer accepts?"}
+C8 -- "Decline/timeout" --> C_REFUND["Refund & Close"]
+C8 -- "Accept" --> W_ACTIVE
 
 end
 
 %% =========================
 %% UNIFIED WORK ENGINE (Post-activation Work)
 %% =========================
-subgraph WORK_ENGINE_F["Unified Work Engine (Post-Activation)"]
+subgraph WORK_ENGINE_C["Unified Work Engine (Post-Activation)"]
 direction TB
 
-W_ACTIVE["ACTIVE (requirements frozen)"] --> W_WORK["Work & chat"]
+W_ACTIVE["ACTIVE (requirements frozen)"] --> W_WAIT["Wait + chat"]
 
 %% Change request
-W_WORK --> W_CHANGE["Change request (extra scope)"]
-W_CHANGE --> W_CHANGE_DEC{"Client accepts?"}
-W_CHANGE_DEC -- "Yes (scope/time updated,\nextra escrow if needed)" --> W_WORK
-W_CHANGE_DEC -- "No (keep original scope)" --> W_WORK
+W_WAIT --> W_CHANGE["Change request (extra scope)"]
+W_CHANGE --> W_CHANGE_DEC{"Freelancer accepts?"}
+W_CHANGE_DEC -- "Yes (pay extra if needed,\nscope/time updated)" --> W_WAIT
+W_CHANGE_DEC -- "No (keep original scope)" --> W_WAIT
 
 %% Extension request
-W_WORK --> W_EXT["Request extension"]
-W_EXT --> W_EXT_DEC{"Client accepts?"}
-W_EXT_DEC -- "Yes (deadline updated)" --> W_WORK
+W_WAIT --> W_EXT["Freelancer requests extension"]
+W_EXT --> W_EXT_DEC{"Accept?"}
+W_EXT_DEC -- "Yes (deadline updated)" --> W_WAIT
 W_EXT_DEC -- "No" --> W_DISPUTE
 
 %% Delivery + review
-W_WORK --> W_DEL["DELIVERED"] --> W_REVIEW["Review window (timer)"]
+W_WAIT --> W_DEL["DELIVERED"] --> W_REVIEW["Review window (timer)"]
 W_REVIEW --> W_DEC{"Decision"}
 W_DEC -- "Approve OR Auto-approve" --> W_DONE["COMPLETED (payout released)"]
-W_DEC -- "Revision (if remaining)" --> W_WORK
+W_DEC -- "Revision (if remaining)" --> W_WAIT
 W_DEC -- "Dispute" --> W_DISPUTE
 
 %% Cancel path (mutual only)
-W_WORK --> W_CANCEL["Cancel request"]
-W_CANCEL --> W_CANCEL_DEC{"Mutual?"}
+W_WAIT --> W_CANCEL["Cancel request"]
+W_CANCEL --> W_CANCEL_DEC{"Freelancer agrees?"}
 W_CANCEL_DEC -- "Yes (apply refund policy)" --> W_CANCELLED["CANCELLED"]
 W_CANCEL_DEC -- "No" --> W_DISPUTE
 
 %% Dispute resolution
 W_DISPUTE["DISPUTE (evidence required)"] --> W_ADMIN["Admin review"]
 W_ADMIN --> W_ADMIN_DEC{"Decision"}
-W_ADMIN_DEC -- "Pay freelancer" --> W_DONE
 W_ADMIN_DEC -- "Refund client" --> W_CANCELLED
-W_ADMIN_DEC -- "Split" --> W_SPLIT["SPLIT (partial payout/refund)"]
+W_ADMIN_DEC -- "Pay freelancer" --> W_DONE
+W_ADMIN_DEC -- "Split" --> W_SPLIT["SPLIT (partial refund/payout)"]
 
 end
 
 %% wiring
-F --> ENTRY_F
-C --> ENTRY_F
+C --> ENTRY_C
+F --> ENTRY_C
+```
 
-## **Freelancer Final v1 — Full Spec (Step-by-step, zero ambiguity)**
+## **Client Final v1 — Full Spec (Step-by-step, zero ambiguity)**
 
-This document explains the **Freelancer** side of the **Final v1** flow in exact operational steps.
+This document explains the **Client** side of the **Final v1** flow in exact operational steps.
 
 It is written so an AI can implement UI + logic **without guessing**.
+
+No code. No implementation details. Only behavior, UI placement, and required actions.
 
 ---
 
@@ -88,54 +92,58 @@ It is written so an AI can implement UI + logic **without guessing**.
 
 ## **0.1 Work Item (Unified Object)**
 
-A **Work Item** is a single operational unit shown to the freelancer once the relationship becomes real work.
+A **Work Item** is a single operational unit shown to the client once it becomes real work.
 
 A Work Item can be created from:
 
-- **Tender Order** (client posted a task → freelancer proposed → client awarded → client paid)
-- **Booking** (client purchased a service package → escrow held → freelancer accepts)
+- **Tender Order** (client posts tender → reviews proposals → awards freelancer → pays escrow → becomes ACTIVE)
+- **Booking** (client selects service package → submits requirements → pays escrow → freelancer accepts → becomes ACTIVE)
 
-After activation, both must behave **identically** in the “Work Engine”.
+After activation, both must behave identically inside the “Work Engine”.
 
-**Freelancer UI rule:**
+**Client UI rule:**
 
-Freelancer should not need to care whether it came from Tender or Booking once it reaches ACTIVE.
+Client should not need to care whether it came from Tender or Booking once it reaches ACTIVE.
 
-It is always shown inside **Work tab** as an “Active Work Item”.
+It must be shown inside **Work tab** as an “Active Work Item”.
 
 ---
 
-## **0.2 Statuses (conceptual, not implementation)**
+## **0.2 User-facing states (Client)**
 
-We use only these user-facing states:
+Use only these states in the UI:
 
-1. **Request Pending (Escrow Held)**
+1. **Draft / Open Tender**
     
-    Client paid, but freelancer has not accepted yet.
+    Tender is posted and collecting proposals.
     
-    Freelancer must decide: accept / decline.
+2. **Pending Payment (Awarded)**
     
-    There is a timeout.
+    Client awarded a freelancer but hasn’t paid yet (tender only).
     
-2. **Active (Requirements Frozen)**
+3. **Request Pending (Escrow Held)**
+    
+    Client paid, but freelancer has not accepted yet (booking only).
+    
+4. **Active (Requirements Frozen)**
     
     Work started. Requirements are frozen.
     
-3. **Delivered (Waiting Client Review)**
+5. **Delivered (Needs Review)**
     
-    Freelancer delivered. Client has a review window.
+    Freelancer delivered work. Client must decide.
     
-4. **Completed (Payout Released)**
+6. **Completed (Payout Released)**
     
-    Work finished. Escrow is released to freelancer.
+    Work finished. Payment released.
     
-5. **Cancelled (Refund Policy Applied)**
+7. **Cancelled (Refund Policy Applied)**
     
-    Work ended without completion, and refund/payout handled by policy.
+    Work ended early. Refund/payout handled.
     
-6. **Dispute (Admin Review)**
+8. **Dispute (Admin Review)**
     
-    Conflict escalated to admin. Admin decides payout/refund/split.
+    Conflict escalated. Admin decides payout/refund/split.
     
 
 ---
@@ -146,556 +154,724 @@ The moment a Work Item becomes **ACTIVE**, the current requirements are frozen a
 
 Any change after that must go through a **Change Request** process.
 
-No silent requirement changes are allowed.
+No silent changes are allowed.
 
 ---
 
-# **1) Freelancer Entry Points (how the freelancer “enters” work)**
+# **1) Client Entry Points (how client starts work)**
 
-Freelancer has two entry routes, both end at the same engine:
+Client has two routes:
 
-## **1.1 Entry Route A — Tender: “Browse → Propose”**
+- Tender path (post and hire)
+- Booking path (buy service package)
 
-### **Step A1 — Browse Tenders**
+Both end in the same unified work engine.
+
+---
+
+# **2) Entry Route A — Tender (Client posts → hires via proposals)**
+
+## **Step A1 — Post Tender**
 
 **Where it appears:**
 
-A “Tenders” browsing screen (marketplace feed) visible to freelancer.
+- A “Post Tender” entry on Home/Dashboard (Client mode)
+- A dedicated “Tenders” section
 
-**Freelancer action:**
+**Client action:**
 
-Scroll/search/filter → open a tender.
+Fill tender details:
 
-**Client involvement:**
+- title
+- description
+- budget
+- deadline
+- optional attachments
 
-Client has already posted the tender; no action yet.
+Then publish.
+
+**System result:**
+
+Tender becomes “Open” and visible to freelancers.
 
 ---
 
-### **Step A2 — Propose**
+## **Step A2 — Wait for Proposals**
 
 **Where it appears:**
 
-Tender details screen includes a “Send Proposal” action.
+- Tender details screen shows “Proposals count”
+- Dashboard “Next Actions” can show “Tender has new proposals” (if any)
 
-**Freelancer action:**
+**Client action:**
 
-Submit a proposal containing:
-
-- price
-- timeframe
-- message/cover letter
-    
-    (Optional: ask questions in comments/chat before proposing, if your product allows.)
-    
-
-**What happens next:**
-
-Freelancer waits. This is not work yet.
+Wait or optionally edit tender.
 
 ---
 
-### **Step A3 — “Client awards?”**
-
-**Freelancer sees:**
-
-Proposal status changes:
-
-- Rejected (end)
-- Awarded but not paid (not active yet)
-- Awarded + paid (becomes ACTIVE)
-
-**Important rule (global-grade):**
-
-A tender does NOT become real work until the client has paid and escrow is held.
-
-**Client action required to proceed:**
-
-Client must:
-
-1. award the freelancer
-2. pay to create escrow
-
-If the client does not pay, freelancer does not start work.
-
----
-
-### **Step A4 — “Yes + client pays” → ACTIVE**
-
-Once the client pays, the tender transforms into an **ACTIVE Work Item** and enters the unified engine.
-
----
-
-## **1.2 Entry Route B — Booking: “Publish service → client pays → freelancer accepts”**
-
-### **Step B1 — Publish Service**
+## **Step A3 — Review Proposals**
 
 **Where it appears:**
 
-A “My Services” management screen for freelancer.
+Tender details → proposals list.
 
-**Freelancer action:**
+**Client action:**
 
-Create/edit service + packages:
+Open proposals; compare:
 
 - price
 - delivery time
-- revision count (or revision policy)
+- cover letter
+- profile trust signals
 
-**Client involvement:**
+Optional actions:
 
-None until the service is live.
-
----
-
-### **Step B2 — Client pays & requests**
-
-Client chooses a package, submits requirements, and pays.
-
-Payment is held in escrow immediately.
-
-**Result:**
-
-A Booking request is created as:
-
-**Request Pending (Escrow Held)**
+- Message freelancer (chat)
+- Shortlist
+- Reject
 
 ---
 
-### **Step B3 — Request Pending (Escrow Held)**
+## **Step A4 — Award Freelancer**
+
+**Where it appears:**
+
+Proposal details → “Award / Accept” button.
+
+**Client action:**
+
+Award one freelancer.
+
+**System result:**
+
+Tender enters: **Pending Payment (Awarded)**
+
+**Global-grade rule:**
+
+Award ≠ work start.
+
+Work is not active until payment is made and escrow is held.
+
+---
+
+## **Step A5 — Pending Payment (Awarded)**
 
 **Where it appears (must be obvious):**
 
-- On the Dashboard “Next Actions” (Freelancer mode) as top priority
-- In a dedicated list: “Requests / Pending”
-- Also can appear as a badge in “Bookings” tab
+- Dashboard “Next Actions” (Client mode) as high priority: “Complete payment to start”
+- Work/Orders list shows it as “Pending Payment” with a “Pay Now” CTA
 
-**What freelancer must do:**
+**Client actions available:**
 
-Freelancer must choose:
+- Pay now (recommended)
+- Pay later (allowed, but must auto-expire after a defined time)
+- Cancel before payment (no escrow, no work)
 
-- Accept
-- Decline
-    
-    Or do nothing (timeout occurs automatically)
-    
+**System requirements:**
 
-**Time rule:**
+If the client does not pay within the allowed window:
 
-There is a hard expiration window (example: 24h).
-
-If freelancer does not act, the booking auto-expires and client is refunded.
+- The order auto-expires/cancels
+- The freelancer should not start work
 
 ---
 
-### **Step B4 — Accept → ACTIVE**
+## **Step A6 — Pay (Escrow Held) → ACTIVE**
 
-If freelancer accepts, it becomes an **ACTIVE Work Item** and enters the unified engine.
+Client pays; money is held in escrow.
 
-### **Step B5 — Decline/timeout → Refund & Close**
+**System result:**
 
-If declined or timed out:
+A unified Work Item becomes **ACTIVE**.
 
-- escrow is refunded to client
-- request is closed
-- it must not appear in Active work
+Requirements are now frozen.
 
 ---
 
-# **2) Unified Work Engine (Freelancer Operational Flow)**
+# **3) Entry Route B — Booking (Client buys a service package)**
 
-Once a Work Item is **ACTIVE**, the freelancer follows this engine.
-
-## **2.1 ACTIVE (Requirements Frozen)**
+## **Step B1 — Browse Services**
 
 **Where it appears:**
 
-- Work tab → “Active”
-- Dashboard counters: Active count increases
-- Dashboard next actions may list it if urgent
+- “Browse Services” entry on Dashboard/Home (Client mode)
+- Search/filter UI
 
-**What freelancer must do immediately:**
+**Client action:**
 
-1. Open the work item
-2. Review requirements
-3. Confirm understanding or request missing info (via chat)
+Search, filter, open service details.
 
-**Client actions in this phase:**
+Optional:
 
-- Answer questions
-- Provide missing files/details
+- Chat before buying (ask questions)
+
+---
+
+## **Step B2 — Choose Package + Requirements**
+
+**Where it appears:**
+
+Service details → packages section.
+
+**Client action:**
+
+- Select package (Basic/Standard/Premium)
+- Fill requirements (answers/description/files)
 
 **Hard rule:**
 
-No hidden change in scope. Anything new after freeze becomes a Change Request.
+Client cannot proceed to pay without requirements being submitted (or explicitly marked “to be provided later”, if you support that).
 
 ---
 
-## **2.2 Work & Chat**
-
-This is the main working period.
+## **Step B3 — Pay & Request (Escrow Held)**
 
 **Where it appears:**
 
-Inside the Work Item:
+Checkout/payment screen.
 
-- Chat thread
-- Requirements section
-- Deliverables section
-- Timeline/status section
+**Client action:**
 
-**Freelancer does:**
+Pay now.
 
-- execute the work
-- communicate progress
-- optionally send preview/partial updates (optional UX)
+**System result:**
 
-**Client does:**
+Booking is created as:
 
-- responds to questions
-- stays updated
+**Request Pending (Escrow Held)**
+
+Freelancer must accept/decline within a window.
 
 ---
 
-# **3) Change Request (Extra scope) — the only legal way to change requirements**
-
-## **3.1 When it triggers**
-
-Trigger condition:
-
-- Client asks for additional features/extra work not included in frozen requirements
-- Freelancer discovers missing scope that changes cost/time materially
-
-This must become a **Change Request**.
-
-## **3.2 UI behavior (freelancer side)**
+## **Step B4 — Waiting for Freelancer Response**
 
 **Where it appears:**
 
-Inside the work item, a structured action:
+- Work list shows: “Request Pending”
+- Dashboard “Next Actions”: “Waiting freelancer acceptance” (medium priority)
 
-- “Propose Change” / “Request Extra Scope”
-    
-    This is not a casual chat message; it’s a formal step.
-    
+**Client action:**
 
-**Freelancer must define:**
+Wait. Optionally send additional clarifications in chat.
 
-- what changes
-- impact on delivery time
-- impact on price (if any)
+**System rule:**
 
-## **3.3 Client accepts?**
+If freelancer declines or times out:
 
-**If client accepts:**
-
-- scope is updated
-- timeline updated
-- if extra payment is required → client pays → escrow for extra is held/added
-- work continues normally
-
-**If client declines:**
-
-- scope stays as original frozen requirements
-- work continues under original scope
-    
-    No dispute automatically unless one party refuses to continue.
-    
+- booking closes
+- escrow is refunded to client
+- item moves to Cancelled/Refunded history
 
 ---
 
-# **4) Extension Request — formal handling of delays**
+## **Step B5 — Freelancer Accepts → ACTIVE**
 
-## **4.1 When it triggers**
+When freelancer accepts:
 
-Freelancer cannot meet original deadline due to:
+- Work item becomes **ACTIVE**
+- Requirements become frozen
+- The unified engine starts
 
-- complexity
-- external blockers
-- client delays providing info
-- change requests
+---
 
-## **4.2 UI behavior**
+# **4) Unified Work Engine (Client operations inside ACTIVE work)**
+
+Once ACTIVE, tender and booking behave the same.
+
+## **4.1 ACTIVE (Requirements Frozen)**
 
 **Where it appears:**
 
-Inside work item, structured action:
+- Work tab → Active
+- Dashboard counters: Active increases
+- Dashboard “Next Actions” may show “Freelancer asked a question” if needed
 
-- “Request Extension”
+**Client must do:**
 
-Freelancer must specify:
+- Confirm requirements are complete
+- Respond to freelancer questions quickly
 
-- new expected delivery date/time
-- reason
+**Rule:**
 
-## **4.3 Client accepts?**
-
-**Yes:**
-
-Deadline updates → work continues.
-
-**No:**
-
-This becomes a conflict.
-
-Freelancer can:
-
-- continue and try to deliver anyway, or
-- escalate to Dispute if it blocks completion fairly
-
-In Final v1 engine, “No” routes to Dispute to avoid unclear outcomes.
+Any new scope request must go through Change Request.
 
 ---
 
-# **5) Delivery**
-
-## **5.1 DELIVERED**
-
-Freelancer submits the final output.
+## **4.2 Wait + Chat**
 
 **Where it appears:**
 
 Inside the work item:
 
-- “Deliver Work” action
-- Delivered files/links area
-- Delivered timestamp
+- chat thread
+- requirements section
+- timeline/status section
 
-**Freelancer must provide:**
+**Client does:**
 
-- deliverable(s)
-- short delivery note
-- what was done + how to verify
-
-**Client must see immediately:**
-
-- notification
-- item moved to “Needs Review” on client side
+- answers questions
+- confirms progress steps if needed
+- avoids adding scope informally
 
 ---
 
-## **5.2 Client Review Window**
+# **5) Change Request (extra scope) — only legal way to change requirements**
 
-After delivery, the system enters a review window.
+## **5.1 When it triggers**
 
-**Freelancer view:**
+Trigger condition:
 
-- status: “Delivered — Waiting client review”
-- timer indicator (review deadline)
+- Client wants extra features beyond frozen requirements
+- Client wants to change the original request meaningfully
 
-**Client obligations:**
+## **5.2 How it appears**
 
-- approve
-- request revision (if remaining)
-- open dispute (if serious issue)
-- or do nothing (auto-approve occurs)
+Inside the work item as a structured object:
+
+- “Change Request” with:
+    - scope change summary
+    - added time
+    - added price (if any)
+
+## **5.3 Client decision**
+
+**If client accepts:**
+
+- scope updates
+- timeline updates
+- if extra payment exists → client pays → escrow holds extra
+- work continues
+
+**If client declines:**
+
+- scope remains original
+- work continues under original scope
+
+No automatic dispute unless one party refuses to continue fairly.
 
 ---
 
-# **6) Client Decision (after delivery)**
+# **6) Extension Request (deadline change)**
 
-## **6.1 Approve / Auto-approve → COMPLETED**
+## **6.1 When it triggers**
 
-### **Approve**
+Freelancer requests more time.
 
-Client approves within review window.
+## **6.2 Where it appears**
 
-### **Auto-approve**
+Inside the work item:
 
-If client takes no action until review window ends:
+- structured “Extension Request”
+- includes new delivery date/time + reason
+
+## **6.3 Client decision**
+
+**Accept:**
+
+- deadline updates
+- work continues
+
+**Decline:**
+
+- system treats it as a conflict path
+- next step is Dispute if it blocks completion (to prevent deadlocks)
+
+---
+
+# **7) Delivery & Review (most important client responsibility)**
+
+## **7.1 Delivered → Needs Review**
+
+Freelancer marks DELIVERED.
+
+**Where it appears (must be aggressive):**
+
+- Dashboard “Next Actions” (Client mode) as top priority
+- Work tab: item moves to “Needs Review”
+- push notification + in-app badge
+
+**Client must do:**
+
+Open the delivery and choose one of:
+
+- Approve
+- Request revision (if remaining)
+- Dispute
+    
+    Or do nothing (auto-approve happens)
+    
+
+---
+
+## **7.2 Review Window (timer)**
+
+A review window starts immediately after delivery.
+
+**Client view must show:**
+
+- remaining time until auto-approve
+- the actions clearly
+
+---
+
+# **8) Client Decision Outcomes**
+
+## **8.1 Approve → COMPLETED (release payout)**
+
+Client approves.
+
+**System result:**
+
+- Escrow releases to freelancer
+- Work item becomes COMPLETED
+
+**Client UI:**
+
+- show completion summary
+- show “Leave rating/review” (optional, but global-grade)
+
+---
+
+## **8.2 Auto-approve (client silent) → COMPLETED**
+
+If client takes no action until the timer ends:
 
 - system auto-approves
-- payout is released
+- payout releases
 
-**Freelancer view:**
+**Client UI:**
 
-- status becomes “Completed”
-- wallet balance increases
-- work item moves to Done/Completed list
+- show “Auto-completed due to no response”
+- still allow dispute only if you have a strict post-completion policy (optional; many systems restrict it)
 
 ---
 
-## **6.2 Revision (if remaining)**
+## **8.3 Request Revision (if remaining)**
 
 Client requests revision.
 
-**Rule:**
+**Rules:**
 
-Revisions are allowed only if:
+- Allowed only if revision count remains
+- Must include clear feedback and requested changes
 
-- revision count remains (based on package/policy)
-- request is within revision window (optional but recommended)
+**System result:**
 
-**Freelancer view:**
+- item returns to ACTIVE work state
+- freelancer works again and re-delivers
 
-- status remains ACTIVE (or goes to “Revision Requested” inside ACTIVE)
-- revision request is visible as a structured item + message
+If no revisions remain:
 
-**Freelancer must do:**
-
-- perform revision
-- re-deliver using DELIVERED step again
-
-If no revisions remaining:
-
-- client must either approve, accept a paid change request, or dispute.
+- client must either approve, accept a paid change request, or dispute
 
 ---
 
-## **6.3 Dispute**
+## **8.4 Dispute**
 
-Client disputes the delivery.
+Client disputes the delivery or overall work quality.
 
-Freelancer view:
+**Client must provide:**
+
+- evidence
+- explanation
+- what outcome they want (refund / partial / rework)
+
+**System result:**
 
 - status becomes DISPUTE
-- work becomes locked from normal completion actions
-- evidence exchange begins
+- normal completion actions are locked
 
 ---
 
-# **7) Cancellation (Mutual)**
+# **9) Cancellation (Mutual only)**
 
-## **7.1 Cancel request**
+## **9.1 Cancel request**
 
-Can be initiated during ACTIVE (and optionally even after delivery).
-
-In Final v1 we treat it as:
-
-- A formal cancellation request
+Client can request cancellation during ACTIVE (and optionally after delivery).
 
 **Where it appears:**
 
-Inside the work item: “Request Cancellation”.
+Inside the work item: “Request Cancellation”
 
-## **7.2 Mutual?**
+## **9.2 Freelancer agrees?**
 
-**If both agree:**
+**Yes:**
 
 - status becomes CANCELLED
-- refund policy applies (full/partial/none depending on rules)
-- escrow handled accordingly
+- refund policy applies
+- escrow handled
 
-**If other party refuses:**
+**No:**
 
-- it escalates to DISPUTE to avoid a deadlock.
+- escalates to DISPUTE to avoid deadlock
 
 ---
 
-# **8) Dispute → Admin Review → Decision**
+# **10) Dispute → Admin Review → Decision**
 
-## **8.1 DISPUTE**
+## **10.1 Dispute screen (client requirements)**
 
-**What freelancer must do:**
-
-Submit evidence:
-
-- deliverables
-- messages
-- timelines
-- proofs of scope and work done
-- change request history (if any)
-
-**What client does:**
-
-Submits their evidence similarly.
-
-**UI requirement:**
-
-Dispute screen must show:
+UI must show:
 
 - claim summary
-- evidence upload area
-- timeline of events
+- evidence upload
+- timeline of events (requirements freeze, changes, delivery timestamps)
+
+Client must submit:
+
+- what was promised vs what was delivered
+- what’s missing
+- any proof
 
 ---
 
-## **8.2 Admin review**
+## **10.2 Admin decision (final outcomes)**
 
-Admin assesses.
+Admin selects one:
 
-**Important rule:**
+### **A) Refund client**
 
-Admin decision must be final and auditable.
+- client receives refund (full/partial depending on policy)
+- work ends as CANCELLED
 
----
+### **B) Pay freelancer**
 
-## **8.3 Admin decision outcomes**
-
-### **A) Pay freelancer**
-
-Escrow released to freelancer → status becomes COMPLETED.
-
-### **B) Refund client**
-
-Escrow refunded → status becomes CANCELLED.
+- payout releases to freelancer
+- work ends as COMPLETED
 
 ### **C) Split**
 
-Partial payout to freelancer + partial refund to client → status becomes SPLIT (resolved).
+- partial refund to client + partial payout to freelancer
+- work ends as SPLIT (resolved)
 
-Freelancer UI must show:
+Client UI must show:
 
-- final outcome
-- amounts (payout/refund)
-- reason summary (short)
+- final amounts
+- short reason
+- outcome label
 
 ---
 
-# **9) Where each state must appear inside the current app (Dashboard integration)**
+# **11) Where each state must appear in the Dashboard (Client mode)**
 
-Based on your Dashboard documentation (role switch + tabs), freelancer flow must surface like this:
+This must match your Dashboard tabs: Overview / Bookings / Work / Inbox.
 
-## **9.1 Overview Tab (Freelancer mode)**
+## **11.1 Overview Tab (Client mode)**
 
 Must show:
 
-- **Next Actions**:
-    1. Request Pending (must be #1 priority)
-    2. Delivered waiting review (high priority)
-    3. Dispute requiring evidence (high priority)
-- **Counters**: Active / Delivered / Completed / Disputes
+**Next Actions (top 3):**
 
-## **9.2 Bookings Tab (Freelancer mode)**
+1. Delivered needs review (highest priority)
+2. Tender awarded but pending payment (very high priority)
+3. Dispute requiring evidence / admin updates (high priority)
+    
+    Then:
+    
+- Pending freelancer acceptance (booking request pending)
 
-Must show booking-related items:
+**Counters grid:**
+
+- Active
+- Needs Review (Delivered)
+- Pending Payment
+- Completed
+
+---
+
+## **11.2 Bookings Tab (Client mode)**
+
+Shows only booking-related timeline items:
 
 - Request Pending
 - Active bookings
-- Past/completed/cancelled
-
-## **9.3 Work Tab (Freelancer mode)**
-
-This is the operational list.
-
-Must show:
-
-- Active Work Items (from both Tender and Booking)
-- Done (Completed / Split resolved)
-- Cancelled (Cancelled / Refunded)
-    
-    Optionally Dispute as its own filter or grouped under Active with strong badge.
-    
-
-## **9.4 Inbox Tab (Freelancer mode)**
-
-Only for pre-work negotiation artifacts:
-
-- Sent proposals (tender)
-- messages not yet active work
-    
-    Once work becomes ACTIVE, it must appear in Work, not Inbox.
-    
+- Past bookings (completed/cancelled/refunded)
 
 ---
 
-# **10) Non-negotiable global-grade rules (must be enforced)**
+## **11.3 Work Tab (Client mode)**
 
-1. **No work without escrow held** (tender must be paid before active)
+This is the main list for both Tender Orders and Bookings once ACTIVE.
+
+Must show filters:
+
+- Active
+- Done
+- Cancelled
+    
+    Optionally:
+    
+- Needs Review (Delivered) as a special filter or as top of Active.
+
+---
+
+## **11.4 Inbox Tab (Client mode)**
+
+Only pre-work offers and negotiation items:
+
+- proposals received (tender offers)
+- chats related to offers before payment/activation
+
+Once a work item becomes ACTIVE, it must move to Work.
+
+---
+
+# **12) Non-negotiable global-grade rules (must be enforced)**
+
+1. **Tender work does not start until escrow is held** (award alone is not enough)
 2. **Requirements freeze at ACTIVE**
-3. **Change request is the only legal scope change**
-4. **Extension request is the only legal deadline change**
-5. **Auto-approve if client is silent after delivery**
+3. **Change request is the only valid scope change**
+4. **Extension request is the only valid deadline change**
+5. **Client must review delivered work within a window or auto-approve triggers**
 6. **Revisions are limited**
-7. **If cancel is not mutual → dispute**
-8. **Dispute outcome must be Pay / Refund / Split**
+7. **Cancellation requires mutual agreement; otherwise dispute**
+8. **Dispute must end in Pay / Refund / Split**
+
+---
+
+If you want the “final-final” version next, I can convert this into a **shorter “AI Execution Rules” checklist** (same rules, fewer words) so it’s easier to paste into agents and prevent mistakes.
+
+.
+
+# SLine Dashboard Documentation (Current Implementation)
+
+## 1. Overview
+
+The Dashboard is the central hub of the SLine application (Index 3 in Main Navigation). It serves as the landing page for users to manage their operational activities.
+
+**Key Characteristics:**
+
+- **Role-Based:** Instantly switchable between `Freelancer` and `Client` views using the `_RoleSwitch` widget.
+- **Offline-First:** Uses `DashboardCacheService` to load data instantly before syncing with Supabase.
+- **Strict MVVM:** UI (`DashboardScreen`) listens to `DashboardViewModel` and never calls Supabase directly.
+
+## 2. Architecture & Diagram
+
+### Widget Tree Structure
+
+```mermaid
+graph TD
+    MainNavigation[MainNavigationScreen] -->|Index 3| DashboardScreen
+
+    subgraph DashboardScreen
+        Header[AppBar & Role Switcher]
+        TabBar[Overview | Bookings | Work | Inbox]
+
+        subgraph Tabs
+            Overview[OverviewTab] --> Wallet[WalletSnapshotCard]
+            Overview --> Counters[DashboardCountersGrid]
+            Overview --> NextActions[NextActionsList]
+            Overview --> Activity[ActivityFeedPreview]
+
+            Bookings[BookingsTab] --> BookingList[Upcoming & Past Lists]
+
+            Work[WorkTab] --> WorkFilters[Active | Done | Cancelled Tabs]
+            Work --> WorkList[WorkItem Cards]
+
+            Inbox[InboxTab] --> OfferList[Offer Cards]
+        end
+    end
+
+    DashboardScreen -->|Provider| VM[DashboardViewModel]
+    VM -->|Data| Repo[DashboardRepository]
+    VM -->|Data| Cache[DashboardCacheService]
+    VM -->|Data| Services[TaskService, BookingService]
+```
+
+### Data Flow
+
+1. **Init:** `DashboardViewModel` loads cached data immediately (WorkItems, Activity, Counters).
+2. **Sync:** Fetches fresh data from Supabase in the background.
+3. **Role Switch:** updating `UserRole` triggers a UI refresh and re-filters data (e.g., fetching `client` bookings vs `provider` bookings).
+
+## 3. Tabs & Detailed Breakdown
+
+### A. Overview Tab (`OverviewTab`)
+
+**Goal:** Provide a high-level summary and immediate "Next Actions" so the user knows what to do next.
+
+**Components:**
+
+1. **Greeting:** "Hello, [Name]!" with a role-specific tagline.
+    - *Freelancer:* "Ready to pick up some work?"
+    - *Client:* "Let's get your projects moving."
+2. **Wallet Snapshot (`WalletSnapshotCard`):** Displays current balance (mocked or from Wallet feature).
+3. **Counters Grid (`DashboardCountersGrid`):**
+    - 4 Stats: Active Jobs, Pending Requests, Completed, Rating/Earnings.
+4. **Next Actions (`NextActionsList`):**
+    - **Logic:** The VM calculates the top 3 most urgent items based on:
+        - **Money/Trust:** Pending payments, delivered work needing review. (Highest Priority)
+        - **Urgency:** Items scheduled within 48 hours.
+        - **Recency:** Most recently updated active items.
+5. **Activity Feed (`ActivityFeedPreview`):**
+    - Shows recent logs (e.g., "New offer received", "Booking confirmed").
+    - Expandable with "See All".
+
+### B. Bookings Tab (`BookingsTab`)
+
+**Goal:** Manage calendar-based appointments (Tenders/Bookings).
+
+**Logic:**
+
+- **Freelancer View:** Shows bookings where user is the `Provider`.
+- **Client View:** Shows bookings where user is the `Client`.
+- **Sections:**
+    1. **Upcoming:** `scheduledAt` is in the future OR status is Pending/Confirmed.
+    2. **Past:** `scheduledAt` is past.
+
+### C. Work Tab (`WorkTab`)
+
+**Goal:** The main operational list for all Tasks and Bookings.
+
+**Structure:**
+Uses a nested `TabBar` with 3 filters:
+
+1. **Active:**
+    - Statuses: `open`, `assigned`, `pending`, `confirmed`, `inprogress`, `paid_request_pending`.
+    - Sorted by: Urgency (Schedule) > Creation Date.
+2. **Done:**
+    - Statuses: `completed`, `paid`, `reviewed`.
+    - Sorted by: Completion Date (Newest first).
+3. **Cancelled:**
+    - Statuses: `cancelled`, `rejected`, `declined`.
+
+**Item Model (`WorkItem`):**
+
+- Unifies `Task` and `Booking` models into a single displayable item.
+- **Primary Actions:** Smart button on the card (e.g., "Start Work", "Mark Complete", "Pay Now") determined by the item's status.
+
+### D. Inbox Tab (`InboxTab`)
+
+**Goal:** Manage offers (Task Requests) before they become active work.
+
+**Logic:**
+
+- **Client View:** Shows offers *received* from freelancers.
+- **Freelancer View:** Shows offers *submitted* to clients.
+- **Grouped View (VM Logic):** Offers are grouped by `Task` (e.g., "Fix my Sink" might have 3 offers). *Note: The UI currently shows a flat list in `InboxTab` but the VM supports grouping.*
+
+**Actions:**
+
+- **Accept:** Calls `acceptOffer` RPC -> Converts offer to Active Work.
+- **Reject:** Removes offer.
+- **Withdraw:** (Freelancer only) Cancels sent offer.
+
+## 4. Services & Dependencies
+
+- **DashboardRepository:** Aggregates calls to Supabase.
+- **DashboardCacheService:** Local storage (Hive/SharedPreferences) for offline access.
+- **TaskService:** Fetches Tasks, Offers, Tenders.
+- **BookingService:** Fetches Calendar Bookings.
+- **ServicesService:** Fetches User's listed services (for Management view - currently lazy loaded).
+
+## 5. User Roles (Client vs Freelancer)
+
+- **Freelancer Mode:**
+    - See jobs assigned to YOU.
+    - See bookings where YOU are the provider.
+    - See offers YOU sent.
+- **Client Mode:**
+    - See jobs YOU posted.
+    - See bookings where YOU hired someone.
+    - See offers YOU received.

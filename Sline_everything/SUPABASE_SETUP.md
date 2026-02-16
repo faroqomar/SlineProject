@@ -32,6 +32,16 @@ This document is the **single source of truth** for all Supabase backend setup: 
 | `bookings`              | ✅  | 1    | Session bookings                   |
 | `portfolio_items`       | ✅  | 0    | Freelancer portfolio               |
 | `notifications`         | ✅  | 1    | User notifications                 |
+| `work_contracts`        | ✅  | 0    | Versioned scope snapshots          |
+| `change_requests`       | ✅  | 0    | Scope/price/days change proposals  |
+| `extension_requests`    | ✅  | 0    | Deadline extension proposals       |
+
+### Views
+
+| View                    | Purpose                                      |
+| ----------------------- | -------------------------------------------- |
+| `vw_unified_work_items` | UNION ALL of tasks + bookings (normalized)   |
+| `wallet_balances`       | Aggregated wallet balance (available/escrow) |
 
 ### Enums
 
@@ -64,6 +74,10 @@ This document is the **single source of truth** for all Supabase backend setup: 
 - ✅ Slot overlap prevention for providers
 - ✅ Auto-assign freelancer on offer acceptance
 - ✅ Client ID is immutable on tasks
+- ✅ Contract fields frozen on active work (`trg_freeze_contract_fields`)
+- ✅ Auto-create contract on booking confirmation (`trg_activate_contract`)
+- ✅ Delivery submission creates contract snapshot (`rpc_submit_delivery`)
+- ✅ Revision requests check limit before resetting status (`rpc_request_revision`)
 
 ---
 

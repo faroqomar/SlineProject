@@ -273,9 +273,10 @@ class WorkManagementService {
     try {
       await _supabase
           .from('bookings')
-          .update({'status': 'declined'})
+          .update({'status': 'refunded'})
           .eq('id', bookingId);
-      AppLogger.i('Booking declined: $bookingId');
+      // fn_booking_guard allows paid_request_pending -> refunded (provider declines)
+      AppLogger.i('Booking declined (refunded): $bookingId');
     } catch (e, stack) {
       AppLogger.e('Failed to decline booking', error: e, stackTrace: stack);
       rethrow;

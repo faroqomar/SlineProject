@@ -21,12 +21,63 @@
 
 ## 📋 Version History
 
+### 🟢 Version 2.13 — Freelancer Unified Flow
+
+**Date:** 2026-02-16
+**Agent:** @Architect, @Supabase_Ops, @CodeGuard
+**Status:** ✅ Complete
+
+#### ✅ Implemented
+
+- **Database (3 tables, 1 view, 4 RPCs, 2 triggers)**
+  - `work_contracts` table — versioned scope snapshots with RLS (SELECT)
+  - `change_requests` table — scope/price/days change proposals with RLS (SELECT, INSERT)
+  - `extension_requests` table — deadline extension proposals with RLS (SELECT, INSERT)
+  - `vw_unified_work_items` view — UNION ALL of tasks + bookings with normalized statuses
+  - `rpc_submit_delivery` — atomic delivery: status + timestamp + contract snapshot
+  - `rpc_request_revision` — client revision with limit checks
+  - `rpc_accept_change_request` — accept change with scope diffs + new contract version
+  - `rpc_finalize_auto_approval` — auto-approve after review window (server-time)
+  - `trg_activate_contract` — auto-create contract on booking confirmation
+  - `trg_freeze_contract_fields` — block direct scope changes on active work
+- **Flutter Module** (`lib/features/work/`)
+  - `WorkManagementService` (316 lines) — single source of truth for all unified work queries
+  - `WorkItemDetailsViewModel` (273 lines) — screen-scoped ChangeNotifier with parallel fetches
+  - `WorkItemDetailsScreen` (502 lines) — 3-tab interface (Overview, Extensions, Contract)
+  - `SubmitDeliveryModal` + `RequestExtensionModal` — bottom sheet modals
+  - 4 models: `UnifiedWorkItemModel`, `WorkContractModel`, `ChangeRequestModel`, `ExtensionRequestModel`
+  - 2 new enums in `app_enums.dart`: `WorkItemType`, `UnifiedWorkStatus`
+- **Tests**
+  - 7 ViewModel unit tests with `MockWorkManagementService` — all passing
+
+#### 📊 Impact
+
+- **UX**: Freelancers now have a unified view of all active work (tasks and bookings)
+- **Trust**: Versioned contracts create accountability for scope changes
+- **Safety**: State machine triggers prevent booking status bypass and unauthorized scope changes
+
+#### 🧪 Verification
+
+- Plan: `.TODO/PLAN_Freelancer_Unified_Flow_2026-02-16.md`
+- Architect Patch: `.TODO/ARCHITECT_PATCH_2026-02-16_Unified_Flow.md`
+- Review: `.TODO/CODEGUARD_REVIEW_2026-02-16_Freelancer_Unified_Flow.md`
+
+#### 🔧 Technical Notes
+
+- `declineBooking` uses `refunded` status (not `declined`) per `fn_booking_guard` transitions
+- ViewModel uses fallback mapper when `vw_unified_work_items` view has refresh lag
+- Provider is screen-scoped (not global) — each instance tied to a specific work item ID
+
+---
+
 ### 🟢 Version 2.12 — Unified Profile & Search Polish (Phase 4)
+
 **Date:** 2026-02-01
 **Agent:** @Architect, @Pixel, @CodeGuard
 **Status:** ✅ Complete
 
 #### ✅ Implemented
+
 - **Profile Refactor**
   - **Structure**: Converted to `NestedScrollView` with pinned `TabBar` (About, Portfolio, History, Reviews).
   - **History Tab**: Displays completed tasks/bookings with correct status ("Completed" vs "Expired").
@@ -40,34 +91,40 @@
   - **Architecture**: Enforced MVVM pattern in Profile and Search features.
 
 #### 📊 Impact
+
 - **UX**: Profile feels like a complete professional identity with history and portfolio.
 - **Performance**: Search results load efficiently without slamming the database for every profile/category.
 
 ---
 
 ### 🟢 Version 2.11 — Freelancer Wallet MVP (Phase 4)
+
 **Date:** 2026-01-31
 **Agent:** @Supabase_Ops, @Architect, @Pixel
 **Status:** ✅ Complete
 
 #### ✅ Implemented
+
 - **Wallet Dashboard**
   - **Database**: Created secure view `wallet_balances` to aggregate `released` vs `held` funds.
   - **Logic**: Updated `WalletService` to use the view for accurate "Net Worth" calculation.
   - **UI**: Updated `WalletScreen` with split balance cards (Teal for Available, Amber for Escrow) and clear transaction history.
 
 #### 📊 Impact
+
 - **Financial Clarity**: Zero ambiguity between "money I have" and "money coming soon".
 - **Security**: Aggregation logic moved to database layer (View) prevents client-side math errors.
 
 ---
 
 ### 🟢 Version 2.10 — Unified Management System (Phase 1)
+
 **Date:** 2026-01-31
 **Agent:** @Architect, @Supabase_Ops, @Pixel
 **Status:** ✅ Complete
 
 #### ✅ Implemented
+
 - **Unified Management & Notes**
   - **Database**: Created `work_logs` table for immutable notes/events with RLS.
   - **Logic**: Implemented `OrderManagementViewModel` to manage private notes and timeline events.
@@ -75,22 +132,26 @@
   - **Integration**: Embedded panel into `BookingDetailsScreen` and `TaskDetailsScreen`.
 
 #### 📊 Impact
+
 - **Truth**: Single source of truth for "what happened" on an order.
 - **Privacy**: Private notes allow users to keep personal records without sharing.
 - **Consistency**: Unified UI for both Task and Booking management.
 
 #### 🔧 Technical Notes
+
 - **Polymorphic Relation**: `work_logs` links to either `tasks` or `bookings` via `related_entity_id`/`type`.
 - **Helper Function**: `is_work_log_participant` DB function simplifies RLS logic for shared logs.
 
 ---
 
 ### 🟢 Version 2.9 — Phase 1: Pay-First Booking Flow & Wallet
+
 **Date:** 2026-01-31
 **Agent:** @Supabase_Ops, @Architect, @Pixel
 **Status:** ✅ Complete
 
 #### ✅ Implemented
+
 - **Booking Flow v2 ("Pay-First")**
   - **Database**: Updated `booking_status_enum` with detailed lifecycle (`pending` → `paid_request_pending` → `active` → `delivered` → `completed`).
   - **Security**: Updated `fn_booking_guard` trigger to strictly enforce these transitions.
@@ -105,22 +166,26 @@
   - **Details**: `BookingDetailsScreen` now shows context-aware banners and buttons for every status (e.g., "Mark Delivered", "Release Funds").
 
 #### 📊 Impact
+
 - **Trust & Safety**: Funds are now logically "held" in escrow (simulated) before work starts.
 - **Clarity**: Both parties see the exact state of the booking (Paid Request, Active, Delivered).
 - **Architecture**: Solid foundation for integrating real payment gateways (Stripe) in Phase 2.
 
 #### 🔧 Technical Notes
+
 - **RPC Usage**: Use `process_payment_event` for all financial state changes to ensure atomicity.
 - **Status Mapping**: Dart `BookingStatus` enum mapped precisely to DB strings (e.g., `paidRequestPending` -> `paid_request_pending`).
 
 ---
 
 ### 🟢 Version 2.8.3 — Open Messaging & Profile Previews
+
 **Date:** 2026-01-19
 **Agent:** @Architect, @CodeGuard
 **Status:** ✅ Complete
 
 #### ✅ Implemented
+
 - **Open Direct Messaging**
   - **Restriction Removed**: Users no longer need to "Favorite" a profile before messaging them.
   - **Backend**: Updated `conversations_before_insert_guard` trigger to allow non-task-linked DM creation.
@@ -135,17 +200,20 @@
   - **Audit**: CodeGuard audit passed for performance and security.
 
 #### 📊 Impact
+
 - **UX**: Frictionless communication—users can reach out to freelancers immediately.
 - **Engagement**: Profile previews encourage exploration without navigating away from tasks/bookings.
 - **Maintainability**: Cleaner, more modular profile code.
 
 #### 🔧 Technical Notes
+
 - `Conversation.taskId` is now nullable (`String?`) to correctly model Direct Messages.
 - **Security Note**: Open messaging increases potential for spam; monitoring recommended.
 
 ---
 
 ### 🟢 Version 2.8 — Booking Packages & Payment UI
+
 **Date:** 2026-01-11
 **Agent:** @Architect, @SlineDocs
 **Status:** ✅ Complete
@@ -153,11 +221,13 @@
 ---
 
 ### 🟢 Version 2.8.2 — Chat UX & Context Integration (Polish)
+
 **Date:** 2026-01-12
 **Agent:** @Pixel, @CodeGuard
 **Status:** ✅ Complete
 
 #### ✅ Implemented
+
 - **Chat Context Improvements**
   - **`ChatContextWidget`**: Redesigned using `GlassContainer` for dark/light mode consistency (Gold/Teal accents).
   - **Navigation**: Added interaction handler to context banner → fetches Task → navigates to `TaskDetailsScreen`.
@@ -172,15 +242,18 @@
   - Updated `TaskViewModel` & `TaskRepository` to expose direct `getTaskById` for navigation support.
 
 #### 📊 Impact
+
 - **UX**: Chat feels deeply integrated rather than isolated. Users navigate fluidly between Talk and Task.
 - **Polish**: Glassmorphism extends to chat context, matching the app's premium aesthetic.
 - **Performance**: Blocking loaders prevent race conditions and improve perceived responsiveness.
 
 #### 🗂️ Files Touched
+
 - **New:** `lib/core/utils/loading_utils.dart`
 - **Modified:** `lib/features/chat/view/widgets/chat_context_widget.dart`, `lib/features/chat/view/widgets/conversation_list_tile.dart`, `lib/features/tasks/view/task_details_screen.dart`, `lib/features/tasks/viewmodels/task_view_model.dart`
 
 #### ✅ Implemented
+
 - **Booking Packages System**
   - Updated `tasks` table with `packages` jsonb column (Basic/Standard/Premium tiers).
   - Implemented `CreateTaskScreen` package editor with price, description, delivery time, and revisions.
@@ -199,16 +272,19 @@
   - Removed outdated test files (`booking_view_model_test.dart`).
 
 #### 📊 Impact
+
 - **Revenue Ready**: The app now supports the full "Order" lifecycle with tiered pricing.
 - **UX**: Seamless transition from "Select Slot" to "Pay & Book".
 - **Developer Experience**: Sentinel workflow is now leaner and more focused on high-level verification.
 
 #### 🗂️ Files Touched
+
 - **New Features:** `lib/features/booking/view/payment_method_screen.dart`, `lib/core/services/payment_service.dart`
 - **Modified:** `lib/features/booking/viewmodels/booking_view_model.dart`, `lib/features/booking/view/booking_sheet.dart`, `lib/features/tasks/view/create_task_screen.dart`
 - **Documentation:** `.agent/workflows/sentinel.md`, `Sline_Log.md`, `MVP_ROADMAP.md`
 
 #### 🔧 Technical Notes
+
 - `packages` column in `tasks` stores JSON: `{ "basic": {...}, "standard": {...}, "premium": {...} }`.
 - Payment Service is designed for easy swap with Stripe/Paddle implementations later.
 - `BookingViewModel` refactored to support DI for `PaymentService`.
@@ -216,11 +292,13 @@
 ---
 
 ### 🟢 Version 2.7.2 — UI Polish: Skeleton Loading & Tab Transitions
+
 **Date:** 2026-01-02
 **Agent:** @Pixel, @CodeGuard
 **Status:** ✅ Complete
 
 #### ✅ Implemented
+
 - **Skeleton Loading States**
   - Created `lib/core/widgets/skeleton_loader.dart` — Reusable shimmer animation base with `SkeletonLoader`, `SkeletonText`, `SkeletonAvatar`.
   - Created `lib/core/widgets/skeleton_card.dart` — Pre-built skeleton cards:
@@ -240,15 +318,18 @@
   - Fixed `task_details_screen.dart` — Refactored to `Column` layout (Header + Scrollable Content + Footer) for correct bottom bar positioning.
 
 #### 📊 Impact
+
 - **UX**: Loading states now show content-shaped placeholders instead of generic spinners, reducing perceived load time.
 - **Polish**: Tab transitions feel smoother and more premium.
 - **Stability**: Detail screen layouts now correctly anchor bottom bars.
 
 #### 🗂️ Files Touched
+
 - **New:** `lib/core/widgets/skeleton_loader.dart`, `lib/core/widgets/skeleton_card.dart`
 - **Modified:** `home_screen.dart`, `tenders_screen.dart`, `bookings_discovery_screen.dart`, `main_navigation_screen.dart`, `task_details_screen.dart`, `requests_list_screen.dart`, `messages_screen.dart`, `bookings_list_screen.dart`
 
 #### 🔧 Technical Notes
+
 - Skeleton cards use theme-aware colors (`colorScheme.cardBackground`, `colorScheme.divider`) for automatic dark/light mode support.
 - `AnimatedSwitcher` uses `KeyedSubtree` with `ValueKey<int>` to trigger transitions on index change.
 - Skeleton animations use `AnimationController` with `AutomaticKeepAliveClientMixin` for smooth shimmer effects.
@@ -256,26 +337,31 @@
 ---
 
 ### 🔧 Version 2.7.1 — CodeGuard Maintenance Audit
+
 **Date:** 2025-12-19
 **Agent:** @CodeGuard
 **Status:** ✅ Passed
 
 #### ✅ Maintenance Updates
+
 - **Lint Fixes**: Resolved `curly_braces_in_flow_control_structures` in 4 files (`booking_view_model.dart`, `message_model.dart`, etc).
 - **Formatting**: Applied `dart format .` to 142 files.
 - **Analysis**: `flutter analyze` is now clean (0 issues).
 
 #### ⚠️ Dependency Audit
+
 - **Critical**: `supabase_flutter` needs update (1.10.x -> 2.12.x). High risk.
 - **Warning**: `js` package is discontinued (transitive dependency).
 
 ---
 
 ### 🟢 Version 2.7 — Notification System End-to-End
+
 **Date:** 2025-12-19
 **Commit:** _Pending_ — "feat(notifications): Realtime notifications system, TaskStatus enum expansion, and UI integration"
 
 #### ✅ Implemented
+
 - **Notification System Core**
   - Database: `notifications` table + RLS policies (insert_any, select_own, update_own).
   - Service: `NotificationService` for realtime listening, fetching, and "mark as read".
@@ -289,11 +375,13 @@
   - `ServiceCard` & `OrderCard`: UI support for `TaskStatus.canceled` (Gray theme).
 
 #### 📊 Impact
+
 - **Engagement**: Users are instantly notified of critical task events.
 - **Completeness**: Handling of 'Cancellation' and 'Completion' closes the task lifecycle loop.
 - **Robustness**: Enum alignment prevents runtime errors with database status values.
 
 #### 🔧 Technical Notes
+
 - `notifications` table uses Realtime subscription for instant badge updates.
 - `TaskService` performs a pre-fetch before status updates to determine the correct recipient ID.
 - `TaskStatus` enum now fully matches Supabase constraints (`open`, `assigned`, `in_progress`, `closed`, `canceled`).
@@ -306,6 +394,7 @@
 **Commit:** _Pending_ — "feat(auth): forgot password flow with glassmorphism UI"
 
 #### ✅ Implemented
+
 - **Forgot Password UI**
   - Created `ForgotPasswordScreen` with matching Glassmorphism design.
   - Added "Forgot Password?" button to `LoginScreen` with navigation.
@@ -314,10 +403,12 @@
   - Updated `AuthViewModel` with `resetPassword` method and error mapping.
 
 #### 📊 Impact
+
 - **UX**: Users can now self-serve password recovery vs. getting stuck.
 - **Completeness**: Closes a critical gap in the authentication lifecycle.
 
 #### 🔧 Technical Notes
+
 - Uses Supabase's built-in email recovery flow.
 - Deep linking is handled by the OS/Supabase default for now; app just triggers the email.
 
@@ -653,8 +744,8 @@
 
 - **Storage**
   - Created private buckets: **`avatars`**, **`task-images`**.
-  - RLS on `storage.objects`:  
-    - INSERT: authenticated owner only (`owner = auth.uid()` and correct `bucket_id`).  
+  - RLS on `storage.objects`:
+    - INSERT: authenticated owner only (`owner = auth.uid()` and correct `bucket_id`).
     - SELECT: authenticated users for respective bucket (for signed URLs).
 - **Database**
   - Added `ALTER TABLE public.tasks ADD COLUMN IF NOT EXISTS image_paths text[] DEFAULT '{}'::text[];`
@@ -706,7 +797,7 @@
 - Pull-to-refresh on Home.
 - Image compression on upload (reduce bandwidth).
 
-### 🟢 Version 1.8 — Profile Avatars Revamp & Home Avatar Fix  
+### 🟢 Version 1.8 — Profile Avatars Revamp & Home Avatar Fix
 
 **Date:** 2025-09-19  
 **Commit:** _Pending_ — "fix: unify ProfileController, add SignedAvatar, private avatars bucket + RLS"
@@ -764,7 +855,7 @@
 - Re-open Profile/Home → image still shows (signed URL regenerated on view).
 - Web upload works; no 403; no `dart:io` usage.
 
-### 🟢 Version 1.7 — Sprint 2 Complete: Booking (A2–A4) + Categories (DB-first) + Portfolio v1**Date:** 2025-08-23  
+### 🟢 Version 1.7 — Sprint 2 Complete: Booking (A2–A4) + Categories (DB-first) + Portfolio v1**Date:** 2025-08-23
 
 **Commit:** _Pending_ — "feat(booking): availability & bookings polish; add categories DB-first + tasks.category_id"
 
@@ -1708,10 +1799,10 @@ Date: 2025-09-14
 Commit: Pending — “fix(chat): block owner from starting task chat; add RPC v1; client guard”
 
 ✅ Implemented
- • DB Trigger: Replaced trg_conversations_before_insert_guard logic → owner cannot start task-linked chats; non-owner must chat with task owner; normalized (user1_id,user2_id) order.
- • RPC: Added start_task_conversation_v1(p_task_id uuid) returning conversations row; grants to authenticated.
- • Flutter: message_service.createOrGetConversation() now calls start_task_conversation_v1(...).select().single(); task_card.dart shows a friendly SnackBar if owner taps Chat.
+• DB Trigger: Replaced trg_conversations_before_insert_guard logic → owner cannot start task-linked chats; non-owner must chat with task owner; normalized (user1_id,user2_id) order.
+• RPC: Added start_task_conversation_v1(p_task_id uuid) returning conversations row; grants to authenticated.
+• Flutter: message_service.createOrGetConversation() now calls start_task_conversation_v1(...).select().single(); task_card.dart shows a friendly SnackBar if owner taps Chat.
 
 📈 Impact
- • Prevents server-side error surfaces to owners; clean UX for non-owners.
- • Eliminates duplicate conversations for the same (task + pair).
+• Prevents server-side error surfaces to owners; clean UX for non-owners.
+• Eliminates duplicate conversations for the same (task + pair).
