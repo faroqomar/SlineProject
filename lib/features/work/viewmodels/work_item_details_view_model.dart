@@ -1,26 +1,22 @@
 import 'package:flutter/foundation.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/features/booking/models/booking_model.dart';
-import 'package:sline_app/features/booking/services/booking_service.dart';
-import 'package:sline_app/features/tasks/models/task_model.dart';
-import 'package:sline_app/features/tasks/services/task_service.dart';
+import 'package:sline_app/features/work/models/unified_work_item_model.dart';
+import 'package:sline_app/features/work/models/work_contract_model.dart';
+import 'package:sline_app/features/work/models/change_request_model.dart';
+import 'package:sline_app/features/work/models/extension_request_model.dart';
+import 'package:sline_app/features/work/services/work_management_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sline_app/features/booking/models/booking_model.dart';
 
 class WorkItemDetailsViewModel extends ChangeNotifier {
-  final BookingService _bookingService;
-  final TaskService _taskService;
+  final WorkManagementService _workService;
   final String currentUserId;
 
-  WorkItemDetailsViewModel({
-    BookingService? bookingService,
-    TaskService? taskService,
-    String? uid,
-  }) : _bookingService =
-           bookingService ?? BookingService(Supabase.instance.client),
-       _taskService = taskService ?? TaskService(Supabase.instance.client),
-       currentUserId =
-           uid ?? Supabase.instance.client.auth.currentUser?.id ?? '' {
+  WorkItemDetailsViewModel({WorkManagementService? workService, String? uid})
+    : _workService = workService ?? WorkManagementService(),
+      currentUserId =
+          uid ?? Supabase.instance.client.auth.currentUser?.id ?? '' {
     if (currentUserId.isEmpty) {
       AppLogger.w('WorkItemDetailsViewModel initialized without user ID');
     }
@@ -32,114 +28,245 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
   String? _error;
   String? get error => _error;
 
-  // loaded data
+  // Unified Data
+  UnifiedWorkItemModel? _workItem;
+  UnifiedWorkItemModel? get workItem => _workItem;
+
+  WorkContractModel? _activeContract;
+  WorkContractModel? get activeContract => _activeContract;
+
+  List<ChangeRequestModel> _changeRequests = [];
+  List<ChangeRequestModel> get changeRequests => _changeRequests;
+
+  List<ExtensionRequestModel> _extensionRequests = [];
+  List<ExtensionRequestModel> get extensionRequests => _extensionRequests;
+
+  // Resolved Accessors
+  String get title => _workItem?.title ?? '';
+  UnifiedWorkStatus get status =>
+      _workItem?.unifiedStatus ?? UnifiedWorkStatus.unknown;
+  bool get isFreelancer => _workItem?.freelancerId == currentUserId;
+  bool get isClient => _workItem?.clientId == currentUserId;
+
+  // Booking Specifics
   BookingModel? _booking;
-  Task? _task;
-
   BookingModel? get booking => _booking;
-  Task? get task => _task;
 
-  // Resolved fields for UI
-  String? get title => _booking?.taskData?['title'] ?? _task?.title;
-  String? get description =>
-      _booking?.taskData?['description'] ?? _task?.description;
-  // TODO: Add more resolved getters as needed
+  Map<String, dynamic>? _otherPartyProfile;
+  Map<String, dynamic>? get otherPartyProfile => _otherPartyProfile;
 
-  Future<void> loadItem(String id, WorkItemType type) async {
+  Future<void> loadData(String id, String type) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      if (type == WorkItemType.booking) {
-        // We need a way to fetch single booking. listBookings filters?
-        // BookingService doesn't seem to have getBookingById yet?
-        // Let's assume it does or I'll need to add it.
-        // Checking BookingService I recall it lacked getById.
-        // For now I'll use list filtered by ID if possible or implement getById.
-        // I'll implement fetch logic here using SupabaseClient if service lacks it,
-        // but cleaner to use Service.
+      // Parallel fetch
+      final results = await Future.wait([
+        _workService.getUnifiedWorkItem(id, type),
+        _workService.getActiveContract(id, type),
+        _workService.getPendingChangeRequests(id, type),
+        _workService.getPendingExtensionRequests(id, type),
+        // Always try to fetch booking details if type is booking
+        type == 'booking' ? _workService.getBooking(id) : Future.value(null),
+      ]);
 
-        // TEMPORARY: using client directly if service missing method,
-        // essentially implementing repository pattern here for now.
-        // Ideally should update BookingService.
+      _workItem = results[0] as UnifiedWorkItemModel?;
+      _activeContract = results[1] as WorkContractModel?;
+      _changeRequests = results[2] as List<ChangeRequestModel>;
+      _extensionRequests = results[3] as List<ExtensionRequestModel>;
+      _booking = results[4] as BookingModel?;
 
-        // Let's try finding it via list for MVP or better, direct fetch.
-        // I will assume I can fetch it.
-        final response = await Supabase.instance.client
-            .from('bookings')
-            .select('*, tasks(*), availability_slots(*)')
-            .eq('id', id)
-            .single();
-        _booking = BookingModel.fromJson(response);
-      } else {
-        _task = await _taskService.getTaskById(id);
+      // Fallback: If UnifiedWorkItem is missing but we have booking data, create a temporary one
+      if (_workItem == null && _booking != null) {
+        _workItem = _createFallbackWorkItem(_booking!);
       }
-    } catch (e) {
-      _error = 'Failed to load details';
-      AppLogger.e('WorkItemDetails load error', error: e);
+
+      if (_workItem == null) {
+        _error = 'Work item not found';
+      } else {
+        // Fetch User Profile
+        final otherUserId = isFreelancer
+            ? _workItem!.clientId
+            : _workItem!.freelancerId;
+        if (otherUserId.isNotEmpty) {
+          _otherPartyProfile = await _workService.getProfile(otherUserId);
+        }
+      }
+    } catch (e, stack) {
+      _error = 'Failed to load work details';
+      AppLogger.e('WorkItemDetails load error', error: e, stackTrace: stack);
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  // --- ACTIONS ---
+  UnifiedWorkItemModel _createFallbackWorkItem(BookingModel b) {
+    // Map BookingStatus to UnifiedWorkStatus
+    UnifiedWorkStatus uStatus;
+    switch (b.status) {
+      case BookingStatus.pending:
+      case BookingStatus.paidRequestPending:
+        uStatus = UnifiedWorkStatus.pending;
+        break;
+      case BookingStatus.confirmed:
+      case BookingStatus.active:
+      case BookingStatus.inProgress:
+        uStatus = UnifiedWorkStatus.active;
+        break;
+      case BookingStatus.completed:
+      case BookingStatus.delivered:
+        uStatus = UnifiedWorkStatus.delivered; // or completed
+        break;
+      case BookingStatus.declined:
+      case BookingStatus.canceled:
+      case BookingStatus.refunded:
+      case BookingStatus.expiredUnanswered:
+      case BookingStatus.noShow:
+        uStatus = UnifiedWorkStatus.canceled;
+        break;
+    }
+
+    return UnifiedWorkItemModel(
+      id: b.id,
+      sourceType: 'booking',
+      sourceStatus: b.status.name,
+      unifiedStatus: uStatus,
+      title: b.taskData?['title'] ?? 'Booking Task',
+      price: (b.price ?? 0).toDouble(),
+      deadline: b.scheduledAt,
+      clientId: b.clientId,
+      freelancerId: b.providerId,
+      revisionsTotal: 0,
+      revisionsUsed: 0,
+    );
+  }
+
+  // --- Actions ---
+
+  Future<void> submitDelivery(String note) async {
+    if (_workItem == null) return;
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      await _workService.submitDelivery(
+        entityId: _workItem!.id,
+        entityType: _workItem!.sourceType,
+        note: note,
+      );
+
+      await loadData(_workItem!.id, _workItem!.sourceType);
+    } catch (e, stack) {
+      _error = 'Failed to submit delivery';
+      AppLogger.e('Submit delivery error', error: e, stackTrace: stack);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> requestRevision(String note) async {
+    if (_workItem == null) return;
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      await _workService.requestRevision(
+        entityId: _workItem!.id,
+        entityType: _workItem!.sourceType,
+        note: note,
+      );
+
+      await loadData(_workItem!.id, _workItem!.sourceType);
+    } catch (e, stack) {
+      _error = 'Failed to request revision';
+      AppLogger.e('Request revision error', error: e, stackTrace: stack);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> acceptChangeRequest(String requestId) async {
+    if (_workItem == null) return;
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      await _workService.acceptChangeRequest(requestId);
+
+      await loadData(_workItem!.id, _workItem!.sourceType);
+    } catch (e, stack) {
+      _error = 'Failed to accept change request';
+      AppLogger.e('Accept change request error', error: e, stackTrace: stack);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> requestExtension(String note, int days) async {
+    if (_workItem == null) return;
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final currentDeadline = _workItem!.deadline ?? DateTime.now();
+      final newDeadline = currentDeadline.add(Duration(days: days));
+
+      await _workService.requestExtension(
+        entityId: _workItem!.id,
+        entityType: _workItem!.sourceType,
+        newDeadline: newDeadline,
+        reason: note,
+        requesterId: currentUserId,
+      );
+
+      await loadData(_workItem!.id, _workItem!.sourceType);
+    } catch (e, stack) {
+      _error = 'Failed to request extension';
+      AppLogger.e('Request extension error', error: e, stackTrace: stack);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
   Future<void> acceptBooking() async {
-    if (_booking == null) return;
+    if (_workItem == null) return;
     try {
-      await _bookingService.acceptBooking(_booking!.id);
-      await loadItem(_booking!.id, WorkItemType.booking);
-    } catch (e) {
-      AppLogger.e('Failed to accept booking', error: e);
-      rethrow;
+      _isLoading = true;
+      notifyListeners();
+
+      await _workService.acceptBooking(_workItem!.id);
+
+      await loadData(_workItem!.id, _workItem!.sourceType);
+    } catch (e, stack) {
+      _error = 'Failed to accept booking';
+      AppLogger.e('Accept booking error', error: e, stackTrace: stack);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
   Future<void> declineBooking() async {
-    if (_booking == null) return;
+    if (_workItem == null) return;
     try {
-      await _bookingService.declineBooking(_booking!.id);
-      await loadItem(_booking!.id, WorkItemType.booking);
-    } catch (e) {
-      AppLogger.e('Failed to decline booking', error: e);
-      rethrow;
-    }
-  }
+      _isLoading = true;
+      notifyListeners();
 
-  Future<void> markDelivered() async {
-    if (_booking != null) {
-      await _bookingService.markDelivered(_booking!.id);
-      await loadItem(_booking!.id, WorkItemType.booking);
-    } else if (_task != null) {
-      // Task delivery logic (update status)
-      // Usually involves submitting delivery.
-      // For MVP assume simple status update.
-      await _taskService.updateTaskStatus(
-        _task!.id,
-        TaskStatus.inProgress,
-      ); // Wrong status
-      // We need 'delivered' status for Tasks.
-      // If TaskStatus doesn't have delivered, we might need to add it or use 'completed' if simple.
-      // Plan says "delivered: View Only (Waiting for Review)".
-      // So Task needs 'delivered' status. Or we use 'completed'?
-      // Often 'in_review'?
-      // Let's check TaskEnum.
-    }
-  }
+      await _workService.declineBooking(_workItem!.id);
 
-  Future<void> approveAndRelease() async {
-    if (_booking != null) {
-      await _bookingService.approveAndRelease(_booking!.id);
-      await loadItem(_booking!.id, WorkItemType.booking);
+      await loadData(_workItem!.id, _workItem!.sourceType);
+    } catch (e, stack) {
+      _error = 'Failed to decline booking';
+      AppLogger.e('Decline booking error', error: e, stackTrace: stack);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
-  }
-
-  // Helper to determine primary button action
-  PrimaryActionType get primaryAction {
-    // Reuse specific logic from DashboardPermissionService if applicable
-    // or custom logic for Details screen.
-    return PrimaryActionType.startWork; // Placeholder
   }
 }

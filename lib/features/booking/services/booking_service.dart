@@ -260,7 +260,7 @@ class BookingService {
   Future<BookingModel> getBookingById(String bookingId) async {
     final res = await _client
         .from(_bookingsTable)
-        .select()
+        .select('*, tasks(*)')
         .eq('id', bookingId)
         .single();
     return BookingModel.fromJson(res);

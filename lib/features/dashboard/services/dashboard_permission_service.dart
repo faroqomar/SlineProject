@@ -13,8 +13,35 @@ class DashboardPermissionService {
       return _getBookingPermissions(userRole, status);
     } else if (type == WorkItemType.task && status is TaskStatus) {
       return _getTaskPermissions(userRole, status);
+    } else if (status is UnifiedWorkStatus) {
+      return _getUnifiedPermissions(userRole, status);
     }
     return WorkItemPermissions();
+  }
+
+  static WorkItemPermissions _getUnifiedPermissions(
+    UserRole role,
+    UnifiedWorkStatus status,
+  ) {
+    // Unified Status: active, delivered, completed, cancelled, pending, unknown
+    if (role == UserRole.freelancer) {
+      return WorkItemPermissions(
+        canStart: status == UnifiedWorkStatus.active, // Can "Submit Work"
+        canComplete:
+            false, // Delivered is a state, not permission to "Mark Completed" (Client does that)
+        canApprove: false,
+        canCancel: false, // Usually can't cancel active work easily
+      );
+    } else {
+      // Client
+      return WorkItemPermissions(
+        canStart: false,
+        canComplete: false,
+        canApprove:
+            status == UnifiedWorkStatus.delivered, // Can Accept Delivery
+        canCancel: false,
+      );
+    }
   }
 
   static WorkItemPermissions _getBookingPermissions(
@@ -96,6 +123,18 @@ class DashboardPermissionService {
     if (perms.canComplete) return PrimaryActionType.markCompleted;
     if (perms.canStart) return PrimaryActionType.startWork;
     if (perms.canApprove) return PrimaryActionType.approveClose;
+
+    // Unified Flow Action Mapping
+    if (status is UnifiedWorkStatus) {
+      if (userRole == UserRole.freelancer &&
+          status == UnifiedWorkStatus.active) {
+        return PrimaryActionType.startWork; // "Submit Work"
+      }
+      if (userRole == UserRole.client &&
+          status == UnifiedWorkStatus.delivered) {
+        return PrimaryActionType.approveClose; // "Accept Delivery"
+      }
+    }
 
     // Fallback or specific logical defaults
     if (type == WorkItemType.booking) {

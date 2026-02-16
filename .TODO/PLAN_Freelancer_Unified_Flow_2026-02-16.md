@@ -1,4 +1,4 @@
-# 📌 Plan: Freelancer Unified Flow (Final v1)
+# 📌 Plan: Freelancer Unified Flow (Final v1.5 Execution Ready)
 
 ## 1) Goal
 
@@ -11,50 +11,43 @@
 ### In-Scope
 
 - **Database:**
-  - New tables: `change_requests`, `extension_requests`.
-  - Updates to `tasks` and `bookings` constraints/triggers if needed.
+  - New tables: `work_contracts`, `change_requests`, `extension_requests`.
+  - Updates: Add Delivery/Revision columns to `tasks` and `bookings`.
+  - Polymorphic linking with **strict constraints**.
+  - **Unified View:** `vw_unified_work_items` with mapped status enums.
 - **Backend (Supabase):**
-  - RLS policies for new tables.
-  - Triggers for status transitions (e.g., auto-update task deadline on extension accept).
+  - RLS policies (strict recipient checks + No Update allowed on requests).
+  - Triggers for status transitions, activations, **escrow guards**, and **revision limits**.
+  - **RPC Functions** (SECURITY DEFINER) for accepting changes/delivery (Atomic Updates).
 - **App Logic (Flutter):**
   - Refactor `WorkItemDetailsViewModel` to be the "Unified Controller".
-  - Implement `ChangeRequestService`, `ExtensionRequestService`.
-  - Update `DashboardViewModel` to strictly follow spec priorities.
+  - Implement `WorkManagementService` (RPC-based).
+  - Update `DashboardViewModel`: Priorities include "Delivery Pending Approval".
 - **UI:**
-  - "Unification" of Work Details screen (same tabs/actions for both types).
-  - Integration of Change/Extension request actions.
+  - Unified Work Details (Requirements, Management tabs).
+  - Delivery Flow & Revision Request Flow (Freelancer "Resubmit" view).
 
 ### Out-of-Scope
 
-- **Client-side changes** (focusing on Freelancer experience first, though underlying DB logic affects both).
-- **Payment Gateway** details (assumed handled by `PaymentService`).
-- **Notification System** overhaul (using existing system).
+- **Client-side UI:** (Focusing on Freelancer experience).
+  - _Note:_ Revision Request _logic_ (DB/RPC) is implemented, but Client UI to trigger it is deferred. Verification via "Mock Client".
+- **Payment Gateway** details (handled by `PaymentService`).
+- **Edge Functions** (Logic defined in DB/RPC; Auto-Approve via "Lazy Finalize").
 
 ## 3) Evidence & Findings (From Scan)
 
 ### Existing
 
-- **Tables:** `tasks`, `bookings`, `task_requests` (bids), `conversations`, `messages`, `disputes` (exists!).
-- **Enums:** `booking_status_enum` (matches spec), `task_type_enum`.
-- **Code:** `WorkItemDetailsViewModel` exists but is skeletal. `DashboardViewModel` has basic logic but lacks strict priority rules for "Request Pending".
+- **Tables:** `tasks`, `bookings`, `task_requests`, `conversations`, `messages`, `disputes`.
+- **Enums:** `booking_status_enum` (authoritative), `task_type_enum`.
+- **Code:** `WorkItemDetailsViewModel` exists but is skeletal.
 
-### Missing
+### Critical Gaps Resolved in v1.5
 
-- **Tables:** `change_requests`, `extension_requests`.
-- **Logic:** "Requirements Frozen" enforcement, Change Request flow, Extension Request flow.
-- **UI:** Unified view for these new flows.
-
-### Risks
-
-- **Drift:** `tasks` table uses string status while `bookings` uses enum. Need to ensure `tasks.status` aligns with `booking_status_enum` conceptually.
-- **Complexity:** "Unified" view might complexify the code if not strictly abstracted.
-
-## 4) System Impact Map
-
-- **UI:** drastic updates to `WorkItemDetailsScreen` and `DashboardScreen`.
-- **MVVM:** `WorkItemDetailsViewModel` becomes complex state machine.
-- **Database:** new tables + foreign keys to `tasks` and `bookings` (polymorphic relationship using `related_entity_id`).
-- **RLS:** strict ownership rules on requests.
+- **Unified Status:** `vw_unified_work_items` maps Task strings -> Booking Enums for consistent logic.
+- **Auto-Approve:** "Lazy Finalize" RPC handles expiration on view/load.
+- **Security:** RPCs use `SECURITY DEFINER` with explicit participant validation.
+- **Revisions:** Logic implemented; Freelancer UI handles "Resubmit" flow.
 
 ---
 
@@ -64,15 +57,22 @@
 
 > Primary: @Sentinel
 
-### 0.1 Spec Lock
+### 0.1 Spec Definitions & Discovery
 
-- [ ] (@Sentinel) Confirm "Requirements Frozen" means NO edits to `tasks.description` or `bookings.requirements` after `active`.
-- [ ] (@Architect) Confirm `WorkItemDetailsViewModel` will wrap both `Task` and `BookingModel`.
+- [ ] (@Supabase_Ops) **Identify Exact Activation States:** Scan DB to confirm exact enum values (e.g., `confirmed`/`in_progress`).
+- [ ] (@Supabase_Ops) **Identify Payment Status:** Confirm exact values like `'held'`, `'escrow'`.
+- [ ] (@Supabase_Ops) **Ensure Freelancer Column:** functionality relies on `tasks.assigned_freelancer_id`.
+  - **Backfill Strategy:** Update `tasks.assigned_freelancer_id` from `task_requests` WHERE `status='accepted'`.
 
 ### 0.2 Threat Model
 
 - [ ] (@ThreatModeler) Abuse: ensure freelancer cannot "accept" their own change request.
-- [ ] (@Sentinel) Negative test: try to edit active task description (should fail RLS/trigger).
+- [ ] (@ThreatModeler) Abuse: ensure work cannot activate without payment held.
+
+### 0.3 Observability & Contracts
+
+- [ ] (@APIContract) Define RPC payloads.
+- [ ] (@Observability) Logging: `AppLogger` + DB Audit logs.
 
 ---
 
@@ -80,19 +80,54 @@
 
 > Primary: @Supabase_Ops
 
-### 1.1 Schema (New Tables)
+### 1.1 Schema (Contracts, Requests, Delivery)
 
-- [ ] (@Supabase_Ops) Create `change_requests` table:
-  - `id`, `task_id` (nullable), `booking_id` (nullable), `requester_id` (FK profiles), `scope_diff` (text), `price_diff` (numeric), `days_diff` (int), `status` (pending/accepted/rejected), `created_at`.
-  - Check constraint: `task_id IS NOT NULL OR booking_id IS NOT NULL`.
-- [ ] (@Supabase_Ops) Create `extension_requests` table:
-  - `id`, `task_id` (nullable), `booking_id` (nullable), `requester_id`, `new_deadline` (timestamptz), `reason`, `status` (pending/accepted/rejected).
+- [ ] (@Supabase_Ops) Create `work_contracts` table: `id`, `related_entity_type`, `related_entity_id`, `version`, `snapshot` (jsonb), `contract_hash`, `created_at`.
+- [ ] (@Supabase_Ops) Update `tasks` and `bookings`:
+  - Add `delivered_at` (timestamptz), `review_expires_at` (timestamptz).
+  - Add `revisions_total` (int, default 3), `revisions_used` (int, default 0).
+  - Add `revision_note` (text), `revision_requested_at` (timestamptz).
+- [ ] (@Supabase_Ops) Create `change_requests`: `scope_diff`, `price_diff`, `days_diff`, `status`, `applied_contract_version`.
+  - Constraint: `CHECK (related_entity_type IN ('task', 'booking'))`.
+  - Trigger Validation: Ensure entity exists.
+- [ ] (@Supabase_Ops) Create `extension_requests`: `new_deadline`, `reason`.
 
-### 1.2 RLS & Triggers
+### 1.2 RLS, Triggers & Views
 
-- [ ] (@Supabase_Ops) RLS: Select (participants), Insert (participants), Update (recipient only for status).
-- [ ] (@Supabase_Ops) Trigger: `trg_apply_extension`: on `status='accepted'`, update `tasks.deadline` or `bookings.ends_at` (conceptually).
-- [ ] (@Supabase_Ops) Trigger: `trg_freeze_requirements`: Prevent UPDATE on `tasks.description` / `bookings.requirements` if `status` is active.
+- [ ] (@Supabase_Ops) **Unified View (`vw_unified_work_items`):**
+  - Columns: `id`, `unified_status` (Enum), `source_type`, `source_status`, `title`, `price`.
+  - Logic: Maps `tasks.status` ('in_progress'->'active', 'review'->'delivered') to match `bookings` logic.
+- [ ] (@Supabase_Ops) Trigger `trg_activate_contract`:
+  - **ON UPDATE** of `tasks` or `bookings`.
+  - **IF** `status` matches **Exact Activation Value**.
+  - **GUARD:** Check `payment_status = 'held'`. If not, RAISE EXCEPTION.
+  - **ACTION:** Insert Version 1 into `work_contracts`.
+- [ ] (@Supabase_Ops) Trigger `trg_freeze_contract_fields`:
+  - **BEFORE UPDATE** on `tasks` or `bookings` active rows.
+  - **FROZEN:** `title`/`reqs`, `price`, `deadline`.
+  - **ALLOWED:** `delivered_at`, `revisions_used`, `status` (via RPC).
+- [ ] (@Supabase_Ops) RLS:
+  - Select: Participants only.
+  - Insert: Requester only.
+  - **Update:** `DENY ALL` (RPC Only).
+
+### 1.3 RPC Logic (SECURITY DEFINER)
+
+- [ ] (@Supabase_Ops) `rpc_accept_change_request(id)`:
+  - `SECURITY DEFINER`. Validate `auth.uid()` is recipient.
+  - Atomic update: Request status -> Accepted, Contract -> New Version, Wallet -> Update.
+- [ ] (@Supabase_Ops) `rpc_submit_delivery(entity_type, id, note)`:
+  - `SECURITY DEFINER`. Validate `auth.uid()` is provider/freelancer.
+  - Sets `delivered_at = NOW()`, `review_expires_at = NOW() + 3 days`.
+  - Updates status to `delivered`.
+- [ ] (@Supabase_Ops) `rpc_request_revision(entity_type, id, note)`:
+  - `SECURITY DEFINER`. Validate `auth.uid()` is client.
+  - Check `revisions_used < revisions_total`. Increment used.
+  - Reset `delivered_at` = NULL. Status -> `active`.
+- [ ] (@Supabase_Ops) `rpc_finalize_auto_approval(entity_type, id)`:
+  - **Lazy Guard:** If `status='delivered'` AND `now() > review_expires_at`.
+  - Actions: Move to `completed`, Release Payout.
+  - Returns: New status.
 
 ---
 
@@ -102,26 +137,25 @@
 
 ### 2.1 Models & Services
 
-- [ ] (@Architect) Generate `ChangeRequestModel` + `ExtensionRequestModel`.
-- [ ] (@Architect) Create `WorkManagementService`:
-  - `createChangeRequest(...)`
-  - `acceptChangeRequest(...)`
-  - `createExtensionRequest(...)`
-  - `acceptExtensionRequest(...)`
+- [ ] (@Architect) Models: `WorkContractModel`, `ChangeRequestModel`, `ExtensionRequestModel`.
+- [ ] (@Architect) Service `WorkManagementService`:
+  - Wraps all RPCs. calls `rpc_finalize_auto_approval` on `loadWorkItem()`.
 
 ### 2.2 Unified ViewModel
 
-- [ ] (@Architect) Enhance `WorkItemDetailsViewModel`:
-  - Add `loadChangeRequests()`, `loadExtensionRequests()`.
-  - Expose `canRequestChange`, `canRequestExtension`.
-  - Implement `freeze` check (is Active?).
+- [ ] (@Architect) `WorkItemDetailsViewModel`:
+  - Uses `vw_unified_work_items` for status logic.
+  - `activeContract`: frozen snapshot.
+  - `deliveryStatus`: Computed from `delivered_at` / `review_expires_at`.
+  - `revisionsLeft`: `revisions_total - revisions_used`.
+  - Actions: `deliverWork()`.
 
 ### 2.3 Dashboard Refinement
 
-- [ ] (@Architect) Refactor `DashboardViewModel._calculateNextActions()`:
-  - Priority 1: `booking.status = paid_request_pending` (Escrow Held).
-  - Priority 2: `change_requests.status = pending` (Action required by me).
-  - Priority 3: `disputes.status = open`.
+- [ ] (@Architect) Priorities:
+  1. **Action Required:** `paid_request_pending`, `dispute_open`.
+  2. **Workflow:** `change_pending`, `extension_pending`, `revision_requested` (Freelancer action).
+  3. **In Review:** Items where `unified_status='delivered'`.
 
 ---
 
@@ -131,17 +165,16 @@
 
 ### 3.1 Work Item Details Screen
 
-- [ ] (@Pixel) "Requirements" Tab: Read-only view of blocked scope.
-- [ ] (@Pixel) "Management" Tab (New):
-  - List active Change Requests.
-  - Button: "Request Scope Change" (Sheet).
-  - Button: "Request Extension" (Sheet).
-  - "Deliver Work" button (only if Active).
+- [ ] (@Pixel) "Requirements": Read Frozen Snapshot.
+- [ ] (@Pixel) "Management":
+  - If Active: Show "Deliver Work".
+  - If Delivered: Show "In Review" + Timer.
+  - If Revision Requested: Show Note + "Resubmit".
+  - Change/Extension lists.
 
-### 3.2 Dashboard Overhaul
+### 3.2 Dashboard
 
-- [ ] (@Pixel) "Next Actions" card for "New Booking Request" (High visibility, Green/Gold).
-- [ ] (@Pixel) "Work" tab: Group by Active, Delivered, Done.
+- [ ] (@Pixel) New Badges: "In Review", "Revision Requested".
 
 ---
 
@@ -151,25 +184,27 @@
 
 ### 4.1 Functional Tests
 
-- [ ] (@Sentinel) Plan: Create booking -> Pay -> "Request Pending" shows on dashboard.
-- [ ] (@Sentinel) Plan: Accept -> Active -> Verify "Requirements" are read-only.
-- [ ] (@Sentinel) Plan: Create Change Request -> Verify pending state -> Accept -> Verify budget updated (mock).
+- [ ] (@Sentinel) **Escrow Guard:** Try to activate unpaid task -> Exception.
+- [ ] (@Sentinel) **Delivery:** RPC `mark_delivered` -> Check `review_expires_at` is set.
+- [ ] (@Sentinel) **Auto-Approve:** Manipulate DB time -> Call `rpc_finalize` -> Check status `completed`.
+- [ ] (@Sentinel) **Revision Limit:** Request revision > limit -> Fail.
 
 ### 4.2 Security Tests
 
-- [ ] (@Sentinel) Try to update `tasks.description` via SQL when status is `in_progress`. Expect: Fail.
+- [ ] (@Sentinel) **Non-Participant:** Try to call `rpc_submit_delivery` on random task -> Fail.
+- [ ] (@Sentinel) **Direct Update:** Try to UPDATE `tasks` directly -> Fail.
 
 ---
 
 ## 5) Acceptance Criteria
 
-- [ ] Freelancer sees "Request Pending" bookings at top of dashboard.
-- [ ] Freelancer cannot edit task/booking details once active.
-- [ ] Change Request flow works (create -> view -> accept/reject UI exists).
-- [ ] Dashboard correctly categorizes items into Active/Delivered/Completed.
+- [ ] **Unified Status:** All logic relies on `vw_unified_work_items`.
+- [ ] **Security:** All mutations via SECURITY DEFINER RPCs.
+- [ ] **Contract Frozen:** Requirements stable.
+- [ ] **Delivery Lifecycle:** Delivered -> Timer -> (Lazy Auto-approve/Revision).
+- [ ] **Revisions:** Tracked and limited.
 
 ## 6) References
 
 - Spec: `.TODO/Fixing_Dashbowrd.md`
 - DB: `SUPABASE_SETUP.md`
-- Code: `lib/features/work/viewmodels/work_item_details_view_model.dart`

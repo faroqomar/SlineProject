@@ -11,46 +11,45 @@ This document is the **single source of truth** for all Supabase backend setup: 
 
 ---
 
-
 ---
 
 ## 1. Quick Reference (TL;DR)
 
 ### Core Tables (Public Schema)
 
-| Table | RLS | Rows | Purpose |
-|-------|-----|------|---------|
-| `profiles` | ✅ | 0 | User profiles linked to auth.users |
-| `tasks` | ✅ | 1 | Job postings (tender/booking) |
-| `task_requests` | ✅ | 0 | Bids/proposals on tasks |
-| `conversations` | ✅ | 0 | Chat threads |
-| `messages` | ✅ | 1 | Chat messages |
-| `conversation_presence` | ✅ | 0 | Typing indicators |
-| `categories` | ✅ | 0 | Service categories |
-| `favorites` | ✅ | 0 | Client's saved freelancers |
-| `saved_tasks` | ✅ | 0 | Bookmarked tasks |
-| `availability_slots` | ✅ | 0 | Provider availability |
-| `bookings` | ✅ | 1 | Session bookings |
-| `portfolio_items` | ✅ | 0 | Freelancer portfolio |
-| `notifications` | ✅ | 1 | User notifications |
+| Table                   | RLS | Rows | Purpose                            |
+| ----------------------- | --- | ---- | ---------------------------------- |
+| `profiles`              | ✅  | 0    | User profiles linked to auth.users |
+| `tasks`                 | ✅  | 1    | Job postings (tender/booking)      |
+| `task_requests`         | ✅  | 0    | Bids/proposals on tasks            |
+| `conversations`         | ✅  | 0    | Chat threads                       |
+| `messages`              | ✅  | 1    | Chat messages                      |
+| `conversation_presence` | ✅  | 0    | Typing indicators                  |
+| `categories`            | ✅  | 0    | Service categories                 |
+| `favorites`             | ✅  | 0    | Client's saved freelancers         |
+| `saved_tasks`           | ✅  | 0    | Bookmarked tasks                   |
+| `availability_slots`    | ✅  | 0    | Provider availability              |
+| `bookings`              | ✅  | 1    | Session bookings                   |
+| `portfolio_items`       | ✅  | 0    | Freelancer portfolio               |
+| `notifications`         | ✅  | 1    | User notifications                 |
 
 ### Enums
 
-| Enum | Values |
-|------|--------|
-| `task_type_enum` | `tender`, `booking` |
-| `booking_status_enum` | `pending`, `confirmed`, `active`, `delivered`, `completed`, `canceled`, `refunded`, `paid_request_pending`, `expired_unanswered` |
-| `payment_status_enum` | `unpaid`, `held`, `released`, `refunded` |
-| `message_type_enum` | `text`, `system`, `offer`, `offer_update`, `offer_accepted`, `offer_rejected`, `delivery_submitted`, `end_early_request`, `dispute_report` |
+| Enum                  | Values                                                                                                                                     |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `task_type_enum`      | `tender`, `booking`                                                                                                                        |
+| `booking_status_enum` | `pending`, `confirmed`, `active`, `delivered`, `completed`, `canceled`, `refunded`, `paid_request_pending`, `expired_unanswered`           |
+| `payment_status_enum` | `unpaid`, `held`, `released`, `refunded`                                                                                                   |
+| `message_type_enum`   | `text`, `system`, `offer`, `offer_update`, `offer_accepted`, `offer_rejected`, `delivery_submitted`, `end_early_request`, `dispute_report` |
 
 ### Storage Buckets
 
-| Bucket | Public | Purpose |
-|--------|--------|---------|
-| `avatars` | ❌ Private | Profile pictures (signed URLs) |
-| `task-images` | ❌ Private | Task attachments (signed URLs) |
-| `chat-attachments` | ❌ Private | Message files (signed URLs) |
-| `portfolio` | ✅ Public | Portfolio work images |
+| Bucket             | Public     | Purpose                        |
+| ------------------ | ---------- | ------------------------------ |
+| `avatars`          | ❌ Private | Profile pictures (signed URLs) |
+| `task-images`      | ❌ Private | Task attachments (signed URLs) |
+| `chat-attachments` | ❌ Private | Message files (signed URLs)    |
+| `portfolio`        | ✅ Public  | Portfolio work images          |
 
 ### Realtime
 
@@ -141,15 +140,15 @@ categories (id) ──< tasks (category_id)
 
 ### Key Unique Constraints
 
-| Table | Constraint | Purpose |
-|-------|------------|---------|
-| `conversations` | `(LEAST(user1_id,user2_id), GREATEST(user1_id,user2_id), COALESCE(task_id, NIL_UUID))` | One conversation per user pair per task |
-| `conversations` | `ux_convo_pair_direct` (WHERE task_id IS NULL) | One direct DM per user pair |
-| `conversations` | `ux_convo_pair_task` (WHERE task_id IS NOT NULL) | One conversation per task per user pair |
-| `task_requests` | `(task_id, freelancer_id) WHERE deleted_at IS NULL` | One active offer per freelancer per task |
-| `favorites` | `(client_id, freelancer_id)` | One favorite per client-freelancer pair |
-| `saved_tasks` | `(user_id, task_id)` | One save per user per task |
-| `categories` | `UNIQUE(name)` | Unique category names |
+| Table           | Constraint                                                                             | Purpose                                  |
+| --------------- | -------------------------------------------------------------------------------------- | ---------------------------------------- |
+| `conversations` | `(LEAST(user1_id,user2_id), GREATEST(user1_id,user2_id), COALESCE(task_id, NIL_UUID))` | One conversation per user pair per task  |
+| `conversations` | `ux_convo_pair_direct` (WHERE task_id IS NULL)                                         | One direct DM per user pair              |
+| `conversations` | `ux_convo_pair_task` (WHERE task_id IS NOT NULL)                                       | One conversation per task per user pair  |
+| `task_requests` | `(task_id, freelancer_id) WHERE deleted_at IS NULL`                                    | One active offer per freelancer per task |
+| `favorites`     | `(client_id, freelancer_id)`                                                           | One favorite per client-freelancer pair  |
+| `saved_tasks`   | `(user_id, task_id)`                                                                   | One save per user per task               |
+| `categories`    | `UNIQUE(name)`                                                                         | Unique category names                    |
 
 ---
 
@@ -161,14 +160,14 @@ categories (id) ──< tasks (category_id)
 CREATE TYPE public.task_type_enum AS ENUM ('tender', 'booking');
 ```
 
-| Value | Description | Use Case |
-|-------|-------------|----------|
-| `tender` | Traditional bidding task | Freelancers submit proposals, client selects one |
-| `booking` | Scheduled appointment | Client books provider's time slot |
+| Value     | Description              | Use Case                                         |
+| --------- | ------------------------ | ------------------------------------------------ |
+| `tender`  | Traditional bidding task | Freelancers submit proposals, client selects one |
+| `booking` | Scheduled appointment    | Client books provider's time slot                |
 
 ### 4.2 `booking_status_enum`
 
-```sql
+````sql
 ### 4.2 `booking_status_enum`
 
 ```sql
@@ -184,7 +183,7 @@ CREATE TYPE public.booking_status_enum AS ENUM (
   'paid_request_pending',
   'expired_unanswered'
 );
-```
+````
 
 **Status Transitions** (enforced by `fn_booking_guard` trigger):
 
@@ -219,17 +218,17 @@ CREATE TYPE public.message_type_enum AS ENUM (
 );
 ```
 
-| Type | Sender | Description | Payload Required |
-|------|--------|-------------|------------------|
-| `text` | Any participant | Regular message | No |
-| `system` | System | Auto-generated notification | No |
-| `offer` | Freelancer | Initial offer | `{price, days}` |
-| `offer_update` | Freelancer | Modified offer | `{price, days}` |
-| `offer_accepted` | Client | Acceptance notification | No |
-| `offer_rejected` | Client | Rejection notification | No |
-| `delivery_submitted` | Freelancer | Work submission | Optional attachments |
-| `end_early_request` | Either | Request to end early | `{reason}` |
-| `dispute_report` | Either | Dispute filing | `{reason}` |
+| Type                 | Sender          | Description                 | Payload Required     |
+| -------------------- | --------------- | --------------------------- | -------------------- |
+| `text`               | Any participant | Regular message             | No                   |
+| `system`             | System          | Auto-generated notification | No                   |
+| `offer`              | Freelancer      | Initial offer               | `{price, days}`      |
+| `offer_update`       | Freelancer      | Modified offer              | `{price, days}`      |
+| `offer_accepted`     | Client          | Acceptance notification     | No                   |
+| `offer_rejected`     | Client          | Rejection notification      | No                   |
+| `delivery_submitted` | Freelancer      | Work submission             | Optional attachments |
+| `end_early_request`  | Either          | Request to end early        | `{reason}`           |
+| `dispute_report`     | Either          | Dispute filing              | `{reason}`           |
 
 ### 4.4 `payment_status_enum`
 
@@ -249,16 +248,16 @@ CREATE TYPE public.payment_status_enum AS ENUM ('unpaid', 'held', 'released', 'r
 
 User profile information linked to Supabase Auth.
 
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| `id` | uuid | ❌ | - | PK, FK to auth.users(id) ON DELETE CASCADE |
-| `full_name` | text | ✅ | - | Display name |
-| `email` | text | ✅ | - | Email address |
-| `avatar_url` | text | ✅ | - | Storage path in 'avatars' bucket |
-| `roles` | text[] | ✅ | `['client']` | Available roles array |
-| `active_role` | text | ✅ | `'client'` | Current active role ('client' or 'freelancer') |
-| `skills` | text[] | ✅ | `'{}'` | List of professional skills |
-| `created_at` | timestamptz | ✅ | `now()` | Creation timestamp (UTC) |
+| Column        | Type        | Nullable | Default      | Description                                    |
+| ------------- | ----------- | -------- | ------------ | ---------------------------------------------- |
+| `id`          | uuid        | ❌       | -            | PK, FK to auth.users(id) ON DELETE CASCADE     |
+| `full_name`   | text        | ✅       | -            | Display name                                   |
+| `email`       | text        | ✅       | -            | Email address                                  |
+| `avatar_url`  | text        | ✅       | -            | Storage path in 'avatars' bucket               |
+| `roles`       | text[]      | ✅       | `['client']` | Available roles array                          |
+| `active_role` | text        | ✅       | `'client'`   | Current active role ('client' or 'freelancer') |
+| `skills`      | text[]      | ✅       | `'{}'`       | List of professional skills                    |
+| `created_at`  | timestamptz | ✅       | `now()`      | Creation timestamp (UTC)                       |
 
 **Key Relations:**
 
@@ -271,29 +270,35 @@ User profile information linked to Supabase Auth.
 
 Job postings (tender or booking type).
 
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
-| `user_id` | uuid | ❌ | - | FK to auth.users (legacy) |
-| `client_id` | uuid | ✅ | - | FK to profiles (task owner) |
-| `freelancer_id` | uuid | ✅ | - | FK to profiles (assigned) |
-| `assigned_freelancer_id` | uuid | ✅ | - | FK to profiles (assigned via offer) |
-| `title` | text | ❌ | - | Task title |
-| `description` | text | ❌ | - | Task details |
-| `budget` | numeric | ❌ | - | Task budget |
-| `budget_cents` | bigint | ✅ | Generated | Budget in cents (computed) |
-| `deadline` | timestamp | ✅ | - | Due date |
-| `category` | text | ✅ | - | Legacy category string |
-| `category_id` | uuid | ✅ | - | FK to categories |
-| `skills` | text[] | ✅ | `'{}'` | Required skills array |
-| `status` | text | ❌ | `'open'` | Status (open/assigned/closed/in_progress/canceled) |
-| `task_type` | task_type_enum | ❌ | `'tender'` | Task type |
-| `session_price_bigint` | bigint | ✅ | - | Booking session price |
-| `hour_rate_bigint` | bigint | ✅ | - | Booking hourly rate |
-| `image_paths` | text[] | ✅ | `'{}'` | Storage paths in 'task-images' bucket |
-| `packages` | jsonb | ✅ | - | Booking packages (Basic/Standard/Premium) |
-| `owner_id` | uuid | ✅ | Generated | `COALESCE(client_id, user_id)` |
-| `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
+| Column                   | Type           | Nullable | Default             | Description                                        |
+| ------------------------ | -------------- | -------- | ------------------- | -------------------------------------------------- |
+| `id`                     | uuid           | ❌       | `gen_random_uuid()` | Primary key                                        |
+| `user_id`                | uuid           | ❌       | -                   | FK to auth.users (legacy)                          |
+| `client_id`              | uuid           | ✅       | -                   | FK to profiles (task owner)                        |
+| `freelancer_id`          | uuid           | ✅       | -                   | FK to profiles (assigned)                          |
+| `assigned_freelancer_id` | uuid           | ✅       | -                   | FK to profiles (assigned via offer)                |
+| `title`                  | text           | ❌       | -                   | Task title                                         |
+| `description`            | text           | ❌       | -                   | Task details                                       |
+| `budget`                 | numeric        | ❌       | -                   | Task budget                                        |
+| `budget_cents`           | bigint         | ✅       | Generated           | Budget in cents (computed)                         |
+| `deadline`               | timestamp      | ✅       | -                   | Due date                                           |
+| `category`               | text           | ✅       | -                   | Legacy category string                             |
+| `category_id`            | uuid           | ✅       | -                   | FK to categories                                   |
+| `skills`                 | text[]         | ✅       | `'{}'`              | Required skills array                              |
+| `status`                 | text           | ❌       | `'open'`            | Status (open/assigned/closed/in_progress/canceled) |
+| `task_type`              | task_type_enum | ❌       | `'tender'`          | Task type                                          |
+| `session_price_bigint`   | bigint         | ✅       | -                   | Booking session price                              |
+| `hour_rate_bigint`       | bigint         | ✅       | -                   | Booking hourly rate                                |
+| `image_paths`            | text[]         | ✅       | `'{}'`              | Storage paths in 'task-images' bucket              |
+| `packages`               | jsonb          | ✅       | -                   | Booking packages (Basic/Standard/Premium)          |
+| `owner_id`               | uuid           | ✅       | Generated           | `COALESCE(client_id, user_id)`                     |
+| `delivered_at`           | timestamptz    | ✅       | -                   | When work was submitted                            |
+| `review_expires_at`      | timestamptz    | ✅       | -                   | Auto-approval deadline                             |
+| `revisions_total`        | int            | ❌       | `3`                 | Max revisions allowed                              |
+| `revisions_used`         | int            | ❌       | `0`                 | Revisions consumed                                 |
+| `revision_note`          | text           | ✅       | -                   | Last revision feedback                             |
+| `revision_requested_at`  | timestamptz    | ✅       | -                   | When revision was asked                            |
+| `created_at`             | timestamptz    | ❌       | `now()`             | Creation timestamp                                 |
 
 **Status Values:**
 
@@ -313,22 +318,22 @@ Job postings (tender or booking type).
 
 Offers/bids on tender tasks.
 
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
-| `task_id` | uuid | ❌ | - | FK to tasks |
-| `freelancer_id` | uuid | ✅ | - | FK to profiles (bidder) |
-| `bidder_id` | uuid | ✅ | - | FK to profiles (legacy) |
-| `price` | numeric | ❌ | - | Proposed price |
-| `days` | integer | ❌ | - | Proposed duration in days |
-| `duration_days` | integer | ✅ | - | Duration (synced to days) |
-| `amount` | numeric | ✅ | - | Alternative amount field |
-| `message` | text | ✅ | - | Proposal message |
-| `note` | text | ✅ | - | Additional notes |
-| `status` | text | ❌ | `'pending'` | Status (pending/accepted/rejected) |
-| `initiated_by` | uuid | ✅ | - | FK to auth.users (who last acted) |
-| `deleted_at` | timestamptz | ✅ | - | Soft delete timestamp |
-| `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
+| Column          | Type        | Nullable | Default             | Description                        |
+| --------------- | ----------- | -------- | ------------------- | ---------------------------------- |
+| `id`            | uuid        | ❌       | `gen_random_uuid()` | Primary key                        |
+| `task_id`       | uuid        | ❌       | -                   | FK to tasks                        |
+| `freelancer_id` | uuid        | ✅       | -                   | FK to profiles (bidder)            |
+| `bidder_id`     | uuid        | ✅       | -                   | FK to profiles (legacy)            |
+| `price`         | numeric     | ❌       | -                   | Proposed price                     |
+| `days`          | integer     | ❌       | -                   | Proposed duration in days          |
+| `duration_days` | integer     | ✅       | -                   | Duration (synced to days)          |
+| `amount`        | numeric     | ✅       | -                   | Alternative amount field           |
+| `message`       | text        | ✅       | -                   | Proposal message                   |
+| `note`          | text        | ✅       | -                   | Additional notes                   |
+| `status`        | text        | ❌       | `'pending'`         | Status (pending/accepted/rejected) |
+| `initiated_by`  | uuid        | ✅       | -                   | FK to auth.users (who last acted)  |
+| `deleted_at`    | timestamptz | ✅       | -                   | Soft delete timestamp              |
+| `created_at`    | timestamptz | ❌       | `now()`             | Creation timestamp                 |
 
 **Check Constraints:**
 
@@ -341,12 +346,12 @@ Offers/bids on tender tasks.
 
 Service categories (database-first approach).
 
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
-| `name` | text | ❌ | - | Category name (unique) |
-| `icon_url` | text | ✅ | - | Icon URL/path |
-| `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
+| Column       | Type        | Nullable | Default             | Description            |
+| ------------ | ----------- | -------- | ------------------- | ---------------------- |
+| `id`         | uuid        | ❌       | `gen_random_uuid()` | Primary key            |
+| `name`       | text        | ❌       | -                   | Category name (unique) |
+| `icon_url`   | text        | ✅       | -                   | Icon URL/path          |
+| `created_at` | timestamptz | ❌       | `now()`             | Creation timestamp     |
 
 ---
 
@@ -354,15 +359,15 @@ Service categories (database-first approach).
 
 Chat threads between two users (optional task context).
 
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
-| `task_id` | uuid | ✅ | - | FK to tasks (optional) |
-| `user1_id` | uuid | ✅ | - | FK to profiles (normalized: smaller UUID) |
-| `user2_id` | uuid | ✅ | - | FK to profiles (normalized: larger UUID) |
-| `initiated_by` | uuid | ✅ | - | FK to profiles (who started) |
-| `last_message_at` | timestamptz | ✅ | - | Last message timestamp |
-| `created_at` | timestamptz | ✅ | `now()` | Creation timestamp |
+| Column            | Type        | Nullable | Default             | Description                               |
+| ----------------- | ----------- | -------- | ------------------- | ----------------------------------------- |
+| `id`              | uuid        | ❌       | `gen_random_uuid()` | Primary key                               |
+| `task_id`         | uuid        | ✅       | -                   | FK to tasks (optional)                    |
+| `user1_id`        | uuid        | ✅       | -                   | FK to profiles (normalized: smaller UUID) |
+| `user2_id`        | uuid        | ✅       | -                   | FK to profiles (normalized: larger UUID)  |
+| `initiated_by`    | uuid        | ✅       | -                   | FK to profiles (who started)              |
+| `last_message_at` | timestamptz | ✅       | -                   | Last message timestamp                    |
+| `created_at`      | timestamptz | ✅       | `now()`             | Creation timestamp                        |
 
 **Important Notes:**
 
@@ -376,22 +381,22 @@ Chat threads between two users (optional task context).
 
 Chat messages with attachments and offer support.
 
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
-| `conversation_id` | uuid | ✅ | - | FK to conversations |
-| `sender_id` | uuid | ✅ | - | FK to profiles/auth.users |
-| `receiver_id` | uuid | ✅ | - | FK to profiles/auth.users |
-| `content` | text | ❌ | - | Message text |
-| `message_type` | message_type_enum | ❌ | `'text'` | Message type |
-| `payload` | jsonb | ❌ | `'{}'` | Structured data (offer details, etc.) |
-| `attachment_url` | text | ✅ | - | Storage path in 'chat-attachments' |
-| `attachment_type` | text | ✅ | - | 'image' or 'file' |
-| `attachment_name` | text | ✅ | - | Original filename |
-| `attachment_size` | bigint | ✅ | - | File size in bytes |
-| `delivered_at` | timestamptz | ✅ | - | When delivered to receiver |
-| `seen_at` | timestamptz | ✅ | - | When seen by receiver |
-| `created_at` | timestamptz | ✅ | `now()` | Creation timestamp |
+| Column            | Type              | Nullable | Default             | Description                           |
+| ----------------- | ----------------- | -------- | ------------------- | ------------------------------------- |
+| `id`              | uuid              | ❌       | `gen_random_uuid()` | Primary key                           |
+| `conversation_id` | uuid              | ✅       | -                   | FK to conversations                   |
+| `sender_id`       | uuid              | ✅       | -                   | FK to profiles/auth.users             |
+| `receiver_id`     | uuid              | ✅       | -                   | FK to profiles/auth.users             |
+| `content`         | text              | ❌       | -                   | Message text                          |
+| `message_type`    | message_type_enum | ❌       | `'text'`            | Message type                          |
+| `payload`         | jsonb             | ❌       | `'{}'`              | Structured data (offer details, etc.) |
+| `attachment_url`  | text              | ✅       | -                   | Storage path in 'chat-attachments'    |
+| `attachment_type` | text              | ✅       | -                   | 'image' or 'file'                     |
+| `attachment_name` | text              | ✅       | -                   | Original filename                     |
+| `attachment_size` | bigint            | ✅       | -                   | File size in bytes                    |
+| `delivered_at`    | timestamptz       | ✅       | -                   | When delivered to receiver            |
+| `seen_at`         | timestamptz       | ✅       | -                   | When seen by receiver                 |
+| `created_at`      | timestamptz       | ✅       | `now()`             | Creation timestamp                    |
 
 **Check Constraints:**
 
@@ -416,12 +421,12 @@ Chat messages with attachments and offer support.
 
 Typing indicators for real-time chat.
 
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| `conversation_id` | uuid | ❌ | - | FK to conversations (PK part) |
-| `user_id` | uuid | ❌ | - | FK to profiles (PK part) |
-| `is_typing` | boolean | ❌ | `false` | Currently typing |
-| `updated_at` | timestamptz | ❌ | `now()` | Last update timestamp |
+| Column            | Type        | Nullable | Default | Description                   |
+| ----------------- | ----------- | -------- | ------- | ----------------------------- |
+| `conversation_id` | uuid        | ❌       | -       | FK to conversations (PK part) |
+| `user_id`         | uuid        | ❌       | -       | FK to profiles (PK part)      |
+| `is_typing`       | boolean     | ❌       | `false` | Currently typing              |
+| `updated_at`      | timestamptz | ❌       | `now()` | Last update timestamp         |
 
 **Note:** Presence records are automatically expired after 15 seconds by `expire_typing_presence` trigger.
 
@@ -431,14 +436,14 @@ Typing indicators for real-time chat.
 
 Provider availability windows for booking tasks.
 
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
-| `provider_id` | uuid | ❌ | - | FK to auth.users |
-| `starts_at` | timestamptz | ❌ | - | Slot start time (UTC) |
-| `ends_at` | timestamptz | ❌ | - | Slot end time (UTC) |
-| `is_blocked` | boolean | ❌ | `false` | Whether slot is blocked |
-| `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
+| Column        | Type        | Nullable | Default             | Description             |
+| ------------- | ----------- | -------- | ------------------- | ----------------------- |
+| `id`          | uuid        | ❌       | `gen_random_uuid()` | Primary key             |
+| `provider_id` | uuid        | ❌       | -                   | FK to auth.users        |
+| `starts_at`   | timestamptz | ❌       | -                   | Slot start time (UTC)   |
+| `ends_at`     | timestamptz | ❌       | -                   | Slot end time (UTC)     |
+| `is_blocked`  | boolean     | ❌       | `false`             | Whether slot is blocked |
+| `created_at`  | timestamptz | ❌       | `now()`             | Creation timestamp      |
 
 **Business Rules:**
 
@@ -451,20 +456,26 @@ Provider availability windows for booking tasks.
 
 Client bookings on provider slots.
 
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
-| `task_id` | uuid | ✅ | - | FK to tasks |
-| `provider_id` | uuid | ❌ | - | FK to auth.users |
-| `client_id` | uuid | ❌ | - | FK to auth.users |
-| `slot_id` | uuid | ✅ | - | FK to availability_slots |
-| `status` | booking_status_enum | ❌ | `'pending'` | Booking status |
-| `payment_status` | payment_status_enum | ❌ | `'unpaid'` | Payment status |
-| `price` | numeric | ✅ | `0` | Agreed price |
-| `package_id` | text | ✅ | - | Chosen package ID |
-| `requirements` | jsonb | ✅ | `'{}'` | Client requirements |
-| `note` | text | ✅ | - | Booking notes |
-| `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
+| Column                  | Type                | Nullable | Default             | Description              |
+| ----------------------- | ------------------- | -------- | ------------------- | ------------------------ |
+| `id`                    | uuid                | ❌       | `gen_random_uuid()` | Primary key              |
+| `task_id`               | uuid                | ✅       | -                   | FK to tasks              |
+| `provider_id`           | uuid                | ❌       | -                   | FK to auth.users         |
+| `client_id`             | uuid                | ❌       | -                   | FK to auth.users         |
+| `slot_id`               | uuid                | ✅       | -                   | FK to availability_slots |
+| `status`                | booking_status_enum | ❌       | `'pending'`         | Booking status           |
+| `payment_status`        | payment_status_enum | ❌       | `'unpaid'`          | Payment status           |
+| `price`                 | numeric             | ✅       | `0`                 | Agreed price             |
+| `package_id`            | text                | ✅       | -                   | Chosen package ID        |
+| `requirements`          | jsonb               | ✅       | `'{}'`              | Client requirements      |
+| `note`                  | text                | ✅       | -                   | Booking notes            |
+| `delivered_at`          | timestamptz         | ✅       | -                   | When work was submitted  |
+| `review_expires_at`     | timestamptz         | ✅       | -                   | Auto-approval deadline   |
+| `revisions_total`       | int                 | ❌       | `3`                 | Max revisions allowed    |
+| `revisions_used`        | int                 | ❌       | `0`                 | Revisions consumed       |
+| `revision_note`         | text                | ✅       | -                   | Last revision feedback   |
+| `revision_requested_at` | timestamptz         | ✅       | -                   | When revision was asked  |
+| `created_at`            | timestamptz         | ❌       | `now()`             | Creation timestamp       |
 
 ---
 
@@ -472,12 +483,67 @@ Client bookings on provider slots.
 
 Wallet ledger for Pay-First flow.
 
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
-| `user_id` | uuid | ❌ | - | FK to profiles |
-| `amount` | numeric | ❌ | - | Transaction amount |
-| `type` | text | ❌ | - | 'escrow', 'release', 'refund' |
+| Column    | Type    | Nullable | Default             | Description                   |
+| --------- | ------- | -------- | ------------------- | ----------------------------- |
+| `id`      | uuid    | ❌       | `gen_random_uuid()` | Primary key                   |
+| `user_id` | uuid    | ❌       | -                   | FK to profiles                |
+| `amount`  | numeric | ❌       | -                   | Transaction amount            |
+| `type`    | text    | ❌       | -                   | 'escrow', 'release', 'refund' |
+
+---
+
+### 5.16 `work_contracts`
+
+Immutable snapshots of the work agreement at the moment of activation (or scope change).
+
+| Column                | Type        | Nullable | Default             | Description            |
+| --------------------- | ----------- | -------- | ------------------- | ---------------------- |
+| `id`                  | uuid        | ❌       | `gen_random_uuid()` | Primary key            |
+| `related_entity_type` | text        | ❌       | -                   | 'task' or 'booking'    |
+| `related_entity_id`   | uuid        | ❌       | -                   | FK to tasks/bookings   |
+| `version`             | int         | ❌       | -                   | Version number         |
+| `snapshot`            | jsonb       | ❌       | -                   | Full copy of agreement |
+| `contract_hash`       | text        | ❌       | -                   | Integrity hash         |
+| `created_at`          | timestamptz | ❌       | `now()`             | Creation timestamp     |
+
+**Constraints:** `UNIQUE(related_entity_type, related_entity_id, version)`
+
+---
+
+### 5.17 `change_requests`
+
+Formal requests to change scope, price, or deadline.
+
+| Column                     | Type        | Nullable | Default             | Description                         |
+| -------------------------- | ----------- | -------- | ------------------- | ----------------------------------- |
+| `id`                       | uuid        | ❌       | `gen_random_uuid()` | Primary key                         |
+| `related_entity_type`      | text        | ❌       | -                   | 'task' or 'booking'                 |
+| `related_entity_id`        | uuid        | ❌       | -                   | FK to tasks/bookings                |
+| `requester_id`             | uuid        | ❌       | -                   | FK to profiles                      |
+| `scope_diff`               | text        | ✅       | -                   | Scope changes                       |
+| `price_diff`               | numeric     | ✅       | -                   | Price adjustment                    |
+| `days_diff`                | int         | ✅       | -                   | Timeline adjustment                 |
+| `status`                   | text        | ❌       | `'pending'`         | pending/accepted/rejected/cancelled |
+| `applied_contract_version` | int         | ✅       | -                   | Version applied to                  |
+| `created_at`               | timestamptz | ❌       | `now()`             | Creation timestamp                  |
+| `resolved_at`              | timestamptz | ✅       | -                   | Resolution timestamp                |
+
+---
+
+### 5.18 `extension_requests`
+
+Requests to extend the deadline.
+
+| Column                | Type        | Nullable | Default             | Description                         |
+| --------------------- | ----------- | -------- | ------------------- | ----------------------------------- |
+| `id`                  | uuid        | ❌       | `gen_random_uuid()` | Primary key                         |
+| `related_entity_type` | text        | ❌       | -                   | 'task' or 'booking'                 |
+| `related_entity_id`   | uuid        | ❌       | -                   | FK to tasks/bookings                |
+| `requester_id`        | uuid        | ❌       | -                   | FK to profiles                      |
+| `new_deadline`        | timestamptz | ❌       | -                   | Proposed deadline                   |
+| `reason`              | text        | ✅       | -                   | Extension reason                    |
+| `status`              | text        | ❌       | `'pending'`         | pending/accepted/rejected/cancelled |
+| `created_at`          | timestamptz | ❌       | `now()`             | Creation timestamp                  |
 
 ---
 
@@ -485,16 +551,16 @@ Wallet ledger for Pay-First flow.
 
 Centralized immutable record of notes and system events.
 
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
-| `author_id` | uuid | ❌ | - | FK to profiles |
-| `related_entity_id` | uuid | ❌ | - | task_id or booking_id |
-| `related_entity_type` | text | ❌ | - | 'task' or 'booking' |
-| `content` | text | ❌ | - | Note content or event label |
-| `is_private` | boolean | ❌ | `false` | Access control flag |
-| `metadata` | jsonb | ✅ | `'{}'` | Event metadata |
-| `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
+| Column                | Type        | Nullable | Default             | Description                 |
+| --------------------- | ----------- | -------- | ------------------- | --------------------------- |
+| `id`                  | uuid        | ❌       | `gen_random_uuid()` | Primary key                 |
+| `author_id`           | uuid        | ❌       | -                   | FK to profiles              |
+| `related_entity_id`   | uuid        | ❌       | -                   | task_id or booking_id       |
+| `related_entity_type` | text        | ❌       | -                   | 'task' or 'booking'         |
+| `content`             | text        | ❌       | -                   | Note content or event label |
+| `is_private`          | boolean     | ❌       | `false`             | Access control flag         |
+| `metadata`            | jsonb       | ✅       | `'{}'`              | Event metadata              |
+| `created_at`          | timestamptz | ❌       | `now()`             | Creation timestamp          |
 
 **Indexes:** `idx_work_logs_entity` (related_entity_id, created_at desc)
 | `status` | text | ❌ | - | 'held', 'released', 'completed', 'refunded' |
@@ -509,14 +575,14 @@ Centralized immutable record of notes and system events.
 
 Freelancer work gallery.
 
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
-| `owner_id` | uuid | ❌ | - | FK to profiles |
-| `title` | text | ❌ | - | Item title |
-| `description` | text | ✅ | - | Item description |
-| `image_url` | text | ✅ | - | Storage path in 'portfolio' bucket |
-| `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
+| Column        | Type        | Nullable | Default             | Description                        |
+| ------------- | ----------- | -------- | ------------------- | ---------------------------------- |
+| `id`          | uuid        | ❌       | `gen_random_uuid()` | Primary key                        |
+| `owner_id`    | uuid        | ❌       | -                   | FK to profiles                     |
+| `title`       | text        | ❌       | -                   | Item title                         |
+| `description` | text        | ✅       | -                   | Item description                   |
+| `image_url`   | text        | ✅       | -                   | Storage path in 'portfolio' bucket |
+| `created_at`  | timestamptz | ❌       | `now()`             | Creation timestamp                 |
 
 ---
 
@@ -524,18 +590,18 @@ Freelancer work gallery.
 
 User notifications for messages, offers, and system events.
 
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
-| `user_id` | uuid | ❌ | - | FK to profiles (recipient) |
-| `title` | text | ❌ | - | Notification title |
-| `message` | text | ❌ | - | Notification body |
-| `type` | text | ❌ | - | 'offer', 'message', 'system', 'booking', 'task' |
-| `related_entity_id` | uuid | ✅ | - | ID of related object |
-| `related_entity_type` | text | ✅ | - | Table name of related object |
-| `is_read` | boolean | ❌ | `false` | Read status |
-| `metadata` | jsonb | ✅ | `'{}'` | Extra data |
-| `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
+| Column                | Type        | Nullable | Default             | Description                                     |
+| --------------------- | ----------- | -------- | ------------------- | ----------------------------------------------- |
+| `id`                  | uuid        | ❌       | `gen_random_uuid()` | Primary key                                     |
+| `user_id`             | uuid        | ❌       | -                   | FK to profiles (recipient)                      |
+| `title`               | text        | ❌       | -                   | Notification title                              |
+| `message`             | text        | ❌       | -                   | Notification body                               |
+| `type`                | text        | ❌       | -                   | 'offer', 'message', 'system', 'booking', 'task' |
+| `related_entity_id`   | uuid        | ✅       | -                   | ID of related object                            |
+| `related_entity_type` | text        | ✅       | -                   | Table name of related object                    |
+| `is_read`             | boolean     | ❌       | `false`             | Read status                                     |
+| `metadata`            | jsonb       | ✅       | `'{}'`              | Extra data                                      |
+| `created_at`          | timestamptz | ❌       | `now()`             | Creation timestamp                              |
 
 ---
 
@@ -543,12 +609,12 @@ User notifications for messages, offers, and system events.
 
 Client's saved freelancers (enables DM creation).
 
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
-| `client_id` | uuid | ❌ | - | FK to profiles |
-| `freelancer_id` | uuid | ❌ | - | FK to profiles |
-| `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
+| Column          | Type        | Nullable | Default             | Description        |
+| --------------- | ----------- | -------- | ------------------- | ------------------ |
+| `id`            | uuid        | ❌       | `gen_random_uuid()` | Primary key        |
+| `client_id`     | uuid        | ❌       | -                   | FK to profiles     |
+| `freelancer_id` | uuid        | ❌       | -                   | FK to profiles     |
+| `created_at`    | timestamptz | ❌       | `now()`             | Creation timestamp |
 
 ---
 
@@ -556,12 +622,12 @@ Client's saved freelancers (enables DM creation).
 
 User's bookmarked tasks.
 
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| `id` | uuid | ❌ | `gen_random_uuid()` | Primary key |
-| `user_id` | uuid | ❌ | - | FK to profiles |
-| `task_id` | uuid | ❌ | - | FK to tasks |
-| `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
+| Column       | Type        | Nullable | Default             | Description        |
+| ------------ | ----------- | -------- | ------------------- | ------------------ |
+| `id`         | uuid        | ❌       | `gen_random_uuid()` | Primary key        |
+| `user_id`    | uuid        | ❌       | -                   | FK to profiles     |
+| `task_id`    | uuid        | ❌       | -                   | FK to tasks        |
+| `created_at` | timestamptz | ❌       | `now()`             | Creation timestamp |
 
 ---
 
@@ -572,7 +638,7 @@ User's bookmarked tasks.
 Simplified task view for MVP queries.
 
 ```sql
-SELECT 
+SELECT
   id,
   owner_id AS client_id,
   title,
@@ -607,26 +673,84 @@ Aggregates `available` (released) and `held` (escrow) funds per user.
 
 ```sql
 create or replace view public.wallet_balances with (security_invoker=on) as
-select 
+select
   user_id,
   coalesce(sum(amount) filter (where status = 'held'), 0) as held_balance,
   coalesce(sum(amount) filter (where status = 'released'), 0) as available_balance
 from public.wallet_transactions
 group by user_id;
 ```
+
 WHERE user1_id = auth.uid() OR user2_id = auth.uid();
-```
+
+````
 
 **⚠️ Security Warning:** Uses `SECURITY DEFINER`.
 
-### 6.3 `users` ⚠️ SECURITY RISK
+
+### 6.4 `vw_unified_work_items`
+
+Maps Tasks and Bookings to a single schema for the 'Work Management' UI.
 
 ```sql
-SELECT id, email, 
+CREATE OR REPLACE VIEW public.vw_unified_work_items AS
+SELECT
+    t.id,
+    'task' AS source_type,
+    t.status AS source_status,
+    CASE
+        WHEN t.status = 'in_progress' THEN 'active'
+        WHEN t.status = 'delivered' THEN 'delivered'
+        WHEN t.status = 'completed' THEN 'completed'
+        WHEN t.status = 'canceled' THEN 'canceled'
+        ELSE t.status
+    END AS unified_status,
+    t.title,
+    t.budget AS price,
+    t.deadline,
+    t.client_id,
+    t.assigned_freelancer_id AS freelancer_id,
+    t.delivered_at,
+    t.review_expires_at,
+    t.revisions_total,
+    t.revisions_used
+FROM public.tasks t
+WHERE t.assigned_freelancer_id IS NOT NULL
+  AND t.status IN ('in_progress', 'delivered', 'completed')
+
+UNION ALL
+
+SELECT
+    b.id,
+    'booking' AS source_type,
+    b.status::text AS source_status,
+    b.status::text AS unified_status,
+    (t.title || ' - Session') AS title,
+    b.price,
+    av.starts_at AS deadline,
+    b.client_id,
+    b.provider_id AS freelancer_id,
+    b.delivered_at,
+    b.review_expires_at,
+    b.revisions_total,
+    b.revisions_used
+FROM public.bookings b
+LEFT JOIN public.tasks t ON b.task_id = t.id
+LEFT JOIN public.availability_slots av ON b.slot_id = av.id
+WHERE b.status IN ('active', 'delivered', 'completed');
+```
+
+**⚠️ Security Warning:** This view uses `SECURITY INVOKER` (default). RLS on base tables (`tasks`, `bookings`) will apply.
+
+### 6.3 `users` ⚠️ SECURITY RISK
+
+
+```sql
+SELECT id, email,
   raw_user_meta_data->>'full_name' AS full_name,
   raw_user_meta_data->>'avatar_url' AS avatar_url
 FROM auth.users u;
-```
+````
 
 **🚨 CRITICAL:** This view exposes `auth.users` to the `anon` role. **Should be removed or restricted immediately.**
 
@@ -638,141 +762,162 @@ All tables have Row Level Security (RLS) enabled. Below are the actual policies 
 
 ### 7.1 `profiles` Policies
 
-| Policy | Command | Rule |
-|--------|---------|------|
-| `Profiles are viewable by everyone` | SELECT | `true` (public can view) |
-| `Users can read their own profile` | SELECT | `auth.uid() = id` |
-| `Allow insert for authenticated users` | INSERT | `auth.uid() = id` |
-| `Users can insert their own profile` | INSERT | `auth.uid() = id` |
-| `Users can update their own profile` | UPDATE | `auth.uid() = id` |
-| `Users can delete their own profile` | DELETE | `auth.uid() = id` |
+| Policy                                 | Command | Rule                     |
+| -------------------------------------- | ------- | ------------------------ |
+| `Profiles are viewable by everyone`    | SELECT  | `true` (public can view) |
+| `Users can read their own profile`     | SELECT  | `auth.uid() = id`        |
+| `Allow insert for authenticated users` | INSERT  | `auth.uid() = id`        |
+| `Users can insert their own profile`   | INSERT  | `auth.uid() = id`        |
+| `Users can update their own profile`   | UPDATE  | `auth.uid() = id`        |
+| `Users can delete their own profile`   | DELETE  | `auth.uid() = id`        |
 
 ### 7.2 `tasks` Policies
 
-| Policy | Command | Rule |
-|--------|---------|------|
-| `Allow read tasks` | SELECT | `true` (all authenticated) |
-| `Allow select for all users` | SELECT | `true` |
-| `Allow read access with join` | SELECT | `true` |
-| `tasks_select_all_auth` | SELECT | `auth.role() = 'authenticated'` |
-| `tasks_select_open` | SELECT | `status = 'open' OR client_id = auth.uid() OR freelancer_id = auth.uid()` |
-| `tasks_select_policy` | SELECT | Same as above |
-| `Allow insert own tasks` | INSERT | `auth.uid() = user_id` |
-| `tasks_insert_policy` | INSERT | `is_client(auth.uid()) AND client_id = auth.uid()` |
-| `tasks_insert_self` | INSERT | `client_id = auth.uid()` |
-| `tasks_insert_owner` | INSERT | `owner_id = auth.uid()` |
-| `Allow update own tasks` | UPDATE | `auth.uid() = user_id` |
-| `tasks_update_policy` | UPDATE | `client_id = auth.uid()` |
-| `tasks_update_involved` | UPDATE | `client_id = auth.uid() OR freelancer_id = auth.uid()` |
-| `tasks_update_owner` | UPDATE | `owner_id = auth.uid()` |
-| `Allow delete own tasks` | DELETE | `auth.uid() = user_id` |
-| `tasks_delete_policy` | DELETE | `client_id = auth.uid()` |
+| Policy                        | Command | Rule                                                                      |
+| ----------------------------- | ------- | ------------------------------------------------------------------------- |
+| `Allow read tasks`            | SELECT  | `true` (all authenticated)                                                |
+| `Allow select for all users`  | SELECT  | `true`                                                                    |
+| `Allow read access with join` | SELECT  | `true`                                                                    |
+| `tasks_select_all_auth`       | SELECT  | `auth.role() = 'authenticated'`                                           |
+| `tasks_select_open`           | SELECT  | `status = 'open' OR client_id = auth.uid() OR freelancer_id = auth.uid()` |
+| `tasks_select_policy`         | SELECT  | Same as above                                                             |
+| `Allow insert own tasks`      | INSERT  | `auth.uid() = user_id`                                                    |
+| `tasks_insert_policy`         | INSERT  | `is_client(auth.uid()) AND client_id = auth.uid()`                        |
+| `tasks_insert_self`           | INSERT  | `client_id = auth.uid()`                                                  |
+| `tasks_insert_owner`          | INSERT  | `owner_id = auth.uid()`                                                   |
+| `Allow update own tasks`      | UPDATE  | `auth.uid() = user_id`                                                    |
+| `tasks_update_policy`         | UPDATE  | `client_id = auth.uid()`                                                  |
+| `tasks_update_involved`       | UPDATE  | `client_id = auth.uid() OR freelancer_id = auth.uid()`                    |
+| `tasks_update_owner`          | UPDATE  | `owner_id = auth.uid()`                                                   |
+| `Allow delete own tasks`      | DELETE  | `auth.uid() = user_id`                                                    |
+| `tasks_delete_policy`         | DELETE  | `client_id = auth.uid()`                                                  |
 
 ### 7.3 `task_requests` Policies
 
-| Policy | Command | Rule |
-|--------|---------|------|
-| `tr_select` | SELECT | `freelancer_id = auth.uid() OR EXISTS(task owner check)` |
-| `tr_insert` | INSERT | `is_freelancer(uid) AND freelancer_id = uid AND task is open AND not own task` |
-| `tr_update` | UPDATE | `freelancer_id = uid AND status = 'pending'` |
-| `tr_update_by_owner` | UPDATE | Task owner can update |
-| `tr_delete` | DELETE | `freelancer_id = uid AND status = 'pending'` |
+| Policy               | Command | Rule                                                                           |
+| -------------------- | ------- | ------------------------------------------------------------------------------ |
+| `tr_select`          | SELECT  | `freelancer_id = auth.uid() OR EXISTS(task owner check)`                       |
+| `tr_insert`          | INSERT  | `is_freelancer(uid) AND freelancer_id = uid AND task is open AND not own task` |
+| `tr_update`          | UPDATE  | `freelancer_id = uid AND status = 'pending'`                                   |
+| `tr_update_by_owner` | UPDATE  | Task owner can update                                                          |
+| `tr_delete`          | DELETE  | `freelancer_id = uid AND status = 'pending'`                                   |
 
 ### 7.4 `conversations` Policies
 
-| Policy | Command | Rule |
-|--------|---------|------|
-| `conversations_select` | SELECT | Participant only |
-| `conversations_select_by_participant` | SELECT | `auth.uid() = user1_id OR auth.uid() = user2_id` |
-| `conversations_insert` | INSERT | Client can insert if participant |
-| `conversations_insert_client_only` | INSERT | Complex: task-linked or favorites DM |
-| `conversations_update` | UPDATE | Participant only |
+| Policy                                | Command | Rule                                             |
+| ------------------------------------- | ------- | ------------------------------------------------ |
+| `conversations_select`                | SELECT  | Participant only                                 |
+| `conversations_select_by_participant` | SELECT  | `auth.uid() = user1_id OR auth.uid() = user2_id` |
+| `conversations_insert`                | INSERT  | Client can insert if participant                 |
+| `conversations_insert_client_only`    | INSERT  | Complex: task-linked or favorites DM             |
+| `conversations_update`                | UPDATE  | Participant only                                 |
 
 ### 7.5 `messages` Policies
 
-| Policy | Command | Rule |
-|--------|---------|------|
-| `messages_select` | SELECT | `is_conversation_participant(conversation_id, uid)` |
-| `messages_select_by_participant` | SELECT | Via conversation join |
-| `messages_select_participants` | SELECT | Via conversation join |
-| `Users can view their messages` | SELECT | `sender_id = uid OR receiver_id = uid` |
-| `messages_insert` | INSERT | Participant and sender = uid |
-| `messages_insert_by_sender` | INSERT | sender_id = uid and participant |
-| `messages_insert_participants_only` | INSERT | Complex with offer acceptance rules |
-| `messages_update` | UPDATE | `sender_id = uid` |
-| `messages_update_by_receiver` | UPDATE | `receiver_id = uid` (for seen_at) |
-| `messages_delete` | DELETE | `sender_id = uid` |
+| Policy                              | Command | Rule                                                |
+| ----------------------------------- | ------- | --------------------------------------------------- |
+| `messages_select`                   | SELECT  | `is_conversation_participant(conversation_id, uid)` |
+| `messages_select_by_participant`    | SELECT  | Via conversation join                               |
+| `messages_select_participants`      | SELECT  | Via conversation join                               |
+| `Users can view their messages`     | SELECT  | `sender_id = uid OR receiver_id = uid`              |
+| `messages_insert`                   | INSERT  | Participant and sender = uid                        |
+| `messages_insert_by_sender`         | INSERT  | sender_id = uid and participant                     |
+| `messages_insert_participants_only` | INSERT  | Complex with offer acceptance rules                 |
+| `messages_update`                   | UPDATE  | `sender_id = uid`                                   |
+| `messages_update_by_receiver`       | UPDATE  | `receiver_id = uid` (for seen_at)                   |
+| `messages_delete`                   | DELETE  | `sender_id = uid`                                   |
 
 ### 7.6 `availability_slots` Policies
 
-| Policy | Command | Rule |
-|--------|---------|------|
-| `slots_select_read` | SELECT | `true` (all authenticated) |
-| `slots_write_owner` | ALL | `provider_id = auth.uid()` |
+| Policy              | Command | Rule                       |
+| ------------------- | ------- | -------------------------- |
+| `slots_select_read` | SELECT  | `true` (all authenticated) |
+| `slots_write_owner` | ALL     | `provider_id = auth.uid()` |
 
 ### 7.7 `bookings` Policies
 
-| Policy | Command | Rule |
-|--------|---------|------|
-| `bookings_select_parties` | SELECT | `client_id = uid OR provider_id = uid` |
-| `bookings_insert_client` | INSERT | `client_id = uid` |
-| `bookings_update_status_only` | UPDATE | `client_id = uid OR provider_id = uid` (Cols locked via REVOKE) |
-| `bookings_deny_delete` | DELETE | `false` |
+| Policy                        | Command | Rule                                                            |
+| ----------------------------- | ------- | --------------------------------------------------------------- |
+| `bookings_select_parties`     | SELECT  | `client_id = uid OR provider_id = uid`                          |
+| `bookings_insert_client`      | INSERT  | `client_id = uid`                                               |
+| `bookings_update_status_only` | UPDATE  | `client_id = uid OR provider_id = uid` (Cols locked via REVOKE) |
+| `bookings_deny_delete`        | DELETE  | `false`                                                         |
 
 ### 7.13 `wallet_transactions` Policies
 
-| Policy | Command | Rule |
-|--------|---------|------|
-| `wallet_select_own` | SELECT | `user_id = auth.uid()` |
-| `wallet_deny_mod` | ALL | `false` (System only) |
+| Policy              | Command | Rule                   |
+| ------------------- | ------- | ---------------------- |
+| `wallet_select_own` | SELECT  | `user_id = auth.uid()` |
+| `wallet_deny_mod`   | ALL     | `false` (System only)  |
+
+### 7.15 `work_contracts` Policies
+
+| Policy                  | Command | Rule                          |
+| ----------------------- | ------- | ----------------------------- |
+| `work_contracts_select` | SELECT  | Participant of related entity |
+
+### 7.16 `change_requests` Policies
+
+| Policy                        | Command | Rule                                                      |
+| ----------------------------- | ------- | --------------------------------------------------------- |
+| `change_requests_select`      | SELECT  | Requester OR Participant of related entity                |
+| `change_requests_insert`      | INSERT  | Requester = uid AND Participant of related entity         |
+| `change_requests_soft_delete` | UPDATE  | Requester = uid (cancel only) - Status transition via RPC |
+
+### 7.17 `extension_requests` Policies
+
+| Policy                      | Command | Rule                                              |
+| --------------------------- | ------- | ------------------------------------------------- |
+| `extension_requests_select` | SELECT  | Requester OR Participant of related entity        |
+| `extension_requests_insert` | INSERT  | Requester = uid AND Participant of related entity |
 
 ### 7.14 `work_logs` Policies
 
-| Policy | Command | Rule |
-|--------|---------|------|
-| `work_logs_select` | SELECT | Private: `author_id=uid`, Shared: `is_work_log_participant` |
-| `work_logs_insert` | INSERT | `author_id=uid AND is_work_log_participant` |
-| `work_logs_deny_update` | UPDATE | `false` (Immutable) |
-| `work_logs_deny_delete` | DELETE | `false` (Immutable) |
+| Policy                  | Command | Rule                                                        |
+| ----------------------- | ------- | ----------------------------------------------------------- |
+| `work_logs_select`      | SELECT  | Private: `author_id=uid`, Shared: `is_work_log_participant` |
+| `work_logs_insert`      | INSERT  | `author_id=uid AND is_work_log_participant`                 |
+| `work_logs_deny_update` | UPDATE  | `false` (Immutable)                                         |
+| `work_logs_deny_delete` | DELETE  | `false` (Immutable)                                         |
 
 ### 7.8 `favorites` Policies
 
-| Policy | Command | Rule |
-|--------|---------|------|
-| `favorites_select_own` | SELECT | `client_id = auth.uid()` |
-| `favorites_insert_self` | INSERT | `client_id = auth.uid()` |
-| `favorites_delete_self` | DELETE | `client_id = auth.uid()` |
+| Policy                  | Command | Rule                     |
+| ----------------------- | ------- | ------------------------ |
+| `favorites_select_own`  | SELECT  | `client_id = auth.uid()` |
+| `favorites_insert_self` | INSERT  | `client_id = auth.uid()` |
+| `favorites_delete_self` | DELETE  | `client_id = auth.uid()` |
 
 ### 7.9 `saved_tasks` Policies
 
-| Policy | Command | Rule |
-|--------|---------|------|
-| `saved_tasks_select_own` | SELECT | `user_id = auth.uid()` |
-| `saved_tasks_insert_own` | INSERT | `user_id = auth.uid()` |
-| `saved_tasks_delete_own` | DELETE | `user_id = auth.uid()` |
+| Policy                   | Command | Rule                   |
+| ------------------------ | ------- | ---------------------- |
+| `saved_tasks_select_own` | SELECT  | `user_id = auth.uid()` |
+| `saved_tasks_insert_own` | INSERT  | `user_id = auth.uid()` |
+| `saved_tasks_delete_own` | DELETE  | `user_id = auth.uid()` |
 
 ### 7.10 `portfolio_items` Policies
 
-| Policy | Command | Rule |
-|--------|---------|------|
-| `portfolio_select_all_auth` | SELECT | `true` (public view) |
-| `portfolio_insert_owner` | INSERT | `owner_id = auth.uid()` |
-| `portfolio_update_owner` | UPDATE | `owner_id = auth.uid()` |
-| `portfolio_delete_owner` | DELETE | `owner_id = auth.uid()` |
+| Policy                      | Command | Rule                    |
+| --------------------------- | ------- | ----------------------- |
+| `portfolio_select_all_auth` | SELECT  | `true` (public view)    |
+| `portfolio_insert_owner`    | INSERT  | `owner_id = auth.uid()` |
+| `portfolio_update_owner`    | UPDATE  | `owner_id = auth.uid()` |
+| `portfolio_delete_owner`    | DELETE  | `owner_id = auth.uid()` |
 
 ### 7.11 `categories` Policies
 
-| Policy | Command | Rule |
-|--------|---------|------|
-| `categories_select_all` | SELECT | `true` (read-only for all) |
+| Policy                  | Command | Rule                       |
+| ----------------------- | ------- | -------------------------- |
+| `categories_select_all` | SELECT  | `true` (read-only for all) |
 
 ### 7.12 `conversation_presence` Policies
 
-| Policy | Command | Rule |
-|--------|---------|------|
-| `presence_select_participant` | SELECT | Conversation participant |
-| `presence_upsert_self` | INSERT | `user_id = auth.uid()` |
-| `presence_update_self` | UPDATE | `user_id = auth.uid()` |
+| Policy                        | Command | Rule                     |
+| ----------------------------- | ------- | ------------------------ |
+| `presence_select_participant` | SELECT  | Conversation participant |
+| `presence_upsert_self`        | INSERT  | `user_id = auth.uid()`   |
+| `presence_update_self`        | UPDATE  | `user_id = auth.uid()`   |
 
 ---
 
@@ -780,27 +925,35 @@ All tables have Row Level Security (RLS) enabled. Below are the actual policies 
 
 ### 8.1 Availability Slots Triggers
 
-| Trigger | Event | Function | Purpose |
-|---------|-------|----------|---------|
+| Trigger                | Event                | Function                        | Purpose                        |
+| ---------------------- | -------------------- | ------------------------------- | ------------------------------ |
 | `trg_no_overlap_slots` | BEFORE INSERT/UPDATE | `fn_reject_overlapping_slots()` | Prevent overlapping open slots |
 
 ### 8.2 Bookings Triggers
 
-| Trigger | Event | Function | Purpose |
-|---------|-------|----------|---------|
+| Trigger             | Event         | Function             | Purpose                          |
+| ------------------- | ------------- | -------------------- | -------------------------------- |
 | `trg_booking_guard` | BEFORE UPDATE | `fn_booking_guard()` | Enforce valid status transitions |
 
 ### 8.3 Conversations Triggers
 
-| Trigger | Event | Function | Purpose |
-|---------|-------|----------|---------|
-| `trg_conversations_before_insert_guard` | BEFORE INSERT | `conversations_before_insert_guard()` | Validate DM/task-linked rules |
-| `trg_normalize_conversation_users` | BEFORE INSERT/UPDATE | `normalize_conversation_users()` | Normalize user1_id < user2_id |
+| Trigger                                 | Event                | Function                              | Purpose                       |
+| --------------------------------------- | -------------------- | ------------------------------------- | ----------------------------- |
+| `trg_conversations_before_insert_guard` | BEFORE INSERT        | `conversations_before_insert_guard()` | Validate DM/task-linked rules |
+| `trg_normalize_conversation_users`      | BEFORE INSERT/UPDATE | `normalize_conversation_users()`      | Normalize user1_id < user2_id |
+
+### 8.5 Work Contract Triggers
+
+| Trigger                        | Event         | Function                       | Purpose                                                 |
+| ------------------------------ | ------------- | ------------------------------ | ------------------------------------------------------- |
+| `t_activate_contract_tasks`    | AFTER UPDATE  | `trg_activate_contract()`      | Snapshot contract on Task activation                    |
+| `t_activate_contract_bookings` | AFTER UPDATE  | `trg_activate_contract()`      | Snapshot contract on Booking activation                 |
+| `t_freeze_contract_fields`     | BEFORE UPDATE | `trg_freeze_contract_fields()` | Prevent direct updates to frozen fields on active items |
 
 ### 8.4 Messages Triggers
 
-| Trigger | Event | Function | Purpose |
-|---------|-------|----------|---------|
+| Trigger               | Event        | Function              | Purpose                                 |
+| --------------------- | ------------ | --------------------- | --------------------------------------- |
 | `trg_messages_notify` | AFTER INSERT | `fn_notify_message()` | Send push notification for new messages |
 
 ---
@@ -810,11 +963,13 @@ All tables have Row Level Security (RLS) enabled. Below are the actual policies 
 ### 9.1 Search
 
 **`search_tasks(query, limit_val, offset_val)`**
+
 - Full-text search on `title` and `description`
 - Filters: `status = 'open'`
 - Returns: `setof tasks`
 
 **`search_profiles(query, role_filter, limit_val, offset_val)`**
+
 - Full-text search on `full_name`
 - Filters: Optional `role` filter
 - Returns: `setof profiles`
@@ -823,37 +978,37 @@ All tables have Row Level Security (RLS) enabled. Below are the actual policies 
 
 ## 10. Indexes
 
-| Table | Columns | Type | Purpose |
-|-------|---------|------|---------|
-| `tasks` | `(to_tsvector('english', title \|\| ' ' \|\| description))` | GIN | Full-text search |
-| `tasks` | `(skills)` | GIN | Skills filtering |
-| `profiles` | `(to_tsvector('english', full_name))` | GIN | Full-text search |
-| `profiles` | `(skills)` | GIN | Skills filtering |
+| Table      | Columns                                                     | Type | Purpose          |
+| ---------- | ----------------------------------------------------------- | ---- | ---------------- |
+| `tasks`    | `(to_tsvector('english', title \|\| ' ' \|\| description))` | GIN  | Full-text search |
+| `tasks`    | `(skills)`                                                  | GIN  | Skills filtering |
+| `profiles` | `(to_tsvector('english', full_name))`                       | GIN  | Full-text search |
+| `profiles` | `(skills)`                                                  | GIN  | Skills filtering |
 
-| Trigger | Event | Function | Purpose |
-|---------|-------|----------|---------|
-| `trg_messages_before_insert_validate` | BEFORE INSERT | `messages_before_insert_validate()` | Validate payload for offer types |
-| `trg_messages_after_insert_offer_accept` | AFTER INSERT | `messages_after_insert_offer_accept()` | Auto-assign on offer_accepted |
+| Trigger                                  | Event         | Function                               | Purpose                          |
+| ---------------------------------------- | ------------- | -------------------------------------- | -------------------------------- |
+| `trg_messages_before_insert_validate`    | BEFORE INSERT | `messages_before_insert_validate()`    | Validate payload for offer types |
+| `trg_messages_after_insert_offer_accept` | AFTER INSERT  | `messages_after_insert_offer_accept()` | Auto-assign on offer_accepted    |
 
 ### 8.5 Task Requests Triggers
 
-| Trigger | Event | Function | Purpose |
-|---------|-------|----------|---------|
-| `trg_task_requests_before_insert_guard` | BEFORE INSERT | `task_requests_before_insert_guard()` | Validate tender-only, set freelancer_id |
-| `trg_sync_days_from_duration` | BEFORE INSERT | `trg_sync_days_from_duration()` | Sync days from duration_days |
-| `trg_task_requests_status_only` | BEFORE UPDATE | `trg_task_requests_allow_status_only()` | Set initiated_by on update |
-| `aaa_set_initiated_by_before_update` | BEFORE UPDATE | `aaa_set_initiated_by_before_update()` | Set initiated_by on update |
+| Trigger                                 | Event         | Function                                | Purpose                                 |
+| --------------------------------------- | ------------- | --------------------------------------- | --------------------------------------- |
+| `trg_task_requests_before_insert_guard` | BEFORE INSERT | `task_requests_before_insert_guard()`   | Validate tender-only, set freelancer_id |
+| `trg_sync_days_from_duration`           | BEFORE INSERT | `trg_sync_days_from_duration()`         | Sync days from duration_days            |
+| `trg_task_requests_status_only`         | BEFORE UPDATE | `trg_task_requests_allow_status_only()` | Set initiated_by on update              |
+| `aaa_set_initiated_by_before_update`    | BEFORE UPDATE | `aaa_set_initiated_by_before_update()`  | Set initiated_by on update              |
 
 ### 8.6 Tasks Triggers
 
-| Trigger | Event | Function | Purpose |
-|---------|-------|----------|---------|
+| Trigger                    | Event                | Function                 | Purpose                  |
+| -------------------------- | -------------------- | ------------------------ | ------------------------ |
 | `trg_lock_tasks_client_id` | BEFORE INSERT/UPDATE | `lock_tasks_client_id()` | Make client_id immutable |
 
 ### 8.7 Conversation Presence Triggers
 
-| Trigger | Event | Function | Purpose |
-|---------|-------|----------|---------|
+| Trigger               | Event               | Function                   | Purpose                       |
+| --------------------- | ------------------- | -------------------------- | ----------------------------- |
 | `trg_expire_presence` | AFTER INSERT/UPDATE | `expire_typing_presence()` | Clean up old presence records |
 
 ---
@@ -935,7 +1090,7 @@ BEGIN
     IF NEW.status = 'canceled' THEN
        RETURN NEW;
     END IF;
-    
+
     -- Legacy / Fallback
     IF OLD.status = NEW.status THEN
         RETURN NEW;
@@ -1017,6 +1172,7 @@ Alternative signature that also creates conversation and logs message.
 #### `process_payment_event(p_entity_id uuid, p_type text, p_event text) → jsonb`
 
 Handles wallet ledger and status updates safely.
+
 - `escrow`: Inserts held txn, updates booking->paid_request_pending
 - `release`: Inserts released txn, updates booking->completed
 - `refund`: Inserts refund txn, updates booking->refunded
@@ -1059,78 +1215,78 @@ Mark all messages in conversation as delivered for current user.
 
 ### 10.1 Tasks Indexes
 
-| Index | Columns | Purpose |
-|-------|---------|---------|
-| `tasks_pkey` | `(id)` | Primary key |
-| `idx_tasks_client` | `(client_id)` | Filter by client |
-| `idx_tasks_freelancer` | `(freelancer_id)` | Filter by freelancer |
-| `idx_tasks_assigned_freelancer` | `(assigned_freelancer_id)` | Filter by assigned |
-| `idx_tasks_status` | `(status)` | Filter by status |
-| `idx_tasks_status_created` | `(status, created_at DESC)` | List open tasks |
-| `idx_tasks_category_id` | `(category_id)` | Filter by category |
-| `idx_tasks_type_created_at` | `(task_type, created_at DESC)` | Filter by type |
-| `idx_tasks_user_created` | `(user_id, created_at DESC)` | User's tasks |
+| Index                           | Columns                              | Purpose                |
+| ------------------------------- | ------------------------------------ | ---------------------- |
+| `tasks_pkey`                    | `(id)`                               | Primary key            |
+| `idx_tasks_client`              | `(client_id)`                        | Filter by client       |
+| `idx_tasks_freelancer`          | `(freelancer_id)`                    | Filter by freelancer   |
+| `idx_tasks_assigned_freelancer` | `(assigned_freelancer_id)`           | Filter by assigned     |
+| `idx_tasks_status`              | `(status)`                           | Filter by status       |
+| `idx_tasks_status_created`      | `(status, created_at DESC)`          | List open tasks        |
+| `idx_tasks_category_id`         | `(category_id)`                      | Filter by category     |
+| `idx_tasks_type_created_at`     | `(task_type, created_at DESC)`       | Filter by type         |
+| `idx_tasks_user_created`        | `(user_id, created_at DESC)`         | User's tasks           |
 | `idx_tasks_user_status_created` | `(user_id, status, created_at DESC)` | User's tasks by status |
-| `idx_tasks_owner_created` | `(owner_id, created_at DESC)` | Owner's tasks |
+| `idx_tasks_owner_created`       | `(owner_id, created_at DESC)`        | Owner's tasks          |
 
 ### 10.2 Messages Indexes
 
-| Index | Columns | Purpose |
-|-------|---------|---------|
-| `messages_pkey` | `(id)` | Primary key |
-| `idx_messages_conv_created` | `(conversation_id, created_at DESC)` | Message list |
-| `idx_messages_conversation_created` | `(conversation_id, created_at DESC)` | Message list |
-| `idx_messages_conversation_created_at` | `(conversation_id, created_at DESC)` | Message list |
-| `idx_messages_convo_created` | `(conversation_id, created_at)` | Message list (ASC) |
-| `idx_messages_participants` | `(sender_id, receiver_id)` | DM queries |
-| `idx_messages_type` | `(message_type)` | Filter by type |
-| `idx_messages_payload_gin` | `(payload) GIN` | JSONB search |
-| `idx_messages_receiver_unseen` | `(receiver_id) WHERE seen_at IS NULL` | Unread count |
-| `idx_messages_conv_type` | `(conversation_id, attachment_type)` | Attachments |
+| Index                                  | Columns                               | Purpose            |
+| -------------------------------------- | ------------------------------------- | ------------------ |
+| `messages_pkey`                        | `(id)`                                | Primary key        |
+| `idx_messages_conv_created`            | `(conversation_id, created_at DESC)`  | Message list       |
+| `idx_messages_conversation_created`    | `(conversation_id, created_at DESC)`  | Message list       |
+| `idx_messages_conversation_created_at` | `(conversation_id, created_at DESC)`  | Message list       |
+| `idx_messages_convo_created`           | `(conversation_id, created_at)`       | Message list (ASC) |
+| `idx_messages_participants`            | `(sender_id, receiver_id)`            | DM queries         |
+| `idx_messages_type`                    | `(message_type)`                      | Filter by type     |
+| `idx_messages_payload_gin`             | `(payload) GIN`                       | JSONB search       |
+| `idx_messages_receiver_unseen`         | `(receiver_id) WHERE seen_at IS NULL` | Unread count       |
+| `idx_messages_conv_type`               | `(conversation_id, attachment_type)`  | Attachments        |
 
 ### 10.3 Conversations Indexes
 
-| Index | Columns | Purpose |
-|-------|---------|---------|
-| `conversations_pkey` | `(id)` | Primary key |
-| `idx_conversations_task` | `(task_id)` | Task conversations |
-| `idx_conversations_user1` | `(user1_id)` | User queries |
-| `idx_conversations_user2` | `(user2_id)` | User queries |
-| `uq_conversations_pair_task` | `(LEAST, GREATEST, COALESCE(task_id, NIL))` | Unique constraint |
-| `ux_convo_pair_direct` | `(LEAST, GREATEST) WHERE task_id IS NULL` | Direct DMs |
-| `ux_convo_pair_task` | `(LEAST, GREATEST, task_id) WHERE task_id IS NOT NULL` | Task convos |
-| `ux_convo_unique` | `(task_id, user1_id, user2_id)` | Legacy unique |
+| Index                        | Columns                                                | Purpose            |
+| ---------------------------- | ------------------------------------------------------ | ------------------ |
+| `conversations_pkey`         | `(id)`                                                 | Primary key        |
+| `idx_conversations_task`     | `(task_id)`                                            | Task conversations |
+| `idx_conversations_user1`    | `(user1_id)`                                           | User queries       |
+| `idx_conversations_user2`    | `(user2_id)`                                           | User queries       |
+| `uq_conversations_pair_task` | `(LEAST, GREATEST, COALESCE(task_id, NIL))`            | Unique constraint  |
+| `ux_convo_pair_direct`       | `(LEAST, GREATEST) WHERE task_id IS NULL`              | Direct DMs         |
+| `ux_convo_pair_task`         | `(LEAST, GREATEST, task_id) WHERE task_id IS NOT NULL` | Task convos        |
+| `ux_convo_unique`            | `(task_id, user1_id, user2_id)`                        | Legacy unique      |
 
 ### 10.4 Task Requests Indexes
 
-| Index | Columns | Purpose |
-|-------|---------|---------|
-| `task_requests_pkey` | `(id)` | Primary key |
-| `idx_task_requests_task` | `(task_id)` | Task's offers |
-| `idx_task_requests_freelancer` | `(freelancer_id)` | Freelancer's offers |
-| `idx_task_requests_task_created` | `(task_id, created_at DESC)` | Task's offers sorted |
-| `ix_tr_task_freelancer` | `(task_id, freelancer_id)` | Composite |
-| `ix_tr_task_bidder_status` | `(task_id, bidder_id, status)` | Status check |
-| `uq_task_requests_one_active_per_freelancer` | `(task_id, freelancer_id) WHERE deleted_at IS NULL` | One active offer |
+| Index                                        | Columns                                             | Purpose              |
+| -------------------------------------------- | --------------------------------------------------- | -------------------- |
+| `task_requests_pkey`                         | `(id)`                                              | Primary key          |
+| `idx_task_requests_task`                     | `(task_id)`                                         | Task's offers        |
+| `idx_task_requests_freelancer`               | `(freelancer_id)`                                   | Freelancer's offers  |
+| `idx_task_requests_task_created`             | `(task_id, created_at DESC)`                        | Task's offers sorted |
+| `ix_tr_task_freelancer`                      | `(task_id, freelancer_id)`                          | Composite            |
+| `ix_tr_task_bidder_status`                   | `(task_id, bidder_id, status)`                      | Status check         |
+| `uq_task_requests_one_active_per_freelancer` | `(task_id, freelancer_id) WHERE deleted_at IS NULL` | One active offer     |
 
 ### 10.5 Availability Slots Indexes
 
-| Index | Columns | Purpose |
-|-------|---------|---------|
-| `availability_slots_pkey` | `(id)` | Primary key |
+| Index                      | Columns                                                  | Purpose           |
+| -------------------------- | -------------------------------------------------------- | ----------------- |
+| `availability_slots_pkey`  | `(id)`                                                   | Primary key       |
 | `excl_slots_provider_time` | `(provider_id, tstzrange) GIST WHERE is_blocked = false` | Overlap detection |
 
 ### 10.6 Other Key Indexes
 
-| Table | Index | Purpose |
-|-------|-------|---------|
-| `favorites` | `idx_favorites_client`, `idx_favorites_freelancer` | Quick lookups |
-| `favorites` | `uq_favorites_client_freelancer` | Unique pair |
-| `saved_tasks` | `idx_saved_tasks_user`, `idx_saved_tasks_task` | Quick lookups |
-| `saved_tasks` | `uq_saved_tasks_user_task` | Unique pair |
-| `categories` | `uq_categories_name` | Unique name |
-| `categories` | `idx_categories_name_lower` | Case-insensitive search |
-| `portfolio_items` | `idx_portfolio_owner_created` | Owner's portfolio |
+| Table             | Index                                              | Purpose                 |
+| ----------------- | -------------------------------------------------- | ----------------------- |
+| `favorites`       | `idx_favorites_client`, `idx_favorites_freelancer` | Quick lookups           |
+| `favorites`       | `uq_favorites_client_freelancer`                   | Unique pair             |
+| `saved_tasks`     | `idx_saved_tasks_user`, `idx_saved_tasks_task`     | Quick lookups           |
+| `saved_tasks`     | `uq_saved_tasks_user_task`                         | Unique pair             |
+| `categories`      | `uq_categories_name`                               | Unique name             |
+| `categories`      | `idx_categories_name_lower`                        | Case-insensitive search |
+| `portfolio_items` | `idx_portfolio_owner_created`                      | Owner's portfolio       |
 
 ---
 
@@ -1138,48 +1294,48 @@ Mark all messages in conversation as delivered for current user.
 
 ### 11.1 Bucket Configuration
 
-| Bucket | ID | Public | Size Limit | MIME Types | Created |
-|--------|-----|--------|------------|------------|---------|
-| avatars | `avatars` | ❌ Private | Unlimited | Any | 2025-09-19 |
-| task-images | `task-images` | ❌ Private | Unlimited | Any | 2025-09-20 |
-| chat-attachments | `chat-attachments` | ❌ Private | Unlimited | Any | 2025-08-16 |
-| portfolio | `portfolio` | ✅ Public | Unlimited | Any | 2025-08-23 |
+| Bucket           | ID                 | Public     | Size Limit | MIME Types | Created    |
+| ---------------- | ------------------ | ---------- | ---------- | ---------- | ---------- |
+| avatars          | `avatars`          | ❌ Private | Unlimited  | Any        | 2025-09-19 |
+| task-images      | `task-images`      | ❌ Private | Unlimited  | Any        | 2025-09-20 |
+| chat-attachments | `chat-attachments` | ❌ Private | Unlimited  | Any        | 2025-08-16 |
+| portfolio        | `portfolio`        | ✅ Public  | Unlimited  | Any        | 2025-08-23 |
 
 ### 11.2 Storage Policies
 
 #### Avatars Bucket
 
-| Policy | Command | Rule |
-|--------|---------|------|
-| `avatars_select_authenticated` | SELECT | `bucket_id = 'avatars'` |
-| `avatars_insert_own_folder` | INSERT | `bucket_id = 'avatars' AND name LIKE uid || '/%'` |
-| `avatars_update_own_folder` | UPDATE | `bucket_id = 'avatars' AND name LIKE uid || '/%'` |
-| `avatars_delete_own_folder` | DELETE | `bucket_id = 'avatars' AND name LIKE uid || '/%'` |
+| Policy                         | Command | Rule                                     |
+| ------------------------------ | ------- | ---------------------------------------- | --- | ----- |
+| `avatars_select_authenticated` | SELECT  | `bucket_id = 'avatars'`                  |
+| `avatars_insert_own_folder`    | INSERT  | `bucket_id = 'avatars' AND name LIKE uid |     | '/%'` |
+| `avatars_update_own_folder`    | UPDATE  | `bucket_id = 'avatars' AND name LIKE uid |     | '/%'` |
+| `avatars_delete_own_folder`    | DELETE  | `bucket_id = 'avatars' AND name LIKE uid |     | '/%'` |
 
 #### Task Images Bucket
 
-| Policy | Command | Rule |
-|--------|---------|------|
-| `task_images_select_authenticated` | SELECT | `bucket_id = 'task-images'` |
-| `task_images_insert_own_folder` | INSERT | `bucket_id = 'task-images' AND name LIKE uid || '/%'` |
-| `task_images_update_own_folder` | UPDATE | Same as insert |
-| `task_images_delete_own_folder` | DELETE | Same as insert |
+| Policy                             | Command | Rule                                         |
+| ---------------------------------- | ------- | -------------------------------------------- | --- | ----- |
+| `task_images_select_authenticated` | SELECT  | `bucket_id = 'task-images'`                  |
+| `task_images_insert_own_folder`    | INSERT  | `bucket_id = 'task-images' AND name LIKE uid |     | '/%'` |
+| `task_images_update_own_folder`    | UPDATE  | Same as insert                               |
+| `task_images_delete_own_folder`    | DELETE  | Same as insert                               |
 
 #### Chat Attachments Bucket
 
-| Policy | Command | Rule |
-|--------|---------|------|
-| `chat_attach_select_auth` | SELECT | `bucket_id = 'chat-attachments'` |
-| `chat_attach_insert_auth` | INSERT | `bucket_id = 'chat-attachments' AND owner = auth.uid()` |
+| Policy                    | Command | Rule                                                    |
+| ------------------------- | ------- | ------------------------------------------------------- |
+| `chat_attach_select_auth` | SELECT  | `bucket_id = 'chat-attachments'`                        |
+| `chat_attach_insert_auth` | INSERT  | `bucket_id = 'chat-attachments' AND owner = auth.uid()` |
 
 #### Portfolio Bucket
 
-| Policy | Command | Rule |
-|--------|---------|------|
-| `storage_portfolio_select_all` | SELECT | `bucket_id = 'portfolio'` (public) |
-| `storage_portfolio_insert_owner` | INSERT | `bucket_id = 'portfolio' AND split_part(name, '/', 1) = uid` |
-| `storage_portfolio_update_owner` | UPDATE | Same as insert |
-| `storage_portfolio_delete_owner` | DELETE | Same as insert |
+| Policy                           | Command | Rule                                                         |
+| -------------------------------- | ------- | ------------------------------------------------------------ |
+| `storage_portfolio_select_all`   | SELECT  | `bucket_id = 'portfolio'` (public)                           |
+| `storage_portfolio_insert_owner` | INSERT  | `bucket_id = 'portfolio' AND split_part(name, '/', 1) = uid` |
+| `storage_portfolio_update_owner` | UPDATE  | Same as insert                                               |
+| `storage_portfolio_delete_owner` | DELETE  | Same as insert                                               |
 
 ### 11.3 Signed URL Usage (Flutter)
 
@@ -1205,8 +1361,8 @@ SignedAvatar(
 
 ```sql
 -- Currently enabled for realtime
-SELECT schemaname, tablename 
-FROM pg_publication_tables 
+SELECT schemaname, tablename
+FROM pg_publication_tables
 WHERE pubname = 'supabase_realtime';
 
 -- Result:
@@ -1248,15 +1404,15 @@ messagesStream.listen((List<Map<String, dynamic>> data) {
 
 ### 13.1 Installed Extensions
 
-| Extension | Schema | Version | Purpose |
-|-----------|--------|---------|---------|
-| `pg_stat_statements` | extensions | 1.11 | Query performance monitoring |
-| `pg_graphql` | graphql | 1.5.11 | GraphQL API support |
-| `pgcrypto` | extensions | 1.3 | Cryptographic functions |
-| `uuid-ossp` | extensions | 1.1 | UUID generation |
-| `btree_gist` | public | 1.7 | GiST index support (for range overlap) |
-| `supabase_vault` | vault | 0.3.1 | Secret management |
-| `plpgsql` | pg_catalog | 1.0 | Procedural language |
+| Extension            | Schema     | Version | Purpose                                |
+| -------------------- | ---------- | ------- | -------------------------------------- |
+| `pg_stat_statements` | extensions | 1.11    | Query performance monitoring           |
+| `pg_graphql`         | graphql    | 1.5.11  | GraphQL API support                    |
+| `pgcrypto`           | extensions | 1.3     | Cryptographic functions                |
+| `uuid-ossp`          | extensions | 1.1     | UUID generation                        |
+| `btree_gist`         | public     | 1.7     | GiST index support (for range overlap) |
+| `supabase_vault`     | vault      | 0.3.1   | Secret management                      |
+| `plpgsql`            | pg_catalog | 1.0     | Procedural language                    |
 
 ### 13.2 Available Extensions (Not Installed)
 
@@ -1274,9 +1430,9 @@ The following extensions are available but not currently installed:
 
 ### 14.1 Critical Issues (Must Fix)
 
-| Issue | Severity | Description | Remediation |
-|-------|----------|-------------|-------------|
-| Exposed Auth Users | 🔴 ERROR | View `public.users` exposes `auth.users` to anon role | [Fix Guide](https://supabase.com/docs/guides/database/database-linter?lint=0002_auth_users_exposed) |
+| Issue                  | Severity | Description                                                           | Remediation                                                                                            |
+| ---------------------- | -------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Exposed Auth Users     | 🔴 ERROR | View `public.users` exposes `auth.users` to anon role                 | [Fix Guide](https://supabase.com/docs/guides/database/database-linter?lint=0002_auth_users_exposed)    |
 | Security Definer Views | 🔴 ERROR | Views `tasks_mvp`, `users`, `user_conversations` use SECURITY DEFINER | [Fix Guide](https://supabase.com/docs/guides/database/database-linter?lint=0010_security_definer_view) |
 
 **Immediate Actions Required:**
@@ -1286,12 +1442,12 @@ The following extensions are available but not currently installed:
 
 ### 14.2 Warnings
 
-| Issue | Count | Description |
-|-------|-------|-------------|
-| Mutable search_path | 16 | Functions without explicit `search_path` |
-| Extension in public | 1 | `btree_gist` should be moved to `extensions` schema |
-| Leaked password protection | 1 | Password leak detection disabled |
-| Postgres version | 1 | Security patches available |
+| Issue                      | Count | Description                                         |
+| -------------------------- | ----- | --------------------------------------------------- |
+| Mutable search_path        | 16    | Functions without explicit `search_path`            |
+| Extension in public        | 1     | `btree_gist` should be moved to `extensions` schema |
+| Leaked password protection | 1     | Password leak detection disabled                    |
+| Postgres version           | 1     | Security patches available                          |
 
 ---
 
@@ -1338,18 +1494,48 @@ VALUES (auth.uid(), '<other-user>', auth.uid());
 
 ---
 
+### 9. Functions (RPCs)
+
+All functions use `SECURITY DEFINER` and include explicit `auth.uid()` checks.
+
+### 9.1 `rpc_submit_delivery`
+
+- **Purpose**: Mark work as delivered and start review timer.
+- **Access**: Assigned Freelancer Only.
+- **Logic**: Sets `status='delivered'`, `delivered_at=now()`, `review_expires_at=now() + 3 days`.
+
+### 9.2 `rpc_request_revision`
+
+- **Purpose**: Reject delivery and request changes.
+- **Access**: Client Only.
+- **Logic**: Resets `status='active'`, increments `revisions_used`, clears `delivered_at`.
+
+### 9.3 `rpc_accept_change_request`
+
+- **Purpose**: Apply a change request (scope/price/deadline) to the entity.
+- **Access**: Recipient of request Only.
+- **Logic**: Updates `tasks`/`bookings` columns + `wallet` (if price changed).
+
+### 9.4 `rpc_finalize_auto_approval`
+
+- **Purpose**: Auto-complete work if review timer expired.
+- **Access**: Public/System (Lazy guard).
+- **Logic**: Checks `now() > review_expires_at`, sets `status='completed'`, releases payment.
+
+---
+
 ## 16. Troubleshooting
 
 ### 16.1 Common Errors
 
-| Error Code | Meaning | Solution |
-|------------|---------|----------|
-| `42501` | RLS permission denied | Ensure valid session; check RLS policies |
-| `23505` | Unique violation | Duplicate entry (favorites, offers, etc.) |
-| `23503` | Foreign key violation | Referenced row doesn't exist |
-| `22P02` | Invalid UUID | Validate UUID format client-side |
-| `PGRST116` | Multiple rows returned | Use `.single()` or `.maybeSingle()` |
-| `P0001` | User-defined exception | Check trigger error message |
+| Error Code | Meaning                | Solution                                  |
+| ---------- | ---------------------- | ----------------------------------------- |
+| `42501`    | RLS permission denied  | Ensure valid session; check RLS policies  |
+| `23505`    | Unique violation       | Duplicate entry (favorites, offers, etc.) |
+| `23503`    | Foreign key violation  | Referenced row doesn't exist              |
+| `22P02`    | Invalid UUID           | Validate UUID format client-side          |
+| `PGRST116` | Multiple rows returned | Use `.single()` or `.maybeSingle()`       |
+| `P0001`    | User-defined exception | Check trigger error message               |
 
 ### 16.2 Storage Issues
 

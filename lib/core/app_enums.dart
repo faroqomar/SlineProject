@@ -59,3 +59,13 @@ enum SearchTab {
   /// Find Freelancers (for clients)
   findTalent,
 }
+
+/// Status of a Unified Work Item (Task/Booking).
+enum UnifiedWorkStatus {
+  pending,
+  active,
+  delivered,
+  completed,
+  canceled,
+  unknown,
+}

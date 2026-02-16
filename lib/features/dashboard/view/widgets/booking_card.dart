@@ -11,6 +11,8 @@ import 'package:sline_app/features/booking/models/booking_model.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 import '../../../../core/app_enums.dart';
 
+import 'package:sline_app/features/work/view/work_item_details_screen.dart';
+
 class BookingCard extends StatelessWidget {
   final BookingModel booking;
   final bool isProvider;
@@ -52,6 +54,7 @@ class BookingCard extends StatelessWidget {
         case BookingStatus.active:
           return AppColors.teal;
         case BookingStatus.pending:
+        case BookingStatus.paidRequestPending: // Added
           return AppColors.gold;
         case BookingStatus.canceled:
         case BookingStatus.declined:
@@ -66,6 +69,17 @@ class BookingCard extends StatelessWidget {
     return GlassCard(
       padding: const EdgeInsets.all(AppDimens.p16),
       margin: const EdgeInsets.only(bottom: AppDimens.p16),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => WorkItemDetailsScreen(
+              id: booking.id,
+              type: WorkItemType.booking,
+            ),
+          ),
+        );
+      },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -124,7 +138,9 @@ class BookingCard extends StatelessWidget {
           const SizedBox(height: AppDimens.p16),
 
           // Actions
-          if (booking.status == BookingStatus.pending)
+          if (booking.status == BookingStatus.pending ||
+              booking.status ==
+                  BookingStatus.paidRequestPending) // Added OR condition
             Row(
               children: [
                 if (isProvider) ...[
