@@ -10,7 +10,7 @@ class WorkItem {
   final String counterpartyRole; // 'Client' or 'Freelancer'
   final String? sourceId;
   final String statusRaw; // String representation of original status
-  final String statusUiBucket; // 'Active', 'Waiting', 'Done'
+  final String statusUiBucket; // 'Active', 'Pending', 'Done', 'Cancelled'
   final DateTime createdAt;
   final DateTime? scheduledAt; // For bookings/tasks with deadlines
   final DateTime? completedAt;
@@ -18,6 +18,11 @@ class WorkItem {
   final PrimaryActionType primaryActionType;
   final String? deepLinkRoute;
   final WorkItemPermissions permissions;
+  // v1 additions
+  final String workItemId; // 'task:<uuid>' or 'booking:<uuid>'
+  final bool needsReview;
+  final int sortRank;
+  final DateTime? lastActivityAt;
 
   WorkItem({
     required this.id,
@@ -37,7 +42,38 @@ class WorkItem {
     required this.primaryActionType,
     this.deepLinkRoute,
     required this.permissions,
+    this.workItemId = '',
+    this.needsReview = false,
+    this.sortRank = 6,
+    this.lastActivityAt,
   });
+
+  /// Create a copy with updated counterparty profile info
+  WorkItem withCounterparty({required String name, required String avatar}) {
+    return WorkItem(
+      id: id,
+      type: type,
+      title: title,
+      counterpartyId: counterpartyId,
+      counterpartyName: name,
+      counterpartyAvatar: avatar,
+      counterpartyRole: counterpartyRole,
+      sourceId: sourceId,
+      statusRaw: statusRaw,
+      statusUiBucket: statusUiBucket,
+      createdAt: createdAt,
+      scheduledAt: scheduledAt,
+      completedAt: completedAt,
+      lastUpdate: lastUpdate,
+      primaryActionType: primaryActionType,
+      deepLinkRoute: deepLinkRoute,
+      permissions: permissions,
+      workItemId: workItemId,
+      needsReview: needsReview,
+      sortRank: sortRank,
+      lastActivityAt: lastActivityAt,
+    );
+  }
 
   /// Serialize to JSON for caching
   Map<String, dynamic> toJson() {
@@ -59,6 +95,10 @@ class WorkItem {
       'primaryActionType': primaryActionType.name,
       'deepLinkRoute': deepLinkRoute,
       'permissions': permissions.toJson(),
+      'workItemId': workItemId,
+      'needsReview': needsReview,
+      'sortRank': sortRank,
+      'lastActivityAt': lastActivityAt?.toIso8601String(),
     };
   }
 
@@ -85,11 +125,18 @@ class WorkItem {
       lastUpdate: DateTime.parse(json['lastUpdate'] as String),
       primaryActionType: PrimaryActionType.values.firstWhere(
         (e) => e.name == json['primaryActionType'],
+        orElse: () => PrimaryActionType.viewDetails,
       ),
       deepLinkRoute: json['deepLinkRoute'] as String?,
       permissions: WorkItemPermissions.fromJson(
         json['permissions'] as Map<String, dynamic>,
       ),
+      workItemId: json['workItemId'] as String? ?? '',
+      needsReview: json['needsReview'] as bool? ?? false,
+      sortRank: json['sortRank'] as int? ?? 6,
+      lastActivityAt: json['lastActivityAt'] != null
+          ? DateTime.parse(json['lastActivityAt'] as String)
+          : null,
     );
   }
 }
@@ -100,6 +147,10 @@ class WorkItemPermissions {
   final bool canApprove;
   final bool canCancel;
   final bool canReschedule;
+  // v1 additions
+  final bool canReview;
+  final bool canDispute;
+  final bool canPayEscrow;
 
   WorkItemPermissions({
     this.canStart = false,
@@ -107,6 +158,9 @@ class WorkItemPermissions {
     this.canApprove = false,
     this.canCancel = false,
     this.canReschedule = false,
+    this.canReview = false,
+    this.canDispute = false,
+    this.canPayEscrow = false,
   });
 
   /// Serialize to JSON
@@ -117,6 +171,9 @@ class WorkItemPermissions {
       'canApprove': canApprove,
       'canCancel': canCancel,
       'canReschedule': canReschedule,
+      'canReview': canReview,
+      'canDispute': canDispute,
+      'canPayEscrow': canPayEscrow,
     };
   }
 
@@ -128,6 +185,9 @@ class WorkItemPermissions {
       canApprove: json['canApprove'] as bool? ?? false,
       canCancel: json['canCancel'] as bool? ?? false,
       canReschedule: json['canReschedule'] as bool? ?? false,
+      canReview: json['canReview'] as bool? ?? false,
+      canDispute: json['canDispute'] as bool? ?? false,
+      canPayEscrow: json['canPayEscrow'] as bool? ?? false,
     );
   }
 }

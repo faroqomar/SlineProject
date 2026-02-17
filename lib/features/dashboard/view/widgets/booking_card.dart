@@ -54,13 +54,33 @@ class BookingCard extends StatelessWidget {
         case BookingStatus.active:
           return AppColors.teal;
         case BookingStatus.pending:
-        case BookingStatus.paidRequestPending: // Added
+        case BookingStatus.paidRequestPending:
           return AppColors.gold;
         case BookingStatus.canceled:
         case BookingStatus.declined:
           return AppColors.lightRed;
+        case BookingStatus.delivered:
+          return AppColors.lightRed;
+        case BookingStatus.completed:
+          return AppColors.gold; // Awaiting client review
         default:
           return colorScheme.textSecondary;
+      }
+    }
+
+    // Human-readable status label
+    String getStatusLabel(BookingStatus status) {
+      switch (status) {
+        case BookingStatus.paidRequestPending:
+          return 'REQUEST PENDING';
+        case BookingStatus.inProgress:
+          return 'IN PROGRESS';
+        case BookingStatus.noShow:
+          return 'NO SHOW';
+        case BookingStatus.expiredUnanswered:
+          return 'EXPIRED';
+        default:
+          return status.name.toUpperCase();
       }
     }
 
@@ -110,7 +130,7 @@ class BookingCard extends StatelessWidget {
                 ),
               ),
               StatusBadge(
-                text: booking.status.name.toUpperCase(),
+                text: getStatusLabel(booking.status),
                 color: statusColor,
                 isSmall: true,
               ),

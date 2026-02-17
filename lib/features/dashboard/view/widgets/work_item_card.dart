@@ -24,6 +24,21 @@ class WorkItemCard extends StatelessWidget {
     this.onSecondaryAction,
   });
 
+  /// Convert raw snake_case status to human-readable label
+  static String _getStatusDisplayLabel(String raw) {
+    switch (raw.toLowerCase()) {
+      case 'pending_payment':
+        return 'PENDING PAYMENT';
+      case 'request_pending':
+      case 'paid_request_pending':
+        return 'REQUEST PENDING';
+      case 'in_progress':
+        return 'IN PROGRESS';
+      default:
+        return raw.replaceAll('_', ' ').toUpperCase();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
@@ -34,12 +49,18 @@ class WorkItemCard extends StatelessWidget {
     switch (item.statusRaw) {
       case 'open':
       case 'pending':
+      case 'paid_request_pending':
         statusColor = AppColors.gold;
         break;
       case 'assigned':
       case 'confirmed':
       case 'inProgress':
+      case 'in_progress':
+      case 'active':
         statusColor = AppColors.teal;
+        break;
+      case 'delivered':
+        statusColor = AppColors.lightRed;
         break;
       case 'completed':
       case 'closed':
@@ -47,6 +68,7 @@ class WorkItemCard extends StatelessWidget {
         break;
       case 'canceled':
       case 'declined':
+      case 'refunded':
         statusColor = AppColors.lightRed;
         break;
       default:
@@ -107,7 +129,7 @@ class WorkItemCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  item.statusRaw.toUpperCase(),
+                  _getStatusDisplayLabel(item.statusRaw),
                   style: AppTypography.captionBold.copyWith(color: statusColor),
                 ),
               ],
@@ -158,10 +180,42 @@ class WorkItemCard extends StatelessWidget {
 
                 const SizedBox(height: AppDimens.p16),
 
+                if (item.needsReview)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: AppDimens.p8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimens.p12,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.lightRed.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(AppDimens.r16),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.rate_review,
+                          size: 14,
+                          color: AppColors.lightRed,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Needs Review',
+                          style: AppTypography.captionBold.copyWith(
+                            color: AppColors.lightRed,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                 // Actions
-                if (item.permissions.canStart ||
-                    item.permissions.canComplete ||
-                    item.permissions.canApprove)
+                if (item.primaryActionType != PrimaryActionType.startWork &&
+                    (item.permissions.canComplete ||
+                        item.permissions.canApprove ||
+                        item.permissions.canReview ||
+                        item.permissions.canPayEscrow))
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton(
@@ -190,6 +244,14 @@ class WorkItemCard extends StatelessWidget {
         return 'Mark Completed';
       case PrimaryActionType.approveClose:
         return 'Complete & Close';
+      case PrimaryActionType.reviewDelivery:
+        return 'Review Delivery';
+      case PrimaryActionType.payEscrow:
+        return 'Pay & Confirm';
+      case PrimaryActionType.submitEvidence:
+        return 'Submit Evidence';
+      case PrimaryActionType.viewDetails:
+        return 'View Details';
     }
   }
 }

@@ -29,7 +29,7 @@ class _OverviewTabState extends State<OverviewTab> {
       padding: const EdgeInsets.all(AppDimens.p16),
       children: [
         Text(
-          "Hello, Eros! 👋",
+          "Hello, ${vm.userName}! 👋",
           style: AppTypography.h3.copyWith(color: colorScheme.text),
         ),
         Text(
@@ -40,8 +40,6 @@ class _OverviewTabState extends State<OverviewTab> {
             color: colorScheme.textSecondary,
           ),
         ),
-        const SizedBox(height: AppDimens.p20),
-
         const SizedBox(height: AppDimens.p20),
         const WalletSnapshotCard(),
         const SizedBox(height: AppDimens.p20),

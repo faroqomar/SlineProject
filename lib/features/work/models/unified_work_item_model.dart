@@ -15,6 +15,13 @@ class UnifiedWorkItemModel {
   final DateTime? reviewExpiresAt;
   final int revisionsTotal;
   final int revisionsUsed;
+  // v1 computed columns
+  final String workItemId; // 'task:<uuid>' or 'booking:<uuid>'
+  final DateTime? lastActivityAt;
+  final bool needsReview;
+  final int sortRank;
+  final String? resolutionType; // placeholder, nullable
+  final bool? disputeRequiresUserAction; // placeholder, nullable
 
   const UnifiedWorkItemModel({
     required this.id,
@@ -30,6 +37,12 @@ class UnifiedWorkItemModel {
     this.reviewExpiresAt,
     required this.revisionsTotal,
     required this.revisionsUsed,
+    this.workItemId = '',
+    this.lastActivityAt,
+    this.needsReview = false,
+    this.sortRank = 6,
+    this.resolutionType,
+    this.disputeRequiresUserAction,
   });
 
   factory UnifiedWorkItemModel.fromJson(Map<String, dynamic> json) {
@@ -53,15 +66,40 @@ class UnifiedWorkItemModel {
           : null,
       revisionsTotal: (json['revisions_total'] as int?) ?? 3,
       revisionsUsed: (json['revisions_used'] as int?) ?? 0,
+      workItemId: json['work_item_id'] as String? ?? '',
+      lastActivityAt: json['last_activity_at'] != null
+          ? DateTime.parse(json['last_activity_at'] as String)
+          : null,
+      needsReview: json['needs_review'] as bool? ?? false,
+      sortRank: json['sort_rank'] as int? ?? 6,
+      resolutionType: json['resolution_type'] as String?,
+      disputeRequiresUserAction: json['dispute_requires_user_action'] as bool?,
     );
   }
 
   static UnifiedWorkStatus _mapStatus(String? status) {
     if (status == null) return UnifiedWorkStatus.unknown;
-    return UnifiedWorkStatus.values.firstWhere(
-      (e) => e.name == status,
-      orElse: () => UnifiedWorkStatus.unknown,
-    );
+    // Map DB values to enum
+    switch (status) {
+      case 'active':
+        return UnifiedWorkStatus.active;
+      case 'delivered':
+        return UnifiedWorkStatus.delivered;
+      case 'completed':
+        return UnifiedWorkStatus.completed;
+      case 'canceled':
+        return UnifiedWorkStatus.canceled;
+      case 'pending_payment':
+        return UnifiedWorkStatus.pendingPayment;
+      case 'request_pending':
+        return UnifiedWorkStatus.requestPending;
+      case 'disputed':
+        return UnifiedWorkStatus.disputed;
+      case 'pending':
+        return UnifiedWorkStatus.pending;
+      default:
+        return UnifiedWorkStatus.unknown;
+    }
   }
 
   bool get isTask => sourceType == 'task';

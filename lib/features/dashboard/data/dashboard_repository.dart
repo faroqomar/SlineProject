@@ -5,15 +5,14 @@ import 'package:sline_app/features/dashboard/models/work_item.dart';
 import 'package:sline_app/features/dashboard/models/activity_log.dart';
 import 'package:sline_app/features/dashboard/models/dashboard_counters.dart';
 import 'package:sline_app/features/dashboard/services/dashboard_permission_service.dart';
-import 'package:sline_app/features/tasks/services/task_service.dart';
+import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/features/work/models/unified_work_item_model.dart';
 
 class DashboardRepository {
+  static const _kTag = 'dashboard.repo';
   final SupabaseClient _client;
-  final TaskService _taskService;
-  DashboardRepository({SupabaseClient? client, TaskService? taskService})
-    : _client = client ?? Supabase.instance.client,
-      _taskService = taskService ?? TaskService(client);
+  DashboardRepository({SupabaseClient? client})
+    : _client = client ?? Supabase.instance.client;
 
   User? get currentUser => _client.auth.currentUser;
   SupabaseClient get client => _client;
@@ -39,6 +38,7 @@ class DashboardRepository {
       AppLogger.w(
         'Failed to fetch user role, defaulting to freelancer',
         error: e,
+        tag: _kTag,
       );
       return UserRole.freelancer;
     }
@@ -56,7 +56,7 @@ class DashboardRepository {
         .update({'active_role': roleDbValue})
         .eq('id', uid);
 
-    AppLogger.i('Updated DB role to: $roleDbValue');
+    AppLogger.i('Updated DB role to: $roleDbValue', tag: _kTag);
   }
 
   /// Fetch all work items using the Unified View
@@ -65,7 +65,10 @@ class DashboardRepository {
     if (uid == null) return [];
 
     try {
-      AppLogger.d('Fetching unified work items for role: ${role.name}');
+      AppLogger.d(
+        'Fetching unified work items for role: ${role.name}',
+        tag: _kTag,
+      );
 
       var query = _client.from('vw_unified_work_items').select();
 
@@ -75,10 +78,10 @@ class DashboardRepository {
         query = query.eq('freelancer_id', uid);
       }
 
-      final response = await query.order(
-        'deadline',
-        ascending: true,
-      ); // Sort by deadline/urgency
+      // v1: Use sort_rank and last_activity_at for ordering
+      final response = await query
+          .order('sort_rank', ascending: true)
+          .order('last_activity_at', ascending: false);
 
       final unifiedItems = (response as List)
           .map((e) => UnifiedWorkItemModel.fromJson(e))
@@ -88,87 +91,134 @@ class DashboardRepository {
           .map((u) => _mapUnifiedToWorkItem(u, role))
           .toList();
 
-      // Additional Sort: Most recently updated/created first if no deadline, or stick to deadline?
-      // Unified view sort order is usually better handled in DB, but we sorted by deadline.
-      // Let's keep existing sort logic in ViewModel or here. ViewModel sorts them again.
+      // Batch-fetch counterparty profiles (single query, no N+1)
+      final enrichedItems = await _enrichWithProfiles(items);
 
-      AppLogger.i('Fetched ${items.length} unified work items');
-      return items;
+      AppLogger.i(
+        'Fetched ${enrichedItems.length} unified work items',
+        tag: _kTag,
+      );
+      return enrichedItems;
     } catch (e, st) {
-      AppLogger.e('Failed to fetch dashboard items', error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to fetch dashboard items',
+        error: e,
+        stackTrace: st,
+        tag: _kTag,
+      );
       return [];
+    }
+  }
+
+  /// Batch-fetch profiles for all counterparty IDs and enrich WorkItems
+  Future<List<WorkItem>> _enrichWithProfiles(List<WorkItem> items) async {
+    if (items.isEmpty) return items;
+
+    // Collect unique counterparty IDs
+    final ids = items
+        .map((i) => i.counterpartyId)
+        .where((id) => id.isNotEmpty)
+        .toSet()
+        .toList();
+
+    if (ids.isEmpty) return items;
+
+    try {
+      final profileRows = await _client
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in_('id', ids);
+
+      // Build a lookup map
+      final profileMap = <String, Map<String, dynamic>>{};
+      for (final row in profileRows) {
+        profileMap[row['id'] as String] = row;
+      }
+
+      // Enrich each item
+      int enriched = 0;
+      final result = items.map((item) {
+        final profile = profileMap[item.counterpartyId];
+        if (profile == null) return item;
+
+        enriched++;
+        return item.withCounterparty(
+          name: (profile['full_name'] as String?) ?? 'Unknown',
+          avatar: (profile['avatar_url'] as String?) ?? '',
+        );
+      }).toList();
+
+      AppLogger.i(
+        'Enriched $enriched/${items.length} items with profiles',
+        tag: _kTag,
+      );
+      return result;
+    } catch (e, st) {
+      AppLogger.e(
+        'Profile enrichment failed',
+        error: e,
+        stackTrace: st,
+        tag: _kTag,
+      );
+      return items; // Graceful fallback — cards show 'Loading...'
     }
   }
 
   WorkItem _mapUnifiedToWorkItem(UnifiedWorkItemModel u, UserRole role) {
     final isClient = role == UserRole.client;
-    // Map Counterparty (Unified Model has client_name/avatar etc joined? No, check SQL View)
-    // The view `vw_unified_work_items` returns client_id, freelancer_id.
-    // It does NOT have names/avatars?
-    // Let's check the SQL view definition in `migrations/20260216_unified_flow.sql`.
-    // It selects t.*, b.* etc.
-    // It does NOT join profiles to get names.
-    // So `UnifiedWorkItemModel` only has IDs.
-    // WE NEED NAMES/AVATARS.
-    // I need to fetch profiles.
-    // I'll add a batch profile fetch here.
+    final itemType = u.sourceType == 'booking'
+        ? WorkItemType.booking
+        : WorkItemType.task;
 
-    // NOTE: This _mapUnifiedToWorkItem function is used inside fetchWorkItems.
-    // I should do batch fetch before mapping.
-    // But I'm writing this file now.
-    // I will add `_enrichUnifiedItemsWithProfiles` method.
-
-    // For now, I'll return placeholders if I can't batch fetch inside `map`.
-    // I need to structure `fetchWorkItems` to do batch fetch.
     return WorkItem(
       id: u.id,
-      type: u.sourceType == 'booking'
-          ? WorkItemType.booking
-          : WorkItemType.task,
+      type: itemType,
       title: u.title,
       counterpartyId: isClient ? u.freelancerId : u.clientId,
-      counterpartyName: 'Loading...', // Placeholder, enriched later?
+      counterpartyName: 'Loading...', // Enriched by profile batch fetch
       counterpartyAvatar: '',
       counterpartyRole: isClient ? 'Freelancer' : 'Client',
       sourceId: u.id,
-      statusRaw: u
-          .sourceStatus, // or u.unifiedStatus.name? WorkItem uses statusRaw for logic.
+      statusRaw: u.sourceStatus,
       statusUiBucket: _mapUnifiedStatusToBucket(u.unifiedStatus),
-      createdAt:
-          DateTime.now(), // View doesn't have created_at? Check UnifiedWorkItemModel.
-      // UnifiedWorkItemModel doesn't have created_at.
-      // It has deadline sourceStatus.
-      // I should add created_at to View and Model if needed.
-      // Or use deadline/deliveredAt as proxy.
+      createdAt: u.lastActivityAt ?? DateTime.now(),
       scheduledAt: u.deadline,
-      lastUpdate: DateTime.now(), // Placeholder
+      lastUpdate: u.lastActivityAt ?? DateTime.now(),
       primaryActionType: DashboardPermissionService.getPrimaryAction(
         userRole: role,
-        type: u.sourceType == 'booking'
-            ? WorkItemType.booking
-            : WorkItemType.task,
+        type: itemType,
         status: u.unifiedStatus,
       ),
       permissions: DashboardPermissionService.calculatePermissions(
         userRole: role,
-        type: u.sourceType == 'booking'
-            ? WorkItemType.booking
-            : WorkItemType.task,
+        type: itemType,
         status: u.unifiedStatus,
       ),
+      // v1 fields
+      workItemId: u.workItemId,
+      needsReview: u.needsReview,
+      sortRank: u.sortRank,
+      lastActivityAt: u.lastActivityAt,
     );
   }
 
+  /// Maps unified status to UI bucket.
+  /// Buckets: 'Pending', 'Active', 'Done', 'Cancelled'
   String _mapUnifiedStatusToBucket(UnifiedWorkStatus status) {
     switch (status) {
+      case UnifiedWorkStatus.pendingPayment:
+      case UnifiedWorkStatus.requestPending:
+      case UnifiedWorkStatus.pending:
+        return 'Pending';
       case UnifiedWorkStatus.active:
       case UnifiedWorkStatus.delivered:
+      case UnifiedWorkStatus.disputed:
         return 'Active';
       case UnifiedWorkStatus.completed:
         return 'Done';
       case UnifiedWorkStatus.canceled:
         return 'Cancelled';
-      default:
+      case UnifiedWorkStatus.unknown:
         return 'Active'; // Safe default
     }
   }
@@ -186,10 +236,13 @@ class DashboardRepository {
       final activities = (response as List)
           .map((e) => ActivityLog.fromJson(e))
           .toList();
-      AppLogger.d('Fetched ${activities.length} activity log items');
+      AppLogger.d(
+        'Fetched ${activities.length} activity log items',
+        tag: _kTag,
+      );
       return activities;
     } catch (e) {
-      AppLogger.e('Failed to fetch activity feed', error: e);
+      AppLogger.e('Failed to fetch activity feed', error: e, tag: _kTag);
       return [];
     }
   }
@@ -197,48 +250,57 @@ class DashboardRepository {
   Future<DashboardCounters> fetchCounters(
     UserRole role,
     List<WorkItem> currentItems,
+    List<TaskRequest> inboxOffers,
   ) async {
     int active = 0;
     int pending = 0;
     int offers = 0;
     int unreadMessages = 0;
+    int needsReview = 0;
+    int pendingPayment = 0;
+    int completed = 0;
 
     active = currentItems.where((i) {
       return i.statusUiBucket == 'Active';
     }).length;
 
+    completed = currentItems.where((i) {
+      return i.statusUiBucket == 'Done';
+    }).length;
+
+    // v1: Count needs_review and pending_payment from view data
+    needsReview = currentItems
+        .where(
+          (i) =>
+              i.needsReview &&
+              (i.statusUiBucket == 'Active' || i.statusUiBucket == 'Pending'),
+        )
+        .length;
+
     if (role == UserRole.client) {
       pending = currentItems.where((i) {
-        // Delivered -> Needs review
-        if (i.statusRaw == 'delivered') return true;
-        // Paid request pending (if mapped)
-        return false;
+        return i.statusUiBucket == 'Pending';
       }).length;
 
-      try {
-        final proposals = await _taskService.getOffersReceived(
-          _client.auth.currentUser?.id ?? '',
-        );
-        offers = proposals.where((p) => p.status == OfferStatus.pending).length;
-      } catch (_) {}
+      pendingPayment = currentItems.where((i) {
+        return i.statusRaw == 'paid_request_pending';
+      }).length;
+
+      // Use pre-fetched inbox offers (no re-query)
+      offers = inboxOffers.where((p) => p.status == OfferStatus.pending).length;
     } else {
       pending = currentItems.where((i) {
-        // Revisions requested?
-        return false;
+        return i.statusRaw == 'paid_request_pending';
       }).length;
 
-      try {
-        final myProposals = await _taskService.getOffersSubmitted(
-          _client.auth.currentUser?.id ?? '',
-        );
-        offers = myProposals
-            .where(
-              (p) =>
-                  p.status == OfferStatus.pending ||
-                  p.status == OfferStatus.accepted,
-            )
-            .length;
-      } catch (_) {}
+      // Use pre-fetched inbox offers (no re-query)
+      offers = inboxOffers
+          .where(
+            (p) =>
+                p.status == OfferStatus.pending ||
+                p.status == OfferStatus.accepted,
+          )
+          .length;
     }
 
     return DashboardCounters(
@@ -246,6 +308,9 @@ class DashboardRepository {
       pendingRequests: pending,
       newMessages: unreadMessages,
       newOffers: offers,
+      needsReview: needsReview,
+      pendingPayment: pendingPayment,
+      completed: completed,
     );
   }
 }

@@ -7,7 +7,7 @@ class DashboardPermissionService {
   static WorkItemPermissions calculatePermissions({
     required UserRole userRole,
     required WorkItemType type,
-    required Enum status, // BookingStatus or TaskStatus
+    required Enum status, // BookingStatus, TaskStatus, or UnifiedWorkStatus
   }) {
     if (type == WorkItemType.booking && status is BookingStatus) {
       return _getBookingPermissions(userRole, status);
@@ -23,23 +23,26 @@ class DashboardPermissionService {
     UserRole role,
     UnifiedWorkStatus status,
   ) {
-    // Unified Status: active, delivered, completed, cancelled, pending, unknown
     if (role == UserRole.freelancer) {
       return WorkItemPermissions(
-        canStart: status == UnifiedWorkStatus.active, // Can "Submit Work"
-        canComplete:
-            false, // Delivered is a state, not permission to "Mark Completed" (Client does that)
+        canStart: status == UnifiedWorkStatus.active,
+        canComplete: false,
         canApprove: false,
-        canCancel: false, // Usually can't cancel active work easily
+        canCancel: false,
       );
     } else {
-      // Client
+      // Client permissions
       return WorkItemPermissions(
         canStart: false,
         canComplete: false,
-        canApprove:
-            status == UnifiedWorkStatus.delivered, // Can Accept Delivery
+        canApprove: false,
         canCancel: false,
+        // v1 client permissions
+        canReview: status == UnifiedWorkStatus.delivered,
+        canDispute:
+            status == UnifiedWorkStatus.active ||
+            status == UnifiedWorkStatus.delivered,
+        canPayEscrow: status == UnifiedWorkStatus.pendingPayment,
       );
     }
   }
@@ -49,38 +52,31 @@ class DashboardPermissionService {
     BookingStatus status,
   ) {
     if (role == UserRole.freelancer) {
-      // Freelancer permissions
       return WorkItemPermissions(
-        canStart: status == BookingStatus.confirmed, // Can start if confirmed
-        canComplete:
-            status == BookingStatus.inProgress, // Can complete if in progress
+        canStart: status == BookingStatus.confirmed,
+        canComplete: status == BookingStatus.inProgress,
         canCancel:
             status == BookingStatus.pending ||
             status == BookingStatus.confirmed,
         canReschedule:
             status == BookingStatus.pending ||
             status == BookingStatus.confirmed,
-        canApprove:
-            false, // Only clients approve completion usually (or system)
+        canApprove: false,
       );
     } else {
       // Client permissions
       return WorkItemPermissions(
         canStart: false,
         canComplete: false,
-        canApprove:
-            status ==
-            BookingStatus
-                .completed, // Approve means closing/reviewing? Or "Mark as done"?
-        // Let's assume Client confirms completion or just reviews.
-        // For now, if "Completed" by freelancer, maybe client "Closes" it.
-        // Actually, BookingStatus.completed usually means job done.
+        canApprove: status == BookingStatus.completed,
         canCancel:
             status == BookingStatus.pending ||
             status == BookingStatus.confirmed,
         canReschedule:
             status == BookingStatus.pending ||
             status == BookingStatus.confirmed,
+        canReview: status == BookingStatus.delivered,
+        canPayEscrow: status == BookingStatus.paidRequestPending,
       );
     }
   }
@@ -90,20 +86,19 @@ class DashboardPermissionService {
     TaskStatus status,
   ) {
     if (role == UserRole.freelancer) {
-      // Freelancer (Assigned to task)
       return WorkItemPermissions(
         canStart: status == TaskStatus.assigned,
         canComplete: status == TaskStatus.inProgress,
-        canCancel: status == TaskStatus.assigned, // Can maybe drop it?
+        canCancel: status == TaskStatus.assigned,
       );
     } else {
-      // Client (Owner of task)
+      // Client permissions
       return WorkItemPermissions(
         canStart: false,
         canComplete: false,
-        canApprove: status == TaskStatus.completed, // Review work
+        canApprove: status == TaskStatus.completed,
         canCancel: status == TaskStatus.open || status == TaskStatus.assigned,
-        canReschedule: false, // tasks usually have deadlines, separate logic
+        canReschedule: false,
       );
     }
   }
@@ -120,32 +115,23 @@ class DashboardPermissionService {
       status: status,
     );
 
+    // v1 client-specific actions take priority
+    if (perms.canReview) return PrimaryActionType.reviewDelivery;
+    if (perms.canPayEscrow) return PrimaryActionType.payEscrow;
+
+    // Standard actions
     if (perms.canComplete) return PrimaryActionType.markCompleted;
     if (perms.canStart) return PrimaryActionType.startWork;
     if (perms.canApprove) return PrimaryActionType.approveClose;
 
-    // Unified Flow Action Mapping
+    // Unified status-specific fallbacks
     if (status is UnifiedWorkStatus) {
-      if (userRole == UserRole.freelancer &&
-          status == UnifiedWorkStatus.active) {
-        return PrimaryActionType.startWork; // "Submit Work"
-      }
-      if (userRole == UserRole.client &&
-          status == UnifiedWorkStatus.delivered) {
-        return PrimaryActionType.approveClose; // "Accept Delivery"
+      if (status == UnifiedWorkStatus.disputed) {
+        return PrimaryActionType.submitEvidence;
       }
     }
 
-    // Fallback or specific logical defaults
-    if (type == WorkItemType.booking) {
-      if (status == BookingStatus.pending && userRole == UserRole.freelancer) {
-        // Freelancer needs to Accept/Decline. Not strict "PrimaryAction" enum maybe?
-        // Or maybe startWork covers "View Details" to accept?
-        return PrimaryActionType.startWork; // Placeholder
-      }
-    }
-
-    return PrimaryActionType
-        .approveClose; // Default safe (View Details usually)
+    // Default: view details
+    return PrimaryActionType.viewDetails;
   }
 }

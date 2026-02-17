@@ -51,32 +51,32 @@ class DashboardCountersGrid extends StatelessWidget {
           ]
         : [
             _CounterData(
-              "Active Bookings",
+              "Active Work",
               counters.activeWork.toString(),
               AppColors.teal,
-              Icons.calendar_today,
-              () => vm.setTab(DashboardTab.bookings.index),
-            ),
-            _CounterData(
-              "Pending Approvals",
-              counters.pendingRequests.toString(),
-              AppColors.gold,
-              Icons.gavel,
-              () => vm.setTab(DashboardTab.bookings.index),
-            ),
-            _CounterData(
-              "New Offers",
-              counters.newOffers.toString(),
-              AppColors.lightRed,
-              Icons.notifications_active,
+              Icons.work_outline,
               () => vm.setTab(DashboardTab.activeWork.index),
             ),
             _CounterData(
-              "Messages",
-              counters.newMessages.toString(),
+              "Needs Review",
+              counters.needsReview.toString(),
+              AppColors.lightRed,
+              Icons.rate_review_outlined,
+              () => vm.setTab(DashboardTab.activeWork.index),
+            ),
+            _CounterData(
+              "Pending Payment",
+              counters.pendingPayment.toString(),
+              AppColors.gold,
+              Icons.payment_outlined,
+              () => vm.setTab(DashboardTab.bookings.index),
+            ),
+            _CounterData(
+              "Completed",
+              counters.completed.toString(),
               AppColors.lightTeal,
-              Icons.chat,
-              () => vm.setTab(DashboardTab.inbox.index),
+              Icons.check_circle_outline,
+              () => vm.setTab(DashboardTab.activeWork.index, workSubTab: 1),
             ),
           ];
 

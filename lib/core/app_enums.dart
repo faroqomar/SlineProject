@@ -46,10 +46,18 @@ enum OfferStatus { pending, accepted, rejected, withdrawn }
 enum WorkItemType { task, booking }
 
 /// Primary action to be taken on a WorkItem.
-enum PrimaryActionType { startWork, markCompleted, approveClose }
+enum PrimaryActionType {
+  startWork,
+  markCompleted,
+  approveClose,
+  reviewDelivery,
+  payEscrow,
+  submitEvidence,
+  viewDetails,
+}
 
 /// Tabs in the Unified Dashboard.
-enum DashboardTab { overview, manage, bookings, activeWork, inbox }
+enum DashboardTab { overview, bookings, activeWork, inbox }
 
 /// Tabs for the Search Screen
 enum SearchTab {
@@ -63,9 +71,12 @@ enum SearchTab {
 /// Status of a Unified Work Item (Task/Booking).
 enum UnifiedWorkStatus {
   pending,
+  pendingPayment,
+  requestPending,
   active,
   delivered,
   completed,
   canceled,
+  disputed,
   unknown,
 }

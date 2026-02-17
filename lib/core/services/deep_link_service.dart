@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sline_app/core/app_enums.dart';
 import '../../features/notifications/models/notification_model.dart';
 import '../../features/dashboard/models/activity_log.dart';
 import '../../core/services/logger_service.dart';
@@ -8,6 +9,7 @@ import '../../features/chat/services/message_service.dart';
 import '../../features/tasks/view/task_details_screen.dart';
 import '../../features/booking/view/booking_details_screen.dart';
 import '../../features/chat/view/chat_screen.dart';
+import '../../features/work/view/work_item_details_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Service to handle deep linking and routing from notifications/activity feed.
@@ -53,13 +55,25 @@ class DeepLinkService {
 
   /// Handle tap on a dashboard work item.
   /// Uses [type] as string ("task" or "booking") and [id].
+  /// Navigates to the Work Progress screen (not the raw task/booking page).
   Future<void> handleWorkItem(
     BuildContext context,
     String type,
     String id,
   ) async {
     AppLogger.i('Handling work item tap: $type - $id');
-    await navigateToEntity(context, type, id);
+    if (!context.mounted) return;
+
+    final workItemType = type.toLowerCase() == 'booking'
+        ? WorkItemType.booking
+        : WorkItemType.task;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => WorkItemDetailsScreen(id: id, type: workItemType),
+      ),
+    );
   }
 
   /// Centralized navigation logic based on entity type and ID.

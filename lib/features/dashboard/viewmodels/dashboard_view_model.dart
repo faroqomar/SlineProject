@@ -15,7 +15,14 @@ import '../../booking/models/booking_model.dart';
 import '../../booking/services/booking_service.dart';
 import '../../tasks/models/task_request_model.dart';
 
+/// Generates a short trace ID for correlating multi-step operations.
+String _traceId() {
+  final now = DateTime.now().microsecondsSinceEpoch;
+  return now.toRadixString(36).padLeft(8, '0').substring(0, 8);
+}
+
 class DashboardViewModel extends ChangeNotifier {
+  static const _kTag = 'dashboard';
   final DashboardRepository _repository;
   final DashboardCacheService? _cacheService;
 
@@ -26,21 +33,18 @@ class DashboardViewModel extends ChangeNotifier {
   DashboardViewModel({
     DashboardRepository? repository,
     DashboardCacheService? cacheService,
+    TaskService? taskService,
+    ServicesService? servicesService,
   }) : _repository = repository ?? DashboardRepository(),
-       _cacheService = cacheService {
+       _cacheService = cacheService,
+       _taskService = taskService ?? TaskService(),
+       _servicesService = servicesService ?? ServicesService() {
     _bookingService = BookingService(_repository.client);
-    // Default to overview tab
     _currentTab = DashboardTab.overview;
-    // Default role
-    _currentRole = UserRole.freelancer; // Will be replaced by cached/DB role
+    _currentRole = UserRole.freelancer;
 
-    // Load cached role instantly
     _loadCachedRole();
-
-    // Sync from backend in background
     _syncRoleFromBackend();
-
-    // Load dashboard data
     _loadData();
   }
 
@@ -60,11 +64,31 @@ class DashboardViewModel extends ChangeNotifier {
   /// Returns true if disposed (caller should abort)
   bool _abortIfDisposed() => _isDisposed;
 
+  /// Invalidates all cached computed lists derived from _workItems.
+  void _invalidateWorkCaches() {
+    _nextActionsCache = null;
+    _activeWorkCache = null;
+    _deliveredWorkCache = null;
+    _completedWorkCache = null;
+    _cancelledWorkCache = null;
+  }
+
   UserRole _currentRole = UserRole.freelancer;
   UserRole get currentRole => _currentRole;
 
   DashboardTab _currentTab = DashboardTab.overview;
   DashboardTab get currentTab => _currentTab;
+
+  // Nested sub-tab index for WorkTab (consumed once after navigation)
+  int? _workSubTabIndex;
+  int? get workSubTabIndex => _workSubTabIndex;
+
+  /// Consumes the pending work sub-tab index (returns it and clears).
+  int? consumeWorkSubTabIndex() {
+    final idx = _workSubTabIndex;
+    _workSubTabIndex = null;
+    return idx;
+  }
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -127,12 +151,26 @@ class DashboardViewModel extends ChangeNotifier {
     return groups;
   }
 
-  // Services (Lazy loaded)
-  final ServicesService _servicesService = ServicesService();
-  final TaskService _taskService = TaskService(); // Reuse or inject
+  // Services (injected or defaulted)
+  final ServicesService _servicesService;
+  final TaskService _taskService;
   late final BookingService _bookingService;
 
-  List<WorkItem> get nextActions => _calculateNextActions();
+  // Cached computed lists (invalidated when _workItems changes)
+  List<WorkItem>? _nextActionsCache;
+  List<WorkItem>? _activeWorkCache;
+  List<WorkItem>? _deliveredWorkCache;
+  List<WorkItem>? _completedWorkCache;
+  List<WorkItem>? _cancelledWorkCache;
+
+  List<WorkItem> get nextActions {
+    _nextActionsCache ??= _calculateNextActions();
+    return _nextActionsCache!;
+  }
+
+  // User display name
+  String? _userName;
+  String get userName => _userName ?? 'there';
 
   // Phase 7: Pending Actions (New for restructuring)
   List<BookingModel> _pendingRequests = [];
@@ -141,45 +179,52 @@ class DashboardViewModel extends ChangeNotifier {
   List<Task> _pendingPaymentTenders = [];
   List<Task> get pendingPaymentTenders => _pendingPaymentTenders;
 
-  // --- Filtered Work Buckets ---
+  // --- Filtered Work Buckets (cached, invalidated on _workItems change) ---
 
-  /// Active Work: Open, Assigned, Pending, Confirmed, InProgress
+  /// Active Work: items in Active or Pending bucket
   List<WorkItem> get activeWork {
-    return _workItems.where((i) {
-      final s = i.statusRaw.toLowerCase();
-      return s == 'open' ||
-          s == 'assigned' ||
-          s == 'pending' ||
-          s == 'confirmed' ||
-          s == 'paid_request_pending' || // Added this
-          s == 'inprogress';
-    }).toList()..sort((a, b) {
-      // Urgency sort
-      if (a.scheduledAt != null && b.scheduledAt != null) {
-        return a.scheduledAt!.compareTo(b.scheduledAt!);
-      }
-      return b.createdAt.compareTo(a.createdAt);
-    });
+    _activeWorkCache ??=
+        _workItems.where((i) {
+          return i.statusUiBucket == 'Active' || i.statusUiBucket == 'Pending';
+        }).toList()..sort((a, b) {
+          final rankCmp = a.sortRank.compareTo(b.sortRank);
+          if (rankCmp != 0) return rankCmp;
+          final aTime = a.lastActivityAt ?? a.lastUpdate;
+          final bTime = b.lastActivityAt ?? b.lastUpdate;
+          return bTime.compareTo(aTime);
+        });
+    return _activeWorkCache!;
   }
 
-  /// Completed Work: Completed, Paid, Reviewed
+  /// Delivered work needing review (subset of active)
+  List<WorkItem> get deliveredWork {
+    _deliveredWorkCache ??= _workItems.where((i) {
+      final isBucketValid =
+          i.statusUiBucket == 'Active' || i.statusUiBucket == 'Pending';
+      return i.needsReview && isBucketValid;
+    }).toList();
+    return _deliveredWorkCache!;
+  }
+
+  /// Completed Work
   List<WorkItem> get completedWork {
-    return _workItems.where((i) {
-      final s = i.statusRaw.toLowerCase();
-      return s == 'completed' || s == 'paid' || s == 'reviewed';
-    }).toList()..sort((a, b) {
-      final timeA = a.completedAt ?? a.lastUpdate;
-      final timeB = b.completedAt ?? b.lastUpdate;
-      return timeB.compareTo(timeA);
-    });
+    _completedWorkCache ??=
+        _workItems.where((i) {
+          return i.statusUiBucket == 'Done';
+        }).toList()..sort((a, b) {
+          final timeA = a.completedAt ?? a.lastUpdate;
+          final timeB = b.completedAt ?? b.lastUpdate;
+          return timeB.compareTo(timeA);
+        });
+    return _completedWorkCache!;
   }
 
-  /// Cancelled Work: Cancelled, Rejected, Declined
+  /// Cancelled Work
   List<WorkItem> get cancelledWork {
-    return _workItems.where((i) {
-      final s = i.statusRaw.toLowerCase();
-      return s == 'cancelled' || s == 'rejected' || s == 'declined';
+    _cancelledWorkCache ??= _workItems.where((i) {
+      return i.statusUiBucket == 'Cancelled';
     }).toList()..sort((a, b) => b.lastUpdate.compareTo(a.lastUpdate));
+    return _cancelledWorkCache!;
   }
 
   // Active Work Buckets (Keep for backward compatibility if needed, else deprecate)
@@ -216,9 +261,9 @@ class DashboardViewModel extends ChangeNotifier {
       await _loadData(forceRefresh: true);
       if (_abortIfDisposed()) return;
 
-      AppLogger.i('Role switched to: ${role.name}');
+      AppLogger.i('Role switched to: ${role.name}', tag: _kTag);
     } catch (e) {
-      AppLogger.e('Failed to persist role', error: e);
+      AppLogger.e('Failed to persist role', error: e, tag: _kTag);
 
       // Revert to PREVIOUS role (not flip)
       if (!_isDisposed) {
@@ -237,7 +282,7 @@ class DashboardViewModel extends ChangeNotifier {
     if (cached != null && cached != _currentRole) {
       _currentRole = cached;
       _safeNotify();
-      AppLogger.i('Loaded cached role: ${cached.name}');
+      AppLogger.i('Loaded cached role: ${cached.name}', tag: _kTag);
     }
   }
 
@@ -248,7 +293,7 @@ class DashboardViewModel extends ChangeNotifier {
       if (_lastRoleChangeAt != null) {
         final elapsed = DateTime.now().difference(_lastRoleChangeAt!);
         if (elapsed.inSeconds < 15) {
-          AppLogger.d('Skipping role sync - recent manual change');
+          AppLogger.d('Skipping role sync - recent manual change', tag: _kTag);
           return;
         }
       }
@@ -262,25 +307,46 @@ class DashboardViewModel extends ChangeNotifier {
         if (_abortIfDisposed()) return;
 
         _safeNotify();
-        AppLogger.i('Synced role from DB: ${dbRole.name}');
+        AppLogger.i('Synced role from DB: ${dbRole.name}', tag: _kTag);
       }
     } catch (e) {
-      AppLogger.e('Failed to sync role from DB', error: e);
+      AppLogger.e('Failed to sync role from DB', error: e, tag: _kTag);
       // Keep cached role
     }
   }
 
-  void setTab(int index) {
+  void setTab(int index, {int? workSubTab}) {
+    if (index < 0 || index >= DashboardTab.values.length) {
+      AppLogger.w('Invalid tab index: $index', tag: _kTag);
+      return;
+    }
     final tab = DashboardTab.values[index];
-    if (_currentTab == tab) return;
-    AppLogger.i('Switching dashboard tab to: ${tab.name}');
+
+    // Store sub-tab intent for WorkTab to consume
+    if (tab == DashboardTab.activeWork && workSubTab != null) {
+      _workSubTabIndex = workSubTab;
+    }
+
+    if (_currentTab == tab && workSubTab == null) return;
+    AppLogger.i(
+      'Switching dashboard tab to: ${tab.name}'
+      '${workSubTab != null ? ' (subTab=$workSubTab)' : ''}',
+      tag: _kTag,
+    );
     _currentTab = tab;
     _safeNotify();
   }
 
+  /// Refreshes all dashboard data from the API
+  Future<void> refresh() => _loadData(forceRefresh: true);
+
   /// Load dashboard data with stale-while-revalidate caching
   Future<void> _loadData({bool forceRefresh = false}) async {
-    AppLogger.d('Loading dashboard data (forceRefresh=$forceRefresh)...');
+    AppLogger.d(
+      'Loading dashboard data (forceRefresh=$forceRefresh)...',
+      tag: _kTag,
+    );
+    final sw = Stopwatch()..start();
 
     // Phase 1: Try cache first for instant loading (stale)
     if (_cacheService != null && !forceRefresh) {
@@ -291,164 +357,199 @@ class DashboardViewModel extends ChangeNotifier {
       final cachedCounters = await _cacheService.getCachedCounters();
 
       if (cachedWorkItems != null || cachedActivity != null) {
-        AppLogger.i('⚡ Dashboard loaded from cache (instant)');
+        AppLogger.i('⚡ Dashboard loaded from cache (instant)', tag: _kTag);
         _workItems = cachedWorkItems ?? [];
         _activityFeed = cachedActivity ?? [];
+        _invalidateWorkCaches();
 
         if (cachedCounters != null) {
           _counters = DashboardCounters.fromMap(cachedCounters);
         }
 
-        _isLoading = false; // Hide initial loading
+        _isLoading = false;
         _safeNotify();
       }
     }
 
     // Phase 2: Fetch fresh data in background (revalidate)
-    _isLoading = true; // Show refresh indicator
+    _isLoading = true;
     _safeNotify();
 
     try {
-      // 0. Resolve Role (sync with backend active_role)
+      // 0. Resolve role (must be first — determines query filters)
       final fetchedRole = await _repository.fetchUserRole();
       if (_currentRole != fetchedRole) {
         _currentRole = fetchedRole;
       }
+      if (_abortIfDisposed()) return;
 
-      // 1. Fetch main work items
-      _workItems = await _repository.fetchWorkItems(_currentRole);
+      // 1. Fetch user name for greeting
+      _userName =
+          _repository.currentUser?.userMetadata?['full_name'] as String?;
 
-      // 2. Fetch activity feed
-      _activityFeed = await _repository.fetchActivityFeed();
+      // 2. Parallel fetch — all independent of each other
+      final results = await Future.wait([
+        _repository.fetchWorkItems(_currentRole),
+        _repository.fetchActivityFeed(),
+        _fetchBookingsInternal(),
+        _fetchInboxInternal(),
+        _fetchPendingItemsInternal(),
+        _loadManagementDataInternal(),
+      ]);
+      if (_abortIfDisposed()) return;
 
-      // 3. Calculate counters (client-side)
-      _counters = await _repository.fetchCounters(_currentRole, _workItems);
+      // Assign results
+      _workItems = results[0] as List<WorkItem>;
+      _activityFeed = results[1] as List<ActivityLog>;
+      _bookings = results[2] as List<BookingModel>;
+      _inboxOffers = results[3] as List<TaskRequest>;
+      // results[4] and results[5] are Maps, handled below
+      final pendingResult = results[4] as Map<String, dynamic>;
+      _pendingRequests = pendingResult['requests'] as List<BookingModel>;
+      _pendingPaymentTenders = pendingResult['tenders'] as List<Task>;
 
-      // Cache fresh data for next load
-      if (_cacheService != null) {
+      final mgmtResult = results[5] as Map<String, dynamic>;
+      _myServices = mgmtResult['services'] as List<ServiceModel>;
+      _myTasks = mgmtResult['tasks'] as List<Task>;
+
+      // Invalidate cached computations
+      _invalidateWorkCaches();
+
+      // 3. Counters (depends on workItems + inboxOffers — sequential)
+      _counters = await _repository.fetchCounters(
+        _currentRole,
+        _workItems,
+        _inboxOffers,
+      );
+
+      // Cache fresh data
+      if (_cacheService != null && !_abortIfDisposed()) {
         await _cacheService.cacheWorkItems(_workItems, _currentRole);
         await _cacheService.cacheActivityFeed(_activityFeed);
         await _cacheService.cacheCounters(_counters.toMap());
-        AppLogger.i('💾 Dashboard data cached');
+        AppLogger.i('💾 Dashboard data cached', tag: _kTag);
       }
 
-      // 4. Load Management Data (lazy)
-      await _loadManagementData();
-
-      // 5. Load Bookings (lazy)
-      await _fetchBookings();
-
-      // 6. Load Inbox Offers (lazy)
-      await _fetchInbox();
-
-      // 7. Load Pending Items
-      await _fetchPendingItems();
-
-      AppLogger.i('✅ Dashboard refreshed from API');
+      sw.stop();
+      AppLogger.i(
+        '✅ Dashboard refreshed from API in ${sw.elapsedMilliseconds}ms '
+        '(${_workItems.length} items, ${_inboxOffers.length} offers, '
+        '${_bookings.length} bookings)',
+        tag: _kTag,
+      );
     } catch (e) {
-      AppLogger.e('Dashboard load error', error: e);
+      sw.stop();
+      AppLogger.e(
+        'Dashboard load error after ${sw.elapsedMilliseconds}ms',
+        error: e,
+        tag: _kTag,
+      );
     }
 
     _isLoading = false;
     _safeNotify();
   }
 
-  Future<void> _loadManagementData() async {
-    final uid = _repository.currentUser?.id; // Need access to UID
-    if (uid == null) return;
-
-    // Accessing auth logic from repo for now or inject AuthService
-    // Hack: _repository._client.auth.currentUser? via getter in repo?
-    // Let's assume passed in or available.
-    // Repo has access to client.
-
-    // Actually DashboardRepository has no getter for user.
-    // Let's rely on services handling "current user" implicitly or pass it.
-    // ServicesService.getMyServices(uid) needs uid.
-    // Let's assume we can get it from repository or Supabase.instance.
-
-    if (_currentRole == UserRole.freelancer) {
-      _myServices = await _servicesService.getMyServices(uid);
-    } else {
-      _myTasks = await _taskService.getTasksByUser(uid);
+  /// Returns management data without assigning to fields (for Future.wait)
+  Future<Map<String, dynamic>> _loadManagementDataInternal() async {
+    final uid = _repository.currentUser?.id;
+    if (uid == null) {
+      return {'services': <ServiceModel>[], 'tasks': <Task>[]};
     }
-  }
-
-  Future<void> _fetchBookings() async {
     try {
       if (_currentRole == UserRole.freelancer) {
-        _bookings = await _bookingService.listBookingsAsProvider(limit: 50);
+        final services = await _servicesService.getMyServices(uid);
+        return {'services': services, 'tasks': <Task>[]};
       } else {
-        _bookings = await _bookingService.listBookingsAsClient(limit: 50);
+        final tasks = await _taskService.getTasksByUser(uid);
+        return {'services': <ServiceModel>[], 'tasks': tasks};
       }
     } catch (e) {
-      AppLogger.e("Failed to fetch bookings", error: e);
+      AppLogger.e('Failed to load management data', error: e, tag: _kTag);
+      return {'services': <ServiceModel>[], 'tasks': <Task>[]};
     }
   }
 
-  Future<void> _fetchInbox() async {
-    final uid = _repository.currentUser?.id;
-    if (uid == null) return;
+  /// Returns bookings without assigning to fields (for Future.wait)
+  Future<List<BookingModel>> _fetchBookingsInternal() async {
+    try {
+      if (_currentRole == UserRole.freelancer) {
+        return await _bookingService.listBookingsAsProvider(limit: 50);
+      } else {
+        return await _bookingService.listBookingsAsClient(limit: 50);
+      }
+    } catch (e) {
+      AppLogger.e('Failed to fetch bookings', error: e, tag: _kTag);
+      return [];
+    }
+  }
 
+  /// Returns inbox offers without assigning to fields (for Future.wait)
+  Future<List<TaskRequest>> _fetchInboxInternal() async {
+    final uid = _repository.currentUser?.id;
+    if (uid == null) return [];
     try {
       if (_currentRole == UserRole.client) {
-        _inboxOffers = await _taskService.getOffersReceived(uid);
+        return await _taskService.getOffersReceived(uid);
       } else {
-        _inboxOffers = await _taskService.getOffersSubmitted(uid);
+        return await _taskService.getOffersSubmitted(uid);
       }
-      AppLogger.d('Fetched ${_inboxOffers.length} inbox offers');
     } catch (e) {
-      AppLogger.e('Failed to fetch inbox offers', error: e);
+      AppLogger.e('Failed to fetch inbox offers', error: e, tag: _kTag);
+      return [];
     }
   }
 
-  Future<void> _fetchPendingItems() async {
-    // Current user check
-    final uid = _repository.currentUser?.id; // Assuming access to repo user
-    // OR: Supabase.instance.client.auth.currentUser?.id
-    // Since _repository is initialized with client, we can assume it works if called after auth.
-    // Safe check:
-    if (uid == null) return;
-
+  /// Returns pending items without assigning to fields (for Future.wait)
+  Future<Map<String, dynamic>> _fetchPendingItemsInternal() async {
+    final uid = _repository.currentUser?.id;
+    if (uid == null) {
+      return {'requests': <BookingModel>[], 'tenders': <Task>[]};
+    }
     try {
+      final requests = await _bookingService.getPendingRequests();
+      List<Task> tenders = [];
       if (_currentRole == UserRole.freelancer) {
-        _pendingRequests = await _bookingService.getPendingRequests();
-        _pendingPaymentTenders = await _taskService.getPendingPaymentTenders();
-      } else {
-        _pendingRequests = [];
-        _pendingPaymentTenders = [];
+        tenders = await _taskService.getPendingPaymentTenders();
       }
-      AppLogger.d(
-        'Fetched pending items: ${_pendingRequests.length} requests, ${_pendingPaymentTenders.length} tenders',
-      );
+      return {'requests': requests, 'tenders': tenders};
     } catch (e) {
-      AppLogger.e('Failed to fetch pending items', error: e);
+      AppLogger.e('Failed to fetch pending items', error: e, tag: _kTag);
+      return {'requests': <BookingModel>[], 'tenders': <Task>[]};
     }
   }
 
   // --- Inbox Actions ---
 
   Future<void> withdrawOffer(String offerId) async {
+    final tid = _traceId();
     try {
       await _taskService.withdrawOffer(offerId);
       _inboxOffers.removeWhere((o) => o.id == offerId);
-      AppLogger.i('Offer withdrawn: $offerId');
+      AppLogger.i(
+        'Offer withdrawn: $offerId [trace:$tid]',
+        tag: '$_kTag.inbox',
+      );
       _safeNotify();
     } catch (e) {
-      AppLogger.e('Failed to withdraw offer', error: e);
+      AppLogger.e(
+        'Failed to withdraw offer=$offerId [trace:$tid]',
+        error: e,
+        tag: '$_kTag.inbox',
+      );
       rethrow;
     }
   }
 
   /// Accepts an offer atomically
   Future<void> acceptOffer(TaskRequest offer) async {
+    final tid = _traceId();
     try {
       // 1. Call RPC (atomic: accept this, reject others, assign task)
       await _taskService.acceptOffer(offer.id);
       if (_abortIfDisposed()) return;
 
       // 2. Remove ALL offers for this task (not just this one!)
-      // RPC rejects all other offers, so UI should reflect that
       _inboxOffers.removeWhere((o) => o.taskId == offer.taskId);
       _safeNotify();
 
@@ -456,13 +557,22 @@ class DashboardViewModel extends ChangeNotifier {
       await _fetchWorkItems();
       if (_abortIfDisposed()) return;
 
-      await _loadManagementData();
+      final mgmt = await _loadManagementDataInternal();
+      _myServices = mgmt['services'] as List<ServiceModel>;
+      _myTasks = mgmt['tasks'] as List<Task>;
       if (_abortIfDisposed()) return;
 
       _safeNotify();
-      AppLogger.i('Accepted offer ${offer.id} for task ${offer.taskId}');
+      AppLogger.i(
+        'Accepted offer=${offer.id} task=${offer.taskId} [trace:$tid]',
+        tag: '$_kTag.inbox',
+      );
     } catch (e) {
-      AppLogger.e('Failed to accept offer', error: e);
+      AppLogger.e(
+        'Failed to accept offer=${offer.id} task=${offer.taskId} [trace:$tid]',
+        error: e,
+        tag: '$_kTag.inbox',
+      );
       rethrow;
     }
   }
@@ -473,33 +583,49 @@ class DashboardViewModel extends ChangeNotifier {
       _workItems = await _repository.fetchWorkItems(_currentRole);
       if (_abortIfDisposed()) return;
 
-      // Update counters
-      _counters = await _repository.fetchCounters(_currentRole, _workItems);
+      _invalidateWorkCaches();
+
+      // Update counters (pass existing inbox offers to avoid re-query)
+      _counters = await _repository.fetchCounters(
+        _currentRole,
+        _workItems,
+        _inboxOffers,
+      );
       if (_cacheService != null && !_abortIfDisposed()) {
         await _cacheService.cacheWorkItems(_workItems, _currentRole);
         await _cacheService.cacheCounters(_counters.toMap());
       }
     } catch (e) {
-      AppLogger.e('Failed to fetch work items', error: e);
+      AppLogger.e('Failed to fetch work items', error: e, tag: _kTag);
     }
   }
 
   /// Rejects an offer
   Future<void> rejectOffer(TaskRequest offer) async {
+    final tid = _traceId();
     try {
       await _taskService.rejectOffer(offer.id);
       if (_abortIfDisposed()) return;
 
-      // Remove only this offer
       _inboxOffers.removeWhere((o) => o.id == offer.id);
       _safeNotify();
 
-      AppLogger.i('Rejected offer ${offer.id}');
+      AppLogger.i(
+        'Rejected offer=${offer.id} [trace:$tid]',
+        tag: '$_kTag.inbox',
+      );
     } catch (e) {
       if (e.toString().contains('Need reject_task_request RPC')) {
-        AppLogger.w('Reject needs RPC implementation');
+        AppLogger.w(
+          'Reject needs RPC implementation [trace:$tid]',
+          tag: '$_kTag.inbox',
+        );
       }
-      AppLogger.e('Failed to reject offer', error: e);
+      AppLogger.e(
+        'Failed to reject offer=${offer.id} [trace:$tid]',
+        error: e,
+        tag: '$_kTag.inbox',
+      );
       rethrow;
     }
   }
@@ -524,20 +650,39 @@ class DashboardViewModel extends ChangeNotifier {
       final index = _bookings.indexWhere((b) => b.id == bookingId);
       if (index != -1) {
         _bookings[index] = updated;
-        AppLogger.i('Updated booking $bookingId status to ${status.name}');
+        AppLogger.i('Updated booking=$bookingId to ${status.name}', tag: _kTag);
         _safeNotify();
       }
     } catch (e) {
-      AppLogger.e("Failed to update booking status", error: e);
+      AppLogger.e('Failed to update booking=$bookingId', error: e, tag: _kTag);
       rethrow; // Let UI handle error toast
     }
   }
 
   Future<void> performPrimaryAction(WorkItem item) async {
-    if (item.primaryActionType == PrimaryActionType.approveClose) {
-      // Navigation only for now, or 'Closed' status if/when added.
-      AppLogger.i("Approve/Close action triggered for ${item.id}");
-      return;
+    // v1: Handle navigation-only actions first
+    switch (item.primaryActionType) {
+      case PrimaryActionType.approveClose:
+        AppLogger.i('Action: approveClose item=${item.id}', tag: _kTag);
+        return;
+      case PrimaryActionType.reviewDelivery:
+        AppLogger.i('Action: reviewDelivery item=${item.id}', tag: _kTag);
+        // TODO: Navigate to review screen
+        return;
+      case PrimaryActionType.payEscrow:
+        AppLogger.i('Action: payEscrow item=${item.id}', tag: _kTag);
+        // TODO: Navigate to payment flow (stubbed)
+        return;
+      case PrimaryActionType.submitEvidence:
+        AppLogger.i('Action: submitEvidence item=${item.id}', tag: _kTag);
+        // TODO: Navigate to dispute evidence screen
+        return;
+      case PrimaryActionType.viewDetails:
+        AppLogger.i('Action: viewDetails item=${item.id}', tag: _kTag);
+        return;
+      case PrimaryActionType.startWork:
+      case PrimaryActionType.markCompleted:
+        break; // Handle below
     }
 
     try {
@@ -566,67 +711,63 @@ class DashboardViewModel extends ChangeNotifier {
         if (newStatus != null) {
           await _taskService.updateTaskStatus(item.id, newStatus);
         }
-        AppLogger.i(
-          'Primary action "${item.primaryActionType.name}" completed for ${item.id}',
-        );
       }
+
+      AppLogger.i(
+        'Action: ${item.primaryActionType.name} completed item=${item.id}',
+        tag: _kTag,
+      );
 
       // Refresh to reflect changes
       await _loadData();
     } catch (e) {
-      AppLogger.e("Failed to perform primary action", error: e);
-      // For UI feedback, we might want to rethrow or set error state
+      AppLogger.e(
+        'Failed primary action=${item.primaryActionType.name} item=${item.id}',
+        error: e,
+        tag: _kTag,
+      );
     }
   }
 
   List<WorkItem> _calculateNextActions() {
-    // Phase 1.3: Strict Sorting (Money/Trust > Urgency > CreatedAt)
-    // 1. Pending Actions (Money/Trust)
-    final pendingItems = _workItems.where((i) {
-      final s = i.statusRaw.toLowerCase();
-      // Client Money: 'pending' booking (unpaid), 'delivered' (Trust/Review)
-      // Freelancer Money: 'paid_request_pending' (Accept/Decline)
-      return s == 'pending' ||
-          s == 'paid_request_pending' ||
-          s == 'delivered' ||
-          s == 'revision_requested';
-    }).toList();
+    // v1 Priority Tiers with Set-based exclusion (O(1) lookups)
+    // Tier 1: Delivered (needs review) — highest urgency
+    final tier1 = _workItems.where((i) => i.needsReview).toList()
+      ..sort((a, b) => b.lastUpdate.compareTo(a.lastUpdate));
+    final seen = tier1.map((i) => i.id).toSet();
 
-    // 2. Urgent Active Work (Deadline approaching)
-    final urgentItems = _workItems.where((i) {
-      if (pendingItems.contains(i)) return false; // Avoid dupes
+    // Tier 2: Pending Payment (awarded/escrow)
+    final tier2 = _workItems.where((i) {
+      if (seen.contains(i.id)) return false;
+      final s = i.statusRaw.toLowerCase();
+      return s == 'paid_request_pending' || s == 'awarded';
+    }).toList()..sort((a, b) => b.lastUpdate.compareTo(a.lastUpdate));
+    seen.addAll(tier2.map((i) => i.id));
+
+    // Tier 3: Disputed items
+    final tier3 = _workItems.where((i) {
+      if (seen.contains(i.id)) return false;
+      return i.statusUiBucket == 'Active' &&
+          i.statusRaw.toLowerCase() == 'disputed';
+    }).toList()..sort((a, b) => b.lastUpdate.compareTo(a.lastUpdate));
+    seen.addAll(tier3.map((i) => i.id));
+
+    // Tier 4: Urgent active (deadline within 48h)
+    final tier4 = _workItems.where((i) {
+      if (seen.contains(i.id)) return false;
       if (i.statusUiBucket != 'Active') return false;
       if (i.scheduledAt == null) return false;
-      // Urgent if due within 48 hours or overdue
       final hoursUntil = i.scheduledAt!.difference(DateTime.now()).inHours;
       return hoursUntil < 48;
-    }).toList();
+    }).toList()..sort((a, b) => a.scheduledAt!.compareTo(b.scheduledAt!));
 
-    // 3. Recent Active Work (Everything else active)
-    final otherItems = _workItems.where((i) {
-      if (pendingItems.contains(i)) return false;
-      if (urgentItems.contains(i)) return false;
-      return i.statusUiBucket == 'Active';
-    }).toList();
-
-    // Sort Groups
-    pendingItems.sort((a, b) {
-      // Delivered > Money Pending
-      if (a.statusRaw == 'delivered' && b.statusRaw != 'delivered') return -1;
-      if (b.statusRaw == 'delivered' && a.statusRaw != 'delivered') return 1;
-      return b.lastUpdate.compareTo(a.lastUpdate);
-    });
-
-    urgentItems.sort(
-      (a, b) => a.scheduledAt!.compareTo(b.scheduledAt!),
-    ); // Closest first
-
-    otherItems.sort(
-      (a, b) => b.lastUpdate.compareTo(a.lastUpdate),
-    ); // Most recent activity first
-
-    // Combine Top 3
-    final combined = [...pendingItems, ...urgentItems, ...otherItems];
+    // Combine: max 3 per tier, total max 3
+    final combined = [
+      ...tier1.take(3),
+      ...tier2.take(3),
+      ...tier3.take(3),
+      ...tier4.take(3),
+    ];
     return combined.take(3).toList();
   }
 

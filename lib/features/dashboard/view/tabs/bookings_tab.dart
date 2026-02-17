@@ -54,7 +54,10 @@ class BookingsTab extends StatelessWidget {
               b.status == BookingStatus.confirmed;
         }).toList();
 
-        final past = bookings.where((b) => !upcoming.contains(b)).toList();
+        final upcomingIds = upcoming.map((b) => b.id).toSet();
+        final past = bookings
+            .where((b) => !upcomingIds.contains(b.id))
+            .toList();
 
         return ListView(
           padding: const EdgeInsets.all(AppDimens.p16),
