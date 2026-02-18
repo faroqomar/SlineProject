@@ -10,6 +10,7 @@ import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/core/services/deep_link_service.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/widgets/glass_card.dart';
+import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 import '../../models/work_item.dart';
 
 class WorkItemCard extends StatelessWidget {
@@ -76,8 +77,16 @@ class WorkItemCard extends StatelessWidget {
     }
 
     return GlassCard(
-      onTap: () =>
-          deepLinkService.handleWorkItem(context, item.type.name, item.id),
+      onTap: () async {
+        final result = await deepLinkService.handleWorkItem(
+          context,
+          item.type.name,
+          item.id,
+        );
+        if (result == true && context.mounted) {
+          context.read<DashboardViewModel>().refresh();
+        }
+      },
       margin: const EdgeInsets.only(bottom: AppDimens.p16),
       padding: EdgeInsets.zero,
       child: Column(
@@ -212,6 +221,8 @@ class WorkItemCard extends StatelessWidget {
 
                 // Actions
                 if (item.primaryActionType != PrimaryActionType.startWork &&
+                    item.primaryActionType !=
+                        PrimaryActionType.reviewDelivery &&
                     (item.permissions.canComplete ||
                         item.permissions.canApprove ||
                         item.permissions.canReview ||

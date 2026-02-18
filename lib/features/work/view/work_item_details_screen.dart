@@ -11,6 +11,7 @@ import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/features/work/viewmodels/work_item_details_view_model.dart';
 import 'package:sline_app/features/work/view/widgets/submit_delivery_modal.dart';
 import 'package:sline_app/features/work/view/widgets/request_extension_modal.dart';
+import 'package:sline_app/features/work/view/widgets/review_delivery_modal.dart';
 import 'package:sline_app/features/work/models/change_request_model.dart';
 import 'package:sline_app/features/work/models/extension_request_model.dart';
 
@@ -56,6 +57,8 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     });
   }
 
+  bool _shouldRefresh = false;
+
   @override
   Widget build(BuildContext context) {
     return Consumer<WorkItemDetailsViewModel>(
@@ -84,28 +87,39 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
 
         return DefaultTabController(
           length: 3,
-          child: Scaffold(
-            backgroundColor: context.colorScheme.phoneBackground,
-            appBar: AppBar(
-              title: Text(isBooking ? 'Booking' : 'Task'),
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              bottom: const TabBar(
-                tabs: [
-                  Tab(text: 'Overview'),
-                  Tab(text: 'Extensions'),
-                  Tab(text: 'Contract'),
+          child: PopScope(
+            canPop: false,
+            onPopInvokedWithResult: (didPop, result) {
+              if (didPop) return;
+              Navigator.pop(context, _shouldRefresh);
+            },
+            child: Scaffold(
+              backgroundColor: context.colorScheme.phoneBackground,
+              appBar: AppBar(
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => Navigator.pop(context, _shouldRefresh),
+                ),
+                title: Text(isBooking ? 'Booking' : 'Task'),
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                bottom: const TabBar(
+                  tabs: [
+                    Tab(text: 'Overview'),
+                    Tab(text: 'Extensions'),
+                    Tab(text: 'Contract'),
+                  ],
+                ),
+              ),
+              body: TabBarView(
+                children: [
+                  _buildOverviewTab(vm, title),
+                  _buildExtensionsTab(vm),
+                  _buildContractTab(vm),
                 ],
               ),
+              bottomNavigationBar: _buildBottomActions(vm, context),
             ),
-            body: TabBarView(
-              children: [
-                _buildOverviewTab(vm, title),
-                _buildExtensionsTab(vm),
-                _buildContractTab(vm),
-              ],
-            ),
-            bottomNavigationBar: _buildBottomActions(vm, context),
           ),
         );
       },
@@ -357,8 +371,11 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
         vm.workItem?.isBooking == true &&
         vm.status == UnifiedWorkStatus.pending;
     final canAccept = vm.isFreelancer && isPendingBooking;
+    final canReview = vm.canReview;
 
-    if (!canSubmit && !canRequestExtension && !canAccept) return null;
+    if (!canSubmit && !canRequestExtension && !canAccept && !canReview) {
+      return null;
+    }
 
     return Container(
       padding: const EdgeInsets.all(AppDimens.p16),
@@ -399,8 +416,15 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
                   onPressed: () => _showDeliveryModal(context, vm),
                 ),
               ),
+            if (canReview)
+              Expanded(
+                child: AppButton(
+                  text: 'Review Delivery',
+                  onPressed: () => _showReviewModal(context, vm),
+                ),
+              ),
           ],
-          if (vm.status == UnifiedWorkStatus.active) ...[
+          if (vm.status == UnifiedWorkStatus.active && !canSubmit) ...[
             if (canAccept)
               const SizedBox(width: AppDimens.p16), // Spacing if mixed
             Expanded(
@@ -457,6 +481,33 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
         ),
       ),
     );
+  }
+
+  Future<void> _showReviewModal(
+    BuildContext context,
+    WorkItemDetailsViewModel vm,
+  ) async {
+    final result = await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        child: ReviewDeliveryModal(
+          onApprove: vm.approveDelivery,
+          onReject: (reason) async {
+            await vm.requestRevision(reason);
+          },
+        ),
+      ),
+    );
+
+    if (result == true && context.mounted) {
+      _shouldRefresh = true;
+      if (vm.workItem != null) {
+        vm.loadData(vm.workItem!.id, vm.workItem!.sourceType);
+      }
+    }
   }
 }
 

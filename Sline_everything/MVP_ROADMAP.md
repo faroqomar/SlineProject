@@ -313,8 +313,23 @@ This file is the single source of truth for MVP progress. Each step is bite-size
 - ✅ **CodeGuard**: Approved with 0 blockers.
 - 🔜 Next: Chat navigation from Work detail, `supabase_flutter` v2.x migration.
 
-# 🎯 Summary (v2.8.3)
+## 🟢 Version 2.13 — Freelancer Unified Flow (Polish)
 
-- ✅ **Open Messaging**: Removed "Favorite" restriction (Any-to-Any DM).
-- ✅ **Public Profile Preview**: Modal preview with Bio, Skills, Portfolio.
-- ✅ **Code Refactoring**: `CircleIconButton` component & CodeGuard audit.
+**Date:** 2026-02-16
+**Status:** ✅ Complete
+
+## 🔹 11. Delivery & Dashboard Optimization (v2.14) — ✅ Completed
+
+| Step | Feature                   | Description                                        | Status       |
+| ---- | ------------------------- | -------------------------------------------------- | ------------ |
+| 11.1 | **Delivery Approval**     | Client-side `approveDelivery` RPC and UI Modal     | ✅ Completed |
+| 11.2 | **Dashboard Performance** | Parallel data loading (F1-F9) + DI for testability | ✅ Completed |
+| 11.3 | **Observability**         | Structured JSON logging for critical Work flows    | ✅ Completed |
+| 11.4 | **Security**              | Threat Model auditing for delivery state machine   | ✅ Completed |
+
+# 🎯 Summary (v2.14)
+
+- ✅ **Work Delivery**: Full "Submit -> Review -> Approve" cycle is now production-ready.
+- ✅ **Dashboard**: Optimized for scale (parallel fetching, O(1) lookups).
+- ✅ **Audit**: Threat model & Observability rules enforced.
+- 🔜 Next: Client-side "Request Revision" UX refinements.

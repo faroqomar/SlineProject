@@ -35,11 +35,14 @@ class DashboardViewModel extends ChangeNotifier {
     DashboardCacheService? cacheService,
     TaskService? taskService,
     ServicesService? servicesService,
+    BookingService? bookingService,
   }) : _repository = repository ?? DashboardRepository(),
        _cacheService = cacheService,
        _taskService = taskService ?? TaskService(),
-       _servicesService = servicesService ?? ServicesService() {
-    _bookingService = BookingService(_repository.client);
+       _servicesService = servicesService ?? ServicesService(),
+       _bookingService =
+           bookingService ??
+           BookingService((repository ?? DashboardRepository()).client) {
     _currentTab = DashboardTab.overview;
     _currentRole = UserRole.freelancer;
 

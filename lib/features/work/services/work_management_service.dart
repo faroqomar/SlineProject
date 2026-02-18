@@ -171,9 +171,16 @@ class WorkManagementService {
           'note': note,
         },
       );
-      AppLogger.i('Work delivered: $entityId');
+      AppLogger.i(
+        'Work delivered: $entityId',
+        json: {'type': entityType, 'note_length': note.length},
+      );
     } catch (e, stack) {
-      AppLogger.e('Failed to submit delivery', error: e, stackTrace: stack);
+      AppLogger.e(
+        'Failed to submit delivery: $entityId ($entityType)',
+        error: e,
+        stackTrace: stack,
+      );
       rethrow;
     }
   }
@@ -190,12 +197,40 @@ class WorkManagementService {
         params: {
           'entity_type': entityType,
           'entity_id': entityId,
-          'note': note,
+          'p_note': note,
         },
       );
-      AppLogger.i('Revision requested: $entityId');
+      AppLogger.i(
+        'Revision requested: $entityId',
+        json: {'type': entityType, 'note_length': note.length},
+      );
     } catch (e, stack) {
-      AppLogger.e('Failed to request revision', error: e, stackTrace: stack);
+      AppLogger.e(
+        'Failed to request revision: $entityId ($entityType)',
+        error: e,
+        stackTrace: stack,
+      );
+      rethrow;
+    }
+  }
+
+  /// Approves delivery and completes the work.
+  Future<void> approveDelivery({
+    required String entityId,
+    required String entityType,
+  }) async {
+    try {
+      await _supabase.rpc(
+        'rpc_approve_delivery',
+        params: {'entity_type': entityType, 'entity_id': entityId},
+      );
+      AppLogger.i('Delivery approved: $entityId', json: {'type': entityType});
+    } catch (e, stack) {
+      AppLogger.e(
+        'Failed to approve delivery: $entityId ($entityType)',
+        error: e,
+        stackTrace: stack,
+      );
       rethrow;
     }
   }

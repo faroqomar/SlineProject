@@ -56,7 +56,7 @@ class DeepLinkService {
   /// Handle tap on a dashboard work item.
   /// Uses [type] as string ("task" or "booking") and [id].
   /// Navigates to the Work Progress screen (not the raw task/booking page).
-  Future<void> handleWorkItem(
+  Future<dynamic> handleWorkItem(
     BuildContext context,
     String type,
     String id,
@@ -68,7 +68,7 @@ class DeepLinkService {
         ? WorkItemType.booking
         : WorkItemType.task;
 
-    Navigator.push(
+    return Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => WorkItemDetailsScreen(id: id, type: workItemType),

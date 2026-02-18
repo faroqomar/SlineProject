@@ -47,6 +47,7 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
       _workItem?.unifiedStatus ?? UnifiedWorkStatus.unknown;
   bool get isFreelancer => _workItem?.freelancerId == currentUserId;
   bool get isClient => _workItem?.clientId == currentUserId;
+  bool get canReview => isClient && status == UnifiedWorkStatus.delivered;
 
   // Booking Specifics
   BookingModel? _booking;
@@ -161,6 +162,27 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
     } catch (e, stack) {
       _error = 'Failed to submit delivery';
       AppLogger.e('Submit delivery error', error: e, stackTrace: stack);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> approveDelivery() async {
+    if (_workItem == null) return;
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      await _workService.approveDelivery(
+        entityId: _workItem!.id,
+        entityType: _workItem!.sourceType,
+      );
+
+      await loadData(_workItem!.id, _workItem!.sourceType);
+    } catch (e, stack) {
+      _error = 'Failed to approve delivery';
+      AppLogger.e('Approve delivery error', error: e, stackTrace: stack);
     } finally {
       _isLoading = false;
       notifyListeners();

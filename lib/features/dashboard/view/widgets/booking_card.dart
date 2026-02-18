@@ -89,8 +89,8 @@ class BookingCard extends StatelessWidget {
     return GlassCard(
       padding: const EdgeInsets.all(AppDimens.p16),
       margin: const EdgeInsets.only(bottom: AppDimens.p16),
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        final result = await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => WorkItemDetailsScreen(
@@ -99,6 +99,9 @@ class BookingCard extends StatelessWidget {
             ),
           ),
         );
+        if (result == true && context.mounted) {
+          vm.refresh();
+        }
       },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
