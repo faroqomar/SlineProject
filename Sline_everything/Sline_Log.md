@@ -21,6 +21,46 @@
 
 ## 📋 Version History
 
+### 🟢 Version 2.15 — Profile Security & Observability Baseline
+
+**Date:** 2026-02-19
+**Agent:** @ThreatModeler, @Observability, @CodeGuard
+**Status:** ✅ Complete
+
+#### ✅ Implemented
+
+- **Security Hardening (Profile Access)**
+  - **Data Minimization**: `ProfileRepository.getPublicProfile` now strictly selects safe columns (`id, full_name, avatar_url, bio, active_role, skills, created_at, title, location, verified`). Eliminated `select(*)` risk.
+  - **Efficient History**: Task history fetch is now server-side filtered for `completed`/`closed` status and limited to 20 items, preventing data leakage of active tasks.
+  - **Threat Model**: Created `THREAT_MODEL_2026-02-19_ProfileAccess.md` identifying risks.
+
+- **Booking Logic Fix**
+  - **Bug Fix**: `UnifiedWorkItemModel` now correctly maps `paid_request_pending` status to `UnifiedWorkStatus.requestPending`.
+  - **Impact**: Restored "Accept/Decline" buttons for Freelancers and "Cancel" for Clients on pending bookings.
+
+- **Observability Baseline**
+  - **Crash Reporting**: Implemented `CrashReportingService` abstraction (ready for Sentry/Firebase).
+  - **Global Error Handling**: Wrapped app in `runZonedGuarded` to catch async errors.
+  - **Logging**: Enforced `AppLogger` usage; audited and removed `print()` statements.
+
+- **UI Refactoring**
+  - **Public Profile**: Removed legacy `UserProfileScreen`.
+  - **Navigation**: All profile links now use the `showProfilePreview` modal for a consistent, context-preserving experience.
+
+#### 📊 Impact
+
+- **Security**: PII leakage vectors in public profile fetching are closed.
+- **Reliability**: App is now observable; uncaught exceptions are logged centrally.
+- **UX**: Booking flow actions are restored; Profile navigation is unified.
+
+#### 🧪 Verification
+
+- Security Audit: `_TODO/CODEGUARD_REVIEW_2026-02-19_Profile_And_Booking_Fixes.md` (Verified)
+- Threat Model: `_TODO/THREAT_MODEL_2026-02-19_ProfileAccess.md` (Verified)
+- Observability Plan: `_TODO/OBSERVABILITY_PLAN_2026-02-19_Baseline.md` (Verified)
+
+---
+
 ### 🟢 Version 2.14 — Work Delivery & Dashboard Optimization
 
 **Date:** 2026-02-19

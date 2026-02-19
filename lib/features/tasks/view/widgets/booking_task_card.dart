@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:sline_app/core/app_enums.dart'; // Added for TaskStatus
+import 'package:sline_app/features/profile/view/widgets/profile_preview_modal.dart';
 
 class BookingTaskCard extends StatelessWidget {
   final Task task;
@@ -200,48 +201,52 @@ class BookingTaskCard extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           // Avatar Box
-                          Container(
-                            width: 56,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              color: AppColors.gold,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: colorScheme
-                                    .cardBackground, // Matches card bg to look like cutout
-                                width: 4,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.1),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
+                          GestureDetector(
+                            onTap: () {
+                              showProfilePreview(context, task.userId);
+                            },
+                            child: Container(
+                              width: 56,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                color: AppColors.gold,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: colorScheme.cardBackground,
+                                  width: 4,
                                 ),
-                              ],
-                            ),
-                            child:
-                                task.userAvatar != null &&
-                                    task.userAvatar!.isNotEmpty
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(
-                                      12,
-                                    ), // Inner radius
-                                    child: SignedAvatar(
-                                      storagePathOrUrl: task.userAvatar!,
-                                      size: 48, // 56 - border
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  )
-                                : Center(
-                                    child: Text(
-                                      initials,
-                                      style: AppTypography.h5.copyWith(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w900,
-                                        color: AppColors.almostBlack,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.1),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child:
+                                  task.userAvatar != null &&
+                                      task.userAvatar!.isNotEmpty
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(
+                                        12,
+                                      ), // Inner radius
+                                      child: SignedAvatar(
+                                        storagePathOrUrl: task.userAvatar!,
+                                        size: 48, // 56 - border
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    )
+                                  : Center(
+                                      child: Text(
+                                        initials,
+                                        style: AppTypography.h5.copyWith(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w900,
+                                          color: AppColors.almostBlack,
+                                        ),
                                       ),
                                     ),
-                                  ),
+                            ),
                           ),
 
                           // Rating Pill

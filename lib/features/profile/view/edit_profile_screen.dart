@@ -204,19 +204,30 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 ),
                               ),
                             ),
-                            onPressed: () async {
-                              await vm.updateProfile();
-                              if (context.mounted) {
-                                Navigator.pop(context);
-                              }
-                            },
-                            child: Text(
-                              'Save Changes',
-                              style: AppTypography.bodyLarge.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            onPressed: vm.isLoadingUpdate
+                                ? null
+                                : () async {
+                                    await vm.updateProfile();
+                                    if (context.mounted) {
+                                      Navigator.pop(context);
+                                    }
+                                  },
+                            child: vm.isLoadingUpdate
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Text(
+                                    'Save Changes',
+                                    style: AppTypography.bodyLarge.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                           ),
                         ),
                         const SizedBox(height: AppDimens.p48),

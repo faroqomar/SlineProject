@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sline_app/features/profile/view/widgets/profile_preview_modal.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
@@ -301,39 +302,49 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
             ),
             const SizedBox(height: AppDimens.p16),
             // Who
-            Row(
-              children: [
-                SignedAvatar(
-                  storagePathOrUrl: otherAvatar,
-                  radius: 20,
-                  placeholder: CircleAvatar(
+            GestureDetector(
+              onTap: () {
+                final targetId = vm.isFreelancer
+                    ? vm.workItem?.clientId
+                    : vm.workItem?.freelancerId;
+                if (targetId != null && context.mounted) {
+                  showProfilePreview(context, targetId);
+                }
+              },
+              child: Row(
+                children: [
+                  SignedAvatar(
+                    storagePathOrUrl: otherAvatar,
                     radius: 20,
-                    backgroundColor: context.colorScheme.primary,
-                    child: Text(
-                      otherName.isNotEmpty ? otherName[0].toUpperCase() : '?',
-                      style: AppTypography.bodyLarge.copyWith(
-                        color: AppColors.white,
+                    placeholder: CircleAvatar(
+                      radius: 20,
+                      backgroundColor: context.colorScheme.primary,
+                      child: Text(
+                        otherName.isNotEmpty ? otherName[0].toUpperCase() : '?',
+                        style: AppTypography.bodyLarge.copyWith(
+                          color: AppColors.white,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: AppDimens.p12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      vm.isFreelancer ? 'Booked by' : 'Provider',
-                      style: AppTypography.bodySmall,
-                    ),
-                    Text(
-                      otherName,
-                      style: AppTypography.bodyLarge.copyWith(
-                        fontWeight: FontWeight.bold,
+                  const SizedBox(width: AppDimens.p12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        vm.isFreelancer ? 'Booked by' : 'Provider',
+                        style: AppTypography.bodySmall,
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      Text(
+                        otherName,
+                        style: AppTypography.bodyLarge.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: AppDimens.p16),
             // When
@@ -369,11 +380,17 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     // Booking Acceptance logic
     final isPendingBooking =
         vm.workItem?.isBooking == true &&
-        vm.status == UnifiedWorkStatus.pending;
+        (vm.status == UnifiedWorkStatus.pending ||
+            vm.status == UnifiedWorkStatus.requestPending);
     final canAccept = vm.isFreelancer && isPendingBooking;
+    final canCancel = vm.isClient && isPendingBooking;
     final canReview = vm.canReview;
 
-    if (!canSubmit && !canRequestExtension && !canAccept && !canReview) {
+    if (!canSubmit &&
+        !canRequestExtension &&
+        !canAccept &&
+        !canReview &&
+        !canCancel) {
       return null;
     }
 
@@ -396,6 +413,15 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
               child: AppButton(
                 text: 'Accept',
                 onPressed: () => vm.acceptBooking(),
+              ),
+            ),
+          ] else if (canCancel) ...[
+            Expanded(
+              child: AppButton(
+                text: 'Cancel Request',
+                isPrimary: false,
+                backgroundColor: AppColors.lightRed,
+                onPressed: () => vm.cancelBooking(),
               ),
             ),
           ] else ...[

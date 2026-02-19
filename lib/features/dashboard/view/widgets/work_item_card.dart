@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sline_app/features/profile/view/widgets/profile_preview_modal.dart';
 import 'package:intl/intl.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
@@ -157,34 +158,43 @@ class WorkItemCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    // Avatar
-                    SignedAvatar(
-                      storagePathOrUrl: item.counterpartyAvatar,
-                      radius: 12,
-                      placeholder: CircleAvatar(
+                // Avatar + Name (Clickable)
+                GestureDetector(
+                  onTap: () {
+                    if (context.mounted) {
+                      showProfilePreview(context, item.counterpartyId);
+                    }
+                  },
+                  child: Row(
+                    children: [
+                      // Avatar
+                      SignedAvatar(
+                        storagePathOrUrl: item.counterpartyAvatar,
                         radius: 12,
-                        backgroundColor: colorScheme.textSecondary,
-                        child: Icon(
-                          Icons.person,
-                          size: 14,
-                          color: AppColors.white,
+                        placeholder: CircleAvatar(
+                          radius: 12,
+                          backgroundColor: colorScheme.textSecondary,
+                          child: Icon(
+                            Icons.person,
+                            size: 14,
+                            color: AppColors.white,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        "${item.counterpartyRole}: ${item.counterpartyName}",
-                        style: AppTypography.bodySmall.copyWith(
-                          color: colorScheme.textSecondary,
+                      const SizedBox(width: 8),
+                      // Name
+                      Flexible(
+                        child: Text(
+                          item.counterpartyName,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: colorScheme.text,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
 
                 const SizedBox(height: AppDimens.p16),

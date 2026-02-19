@@ -291,4 +291,22 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> cancelBooking() async {
+    if (_workItem == null) return;
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      await _workService.cancelBooking(_workItem!.id);
+
+      await loadData(_workItem!.id, _workItem!.sourceType);
+    } catch (e, stack) {
+      _error = 'Failed to cancel booking';
+      AppLogger.e('Cancel booking error', error: e, stackTrace: stack);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

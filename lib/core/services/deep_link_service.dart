@@ -10,7 +10,10 @@ import '../../features/tasks/view/task_details_screen.dart';
 import '../../features/booking/view/booking_details_screen.dart';
 import '../../features/chat/view/chat_screen.dart';
 import '../../features/work/view/work_item_details_screen.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../features/profile/view/public_profile_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
+import 'package:provider/provider.dart';
+import '../providers/navigation_provider.dart';
 
 /// Service to handle deep linking and routing from notifications/activity feed.
 class DeepLinkService {
@@ -99,6 +102,12 @@ class DeepLinkService {
         case 'conversation':
         case 'message':
           await _navigateToConversation(context, id);
+          break;
+        case 'profile':
+          _navigateToProfile(context);
+          break;
+        case 'user':
+          _navigateToUserProfile(context, id);
           break;
         default:
           AppLogger.w('Unknown entity type for deep link: $type');
@@ -219,5 +228,27 @@ class DeepLinkService {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _navigateToProfile(BuildContext context) async {
+    // 1. Clear stack to main
+    Navigator.popUntil(context, (route) => route.isFirst);
+
+    // 2. Switch to Profile tab (Index 5)
+    if (context.mounted) {
+      final navProvider = Provider.of<NavigationProvider>(
+        context,
+        listen: false,
+      );
+      navProvider.setCurrentIndex(5);
+    }
+  }
+
+  void _navigateToUserProfile(BuildContext context, String userId) {
+    if (!context.mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => PublicProfileScreen(userId: userId)),
+    );
   }
 }

@@ -20,6 +20,16 @@ class ProfileViewModel extends ChangeNotifier {
   ProfileModel? _profile;
   ProfileModel? get profile => _profile;
 
+  // Loading & Error States for Profile fetching
+  bool _isLoadingProfile = false;
+  bool get isLoadingProfile => _isLoadingProfile;
+
+  bool _isLoadingUpdate = false;
+  bool get isLoadingUpdate => _isLoadingUpdate;
+
+  String? _profileError;
+  String? get profileError => _profileError;
+
   // Form controllers and keys
   final nameController = TextEditingController();
   final emailController = TextEditingController();
@@ -57,6 +67,10 @@ class ProfileViewModel extends ChangeNotifier {
     final user = _repo.currentUser;
     if (user == null) return;
 
+    _isLoadingProfile = true;
+    _profileError = null;
+    notifyListeners();
+
     try {
       _profile = await _repo.fetchProfile(user.id);
 
@@ -69,13 +83,15 @@ class ProfileViewModel extends ChangeNotifier {
         _skills.addAll(_profile!.skills);
       }
 
-      await refreshAvatarSignedUrl();
-      await fetchPortfolio();
+      await Future.wait([refreshAvatarSignedUrl(), fetchPortfolio()]);
       // await fetchMyTasks(); // Optional: load tasks here if needed immediately
     } catch (e) {
       AppLogger.e('Error loading profile: $e');
+      _profileError = 'Failed to load profile. Please try again.';
+    } finally {
+      _isLoadingProfile = false;
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   // Update profile with form data
@@ -84,19 +100,26 @@ class ProfileViewModel extends ChangeNotifier {
     if (user == null) return;
 
     if (formKey.currentState?.validate() ?? false) {
+      _isLoadingUpdate = true;
+      notifyListeners();
+
       try {
         await _repo.updateProfileFields(
           userId: user.id,
           fullName: nameController.text.trim(),
           bio: bioController.text.trim(),
         );
-        await _repo.updateUserEmail(emailController.text.trim());
+        // await _repo.updateUserEmail(emailController.text.trim()); // TODO: Handle email change separately (re-auth required)
         await _repo.updateProfileSkills(userId: user.id, skills: _skills);
 
         await loadUserData(); // Refresh local state
         AppLogger.i('Profile updated successfully');
       } catch (e) {
         AppLogger.e('Error updating profile: $e');
+        _profileError = 'Failed to update profile. Please try again.';
+      } finally {
+        _isLoadingUpdate = false;
+        notifyListeners();
       }
     }
   }

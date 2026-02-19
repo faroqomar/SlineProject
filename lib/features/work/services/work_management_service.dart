@@ -318,6 +318,20 @@ class WorkManagementService {
     }
   }
 
+  /// Cancels a booking request.
+  Future<void> cancelBooking(String bookingId) async {
+    try {
+      await _supabase
+          .from('bookings')
+          .update({'status': 'canceled'})
+          .eq('id', bookingId);
+      AppLogger.i('Booking canceled: $bookingId');
+    } catch (e, stack) {
+      AppLogger.e('Failed to cancel booking', error: e, stackTrace: stack);
+      rethrow;
+    }
+  }
+
   Future<BookingModel?> getBooking(String id) async {
     try {
       final response = await _supabase

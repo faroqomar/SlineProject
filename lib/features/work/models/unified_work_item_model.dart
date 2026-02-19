@@ -95,6 +95,9 @@ class UnifiedWorkItemModel {
         return UnifiedWorkStatus.requestPending;
       case 'disputed':
         return UnifiedWorkStatus.disputed;
+      case 'paid_request_pending':
+        // Maps to requestPending so UI shows Accept/Decline (for freelancer) or Cancel (for client)
+        return UnifiedWorkStatus.requestPending;
       case 'pending':
         return UnifiedWorkStatus.pending;
       default:

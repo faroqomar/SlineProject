@@ -45,6 +45,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: Colors.transparent,
       body: Consumer<ProfileViewModel>(
         builder: (context, vm, child) {
+          if (vm.isLoadingProfile) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (vm.profileError != null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    vm.profileError!,
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.lightRed,
+                    ),
+                  ),
+                  const SizedBox(height: AppDimens.p16),
+                  ElevatedButton(
+                    onPressed: () => vm.loadUserData(),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
+          }
+
           return CustomScrollView(
             slivers: [
               // --- Header Title ---

@@ -116,8 +116,8 @@ class _BookingSheetState extends State<BookingSheet> {
         slotId: widget.slotId,
         providerId: widget.providerId,
         note: finalNote.isEmpty ? null : finalNote.toString(),
-        // Force CONFIRMED status for testing
-        status: BookingStatus.confirmed,
+        // Force ACTIVE status for testing (skips payment/acceptance flow)
+        status: BookingStatus.active,
       );
       if (!mounted) return;
       setState(() => _sending = false);

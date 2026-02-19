@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/avatar_service.dart';
-import 'package:sline_app/core/app_enums.dart';
+
 import '../../tasks/services/task_service.dart';
 import '../../tasks/models/task_model.dart';
 import '../models/profile_model.dart';
@@ -162,12 +162,17 @@ class ProfileRepository {
   }
 
   Future<FreelancerProfile> getPublicProfile(String userId) async {
-    // 1. Fetch Profile Data
+    // 1. Fetch Profile Data (SECURE: Explicit column selection)
+    // REQ-SEC-001: Do NOT select(*). Exclude email/phone/metadata.
     final profileData = await _client
         .from('profiles')
-        .select()
+        .select(
+          'id, full_name, avatar_url, bio, active_role, skills, created_at, title, location, verified',
+        )
         .eq('id', userId)
         .single();
+
+    // Note: ProfileModel.fromJson handles missing fields (like email) gracefully
     final profileModel = ProfileModel.fromJson(profileData);
 
     // 2. Fetch Portfolio Items
@@ -192,17 +197,24 @@ class ProfileRepository {
       ),
     ];
 
-    // 4. Fetch History (Completed Tasks)
-    // We assume getTasksByUser returns tasks where user is involved.
-    // Ideally we filter for completed/closed tasks where they were the freelancer.
-    final allTasks = await _taskService.getTasksByUser(userId);
-    final history = allTasks.where((t) {
-      final isCompleted =
-          t.status == TaskStatus.completed || t.status == TaskStatus.closed;
-      // Also check if they were the freelancer (not client) if strictly for freelancer profile
-      // For now, listing all completed involvement is fine or refine logic later.
-      return isCompleted;
-    }).toList();
+    // 4. Fetch History (Completed Tasks) - SECURE & EFFICIENT
+    // REQ-SEC-005: Only fetch completed/closed tasks. Limit to 20.
+    final historyData = await _client
+        .from('tasks')
+        .select('''
+          id, title, description, budget, user_id, status, task_type, created_at, 
+          deadline, skills, category_id, category, assigned_freelancer_id, 
+          image_paths, packages, offers,
+          profiles!tasks_user_id_fkey(full_name, avatar_url)
+        ''')
+        .in_('status', ['completed', 'closed'])
+        .or('freelancer_id.eq.$userId,assigned_freelancer_id.eq.$userId')
+        .order('created_at', ascending: false)
+        .limit(20);
+
+    final history = (historyData as List)
+        .map((e) => Task.fromJson(e as Map<String, dynamic>))
+        .toList();
 
     // 5. Construct FreelancerProfile
     return FreelancerProfile.fromModel(

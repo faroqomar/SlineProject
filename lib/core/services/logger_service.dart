@@ -10,6 +10,8 @@ library;
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
+import 'package:sline_app/core/services/crash_reporting_service.dart';
+
 /// Logging levels - higher index = more severe.
 enum LogLevel { debug, info, warning, error }
 
@@ -169,6 +171,13 @@ class AppLogger {
       tag: tag,
       error: error,
       stackTrace: stackTrace,
+    );
+
+    // Automatically report errors to crashlytics
+    CrashReportingService.instance.recordError(
+      error ?? message,
+      stackTrace,
+      reason: message,
     );
   }
 

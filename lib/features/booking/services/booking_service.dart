@@ -114,14 +114,16 @@ class BookingService {
     // Process Payment (Escrow)
     // In a real app, we'd wait for Stripe webhook.
     // Here we simulate immediate payment -> escrow.
-    await _client.rpc(
-      'process_payment_event',
-      params: {
-        'p_entity_id': res['id'],
-        'p_type': 'escrow',
-        'p_event': 'booking_creation',
-      },
-    );
+    if (status != BookingStatus.active) {
+      await _client.rpc(
+        'process_payment_event',
+        params: {
+          'p_entity_id': res['id'],
+          'p_type': 'escrow',
+          'p_event': 'booking', // entity_type must be 'booking'
+        },
+      );
+    }
 
     // Re-fetch to get updated status
     final updatedRes = await _client

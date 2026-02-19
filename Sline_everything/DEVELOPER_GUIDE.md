@@ -159,6 +159,16 @@ try {
 - **Integration**: happy‑paths against staging Supabase (auth, RLS, flows).
 - **Checklists**: each feature doc ends with a testing checklist; follow it before merging.
 
+## 11. Observability (Crash & Error Tracking)
+
+- **Crash Reporting**: `CrashReportingService` (lib/core/services/crash_reporting_service.dart) abstracts the backend (Sentry/Firebase).
+- **Zoned Errors**: `main.dart` uses `runZonedGuarded` to catch concurrent async errors.
+- **Flutter Errors**: `FlutterError.onError` is hooked to report UI crashes.
+- **Logging**:
+  - Use `AppLogger.e(message, error, stackTrace)` for handled exceptions.
+  - Use `AppLogger.i/d/w` for standard logs.
+  - **Avoid `print()`**: CI/CodeGuard will flag direct print usage.
+
 ## 11. Quick Links (Deep Dives)
 
 - Core: `DEVELOPER_GUIDE/Core Module.md`
@@ -2259,7 +2269,9 @@ UI (WorkItemDetailsScreen)
 
 1. **Parallel Data Fetching**: `loadData()` uses `Future.wait` with 5 concurrent queries
 2. **Fallback Mapper**: When `vw_unified_work_items` has refresh lag, creates a temporary model from raw booking data
-3. **Status Mapping**: `declineBooking` maps to DB `refunded` status (per `fn_booking_guard` transitions)
+3. **Status Mapping**:
+   - `declineBooking` maps to DB `refunded` status (per `fn_booking_guard` transitions).
+   - `paid_request_pending` maps to `UnifiedWorkStatus.requestPending` to expose actions (Accept/Decline).
 4. **Error Handling**: All errors mapped via `_mapError()` — no raw exceptions in UI
 
 ## Verification

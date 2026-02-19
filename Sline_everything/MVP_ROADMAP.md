@@ -89,15 +89,17 @@ This file serves as the central reference for MVP development progress.
 
 ## 🔹 8. Infrastructure
 
-| Step | Feature            | Description                                                           | Status       |
-| ---- | ------------------ | --------------------------------------------------------------------- | ------------ |
-| 8.1  | Logger service     | Centralized debug/error logs with PrettyPrinter (debug-only)          | ✅ Completed |
-| 8.2  | Constants & Config | Shared constants and env setup                                        | ✅ Completed |
-| 8.3  | Theme system       | Material 3 Light/Dark theme with centralized dashboard                | ✅ Completed |
-| 8.4  | Theme Dashboard    | `theme_dashboard.dart` - single source of truth for all theme values  | ✅ Completed |
-| 8.5  | Localization       | Arabic (RTL) + English (LTR)                                          | ⏳ Planned   |
-| 8.6  | Documentation      | STRUCTURE.md, SUPABASE_SETUP.md, Sline_Log.md synced                  | ✅ Completed |
-| 8.7  | AI Agents          | 7 specialized agents for different tasks (CodeGuard, Architect, etc.) | ✅ Completed |
+| Step | Feature            | Description                                                           | Status               |
+| ---- | ------------------ | --------------------------------------------------------------------- | -------------------- |
+| 8.1  | Logger service     | Centralized debug/error logs with PrettyPrinter (debug-only)          | ✅ Completed         |
+| 8.2  | Constants & Config | Shared constants and env setup                                        | ✅ Completed         |
+| 8.3  | Theme system       | Material 3 Light/Dark theme with centralized dashboard                | ✅ Completed         |
+| 8.4  | Theme Dashboard    | `theme_dashboard.dart` - single source of truth for all theme values  | ✅ Completed         |
+| 8.5  | Localization       | Arabic (RTL) + English (LTR)                                          | ⏳ Planned           |
+| 8.6  | Documentation      | STRUCTURE.md, SUPABASE_SETUP.md, Sline_Log.md synced                  | ✅ Completed         |
+| 8.7  | AI Agents          | 7 specialized agents for different tasks (CodeGuard, Architect, etc.) | ✅ Completed         |
+| 8.8  | **Observability**  | Crash reporting foundation & `runZonedGuarded`                        | ✅ Completed (v2.15) |
+| 8.9  | **Security**       | Public Profile PII hardening & Threat Modeling                        | ✅ Completed (v2.15) |
 
 ---
 
