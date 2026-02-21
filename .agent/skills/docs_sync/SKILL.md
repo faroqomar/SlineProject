@@ -1,24 +1,27 @@
 ---
-description: Automatically updates documentation to reflect the latest codebase state.
+name: docs-sync
+description: Keep project documentation aligned with real code changes. Use when features, schema, architecture, or folder structure changes are introduced so developer docs, setup docs, and project context stay accurate in the same session.
 ---
 
-# Docs Sync Skill
+# Docs Sync
 
-**Goal**: Keep documentation as the "Living Truth" of the project.
+## Trigger Conditions
+- New feature or behavior change.
+- Database schema, SQL, or RLS update.
+- Refactor that changes structure or conventions.
 
-## Sync Triggers
-- **New Feature Added**: Update `MVP_ROADMAP.md` and `DEVELOPER_GUIDE.md`.
-- **Database Change**: Update `SUPABASE_SETUP.md`.
-- **Refactor**: Update `STRUCTURE.md` if folder structure changes.
+## Update Targets
+- `Sline_everything/DEVELOPER_GUIDE.md`
+- `Sline_everything/MVP_ROADMAP.md`
+- `Sline_everything/SUPABASE_SETUP.md`
+- `Sline_everything/STRUCTURE.md`
+- `.agent/PROJECT_CONTEXT.md`
 
-## Sync Process
+## Workflow
+1. Read changed code and summarize what changed and why.
+2. Update only affected sections in the target docs.
+3. Keep file paths and examples accurate.
+4. Note breaking changes and migration steps when relevant.
 
-1.  **Scrape**: Read the new files or changes.
-2.  **Summarize**: Extract the "What", "Why", and "How".
-3.  **Update**:
-    - **Developer Guide**: Add new section for the feature, link to key files.
-    - **Structure**: Add new directories/files to the tree.
-    - **Project Context**: Update `.cursor/PROJECT_CONTEXT.md` with new capabilities.
-
-## Rule
-**Never** leave docs outdated. If code changes, docs change in the same "session".
+## Completion Rule
+Do not close implementation work while related docs remain stale.

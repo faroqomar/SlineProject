@@ -1,42 +1,32 @@
 ---
-description: Generates UI for List, Details, and Edit screens wired to the ViewModel.
+name: crud-generator
+description: Generate List, Detail, and Create/Edit Flutter screens wired to MVVM ViewModels in the SLine project. Use when bootstrapping or expanding CRUD features while preserving theme, architecture, and state-management conventions.
 ---
 
-# CRUD Screen Builder
+# CRUD Generator
 
-**Goal**: Rapidly build interacting UI screens without thinking about boilerplate.
+## Generate These Screens
+1. `view/<feature>_list_screen.dart`
+2. `view/<feature>_details_screen.dart`
+3. `view/<feature>_form_screen.dart`
 
-## 1. List Screen Pattern
-- **Path**: `view/[feature]_list_screen.dart`
-- **Components**:
-  - `RefreshIndicator` wrapping a `ListView`.
-  - `GlassContainer` items.
-  - Floating Action Button for "Add" (if applicable).
-  - Search/Filter bar (Glassmorphism style).
-- **Logic**:
-  - `initState`: `context.read<VM>().loadItems()`.
-  - `Consumer`: Check `isLoading` ? `Loader()` : `ListView`.
+## List Screen Pattern
+- Use `RefreshIndicator` + list content.
+- Render loading, empty, error, and data states.
+- Trigger `vm.loadItems()` from initialization flow.
+- Use feature-level filtering/search only through ViewModel methods.
 
-## 2. Details Screen Pattern
-- **Path**: `view/[feature]_details_screen.dart`
-- **Components**:
-  - `SliverAppBar` with image (if available).
-  - Sections for fields using `AppTypography`.
-  - Action buttons (Edit/Delete) based on ownership.
+## Details Screen Pattern
+- Render read-only sections clearly.
+- Show edit/delete actions only when authorized.
+- Keep mutation actions in ViewModel (not inline business logic).
 
-## 3. Add/Edit Form Pattern
-- **Path**: `view/[feature]_form_screen.dart`
-- **Components**:
-  - `Form` widget with `GlobalKey`.
-  - `AppTextField` widgets for inputs.
-  - Validation logic (client-side first).
-  - "Save" button with `isLoading` state.
-- **Logic**:
-  - `onSubmit`: Call `vm.createItem(data)` or `vm.updateItem(data)`.
-  - On success: `Navigator.pop(context)`.
-  - On error: Show `SnackBar`.
+## Form Screen Pattern
+- Use `Form` + validation before submit.
+- Map form actions to `vm.createItem(...)` or `vm.updateItem(...)`.
+- Handle success navigation and surfaced errors consistently.
 
-## Design Rules
-- Use `AppPadding` and `AppDimens`.
-- Use `context.colorScheme`.
-- No direct logical operations in `onPressed`.
+## UI Rules
+- Use project theme tokens (`AppDimens`, `context.colorScheme`, shared widgets).
+- Avoid raw colors and duplicated spacing literals.
+- Keep callbacks thin; delegate logic to ViewModel.

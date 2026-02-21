@@ -1,56 +1,31 @@
 ---
-description: Generates boilerplate code and folder structure for new features following strict MVVM.
+name: feature-scaffolder
+description: Scaffold a new SLine feature with MVVM-compliant folders and starter files for model, service, viewmodel, and view. Use when creating a new feature module quickly while preserving project architecture and conventions.
 ---
 
-# Feature Scaffold Generator
+# Feature Scaffolder
 
-**Goal**: Instantaneously setup a pristine, compliant MVVM feature structure.
+## Create Structure
+```text
+lib/features/<feature_name>/
+├── models/
+├── services/
+├── viewmodels/
+└── view/
+    └── widgets/
+```
 
-## Usage
-`@FeatureScaffolder "Create feature X"`
+## Generate Starter Files
+1. Model with immutable fields, `fromJson`, `toJson`, `copyWith`, UTC-safe timestamps.
+2. Service with Supabase access, CRUD methods, and error mapping.
+3. ViewModel extending `ChangeNotifier` with loading/error/data state and async actions.
+4. View screen wired to ViewModel via `Consumer` and explicit loading/error/empty/data UI states.
 
-## Scaffolding Steps
-
-1.  **Directory Structure Creation**:
-    ```text
-    lib/features/[name]/
-    ├── models/
-    ├── services/
-    ├── viewmodels/
-    └── view/
-        └── widgets/
-    ```
-
-2.  **File Generation**:
-
-    **A. Model** (`models/[name]_model.dart`):
-    - Immutable class with `final` fields.
-    - `fromJson` / `toJson`.
-    - `copyWith`.
-    - UTC DateTime handling.
-
-    **B. Service** (`services/[name]_service.dart`):
-    - `SupabaseClient` private instance.
-    - Methods: `fetch`, `create`, `update`, `delete`.
-    - Error mapping (`_mapError`).
-    - **CRITICAL**: Use `.select('*, related(*)')` for fetching.
-
-    **C. ViewModel** (`viewmodels/[name]_view_model.dart`):
-    - Extends `ChangeNotifier`.
-    - Depend on `[Name]Service`.
-    - State: `isLoading`, `error`, `dataList`.
-    - Methods: `loadData()`, `addData()`.
-
-    **D. View** (`view/[name]_screen.dart`):
-    - `StatelessWidget` (usually).
-    - `Consumer<[Name]ViewModel>`.
-    - `Scaffold` with SLine Appbar.
-    - Handling loading/error states.
-
-3.  **Registration**:
-    - Output the snippet to add to `MultiProvider` in `lib/main.dart`.
+## Integrate
+1. Provide dependency registration snippet for `lib/main.dart` provider setup.
+2. Keep routing hooks minimal and explicit.
 
 ## Standards
-- Use `AppLogger` for logging.
-- Use `AppTheme` for UI.
-- No `print()` statements.
+- Use `AppLogger`; do not use `print()`.
+- Keep business logic out of views.
+- Use app theme tokens and shared widgets.

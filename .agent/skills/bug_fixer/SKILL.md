@@ -1,41 +1,32 @@
 ---
-description: Systematic process to reproduce, isolate, fix, and verify bugs.
+name: bug-fixer
+description: Run a structured bug triage and repair workflow for Flutter and Supabase features. Use when a defect is reported or reproduced and you need root-cause isolation, safe fixes, regression checks, and concise verification notes.
 ---
 
-# Bug Triage + Fix Plan
+# Bug Fixer
 
-**Goal**: Eliminate bugs systematically and prevent regression.
+## Workflow
+1. Reproduce with minimal deterministic steps.
+2. Capture evidence with `AppLogger` and relevant error traces.
+3. Isolate failing layer: UI, ViewModel, Service, or database/RLS.
+4. Implement the smallest safe fix.
+5. Add or update tests to prevent regression.
+6. Re-run checks (`flutter analyze`, targeted tests).
+7. Update docs/rules only if behavior or constraints changed.
 
-## Usage
-When an issue is reported:
-
-1.  **Reproduce & Log**:
-    - Create a reproduction case (minimal steps).
-    - Capture logs using `AppLogger` (Debug level).
-
-2.  **Isolate**:
-    - Is it Data Layer? (Check Supabase response).
-    - Is it Logic Layer? (Check ViewModel state).
-    - Is it UI Layer? (Check Widget constraints/rendering).
-
-3.  **Propose Fix**:
-    - Describe the fix in 1-2 sentences.
-    - Check for side effects (What else uses this logic?).
-
-4.  **Regression Test**:
-    - Can we add a Unit Test for this?
-    - Add test case to `test/features/[feature]_test.dart`.
-
-5.  **Documentation**:
-    - If the bug was an architectural misunderstanding, update `.agent/rules/`.
-    - If it's a known limitation, add to `TROUBLESHOOTING.md`.
+## Isolation Heuristics
+- Data mismatch: inspect service queries, joins, RLS, and model mapping.
+- State mismatch: inspect ViewModel mutations and `notifyListeners()` timing.
+- UI issue: inspect widget constraints, render paths, and state subscriptions.
 
 ## Output Template
 ```markdown
-### Bug Report: [Title]
-**Severity**: High/Medium/Low
-**Location**: [File/Class]
-**Cause**: [Root Cause]
-**Fix**: [Description of fix]
-**Verification**: [How it was tested]
+### Bug Report: <title>
+- Severity: High | Medium | Low
+- Location: <file/class>
+- Reproduction: <short steps>
+- Root cause: <why it failed>
+- Fix: <what changed>
+- Verification: <tests/manual checks>
+- Residual risk: <none or note>
 ```

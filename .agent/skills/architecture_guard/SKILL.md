@@ -1,38 +1,33 @@
 ---
-description: Enforces strict MVVM patterns and prevents architectural consistency drift.
+name: architecture-guard
+description: Enforce strict MVVM boundaries in the SLine Flutter codebase. Use when reviewing, refactoring, or implementing feature code to prevent direct database/API access in views, keep layer responsibilities clean, and stop architecture drift before merge.
 ---
 
-# Architecture Enforcer (MVVM Guardrail)
+# Architecture Guard
 
-**Goal**: Prevent UI code from directly accessing the database and ensure strict layer separation.
+## Run This Checklist
+1. Verify `lib/features/*/view/` files do not call `Supabase.instance`, `SupabaseClient`, raw HTTP, or heavy business logic.
+2. Verify dependency direction is `View -> ViewModel -> Service -> Supabase`.
+3. Verify ViewModels extend `ChangeNotifier`, expose safe/immutable state, and call `notifyListeners()` only on real state changes.
+4. Verify Services do not import UI files and only handle IO, mapping, and domain-specific persistence rules.
 
-## Inspection Checklist
+## Enforce On Violation
+1. Move logic to ViewModel or Service immediately.
+2. Block feature completion until boundaries are restored.
+3. Track unresolved items in `.TODO/TECHNICAL_DEBT.md`.
 
-When running this skill, verify the following in the target files:
+## Report Format
+```markdown
+### Architecture Guard Report
+- Status: pass | fail
+- Violations:
+  - [file:line] issue
+- Applied fixes:
+  - [file] summary
+- Follow-ups:
+  - debt item or "none"
+```
 
-1.  **UI Purity Check (`lib/features/*/view/`)**:
-    *   [ ] **NO** `Supabase.instance`, `SupabaseClient`, or `supabase` variable usage.
-    *   [ ] **NO** `http` calls or direct API fetching.
-    *   [ ] **NO** complex logic (if/else chains > 3 levels).
-    *   [ ] **MUST** use `Consumer<ViewModel>` or `context.watch<ViewModel>`.
-
-2.  **Layer Integrity**:
-    *   **Flow**: View ➔ ViewModel ➔ Service ➔ Supabase.
-    *   [ ] ViewModel must NOT depend on UI widgets (no `BuildContext` in methods if possible).
-    *   [ ] Service must NOT depend on ViewModels.
-
-3.  **State Management**:
-    *   [ ] ViewModels must extend `ChangeNotifier`.
-    *   [ ] ViewModels must expose `UnmodifiableListView` for lists.
-    *   [ ] `notifyListeners()` must be called only when state actually changes.
-
-## Enforcement Action
-
-If violations are found:
-1.  **Refactor**: Move logic to ViewModel or Service IMMEDIATELY.
-2.  **Block**: Do not proceed with feature implementation until strict MVVM is restored.
-3.  **Log**: Note the violation in `.TODO/TECHNICAL_DEBT.md`.
-
-## Reference Rules
+## References
 - `.agent/rules/flutter-mvvm.md`
 - `.agent/rules/project-rules.md`

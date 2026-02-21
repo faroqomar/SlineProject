@@ -1,29 +1,32 @@
 ---
-description: Helper for creating standardized semantic commit messages and changelogs.
+name: commit-helper
+description: Create high-signal conventional commit messages and keep project changelog updates consistent. Use when preparing commits after feature work, fixes, refactors, or documentation changes in SLine.
 ---
 
-# Conventional Commits + Changelog Helper
+# Commit Helper
 
-**Goal**: Semantic history that enables automated changelog generation.
+## Commit Format
+Use `type(scope): subject`.
 
-## Commit Message Format
-`type(scope): description`
+## Allowed Types
+- `feat`: new user-facing behavior.
+- `fix`: bug resolution.
+- `docs`: documentation-only change.
+- `style`: formatting/style-only change.
+- `refactor`: structure change with no behavior change.
+- `perf`: performance improvement.
+- `test`: test-only change.
+- `chore`: maintenance and tooling.
 
-**Types**:
-- `feat`: A new feature
-- `fix`: A bug fix
-- `docs`: Documentation only changes
-- `style`: Formatting, missing semi-colons, etc; no production code change
-- `refactor`: Refactoring production code, e.g. renaming a variable
-- `perf`: Code change that improves performance
-- `test`: Adding missing tests, refactoring tests; no production code change
-- `chore`: Updating grunt tasks etc; no production code change
+## Rules
+1. Keep subject imperative and specific.
+2. Use smallest meaningful scope (feature/module).
+3. Split unrelated changes into separate commits.
 
 ## Examples
 - `feat(auth): implement google sign-in`
-- `fix(ui): resolve overflow in task card`
-- `docs(readme): update setup instructions`
-- `refactor(core): move logger to services`
+- `fix(tasks): prevent empty title submission`
+- `refactor(chat): extract message mapper`
 
-## Changelog Updating
-When a feature is complete, verify if it should be added to `Sline_everything/Sline_Log.md` under the current version.
+## Changelog Rule
+When behavior changes, evaluate whether to add an entry to `Sline_everything/Sline_Log.md` under the active version.

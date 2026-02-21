@@ -1,37 +1,28 @@
 ---
-description: Handles all database changes with generated SQL, RLS policies, and validation.
+name: supabase-migration
+description: Design and validate Supabase/Postgres migrations with secure RLS and performance-aware indexing. Use when adding or changing tables, policies, constraints, or data-access behavior in SLine.
 ---
 
-# Supabase RLS + Migration Builder
-
-**Goal**: Safe, secure, and documented database evolution.
+# Supabase Migration
 
 ## Workflow
+1. Draft schema SQL with explicit types, constraints, defaults, and FK actions.
+2. Enable RLS and define least-privilege policies for `SELECT`, `INSERT`, `UPDATE`, `DELETE`.
+3. Add indexes for foreign keys and high-frequency filters/sorts.
+4. Validate policy behavior with representative user roles and ownership cases.
+5. Confirm UTC-safe timestamps and consistent naming.
+6. Record finalized SQL changes in `Sline_everything/SUPABASE_SETUP.md`.
 
-1.  **Draft SQL**:
-    - Define table schema (Types, Constraints, Defaults).
-    - Define specific Enums if needed.
+## RLS Baseline
+- Ownership tables: guard by `auth.uid() = <owner_id_column>`.
+- Shared/public reads: explicitly scope records and avoid broad `true` policies.
+- Mutations: enforce ownership in `WITH CHECK` and `USING`.
 
-2.  **Security Layer (RLS)**:
-    - **Enable RLS**: `ALTER TABLE x ENABLE ROW LEVEL SECURITY;`
-    - **Policy Generation**:
-      - `SELECT`: typically `auth.uid() = user_id` or public/shared logic.
-      - `INSERT`: `auth.uid() = user_id`.
-      - `UPDATE`: `auth.uid() = user_id`.
-      - `DELETE`: `auth.uid() = user_id`.
-
-3.  **Performance Layer (Indexes)**:
-    - Index foreign keys.
-    - Index frequently filtered columns (`status`, `created_at`, `type`).
-
-4.  **Verification Checklist**:
-    - [ ] Does the policy allow the intended user? (Test with `@Supabase_Ops`)
-    - [ ] Are Foreign Keys valid?
-    - [ ] Is `created_at` set to `timezone('utc', now())`?
-
-5.  **Execution & Logging**:
-    - Execute via `@mcp:supabase-mcp-server`.
-    - Append SQL to `Sline_everything/SUPABASE_SETUP.md`.
+## Verification Checklist
+- Intended users can read/write expected records.
+- Non-owners are denied for restricted operations.
+- FK relationships and cascade behavior are correct.
+- Query performance is acceptable on expected dataset sizes.
 
 ## Reference
 - `.agent/rules/supabase-database.md`
