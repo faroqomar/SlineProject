@@ -17,10 +17,7 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => DashboardViewModel(),
-      child: const _DashboardContent(),
-    );
+    return const _DashboardContent();
   }
 }
 

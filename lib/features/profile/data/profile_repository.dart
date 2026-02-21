@@ -167,7 +167,7 @@ class ProfileRepository {
     final profileData = await _client
         .from('profiles')
         .select(
-          'id, full_name, avatar_url, bio, active_role, skills, created_at, title, location, verified',
+          'id, full_name, avatar_url, bio, active_role, skills, created_at',
         )
         .eq('id', userId)
         .single();
@@ -202,10 +202,10 @@ class ProfileRepository {
     final historyData = await _client
         .from('tasks')
         .select('''
-          id, title, description, budget, user_id, status, task_type, created_at, 
-          deadline, skills, category_id, category, assigned_freelancer_id, 
-          image_paths, packages, offers,
-          profiles!tasks_user_id_fkey(full_name, avatar_url)
+          id, title, description, budget, user_id, client_id, status, task_type, created_at, 
+          deadline, skills, category_id, category, freelancer_id, assigned_freelancer_id, 
+          image_paths, packages,
+          profiles!tasks_client_id_fkey(full_name, avatar_url)
         ''')
         .in_('status', ['completed', 'closed'])
         .or('freelancer_id.eq.$userId,assigned_freelancer_id.eq.$userId')

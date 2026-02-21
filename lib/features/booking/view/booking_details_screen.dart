@@ -266,7 +266,23 @@ class BookingDetailsScreen extends StatelessWidget {
                 const SizedBox(height: AppDimens.p12),
                 Center(
                   child: TextButton(
-                    onPressed: () {}, // TODO: Dispute Flow
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Dispute Flow'),
+                          content: const Text(
+                            'The dispute resolution center is coming soon.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: const Text('OK'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                     child: Text(
                       'Report Issue',
                       style: AppTypography.bodySmall.copyWith(

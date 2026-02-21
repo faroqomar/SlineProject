@@ -13,7 +13,6 @@ import 'package:sline_app/features/profile/view/profile_screen.dart';
 import 'package:sline_app/features/tasks/view/create_task_screen.dart';
 import 'package:sline_app/features/tasks/view/tenders_screen.dart';
 import 'package:sline_app/features/wallet/view/wallet_dashboard_screen.dart';
-import 'package:sline_app/features/notifications/view/widgets/notification_badge_button.dart';
 import '../core/providers/navigation_provider.dart';
 import '../core/widgets/custom_bottom_nav_bar.dart';
 
@@ -109,12 +108,6 @@ class MainNavigationScreen extends StatelessWidget {
                     child: Icon(Icons.add, color: AppColors.white, size: 30),
                   ),
                 ),
-              ),
-              // 6. Notification Badge (Top Right)
-              Positioned(
-                top: MediaQuery.of(context).padding.top + AppDimens.p16,
-                right: AppDimens.p16,
-                child: const NotificationBadgeButton(),
               ),
             ],
           ),

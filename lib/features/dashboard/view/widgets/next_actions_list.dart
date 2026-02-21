@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/dashboard_view_model.dart';
 import 'work_item_card.dart';
+import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/services/deep_link_service.dart'
+    as sline_deep_link;
 
 class NextActionsList extends StatelessWidget {
   const NextActionsList({super.key});
@@ -29,10 +32,24 @@ class NextActionsList extends StatelessWidget {
           .map(
             (item) => WorkItemCard(
               item: item,
-              onPrimaryAction: () {
-                // TODO: Wire up action properly based on type
-                // For now, WorkItemCard handles deep link on tap
-                // Primary action could be distinct
+              onPrimaryAction: () async {
+                final action = item.primaryActionType;
+                if (action == PrimaryActionType.reviewDelivery ||
+                    action == PrimaryActionType.submitEvidence ||
+                    action == PrimaryActionType.payEscrow ||
+                    action == PrimaryActionType.viewDetails) {
+                  // Navigate using deep link service
+                  final result = await context
+                      .read<sline_deep_link.DeepLinkService>()
+                      .handleWorkItem(context, item.type.name, item.id);
+                  if (result == true && context.mounted) {
+                    context.read<DashboardViewModel>().refresh();
+                  }
+                } else {
+                  await context.read<DashboardViewModel>().performPrimaryAction(
+                    item,
+                  );
+                }
               },
             ),
           )

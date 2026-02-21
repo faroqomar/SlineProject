@@ -11,6 +11,9 @@ import 'package:sline_app/features/orders/view/widgets/offer_list_sheet.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:sline_app/features/tasks/view/create_task_screen.dart';
 import 'package:sline_app/features/tasks/view/task_details_screen.dart';
+import 'package:sline_app/features/chat/view/chat_screen.dart';
+import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
+import 'package:sline_app/core/utils/loading_utils.dart';
 
 /// Orders dashboard screen showing user's published tasks.
 class OrdersDashboardScreen extends StatefulWidget {
@@ -168,14 +171,7 @@ class _OrdersDashboardScreenState extends State<OrdersDashboardScreen> {
                               task.status == TaskStatus.inProgress ||
                               task.status == TaskStatus.assigned,
                           onActionTap: () => _handleActionTap(context, task),
-                          onChatTap: () {
-                            // TODO: Navigate to chat
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Chat not implemented yet'),
-                              ),
-                            );
-                          },
+                          onChatTap: () => _handleChatTap(context, task),
                           onEdit: () => _handleEdit(context, task),
                           onDelete: () => _handleDelete(context, task),
                         );
@@ -304,5 +300,26 @@ class _OrdersDashboardScreenState extends State<OrdersDashboardScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _handleChatTap(BuildContext context, Task task) async {
+    final chatVm = context.read<ChatViewModel>();
+    LoadingUtils.show(context);
+    try {
+      final convo = await chatVm.getTaskConversation(task);
+      if (!context.mounted) return;
+      LoadingUtils.hide(context);
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatScreen(conversation: convo)),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      LoadingUtils.hide(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+      );
+    }
   }
 }

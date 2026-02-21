@@ -15,6 +15,9 @@ import 'package:sline_app/features/work/view/widgets/request_extension_modal.dar
 import 'package:sline_app/features/work/view/widgets/review_delivery_modal.dart';
 import 'package:sline_app/features/work/models/change_request_model.dart';
 import 'package:sline_app/features/work/models/extension_request_model.dart';
+import 'package:sline_app/features/chat/view/chat_screen.dart';
+import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
+import 'package:sline_app/core/utils/loading_utils.dart';
 
 class WorkItemDetailsScreen extends StatelessWidget {
   final String id;
@@ -445,28 +448,20 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
             if (canReview)
               Expanded(
                 child: AppButton(
-                  text: 'Review Delivery',
+                  text: 'Review',
                   onPressed: () => _showReviewModal(context, vm),
                 ),
               ),
-          ],
-          if (vm.status == UnifiedWorkStatus.active && !canSubmit) ...[
-            if (canAccept)
-              const SizedBox(width: AppDimens.p16), // Spacing if mixed
-            Expanded(
-              child: AppButton(
-                text: 'Message',
-                isPrimary: false,
-                onPressed: () {
-                  // TODO: Navigate to chat
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Chat navigation not implemented yet'),
-                    ),
-                  );
-                },
+            if (vm.status == UnifiedWorkStatus.active) ...[
+              const SizedBox(width: AppDimens.p12),
+              Expanded(
+                child: AppButton(
+                  text: 'Message',
+                  isPrimary: false,
+                  onPressed: () => _handleMessage(context, vm),
+                ),
               ),
-            ),
+            ],
           ],
         ],
       ),
@@ -533,6 +528,42 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
       if (vm.workItem != null) {
         vm.loadData(vm.workItem!.id, vm.workItem!.sourceType);
       }
+    }
+  }
+
+  Future<void> _handleMessage(
+    BuildContext context,
+    WorkItemDetailsViewModel vm,
+  ) async {
+    final item = vm.workItem;
+    if (item == null) return;
+
+    final chatVm = context.read<ChatViewModel>();
+    LoadingUtils.show(context);
+
+    try {
+      final convo = await chatVm.createOrGetConversation(
+        taskId: item.id,
+        user1Id: item.clientId,
+        user2Id: item.freelancerId,
+      );
+      if (!context.mounted) return;
+      LoadingUtils.hide(context);
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatScreen(conversation: convo)),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      LoadingUtils.hide(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to open chat: ${e.toString().replaceAll('Exception: ', '')}',
+          ),
+        ),
+      );
     }
   }
 }

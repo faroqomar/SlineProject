@@ -21,6 +21,37 @@
 
 ## 📋 Version History
 
+### 🟢 Version 2.15.1 — Navigation & UI Polish (Hotfixes)
+
+**Date:** 2026-02-22
+**Agent:** @Architect, @Pixel, @SlineDocs
+**Status:** ✅ Complete
+
+#### ✅ Implemented
+
+- **Navigation & Routing Fixes**
+  - **Global State**: Promoted `DashboardViewModel` to the global `MultiProvider` in `main.dart` to fix `ProviderNotFoundException` when accessing dashboard state from `MyServicesScreen` and deep links.
+  - **Chat Routing**: Fixed UI conditional logic in `WorkItemDetailsScreen` so that the "Message" button correctly appears for freelancers on active tasks, directly opening `ChatScreen` instead of dropping them in the generic Inbox.
+- **Database Schema Patches**
+  - **Profile History Query**: Removed obsolete column references (`title`, `location`, `verified`, `offers`) from the explicit `.select()` query in `ProfileRepository.getPublicProfile()`. This prevents the `42703` `PostgrestException` when navigating to a user's profile.
+  - **Task Relations**: Updated the profile relation hint in the task history query from the legacy `tasks_user_id_fkey` to the modern `tasks_client_id_fkey` to prevent the `PGRST200` schema relation error.
+- **UI Polish**
+  - **Notification Indication**: Resolved duplicate notification bell icons. Merged the functional realtime `NotificationBadgeButton` directly into the `GlassContainer` header of `HomeScreen`.
+  - **Cleanup**: Removed the floating, duplicate notification ring from `MainNavigationScreen` and eliminated unused imports.
+
+#### 📊 Impact
+
+- **UX**: Freelancers can now instantly directly message clients from the task details page.
+- **Stability**: Deep linking and global access to the dashboard state no longer crash the app.
+- **Polish**: The app header is cleaner with a single, functional, glassmorphic notification bell.
+
+#### 🧪 Verification
+
+- Execution Log: `.TODO/PLAN_NavChat_Fixes_2026-02-21.md`
+- Docs Sync: `.TODO/DOCS_SYNC_2026-02-22_Navigation_And_UI_Fixes.md`
+
+---
+
 ### 🟢 Version 2.15 — Profile Security & Observability Baseline
 
 **Date:** 2026-02-19

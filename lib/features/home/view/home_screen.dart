@@ -5,11 +5,10 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
 import 'package:sline_app/features/home/view/widgets/filters_modal.dart';
-import 'package:sline_app/features/notifications/view/notifications_modal.dart';
+import 'package:sline_app/features/notifications/view/widgets/notification_badge_button.dart';
 import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 import 'package:sline_app/features/saved/data/saved_tasks_service.dart';
 import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
@@ -126,30 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                       ],
                                     ),
-                                    GestureDetector(
-                                      onTap: () {
-                                        showModalBottomSheet(
-                                          context: context,
-                                          isScrollControlled: true,
-                                          backgroundColor: Colors.transparent,
-                                          builder: (_) =>
-                                              const NotificationsModal(),
-                                        );
-                                      },
-                                      child: GlassContainer(
-                                        borderRadius: BorderRadius.circular(
-                                          AppDimens.r16,
-                                        ),
-                                        padding: const EdgeInsets.all(
-                                          AppDimens.p12,
-                                        ),
-                                        child: Icon(
-                                          Icons.notifications_outlined,
-                                          color: colorScheme.text,
-                                          size: AppDimens.p24,
-                                        ),
-                                      ),
-                                    ),
+                                    const NotificationBadgeButton(),
                                   ],
                                 ),
                                 const SizedBox(height: AppDimens.p24),

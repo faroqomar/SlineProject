@@ -670,15 +670,15 @@ class DashboardViewModel extends ChangeNotifier {
         return;
       case PrimaryActionType.reviewDelivery:
         AppLogger.i('Action: reviewDelivery item=${item.id}', tag: _kTag);
-        // TODO: Navigate to review screen
+        // Note: Navigation routed via DeepLinkService in View
         return;
       case PrimaryActionType.payEscrow:
         AppLogger.i('Action: payEscrow item=${item.id}', tag: _kTag);
-        // TODO: Navigate to payment flow (stubbed)
+        // Note: Navigation routed via DeepLinkService in View
         return;
       case PrimaryActionType.submitEvidence:
         AppLogger.i('Action: submitEvidence item=${item.id}', tag: _kTag);
-        // TODO: Navigate to dispute evidence screen
+        // Note: Navigation routed via DeepLinkService in View
         return;
       case PrimaryActionType.viewDetails:
         AppLogger.i('Action: viewDetails item=${item.id}', tag: _kTag);

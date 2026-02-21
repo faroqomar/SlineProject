@@ -34,6 +34,7 @@ import 'features/notifications/viewmodels/notification_view_model.dart';
 import 'features/wallet/viewmodels/wallet_view_model.dart';
 import 'core/services/deep_link_service.dart';
 import 'core/services/dashboard_cache_service.dart';
+import 'features/dashboard/viewmodels/dashboard_view_model.dart';
 
 /// App entry point with global error handling.
 ///
@@ -122,6 +123,8 @@ class SLineApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => BookingViewModel()),
         // Orders dashboard state
         ChangeNotifierProvider(create: (_) => OrdersViewModel()),
+        // Main freelancer dashboard state
+        ChangeNotifierProvider(create: (_) => DashboardViewModel()),
         // Notifications state
         ChangeNotifierProvider(create: (_) => NotificationViewModel()),
         // Task Requests Service (Stateless)

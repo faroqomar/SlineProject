@@ -7,6 +7,7 @@ import '../models/conversation_model.dart';
 import '../models/message_model.dart';
 import '../../../core/services/logger_service.dart';
 import '../attachments/services/send_attachment_usecase.dart';
+import '../../tasks/models/task_model.dart';
 
 /// ChatViewModel — MVVM state holder for Chat feature.
 ///
@@ -145,6 +146,28 @@ class ChatViewModel extends ChangeNotifier {
       user1Id: user1Id,
       user2Id: user2Id,
     );
+  }
+
+  /// High-level helper for UI to easily start/fetch a conversation linked to a Task.
+  /// Relies on idempotency of createOrGetConversation.
+  Future<Conversation> getTaskConversation(Task task) async {
+    final freelancerId = task.assignedFreelancerId;
+    if (freelancerId == null) {
+      throw Exception(
+        'Cannot start conversation: No freelancer assigned to this task.',
+      );
+    }
+
+    try {
+      return await createOrGetConversation(
+        taskId: task.id,
+        user1Id: task.userId,
+        user2Id: freelancerId,
+      );
+    } catch (e) {
+      AppLogger.e('Error getting task conversation for task ${task.id}: $e');
+      rethrow;
+    }
   }
 
   Future<void> deleteConversation(String conversationId) async {

@@ -102,7 +102,7 @@ class Task {
   ///
   /// Why this parsing logic: Supabase returns nested objects for JOINed relations.
   /// The `profiles` key contains user data when fetched with:
-  /// `.select('*, profiles!tasks_user_id_fkey(full_name, avatar_url)')`
+  /// `.select('*, profiles!tasks_client_id_fkey(full_name, avatar_url)')`
   ///
   /// This avoids N+1 queries by getting all data in a single request.
   factory Task.fromJson(Map<String, dynamic> json) {

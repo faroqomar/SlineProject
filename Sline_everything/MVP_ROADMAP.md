@@ -335,3 +335,18 @@ This file is the single source of truth for MVP progress. Each step is bite-size
 - ✅ **Dashboard**: Optimized for scale (parallel fetching, O(1) lookups).
 - ✅ **Audit**: Threat model & Observability rules enforced.
 - 🔜 Next: Client-side "Request Revision" UX refinements.
+
+## 🔹 12. Chat Routing & Dashboard Actions (v2.15) — ✅ Completed
+
+| Step | Feature                   | Description                                      | Status       |
+| ---- | ------------------------- | ------------------------------------------------ | ------------ |
+| 12.1 | **Next Actions Routing**  | DeepLinkService wiring for Dashboard Review/Pay  | ✅ Completed |
+| 12.2 | **Task Chat Integration** | RPC idempotency to route to correct task chat    | ✅ Completed |
+| 12.3 | **UI Chat Launchers**     | OrdersDashboard and WorkItemDetails push to Chat | ✅ Completed |
+| 12.4 | **Dispute Placeholder**   | Safe fallback UI for dispute transition          | ✅ Completed |
+
+# 🎯 Summary (v2.15)
+
+- ✅ **Chat Routing**: Added `getTaskConversation` and integrated seamlessly across Dashboards and Work Details.
+- ✅ **Next Actions**: Replaced TODOs with robust `DeepLinkService` navigation logic.
+- 🔜 Next: Client-side "Request Revision" UX refinements.
