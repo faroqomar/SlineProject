@@ -9,7 +9,6 @@
 
 **A modern, cross-platform freelance marketplace connecting clients with service providers**
 
-
 </div>
 
 ---
@@ -27,23 +26,27 @@
 ### Business Model
 
 Two-sided marketplace with:
+
 - **Tender-based tasks** — Clients receive bids from freelancers
 - **Booking-based tasks** — Clients schedule appointments with freelancers
 - **Real-time messaging** — In-app negotiation and project communication
 - **Portfolio system** — Trust-building through work showcase
-- **Future**: Escrow payments, premium placement, AI-powered matching
+- **Secure Wallet & Escrow** — Double-entry ledger system for safe fund handling
+- **Future**: Premium placement, AI-powered matching
 
 ---
 
 ## Features
 
 ### 🔐 Authentication & Profiles
+
 - Email/password authentication via Supabase Auth
 - Role selection (Client or Freelancer)
 - Profile management with avatar upload (private storage + signed URLs)
 - Session management with automatic re-authentication
 
 ### 📋 Task Management
+
 - Create tasks (tender with bidding OR booking with scheduling)
 - Multiple image uploads (private storage with signed URLs)
 - Search and filter by category/keywords
@@ -52,12 +55,14 @@ Two-sided marketplace with:
 - Task status tracking (open → assigned → completed → closed)
 
 ### 💼 Offers & Requests System
+
 - Freelancers submit structured offers (price + timeline)
 - Clients review and accept/reject offers
 - One pending offer per bidder per task (enforced by database)
 - Offer messages in chat with typed payload
 
 ### 💬 Real-time Messaging
+
 - WhatsApp-style chat interface
 - Conversations list with last message preview
 - Task-linked conversations for job discussions
@@ -67,6 +72,7 @@ Two-sided marketplace with:
 - Optimized realtime (upsert-in-place, no full refetch)
 
 ### 📅 Booking System
+
 - Providers create availability slots (open/blocked)
 - Clients book available slots
 - Status management (pending → confirmed → completed/canceled)
@@ -75,18 +81,29 @@ Two-sided marketplace with:
 - Max one active booking per slot
 
 ### ⭐ Favorites & Saved Tasks
+
 - Clients save freelancers to favorites
 - Enables DM creation (business rule enforcement)
 - Bookmark tasks for later
 - Optimistic UI updates
 
 ### 🖼️ Portfolio System
+
 - Freelancers upload work samples with images
 - CRUD operations for portfolio items
 - Public gallery (visible to all authenticated users)
 - Project URL and description support
 
+### 💳 Payment Ledger System (In Progress)
+
+- Double-entry accounting system across `accounts`, `journal_entries`, and `ledger_lines`
+- Escrow hold mechanism gating funds between booking and delivery
+- Atomic RPC engine strictly enforcing zero negative balances, idempotency, and audit logging
+- Stripe webhook integration for top-ups (deposits) and payouts (withdrawals)
+- Immutable ledger architecture (append-only)
+
 ### 🎨 Theme System (v2.1)
+
 - Centralized theme dashboard (`theme_dashboard.dart`)
 - iOS 26-inspired liquid glass bottom navigation
 - Material Design 3 with Glassmorphism effects
@@ -97,19 +114,23 @@ Two-sided marketplace with:
 ## Tech Stack
 
 ### Frontend
+
 - **Flutter 3.8.1+** — Cross-platform UI framework (iOS, Android, Web, Desktop)
 - **Dart 3.8.1+** — Programming language
 - **Material Design 3** — Modern UI components with Glassmorphism
 - **Provider** — State management (ChangeNotifier pattern)
 
 ### Backend (Supabase BaaS)
+
 - **PostgreSQL** — Relational database with strong data integrity
 - **Supabase Auth** — Email/password authentication
 - **Supabase Storage** — File storage with private buckets and signed URLs
 - **Supabase Realtime** — WebSocket subscriptions for live updates
 - **Row-Level Security (RLS)** — Database-level access control
+- **Postgres RPC** — Atomic execution engine for strict transaction enforcement and idempotency
 
 ### Architecture
+
 - **Pattern**: Strict MVVM (Model-View-ViewModel)
 - **Organization**: Feature-based modular structure
 - **Security**: RLS on all tables, private storage by default
@@ -165,7 +186,9 @@ sline_app/
 ```
 
 ### Feature Structure (MVVM)
+
 Each feature follows strict MVVM:
+
 ```
 features/<feature>/
 ├── view/                    # UI Layer - Screens & Widgets
@@ -180,6 +203,7 @@ features/<feature>/
 ## Getting Started
 
 ### Prerequisites
+
 - [Flutter SDK 3.8.1+](https://flutter.dev/docs/get-started/install)
 - [Dart SDK 3.8.1+](https://dart.dev/get-dart)
 - Supabase account ([supabase.com](https://supabase.com))
@@ -188,12 +212,14 @@ features/<feature>/
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd sline_app
    ```
 
 2. **Install dependencies**
+
    ```bash
    flutter pub get
    ```
@@ -205,6 +231,7 @@ features/<feature>/
    - Update `lib/core/services/supabase_config.dart` with your credentials
 
 4. **Run the app**
+
    ```bash
    # List available devices
    flutter devices
@@ -245,15 +272,15 @@ flutter clean && flutter pub get
 
 SLine uses specialized AI agents (in `.cursor/Agents/`) for different tasks:
 
-| Agent | Trigger | Focus |
-|-------|---------|-------|
-| **@Architect** | `@Architect`, "fix logic", "refactor" | Logic, MVVM compliance, refactoring |
-| **@Pixel** | `@Pixel`, "design this", "make it pretty" | UI/UX, Glassmorphism, themes |
-| **@Supabase_Ops** | `@Supabase`, "add table", "secure db" | Database, RLS, SQL, storage |
-| **@Sentinel** | `@Sentinel`, "check this", "run tests" | QA, security, testing |
-| **@SlineDocs** | `@SlineDocs`, "document this" | Documentation updates |
-| **@SlinePlanner** | `@SlinePlanner`, "plan this feature" | Implementation planning |
-| **@CodeGuard** | `@CodeGuard`, "review code", "performance check" | Code reviews, performance, security, dependencies |
+| Agent             | Trigger                                          | Focus                                             |
+| ----------------- | ------------------------------------------------ | ------------------------------------------------- |
+| **@Architect**    | `@Architect`, "fix logic", "refactor"            | Logic, MVVM compliance, refactoring               |
+| **@Pixel**        | `@Pixel`, "design this", "make it pretty"        | UI/UX, Glassmorphism, themes                      |
+| **@Supabase_Ops** | `@Supabase`, "add table", "secure db"            | Database, RLS, SQL, storage                       |
+| **@Sentinel**     | `@Sentinel`, "check this", "run tests"           | QA, security, testing                             |
+| **@SlineDocs**    | `@SlineDocs`, "document this"                    | Documentation updates                             |
+| **@SlinePlanner** | `@SlinePlanner`, "plan this feature"             | Implementation planning                           |
+| **@CodeGuard**    | `@CodeGuard`, "review code", "performance check" | Code reviews, performance, security, dependencies |
 
 ### Cursor Configuration
 
@@ -275,23 +302,25 @@ SLine uses specialized AI agents (in `.cursor/Agents/`) for different tasks:
 
 ### 📖 Essential Docs (Start Here)
 
-| Document | Purpose |
-|----------|---------|
-| **[GEMINI.md](./GEMINI.md)** | Project overview, agents, building instructions |
-| **[Sline_everything/DEVELOPER_GUIDE.md](./Sline_everything/DEVELOPER_GUIDE.md)** | System architecture & feature map |
+| Document                                                                         | Purpose                                         |
+| -------------------------------------------------------------------------------- | ----------------------------------------------- |
+| **[GEMINI.md](./GEMINI.md)**                                                     | Project overview, agents, building instructions |
+| **[Sline_everything/DEVELOPER_GUIDE.md](./Sline_everything/DEVELOPER_GUIDE.md)** | System architecture & feature map               |
+
 ### 📋 Core Documentation
 
-| Document | Description |
-|----------|-------------|
-| [STRUCTURE.md](./Sline_everything/STRUCTURE.md) | Project folder structure & conventions |
+| Document                                                  | Description                                              |
+| --------------------------------------------------------- | -------------------------------------------------------- |
+| [STRUCTURE.md](./Sline_everything/STRUCTURE.md)           | Project folder structure & conventions                   |
 | [SUPABASE_SETUP.md](./Sline_everything/SUPABASE_SETUP.md) | Database schema, RLS policies, triggers (executable SQL) |
-| [MVP_ROADMAP.md](./Sline_everything/MVP_ROADMAP.md) | Feature roadmap & completion status |
-| [Sline_Log.md](./Sline_everything/Sline_Log.md) | Complete version history |
-| [CODE_REVIEW.md](./Sline_everything/CODE_REVIEW.md) | Code quality patterns & best practices |
+| [MVP_ROADMAP.md](./Sline_everything/MVP_ROADMAP.md)       | Feature roadmap & completion status                      |
+| [Sline_Log.md](./Sline_everything/Sline_Log.md)           | Complete version history                                 |
+| [CODE_REVIEW.md](./Sline_everything/CODE_REVIEW.md)       | Code quality patterns & best practices                   |
 
 ### 🎓 Feature-Specific Guides
 
 Located in `Sline_everything/DEVELOPER_GUIDE/`:
+
 - Auth Feature.md
 - Task Feature.md
 - Chat Feature.md
@@ -307,12 +336,14 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 ### MVVM Pattern (Strict Enforcement)
 
 **View Layer** (`view/`):
+
 - Pure UI rendering (StatelessWidget/StatefulWidget)
 - Observes ViewModel via `Consumer<ViewModel>`
 - Local form state only
 - **NEVER makes direct Supabase calls**
 
 **ViewModel Layer** (`viewmodels/`):
+
 - Extends `ChangeNotifier`
 - Manages UI state (loading, error, data)
 - Orchestrates Repository/Service calls
@@ -320,12 +351,14 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 - Calls `notifyListeners()` after state changes
 
 **Repository/Service Layer** (`data/`, `services/`):
+
 - Encapsulates ALL Supabase queries
 - Error mapping (RLS → user-friendly messages)
 - Storage operations (upload, signed URLs)
 - Never exposes raw database errors
 
 **Model Layer** (`models/`):
+
 - Immutable data classes
 - JSON serialization (`fromJson`, `toJson`)
 - UTC timestamps (converted to local in UI)
@@ -333,11 +366,13 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 ### Security Architecture
 
 **Row-Level Security (RLS)**:
+
 - ALL tables have RLS enabled
 - Session-based access control (`auth.uid()`)
 - Policies: owner-only, participant-based, role-based
 
 **Private Storage**:
+
 - All user uploads in private buckets
 - Signed URLs (1-hour TTL, cached ~90min)
 - Storage paths in database, NOT URLs
@@ -349,6 +384,7 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 ### Version 2.1 (December 2025)
 
 **Latest Changes**:
+
 - ✅ Theme System Dashboard (centralized theme management)
 - ✅ iOS 26 Liquid Glass Bottom Navigation
 - ✅ CodeGuard Agent (code reviews, performance, security)
@@ -356,6 +392,7 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 - ✅ Video Call Feature Removed (scope reduction)
 
 **Completed Features**:
+
 - Auth & Profiles (with private avatar storage)
 - Tasks (tender/booking, images, CRUD, search/filter)
 - Real-time Chat (DM + task-linked, attachments)
@@ -371,18 +408,21 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 ### Priority Roadmap
 
 **Immediate**:
+
+- Integrate Payment Ledger System (Phase A - DB Prep)
 - Audit `Colors.*` → `AppColors` migration
 - Update Supabase Flutter to v2.x
 
 **Short-term**:
+
 - Localization (Arabic RTL + English LTR)
 - Push notifications (FCM)
 - User ratings & reviews
 
 **Medium-term**:
-- Payment integration & escrow
-- Analytics dashboard
+
 - Admin Dashboard
+- AI-Driven Matching Engine
 
 ---
 
@@ -391,12 +431,14 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 ### Development Standards
 
 **Code Quality**:
+
 - ✅ English only (code, comments, docs)
 - ✅ No `print()` — use `AppLogger.d/i/w/e`
 - ✅ Lint clean (`flutter analyze`)
 - ✅ Formatted (`flutter format .`)
 
 **Critical Patterns**:
+
 - ✅ Check `mounted` after `await` in StatefulWidget
 - ✅ Store paths, not URLs (for storage)
 - ✅ UTC timestamps (store UTC, display local)
@@ -404,6 +446,7 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 - ✅ Use `AppColors`, not hardcoded colors
 
 **Architecture Rules**:
+
 - ❌ NO Supabase calls in View layer
 - ❌ NO business logic in View layer
 - ❌ NO storing signed URLs in database
@@ -425,6 +468,7 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 ## 📞 Quick Reference
 
 **Commands**:
+
 ```bash
 flutter run                         # Run app
 flutter analyze                     # Static analysis
@@ -435,6 +479,7 @@ AppLogger.i('message')              # Info logging
 ```
 
 **Key Files**:
+
 - **Theme**: `lib/core/theme/theme_dashboard.dart`
 - **Config**: `lib/core/services/supabase_config.dart`
 - **Navigation**: `lib/app/main_navigation_screen.dart`
