@@ -18,22 +18,35 @@ import '../core/widgets/custom_bottom_nav_bar.dart';
 
 /// Main navigation screen that manages bottom navigation and screen switching
 class MainNavigationScreen extends StatelessWidget {
-  const MainNavigationScreen({super.key});
+  const MainNavigationScreen({
+    super.key,
+    this.screens,
+    this.createTaskScreenBuilder,
+  });
+
+  static const Key createTaskFabKey = ValueKey<String>('main_nav_create_task');
+
+  final List<Widget>? screens;
+  final WidgetBuilder? createTaskScreenBuilder;
 
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colorScheme = context.colorScheme;
+    final WidgetBuilder createTaskBuilder =
+        createTaskScreenBuilder ?? ((_) => const CreateTaskScreen());
 
     // Screens matching NavView enum order: home, tender, booking, orders, messages, profile, wallet
-    final List<Widget> screens = [
-      const HomeScreen(),
-      const TendersScreen(),
-      const BookingsDiscoveryScreen(),
-      const DashboardScreen(),
-      const MessagesScreen(),
-      const ProfileScreen(),
-      const WalletDashboardScreen(),
-    ];
+    final List<Widget> screens =
+        this.screens ??
+        const [
+          HomeScreen(),
+          TendersScreen(),
+          BookingsDiscoveryScreen(),
+          DashboardScreen(),
+          MessagesScreen(),
+          ProfileScreen(),
+          WalletDashboardScreen(),
+        ];
 
     return Consumer<NavigationProvider>(
       builder: (context, navigationProvider, child) {
@@ -85,13 +98,12 @@ class MainNavigationScreen extends StatelessWidget {
                 child: AnimatedRotationButton(
                   rotationAngle: 0.125, // 45 degrees
                   onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const CreateTaskScreen(),
-                      ),
-                    );
+                    Navigator.of(
+                      context,
+                    ).push(MaterialPageRoute(builder: createTaskBuilder));
                   },
                   child: Container(
+                    key: createTaskFabKey,
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(

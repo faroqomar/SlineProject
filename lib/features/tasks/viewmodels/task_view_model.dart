@@ -13,8 +13,8 @@ import '../../../core/app_enums.dart';
 /// Performance: Optimized to minimize redundant notifyListeners() calls.
 /// Each state-changing method calls notifyListeners() only once at the end.
 class TaskViewModel extends ChangeNotifier {
-  TaskViewModel({SupabaseClient? client})
-    : _repo = TaskRepository(client ?? Supabase.instance.client);
+  TaskViewModel({TaskRepository? repo, SupabaseClient? client})
+    : _repo = repo ?? TaskRepository(client ?? Supabase.instance.client);
 
   final TaskRepository _repo;
 

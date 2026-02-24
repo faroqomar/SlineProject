@@ -196,19 +196,22 @@ class BookingViewModel extends ChangeNotifier {
     required String taskId,
     required String slotId,
     required String providerId,
-    required double price,
+    double? price,
     String? note,
     String? packageId,
     Map<String, dynamic>? requirements,
     BookingStatus status = BookingStatus.pending,
   }) async {
     try {
+      // Keep a view-model level fallback for unit-testable booking flows and
+      // future non-UI callers. UI may already provide the same default.
+      final effectivePrice = price ?? 100.0;
       final b = await _repo.bookSlot(
         taskId: taskId,
         slotId: slotId,
         note: note,
         providerId: providerId,
-        price: price,
+        price: effectivePrice,
         packageId: packageId,
         requirements: requirements,
         status: status,
@@ -319,12 +322,18 @@ class BookingViewModel extends ChangeNotifier {
       }
 
       // Update in provider list
-      final providerIdx = bookingsAsProvider.indexWhere((b) => b.id == bookingId);
+      final providerIdx = bookingsAsProvider.indexWhere(
+        (b) => b.id == bookingId,
+      );
       if (providerIdx != -1) {
         bookingsAsProvider[providerIdx] = updated;
       }
     } catch (e) {
-      AppLogger.w('Failed to refresh booking $bookingId', tag: 'Booking', error: e);
+      AppLogger.w(
+        'Failed to refresh booking $bookingId',
+        tag: 'Booking',
+        error: e,
+      );
     }
   }
 

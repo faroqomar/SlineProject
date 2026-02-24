@@ -10,6 +10,8 @@ import 'package:sline_app/features/notifications/view/notifications_modal.dart';
 class NotificationBadgeButton extends StatelessWidget {
   const NotificationBadgeButton({super.key});
 
+  static const Key buttonKey = ValueKey<String>('notification_badge_button');
+
   @override
   Widget build(BuildContext context) {
     return Consumer<NotificationViewModel>(
@@ -18,6 +20,7 @@ class NotificationBadgeButton extends StatelessWidget {
         final colorScheme = context.colorScheme;
 
         return GestureDetector(
+          key: buttonKey,
           onTap: () {
             showModalBottomSheet(
               context: context,

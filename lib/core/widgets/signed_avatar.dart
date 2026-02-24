@@ -69,15 +69,18 @@ class SignedAvatar extends StatefulWidget {
 }
 
 class _SignedAvatarState extends State<SignedAvatar> {
-  late final AvatarService _avatarService;
+  AvatarService? _avatarService;
   String? _resolvedUrl;
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _avatarService = AvatarService(Supabase.instance.client);
     _resolve();
+  }
+
+  AvatarService _ensureAvatarService() {
+    return _avatarService ??= AvatarService(Supabase.instance.client);
   }
 
   @override
@@ -125,7 +128,7 @@ class _SignedAvatarState extends State<SignedAvatar> {
 
     // Generate new signed URL and cache it
     try {
-      final signed = await _avatarService.createSignedUrl(
+      final signed = await _ensureAvatarService().createSignedUrl(
         v,
         expire: const Duration(hours: 2),
       );

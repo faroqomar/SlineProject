@@ -13,16 +13,30 @@ import 'tabs/work_tab.dart';
 import 'tabs/inbox_tab.dart';
 
 class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+  const DashboardScreen({super.key, this.tabViews});
+
+  static const Key settingsButtonKey = ValueKey<String>(
+    'dashboard_settings_button',
+  );
+  static const Key freelancerRoleButtonKey = ValueKey<String>(
+    'dashboard_role_freelancer',
+  );
+  static const Key clientRoleButtonKey = ValueKey<String>(
+    'dashboard_role_client',
+  );
+
+  final List<Widget>? tabViews;
 
   @override
   Widget build(BuildContext context) {
-    return const _DashboardContent();
+    return _DashboardContent(tabViews: tabViews);
   }
 }
 
 class _DashboardContent extends StatefulWidget {
-  const _DashboardContent();
+  const _DashboardContent({this.tabViews});
+
+  final List<Widget>? tabViews;
 
   @override
   State<_DashboardContent> createState() => _DashboardContentState();
@@ -91,6 +105,7 @@ class _DashboardContentState extends State<_DashboardContent>
         actions: [
           IconButton(
             icon: Icon(
+              key: DashboardScreen.settingsButtonKey,
               Icons.settings_outlined,
               color: colorScheme.textSecondary,
             ),
@@ -123,13 +138,15 @@ class _DashboardContentState extends State<_DashboardContent>
           controller: _tabController,
           physics:
               const NeverScrollableScrollPhysics(), // Disable swipe to avoid conflict with internal tabs
-          children: [
-            const OverviewTab(),
-            // ManageTab removed
-            const BookingsTab(),
-            const WorkTab(),
-            const InboxTab(),
-          ],
+          children:
+              widget.tabViews ??
+              const [
+                OverviewTab(),
+                // ManageTab removed
+                BookingsTab(),
+                WorkTab(),
+                InboxTab(),
+              ],
         ),
       ),
     );
@@ -158,11 +175,13 @@ class _RoleSwitch extends StatelessWidget {
           _RoleButton(
             label: "Freelancer",
             isActive: isFreelancer,
+            buttonKey: DashboardScreen.freelancerRoleButtonKey,
             onTap: () => vm.setRole(UserRole.freelancer),
           ),
           _RoleButton(
             label: "Client",
             isActive: !isFreelancer,
+            buttonKey: DashboardScreen.clientRoleButtonKey,
             onTap: () => vm.setRole(UserRole.client),
           ),
         ],
@@ -174,11 +193,13 @@ class _RoleSwitch extends StatelessWidget {
 class _RoleButton extends StatelessWidget {
   final String label;
   final bool isActive;
+  final Key? buttonKey;
   final VoidCallback onTap;
 
   const _RoleButton({
     required this.label,
     required this.isActive,
+    this.buttonKey,
     required this.onTap,
   });
 
@@ -189,6 +210,7 @@ class _RoleButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
+        key: buttonKey,
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(

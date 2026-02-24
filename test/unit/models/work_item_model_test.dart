@@ -1,0 +1,56 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/features/dashboard/models/work_item.dart';
+
+void main() {
+  group('WorkItem model T35', () {
+    test(
+      'T35 WorkItem toJson/fromJson roundtrip preserves permissions and sort fields',
+      () {
+        final original = WorkItem(
+          id: 'work-1',
+          type: WorkItemType.booking,
+          title: 'Roundtrip booking',
+          counterpartyId: 'user-2',
+          counterpartyName: 'Counterparty',
+          counterpartyAvatar: 'avatar.png',
+          counterpartyRole: 'Freelancer',
+          sourceId: 'booking-1',
+          statusRaw: 'delivered',
+          statusUiBucket: 'Done',
+          createdAt: DateTime.utc(2026, 2, 24, 10, 0),
+          scheduledAt: DateTime.utc(2026, 2, 25, 9, 0),
+          completedAt: DateTime.utc(2026, 2, 26, 9, 0),
+          lastUpdate: DateTime.utc(2026, 2, 26, 10, 0),
+          primaryActionType: PrimaryActionType.reviewDelivery,
+          deepLinkRoute: '/booking/booking-1',
+          permissions: WorkItemPermissions(
+            canReview: true,
+            canDispute: true,
+            canPayEscrow: false,
+            canStart: false,
+            canComplete: false,
+            canApprove: false,
+            canCancel: false,
+            canReschedule: false,
+          ),
+          workItemId: 'booking:booking-1',
+          needsReview: true,
+          sortRank: 2,
+          lastActivityAt: DateTime.utc(2026, 2, 26, 11, 30),
+        );
+
+        final roundTripped = WorkItem.fromJson(original.toJson());
+
+        expect(roundTripped.id, 'work-1');
+        expect(roundTripped.type, WorkItemType.booking);
+        expect(roundTripped.permissions.canReview, isTrue);
+        expect(roundTripped.permissions.canDispute, isTrue);
+        expect(roundTripped.permissions.canPayEscrow, isFalse);
+        expect(roundTripped.sortRank, 2);
+        expect(roundTripped.lastActivityAt, DateTime.utc(2026, 2, 26, 11, 30));
+        expect(roundTripped.needsReview, isTrue);
+      },
+    );
+  });
+}

@@ -9,6 +9,7 @@ import 'package:sline_app/core/theme/app_theme.dart';
 /// This widget mimics the button styles from the React design, including
 /// specific dimensions, rounded corners, text styling, and elevation/shadow.
 class AppButton extends StatelessWidget {
+  final Key? tapTargetKey;
   final VoidCallback? onPressed;
   final String text;
   final bool isLoading;
@@ -24,6 +25,7 @@ class AppButton extends StatelessWidget {
 
   const AppButton({
     super.key,
+    this.tapTargetKey,
     required this.onPressed,
     required this.text,
     this.isLoading = false,
@@ -77,6 +79,7 @@ class AppButton extends StatelessWidget {
         color: effectiveBackgroundColor,
         borderRadius: effectiveBorderRadius,
         child: InkWell(
+          key: tapTargetKey,
           onTap: isLoading ? null : onPressed,
           borderRadius: effectiveBorderRadius,
           child: Center(

@@ -17,6 +17,31 @@ class CreateTaskScreen extends StatefulWidget {
   final Task? task; // optional task for edit mode
   const CreateTaskScreen({super.key, this.task});
 
+  static const Key primaryActionButtonKey = ValueKey<String>(
+    'create_task_primary_action',
+  );
+  static const Key tenderTypeCardKey = ValueKey<String>(
+    'create_task_type_tender',
+  );
+  static const Key bookingTypeCardKey = ValueKey<String>(
+    'create_task_type_booking',
+  );
+  static const Key packageTierBasicKey = ValueKey<String>(
+    'create_task_package_tier_basic',
+  );
+  static const Key packageTierStandardKey = ValueKey<String>(
+    'create_task_package_tier_standard',
+  );
+  static const Key packageTierPremiumKey = ValueKey<String>(
+    'create_task_package_tier_premium',
+  );
+  static const Key packagePriceFieldKey = ValueKey<String>(
+    'create_task_package_price',
+  );
+  static const Key packageDescriptionFieldKey = ValueKey<String>(
+    'create_task_package_description',
+  );
+
   @override
   State<CreateTaskScreen> createState() => _CreateTaskScreenState();
 }
@@ -416,6 +441,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           children: [
             Expanded(
               child: _buildTypeCard(
+                cardKey: CreateTaskScreen.tenderTypeCardKey,
                 emoji: '📋',
                 label: 'Tender',
                 subLabel: 'Open proposals',
@@ -427,6 +453,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
             const SizedBox(width: AppDimens.p12),
             Expanded(
               child: _buildTypeCard(
+                cardKey: CreateTaskScreen.bookingTypeCardKey,
                 emoji: '📅',
                 label: 'Booking',
                 subLabel: 'Direct hire',
@@ -579,6 +606,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   }
 
   Widget _buildTypeCard({
+    Key? cardKey,
     required String emoji,
     required String label,
     required String subLabel,
@@ -590,6 +618,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     return GestureDetector(
       onTap: () => setState(() => _selectedTaskType = type),
       child: AnimatedContainer(
+        key: cardKey,
         duration: const Duration(milliseconds: 200),
         height: 100,
         decoration: BoxDecoration(
@@ -754,6 +783,11 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
               final index = entry.key;
               final label = entry.value;
               final isSelected = _selectedPackageTier == index;
+              final Key tierKey = switch (index) {
+                0 => CreateTaskScreen.packageTierBasicKey,
+                1 => CreateTaskScreen.packageTierStandardKey,
+                _ => CreateTaskScreen.packageTierPremiumKey,
+              };
               return Expanded(
                 child: GestureDetector(
                   onTap: () {
@@ -761,6 +795,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                     _updateControllersFromState(index);
                   },
                   child: AnimatedContainer(
+                    key: tierKey,
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(
                       vertical: AppDimens.p10,
@@ -801,6 +836,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                 'Price (\$)',
                 AppTextField(
                   hintText: '0',
+                  fieldKey: CreateTaskScreen.packagePriceFieldKey,
                   controller:
                       _packagePriceController, // Note: Shared controller for now (simplified)
                   keyboardType: TextInputType.number,
@@ -838,6 +874,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           'Package Description',
           AppTextField(
             hintText: 'What is included?',
+            fieldKey: CreateTaskScreen.packageDescriptionFieldKey,
             controller: _packageDescriptionController,
             maxLines: 3,
           ),
@@ -872,6 +909,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
             ),
           Expanded(
             child: AppButton(
+              tapTargetKey: CreateTaskScreen.primaryActionButtonKey,
               text: _currentStep == 3
                   ? (widget.task != null ? 'Save Changes' : 'Create Task')
                   : 'Next Step',

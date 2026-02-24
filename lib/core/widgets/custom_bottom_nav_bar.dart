@@ -18,30 +18,46 @@ import 'package:sline_app/core/providers/navigation_provider.dart';
 class CustomBottomNavBar extends StatelessWidget {
   const CustomBottomNavBar({super.key});
 
+  static const Key homeNavKey = ValueKey<String>('bottom_nav_home');
+  static const Key tendersNavKey = ValueKey<String>('bottom_nav_tenders');
+  static const Key bookingsNavKey = ValueKey<String>('bottom_nav_bookings');
+  static const Key dashboardNavKey = ValueKey<String>('bottom_nav_dashboard');
+  static const Key messagesNavKey = ValueKey<String>('bottom_nav_messages');
+  static const Key profileNavKey = ValueKey<String>('bottom_nav_profile');
+
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colorScheme = context.colorScheme;
 
     // Navigation items configuration
     final List<_NavItem> navItems = [
-      _NavItem(NavView.home, Icons.home_outlined, Icons.home, 'Home'),
+      _NavItem(
+        NavView.home,
+        Icons.home_outlined,
+        Icons.home,
+        'Home',
+        key: homeNavKey,
+      ),
       _NavItem(
         NavView.tender,
         Icons.assignment_outlined,
         Icons.assignment,
         'Tenders',
+        key: tendersNavKey,
       ),
       _NavItem(
         NavView.booking,
         Icons.calendar_today_outlined,
         Icons.calendar_today,
         'Bookings',
+        key: bookingsNavKey,
       ),
       _NavItem(
         NavView.orders,
         Icons.dashboard_outlined,
         Icons.dashboard,
         'Dashboard',
+        key: dashboardNavKey,
       ),
       _NavItem(
         NavView.messages,
@@ -49,8 +65,15 @@ class CustomBottomNavBar extends StatelessWidget {
         Icons.message,
         'Messages',
         hasNotification: true,
+        key: messagesNavKey,
       ),
-      _NavItem(NavView.profile, Icons.person_outline, Icons.person, 'Profile'),
+      _NavItem(
+        NavView.profile,
+        Icons.person_outline,
+        Icons.person,
+        'Profile',
+        key: profileNavKey,
+      ),
     ];
 
     return Consumer<NavigationProvider>(
@@ -228,6 +251,7 @@ class _LiquidGlassNavItemState extends State<_LiquidGlassNavItem>
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      key: widget.item.key,
       onTap: widget.onTap,
       behavior: HitTestBehavior.opaque,
       child: AnimatedBuilder(
@@ -333,6 +357,7 @@ class _NavItem {
   final IconData activeIcon;
   final String label;
   final bool hasNotification;
+  final Key? key;
 
   const _NavItem(
     this.id,
@@ -340,5 +365,6 @@ class _NavItem {
     this.activeIcon,
     this.label, {
     this.hasNotification = false,
+    this.key,
   });
 }

@@ -20,7 +20,19 @@ import '../viewmodels/home_view_model.dart';
 
 /// Home screen - main dashboard for the app (MVVM) with Glassmorphism design.
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({
+    super.key,
+    this.autoLoadOnInit = true,
+    this.savedTasksVmFactory,
+  });
+
+  static const Key searchFieldKey = ValueKey<String>('home_search_field');
+  static const Key refreshIndicatorKey = ValueKey<String>(
+    'home_refresh_indicator',
+  );
+
+  final bool autoLoadOnInit;
+  final SavedTasksViewModel Function()? savedTasksVmFactory;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -30,6 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    if (!widget.autoLoadOnInit) return;
     // Load featured tasks and notify filter controller when screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<HomeViewModel>().loadFeaturedTasks(
@@ -46,7 +59,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return ChangeNotifierProvider(
       create: (_) {
-        final vm = SavedTasksViewModel(service: SavedTasksService());
+        final vm =
+            widget.savedTasksVmFactory?.call() ??
+            SavedTasksViewModel(service: SavedTasksService());
         // Load saved tasks cache on first build
         vm.load();
         return vm;
@@ -62,6 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   final topPadding = MediaQuery.of(context).padding.top;
 
                   return RefreshIndicator(
+                    key: HomeScreen.refreshIndicatorKey,
                     onRefresh: () async {
                       final saved = context.read<SavedTasksViewModel>();
                       await homeViewModel.refresh(
@@ -135,6 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   children: [
                                     Expanded(
                                       child: AppTextField(
+                                        fieldKey: HomeScreen.searchFieldKey,
                                         hintText: 'Search amazing projects...',
                                         prefixIcon: Icon(
                                           Icons.search,

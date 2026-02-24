@@ -18,6 +18,7 @@ class TaskFilterViewModel extends ChangeNotifier {
   String _sortBy = 'Relevance';
 
   List<Task> get filteredTasks => List.unmodifiable(_filteredTasks);
+  String get searchQuery => _searchQuery;
   String get selectedCategory => _selectedCategory;
 
   // Advanced Filter Getters

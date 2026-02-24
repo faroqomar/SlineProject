@@ -16,7 +16,18 @@ import 'package:sline_app/features/auth/view/forgot_password_screen.dart';
 /// The View handles navigation and SnackBar display based on ViewModel state,
 /// keeping the ViewModel framework-agnostic.
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({
+    super.key,
+    this.authViewModelFactory,
+    this.mainNavigationBuilder,
+  });
+
+  final AuthViewModel Function()? authViewModelFactory;
+  final WidgetBuilder? mainNavigationBuilder;
+
+  static const Key emailFieldKey = ValueKey<String>('login_email_field');
+  static const Key passwordFieldKey = ValueKey<String>('login_password_field');
+  static const Key signInButtonKey = ValueKey<String>('login_sign_in_button');
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -51,7 +62,11 @@ class _LoginScreenState extends State<LoginScreen> {
       ).showSnackBar(const SnackBar(content: Text('Login successful')));
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+        MaterialPageRoute(
+          builder:
+              widget.mainNavigationBuilder ??
+              (_) => const MainNavigationScreen(),
+        ),
       );
     } else {
       // Show error from ViewModel
@@ -66,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final AppColorScheme colorScheme = context.colorScheme;
 
     return ChangeNotifierProvider(
-      create: (_) => AuthViewModel(),
+      create: (_) => widget.authViewModelFactory?.call() ?? AuthViewModel(),
       child: Scaffold(
         body: Container(
           width: double.infinity,
@@ -152,6 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: AppDimens.p8),
                       AppTextField(
+                        fieldKey: LoginScreen.emailFieldKey,
                         controller: _emailController,
                         hintText: 'your@email.com',
                         keyboardType: TextInputType.emailAddress,
@@ -177,6 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: AppDimens.p8),
                       AppTextField(
+                        fieldKey: LoginScreen.passwordFieldKey,
                         controller: _passwordController,
                         hintText: 'Enter your password',
                         obscureText: true,
@@ -216,6 +233,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Consumer<AuthViewModel>(
                         builder: (context, authVM, child) {
                           return AppButton(
+                            tapTargetKey: LoginScreen.signInButtonKey,
                             text: 'Sign In',
                             isLoading: authVM.isLoading,
                             width: double.infinity,

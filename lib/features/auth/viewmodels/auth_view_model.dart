@@ -18,6 +18,7 @@ import 'package:sline_app/features/auth/data/auth_repository.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final AuthRepository _authRepo;
+  final Stream<AuthState> _authStateChanges;
   StreamSubscription<AuthState>? _authSubscription;
 
   /// Tracks if a session error occurred before callback was set.
@@ -41,14 +42,16 @@ class AuthViewModel extends ChangeNotifier {
 
   VoidCallback? get onSessionExpired => _onSessionExpired;
 
-  AuthViewModel({AuthRepository? authRepo})
-    : _authRepo = authRepo ?? AuthRepository() {
+  AuthViewModel({AuthRepository? authRepo, Stream<AuthState>? authStateChanges})
+    : _authRepo = authRepo ?? AuthRepository(),
+      _authStateChanges =
+          authStateChanges ?? Supabase.instance.client.auth.onAuthStateChange {
     _initAuthListener();
   }
 
   /// Initialize auth state listener to handle session expiry.
   void _initAuthListener() {
-    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen(
+    _authSubscription = _authStateChanges.listen(
       (AuthState state) {
         AppLogger.d('Auth state changed: ${state.event}', tag: 'Auth');
 

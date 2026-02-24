@@ -22,7 +22,19 @@ import '../attachments/widgets/attachment_message_tile.dart';
 /// Chat screen with Glassmorphism design matching the new design system.
 class ChatScreen extends StatefulWidget {
   final Conversation conversation;
-  const ChatScreen({super.key, required this.conversation});
+  final bool enableLifecycleEffects;
+  final AttachmentSignedUrlResolver? attachmentSignedUrlResolver;
+  static const Key messageInputKey = ValueKey<String>(
+    'chat_message_input_field',
+  );
+  static const Key sendButtonKey = ValueKey<String>('chat_send_button');
+
+  const ChatScreen({
+    super.key,
+    required this.conversation,
+    this.enableLifecycleEffects = true,
+    this.attachmentSignedUrlResolver,
+  });
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -36,19 +48,23 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     _chatCtrl = context.read<ChatViewModel>();
-    _chatCtrl.activeConversation = widget.conversation;
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      AppLogger.i('[CHAT] opened: convo=${widget.conversation.id}');
-      _chatCtrl.subscribeToActiveConversation();
-      if (!mounted) return;
-      await _chatCtrl.markReceiptsForActive(delivered: true, seen: true);
-    });
+    if (widget.enableLifecycleEffects) {
+      _chatCtrl.activeConversation = widget.conversation;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        AppLogger.i('[CHAT] opened: convo=${widget.conversation.id}');
+        _chatCtrl.subscribeToActiveConversation();
+        if (!mounted) return;
+        await _chatCtrl.markReceiptsForActive(delivered: true, seen: true);
+      });
+    }
   }
 
   @override
   void dispose() {
     AppLogger.d('[CHAT] closed: convo=${widget.conversation.id}');
-    _chatCtrl.unsubscribeFromConversation();
+    if (widget.enableLifecycleEffects) {
+      _chatCtrl.unsubscribeFromConversation();
+    }
     _messageController.dispose();
     super.dispose();
   }
@@ -156,6 +172,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         storagePath: msg.attachmentUrl!,
                         time: formatFriendlyTime(msg.createdAt),
                         caption: msg.content != '[photo]' ? msg.content : null,
+                        signedUrlResolver: widget.attachmentSignedUrlResolver,
                       );
                     }
 
@@ -315,6 +332,7 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
               padding: const EdgeInsets.symmetric(horizontal: AppDimens.p16),
               child: TextField(
+                key: ChatScreen.messageInputKey,
                 controller: _messageController,
                 style: TextStyle(color: colorScheme.text),
                 decoration: InputDecoration(
@@ -338,6 +356,7 @@ class _ChatScreenState extends State<ChatScreen> {
               }
             },
             child: Container(
+              key: ChatScreen.sendButtonKey,
               width: 46, // Standard icon button size from design
               height: 46, // Standard icon button size from design
               decoration: BoxDecoration(

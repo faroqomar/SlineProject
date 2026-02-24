@@ -9,6 +9,7 @@ import 'package:sline_app/core/theme/app_colors.dart'; // NEW import
 /// [InputDecoration] to match the translucent background, border behavior,
 /// and focus states seen in the React design.
 class AppTextField extends StatelessWidget {
+  final Key? fieldKey;
   final String? hintText;
   final TextEditingController? controller;
   final bool obscureText;
@@ -22,6 +23,7 @@ class AppTextField extends StatelessWidget {
 
   const AppTextField({
     super.key,
+    this.fieldKey,
     this.hintText,
     this.controller,
     this.obscureText = false,
@@ -43,6 +45,7 @@ class AppTextField extends StatelessWidget {
     // or extend it here for specific AppTextField needs.
     // For this case, the InputDecorationTheme is already designed to match the inputs.
     return TextFormField(
+      key: fieldKey,
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,

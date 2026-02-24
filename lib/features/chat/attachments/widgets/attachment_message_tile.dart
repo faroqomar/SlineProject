@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import '../services/upload_service.dart';
 
+typedef AttachmentSignedUrlResolver =
+    Future<String> Function(String storagePath);
+
 /// Renders an image attachment bubble and resolves a signed URL for private files.
 class AttachmentMessageTile extends StatefulWidget {
   final bool isMine;
   final String storagePath; // e.g. chat-attachments/convos/<id>/file.jpg
   final String time; // already formatted
   final String? caption; // optional caption; null to hide
+  final AttachmentSignedUrlResolver? signedUrlResolver;
 
   const AttachmentMessageTile({
     super.key,
@@ -14,6 +18,7 @@ class AttachmentMessageTile extends StatefulWidget {
     required this.storagePath,
     required this.time,
     this.caption,
+    this.signedUrlResolver,
   });
 
   @override
@@ -26,10 +31,12 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
   @override
   void initState() {
     super.initState();
-    _signedUrlFuture = SupabaseAttachmentUploader().createSignedUrl(
-      widget.storagePath,
-      expiresInSeconds: 3600,
-    );
+    _signedUrlFuture =
+        widget.signedUrlResolver?.call(widget.storagePath) ??
+        SupabaseAttachmentUploader().createSignedUrl(
+          widget.storagePath,
+          expiresInSeconds: 3600,
+        );
   }
 
   @override
