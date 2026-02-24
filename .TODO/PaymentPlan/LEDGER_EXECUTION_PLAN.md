@@ -4,13 +4,13 @@ This is the critical path to safely and effectively migrate the platform to the 
 
 ## Critical Path Checklist
 
-- [ ] **Phase A (Schema):** Create `accounts`, `journal_entries`, `ledger_lines`, `audit_logs`, `withdrawal_requests`.
-- [ ] **Phase A (Security):** Apply `append-only` triggers blocking updates/deletes, configure RLS.
-- [ ] **Phase A (Seed):** Initialize `platform_cash`, `platform_escrow`, `platform_revenue`.
-- [ ] **Phase B (Engine):** Deploy `process_payment_event_ledger` RPC (locks, gates, funds, idempotency, balancing).
-- [ ] **Phase C (Views Contract):** Deploy `vw_wallet_balances_user`, `vw_wallet_activity_user`, `vw_financial_metrics_period`, `vw_financial_metrics_realtime`.
-- [ ] **Phase D (Integration):** Update `BookingService`, `TaskService`, `WalletService`, and `DashboardRepository` in Flutter to point to new views/RPC.
-- [ ] **Phase E (Cutover):** Execute backfill mapping `wallet_transactions` to journals, run reconciliation, freeze legacy writes.
+- [x] **Phase A (Schema):** Create `accounts`, `journal_entries`, `ledger_lines`, `audit_logs`, `withdrawal_requests`.
+- [x] **Phase A (Security):** Apply `append-only` triggers blocking updates/deletes, configure RLS.
+- [x] **Phase A (Seed):** Initialize `platform_cash`, `platform_escrow`, `platform_revenue`, `platform_test_float`.
+- [x] **Phase B (Engine):** Deploy `process_payment_event_ledger` RPC (locks, gates, funds, idempotency, balancing).
+- [x] **Phase C (Views Contract):** Deploy `vw_wallet_balances_user`, `vw_wallet_activity_user`, `vw_financial_metrics_period`, `vw_financial_metrics_realtime`.
+- [x] **Phase D (Integration):** Update `BookingService`, `TaskService`, `WalletService`, and `DashboardRepository` in Flutter to point to new views/RPC.
+- [x] **Phase E (Cutover):** Execute backfill mapping `wallet_transactions` to journals, run reconciliation, freeze legacy writes.
 
 ---
 

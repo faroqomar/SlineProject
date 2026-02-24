@@ -65,4 +65,70 @@ class DemoPaymentService implements PaymentService {
   }) async {
     return false;
   }
+
+  @override
+  Future<RefundResult> refundPayment({
+    required String paymentId,
+    required double amount,
+    required String currency,
+    String? reason,
+  }) async {
+    await Future.delayed(delay);
+
+    if (shouldFail) {
+      return const RefundResult(
+        error: 'Refund failed (Demo)',
+        errorCode: 'DEMO_REFUND_FAILED',
+      );
+    }
+
+    return RefundResult(
+      refundId: 'demo_refund_${DateTime.now().millisecondsSinceEpoch}',
+      amount: amount,
+      currency: currency,
+      status: 'COMPLETED',
+    );
+  }
+
+  @override
+  Future<CancelResult> cancelPayment({
+    required String paymentId,
+    required String reason,
+  }) async {
+    await Future.delayed(delay);
+
+    if (shouldFail) {
+      return const CancelResult(
+        error: 'Cancel failed (Demo)',
+        errorCode: 'DEMO_CANCEL_FAILED',
+      );
+    }
+
+    return CancelResult(
+      cancelId: 'demo_cancel_${DateTime.now().millisecondsSinceEpoch}',
+      status: 'CANCELLED',
+    );
+  }
+
+  @override
+  Future<PaymentStatusResult> getPaymentStatus({
+    required String paymentId,
+  }) async {
+    await Future.delayed(delay);
+
+    if (shouldFail) {
+      return const PaymentStatusResult(
+        error: 'Status check failed (Demo)',
+        errorCode: 'DEMO_STATUS_FAILED',
+      );
+    }
+
+    return PaymentStatusResult(
+      paymentId: paymentId,
+      status: 'SUCCESS',
+      amount: 100.0,
+      currency: 'IQD',
+      createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
+    );
+  }
 }

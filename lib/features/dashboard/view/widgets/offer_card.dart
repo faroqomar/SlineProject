@@ -183,9 +183,9 @@ class OfferCard extends StatelessWidget {
                 entityType: 'task_request',
               );
 
-              final bool showEscrow = ctaMeta.allowedActions.contains(
-                'escrow_hold',
-              );
+              final bool showAward = ctaMeta.allowedActions.contains('award');
+              final bool showPay = ctaMeta.allowedActions.contains('pay');
+              final bool showEscrow = ctaMeta.allowedActions.contains('escrow_hold');
               final bool showRelease = ctaMeta.allowedActions.contains(
                 'release_with_fee',
               );
@@ -194,7 +194,7 @@ class OfferCard extends StatelessWidget {
               // If no specific payment actions are resolved but it's still pending, we fallback to our generic logic for non-payment MVP states
               // Actually, since we wired escrow_hold, let's just use it combined with legacy.
 
-              if (!isPending && !showRelease && !showRefund) {
+              if (!isPending && !showRelease && !showRefund && !showPay) {
                 return const SizedBox.shrink();
               }
 
@@ -218,6 +218,24 @@ class OfferCard extends StatelessWidget {
                           child: const Text('Reject'),
                         ),
                       const SizedBox(width: AppDimens.p8),
+                      // New two-step flow: Award button
+                      if (onAccept != null && showAward)
+                        FilledButton(
+                          onPressed: onAccept,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.teal,
+                          ),
+                          child: const Text('Award'),
+                        ),
+                      // Pay button for awarded but unpaid offers
+                      if (onAccept != null && showPay)
+                        FilledButton(
+                          onPressed: onAccept,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: Colors.orange,
+                          ),
+                          child: const Text('Pay Now'),
+                        ),
                       if (onAccept != null && showEscrow)
                         FilledButton(
                           onPressed: onAccept,
@@ -228,7 +246,7 @@ class OfferCard extends StatelessWidget {
                             'Escrow Funds',
                           ), // Replaced 'Accept' with Escrow
                         ),
-                      if (onAccept != null && !showEscrow && isPending)
+                      if (onAccept != null && !showEscrow && !showAward && !showPay && isPending)
                         FilledButton(
                           onPressed: onAccept,
                           style: FilledButton.styleFrom(

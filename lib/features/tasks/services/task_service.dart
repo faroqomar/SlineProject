@@ -711,6 +711,115 @@ class TaskService {
     }
   }
 
+  // ==========================================================================
+  // TWO-STEP AWARD & PAYMENT FLOW (Phase 2 - Tender Payment)
+  // ==========================================================================
+
+  /// Award an offer (Step 1: Award without payment)
+  ///
+  /// This creates an "Awarded but Pending Payment" state.
+  /// Client must call [payAwardedOffer] to complete payment and activate work.
+  Future<Map<String, dynamic>> awardOffer(String offerId) async {
+    try {
+      final result = await _client.rpc(
+        'award_task_offer',
+        params: {'p_request_id': offerId},
+      );
+
+      AppLogger.i('Offer awarded (pending payment): $offerId');
+      return result as Map<String, dynamic>;
+    } on PostgrestException catch (e, st) {
+      AppLogger.e('Failed to award offer', error: e, stackTrace: st);
+      throw Exception(ErrorMapper.map(e));
+    }
+  }
+
+  /// Pay for an awarded offer (Step 2: Complete payment)
+  ///
+  /// This triggers escrow hold and activates the work.
+  /// After success, freelancer can start working.
+  Future<Map<String, dynamic>> payAwardedOffer(String offerId) async {
+    try {
+      // 1. First, get offer details and validate it can be paid
+      final offerData = await _client
+          .from('task_requests')
+          .select('price, task_id, status, payment_status, payment_deadline')
+          .eq('id', offerId)
+          .single();
+
+      if (offerData['status'] != 'accepted') {
+        throw Exception('Offer is not in accepted status');
+      }
+      if (offerData['payment_status'] != 'unpaid') {
+        throw Exception('Offer is already paid or held');
+      }
+
+      final deadline = DateTime.tryParse(offerData['payment_deadline'] ?? '');
+      if (deadline != null && deadline.isBefore(DateTime.now())) {
+        throw Exception('Payment deadline has expired');
+      }
+
+      final price = offerData['price'] as num? ?? 0;
+
+      // 2. Create ledger entry for escrow hold FIRST (while status is still 'unpaid')
+      await LedgerService(_client).submitPaymentEvent(
+        eventType: 'escrow_hold',
+        relatedEntityType: 'task_request',
+        relatedEntityId: offerId,
+        amountGross: price,
+        meta: {'awarded_at': DateTime.now().toIso8601String()},
+      );
+
+      // 3. Mark the offer as paid in the database AFTER ledger succeeds
+      final result = await _client.rpc(
+        'pay_awarded_offer',
+        params: {'p_request_id': offerId},
+      ) as Map<String, dynamic>;
+
+      if (result['success'] != true) {
+        // Ledger succeeded but DB update failed - this is a critical inconsistency
+        AppLogger.e('CRITICAL: Ledger succeeded but DB update failed for offer: $offerId');
+        throw Exception(result['error'] ?? 'Payment status update failed');
+      }
+
+      AppLogger.i('Payment completed for awarded offer: $offerId');
+      return result;
+    } on PostgrestException catch (e, st) {
+      AppLogger.e('Failed to pay for awarded offer', error: e, stackTrace: st);
+      throw Exception(ErrorMapper.map(e));
+    }
+  }
+
+  /// Get client's awarded but unpaid offers (for "Pay Now" UI)
+  Future<List<Map<String, dynamic>>> getClientAwardedUnpaidOffers() async {
+    try {
+      final result = await _client.rpc('get_client_awarded_unpaid_offers');
+      return (result as List).cast<Map<String, dynamic>>();
+    } catch (e, st) {
+      AppLogger.e(
+        'Failed to get awarded unpaid offers',
+        error: e,
+        stackTrace: st,
+      );
+      return [];
+    }
+  }
+
+  /// Get freelancer's awarded but unpaid offers (for "Waiting for Payment" UI)
+  Future<List<Map<String, dynamic>>> getFreelancerAwardedUnpaidOffers() async {
+    try {
+      final result = await _client.rpc('get_freelancer_awarded_unpaid_offers');
+      return (result as List).cast<Map<String, dynamic>>();
+    } catch (e, st) {
+      AppLogger.e(
+        'Failed to get freelancer awarded offers',
+        error: e,
+        stackTrace: st,
+      );
+      return [];
+    }
+  }
+
   /// Get Tenders where the current user (freelancer) has an accepted offer
   /// but payment is pending (or any state requiring attention).
   ///

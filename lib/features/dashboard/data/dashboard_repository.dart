@@ -4,6 +4,7 @@ import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/dashboard/models/work_item.dart';
 import 'package:sline_app/features/dashboard/models/activity_log.dart';
 import 'package:sline_app/features/dashboard/models/dashboard_counters.dart';
+import 'package:sline_app/features/dashboard/models/financial_metrics_model.dart';
 import 'package:sline_app/features/dashboard/services/dashboard_permission_service.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/features/work/models/unified_work_item_model.dart';
@@ -312,5 +313,180 @@ class DashboardRepository {
       pendingPayment: pendingPayment,
       completed: completed,
     );
+  }
+
+  // ==========================================================================
+  // Financial Metrics from Ledger Views
+  // ==========================================================================
+
+  /// Fetches real-time financial metrics from the ledger.
+  /// These metrics reflect the current platform financial state.
+  Future<FinancialMetrics> fetchFinancialMetrics() async {
+    try {
+      AppLogger.d('Fetching financial metrics from ledger', tag: _kTag);
+
+      final response = await _client
+          .from('vw_financial_metrics_realtime')
+          .select()
+          .maybeSingle();
+
+      if (response == null) {
+        AppLogger.w('No financial metrics found, returning zeros', tag: _kTag);
+        return FinancialMetrics.zero();
+      }
+
+      final metrics = FinancialMetrics.fromJson(response);
+      AppLogger.i(
+        'Financial metrics: GMV=${metrics.gmv}, Revenue=${metrics.revenue}, Escrow=${metrics.escrowHeld}',
+        tag: _kTag,
+      );
+
+      return metrics;
+    } catch (e, st) {
+      AppLogger.e(
+        'Failed to fetch financial metrics',
+        error: e,
+        stackTrace: st,
+        tag: _kTag,
+      );
+      return FinancialMetrics.zero();
+    }
+  }
+
+  /// Fetches period-based financial metrics for dashboard charts.
+  ///
+  /// [days] - Number of days to fetch (default 30)
+  Future<List<PeriodFinancialMetrics>> fetchPeriodFinancialMetrics({
+    int days = 30,
+  }) async {
+    try {
+      AppLogger.d('Fetching period financial metrics for $days days', tag: _kTag);
+
+      final response = await _client
+          .from('vw_financial_metrics_period')
+          .select()
+          .order('period_start', ascending: false)
+          .limit(days);
+
+      final metrics = (response as List)
+          .map((e) => PeriodFinancialMetrics.fromJson(e as Map<String, dynamic>))
+          .toList();
+
+      AppLogger.i(
+        'Fetched ${metrics.length} period metrics',
+        tag: _kTag,
+      );
+
+      return metrics;
+    } catch (e, st) {
+      AppLogger.e(
+        'Failed to fetch period financial metrics',
+        error: e,
+        stackTrace: st,
+        tag: _kTag,
+      );
+      return [];
+    }
+  }
+
+  /// Fetches wallet balance for the current user from ledger.
+  /// This is used by the dashboard to show user's available balance.
+  Future<Map<String, double>> fetchWalletBalances() async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) {
+      return {
+        'available': 0.0,
+        'pending_withdrawal': 0.0,
+        'held': 0.0,
+      };
+    }
+
+    try {
+      AppLogger.d('Fetching wallet balances for $uid', tag: _kTag);
+
+      final response = await _client
+          .from('vw_wallet_balances_user')
+          .select()
+          .maybeSingle();
+
+      if (response == null) {
+        return {
+          'available': 0.0,
+          'pending_withdrawal': 0.0,
+          'held': 0.0,
+        };
+      }
+
+      final balances = {
+        'available': ((response['available_balance'] ?? 0) as num).toDouble(),
+        'pending_withdrawal': ((response['pending_withdrawal_balance'] ?? 0) as num).toDouble(),
+        'held': ((response['held_balance'] ?? 0) as num).toDouble(),
+      };
+
+      AppLogger.i(
+        'Wallet balances: available=${balances['available']}, pending=${balances['pending_withdrawal']}, held=${balances['held']}',
+        tag: _kTag,
+      );
+
+      return balances;
+    } catch (e, st) {
+      AppLogger.e(
+        'Failed to fetch wallet balances',
+        error: e,
+        stackTrace: st,
+        tag: _kTag,
+      );
+      return {
+        'available': 0.0,
+        'pending_withdrawal': 0.0,
+        'held': 0.0,
+      };
+    }
+  }
+
+  // ==========================================================================
+  // Tender Award & Payment Flow
+  // ==========================================================================
+
+  /// Fetches client's awarded but unpaid offers (for "Pay Now" section)
+  Future<List<Map<String, dynamic>>> fetchClientAwardedUnpaidOffers() async {
+    try {
+      final result = await _client.rpc('get_client_awarded_unpaid_offers');
+      final items = result as List;
+      AppLogger.i(
+        'Fetched ${items.length} awarded unpaid offers for client',
+        tag: _kTag,
+      );
+      return items.cast<Map<String, dynamic>>();
+    } catch (e, st) {
+      AppLogger.e(
+        'Failed to fetch client awarded unpaid offers',
+        error: e,
+        stackTrace: st,
+        tag: _kTag,
+      );
+      return [];
+    }
+  }
+
+  /// Fetches freelancer's awarded but unpaid offers (for "Waiting for Payment" section)
+  Future<List<Map<String, dynamic>>> fetchFreelancerAwardedUnpaidOffers() async {
+    try {
+      final result = await _client.rpc('get_freelancer_awarded_unpaid_offers');
+      final items = result as List;
+      AppLogger.i(
+        'Fetched ${items.length} awarded unpaid offers for freelancer',
+        tag: _kTag,
+      );
+      return items.cast<Map<String, dynamic>>();
+    } catch (e, st) {
+      AppLogger.e(
+        'Failed to fetch freelancer awarded unpaid offers',
+        error: e,
+        stackTrace: st,
+        tag: _kTag,
+      );
+      return [];
+    }
   }
 }

@@ -438,7 +438,7 @@ Ensure all Dashboard queries in (Phase 2A) depend entirely on `vw_financial_metr
 
 ---
 
-### Phase 2B — Gateway Integration — DEFERRED [LATER - NOT MVP]
+### Phase 2B — Gateway Integration — COMPLETE ✅
 
 #### 2B.1 Goal
 
@@ -499,7 +499,7 @@ Deterministic idempotency_key (Stable Mapping)
 
 ---
 
-## Phase 3 — Backfill/Cutover + Monitoring — DEFERRED [LATER - NOT MVP]
+## Phase 3 — Backfill/Cutover + Monitoring — COMPLETE ✅
 
 ### 3.1 Deliverables (Detail)
 

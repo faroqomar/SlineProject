@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
+import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_requests_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
+import 'package:sline_app/core/utils/format_price.dart';
+import 'package:sline_app/features/tasks/view/tender_payment_screen.dart';
 import 'widgets/request_tile.dart';
 import 'submit_request_sheet.dart';
 
@@ -32,6 +35,7 @@ class RequestsListScreen extends StatefulWidget {
 class _RequestsListScreenState extends State<RequestsListScreen> {
   BuildContext? _providerCtx;
   late final ScrollController _scroll;
+  bool _isAwarding = false;
 
   @override
   void initState() {
@@ -52,6 +56,105 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
     final c = prov.read<TaskRequestsViewModel>();
     if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 200) {
       if (c.hasMore && !c.isLoadingMore) c.loadMore();
+    }
+  }
+
+  /// Show award confirmation dialog (Step 1: Award without payment)
+  Future<void> _showAwardDialog(TaskRequest request, TaskRequestsViewModel vm) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Award this freelancer?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('You are about to award ${request.bidderName ?? "this freelancer"}'),
+            const SizedBox(height: 8),
+            Text(
+              'Price: ${PriceFormatter.formatPrice(request.price.toDouble())}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text('Delivery: ${request.days} days'),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Next Step: Complete Payment',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'After awarding, you will have 24 hours to complete payment. '
+                    'Work starts only after payment is confirmed.',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Award'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _awardOffer(request, vm);
+    }
+  }
+
+  /// Award the offer and navigate to payment screen
+  Future<void> _awardOffer(TaskRequest request, TaskRequestsViewModel vm) async {
+    setState(() => _isAwarding = true);
+
+    final result = await vm.award(request.id);
+
+    setState(() => _isAwarding = false);
+
+    if (result != null && result['success'] == true) {
+      // Navigate to payment screen
+      if (mounted) {
+        final clientId = context.read<AuthViewModel>().currentUserId ?? '';
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => TenderPaymentScreen(
+              requestId: request.id,
+              taskId: request.taskId,
+              taskTitle: widget.taskId, // We should get this from somewhere
+              freelancerName: request.bidderName ?? 'Freelancer',
+              amount: request.price.toDouble(),
+              paymentDeadline: DateTime.parse(result['payment_deadline'] as String),
+              clientId: clientId,
+            ),
+          ),
+        );
+      }
+    } else {
+      // Show error
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result?['error'] ?? 'Failed to award offer'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -162,9 +265,14 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
         final TaskRequest req = c.items[index];
         return RequestTile(
           request: req,
-          onAccept: c.canActOn(req) ? () => c.accept(req.id) : null,
-          onReject: c.canActOn(req) ? () => c.reject(req.id) : null,
+          onAccept: c.canActOn(req) && !_isAwarding
+              ? () => _showAwardDialog(req, c)
+              : null,
+          onReject: c.canActOn(req) && !_isAwarding
+              ? () => c.reject(req.id)
+              : null,
           isOwner: widget.isOwner,
+          isLoading: _isAwarding,
         );
       },
     );

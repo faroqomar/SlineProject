@@ -60,6 +60,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
   bool _paymentSuccess = false;
   bool _awaitingGatewayConfirmation = false;
   bool _isPollingGatewayResult = false;
+  final bool _paymentFlowInProgress = false;
   String? _draftBookingId;
   BookingViewModel? _vm;
   Timer? _orphanDraftTimer;
@@ -68,7 +69,16 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
   void dispose() {
     _orphanDraftTimer?.cancel();
     final draftBookingId = _draftBookingId;
-    if (!_paymentSuccess && draftBookingId != null && _vm != null) {
+    // Only cancel draft if:
+    // 1. Payment was not successful AND
+    // 2. No payment flow is in progress (user abandoned before starting) AND
+    // 3. Not awaiting gateway confirmation (payment is being processed)
+    // If payment is in progress, let the 30-min orphan timer handle cleanup
+    if (!_paymentSuccess && 
+        !_paymentFlowInProgress && 
+        !_awaitingGatewayConfirmation && 
+        draftBookingId != null && 
+        _vm != null) {
       unawaited(_vm!.cancelBookingDraftIfUnpaid(draftBookingId));
     }
     _cardNumberCtrl.dispose();

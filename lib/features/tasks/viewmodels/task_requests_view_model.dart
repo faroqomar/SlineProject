@@ -95,6 +95,58 @@ class TaskRequestsViewModel extends ChangeNotifier {
   Future<TaskRequest?> getExistingActiveOffer() async =>
       _service.getExistingActiveOfferForCurrentUser(taskId);
 
+  // ==========================================================================
+  // TWO-STEP AWARD & PAYMENT FLOW
+  // ==========================================================================
+
+  /// Step 1: Award the offer (without payment)
+  ///
+  /// This creates "Awarded - Pending Payment" state.
+  /// Returns the awarded offer details including payment deadline.
+  Future<Map<String, dynamic>?> award(String requestId) async {
+    try {
+      final result = await _taskService.awardOffer(requestId);
+
+      // Refresh the list
+      final list = await _service.listByTask(taskId: taskId, limit: 100);
+      _items.clear();
+      _items.addAll(list);
+      notifyListeners();
+
+      return result;
+    } catch (e) {
+      _errorMessage = _friendlyError(e);
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// Step 2: Pay for the awarded offer
+  ///
+  /// This completes payment, creates escrow, and activates work.
+  /// Must be called after [award] and before payment deadline.
+  Future<Map<String, dynamic>?> payForAwardedOffer(String requestId) async {
+    try {
+      final result = await _taskService.payAwardedOffer(requestId);
+
+      // Refresh the list
+      final list = await _service.listByTask(taskId: taskId, limit: 100);
+      _items.clear();
+      _items.addAll(list);
+      notifyListeners();
+
+      return result;
+    } catch (e) {
+      _errorMessage = _friendlyError(e);
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// Legacy: Combined award+pay (keep for backward compatibility)
+  ///
+  /// DEPRECATED: Use [award] + [payForAwardedOffer] for new flow
+  @deprecated
   Future<void> accept(String requestId) async {
     try {
       await _taskService.escrowHoldOffer(requestId);

@@ -41,6 +41,7 @@ class LedgerService {
           'p_related_entity_id': relatedEntityId,
           'p_idempotency_key': idempotencyKey,
           'p_amount_gross': amountGross,
+          'p_currency': 'IQD',  // Always IQD for MVP
           'p_meta': meta,
         },
       );
@@ -56,19 +57,53 @@ class LedgerService {
   }
 
   String _mapLedgerError(PostgrestException e) {
-    // If the RPC threw an error JSON inside PostgrestException, attempt to format it
-    if (e.message.contains('ERR_INSUFFICIENT_FUNDS')) {
-      return 'Insufficient available balance.';
+    final message = e.message;
+
+    // Idempotency errors
+    if (message.contains('ERR_MISSING_IDEMPOTENCY_KEY')) {
+      return 'Missing idempotency key. Please try again.';
     }
-    if (e.message.contains('ERR_GATE_NOT_ALLOWED')) {
+    if (message.contains('ERR_IDEMPOTENCY_REPLAY')) {
+      return 'This transaction was already processed.';
+    }
+
+    // Gate validation errors
+    if (message.contains('ERR_GATE_NOT_ALLOWED')) {
       return 'Event not allowed for current status.';
     }
-    if (e.message.contains('ERR_AMOUNT_MISMATCH')) {
-      return 'Amount mismatch detected.';
-    }
-    if (e.message.contains('ERR_ENTITY_NOT_FOUND')) {
+
+    // Entity errors
+    if (message.contains('ERR_ENTITY_NOT_FOUND')) {
       return 'Related entity not found.';
     }
+
+    // Amount errors
+    if (message.contains('ERR_AMOUNT_MISMATCH')) {
+      return 'Amount mismatch detected.';
+    }
+    if (message.contains('ERR_CURRENCY_MISMATCH')) {
+      return 'Currency mismatch. Only IQD is supported.';
+    }
+    if (message.contains('ERR_WITHDRAWAL_AMOUNT_INVALID')) {
+      return 'Invalid withdrawal amount.';
+    }
+
+    // Balance errors
+    if (message.contains('ERR_INSUFFICIENT_FUNDS')) {
+      return 'Insufficient available balance.';
+    }
+
+    // Ledger integrity errors
+    if (message.contains('ERR_UNBALANCED_JOURNAL')) {
+      return 'Internal error: Journal entry unbalanced. Please contact support.';
+    }
+
+    // Unique constraint errors (usually idempotency)
+    if (message.contains('unique constraint') || message.contains('uq_journal_entries')) {
+      return 'This transaction was already processed.';
+    }
+
+    // Generic fallback
     return 'Payment failed to process. Please try again.';
   }
 }

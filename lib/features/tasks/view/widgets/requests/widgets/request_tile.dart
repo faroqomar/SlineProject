@@ -14,6 +14,7 @@ class RequestTile extends StatelessWidget {
   final VoidCallback? onAccept;
   final VoidCallback? onReject;
   final bool isOwner;
+  final bool isLoading;
 
   /// Optional FavoritesViewModel. If null, favorites will be added via direct
   /// service call (legacy behavior). Prefer providing a ViewModel for testability.
@@ -26,13 +27,14 @@ class RequestTile extends StatelessWidget {
     this.onReject,
     required this.isOwner,
     this.favoritesVM,
+    this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final priceText = PriceFormatter.formatPrice(request.price.toDouble());
-    final subtitle = '${request.days} days • ${request.status.name}';
-    final canAct = request.isPending && onAccept != null && onReject != null;
+    final subtitle = '${request.days} days • ${_getStatusLabel()}';
+    final canAct = request.isPending && onAccept != null && onReject != null && !isLoading;
 
     return Card(
       elevation: 1,
@@ -52,22 +54,39 @@ class RequestTile extends StatelessWidget {
                 icon: const Icon(Icons.favorite_border),
                 onPressed: () => _handleAddFavorite(context),
               ),
+            if (isOwner && isLoading)
+              const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
             if (isOwner && canAct) ...[
               IconButton(
-                tooltip: 'Accept',
-                icon: const Icon(Icons.check_circle),
+                tooltip: 'Award',
+                icon: const Icon(Icons.check_circle, color: Colors.green),
                 onPressed: onAccept,
               ),
               IconButton(
                 tooltip: 'Reject',
-                icon: const Icon(Icons.cancel),
+                icon: const Icon(Icons.cancel, color: Colors.red),
                 onPressed: onReject,
               ),
             ],
+            if (isOwner && !canAct && !isLoading && request.isAccepted)
+              const Chip(
+                label: Text('Awarded', style: TextStyle(fontSize: 10)),
+                backgroundColor: Colors.green,
+                labelStyle: TextStyle(color: Colors.white),
+              ),
           ],
         ),
       ),
     );
+  }
+
+  String _getStatusLabel() {
+    if (isLoading) return 'Processing...';
+    return request.status.name;
   }
 
   /// Handle adding the bidder to favorites.

@@ -15,9 +15,15 @@ class UnifiedCtaResolver {
 
     if (actorRole == 'client') {
       if (status == 'pending' && paymentStatus == 'unpaid') {
-        allowedActions.add('escrow_hold');
-        badgeText = 'Needs Funding';
+        // Two-step flow: Award first, then Pay
+        allowedActions.add('award');
+        badgeText = 'Needs Award';
         badgeColor = const Color(0xFFF3BB19); // AppColors.gold
+      } else if (status == 'accepted' && paymentStatus == 'unpaid') {
+        // Awarded but not paid yet - show Pay action
+        allowedActions.add('pay');
+        badgeText = 'Needs Payment';
+        badgeColor = const Color(0xFFFF9800); // Orange
       } else if (status == 'delivered' && paymentStatus == 'held') {
         allowedActions.add('release_with_fee');
         badgeText = 'Review Work';

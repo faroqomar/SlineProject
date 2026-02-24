@@ -1,4 +1,9 @@
-/// Interface for payment processing.
+// Interface for payment processing.
+//
+// This file defines the abstract contract that all payment implementations
+// must follow, including QiCard, Stripe, and demo/test implementations.
+
+/// Result of payment initiation.
 class PaymentInitResult {
   const PaymentInitResult({
     this.formUrl,
@@ -15,6 +20,71 @@ class PaymentInitResult {
   final String? errorCode;
 
   bool get isSuccess => formUrl != null && error == null;
+}
+
+/// Result of refund operation.
+class RefundResult {
+  const RefundResult({
+    this.refundId,
+    this.amount,
+    this.currency,
+    this.status,
+    this.error,
+    this.errorCode,
+  });
+
+  final String? refundId;
+  final double? amount;
+  final String? currency;
+  final String? status;
+  final String? error;
+  final String? errorCode;
+
+  bool get isSuccess => refundId != null && error == null;
+}
+
+/// Result of cancel operation.
+class CancelResult {
+  const CancelResult({
+    this.cancelId,
+    this.status,
+    this.error,
+    this.errorCode,
+  });
+
+  final String? cancelId;
+  final String? status;
+  final String? error;
+  final String? errorCode;
+
+  bool get isSuccess => cancelId != null && error == null;
+}
+
+/// Result of payment status check.
+class PaymentStatusResult {
+  const PaymentStatusResult({
+    this.paymentId,
+    this.status,
+    this.amount,
+    this.currency,
+    this.createdAt,
+    this.error,
+    this.errorCode,
+  });
+
+  final String? paymentId;
+  final String? status; // 'PENDING', 'SUCCESS', 'FAILED', 'CANCELLED', etc.
+  final double? amount;
+  final String? currency;
+  final DateTime? createdAt;
+  final String? error;
+  final String? errorCode;
+
+  bool get isSuccess => status != null && error == null;
+
+  bool get isPending => status?.toUpperCase() == 'PENDING' || status?.toUpperCase() == 'CREATED';
+  bool get isCompleted => status?.toUpperCase() == 'SUCCESS' || status?.toUpperCase() == 'COMPLETED';
+  bool get isFailed => status?.toUpperCase() == 'FAILED' || status?.toUpperCase() == 'CANCELLED';
 }
 
 abstract class PaymentService {
@@ -49,4 +119,39 @@ abstract class PaymentService {
 
   /// Initialize the payment SDK (if needed).
   Future<void> initialize();
+
+  /// Refund a payment.
+  ///
+  /// [paymentId] - The original payment ID to refund.
+  /// [amount] - The amount to refund (may be partial).
+  /// [currency] - The currency code (e.g., 'IQD').
+  /// [reason] - Optional reason for the refund.
+  ///
+  /// Returns [RefundResult] with refund details or error information.
+  Future<RefundResult> refundPayment({
+    required String paymentId,
+    required double amount,
+    required String currency,
+    String? reason,
+  });
+
+  /// Cancel a pending payment.
+  ///
+  /// [paymentId] - The payment ID to cancel.
+  /// [reason] - Optional reason for cancellation.
+  ///
+  /// Returns [CancelResult] with cancel details or error information.
+  Future<CancelResult> cancelPayment({
+    required String paymentId,
+    required String reason,
+  });
+
+  /// Get the current status of a payment.
+  ///
+  /// [paymentId] - The payment ID to check.
+  ///
+  /// Returns [PaymentStatusResult] with current status or error information.
+  Future<PaymentStatusResult> getPaymentStatus({
+    required String paymentId,
+  });
 }

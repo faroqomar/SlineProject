@@ -1,8 +1,49 @@
-// deno-lint-ignore-file
 // @ts-nocheck
+// deno-lint-ignore-file
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import * as crypto from "node:crypto";
+
+// Type definitions for QiCard webhook payload
+interface QiCardPaymentPayload {
+  paymentId: string;
+  requestId: string;
+  status: string;
+  amount?: number;
+  currency?: string;
+  creationDate?: string;
+  additionalInfo?: {
+    booking_id?: string;
+    client_id?: string;
+    [key: string]: unknown;
+  };
+}
+
+interface QiCardLegacyPayload {
+  event_type?: string;
+  event_id?: string;
+  psp_event_id?: string;
+  payment_id?: string;
+  psp_payment_id?: string;
+  request_id?: string;
+  psp_request_id?: string;
+  status?: string;
+  amount?: number;
+  currency?: string;
+  timestamp?: string;
+  user_id?: string;
+  related_entity_id?: string;
+  [key: string]: unknown;
+}
+
+interface RpcResponse {
+  ok: boolean;
+  journal_entry_id?: string;
+  error?: {
+    code: string;
+    message: string;
+  };
+}
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const SUPABASE_SERVICE_ROLE_KEY =
@@ -25,7 +66,13 @@ function verifySignature(
   publicKeyPem: string,
 ): boolean {
   if (!publicKeyPem) {
-    console.warn("QICARD_RSA_PUBLIC_KEY_PEM not set - skipping signature check");
+    // Security: Fail closed in production, allow in development
+    const isProduction = Deno.env.get("ENVIRONMENT") === "production";
+    if (isProduction) {
+      console.error("QICARD_RSA_PUBLIC_KEY_PEM required in production");
+      return false;
+    }
+    console.warn("QICARD_RSA_PUBLIC_KEY_PEM not set - skipping signature check (dev only)");
     return true;
   }
 
@@ -53,7 +100,7 @@ function isUuid(value: string): boolean {
     .test(value);
 }
 
-function isQiCardPaymentPayload(payload: Record<string, unknown>): boolean {
+function isQiCardPaymentPayload(payload: Record<string, unknown>): payload is QiCardPaymentPayload {
   return typeof payload.paymentId === "string" &&
     typeof payload.requestId === "string" &&
     typeof payload.status === "string";
@@ -141,16 +188,16 @@ Deno.serve(async (req: Request) => {
 });
 
 async function handleQiCardPaymentWebhook(
-  payload: Record<string, unknown>,
+  payload: QiCardPaymentPayload,
 ): Promise<Response> {
-  const paymentId = String(payload.paymentId || "");
-  const requestId = String(payload.requestId || "");
-  const status = String(payload.status || "").toUpperCase();
+  const paymentId = payload.paymentId || "";
+  const requestId = payload.requestId || "";
+  const status = (payload.status || "").toUpperCase();
   const amount = Number(payload.amount) || 0;
-  const currency = String(payload.currency || "IQD");
-  const creationDate = String(payload.creationDate || new Date().toISOString());
-  const additionalInfo = (payload.additionalInfo || {}) as Record<string, unknown>;
-  const bookingId = String(additionalInfo.booking_id || "");
+  const currency = payload.currency || "IQD";
+  const creationDate = payload.creationDate || new Date().toISOString();
+  const additionalInfo = payload.additionalInfo || {};
+  const bookingId = additionalInfo.booking_id || "";
 
   if (!paymentId || !requestId || !status) {
     return jsonResponse({ error: "Missing required payment webhook fields" }, 400);
@@ -211,17 +258,17 @@ async function handleQiCardPaymentWebhook(
 }
 
 async function handleLegacyQiCardWebhook(
-  payload: Record<string, unknown>,
+  payload: QiCardLegacyPayload,
 ): Promise<Response> {
-  const eventType = String(payload.event_type || "");
-  const pspEventId = String(payload.psp_event_id || payload.event_id || "");
-  const pspPaymentId = String(payload.payment_id || "");
-  const pspRequestId = String(payload.request_id || "");
-  const pspStatus = String(payload.status || "").toLowerCase();
+  const eventType = payload.event_type || "";
+  const pspEventId = payload.psp_event_id || payload.event_id || "";
+  const pspPaymentId = payload.payment_id || "";
+  const pspRequestId = payload.request_id || "";
+  const pspStatus = (payload.status || "").toLowerCase();
   const amount = Number(payload.amount) || 0;
-  const currency = String(payload.currency || "IQD");
-  const pspTimestamp = String(payload.timestamp || new Date().toISOString());
-  const userId = String(payload.user_id || "");
+  const currency = payload.currency || "IQD";
+  const pspTimestamp = payload.timestamp || new Date().toISOString();
+  const userId = payload.user_id || "";
 
   const mapped = mapLegacyQiCardEvent(eventType, pspStatus);
   if (!mapped) {

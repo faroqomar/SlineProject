@@ -86,6 +86,42 @@ class BookingModel {
     };
   }
 
+  BookingModel copyWith({
+    String? id,
+    String? taskId,
+    String? providerId,
+    String? clientId,
+    String? slotId,
+    BookingStatus? status,
+    PaymentStatus? paymentStatus,
+    String? note,
+    num? price,
+    String? packageId,
+    Map<String, dynamic>? requirements,
+    DateTime? createdAtUtc,
+    DateTime? scheduledAt,
+    DateTime? completedAt,
+    Map<String, dynamic>? taskData,
+  }) {
+    return BookingModel(
+      id: id ?? this.id,
+      taskId: taskId ?? this.taskId,
+      providerId: providerId ?? this.providerId,
+      clientId: clientId ?? this.clientId,
+      slotId: slotId ?? this.slotId,
+      status: status ?? this.status,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
+      note: note ?? this.note,
+      price: price ?? this.price,
+      packageId: packageId ?? this.packageId,
+      requirements: requirements ?? this.requirements,
+      createdAtUtc: createdAtUtc ?? this.createdAtUtc,
+      scheduledAt: scheduledAt ?? this.scheduledAt,
+      completedAt: completedAt ?? this.completedAt,
+      taskData: taskData ?? this.taskData,
+    );
+  }
+
   static PaymentStatus _mapDbPaymentStatusToEnum(String? status) {
     if (status == null) return PaymentStatus.unpaid;
     return PaymentStatus.values.firstWhere(

@@ -48,10 +48,13 @@ class WalletService {
   /// Creates a withdrawal request and locks funds via the ledger.
   ///
   /// Flow:
-  /// 1. Insert a row into `withdrawal_requests` (status = 'pending')
+  /// 1. Insert a row into `withdrawal_requests` (status = 'requested')
   /// 2. Call `process_payment_event_ledger` with event_type = 'withdrawal_request'
   ///    which moves funds from user_available → user_pending_withdrawal
-  Future<void> requestWithdrawal({required num amount}) async {
+  ///
+  /// If the ledger call fails, the withdrawal request is cleaned up to prevent
+  /// orphaned records.
+  Future<String> requestWithdrawal({required num amount}) async {
     final uid = _client.auth.currentUser?.id;
     if (uid == null) throw Exception('Not authenticated');
 
@@ -64,30 +67,106 @@ class WalletService {
       tag: 'Wallet',
     );
 
-    // Step 1: Insert withdrawal_request row
-    final res = await _client
+    String? withdrawalId;
+
+    try {
+      // Step 1: Insert withdrawal_request row
+      final res = await _client
+          .from('withdrawal_requests')
+          .insert({
+            'user_id': uid,
+            'amount': amount,
+            'currency': 'IQD',
+            'status': 'requested',
+          })
+          .select()
+          .single();
+
+      withdrawalId = res['id'] as String;
+      AppLogger.i('Withdrawal request created: $withdrawalId', tag: 'Wallet');
+
+      // Step 2: Lock funds via ledger
+      await LedgerService(_client).submitPaymentEvent(
+        eventType: 'withdrawal_request',
+        relatedEntityType: 'withdrawal_request',
+        relatedEntityId: withdrawalId,
+        amountGross: amount,
+        meta: {},
+      );
+
+      AppLogger.i('Funds locked for withdrawal: $withdrawalId', tag: 'Wallet');
+
+      return withdrawalId;
+    } catch (e) {
+      // If ledger call failed but we created the withdrawal request, clean it up
+      if (withdrawalId != null) {
+        AppLogger.w(
+          'Ledger call failed for withdrawal $withdrawalId. Cleaning up.',
+          tag: 'Wallet',
+          error: e,
+        );
+        try {
+          await _client
+              .from('withdrawal_requests')
+              .update({'status': 'failed'})
+              .eq('id', withdrawalId);
+        } catch (cleanupError) {
+          AppLogger.e(
+            'Failed to cleanup withdrawal request $withdrawalId',
+            tag: 'Wallet',
+            error: cleanupError,
+          );
+        }
+      }
+      rethrow;
+    }
+  }
+
+  /// Get withdrawal requests for the current user.
+  Future<List<Map<String, dynamic>>> getWithdrawalRequests({
+    int limit = 20,
+    List<String>? statuses,
+  }) async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return [];
+
+    var query = _client
         .from('withdrawal_requests')
-        .insert({
-          'user_id': uid,
-          'amount': amount,
-          'currency': 'IQD',
-          'status': 'pending',
-        })
         .select()
-        .single();
+        .eq('user_id', uid);
 
-    final withdrawalId = res['id'] as String;
-    AppLogger.i('Withdrawal request created: $withdrawalId', tag: 'Wallet');
+    if (statuses != null && statuses.isNotEmpty) {
+      query = query.in_('status', statuses);
+    }
 
-    // Step 2: Lock funds via ledger
-    await LedgerService(_client).submitPaymentEvent(
-      eventType: 'withdrawal_request',
-      relatedEntityType: 'withdrawal_request',
-      relatedEntityId: withdrawalId,
-      amountGross: amount,
-      meta: {},
-    );
+    final data = await query.order('created_at', ascending: false).limit(limit);
+    return (data as List<dynamic>).cast<Map<String, dynamic>>();
+  }
 
-    AppLogger.i('Funds locked for withdrawal: $withdrawalId', tag: 'Wallet');
+  /// Cancel a pending withdrawal request (if not yet processing).
+  Future<void> cancelWithdrawalRequest(String withdrawalId) async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) throw Exception('Not authenticated');
+
+    // Verify ownership
+    final existing = await _client
+        .from('withdrawal_requests')
+        .select()
+        .eq('id', withdrawalId)
+        .eq('user_id', uid)
+        .eq('status', 'requested')
+        .maybeSingle();
+
+    if (existing == null) {
+      throw Exception('Withdrawal request not found or cannot be cancelled.');
+    }
+
+    // Update status to canceled
+    await _client
+        .from('withdrawal_requests')
+        .update({'status': 'canceled'})
+        .eq('id', withdrawalId);
+
+    AppLogger.i('Withdrawal request cancelled: $withdrawalId', tag: 'Wallet');
   }
 }

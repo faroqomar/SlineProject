@@ -298,9 +298,8 @@ class BookingViewModel extends ChangeNotifier {
   Future<void> escrowHoldBooking(String bookingId) async {
     try {
       await _repo.escrowHoldBooking(bookingId);
-      // Wait to re-fetch or optimistically assume the payment status updated
-      // Since booking model currently doesn't reflect payment_status directly in the UI as heavily,
-      // we just notify listeners or reload. Ideally we update payment_status in the model.
+      // ✅ Refresh the booking to get updated payment_status
+      await _refreshBookingInLists(bookingId);
       notifyListeners();
     } catch (e) {
       bookingsError = _mapError(e);
@@ -308,15 +307,49 @@ class BookingViewModel extends ChangeNotifier {
     }
   }
 
+  /// Internal helper to refresh a booking in the in-memory lists
+  Future<void> _refreshBookingInLists(String bookingId) async {
+    try {
+      final updated = await _repo.getBookingById(bookingId);
+
+      // Update in client list
+      final clientIdx = bookingsAsClient.indexWhere((b) => b.id == bookingId);
+      if (clientIdx != -1) {
+        bookingsAsClient[clientIdx] = updated;
+      }
+
+      // Update in provider list
+      final providerIdx = bookingsAsProvider.indexWhere((b) => b.id == bookingId);
+      if (providerIdx != -1) {
+        bookingsAsProvider[providerIdx] = updated;
+      }
+    } catch (e) {
+      AppLogger.w('Failed to refresh booking $bookingId', tag: 'Booking', error: e);
+    }
+  }
+
   /// Release funds for a delivered booking (Client).
   Future<void> releaseBookingWithFee(String bookingId) async {
     try {
+      // ✅ Validate booking is delivered and payment is held before release
+      final booking = await _repo.getBookingById(bookingId);
+
+      if (booking.status != BookingStatus.delivered) {
+        throw Exception('Booking must be delivered before releasing funds');
+      }
+
+      if (booking.paymentStatus != PaymentStatus.held) {
+        throw Exception('Payment must be held before releasing');
+      }
+
+      // Current user must be the client
+      if (currentUserId == null || currentUserId != booking.clientId) {
+        throw Exception('Only the client can release funds');
+      }
+
       await _repo.releaseBookingWithFee(bookingId);
-      // Optimistic update
-      await updateBookingStatus(
-        bookingId: bookingId,
-        newStatus: BookingStatus.completed,
-      );
+      // Optimistic update - refresh to get accurate state
+      await _refreshBookingInLists(bookingId);
     } catch (e) {
       bookingsError = _mapError(e);
       notifyListeners();
@@ -337,25 +370,17 @@ class BookingViewModel extends ChangeNotifier {
   }
 
   /// Decline booking (Provider).
+  ///
+  /// This operation is atomic at the database level via RPC to avoid race conditions.
   Future<void> declineBooking(String bookingId) async {
     try {
-      final latest = await _repo.getBookingById(bookingId);
-      if (latest.paymentStatus != PaymentStatus.held) {
-        final held = await waitForBookingPaymentHeld(bookingId: bookingId);
-        if (!held) {
-          bookingsError =
-              'Payment still processing. Please try again in a moment.';
-          notifyListeners();
-          return;
-        }
-      }
-
+      // The decline operation is now handled atomically by the repository/RPC
+      // which internally waits for payment status and processes the refund in one go
       await _repo.declineBooking(bookingId);
-      // Optimistic update
-      await updateBookingStatus(
-        bookingId: bookingId,
-        newStatus: BookingStatus.refunded, // Logic sets it to refunded/canceled
-      );
+
+      // Refresh the booking state to reflect the refund
+      await _refreshBookingInLists(bookingId);
+      notifyListeners();
     } catch (e) {
       bookingsError = _mapError(e);
       notifyListeners();

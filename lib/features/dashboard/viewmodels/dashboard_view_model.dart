@@ -79,6 +79,9 @@ class DashboardViewModel extends ChangeNotifier {
   UserRole _currentRole = UserRole.freelancer;
   UserRole get currentRole => _currentRole;
 
+  /// Current user ID (for passing to child screens without Supabase in View).
+  String? get currentUserId => _repository.currentUser?.id;
+
   DashboardTab _currentTab = DashboardTab.overview;
   DashboardTab get currentTab => _currentTab;
 
@@ -544,7 +547,73 @@ class DashboardViewModel extends ChangeNotifier {
     }
   }
 
-  /// Accepts an offer atomically (And holds funds in escrow first)
+  /// Awards an offer (Step 1: Award without payment)
+  ///
+  /// This creates an "Awarded - Pending Payment" state with 24h deadline.
+  /// Returns the award result including payment_deadline for navigation.
+  Future<Map<String, dynamic>?> awardOffer(TaskRequest offer) async {
+    final tid = _traceId();
+    try {
+      // 1. Award the offer (without payment)
+      final result = await _taskService.awardOffer(offer.id);
+      if (_abortIfDisposed()) return null;
+
+      AppLogger.i(
+        'Awarded offer=${offer.id} task=${offer.taskId} [trace:$tid]',
+        tag: '$_kTag.inbox',
+      );
+
+      return result;
+    } catch (e) {
+      AppLogger.e(
+        'Failed to award offer=${offer.id} task=${offer.taskId} [trace:$tid]',
+        error: e,
+        tag: '$_kTag.inbox',
+      );
+      rethrow;
+    }
+  }
+
+  /// Completes payment for an awarded offer (Step 2: Pay)
+  ///
+  /// This is called after the user returns from the payment screen.
+  Future<void> payAwardedOffer(TaskRequest offer) async {
+    final tid = _traceId();
+    try {
+      // 1. Complete payment
+      await _taskService.payAwardedOffer(offer.id);
+      if (_abortIfDisposed()) return;
+
+      // 2. Remove ALL offers for this task (not just this one!)
+      _inboxOffers.removeWhere((o) => o.taskId == offer.taskId);
+      _safeNotify();
+
+      // 3. Reload work items
+      await _fetchWorkItems();
+      if (_abortIfDisposed()) return;
+
+      final mgmt = await _loadManagementDataInternal();
+      _myServices = mgmt['services'] as List<ServiceModel>;
+      _myTasks = mgmt['tasks'] as List<Task>;
+      if (_abortIfDisposed()) return;
+
+      _safeNotify();
+      AppLogger.i(
+        'Paid for awarded offer=${offer.id} task=${offer.taskId} [trace:$tid]',
+        tag: '$_kTag.inbox',
+      );
+    } catch (e) {
+      AppLogger.e(
+        'Failed to pay for awarded offer=${offer.id} task=${offer.taskId} [trace:$tid]',
+        error: e,
+        tag: '$_kTag.inbox',
+      );
+      rethrow;
+    }
+  }
+
+  /// Legacy: Accepts an offer atomically (And holds funds in escrow first)
+  @deprecated
   Future<void> acceptOffer(TaskRequest offer) async {
     final tid = _traceId();
     try {
