@@ -1,0 +1,11 @@
+{
+  "requestId": "57b85e60-e7a6-4abb-9466-703472fb83b9",
+  "paymentId": "b2bb43a8-488a-4281-977b-5b3418fc3c62",
+  "status": "SUCCESS",
+  "amount": 256.505,
+  "currency": "IQD",
+  "creationDate": "2024-08-04T15:34:33Z",
+  "additionalInfo": {
+    "client_id": "66666666-7777-8888-9999-000000000000"
+  }
+}

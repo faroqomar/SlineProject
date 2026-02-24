@@ -7,6 +7,7 @@ import '../../notifications/services/notification_service.dart';
 import '../../notifications/models/notification_model.dart';
 
 import '../models/task_request_model.dart';
+import '../../wallet/services/ledger_service.dart';
 
 /// Service for handling task operations with Supabase.
 ///
@@ -625,6 +626,88 @@ class TaskService {
       }
       AppLogger.e('Failed to reject offer', error: e, stackTrace: st);
       throw Exception(ErrorMapper.map(e));
+    }
+  }
+
+  /// Escrow hold for a Task Request (Offer)
+  Future<void> escrowHoldOffer(String offerId) async {
+    try {
+      final res = await _client
+          .from('task_requests')
+          .select('price')
+          .eq('id', offerId)
+          .single();
+      final price = res['price'] as num? ?? 0;
+
+      await LedgerService(_client).submitPaymentEvent(
+        eventType: 'escrow_hold',
+        relatedEntityType: 'task_request',
+        relatedEntityId: offerId,
+        amountGross: price,
+        meta: {},
+      );
+
+      // Once escrow is held successfully, accept the offer
+      await acceptOffer(offerId);
+    } catch (e) {
+      AppLogger.e('Failed to process escrow hold for offer', error: e);
+      rethrow;
+    }
+  }
+
+  /// Release payment with fee for a Task Request
+  Future<void> releaseOfferWithFee(String offerId) async {
+    try {
+      final res = await _client
+          .from('task_requests')
+          .select('price')
+          .eq('id', offerId)
+          .single();
+      final price = res['price'] as num? ?? 0;
+
+      await LedgerService(_client).submitPaymentEvent(
+        eventType: 'release_with_fee',
+        relatedEntityType: 'task_request',
+        relatedEntityId: offerId,
+        amountGross: price,
+        meta: {
+          'fee_rate_bps': 0, // MVP zero fee
+        },
+      );
+    } catch (e) {
+      AppLogger.e('Failed to release offer funds', error: e);
+      rethrow;
+    }
+  }
+
+  /// Refund a Task Request
+  Future<void> refundOffer(String offerId) async {
+    try {
+      final res = await _client
+          .from('task_requests')
+          .select('price, status')
+          .eq('id', offerId)
+          .single();
+      final price = res['price'] as num? ?? 0;
+      final status = res['status'] as String?;
+
+      if (status != 'rejected' &&
+          status != 'canceled' &&
+          status != 'declined' &&
+          status != 'dispute_refund') {
+        await rejectOffer(offerId);
+      }
+
+      await LedgerService(_client).submitPaymentEvent(
+        eventType: 'refund',
+        relatedEntityType: 'task_request',
+        relatedEntityId: offerId,
+        amountGross: price,
+        meta: {},
+      );
+    } catch (e) {
+      AppLogger.e('Failed to refund offer', error: e);
+      rethrow;
     }
   }
 

@@ -1,0 +1,176 @@
+---
+description: Strict MVVM pattern rules for Flutter/Dart files
+globs: "**/*.dart"
+alwaysApply: false
+---
+
+# Flutter MVVM Pattern Rules
+
+## Architecture Enforcement
+
+### Layer Separation (CRITICAL)
+
+**View Layer** (`lib/features/*/view/`):
+- Contains only UI widgets and screens
+- NO direct Supabase calls
+- NO business logic
+- Uses `Consumer<ViewModel>` or `context.watch<ViewModel>()` to access state
+- Local form state only (TextEditingController, etc.)
+
+**ViewModel Layer** (`lib/features/*/viewmodels/`):
+- Extends `ChangeNotifier`
+- Contains business logic and UI state
+- Calls Service/Repository layer (never Supabase directly)
+- Manages loading states, errors, and data
+- Calls `notifyListeners()` after state changes
+
+**Service/Repository Layer** (`lib/features/*/services/`, `lib/features/*/data/`):
+- Encapsulates all Supabase API calls
+- Handles error mapping
+- Returns typed models or throws exceptions
+- NO UI dependencies
+
+**Model Layer** (`lib/features/*/models/`):
+- Immutable data classes
+- JSON serialization (`fromJson`, `toJson`)
+- Mirrors database structure
+- UTC timestamps
+
+## ViewModel Pattern
+
+### Standard ViewModel Structure
+
+```dart
+import 'package:flutter/foundation.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+
+class ExampleViewModel extends ChangeNotifier {
+  final ExampleService _service;
+  
+  // State
+  List<ExampleModel> _items = [];
+  bool _isLoading = false;
+  String? _error;
+  
+  // Getters
+  List<ExampleModel> get items => List.unmodifiable(_items);
+  bool get isLoading => _isLoading;
+  String? get error => _error;
+  
+  ExampleViewModel(this._service);
+  
+  Future<void> loadItems() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    
+    try {
+      _items = await _service.getItems();
+      AppLogger.i('Loaded ${_items.length} items');
+    } catch (e) {
+      _error = _mapError(e);
+      AppLogger.e('Failed to load items', e);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+  
+  String _mapError(dynamic e) {
+    // Map technical errors to user-friendly messages
+    if (e is PostgrestException && e.code == '42501') {
+      return 'Session expired. Please log in again.';
+    }
+    return 'An error occurred. Please try again.';
+  }
+}
+```
+
+### Anti-Patterns
+
+**WRONG** - Direct Supabase in View:
+```dart
+// ❌ NEVER DO THIS
+class TaskScreen extends StatelessWidget {
+  Widget build(BuildContext context) {
+    final tasks = await Supabase.instance.client
+        .from('tasks')
+        .select(); // NO!
+  }
+}
+```
+
+**CORRECT** - ViewModel Pattern:
+```dart
+// ✅ CORRECT
+class TaskScreen extends StatelessWidget {
+  Widget build(BuildContext context) {
+    return Consumer<TaskViewModel>(
+      builder: (context, viewModel, child) {
+        if (viewModel.isLoading) return CircularProgressIndicator();
+        return ListView.builder(
+          itemCount: viewModel.tasks.length,
+          itemBuilder: (context, i) => TaskCard(task: viewModel.tasks[i]),
+        );
+      },
+    );
+  }
+}
+```
+
+## Provider Usage
+
+### Registration
+
+Register providers in `lib/main.dart`:
+
+```dart
+MultiProvider(
+  providers: [
+    ChangeNotifierProvider(create: (_) => TaskViewModel(TaskService())),
+    ChangeNotifierProvider(create: (_) => ProfileViewModel(ProfileRepository())),
+  ],
+  child: MaterialApp(...),
+)
+```
+
+### Accessing in UI
+
+```dart
+// Option 1: Consumer (rebuilds only when needed)
+Consumer<TaskViewModel>(
+  builder: (context, viewModel, child) {
+    return Text('${viewModel.tasks.length} tasks');
+  },
+)
+
+// Option 2: context.watch (rebuilds on changes)
+final viewModel = context.watch<TaskViewModel>();
+
+// Option 3: context.read (no rebuild, for callbacks)
+context.read<TaskViewModel>().loadTasks();
+```
+
+## Data Fetching Patterns
+
+### Efficient Queries (Prevent N+1)
+
+**CORRECT** - JOIN Query:
+```dart
+// ✅ Single query with JOIN
+final rows = await supabase
+    .from('tasks')
+    .select('''
+      *,
+      profiles!tasks_user_id_fkey(full_name, avatar_url)
+    ''')
+    .order('created_at', ascending: false);
+```
+
+**Reference**: See `Sline_everything/CODE_REVIEW.md` for N+1 query examples and fixes.
+
+## References
+
+- `Sline_everything/ARCHITECTURE_ANALYSIS.md` - Architecture decisions and patterns
+- `Sline_everything/DEVELOPER_GUIDE.md` - Complete MVVM examples per feature
+- `Sline_everything/CODE_REVIEW.md` - Common mistakes and fixes

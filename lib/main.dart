@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sline_app/features/auth/view/signup_screen.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
+import 'package:sline_app/features/chat/data/chat_repository.dart';
+import 'package:sline_app/features/booking/data/booking_repository.dart';
 import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 import 'package:sline_app/features/home/viewmodels/home_view_model.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
@@ -35,6 +37,26 @@ import 'features/wallet/viewmodels/wallet_view_model.dart';
 import 'core/services/deep_link_service.dart';
 import 'core/services/dashboard_cache_service.dart';
 import 'features/dashboard/viewmodels/dashboard_view_model.dart';
+import 'core/services/payment_service.dart';
+import 'core/services/demo_payment_service.dart';
+import 'core/services/qicard_payment_service.dart';
+import 'package:sline_app/features/profile/data/profile_repository.dart';
+import 'package:sline_app/features/categories/data/categories_repository.dart';
+
+const bool kUseQiCardPayment = bool.fromEnvironment(
+  'USE_QICARD_PAYMENT',
+  defaultValue: true,
+);
+
+PaymentService createPaymentService() {
+  if (kUseQiCardPayment) {
+    AppLogger.i('Payment provider selected: QiCard', tag: 'Payment');
+    return QiCardPaymentService();
+  }
+
+  AppLogger.i('Payment provider selected: Demo', tag: 'Payment');
+  return DemoPaymentService();
+}
 
 /// App entry point with global error handling.
 ///
@@ -120,7 +142,13 @@ class SLineApp extends StatelessWidget {
         // Chat/messaging state
         ChangeNotifierProvider(create: (_) => ChatViewModel()),
         // Booking/scheduling state
-        ChangeNotifierProvider(create: (_) => BookingViewModel()),
+        ChangeNotifierProvider(
+          create: (_) => BookingViewModel(
+            repo: BookingRepository(Supabase.instance.client),
+            chatRepository: ChatRepository(Supabase.instance.client),
+            paymentService: createPaymentService(),
+          ),
+        ),
         // Orders dashboard state
         ChangeNotifierProvider(create: (_) => OrdersViewModel()),
         // Main freelancer dashboard state
@@ -139,6 +167,14 @@ class SLineApp extends StatelessWidget {
         Provider(create: (_) => DashboardCacheService(prefs)),
         // Wallet state
         ChangeNotifierProvider(create: (_) => WalletViewModel()),
+        // App-level data dependencies (views must not reference Supabase directly)
+        Provider<SupabaseClient>(create: (_) => Supabase.instance.client),
+        Provider<ProfileRepository>(
+          create: (_) => ProfileRepository(Supabase.instance.client),
+        ),
+        Provider<CategoriesRepository>(
+          create: (_) => CategoriesRepository(Supabase.instance.client),
+        ),
       ],
       child: const _AppWithAuthListener(),
     );

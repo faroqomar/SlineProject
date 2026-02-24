@@ -67,6 +67,28 @@ class BookingRepository {
     );
   }
 
+  Future<BookingModel> createBookingDraft({
+    required String taskId,
+    required String slotId,
+    String? note,
+    required String providerId,
+    required double price,
+    String? packageId,
+    Map<String, dynamic>? requirements,
+    BookingStatus status = BookingStatus.pending,
+  }) {
+    return _service.createBookingDraft(
+      taskId: taskId,
+      slotId: slotId,
+      note: note,
+      providerId: providerId,
+      price: price,
+      packageId: packageId,
+      requirements: requirements,
+      status: status,
+    );
+  }
+
   Future<List<BookingModel>> listBookingsAsClient({
     int limit = 50,
     String? cursorCreatedAtIso,
@@ -101,7 +123,11 @@ class BookingRepository {
     return _service.getBookingById(bookingId);
   }
 
-  Future<void> approveAndRelease(String bookingId) {
+  Future<void> escrowHoldBooking(String bookingId) {
+    return _service.escrowHoldBooking(bookingId);
+  }
+
+  Future<void> releaseBookingWithFee(String bookingId) {
     return _service.approveAndRelease(bookingId);
   }
 

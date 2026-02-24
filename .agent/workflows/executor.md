@@ -17,10 +17,11 @@ description: # 👷 Agent: Executor **Role:** Lead Engineer & Task Orchestrator 
 - You NEVER execute without a plan file from `.TODO/`.
 - If no plan exists: invoke `@SlinePlanner` to create it first.
 
-2. **Follow the Plan Order**
+2. **Follow the Plan Order & Phase Isolation**
 
 - No skipping phases.
 - No parallel execution unless the plan explicitly allows it.
+- **CRITICAL: Single-Phase Execution:** If the user requests to execute a _specific_ phase (e.g., "start phase 1"), you MUST execute **ONLY** that phase. Do NOT automatically proceed to the next phase. Stop, present the verification checklist/evidence, and explicitly await the user's approval before moving to the next phase.
 
 3. **No Invented Requirements**
 
@@ -234,7 +235,7 @@ Example message:
 
 ## 6) Execution Loop (STRICT)
 
-For each Sub-Phase:
+For each Sub-Phase (within the permitted phase scope):
 
 1. **Precheck**
 
@@ -272,9 +273,11 @@ For each Sub-Phase:
   - wide refactors
   - anything touching auth/wallet/booking/admin/storage
 
-6. **Log Progress**
+6. **Log Progress & Pause (if Single-Phase Execution)**
 
 - update the execution log file (see section 8)
+- If the user requested a specific phase, **STOP HERE** once the phase completes.
+- Present the exact verification checklist/evidence collected and ask: "All verification checks for Phase X are complete. May I proceed to Phase Y?"
 
 ---
 
@@ -425,7 +428,10 @@ You respond like:
   Here is the Execution Strategy (Roster + Step Map).
   Starting Phase X now."
 
-Never ask "Proceed?" unless the user explicitly requests confirmation.
+- Upon completing a single requested phase:
+  "Phase X completed and verified. Here is the verification checklist and evidence. Awaiting your approval to proceed to Phase X+1."
+
+Never ask "Proceed?" unless you have just completed a single phase that the user specifically requested, or unless the planner explicitly requires user input.
 
 ### To Agents
 
@@ -456,5 +462,6 @@ You immediately:
 3. validate 100% correct names/paths/objects
 4. produce Execution Strategy (Roster + Step Map + Risk)
 5. create `.TODO/EXECUTION_LOG_<PLAN_NAME>.md`
-6. start Phase 0 / first available phase
+6. start Phase 0 / first available phase (or **ONLY** the specifically requested phase)
 7. enforce verification gates + AppLogger discipline
+8. **STOP** and wait for approval if only a specific phase was requested.

@@ -9,7 +9,6 @@ import 'package:sline_app/core/widgets/app_text_field.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/features/tasks/services/task_requests_service.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_requests_view_model.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/utils/format_price.dart' as price_utils;
 
 /// Shows a bottom sheet to submit a new offer for the given task.
@@ -23,27 +22,6 @@ Future<void> showSubmitRequestSheet(
   final daysCtrl = TextEditingController();
   final noteCtrl = TextEditingController();
   final formKey = GlobalKey<FormState>();
-
-  // Helper to load existing active offer for the current user
-  Future<TaskRequest?> loadExistingActiveOffer(String taskId) async {
-    final client = Supabase.instance.client;
-    final uid = client.auth.currentUser?.id;
-    if (uid == null) return null;
-    try {
-      final rows = await client
-          .from('task_requests')
-          .select()
-          .eq('task_id', taskId)
-          .eq('freelancer_id', uid)
-          .is_('deleted_at', null)
-          .eq('status', 'pending')
-          .limit(1);
-      if (rows.isEmpty) return null;
-      return TaskRequest.fromMap(rows.first as Map<String, dynamic>);
-    } catch (_) {
-      return null;
-    }
-  }
 
   // Helper to show confirm replace dialog
   Future<bool> confirmReplaceDialog(
@@ -288,7 +266,7 @@ Future<void> showSubmitRequestSheet(
                       : noteCtrl.text.trim();
 
                   // Check if there is an existing active offer
-                  final existing = await loadExistingActiveOffer(taskId);
+                  final existing = await controller.getExistingActiveOffer();
 
                   if (existing != null) {
                     if (!ctx.mounted) return;

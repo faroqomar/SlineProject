@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
-import 'package:sline_app/core/app_enums.dart';
-import '../viewmodels/booking_view_model.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/app_typography.dart';
+
+/// Data returned from BookingSheet when user taps "Request Booking".
+/// The parent screen handles navigation to the payment checkout.
+class BookingSheetResult {
+  const BookingSheetResult({required this.note, required this.price});
+  final String? note;
+  final double price;
+}
 
 /// BookingSheet
 ///
-/// Bottom sheet for requesting a booking on a given slot (A2 prototype).
-/// In A3, will call BookingService.bookSlot(...).
+/// Bottom sheet for requesting a booking on a given slot.
+/// Returns a [BookingSheetResult] via Navigator.pop when the user confirms.
+/// The PARENT screen is responsible for navigating to PaymentCheckoutScreen.
 class BookingSheet extends StatefulWidget {
   const BookingSheet({
     super.key,
@@ -17,7 +25,6 @@ class BookingSheet extends StatefulWidget {
     required this.startUtc,
     required this.endUtc,
     required this.isBlocked,
-    this.onSubmitted,
     this.packageTier,
     this.packagePrice,
     this.packageData,
@@ -29,7 +36,6 @@ class BookingSheet extends StatefulWidget {
   final DateTime startUtc;
   final DateTime endUtc;
   final bool isBlocked;
-  final VoidCallback? onSubmitted;
 
   final String? packageTier;
   final String? packagePrice;
@@ -41,7 +47,6 @@ class BookingSheet extends StatefulWidget {
 
 class _BookingSheetState extends State<BookingSheet> {
   final TextEditingController _noteCtrl = TextEditingController();
-  bool _sending = false;
 
   @override
   void dispose() {
@@ -58,99 +63,55 @@ class _BookingSheetState extends State<BookingSheet> {
     return '${ymd(s)}  ${hm(s)} → ${hm(e)}';
   }
 
-  Future<void> _submit() async {
+  void _submit() {
     if (widget.isBlocked) return;
-    setState(() => _sending = true);
-    try {
-      final vm = context.read<BookingViewModel>();
 
-      String? txnId;
-      /*
-      // Process Payment if involves a package
-      if (widget.packagePrice != null &&
-          (double.tryParse(
-                    widget.packagePrice!.replaceAll(RegExp(r'[^0-9.]'), ''),
-                  ) ??
-                  0) >
-              0) {
-        
-        // ... Payment logic commented out for testing ...
-        
-        // 1. SKIP PAYMENT SCREEN
-        // 2. Set txnId to simulate success
-        txnId = 'TEST_SKIPPED_PAYMENT';
-      }
-      */
-
-      // Force TXN ID for testing if package exists
-      if (widget.packagePrice != null) {
-        txnId = 'TEST_SKIPPED_PAYMENT';
-      }
-
-      // Prepend package info to note
-      final userNote = _noteCtrl.text.trim();
-      final StringBuffer finalNote = StringBuffer();
-      // ... (existing note logic remains same) ...
-      if (widget.packageTier != null) {
-        finalNote.writeln(
-          'Package: ${widget.packageTier} (${widget.packagePrice})',
-        );
-        if (txnId != null) {
-          finalNote.writeln('Payment TXN: $txnId (TEST VERIFIED)');
-        }
-        // Add other details if needed, e.g. delivery days
-        if (widget.packageData != null) {
-          final del = widget.packageData!['delivery'];
-          if (del != null && del.toString().isNotEmpty) {
-            finalNote.writeln('Delivery: $del days');
-          }
-        }
-        finalNote.writeln('---');
-      }
-      if (userNote.isNotEmpty) {
-        finalNote.write(userNote);
-      }
-
-      final res = await vm.bookSlot(
-        taskId: widget.taskId,
-        slotId: widget.slotId,
-        providerId: widget.providerId,
-        note: finalNote.isEmpty ? null : finalNote.toString(),
-        // Force ACTIVE status for testing (skips payment/acceptance flow)
-        status: BookingStatus.active,
+    // Build note
+    final userNote = _noteCtrl.text.trim();
+    final StringBuffer finalNote = StringBuffer();
+    if (widget.packageTier != null) {
+      finalNote.writeln(
+        'Package: ${widget.packageTier} (${widget.packagePrice})',
       );
-      if (!mounted) return;
-      setState(() => _sending = false);
-      if (res != null) {
-        widget.onSubmitted?.call();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Failed to request booking: ${vm.bookingsError ?? 'Unknown error'}',
-            ),
-            backgroundColor: AppColors.lightRed,
-          ),
-        );
+      if (widget.packageData != null) {
+        final del = widget.packageData!['delivery'];
+        if (del != null && del.toString().isNotEmpty) {
+          finalNote.writeln('Delivery: $del days');
+        }
       }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _sending = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      finalNote.writeln('---');
     }
+    if (userNote.isNotEmpty) {
+      finalNote.write(userNote);
+    }
+
+    // Parse price
+    double price = 100.0;
+    if (widget.packagePrice != null) {
+      final parsed = double.tryParse(
+        widget.packagePrice!.replaceAll(RegExp(r'[^0-9.]'), ''),
+      );
+      if (parsed != null && parsed > 0) price = parsed;
+    }
+
+    // Return result to parent — parent handles navigation
+    Navigator.of(context).pop(
+      BookingSheetResult(
+        note: finalNote.isEmpty ? null : finalNote.toString(),
+        price: price,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final cs = context.colorScheme;
     return Padding(
       padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 12,
-        bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
+        left: AppDimens.p16,
+        right: AppDimens.p16,
+        top: AppDimens.p12,
+        bottom: AppDimens.p16 + MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -158,50 +119,46 @@ class _BookingSheetState extends State<BookingSheet> {
         children: [
           Row(
             children: [
-              const Icon(Icons.event),
-              const SizedBox(width: 8),
+              Icon(Icons.event, color: cs.primary),
+              const SizedBox(width: AppDimens.p8),
               Expanded(
                 child: Text(
                   _fmtRange(widget.startUtc, widget.endUtc),
-                  style: theme.textTheme.titleMedium,
+                  style: AppTypography.h4.copyWith(color: cs.text),
                   maxLines: 2,
                 ),
               ),
             ],
           ),
           if (widget.packageTier != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppDimens.p12),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(AppDimens.p12),
               decoration: BoxDecoration(
-                color: theme.colorScheme.secondaryContainer.withValues(
-                  alpha: 0.3,
-                ),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                ),
+                color: cs.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppDimens.r8),
+                border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.inventory_2_outlined,
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(width: 12),
+                  Icon(Icons.inventory_2_outlined, color: cs.primary),
+                  const SizedBox(width: AppDimens.p12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           '${widget.packageTier} Package',
-                          style: theme.textTheme.titleSmall?.copyWith(
+                          style: AppTypography.bodyLarge.copyWith(
                             fontWeight: FontWeight.bold,
+                            color: cs.text,
                           ),
                         ),
                         Text(
                           'Price: ${widget.packagePrice}',
-                          style: theme.textTheme.bodySmall,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: cs.textSecondary,
+                          ),
                         ),
                       ],
                     ),
@@ -211,28 +168,51 @@ class _BookingSheetState extends State<BookingSheet> {
             ),
           ],
 
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimens.p12),
           TextField(
             controller: _noteCtrl,
             maxLines: 3,
-            decoration: const InputDecoration(
+            style: TextStyle(color: cs.text),
+            decoration: InputDecoration(
               labelText: 'Note (optional)',
-              border: OutlineInputBorder(),
+              labelStyle: TextStyle(color: cs.textSecondary),
+              filled: true,
+              fillColor: cs.cardBackground,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppDimens.r12),
+                borderSide: BorderSide(color: cs.text.withValues(alpha: 0.1)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppDimens.r12),
+                borderSide: BorderSide(color: cs.text.withValues(alpha: 0.1)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppDimens.r12),
+                borderSide: BorderSide(color: cs.primary, width: 1.5),
+              ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimens.p16),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: (widget.isBlocked || _sending) ? null : _submit,
-              icon: _sending
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.send),
-              label: Text(widget.isBlocked ? 'Blocked' : 'Request Booking'),
+            height: 52,
+            child: FilledButton.icon(
+              onPressed: widget.isBlocked ? null : _submit,
+              icon: const Icon(Icons.payment),
+              label: Text(
+                widget.isBlocked ? 'Blocked' : 'Proceed to Payment',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: cs.primary,
+                disabledBackgroundColor: cs.primary.withValues(alpha: 0.5),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppDimens.r12),
+                ),
+              ),
             ),
           ),
         ],

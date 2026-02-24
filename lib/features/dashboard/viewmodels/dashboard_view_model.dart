@@ -544,12 +544,12 @@ class DashboardViewModel extends ChangeNotifier {
     }
   }
 
-  /// Accepts an offer atomically
+  /// Accepts an offer atomically (And holds funds in escrow first)
   Future<void> acceptOffer(TaskRequest offer) async {
     final tid = _traceId();
     try {
-      // 1. Call RPC (atomic: accept this, reject others, assign task)
-      await _taskService.acceptOffer(offer.id);
+      // 1. Hold funds in escrow, which then auto-accepts the offer
+      await _taskService.escrowHoldOffer(offer.id);
       if (_abortIfDisposed()) return;
 
       // 2. Remove ALL offers for this task (not just this one!)
@@ -600,6 +600,46 @@ class DashboardViewModel extends ChangeNotifier {
       }
     } catch (e) {
       AppLogger.e('Failed to fetch work items', error: e, tag: _kTag);
+    }
+  }
+
+  /// Release offer funds
+  Future<void> releaseOfferWithFee(String offerId) async {
+    final tid = _traceId();
+    try {
+      await _taskService.releaseOfferWithFee(offerId);
+      await _fetchWorkItems();
+      _safeNotify();
+      AppLogger.i(
+        'Released funds for offer=$offerId [trace:$tid]',
+        tag: '$_kTag.ledger',
+      );
+    } catch (e) {
+      AppLogger.e(
+        'Failed to release funds for offer=$offerId [trace:$tid]',
+        error: e,
+        tag: '$_kTag.ledger',
+      );
+      rethrow;
+    }
+  }
+
+  /// Refund offer
+  Future<void> refundOffer(String offerId) async {
+    final tid = _traceId();
+    try {
+      await _taskService.refundOffer(offerId);
+      _inboxOffers.removeWhere((o) => o.id == offerId);
+      await _fetchWorkItems();
+      _safeNotify();
+      AppLogger.i('Refunded offer=$offerId [trace:$tid]', tag: '$_kTag.ledger');
+    } catch (e) {
+      AppLogger.e(
+        'Failed to refund offer=$offerId [trace:$tid]',
+        error: e,
+        tag: '$_kTag.ledger',
+      );
+      rethrow;
     }
   }
 

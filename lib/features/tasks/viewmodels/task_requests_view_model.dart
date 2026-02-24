@@ -2,18 +2,22 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/features/tasks/services/task_requests_service.dart';
+import 'package:sline_app/features/tasks/services/task_service.dart';
 
 /// TaskRequestsViewModel — MVVM state holder for Task Requests (Offers)
 class TaskRequestsViewModel extends ChangeNotifier {
   final String taskId;
   final bool isOwner;
   final TaskRequestsService _service;
+  final TaskService _taskService;
 
   TaskRequestsViewModel({
     required this.taskId,
     this.isOwner = false,
     TaskRequestsService? service,
-  }) : _service = service ?? TaskRequestsService();
+    TaskService? taskService,
+  }) : _service = service ?? TaskRequestsService(),
+       _taskService = taskService ?? TaskService();
 
   // Paging state
   final List<TaskRequest> _items = <TaskRequest>[];
@@ -87,10 +91,17 @@ class TaskRequestsViewModel extends ChangeNotifier {
 
   bool canActOn(TaskRequest req) => isOwner && req.isPending;
 
+  /// Returns the current user's pending offer for the task, if any.
+  Future<TaskRequest?> getExistingActiveOffer() async =>
+      _service.getExistingActiveOfferForCurrentUser(taskId);
+
   Future<void> accept(String requestId) async {
     try {
-      final updated = await _service.accept(requestId);
-      _replace(updated);
+      await _taskService.escrowHoldOffer(requestId);
+      final list = await _service.listByTask(taskId: taskId, limit: 100);
+      _items.clear();
+      _items.addAll(list);
+      notifyListeners();
     } catch (e) {
       _errorMessage = _friendlyError(e);
       notifyListeners();

@@ -5,6 +5,8 @@ import 'package:sline_app/features/work/models/work_contract_model.dart';
 import 'package:sline_app/features/work/models/change_request_model.dart';
 import 'package:sline_app/features/work/models/extension_request_model.dart';
 import 'package:sline_app/features/booking/models/booking_model.dart';
+import 'package:sline_app/features/booking/services/booking_service.dart';
+import 'package:sline_app/core/app_enums.dart';
 
 /// Service for managing Unified Work Items (Tasks & Bookings).
 /// Wraps RPC calls and table queries for the Work Management flow.
@@ -290,12 +292,7 @@ class WorkManagementService {
   /// Accepts a booking request.
   Future<void> acceptBooking(String bookingId) async {
     try {
-      await _supabase
-          .from('bookings')
-          .update({'status': 'active'})
-          .eq('id', bookingId);
-      // Note: Trigger 'trg_booking_guard' expects 'active' for acceptance.
-      // 'active' maps to UnifiedWorkStatus.active.
+      await BookingService(_supabase).acceptBooking(bookingId);
       AppLogger.i('Booking accepted: $bookingId');
     } catch (e, stack) {
       AppLogger.e('Failed to accept booking', error: e, stackTrace: stack);
@@ -306,11 +303,7 @@ class WorkManagementService {
   /// Declines a booking request.
   Future<void> declineBooking(String bookingId) async {
     try {
-      await _supabase
-          .from('bookings')
-          .update({'status': 'refunded'})
-          .eq('id', bookingId);
-      // fn_booking_guard allows paid_request_pending -> refunded (provider declines)
+      await BookingService(_supabase).declineBooking(bookingId);
       AppLogger.i('Booking declined (refunded): $bookingId');
     } catch (e, stack) {
       AppLogger.e('Failed to decline booking', error: e, stackTrace: stack);
@@ -321,10 +314,10 @@ class WorkManagementService {
   /// Cancels a booking request.
   Future<void> cancelBooking(String bookingId) async {
     try {
-      await _supabase
-          .from('bookings')
-          .update({'status': 'canceled'})
-          .eq('id', bookingId);
+      await BookingService(_supabase).updateBookingStatus(
+        bookingId: bookingId,
+        newStatus: BookingStatus.canceled,
+      );
       AppLogger.i('Booking canceled: $bookingId');
     } catch (e, stack) {
       AppLogger.e('Failed to cancel booking', error: e, stackTrace: stack);

@@ -62,6 +62,7 @@
 				<key>CFBundleURLSchemes</key>
 				<array>
 					<string>io.supabase.sline</string>
+					<string>sline</string>
 				</array>
 			</dict>
 		</array>

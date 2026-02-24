@@ -8,7 +8,6 @@ import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
 import 'package:sline_app/core/widgets/sliver_tab_bar_delegate.dart';
 import 'package:sline_app/features/profile/viewmodels/public_profile_view_model.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/features/profile/data/profile_repository.dart';
 import 'widgets/public_profile/public_profile_header.dart';
 import 'widgets/public_profile/public_profile_stats.dart';
@@ -60,8 +59,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
     final AppColorScheme colorScheme = context.colorScheme;
 
     return ChangeNotifierProvider(
-      create: (_) =>
-          PublicProfileViewModel(ProfileRepository(Supabase.instance.client))
+      create: (ctx) =>
+          PublicProfileViewModel(ctx.read<ProfileRepository>())
             ..loadProfile(widget.userId),
       child: Scaffold(
         backgroundColor: colorScheme.phoneBackground,

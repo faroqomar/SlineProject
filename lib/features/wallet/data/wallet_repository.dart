@@ -1,5 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/wallet_transaction_model.dart';
+import '../models/wallet_activity_model.dart';
 import '../models/wallet_balance_model.dart';
 import '../services/wallet_service.dart';
 
@@ -8,11 +8,11 @@ class WalletRepository {
 
   final WalletService _service;
 
-  Future<List<WalletTransactionModel>> getTransactions({
+  Future<List<WalletActivityModel>> getActivity({
     int limit = 20,
     String? cursorCreatedAtIso,
   }) {
-    return _service.getTransactions(
+    return _service.getActivity(
       limit: limit,
       cursorCreatedAtIso: cursorCreatedAtIso,
     );
@@ -20,5 +20,9 @@ class WalletRepository {
 
   Future<WalletBalanceModel> getWalletBalance() {
     return _service.getWalletBalance();
+  }
+
+  Future<void> requestWithdrawal({required num amount}) {
+    return _service.requestWithdrawal(amount: amount);
   }
 }

@@ -38,6 +38,8 @@ class InboxTab extends StatelessWidget {
                 onAccept: () => vm.acceptOffer(offer),
                 onReject: () => vm.rejectOffer(offer),
                 onWithdraw: () => vm.withdrawOffer(offer.id),
+                onRelease: () => vm.releaseOfferWithFee(offer.id),
+                onRefund: () => vm.refundOffer(offer.id),
               );
             },
           ),

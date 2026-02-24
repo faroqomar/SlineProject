@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/features/booking/view/add_slot_sheet.dart';
 import 'package:sline_app/features/booking/view/booking_sheet.dart';
+import 'package:sline_app/features/booking/view/payment_checkout_screen.dart';
 import '../../../core/utils/format_date.dart';
 import '../viewmodels/booking_view_model.dart';
 import '../models/slot_model.dart';
@@ -244,12 +245,17 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     );
   }
 
-  void _onTapSlot(BuildContext context, SlotModel slot) {
-    showModalBottomSheet(
+  void _onTapSlot(BuildContext context, SlotModel slot) async {
+    // Capture context-dependent values before any await
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+
+    // Show bottom sheet — returns BookingSheetResult if user confirms
+    final result = await showModalBottomSheet<BookingSheetResult>(
       context: context,
       useSafeArea: true,
       isScrollControlled: true,
-      builder: (ctx) => BookingSheet(
+      builder: (_) => BookingSheet(
         slotId: slot.id,
         providerId: widget.providerId,
         taskId: widget.taskId,
@@ -259,14 +265,35 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
         startUtc: slot.startsAtUtc,
         endUtc: slot.endsAtUtc,
         isBlocked: slot.isBlocked,
-        onSubmitted: () {
-          Navigator.of(ctx).pop();
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Booking requested')));
-        },
       ),
     );
+
+    // User dismissed without confirming
+    if (result == null || !mounted) return;
+
+    // Navigate to Payment Checkout Screen
+    final success = await navigator.push<bool>(
+      MaterialPageRoute(
+        builder: (_) => PaymentCheckoutScreen(
+          slotId: slot.id,
+          providerId: widget.providerId,
+          taskId: widget.taskId,
+          startUtc: slot.startsAtUtc,
+          endUtc: slot.endsAtUtc,
+          price: result.price,
+          note: result.note,
+          packageTier: widget.packageTier,
+          packagePrice: widget.packagePrice,
+          packageData: widget.packageData,
+        ),
+      ),
+    );
+
+    if (success == true) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Booking confirmed!')),
+      );
+    }
   }
 }
 

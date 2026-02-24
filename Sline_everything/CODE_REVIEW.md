@@ -138,11 +138,13 @@ _authSubscription = supabase.auth.onAuthStateChange.listen(
 **Status**: **RESOLVED**
 
 **What was fixed**:
+
 - Replaced 4 methods with N+1 queries with single JOIN queries
 - Added `_selectWithProfile` constant for consistent query pattern
 - Updated `Task.fromJson()` to parse nested profile data from JOINs
 
 **Before** (51 queries for 50 tasks):
+
 ```dart
 for (var i = 0; i < tasks.length; i++) {
   final user = await _client.from('profiles')...
@@ -150,6 +152,7 @@ for (var i = 0; i < tasks.length; i++) {
 ```
 
 **After** (1 query for any number of tasks):
+
 ```dart
 static const String _selectWithProfile = '''
   ..., profiles!tasks_user_id_fkey(full_name, avatar_url)
@@ -165,11 +168,13 @@ static const String _selectWithProfile = '''
 **Status**: **RESOLVED**
 
 **What was fixed**:
+
 - Deleted `lib/features/auth/services/auth_service.dart` (duplicate file)
 - Updated `AuthViewModel` to use `AuthRepository` directly
 - Refactored to return success/failure booleans instead of passing BuildContext
 
 **Before**:
+
 ```dart
 // Two identical files doing the same thing
 class AuthService { ... }  // auth_service.dart
@@ -177,6 +182,7 @@ class AuthRepository { ... }  // auth_repository.dart - DUPLICATE!
 ```
 
 **After**:
+
 ```dart
 // Single source of truth
 class AuthViewModel extends ChangeNotifier {
@@ -192,12 +198,14 @@ class AuthViewModel extends ChangeNotifier {
 **Status**: **RESOLVED**
 
 **What was fixed**:
+
 - Removed `State` and `BuildContext` parameters from ViewModel methods
 - Methods now return `bool` for success/failure
 - View handles navigation and SnackBars based on ViewModel state
 - Added user-friendly error mapping with `_mapAuthError()`
 
 **Before** (anti-pattern):
+
 ```dart
 Future<void> login({required State state, ...}) async {
   Navigator.pushReplacement(state.context, ...);  // ❌ Context in ViewModel
@@ -205,6 +213,7 @@ Future<void> login({required State state, ...}) async {
 ```
 
 **After** (proper MVVM):
+
 ```dart
 Future<bool> login({required String email, ...}) async {
   // Returns true/false, UI handles navigation
@@ -219,6 +228,7 @@ Future<bool> login({required String email, ...}) async {
 **Status**: **RESOLVED**
 
 **What was added**:
+
 - `FlutterError.onError` for widget build errors
 - `PlatformDispatcher.instance.onError` for native crashes
 - `runZonedGuarded()` for uncaught async exceptions
@@ -232,6 +242,7 @@ Future<bool> login({required String email, ...}) async {
 **Status**: **RESOLVED**
 
 **What was fixed**:
+
 - Added optional `FavoritesViewModel? favoritesVM` parameter
 - Extracted `_handleAddFavorite()` method with ViewModel preference
 - Legacy service call kept as fallback for backward compatibility
@@ -244,6 +255,7 @@ Future<bool> login({required String email, ...}) async {
 **Status**: **RESOLVED**
 
 **What was fixed**:
+
 - Added `AuthViewModel` to global `MultiProvider`
 - Added descriptive comments for all providers
 - Profile screen now uses global `AuthViewModel` for logout
@@ -253,12 +265,14 @@ Future<bool> login({required String email, ...}) async {
 ### 7. Inconsistent Logger Usage - FIXED ✅
 
 **Locations**:
+
 - `lib/features/favorites/viewmodels/favorites_view_model.dart`
 - `lib/features/saved/viewmodels/saved_tasks_view_model.dart`
 
 **Status**: **RESOLVED**
 
 **What was fixed**:
+
 - Replaced `Logger()` with `AppLogger`
 - Removed unused `final _favVmLogger = Logger();` declarations
 
@@ -269,6 +283,7 @@ Future<bool> login({required String email, ...}) async {
 **Status**: **RESOLVED**
 
 **What was fixed**:
+
 - Created shared `lib/core/utils/signed_url_cache.dart`
 - Updated `SignedAvatar` and `SignedImage` to use shared cache
 - Removed duplicate `_CacheEntry` classes
@@ -279,21 +294,22 @@ Future<bool> login({required String email, ...}) async {
 
 ### Before vs After
 
-| Metric | Before | After | Change |
-|--------|--------|-------|--------|
-| Architecture Compliance | 8/10 | 9.5/10 | +1.5 |
-| Performance | 6/10 | 9/10 | +3 |
-| Code Duplication | 6/10 | 9/10 | +3 |
-| Error Handling | 7/10 | 9/10 | +2 |
-| Testing Coverage | 3/10 | 3/10 | - |
-| Documentation | 9/10 | 9.5/10 | +0.5 |
-| **Overall** | **7.5/10** | **9/10** | **+1.5** |
+| Metric                  | Before     | After    | Change   |
+| ----------------------- | ---------- | -------- | -------- |
+| Architecture Compliance | 8/10       | 9.5/10   | +1.5     |
+| Performance             | 6/10       | 9/10     | +3       |
+| Code Duplication        | 6/10       | 9/10     | +3       |
+| Error Handling          | 7/10       | 9/10     | +2       |
+| Testing Coverage        | 3/10       | 3/10     | -        |
+| Documentation           | 9/10       | 9.5/10   | +0.5     |
+| **Overall**             | **7.5/10** | **9/10** | **+1.5** |
 
 ---
 
 ## 📁 FILES MODIFIED
 
 ### Core
+
 - `lib/main.dart` - Added error boundary, AuthViewModel provider, comments
 - `lib/core/services/supabase_config.dart` - Added security documentation
 - `lib/core/services/logger_service.dart` - Enhanced documentation
@@ -302,17 +318,20 @@ Future<bool> login({required String email, ...}) async {
 - `lib/core/widgets/signed_image.dart` - Use shared cache
 
 ### Auth Feature
+
 - `lib/features/auth/services/auth_service.dart` - DELETED (duplicate)
 - `lib/features/auth/viewmodels/auth_view_model.dart` - Complete rewrite
 - `lib/features/auth/view/login_screen.dart` - Updated for new ViewModel API
 - `lib/features/auth/view/signup_screen.dart` - Updated for new ViewModel API
 
 ### Tasks Feature
+
 - `lib/features/tasks/services/task_service.dart` - N+1 fix with JOINs
 - `lib/features/tasks/models/task_model.dart` - Parse profile from JOINs
 - `lib/features/tasks/view/widgets/requests/widgets/request_tile.dart` - ViewModel support
 
 ### Other Features
+
 - `lib/features/profile/view/profile_screen.dart` - Use global AuthViewModel
 - `lib/features/favorites/viewmodels/favorites_view_model.dart` - Use AppLogger
 - `lib/features/saved/viewmodels/saved_tasks_view_model.dart` - Use AppLogger
@@ -341,12 +360,14 @@ These excellent practices remain in place:
 ## 🎯 REMAINING WORK (Future Sprints)
 
 ### Medium Priority
+
 - [ ] Create `CategoriesViewModel` for `create_task_screen.dart`
 - [ ] Add loading state aggregation (global spinner)
 - [ ] Write integration tests for critical paths
 - [ ] Add performance monitoring (Firebase Performance)
 
 ### Low Priority
+
 - [ ] Consider offline caching strategy (Hive/SQLite)
 - [ ] Add analytics events for user behavior tracking
 - [ ] Optimize image loading (caching, lazy loading)
@@ -359,6 +380,7 @@ These excellent practices remain in place:
 Based on this review, here are the patterns all future code should follow:
 
 ### 1. Service Layer with JOINs
+
 ```dart
 // Always use JOINs for related data - see TaskService._selectWithProfile
 static const String _selectWithProfile = '''
@@ -367,6 +389,7 @@ static const String _selectWithProfile = '''
 ```
 
 ### 2. ViewModel with Bool Returns
+
 ```dart
 // Don't pass BuildContext - return success/failure
 Future<bool> doSomething() async {
@@ -381,6 +404,7 @@ Future<bool> doSomething() async {
 ```
 
 ### 3. Error Mapping
+
 ```dart
 // Map technical errors to user-friendly messages
 String _mapError(dynamic error) {
@@ -391,16 +415,47 @@ String _mapError(dynamic error) {
 ```
 
 ### 4. Cursor Pagination
+
 ```dart
 // Use ISO timestamps, not offsets - see BookingViewModel
 String? cursor = data.last.createdAt.toIso8601String();
 ```
 
 ### 5. Shared Caching
+
 ```dart
 // Use SignedUrlCache for all signed URLs
 final cached = SignedUrlCache.get(path);
 if (cached != null) return cached;
+```
+
+### 6. Returning Data from Bottom Sheets
+
+Always prefer returning data via `Navigator.pop(result)` from a bottom sheet rather than navigating forwards directly from the sheet's context.
+
+**WRONG**:
+
+```dart
+// ❌ Navigation from sheet context (prone to disposed state crash)
+void _submit() {
+  Navigator.pop(context);
+  Navigator.push(context, (ctx) => NextScreen(...)); // Error: potential crash if context invalid
+}
+```
+
+**CORRECT**:
+
+```dart
+// ✅ Return data, let parent handle navigation
+void _submit() {
+  Navigator.pop(context, ResultData(...));
+}
+
+// In parent screen
+final result = await showModalBottomSheet<ResultData>(...);
+if (result != null && mounted) {
+  Navigator.push(context, MaterialPageRoute(builder: (_) => NextScreen(data: result)));
+}
 ```
 
 ---
@@ -408,6 +463,7 @@ if (cached != null) return cached;
 ## 📅 NEXT REVIEW
 
 Schedule the next comprehensive code review in **March 2025** to:
+
 - Verify continued compliance with patterns
 - Review any new features added
 - Assess testing coverage improvements
@@ -418,6 +474,7 @@ Schedule the next comprehensive code review in **March 2025** to:
 ## ✅ CONCLUSION
 
 The SLine codebase is now **production-ready** with:
+
 - ✅ Optimal database query patterns (no N+1)
 - ✅ Clean MVVM architecture throughout
 - ✅ Global error handling

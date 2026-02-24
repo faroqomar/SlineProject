@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/features/profile/view/widgets/profile_preview_modal.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
@@ -31,8 +32,9 @@ class WorkItemDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final uid = context.read<AuthViewModel>().currentUserId ?? '';
     return ChangeNotifierProvider(
-      create: (_) => WorkItemDetailsViewModel(),
+      create: (_) => WorkItemDetailsViewModel(uid: uid),
       child: _WorkItemDetailsContent(id: id, type: type),
     );
   }

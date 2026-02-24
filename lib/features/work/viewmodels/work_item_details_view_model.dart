@@ -6,17 +6,17 @@ import 'package:sline_app/features/work/models/work_contract_model.dart';
 import 'package:sline_app/features/work/models/change_request_model.dart';
 import 'package:sline_app/features/work/models/extension_request_model.dart';
 import 'package:sline_app/features/work/services/work_management_service.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/features/booking/models/booking_model.dart';
 
 class WorkItemDetailsViewModel extends ChangeNotifier {
   final WorkManagementService _workService;
   final String currentUserId;
 
-  WorkItemDetailsViewModel({WorkManagementService? workService, String? uid})
-    : _workService = workService ?? WorkManagementService(),
-      currentUserId =
-          uid ?? Supabase.instance.client.auth.currentUser?.id ?? '' {
+  WorkItemDetailsViewModel({
+    WorkManagementService? workService,
+    required String uid,
+  }) : _workService = workService ?? WorkManagementService(),
+       currentUserId = uid {
     if (currentUserId.isEmpty) {
       AppLogger.w('WorkItemDetailsViewModel initialized without user ID');
     }

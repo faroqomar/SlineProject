@@ -350,3 +350,27 @@ This file is the single source of truth for MVP progress. Each step is bite-size
 - ✅ **Chat Routing**: Added `getTaskConversation` and integrated seamlessly across Dashboards and Work Details.
 - ✅ **Next Actions**: Replaced TODOs with robust `DeepLinkService` navigation logic.
 - 🔜 Next: Client-side "Request Revision" UX refinements.
+
+## 🔹 13) Payment Ledger System (v2.16) — 🚧 In Progress
+
+| Step | Feature                  | Description                                        | Status       |
+| ---- | ------------------------ | -------------------------------------------------- | ------------ |
+| 13.1 | **Ledger Foundation**    | Tables: journal_entries, ledger_lines, accounts    | ✅ Completed |
+| 13.2 | **RPC Processing**       | `process_payment_event_ledger` for all money moves | ✅ Completed |
+| 13.3 | **Ledger Phase 3**       | Enforce Escrow, Freeze Legacy, Backfill Data       | ✅ Completed |
+| 13.4 | **Checkout Integration** | Dedicated `PaymentCheckoutScreen` + Nav Crash Fix  | ✅ Completed |
+| 13.5 | **Real Gateway**         | QiCard flow integrated (sandbox); production via `--dart-define` | 🚧 In Progress |
+
+# 🎯 Summary (v2.16.1)
+
+- ✅ **QiCard integration (sandbox)**: End-to-end flow (draft → initiatePayment → WebView → webhook → held); feature flag `USE_QICARD_PAYMENT`; default credentials in `qicard_payment_service.dart`.
+- ✅ **Delivery RPC fixes**: `rpc_submit_delivery` booking transition (confirmed/paid_request_pending → active → delivered); `rpc_approve_delivery` uses `extensions.digest` for ledger idempotency.
+- ✅ **Architecture Guard**: Views no direct Supabase; app-level providers for `SupabaseClient`, `ProfileRepository`, `CategoriesRepository`; task requests via ViewModel only.
+- 🔜 Next: Production QiCard credentials; follow-ups in `.TODO/TECHNICAL_DEBT.md`.
+
+# 🎯 Summary (v2.16)
+
+- ✅ **Payment Ledger Foundation**: Production-ready double-entry system.
+- ✅ **Legacy Freeze**: Writes to `wallet_transactions` are now prevented.
+- ✅ **Secure Booking**: Mandatory escrow payment before booking confirmation.
+- ✅ **Navigation Stability**: Eliminated `_state!` null assertion crashes in booking.

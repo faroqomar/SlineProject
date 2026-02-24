@@ -1,7 +1,7 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.2 (Updated with Freelancer Unified Flow v2.13)
-**Last Updated**: 2026-02-16
+**Version**: 2.16.1 (QiService integration, delivery RPC fixes, app-level providers)
+**Last Updated**: 2026-02-24
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
 
@@ -40,10 +40,12 @@ This section gives any new contributor a complete map of the SLine app: how it�
 
 ## 3. Architecture (MVVM, per feature)
 
-- **View (`view/`)**: Widgets/screens, local state only (forms), Material 3. No direct backend calls.
+- **View (`view/`)**: Widgets/screens, local state only (forms), Material 3. **No direct backend calls** — views must not reference `Supabase.instance` or call `.from()`/`.rpc()`; obtain data via ViewModels and inject repositories/clients via `context.read<>()` (e.g. `SupabaseClient`, `ProfileRepository`, `CategoriesRepository` provided in `main.dart`).
 - **ViewModel (`viewmodels/`)**: ChangeNotifier with business logic and UI state. Calls repository/service.
 - **Repository/Service (`data/`, `services/`)**: Encapsulate Supabase queries, error mapping, and Storage ops.
 - **Models (`models/`)**: Immutable data models mirroring DB rows (UTC timestamps).
+
+**App-level providers** (in `lib/main.dart`): `Provider<SupabaseClient>`, `Provider<ProfileRepository>`, `Provider<CategoriesRepository>` so that views that need to construct ViewModels with a client or repository get them via `context.read<>()` instead of referencing Supabase directly.
 
 Conventions
 
@@ -2033,14 +2035,16 @@ WHERE status IN ('pending','confirmed');
 
 3. File Inventory (Flutter)
 
-File Layer Description
-lib/features/booking/data/booking_repository.dart Repository Wraps BookingService and exposes methods for slots/bookings; surfaces current user.
-lib/features/booking/services/booking_service.dart Service Executes PostgREST calls for `availability_slots` and `bookings` (list/create/update) and maps to models.
-lib/features/booking/viewmodels/booking_view_model.dart ViewModel ChangeNotifier holding UI state, pagination cursors, optimistic updates, and friendly error mapping.
-lib/features/booking/view/availability_screen.dart View Provider availability browser with pull-to-refresh, infinite scroll, and + button for `AddSlotSheet`.
-lib/features/booking/view/add_slot_sheet.dart View Bottom sheet to pick local start/end, convert to UTC, and call `BookingViewModel.createSlot()`.
-lib/features/booking/view/booking_sheet.dart View Client booking sheet with optional note; calls `BookingViewModel.bookSlot()`.
-lib/features/booking/view/bookings_list_screen.dart View Dual-tab history (As Client / As Provider) with filters, pagination, and action buttons (future confirm/complete/cancel).
+| File                                                      | Layer      | Description                                                                                                                                                                             |
+| --------------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lib/features/booking/data/booking_repository.dart`       | Repository | Wraps `BookingService` and exposes methods for slots/bookings; surfaces current user.                                                                                                   |
+| `lib/features/booking/services/booking_service.dart`      | Service    | Executes PostgREST calls for `availability_slots` and `bookings` (list/create/update) and maps to models.                                                                               |
+| `lib/features/booking/viewmodels/booking_view_model.dart` | ViewModel  | ChangeNotifier with DI injected BookingService, holding UI state, pagination cursors, optimistic updates, and friendly error mapping.                                                   |
+| `lib/features/booking/view/availability_screen.dart`      | View       | Provider availability browser. **Crucial**: Now handles navigation to `PaymentCheckoutScreen` after a slot is confirmed in the bottom sheet to avoid disposed-context crashes.          |
+| `lib/features/booking/view/add_slot_sheet.dart`           | View       | Bottom sheet to pick local start/end, convert to UTC, and call `BookingViewModel.createSlot()`.                                                                                         |
+| `lib/features/booking/view/booking_sheet.dart`            | View       | Client booking sheet with AppDimens enforcement and optional note. **Pattern**: Returns `BookingSheetResult` (note + price) via `Navigator.pop(result)` instead of navigating directly. |
+| `lib/features/booking/view/payment_checkout_screen.dart`  | View       | **NEW (v2.16)**: Secure order summary and test card form. Handles payment processing before final booking creation.                                                                     |
+| `lib/features/booking/view/bookings_list_screen.dart`     | View       | Dual-tab history (As Client / As Provider) with filters, pagination, and action buttons.                                                                                                |
 
 Convention: Service owns Supabase calls, ViewModel owns UI state + orchestration, UI is dumb (reads state, triggers ViewModel methods).
 
@@ -2118,19 +2122,33 @@ final rows = await supabase
 .order('starts_at') // server-side sort
 .range(offset, offset + limit - 1);
 
-5.3 Book a Slot (Client)
+5.3 Book a Slot (Client Flow v2.16 / QiCard v2.16.1)
 
+The booking flow requires payment (escrow hold) before the booking is confirmed. Two modes:
+
+- **QiCard (default)**: Draft → initiatePayment (QiCard API) → open formUrl in WebView → user completes 3DS → deep-link `sline://payment/finish` or recovery polling → webhook sets `payment_status=held` via `gateway_escrow` → client waits for held then creates/confirms booking.
+- **Demo**: Legacy flow: process payment via `DemoPaymentService`, then create booking with escrow.
+
+Steps (QiCard): (1) Select slot in `AvailabilityScreen`. (2) `BookingSheet` returns `BookingSheetResult`. (3) Parent pushes `PaymentCheckoutScreen`. (4) ViewModel creates booking draft, calls `initiatePayment()` → gets formUrl → opens `PaymentWebViewScreen`. (5) On success (deep-link or polling), webhook runs; when `payment_status=held`, checkout completes and booking is confirmed. Orphan drafts are cancelled on failure or timeout.
+
+Dart (Service - `bookSlot`):
+
+```dart
 final row = await supabase
-.from('bookings')
-.insert({
-'task_id' : taskId,
-'provider_id': providerId,
-'client_id' : clientId, // must equal auth.uid() under RLS
-'slot_id' : slotId,
-'note' : note,
-})
-.select()
-.single();
+  .from('bookings')
+  .insert({
+    'task_id' : taskId,
+    'provider_id': providerId,
+    'client_id' : clientId, // RLS enforced
+    'slot_id' : slotId,
+    'note' : note,
+    'status' : 'pending', // Will trigger escrow ledger entry via DB trigger
+  })
+  .select()
+  .single();
+```
+
+**Note**: The legacy "Skip payment" flow is removed. All bookings are now "Pay-First" to ensure financial safety.
 
 5.4 List My Bookings (As Client)
 
@@ -2224,7 +2242,7 @@ lib/features/work/
 │   ├── change_request_model.dart        # Scope/price/days change proposal
 │   └── extension_request_model.dart     # Deadline extension proposal
 ├── services/
-│   └── work_management_service.dart     # All Supabase queries (sole data source)
+│   └── work_management_service.dart     # Supabase queries for work items; delegates booking logic to BookingService
 ├── viewmodels/
 │   └── work_item_details_view_model.dart  # Screen-scoped ChangeNotifier
 └── view/
@@ -2247,18 +2265,19 @@ UI (WorkItemDetailsScreen)
 
 ## Database Objects
 
-| Object                       | Type    | Purpose                                                 |
-| ---------------------------- | ------- | ------------------------------------------------------- |
-| `vw_unified_work_items`      | View    | UNION ALL of tasks + bookings with normalized status    |
-| `work_contracts`             | Table   | Versioned scope snapshots (price, days, description)    |
-| `change_requests`            | Table   | Scope/price/days change proposals                       |
-| `extension_requests`         | Table   | Deadline extension proposals                            |
-| `rpc_submit_delivery`        | RPC     | Atomic delivery: status + timestamp + contract snapshot |
-| `rpc_request_revision`       | RPC     | Client revision with limit check                        |
-| `rpc_accept_change_request`  | RPC     | Accept change, create new contract version              |
-| `rpc_finalize_auto_approval` | RPC     | Auto-approve after review window                        |
-| `trg_activate_contract`      | Trigger | Auto-create contract on booking confirmation            |
-| `trg_freeze_contract_fields` | Trigger | Block direct scope changes on active work               |
+| Object                       | Type    | Purpose                                                                                                                                                 |
+| ---------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vw_unified_work_items`      | View    | UNION ALL of tasks + bookings with normalized status                                                                                                    |
+| `work_contracts`             | Table   | Versioned scope snapshots (price, days, description)                                                                                                    |
+| `change_requests`            | Table   | Scope/price/days change proposals                                                                                                                       |
+| `extension_requests`         | Table   | Deadline extension proposals                                                                                                                            |
+| `rpc_submit_delivery`        | RPC     | Atomic delivery: status + timestamp; for bookings, `confirmed`/`paid_request_pending` → `active` then `delivered`                                       |
+| `rpc_request_revision`       | RPC     | Client revision with limit check                                                                                                                        |
+| `rpc_accept_change_request`  | RPC     | Accept change, create new contract version                                                                                                              |
+| `rpc_approve_delivery`       | RPC     | Client approves delivered work; when `payment_status=held`, calls ledger `release_with_fee` (idempotency via `extensions.digest`) then sets `completed` |
+| `rpc_finalize_auto_approval` | RPC     | Auto-approve after review window                                                                                                                        |
+| `trg_activate_contract`      | Trigger | Auto-create contract on booking confirmation                                                                                                            |
+| `trg_freeze_contract_fields` | Trigger | Block direct scope changes on active work                                                                                                               |
 
 ## Enums (app_enums.dart)
 
@@ -2279,3 +2298,73 @@ UI (WorkItemDetailsScreen)
 - Plan: `.TODO/PLAN_Freelancer_Unified_Flow_2026-02-16.md`
 - Architect Patch: `.TODO/ARCHITECT_PATCH_2026-02-16_Unified_Flow.md`
 - CodeGuard Review: `.TODO/CODEGUARD_REVIEW_2026-02-16_Freelancer_Unified_Flow.md`
+
+---
+
+# Finance & Payment Ledger Reference
+
+**Added in v2.16** — 2026-02-24
+
+## 1. Human-Readable Overview
+
+The Finance module implements a **Double-Entry Ledger System** to replace the legacy simple log. It ensures that every transaction is balanced (Debits = Credits) and provides a secure, auditable history of all user funds and system fees.
+
+Key features:
+
+- **Escrow Enforcement**: Payments for bookings/tasks are held in a platform account until completion.
+- **Legacy Protection**: The old `wallet_transactions` table is frozen (read-only) to preserve history without risk of drift.
+- **Idempotency**: Prevents duplicate charges by using unique keys from the payment gateway.
+- **Real-time Balances**: User available/escrow balances are aggregated live from ledger lines.
+
+## 2. Supabase Integration
+
+### 2.1 Ledger Tables
+
+| Table             | Purpose                                                     | Notes                                     |
+| ----------------- | ----------------------------------------------------------- | ----------------------------------------- |
+| `accounts`        | Chart of accounts (User wallets, Platform escrow, Revenue). | Linked to `profiles.id` where applicable. |
+| `journal_entries` | The "Event" record (Header).                                | Links to `booking` or `task` via ID.      |
+| `ledger_lines`    | The atomic Debit/Credit entries.                            | Direction: `DEBIT` or `CREDIT`.           |
+
+### 2.2 Orchestration (RPC)
+
+**`process_payment_event_ledger(event_type, related_entity_type, related_entity_id)`**
+
+- **Flow**: App → Payment Gateway (QiCard/Demo) → Successful Result → Call this RPC.
+- **Safety**: Wrapped in a DB transaction; if Debits != Credits, the whole batch fails.
+
+### 2.3 Balance View
+
+**`vw_wallet_balances`**
+
+- Dynamically aggregates balance by summing ledger lines for user accounts.
+- **Available**: Sum of credits to `user_available:uuid`.
+- **Escrow (Held)**: Sum of credits to `platform_escrow` where linked to the user's jobs.
+
+## 3. Flutter Integration
+
+### 3.1 Payment Flow
+
+**QiCard (default)**: Draft → `initiatePayment()` → formUrl in WebView → user completes → webhook runs `gateway_escrow` → when `payment_status=held`, ViewModel completes checkout and booking. No direct `processPayment` call; ledger is updated by the webhook.
+
+**Demo**: `processPayment()` then `bookSlot(..., paymentConfirmed: true)` which triggers escrow RPC in the service layer.
+
+```dart
+// QiCard: initiate then wait for webhook/held
+final result = await paymentService.initiatePayment(...);
+if (result.formUrl != null) { /* open WebView; on return, poll or deep-link */ }
+// After payment_status=held, bookSlot or confirm draft
+```
+
+### 3.2 Error Handling
+
+- **`insufficient_funds`**: (Future withdrawal flow) Friendly message to user.
+- **`frozen_legacy`**: Thrown if attempting to use old `wallet_transactions` API.
+
+## 4. Testing Checklist
+
+- [x] New account creation: Auto-created when a user receives funds.
+- [x] Escrow hold: Check `platform_escrow` balance increases on booking.
+- [x] Release: Check `user_available` increases and `platform_escrow` decreases on completion.
+- [x] Fee calculation: Verification of `system_revenue` account credits.
+- [x] Idempotency: Retrying the same transaction ID results in `already_processed` check.

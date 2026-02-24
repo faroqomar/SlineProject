@@ -39,4 +39,30 @@ class DemoPaymentService implements PaymentService {
     AppLogger.i('Demo payment successful: $transactionId');
     return transactionId;
   }
+
+  @override
+  Future<PaymentInitResult> initiatePayment({
+    required double amount,
+    required String currency,
+    required String bookingId,
+    required String clientId,
+    String? description,
+  }) async {
+    return const PaymentInitResult(
+      error: 'External payment init is not available in demo mode.',
+      errorCode: 'DEMO_MODE_LEGACY_FLOW',
+    );
+  }
+
+  @override
+  Future<bool> triggerPaymentSuccessRecovery({
+    required String bookingId,
+    required String paymentId,
+    required String requestId,
+    required double amount,
+    required String currency,
+    required String clientId,
+  }) async {
+    return false;
+  }
 }

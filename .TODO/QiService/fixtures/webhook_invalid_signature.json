@@ -1,0 +1,12 @@
+{
+  "requestId": "67b85e60-e7a6-4abb-9466-703472fb83b9",
+  "paymentId": "c2bb43a8-488a-4281-977b-5b3418fc3c63",
+  "status": "SUCCESS",
+  "amount": 1000.0,
+  "currency": "IQD",
+  "creationDate": "2024-08-04T15:34:33Z",
+  "additionalInfo": {
+    "booking_id": "11111111-2222-3333-4444-555555555555"
+  },
+  "_test_note": "Send this payload with an intentionally wrong X-Signature header and expect HTTP 401."
+}

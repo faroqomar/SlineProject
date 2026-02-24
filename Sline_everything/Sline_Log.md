@@ -1,6 +1,6 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2025-12-16
+**Last Updated:** 2026-02-24
 
 ---
 
@@ -20,6 +20,79 @@
 ---
 
 ## 📋 Version History
+
+### 🟢 Version 2.16.2 — Payment Flow Polish & UI Themes
+
+**Date:** 2026-02-24
+**Agent:** @Architect, @Pixel, @CodeGuard
+**Status:** ✅ Complete
+
+#### ✅ Implemented
+
+- **Payment Ledger & Booking Flow Logic**
+  - **BookingService**: Fixed a query building immutability error in `listSlots` and added explicit error logging to `getPendingRequests`.
+  - **WorkManagementService**: Delegated booking actions (`acceptBooking`, `declineBooking`, `cancelBooking`) to `BookingService` to ensure safe, atomic transitions involving escrow and ledger.
+  - **BookingViewModel**: Enforced a `price` requirement for `bookSlot()`, eliminating hardcoded values. Added an isolated `_isContactingProvider` state.
+- **Dependency Injection & MVVM Architecture**
+  - Updated `main.dart` to inject `BookingRepository`, `ChatRepository`, and `PaymentService` into `BookingViewModel`.
+  - Refitted `WorkItemDetailsViewModel` constructors to accept authenticated context through `AuthViewModel` in the view, removing direct DB access.
+  - Mitigated a rebuild issue inside `PaymentCheckoutScreen` by replacing global `context.watch` with `context.read`.
+- **Payment Configs & UI Alignment**
+  - **QiCard**: Removed hardcoded sandbox credentials in `QiCardPaymentService`. Secure variables must now pass via `--dart-define`.
+  - **Themes**: Removed hardcoded padding and color variables from `BookingSheet` mapping them directly to `AppDimens` and `colorScheme`. Applied strict color variables for `PaymentWebViewScreen` errors.
+
+#### 📊 Impact
+
+- **Reliability**: Eliminates rebuild performance leaks triggered by bad state dependencies.
+- **Maintainability**: Full isolation from legacy Supabase clients in ViewModels.
+- **Aesthetic**: The BookingSheet aligns completely with modern `AppTheme` context.
+
+#### 🧪 Verification
+
+- Docs Sync: `.TODO/DOCS_SYNC_2026-02-24_Booking_And_Payment_Fixes.md`
+- Check: `flutter analyze` completed with 0 issues.
+
+---
+
+### 🟢 Version 2.16.1 — QiService Integration, Delivery RPC Fixes & Architecture Guard
+
+**Date:** 2026-02-24
+**Commit:** _Pending_ — "feat: QiCard payment flow, delivery RPC fixes, MVVM boundary enforcement"
+
+#### ✅ Implemented
+
+- **QiService (QiCard) Integration**
+  - **Flow**: Draft booking → `initiatePayment()` → QiCard formUrl → WebView → deep-link `sline://payment/finish` or recovery polling → webhook sets `payment_status=held` via `gateway_escrow`.
+  - **Backend**: `process_payment_event_ledger` extended with `gateway_escrow`; webhook handler `qicard_webhook_handler` (signature verification, SUCCESS → gateway_escrow).
+  - **App**: `lib/core/services/qicard_payment_service.dart` (initiatePayment, default sandbox credentials); feature flag `USE_QICARD_PAYMENT`; `PaymentCheckoutScreen` and `PaymentWebViewScreen`; client-side recovery and orphan-draft cancellation.
+- **Delivery RPC Fixes (DB)**
+  - **rpc_submit_delivery**: Booking status transition fixed — `confirmed` or `paid_request_pending` now transition to `active` first, then to `delivered` (migration: `supabase/migrations/20260224_fix_rpc_submit_delivery_booking_transition.sql`).
+  - **rpc_approve_delivery**: Uses `extensions.digest()` for idempotency key when `payment_status=held` before calling `process_payment_event_ledger('release_with_fee', ...)` (migration: `supabase/migrations/20260224_fix_rpc_approve_delivery_digest_schema.sql`).
+- **Architecture Guard**
+  - Views no longer call Supabase directly. App-level providers in `main.dart`: `Provider<SupabaseClient>`, `Provider<ProfileRepository>`, `Provider<CategoriesRepository>`.
+  - **Task requests**: `TaskRequestsService.getExistingActiveOfferForCurrentUser`; `TaskRequestsViewModel.getExistingActiveOffer`; `SubmitRequestSheet` uses ViewModel only.
+  - **Fixes**: `PublicProfileScreen`, `PortfolioScreen`, `CreateTaskScreen`, `SubmitRequestSheet` now obtain dependencies via `context.read<>()`.
+
+#### 📊 Impact
+
+- Real card payments (QiCard sandbox) flow end-to-end; ledger reflects gateway_escrow and release.
+- Work delivery submit/approve works correctly for bookings in legacy or pay-first states; ledger release uses correct schema on Supabase.
+- MVVM boundaries enforced; no direct Supabase/DB access in view layer.
+
+#### 🧪 Verification
+
+- Plan: `.TODO/PLAN_QiService_Integration_2026-02-24.md`
+- Execution Log: `.TODO/EXECUTION_LOG_PLAN_QiService_Integration_2026-02-24.md`
+- Architecture Guard: `.TODO/ARCHITECTURE_GUARD_REPORT_2026-02-24.md`
+- Review: `.TODO/CODEGUARD_REVIEW_2026-02-24_Booking_Work_Payment.md`
+- Technical debt follow-ups: `.TODO/TECHNICAL_DEBT.md`
+
+#### 🔧 Technical Notes
+
+- QiCard default credentials are sandbox; production must use `--dart-define` (see CodeGuard follow-ups).
+- `rpc_approve_delivery` idempotency key: `encode(extensions.digest(entity_id::text || ':release_with_fee:' || now()::text, 'sha256'), 'hex')`.
+
+---
 
 ### 🟢 Version 2.15.1 — Navigation & UI Polish (Hotfixes)
 
@@ -1898,16 +1971,39 @@ Flutter + Supabase freelance marketplace with real-time chat, tasks, and profile
 ## أضِف مدخلة نسخة جديدة تحت “Version History”
 
 ابحث عن عنوان `## 📋 Version History` وألصق المقطع التالي **مباشرة بعده**:
-🟢 Version 1.8 — Chat guard flip (owner blocked) + RPC v1 + UI guard
 
-Date: 2025-09-14
-Commit: Pending — “fix(chat): block owner from starting task chat; add RPC v1; client guard”
+### 🟢 Version 2.16 — Payment Ledger (Phase 3) & Navigation Fix
 
-✅ Implemented
-• DB Trigger: Replaced trg_conversations_before_insert_guard logic → owner cannot start task-linked chats; non-owner must chat with task owner; normalized (user1_id,user2_id) order.
-• RPC: Added start_task_conversation_v1(p_task_id uuid) returning conversations row; grants to authenticated.
-• Flutter: message_service.createOrGetConversation() now calls start_task_conversation_v1(...).select().single(); task_card.dart shows a friendly SnackBar if owner taps Chat.
+**Date:** 2026-02-24
+**Commit:** _Pending_ — "feat: Payment Ledger Phase 3 (Escrow Enforced) + Nav Crash Fix"
 
-📈 Impact
-• Prevents server-side error surfaces to owners; clean UX for non-owners.
-• Eliminates duplicate conversations for the same (task + pair).
+#### ✅ Implemented
+
+- **Payment Ledger (Phase 3):**
+  - Enforced escrow payment on all bookings (removed "skip payment" shortcut).
+  - Frozen legacy `wallet_transactions` table with DB trigger `trg_wallet_transactions_freeze`.
+  - Backfilled legacy data into new ledger system via SQL migration.
+  - Updated booking flow to include `PaymentCheckoutScreen` before creation.
+- **Navigation (Crash Fix):**
+  - Redesigned `BookingSheet` to return `BookingSheetResult` (note + price).
+  - `AvailabilityScreen` handles navigation to `PaymentCheckoutScreen` from parent context.
+  - Fixes `_state!` null assertion error when navigating from a disposed bottom sheet.
+- **Gateway Status Clarified:**
+  - QiCard integration: Backend ready with high-security webhook handler and signature verification.
+  - Flutter app: Still uses `DemoPaymentService` for frontend (Arch ready for swap).
+
+#### 📊 Impact
+
+- Booking flow is now secure and follows the new ledger system.
+- Eliminated common navigation crash in the booking module.
+- Legacy financial data preserved and write-protected.
+
+#### 🧪 Verification
+
+- Plan: `Sline_everything/Payment_Gateway/Qi_Service/documentation.md` (Reference)
+- QA: Manual verification of booking flow (Payment -> Success -> Booking Created).
+- Tests: `flutter analyze` clean.
+
+---
+
+### 🟢 Version 1.8 — Chat guard flip (owner blocked) + RPC v1 + UI guard

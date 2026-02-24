@@ -27,16 +27,16 @@ Per-user accounts (owner_id = auth.users.id)
 
 ### 0.3 Event Types (Minimum required)
 
-Internal payment events (Phase 1 + Phase 2A)
+Internal payment events (NOW)
 
 - escrow_hold
 - release_with_fee
 - refund
+- withdrawal_request
 
-Gateway events (Phase 2B + Phase 3 E2E)
+Deferred events (LATER)
 
 - deposit
-- withdrawal_request
 - withdrawal_complete
 - withdrawal_failed
 
@@ -95,7 +95,7 @@ Columns
 - related_entity_id (uuid, nullable for platform events)
 - idempotency_key (text, UNIQUE)
 - status (text): posted | voided (Default: posted)
-- created_by (uuid) actor user id or system id
+- created_by (uuid) actor user id (auth.uid for Flutter, or NULL for system)
 - currency (text) "IQD"
 - meta (jsonb) — details (fee, gateway ids, reversals, etc.)
 - created_at (timestamptz)
@@ -216,6 +216,7 @@ Error Codes
 - ERR_ENTITY_NOT_FOUND
 - ERR_CURRENCY_MISMATCH
 - ERR_AMOUNT_MISMATCH
+- ERR_WITHDRAWAL_AMOUNT_INVALID
 
 ---
 
@@ -289,6 +290,10 @@ Example (by names)
 - refund:
   - debit: platform_escrow amount=v_entity_amount_gross
   - credit: user_available:{client_id} amount=v_entity_amount_gross
+- withdrawal_request (internal-only):
+  - debit: user_available:{user_id} amount=v_request_amount
+  - credit: user_pending_withdrawal:{user_id} amount=v_request_amount
+  - entity: withdrawal_request (related_entity_type = withdrawal_request)
 - admin_credit (testing only):
   - debit: platform_test_float amount=p_amount_gross
   - credit: user_available:{user_id} amount=p_amount_gross
@@ -331,11 +336,12 @@ _(Note: This is the first phase that touches Flutter code. Phase 1 is DB/RPC onl
 
 #### 2A.1 Goal
 
-Connect bookings + task_requests with the three ledger events only:
+Connect bookings + task_requests + wallet with the payment events only:
 
 - escrow_hold
 - release_with_fee
 - refund
+- wallet lock (withdrawal_request) via Withdrawal screen/service
 
 #### 2A.2 Deliverables (Detail)
 
@@ -400,12 +406,26 @@ For release_with_fee
 **Testing Setup & Gates:**
 
 - **Test Script Name**: `test_phase2a_integration.dart`
-- **Scenarios:**
+- **DB Scenarios:**
   - escrow_hold fails without sufficient balance (Expected: `ERR_INSUFFICIENT_FUNDS`)
   - release fails before delivered (Expected: `ERR_GATE_NOT_ALLOWED`)
   - refund fails without held (Expected: `ERR_GATE_NOT_ALLOWED`)
   - same idempotencyKey twice gives the same result.
 - **Verification Query:** `SELECT * FROM audit_logs WHERE action IN ('payment.escrow_hold', 'payment.release_with_fee', 'payment.refund')`
+
+**Gate UI (Mandatory)**
+
+- **Every Booking Card and Task Card:**
+  - Exact same state shows the exact same button (no variation between views).
+  - No button appears in the wrong state.
+- **Wallet Screen:**
+  - No "Deposit" button at all.
+  - "Request Withdrawal" creates a `withdrawal_request` and locks funds (available decreases, pending increases).
+- **UI State Required Tests:**
+  1. `pending` + `unpaid` → shows **Escrow** CTA
+  2. `delivered` + `held` → shows **Release** CTA
+  3. `declined` + `held` → shows **Refund** CTA
+  4. `active` + `held` → **No Button** (only informative badge based on R.3)
 
 #### 2A.4 Dashboard Financial Wiring
 
@@ -418,7 +438,7 @@ Ensure all Dashboard queries in (Phase 2A) depend entirely on `vw_financial_metr
 
 ---
 
-### Phase 2B — Add QiCard Gateway (Webhook truth) [LATER - NOT MVP]
+### Phase 2B — Gateway Integration — DEFERRED [LATER - NOT MVP]
 
 #### 2B.1 Goal
 
@@ -479,7 +499,7 @@ Deterministic idempotency_key (Stable Mapping)
 
 ---
 
-## Phase 3 — E2E Testing + Reconciliation + Cutover + Monitoring [LATER - NOT MVP]
+## Phase 3 — Backfill/Cutover + Monitoring — DEFERRED [LATER - NOT MVP]
 
 ### 3.1 Deliverables (Detail)
 
@@ -567,18 +587,21 @@ This plan is "extremely detailed" and includes all the strict addendums integrat
 - equity
 
 **B.1.3 payment_event_type_enum**
-Internal (Phase 1 + Phase 2A)
+
+Internal payment events (NOW)
 
 - escrow_hold
 - release_with_fee
 - refund
+- withdrawal_request
 
-Gateway (Phase 2B + Phase 3 E2E)
+Deferred events (LATER)
 
 - deposit
-- withdrawal_request
 - withdrawal_complete
 - withdrawal_failed
+
+_(Rule: In MVP, RPC strictly rejects any event_type in: deposit, withdrawal_complete, withdrawal_failed)_
 
 System/Reserved
 
@@ -713,7 +736,7 @@ Task request also:
 **System Actor Logic & `created_by`:**
 
 - For operations performed by the system (edge functions/cron) `auth.uid()` will be null or service request.
-- `created_by` is recorded either as `auth.uid()` (for client/provider) or left `NULL` (or specific `system_id`) for server events.
+- `created_by` is recorded either as `auth.uid()` (for client/provider events initiated from Flutter) or left `NULL` for system events.
 - Internally, written in audit `meta`: `{"created_by_type": "user" | "system", "created_by_source": "flutter" | "edge" | "cron"}`
 
 ---
@@ -738,6 +761,7 @@ Inside `p_meta` or fixed config:
 ### G.2 vw_wallet_balances_user computation
 
 - `available_balance` = balance(account_code = user_available:{auth.uid()})
+- `pending_withdrawal_balance` = balance(account_code = user_pending_withdrawal:{auth.uid()})
 - `held_balance` = calculated only from events related to entity and with client_id = auth.uid() and excludes any escrow not belonging to them.
   - SUM of `escrow_hold` gross - SUM of `refund`/`release` gross for bookings/task_requests where `client_id = auth.uid()`.
 
@@ -1092,3 +1116,91 @@ Add reserved event type:
 ### Q.4 Gate
 
 - This event can be executed ONLY by system/service role (never from Flutter).
+
+---
+
+## ✅ ADDENDUM R — UI Wiring Contract (Mandatory)
+
+### R.1 Screens that MUST exist (or be created)
+
+- **Wallet Screen:**
+  - shows `available_balance`, `held_balance`, `pending_withdrawal_balance`
+  - activity list from `vw_wallet_activity_user`
+- **Booking Details Screen:**
+  - shows booking_id, client_id, provider_id (nullable), status, payment_status, amount_gross, currency
+  - buttons: escrow/release/refund based on exact rules
+- **Task Request Details Screen (or Work Item Details):**
+  - shows task_request_id, task_id, client_id, provider_id, status, payment_status, amount_gross, currency
+  - buttons: escrow/release/refund based on exact rules
+- **(Optional) Withdrawal Request Screen:**
+  - create withdrawal_request
+  - list pending requests
+
+### R.2 Repositories/Services MUST use views/RPC only
+
+- **WalletService** reads:
+  - `vw_wallet_balances_user`
+  - `vw_wallet_activity_user`
+- **BookingService / TaskService** calls:
+  - `process_payment_event_ledger`
+- **WithdrawalService** calls:
+  - request_withdrawal (either same RPC with event_type=withdrawal_request or a dedicated RPC)
+
+### R.3 "No missing state" rule
+
+If UI doesn't know how to represent a specific state combination (e.g., payment_status=held but status=active), you must:
+
+- Show a clear badge
+- Add a simple explanatory text
+- NEVER show an incorrect CTA
+
+### R.4 Unified Work Item mapping (`vw_unified_payable_items`)
+
+To avoid duplicating logic across Booking Cards and Task Request Cards, map both to a single Unified Payable Item view so Cards can use one DTO:
+
+- `vw_unified_payable_items` should return:
+  - entity_type (booking | task_request)
+  - entity_id
+  - client_id
+  - provider_id
+  - status
+  - payment_status
+  - amount_gross
+  - currency
+
+### R.5 UI Action Mapping (Strictly tied to conditions)
+
+- **Escrow Hold (Client)**
+  - shows only if: `status = pending`, `payment_status = unpaid`, `actor = client`
+- **Release With Fee (Client)**
+  - shows only if: `status = delivered`, `payment_status = held`, `actor = client`
+- **Refund (Provider/System)**
+  - shows only if: `payment_status = held`, status allowed by policy (declined/canceled/expired/dispute_refund), `actor = provider` (or system)
+
+---
+
+## ✅ ADDENDUM S — Unified CTA Resolver
+
+To prevent divergence between `booking_card`, `dashboard_card`, and `task_card`, there must be a single unified function in the front-end that determines the buttons.
+
+- **Function Signature Idea:** takes `(status, payment_status, actor_role, entity_type)`
+- **Returns:** `allowed_actions[]` + `badge_text`
+- **Rule:** Exact same state MUST ALWAYS return the exact same button array and badge.
+
+---
+
+## ✅ ADDENDUM T — No Deposit UI Rule
+
+- **Rule:** It is strictly prohibited in the current MVP to show any of the following triggers/buttons anywhere in the UI or Navigation:
+  - Deposit button
+  - Add funds button
+  - Top up button
+
+---
+
+## ✅ ADDENDUM U — Withdrawal UI (Lock Only)
+
+- Inside the **Wallet Screen**:
+  - `Request Withdrawal` strictly creates a `withdrawal_request` event, decreasing `available_balance` and increasing `pending_withdrawal_balance` (locking funds internally).
+  - There is absolutely NO `complete` or `failed` manual UI anywhere in the app to represent external withdrawal transitions for the MVP.
+  

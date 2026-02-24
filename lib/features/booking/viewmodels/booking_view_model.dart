@@ -32,14 +32,18 @@ import 'package:sline_app/core/services/demo_payment_service.dart';
 /// 5. **hasMore Flags**: Tracks whether more pages are available to prevent
 ///    unnecessary API calls when scrolling past the end.
 class BookingViewModel extends ChangeNotifier {
-  BookingViewModel({SupabaseClient? client, PaymentService? paymentService})
-    : _repo = BookingRepository(client ?? Supabase.instance.client),
-      _chatRepository = ChatRepository(client ?? Supabase.instance.client),
-      _paymentService = paymentService ?? DemoPaymentService();
+  BookingViewModel({
+    required BookingRepository repo,
+    required ChatRepository chatRepository,
+    PaymentService? paymentService,
+  }) : _repo = repo,
+       _chatRepository = chatRepository,
+       _paymentService = paymentService ?? DemoPaymentService();
 
   final BookingRepository _repo;
   final ChatRepository _chatRepository;
   final PaymentService _paymentService;
+  String get paymentServiceType => _paymentService.runtimeType.toString();
 
   static const int _pageSize = 50;
 
@@ -192,22 +196,19 @@ class BookingViewModel extends ChangeNotifier {
     required String taskId,
     required String slotId,
     required String providerId,
+    required double price,
     String? note,
-    String? packageId, // Added
-    Map<String, dynamic>? requirements, // Added
-    double? price, // Added
+    String? packageId,
+    Map<String, dynamic>? requirements,
     BookingStatus status = BookingStatus.pending,
   }) async {
-    // Default price logic if null
-    final double finalPrice =
-        price ?? 100.0; // Hardcoded default for Phase 1 simulation
     try {
       final b = await _repo.bookSlot(
         taskId: taskId,
         slotId: slotId,
         note: note,
         providerId: providerId,
-        price: finalPrice,
+        price: price,
         packageId: packageId,
         requirements: requirements,
         status: status,
@@ -236,14 +237,85 @@ class BookingViewModel extends ChangeNotifier {
     }
   }
 
-  /// Approve booking (Provider).
-  Future<void> approveBooking(String bookingId) async {
+  Future<bool> waitForBookingPaymentHeld({
+    required String bookingId,
+    Duration timeout = const Duration(seconds: 60),
+    Duration interval = const Duration(seconds: 3),
+  }) async {
+    final deadline = DateTime.now().add(timeout);
+
+    while (DateTime.now().isBefore(deadline)) {
+      final booking = await getBookingById(bookingId);
+      if (booking == null) {
+        await Future.delayed(interval);
+        continue;
+      }
+
+      if (booking.paymentStatus == PaymentStatus.held) {
+        return true;
+      }
+
+      // If it reached a terminal failure state, stop polling early.
+      if (booking.paymentStatus == PaymentStatus.refunded ||
+          booking.status == BookingStatus.canceled ||
+          booking.status == BookingStatus.refunded) {
+        return false;
+      }
+
+      await Future.delayed(interval);
+    }
+
+    return false;
+  }
+
+  Future<void> cancelBookingDraftIfUnpaid(String bookingId) async {
     try {
-      await _repo.approveAndRelease(bookingId);
+      final booking = await getBookingById(bookingId);
+      if (booking == null) return;
+      if (booking.status != BookingStatus.pending ||
+          booking.paymentStatus != PaymentStatus.unpaid) {
+        return;
+      }
+
+      await updateBookingStatus(
+        bookingId: bookingId,
+        newStatus: BookingStatus.canceled,
+      );
+      AppLogger.i(
+        'Canceled orphan unpaid booking draft: $bookingId',
+        tag: 'Booking',
+      );
+    } catch (e) {
+      AppLogger.w(
+        'Failed to cancel unpaid draft booking=$bookingId',
+        tag: 'Booking',
+        error: e,
+      );
+    }
+  }
+
+  /// Escrow hold for a pending booking (Client)
+  Future<void> escrowHoldBooking(String bookingId) async {
+    try {
+      await _repo.escrowHoldBooking(bookingId);
+      // Wait to re-fetch or optimistically assume the payment status updated
+      // Since booking model currently doesn't reflect payment_status directly in the UI as heavily,
+      // we just notify listeners or reload. Ideally we update payment_status in the model.
+      notifyListeners();
+    } catch (e) {
+      bookingsError = _mapError(e);
+      notifyListeners();
+    }
+  }
+
+  /// Release funds for a delivered booking (Client).
+  Future<void> releaseBookingWithFee(String bookingId) async {
+    try {
+      await _repo.releaseBookingWithFee(bookingId);
       // Optimistic update
       await updateBookingStatus(
         bookingId: bookingId,
-        newStatus: BookingStatus.completed, // Logic sets it to completed in RPC
+        newStatus: BookingStatus.completed,
       );
     } catch (e) {
       bookingsError = _mapError(e);
@@ -267,6 +339,17 @@ class BookingViewModel extends ChangeNotifier {
   /// Decline booking (Provider).
   Future<void> declineBooking(String bookingId) async {
     try {
+      final latest = await _repo.getBookingById(bookingId);
+      if (latest.paymentStatus != PaymentStatus.held) {
+        final held = await waitForBookingPaymentHeld(bookingId: bookingId);
+        if (!held) {
+          bookingsError =
+              'Payment still processing. Please try again in a moment.';
+          notifyListeners();
+          return;
+        }
+      }
+
       await _repo.declineBooking(bookingId);
       // Optimistic update
       await updateBookingStatus(
@@ -323,6 +406,84 @@ class BookingViewModel extends ChangeNotifier {
       _isProcessingPayment = false;
       notifyListeners();
     }
+  }
+
+  /// Creates a pending/unpaid booking row before external payment initialization.
+  Future<BookingModel?> createBookingDraft({
+    required String taskId,
+    required String slotId,
+    required String providerId,
+    String? note,
+    required double price,
+    String? packageId,
+    Map<String, dynamic>? requirements,
+  }) async {
+    try {
+      final draft = await _repo.createBookingDraft(
+        taskId: taskId,
+        slotId: slotId,
+        providerId: providerId,
+        note: note,
+        price: price,
+        packageId: packageId,
+        requirements: requirements,
+        status: BookingStatus.pending,
+      );
+      bookingsAsClient.insert(0, draft);
+      notifyListeners();
+      return draft;
+    } catch (e) {
+      bookingsError = _mapError(e);
+      AppLogger.e('Failed to create booking draft', tag: 'Booking', error: e);
+      notifyListeners();
+      return null;
+    }
+  }
+
+  Future<PaymentInitResult> initiateQiCardPayment({
+    required double amount,
+    required String bookingId,
+    String? description,
+  }) async {
+    final clientId = currentUserId;
+    if (clientId == null) {
+      return const PaymentInitResult(
+        error: 'Session expired. Please log in again.',
+      );
+    }
+
+    final result = await _paymentService.initiatePayment(
+      amount: amount,
+      currency: 'IQD',
+      bookingId: bookingId,
+      clientId: clientId,
+      description: description,
+    );
+
+    if (result.error != null) {
+      bookingsError = result.error;
+      notifyListeners();
+    }
+
+    return result;
+  }
+
+  Future<bool> triggerQiCardSuccessRecovery({
+    required String bookingId,
+    required String paymentId,
+    required String requestId,
+    required double amount,
+  }) async {
+    final clientId = currentUserId;
+    if (clientId == null) return false;
+    return _paymentService.triggerPaymentSuccessRecovery(
+      bookingId: bookingId,
+      paymentId: paymentId,
+      requestId: requestId,
+      amount: amount,
+      currency: 'IQD',
+      clientId: clientId,
+    );
   }
 
   Future<void> loadBookingsAsClient() async {
@@ -445,6 +606,11 @@ class BookingViewModel extends ChangeNotifier {
       return false;
     }
   }
+
+  // Separate state for contacting provider
+  bool _isContactingProvider = false;
+  bool get isContactingProvider => _isContactingProvider;
+
   // --- Chat Integration ---
 
   Future<Conversation?> contactProvider(
@@ -452,7 +618,7 @@ class BookingViewModel extends ChangeNotifier {
     String currentUserId,
   ) async {
     try {
-      bookingsLoading = true;
+      _isContactingProvider = true;
       notifyListeners();
 
       // We pass the CLIENT ID and FREELANCER ID explicitly to startConversationByClient.
@@ -474,7 +640,7 @@ class BookingViewModel extends ChangeNotifier {
       notifyListeners();
       return null;
     } finally {
-      bookingsLoading = false;
+      _isContactingProvider = false;
       notifyListeners();
     }
   }

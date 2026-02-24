@@ -1,7 +1,7 @@
 # Supabase Setup for SLine — Complete Database Reference
 
-**Last Updated**: 2025-12-14 (Auto-generated from MCP Server)
-**Version**: 2.1
+**Last Updated**: 2026-02-24 (Phase 3: Double-Entry Ledger Integrated)
+**Version**: 2.16
 **Database Version**: PostgreSQL 17.4.1
 **Project ID**: `isddrknbjsgaantjojhm`
 **Region**: `eu-north-1` (Stockholm)
@@ -35,6 +35,17 @@ This document is the **single source of truth** for all Supabase backend setup: 
 | `work_contracts`        | ✅  | 0    | Versioned scope snapshots          |
 | `change_requests`       | ✅  | 0    | Scope/price/days change proposals  |
 | `extension_requests`    | ✅  | 0    | Deadline extension proposals       |
+| `accounts`              | ✅  | -    | **NEW**: Ledger account chart      |
+| `journal_entries`       | ✅  | -    | **NEW**: Double-entry journal      |
+| `ledger_lines`          | ✅  | -    | **NEW**: Double-entry ledger lines |
+| `admin_logs`            | ✅  | 0    | Audit logs for admin actions       |
+| `disputes`              | ✅  | 0    | Formal dispute tickets             |
+| `dispute_messages`      | ✅  | 0    | Messages in dispute threads        |
+| `dispute_evidence`      | ✅  | 0    | Attached dispute files             |
+| `withdrawal_requests`   | ✅  | 0    | Freelancer fund withdrawals        |
+| `support_tickets`       | ✅  | 0    | General support tickets            |
+| `ticket_messages`       | ✅  | 0    | Messages in support tickets        |
+| `services`              | ✅  | 0    | Pre-defined freelancer services    |
 
 ### Views
 
@@ -78,6 +89,8 @@ This document is the **single source of truth** for all Supabase backend setup: 
 - ✅ Auto-create contract on booking confirmation (`trg_activate_contract`)
 - ✅ Delivery submission creates contract snapshot (`rpc_submit_delivery`)
 - ✅ Revision requests check limit before resetting status (`rpc_request_revision`)
+- ✅ **Double-Entry Ledger Implementation (v2.16)**: All financial events go through `process_payment_event_ledger`.
+- ✅ **Legacy Freeze**: `wallet_transactions` table is now read-only to prevent drift.
 
 ---
 
@@ -188,13 +201,13 @@ CREATE TYPE public.task_type_enum AS ENUM ('tender', 'booking');
 CREATE TYPE public.booking_status_enum AS ENUM (
   'pending',
   'confirmed',
+  'in_progress',
+  'canceled',
+  'completed',
+  'paid_request_pending',
   'active',
   'delivered',
-  'completed',
-  'canceled',
-  'declined',
   'refunded',
-  'paid_request_pending',
   'expired_unanswered'
 );
 ````
@@ -244,15 +257,54 @@ CREATE TYPE public.message_type_enum AS ENUM (
 | `end_early_request`  | Either          | Request to end early        | `{reason}`           |
 | `dispute_report`     | Either          | Dispute filing              | `{reason}`           |
 
-### 4.4 `payment_status_enum`
-
-### 4.4 `payment_status_enum`
+### 4.4 `payment_status_enum` (Legacy)
 
 ```sql
 CREATE TYPE public.payment_status_enum AS ENUM ('unpaid', 'held', 'released', 'refunded');
 ```
 
-**Note:** Added in v2.9 for Wallet/Escrow flow.
+**Note:** Used in `tasks` and `bookings` status columns. Financial logic now uses the Ledger system (v2.16).
+
+### 4.5 `ledger_account_type_enum` (v2.16)
+
+```sql
+CREATE TYPE public.ledger_account_type_enum AS ENUM ('asset', 'liability', 'equity', 'revenue', 'expense');
+```
+
+### 4.6 `ledger_direction_enum` (v2.16)
+
+```sql
+CREATE TYPE public.ledger_direction_enum AS ENUM ('DEBIT', 'CREDIT');
+```
+
+### 4.7 `payment_event_type_enum` (v2.16)
+
+```sql
+CREATE TYPE public.payment_event_type_enum AS ENUM (
+  'escrow_hold',
+  'release_with_fee',
+  'refund',
+  'withdrawal_request',
+  'deposit',
+  'withdrawal_complete',
+  'withdrawal_failed',
+  'admin_credit',
+  'admin_adjustment',
+  'reversal',
+  'gateway_escrow'
+);
+```
+
+### 4.8 `related_entity_type_enum` (v2.16)
+
+```sql
+CREATE TYPE public.related_entity_type_enum AS ENUM (
+  'booking',
+  'task_request',
+  'withdrawal_request',
+  'admin_adjustment'
+);
+```
 
 ---
 
@@ -493,16 +545,59 @@ Client bookings on provider slots.
 
 ---
 
-### 5.14 `wallet_transactions`
+### 5.14 `wallet_transactions` (DEPRECATED / FROZEN)
 
-Wallet ledger for Pay-First flow.
+**🚨 IMPORTANT**: This table is frozen as of v2.16. All new transactions are written to `journal_entries` and `ledger_lines`.
 
-| Column    | Type    | Nullable | Default             | Description                   |
-| --------- | ------- | -------- | ------------------- | ----------------------------- |
-| `id`      | uuid    | ❌       | `gen_random_uuid()` | Primary key                   |
-| `user_id` | uuid    | ❌       | -                   | FK to profiles                |
-| `amount`  | numeric | ❌       | -                   | Transaction amount            |
-| `type`    | text    | ❌       | -                   | 'escrow', 'release', 'refund' |
+| Column    | Type    | Nullable | Default             | Description                                 |
+| --------- | ------- | -------- | ------------------- | ------------------------------------------- |
+| `id`      | uuid    | ❌       | `gen_random_uuid()` | Primary key                                 |
+| `user_id` | uuid    | ❌       | -                   | FK to profiles                              |
+| `amount`  | numeric | ❌       | -                   | Transaction amount                          |
+| `type`    | text    | ❌       | -                   | 'escrow', 'release', 'refund'               |
+| `status`  | text    | ❌       | -                   | 'held', 'released', 'completed', 'refunded' |
+
+**Trigger**: `trg_wallet_transactions_freeze` prevents any DML on this table.
+
+---
+
+### 5.20 `accounts` (v2.16)
+
+Chart of accounts for the double-entry system.
+
+| Column         | Type                      | Description                           |
+| -------------- | ------------------------- | ------------------------------------- |
+| `id`           | uuid                      | Primary Key                           |
+| `account_code` | text (Unique)             | e.g., 'user_available:uuid', 'system' |
+| `account_type` | payment_account_type_enum | asset, liability, etc.                |
+| `owner_id`     | uuid                      | FK to profiles (if user account)      |
+
+### 5.21 `journal_entries` (v2.16)
+
+The "Header" of a financial event.
+
+| Column                | Type                     | Description                         |
+| --------------------- | ------------------------ | ----------------------------------- |
+| `id`                  | uuid                     | Primary Key                         |
+| `event_type`          | payment_event_type_enum  | e.g., 'escrow_hold'                 |
+| `related_entity_type` | related_entity_type_enum | 'booking', 'task_request'           |
+| `related_entity_id`   | uuid                     | Link to the source object           |
+| `idempotency_key`     | text (Unique)            | Prevents double-charging            |
+| `status`              | text                     | 'draft', 'posted', 'void'           |
+| `meta`                | jsonb                    | Debug info, original transaction ID |
+
+### 5.22 `ledger_lines` (v2.16)
+
+Atomic Debit/Credit entries. Must sum to zero per journal entry.
+
+| Column             | Type    | Description                   |
+| ------------------ | ------- | ----------------------------- |
+| `id`               | uuid    | Primary Key                   |
+| `journal_entry_id` | uuid    | FK to journal_entries         |
+| `account_id`       | uuid    | FK to accounts                |
+| `direction`        | text    | 'DEBIT' or 'CREDIT'           |
+| `amount`           | numeric | Absolute amount (must be > 0) |
+| `currency`         | text    | Default 'IQD'                 |
 
 ---
 
@@ -645,6 +740,137 @@ User's bookmarked tasks.
 
 ---
 
+### 5.23 `admin_logs`
+
+Audit logs for admin actions.
+
+| Column            | Type        | Nullable | Default             | Description                 |
+| ----------------- | ----------- | -------- | ------------------- | --------------------------- |
+| `id`              | uuid        | ❌       | `gen_random_uuid()` | Primary key                 |
+| `actor_id`        | uuid        | ✅       | -                   | FK to profiles (admin user) |
+| `action`          | text        | ✅       | -                   | Action performed            |
+| `target_resource` | text        | ✅       | -                   | Resource type               |
+| `target_id`       | uuid        | ✅       | -                   | Affected entity             |
+| `metadata`        | jsonb       | ✅       | -                   | Extra structured data       |
+| `created_at`      | timestamptz | ✅       | `now()`             | Timestamp                   |
+
+---
+
+### 5.24 `disputes`
+
+Formal dispute tickets between clients and freelancers.
+
+| Column           | Type        | Nullable | Default             | Description              |
+| ---------------- | ----------- | -------- | ------------------- | ------------------------ |
+| `id`             | uuid        | ❌       | `gen_random_uuid()` | Primary key              |
+| `task_id`        | uuid        | ✅       | -                   | FK to tasks              |
+| `complainant_id` | uuid        | ✅       | -                   | FK to profiles           |
+| `defendant_id`   | uuid        | ✅       | -                   | FK to profiles           |
+| `reason`         | text        | ✅       | -                   | Dispute reason           |
+| `status`         | text        | ✅       | -                   | 'open', 'resolved', etc. |
+| `resolution`     | text        | ✅       | -                   | Admin decision           |
+| `created_at`     | timestamptz | ✅       | `now()`             | Creation timestamp       |
+| `resolved_at`    | timestamptz | ✅       | -                   | Resolution timestamp     |
+
+---
+
+### 5.25 `dispute_messages`
+
+Messages exchanged within a dispute thread.
+
+| Column       | Type        | Nullable | Default             | Description           |
+| ------------ | ----------- | -------- | ------------------- | --------------------- |
+| `id`         | uuid        | ❌       | `gen_random_uuid()` | Primary key           |
+| `dispute_id` | uuid        | ✅       | -                   | FK to disputes        |
+| `sender_id`  | uuid        | ✅       | -                   | FK to profiles        |
+| `content`    | text        | ✅       | -                   | Message body          |
+| `is_admin`   | boolean     | ✅       | -                   | True if sent by admin |
+| `created_at` | timestamptz | ✅       | `now()`             | Timestamp             |
+
+---
+
+### 5.26 `dispute_evidence`
+
+Files and evidence attached to a dispute.
+
+| Column        | Type        | Nullable | Default             | Description                 |
+| ------------- | ----------- | -------- | ------------------- | --------------------------- |
+| `id`          | uuid        | ❌       | `gen_random_uuid()` | Primary key                 |
+| `dispute_id`  | uuid        | ✅       | -                   | FK to disputes              |
+| `uploader_id` | uuid        | ✅       | -                   | FK to profiles              |
+| `file_url`    | text        | ✅       | -                   | Storage path                |
+| `file_type`   | text        | ✅       | -                   | MIME type or 'image'/'file' |
+| `description` | text        | ✅       | -                   | Optional context            |
+| `created_at`  | timestamptz | ✅       | `now()`             | Timestamp                   |
+
+---
+
+### 5.27 `withdrawal_requests`
+
+Freelancer requests to withdraw available funds.
+
+| Column       | Type        | Nullable | Default             | Description                     |
+| ------------ | ----------- | -------- | ------------------- | ------------------------------- |
+| `id`         | uuid        | ❌       | `gen_random_uuid()` | Primary key                     |
+| `user_id`    | uuid        | ✅       | -                   | FK to profiles                  |
+| `status`     | text        | ✅       | -                   | 'pending', 'approved', 'failed' |
+| `amount`     | numeric     | ✅       | -                   | Withdrawal amount               |
+| `currency`   | text        | ✅       | -                   | ISO code (IQD, USD)             |
+| `created_at` | timestamptz | ✅       | `now()`             | Timestamp                       |
+
+---
+
+### 5.28 `support_tickets`
+
+General support tickets raised by users.
+
+| Column        | Type        | Nullable | Default             | Description                       |
+| ------------- | ----------- | -------- | ------------------- | --------------------------------- |
+| `id`          | uuid        | ❌       | `gen_random_uuid()` | Primary key                       |
+| `user_id`     | uuid        | ✅       | -                   | FK to profiles                    |
+| `assignee_id` | uuid        | ✅       | -                   | FK to profiles (admin)            |
+| `subject`     | text        | ✅       | -                   | Ticket subject                    |
+| `category`    | text        | ✅       | -                   | Issue category                    |
+| `priority`    | text        | ✅       | -                   | 'low', 'medium', 'high', 'urgent' |
+| `status`      | text        | ✅       | -                   | 'open', 'in_progress', 'resolved' |
+| `created_at`  | timestamptz | ✅       | `now()`             | Creation timestamp                |
+| `updated_at`  | timestamptz | ✅       | `now()`             | Last update timestamp             |
+
+---
+
+### 5.29 `ticket_messages`
+
+Messages within a support ticket.
+
+| Column        | Type        | Nullable | Default             | Description              |
+| ------------- | ----------- | -------- | ------------------- | ------------------------ |
+| `id`          | uuid        | ❌       | `gen_random_uuid()` | Primary key              |
+| `ticket_id`   | uuid        | ✅       | -                   | FK to support_tickets    |
+| `sender_id`   | uuid        | ✅       | -                   | FK to profiles           |
+| `message`     | text        | ✅       | -                   | Message body             |
+| `is_internal` | boolean     | ✅       | -                   | Admin-only internal note |
+| `created_at`  | timestamptz | ✅       | `now()`             | Timestamp                |
+
+---
+
+### 5.30 `services`
+
+Pre-defined service packages offered by freelancers.
+
+| Column          | Type        | Nullable | Default             | Description               |
+| --------------- | ----------- | -------- | ------------------- | ------------------------- |
+| `id`            | uuid        | ❌       | `gen_random_uuid()` | Primary key               |
+| `freelancer_id` | uuid        | ✅       | -                   | FK to profiles            |
+| `title`         | text        | ✅       | -                   | Service title             |
+| `description`   | text        | ✅       | -                   | What the service includes |
+| `price`         | numeric     | ✅       | -                   | Fixed price               |
+| `delivery_days` | integer     | ✅       | -                   | Expected delivery time    |
+| `status`        | text        | ✅       | -                   | 'active', 'paused'        |
+| `image_urls`    | text[]      | ✅       | -                   | Service images            |
+| `created_at`    | timestamptz | ✅       | `now()`             | Timestamp                 |
+
+---
+
 ## 6. Views
 
 ### 6.1 `tasks_mvp`
@@ -681,26 +907,23 @@ FROM conversations c
 WHERE auth.uid() = user1_id OR auth.uid() = user2_id;
 ```
 
-### 6.3 `wallet_balances`
+### 6.3 `wallet_balances` (v2.16)
 
-Aggregates `available` (released) and `held` (escrow) funds per user.
+Aggregates `available` (user accounts) and `held` (escrow accounts) funds from the ledger.
 
 ```sql
-create or replace view public.wallet_balances with (security_invoker=on) as
-select
-  user_id,
-  coalesce(sum(amount) filter (where status = 'held'), 0) as held_balance,
-  coalesce(sum(amount) filter (where status = 'released'), 0) as available_balance
-from public.wallet_transactions
-group by user_id;
+CREATE OR REPLACE VIEW public.wallet_balances AS
+SELECT
+    p.id AS user_id,
+    COALESCE(SUM(CASE WHEN a.account_code = 'platform_escrow' THEN (CASE WHEN ll.direction = 'CREDIT' THEN ll.amount ELSE -ll.amount END) ELSE 0 END), 0) AS held_balance,
+    COALESCE(SUM(CASE WHEN a.account_code = 'user_available:' || p.id::text THEN (CASE WHEN ll.direction = 'CREDIT' THEN ll.amount ELSE -ll.amount END) ELSE 0 END), 0) AS available_balance
+FROM public.profiles p
+LEFT JOIN public.accounts a ON a.owner_id = p.id OR a.account_code = 'platform_escrow'
+LEFT JOIN public.ledger_lines ll ON ll.account_id = a.id
+GROUP BY p.id;
 ```
 
-WHERE user1_id = auth.uid() OR user2_id = auth.uid();
-
-````
-
-**⚠️ Security Warning:** Uses `SECURITY DEFINER`.
-
+**⚠️ Security Warning:** This view uses `SECURITY INVOKER`.
 
 ### 6.4 `vw_unified_work_items`
 
@@ -758,13 +981,12 @@ WHERE b.status IN ('active', 'delivered', 'completed');
 
 ### 6.3 `users` ⚠️ SECURITY RISK
 
-
 ```sql
 SELECT id, email,
   raw_user_meta_data->>'full_name' AS full_name,
   raw_user_meta_data->>'avatar_url' AS avatar_url
 FROM auth.users u;
-````
+```
 
 **🚨 CRITICAL:** This view exposes `auth.users` to the `anon` role. **Should be removed or restricted immediately.**
 
@@ -958,11 +1180,13 @@ All tables have Row Level Security (RLS) enabled. Below are the actual policies 
 
 ### 8.5 Work Contract Triggers
 
-| Trigger                        | Event         | Function                       | Purpose                                                 |
-| ------------------------------ | ------------- | ------------------------------ | ------------------------------------------------------- |
-| `t_activate_contract_tasks`    | AFTER UPDATE  | `trg_activate_contract()`      | Snapshot contract on Task activation                    |
-| `t_activate_contract_bookings` | AFTER UPDATE  | `trg_activate_contract()`      | Snapshot contract on Booking activation                 |
-| `t_freeze_contract_fields`     | BEFORE UPDATE | `trg_freeze_contract_fields()` | Prevent direct updates to frozen fields on active items |
+| `t_freeze_contract_fields` | BEFORE UPDATE | `trg_freeze_contract_fields()` | Prevent direct updates to frozen fields on active items |
+
+### 8.8 Wallet Management (v2.16)
+
+| Trigger                          | Event                | Function                          | Purpose                                      |
+| -------------------------------- | -------------------- | --------------------------------- | -------------------------------------------- |
+| `trg_wallet_transactions_freeze` | BEFORE INSERT/UPDATE | `fn_wallet_transactions_freeze()` | Prevent legacy writes to wallet_transactions |
 
 ### 8.4 Messages Triggers
 
@@ -1183,13 +1407,25 @@ final result = await supabase.rpc('accept_task_request', params: {
 
 Alternative signature that also creates conversation and logs message.
 
-#### `process_payment_event(p_entity_id uuid, p_type text, p_event text) → jsonb`
+#### `process_payment_event_ledger(event_type, related_entity_type, related_entity_id, amount_override)` (v2.16)
 
-Handles wallet ledger and status updates safely.
+The core orchestration function for the double-entry system.
 
-- `escrow`: Inserts held txn, updates booking->paid_request_pending
-- `release`: Inserts released txn, updates booking->completed
-- `refund`: Inserts refund txn, updates booking->refunded
+- **Purpose**: Creates journal entries and ledger lines based on business events.
+- **Access**: System-only (enforced by RLS on ledger tables).
+- **Logic**:
+  - `escrow_hold`: DR Client Available, CR platform_escrow.
+  - `release_with_fee`: DR platform_escrow, CR Provider Available, CR system_revenue.
+  - `refund`: DR platform_escrow, CR Client Available.
+
+#### `fn_wallet_transactions_freeze()` (v2.16)
+
+- **Purpose**: Throws an exception if anyone tries to write to `wallet_transactions`.
+- **Logic**: `RAISE EXCEPTION 'wallet_transactions is frozen. Use process_payment_event_ledger instead.';`
+
+#### `process_payment_event(...)` (LEGACY)
+
+**🚨 DEPRECATED**: Use `process_payment_event_ledger` instead. This function is kept for backward compatibility but is effectively disconnected from the frontend.
 
 #### `process_expired_requests() → jsonb`
 
@@ -1516,7 +1752,10 @@ All functions use `SECURITY DEFINER` and include explicit `auth.uid()` checks.
 
 - **Purpose**: Mark work as delivered and start review timer.
 - **Access**: Assigned Freelancer Only.
-- **Logic**: Sets `status='delivered'`, `delivered_at=now()`, `review_expires_at=now() + 3 days`.
+- **Logic**:
+  - **Tasks**: Sets `status='delivered'`, `delivered_at=now()`, `review_expires_at=now() + 3 days`.
+  - **Bookings**: If current status is `confirmed` or `paid_request_pending`, first updates to `active`, then to `delivered` (legacy/pay-first states must pass through `active` before `delivered`). Then sets `delivered_at`, `review_expires_at`, `revision_note`. Only allows submit when status is `active` or (for tasks) equivalent.
+- **Migration**: `supabase/migrations/20260224_fix_rpc_submit_delivery_booking_transition.sql`
 
 ### 9.2 `rpc_request_revision`
 
@@ -1535,6 +1774,15 @@ All functions use `SECURITY DEFINER` and include explicit `auth.uid()` checks.
 - **Purpose**: Auto-complete work if review timer expired.
 - **Access**: Public/System (Lazy guard).
 - **Logic**: Checks `now() > review_expires_at`, sets `status='completed'`, releases payment.
+
+### 9.5 `rpc_approve_delivery`
+
+- **Purpose**: Client approves delivered work; completes the order and releases funds when payment is held.
+- **Access**: Client (owner) only.
+- **Logic**:
+  - **Tasks**: Sets `status='completed'`, clears `review_expires_at`.
+  - **Bookings**: If `payment_status='held'`, computes idempotency key via `extensions.digest(entity_id::text || ':release_with_fee:' || now()::text, 'sha256')` (hex-encoded), then calls `process_payment_event_ledger('release_with_fee', 'booking', entity_id, idempotency_key, ...)`. On success, updates `status='completed'` and clears `review_expires_at`. If payment is not held, only updates status.
+- **Migration**: `supabase/migrations/20260224_fix_rpc_approve_delivery_digest_schema.sql` (ensures `extensions.digest` is used where pgcrypto is in `extensions` schema).
 
 ---
 
@@ -1569,14 +1817,21 @@ All functions use `SECURITY DEFINER` and include explicit `auth.uid()` checks.
 
 ## 17. Changelog
 
-### Version 2.9 (January 2026) -> Current
+### Version 2.16.1 (February 2026)
 
-- **Booking Flow v2**: "Pay First, Book Later"
-- **Enums**: Added `paid_request_pending`, `active`, `delivered` to `booking_status_enum`.
-- **Enums**: Added `payment_status_enum` ('unpaid', 'held', 'released', 'refunded').
-- **Table**: Added `wallet_transactions` table with RLS.
-- **Trigger**: Updated `fn_booking_guard` to support new flow transitions.
-- **RPC**: Added `process_payment_event` and `process_expired_requests`.
+- **Delivery RPCs**: `rpc_submit_delivery` — booking status transition: `confirmed`/`paid_request_pending` → `active` then `delivered` (migration `20260224_fix_rpc_submit_delivery_booking_transition.sql`). `rpc_approve_delivery` — idempotency key for ledger release uses `extensions.digest()` when `payment_status=held` (migration `20260224_fix_rpc_approve_delivery_digest_schema.sql`).
+- **Ledger**: `gateway_escrow` event type and webhook-driven escrow hold (QiCard) documented in plan/execution logs; see `process_payment_event_ledger` and `qicard_webhook_handler`.
+
+### Version 2.16 (February 2026)
+
+- **Ledger System Phase 3**: Full migration to Double-Entry Ledger.
+- **FROZEN**: `wallet_transactions` table is now read-only.
+- **Tables**: Added `accounts`, `journal_entries`, `ledger_lines`.
+- **Logic**: Added `process_payment_event_ledger` RPC.
+- **Stability**: Updated all RPCs (`rpc_approve_delivery`, `process_expired_requests`) to use the new ledger system.
+- **Backfill**: Migrated 100% of legacy wallet logs into the new ledger for historical accuracy.
+
+### Version 2.9 (January 2026)
 
 ### Version 2.1 (December 2025)
 

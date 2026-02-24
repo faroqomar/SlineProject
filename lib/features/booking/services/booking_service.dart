@@ -1,9 +1,11 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/app_enums.dart';
 import '../models/slot_model.dart';
 import '../models/booking_model.dart';
 import '../../notifications/services/notification_service.dart';
 import '../../notifications/models/notification_model.dart';
+import '../../wallet/services/ledger_service.dart';
 
 /// Low-level service that talks to Supabase (PostgREST) only.
 /// No UI state here; RLS is assumed to be enforced by the backend.
@@ -25,20 +27,20 @@ class BookingService {
     int limit = 50,
     String? cursorStartsAtIso, // simple cursor based on starts_at
   }) async {
-    final query = _client
+    var query = _client
         .from(_slotsTable)
         .select()
         .eq('provider_id', providerId);
 
     if (fromUtc != null) {
-      query.gte('starts_at', fromUtc.toUtc().toIso8601String());
+      query = query.gte('starts_at', fromUtc.toUtc().toIso8601String());
     }
     if (toUtc != null) {
-      query.lte('ends_at', toUtc.toUtc().toIso8601String());
+      query = query.lte('ends_at', toUtc.toUtc().toIso8601String());
     }
     if (cursorStartsAtIso != null) {
       // naive cursor: fetch where starts_at > lastStartsAt
-      query.gt('starts_at', cursorStartsAtIso);
+      query = query.gt('starts_at', cursorStartsAtIso);
     }
 
     final data = await query.order('starts_at', ascending: true).limit(limit);
@@ -79,7 +81,7 @@ class BookingService {
 
   /// Book a slot as the current client.
   /// RLS policy requires: client_id = auth.uid().
-  Future<BookingModel> bookSlot({
+  Future<BookingModel> createBookingDraft({
     required String taskId,
     required String slotId,
     String? note,
@@ -111,21 +113,7 @@ class BookingService {
         .select()
         .single();
 
-    // Process Payment (Escrow)
-    // In a real app, we'd wait for Stripe webhook.
-    // Here we simulate immediate payment -> escrow.
-    if (status != BookingStatus.active) {
-      await _client.rpc(
-        'process_payment_event',
-        params: {
-          'p_entity_id': res['id'],
-          'p_type': 'escrow',
-          'p_event': 'booking', // entity_type must be 'booking'
-        },
-      );
-    }
-
-    // Re-fetch to get updated status
+    // Re-fetch to get normalized row (joins/triggers).
     final updatedRes = await _client
         .from(_bookingsTable)
         .select()
@@ -145,6 +133,29 @@ class BookingService {
     );
 
     return booking;
+  }
+
+  /// Backward-compatible alias for older call sites.
+  Future<BookingModel> bookSlot({
+    required String taskId,
+    required String slotId,
+    String? note,
+    required String providerId,
+    required double price,
+    String? packageId,
+    Map<String, dynamic>? requirements,
+    BookingStatus status = BookingStatus.pending,
+  }) {
+    return createBookingDraft(
+      taskId: taskId,
+      slotId: slotId,
+      note: note,
+      providerId: providerId,
+      price: price,
+      packageId: packageId,
+      requirements: requirements,
+      status: status,
+    );
   }
 
   Future<List<BookingModel>> listBookingsAsClient({
@@ -209,9 +220,14 @@ class BookingService {
       return (data as List<dynamic>)
           .map((e) => BookingModel.fromJson(e as Map<String, dynamic>))
           .toList();
-    } catch (e) {
+    } catch (e, st) {
       // Log error but don't crash UI, return empty list
-      // AppLogger.e('Failed to get pending requests', error: e); // Assuming logger usage
+      AppLogger.e(
+        'Failed to get pending requests',
+        error: e,
+        stackTrace: st,
+        tag: 'Booking',
+      );
       return [];
     }
   }
@@ -268,27 +284,55 @@ class BookingService {
     return BookingModel.fromJson(res);
   }
 
+  /// Escrow hold for booking
+  Future<void> escrowHoldBooking(String bookingId) async {
+    final booking = await getBookingById(bookingId);
+    await LedgerService(_client).submitPaymentEvent(
+      eventType: 'escrow_hold',
+      relatedEntityType: 'booking',
+      relatedEntityId: booking.id,
+      amountGross: booking.price ?? 0,
+      meta: {},
+    );
+  }
+
   /// Approve booking and release funds (RPC).
   Future<void> approveAndRelease(String bookingId) async {
-    await _client.rpc(
-      'process_payment_event',
-      params: {
-        'p_entity_id': bookingId,
-        'p_type': 'release',
-        'p_event': 'provider_approval',
+    final booking = await getBookingById(bookingId);
+
+    // Status must be delivered, payment_status held for this to work
+    await LedgerService(_client).submitPaymentEvent(
+      eventType: 'release_with_fee',
+      relatedEntityType: 'booking',
+      relatedEntityId: booking.id,
+      amountGross: booking.price ?? 0,
+      meta: {
+        'fee_rate_bps':
+            0, // Simplified without fee config for now, or match plan
       },
     );
   }
 
-  /// Decline booking and refund funds (RPC).
+  /// Decline booking and refund funds.
+  /// Usually status is updated to declined FIRST, then refund is issued.
   Future<void> declineBooking(String bookingId) async {
-    await _client.rpc(
-      'process_payment_event',
-      params: {
-        'p_entity_id': bookingId,
-        'p_type': 'refund',
-        'p_event': 'provider_decline',
-      },
+    final booking = await getBookingById(bookingId);
+
+    // The UI must update status to declined before refunding or the RPC handles it?
+    // Let's ensure status is declined:
+    if (booking.status != BookingStatus.declined) {
+      await updateBookingStatus(
+        bookingId: booking.id,
+        newStatus: BookingStatus.declined,
+      );
+    }
+
+    await LedgerService(_client).submitPaymentEvent(
+      eventType: 'refund',
+      relatedEntityType: 'booking',
+      relatedEntityId: booking.id,
+      amountGross: booking.price ?? 0,
+      meta: {},
     );
   }
 

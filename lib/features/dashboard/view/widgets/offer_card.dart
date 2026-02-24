@@ -7,6 +7,7 @@ import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
+import 'package:sline_app/core/utils/unified_cta_resolver.dart';
 
 class OfferCard extends StatelessWidget {
   final TaskRequest offer;
@@ -15,6 +16,8 @@ class OfferCard extends StatelessWidget {
   final VoidCallback? onAccept;
   final VoidCallback? onReject;
   final VoidCallback? onWithdraw;
+  final VoidCallback? onRelease;
+  final VoidCallback? onRefund;
 
   const OfferCard({
     super.key,
@@ -23,6 +26,8 @@ class OfferCard extends StatelessWidget {
     this.onAccept,
     this.onReject,
     this.onWithdraw,
+    this.onRelease,
+    this.onRefund,
   });
 
   @override
@@ -168,54 +173,105 @@ class OfferCard extends StatelessWidget {
             ),
           ),
 
-          // Actions Footer (Only if pending)
-          if (isPending)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppDimens.p16,
-                0,
-                AppDimens.p16,
-                AppDimens.p16,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  if (isClientView) ...[
-                    if (onReject != null)
-                      TextButton(
-                        onPressed: onReject,
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppColors.lightRed,
-                        ),
-                        child: const Text('Reject'),
-                      ),
-                    const SizedBox(width: AppDimens.p8),
-                    if (onAccept != null)
-                      FilledButton(
-                        onPressed: onAccept,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.teal,
-                        ),
-                        child: const Text('Accept'),
-                      ),
-                  ] else ...[
-                    // Freelancer View
-                    if (onWithdraw != null)
-                      OutlinedButton.icon(
-                        onPressed: onWithdraw,
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.lightRed,
-                          side: BorderSide(
-                            color: AppColors.lightRed.withValues(alpha: 0.5),
+          // Actions Footer
+          Builder(
+            builder: (ctx) {
+              final ctaMeta = UnifiedCtaResolver.resolveActions(
+                status: offer.status.name,
+                paymentStatus: offer.paymentStatus.name,
+                actorRole: isClientView ? 'client' : 'provider',
+                entityType: 'task_request',
+              );
+
+              final bool showEscrow = ctaMeta.allowedActions.contains(
+                'escrow_hold',
+              );
+              final bool showRelease = ctaMeta.allowedActions.contains(
+                'release_with_fee',
+              );
+              final bool showRefund = ctaMeta.allowedActions.contains('refund');
+
+              // If no specific payment actions are resolved but it's still pending, we fallback to our generic logic for non-payment MVP states
+              // Actually, since we wired escrow_hold, let's just use it combined with legacy.
+
+              if (!isPending && !showRelease && !showRefund) {
+                return const SizedBox.shrink();
+              }
+
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppDimens.p16,
+                  0,
+                  AppDimens.p16,
+                  AppDimens.p16,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (isClientView) ...[
+                      if (onReject != null && isPending)
+                        TextButton(
+                          onPressed: onReject,
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.lightRed,
                           ),
+                          child: const Text('Reject'),
                         ),
-                        icon: const Icon(Icons.close, size: 16),
-                        label: const Text('Withdraw'),
-                      ),
+                      const SizedBox(width: AppDimens.p8),
+                      if (onAccept != null && showEscrow)
+                        FilledButton(
+                          onPressed: onAccept,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.teal,
+                          ),
+                          child: const Text(
+                            'Escrow Funds',
+                          ), // Replaced 'Accept' with Escrow
+                        ),
+                      if (onAccept != null && !showEscrow && isPending)
+                        FilledButton(
+                          onPressed: onAccept,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.teal,
+                          ),
+                          child: const Text('Accept'),
+                        ),
+                      if (onRelease != null && showRelease)
+                        FilledButton(
+                          onPressed: onRelease,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.teal,
+                          ),
+                          child: const Text('Release Funds'),
+                        ),
+                      if (onRefund != null && showRefund)
+                        TextButton(
+                          onPressed: onRefund,
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.lightRed,
+                          ),
+                          child: const Text('Refund'),
+                        ),
+                    ] else ...[
+                      // Freelancer View
+                      if (onWithdraw != null && isPending)
+                        OutlinedButton.icon(
+                          onPressed: onWithdraw,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.lightRed,
+                            side: BorderSide(
+                              color: AppColors.lightRed.withValues(alpha: 0.5),
+                            ),
+                          ),
+                          icon: const Icon(Icons.close, size: 16),
+                          label: const Text('Withdraw'),
+                        ),
+                    ],
                   ],
-                ],
-              ),
-            ),
+                ),
+              );
+            },
+          ),
         ],
       ),
     );

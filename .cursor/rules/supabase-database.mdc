@@ -1,0 +1,104 @@
+---
+description: Supabase and database rules - RLS, storage, queries
+globs: ["**/services/**", "**/data/**", "**/repositories/**"]
+alwaysApply: false
+---
+
+# Supabase Database Rules
+
+## Database Schema Reference
+
+**CRITICAL**: Always check `Sline_everything/SUPABASE_SETUP.md` before making database changes. This file is the single source of truth for:
+- Table schemas
+- RLS policies
+- Triggers and functions
+- Indexes
+- Storage buckets
+
+## Row-Level Security (RLS)
+
+### RLS is Always Enabled
+
+Every table has RLS enabled. All queries require a valid session (`auth.currentUser`).
+
+### Common RLS Patterns
+
+**Owner-Only Access**:
+```sql
+CREATE POLICY "users_select_own"
+ON profiles FOR SELECT
+USING (auth.uid() = id);
+```
+
+**Participant Access**:
+```sql
+CREATE POLICY "conversations_select_participants"
+ON conversations FOR SELECT
+USING (auth.uid() = user1_id OR auth.uid() = user2_id);
+```
+
+### RLS Error Handling
+
+When RLS denies access, you'll get `PostgrestException` with code `42501`:
+
+```dart
+try {
+  await supabase.from('profiles').select().eq('id', userId);
+} on PostgrestException catch (e) {
+  if (e.code == '42501') {
+    throw const FormatException('Session expired. Please log in again.');
+  }
+  rethrow;
+}
+```
+
+## Storage Buckets
+
+### Bucket Configuration
+
+| Bucket | Visibility | Purpose | Access Pattern |
+|--------|-----------|---------|----------------|
+| `avatars` | Private | Profile avatars | Store path, generate signed URL |
+| `task-images` | Private | Task images | Store path, generate signed URL |
+| `chat-attachments` | Private | Message attachments | Store path, generate signed URL |
+| `portfolio` | Public (or Private) | Portfolio items | Store path or public URL |
+
+### Storage Patterns
+
+**CRITICAL RULE**: Store storage PATHS in database, NOT signed URLs. Generate signed URLs at render time.
+
+**CORRECT** - Storing Paths:
+```dart
+// ✅ Store path, generate signed URL when needed
+await supabase.from('profiles').update({
+  'avatar_url': 'avatars/$userId/$timestamp.jpg', // Path only
+});
+// Generate signed URL at render time
+final signedUrl = await storage.createSignedUrl(path, 600); // 10 min TTL
+```
+
+## Query Patterns
+
+### Efficient Joins
+
+```dart
+// ✅ CORRECT - Single query with JOIN
+final rows = await supabase
+    .from('tasks')
+    .select('''
+      *,
+      categories(name),
+      profiles!tasks_user_id_fkey(full_name, avatar_url)
+    ''')
+    .eq('status', 'open')
+    .order('created_at', ascending: false);
+```
+
+### Pagination with Cursors
+
+Use time-based cursors, NOT offsets. See `.cursor/rules/code-quality.mdc` for cursor pagination pattern.
+
+## References
+
+- `Sline_everything/SUPABASE_SETUP.md` - Complete database schema and setup
+- `Sline_everything/DEVELOPER_GUIDE.md` - Feature-specific database patterns

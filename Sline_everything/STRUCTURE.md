@@ -143,10 +143,10 @@ features/
 
 - `auth/`: login/signup
 - `home/`: service cards & feed
-- `chat/`: real-time messaging with Supabase Realtime subscriptions
-- `tasks/`: post and manage tasks
-- `profile/`: view and edit user profile
-- `booking/`: booking services
+- `chat/`: real-time messaging, attachments, realtime subscriptions
+- `tasks/`: post and manage tasks, offers/requests
+- `profile/`: view and edit user profile, role switch, my tasks, portfolio
+- `booking/`: provider slots, client bookings, **PaymentCheckoutScreen (v2.16)**
 - `work/`: unified work management (active tasks & bookings, contracts, change/extension requests)
 
 ---
@@ -186,7 +186,17 @@ This structure helps keep SLine maintainable, scalable, and easy to navigate for
 
 ---
 
-## 🔄 Recent Updates (2025-08-03)
+## 🔄 Recent Updates
+
+- **2026-02-24**:
+  - **Payment Integration**: Added `PaymentCheckoutScreen` to `booking/view/`.
+  - **Ledger System**: Documented Phase 3 (Escrow Enforced) in `Sline_Log.md`.
+  - **Navigation**: Established returning results pattern for bottom sheets.
+
+- **2026-02-19**:
+  - **Observability**: Added `CrashReportingService` and global error trapping (`runZonedGuarded`) in `main.dart`.
+  - **Security**: Hardened `ProfileRepository` to strictly select safe columns.
+  - **Booking**: Fixed status mapping in `UnifiedWorkItemModel`.
 
 - Integrated Supabase Realtime into the `chat` module for instant messaging updates.
 - Updated `core/services/` with structured logging (AppLogger).
@@ -272,22 +282,6 @@ This structure helps keep SLine maintainable, scalable, and easy to navigate for
     │ └── l10n.dart
     │
     └── main.dart # Entry point of the app → calls MainNavigationScreen
-
-        ├── presentation/
-        │   ├── profile_screen.dart
-        │   └── portfolio/
-        │       ├── portfolio_screen.dart
-        │       ├── widgets/
-        │       │   ├── portfolio_grid.dart
-        │       │   ├── add_portfolio_sheet.dart
-        │       │   └── portfolio_details_sheet.dart
-        ├── controllers/
-        │   ├── profile_controller.dart
-        │   └── portfolio_controller.dart
-        ├── services/
-        │   └── portfolio_service.dart
-        └── models/
-            └── portfolio_item.dart
 
 ## 🔄 Recent Updates
 

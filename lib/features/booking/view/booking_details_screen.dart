@@ -15,6 +15,7 @@ import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/features/management/view/order_management_panel.dart';
 import 'package:sline_app/features/management/viewmodels/order_management_view_model.dart';
+import 'package:sline_app/core/utils/unified_cta_resolver.dart';
 
 class BookingDetailsScreen extends StatelessWidget {
   final BookingModel booking;
@@ -45,6 +46,41 @@ class BookingDetailsScreen extends StatelessWidget {
           children: [
             // Status Banner
             _buildStatusBanner(context, booking.status),
+
+            // CTA Resolver Banner
+            Builder(
+              builder: (_) {
+                final ctaMeta = UnifiedCtaResolver.resolveActions(
+                  status: booking.status.name,
+                  paymentStatus: booking.paymentStatus.name,
+                  actorRole: isProvider ? 'provider' : 'client',
+                  entityType: 'booking',
+                );
+                if (ctaMeta.badgeText != null && ctaMeta.badgeColor != null) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: AppDimens.p12),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(AppDimens.p12),
+                      decoration: BoxDecoration(
+                        color: ctaMeta.badgeColor!.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(AppDimens.r8),
+                        border: Border.all(color: ctaMeta.badgeColor!),
+                      ),
+                      child: Text(
+                        ctaMeta.badgeText!,
+                        style: AppTypography.bodySmall.copyWith(
+                          color: ctaMeta.badgeColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
             const SizedBox(height: AppDimens.p24),
 
             // Service Card (Task Info)
@@ -210,12 +246,66 @@ class BookingDetailsScreen extends StatelessWidget {
                     _updateStatus(context, booking, BookingStatus.canceled),
               ),
 
-            // --- Phase 1 Payment/Flow Actions ---
+            // --- Dynamic Actions based on CTA Resolver ---
+            Builder(
+              builder: (ctx) {
+                final ctaMeta = UnifiedCtaResolver.resolveActions(
+                  status: booking.status.name,
+                  paymentStatus: booking.paymentStatus.name,
+                  actorRole: isProvider ? 'provider' : 'client',
+                  entityType: 'booking',
+                );
 
-            // 1. Provider Actions
+                List<Widget> dynamicActions = [];
+
+                if (ctaMeta.allowedActions.contains('escrow_hold')) {
+                  dynamicActions.add(
+                    AppButton(
+                      text: 'Escrow Funds',
+                      onPressed: () => ctx
+                          .read<BookingViewModel>()
+                          .escrowHoldBooking(booking.id),
+                    ),
+                  );
+                  dynamicActions.add(const SizedBox(height: AppDimens.p12));
+                }
+
+                if (ctaMeta.allowedActions.contains('release_with_fee')) {
+                  dynamicActions.add(
+                    AppButton(
+                      text: 'Approve & Release Funds',
+                      onPressed: () => ctx
+                          .read<BookingViewModel>()
+                          .releaseBookingWithFee(booking.id),
+                    ),
+                  );
+                  dynamicActions.add(const SizedBox(height: AppDimens.p12));
+                }
+
+                if (ctaMeta.allowedActions.contains('refund')) {
+                  dynamicActions.add(
+                    AppButton(
+                      text: 'Issue Refund',
+                      isPrimary: false,
+                      onPressed: () {
+                        // The refund logic can be wired here if the provider needs an explicit refund button
+                        // Usually handled automatically on decline though.
+                      },
+                    ),
+                  );
+                  dynamicActions.add(const SizedBox(height: AppDimens.p12));
+                }
+
+                return Column(children: dynamicActions);
+              },
+            ),
+
+            // 1. Provider Actions (Legacy status-based checks that don't overlap with Payment matrix directly yet)
             if (isProvider) ...[
               // Accept Request (Funds held)
-              if (booking.status == BookingStatus.paidRequestPending) ...[
+              if (booking.status == BookingStatus.paidRequestPending ||
+                  (booking.status == BookingStatus.pending &&
+                      booking.paymentStatus == PaymentStatus.held)) ...[
                 Row(
                   children: [
                     Expanded(
@@ -252,15 +342,6 @@ class BookingDetailsScreen extends StatelessWidget {
 
             // 2. Client Actions
             if (!isProvider) ...[
-              // Approve & Release (Funds released)
-              if (booking.status == BookingStatus.delivered) ...[
-                AppButton(
-                  text: 'Approve & Release Funds',
-                  onPressed: () => context
-                      .read<BookingViewModel>()
-                      .approveBooking(booking.id),
-                ),
-              ],
               // Dispute/Cancel (If needed)
               if (booking.status == BookingStatus.delivered) ...[
                 const SizedBox(height: AppDimens.p12),

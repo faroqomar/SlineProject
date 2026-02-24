@@ -7,7 +7,7 @@ import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 import '../viewmodels/wallet_view_model.dart';
-import '../models/wallet_transaction_model.dart';
+import '../models/wallet_activity_model.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -48,7 +48,7 @@ class _WalletScreenState extends State<WalletScreen> {
       ),
       body: Consumer<WalletViewModel>(
         builder: (context, vm, child) {
-          if (vm.isLoading && vm.transactions.isEmpty) {
+          if (vm.isLoading && vm.activities.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -77,7 +77,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     ),
                     const SizedBox(height: AppDimens.p8),
                     Text(
-                      '\$${vm.balance.availableBalance.toStringAsFixed(2)}',
+                      'IQD ${vm.balance.availableBalance.toStringAsFixed(0)}',
                       style: AppTypography.h1.copyWith(color: AppColors.teal),
                     ),
                   ],
@@ -85,7 +85,39 @@ class _WalletScreenState extends State<WalletScreen> {
               ),
               const SizedBox(height: AppDimens.p12),
 
-              if (vm.balance.heldBalance > 0)
+              if (vm.balance.pendingWithdrawalBalance > 0)
+                GlassContainer(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: AppDimens.p16,
+                    horizontal: AppDimens.p24,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.timer_outlined,
+                        color: AppColors.lightRed,
+                        size: 20,
+                      ),
+                      const SizedBox(width: AppDimens.p8),
+                      Text(
+                        'Pending Withdrawal: ',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: colorScheme.textSecondary,
+                        ),
+                      ),
+                      Text(
+                        'IQD ${vm.balance.pendingWithdrawalBalance.toStringAsFixed(0)}',
+                        style: AppTypography.h3.copyWith(
+                          color: AppColors.lightRed,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              if (vm.balance.heldBalance > 0) ...[
+                const SizedBox(height: AppDimens.p12),
                 GlassContainer(
                   padding: const EdgeInsets.symmetric(
                     vertical: AppDimens.p16,
@@ -103,26 +135,60 @@ class _WalletScreenState extends State<WalletScreen> {
                         ),
                       ),
                       Text(
-                        '\$${vm.balance.heldBalance.toStringAsFixed(2)}',
+                        'IQD ${vm.balance.heldBalance.toStringAsFixed(0)}',
                         style: AppTypography.h3.copyWith(color: AppColors.gold),
                       ),
                     ],
                   ),
                 ),
+              ],
+              const SizedBox(height: AppDimens.p16),
+
+              // ── Request Withdrawal (NO Deposit button per Addendum S) ──
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: vm.isWithdrawing
+                      ? null
+                      : () => _showWithdrawalSheet(context, vm),
+                  icon: vm.isWithdrawing
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.send_outlined),
+                  label: Text(
+                    vm.isWithdrawing ? 'Processing...' : 'Request Withdrawal',
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.teal,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppDimens.p16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppDimens.r12),
+                    ),
+                  ),
+                ),
+              ),
               const SizedBox(height: AppDimens.p24),
 
               Text(
-                'Transactions',
+                'Activity',
                 style: AppTypography.h5.copyWith(color: colorScheme.text),
               ),
               const SizedBox(height: AppDimens.p12),
 
-              if (vm.transactions.isEmpty)
+              if (vm.activities.isEmpty)
                 Center(
                   child: Padding(
                     padding: const EdgeInsets.all(AppDimens.p24),
                     child: Text(
-                      'No transactions yet.',
+                      'No wallet activity yet.',
                       style: AppTypography.bodyMedium.copyWith(
                         color: colorScheme.textSecondary,
                       ),
@@ -130,7 +196,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   ),
                 )
               else
-                ...vm.transactions.map(
+                ...vm.activities.map(
                   (txn) => _buildTransactionItem(context, txn),
                 ),
 
@@ -148,20 +214,19 @@ class _WalletScreenState extends State<WalletScreen> {
 
   Widget _buildTransactionItem(
     BuildContext context,
-    WalletTransactionModel txn,
+    WalletActivityModel activity,
   ) {
-    // In our model, amount is positive, type defines flow.
-    // Types: 'deposit', 'escrow_hold', 'escrow_release', 'payment_in', 'refund', 'withdrawal'.
-    // Debit: escrow_hold, withdrawal, payment_out (if any).
-    // Credit: deposit, escrow_release, refund, payment_in.
-
-    // Let's guess direction based on type for coloring:
     bool positive = [
       'deposit',
-      'escrow_release',
+      'release_with_fee',
       'refund',
-      'payment_in',
-    ].contains(txn.type);
+      'admin_credit',
+    ].contains(activity.eventType);
+
+    // Some events might have a net amount (release_with_fee), others gross
+    num displayAmount = activity.eventType == 'release_with_fee'
+        ? activity.amountNet
+        : activity.amountGross;
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimens.p12),
@@ -192,13 +257,13 @@ class _WalletScreenState extends State<WalletScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _formatType(txn.type),
+                  _formatType(activity.eventType),
                   style: AppTypography.bodyLarge.copyWith(
                     color: context.colorScheme.text,
                   ),
                 ),
                 Text(
-                  formatUtcToLocal(txn.createdAtUtc),
+                  formatUtcToLocal(activity.createdAtUtc),
                   style: AppTypography.caption.copyWith(
                     color: context.colorScheme.textSecondary,
                   ),
@@ -207,7 +272,7 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
           ),
           Text(
-            '${positive ? '+' : '-'}\$${txn.amount.toStringAsFixed(2)}',
+            '${positive ? '+' : '-'}${activity.currency} ${displayAmount.toStringAsFixed(0)}',
             style: AppTypography.bodyLarge.copyWith(
               color: positive ? AppColors.teal : AppColors.lightRed,
               fontWeight: FontWeight.bold,
@@ -223,5 +288,103 @@ class _WalletScreenState extends State<WalletScreen> {
         .split('_')
         .map((e) => e[0].toUpperCase() + e.substring(1))
         .join(' ');
+  }
+
+  void _showWithdrawalSheet(BuildContext context, WalletViewModel vm) {
+    final controller = TextEditingController();
+    final colorScheme = context.colorScheme;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: colorScheme.cardBackground,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            AppDimens.p24,
+            AppDimens.p24,
+            AppDimens.p24,
+            MediaQuery.of(sheetCtx).viewInsets.bottom + AppDimens.p24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Request Withdrawal',
+                style: AppTypography.h3.copyWith(color: colorScheme.text),
+              ),
+              const SizedBox(height: AppDimens.p8),
+              Text(
+                'Available: IQD ${vm.balance.availableBalance.toStringAsFixed(0)}',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: colorScheme.textSecondary,
+                ),
+              ),
+              const SizedBox(height: AppDimens.p16),
+              TextField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                style: TextStyle(color: colorScheme.text),
+                decoration: InputDecoration(
+                  labelText: 'Amount (IQD)',
+                  labelStyle: TextStyle(color: colorScheme.textSecondary),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppDimens.r12),
+                  ),
+                  prefixIcon: const Icon(Icons.payments_outlined),
+                ),
+              ),
+              const SizedBox(height: AppDimens.p16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () async {
+                    final amount = num.tryParse(controller.text.trim());
+                    if (amount == null || amount <= 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Enter a valid amount.')),
+                      );
+                      return;
+                    }
+                    Navigator.pop(sheetCtx);
+                    final success = await vm.requestWithdrawal(amount: amount);
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          success
+                              ? 'Withdrawal requested. Funds locked.'
+                              : vm.error ?? 'Withdrawal failed.',
+                        ),
+                        backgroundColor: success
+                            ? AppColors.teal
+                            : AppColors.lightRed,
+                      ),
+                    );
+                    if (success) {
+                      vm.loadWallet(); // Refresh activity list
+                    }
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.teal,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppDimens.p16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppDimens.r12),
+                    ),
+                  ),
+                  child: const Text('Submit Withdrawal'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

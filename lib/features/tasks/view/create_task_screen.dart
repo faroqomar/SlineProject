@@ -12,7 +12,6 @@ import 'package:sline_app/features/categories/data/categories_repository.dart';
 import 'package:sline_app/features/categories/models/category_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CreateTaskScreen extends StatefulWidget {
   final Task? task; // optional task for edit mode
@@ -88,6 +87,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   List<CategoryModel> _categories = [];
   bool _categoriesLoading = false;
   bool _isLoading = false;
+  bool _categoriesLoadScheduled = false;
 
   @override
   void initState() {
@@ -107,7 +107,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         _loadPackageDataFromModel(widget.task!.packages!);
       }
     }
-    _loadCategories();
+    // Categories loaded in didChangeDependencies so context has repository
 
     // Listeners to sync controllers to state
     _packagePriceController.addListener(
@@ -127,21 +127,31 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     );
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_categoriesLoadScheduled) {
+      _categoriesLoadScheduled = true;
+      _loadCategories();
+    }
+  }
+
   Future<void> _loadCategories() async {
     setState(() => _categoriesLoading = true);
     try {
-      final repo = CategoriesRepository(Supabase.instance.client);
+      final repo = context.read<CategoriesRepository>();
       final cats = await repo.getAll();
+      if (!mounted) return;
       setState(() {
         _categories = cats;
       });
     } catch (e) {
-      // Fallback
+      if (!mounted) return;
       setState(() {
         _categories = [];
       });
     } finally {
-      setState(() => _categoriesLoading = false);
+      if (mounted) setState(() => _categoriesLoading = false);
     }
   }
 

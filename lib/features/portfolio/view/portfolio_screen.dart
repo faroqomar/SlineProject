@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show SupabaseClient;
 
 import '../viewmodels/portfolio_view_model.dart';
 import '../models/portfolio_item.dart';
@@ -74,7 +74,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<PortfolioViewModel>(
-      create: (_) => PortfolioViewModel(client: Supabase.instance.client),
+      create: (ctx) => PortfolioViewModel(client: ctx.read<SupabaseClient>()),
       child: Consumer<PortfolioViewModel>(
         builder: (context, ctrl, _) {
           // capture controller reference for listeners/callbacks

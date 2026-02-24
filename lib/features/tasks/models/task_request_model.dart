@@ -14,6 +14,7 @@ class TaskRequest {
   final int days;
   final String? note;
   final OfferStatus status;
+  final PaymentStatus paymentStatus;
   final DateTime createdAt;
 
   // Joined fields from profiles table
@@ -31,6 +32,7 @@ class TaskRequest {
     required this.days,
     this.note,
     required this.status,
+    this.paymentStatus = PaymentStatus.unpaid,
     required this.createdAt,
     this.bidderName,
     this.bidderAvatar,
@@ -70,6 +72,9 @@ class TaskRequest {
         status: OfferStatus.values.firstWhere(
           (e) => e.name == map['status'],
           orElse: () => OfferStatus.pending,
+        ),
+        paymentStatus: _mapDbPaymentStatusToEnum(
+          map['payment_status'] as String?,
         ),
         createdAt: DateTime.parse(map['created_at'] as String),
         bidderName: parsedBidderName,
@@ -122,6 +127,7 @@ class TaskRequest {
     int? days,
     String? note,
     OfferStatus? status,
+    PaymentStatus? paymentStatus,
     DateTime? createdAt,
     String? bidderName,
     String? bidderAvatar,
@@ -135,6 +141,7 @@ class TaskRequest {
       days: days ?? this.days,
       note: note ?? this.note,
       status: status ?? this.status,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
       createdAt: createdAt ?? this.createdAt,
       bidderName: bidderName ?? this.bidderName,
       bidderAvatar: bidderAvatar ?? this.bidderAvatar,
@@ -170,9 +177,18 @@ class TaskRequest {
     days,
     note,
     status,
+    paymentStatus,
     createdAt,
     bidderName,
     bidderAvatar,
     taskTitle,
   );
+
+  static PaymentStatus _mapDbPaymentStatusToEnum(String? status) {
+    if (status == null) return PaymentStatus.unpaid;
+    return PaymentStatus.values.firstWhere(
+      (e) => e.name == status,
+      orElse: () => PaymentStatus.unpaid,
+    );
+  }
 }

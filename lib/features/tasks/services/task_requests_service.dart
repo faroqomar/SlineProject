@@ -12,6 +12,28 @@ class TaskRequestsService {
   TaskRequestsService({SupabaseClient? client})
     : _client = client ?? Supabase.instance.client;
 
+  /// Returns the current user's pending offer for the task, if any.
+  Future<TaskRequest?> getExistingActiveOfferForCurrentUser(
+    String taskId,
+  ) async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return null;
+    try {
+      final rows = await _client
+          .from('task_requests')
+          .select()
+          .eq('task_id', taskId)
+          .eq('freelancer_id', uid)
+          .is_('deleted_at', null)
+          .eq('status', 'pending')
+          .limit(1);
+      if (rows.isEmpty) return null;
+      return TaskRequest.fromMap(rows.first as Map<String, dynamic>);
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// List offers for a task with pagination.
   Future<List<TaskRequest>> listByTask({
     required String taskId,
