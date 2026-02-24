@@ -153,3 +153,66 @@
 - No production behavior changes were introduced beyond stable keys for `T61-T63`.
 - `T61` reuses the existing `ChatScreen.enableLifecycleEffects` seam from the previous slice (`T51-T60`); no new lifecycle production change was needed here.
 - `T64-T70` were intentionally scaffolded with preflight blockers instead of speculative staging logic/IDs.
+
+---
+
+## 9) Addendum (2026-02-24, Later Session Update)
+
+### New Inputs Received
+
+- Staging confirmation for hardcoded Supabase project: **YES**
+- Staging login credentials provided to executor (kept out of source; still consumed via `--dart-define`)
+
+### Integration Slice Progress Upgrade
+
+- `T64`, `T65`, `T66`, `T67`, `T69`, `T70`:
+  - **Implemented** with runtime-discovery strategy (no hardcoded seed IDs required)
+  - Tests now use:
+    - programmatic Supabase auth sign-out reset in the integration harness (`T64` clean-start approximation)
+    - shared login helper via `LoginScreen` keys (`T65+`)
+    - runtime discovery from ViewModels for conversations/notifications (`T67`, `T69`)
+    - default locked surfaces for `T66`: **Tenders list + TaskDetailsScreen**
+    - same-session dashboard re-entry persistence check for `T70`
+- `T68`:
+  - **Still blocked**, but now by a concrete code-path issue (not missing seed data)
+  - Reason: `PaymentCheckoutScreen` requires QiCard web flow, and demo mode intentionally stops before booking confirmation, so no automatable booking-complete path exists for baseline integration testing without an additional test seam
+
+### Additional Default-Preserving Testability Seams Added
+
+- `CustomBottomNavBar`
+  - Added stable bottom-nav keys (home/tenders/bookings/dashboard/messages/profile)
+- `NotificationBadgeButton`
+  - Added stable bell button key for `T69`
+
+### Integration Harness Refactor (Completed)
+
+- `integration_test/support/helpers.dart`
+  - Switched launch helper from `app.main()` to pumping `SLineApp(...)` directly
+  - Added one-time Supabase SDK init guard to avoid re-init problems across tests
+  - Added programmatic auth reset helper (`Supabase.auth.signOut`) for deterministic login-start tests
+  - Added bounded wait helpers (`pumpUntil...`), provider readers, login helper, and home-refresh helper
+- `integration_test/support/preflight.dart`
+  - Relaxed `T64/T66/T67/T69/T70` preflight to staging + credentials (runtime discovery replaces seed-ID blockers)
+  - `T68` now returns a **code-based blocker** message documenting checkout automation gap
+
+### Verification (This Update)
+
+- `dart format` on changed integration/support + selector seam files => **PASS**
+- `flutter analyze integration_test lib/core/widgets/custom_bottom_nav_bar.dart lib/features/notifications/view/widgets/notification_badge_button.dart` => **PASS** (`No issues found!`)
+- `flutter test test/widget/app test/widget/home test/widget/dashboard test/widget/chat` => **PASS**
+  - Total passed: **12** (existing widget coverage regression check)
+
+### Current End State for T61-T70
+
+- `T61-T63`: PASS (previously verified)
+- `T64-T67`, `T69-T70`: implemented and analyzer-clean, but **not executed in this environment** due prior local integration runner/iOS build limitations
+- `T68`: blocked by checkout/payment automation gap in current product code path
+
+### Remaining Work to Fully Close Slice
+
+- Run integration tests on a working device/simulator environment with:
+  - `IT_STAGING_CONFIRMED=true`
+  - `IT_LOGIN_EMAIL` / `IT_LOGIN_PASSWORD`
+- Decide whether to:
+  - add a default-preserving test-only checkout seam for `T68`, or
+  - split `T68` into a seeded post-booking verification variant (if full checkout automation is deferred)
