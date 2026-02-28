@@ -45,12 +45,7 @@ class RefundResult {
 
 /// Result of cancel operation.
 class CancelResult {
-  const CancelResult({
-    this.cancelId,
-    this.status,
-    this.error,
-    this.errorCode,
-  });
+  const CancelResult({this.cancelId, this.status, this.error, this.errorCode});
 
   final String? cancelId;
   final String? status;
@@ -82,9 +77,83 @@ class PaymentStatusResult {
 
   bool get isSuccess => status != null && error == null;
 
-  bool get isPending => status?.toUpperCase() == 'PENDING' || status?.toUpperCase() == 'CREATED';
-  bool get isCompleted => status?.toUpperCase() == 'SUCCESS' || status?.toUpperCase() == 'COMPLETED';
-  bool get isFailed => status?.toUpperCase() == 'FAILED' || status?.toUpperCase() == 'CANCELLED';
+  bool get isPending =>
+      status?.toUpperCase() == 'PENDING' || status?.toUpperCase() == 'CREATED';
+  bool get isCompleted =>
+      status?.toUpperCase() == 'SUCCESS' ||
+      status?.toUpperCase() == 'COMPLETED';
+  bool get isFailed =>
+      status?.toUpperCase() == 'FAILED' || status?.toUpperCase() == 'CANCELLED';
+}
+
+class QiCardCreatePaymentResult {
+  const QiCardCreatePaymentResult({
+    this.bookingId,
+    this.paymentRequestId,
+    this.formUrl,
+    this.amount,
+    this.providerId,
+    this.expiresAt,
+    this.correlationId,
+    this.error,
+    this.errorCode,
+  });
+
+  final String? bookingId;
+  final String? paymentRequestId;
+  final String? formUrl;
+  final double? amount;
+  final String? providerId;
+  final DateTime? expiresAt;
+  final String? correlationId;
+  final String? error;
+  final String? errorCode;
+
+  bool get isSuccess => bookingId != null && formUrl != null && error == null;
+}
+
+class QiCardRecoveryResult {
+  const QiCardRecoveryResult({
+    this.bookingId,
+    this.bookingStatus,
+    this.paymentStatus,
+    this.recoveryResult,
+    this.correlationId,
+    this.error,
+    this.errorCode,
+  });
+
+  final String? bookingId;
+  final String? bookingStatus;
+  final String? paymentStatus;
+  final String? recoveryResult;
+  final String? correlationId;
+  final String? error;
+  final String? errorCode;
+
+  bool get isSuccess => bookingId != null && error == null;
+}
+
+class BookingRefundResult {
+  const BookingRefundResult({
+    this.bookingId,
+    this.bookingStatus,
+    this.paymentStatus,
+    this.refundResult,
+    this.correlationId,
+    this.error,
+    this.errorCode,
+  });
+
+  final String? bookingId;
+  final String? bookingStatus;
+  final String? paymentStatus;
+  final String? refundResult;
+  final String? correlationId;
+  final String? error;
+  final String? errorCode;
+
+  bool get isSuccess => bookingId != null && error == null;
 }
 
 abstract class PaymentService {
@@ -151,7 +220,24 @@ abstract class PaymentService {
   /// [paymentId] - The payment ID to check.
   ///
   /// Returns [PaymentStatusResult] with current status or error information.
-  Future<PaymentStatusResult> getPaymentStatus({
-    required String paymentId,
+  Future<PaymentStatusResult> getPaymentStatus({required String paymentId});
+
+  /// Create a booking draft and QiCard payment request on the server.
+  Future<QiCardCreatePaymentResult> createPaymentForBooking({
+    required String taskId,
+    String? note,
+    String? packageId,
+    Map<String, dynamic>? requirements,
+  });
+
+  /// Recover booking payment state for the caller's own booking.
+  Future<QiCardRecoveryResult> recoverBookingPayment({
+    required String bookingId,
+  });
+
+  /// Decline or cancel a booking and refund when funds are held.
+  Future<BookingRefundResult> declineAndRefundBooking({
+    required String bookingId,
+    required String reason,
   });
 }

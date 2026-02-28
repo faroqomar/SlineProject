@@ -127,7 +127,7 @@ class WorkItemCard extends StatelessWidget {
                       Flexible(
                         child: Text(
                           item.scheduledAt != null
-                              ? '• ${DateFormat('MMM d, h:mm a').format(item.scheduledAt!.toLocal())}'
+                              ? '• Due ${DateFormat('MMM d, h:mm a').format(item.scheduledAt!.toLocal())}'
                               : '• Posted ${formatFriendlyTime(item.createdAt)}',
                           style: AppTypography.caption.copyWith(
                             color: statusColor.withValues(alpha: 0.8),

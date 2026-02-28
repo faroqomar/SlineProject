@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
@@ -13,6 +14,7 @@ import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:sline_app/features/tasks/view/widgets/requests/requests_list_screen.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
 import 'package:sline_app/features/chat/view/chat_screen.dart'; // Added
+import 'package:sline_app/features/booking/view/payment_checkout_screen.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 import 'package:sline_app/features/management/view/order_management_panel.dart';
@@ -295,12 +297,14 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                 Expanded(
                   child: AppButton(
                     text: _getButtonLabel(isOwner, isTender, isBooking),
-                    onPressed: () => _handlePrimaryAction(
-                      context,
-                      isOwner,
-                      isTender,
-                      isBooking,
-                    ),
+                    onPressed: _canTriggerPrimaryAction(isOwner, isBooking)
+                        ? () => _handlePrimaryAction(
+                            context,
+                            isOwner,
+                            isTender,
+                            isBooking,
+                          )
+                        : null,
                   ),
                 ),
                 const SizedBox(width: AppDimens.p12),
@@ -499,8 +503,46 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
 
   String _getButtonLabel(bool isOwner, bool isTender, bool isBooking) {
     if (isOwner) return 'Manage Task';
+    if (isBooking && widget.task.status != TaskStatus.open) {
+      return 'Booking Unavailable';
+    }
     if (isBooking) return 'Book $_selectedPackageTier';
     return 'Apply Now';
+  }
+
+  bool _canTriggerPrimaryAction(bool isOwner, bool isBooking) {
+    if (isOwner) return false;
+    if (isBooking) {
+      return widget.task.status == TaskStatus.open;
+    }
+    return true;
+  }
+
+  Map<String, dynamic>? _selectedPackageData() {
+    if (widget.task.packages == null) return null;
+    return widget.task.packages![_selectedPackageTier] as Map<String, dynamic>?;
+  }
+
+  String? _selectedPackageId() {
+    final packages = widget.task.packages;
+    if (packages == null || !packages.containsKey(_selectedPackageTier)) {
+      return null;
+    }
+    return _selectedPackageTier;
+  }
+
+  double _selectedBookingPrice() {
+    final pkg = _selectedPackageData();
+    final raw = pkg?['price'];
+    if (raw is num) return raw.toDouble();
+    return double.tryParse(raw?.toString() ?? '') ?? widget.task.budget;
+  }
+
+  int? _selectedDeliveryDays() {
+    final pkg = _selectedPackageData();
+    final raw = pkg?['delivery'];
+    if (raw is num) return raw.toInt();
+    return int.tryParse(raw?.toString() ?? '');
   }
 
   void _handlePrimaryAction(
@@ -515,17 +557,21 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     }
 
     if (isBooking) {
-      // Navigate to availability
-      Navigator.of(context).pushNamed(
-        '/availability',
-        arguments: {
-          'freelancerId': widget.task.userId,
-          'taskId': widget.task.id,
-          'packageTier': _selectedPackageTier,
-          'packagePrice':
-              widget.task.packages?[_selectedPackageTier]?['price'] ?? '0',
-          'packageData': widget.task.packages?[_selectedPackageTier],
-        },
+      if (widget.task.status != TaskStatus.open) return;
+
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => PaymentCheckoutScreen(
+            providerId: widget.task.userId,
+            taskId: widget.task.id,
+            taskTitle: widget.task.title,
+            price: _selectedBookingPrice(),
+            packageTier: _selectedPackageId(),
+            packageData: _selectedPackageData(),
+            deliveryDays: _selectedDeliveryDays(),
+            taskDeadline: widget.task.deadline,
+          ),
+        ),
       );
     } else {
       // Tender -> Open Proposal Sheet

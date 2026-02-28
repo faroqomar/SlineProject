@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/slot_model.dart';
 import '../models/booking_model.dart';
 import 'package:sline_app/core/app_enums.dart';
 import '../../chat/data/chat_repository.dart';
@@ -17,17 +16,17 @@ import 'package:sline_app/core/services/demo_payment_service.dart';
 ///
 /// 1. **Cursor-Based Pagination**: Uses ISO timestamps as cursors instead of
 ///    offsets. This is more efficient and handles concurrent updates correctly.
-///    See `slotsCursor`, `bookingsClientCursor`, `bookingsProviderCursor`.
+///    See `bookingsClientCursor`, `bookingsProviderCursor`.
 ///
 /// 2. **User-Friendly Error Mapping**: The `_mapError()` method translates
 ///    technical Supabase/Postgres errors into readable messages.
 ///    Error code 23505 = unique violation = "already booked"
 ///
-/// 3. **Optimistic Updates**: After `bookSlot()`, the new booking is immediately
-///    prepended to `bookingsAsClient` without waiting for a refetch.
+/// 3. **Server-Authoritative Booking Creation**: New bookings are created
+///    through the payment edge function, then refreshed from the canonical row.
 ///
 /// 4. **Separate Loading States**: Each data type has its own loading flag
-///    (`slotsLoading`, `bookingsLoading`) to prevent UI flicker.
+///    (`bookingsLoading`) to prevent UI flicker.
 ///
 /// 5. **hasMore Flags**: Tracks whether more pages are available to prevent
 ///    unnecessary API calls when scrolling past the end.
@@ -51,7 +50,6 @@ class BookingViewModel extends ChangeNotifier {
   String? get currentUserId => _repo.currentUser?.id;
 
   // Pagination flags
-  bool slotsHasMore = true;
   bool bookingsClientHasMore = true;
   bool bookingsProviderHasMore = true;
 
@@ -72,6 +70,30 @@ class BookingViewModel extends ChangeNotifier {
           return 'This slot overlaps with an existing one.';
         }
 
+        if (msg.contains('booking_slot_in_past')) {
+          return 'This slot is no longer available.';
+        }
+
+        if (msg.contains('booking_slot_unavailable')) {
+          return 'This slot is no longer available.';
+        }
+
+        if (msg.contains('booking_task_not_bookable')) {
+          return 'This booking is not currently available.';
+        }
+
+        if (msg.contains('booking_self_booking_forbidden')) {
+          return 'You cannot book your own service.';
+        }
+
+        if (msg.contains('booking_already_exists_for_client')) {
+          return 'You already have an active booking for this service.';
+        }
+
+        if (msg.contains('booking_package_invalid')) {
+          return 'The selected package is no longer available.';
+        }
+
         // Generic postgrest message
         return e.message;
       }
@@ -86,148 +108,39 @@ class BookingViewModel extends ChangeNotifier {
     }
   }
 
-  // Slots state
-  bool slotsLoading = false;
-  String? slotsError;
-  final List<SlotModel> slots = [];
-  String? slotsCursor; // ISO string of last starts_at
+  String? _mapServiceError(String? error) {
+    if (error == null || error.isEmpty) return error;
+    final msg = error.toLowerCase();
+    if (msg.contains('booking_task_not_bookable')) {
+      return 'This booking is not currently available.';
+    }
+    if (msg.contains('booking_self_booking_forbidden')) {
+      return 'You cannot book your own service.';
+    }
+    if (msg.contains('booking_already_exists_for_client')) {
+      return 'You already have an active booking for this service.';
+    }
+    if (msg.contains('booking_package_invalid')) {
+      return 'The selected package is no longer available.';
+    }
+    if (msg.contains('booking_slot_unavailable') ||
+        msg.contains('booking_slot_in_past')) {
+      return 'This slot is no longer available.';
+    }
+    return error;
+  }
 
   // Bookings state
   bool bookingsLoading = false;
   String? bookingsError;
+  bool clientBookingsLoading = false;
+  bool providerBookingsLoading = false;
+  String? clientBookingsError;
+  String? providerBookingsError;
   final List<BookingModel> bookingsAsClient = [];
   final List<BookingModel> bookingsAsProvider = [];
   String? bookingsClientCursor; // ISO string of last created_at
   String? bookingsProviderCursor; // ISO string of last created_at
-
-  // Optional filters
-  DateTimeRange? slotsRange;
-
-  /// Load first page of slots for a provider.
-  Future<void> loadSlots({
-    required String providerId,
-    DateTime? fromUtc,
-    DateTime? toUtc,
-  }) async {
-    slotsLoading = true;
-    slotsError = null;
-    slots.clear();
-    slotsCursor = null;
-    notifyListeners();
-    try {
-      final data = await _repo.listSlots(
-        providerId: providerId,
-        fromUtc: fromUtc,
-        toUtc: toUtc,
-        limit: _pageSize,
-      );
-      slots.addAll(data);
-      if (data.isNotEmpty) {
-        slotsCursor = data.last.startsAtUtc.toUtc().toIso8601String();
-      }
-      slotsHasMore = data.length == _pageSize;
-      AppLogger.i(
-        'Loaded ${data.length} slots for provider $providerId',
-        tag: 'Booking',
-      );
-    } catch (e) {
-      slotsError = _mapError(e);
-      AppLogger.e('Failed to load slots', tag: 'Booking', error: e);
-    } finally {
-      slotsLoading = false;
-      notifyListeners();
-    }
-  }
-
-  /// Load next page of slots if available.
-  Future<void> loadMoreSlots({required String providerId}) async {
-    if (slotsLoading || slotsCursor == null || !slotsHasMore) return;
-    slotsLoading = true;
-    notifyListeners();
-    try {
-      final data = await _repo.listSlots(
-        providerId: providerId,
-        cursorStartsAtIso: slotsCursor,
-        limit: _pageSize,
-      );
-      slots.addAll(data);
-      if (data.isNotEmpty) {
-        slotsCursor = data.last.startsAtUtc.toUtc().toIso8601String();
-      }
-      slotsHasMore = data.length == _pageSize;
-    } catch (e) {
-      slotsError = _mapError(e);
-      AppLogger.e('Failed to load more slots', tag: 'Booking', error: e);
-    } finally {
-      slotsLoading = false;
-      notifyListeners();
-    }
-  }
-
-  /// Create a slot as provider (A4 button will call this later).
-  Future<SlotModel?> createSlot({
-    required DateTime startsAtUtc,
-    required DateTime endsAtUtc,
-    bool isBlocked = false,
-    String? providerIdForRefresh, // optional: refresh list after create
-  }) async {
-    try {
-      final slot = await _repo.createSlot(
-        startsAtUtc: startsAtUtc,
-        endsAtUtc: endsAtUtc,
-        isBlocked: isBlocked,
-      );
-      // Refresh first page if we are looking at the same provider
-      if (providerIdForRefresh != null) {
-        await loadSlots(providerId: providerIdForRefresh);
-      }
-      AppLogger.i('Created slot: ${slot.id}', tag: 'Booking');
-      return slot;
-    } catch (e) {
-      slotsError = _mapError(e);
-      AppLogger.e('Failed to create slot', tag: 'Booking', error: e);
-      notifyListeners();
-      return null;
-    }
-  }
-
-  /// Book a slot as client.
-  Future<BookingModel?> bookSlot({
-    required String taskId,
-    required String slotId,
-    required String providerId,
-    double? price,
-    String? note,
-    String? packageId,
-    Map<String, dynamic>? requirements,
-    BookingStatus status = BookingStatus.pending,
-  }) async {
-    try {
-      // Keep a view-model level fallback for unit-testable booking flows and
-      // future non-UI callers. UI may already provide the same default.
-      final effectivePrice = price ?? 100.0;
-      final b = await _repo.bookSlot(
-        taskId: taskId,
-        slotId: slotId,
-        note: note,
-        providerId: providerId,
-        price: effectivePrice,
-        packageId: packageId,
-        requirements: requirements,
-        status: status,
-      );
-      // Optimistically prepend to client list
-      bookingsAsClient.insert(0, b);
-      AppLogger.i('Booked slot ${b.id} for task $taskId', tag: 'Booking');
-      notifyListeners();
-      return b;
-    } catch (e) {
-      bookingsError = _mapError(e);
-      AppLogger.e('Failed to book slot', tag: 'Booking', error: e);
-      notifyListeners();
-      return null;
-    }
-  }
 
   /// Fetch a single booking by ID (for details screen/deep linking).
   Future<BookingModel?> getBookingById(String bookingId) async {
@@ -304,8 +217,14 @@ class BookingViewModel extends ChangeNotifier {
       // ✅ Refresh the booking to get updated payment_status
       await _refreshBookingInLists(bookingId);
       notifyListeners();
-    } catch (e) {
+    } catch (e, st) {
       bookingsError = _mapError(e);
+      AppLogger.e(
+        'Failed to hold escrow for booking $bookingId',
+        error: e,
+        stackTrace: st,
+        tag: 'Booking',
+      );
       notifyListeners();
     }
   }
@@ -359,8 +278,14 @@ class BookingViewModel extends ChangeNotifier {
       await _repo.releaseBookingWithFee(bookingId);
       // Optimistic update - refresh to get accurate state
       await _refreshBookingInLists(bookingId);
-    } catch (e) {
+    } catch (e, st) {
       bookingsError = _mapError(e);
+      AppLogger.e(
+        'Failed to release funds for booking $bookingId',
+        error: e,
+        stackTrace: st,
+        tag: 'Booking',
+      );
       notifyListeners();
     }
   }
@@ -372,8 +297,14 @@ class BookingViewModel extends ChangeNotifier {
         bookingId: bookingId,
         newStatus: BookingStatus.active,
       );
-    } catch (e) {
+    } catch (e, st) {
       bookingsError = _mapError(e);
+      AppLogger.e(
+        'Failed to accept booking $bookingId',
+        error: e,
+        stackTrace: st,
+        tag: 'Booking',
+      );
       notifyListeners();
     }
   }
@@ -383,15 +314,25 @@ class BookingViewModel extends ChangeNotifier {
   /// This operation is atomic at the database level via RPC to avoid race conditions.
   Future<void> declineBooking(String bookingId) async {
     try {
-      // The decline operation is now handled atomically by the repository/RPC
-      // which internally waits for payment status and processes the refund in one go
-      await _repo.declineBooking(bookingId);
+      final result = await _paymentService.declineAndRefundBooking(
+        bookingId: bookingId,
+        reason: 'Booking declined',
+      );
+      if (!result.isSuccess) {
+        throw Exception(result.error ?? 'Booking decline/refund failed');
+      }
 
       // Refresh the booking state to reflect the refund
       await _refreshBookingInLists(bookingId);
       notifyListeners();
-    } catch (e) {
+    } catch (e, st) {
       bookingsError = _mapError(e);
+      AppLogger.e(
+        'Failed to decline booking $bookingId',
+        error: e,
+        stackTrace: st,
+        tag: 'Booking',
+      );
       notifyListeners();
     }
   }
@@ -400,13 +341,16 @@ class BookingViewModel extends ChangeNotifier {
   Future<void> markDelivered(String bookingId) async {
     try {
       await _repo.markDelivered(bookingId);
-      // Optimistic update handled by updateBookingStatus underneath or manually
-      await updateBookingStatus(
-        bookingId: bookingId,
-        newStatus: BookingStatus.delivered,
-      );
-    } catch (e) {
+      await _refreshBookingInLists(bookingId);
+      notifyListeners();
+    } catch (e, st) {
       bookingsError = _mapError(e);
+      AppLogger.e(
+        'Failed to mark booking $bookingId as delivered',
+        error: e,
+        stackTrace: st,
+        tag: 'Booking',
+      );
       notifyListeners();
     }
   }
@@ -439,38 +383,6 @@ class BookingViewModel extends ChangeNotifier {
     } finally {
       _isProcessingPayment = false;
       notifyListeners();
-    }
-  }
-
-  /// Creates a pending/unpaid booking row before external payment initialization.
-  Future<BookingModel?> createBookingDraft({
-    required String taskId,
-    required String slotId,
-    required String providerId,
-    String? note,
-    required double price,
-    String? packageId,
-    Map<String, dynamic>? requirements,
-  }) async {
-    try {
-      final draft = await _repo.createBookingDraft(
-        taskId: taskId,
-        slotId: slotId,
-        providerId: providerId,
-        note: note,
-        price: price,
-        packageId: packageId,
-        requirements: requirements,
-        status: BookingStatus.pending,
-      );
-      bookingsAsClient.insert(0, draft);
-      notifyListeners();
-      return draft;
-    } catch (e) {
-      bookingsError = _mapError(e);
-      AppLogger.e('Failed to create booking draft', tag: 'Booking', error: e);
-      notifyListeners();
-      return null;
     }
   }
 
@@ -520,9 +432,50 @@ class BookingViewModel extends ChangeNotifier {
     );
   }
 
+  Future<QiCardCreatePaymentResult> createPaymentForBooking({
+    required String taskId,
+    String? note,
+    String? packageId,
+    Map<String, dynamic>? requirements,
+  }) async {
+    final result = await _paymentService.createPaymentForBooking(
+      taskId: taskId,
+      note: note,
+      packageId: packageId,
+      requirements: requirements,
+    );
+
+    if (!result.isSuccess) {
+      bookingsError = _mapServiceError(result.error);
+      notifyListeners();
+    }
+
+    return result;
+  }
+
+  Future<QiCardRecoveryResult> recoverBookingPayment({
+    required String bookingId,
+  }) async {
+    final result = await _paymentService.recoverBookingPayment(
+      bookingId: bookingId,
+    );
+
+    if (result.isSuccess) {
+      await _refreshBookingInLists(bookingId);
+      notifyListeners();
+    } else {
+      bookingsError = result.error;
+      notifyListeners();
+    }
+
+    return result;
+  }
+
   Future<void> loadBookingsAsClient() async {
     bookingsLoading = true;
     bookingsError = null;
+    clientBookingsLoading = true;
+    clientBookingsError = null;
     bookingsAsClient.clear();
     bookingsClientCursor = null;
     notifyListeners();
@@ -533,21 +486,30 @@ class BookingViewModel extends ChangeNotifier {
         bookingsClientCursor = data.last.createdAtUtc.toUtc().toIso8601String();
       }
       bookingsClientHasMore = data.length == _pageSize;
-    } catch (e) {
-      bookingsError = _mapError(e);
+    } catch (e, st) {
+      final message = _mapError(e);
+      bookingsError = message;
+      clientBookingsError = message;
+      AppLogger.e(
+        'Failed to load bookings as client',
+        error: e,
+        stackTrace: st,
+        tag: 'Booking',
+      );
     } finally {
       bookingsLoading = false;
+      clientBookingsLoading = false;
       notifyListeners();
     }
   }
 
   Future<void> loadMoreBookingsAsClient() async {
-    if (bookingsLoading ||
+    if (clientBookingsLoading ||
         bookingsClientCursor == null ||
         !bookingsClientHasMore) {
       return;
     }
-    bookingsLoading = true;
+    clientBookingsLoading = true;
     notifyListeners();
     try {
       final data = await _repo.listBookingsAsClient(
@@ -559,10 +521,18 @@ class BookingViewModel extends ChangeNotifier {
         bookingsClientCursor = data.last.createdAtUtc.toUtc().toIso8601String();
       }
       bookingsClientHasMore = data.length == _pageSize;
-    } catch (e) {
-      bookingsError = _mapError(e);
+    } catch (e, st) {
+      final message = _mapError(e);
+      bookingsError = message;
+      clientBookingsError = message;
+      AppLogger.e(
+        'Failed to load more bookings as client',
+        error: e,
+        stackTrace: st,
+        tag: 'Booking',
+      );
     } finally {
-      bookingsLoading = false;
+      clientBookingsLoading = false;
       notifyListeners();
     }
   }
@@ -570,6 +540,8 @@ class BookingViewModel extends ChangeNotifier {
   Future<void> loadBookingsAsProvider() async {
     bookingsLoading = true;
     bookingsError = null;
+    providerBookingsLoading = true;
+    providerBookingsError = null;
     bookingsAsProvider.clear();
     bookingsProviderCursor = null;
     notifyListeners();
@@ -582,21 +554,30 @@ class BookingViewModel extends ChangeNotifier {
             .toIso8601String();
       }
       bookingsProviderHasMore = data.length == _pageSize;
-    } catch (e) {
-      bookingsError = _mapError(e);
+    } catch (e, st) {
+      final message = _mapError(e);
+      bookingsError = message;
+      providerBookingsError = message;
+      AppLogger.e(
+        'Failed to load bookings as provider',
+        error: e,
+        stackTrace: st,
+        tag: 'Booking',
+      );
     } finally {
       bookingsLoading = false;
+      providerBookingsLoading = false;
       notifyListeners();
     }
   }
 
   Future<void> loadMoreBookingsAsProvider() async {
-    if (bookingsLoading ||
+    if (providerBookingsLoading ||
         bookingsProviderCursor == null ||
         !bookingsProviderHasMore) {
       return;
     }
-    bookingsLoading = true;
+    providerBookingsLoading = true;
     notifyListeners();
     try {
       final data = await _repo.listBookingsAsProvider(
@@ -610,10 +591,18 @@ class BookingViewModel extends ChangeNotifier {
             .toIso8601String();
       }
       bookingsProviderHasMore = data.length == _pageSize;
-    } catch (e) {
-      bookingsError = _mapError(e);
+    } catch (e, st) {
+      final message = _mapError(e);
+      bookingsError = message;
+      providerBookingsError = message;
+      AppLogger.e(
+        'Failed to load more bookings as provider',
+        error: e,
+        stackTrace: st,
+        tag: 'Booking',
+      );
     } finally {
-      bookingsLoading = false;
+      providerBookingsLoading = false;
       notifyListeners();
     }
   }
@@ -634,8 +623,14 @@ class BookingViewModel extends ChangeNotifier {
       if (idx != -1) bookingsAsProvider[idx] = updated;
       notifyListeners();
       return true;
-    } catch (e) {
+    } catch (e, st) {
       bookingsError = _mapError(e);
+      AppLogger.e(
+        'Failed to update booking $bookingId status to $newStatus',
+        error: e,
+        stackTrace: st,
+        tag: 'Booking',
+      );
       notifyListeners();
       return false;
     }
@@ -669,8 +664,14 @@ class BookingViewModel extends ChangeNotifier {
       );
 
       return conversation;
-    } catch (e) {
+    } catch (e, st) {
       bookingsError = _mapError(e);
+      AppLogger.e(
+        'Failed to contact provider for booking ${booking.id}',
+        error: e,
+        stackTrace: st,
+        tag: 'Booking',
+      );
       notifyListeners();
       return null;
     } finally {

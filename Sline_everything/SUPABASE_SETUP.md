@@ -534,6 +534,11 @@ Client bookings on provider slots.
 | `price`                 | numeric             | ✅       | `0`                 | Agreed price             |
 | `package_id`            | text                | ✅       | -                   | Chosen package ID        |
 | `requirements`          | jsonb               | ✅       | `'{}'`              | Client requirements      |
+| `payment_request_id`    | text                | ✅       | -                   | Server-side QiCard request id |
+| `payment_gateway_id`    | text                | ✅       | -                   | QiCard payment id        |
+| `payment_correlation_id`| text                | ✅       | -                   | Canonical booking correlation |
+| `payment_expires_at`    | timestamptz         | ✅       | -                   | Payment session expiry   |
+| `payment_recovered_at`  | timestamptz         | ✅       | -                   | Last successful reconciliation |
 | `note`                  | text                | ✅       | -                   | Booking notes            |
 | `delivered_at`          | timestamptz         | ✅       | -                   | When work was submitted  |
 | `review_expires_at`     | timestamptz         | ✅       | -                   | Auto-approval deadline   |
@@ -1417,6 +1422,19 @@ The core orchestration function for the double-entry system.
   - `escrow_hold`: DR Client Available, CR platform_escrow.
   - `release_with_fee`: DR platform_escrow, CR Provider Available, CR system_revenue.
   - `refund`: DR platform_escrow, CR Client Available.
+
+#### Booking remediation RPCs / functions (2026-02-28)
+
+- `rpc_create_booking_draft_validated(...) -> bookings`
+  - Validates slot/task/provider consistency and derives canonical `bookings.price` on the server.
+- `rpc_finalize_booking_refund(...) -> bookings`
+  - Finalizes terminal refunded booking state after a successful server-side refund.
+- Edge functions:
+  - `qicard_payment_create`
+  - `qicard_payment_recovery`
+  - `booking_decline_refund`
+- Booking webhook:
+  - `qicard_webhook_handler` must reject unsigned payloads unless explicit local-dev override is enabled.
 
 #### `fn_wallet_transactions_freeze()` (v2.16)
 

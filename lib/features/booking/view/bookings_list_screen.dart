@@ -58,16 +58,16 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
           children: [
             _BookingsListView(
               items: vm.bookingsAsClient,
-              loading: vm.bookingsLoading,
-              error: vm.bookingsError,
+              loading: vm.clientBookingsLoading,
+              error: vm.clientBookingsError,
               filter: _filter,
               onFilterChanged: (v) => setState(() => _filter = v),
               hasMore: vm.bookingsClientHasMore,
             ),
             _BookingsListView(
               items: vm.bookingsAsProvider,
-              loading: vm.bookingsLoading,
-              error: vm.bookingsError,
+              loading: vm.providerBookingsLoading,
+              error: vm.providerBookingsError,
               filter: _filter,
               onFilterChanged: (v) => setState(() => _filter = v),
               asProvider: true,

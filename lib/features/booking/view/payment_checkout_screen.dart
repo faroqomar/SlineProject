@@ -3,81 +3,93 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/features/booking/view/payment_webview_screen.dart';
-import '../viewmodels/booking_view_model.dart';
+import 'package:sline_app/features/booking/viewmodels/booking_view_model.dart';
 
-/// Payment Checkout Screen — appears after user selects a slot.
-///
-/// Shows booking summary + test card form. On "Pay Now":
-/// 1. Processes payment via DemoPaymentService (2s simulated delay)
-/// 2. Creates booking with pending status
-/// 3. Calls escrowHoldBooking to lock funds in ledger
-/// 4. Returns success/failure to caller
+/// Payment Checkout Screen — direct booking purchase without slot selection.
 class PaymentCheckoutScreen extends StatefulWidget {
   const PaymentCheckoutScreen({
     super.key,
-    required this.slotId,
     required this.providerId,
     required this.taskId,
-    required this.startUtc,
-    required this.endUtc,
+    required this.taskTitle,
     required this.price,
-    this.note,
     this.packageTier,
-    this.packagePrice,
     this.packageData,
+    this.deliveryDays,
+    this.taskDeadline,
   });
 
-  final String slotId;
   final String providerId;
   final String taskId;
-  final DateTime startUtc;
-  final DateTime endUtc;
+  final String taskTitle;
   final double price;
-  final String? note;
   final String? packageTier;
-  final String? packagePrice;
   final Map<String, dynamic>? packageData;
+  final int? deliveryDays;
+  final DateTime? taskDeadline;
 
   @override
   State<PaymentCheckoutScreen> createState() => _PaymentCheckoutScreenState();
 }
 
 class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
-  // Pre-filled test card values
   final _cardNumberCtrl = TextEditingController(text: '4242 4242 4242 4242');
   final _expiryCtrl = TextEditingController(text: '12/28');
   final _cvvCtrl = TextEditingController(text: '123');
   final _nameCtrl = TextEditingController(text: 'Test User');
+  final _noteCtrl = TextEditingController();
 
   bool _processing = false;
   String? _error;
   bool _paymentSuccess = false;
   bool _awaitingGatewayConfirmation = false;
-  bool _isPollingGatewayResult = false;
-  final bool _paymentFlowInProgress = false;
+  bool _paymentFlowInProgress = false;
   String? _draftBookingId;
   BookingViewModel? _vm;
   Timer? _orphanDraftTimer;
+
+  Set<String> get _callbackHosts {
+    final hosts = <String>{'sline.app'};
+    final configuredFinishUrl = String.fromEnvironment(
+      'QICARD_FINISH_URL',
+      defaultValue: 'https://sline.app/payment/success',
+    );
+    final configuredHost = Uri.tryParse(
+      configuredFinishUrl,
+    )?.host.toLowerCase();
+    if (configuredHost != null && configuredHost.isNotEmpty) {
+      hosts.add(configuredHost);
+    }
+    return hosts;
+  }
+
+  DateTime? get _estimatedDueAt {
+    if (widget.deliveryDays != null) {
+      return DateTime.now().toUtc().add(Duration(days: widget.deliveryDays!));
+    }
+    return widget.taskDeadline?.toUtc();
+  }
+
+  String? get _trimmedNote {
+    final note = _noteCtrl.text.trim();
+    return note.isEmpty ? null : note;
+  }
 
   @override
   void dispose() {
     _orphanDraftTimer?.cancel();
     final draftBookingId = _draftBookingId;
-    // Only cancel draft if:
-    // 1. Payment was not successful AND
-    // 2. No payment flow is in progress (user abandoned before starting) AND
-    // 3. Not awaiting gateway confirmation (payment is being processed)
-    // If payment is in progress, let the 30-min orphan timer handle cleanup
-    if (!_paymentSuccess && 
-        !_paymentFlowInProgress && 
-        !_awaitingGatewayConfirmation && 
-        draftBookingId != null && 
+    if (!_paymentSuccess &&
+        !_paymentFlowInProgress &&
+        !_awaitingGatewayConfirmation &&
+        draftBookingId != null &&
         _vm != null) {
       unawaited(_vm!.cancelBookingDraftIfUnpaid(draftBookingId));
     }
@@ -85,112 +97,116 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
     _expiryCtrl.dispose();
     _cvvCtrl.dispose();
     _nameCtrl.dispose();
+    _noteCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _cancelDraftIfPossible(String bookingId) async {
     _orphanDraftTimer?.cancel();
     _orphanDraftTimer = null;
+    AppLogger.i(
+      'Attempting to cancel unpaid booking draft booking=$bookingId',
+      tag: 'Payment',
+    );
     final vm = context.read<BookingViewModel>();
     _vm = vm;
     await vm.cancelBookingDraftIfUnpaid(bookingId);
-  }
-
-  Future<void> _waitForGatewayConfirmation(String bookingId) async {
-    if (_isPollingGatewayResult) return;
-    _isPollingGatewayResult = true;
-    final vm = context.read<BookingViewModel>();
-
-    setState(() {
-      _processing = true;
-      _awaitingGatewayConfirmation = true;
-      _error = null;
-    });
-
-    final held = await vm.waitForBookingPaymentHeld(bookingId: bookingId);
-    _isPollingGatewayResult = false;
-
-    if (!mounted) return;
-    if (held) {
-      _orphanDraftTimer?.cancel();
-      _orphanDraftTimer = null;
-      setState(() {
-        _processing = false;
-        _awaitingGatewayConfirmation = false;
-        _paymentSuccess = true;
-      });
-      await Future.delayed(const Duration(milliseconds: 1200));
-      if (!mounted) return;
-      Navigator.of(context).pop(true);
-      return;
-    }
-
-    setState(() {
-      _processing = false;
-      _awaitingGatewayConfirmation = false;
-      _error = 'Payment still processing. Please check booking status shortly.';
-    });
   }
 
   Future<void> _processPayment() async {
     setState(() {
       _processing = true;
       _error = null;
+      _paymentFlowInProgress = true;
     });
 
     final vm = context.read<BookingViewModel>();
+    AppLogger.i(
+      'Starting booking checkout task=${widget.taskId} package=${widget.packageTier ?? 'none'}',
+      tag: 'Payment',
+      json: <String, dynamic>{
+        'task_id': widget.taskId,
+        'provider_id': widget.providerId,
+        'package_id': widget.packageTier,
+        'delivery_days': widget.deliveryDays,
+        'task_deadline': widget.taskDeadline?.toUtc().toIso8601String(),
+        'has_note': _trimmedNote != null,
+      },
+    );
 
     try {
-      // Step 1: Create draft booking (pending/unpaid) before payment init.
-      final draft = await vm.createBookingDraft(
+      final createResult = await vm.createPaymentForBooking(
         taskId: widget.taskId,
-        slotId: widget.slotId,
-        providerId: widget.providerId,
-        note: widget.note,
-        price: widget.price,
+        note: _trimmedNote,
         packageId: widget.packageTier,
         requirements: widget.packageData,
       );
 
-      if (draft == null) {
+      if (!createResult.isSuccess || createResult.bookingId == null) {
+        AppLogger.w(
+          'Booking payment draft creation failed for task=${widget.taskId}',
+          tag: 'Payment',
+          error:
+              createResult.error ??
+              vm.bookingsError ??
+              'BOOKING_PAYMENT_CREATE_FAILED',
+        );
         setState(() {
-          _error = vm.bookingsError ?? 'Failed to create booking draft.';
+          _error =
+              createResult.error ??
+              vm.bookingsError ??
+              'Failed to create booking payment.';
           _processing = false;
+          _paymentFlowInProgress = false;
         });
         return;
       }
 
-      _draftBookingId = draft.id;
+      _draftBookingId = createResult.bookingId;
       _orphanDraftTimer?.cancel();
       _orphanDraftTimer = Timer(const Duration(minutes: 30), () {
         if (!mounted) return;
-        unawaited(_cancelDraftIfPossible(draft.id));
+        unawaited(_cancelDraftIfPossible(createResult.bookingId!));
       });
 
-      // Step 2: Initiate QiCard payment (form URL path).
-      final initResult = await vm.initiateQiCardPayment(
-        amount: widget.price,
-        bookingId: draft.id,
-        description:
-            'Booking: ${widget.packageTier ?? 'Service'} — ${widget.price} IQD',
-      );
-
-      if (initResult.isSuccess && initResult.formUrl != null) {
-        final uri = Uri.tryParse(initResult.formUrl!);
+      if (createResult.formUrl != null) {
+        final uri = Uri.tryParse(createResult.formUrl!);
         if (uri == null) {
-          await _cancelDraftIfPossible(draft.id);
+          AppLogger.w(
+            'Booking payment provider returned an invalid URL for booking=${createResult.bookingId}',
+            tag: 'Payment',
+            error: createResult.formUrl,
+          );
+          await _cancelDraftIfPossible(createResult.bookingId!);
           setState(() {
             _error = 'Payment provider returned an invalid URL.';
             _processing = false;
+            _paymentFlowInProgress = false;
           });
           return;
         }
+        AppLogger.i(
+          'Opening payment webview for booking=${createResult.bookingId}',
+          tag: 'Payment',
+          json: <String, dynamic>{
+            'booking_id': createResult.bookingId,
+            'correlation_id': createResult.correlationId,
+            'callback_hosts': _callbackHosts.toList(),
+          },
+        );
+        setState(() {
+          _awaitingGatewayConfirmation = true;
+        });
         if (!mounted) return;
         final webViewResult = await Navigator.of(context)
             .push<PaymentWebViewResult>(
               MaterialPageRoute(
-                builder: (_) =>
-                    PaymentWebViewScreen(initialUrl: uri.toString()),
+                builder: (_) => PaymentWebViewScreen(
+                  initialUrl: uri.toString(),
+                  callbackHosts: _callbackHosts,
+                  expectedBookingId: createResult.bookingId,
+                  expectedCorrelationId: createResult.correlationId,
+                ),
               ),
             );
 
@@ -199,75 +215,106 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
         if (resultStatus == 'FAILED' ||
             resultStatus == 'CANCELED' ||
             resultStatus == 'CANCELLED') {
-          await _cancelDraftIfPossible(draft.id);
+          AppLogger.w(
+            'Payment webview returned a non-success status for booking=${createResult.bookingId}',
+            tag: 'Payment',
+            error: resultStatus,
+          );
+          await _cancelDraftIfPossible(createResult.bookingId!);
           setState(() {
             _error = 'Payment was not completed. Please try again.';
             _processing = false;
             _awaitingGatewayConfirmation = false;
+            _paymentFlowInProgress = false;
           });
           return;
         }
 
         AppLogger.i(
-          'QiCard payment return received booking=${draft.id} paymentId=${webViewResult?.paymentId ?? initResult.paymentId} requestId=${initResult.requestId} status=$resultStatus',
+          'QiCard payment return received booking=${createResult.bookingId} '
+          'paymentId=${webViewResult?.paymentId} '
+          'correlation=${webViewResult?.correlationId ?? createResult.correlationId} '
+          'status=$resultStatus',
           tag: 'QiCard',
         );
 
-        final paymentId = initResult.paymentId;
-        final requestId = initResult.requestId;
-        if (paymentId != null && requestId != null) {
-          await vm.triggerQiCardSuccessRecovery(
-            bookingId: draft.id,
-            paymentId: paymentId,
-            requestId: requestId,
-            amount: widget.price,
+        final recovery = await vm.recoverBookingPayment(
+          bookingId: createResult.bookingId!,
+        );
+        if (!mounted) return;
+
+        if (!recovery.isSuccess) {
+          AppLogger.w(
+            'Booking recovery failed after gateway return for booking=${createResult.bookingId}',
+            tag: 'Payment',
+            error: recovery.error ?? 'BOOKING_PAYMENT_RECOVERY_FAILED',
           );
+          setState(() {
+            _error =
+                recovery.error ??
+                'Payment return was received, but booking recovery failed.';
+            _processing = false;
+            _awaitingGatewayConfirmation = false;
+            _paymentFlowInProgress = false;
+          });
+          return;
         }
 
-        setState(() {
-          _awaitingGatewayConfirmation = true;
-        });
-        await _waitForGatewayConfirmation(draft.id);
-        return;
-      }
+        if (recovery.paymentStatus == 'held') {
+          AppLogger.i(
+            'Booking payment completed successfully for booking=${createResult.bookingId}',
+            tag: 'Payment',
+          );
+          _orphanDraftTimer?.cancel();
+          _orphanDraftTimer = null;
+          setState(() {
+            _processing = false;
+            _awaitingGatewayConfirmation = false;
+            _paymentSuccess = true;
+            _paymentFlowInProgress = false;
+          });
+          await Future.delayed(const Duration(milliseconds: 1200));
+          if (!mounted) return;
+          Navigator.of(context).pop(true);
+          return;
+        }
 
-      // Step 3 (fallback): only for explicit demo mode signal.
-      if (initResult.errorCode != 'DEMO_MODE_LEGACY_FLOW') {
-        await _cancelDraftIfPossible(draft.id);
+        AppLogger.w(
+          'Booking recovery returned a non-held status for booking=${createResult.bookingId}',
+          tag: 'Payment',
+          error: recovery.paymentStatus ?? 'UNKNOWN_PAYMENT_STATUS',
+        );
         setState(() {
           _error =
-              initResult.error ??
-              'Payment could not be started. Please try again.';
+              recovery.error ??
+              'Payment recovery completed but payment status is not held. Please contact support.';
           _processing = false;
+          _awaitingGatewayConfirmation = false;
+          _paymentFlowInProgress = false;
         });
         return;
       }
 
-      await _cancelDraftIfPossible(draft.id);
+      AppLogger.w(
+        'Booking payment draft was created without a form URL for booking=${createResult.bookingId}',
+        tag: 'Payment',
+      );
+      await _cancelDraftIfPossible(createResult.bookingId!);
       setState(() {
-        _error =
-            'QiCard gateway is not enabled in this build. '
-            'Please run with USE_QICARD_PAYMENT=true and valid QiCard credentials.';
+        _error = 'Payment could not be started. Please try again.';
         _processing = false;
+        _paymentFlowInProgress = false;
       });
-      return;
     } catch (e) {
       AppLogger.e('Payment flow failed', error: e, tag: 'Payment');
       if (!mounted) return;
       setState(() {
         _error = vm.bookingsError ?? 'Payment failed. Please try again.';
         _processing = false;
+        _awaitingGatewayConfirmation = false;
+        _paymentFlowInProgress = false;
       });
     }
-  }
-
-  String _fmtRange(DateTime startUtc, DateTime endUtc) {
-    final s = startUtc.toLocal();
-    final e = endUtc.toLocal();
-    String two(int n) => n.toString().padLeft(2, '0');
-    String ymd(DateTime d) => '${d.year}-${two(d.month)}-${two(d.day)}';
-    String hm(DateTime d) => '${two(d.hour)}:${two(d.minute)}';
-    return '${ymd(s)} · ${hm(s)} → ${hm(e)}';
   }
 
   @override
@@ -324,13 +371,13 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
   Widget _buildForm(AppColorScheme cs) {
     final vm = context.read<BookingViewModel>();
     final isDemoMode = vm.paymentServiceType == 'DemoPaymentService';
+    final estimatedDueAt = _estimatedDueAt;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimens.p20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ─── Order Summary ────────────────────
           Container(
             padding: const EdgeInsets.all(AppDimens.p16),
             decoration: BoxDecoration(
@@ -346,20 +393,18 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
                   style: AppTypography.h4.copyWith(color: cs.text),
                 ),
                 const SizedBox(height: AppDimens.p12),
-                _summaryRow('Service', widget.packageTier ?? 'Booking', cs),
-                const SizedBox(height: AppDimens.p8),
-                _summaryRow(
-                  'Schedule',
-                  _fmtRange(widget.startUtc, widget.endUtc),
-                  cs,
-                ),
-                if (widget.packageData?['delivery'] != null) ...[
+                _summaryRow('Service', widget.taskTitle, cs),
+                if (widget.packageTier != null) ...[
                   const SizedBox(height: AppDimens.p8),
-                  _summaryRow(
-                    'Delivery',
-                    '${widget.packageData!['delivery']} days',
-                    cs,
-                  ),
+                  _summaryRow('Package', widget.packageTier!, cs),
+                ],
+                if (widget.deliveryDays != null) ...[
+                  const SizedBox(height: AppDimens.p8),
+                  _summaryRow('Delivery', '${widget.deliveryDays} days', cs),
+                ],
+                if (estimatedDueAt != null) ...[
+                  const SizedBox(height: AppDimens.p8),
+                  _summaryRow('Due', formatUtcToLocal(estimatedDueAt), cs),
                 ],
                 const Divider(height: 24),
                 Row(
@@ -382,9 +427,40 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
             ),
           ),
 
+          const SizedBox(height: AppDimens.p20),
+
+          Text(
+            'Booking Note',
+            style: AppTypography.h4.copyWith(color: cs.text),
+          ),
+          const SizedBox(height: AppDimens.p8),
+          TextField(
+            controller: _noteCtrl,
+            maxLines: 4,
+            minLines: 3,
+            style: TextStyle(color: cs.text),
+            decoration: InputDecoration(
+              hintText: 'Add requirements or extra details for the provider',
+              hintStyle: TextStyle(color: cs.textSecondary),
+              filled: true,
+              fillColor: cs.cardBackground,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppDimens.r12),
+                borderSide: BorderSide(color: cs.text.withValues(alpha: 0.1)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppDimens.r12),
+                borderSide: BorderSide(color: cs.text.withValues(alpha: 0.1)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppDimens.r12),
+                borderSide: BorderSide(color: AppColors.teal, width: 1.5),
+              ),
+            ),
+          ),
+
           const SizedBox(height: AppDimens.p24),
 
-          // ─── Payment Details ──────────────────
           Text(
             'Payment Details',
             style: AppTypography.h4.copyWith(color: cs.text),
@@ -399,7 +475,6 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
               ),
             ),
             const SizedBox(height: AppDimens.p16),
-
             _buildCardField(
               controller: _cardNumberCtrl,
               label: 'Card Number',
@@ -471,8 +546,6 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
               ),
             ),
           ],
-
-          // Error message
           if (_error != null) ...[
             const SizedBox(height: AppDimens.p16),
             Container(
@@ -501,7 +574,6 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
               ),
             ),
           ],
-
           if (_awaitingGatewayConfirmation) ...[
             const SizedBox(height: AppDimens.p12),
             Text(
@@ -512,10 +584,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
               ),
             ),
           ],
-
           const SizedBox(height: AppDimens.p24),
-
-          // ─── Pay Button ───────────────────────
           SizedBox(
             width: double.infinity,
             height: 52,
@@ -540,7 +609,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
                             color: Colors.white,
                           ),
                         ),
-                        SizedBox(width: 12),
+                        const SizedBox(width: 12),
                         Text(
                           _awaitingGatewayConfirmation
                               ? 'Waiting for confirmation...'
@@ -563,10 +632,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
                     ),
             ),
           ),
-
           const SizedBox(height: AppDimens.p12),
-
-          // Security badge
           Center(
             child: Row(
               mainAxisSize: MainAxisSize.min,

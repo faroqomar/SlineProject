@@ -1989,10 +1989,19 @@ Key design choices:
 | `task_id`     | `uuid` (FK → `tasks.id`)              | Linked task context            | ON DELETE CASCADE                              |
 | `provider_id` | `uuid` (FK → `profiles.id`)           | Provider receiving the booking | Scopes provider views                          |
 | `client_id`   | `uuid` (FK → `profiles.id`)           | Client making the booking      | Must equal `auth.uid()` on insert (RLS)        |
-| `slot_id`     | `uuid` (FK → `availability_slots.id`) | The reserved slot              | Unique while status in ('pending','confirmed') |
+| `slot_id`     | `uuid` (FK → `availability_slots.id`) | The reserved slot              | Nullable in live DB; server validates occupancy |
 | `status`      | `booking_status_enum`                 | Lifecycle                      | Default `pending`                              |
+| `payment_status` | `payment_status_enum`              | Payment lifecycle              | Default `unpaid`; held by webhook/recovery     |
+| `price`       | `numeric`                             | Canonical booking amount       | Server maps `price -> p_amount_gross`          |
+| `package_id`  | `text`                                | Selected package tier          | Optional                                       |
+| `requirements`| `jsonb`                               | Client-provided requirements   | Optional                                       |
 | `note`        | `text`                                | Optional message               | Nullable                                       |
 | `created_at`  | `timestamptz`                         | Audit timestamp                | Default `now()` (UTC)                          |
+| `payment_request_id` | `text`                         | Server-side QiCard request id  | Nullable, remediation-added                    |
+| `payment_gateway_id` | `text`                         | QiCard payment id              | Nullable, remediation-added                    |
+| `payment_correlation_id` | `text`                     | Canonical booking correlation  | Nullable, remediation-added                    |
+| `payment_expires_at` | `timestamptz`                   | Payment session expiry         | Nullable, remediation-added                    |
+| `payment_recovered_at` | `timestamptz`                 | Last successful reconciliation | Nullable, remediation-added                    |
 
 2.2 Enums
 
@@ -2126,10 +2135,10 @@ final rows = await supabase
 
 The booking flow requires payment (escrow hold) before the booking is confirmed. Two modes:
 
-- **QiCard (default)**: Draft → initiatePayment (QiCard API) → open formUrl in WebView → user completes 3DS → deep-link `sline://payment/finish` or recovery polling → webhook sets `payment_status=held` via `gateway_escrow` → client waits for held then creates/confirms booking.
+- **QiCard (default)**: `qicard_payment_create` creates the validated draft server-side and starts the QiCard session → app opens `form_url` in WebView → user completes 3DS → trusted callback returns to the app → `qicard_payment_recovery` resolves the caller’s own booking if the webhook was delayed → webhook or recovery records `payment_status=held` via `gateway_escrow` and promotes the booking to `paid_request_pending`.
 - **Demo**: Legacy flow: process payment via `DemoPaymentService`, then create booking with escrow.
 
-Steps (QiCard): (1) Select slot in `AvailabilityScreen`. (2) `BookingSheet` returns `BookingSheetResult`. (3) Parent pushes `PaymentCheckoutScreen`. (4) ViewModel creates booking draft, calls `initiatePayment()` → gets formUrl → opens `PaymentWebViewScreen`. (5) On success (deep-link or polling), webhook runs; when `payment_status=held`, checkout completes and booking is confirmed. Orphan drafts are cancelled on failure or timeout.
+Steps (QiCard): (1) Select slot in `AvailabilityScreen`. (2) `BookingSheet` returns `BookingSheetResult`. (3) Parent pushes `PaymentCheckoutScreen`. (4) ViewModel calls `QiCardPaymentService.createPaymentForBooking()`, which invokes the server-backed `qicard_payment_create` edge function; the server validates task/slot/provider/price and returns a draft booking plus `form_url`. (5) `PaymentWebViewScreen` only accepts trusted callback hosts and matching booking/correlation query parameters. (6) On success return, `qicard_payment_recovery` resolves the booking if needed; webhook and recovery share idempotent hold recording. Orphan drafts are cancelled on failure or timeout.
 
 Dart (Service - `bookSlot`):
 

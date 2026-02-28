@@ -9,7 +9,7 @@ class BookingModel {
   final String? taskId;
   final String providerId;
   final String clientId;
-  final String slotId;
+  final String? slotId;
   final BookingStatus status;
   final PaymentStatus paymentStatus;
   final String? note;
@@ -17,7 +17,9 @@ class BookingModel {
   final String? packageId;
   final Map<String, dynamic>? requirements;
   final DateTime createdAtUtc;
-  final DateTime? scheduledAt; // Derived from availability_slots.starts_at
+  final DateTime? dueAtUtc;
+  final int? deliveryDays;
+  final DateTime? scheduledAt; // Legacy fallback for historical slot-based rows
   final DateTime? completedAt; // Auto-set when status changes to 'completed'
   final Map<String, dynamic>? taskData; // Joined task data
 
@@ -34,6 +36,8 @@ class BookingModel {
     this.packageId,
     this.requirements,
     required this.createdAtUtc,
+    this.dueAtUtc,
+    this.deliveryDays,
     this.scheduledAt,
     this.completedAt,
     this.taskData,
@@ -45,9 +49,7 @@ class BookingModel {
       taskId: json['task_id'] as String?,
       providerId: json['provider_id'] as String,
       clientId: json['client_id'] as String,
-      slotId:
-          json['slot_id'] as String? ??
-          '00000000-0000-0000-0000-000000000000', // Handle null slot_id
+      slotId: json['slot_id'] as String?,
       status: _mapDbStatusToEnum(json['status'] as String),
       paymentStatus: _mapDbPaymentStatusToEnum(
         json['payment_status'] as String?,
@@ -57,6 +59,14 @@ class BookingModel {
       packageId: json['package_id'] as String?,
       requirements: json['requirements'] as Map<String, dynamic>?,
       createdAtUtc: DateTime.parse(json['created_at'] as String).toUtc(),
+      dueAtUtc: json['due_at'] != null
+          ? DateTime.parse(json['due_at'] as String).toUtc()
+          : (json['availability_slots']?['starts_at'] != null
+                ? DateTime.parse(
+                    json['availability_slots']['starts_at'] as String,
+                  ).toUtc()
+                : null),
+      deliveryDays: (json['delivery_days'] as num?)?.toInt(),
       scheduledAt: json['availability_slots']?['starts_at'] != null
           ? DateTime.parse(
               json['availability_slots']['starts_at'] as String,
@@ -83,6 +93,8 @@ class BookingModel {
       'package_id': packageId,
       'requirements': requirements,
       'created_at': createdAtUtc.toUtc().toIso8601String(),
+      'due_at': dueAtUtc?.toUtc().toIso8601String(),
+      'delivery_days': deliveryDays,
     };
   }
 
@@ -99,6 +111,8 @@ class BookingModel {
     String? packageId,
     Map<String, dynamic>? requirements,
     DateTime? createdAtUtc,
+    DateTime? dueAtUtc,
+    int? deliveryDays,
     DateTime? scheduledAt,
     DateTime? completedAt,
     Map<String, dynamic>? taskData,
@@ -116,6 +130,8 @@ class BookingModel {
       packageId: packageId ?? this.packageId,
       requirements: requirements ?? this.requirements,
       createdAtUtc: createdAtUtc ?? this.createdAtUtc,
+      dueAtUtc: dueAtUtc ?? this.dueAtUtc,
+      deliveryDays: deliveryDays ?? this.deliveryDays,
       scheduledAt: scheduledAt ?? this.scheduledAt,
       completedAt: completedAt ?? this.completedAt,
       taskData: taskData ?? this.taskData,

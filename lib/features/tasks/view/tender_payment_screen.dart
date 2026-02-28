@@ -4,14 +4,13 @@ import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/services/qicard_payment_service.dart';
 import 'package:sline_app/features/tasks/services/task_service.dart';
-import 'package:sline_app/features/booking/view/payment_webview_screen.dart';
 
 /// Payment screen for completing payment on an awarded tender.
 ///
 /// Flow:
 /// 1. Client awards freelancer (creates "Awarded - Pending Payment")
 /// 2. Client opens this screen via "Pay Now" button
-/// 3. Client completes payment via QiCard gateway
+/// 3. Client confirms payment through the generic payment service
 /// 4. On success, escrow is held and work becomes ACTIVE
 class TenderPaymentScreen extends StatefulWidget {
   const TenderPaymentScreen({
@@ -50,12 +49,16 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
     _taskService = TaskService();
   }
 
-  Duration get _timeRemaining => widget.paymentDeadline.difference(DateTime.now());
+  Duration get _timeRemaining =>
+      widget.paymentDeadline.difference(DateTime.now());
   bool get _isExpired => _timeRemaining.isNegative;
 
   Future<void> _processPayment() async {
     if (_isExpired) {
-      setState(() => _errorMessage = 'Payment deadline expired. Award has been cancelled.');
+      setState(
+        () => _errorMessage =
+            'Payment deadline expired. Award has been cancelled.',
+      );
       return;
     }
 
@@ -65,37 +68,14 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
     });
 
     try {
-      // Step 1: Initiate payment with QiCard gateway
-      final paymentResult = await _paymentService.initiatePayment(
+      // Step 1: Run the non-booking payment confirmation flow.
+      await _paymentService.processPayment(
         amount: widget.amount,
         currency: 'IQD',
-        bookingId: widget.requestId, // Using requestId as bookingId for tender
-        clientId: widget.clientId,
         description: 'Payment for "${widget.taskTitle}"',
       );
 
-      if (!paymentResult.isSuccess || paymentResult.formUrl == null) {
-        throw Exception(paymentResult.error ?? 'Failed to initiate payment');
-      }
-
-      // Step 2: Open WebView for external payment (QiCard)
-      final webViewResult = await Navigator.of(context).push<PaymentWebViewResult>(
-        MaterialPageRoute(
-          builder: (_) => PaymentWebViewScreen(initialUrl: paymentResult.formUrl!),
-        ),
-      );
-
-      if (webViewResult == null || webViewResult.status != 'SUCCESS') {
-        setState(() {
-          _isProcessing = false;
-          _errorMessage = webViewResult?.status == 'CANCELED'
-              ? 'Payment was cancelled.'
-              : 'Payment was not completed. Please try again.';
-        });
-        return;
-      }
-
-      // Step 3: Complete the payment (create escrow + activate work)
+      // Step 2: Complete the payment (create escrow + activate work)
       final result = await _taskService.payAwardedOffer(widget.requestId);
 
       if (result['success'] == true) {
@@ -150,10 +130,14 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
               Container(
                 padding: const EdgeInsets.all(AppDimens.p12),
                 decoration: BoxDecoration(
-                  color: _isExpired ? Colors.red.shade50 : Colors.orange.shade50,
+                  color: _isExpired
+                      ? Colors.red.shade50
+                      : Colors.orange.shade50,
                   borderRadius: BorderRadius.circular(AppDimens.r12),
                   border: Border.all(
-                    color: _isExpired ? Colors.red.shade200 : Colors.orange.shade200,
+                    color: _isExpired
+                        ? Colors.red.shade200
+                        : Colors.orange.shade200,
                   ),
                 ),
                 child: Row(
@@ -168,10 +152,14 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _isExpired ? 'Payment Deadline Expired' : 'Payment Required',
+                            _isExpired
+                                ? 'Payment Deadline Expired'
+                                : 'Payment Required',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: _isExpired ? Colors.red : Colors.orange.shade800,
+                              color: _isExpired
+                                  ? Colors.red
+                                  : Colors.orange.shade800,
                             ),
                           ),
                           if (!_isExpired)
@@ -194,9 +182,9 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
               // Order summary
               Text(
                 'Order Summary',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: AppDimens.p16),
 
@@ -213,9 +201,9 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
               // Payment method
               Text(
                 'Payment Method',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: AppDimens.p12),
 
@@ -224,22 +212,24 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
                 decoration: BoxDecoration(
                   color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(AppDimens.r12),
-                  border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
+                  border: Border.all(
+                    color: colorScheme.outline.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Row(
                   children: [
                     Icon(Icons.credit_card, color: colorScheme.primary),
                     const SizedBox(width: AppDimens.p12),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'QiCard / Credit Card',
+                            'Card Payment',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                           Text(
-                            'Secure payment via QiCard gateway',
+                            'Secure payment confirmation',
                             style: TextStyle(fontSize: 12, color: Colors.grey),
                           ),
                         ],
@@ -279,17 +269,23 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: _isProcessing || _isExpired ? null : _processPayment,
+                  onPressed: _isProcessing || _isExpired
+                      ? null
+                      : _processPayment,
                   child: _isProcessing
                       ? const SizedBox(
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
-                      : Text('Pay ${PriceFormatter.formatPrice(widget.amount)}'),
+                      : Text(
+                          'Pay ${PriceFormatter.formatPrice(widget.amount)}',
+                        ),
                 ),
               ),
 
@@ -299,7 +295,9 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
               SizedBox(
                 width: double.infinity,
                 child: TextButton(
-                  onPressed: _isProcessing ? null : () => Navigator.of(context).pop(),
+                  onPressed: _isProcessing
+                      ? null
+                      : () => Navigator.of(context).pop(),
                   child: const Text('Pay Later'),
                 ),
               ),
@@ -316,12 +314,7 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.grey.shade600,
-            ),
-          ),
+          Text(label, style: TextStyle(color: Colors.grey.shade600)),
           Text(
             value,
             style: TextStyle(

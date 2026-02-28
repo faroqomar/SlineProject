@@ -45,9 +45,9 @@ class BookingsTab extends StatelessWidget {
         // Split into Upcoming and Past
         final now = DateTime.now().toUtc();
         final upcoming = bookings.where((b) {
-          // If scheduledAt is null, check createdAt or treat as upcoming/pending
-          if (b.scheduledAt != null) {
-            return b.scheduledAt!.isAfter(now);
+          final bookingTimeline = b.dueAtUtc ?? b.scheduledAt;
+          if (bookingTimeline != null) {
+            return bookingTimeline.isAfter(now);
           }
           // Fallback: Pending items are "Upcoming" regardless of date mostly?
           return b.status == BookingStatus.pending ||

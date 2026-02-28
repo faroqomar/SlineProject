@@ -13,6 +13,8 @@ Map<String, dynamic> _bookingJson({String status = 'pending'}) {
     'payment_status': 'unpaid',
     'note': 'note',
     'price': 100.0,
+    'due_at': '2026-02-28T10:00:00Z',
+    'delivery_days': 5,
     'created_at': '2026-02-24T10:00:00Z',
   };
 }
@@ -45,5 +47,46 @@ void main() {
       expect(booking.clientId, 'client-1');
       expect(booking.providerId, 'provider-1');
     });
+
+    test(
+      'BookingModel.fromJson preserves null slot_id instead of zero UUID',
+      () {
+        final booking = BookingModel.fromJson(<String, dynamic>{
+          ..._bookingJson(),
+          'slot_id': null,
+        });
+
+        expect(booking.slotId, isNull);
+      },
+    );
+
+    test('BookingModel.fromJson prefers due_at for direct bookings', () {
+      final booking = BookingModel.fromJson(_bookingJson());
+
+      expect(booking.dueAtUtc, DateTime.parse('2026-02-28T10:00:00Z').toUtc());
+      expect(booking.deliveryDays, 5);
+    });
+
+    test(
+      'BookingModel.fromJson falls back to legacy availability slot start when due_at is null',
+      () {
+        final booking = BookingModel.fromJson(<String, dynamic>{
+          ..._bookingJson(),
+          'due_at': null,
+          'availability_slots': <String, dynamic>{
+            'starts_at': '2026-02-26T09:00:00Z',
+          },
+        });
+
+        expect(
+          booking.dueAtUtc,
+          DateTime.parse('2026-02-26T09:00:00Z').toUtc(),
+        );
+        expect(
+          booking.scheduledAt,
+          DateTime.parse('2026-02-26T09:00:00Z').toUtc(),
+        );
+      },
+    );
   });
 }

@@ -18,6 +18,7 @@ import 'package:sline_app/features/work/models/change_request_model.dart';
 import 'package:sline_app/features/work/models/extension_request_model.dart';
 import 'package:sline_app/features/chat/view/chat_screen.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
+import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
 
 class WorkItemDetailsScreen extends StatelessWidget {
@@ -353,7 +354,16 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
             ),
             const SizedBox(height: AppDimens.p16),
             // When
-            _infoRow('Scheduled', booking.scheduledAt?.toString() ?? 'Pending'),
+            _infoRow(
+              'Due',
+              booking.dueAtUtc != null
+                  ? formatUtcToLocal(booking.dueAtUtc!)
+                  : (booking.scheduledAt != null
+                        ? formatUtcToLocal(booking.scheduledAt!)
+                        : 'No deadline'),
+            ),
+            if (booking.deliveryDays != null)
+              _infoRow('Delivery', '${booking.deliveryDays} days'),
             // Payment
             _infoRow('Payment', booking.paymentStatus.name.toUpperCase()),
             // Note

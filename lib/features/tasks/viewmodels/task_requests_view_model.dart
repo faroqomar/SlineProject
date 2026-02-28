@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/features/tasks/services/task_requests_service.dart';
 import 'package:sline_app/features/tasks/services/task_service.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 
 /// TaskRequestsViewModel — MVVM state holder for Task Requests (Offers)
 class TaskRequestsViewModel extends ChangeNotifier {
@@ -55,8 +56,14 @@ class TaskRequestsViewModel extends ChangeNotifier {
         ..addAll(list);
       _hasMore = list.length == _pageSize;
       _cursorBefore = list.isEmpty ? null : list.last.createdAt;
-    } catch (e) {
+    } catch (e, st) {
       _errorMessage = _friendlyError(e);
+      AppLogger.e(
+        'Failed to load initial task requests',
+        error: e,
+        stackTrace: st,
+        tag: 'TaskRequests',
+      );
     } finally {
       _isLoadingInitial = false;
       notifyListeners();
@@ -76,8 +83,14 @@ class TaskRequestsViewModel extends ChangeNotifier {
       _items.addAll(list);
       _hasMore = list.length == _pageSize;
       _cursorBefore = list.isEmpty ? _cursorBefore : list.last.createdAt;
-    } catch (e) {
+    } catch (e, st) {
       _errorMessage = _friendlyError(e);
+      AppLogger.e(
+        'Failed to load more task requests',
+        error: e,
+        stackTrace: st,
+        tag: 'TaskRequests',
+      );
     } finally {
       _isLoadingMore = false;
       notifyListeners();
@@ -114,8 +127,14 @@ class TaskRequestsViewModel extends ChangeNotifier {
       notifyListeners();
 
       return result;
-    } catch (e) {
+    } catch (e, st) {
       _errorMessage = _friendlyError(e);
+      AppLogger.e(
+        'Failed to award offer $requestId',
+        error: e,
+        stackTrace: st,
+        tag: 'TaskRequests',
+      );
       notifyListeners();
       return null;
     }
@@ -136,8 +155,14 @@ class TaskRequestsViewModel extends ChangeNotifier {
       notifyListeners();
 
       return result;
-    } catch (e) {
+    } catch (e, st) {
       _errorMessage = _friendlyError(e);
+      AppLogger.e(
+        'Failed to pay for awarded offer $requestId',
+        error: e,
+        stackTrace: st,
+        tag: 'TaskRequests',
+      );
       notifyListeners();
       return null;
     }
@@ -146,7 +171,7 @@ class TaskRequestsViewModel extends ChangeNotifier {
   /// Legacy: Combined award+pay (keep for backward compatibility)
   ///
   /// DEPRECATED: Use [award] + [payForAwardedOffer] for new flow
-  @deprecated
+  @Deprecated('Use award() and payForAwardedOffer() instead.')
   Future<void> accept(String requestId) async {
     try {
       await _taskService.escrowHoldOffer(requestId);
@@ -154,8 +179,14 @@ class TaskRequestsViewModel extends ChangeNotifier {
       _items.clear();
       _items.addAll(list);
       notifyListeners();
-    } catch (e) {
+    } catch (e, st) {
       _errorMessage = _friendlyError(e);
+      AppLogger.e(
+        'Failed to accept offer $requestId',
+        error: e,
+        stackTrace: st,
+        tag: 'TaskRequests',
+      );
       notifyListeners();
     }
   }
@@ -164,8 +195,14 @@ class TaskRequestsViewModel extends ChangeNotifier {
     try {
       final updated = await _service.reject(requestId);
       _replace(updated);
-    } catch (e) {
+    } catch (e, st) {
       _errorMessage = _friendlyError(e);
+      AppLogger.e(
+        'Failed to reject offer $requestId',
+        error: e,
+        stackTrace: st,
+        tag: 'TaskRequests',
+      );
       notifyListeners();
     }
   }
@@ -186,8 +223,14 @@ class TaskRequestsViewModel extends ChangeNotifier {
       _items.insert(0, created);
       notifyListeners();
       return true;
-    } catch (e) {
+    } catch (e, st) {
       _errorMessage = _friendlyError(e);
+      AppLogger.e(
+        'Failed to submit offer UI for task $taskId',
+        error: e,
+        stackTrace: st,
+        tag: 'TaskRequests',
+      );
       notifyListeners();
       return false;
     }

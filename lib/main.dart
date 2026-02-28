@@ -28,7 +28,6 @@ import 'app/main_navigation_screen.dart';
 import 'core/providers/navigation_provider.dart';
 import 'package:provider/provider.dart';
 import 'features/booking/viewmodels/booking_view_model.dart';
-import 'features/booking/view/availability_screen.dart';
 import 'features/orders/viewmodels/orders_view_model.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/providers/theme_mode_provider.dart';
@@ -235,28 +234,6 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener> {
             '/home': (_) => const HomeScreen(),
             '/categories': (_) => const CategoriesScreen(),
             FavoritesRoutes.routeName: (_) => const FavoritesScreen(),
-            '/availability': (ctx) {
-              final args =
-                  ModalRoute.of(ctx)!.settings.arguments
-                      as Map<String, dynamic>?;
-              final providerId =
-                  (args?['providerId'] ?? args?['freelancerId']) as String?;
-              final taskId = args?['taskId'] as String?;
-              if (providerId == null || taskId == null) {
-                return const Scaffold(
-                  body: Center(
-                    child: Text('Missing arguments for Availability'),
-                  ),
-                );
-              }
-              return AvailabilityScreen(
-                providerId: providerId,
-                taskId: taskId,
-                packageTier: args?['packageTier'] as String?,
-                packagePrice: args?['packagePrice']?.toString(),
-                packageData: args?['packageData'] as Map<String, dynamic>?,
-              );
-            },
           },
         );
       },

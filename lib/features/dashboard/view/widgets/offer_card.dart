@@ -13,7 +13,7 @@ class OfferCard extends StatelessWidget {
   final TaskRequest offer;
   final bool
   isClientView; // True if viewing offers received, False if viewing submitted
-  final VoidCallback? onAccept;
+  final VoidCallback onAccept;
   final VoidCallback? onReject;
   final VoidCallback? onWithdraw;
   final VoidCallback? onRelease;
@@ -23,7 +23,7 @@ class OfferCard extends StatelessWidget {
     super.key,
     required this.offer,
     required this.isClientView,
-    this.onAccept,
+    required this.onAccept,
     this.onReject,
     this.onWithdraw,
     this.onRelease,
@@ -219,7 +219,7 @@ class OfferCard extends StatelessWidget {
                         ),
                       const SizedBox(width: AppDimens.p8),
                       // New two-step flow: Award button
-                      if (onAccept != null && showAward)
+                      if (showAward)
                         FilledButton(
                           onPressed: onAccept,
                           style: FilledButton.styleFrom(
@@ -228,7 +228,7 @@ class OfferCard extends StatelessWidget {
                           child: const Text('Award'),
                         ),
                       // Pay button for awarded but unpaid offers
-                      if (onAccept != null && showPay)
+                      if (showPay)
                         FilledButton(
                           onPressed: onAccept,
                           style: FilledButton.styleFrom(
@@ -236,7 +236,7 @@ class OfferCard extends StatelessWidget {
                           ),
                           child: const Text('Pay Now'),
                         ),
-                      if (onAccept != null && showEscrow)
+                      if (showEscrow)
                         FilledButton(
                           onPressed: onAccept,
                           style: FilledButton.styleFrom(
@@ -246,7 +246,7 @@ class OfferCard extends StatelessWidget {
                             'Escrow Funds',
                           ), // Replaced 'Accept' with Escrow
                         ),
-                      if (onAccept != null && !showEscrow && !showAward && !showPay && isPending)
+                      if (!showEscrow && !showAward && !showPay && isPending)
                         FilledButton(
                           onPressed: onAccept,
                           style: FilledButton.styleFrom(

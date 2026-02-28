@@ -18,7 +18,11 @@ class InboxTab extends StatefulWidget {
 class _InboxTabState extends State<InboxTab> {
   bool _isAwarding = false;
 
-  Future<void> _handleAwardOffer(BuildContext context, DashboardViewModel vm, dynamic offer) async {
+  Future<void> _handleAwardOffer(
+    BuildContext context,
+    DashboardViewModel vm,
+    dynamic offer,
+  ) async {
     setState(() => _isAwarding = true);
 
     try {
@@ -30,7 +34,9 @@ class _InboxTabState extends State<InboxTab> {
       if (result != null && result['success'] == true) {
         // Navigate to payment screen
         if (context.mounted) {
-          final paymentDeadline = DateTime.parse(result['payment_deadline'] as String);
+          final paymentDeadline = DateTime.parse(
+            result['payment_deadline'] as String,
+          );
           final clientId = vm.currentUserId ?? '';
 
           await Navigator.of(context).push(
@@ -67,17 +73,17 @@ class _InboxTabState extends State<InboxTab> {
       setState(() => _isAwarding = false);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     }
   }
 
   /// Handle "Pay Now" for awarded but unpaid offers (Pay Later flow)
-  Future<void> _handlePayAwardedOffer(BuildContext context, dynamic offer) async {
+  Future<void> _handlePayAwardedOffer(
+    BuildContext context,
+    dynamic offer,
+  ) async {
     final vm = context.read<DashboardViewModel>();
 
     // For awarded offers, use a 24-hour deadline from now as fallback
@@ -127,25 +133,31 @@ class _InboxTabState extends State<InboxTab> {
             padding: const EdgeInsets.all(AppDimens.p16),
             itemCount: vm.inboxOffers.length,
             itemBuilder: (context, index) {
-                final offer = vm.inboxOffers[index];
+              final offer = vm.inboxOffers[index];
 
               // Determine the correct handler based on offer state
-              VoidCallback? acceptHandler;
+              VoidCallback acceptHandler;
               if (isClient && !_isAwarding) {
                 if (offer.status == OfferStatus.pending) {
                   // Pending offer: Show Award dialog then navigate to payment
                   acceptHandler = () => _handleAwardOffer(context, vm, offer);
                 } else if (offer.status == OfferStatus.accepted &&
-                           offer.paymentStatus == PaymentStatus.unpaid) {
+                    offer.paymentStatus == PaymentStatus.unpaid) {
                   // Awarded but unpaid: Navigate directly to payment screen (Pay Later flow)
                   acceptHandler = () => _handlePayAwardedOffer(context, offer);
+                } else {
+                  // No-op for other states to prevent null callback crashes
+                  acceptHandler = () {};
                 }
+              } else {
+                // Provider view or during awarding: no-op to prevent null callback crashes
+                acceptHandler = () {};
               }
 
               return OfferCard(
                 offer: offer,
                 isClientView: isClient,
-                onAccept: acceptHandler ?? () => vm.acceptOffer(offer),
+                onAccept: acceptHandler,
                 onReject: () => vm.rejectOffer(offer),
                 onWithdraw: () => vm.withdrawOffer(offer.id),
                 onRelease: () => vm.releaseOfferWithFee(offer.id),

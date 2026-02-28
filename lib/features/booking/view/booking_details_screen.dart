@@ -172,24 +172,58 @@ class BookingDetailsScreen extends StatelessWidget {
             ),
             const SizedBox(height: AppDimens.p24),
 
-            // Slot Details
-            _buildSectionHeader(context, 'Schedule'),
+            // Timeline
+            _buildSectionHeader(context, 'Timeline'),
             const SizedBox(height: AppDimens.p12),
             GlassContainer(
               padding: const EdgeInsets.all(AppDimens.p16),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.calendar_today, size: 20, color: AppColors.teal),
-                  const SizedBox(width: AppDimens.p12),
-                  Expanded(
-                    child: Text(
-                      'Slot ID: ${booking.slotId}',
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: colorScheme.text,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                  _timelineRow(
+                    context,
+                    'Booked',
+                    formatUtcToLocal(booking.createdAtUtc),
                   ),
+                  const SizedBox(height: AppDimens.p8),
+                  _timelineRow(
+                    context,
+                    'Due',
+                    booking.dueAtUtc != null
+                        ? formatUtcToLocal(booking.dueAtUtc!)
+                        : 'No deadline',
+                  ),
+                  if (booking.deliveryDays != null) ...[
+                    const SizedBox(height: AppDimens.p8),
+                    _timelineRow(
+                      context,
+                      'Delivery',
+                      '${booking.deliveryDays} days',
+                    ),
+                  ],
+                  if (booking.slotId != null) ...[
+                    const SizedBox(height: AppDimens.p12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimens.p10,
+                        vertical: AppDimens.p8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.gold.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppDimens.r8),
+                        border: Border.all(
+                          color: AppColors.gold.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Text(
+                        'Legacy slot-based booking',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.gold,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -377,6 +411,31 @@ class BookingDetailsScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _timelineRow(BuildContext context, String label, String value) {
+    final colorScheme = context.colorScheme;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: AppTypography.bodyMedium.copyWith(
+            color: colorScheme.textSecondary,
+          ),
+        ),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: AppTypography.bodyMedium.copyWith(
+              color: colorScheme.text,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
     );
   }
 

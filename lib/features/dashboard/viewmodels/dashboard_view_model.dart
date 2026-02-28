@@ -613,7 +613,9 @@ class DashboardViewModel extends ChangeNotifier {
   }
 
   /// Legacy: Accepts an offer atomically (And holds funds in escrow first)
-  @deprecated
+  @Deprecated(
+    'Use awardOffer() and payAwardedOffer() for the two-step tender flow.',
+  )
   Future<void> acceptOffer(TaskRequest offer) async {
     final tid = _traceId();
     try {

@@ -1,23 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 
 class PaymentWebViewResult {
   const PaymentWebViewResult({
     required this.status,
     this.paymentId,
+    this.bookingId,
+    this.correlationId,
     this.rawUri,
   });
 
   final String status;
   final String? paymentId;
+  final String? bookingId;
+  final String? correlationId;
   final Uri? rawUri;
 }
 
 class PaymentWebViewScreen extends StatefulWidget {
-  const PaymentWebViewScreen({super.key, required this.initialUrl});
+  const PaymentWebViewScreen({
+    super.key,
+    required this.initialUrl,
+    this.callbackHosts = const {'sline.app'},
+    this.expectedBookingId,
+    this.expectedCorrelationId,
+  });
 
   final String initialUrl;
+  final Set<String> callbackHosts;
+  final String? expectedBookingId;
+  final String? expectedCorrelationId;
 
   @override
   State<PaymentWebViewScreen> createState() => _PaymentWebViewScreenState();
@@ -42,6 +56,29 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
     }
   }
 
+  bool _isTrustedCallbackHost(Uri? uri) {
+    if (uri == null) return false;
+    return widget.callbackHosts.contains(uri.host.toLowerCase());
+  }
+
+  bool _matchesExpectedCallback(Uri? uri) {
+    if (uri == null) return false;
+    final matchesBooking =
+        widget.expectedBookingId == null ||
+        uri.queryParameters['booking_id'] == widget.expectedBookingId;
+    final matchesCorrelation =
+        widget.expectedCorrelationId == null ||
+        uri.queryParameters['correlation_id'] == widget.expectedCorrelationId;
+    return matchesBooking && matchesCorrelation;
+  }
+
+  bool _isTrustedWebCallback(Uri? uri) {
+    if (uri == null || !_isTrustedCallbackHost(uri)) return false;
+    if (uri.scheme == 'https') return true;
+    return uri.scheme == 'http' &&
+        (uri.host == 'localhost' || uri.host == '127.0.0.1');
+  }
+
   @override
   void dispose() {
     _isDisposed = true;
@@ -51,23 +88,40 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
   @override
   void initState() {
     super.initState();
+    AppLogger.i(
+      'Opening payment webview',
+      tag: 'QiCard',
+      json: <String, dynamic>{
+        'initial_url': widget.initialUrl,
+        'expected_booking_id': widget.expectedBookingId,
+        'expected_correlation_id': widget.expectedCorrelationId,
+        'callback_hosts': widget.callbackHosts.toList(),
+      },
+    );
 
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
-          onPageStarted: (_) {
+          onPageStarted: (url) {
+            AppLogger.d('Payment webview page started: $url', tag: 'QiCard');
             _safeSetState(() {
               _isLoading = true;
               _loadError = null;
             });
           },
-          onPageFinished: (_) {
+          onPageFinished: (url) {
+            AppLogger.d('Payment webview page finished: $url', tag: 'QiCard');
             _safeSetState(() {
               _isLoading = false;
             });
           },
           onWebResourceError: (error) {
+            AppLogger.e(
+              'Payment webview resource error',
+              tag: 'QiCard',
+              error: '${error.errorCode}: ${error.description}',
+            );
             _safeSetState(() {
               _isLoading = false;
               _loadError = error.description;
@@ -75,6 +129,8 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
           },
           onNavigationRequest: (request) {
             final uri = Uri.tryParse(request.url);
+            final isTrustedCallbackHost = _isTrustedWebCallback(uri);
+            final matchesExpectedCallback = _matchesExpectedCallback(uri);
 
             // App scheme deep link: sline://payment/finish?status=...
             final isAppSchemeFinish =
@@ -87,6 +143,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
             final isHttpsFinishWithStatus =
                 uri != null &&
                 (uri.scheme == 'https' || uri.scheme == 'http') &&
+                isTrustedCallbackHost &&
                 uri.path.contains('finish') &&
                 uri.queryParameters.containsKey('status');
 
@@ -95,25 +152,47 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
             final isPaymentSuccessUrl =
                 uri != null &&
                 (uri.scheme == 'https' || uri.scheme == 'http') &&
+                isTrustedCallbackHost &&
                 (uri.path.contains('/payment/success') ||
-                 uri.path.endsWith('/success') && uri.path.contains('payment'));
+                    uri.path.endsWith('/success') &&
+                        uri.path.contains('payment'));
 
             // QiCard failure/cancel URLs
             final isPaymentFailureUrl =
                 uri != null &&
                 (uri.scheme == 'https' || uri.scheme == 'http') &&
+                isTrustedCallbackHost &&
                 (uri.path.contains('/payment/failure') ||
-                 uri.path.contains('/payment/cancel') ||
-                 uri.path.contains('/payment/error'));
+                    uri.path.contains('/payment/cancel') ||
+                    uri.path.contains('/payment/error'));
 
             if (isAppSchemeFinish || isHttpsFinishWithStatus) {
+              if (!matchesExpectedCallback) {
+                AppLogger.w(
+                  'Rejected payment finish callback due to booking/correlation mismatch',
+                  tag: 'QiCard',
+                  error: request.url,
+                );
+                return NavigationDecision.prevent;
+              }
               final status = (uri.queryParameters['status'] ?? 'UNKNOWN')
                   .toUpperCase();
               final paymentId = uri.queryParameters['payment_id'];
+              AppLogger.i(
+                'Accepted payment finish callback status=$status',
+                tag: 'QiCard',
+                json: <String, dynamic>{
+                  'booking_id': uri.queryParameters['booking_id'],
+                  'correlation_id': uri.queryParameters['correlation_id'],
+                  'payment_id': paymentId,
+                },
+              );
               _popWithResult(
                 PaymentWebViewResult(
                   status: status,
                   paymentId: paymentId,
+                  bookingId: uri.queryParameters['booking_id'],
+                  correlationId: uri.queryParameters['correlation_id'],
                   rawUri: uri,
                 ),
               );
@@ -122,10 +201,29 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
 
             // Handle QiCard success return URL
             if (isPaymentSuccessUrl) {
+              if (!matchesExpectedCallback) {
+                AppLogger.w(
+                  'Rejected payment success callback due to booking/correlation mismatch',
+                  tag: 'QiCard',
+                  error: request.url,
+                );
+                return NavigationDecision.prevent;
+              }
+              AppLogger.i(
+                'Accepted payment success callback',
+                tag: 'QiCard',
+                json: <String, dynamic>{
+                  'booking_id': uri.queryParameters['booking_id'],
+                  'correlation_id': uri.queryParameters['correlation_id'],
+                  'payment_id': uri.queryParameters['payment_id'],
+                },
+              );
               _popWithResult(
                 PaymentWebViewResult(
                   status: 'SUCCESS',
                   paymentId: uri.queryParameters['payment_id'],
+                  bookingId: uri.queryParameters['booking_id'],
+                  correlationId: uri.queryParameters['correlation_id'],
                   rawUri: uri,
                 ),
               );
@@ -134,12 +232,28 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
 
             // Handle QiCard failure/cancel return URL
             if (isPaymentFailureUrl) {
-              final status = uri.queryParameters['status']?.toUpperCase() ??
+              if (!matchesExpectedCallback) {
+                AppLogger.w(
+                  'Rejected payment failure callback due to booking/correlation mismatch',
+                  tag: 'QiCard',
+                  error: request.url,
+                );
+                return NavigationDecision.prevent;
+              }
+              final status =
+                  uri.queryParameters['status']?.toUpperCase() ??
                   (uri.path.contains('cancel') ? 'CANCELED' : 'FAILED');
+              AppLogger.w(
+                'Accepted payment failure callback status=$status',
+                tag: 'QiCard',
+                error: request.url,
+              );
               _popWithResult(
                 PaymentWebViewResult(
                   status: status,
                   paymentId: uri.queryParameters['payment_id'],
+                  bookingId: uri.queryParameters['booking_id'],
+                  correlationId: uri.queryParameters['correlation_id'],
                   rawUri: uri,
                 ),
               );
@@ -174,37 +288,72 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
 
       if (uri != null) {
         final currentPath = uri.path.toLowerCase();
-        final currentUrlStr = currentUrl?.toLowerCase() ?? '';
+        final isTrustedCallback = _isTrustedWebCallback(uri);
+        final matchesExpectedCallback = _matchesExpectedCallback(uri);
 
         // Check if we're on a success/receipt page
         final isOnSuccessPage =
-            currentPath.contains('/payment/success') ||
-            currentPath.contains('/receipt') ||
-            currentPath.contains('/processed') ||
-            (currentUrlStr.contains('qi') && currentPath.contains('success'));
+            isTrustedCallback &&
+            matchesExpectedCallback &&
+            (currentPath.contains('/payment/success') ||
+                (currentPath.contains('finish') &&
+                    uri.queryParameters.containsKey('status')));
 
         // Check if we're on a failure/cancel page
         final isOnFailurePage =
-            currentPath.contains('/payment/failure') ||
-            currentPath.contains('/payment/cancel') ||
-            currentPath.contains('/payment/error') ||
-            currentPath.contains('/404');
+            isTrustedCallback &&
+            matchesExpectedCallback &&
+            (currentPath.contains('/payment/failure') ||
+                currentPath.contains('/payment/cancel') ||
+                currentPath.contains('/payment/error'));
 
         if (isOnSuccessPage) {
-          _popWithResult(const PaymentWebViewResult(status: 'SUCCESS'));
+          AppLogger.i(
+            'Back navigation resolved to payment success page',
+            tag: 'QiCard',
+            json: <String, dynamic>{
+              'booking_id': uri.queryParameters['booking_id'],
+              'correlation_id': uri.queryParameters['correlation_id'],
+            },
+          );
+          _popWithResult(
+            PaymentWebViewResult(
+              status: 'SUCCESS',
+              bookingId: uri.queryParameters['booking_id'],
+              correlationId: uri.queryParameters['correlation_id'],
+              rawUri: uri,
+            ),
+          );
           return;
         }
 
         if (isOnFailurePage) {
           final status = currentPath.contains('cancel') ? 'CANCELED' : 'FAILED';
-          _popWithResult(PaymentWebViewResult(status: status));
+          AppLogger.w(
+            'Back navigation resolved to payment failure page status=$status',
+            tag: 'QiCard',
+            error: currentUrl,
+          );
+          _popWithResult(
+            PaymentWebViewResult(
+              status: status,
+              bookingId: uri.queryParameters['booking_id'],
+              correlationId: uri.queryParameters['correlation_id'],
+              rawUri: uri,
+            ),
+          );
           return;
         }
       }
     } catch (e) {
-      // Fallback to CANCELED if we can't determine status
+      AppLogger.w(
+        'Failed to inspect payment webview URL during back navigation',
+        tag: 'QiCard',
+        error: e,
+      );
     }
 
+    AppLogger.i('Payment webview closed without callback; returning canceled', tag: 'QiCard');
     _popWithResult(const PaymentWebViewResult(status: 'CANCELED'));
   }
 

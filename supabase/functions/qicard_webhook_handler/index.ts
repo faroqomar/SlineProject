@@ -1,8 +1,18 @@
 // @ts-nocheck
 // deno-lint-ignore-file
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "npm:@supabase/supabase-js@2";
 import * as crypto from "node:crypto";
+import {
+  buildCorrelationId,
+  corsPreflightResponse,
+  createBookingNotification,
+  createAdminClient,
+  fetchBooking,
+  jsonResponse,
+  QICARD_PROVIDER_NAME,
+  recordBookingAudit,
+  submitGatewayEscrowHold,
+} from "../_shared/bookin_payment.ts";
 
 // Type definitions for QiCard webhook payload
 interface QiCardPaymentPayload {
@@ -36,24 +46,11 @@ interface QiCardLegacyPayload {
   [key: string]: unknown;
 }
 
-interface RpcResponse {
-  ok: boolean;
-  journal_entry_id?: string;
-  error?: {
-    code: string;
-    message: string;
-  };
-}
-
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
-const SUPABASE_SERVICE_ROLE_KEY =
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const QICARD_PROVIDER_NAME = Deno.env.get("QICARD_PROVIDER_NAME") || "qicard";
 const QICARD_RSA_PUBLIC_KEY_PEM =
   Deno.env.get("QICARD_RSA_PUBLIC_KEY_PEM") || "";
-
-// Service-role client: auth.uid() is null inside RPC (system actor).
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+const QICARD_ALLOW_UNSIGNED_LOCAL_DEV =
+  Deno.env.get("QICARD_ALLOW_UNSIGNED_LOCAL_DEV") === "true";
+const supabase = createAdminClient();
 
 interface MappedEvent {
   ledgerEventType: string;
@@ -66,14 +63,7 @@ function verifySignature(
   publicKeyPem: string,
 ): boolean {
   if (!publicKeyPem) {
-    // Security: Fail closed in production, allow in development
-    const isProduction = Deno.env.get("ENVIRONMENT") === "production";
-    if (isProduction) {
-      console.error("QICARD_RSA_PUBLIC_KEY_PEM required in production");
-      return false;
-    }
-    console.warn("QICARD_RSA_PUBLIC_KEY_PEM not set - skipping signature check (dev only)");
-    return true;
+    return QICARD_ALLOW_UNSIGNED_LOCAL_DEV;
   }
 
   try {
@@ -147,6 +137,10 @@ function mapLegacyQiCardEvent(eventType: string, pspStatus: string): MappedEvent
 }
 
 Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return corsPreflightResponse();
+  }
+
   if (req.method !== "POST") {
     return jsonResponse({ error: "Method not allowed" }, 405);
   }
@@ -167,10 +161,11 @@ Deno.serve(async (req: Request) => {
       ? buildQiCardWebhookSignatureString(payload)
       : rawBody;
 
-    if (
-      QICARD_RSA_PUBLIC_KEY_PEM &&
-      !verifySignature(signedData, signatureHeader, QICARD_RSA_PUBLIC_KEY_PEM)
-    ) {
+    if (!signatureHeader && !QICARD_ALLOW_UNSIGNED_LOCAL_DEV) {
+      return jsonResponse({ error: "Missing signature" }, 401);
+    }
+
+    if (!verifySignature(signedData, signatureHeader, QICARD_RSA_PUBLIC_KEY_PEM)) {
       console.error("Webhook rejected: invalid signature");
       return jsonResponse({ error: "Invalid signature" }, 401);
     }
@@ -220,41 +215,72 @@ async function handleQiCardPaymentWebhook(
     );
   }
 
-  const idempotencyKey = `qicard:${paymentId}:gateway_escrow:${status}`;
-  const meta: Record<string, unknown> = {
-    psp_provider: QICARD_PROVIDER_NAME,
-    psp_event_id: requestId,
-    psp_payment_id: paymentId,
-    psp_request_id: requestId,
-    psp_status: status,
-    psp_timestamp: creationDate,
-    booking_id: bookingId,
-  };
+  const correlationId =
+    typeof additionalInfo.correlation_id === "string" &&
+        additionalInfo.correlation_id.length > 0
+      ? additionalInfo.correlation_id
+      : buildCorrelationId(bookingId, "recover");
 
-  const { data, error } = await supabase.rpc("process_payment_event_ledger", {
-    p_event_type: "gateway_escrow",
-    p_related_entity_type: "booking",
-    p_related_entity_id: bookingId,
-    p_idempotency_key: idempotencyKey,
-    p_amount_gross: amount,
-    p_currency: currency,
-    p_meta: meta,
-  });
+  try {
+    const escrowResult = await submitGatewayEscrowHold(supabase, {
+      bookingId,
+      paymentId,
+      requestId,
+      amount,
+      currency,
+      timestamp: creationDate,
+      correlationId,
+    });
 
-  if (error) {
-    console.error("Ledger RPC failed [gateway_escrow]:", error.message);
-    if (error.message?.includes("ERR_IDEMPOTENCY_REPLAY")) {
-      return jsonResponse({ ok: true, message: "Idempotent replay" }, 200);
+    await recordBookingAudit(supabase, {
+      bookingId,
+      eventType: "webhook_accept",
+      correlationId,
+      outcome: escrowResult.replayed ? "replayed" : "accepted",
+      payload: {
+        payment_id: paymentId,
+        request_id: requestId,
+        amount,
+        currency,
+      },
+    });
+
+    if (!escrowResult.replayed) {
+      const booking = await fetchBooking(supabase, bookingId);
+      await createBookingNotification(supabase, {
+        userId: booking.provider_id,
+        bookingId,
+        title: "Booking Payment Secured",
+        message: "Payment was secured for a booking request.",
+        metadata: {
+          booking_id: bookingId,
+          status: booking.status,
+          payment_status: booking.payment_status,
+        },
+      });
     }
-    return jsonResponse({ error: error.message }, 400);
-  }
 
-  if (data?.ok === false) {
-    return jsonResponse({ error: data.error || "Ledger RPC rejected event" }, 400);
+    return jsonResponse({
+      ok: true,
+      journal_entry_id: escrowResult.journalEntryId,
+      replayed: escrowResult.replayed,
+    }, 200);
+  } catch (error) {
+    console.error("Webhook payment handler error:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    await recordBookingAudit(supabase, {
+      bookingId,
+      eventType: "webhook_reject",
+      correlationId,
+      outcome: "rejected",
+      payload: {
+        payment_id: paymentId,
+        request_id: requestId,
+        error: message,
+      },
+    });
+    return jsonResponse({ error: message }, 400);
   }
-
-  console.log(`gateway_escrow recorded: journal=${data?.journal_entry_id}`);
-  return jsonResponse({ ok: true, journal_entry_id: data?.journal_entry_id }, 200);
 }
 
 async function handleLegacyQiCardWebhook(
@@ -315,14 +341,4 @@ async function handleLegacyQiCardWebhook(
   }
 
   return jsonResponse({ ok: true, journal_entry_id: data?.journal_entry_id }, 200);
-}
-
-function jsonResponse(body: Record<string, unknown>, status: number): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-      "Connection": "keep-alive",
-    },
-  });
 }

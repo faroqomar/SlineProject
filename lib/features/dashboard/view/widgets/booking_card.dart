@@ -30,6 +30,7 @@ class BookingCard extends StatelessWidget {
 
     // Determine task title
     final taskTitle = booking.taskData?['title'] ?? 'Task';
+    final bookingDue = booking.dueAtUtc ?? booking.scheduledAt;
 
     // Parse note to hide metadata if present
     String? displayNote = booking.note;
@@ -121,9 +122,9 @@ class BookingCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      booking.scheduledAt != null
-                          ? formatUtcToLocal(booking.scheduledAt!)
-                          : "Date Pending",
+                      bookingDue != null
+                          ? 'Due ${formatUtcToLocal(bookingDue)}'
+                          : 'No deadline',
                       style: AppTypography.bodySmall.copyWith(
                         color: colorScheme.primary,
                         fontWeight: FontWeight.bold,
@@ -154,6 +155,16 @@ class BookingCard extends StatelessWidget {
                   fontStyle: FontStyle.italic,
                   color: colorScheme.textSecondary,
                 ),
+              ),
+            ),
+          ],
+
+          if (booking.deliveryDays != null) ...[
+            const SizedBox(height: AppDimens.p12),
+            Text(
+              'Delivery: ${booking.deliveryDays} days',
+              style: AppTypography.bodySmall.copyWith(
+                color: colorScheme.textSecondary,
               ),
             ),
           ],

@@ -32,6 +32,7 @@ class BookingCard extends StatelessWidget {
     final imagePath = taskImages.isNotEmpty ? taskImages.first : null;
     final rawBudget = taskData?['budget'];
     final budget = rawBudget is num ? rawBudget.toDouble() : 0.0;
+    final timeline = booking.dueAtUtc ?? booking.scheduledAt;
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimens.p12),
@@ -107,6 +108,24 @@ class BookingCard extends StatelessWidget {
                           color: colorScheme.textSecondary,
                         ),
                       ),
+                      const SizedBox(height: 2),
+                      Text(
+                        timeline != null
+                            ? 'Due: ${formatUtcToLocal(timeline)}'
+                            : 'Due: No deadline',
+                        style: AppTypography.caption.copyWith(
+                          color: colorScheme.textSecondary,
+                        ),
+                      ),
+                      if (booking.deliveryDays != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          'Delivery: ${booking.deliveryDays} days',
+                          style: AppTypography.caption.copyWith(
+                            color: colorScheme.textSecondary,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),

@@ -131,4 +131,41 @@ class DemoPaymentService implements PaymentService {
       createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
     );
   }
+
+  @override
+  Future<QiCardCreatePaymentResult> createPaymentForBooking({
+    required String taskId,
+    String? note,
+    String? packageId,
+    Map<String, dynamic>? requirements,
+  }) async {
+    await Future.delayed(delay);
+    return const QiCardCreatePaymentResult(
+      error: 'Booking checkout is not available in demo mode.',
+      errorCode: 'DEMO_BOOKING_CREATE_UNSUPPORTED',
+    );
+  }
+
+  @override
+  Future<QiCardRecoveryResult> recoverBookingPayment({
+    required String bookingId,
+  }) async {
+    await Future.delayed(delay);
+    return const QiCardRecoveryResult(
+      error: 'Booking recovery is not available in demo mode.',
+      errorCode: 'DEMO_BOOKING_RECOVERY_UNSUPPORTED',
+    );
+  }
+
+  @override
+  Future<BookingRefundResult> declineAndRefundBooking({
+    required String bookingId,
+    required String reason,
+  }) async {
+    await Future.delayed(delay);
+    return const BookingRefundResult(
+      error: 'Booking refund is not available in demo mode.',
+      errorCode: 'DEMO_BOOKING_REFUND_UNSUPPORTED',
+    );
+  }
 }

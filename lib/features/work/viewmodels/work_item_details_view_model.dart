@@ -136,7 +136,7 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
       unifiedStatus: uStatus,
       title: b.taskData?['title'] ?? 'Booking Task',
       price: (b.price ?? 0).toDouble(),
-      deadline: b.scheduledAt,
+      deadline: b.dueAtUtc ?? b.scheduledAt,
       clientId: b.clientId,
       freelancerId: b.providerId,
       revisionsTotal: 0,
