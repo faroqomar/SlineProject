@@ -19,6 +19,7 @@ import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 import 'package:sline_app/features/management/view/order_management_panel.dart';
 import 'package:sline_app/features/management/viewmodels/order_management_view_model.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 
 /// Shows details of a task with Glassmorphism design.
 class TaskDetailsScreen extends StatefulWidget {
@@ -358,6 +359,11 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
         ),
       );
     } catch (e) {
+      AppLogger.e(
+        'Failed to start chat for task=$taskId owner=$ownerId',
+        tag: 'Task',
+        error: e,
+      );
       if (!context.mounted) return;
       LoadingUtils.hide(context);
       ScaffoldMessenger.of(
@@ -559,6 +565,16 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     if (isBooking) {
       if (widget.task.status != TaskStatus.open) return;
 
+      AppLogger.i(
+        'Opening slotless booking checkout task=${widget.task.id} package=${_selectedPackageId() ?? 'none'}',
+        tag: 'Task',
+        json: <String, dynamic>{
+          'task_id': widget.task.id,
+          'provider_id': widget.task.userId,
+          'package_id': _selectedPackageId(),
+          'delivery_days': _selectedDeliveryDays(),
+        },
+      );
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => PaymentCheckoutScreen(

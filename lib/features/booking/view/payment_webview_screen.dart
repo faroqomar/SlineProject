@@ -79,6 +79,12 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
         (uri.host == 'localhost' || uri.host == '127.0.0.1');
   }
 
+  String? _describeUri(Uri? uri) {
+    if (uri == null) return null;
+    final port = uri.hasPort ? ':${uri.port}' : '';
+    return '${uri.scheme}://${uri.host}$port${uri.path}';
+  }
+
   @override
   void dispose() {
     _isDisposed = true;
@@ -92,7 +98,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
       'Opening payment webview',
       tag: 'QiCard',
       json: <String, dynamic>{
-        'initial_url': widget.initialUrl,
+        'initial_url': _describeUri(Uri.tryParse(widget.initialUrl)),
         'expected_booking_id': widget.expectedBookingId,
         'expected_correlation_id': widget.expectedCorrelationId,
         'callback_hosts': widget.callbackHosts.toList(),
@@ -104,14 +110,20 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (url) {
-            AppLogger.d('Payment webview page started: $url', tag: 'QiCard');
+            AppLogger.d(
+              'Payment webview page started: ${_describeUri(Uri.tryParse(url))}',
+              tag: 'QiCard',
+            );
             _safeSetState(() {
               _isLoading = true;
               _loadError = null;
             });
           },
           onPageFinished: (url) {
-            AppLogger.d('Payment webview page finished: $url', tag: 'QiCard');
+            AppLogger.d(
+              'Payment webview page finished: ${_describeUri(Uri.tryParse(url))}',
+              tag: 'QiCard',
+            );
             _safeSetState(() {
               _isLoading = false;
             });
@@ -129,6 +141,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
           },
           onNavigationRequest: (request) {
             final uri = Uri.tryParse(request.url);
+            final isTrustedHost = _isTrustedCallbackHost(uri);
             final isTrustedCallbackHost = _isTrustedWebCallback(uri);
             final matchesExpectedCallback = _matchesExpectedCallback(uri);
 
@@ -166,12 +179,24 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
                     uri.path.contains('/payment/cancel') ||
                     uri.path.contains('/payment/error'));
 
+            if (uri != null &&
+                isTrustedHost &&
+                !isTrustedCallbackHost &&
+                uri.scheme != 'sline') {
+              AppLogger.w(
+                'Rejected insecure payment callback URL',
+                tag: 'QiCard',
+                error: _describeUri(uri) ?? 'UNKNOWN_CALLBACK_URL',
+              );
+              return NavigationDecision.prevent;
+            }
+
             if (isAppSchemeFinish || isHttpsFinishWithStatus) {
               if (!matchesExpectedCallback) {
                 AppLogger.w(
                   'Rejected payment finish callback due to booking/correlation mismatch',
                   tag: 'QiCard',
-                  error: request.url,
+                  error: _describeUri(uri) ?? 'UNKNOWN_CALLBACK_URL',
                 );
                 return NavigationDecision.prevent;
               }
@@ -205,7 +230,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
                 AppLogger.w(
                   'Rejected payment success callback due to booking/correlation mismatch',
                   tag: 'QiCard',
-                  error: request.url,
+                  error: _describeUri(uri) ?? 'UNKNOWN_CALLBACK_URL',
                 );
                 return NavigationDecision.prevent;
               }
@@ -236,7 +261,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
                 AppLogger.w(
                   'Rejected payment failure callback due to booking/correlation mismatch',
                   tag: 'QiCard',
-                  error: request.url,
+                  error: _describeUri(uri) ?? 'UNKNOWN_CALLBACK_URL',
                 );
                 return NavigationDecision.prevent;
               }
@@ -246,7 +271,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
               AppLogger.w(
                 'Accepted payment failure callback status=$status',
                 tag: 'QiCard',
-                error: request.url,
+                error: _describeUri(uri) ?? 'UNKNOWN_CALLBACK_URL',
               );
               _popWithResult(
                 PaymentWebViewResult(
@@ -332,7 +357,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
           AppLogger.w(
             'Back navigation resolved to payment failure page status=$status',
             tag: 'QiCard',
-            error: currentUrl,
+            error: _describeUri(uri) ?? 'UNKNOWN_CURRENT_URL',
           );
           _popWithResult(
             PaymentWebViewResult(
@@ -353,7 +378,10 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
       );
     }
 
-    AppLogger.i('Payment webview closed without callback; returning canceled', tag: 'QiCard');
+    AppLogger.i(
+      'Payment webview closed without callback; returning canceled',
+      tag: 'QiCard',
+    );
     _popWithResult(const PaymentWebViewResult(status: 'CANCELED'));
   }
 

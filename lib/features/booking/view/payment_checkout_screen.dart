@@ -91,6 +91,10 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
         !_awaitingGatewayConfirmation &&
         draftBookingId != null &&
         _vm != null) {
+      AppLogger.i(
+        'Checkout screen disposed with unpaid draft booking=$draftBookingId; attempting cleanup',
+        tag: 'Payment',
+      );
       unawaited(_vm!.cancelBookingDraftIfUnpaid(draftBookingId));
     }
     _cardNumberCtrl.dispose();
@@ -175,7 +179,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
           AppLogger.w(
             'Booking payment provider returned an invalid URL for booking=${createResult.bookingId}',
             tag: 'Payment',
-            error: createResult.formUrl,
+            error: 'INVALID_PAYMENT_URL',
           );
           await _cancelDraftIfPossible(createResult.bookingId!);
           setState(() {

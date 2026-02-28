@@ -438,6 +438,17 @@ class BookingViewModel extends ChangeNotifier {
     String? packageId,
     Map<String, dynamic>? requirements,
   }) async {
+    AppLogger.i(
+      'Requesting server-backed booking payment task=$taskId package=${packageId ?? 'none'}',
+      tag: 'Booking',
+      json: <String, dynamic>{
+        'task_id': taskId,
+        'package_id': packageId,
+        'has_note': note != null && note.trim().isNotEmpty,
+        'requirements_keys': (requirements ?? const <String, dynamic>{}).keys
+            .toList(),
+      },
+    );
     final result = await _paymentService.createPaymentForBooking(
       taskId: taskId,
       note: note,
@@ -447,7 +458,17 @@ class BookingViewModel extends ChangeNotifier {
 
     if (!result.isSuccess) {
       bookingsError = _mapServiceError(result.error);
+      AppLogger.w(
+        'Booking payment request failed for task=$taskId',
+        tag: 'Booking',
+        error: bookingsError ?? result.error ?? 'BOOKING_PAYMENT_CREATE_FAILED',
+      );
       notifyListeners();
+    } else {
+      AppLogger.i(
+        'Booking payment draft created booking=${result.bookingId} correlation=${result.correlationId}',
+        tag: 'Booking',
+      );
     }
 
     return result;
@@ -456,15 +477,28 @@ class BookingViewModel extends ChangeNotifier {
   Future<QiCardRecoveryResult> recoverBookingPayment({
     required String bookingId,
   }) async {
+    AppLogger.i(
+      'Recovering booking payment booking=$bookingId',
+      tag: 'Booking',
+    );
     final result = await _paymentService.recoverBookingPayment(
       bookingId: bookingId,
     );
 
     if (result.isSuccess) {
       await _refreshBookingInLists(bookingId);
+      AppLogger.i(
+        'Booking payment recovered booking=$bookingId status=${result.paymentStatus} outcome=${result.recoveryResult}',
+        tag: 'Booking',
+      );
       notifyListeners();
     } else {
       bookingsError = result.error;
+      AppLogger.w(
+        'Booking payment recovery failed booking=$bookingId',
+        tag: 'Booking',
+        error: result.error ?? 'BOOKING_PAYMENT_RECOVERY_FAILED',
+      );
       notifyListeners();
     }
 

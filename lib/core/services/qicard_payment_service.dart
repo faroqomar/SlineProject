@@ -158,7 +158,7 @@ class QiCardPaymentService implements PaymentService {
           'Booking payment create was rejected by the server for task=$taskId',
           tag: 'QiCard',
           error: serviceError,
-          json: data,
+          json: _safePayloadSummary(data),
         );
         return QiCardCreatePaymentResult(
           error: serviceError,
@@ -191,7 +191,7 @@ class QiCardPaymentService implements PaymentService {
         AppLogger.w(
           'Booking payment create returned an incomplete payload for task=$taskId',
           tag: 'QiCard',
-          json: data,
+          json: _safePayloadSummary(data),
         );
         return const QiCardCreatePaymentResult(
           error: 'Booking payment could not be created.',
@@ -239,7 +239,7 @@ class QiCardPaymentService implements PaymentService {
           'Booking recovery was rejected for booking=$bookingId',
           tag: 'QiCard',
           error: serviceError,
-          json: data,
+          json: _safePayloadSummary(data),
         );
         return QiCardRecoveryResult(
           error: serviceError,
@@ -270,7 +270,7 @@ class QiCardPaymentService implements PaymentService {
         AppLogger.w(
           'Booking recovery returned an incomplete payload for booking=$bookingId',
           tag: 'QiCard',
-          json: data,
+          json: _safePayloadSummary(data),
         );
         return const QiCardRecoveryResult(
           error: 'Booking recovery failed.',
@@ -319,7 +319,7 @@ class QiCardPaymentService implements PaymentService {
           'Booking refund was rejected for booking=$bookingId',
           tag: 'QiCard',
           error: serviceError,
-          json: data,
+          json: _safePayloadSummary(data),
         );
         return BookingRefundResult(
           error: serviceError,
@@ -350,7 +350,7 @@ class QiCardPaymentService implements PaymentService {
         AppLogger.w(
           'Booking refund returned an incomplete payload for booking=$bookingId',
           tag: 'QiCard',
-          json: data,
+          json: _safePayloadSummary(data),
         );
         return const BookingRefundResult(
           error: 'Booking refund failed.',
@@ -380,11 +380,21 @@ class QiCardPaymentService implements PaymentService {
   Map<String, dynamic>? _asMap(dynamic data) {
     if (data is Map<String, dynamic>) return data;
     if (data is Map) {
-      return data.map(
-        (key, value) => MapEntry(key.toString(), value),
-      );
+      return data.map((key, value) => MapEntry(key.toString(), value));
     }
     return null;
+  }
+
+  Map<String, dynamic> _safePayloadSummary(Map<String, dynamic>? data) {
+    return <String, dynamic>{
+      'keys': data?.keys.toList() ?? const <String>[],
+      'booking_id': data?['booking_id'],
+      'correlation_id': data?['correlation_id'],
+      'payment_status': data?['payment_status'],
+      'recovery_result': data?['recovery_result'],
+      'refund_result': data?['refund_result'],
+      'error': data?['error'],
+    };
   }
 
   String? _extractError(Map<String, dynamic>? data) {
