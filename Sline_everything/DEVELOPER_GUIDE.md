@@ -401,7 +401,8 @@ Legacy MVVM flow (if using standalone module):
 | `owner_id`    | `uuid` (FK → `profiles.id`) | Owner profile id          | `ON DELETE CASCADE`                                              |
 | `title`       | `text`                      | Work title                | Required                                                         |
 | `description` | `text`                      | Details                   | Optional                                                         |
-| `image_path`  | `text`                      | Storage path (if private) | In schema: `image_path`; app currently uses `image_url` (public) |
+| `image_path`  | `text`                      | Storage path (canonical)  | **Canonical**: Store path like `ownerId/filename.jpg`, resolve to signed URL at render |
+| `image_url`   | `text`                      | Legacy public URL         | **Deprecated**: Legacy public URL (backwards compatibility only) |
 | `created_at`  | `timestamptz`               | When created (UTC)        | Default `now()`                                                  |
 
 Indexes

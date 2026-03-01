@@ -696,8 +696,15 @@ Freelancer work gallery.
 | `owner_id`    | uuid        | ❌       | -                   | FK to profiles                     |
 | `title`       | text        | ❌       | -                   | Item title                         |
 | `description` | text        | ✅       | -                   | Item description                   |
-| `image_url`   | text        | ✅       | -                   | Storage path in 'portfolio' bucket |
+| `image_path`  | text        | ✅       | -                   | **Canonical**: Storage path in 'portfolio' bucket (e.g., `ownerId/filename.jpg`) |
+| `image_url`   | text        | ✅       | -                   | **Legacy**: Public URL (deprecated, backwards compatibility) |
 | `created_at`  | timestamptz | ❌       | `now()`             | Creation timestamp                 |
+
+**Image Resolution Pattern (v2.16.8+)**:
+- New code writes to `image_path` only
+- `ProfileRepository.resolvePortfolioImageUrl()` generates signed URLs (2-hour TTL)
+- Legacy rows with `image_url` still render via `effectiveImageRef` fallback
+- App uses signed URLs for security consistency with other private buckets
 
 ---
 

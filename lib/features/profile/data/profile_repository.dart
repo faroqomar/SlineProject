@@ -6,22 +6,29 @@ import '../services/profile_summary_service.dart';
 
 import '../../tasks/services/task_service.dart';
 import '../../tasks/models/task_model.dart';
+import '../../portfolio/data/portfolio_repository.dart';
+import '../../portfolio/models/portfolio_item.dart';
 import '../models/profile_model.dart';
 import '../models/freelancer_profile.dart';
 
 /// Repository layer for Profile feature.
 /// Encapsulates all Supabase and storage calls.
+///
+/// Note: Portfolio operations are delegated to PortfolioRepository
+/// to maintain single source of truth for portfolio CRUD.
 class ProfileRepository {
   ProfileRepository(SupabaseClient client)
     : _client = client,
       _avatarService = AvatarService(client),
       _taskService = TaskService(client),
-      _profileSummaryService = ProfileSummaryService(client);
+      _profileSummaryService = ProfileSummaryService(client),
+      _portfolioRepository = PortfolioRepository(client);
 
   final SupabaseClient _client;
   final AvatarService _avatarService;
   final TaskService _taskService;
   final ProfileSummaryService _profileSummaryService;
+  final PortfolioRepository _portfolioRepository;
 
   User? get currentUser => _client.auth.currentUser;
 
@@ -147,59 +154,131 @@ class ProfileRepository {
   Future<void> updateTask(String taskId, Map<String, dynamic> updates) =>
       _taskService.updateTask(taskId, updates);
 
-  // Portfolio related
-  Future<List<Map<String, dynamic>>> getPortfolioItems(String userId) async {
-    final res = await _client
-        .from('portfolio_items')
-        .select()
-        .eq('owner_id', userId)
-        .order('created_at', ascending: false);
-    return List<Map<String, dynamic>>.from(res as List);
+  // ============================================================================
+  // PORTFOLIO OPERATIONS
+  // ============================================================================
+  // Delegated to PortfolioRepository to maintain single source of truth.
+  // See: lib/features/portfolio/data/portfolio_repository.dart
+
+  /// Gets portfolio items for a user.
+  /// Delegates to PortfolioRepository.
+  Future<List<PortfolioItem>> getPortfolioItems(String userId) async {
+    AppLogger.d('Delegating getPortfolioItems to PortfolioRepository', tag: 'ProfileRepo');
+    return _portfolioRepository.listItems(ownerId: userId);
   }
 
-  Future<void> addPortfolioItem({
+    /// Adds a portfolio item.
+  /// Delegates to PortfolioRepository.
+  /// If imagePath is provided (existing storage path), creates item with that path.
+  Future<PortfolioItem> addPortfolioItem({
     required String userId,
     required String title,
     String? description,
-    String? imageUrl,
+    Uint8List? imageBytes,
+    String? imageFilename,
+    String? imagePath, // Existing storage path (when upload already done)
   }) async {
-    await _client.from('portfolio_items').insert({
-      'owner_id': userId,
-      'title': title,
-      'description': description,
-      'image_url': imageUrl,
+    AppLogger.d('Delegating addPortfolioItem to PortfolioRepository', tag: 'ProfileRepo', json: {
+      'hasImagePath': imagePath != null,
+      'hasImageBytes': imageBytes != null,
     });
+    
+    // If we have an existing image path, create item directly
+    if (imagePath != null) {
+      // Insert with the existing path
+      final row = await _client
+          .from('portfolio_items')
+          .insert({
+            'owner_id': userId,
+            'title': title,
+            'description': description,
+            'image_path': imagePath,
+          })
+          .select()
+          .single();
+      return PortfolioItem.fromJson(row as Map<String, dynamic>);
+    }
+    
+    // Otherwise, use the normal flow with upload
+    return _portfolioRepository.addItem(
+      ownerId: userId,
+      title: title,
+      description: description,
+      imageBytes: imageBytes,
+      imageFilename: imageFilename,
+    );
   }
 
+  /// Updates a portfolio item.
+  /// Delegates to PortfolioRepository.
   Future<void> updatePortfolioItem({
     required String itemId,
-    Map<String, dynamic>? updates,
+    required String title,
+    String? description,
   }) async {
-    if (updates == null || updates.isEmpty) return;
-    await _client.from('portfolio_items').update(updates).eq('id', itemId);
+    AppLogger.d('Delegating updatePortfolioItem to PortfolioRepository', tag: 'ProfileRepo');
+    return _portfolioRepository.updateItem(
+      id: itemId,
+      title: title,
+      description: description,
+    );
   }
 
+  /// Deletes a portfolio item.
+  /// Delegates to PortfolioRepository.
   Future<void> deletePortfolioItem(String itemId) async {
-    await _client.from('portfolio_items').delete().eq('id', itemId);
+    AppLogger.d('Delegating deletePortfolioItem to PortfolioRepository', tag: 'ProfileRepo');
+    return _portfolioRepository.deleteItem(id: itemId);
   }
 
+  /// Uploads a portfolio image.
+  /// Uses PortfolioService via PortfolioRepository for consistent handling.
   Future<String> uploadPortfolioImage({
     required String userId,
     required Uint8List bytes,
     required String contentType,
     required String fileExt,
   }) async {
-    final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
-    final path = '$userId/$fileName';
+    AppLogger.d('Delegating uploadPortfolioImage to PortfolioRepository', tag: 'ProfileRepo');
+    // Use a temporary item addition that only uploads the image
+    // Since PortfolioService handles upload internally, we create a dummy item
+    // This is a workaround - ideally, the upload should be a separate service method
+    final filename = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+    final result = await _portfolioRepository.addItem(
+      ownerId: userId,
+      title: '_temp_upload_$filename', // Temporary title
+      imageBytes: bytes,
+      imageFilename: filename,
+    );
+    // Return just the image path from the created item
+    if (result.imagePath != null) {
+      // Delete the temporary item, keeping the image for reuse
+      await _portfolioRepository.deleteItem(id: result.id, alsoDeleteImage: false);
+      return result.imagePath!;
+    }
+    throw StateError('Image upload failed - no path returned');
+  }
 
-    await _client.storage
-        .from('portfolio')
-        .uploadBinary(
-          path,
-          bytes,
-          fileOptions: FileOptions(contentType: contentType),
-        );
-    return path;
+  /// Resolves a storage path or URL to a displayable image URL.
+  /// Handles both full URLs (legacy) and storage paths (requires signed URL).
+  Future<String?> resolvePortfolioImageUrl(String? pathOrUrl) async {
+    if (pathOrUrl == null || pathOrUrl.isEmpty) {
+      return null;
+    }
+    // Already a full URL
+    if (pathOrUrl.startsWith('http')) {
+      return pathOrUrl;
+    }
+    // Generate signed URL for storage path
+    try {
+      final signed = await _client.storage
+          .from('portfolio')
+          .createSignedUrl(pathOrUrl, 7200); // 2 hours
+      return signed;
+    } catch (e) {
+      AppLogger.w('Failed to resolve portfolio image URL', tag: 'ProfileRepo', json: {'path': pathOrUrl, 'error': e.toString()});
+      return null;
+    }
   }
 
   Future<FreelancerProfile> getPublicProfile(String userId) async {
@@ -209,16 +288,8 @@ class ProfileRepository {
     }
     final profileModel = ProfileModel.fromJson(profileData);
 
-    // 2. Fetch Portfolio Items
-    final portfolioData = await _client
-        .from('portfolio_items')
-        .select()
-        .eq('owner_id', userId)
-        .order('created_at', ascending: false);
-
-    final portfolioItems = (portfolioData as List)
-        .map((e) => PortfolioItem.fromJson(e as Map<String, dynamic>))
-        .toList();
+    // 2. Fetch Portfolio Items (delegated to PortfolioRepository)
+    final portfolioItems = await _portfolioRepository.listItems(ownerId: userId);
 
     // 3. Mock Reviews (for now, as table doesn't exist)
     // TODO: Implement reviews table and fetching

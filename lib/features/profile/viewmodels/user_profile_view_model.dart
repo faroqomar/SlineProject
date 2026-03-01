@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/profile/data/profile_repository.dart';
 import 'package:sline_app/features/profile/models/public_profile.dart';
+import 'package:sline_app/features/portfolio/models/portfolio_item.dart';
 import 'package:sline_app/features/chat/services/message_service.dart';
 import 'package:sline_app/features/chat/view/chat_screen.dart';
 
@@ -13,12 +14,12 @@ class UserProfileViewModel extends ChangeNotifier {
   bool _isLoading = true;
   String? _error;
   PublicProfile? _profile;
-  List<Map<String, dynamic>> _portfolio = [];
+  List<PortfolioItem> _portfolio = [];
 
   bool get isLoading => _isLoading;
   String? get error => _error;
   PublicProfile? get profile => _profile;
-  List<Map<String, dynamic>> get portfolio => _portfolio;
+  List<PortfolioItem> get portfolio => _portfolio;
 
   UserProfileViewModel({
     required this.userId,

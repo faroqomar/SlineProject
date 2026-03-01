@@ -3,7 +3,11 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/widgets/signed_image.dart';
+// Import both for the extension methods on PortfolioItem
 import 'package:sline_app/features/profile/models/freelancer_profile.dart';
+// Canonical PortfolioItem from portfolio feature
+import 'package:sline_app/features/portfolio/models/portfolio_item.dart' show PortfolioItem;
 
 /// Portfolio grid widget with masonry-style layout matching the new design.
 class PublicProfilePortfolio extends StatelessWidget {
@@ -85,7 +89,7 @@ class PublicProfilePortfolio extends StatelessWidget {
   }
 }
 
-/// Individual portfolio card with gradient overlay.
+/// Individual portfolio card with image and gradient overlay.
 class _PortfolioCard extends StatelessWidget {
   final PortfolioItem item;
   final double aspectRatio;
@@ -94,71 +98,95 @@ class _PortfolioCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get the effective image reference (canonical path or legacy URL)
+    final imageRef = item.effectiveImageRef;
+    // Use extension methods for UI-specific properties (fallback when no image)
+    final displayColor = item.displayColor;
+
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimens.p12),
       child: AspectRatio(
         aspectRatio: aspectRatio,
         child: Container(
           decoration: BoxDecoration(
-            color: item.color,
+            color: displayColor,
             borderRadius: BorderRadius.circular(AppDimens.r16),
             boxShadow: [
               BoxShadow(
-                color: item.color.withValues(alpha: 0.3),
+                color: displayColor.withValues(alpha: 0.3),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
-          child: Stack(
-            children: [
-              // Gradient overlay
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(AppDimens.r16),
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withValues(alpha: 0.8),
-                      ],
-                      stops: const [0.3, 1.0],
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppDimens.r16),
+            child: Stack(
+              children: [
+                // Background image (if available)
+                if (imageRef != null)
+                  Positioned.fill(
+                    child: SignedImage(
+                      storagePathOrUrl: imageRef,
+                      fit: BoxFit.cover,
+                      bucket: 'portfolio',
+                      placeholder: Container(color: displayColor),
+                    ),
+                  )
+                else
+                  // Fallback to color background when no image
+                  Positioned.fill(
+                    child: Container(color: displayColor),
+                  ),
+
+                // Gradient overlay for text readability
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppDimens.r16),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.8),
+                        ],
+                        stops: const [0.3, 1.0],
+                      ),
                     ),
                   ),
                 ),
-              ),
 
-              // Content
-              Positioned(
-                bottom: AppDimens.p12,
-                left: AppDimens.p12,
-                right: AppDimens.p12,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      item.title,
-                      style: AppTypography.bodySmall.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                // Content
+                Positioned(
+                  bottom: AppDimens.p12,
+                  left: AppDimens.p12,
+                  right: AppDimens.p12,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        item.title,
+                        style: AppTypography.bodySmall.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      item.category,
-                      style: AppTypography.micro.copyWith(
-                        color: Colors.white.withValues(alpha: 0.7),
+                      const SizedBox(height: 2),
+                      Text(
+                        item.displayCategory,
+                        style: AppTypography.micro.copyWith(
+                          color: Colors.white.withValues(alpha: 0.7),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

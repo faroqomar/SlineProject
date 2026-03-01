@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/services/logger_service.dart';
 import '../../viewmodels/portfolio_view_model.dart';
 
 /// Bottom sheet for adding a portfolio item (supports optional image).
@@ -31,6 +32,7 @@ class _AddPortfolioSheetState extends State<AddPortfolioSheet> {
 
   /// Pick an image from gallery and store bytes + filename locally.
   Future<void> _pickImage() async {
+    AppLogger.i('Picking portfolio image', tag: 'AddPortfolioSheet');
     try {
       final XFile? picked = await _picker.pickImage(
         source: ImageSource.gallery,
@@ -38,19 +40,28 @@ class _AddPortfolioSheetState extends State<AddPortfolioSheet> {
         maxHeight: 1920,
         imageQuality: 90,
       );
-      if (picked == null) return;
+      if (picked == null) {
+        AppLogger.d('User cancelled image picker', tag: 'AddPortfolioSheet');
+        return;
+      }
 
       final bytes = await picked.readAsBytes();
+      AppLogger.i('Image picked', tag: 'AddPortfolioSheet', json: {
+        'filename': picked.name,
+        'size': bytes.length,
+      });
+
       if (!mounted) return;
       setState(() {
         _imageBytes = bytes;
         _imageFilename = picked.name;
       });
-    } catch (e) {
+    } catch (e, st) {
+      AppLogger.e('Image pick failed', tag: 'AddPortfolioSheet', error: e, stackTrace: st);
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Image pick failed: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to pick image. Please try again.')),
+      );
     }
   }
 
@@ -62,7 +73,16 @@ class _AddPortfolioSheetState extends State<AddPortfolioSheet> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      AppLogger.d('Form validation failed', tag: 'AddPortfolioSheet');
+      return;
+    }
+
+    AppLogger.i('Submitting portfolio item', tag: 'AddPortfolioSheet', json: {
+      'title': _title.text.trim(),
+      'hasImage': _imageBytes != null,
+    });
+
     setState(() => _submitting = true);
 
     final ok = await widget.controller.addItem(
@@ -76,12 +96,16 @@ class _AddPortfolioSheetState extends State<AddPortfolioSheet> {
     if (!mounted) return;
 
     if (ok) {
+      AppLogger.i('Portfolio item added successfully', tag: 'AddPortfolioSheet');
       widget.onCreated();
     } else {
+      AppLogger.w('Failed to add portfolio item', tag: 'AddPortfolioSheet', json: {
+        'error': widget.controller.error,
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Failed: ${widget.controller.error ?? 'Unknown error'}',
+            widget.controller.error ?? 'Failed to create item. Please try again.',
           ),
         ),
       );

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' show SupabaseClient;
 
+import '../../../core/services/logger_service.dart';
 import '../viewmodels/portfolio_view_model.dart';
 import '../models/portfolio_item.dart';
 import 'sheets/add_portfolio_sheet.dart';
@@ -10,6 +10,9 @@ import 'widgets/portfolio_tile.dart';
 /// PortfolioScreen
 /// Hosts the controller/provider scope, grid, refresh, infinite scroll,
 /// and opens bottom-sheets for add/details/edit.
+///
+/// MVVM Compliant: Uses PortfolioViewModel through Provider pattern.
+/// Does NOT directly reference SupabaseClient.
 class PortfolioScreen extends StatefulWidget {
   const PortfolioScreen({super.key, this.ownerId});
   final String? ownerId;
@@ -48,13 +51,21 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
 
   Future<void> _reload() async {
     final ctrl = _ctrlRef;
-    if (ctrl == null) return;
+    if (ctrl == null) {
+      AppLogger.w('Reload called but controller is null', tag: 'PortfolioScreen');
+      return;
+    }
+    AppLogger.i('Reloading portfolio', tag: 'PortfolioScreen');
     await ctrl.load(ownerId: widget.ownerId);
   }
 
   void _openAddSheet() {
     final ctrl = _ctrlRef;
-    if (ctrl == null) return;
+    if (ctrl == null) {
+      AppLogger.w('Cannot open add sheet - controller is null', tag: 'PortfolioScreen');
+      return;
+    }
+    AppLogger.d('Opening add portfolio sheet', tag: 'PortfolioScreen');
     showModalBottomSheet(
       context: context,
       useSafeArea: true,
@@ -63,9 +74,10 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
         controller: ctrl,
         onCreated: () {
           Navigator.of(ctx).pop();
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Portfolio item added')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Portfolio item added')),
+          );
+          AppLogger.i('Portfolio item added via sheet', tag: 'PortfolioScreen');
         },
       ),
     );
@@ -74,7 +86,12 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<PortfolioViewModel>(
-      create: (ctx) => PortfolioViewModel(client: ctx.read<SupabaseClient>()),
+      // MVVM Compliant: ViewModel creates its own repository internally.
+      // No direct SupabaseClient reference from the view.
+      create: (ctx) {
+        AppLogger.d('Creating PortfolioViewModel from PortfolioScreen', tag: 'PortfolioScreen');
+        return PortfolioViewModel();
+      },
       child: Consumer<PortfolioViewModel>(
         builder: (context, ctrl, _) {
           // capture controller reference for listeners/callbacks
@@ -84,6 +101,9 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
           if (!_bootstrapped) {
             _bootstrapped = true;
             WidgetsBinding.instance.addPostFrameCallback((_) {
+              AppLogger.i('Bootstrapping portfolio load', tag: 'PortfolioScreen', json: {
+                'ownerId': widget.ownerId,
+              });
               ctrl.load(ownerId: widget.ownerId);
             });
           }
@@ -120,7 +140,29 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
       return const Center(child: CircularProgressIndicator());
     }
     if (ctrl.error != null) {
-      return Center(child: Text('Failed to load: ${ctrl.error}'));
+      AppLogger.w('Portfolio error state: ${ctrl.error}', tag: 'PortfolioScreen');
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(
+                'Failed to load portfolio',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Please try again by pulling down to refresh.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+          ),
+        ),
+      );
     }
     if (ctrl.items.isEmpty) {
       return const _EmptyState();
@@ -149,6 +191,10 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                 item: item,
                 controller: ctrl,
                 onLongPress: () async {
+                  AppLogger.d('Long press on portfolio item', tag: 'PortfolioScreen', json: {
+                    'itemId': item.id,
+                    'title': item.title,
+                  });
                   final messenger = ScaffoldMessenger.of(context);
                   final ok = await showDialog<bool>(
                     context: context,
@@ -170,13 +216,21 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                     ),
                   );
                   if (ok == true) {
+                    AppLogger.i('User confirmed delete', tag: 'PortfolioScreen', json: {
+                      'itemId': item.id,
+                    });
                     final success = await ctrl.deleteItem(item.id);
+                    if (success) {
+                      AppLogger.i('Item deleted successfully', tag: 'PortfolioScreen');
+                    } else {
+                      AppLogger.w('Item delete failed', tag: 'PortfolioScreen');
+                    }
                     messenger.showSnackBar(
                       SnackBar(
                         content: Text(
                           success
-                              ? 'Deleted'
-                              : 'Delete failed: ${ctrl.error ?? ''}',
+                              ? 'Deleted successfully'
+                              : 'Delete failed. Please try again.',
                         ),
                       ),
                     );

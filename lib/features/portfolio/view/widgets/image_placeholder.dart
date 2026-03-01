@@ -2,13 +2,19 @@ import 'package:flutter/material.dart';
 
 /// Simple placeholder used when there is no image or image fails to load.
 class ImagePlaceholder extends StatelessWidget {
-  const ImagePlaceholder({super.key, required this.title});
+  const ImagePlaceholder({
+    super.key,
+    required this.title,
+    this.height,
+  });
   final String title;
+  final double? height;
 
   @override
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme.surfaceContainerHighest;
     return Container(
+      height: height,
       color: color,
       child: Center(
         child: Text(

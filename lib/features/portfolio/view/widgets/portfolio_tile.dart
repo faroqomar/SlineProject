@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../../../core/services/logger_service.dart';
 import '../sheets/portfolio_details_sheet.dart';
 import '../../viewmodels/portfolio_view_model.dart';
 import '../../models/portfolio_item.dart';
 import 'image_placeholder.dart';
 
 /// Grid tile for a single portfolio item.
+/// Uses effectiveImageRef for rendering (handles both canonical imagePath and legacy imageUrl).
 class PortfolioTile extends StatelessWidget {
   const PortfolioTile({
     super.key,
@@ -19,6 +21,16 @@ class PortfolioTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get effective image URL (canonical path or legacy URL)
+    final imageUrl = controller.getImageUrl(item);
+
+    AppLogger.d('Building portfolio tile', tag: 'PortfolioTile', json: {
+      'itemId': item.id,
+      'hasImage': imageUrl != null,
+      'imagePath': item.imagePath,
+      'imageUrl': item.imageUrl != null ? '(legacy)' : null,
+    });
+
     final border = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(12),
     );
@@ -28,7 +40,12 @@ class PortfolioTile extends StatelessWidget {
       child: InkWell(
         onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(12),
-        onTap: () => PortfolioDetailsSheet.open(context, item, controller),
+        onTap: () {
+          AppLogger.d('Opening portfolio details', tag: 'PortfolioTile', json: {
+            'itemId': item.id,
+          });
+          PortfolioDetailsSheet.open(context, item, controller);
+        },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -37,12 +54,15 @@ class PortfolioTile extends StatelessWidget {
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(12),
                 ),
-                child: item.imageUrl != null
+                child: imageUrl != null
                     ? Image.network(
-                        item.imageUrl!,
+                        imageUrl,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            ImagePlaceholder(title: item.title),
+                        errorBuilder: (_, error, __) {
+                          AppLogger.w('Failed to load portfolio image',
+                              tag: 'PortfolioTile', error: error);
+                          return ImagePlaceholder(title: item.title);
+                        },
                       )
                     : ImagePlaceholder(title: item.title),
               ),

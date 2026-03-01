@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/services/logger_service.dart';
 import '../../viewmodels/portfolio_view_model.dart';
 import '../../models/portfolio_item.dart';
 
@@ -18,6 +19,9 @@ class EditPortfolioSheet extends StatefulWidget {
     PortfolioItem item,
     PortfolioViewModel controller,
   ) {
+    AppLogger.d('Opening edit portfolio sheet', tag: 'EditPortfolioSheet', json: {
+      'itemId': item.id,
+    });
     return showModalBottomSheet<bool>(
       context: context,
       useSafeArea: true,
@@ -48,7 +52,16 @@ class _EditPortfolioSheetState extends State<EditPortfolioSheet> {
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      AppLogger.d('Form validation failed', tag: 'EditPortfolioSheet');
+      return;
+    }
+
+    AppLogger.i('Saving portfolio item changes', tag: 'EditPortfolioSheet', json: {
+      'itemId': widget.item.id,
+      'newTitle': _title.text.trim(),
+    });
+
     setState(() => _saving = true);
     try {
       final ok = await widget.controller.updateItem(
@@ -58,14 +71,29 @@ class _EditPortfolioSheetState extends State<EditPortfolioSheet> {
       );
       if (!mounted) return;
       if (ok) {
+        AppLogger.i('Portfolio item updated successfully', tag: 'EditPortfolioSheet');
         Navigator.of(context).pop(true);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Updated')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Updated successfully')),
+        );
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Update failed')));
+        AppLogger.w('Portfolio item update failed', tag: 'EditPortfolioSheet', json: {
+          'error': widget.controller.error,
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              widget.controller.error ?? 'Update failed. Please try again.',
+            ),
+          ),
+        );
+      }
+    } catch (e, st) {
+      AppLogger.e('Error saving portfolio item', tag: 'EditPortfolioSheet', error: e, stackTrace: st);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('An error occurred. Please try again.')),
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);

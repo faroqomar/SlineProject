@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/services/logger_service.dart';
 import '../../viewmodels/portfolio_view_model.dart';
 import '../../models/portfolio_item.dart';
+import '../widgets/image_placeholder.dart';
 import 'edit_portfolio_sheet.dart';
 
 /// Bottom sheet that shows portfolio item details and actions.
+/// Uses effectiveImageRef for rendering portfolio images.
 class PortfolioDetailsSheet extends StatelessWidget {
   const PortfolioDetailsSheet({
     super.key,
@@ -19,6 +22,9 @@ class PortfolioDetailsSheet extends StatelessWidget {
     PortfolioItem item,
     PortfolioViewModel controller,
   ) {
+    AppLogger.d('Opening portfolio details sheet', tag: 'PortfolioDetailsSheet', json: {
+      'itemId': item.id,
+    });
     return showModalBottomSheet(
       context: context,
       useSafeArea: true,
@@ -31,6 +37,13 @@ class PortfolioDetailsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final createdLocal = item.createdAt.toLocal();
+    final imageUrl = controller.getImageUrl(item);
+
+    AppLogger.d('Building portfolio details', tag: 'PortfolioDetailsSheet', json: {
+      'itemId': item.id,
+      'hasImage': imageUrl != null,
+    });
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -54,11 +67,21 @@ class PortfolioDetailsSheet extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
-            if (item.imageUrl != null)
+            if (imageUrl != null)
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.network(item.imageUrl!, fit: BoxFit.cover),
-              ),
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, error, __) {
+                    AppLogger.w('Failed to load portfolio image in details',
+                        tag: 'PortfolioDetailsSheet', error: error);
+                    return ImagePlaceholder(title: item.title, height: 200);
+                  },
+                ),
+              )
+            else
+              ImagePlaceholder(title: item.title, height: 200),
             const SizedBox(height: 12),
             Text(
               item.title,
@@ -83,6 +106,7 @@ class PortfolioDetailsSheet extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () async {
+                      AppLogger.d('Edit button pressed', tag: 'PortfolioDetailsSheet');
                       final updated = await EditPortfolioSheet.open(
                         context,
                         item,
@@ -104,6 +128,7 @@ class PortfolioDetailsSheet extends StatelessWidget {
                       foregroundColor: Theme.of(context).colorScheme.onError,
                     ),
                     onPressed: () async {
+                      AppLogger.d('Delete button pressed', tag: 'PortfolioDetailsSheet');
                       final ok = await showDialog<bool>(
                         context: context,
                         builder: (ctx) => AlertDialog(
@@ -125,6 +150,7 @@ class PortfolioDetailsSheet extends StatelessWidget {
                       );
                       if (!context.mounted) return;
                       if (ok == true) {
+                        AppLogger.i('User confirmed delete', tag: 'PortfolioDetailsSheet');
                         final messenger = ScaffoldMessenger.of(context);
                         final success = await controller.deleteItem(item.id);
                         if (!context.mounted) return;
@@ -132,8 +158,8 @@ class PortfolioDetailsSheet extends StatelessWidget {
                           SnackBar(
                             content: Text(
                               success
-                                  ? 'Deleted'
-                                  : 'Delete failed: ${controller.error ?? ''}',
+                                  ? 'Deleted successfully'
+                                  : 'Delete failed. Please try again.',
                             ),
                           ),
                         );

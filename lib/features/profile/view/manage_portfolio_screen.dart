@@ -190,19 +190,22 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                   if (titleController.text.trim().isEmpty) return;
 
                   if (isEditing) {
+                    // Update uses explicit parameters (not a map)
                     await vm.updatePortfolioItem(
                       itemId: item['id'],
-                      updates: {
-                        'title': titleController.text.trim(),
-                        'description': descController.text.trim(),
-                        if (localImagePath != null) 'image_url': localImagePath,
-                      },
+                      title: titleController.text.trim(),
+                      description: descController.text.trim(),
                     );
                   } else {
+                    // Add portfolio item
+                    // Note: Image handling is done via pickAndUploadPortfolioImage first
+                    // then the path is stored. For now, we just add without image if
+                    // no image was picked in this flow.
+                    final effectiveImagePath = (localImagePath != null && localImagePath != 'loading') ? localImagePath : null;
                     await vm.addPortfolioItem(
                       title: titleController.text.trim(),
                       description: descController.text.trim(),
-                      imageUrl: localImagePath,
+                      imagePath: effectiveImagePath,
                     );
                   }
                   if (context.mounted) Navigator.pop(dialogContext);

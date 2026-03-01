@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/features/profile/models/profile_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
+// Canonical PortfolioItem from portfolio feature
+import 'package:sline_app/features/portfolio/models/portfolio_item.dart' show PortfolioItem;
 import 'dart:math';
 
+/// FreelancerProfile model for public profile display.
+/// Uses canonical PortfolioItem from portfolio feature.
 class FreelancerProfile {
   final String id;
   final String initials;
@@ -19,7 +23,7 @@ class FreelancerProfile {
   final List<String> skills;
   final List<PortfolioItem> portfolio;
   final List<ReviewItem> reviews;
-  final List<Task> history; // Added
+  final List<Task> history;
   final String? avatarUrl;
 
   const FreelancerProfile({
@@ -37,7 +41,7 @@ class FreelancerProfile {
     required this.skills,
     required this.portfolio,
     required this.reviews,
-    this.history = const [], // Added
+    this.history = const [],
     this.avatarUrl,
   });
 
@@ -89,42 +93,23 @@ class FreelancerProfile {
   // Keeping mock for testing/previews if needed, but updated to use new structure if necessary
 }
 
-class PortfolioItem {
-  final String id;
-  final String title;
-  final String category;
-  final Color color;
-  final String? imageUrl;
-  final String? description;
-
-  const PortfolioItem({
-    required this.id,
-    required this.title,
-    required this.category,
-    required this.color,
-    this.imageUrl,
-    this.description,
-  });
-
-  factory PortfolioItem.fromJson(Map<String, dynamic> json) {
-    // Assign a random color for UI variation
+/// Extension to provide UI-specific properties for PortfolioItem display.
+/// This keeps the canonical PortfolioItem clean while adding view-specific
+/// properties needed for the public profile UI.
+extension PortfolioItemUIProps on PortfolioItem {
+  /// Returns a random color for UI variation (for public profile display).
+  Color get displayColor {
     final colors = [
       AppColors.teal,
       AppColors.gold,
       AppColors.lightRed,
       AppColors.lightTeal,
     ];
-    final color = colors[Random().nextInt(colors.length)];
-
-    return PortfolioItem(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      category: 'Project', // Placeholder as not in DB
-      color: color,
-      imageUrl: json['image_url'] as String?,
-      description: json['description'] as String?,
-    );
+    return colors[Random().nextInt(colors.length)];
   }
+
+  /// Returns a placeholder category for UI display.
+  String get displayCategory => 'Project';
 }
 
 class ReviewItem {

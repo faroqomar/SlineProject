@@ -25,15 +25,15 @@
 ## Exact Feature Names (Use These Names When Choosing a Feature)
 
 - `auth` waiting
-- `booking` done 
+- `booking` ✅ 
 - `categories`
 - `chat` waiting
 - `dashboard` waiting
 - `favorites` waiting
-- `home` done
-- `management`done
+- `home` ✅
+- `management` ✅
 - `notifications`
-- `portfolio` waiting
+- `portfolio` ✅
 - `profile` waiting
 - `proposals`
 - `saved`

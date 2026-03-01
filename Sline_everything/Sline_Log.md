@@ -21,6 +21,51 @@
 
 ## 📋 Version History
 
+### 🟢 Version 2.16.8 — Portfolio Feature Recovery
+
+**Date:** 2026-03-01  
+**Commit:** _Pending_ — "fix(portfolio): implement signed URL image resolution and consolidate CRUD"
+
+#### ✅ Implemented
+
+- **Image Display Fixes**
+  - Added `resolvePortfolioImageUrl()` to `lib/features/profile/data/profile_repository.dart`
+  - Updated `lib/features/profile/viewmodels/profile_view_model.dart` to resolve image URLs in parallel using `Future.wait()`
+  - Fixed `lib/features/profile/view/manage_portfolio_screen.dart` to pass `imagePath` through add flow
+  - Fixed `lib/features/profile/view/widgets/public_profile/public_profile_portfolio.dart` to use `SignedImage` widget with `effectiveImageRef`
+  - Enhanced `lib/core/widgets/signed_image.dart` with configurable bucket parameter
+
+- **Data Model**
+  - Canonical field: `image_path` (storage path like `ownerId/filename.jpg`)
+  - Legacy fallback: `image_url` (public URL for backwards compatibility)
+  - Resolution happens at ViewModel layer via `resolvePortfolioImageUrl()`
+
+- **UI Fixes**
+  - Fixed ScrollController attachment error in `lib/features/profile/view/public_profile_screen.dart` by adding separate controllers for each tab
+
+#### 📊 Impact
+
+- Portfolio images now display correctly in both Manage Portfolio and Public Profile views
+- Consistent signed URL pattern across all private storage buckets
+- Backwards compatible with legacy `image_url` data
+- No more ScrollController errors when switching tabs
+
+#### 🧪 Verification
+
+- Plan: `.TODO/PLAN_ProtfolioFix_2026-03-01.md`
+- Execution Log: `.TODO/EXECUTION_LOG_ProtfolioFix_2026-03-01.md`
+- Contract: `.TODO/portfolio_contract_2026-03-01.md`
+- Master Report: `.TODO/MASTER_REPORT_2026-03-01_PortfolioFix.md`
+
+#### 🔧 Technical Notes
+
+- Portfolio bucket remains public for backwards compatibility
+- App uses signed URLs for security consistency with other buckets
+- Two-step upload: `pickAndUploadPortfolioImage()` → `addPortfolioItem(imagePath: path)`
+- Parallel URL resolution with `Future.wait()` for performance
+
+---
+
 ### 🟢 Version 2.16.7 — Legacy Orders Dashboard Decommission
 
 **Date:** 2026-03-01

@@ -91,30 +91,37 @@ class _SignedImageState extends State<SignedImage> {
 
     // Generate new signed URL and cache it
     try {
-      String? signed;
+      String? resolved;
       if (widget.bucket != null) {
-        // Use specified bucket
-        signed = await Supabase.instance.client.storage
-            .from(widget.bucket!)
-            .createSignedUrl(v, 7200); // 2 hours
+        // Try signed URL first (for private buckets)
+        try {
+          resolved = await Supabase.instance.client.storage
+              .from(widget.bucket!)
+              .createSignedUrl(v, 7200); // 2 hours
+        } catch (e) {
+          // If signed URL fails (e.g., public bucket), fall back to public URL
+          resolved = Supabase.instance.client.storage
+              .from(widget.bucket!)
+              .getPublicUrl(v);
+        }
       } else {
         // Default to TaskImageService (legacy behavior for task-images)
         final signer = TaskImageService();
-        signed = await signer.createSignedUrl(
+        resolved = await signer.createSignedUrl(
           v,
           expire: const Duration(hours: 2),
         );
       }
 
-      if (signed != null && signed.isNotEmpty) {
-        SignedUrlCache.set(v, signed);
+      if (resolved != null && resolved.isNotEmpty) {
+        SignedUrlCache.set(v, resolved);
       }
       if (!mounted) return;
       setState(() {
-        _resolvedUrl = signed;
+        _resolvedUrl = resolved;
         _loading = false;
       });
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);
     }

@@ -3,6 +3,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:sline_app/features/profile/data/profile_repository.dart';
 import 'package:sline_app/features/profile/models/profile_model.dart';
 import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
+import 'package:sline_app/features/portfolio/models/portfolio_item.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _MockProfileRepository extends Mock implements ProfileRepository {}
@@ -43,7 +44,7 @@ void main() {
       ).thenAnswer((_) async => 'https://signed/avatar.png');
       when(
         () => repository.getPortfolioItems(any()),
-      ).thenAnswer((_) async => <Map<String, dynamic>>[]);
+      ).thenAnswer((_) async => <PortfolioItem>[]);
     });
 
     test('loads header-safe data without fetching portfolio', () async {

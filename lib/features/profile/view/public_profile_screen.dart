@@ -37,6 +37,11 @@ class PublicProfileScreen extends StatefulWidget {
 class _PublicProfileScreenState extends State<PublicProfileScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  // Separate ScrollControllers for each tab to avoid "attached to multiple ScrollPosition" error
+  final ScrollController _aboutScrollController = ScrollController();
+  final ScrollController _portfolioScrollController = ScrollController();
+  final ScrollController _historyScrollController = ScrollController();
+  final ScrollController _reviewsScrollController = ScrollController();
 
   @override
   void initState() {
@@ -51,6 +56,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
   @override
   void dispose() {
     _tabController.dispose();
+    _aboutScrollController.dispose();
+    _portfolioScrollController.dispose();
+    _historyScrollController.dispose();
+    _reviewsScrollController.dispose();
     super.dispose();
   }
 
@@ -228,6 +237,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
                     children: [
                       // --- About Tab ---
                       SingleChildScrollView(
+                        controller: _aboutScrollController,
                         padding: const EdgeInsets.all(AppDimens.p24),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -279,6 +289,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
 
                       // --- Portfolio Tab ---
                       SingleChildScrollView(
+                        controller: _portfolioScrollController,
                         padding: const EdgeInsets.all(AppDimens.p24),
                         child: Column(
                           children: [
@@ -301,6 +312,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
                               ),
                             )
                           : ListView.separated(
+                              controller: _historyScrollController,
                               padding: const EdgeInsets.fromLTRB(
                                 AppDimens.p24,
                                 AppDimens.p24,
@@ -322,6 +334,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
 
                       // --- Reviews Tab ---
                       SingleChildScrollView(
+                        controller: _reviewsScrollController,
                         padding: const EdgeInsets.fromLTRB(
                           AppDimens.p24,
                           AppDimens.p24,
