@@ -69,7 +69,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 
 | Feature | Status | Notes |
 | --- | --- | --- |
-| Unified dashboard/workspace | 🚧 In Progress | `dashboard`, `work`, and `orders` features are implemented and still being refined |
+| Unified dashboard/workspace | 🚧 In Progress | `dashboard`, `work`, and `orders` features are implemented; delivered review surfacing is now role-gated so only client-side actionable items appear under review states |
 | Booking/task CTA resolution | ✅ Completed | unified CTA resolver is used by work/booking screens |
 | Order management timeline | ✅ Completed | management feature is live for task and booking details |
 | Wallet and ledger views | 🚧 In Progress | wallet feature and ledger schema exist; ongoing finance hardening continues |

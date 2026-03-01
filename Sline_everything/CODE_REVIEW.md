@@ -460,6 +460,30 @@ if (result != null && mounted) {
 }
 ```
 
+### 7. Permission-Gated Review UI
+
+Never show review badges, counters, pinned sections, or CTAs from a raw delivered-state flag alone.
+
+**WRONG**:
+
+```dart
+if (item.needsReview) {
+  showNeedsReviewBadge();
+}
+```
+
+**CORRECT**:
+
+```dart
+if (item.actionableNeedsReview) {
+  showNeedsReviewBadge();
+} else if (item.awaitingCounterpartyReview) {
+  showAwaitingCounterpartyReviewBadge();
+}
+```
+
+Use this rule anywhere `vw_unified_work_items.needs_review` is consumed. The DB view tells you the item is delivered; the app must still decide whether the current user is the reviewing side.
+
 ---
 
 ## 📅 NEXT REVIEW

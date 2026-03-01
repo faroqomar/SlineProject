@@ -21,6 +21,42 @@
 
 ## 📋 Version History
 
+### 🟢 Version 2.16.6 — Dashboard Review Ownership Sync & Work Detail CTA Clarification
+
+**Date:** 2026-03-01
+**Commit:** _Pending_ — "fix(work): gate review states by permissions and clarify delivered provider state"
+
+#### ✅ Implemented
+
+- **Dashboard Review Ownership**
+  - Added explicit `actionableNeedsReview` and `awaitingCounterpartyReview` helpers in `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/dashboard/models/work_item.dart`.
+  - Updated `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/dashboard/data/dashboard_repository.dart` and `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/dashboard/viewmodels/dashboard_view_model.dart` so `Needs Review` counters, sections, and next-action priority only include items where the current role can actually review.
+  - Updated `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/dashboard/view/tabs/work_tab.dart` and `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/dashboard/view/widgets/work_item_card.dart` so provider-side delivered items show `Awaiting Client Review` instead of being mislabeled as client-actionable.
+- **Work Detail CTA Clarification**
+  - Updated `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/work/view/work_item_details_screen.dart` so delivered provider-side items render `Waiting for Client Review` instead of a blank action area.
+  - Added role/status telemetry in `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/work/viewmodels/work_item_details_view_model.dart` to log `is_client`, `is_freelancer`, `needs_review`, and `can_review` on detail load.
+- **Documentation Reference Fixes**
+  - Corrected the Work module section in `Sline_everything/DEVELOPER_GUIDE.md` to include `review_delivery_modal.dart`, the live `UnifiedWorkStatus` values, and the current review ownership contract.
+  - Added regression coverage in `/Users/eros/Dev/Eros_Projects/Sline/sline_app/test/widget/dashboard/work_tab_test.dart` and `/Users/eros/Dev/Eros_Projects/Sline/sline_app/test/unit/models/work_item_model_test.dart`.
+
+#### 📊 Impact
+
+- Freelancer/provider users no longer see `Needs Your Review` labels for work that only the client can approve.
+- Delivered work detail pages no longer look broken when no provider-side approval action exists.
+- Dashboard review counters and pinned sections now reflect actionable client work only.
+
+#### 🧪 Verification
+
+- Docs Sync: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.TODO/DOCS_SYNC_2026-03-01_Dashboard_Work_Review_Ownership.md`
+- Tests: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/test/widget/dashboard/work_tab_test.dart`
+- Tests: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/test/unit/models/work_item_model_test.dart`
+- Check: `flutter analyze`
+
+#### 🔧 Technical Notes
+
+- `vw_unified_work_items.needs_review` remains a raw delivered-state signal from the database view; UI surfaces must combine it with role-derived permissions before showing review CTAs.
+- This is an app-layer behavior correction. No new migration or Supabase object was introduced in this patch.
+
 ### 🟢 Version 2.16.5 — Home Feed Hardening, Safe Profile Summaries, and Discovery Contract Sync
 
 **Date:** 2026-03-01

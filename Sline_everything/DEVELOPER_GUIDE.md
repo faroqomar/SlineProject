@@ -1939,8 +1939,10 @@ lib/features/work/
 │   └── work_item_details_view_model.dart  # Screen-scoped ChangeNotifier
 └── view/
     ├── work_item_details_screen.dart     # 3-tab interface (Overview, Extensions, Contract)
-    ├── submit_delivery_modal.dart        # Bottom sheet for delivery submission
-    └── request_extension_modal.dart      # Bottom sheet for extension requests
+    └── widgets/
+        ├── submit_delivery_modal.dart    # Bottom sheet for delivery submission
+        ├── request_extension_modal.dart  # Bottom sheet for extension requests
+        └── review_delivery_modal.dart    # Client approval / revision request modal
 ```
 
 ## Data Flow
@@ -1974,22 +1976,35 @@ UI (WorkItemDetailsScreen)
 ## Enums (app_enums.dart)
 
 - `WorkItemType` — `task`, `booking`
-- `UnifiedWorkStatus` — `pending`, `active`, `delivered`, `revision`, `completed`, `canceled`, `disputed`, `unknown`
+- `UnifiedWorkStatus` — `pending`, `pendingPayment`, `requestPending`, `active`, `delivered`, `completed`, `canceled`, `disputed`, `unknown`
 
 ## Key Patterns
 
 1. **Parallel Data Fetching**: `loadData()` uses `Future.wait` with 5 concurrent queries
 2. **Fallback Mapper**: When `vw_unified_work_items` has refresh lag, creates a temporary model from raw booking data
-3. **Status Mapping**:
+3. **Review Ownership Contract**:
+   - `vw_unified_work_items.needs_review` is a raw delivered-state flag, not an authorization result.
+   - Client-facing review UI must combine that flag with role-derived permissions before showing review sections or CTAs.
+   - Dashboard/work screens use `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/dashboard/models/work_item.dart` helpers:
+     - `actionableNeedsReview` → current role can review now
+     - `awaitingCounterpartyReview` → delivered work is waiting on the other side
+   - Provider/freelancer users should see `Awaiting Client Review` in dashboard cards and `Waiting for Client Review` in `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/work/view/work_item_details_screen.dart`.
+4. **Status Mapping**:
    - `declineBooking` maps to DB `refunded` status (per `fn_booking_guard` transitions).
    - `paid_request_pending` maps to `UnifiedWorkStatus.requestPending` to expose actions (Accept/Decline).
-4. **Error Handling**: All errors mapped via `_mapError()` — no raw exceptions in UI
+5. **Observability**:
+   - `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/work/viewmodels/work_item_details_view_model.dart` logs role/status context on detail load so CTA mismatches can be traced from AppLogger output.
+6. **Error Handling**:
+   - Work detail actions set screen-safe user-facing errors in the ViewModel and log full traces through `AppLogger`; review action routing is role-gated before any modal is opened.
 
 ## Verification
 
 - Plan: `.TODO/PLAN_Freelancer_Unified_Flow_2026-02-16.md`
 - Architect Patch: `.TODO/ARCHITECT_PATCH_2026-02-16_Unified_Flow.md`
 - CodeGuard Review: `.TODO/CODEGUARD_REVIEW_2026-02-16_Freelancer_Unified_Flow.md`
+- Regression tests:
+  - `/Users/eros/Dev/Eros_Projects/Sline/sline_app/test/widget/dashboard/work_tab_test.dart`
+  - `/Users/eros/Dev/Eros_Projects/Sline/sline_app/test/unit/models/work_item_model_test.dart`
 
 ---
 
