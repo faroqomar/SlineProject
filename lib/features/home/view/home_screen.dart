@@ -124,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              'Good Morning 👋',
+                                              'Good morning',
                                               style: AppTypography.bodySmall
                                                   .copyWith(
                                                     color: colorScheme
@@ -206,7 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     children: [
                                       _buildCategoryChip(
                                         context,
-                                        label: '✨ All',
+                                        label: 'All',
                                         isSelected:
                                             filterController.selectedCategory ==
                                             '',
@@ -214,16 +214,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                             .filterByCategory(''),
                                       ),
                                       ...taskCategories.map((category) {
-                                        // Add emoji based on category
                                         String label = category;
                                         if (category == 'Design') {
-                                          label = '🎨 Design';
+                                          label = 'Design';
                                         } else if (category == 'Development') {
-                                          label = '💻 Dev';
+                                          label = 'Development';
                                         } else if (category == 'Writing') {
-                                          label = '✍️ Writing';
+                                          label = 'Writing';
                                         } else if (category == 'Marketing') {
-                                          label = '🎯 Marketing';
+                                          label = 'Marketing';
                                         }
 
                                         return _buildCategoryChip(

@@ -173,5 +173,77 @@ void main() {
         'Standard package description',
       );
     });
+
+    testWidgets('submit can pop without post-pop setState exceptions', (
+      tester,
+    ) async {
+      final taskVm = _MockTaskViewModel();
+      final categoriesRepo = _MockCategoriesRepository();
+      when(() => categoriesRepo.getAll()).thenAnswer(
+        (_) async => <CategoryModel>[
+          CategoryModel(
+            id: 'cat-design',
+            name: 'Design',
+            iconUrl: null,
+            createdAt: DateTime.utc(2026, 2, 24),
+          ),
+        ],
+      );
+      when(() => taskVm.currentUserId).thenReturn('user-1');
+      when(() => taskVm.createTask(any())).thenAnswer((_) async => _fallbackTask());
+
+      await pumpApp(
+        tester,
+        Builder(
+          builder: (context) {
+            return Scaffold(
+              body: Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => MultiProvider(
+                          providers: [
+                            ChangeNotifierProvider<TaskViewModel>.value(
+                              value: taskVm,
+                            ),
+                            Provider<CategoriesRepository>.value(
+                              value: categoriesRepo,
+                            ),
+                          ],
+                          child: const CreateTaskScreen(),
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('Open'),
+                ),
+              ),
+            );
+          },
+        ),
+      );
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Design').first);
+      await tester.pump();
+      await tester.tap(find.byKey(CreateTaskScreen.primaryActionButtonKey));
+      await tester.pump();
+
+      await tester.enterText(find.byType(TextFormField).at(0), 'Task title');
+      await tester.enterText(
+        find.byType(TextFormField).at(1),
+        'Task description',
+      );
+      await tester.tap(find.byKey(CreateTaskScreen.primaryActionButtonKey));
+      await tester.pump();
+
+      await tester.enterText(find.byType(TextFormField).first, '100');
+      await tester.tap(find.byKey(CreateTaskScreen.primaryActionButtonKey));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    });
   });
 }

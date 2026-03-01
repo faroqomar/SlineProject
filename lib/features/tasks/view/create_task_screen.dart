@@ -289,11 +289,14 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       if (!mounted) return;
       Navigator.pop(context);
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -419,14 +422,29 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
   // --- Step 1: Concept ---
   Widget _buildStep1(AppColorScheme colorScheme) {
-    // Popular categories with emojis for fallback
     final popularCategories = [
-      {'icon': '🎨', 'name': 'Design', 'color': AppColors.lightRed},
-      {'icon': '💻', 'name': 'Development', 'color': AppColors.lightTeal},
-      {'icon': '✍️', 'name': 'Writing', 'color': AppColors.sand},
-      {'icon': '📱', 'name': 'Mobile', 'color': AppColors.gold},
-      {'icon': '🎯', 'name': 'Marketing', 'color': AppColors.mediumGreyBlue},
-      {'icon': '🎬', 'name': 'Video', 'color': AppColors.teal},
+      {
+        'icon': Icons.palette_outlined,
+        'name': 'Design',
+        'color': AppColors.lightRed,
+      },
+      {
+        'icon': Icons.code,
+        'name': 'Development',
+        'color': AppColors.lightTeal,
+      },
+      {
+        'icon': Icons.edit_note,
+        'name': 'Writing',
+        'color': AppColors.sand,
+      },
+      {'icon': Icons.phone_iphone, 'name': 'Mobile', 'color': AppColors.gold},
+      {
+        'icon': Icons.campaign_outlined,
+        'name': 'Marketing',
+        'color': AppColors.mediumGreyBlue,
+      },
+      {'icon': Icons.movie_outlined, 'name': 'Video', 'color': AppColors.teal},
     ];
 
     return Column(
@@ -442,7 +460,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
             Expanded(
               child: _buildTypeCard(
                 cardKey: CreateTaskScreen.tenderTypeCardKey,
-                emoji: '📋',
+                icon: Icons.assignment_outlined,
                 label: 'Tender',
                 subLabel: 'Open proposals',
                 type: TaskType.tender,
@@ -454,7 +472,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
             Expanded(
               child: _buildTypeCard(
                 cardKey: CreateTaskScreen.bookingTypeCardKey,
-                emoji: '📅',
+                icon: Icons.calendar_today_outlined,
                 label: 'Booking',
                 subLabel: 'Direct hire',
                 type: TaskType.booking,
@@ -489,11 +507,11 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                   if (_categories.isNotEmpty) {
                     final cat = _categories[index];
                     final isSelected = _selectedCategoryId == cat.id;
-                    final emoji = _getCategoryEmoji(cat.name);
+                    final icon = _getCategoryIcon(cat.name);
                     final catColor = _getCategoryColor(cat.name);
 
                     return _buildCategoryCard(
-                      emoji: emoji,
+                      icon: icon,
                       name: cat.name,
                       isSelected: isSelected,
                       color: catColor,
@@ -511,7 +529,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                         catName; // Check name for fallback
 
                     return _buildCategoryCard(
-                      emoji: cat['icon'] as String,
+                      icon: cat['icon'] as IconData,
                       name: catName,
                       isSelected: isSelected,
                       color: cat['color'] as Color,
@@ -530,7 +548,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   }
 
   Widget _buildCategoryCard({
-    required String emoji,
+    required IconData icon,
     required String name,
     required bool isSelected,
     required Color color,
@@ -554,7 +572,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 24)),
+            Icon(icon, size: 24, color: isSelected ? color : colorScheme.text),
             const SizedBox(height: 6),
             Text(
               name,
@@ -571,17 +589,25 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     );
   }
 
-  String _getCategoryEmoji(String name) {
+  IconData _getCategoryIcon(String name) {
     final lowerName = name.toLowerCase();
-    if (lowerName.contains('design')) return '🎨';
-    if (lowerName.contains('dev') || lowerName.contains('code')) return '💻';
-    if (lowerName.contains('writ') || lowerName.contains('content')) {
-      return '✍️';
+    if (lowerName.contains('design')) return Icons.palette_outlined;
+    if (lowerName.contains('dev') || lowerName.contains('code')) {
+      return Icons.code;
     }
-    if (lowerName.contains('mobile') || lowerName.contains('app')) return '📱';
-    if (lowerName.contains('market') || lowerName.contains('seo')) return '🎯';
-    if (lowerName.contains('video') || lowerName.contains('media')) return '🎬';
-    return '📁';
+    if (lowerName.contains('writ') || lowerName.contains('content')) {
+      return Icons.edit_note;
+    }
+    if (lowerName.contains('mobile') || lowerName.contains('app')) {
+      return Icons.phone_iphone;
+    }
+    if (lowerName.contains('market') || lowerName.contains('seo')) {
+      return Icons.campaign_outlined;
+    }
+    if (lowerName.contains('video') || lowerName.contains('media')) {
+      return Icons.movie_outlined;
+    }
+    return Icons.folder_outlined;
   }
 
   Color _getCategoryColor(String name) {
@@ -607,7 +633,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
   Widget _buildTypeCard({
     Key? cardKey,
-    required String emoji,
+    required IconData icon,
     required String label,
     required String subLabel,
     required TaskType type,
@@ -634,7 +660,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 28)),
+            Icon(icon, size: 28, color: isSelected ? color : colorScheme.text),
             const SizedBox(height: 8),
             Text(
               label,

@@ -491,7 +491,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
           isLoading: vm.isLoading,
           onSubmit: (note) async {
             await vm.submitDelivery(note);
-            if (context.mounted) Navigator.pop(context);
+            if (ctx.mounted) Navigator.pop(ctx);
           },
         ),
       ),
@@ -509,7 +509,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
           isLoading: vm.isLoading,
           onSubmit: (note, days) async {
             await vm.requestExtension(note, days);
-            if (context.mounted) Navigator.pop(context);
+            if (ctx.mounted) Navigator.pop(ctx);
           },
         ),
       ),
@@ -551,7 +551,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     if (item == null) return;
 
     final chatVm = context.read<ChatViewModel>();
-    LoadingUtils.show(context);
+    final loader = LoadingUtils.show(context, debugLabel: 'work_item_chat');
 
     try {
       final convo = await chatVm.createOrGetConversation(
@@ -560,7 +560,6 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
         user2Id: item.freelancerId,
       );
       if (!context.mounted) return;
-      LoadingUtils.hide(context);
 
       Navigator.push(
         context,
@@ -568,7 +567,6 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
       );
     } catch (e) {
       if (!context.mounted) return;
-      LoadingUtils.hide(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -576,6 +574,8 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
           ),
         ),
       );
+    } finally {
+      loader.close();
     }
   }
 }

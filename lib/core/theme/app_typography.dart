@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// Defines the typography for the entire application, consistent with the design system.
 ///
@@ -9,10 +8,19 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTypography {
   AppTypography._(); // Private constructor to prevent instantiation
 
+  static const List<String> fontFamilyFallback = <String>[
+    'Noto Sans',
+    'Noto Sans Arabic',
+    'Roboto',
+    'Arial',
+    'sans-serif',
+  ];
+
   // Base text style, all other styles will derive from this
-  static final TextStyle _baseTextStyle = GoogleFonts.plusJakartaSans(
+  static const TextStyle _baseTextStyle = TextStyle(
     fontWeight: FontWeight.normal,
-    height: 1.2, // Default line height
+    height: 1.2,
+    fontFamilyFallback: fontFamilyFallback,
   );
 
   // --- Headings ---

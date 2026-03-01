@@ -9,7 +9,7 @@ It covers two flows:
 
 Key design choices:
 • All timestamps are stored in UTC; UI always displays local time.
-• A slot can be booked by at most one active booking (pending/confirmed) — enforced with a unique partial index.
+• A slot can be booked by at most one active booking (pending/confirmed); slotless direct bookings may be created multiple times for the same client/task pair.
 • RLS ensures each party only sees/edits what they own (provider vs. client rules).
 
 ⸻

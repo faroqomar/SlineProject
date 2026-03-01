@@ -304,11 +304,10 @@ class _OrdersDashboardScreenState extends State<OrdersDashboardScreen> {
 
   Future<void> _handleChatTap(BuildContext context, Task task) async {
     final chatVm = context.read<ChatViewModel>();
-    LoadingUtils.show(context);
+    final loader = LoadingUtils.show(context, debugLabel: 'orders_chat');
     try {
       final convo = await chatVm.getTaskConversation(task);
       if (!context.mounted) return;
-      LoadingUtils.hide(context);
 
       Navigator.push(
         context,
@@ -316,10 +315,11 @@ class _OrdersDashboardScreenState extends State<OrdersDashboardScreen> {
       );
     } catch (e) {
       if (!context.mounted) return;
-      LoadingUtils.hide(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
       );
+    } finally {
+      loader.close();
     }
   }
 }

@@ -386,6 +386,7 @@ class QiCardPaymentService implements PaymentService {
   }
 
   Map<String, dynamic> _safePayloadSummary(Map<String, dynamic>? data) {
+    final normalizedError = _normalizeErrorValue(data?['error']);
     return <String, dynamic>{
       'keys': data?.keys.toList() ?? const <String>[],
       'booking_id': data?['booking_id'],
@@ -393,13 +394,25 @@ class QiCardPaymentService implements PaymentService {
       'payment_status': data?['payment_status'],
       'recovery_result': data?['recovery_result'],
       'refund_result': data?['refund_result'],
-      'error': data?['error'],
+      'error': normalizedError,
     };
   }
 
   String? _extractError(Map<String, dynamic>? data) {
-    final error = data?['error'];
+    return _normalizeErrorValue(data?['error']);
+  }
+
+  String? _normalizeErrorValue(dynamic error) {
     if (error is String && error.isNotEmpty) return error;
+    if (error is Map) {
+      final message = error['message'];
+      final code = error['code'];
+      if (code is String && message is String && code.isNotEmpty) {
+        return '$code: $message';
+      }
+      if (message is String && message.isNotEmpty) return message;
+      if (code is String && code.isNotEmpty) return code;
+    }
     return null;
   }
 

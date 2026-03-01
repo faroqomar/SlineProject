@@ -182,7 +182,7 @@ export async function promoteBookingAfterHold(
       payment_recovered_at: new Date().toISOString(),
     })
     .eq("id", bookingId)
-    .eq("status", "pending");
+    .in("status", ["pending", "confirmed"]);
 }
 
 export async function submitGatewayEscrowHold(
@@ -240,9 +240,7 @@ export async function submitGatewayEscrowHold(
   }
 
   if (data?.ok === false) {
-    throw new Error(
-      typeof data.error === "string" ? data.error : "LEDGER_GATEWAY_ESCROW_REJECTED",
-    );
+    throw new Error(extractLedgerError(data.error));
   }
 
   await promoteBookingAfterHold(adminClient, bookingId);
@@ -251,6 +249,28 @@ export async function submitGatewayEscrowHold(
     replayed: false,
     journalEntryId: data?.journal_entry_id ?? null,
   };
+}
+
+function extractLedgerError(error: unknown): string {
+  if (typeof error === "string" && error.length > 0) {
+    return error;
+  }
+
+  if (error && typeof error === "object") {
+    const code = typeof error.code === "string" ? error.code : null;
+    const message = typeof error.message === "string" ? error.message : null;
+    if (code && message) {
+      return `${code}: ${message}`;
+    }
+    if (message) {
+      return message;
+    }
+    if (code) {
+      return code;
+    }
+  }
+
+  return "LEDGER_GATEWAY_ESCROW_REJECTED";
 }
 
 function qicardAuthHeader() {
@@ -333,28 +353,102 @@ export async function qicardCreatePayment({
   };
 }
 
-export async function qicardGetPaymentStatus(paymentId: string) {
+function normalizeQiCardPaymentStatus(
+  body: Record<string, unknown>,
+  fallbackRequestId: string | null,
+) {
+  const statusSource =
+    body.status ??
+    body.payment?.status ??
+    body.data?.status;
+  const amountSource =
+    body.amount ??
+    body.payment?.amount ??
+    body.data?.amount;
+  const currencySource =
+    body.currency ??
+    body.payment?.currency ??
+    body.data?.currency;
+  const createdAtSource =
+    body.creationDate ??
+    body.createdDate ??
+    body.payment?.creationDate ??
+    body.data?.creationDate;
+  const requestIdSource =
+    body.requestId ??
+    body.paymentRequestId ??
+    body.payment?.requestId ??
+    body.data?.requestId ??
+    fallbackRequestId;
+
+  return {
+    requestId: requestIdSource ? String(requestIdSource) : "",
+    status: String(statusSource || "UNKNOWN").toUpperCase(),
+    amount: Number(amountSource || 0),
+    currency: String(currencySource || "IQD"),
+    createdAt: String(createdAtSource || new Date().toISOString()),
+    raw: body,
+  };
+}
+
+async function qicardFetchPaymentStatus(
+  path: string,
+  fallbackRequestId: string | null,
+) {
   ensureQiCardConfig();
 
-  const requestId = crypto.randomUUID();
-  const response = await fetch(`${QICARD_API_BASE_URL}/payment/${paymentId}/status`, {
+  const response = await fetch(`${QICARD_API_BASE_URL}${path}`, {
     headers: {
       "Content-Type": "application/json",
       Authorization: qicardAuthHeader(),
       "X-Terminal-Id": QICARD_TERMINAL_ID,
-      "X-Request-Id": requestId,
     },
   });
 
   const body = await parseQiCardResponse(response);
-  return {
-    requestId,
-    status: String(body.status || "").toUpperCase(),
-    amount: Number(body.amount || 0),
-    currency: String(body.currency || "IQD"),
-    createdAt: String(body.createdDate || body.creationDate || new Date().toISOString()),
-    raw: body,
+  return normalizeQiCardPaymentStatus(body, fallbackRequestId);
+}
+
+export async function qicardGetPaymentStatus({
+  paymentId,
+  paymentRequestId,
+}: {
+  paymentId?: string | null;
+  paymentRequestId?: string | null;
+}) {
+  ensureQiCardConfig();
+
+  if (!paymentId && !paymentRequestId) {
+    throw new Error("QICARD_PAYMENT_STATUS_IDENTIFIER_MISSING");
+  }
+
+  let lastResult = {
+    requestId: paymentRequestId ? String(paymentRequestId) : "",
+    status: "UNKNOWN",
+    amount: 0,
+    currency: "IQD",
+    createdAt: new Date().toISOString(),
+    raw: <Record<string, unknown>>{},
   };
+
+  if (paymentId) {
+    lastResult = await qicardFetchPaymentStatus(
+      `/payment/${paymentId}/status`,
+      paymentRequestId ? String(paymentRequestId) : null,
+    );
+    if (lastResult.status !== "UNKNOWN") {
+      return lastResult;
+    }
+  }
+
+  if (paymentRequestId) {
+    lastResult = await qicardFetchPaymentStatus(
+      `/payment/status/by/request/${paymentRequestId}`,
+      String(paymentRequestId),
+    );
+  }
+
+  return lastResult;
 }
 
 export async function qicardRefundPayment({

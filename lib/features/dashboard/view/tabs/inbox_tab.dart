@@ -23,59 +23,55 @@ class _InboxTabState extends State<InboxTab> {
     DashboardViewModel vm,
     dynamic offer,
   ) async {
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
     setState(() => _isAwarding = true);
 
     try {
       // Step 1: Award the offer
       final result = await vm.awardOffer(offer);
-
+      if (!mounted) return;
       setState(() => _isAwarding = false);
 
       if (result != null && result['success'] == true) {
         // Navigate to payment screen
-        if (context.mounted) {
-          final paymentDeadline = DateTime.parse(
-            result['payment_deadline'] as String,
-          );
-          final clientId = vm.currentUserId ?? '';
+        final paymentDeadline = DateTime.parse(
+          result['payment_deadline'] as String,
+        );
+        final clientId = vm.currentUserId ?? '';
 
-          await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => TenderPaymentScreen(
-                requestId: offer.id,
-                taskId: offer.taskId,
-                taskTitle: offer.taskTitle ?? 'Task',
-                freelancerName: offer.bidderName ?? 'Freelancer',
-                amount: offer.price.toDouble(),
-                paymentDeadline: paymentDeadline,
-                clientId: clientId,
-              ),
+        await navigator.push(
+          MaterialPageRoute(
+            builder: (_) => TenderPaymentScreen(
+              requestId: offer.id,
+              taskId: offer.taskId,
+              taskTitle: offer.taskTitle ?? 'Task',
+              freelancerName: offer.bidderName ?? 'Freelancer',
+              amount: offer.price.toDouble(),
+              paymentDeadline: paymentDeadline,
+              clientId: clientId,
             ),
-          );
+          ),
+        );
 
-          // After returning from payment screen, refresh
-          if (context.mounted) {
-            await vm.refresh();
-          }
-        }
+        if (!mounted) return;
+        await vm.refresh();
       } else {
         // Show error
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result?['error'] ?? 'Failed to award offer'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      setState(() => _isAwarding = false);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        if (!mounted) return;
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(result?['error'] ?? 'Failed to award offer'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isAwarding = false);
+      messenger.showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
     }
   }
 
@@ -85,31 +81,28 @@ class _InboxTabState extends State<InboxTab> {
     dynamic offer,
   ) async {
     final vm = context.read<DashboardViewModel>();
+    final navigator = Navigator.of(context);
 
     // For awarded offers, use a 24-hour deadline from now as fallback
     final paymentDeadline = DateTime.now().add(const Duration(hours: 24));
     final clientId = vm.currentUserId ?? '';
 
-    if (context.mounted) {
-      await Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => TenderPaymentScreen(
-            requestId: offer.id,
-            taskId: offer.taskId,
-            taskTitle: offer.taskTitle ?? 'Task',
-            freelancerName: offer.bidderName ?? 'Freelancer',
-            amount: offer.price.toDouble(),
-            paymentDeadline: paymentDeadline,
-            clientId: clientId,
-          ),
+    await navigator.push(
+      MaterialPageRoute(
+        builder: (_) => TenderPaymentScreen(
+          requestId: offer.id,
+          taskId: offer.taskId,
+          taskTitle: offer.taskTitle ?? 'Task',
+          freelancerName: offer.bidderName ?? 'Freelancer',
+          amount: offer.price.toDouble(),
+          paymentDeadline: paymentDeadline,
+          clientId: clientId,
         ),
-      );
+      ),
+    );
 
-      // After returning from payment screen, refresh
-      if (context.mounted) {
-        await vm.refresh();
-      }
-    }
+    if (!mounted) return;
+    await vm.refresh();
   }
 
   @override

@@ -12,6 +12,18 @@ import {
   submitGatewayEscrowHold,
 } from "../_shared/bookin_payment.ts";
 
+const RECOVERY_RETRYABLE_STATUSES = new Set(["UNKNOWN", "CREATED"]);
+const RECOVERY_MAX_ATTEMPTS = 3;
+const RECOVERY_RETRY_DELAY_MS = 1500;
+
+function shouldRetryPaymentStatus(status: string): boolean {
+  return RECOVERY_RETRYABLE_STATUSES.has(status);
+}
+
+async function wait(ms: number) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return corsPreflightResponse();
@@ -74,7 +86,23 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const paymentStatus = await qicardGetPaymentStatus(booking.payment_gateway_id);
+    let paymentStatus = await qicardGetPaymentStatus({
+      paymentId: booking.payment_gateway_id,
+      paymentRequestId: booking.payment_request_id,
+    });
+    let attempt = 1;
+    while (
+      attempt < RECOVERY_MAX_ATTEMPTS &&
+      shouldRetryPaymentStatus(paymentStatus.status)
+    ) {
+      await wait(RECOVERY_RETRY_DELAY_MS);
+      paymentStatus = await qicardGetPaymentStatus({
+        paymentId: booking.payment_gateway_id,
+        paymentRequestId: booking.payment_request_id,
+      });
+      attempt += 1;
+    }
+
     if (!["SUCCESS", "COMPLETED"].includes(paymentStatus.status)) {
       await recordBookingAudit(auth.adminClient, {
         bookingId,
@@ -85,6 +113,7 @@ Deno.serve(async (req: Request) => {
         payload: {
           reason: "payment_not_held",
           gateway_status: paymentStatus.status,
+          gateway_attempts: attempt,
         },
       });
       return jsonResponse({

@@ -125,36 +125,34 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
 
     final result = await vm.award(request.id);
 
+    if (!mounted) return;
     setState(() => _isAwarding = false);
 
     if (result != null && result['success'] == true) {
       // Navigate to payment screen
-      if (mounted) {
-        final clientId = context.read<AuthViewModel>().currentUserId ?? '';
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => TenderPaymentScreen(
-              requestId: request.id,
-              taskId: request.taskId,
-              taskTitle: widget.taskId, // We should get this from somewhere
-              freelancerName: request.bidderName ?? 'Freelancer',
-              amount: request.price.toDouble(),
-              paymentDeadline: DateTime.parse(result['payment_deadline'] as String),
-              clientId: clientId,
-            ),
+      final clientId = context.read<AuthViewModel>().currentUserId ?? '';
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => TenderPaymentScreen(
+            requestId: request.id,
+            taskId: request.taskId,
+            taskTitle: widget.taskId, // We should get this from somewhere
+            freelancerName: request.bidderName ?? 'Freelancer',
+            amount: request.price.toDouble(),
+            paymentDeadline: DateTime.parse(result['payment_deadline'] as String),
+            clientId: clientId,
           ),
-        );
-      }
+        ),
+      );
+      if (!mounted) return;
     } else {
       // Show error
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result?['error'] ?? 'Failed to award offer'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result?['error'] ?? 'Failed to award offer'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 

@@ -1,16 +1,22 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/config/payment_runtime_config.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/services/payment_pending_store.dart';
+import 'package:sline_app/core/services/payment_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_date.dart';
+import 'package:sline_app/features/booking/models/payment_return_args.dart';
 import 'package:sline_app/features/booking/view/payment_webview_screen.dart';
 import 'package:sline_app/features/booking/viewmodels/booking_view_model.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Payment Checkout Screen — direct booking purchase without slot selection.
 class PaymentCheckoutScreen extends StatefulWidget {
@@ -55,20 +61,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
   BookingViewModel? _vm;
   Timer? _orphanDraftTimer;
 
-  Set<String> get _callbackHosts {
-    final hosts = <String>{'sline.app'};
-    final configuredFinishUrl = String.fromEnvironment(
-      'QICARD_FINISH_URL',
-      defaultValue: 'https://sline.app/payment/success',
-    );
-    final configuredHost = Uri.tryParse(
-      configuredFinishUrl,
-    )?.host.toLowerCase();
-    if (configuredHost != null && configuredHost.isNotEmpty) {
-      hosts.add(configuredHost);
-    }
-    return hosts;
-  }
+  Set<String> get _callbackHosts => buildQiCardCallbackHosts();
 
   DateTime? get _estimatedDueAt {
     if (widget.deliveryDays != null) {
@@ -115,6 +108,138 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
     final vm = context.read<BookingViewModel>();
     _vm = vm;
     await vm.cancelBookingDraftIfUnpaid(bookingId);
+  }
+
+  Future<void> _launchWebPaymentFlow({
+    required Uri paymentUri,
+    required QiCardCreatePaymentResult createResult,
+  }) async {
+    final pendingStore = context.read<PaymentPendingStore>();
+    await pendingStore.save(
+      PendingPaymentContext(
+        bookingId: createResult.bookingId!,
+        correlationId: createResult.correlationId,
+        provider: 'qicard',
+        startedAt: DateTime.now().toUtc(),
+        entityType: 'booking',
+        callbackHosts: _callbackHosts,
+      ),
+    );
+
+    AppLogger.i(
+      'Redirecting payment in same browser tab for booking=${createResult.bookingId}',
+      tag: 'Payment',
+      json: <String, dynamic>{
+        'booking_id': createResult.bookingId,
+        'correlation_id': createResult.correlationId,
+        'callback_hosts': _callbackHosts.toList(),
+      },
+    );
+
+    final launched = await launchUrl(
+      paymentUri,
+      webOnlyWindowName: '_self',
+    );
+    if (launched) {
+      return;
+    }
+
+    await pendingStore.clear();
+    await _cancelDraftIfPossible(createResult.bookingId!);
+    if (!mounted) return;
+    setState(() {
+      _error = 'Failed to open the payment provider.';
+      _processing = false;
+      _awaitingGatewayConfirmation = false;
+      _paymentFlowInProgress = false;
+    });
+  }
+
+  Future<void> _handlePaymentReturn({
+    required BookingViewModel vm,
+    required String bookingId,
+    required PaymentReturnArgs? paymentReturn,
+  }) async {
+    final resultStatus = paymentReturn?.normalizedStatus ?? 'CANCELED';
+    if (paymentReturn == null || paymentReturn.isFailure) {
+      AppLogger.w(
+        'Payment return was not successful for booking=$bookingId',
+        tag: 'Payment',
+        error: resultStatus,
+      );
+      await _cancelDraftIfPossible(bookingId);
+      if (!mounted) return;
+      setState(() {
+        _error = 'Payment was not completed. Please try again.';
+        _processing = false;
+        _awaitingGatewayConfirmation = false;
+        _paymentFlowInProgress = false;
+      });
+      return;
+    }
+
+    AppLogger.i(
+      'QiCard payment return received booking=$bookingId '
+      'paymentId=${paymentReturn.paymentId} '
+      'correlation=${paymentReturn.correlationId} '
+      'status=$resultStatus',
+      tag: 'QiCard',
+    );
+
+    final recovery = await vm.recoverBookingPaymentWithRetries(
+      bookingId: bookingId,
+    );
+    if (!mounted) return;
+
+    if (!recovery.isSuccess) {
+      AppLogger.w(
+        'Booking recovery failed after gateway return for booking=$bookingId',
+        tag: 'Payment',
+        error: recovery.error ?? 'BOOKING_PAYMENT_RECOVERY_FAILED',
+      );
+      setState(() {
+        _error =
+            recovery.error ??
+            'Payment return was received, but booking recovery failed.';
+        _processing = false;
+        _awaitingGatewayConfirmation = false;
+        _paymentFlowInProgress = false;
+      });
+      return;
+    }
+
+    if (recovery.paymentStatus == 'held') {
+      AppLogger.i(
+        'Booking payment completed successfully for booking=$bookingId',
+        tag: 'Payment',
+      );
+      _orphanDraftTimer?.cancel();
+      _orphanDraftTimer = null;
+      setState(() {
+        _processing = false;
+        _awaitingGatewayConfirmation = false;
+        _paymentSuccess = true;
+        _paymentFlowInProgress = false;
+      });
+      await Future.delayed(const Duration(milliseconds: 1200));
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+      return;
+    }
+
+    AppLogger.w(
+      'Booking recovery returned a non-held status for booking=$bookingId',
+      tag: 'Payment',
+      error: recovery.paymentStatus ?? 'UNKNOWN_PAYMENT_STATUS',
+    );
+    setState(() {
+      _error =
+          recovery.error ??
+          'Payment recovery completed but payment status is not held. Please contact support.';
+      _processing = false;
+      _awaitingGatewayConfirmation = false;
+      _paymentFlowInProgress = false;
+    });
   }
 
   Future<void> _processPayment() async {
@@ -190,7 +315,9 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
           return;
         }
         AppLogger.i(
-          'Opening payment webview for booking=${createResult.bookingId}',
+          kIsWeb
+              ? 'Opening browser payment flow for booking=${createResult.bookingId}'
+              : 'Opening payment webview for booking=${createResult.bookingId}',
           tag: 'Payment',
           json: <String, dynamic>{
             'booking_id': createResult.bookingId,
@@ -201,9 +328,17 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
         setState(() {
           _awaitingGatewayConfirmation = true;
         });
+
+        if (kIsWeb) {
+          await _launchWebPaymentFlow(
+            paymentUri: uri,
+            createResult: createResult,
+          );
+          return;
+        }
+
         if (!mounted) return;
-        final webViewResult = await Navigator.of(context)
-            .push<PaymentWebViewResult>(
+        final paymentReturn = await Navigator.of(context).push<PaymentReturnArgs>(
               MaterialPageRoute(
                 builder: (_) => PaymentWebViewScreen(
                   initialUrl: uri.toString(),
@@ -213,89 +348,11 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
                 ),
               ),
             );
-
-        final resultStatus = (webViewResult?.status ?? 'CANCELED')
-            .toUpperCase();
-        if (resultStatus == 'FAILED' ||
-            resultStatus == 'CANCELED' ||
-            resultStatus == 'CANCELLED') {
-          AppLogger.w(
-            'Payment webview returned a non-success status for booking=${createResult.bookingId}',
-            tag: 'Payment',
-            error: resultStatus,
-          );
-          await _cancelDraftIfPossible(createResult.bookingId!);
-          setState(() {
-            _error = 'Payment was not completed. Please try again.';
-            _processing = false;
-            _awaitingGatewayConfirmation = false;
-            _paymentFlowInProgress = false;
-          });
-          return;
-        }
-
-        AppLogger.i(
-          'QiCard payment return received booking=${createResult.bookingId} '
-          'paymentId=${webViewResult?.paymentId} '
-          'correlation=${webViewResult?.correlationId ?? createResult.correlationId} '
-          'status=$resultStatus',
-          tag: 'QiCard',
-        );
-
-        final recovery = await vm.recoverBookingPayment(
+        await _handlePaymentReturn(
+          vm: vm,
           bookingId: createResult.bookingId!,
+          paymentReturn: paymentReturn,
         );
-        if (!mounted) return;
-
-        if (!recovery.isSuccess) {
-          AppLogger.w(
-            'Booking recovery failed after gateway return for booking=${createResult.bookingId}',
-            tag: 'Payment',
-            error: recovery.error ?? 'BOOKING_PAYMENT_RECOVERY_FAILED',
-          );
-          setState(() {
-            _error =
-                recovery.error ??
-                'Payment return was received, but booking recovery failed.';
-            _processing = false;
-            _awaitingGatewayConfirmation = false;
-            _paymentFlowInProgress = false;
-          });
-          return;
-        }
-
-        if (recovery.paymentStatus == 'held') {
-          AppLogger.i(
-            'Booking payment completed successfully for booking=${createResult.bookingId}',
-            tag: 'Payment',
-          );
-          _orphanDraftTimer?.cancel();
-          _orphanDraftTimer = null;
-          setState(() {
-            _processing = false;
-            _awaitingGatewayConfirmation = false;
-            _paymentSuccess = true;
-            _paymentFlowInProgress = false;
-          });
-          await Future.delayed(const Duration(milliseconds: 1200));
-          if (!mounted) return;
-          Navigator.of(context).pop(true);
-          return;
-        }
-
-        AppLogger.w(
-          'Booking recovery returned a non-held status for booking=${createResult.bookingId}',
-          tag: 'Payment',
-          error: recovery.paymentStatus ?? 'UNKNOWN_PAYMENT_STATUS',
-        );
-        setState(() {
-          _error =
-              recovery.error ??
-              'Payment recovery completed but payment status is not held. Please contact support.';
-          _processing = false;
-          _awaitingGatewayConfirmation = false;
-          _paymentFlowInProgress = false;
-        });
         return;
       }
 

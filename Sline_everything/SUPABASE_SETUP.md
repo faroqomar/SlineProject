@@ -676,7 +676,7 @@ Centralized immutable record of notes and system events.
 | `metadata`            | jsonb       | ✅       | `'{}'`              | Event metadata              |
 | `created_at`          | timestamptz | ❌       | `now()`             | Creation timestamp          |
 
-**Indexes:** `idx_work_logs_entity` (related_entity_id, created_at desc)
+**Indexes:** `idx_work_logs_entity` (related_entity_id, created_at desc), `idx_work_logs_entity_scope_created_at` (related_entity_id, related_entity_type, created_at desc)
 | `status` | text | ❌ | - | 'held', 'released', 'completed', 'refunded' |
 | `related_entity_id` | uuid | ✅ | - | Linked entity ID (booking) |
 | `related_entity_type` | text | ✅ | - | Linked entity type ('booking', 'task') |
@@ -1426,7 +1426,7 @@ The core orchestration function for the double-entry system.
 #### Booking remediation RPCs / functions (2026-02-28)
 
 - `rpc_create_booking_draft_validated(...) -> bookings`
-  - Validates slot/task/provider consistency and derives canonical `bookings.price` on the server.
+  - Validates slot/task/provider consistency, derives canonical `bookings.price` on the server, and allows multiple slotless direct bookings for the same client/task pair.
 - `rpc_finalize_booking_refund(...) -> bookings`
   - Finalizes terminal refunded booking state after a successful server-side refund.
 - Edge functions:

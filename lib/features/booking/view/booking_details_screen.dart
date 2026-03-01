@@ -13,8 +13,8 @@ import 'package:sline_app/features/booking/viewmodels/booking_view_model.dart';
 import 'package:sline_app/features/chat/view/chat_screen.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/core/utils/format_date.dart';
-import 'package:sline_app/features/management/view/order_management_panel.dart';
-import 'package:sline_app/features/management/viewmodels/order_management_view_model.dart';
+import 'package:sline_app/features/management/models/work_log_scope.dart';
+import 'package:sline_app/features/management/view/widgets/order_management_section.dart';
 import 'package:sline_app/core/utils/unified_cta_resolver.dart';
 
 class BookingDetailsScreen extends StatelessWidget {
@@ -231,14 +231,10 @@ class BookingDetailsScreen extends StatelessWidget {
             const SizedBox(height: AppDimens.p24),
 
             // Order Management
-            ChangeNotifierProvider(
-              create: (_) => OrderManagementViewModel(),
-              child: OrderManagementPanel(
-                entityId: booking.id,
-                entityType: 'booking',
-                currentUserId:
-                    context.read<BookingViewModel>().currentUserId ?? '',
-              ),
+            OrderManagementSection(
+              scope: WorkLogScope(entityId: booking.id, entityType: 'booking'),
+              currentUserId:
+                  context.read<BookingViewModel>().currentUserId ?? '',
             ),
 
             const SizedBox(height: AppDimens.p24),
@@ -533,16 +529,19 @@ class BookingDetailsScreen extends StatelessWidget {
     final uid = vm.currentUserId;
     if (uid == null) return;
 
-    LoadingUtils.show(context);
-    final convo = await vm.contactProvider(booking, uid);
-    if (!context.mounted) return;
-    LoadingUtils.hide(context);
+    final loader = LoadingUtils.show(context, debugLabel: 'booking_chat');
+    try {
+      final convo = await vm.contactProvider(booking, uid);
+      if (!context.mounted) return;
 
-    if (convo != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => ChatScreen(conversation: convo)),
-      );
+      if (convo != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => ChatScreen(conversation: convo)),
+        );
+      }
+    } finally {
+      loader.close();
     }
   }
 
@@ -552,23 +551,29 @@ class BookingDetailsScreen extends StatelessWidget {
     BookingStatus status,
   ) async {
     final vm = context.read<BookingViewModel>();
-    LoadingUtils.show(context);
-    final success = await vm.updateBookingStatus(
-      bookingId: booking.id,
-      newStatus: status,
+    final loader = LoadingUtils.show(
+      context,
+      debugLabel: 'booking_status_update',
     );
-    if (!context.mounted) return;
-    LoadingUtils.hide(context);
+    try {
+      final success = await vm.updateBookingStatus(
+        bookingId: booking.id,
+        newStatus: status,
+      );
+      if (!context.mounted) return;
 
-    if (success) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Status updated')));
-      Navigator.pop(context); // Refresh/Back
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to update status')));
+      if (success) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Status updated')));
+        Navigator.pop(context); // Refresh/Back
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update status')),
+        );
+      }
+    } finally {
+      loader.close();
     }
   }
 }

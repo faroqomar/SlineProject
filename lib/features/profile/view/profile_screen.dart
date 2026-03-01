@@ -199,7 +199,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       const SizedBox(width: 8),
                                       _buildBadge(
                                         context,
-                                        '🔥 Rising',
+                                        'Rising',
                                         AppColors.gold,
                                       ),
                                     ],

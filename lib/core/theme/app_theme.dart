@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
@@ -69,8 +68,7 @@ class AppTheme {
         onError: AppColors.white,
       ),
       useMaterial3: true,
-      fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
-      fontFamilyFallback: [GoogleFonts.notoSans().fontFamily!],
+      fontFamilyFallback: AppTypography.fontFamilyFallback,
 
       // Custom TextTheme
       textTheme: TextTheme(

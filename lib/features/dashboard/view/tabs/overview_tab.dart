@@ -29,7 +29,7 @@ class _OverviewTabState extends State<OverviewTab> {
       padding: const EdgeInsets.all(AppDimens.p16),
       children: [
         Text(
-          "Hello, ${vm.userName}! 👋",
+          "Hello, ${vm.userName}!",
           style: AppTypography.h3.copyWith(color: colorScheme.text),
         ),
         Text(

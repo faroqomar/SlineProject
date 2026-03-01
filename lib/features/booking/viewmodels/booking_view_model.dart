@@ -87,7 +87,7 @@ class BookingViewModel extends ChangeNotifier {
         }
 
         if (msg.contains('booking_already_exists_for_client')) {
-          return 'You already have an active booking for this service.';
+          return 'This booking request could not be created. Please refresh and try again.';
         }
 
         if (msg.contains('booking_package_invalid')) {
@@ -118,7 +118,7 @@ class BookingViewModel extends ChangeNotifier {
       return 'You cannot book your own service.';
     }
     if (msg.contains('booking_already_exists_for_client')) {
-      return 'You already have an active booking for this service.';
+      return 'This booking request could not be created. Please refresh and try again.';
     }
     if (msg.contains('booking_package_invalid')) {
       return 'The selected package is no longer available.';
@@ -500,6 +500,35 @@ class BookingViewModel extends ChangeNotifier {
         error: result.error ?? 'BOOKING_PAYMENT_RECOVERY_FAILED',
       );
       notifyListeners();
+    }
+
+    return result;
+  }
+
+  Future<QiCardRecoveryResult> recoverBookingPaymentWithRetries({
+    required String bookingId,
+    int maxAttempts = 3,
+    Duration delay = const Duration(seconds: 2),
+  }) async {
+    var attempt = 1;
+    var result = await recoverBookingPayment(bookingId: bookingId);
+
+    while (result.isSuccess &&
+        result.paymentStatus != 'held' &&
+        result.recoveryResult == 'no_action' &&
+        attempt < maxAttempts) {
+      AppLogger.w(
+        'Booking recovery returned no_action for booking=$bookingId; retrying',
+        tag: 'Booking',
+        json: <String, dynamic>{
+          'attempt': attempt + 1,
+          'payment_status': result.paymentStatus,
+          'recovery_result': result.recoveryResult,
+        },
+      );
+      await Future.delayed(delay);
+      result = await recoverBookingPayment(bookingId: bookingId);
+      attempt += 1;
     }
 
     return result;

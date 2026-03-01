@@ -55,10 +55,12 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
 
   Future<void> _processPayment() async {
     if (_isExpired) {
-      setState(
-        () => _errorMessage =
-            'Payment deadline expired. Award has been cancelled.',
-      );
+      if (mounted) {
+        setState(
+          () => _errorMessage =
+              'Payment deadline expired. Award has been cancelled.',
+        );
+      }
       return;
     }
 
@@ -98,6 +100,7 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
       }
     } catch (e) {
       AppLogger.e('Tender payment failed', error: e);
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'Payment failed: ${e.toString()}';
         _isProcessing = false;

@@ -17,8 +17,8 @@ import 'package:sline_app/features/chat/view/chat_screen.dart'; // Added
 import 'package:sline_app/features/booking/view/payment_checkout_screen.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
-import 'package:sline_app/features/management/view/order_management_panel.dart';
-import 'package:sline_app/features/management/viewmodels/order_management_view_model.dart';
+import 'package:sline_app/features/management/models/work_log_scope.dart';
+import 'package:sline_app/features/management/view/widgets/order_management_section.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 
 /// Shows details of a task with Glassmorphism design.
@@ -204,16 +204,13 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
 
                   // Order Management (Notes & Timeline)
                   if (currentUserId != null)
-                    Padding(
+                    OrderManagementSection(
                       padding: const EdgeInsets.only(bottom: AppDimens.p24),
-                      child: ChangeNotifierProvider(
-                        create: (_) => OrderManagementViewModel(),
-                        child: OrderManagementPanel(
-                          entityId: task.id,
-                          entityType: 'task',
-                          currentUserId: currentUserId,
-                        ),
+                      scope: WorkLogScope(
+                        entityId: task.id,
+                        entityType: 'task',
                       ),
+                      currentUserId: currentUserId,
                     ),
 
                   // Proposals Link (Owner of Tender)
@@ -341,16 +338,16 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     }
 
     final chatVm = context.read<ChatViewModel>();
+    final loader = LoadingUtils.show(context, debugLabel: 'task_chat');
     try {
-      LoadingUtils.show(context);
       final conversation = await chatVm.createOrGetConversation(
         taskId: taskId,
         user1Id: currentUserId,
         user2Id: ownerId,
       );
+      loader.close();
 
       if (!context.mounted) return;
-      LoadingUtils.hide(context);
 
       Navigator.push(
         context,
@@ -365,10 +362,11 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
         error: e,
       );
       if (!context.mounted) return;
-      LoadingUtils.hide(context);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error starting chat: $e')));
+    } finally {
+      loader.close();
     }
   }
 

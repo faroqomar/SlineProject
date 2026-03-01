@@ -124,7 +124,7 @@ void main() {
     );
 
     test(
-      'createPaymentForBooking maps duplicate active booking to user-facing copy',
+      'createPaymentForBooking keeps successful repeat booking responses intact',
       () async {
         when(
           () => paymentService.createPaymentForBooking(
@@ -135,8 +135,10 @@ void main() {
           ),
         ).thenAnswer(
           (_) async => const QiCardCreatePaymentResult(
-            error: 'BOOKING_ALREADY_EXISTS_FOR_CLIENT',
-            errorCode: 'BOOKING_PAYMENT_CREATE_FAILED',
+            bookingId: 'booking-2',
+            paymentRequestId: 'request-2',
+            formUrl: 'https://pay.example.com/form',
+            correlationId: 'booking:booking-2:create',
           ),
         );
 
@@ -146,11 +148,9 @@ void main() {
           requirements: const <String, dynamic>{},
         );
 
-        expect(result.isSuccess, isFalse);
-        expect(
-          viewModel.bookingsError,
-          'You already have an active booking for this service.',
-        );
+        expect(result.isSuccess, isTrue);
+        expect(result.bookingId, 'booking-2');
+        expect(viewModel.bookingsError, isNull);
       },
     );
 

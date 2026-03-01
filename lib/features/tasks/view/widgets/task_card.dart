@@ -156,7 +156,11 @@ class TaskCard extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text('🔥', style: TextStyle(fontSize: 10)),
+                      Icon(
+                        Icons.local_fire_department,
+                        size: 12,
+                        color: AppColors.offWhite,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         'HOT',

@@ -78,11 +78,24 @@ function verifySignature(
 }
 
 function formatAmount3(amount: unknown): string {
+  if (amount == null || amount == "") {
+    return "-";
+  }
+
   const parsed = Number(amount);
   if (!Number.isFinite(parsed)) {
-    return "0.000";
+    return "-";
   }
   return parsed.toFixed(3);
+}
+
+function formatSignatureField(value: unknown): string {
+  if (value == null) {
+    return "-";
+  }
+
+  const normalized = String(value).trim();
+  return normalized.length === 0 ? "-" : normalized;
 }
 
 function isUuid(value: string): boolean {
@@ -97,12 +110,34 @@ function isQiCardPaymentPayload(payload: Record<string, unknown>): payload is Qi
 }
 
 function buildQiCardWebhookSignatureString(payload: Record<string, unknown>): string {
-  const paymentId = String(payload.paymentId || "");
+  const paymentId = formatSignatureField(payload.paymentId);
   const amount = formatAmount3(payload.amount);
-  const currency = String(payload.currency || "IQD");
-  const creationDate = String(payload.creationDate || "");
-  const status = String(payload.status || "");
+  const currency = formatSignatureField(payload.currency);
+  const creationDate = formatSignatureField(
+    payload.creationDate ?? payload.createdDate,
+  );
+  const status = formatSignatureField(payload.status);
   return `${paymentId}|${amount}|${currency}|${creationDate}|${status}`;
+}
+
+function buildQiCardWebhookSignatureCandidates(
+  payload: Record<string, unknown>,
+  rawBody: string,
+): string[] {
+  return Array.from(
+    new Set(
+      [buildQiCardWebhookSignatureString(payload), rawBody].filter((value) =>
+        value.length > 0
+      ),
+    ),
+  );
+}
+
+function getSignatureHeader(req: Request): string {
+  return (req.headers.get("x-signature") ||
+      req.headers.get("signature") ||
+      "")
+    .trim();
 }
 
 function mapLegacyQiCardEvent(eventType: string, pspStatus: string): MappedEvent | null {
@@ -146,7 +181,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const signatureHeader = req.headers.get("x-signature") || "";
+    const signatureHeader = getSignatureHeader(req);
     const rawBody = await req.text();
 
     let payload: Record<string, unknown>;
@@ -157,16 +192,24 @@ Deno.serve(async (req: Request) => {
     }
 
     const isPaymentPayload = isQiCardPaymentPayload(payload);
-    const signedData = isPaymentPayload
-      ? buildQiCardWebhookSignatureString(payload)
-      : rawBody;
+    const signatureCandidates = isPaymentPayload
+      ? buildQiCardWebhookSignatureCandidates(payload, rawBody)
+      : [rawBody];
 
     if (!signatureHeader && !QICARD_ALLOW_UNSIGNED_LOCAL_DEV) {
       return jsonResponse({ error: "Missing signature" }, 401);
     }
 
-    if (!verifySignature(signedData, signatureHeader, QICARD_RSA_PUBLIC_KEY_PEM)) {
-      console.error("Webhook rejected: invalid signature");
+    const hasValidSignature = signatureCandidates.some((candidate) =>
+      verifySignature(candidate, signatureHeader, QICARD_RSA_PUBLIC_KEY_PEM)
+    );
+
+    if (!hasValidSignature) {
+      console.error("Webhook rejected: invalid signature", {
+        hasPublicKey: QICARD_RSA_PUBLIC_KEY_PEM.length > 0,
+        candidate_count: signatureCandidates.length,
+        payload_keys: Object.keys(payload),
+      });
       return jsonResponse({ error: "Invalid signature" }, 401);
     }
 

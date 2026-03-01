@@ -407,15 +407,17 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
       return;
     }
 
+    final loader = LoadingUtils.show(
+      context,
+      debugLabel: 'public_profile_message',
+    );
     try {
-      LoadingUtils.show(context);
       final conversation = await chatVm.createOrGetConversation(
         user1Id: currentUserId,
         user2Id: targetUserId,
       );
 
       if (!context.mounted) return;
-      LoadingUtils.hide(context);
 
       Navigator.push(
         context,
@@ -425,11 +427,12 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
       );
     } catch (e) {
       if (!context.mounted) return;
-      LoadingUtils.hide(context);
 
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error starting chat: $e')));
+    } finally {
+      loader.close();
     }
   }
 }

@@ -267,11 +267,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          _buildSocialButton(context, '🔍'), // Google
+                          _buildSocialButton(context, Icons.g_mobiledata),
                           const SizedBox(width: AppDimens.p12),
-                          _buildSocialButton(context, '📘'), // Facebook
+                          _buildSocialButton(context, Icons.facebook),
                           const SizedBox(width: AppDimens.p12),
-                          _buildSocialButton(context, '🍎'), // Apple
+                          _buildSocialButton(context, Icons.apple),
                         ],
                       ),
                       const SizedBox(height: AppDimens.p24),
@@ -311,7 +311,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildSocialButton(BuildContext context, String icon) {
+  Widget _buildSocialButton(BuildContext context, IconData icon) {
     final AppColorScheme colorScheme = context.colorScheme;
     return Container(
       width: 50,
@@ -327,9 +327,7 @@ class _LoginScreenState extends State<LoginScreen> {
         child: InkWell(
           onTap: () {},
           borderRadius: BorderRadius.circular(AppDimens.r14),
-          child: Center(
-            child: Text(icon, style: const TextStyle(fontSize: 20)),
-          ),
+          child: Center(child: Icon(icon, size: 24, color: colorScheme.text)),
         ),
       ),
     );

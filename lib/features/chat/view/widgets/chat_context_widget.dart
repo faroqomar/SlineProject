@@ -26,12 +26,10 @@ class ChatContextWidget extends StatelessWidget {
 
     // Show a small loading indicator or just fetch optimistically
     // Ideally we would have a loading state, but for a quick action we can just await
+    final loader = LoadingUtils.show(context, debugLabel: 'chat_context_task');
     try {
-      LoadingUtils.show(context);
       final task = await taskVm.getTaskById(taskId);
-
       if (!context.mounted) return;
-      LoadingUtils.hide(context);
 
       if (task != null) {
         Navigator.push(
@@ -45,12 +43,13 @@ class ChatContextWidget extends StatelessWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        LoadingUtils.hide(context);
         AppLogger.e('Error loading task for context nav: $e');
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
       }
+    } finally {
+      loader.close();
     }
   }
 

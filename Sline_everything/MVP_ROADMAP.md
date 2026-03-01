@@ -277,7 +277,7 @@ This file is the single source of truth for MVP progress. Each step is bite-size
 # 🎯 Summary (v2.10)
 
 - ✅ **Unified Management System**:
-  - ✅ **Database**: `work_logs` table with RLS and triggers.
+  - ✅ **Database**: `work_logs` table with RLS.
   - ✅ **UI**: `OrderManagementPanel` for private notes and timeline events.
   - ✅ **Integration**: Added to Booking and Task details screens.
 

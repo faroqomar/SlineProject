@@ -1,5 +1,10 @@
 import 'package:flutter/foundation.dart';
 
+const bool kVerboseNoOpCrashReporting = bool.fromEnvironment(
+  'VERBOSE_DEBUG_CRASH_REPORTING',
+  defaultValue: false,
+);
+
 /// Abstract service for reporting crashes and non-fatal errors.
 ///
 /// This allows us to swap implementations (Firebase Crashlytics, Sentry, etc.)
@@ -50,31 +55,31 @@ class NoOpCrashReportingService implements CrashReportingService {
     dynamic reason,
     bool fatal = false,
   }) async {
-    if (kDebugMode) {
-      print('💥 [CrashReporting] Error: $exception');
-      if (reason != null) print('   Reason: $reason');
-      if (stack != null) print('   Stack: $stack');
+    if (kDebugMode && kVerboseNoOpCrashReporting) {
+      debugPrint('💥 [CrashReporting] Error: $exception');
+      if (reason != null) debugPrint('   Reason: $reason');
+      if (stack != null) debugPrint('   Stack: $stack');
     }
   }
 
   @override
   Future<void> log(String message) async {
-    if (kDebugMode) {
-      print('📝 [CrashReporting] Log: $message');
+    if (kDebugMode && kVerboseNoOpCrashReporting) {
+      debugPrint('📝 [CrashReporting] Log: $message');
     }
   }
 
   @override
   Future<void> setUserIdentifier(String identifier) async {
-    if (kDebugMode) {
-      print('👤 [CrashReporting] User ID: $identifier');
+    if (kDebugMode && kVerboseNoOpCrashReporting) {
+      debugPrint('👤 [CrashReporting] User ID: $identifier');
     }
   }
 
   @override
   Future<void> setCustomKey(String key, Object value) async {
-    if (kDebugMode) {
-      print('🔑 [CrashReporting] Key: $key = $value');
+    if (kDebugMode && kVerboseNoOpCrashReporting) {
+      debugPrint('🔑 [CrashReporting] Key: $key = $value');
     }
   }
 }

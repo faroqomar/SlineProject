@@ -105,8 +105,8 @@ void main() {
       await _pumpHomeScreen(tester, bundle);
 
       expect(find.byKey(HomeScreen.searchFieldKey), findsOneWidget);
-      expect(find.text('✨ All'), findsOneWidget);
-      expect(find.text('🎨 Design'), findsOneWidget);
+      expect(find.text('All'), findsOneWidget);
+      expect(find.text('Design'), findsOneWidget);
       expect(find.byType(SkeletonTaskCard), findsWidgets);
     });
 

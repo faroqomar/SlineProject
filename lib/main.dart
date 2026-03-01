@@ -1,7 +1,9 @@
 import 'dart:async';
-import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sline_app/core/config/payment_runtime_config.dart';
+import 'package:sline_app/core/services/payment_pending_store.dart';
 import 'package:sline_app/features/auth/view/signup_screen.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
@@ -39,8 +41,10 @@ import 'features/dashboard/viewmodels/dashboard_view_model.dart';
 import 'core/services/payment_service.dart';
 import 'core/services/demo_payment_service.dart';
 import 'core/services/qicard_payment_service.dart';
+import 'package:sline_app/core/utils/flutter_error_filters.dart';
 import 'package:sline_app/features/profile/data/profile_repository.dart';
 import 'package:sline_app/features/categories/data/categories_repository.dart';
+import 'package:sline_app/features/booking/view/payment_return_screen.dart';
 
 const bool kUseQiCardPayment = bool.fromEnvironment(
   'USE_QICARD_PAYMENT',
@@ -69,6 +73,9 @@ void main() async {
 
       // Global Flutter framework error handler (widget build errors, etc.)
       FlutterError.onError = (FlutterErrorDetails details) {
+        if (isIgnoredFlutterWebEngineDisposeError(details.exception)) {
+          return;
+        }
         AppLogger.e(
           'Flutter Error: ${details.summary}',
           tag: 'System',
@@ -79,6 +86,9 @@ void main() async {
 
       // Global platform error handler (native crashes, isolate errors)
       PlatformDispatcher.instance.onError = (error, stack) {
+        if (isIgnoredFlutterWebEngineDisposeError(error)) {
+          return true;
+        }
         AppLogger.e(
           'Platform Error',
           tag: 'System',
@@ -100,6 +110,9 @@ void main() async {
       runApp(SLineApp(prefs: prefs));
     },
     (error, stack) {
+      if (isIgnoredFlutterWebEngineDisposeError(error)) {
+        return;
+      }
       // Catches any uncaught async exceptions outside the Flutter framework
       AppLogger.e(
         'Uncaught Zone Error',
@@ -164,6 +177,7 @@ class SLineApp extends StatelessWidget {
         Provider(create: (_) => DeepLinkService()),
         // Dashboard Cache Service (Stateless)
         Provider(create: (_) => DashboardCacheService(prefs)),
+        Provider(create: (_) => PaymentPendingStore(prefs)),
         // Wallet state
         ChangeNotifierProvider(create: (_) => WalletViewModel()),
         // App-level data dependencies (views must not reference Supabase directly)
@@ -193,6 +207,19 @@ class _AppWithAuthListener extends StatefulWidget {
 
 class _AppWithAuthListenerState extends State<_AppWithAuthListener> {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
+  Widget _buildHome() {
+    if (kIsWeb) {
+      final paymentReturn = parsePaymentReturnArgs(Uri.base);
+      if (paymentReturn != null) {
+        return PaymentReturnScreen(initialArgs: paymentReturn);
+      }
+    }
+
+    return Supabase.instance.client.auth.currentUser != null
+        ? const MainNavigationScreen()
+        : const LoginScreen();
+  }
 
   @override
   void initState() {
@@ -224,9 +251,7 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener> {
           theme: AppTheme.light(),
           darkTheme: AppTheme.dark(),
           themeMode: themeModeProvider.themeMode,
-          home: Supabase.instance.client.auth.currentUser != null
-              ? const MainNavigationScreen()
-              : const LoginScreen(),
+          home: _buildHome(),
           routes: {
             '/login': (_) => const LoginScreen(),
             '/main': (_) => const MainNavigationScreen(),
