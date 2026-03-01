@@ -190,7 +190,9 @@ void main() {
         ],
       );
       when(() => taskVm.currentUserId).thenReturn('user-1');
-      when(() => taskVm.createTask(any())).thenAnswer((_) async => _fallbackTask());
+      when(
+        () => taskVm.createTask(any()),
+      ).thenAnswer((_) async => _fallbackTask());
 
       await pumpApp(
         tester,

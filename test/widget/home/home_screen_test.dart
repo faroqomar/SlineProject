@@ -8,6 +8,7 @@ import 'package:sline_app/features/home/viewmodels/home_view_model.dart';
 import 'package:sline_app/features/notifications/viewmodels/notification_view_model.dart';
 import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
+import 'package:sline_app/features/tasks/viewmodels/discovery_feed_view_model_contract.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
 
 import '../../test_support/pump_app.dart';
@@ -48,8 +49,10 @@ _HomeBundle _buildHomeBundle() {
   final savedVm = _MockSavedTasksViewModel();
 
   when(() => homeVm.isLoading).thenReturn(true);
+  when(() => homeVm.isLoadingMore).thenReturn(false);
+  when(() => homeVm.hasMore).thenReturn(false);
   when(
-    () => homeVm.refresh(filterController: filterVm),
+    () => homeVm.refresh(filterController: filterVm, surface: 'home'),
   ).thenAnswer((_) async {});
 
   when(() => filterVm.selectedCategory).thenReturn('');
@@ -57,7 +60,7 @@ _HomeBundle _buildHomeBundle() {
 
   when(() => profileVm.avatarUrl).thenReturn(null);
   when(() => profileVm.fullName).thenReturn('Test User');
-  when(() => profileVm.loadProfile()).thenAnswer((_) async {});
+  when(() => profileVm.loadHeaderProfile()).thenAnswer((_) async {});
 
   when(() => notificationVm.unreadCount).thenReturn(0);
 
@@ -79,6 +82,9 @@ Future<void> _pumpHomeScreen(WidgetTester tester, _HomeBundle bundle) async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider<HomeViewModel>.value(value: bundle.homeVm),
+        ListenableProvider<DiscoveryFeedViewModelContract>.value(
+          value: bundle.homeVm,
+        ),
         ChangeNotifierProvider<TaskFilterViewModel>.value(
           value: bundle.filterVm,
         ),
@@ -86,11 +92,11 @@ Future<void> _pumpHomeScreen(WidgetTester tester, _HomeBundle bundle) async {
         ChangeNotifierProvider<NotificationViewModel>.value(
           value: bundle.notificationVm,
         ),
+        ChangeNotifierProvider<SavedTasksViewModel>.value(
+          value: bundle.savedVm,
+        ),
       ],
-      child: HomeScreen(
-        autoLoadOnInit: false,
-        savedTasksVmFactory: () => bundle.savedVm,
-      ),
+      child: const HomeScreen(autoLoadOnInit: false),
     ),
   );
 }
@@ -136,9 +142,12 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
 
       verify(
-        () => bundle.homeVm.refresh(filterController: bundle.filterVm),
+        () => bundle.homeVm.refresh(
+          filterController: bundle.filterVm,
+          surface: 'home',
+        ),
       ).called(1);
-      verify(() => bundle.profileVm.loadProfile()).called(1);
+      verify(() => bundle.profileVm.loadHeaderProfile()).called(1);
       verify(() => bundle.savedVm.refresh()).called(1);
     });
   });

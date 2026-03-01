@@ -24,10 +24,13 @@ import 'package:flutter/foundation.dart';
 import '../../../core/services/logger_service.dart';
 import '../../tasks/models/task_model.dart';
 import '../../tasks/services/task_service.dart';
+import '../../tasks/viewmodels/discovery_feed_view_model_contract.dart';
 import '../../tasks/viewmodels/task_filter_view_model.dart';
 
-class HomeViewModel extends ChangeNotifier {
+class HomeViewModel extends ChangeNotifier
+    implements DiscoveryFeedViewModelContract {
   final TaskService _taskService;
+  static int _requestSequence = 0;
 
   HomeViewModel({TaskService? taskService})
     : _taskService = taskService ?? TaskService();
@@ -37,42 +40,66 @@ class HomeViewModel extends ChangeNotifier {
   bool _isLoadingMore = false;
 
   // Pagination state
-  String? _cursor; // ISO timestamp of last task's created_at
+  String? _cursorCreatedAtIso;
+  String? _cursorId;
   bool _hasMore = true;
 
   // List of featured tasks for home screen
+  @override
   List<Task> get featuredTasks => List.unmodifiable(_featuredTasks);
 
   // Current loading state (initial load)
+  @override
   bool get isLoading => _isLoading;
 
   // Loading state for pagination (load more)
+  @override
   bool get isLoadingMore => _isLoadingMore;
 
   // Whether more tasks are available to load
+  @override
   bool get hasMore => _hasMore;
 
   // Load featured tasks for home screen (first page)
   // Optionally update a filter view model
+  @override
   Future<void> loadFeaturedTasks({
     TaskFilterViewModel? filterController,
+    String surface = 'home',
   }) async {
     if (_isLoading) return;
 
+    final requestId = _nextFeedRequestId(
+      surface: surface,
+      operation: 'initial',
+    );
+    final stopwatch = Stopwatch()..start();
     _isLoading = true;
-    _cursor = null;
+    _cursorCreatedAtIso = null;
+    _cursorId = null;
     _hasMore = true;
     notifyListeners();
+    _logFeedEvent(
+      'home_feed_load_started',
+      surface: surface,
+      requestId: requestId,
+      operation: 'initial',
+      cursorPresent: false,
+    );
 
     try {
-      final tasks = await _taskService.getOpenTasksForHome();
+      final tasks = await _taskService.getOpenTasksForHome(
+        requestId: requestId,
+        source: surface,
+      );
       _featuredTasks
         ..clear()
         ..addAll(tasks);
 
       // Update cursor for next page
       if (tasks.isNotEmpty) {
-        _cursor = tasks.last.createdAt.toUtc().toIso8601String();
+        _cursorCreatedAtIso = tasks.last.createdAt.toUtc().toIso8601String();
+        _cursorId = tasks.last.id;
       }
 
       // Check if we have more data
@@ -81,29 +108,84 @@ class HomeViewModel extends ChangeNotifier {
       if (filterController != null) {
         filterController.setTasks(_featuredTasks);
       }
+
+      _logFeedEvent(
+        'home_feed_load_succeeded',
+        surface: surface,
+        requestId: requestId,
+        operation: 'initial',
+        cursorPresent: false,
+        resultCount: tasks.length,
+        durationMs: stopwatch.elapsedMilliseconds,
+        hasMore: _hasMore,
+      );
     } catch (e) {
-      AppLogger.e('Error loading featured tasks: $e');
+      AppLogger.e('home_feed_load_failed', tag: 'HomeFeed', error: e);
+      AppLogger.w(
+        'home_feed_load_failed',
+        tag: 'HomeFeed',
+        json: {
+          'surface': surface,
+          'feed_request_id': requestId,
+          'operation': 'initial',
+          'error_type': e.runtimeType.toString(),
+          'duration_ms': stopwatch.elapsedMilliseconds,
+        },
+      );
     } finally {
+      stopwatch.stop();
       _isLoading = false;
       notifyListeners();
     }
   }
 
   // Load more tasks (next page) - for infinite scroll
-  Future<void> loadMoreTasks({TaskFilterViewModel? filterController}) async {
-    if (_isLoadingMore || !_hasMore || _cursor == null) return;
+  @override
+  Future<void> loadMoreTasks({
+    TaskFilterViewModel? filterController,
+    String surface = 'home',
+  }) async {
+    if (_isLoadingMore || !_hasMore || _cursorCreatedAtIso == null) {
+      AppLogger.d(
+        'home_feed_load_more_skipped',
+        tag: 'HomeFeed',
+        json: {
+          'surface': surface,
+          'is_loading_more': _isLoadingMore,
+          'has_more': _hasMore,
+          'cursor_present': _cursorCreatedAtIso != null,
+        },
+      );
+      return;
+    }
 
+    final requestId = _nextFeedRequestId(
+      surface: surface,
+      operation: 'load_more',
+    );
+    final stopwatch = Stopwatch()..start();
     _isLoadingMore = true;
     notifyListeners();
+    _logFeedEvent(
+      'home_feed_load_started',
+      surface: surface,
+      requestId: requestId,
+      operation: 'load_more',
+      cursorPresent: true,
+    );
 
     try {
       final tasks = await _taskService.getOpenTasksForHome(
-        cursorCreatedAtIso: _cursor,
+        cursorCreatedAtIso: _cursorCreatedAtIso,
+        cursorId: _cursorId,
+        requestId: requestId,
+        source: surface,
       );
 
       if (tasks.isNotEmpty) {
         _featuredTasks.addAll(tasks);
-        _cursor = tasks.last.createdAt.toUtc().toIso8601String();
+        _cursorCreatedAtIso = tasks.last.createdAt.toUtc().toIso8601String();
+        _cursorId = tasks.last.id;
       }
 
       // Check if we have more data
@@ -112,16 +194,80 @@ class HomeViewModel extends ChangeNotifier {
       if (filterController != null) {
         filterController.setTasks(_featuredTasks);
       }
+
+      _logFeedEvent(
+        'home_feed_load_succeeded',
+        surface: surface,
+        requestId: requestId,
+        operation: 'load_more',
+        cursorPresent: true,
+        resultCount: tasks.length,
+        durationMs: stopwatch.elapsedMilliseconds,
+        hasMore: _hasMore,
+      );
     } catch (e) {
-      AppLogger.e('Error loading more tasks: $e');
+      AppLogger.e('home_feed_load_failed', tag: 'HomeFeed', error: e);
+      AppLogger.w(
+        'home_feed_load_failed',
+        tag: 'HomeFeed',
+        json: {
+          'surface': surface,
+          'feed_request_id': requestId,
+          'operation': 'load_more',
+          'error_type': e.runtimeType.toString(),
+          'duration_ms': stopwatch.elapsedMilliseconds,
+        },
+      );
     } finally {
+      stopwatch.stop();
       _isLoadingMore = false;
       notifyListeners();
     }
   }
 
   // Refresh home data and update the filter view model
-  Future<void> refresh({required TaskFilterViewModel filterController}) async {
-    await loadFeaturedTasks(filterController: filterController);
+  @override
+  Future<void> refresh({
+    required TaskFilterViewModel filterController,
+    String surface = 'home',
+  }) async {
+    await loadFeaturedTasks(
+      filterController: filterController,
+      surface: surface,
+    );
+  }
+
+  String _nextFeedRequestId({
+    required String surface,
+    required String operation,
+  }) {
+    _requestSequence += 1;
+    final timestamp = DateTime.now().toUtc().millisecondsSinceEpoch;
+    return '${surface}_${operation}_${timestamp}_$_requestSequence';
+  }
+
+  void _logFeedEvent(
+    String eventName, {
+    required String surface,
+    required String requestId,
+    required String operation,
+    required bool cursorPresent,
+    int? resultCount,
+    int? durationMs,
+    bool? hasMore,
+  }) {
+    AppLogger.i(
+      eventName,
+      tag: 'HomeFeed',
+      json: {
+        'surface': surface,
+        'feed_request_id': requestId,
+        'operation': operation,
+        'cursor_present': cursorPresent,
+        if (resultCount != null) 'result_count': resultCount,
+        if (durationMs != null) 'duration_ms': durationMs,
+        if (hasMore != null) 'has_more': hasMore,
+      },
+    );
   }
 }

@@ -86,6 +86,15 @@ class BookingCard extends StatelessWidget {
     }
 
     final statusColor = getStatusColor(booking.status);
+    final canProviderAccept =
+        isProvider &&
+        (booking.status == BookingStatus.paidRequestPending ||
+            (booking.status == BookingStatus.pending &&
+                booking.paymentStatus == PaymentStatus.held));
+    final awaitingClientPayment =
+        isProvider &&
+        booking.status == BookingStatus.pending &&
+        booking.paymentStatus != PaymentStatus.held;
 
     return GlassCard(
       padding: const EdgeInsets.all(AppDimens.p16),
@@ -173,30 +182,35 @@ class BookingCard extends StatelessWidget {
 
           // Actions
           if (booking.status == BookingStatus.pending ||
-              booking.status ==
-                  BookingStatus.paidRequestPending) // Added OR condition
+              booking.status == BookingStatus.paidRequestPending)
             Row(
               children: [
                 if (isProvider) ...[
                   Expanded(
                     child: FilledButton(
-                      onPressed: () => vm.updateBookingStatus(
-                        booking.id,
-                        BookingStatus.confirmed,
-                      ),
+                      onPressed: canProviderAccept
+                          ? () => vm.acceptBooking(booking.id)
+                          : null,
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.teal,
                       ),
-                      child: const Text("Confirm"),
+                      child: Text(
+                        canProviderAccept ? 'Accept' : 'Awaiting Payment',
+                      ),
                     ),
                   ),
                   const SizedBox(width: AppDimens.p12),
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => vm.updateBookingStatus(
-                        booking.id,
-                        BookingStatus.canceled,
-                      ),
+                      onPressed: () {
+                        if (canProviderAccept) {
+                          vm.declineBooking(booking.id);
+                          return;
+                        }
+                        if (awaitingClientPayment) {
+                          vm.cancelBooking(booking.id);
+                        }
+                      },
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.lightRed,
                         side: BorderSide(color: AppColors.lightRed),
@@ -207,10 +221,7 @@ class BookingCard extends StatelessWidget {
                 ] else ...[
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => vm.updateBookingStatus(
-                        booking.id,
-                        BookingStatus.canceled,
-                      ),
+                      onPressed: () => vm.cancelBooking(booking.id),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.lightRed,
                         side: BorderSide(color: AppColors.lightRed),

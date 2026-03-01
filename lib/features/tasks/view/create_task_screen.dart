@@ -428,16 +428,8 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         'name': 'Design',
         'color': AppColors.lightRed,
       },
-      {
-        'icon': Icons.code,
-        'name': 'Development',
-        'color': AppColors.lightTeal,
-      },
-      {
-        'icon': Icons.edit_note,
-        'name': 'Writing',
-        'color': AppColors.sand,
-      },
+      {'icon': Icons.code, 'name': 'Development', 'color': AppColors.lightTeal},
+      {'icon': Icons.edit_note, 'name': 'Writing', 'color': AppColors.sand},
       {'icon': Icons.phone_iphone, 'name': 'Mobile', 'color': AppColors.gold},
       {
         'icon': Icons.campaign_outlined,

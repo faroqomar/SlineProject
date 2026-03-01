@@ -183,8 +183,10 @@ test/
 │   ├── booking/
 │   ├── core/
 │   ├── dashboard/
+│   ├── home/
 │   ├── management/
 │   ├── models/
+│   ├── profile/
 │   └── tasks/
 └── widget/
     ├── app/
@@ -218,3 +220,7 @@ Current bundled asset folder:
 - Core runtime now includes `payment_runtime_config.dart`, `payment_pending_store.dart`, and `flutter_error_filters.dart`.
 - Management now includes `work_log_scope.dart` and `view/widgets/order_management_section.dart`.
 - Loading overlays use `LoadingHandle` from `lib/core/utils/loading_utils.dart`; the old dialog `show/hide` pattern is obsolete.
+- Profile cross-user reads are centralized in `lib/features/profile/services/profile_summary_service.dart`; views and sibling features should not query another user from base `profiles`.
+- Home, Tenders, and Booking discovery now share `lib/features/tasks/viewmodels/discovery_feed_view_model_contract.dart` as their feed API, while `home/viewmodels/home_view_model.dart` remains the concrete notifier.
+- Discovery list rendering is shared in `lib/features/tasks/view/widgets/discovery_task_sliver.dart` and reused by Home, Tenders, and Booking discovery screens.
+- `lib/features/home/view/widgets/service_card.dart` was removed as dead code during the home-feed refactor.

@@ -7,8 +7,9 @@ const String kQiCardFinishUrl = String.fromEnvironment(
 
 Set<String> buildQiCardCallbackHosts({String? finishUrl}) {
   final hosts = <String>{'sline.app'};
-  final configuredHost =
-      Uri.tryParse(finishUrl ?? kQiCardFinishUrl)?.host.toLowerCase();
+  final configuredHost = Uri.tryParse(
+    finishUrl ?? kQiCardFinishUrl,
+  )?.host.toLowerCase();
 
   if (configuredHost != null && configuredHost.isNotEmpty) {
     hosts.add(configuredHost);
@@ -26,8 +27,7 @@ bool isWebPaymentCallbackUri(Uri uri, {Set<String>? callbackHosts}) {
 
   final isTrustedScheme =
       uri.scheme == 'https' ||
-      (uri.scheme == 'http' &&
-          (host == 'localhost' || host == '127.0.0.1'));
+      (uri.scheme == 'http' && (host == 'localhost' || host == '127.0.0.1'));
   if (!isTrustedScheme) {
     return false;
   }

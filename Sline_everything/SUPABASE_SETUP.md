@@ -322,6 +322,7 @@ User profile information linked to Supabase Auth.
 | `avatar_url`  | text        | ✅       | -            | Storage path in 'avatars' bucket               |
 | `roles`       | text[]      | ✅       | `['client']` | Available roles array                          |
 | `active_role` | text        | ✅       | `'client'`   | Current active role ('client' or 'freelancer') |
+| `seller_level`| seller_level_enum | ✅  | `'new_seller'` | Discovery tier for safe public summaries     |
 | `skills`      | text[]      | ✅       | `'{}'`       | List of professional skills                    |
 | `created_at`  | timestamptz | ✅       | `now()`      | Creation timestamp (UTC)                       |
 
@@ -999,39 +1000,35 @@ FROM auth.users u;
 
 ## 7. RLS Policies
 
-All tables have Row Level Security (RLS) enabled. Below are the actual policies from the database.
+All tables have Row Level Security (RLS) enabled. The tables below describe the required contract after applying the `20260301_*home*` migrations in this repository.
 
 ### 7.1 `profiles` Policies
 
-| Policy                                 | Command | Rule                     |
-| -------------------------------------- | ------- | ------------------------ |
-| `Profiles are viewable by everyone`    | SELECT  | `true` (public can view) |
-| `Users can read their own profile`     | SELECT  | `auth.uid() = id`        |
-| `Allow insert for authenticated users` | INSERT  | `auth.uid() = id`        |
-| `Users can insert their own profile`   | INSERT  | `auth.uid() = id`        |
-| `Users can update their own profile`   | UPDATE  | `auth.uid() = id`        |
-| `Users can delete their own profile`   | DELETE  | `auth.uid() = id`        |
+| Policy                                   | Command | Rule              |
+| ---------------------------------------- | ------- | ----------------- |
+| `profiles_select_self`                   | SELECT  | `auth.uid() = id` |
+| `Allow insert for authenticated users`   | INSERT  | `auth.uid() = id` |
+| `Users can insert their own profile`     | INSERT  | `auth.uid() = id` |
+| `Users can update their own profile`     | UPDATE  | `auth.uid() = id` |
+| `Users can delete their own profile`     | DELETE  | `auth.uid() = id` |
+
+Cross-user profile summaries must go through `public.rpc_get_profile_summaries(uuid[])` or the safe `public.search_profiles(...)` function. Base-table reads are intentionally self-only because `profiles` contains sensitive fields such as `email` and `metadata`.
 
 ### 7.2 `tasks` Policies
 
-| Policy                        | Command | Rule                                                                      |
-| ----------------------------- | ------- | ------------------------------------------------------------------------- |
-| `Allow read tasks`            | SELECT  | `true` (all authenticated)                                                |
-| `Allow select for all users`  | SELECT  | `true`                                                                    |
-| `Allow read access with join` | SELECT  | `true`                                                                    |
-| `tasks_select_all_auth`       | SELECT  | `auth.role() = 'authenticated'`                                           |
-| `tasks_select_open`           | SELECT  | `status = 'open' OR client_id = auth.uid() OR freelancer_id = auth.uid()` |
-| `tasks_select_policy`         | SELECT  | Same as above                                                             |
-| `Allow insert own tasks`      | INSERT  | `auth.uid() = user_id`                                                    |
-| `tasks_insert_policy`         | INSERT  | `is_client(auth.uid()) AND client_id = auth.uid()`                        |
-| `tasks_insert_self`           | INSERT  | `client_id = auth.uid()`                                                  |
-| `tasks_insert_owner`          | INSERT  | `owner_id = auth.uid()`                                                   |
-| `Allow update own tasks`      | UPDATE  | `auth.uid() = user_id`                                                    |
-| `tasks_update_policy`         | UPDATE  | `client_id = auth.uid()`                                                  |
-| `tasks_update_involved`       | UPDATE  | `client_id = auth.uid() OR freelancer_id = auth.uid()`                    |
-| `tasks_update_owner`          | UPDATE  | `owner_id = auth.uid()`                                                   |
-| `Allow delete own tasks`      | DELETE  | `auth.uid() = user_id`                                                    |
-| `tasks_delete_policy`         | DELETE  | `client_id = auth.uid()`                                                  |
+| Policy                        | Command | Rule                                                                                                                                             |
+| ----------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `tasks_select_authenticated_feed` | SELECT  | `auth.role() = 'authenticated' AND (status = 'open' OR user_id = auth.uid() OR client_id = auth.uid() OR owner_id = auth.uid() OR freelancer_id = auth.uid() OR assigned_freelancer_id = auth.uid())` |
+| `Allow insert own tasks`      | INSERT  | `auth.uid() = user_id`                                                                                                                           |
+| `tasks_insert_policy`         | INSERT  | `is_client(auth.uid()) AND client_id = auth.uid()`                                                                                               |
+| `tasks_insert_self`           | INSERT  | `client_id = auth.uid()`                                                                                                                         |
+| `tasks_insert_owner`          | INSERT  | `owner_id = auth.uid()`                                                                                                                          |
+| `Allow update own tasks`      | UPDATE  | `auth.uid() = user_id`                                                                                                                           |
+| `tasks_update_policy`         | UPDATE  | `client_id = auth.uid()`                                                                                                                         |
+| `tasks_update_involved`       | UPDATE  | `client_id = auth.uid() OR freelancer_id = auth.uid()`                                                                                           |
+| `tasks_update_owner`          | UPDATE  | `owner_id = auth.uid()`                                                                                                                          |
+| `Allow delete own tasks`      | DELETE  | `auth.uid() = user_id`                                                                                                                           |
+| `tasks_delete_policy`         | DELETE  | `client_id = auth.uid()`                                                                                                                         |
 
 ### 7.3 `task_requests` Policies
 
@@ -1214,8 +1211,14 @@ All tables have Row Level Security (RLS) enabled. Below are the actual policies 
 **`search_profiles(query, role_filter, limit_val, offset_val)`**
 
 - Full-text search on `full_name`
-- Filters: Optional `role` filter
-- Returns: `setof profiles`
+- Filters: Optional `active_role` filter
+- Returns: safe summary rows only: `id`, `full_name`, `avatar_url`, `bio`, `active_role`, `skills`, `created_at`, `seller_level`
+
+**`rpc_get_profile_summaries(p_ids uuid[])`**
+
+- Requires an authenticated session
+- Input: array of profile ids
+- Returns: safe summary rows only: `id`, `full_name`, `avatar_url`, `bio`, `active_role`, `skills`, `created_at`, `seller_level`
 
 ---
 
@@ -1225,6 +1228,7 @@ All tables have Row Level Security (RLS) enabled. Below are the actual policies 
 | ---------- | ----------------------------------------------------------- | ---- | ---------------- |
 | `tasks`    | `(to_tsvector('english', title \|\| ' ' \|\| description))` | GIN  | Full-text search |
 | `tasks`    | `(skills)`                                                  | GIN  | Skills filtering |
+| `tasks`    | `(status, created_at DESC, id DESC)`                        | BTREE| Home feed pagination |
 | `profiles` | `(to_tsvector('english', full_name))`                       | GIN  | Full-text search |
 | `profiles` | `(skills)`                                                  | GIN  | Skills filtering |
 

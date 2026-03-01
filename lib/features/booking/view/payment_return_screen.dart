@@ -33,7 +33,8 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
   }
 
   Future<void> _resolvePaymentReturn() async {
-    final paymentReturn = widget.initialArgs ?? parsePaymentReturnArgs(Uri.base);
+    final paymentReturn =
+        widget.initialArgs ?? parsePaymentReturnArgs(Uri.base);
     final pendingStore = context.read<PaymentPendingStore>();
     final pendingContext = pendingStore.load();
 
@@ -59,7 +60,8 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
       final callbackHost = paymentReturn.rawUri.host.toLowerCase();
       if (expectedHosts.isNotEmpty && !expectedHosts.contains(callbackHost)) {
         _setTerminalState(
-          message: 'The payment callback host does not match the pending payment.',
+          message:
+              'The payment callback host does not match the pending payment.',
           isRecoverable: false,
         );
         return;
@@ -87,10 +89,13 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
     }
 
     if (paymentReturn.isFailure) {
-      await context.read<BookingViewModel>().cancelBookingDraftIfUnpaid(bookingId);
+      await context.read<BookingViewModel>().cancelBookingDraftIfUnpaid(
+        bookingId,
+      );
       await pendingStore.clear();
       _setTerminalState(
-        message: 'Payment was not completed. You can retry checkout from the booking screen.',
+        message:
+            'Payment was not completed. You can retry checkout from the booking screen.',
         isRecoverable: false,
       );
       return;
@@ -178,9 +183,7 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
                         Icon(
                           _isSuccess ? Icons.check_circle : Icons.info_outline,
                           size: 48,
-                          color: _isSuccess
-                              ? AppColors.teal
-                              : AppColors.gold,
+                          color: _isSuccess ? AppColors.teal : AppColors.gold,
                         ),
                         const SizedBox(height: AppDimens.p16),
                         Text(
@@ -210,7 +213,8 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
                             },
                             child: const Text('Retry Recovery'),
                           ),
-                        if (_isRecoverable) const SizedBox(height: AppDimens.p12),
+                        if (_isRecoverable)
+                          const SizedBox(height: AppDimens.p12),
                         OutlinedButton(
                           onPressed: _openMainApp,
                           child: const Text('Open App'),

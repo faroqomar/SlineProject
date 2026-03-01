@@ -11,13 +11,16 @@ import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart'
 class FiltersModal extends StatefulWidget {
   const FiltersModal({super.key});
 
+  static const Key resetButtonKey = ValueKey<String>('filters_reset_button');
+  static const Key applyButtonKey = ValueKey<String>('filters_apply_button');
+
   @override
   State<FiltersModal> createState() => _FiltersModalState();
 }
 
 class _FiltersModalState extends State<FiltersModal> {
   // Local state for the form before applying
-  String _sortBy = 'Relevance';
+  String _sortBy = TaskFilterViewModel.sortRelevance;
   double _maxBudget = 1000;
   final _minBudgetController = TextEditingController();
   final _maxBudgetController = TextEditingController();
@@ -70,9 +73,10 @@ class _FiltersModalState extends State<FiltersModal> {
                   style: AppTypography.h4.copyWith(color: colorScheme.text),
                 ),
                 GestureDetector(
+                  key: FiltersModal.resetButtonKey,
                   onTap: () {
                     setState(() {
-                      _sortBy = 'Relevance';
+                      _sortBy = TaskFilterViewModel.sortRelevance;
                       _maxBudget = 1000;
                       _minBudgetController.clear();
                       _maxBudgetController.clear();
@@ -114,10 +118,10 @@ class _FiltersModalState extends State<FiltersModal> {
                     child: Row(
                       children:
                           [
-                            'Relevance',
-                            'Newest',
-                            'Price: Low to High',
-                            'Price: High to Low',
+                            TaskFilterViewModel.sortRelevance,
+                            TaskFilterViewModel.sortNewest,
+                            TaskFilterViewModel.sortPriceLowToHigh,
+                            TaskFilterViewModel.sortPriceHighToLow,
                           ].map((sort) {
                             final isSelected = _sortBy == sort;
                             return Padding(
@@ -215,45 +219,39 @@ class _FiltersModalState extends State<FiltersModal> {
                   const SizedBox(height: AppDimens.p12),
                   Wrap(
                     spacing: 8,
-                    children:
-                        [
-                          'Up to 24h',
-                          'Up to 3 days',
-                          'Up to 7 days',
-                          'Anytime',
-                        ].map((time) {
-                          final isSelected = _deliveryTimes.contains(time);
-                          return ChoiceChip(
-                            label: Text(time),
-                            selected: isSelected,
-                            onSelected: (v) => setState(() {
-                              if (v) {
-                                _deliveryTimes.add(time);
-                              } else {
-                                _deliveryTimes.remove(time);
-                              }
-                            }),
-                            selectedColor: AppColors.teal,
-                            backgroundColor: colorScheme.inputBackground,
-                            labelStyle: TextStyle(
-                              color: isSelected
-                                  ? Colors.white
-                                  : colorScheme.textSecondary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppDimens.r12,
-                              ),
-                              side: BorderSide(
-                                color: isSelected
-                                    ? AppColors.teal
-                                    : colorScheme.inputBorder,
-                              ),
-                            ),
-                            showCheckmark: false,
-                          );
-                        }).toList(),
+                    children: TaskFilterViewModel.deliveryTimeOptions.map((
+                      time,
+                    ) {
+                      final isSelected = _deliveryTimes.contains(time);
+                      return ChoiceChip(
+                        label: Text(time),
+                        selected: isSelected,
+                        onSelected: (v) => setState(() {
+                          if (v) {
+                            _deliveryTimes.add(time);
+                          } else {
+                            _deliveryTimes.remove(time);
+                          }
+                        }),
+                        selectedColor: AppColors.teal,
+                        backgroundColor: colorScheme.inputBackground,
+                        labelStyle: TextStyle(
+                          color: isSelected
+                              ? Colors.white
+                              : colorScheme.textSecondary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppDimens.r12),
+                          side: BorderSide(
+                            color: isSelected
+                                ? AppColors.teal
+                                : colorScheme.inputBorder,
+                          ),
+                        ),
+                        showCheckmark: false,
+                      );
+                    }).toList(),
                   ),
                   const SizedBox(height: AppDimens.p24),
 
@@ -267,62 +265,55 @@ class _FiltersModalState extends State<FiltersModal> {
                   ),
                   const SizedBox(height: AppDimens.p12),
                   Column(
-                    children:
-                        [
-                          'Top Rated Seller',
-                          'Level 2',
-                          'Level 1',
-                          'New Seller',
-                        ].map((level) {
-                          final isSelected = _sellerLevels.contains(level);
-                          return GestureDetector(
-                            onTap: () => setState(() {
-                              if (isSelected) {
-                                _sellerLevels.remove(level);
-                              } else {
-                                _sellerLevels.add(level);
-                              }
-                            }),
-                            child: Container(
-                              margin: const EdgeInsets.only(bottom: 8),
-                              padding: const EdgeInsets.all(AppDimens.p12),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? AppColors.teal.withValues(alpha: 0.1)
-                                    : colorScheme.inputBackground,
-                                border: Border.all(
+                    children: TaskFilterViewModel.sellerLevelOptions.map((
+                      level,
+                    ) {
+                      final isSelected = _sellerLevels.contains(level);
+                      return GestureDetector(
+                        onTap: () => setState(() {
+                          if (isSelected) {
+                            _sellerLevels.remove(level);
+                          } else {
+                            _sellerLevels.add(level);
+                          }
+                        }),
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(AppDimens.p12),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppColors.teal.withValues(alpha: 0.1)
+                                : colorScheme.inputBackground,
+                            border: Border.all(
+                              color: isSelected
+                                  ? AppColors.teal
+                                  : colorScheme.inputBorder,
+                            ),
+                            borderRadius: BorderRadius.circular(AppDimens.r14),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                level,
+                                style: AppTypography.bodySmall.copyWith(
+                                  fontWeight: FontWeight.w500,
                                   color: isSelected
                                       ? AppColors.teal
-                                      : colorScheme.inputBorder,
-                                ),
-                                borderRadius: BorderRadius.circular(
-                                  AppDimens.r14,
+                                      : colorScheme.text,
                                 ),
                               ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    level,
-                                    style: AppTypography.bodySmall.copyWith(
-                                      fontWeight: FontWeight.w500,
-                                      color: isSelected
-                                          ? AppColors.teal
-                                          : colorScheme.text,
-                                    ),
-                                  ),
-                                  if (isSelected)
-                                    Icon(
-                                      Icons.check,
-                                      color: AppColors.teal,
-                                      size: 18,
-                                    ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }).toList(),
+                              if (isSelected)
+                                Icon(
+                                  Icons.check,
+                                  color: AppColors.teal,
+                                  size: 18,
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ],
               ),
@@ -333,6 +324,7 @@ class _FiltersModalState extends State<FiltersModal> {
           Padding(
             padding: const EdgeInsets.all(AppDimens.p24),
             child: AppButton(
+              key: FiltersModal.applyButtonKey,
               text: 'Apply Filters',
               onPressed: () {
                 context.read<TaskFilterViewModel>().applyAdvancedFilters(

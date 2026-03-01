@@ -236,5 +236,51 @@ void main() {
         ),
       );
     });
+
+    test(
+      'acceptBooking delegates to repository accept flow and refreshes row',
+      () async {
+        final pendingBooking = _booking(
+          id: 'booking-accept',
+          createdAtUtc: DateTime.utc(2026, 3, 1),
+          status: BookingStatus.pending,
+          paymentStatus: PaymentStatus.held,
+        );
+        final activeBooking = pendingBooking.copyWith(
+          status: BookingStatus.active,
+        );
+        viewModel.bookingsAsProvider.add(pendingBooking);
+
+        when(
+          () => bookingRepo.acceptBooking('booking-accept'),
+        ).thenAnswer((_) async {});
+        when(
+          () => bookingRepo.getBookingById('booking-accept'),
+        ).thenAnswer((_) async => activeBooking);
+
+        await viewModel.acceptBooking('booking-accept');
+
+        verify(() => bookingRepo.acceptBooking('booking-accept')).called(1);
+        verify(() => bookingRepo.getBookingById('booking-accept')).called(1);
+        expect(
+          viewModel.bookingsAsProvider.single.status,
+          BookingStatus.active,
+        );
+        expect(viewModel.bookingsError, isNull);
+      },
+    );
+
+    test(
+      'acceptBooking maps blocked payment state to user-facing copy',
+      () async {
+        when(
+          () => bookingRepo.acceptBooking('booking-pending'),
+        ).thenThrow(StateError('Client payment is still pending.'));
+
+        await viewModel.acceptBooking('booking-pending');
+
+        expect(viewModel.bookingsError, 'Client payment is still pending.');
+      },
+    );
   });
 }

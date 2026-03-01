@@ -4,7 +4,9 @@ import 'package:sline_app/core/utils/loading_utils.dart';
 
 void main() {
   group('LoadingUtils', () {
-    testWidgets('show inserts one overlay and close removes it', (tester) async {
+    testWidgets('show inserts one overlay and close removes it', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(home: Scaffold(body: SizedBox.expand())),
       );

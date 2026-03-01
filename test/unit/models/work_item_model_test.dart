@@ -50,7 +50,31 @@ void main() {
         expect(roundTripped.sortRank, 2);
         expect(roundTripped.lastActivityAt, DateTime.utc(2026, 2, 26, 11, 30));
         expect(roundTripped.needsReview, isTrue);
+        expect(roundTripped.actionableNeedsReview, isTrue);
+        expect(roundTripped.awaitingCounterpartyReview, isFalse);
       },
     );
+
+    test('review helpers distinguish actionable vs waiting states', () {
+      final waitingItem = WorkItem(
+        id: 'work-2',
+        type: WorkItemType.task,
+        title: 'Waiting review task',
+        counterpartyId: 'user-3',
+        counterpartyName: 'Client',
+        counterpartyAvatar: '',
+        counterpartyRole: 'Client',
+        statusRaw: 'delivered',
+        statusUiBucket: 'Active',
+        createdAt: DateTime.utc(2026, 3, 1, 10, 0),
+        lastUpdate: DateTime.utc(2026, 3, 1, 11, 0),
+        primaryActionType: PrimaryActionType.viewDetails,
+        permissions: WorkItemPermissions(canReview: false),
+        needsReview: true,
+      );
+
+      expect(waitingItem.actionableNeedsReview, isFalse);
+      expect(waitingItem.awaitingCounterpartyReview, isTrue);
+    });
   });
 }

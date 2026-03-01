@@ -60,7 +60,10 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
   }
 
   /// Show award confirmation dialog (Step 1: Award without payment)
-  Future<void> _showAwardDialog(TaskRequest request, TaskRequestsViewModel vm) async {
+  Future<void> _showAwardDialog(
+    TaskRequest request,
+    TaskRequestsViewModel vm,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -69,7 +72,9 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('You are about to award ${request.bidderName ?? "this freelancer"}'),
+            Text(
+              'You are about to award ${request.bidderName ?? "this freelancer"}',
+            ),
             const SizedBox(height: 8),
             Text(
               'Price: ${PriceFormatter.formatPrice(request.price.toDouble())}',
@@ -120,7 +125,10 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
   }
 
   /// Award the offer and navigate to payment screen
-  Future<void> _awardOffer(TaskRequest request, TaskRequestsViewModel vm) async {
+  Future<void> _awardOffer(
+    TaskRequest request,
+    TaskRequestsViewModel vm,
+  ) async {
     setState(() => _isAwarding = true);
 
     final result = await vm.award(request.id);
@@ -139,7 +147,9 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
             taskTitle: widget.taskId, // We should get this from somewhere
             freelancerName: request.bidderName ?? 'Freelancer',
             amount: request.price.toDouble(),
-            paymentDeadline: DateTime.parse(result['payment_deadline'] as String),
+            paymentDeadline: DateTime.parse(
+              result['payment_deadline'] as String,
+            ),
             clientId: clientId,
           ),
         ),

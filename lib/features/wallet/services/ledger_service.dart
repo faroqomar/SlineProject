@@ -41,7 +41,7 @@ class LedgerService {
           'p_related_entity_id': relatedEntityId,
           'p_idempotency_key': idempotencyKey,
           'p_amount_gross': amountGross,
-          'p_currency': 'IQD',  // Always IQD for MVP
+          'p_currency': 'IQD', // Always IQD for MVP
           'p_meta': meta,
         },
       );
@@ -99,7 +99,8 @@ class LedgerService {
     }
 
     // Unique constraint errors (usually idempotency)
-    if (message.contains('unique constraint') || message.contains('uq_journal_entries')) {
+    if (message.contains('unique constraint') ||
+        message.contains('uq_journal_entries')) {
       return 'This transaction was already processed.';
     }
 

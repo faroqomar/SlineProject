@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/services/logger_service.dart';
 import '../services/avatar_service.dart';
+import '../services/profile_summary_service.dart';
 
 import '../../tasks/services/task_service.dart';
 import '../../tasks/models/task_model.dart';
@@ -13,21 +15,57 @@ class ProfileRepository {
   ProfileRepository(SupabaseClient client)
     : _client = client,
       _avatarService = AvatarService(client),
-      _taskService = TaskService();
+      _taskService = TaskService(client),
+      _profileSummaryService = ProfileSummaryService(client);
 
   final SupabaseClient _client;
   final AvatarService _avatarService;
   final TaskService _taskService;
+  final ProfileSummaryService _profileSummaryService;
 
   User? get currentUser => _client.auth.currentUser;
 
   Future<ProfileModel> fetchProfile(String userId) async {
     final res = await _client
         .from('profiles')
-        .select()
+        .select(
+          'id, full_name, email, avatar_url, bio, active_role, skills, created_at, seller_level',
+        )
         .eq('id', userId)
         .single();
     return ProfileModel.fromJson(res);
+  }
+
+  Future<ProfileModel> fetchProfileSummary(String userId) async {
+    AppLogger.d(
+      'profile_summary_fetch_started',
+      tag: 'ProfileRepo',
+      json: {'user_id': userId},
+    );
+    try {
+      final res = await _client
+          .from('profiles')
+          .select(
+            'id, full_name, avatar_url, bio, active_role, skills, created_at, seller_level',
+          )
+          .eq('id', userId)
+          .single();
+      final profile = ProfileModel.fromJson(res);
+      AppLogger.i(
+        'profile_summary_fetch_succeeded',
+        tag: 'ProfileRepo',
+        json: {'user_id': userId},
+      );
+      return profile;
+    } catch (error, stackTrace) {
+      AppLogger.e(
+        'profile_summary_fetch_failed',
+        tag: 'ProfileRepo',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
   }
 
   Future<void> updateProfileFields({
@@ -60,7 +98,10 @@ class ProfileRepository {
     required String userId,
     required String newRole,
   }) async {
-    await _client.from('profiles').update({'role': newRole}).eq('id', userId);
+    await _client
+        .from('profiles')
+        .update({'active_role': newRole})
+        .eq('id', userId);
   }
 
   Future<void> resetPasswordForEmail(String email) async {
@@ -162,17 +203,10 @@ class ProfileRepository {
   }
 
   Future<FreelancerProfile> getPublicProfile(String userId) async {
-    // 1. Fetch Profile Data (SECURE: Explicit column selection)
-    // REQ-SEC-001: Do NOT select(*). Exclude email/phone/metadata.
-    final profileData = await _client
-        .from('profiles')
-        .select(
-          'id, full_name, avatar_url, bio, active_role, skills, created_at',
-        )
-        .eq('id', userId)
-        .single();
-
-    // Note: ProfileModel.fromJson handles missing fields (like email) gracefully
+    final profileData = await _profileSummaryService.fetchById(userId);
+    if (profileData == null) {
+      throw StateError('Public profile not found');
+    }
     final profileModel = ProfileModel.fromJson(profileData);
 
     // 2. Fetch Portfolio Items
@@ -202,19 +236,37 @@ class ProfileRepository {
     final historyData = await _client
         .from('tasks')
         .select('''
-          id, title, description, budget, user_id, client_id, status, task_type, created_at, 
-          deadline, skills, category_id, category, freelancer_id, assigned_freelancer_id, 
-          image_paths, packages,
-          profiles!tasks_client_id_fkey(full_name, avatar_url)
+          id, title, description, budget, user_id, client_id, status, task_type, created_at,
+          deadline, skills, category_id, category, freelancer_id, assigned_freelancer_id,
+          image_paths, packages
         ''')
         .in_('status', ['completed', 'closed'])
         .or('freelancer_id.eq.$userId,assigned_freelancer_id.eq.$userId')
         .order('created_at', ascending: false)
         .limit(20);
 
-    final history = (historyData as List)
-        .map((e) => Task.fromJson(e as Map<String, dynamic>))
+    final historyRows = (historyData as List)
+        .cast<Map<String, dynamic>>()
+        .map(Map<String, dynamic>.from)
         .toList();
+    final historyProfileIds = historyRows
+        .map((row) => (row['client_id'] ?? row['user_id']) as String?)
+        .whereType<String>()
+        .toSet();
+    final historyProfiles = await _profileSummaryService.fetchByIds(
+      historyProfileIds,
+    );
+
+    final history = historyRows.map((row) {
+      final summaryUserId = (row['client_id'] ?? row['user_id']) as String?;
+      final summary = summaryUserId != null
+          ? historyProfiles[summaryUserId]
+          : null;
+      if (summary != null) {
+        row['profiles'] = summary;
+      }
+      return Task.fromJson(row);
+    }).toList();
 
     // 5. Construct FreelancerProfile
     return FreelancerProfile.fromModel(

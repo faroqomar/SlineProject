@@ -11,8 +11,9 @@ import '../models/profile_model.dart';
 
 /// ProfileViewModel — MVVM state holder for Profile feature.
 class ProfileViewModel extends ChangeNotifier {
-  ProfileViewModel({SupabaseClient? client})
-    : _repo = ProfileRepository(client ?? Supabase.instance.client);
+  ProfileViewModel({SupabaseClient? client, ProfileRepository? repository})
+    : _repo =
+          repository ?? ProfileRepository(client ?? Supabase.instance.client);
 
   final ProfileRepository _repo;
 
@@ -61,6 +62,48 @@ class ProfileViewModel extends ChangeNotifier {
 
   // Alias for loadUserData to match HomeScreen usage
   Future<void> loadProfile() => loadUserData();
+
+  Future<void> loadHeaderProfile() async {
+    final user = _repo.currentUser;
+    if (user == null) return;
+
+    _isLoadingProfile = true;
+    _profileError = null;
+    notifyListeners();
+
+    try {
+      AppLogger.i(
+        'profile_header_load_started',
+        tag: 'Profile',
+        json: {'user_id': user.id},
+      );
+      _profile = await _repo.fetchProfileSummary(user.id);
+
+      nameController.text = _profile?.fullName ?? '';
+      emailController.text = user.email ?? '';
+      bioController.text = _profile?.bio ?? '';
+
+      _skills
+        ..clear()
+        ..addAll(_profile?.skills ?? const []);
+
+      await refreshAvatarSignedUrl();
+      AppLogger.i(
+        'profile_header_load_succeeded',
+        tag: 'Profile',
+        json: {
+          'user_id': user.id,
+          'has_avatar': avatarSignedUrl != null && avatarSignedUrl!.isNotEmpty,
+        },
+      );
+    } catch (e) {
+      AppLogger.e('Error loading profile header: $e');
+      _profileError = 'Failed to load profile. Please try again.';
+    } finally {
+      _isLoadingProfile = false;
+      notifyListeners();
+    }
+  }
 
   // Load current user data into controllers
   Future<void> loadUserData() async {

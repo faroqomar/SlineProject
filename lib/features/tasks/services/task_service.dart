@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/logger_service.dart';
 import '../../../core/utils/error_mapper.dart';
 import '../../../core/app_enums.dart';
+import '../../profile/services/profile_summary_service.dart';
 import '../models/task_model.dart';
 import '../../notifications/services/notification_service.dart';
 import '../../notifications/models/notification_model.dart';
@@ -20,9 +21,12 @@ import '../../wallet/services/ledger_service.dart';
 class TaskService {
   final SupabaseClient _client;
   final NotificationService _notificationService = NotificationService();
+  late final ProfileSummaryService _profileSummaryService;
 
   TaskService([SupabaseClient? client])
-    : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client {
+    _profileSummaryService = ProfileSummaryService(_client);
+  }
 
   /// Standard SELECT clause for tasks (without profile JOIN).
   ///
@@ -40,20 +44,22 @@ class TaskService {
   /// Why batch: Fetching profiles for N tasks requires 2 queries total
   /// (1 for tasks, 1 for profiles) instead of N+1 queries.
   Future<Map<String, Map<String, dynamic>>> _fetchProfilesByIds(
-    Set<String> userIds,
-  ) async {
+    Set<String> userIds, {
+    String source = 'unknown',
+    String? requestId,
+  }) async {
     if (userIds.isEmpty) return {};
 
     try {
-      final response = await _client
-          .from('profiles')
-          .select('id, full_name, avatar_url')
-          .in_('id', userIds.toList());
+      final response = await _profileSummaryService.fetchByIds(
+        userIds,
+        source: source,
+        requestId: requestId,
+      );
 
       final map = <String, Map<String, dynamic>>{};
-      for (final row in (response as List)) {
-        final id = row['id'] as String;
-        map[id] = row as Map<String, dynamic>;
+      for (final entry in response.entries) {
+        map[entry.key] = entry.value;
       }
       return map;
     } catch (e) {
@@ -416,6 +422,9 @@ class TaskService {
   Future<List<Task>> getOpenTasksForHome({
     int limit = defaultPageSize,
     String? cursorCreatedAtIso,
+    String? cursorId,
+    String source = 'home',
+    String? requestId,
   }) async {
     try {
       var query = _client
@@ -423,13 +432,20 @@ class TaskService {
           .select(_selectBasic)
           .eq('status', TaskStatus.open.name);
 
-      // Apply cursor for pagination (fetch tasks created before the cursor)
+      // Apply composite cursor for stable pagination across timestamp ties.
       if (cursorCreatedAtIso != null && cursorCreatedAtIso.isNotEmpty) {
-        query = query.lt('created_at', cursorCreatedAtIso);
+        if (cursorId != null && cursorId.isNotEmpty) {
+          query = query.or(
+            'created_at.lt.$cursorCreatedAtIso,and(created_at.eq.$cursorCreatedAtIso,id.lt.$cursorId)',
+          );
+        } else {
+          query = query.lt('created_at', cursorCreatedAtIso);
+        }
       }
 
       final response = await query
           .order('created_at', ascending: false)
+          .order('id', ascending: false)
           .limit(limit);
 
       final rows = response as List;
@@ -438,7 +454,11 @@ class TaskService {
           .whereType<String>()
           .toSet();
 
-      final profilesMap = await _fetchProfilesByIds(userIds);
+      final profilesMap = await _fetchProfilesByIds(
+        userIds,
+        source: source,
+        requestId: requestId,
+      );
       return _parseTasksWithProfiles(rows, profilesMap);
     } on PostgrestException catch (e, st) {
       AppLogger.e(
@@ -771,14 +791,18 @@ class TaskService {
       );
 
       // 3. Mark the offer as paid in the database AFTER ledger succeeds
-      final result = await _client.rpc(
-        'pay_awarded_offer',
-        params: {'p_request_id': offerId},
-      ) as Map<String, dynamic>;
+      final result =
+          await _client.rpc(
+                'pay_awarded_offer',
+                params: {'p_request_id': offerId},
+              )
+              as Map<String, dynamic>;
 
       if (result['success'] != true) {
         // Ledger succeeded but DB update failed - this is a critical inconsistency
-        AppLogger.e('CRITICAL: Ledger succeeded but DB update failed for offer: $offerId');
+        AppLogger.e(
+          'CRITICAL: Ledger succeeded but DB update failed for offer: $offerId',
+        );
         throw Exception(result['error'] ?? 'Payment status update failed');
       }
 

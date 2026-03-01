@@ -60,6 +60,9 @@ class Task {
   /// Optional avatar URL of the user who posted the task
   final String? userAvatar;
 
+  /// Seller level of the task author, hydrated from profile summaries.
+  final String? authorSellerLevel;
+
   /// When a request is accepted, `assigned_freelancer_id` is set in DB.
   /// UI uses this to show "Assigned" state and gate actions.
   /// Assigned freelancer (set when a request is accepted). Nullable.
@@ -91,6 +94,7 @@ class Task {
     this.category,
     this.userName,
     this.userAvatar,
+    this.authorSellerLevel,
     this.categoryName,
     this.assignedFreelancerId,
     this.imagePaths = const [],
@@ -125,6 +129,9 @@ class Task {
         profileData?['full_name'] as String? ?? json['user_name'] as String?;
     final String? parsedUserAvatar =
         profileData?['avatar_url'] as String? ?? json['user_avatar'] as String?;
+    final String? parsedAuthorSellerLevel =
+        profileData?['seller_level'] as String? ??
+        json['author_seller_level'] as String?;
 
     return Task(
       id: json['id'] as String,
@@ -156,6 +163,7 @@ class Task {
           (json['category'] as String?),
       userName: parsedUserName,
       userAvatar: parsedUserAvatar,
+      authorSellerLevel: parsedAuthorSellerLevel,
       assignedFreelancerId:
           (json['assigned_freelancer_id'] as String?) ??
           (json['freelancer_id'] as String?),
@@ -213,6 +221,7 @@ class Task {
     String? category,
     String? userName,
     String? userAvatar,
+    String? authorSellerLevel,
     String? categoryName,
     String? assignedFreelancerId,
     List<String>? imagePaths,
@@ -234,6 +243,7 @@ class Task {
       category: category ?? this.category,
       userName: userName ?? this.userName,
       userAvatar: userAvatar ?? this.userAvatar,
+      authorSellerLevel: authorSellerLevel ?? this.authorSellerLevel,
       categoryName: categoryName ?? this.categoryName,
       assignedFreelancerId: assignedFreelancerId ?? this.assignedFreelancerId,
       imagePaths: imagePaths ?? this.imagePaths,

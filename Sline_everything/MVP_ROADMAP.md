@@ -30,7 +30,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 
 | Feature | Status | Notes |
 | --- | --- | --- |
-| Home feed and task discovery | ✅ Completed | `home`, `tasks`, and filters are live |
+| Home feed and task discovery | ✅ Completed | repo implementation is live; production rollout depends on the `20260301_*home*` migrations and RLS verification |
 | Category-backed task browsing | ✅ Completed | categories feature and task filters exist |
 | Booking discovery feed | ✅ Completed | `BookingsDiscoveryScreen` reuses the task feed for booking tasks |
 | Search | 🚧 In Progress | dedicated `search/` feature exists; ongoing refinement |

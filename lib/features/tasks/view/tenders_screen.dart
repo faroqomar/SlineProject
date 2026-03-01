@@ -1,35 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/widgets/skeleton_card.dart';
-import 'package:sline_app/features/home/viewmodels/home_view_model.dart';
 import 'package:sline_app/features/tasks/view/task_details_screen.dart';
+import 'package:sline_app/features/tasks/view/widgets/discovery_task_sliver.dart';
 import 'package:sline_app/features/tasks/view/widgets/task_card.dart';
+import 'package:sline_app/features/tasks/viewmodels/discovery_feed_view_model_contract.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
 
-class TendersScreen extends StatelessWidget {
+class TendersScreen extends StatefulWidget {
   const TendersScreen({super.key});
 
   @override
+  State<TendersScreen> createState() => _TendersScreenState();
+}
+
+class _TendersScreenState extends State<TendersScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final homeVm = context.read<DiscoveryFeedViewModelContract>();
+      final filterVm = context.read<TaskFilterViewModel>();
+      if (!homeVm.isLoading && homeVm.featuredTasks.isEmpty) {
+        AppLogger.d(
+          'discovery_screen_bootstrap',
+          tag: 'DiscoveryUI',
+          json: {'surface': 'tenders'},
+        );
+        homeVm.loadFeaturedTasks(
+          filterController: filterVm,
+          surface: 'tenders',
+        );
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Consumer2<HomeViewModel, TaskFilterViewModel>(
+      body: Consumer2<DiscoveryFeedViewModelContract, TaskFilterViewModel>(
         builder: (context, homeVM, filterVM, child) {
-          // Filter for Tenders only
           final tenders = filterVM.filteredTasks
               .where((t) => t.isTender)
               .toList();
 
           return CustomScrollView(
             slivers: [
-              // Header
               SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(
@@ -58,74 +81,40 @@ class TendersScreen extends StatelessWidget {
                   ),
                 ),
               ),
-
-              // Show skeleton while loading
-              if (homeVM.isLoading)
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppDimens.p16,
-                    0,
-                    AppDimens.p16,
-                    AppDimens.p100,
-                  ),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (_, __) => const SkeletonTaskCard(),
-                      childCount: 5,
-                    ),
-                  ),
-                )
-              // Show empty state
-              else if (tenders.isEmpty)
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.assignment_outlined,
-                          size: 64,
-                          color: colorScheme.textSecondary.withValues(
-                            alpha: 0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No active tenders',
-                          style: AppTypography.h5.copyWith(
-                            color: colorScheme.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              // Show actual tender list
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppDimens.p16,
-                    0,
-                    AppDimens.p16,
-                    AppDimens.p100, // Bottom padding for nav bar
-                  ),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final task = tenders[index];
-                      return TaskCard(
-                        task: task,
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => TaskDetailsScreen(task: task),
-                            ),
-                          );
+              DiscoveryTaskSliver(
+                surface: 'tenders',
+                tasks: tenders,
+                isInitialLoading: homeVM.isLoading,
+                isLoadingMore: homeVM.isLoadingMore,
+                hasMore: homeVM.hasMore,
+                onLoadMore: () => homeVM.loadMoreTasks(
+                  filterController: filterVM,
+                  surface: 'tenders',
+                ),
+                emptyTitle: 'No active tenders',
+                emptyIcon: Icons.assignment_outlined,
+                taskBuilder: (context, task) {
+                  return TaskCard(
+                    task: task,
+                    onTap: () {
+                      AppLogger.d(
+                        'discovery_task_opened',
+                        tag: 'DiscoveryUI',
+                        json: {
+                          'surface': 'tenders',
+                          'task_id': task.id,
+                          'task_type': task.taskType.name,
                         },
                       );
-                    }, childCount: tenders.length),
-                  ),
-                ),
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => TaskDetailsScreen(task: task),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ],
           );
         },

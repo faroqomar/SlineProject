@@ -130,10 +130,7 @@ class WalletService {
     final uid = _client.auth.currentUser?.id;
     if (uid == null) return [];
 
-    var query = _client
-        .from('withdrawal_requests')
-        .select()
-        .eq('user_id', uid);
+    var query = _client.from('withdrawal_requests').select().eq('user_id', uid);
 
     if (statuses != null && statuses.isNotEmpty) {
       query = query.in_('status', statuses);

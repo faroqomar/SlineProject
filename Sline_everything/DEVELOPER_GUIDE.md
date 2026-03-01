@@ -220,27 +220,29 @@ Each section below provides complete documentation for a specific feature module
 
 ## 1. Human Explanation
 
-The Profile feature manages a user’s app identity beyond `auth.users`. It loads and edits `profiles` (name, bio, role, avatar path), changes email/password through Supabase Auth, and shows the user’s own tasks. MVVM flow:
+The Profile feature manages a user’s app identity beyond `auth.users`. It loads and edits the current user’s `profiles` row, generates signed avatar URLs from the private `avatars` bucket, exposes a lightweight header-only load path for Home, and shows the user’s own tasks. MVVM flow:
 
 - UI in `lib/features/profile/view/` renders the form and actions.
-- `ProfileViewModel` orchestrates reads/writes, avatar upload, and navigation.
-- `ProfileRepository` performs DB updates and delegates avatar upload to `AvatarService` (private storage + signed URLs).
+- `ProfileViewModel` orchestrates full profile loads for Profile screens and `loadHeaderProfile()` for Home/dashboard header usage.
+- `ProfileRepository` performs self-only `profiles` reads/writes, delegates avatar upload to `AvatarService`, and delegates cross-user summary lookups to `ProfileSummaryService`.
 
 ## 2. Database & Supabase Mapping
 
 ### 2.1 `public.profiles`
 
-| Column       | Type                              | Purpose / Usage                          | Notes                               |
-| ------------ | --------------------------------- | ---------------------------------------- | ----------------------------------- |
-| `id`         | `uuid` (PK, FK → `auth.users.id`) | Identity link to Supabase Auth           | Primary join key across modules     |
-| `full_name`  | `text`                            | Display name                             | Editable in Profile screen          |
-| `email`      | `text`                            | Cached email for quick reads             | Updated alongside Auth when changed |
-| `bio`        | `text`                            | Short description                        | Editable in Profile screen          |
-| `role`       | `text`                            | `client` or `freelancer`                 | Toggles Home/Tasks UX               |
-| `avatar_url` | `text`                            | Private storage path in `avatars` bucket | Use signed URLs for display         |
-| `created_at` | `timestamptz`                     | Creation time (UTC)                      | Default `now()`                     |
+| Column         | Type                              | Purpose / Usage                                    | Notes                                                  |
+| -------------- | --------------------------------- | -------------------------------------------------- | ------------------------------------------------------ |
+| `id`           | `uuid` (PK, FK → `auth.users.id`) | Identity link to Supabase Auth                     | Primary join key across modules                        |
+| `full_name`    | `text`                            | Display name                                       | Editable in Profile screen                             |
+| `email`        | `text`                            | Cached email for self-service settings             | Updated alongside Auth when changed                    |
+| `bio`          | `text`                            | Short description                                  | Editable in Profile screen                             |
+| `active_role`  | `text`                            | `client` or `freelancer`                           | Drives Home/Tasks UX                                   |
+| `seller_level` | `seller_level_enum`               | `new_seller` / `level_1` / `level_2` / `top_rated` | Used by Home discovery filters and secure author cards |
+| `avatar_url`   | `text`                            | Private storage path in `avatars` bucket           | Use signed URLs for display                            |
+| `skills`       | `text[]`                          | Skill tags                                         | Included in summary RPC payload                        |
+| `created_at`   | `timestamptz`                     | Creation time (UTC)                                | Default `now()`                                        |
 
-RLS (summary): Users can `SELECT/UPDATE` only their row (`auth.uid() = id`). Any mutation requires a valid session.
+RLS (summary): direct `public.profiles` reads are self-only (`auth.uid() = id`). Cross-user reads must use the authenticated server-side summary RPC `public.rpc_get_profile_summaries(uuid[])`.
 
 ### 2.2 Storage buckets (private)
 
@@ -252,10 +254,11 @@ RLS (summary): Users can `SELECT/UPDATE` only their row (`auth.uid() = id`). Any
 
 | File                                                           | Layer      | Description                                                                                                                      |
 | -------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `lib/features/profile/data/profile_repository.dart`            | Repository | Wraps Supabase calls for profile load/update, email updates, role change, password reset, avatar upload, and my-tasks helpers.   |
+| `lib/features/profile/data/profile_repository.dart`            | Repository | Wraps self-only `profiles` reads/writes, email updates, role change, password reset, avatar upload, and my-tasks helpers.       |
 | `lib/features/profile/services/avatar_service.dart`            | Service    | Uploads avatar to `avatars` bucket and creates short-lived signed URLs. Stores only the storage path in DB.                      |
+| `lib/features/profile/services/profile_summary_service.dart`   | Service    | Calls `rpc_get_profile_summaries` and `search_profiles`; only safe summary fields are exposed cross-user.                        |
 | `lib/features/profile/view/widgets/profile_preview_modal.dart` | Widget     | Helper `showProfilePreview(context, userId)` to launch public profile in a modal sheet.                                          |
-| `lib/features/profile/viewmodels/profile_view_model.dart`      | ViewModel  | `ChangeNotifier` that binds form controllers, updates profile, uploads avatar, handles logout/role change, and loads user tasks. |
+| `lib/features/profile/viewmodels/profile_view_model.dart`      | ViewModel  | `ChangeNotifier` that binds form controllers, updates profile, uploads avatar, handles logout/role change, and exposes full/header load paths. |
 | `lib/features/profile/view/profile_screen.dart`                | View       | Material 3 profile UI with form fields, avatar, role toggle, password reset, and sign out.                                       |
 | `lib/features/profile/view/widgets/profile_avatar_widget.dart` | Widget     | Renders a profile avatar via a signed URL for a private storage path.                                                            |
 
@@ -268,14 +271,14 @@ erDiagram
   PROFILES ||--o{ STORAGE_AVATARS : "avatar_url (path)"
 
   AUTH_USERS { uuid id PK, text email }
-  PROFILES { uuid id PK/FK, text full_name, text email, text bio, text role, text avatar_url, timestamptz created_at }
+  PROFILES { uuid id PK/FK, text full_name, text email, text bio, text active_role, seller_level_enum seller_level, text avatar_url, timestamptz created_at }
   TASKS { uuid id PK, uuid user_id FK, text title }
   STORAGE_AVATARS { text path PK }
 ```
 
 ```text
 auth.users (id, email)
-   └── profiles (id=auth.users.id, full_name, email, bio, role, avatar_url)
+   └── profiles (id=auth.users.id, full_name, email, bio, active_role, seller_level, avatar_url)
             └──(path) avatars bucket (private, signed URLs)
    └── tasks (user_id → profiles.id)
 ```
@@ -286,13 +289,13 @@ auth.users (id, email)
 
 ```sql
 -- Load my profile
-select id, full_name, email, bio, role, avatar_url
+select id, full_name, email, bio, active_role, seller_level, avatar_url
 from public.profiles
 where id = auth.uid();
 
 -- Update profile fields (RLS enforces id = auth.uid())
 update public.profiles
-set full_name = 'New Name', bio = 'About me', role = 'freelancer'
+set full_name = 'New Name', bio = 'About me', active_role = 'freelancer'
 where id = auth.uid();
 
 -- Change avatar path after upload
@@ -306,9 +309,13 @@ where id = auth.uid();
 ```dart
 final supabase = Supabase.instance.client;
 
-// Fetch profile (ProfileRepository.fetchProfile)
+// Fetch full self profile (ProfileRepository.fetchProfile)
 final me = supabase.auth.currentUser!.id;
-final row = await supabase.from('profiles').select().eq('id', me).single();
+final row = await supabase
+  .from('profiles')
+  .select('id, full_name, email, avatar_url, bio, active_role, skills, created_at, seller_level')
+  .eq('id', me)
+  .single();
 
 // Update profile fields (ProfileRepository.updateProfileFields)
 await supabase.from('profiles').update({
@@ -330,6 +337,11 @@ await supabase.from('profiles').update({'avatar_url': path}).eq('id', me);
 
 // Create signed URL for display
 final signed = await AvatarService(supabase).createSignedUrl(path);
+
+// Fetch safe summaries for task authors / public cards
+final summaries = await supabase.rpc('rpc_get_profile_summaries', params: {
+  'p_ids': [authorId, anotherAuthorId],
+});
 ```
 
 ## 6. Error Handling
@@ -347,7 +359,8 @@ final signed = await AvatarService(supabase).createSignedUrl(path);
 - **Store paths, not signed URLs** in `profiles.avatar_url`; generate signed URLs at render time.
 - **UTC**: All timestamps are UTC; convert with `toLocal()` where needed.
 - **Session required**: All RLS-protected queries require an active session.
-- **Home/Tasks impact**: Updating `role` affects Home/Tasks UX next load.
+- **Cross-user reads**: Do not query another user from base `profiles`; use `ProfileSummaryService` / `rpc_get_profile_summaries`.
+- **Home/Tasks impact**: Updating `active_role` or `seller_level` affects Home/Tasks UX and discovery filters on next load.
 
 Testing checklist:
 
@@ -798,8 +811,8 @@ where user_id = auth.uid()
 order by created_at desc;
 
 -- Remove a saved task
-// List Mine with Manual Join (Fixes PGRST200)
-// We fetch tasks first, then fetch profiles for those tasks, and merge manually.
+// List Mine with Manual Join (RLS-safe summary enrichment)
+// We fetch tasks first, then fetch safe profile summaries, and merge manually.
 Future<List<Task>> listMineWithDetails() async {
   // 1. Fetch saved tasks with basic task details
   final res = await _client
@@ -811,19 +824,21 @@ Future<List<Task>> listMineWithDetails() async {
   // 2. Extract user IDs
   final userIds = res.map((r) => r['task']['user_id']).toSet().toList();
 
-  // 3. Fetch profiles
-  final profiles = await _client.from('profiles').select().in_('id', userIds);
-  final profileMap = {for (var p in profiles) p['id']: p};
+  // 3. Fetch safe profile summaries through the RPC boundary
+  final summaries = await ProfileSummaryService(_client).fetchByIds(
+    userIds.whereType<String>(),
+  );
 
   // 4. Merge
   return res.map((row) {
     final taskJson = row['task'];
-    final profile = profileMap[taskJson['user_id']];
+    final profile = summaries[taskJson['user_id']];
     var task = Task.fromJson(taskJson);
     if (profile != null) {
       task = task.copyWith(
-        userName: profile['full_name'],
-        userAvatar: profile['avatar_url'],
+        userName: profile.fullName,
+        userAvatar: profile.avatarUrl,
+        authorSellerLevel: profile.sellerLevel,
       );
     }
     return task;
@@ -833,7 +848,7 @@ Future<List<Task>> listMineWithDetails() async {
 
 ### 5.3 Workarounds
 
-- **PGRST200 on Join**: The direct join `.select('task:tasks(*, profiles!tasks_user_id_fkey(*))')` fails because the foreign key isn't exposed correctly to the Postgrest client in this specific schema configuration. We use the **manual 2-step fetch** pattern (shown above) to reliably get author details for saved tasks. This is slightly less efficient but 100% robust against schema metadata quirks.
+- **PGRST200 on Join**: The direct join `.select('task:tasks(*, profiles!tasks_user_id_fkey(*))')` is not relied on. Saved-task enrichment uses a **manual 2-step fetch** plus `rpc_get_profile_summaries` so cross-user reads stay compatible with self-only `profiles` RLS.
 
 ### 5.2 Dart (supabase_flutter)
 
@@ -1084,11 +1099,12 @@ Testing checklist:
 
 ## 1. Human Explanation
 
-The Home feature is the authenticated landing page. It shows a searchable, filterable feed of featured/open tasks and routes to other modules (create task, saved tasks, task details). It follows MVVM:
+The Home feature is the authenticated discovery surface. It shows a searchable, filterable feed of open tasks, applies client-side discovery filters over the loaded window, and shares its list behavior with the Tender and Booking discovery screens. It follows MVVM:
 
 - UI in `lib/features/home/view/` renders search/filter controls and task list.
-- `HomeViewModel` loads/refreshes featured tasks and updates `TaskFilterViewModel`.
-- `TaskService` provides the Supabase reads for tasks and joins `profiles` for author display.
+- `HomeViewModel` loads the feed with a composite pagination cursor (`created_at`, `id`), implements the shared `DiscoveryFeedViewModelContract`, and updates `TaskFilterViewModel`.
+- `TaskService` provides the Supabase reads for tasks and enriches author display data through `rpc_get_profile_summaries`.
+- `TaskFilterViewModel` applies search, category, price, delivery-time, and seller-level filters to the loaded discovery window and emits privacy-safe filter telemetry.
 
 ## 2. Database & Supabase Mapping
 
@@ -1096,46 +1112,47 @@ Home does not own tables; it reads from feature tables to populate the dashboard
 
 ### 2.1 `public.tasks` (consumed)
 
-| Column        | Type                        | Purpose / Usage        | Notes                                 |
-| ------------- | --------------------------- | ---------------------- | ------------------------------------- |
-| `id`          | `uuid`                      | Task id                | Used for navigation/details           |
-| `title`       | `text`                      | Headline               | Shown in list cards                   |
-| `description` | `text`                      | Summary                | Displayed in `TaskCard`               |
-| `budget`      | `numeric`/`bigint`          | Price field            | Formatted via `format_price.dart`     |
-| `user_id`     | `uuid` (FK → `profiles.id`) | Author                 | Joined to display name/avatar         |
-| `status`      | `text`/enum                 | Filters (e.g., `open`) | Home fetch uses `status = 'open'`     |
-| `task_type`   | enum                        | Context                | E.g., `tender`                        |
-| `category_id` | `uuid` (FK)                 | Category filter        | Joined to `categories(name)`          |
-| `created_at`  | `timestamptz`               | Sort by newest         | UTC                                   |
-| `image_paths` | `text[]`                    | Thumbnails             | Shown by `TaskCard` via signed images |
+| Column        | Type                        | Purpose / Usage             | Notes                                                   |
+| ------------- | --------------------------- | --------------------------- | ------------------------------------------------------- |
+| `id`          | `uuid`                      | Task id                     | Used for navigation/details and composite pagination    |
+| `title`       | `text`                      | Headline                    | Shown in list cards                                     |
+| `description` | `text`                      | Summary                     | Displayed in `TaskCard`                                 |
+| `budget`      | `numeric`/`bigint`          | Price field                 | Formatted via `format_price.dart`                       |
+| `user_id`     | `uuid` (FK → `profiles.id`) | Author                      | Enriched with safe summary data via RPC                 |
+| `status`      | `text`/enum                 | Feed visibility             | Home fetch uses `status = 'open'`                       |
+| `task_type`   | enum                        | Tender vs booking behavior  | Seller-level filters exclude tenders                    |
+| `category_id` | `uuid` (FK)                 | Category filter             | Joined to `categories(name)`                            |
+| `created_at`  | `timestamptz`               | Primary sort / cursor value | Ordered `DESC`; tied rows use `id DESC` as tiebreaker   |
+| `deadline`    | `timestamptz`               | Delivery estimate fallback  | Used when booking packages do not provide delivery days |
+| `packages`    | `jsonb`                     | Booking delivery estimates  | Min `delivery` value drives delivery-time filters       |
+| `image_paths` | `text[]`                    | Thumbnails                  | Shown by `TaskCard` via signed images                   |
 
-Related tables: `public.profiles` for author name/avatar, `public.categories` for name label.
+Related tables/contracts: `public.categories` for labels and `public.rpc_get_profile_summaries(uuid[])` for author name/avatar/seller level.
 
-RLS: Reads allowed for authenticated users; writes follow feature-specific policies in Tasks.
+RLS: Home reads depend on authenticated-only `public.tasks` access. Direct `public.profiles` reads are self-only and are not part of Home feed rendering.
 
 ## 3. File Inventory
 
 | File                                                        | Layer     | Description                                                                                       |
 | ----------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------- |
-| `lib/features/home/view/home_screen.dart`                   | View      | Dashboard UI with search, category filter, refresh, and navigation to details/create/saved tasks. |
-| `lib/features/home/view/widgets/service_card.dart`          | Widget    | Reusable card (if used in home) for linking to modules.                                           |
-| `lib/features/home/viewmodels/home_view_model.dart`         | ViewModel | `ChangeNotifier` that loads/refreshes featured tasks and passes them to `TaskFilterViewModel`.    |
-| `lib/features/tasks/viewmodels/task_filter_view_model.dart` | ViewModel | Holds filtered list, search text, and category filter state used by `HomeScreen`.                 |
+| `lib/features/home/view/home_screen.dart`                   | View      | Discovery UI with search, filters, refresh, and navigation to details/create/saved tasks.          |
+| `lib/features/home/view/widgets/filters_modal.dart`         | Widget    | Bottom sheet for sort, category, price, delivery-time, and seller-level filters.                   |
+| `lib/features/home/viewmodels/home_view_model.dart`         | ViewModel | `ChangeNotifier` that loads/refreshes featured tasks, tracks composite pagination, and updates filters. |
+| `lib/features/tasks/viewmodels/discovery_feed_view_model_contract.dart` | ViewModel contract | Shared discovery-feed API consumed by Home, Tenders, and Bookings without a Home-specific dependency. |
+| `lib/features/tasks/view/widgets/discovery_task_sliver.dart`| Widget    | Shared list/empty/load-more sliver used by Home, Tenders, and Bookings discovery surfaces.         |
+| `lib/features/tasks/viewmodels/task_filter_view_model.dart` | ViewModel | Holds filtered list, search text, category, price, delivery-time, seller-level, and sort state.   |
 
 ## 4. ERD Diagram (Context)
 
 ```mermaid
 erDiagram
-  PROFILES ||--o{ TASKS : "user_id"
   CATEGORIES ||--o{ TASKS : "category_id"
 
-  PROFILES { uuid id PK, text full_name, text avatar_url }
   CATEGORIES { uuid id PK, text name }
   TASKS { uuid id PK, uuid user_id FK, uuid category_id FK, text title, text description, timestamptz created_at }
 ```
 
 ```text
-profiles (id) ──< tasks (user_id)
 categories (id) ──< tasks (category_id)
 ```
 
@@ -1146,12 +1163,18 @@ categories (id) ──< tasks (category_id)
 ```dart
 final supabase = Supabase.instance.client;
 
-// Fetch open tasks with category name and author info (as in TaskService)
+// Fetch open tasks for Home with composite cursor (as in TaskService)
 final rows = await supabase
   .from('tasks')
   .select('id, title, description, budget, user_id, status, task_type, category_id, category, created_at, deadline, skills, image_paths, categories(name)')
   .eq('status', 'open')
-  .order('created_at', ascending: false);
+  .order('created_at', ascending: false)
+  .order('id', ascending: false);
+
+// Then enrich unique author ids via rpc_get_profile_summaries(p_ids)
+final authorSummaries = await supabase.rpc('rpc_get_profile_summaries', params: {
+  'p_ids': rows.map((row) => row['user_id']).toSet().toList(),
+});
 ```
 
 ### 5.2 Filter logic (ViewModel collaboration)
@@ -1159,6 +1182,10 @@ final rows = await supabase
 ```dart
 // HomeViewModel.loadFeaturedTasks(...) populates TaskFilterViewModel
 await homeViewModel.loadFeaturedTasks(filterController: context.read<TaskFilterViewModel>());
+
+// Delivery and seller-level filters are applied client-side over the loaded feed window.
+context.read<TaskFilterViewModel>().toggleDeliveryTime('Up to 3 days');
+context.read<TaskFilterViewModel>().toggleSellerLevel('Level 2');
 ```
 
 ## 6. Error Handling

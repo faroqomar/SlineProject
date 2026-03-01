@@ -34,7 +34,8 @@ class RequestTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final priceText = PriceFormatter.formatPrice(request.price.toDouble());
     final subtitle = '${request.days} days • ${_getStatusLabel()}';
-    final canAct = request.isPending && onAccept != null && onReject != null && !isLoading;
+    final canAct =
+        request.isPending && onAccept != null && onReject != null && !isLoading;
 
     return Card(
       elevation: 1,

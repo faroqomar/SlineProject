@@ -40,7 +40,8 @@ void main() {
       chatRepo = _MockChatRepository();
       paymentService = _MockPaymentService();
       when(() => bookingRepo.getBookingById(any())).thenAnswer(
-        (invocation) async => _booking(invocation.positionalArguments.first as String),
+        (invocation) async =>
+            _booking(invocation.positionalArguments.first as String),
       );
       viewModel = BookingViewModel(
         repo: bookingRepo,
@@ -56,11 +57,13 @@ void main() {
     test('stops retrying once payment becomes held', () async {
       when(
         () => paymentService.recoverBookingPayment(bookingId: 'booking-1'),
-      ).thenAnswer((_) async => const QiCardRecoveryResult(
-        bookingId: 'booking-1',
-        paymentStatus: 'held',
-        recoveryResult: 'applied',
-      ));
+      ).thenAnswer(
+        (_) async => const QiCardRecoveryResult(
+          bookingId: 'booking-1',
+          paymentStatus: 'held',
+          recoveryResult: 'applied',
+        ),
+      );
 
       final result = await viewModel.recoverBookingPaymentWithRetries(
         bookingId: 'booking-1',
@@ -104,11 +107,13 @@ void main() {
     test('returns terminal no_action after max attempts', () async {
       when(
         () => paymentService.recoverBookingPayment(bookingId: 'booking-3'),
-      ).thenAnswer((_) async => const QiCardRecoveryResult(
-        bookingId: 'booking-3',
-        paymentStatus: 'unpaid',
-        recoveryResult: 'no_action',
-      ));
+      ).thenAnswer(
+        (_) async => const QiCardRecoveryResult(
+          bookingId: 'booking-3',
+          paymentStatus: 'unpaid',
+          recoveryResult: 'no_action',
+        ),
+      );
 
       final result = await viewModel.recoverBookingPaymentWithRetries(
         bookingId: 'booking-3',

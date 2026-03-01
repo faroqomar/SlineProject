@@ -21,6 +21,48 @@
 
 ## 📋 Version History
 
+### 🟢 Version 2.16.5 — Home Feed Hardening, Safe Profile Summaries, and Discovery Contract Sync
+
+**Date:** 2026-03-01
+**Commit:** _Pending_ — "fix(home): harden discovery feed and deploy safe profile summary contract"
+
+#### ✅ Implemented
+
+- **Home Feed Contract**
+  - Added seller-level support to `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/profile/models/profile_model.dart` and `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/tasks/models/task_model.dart`.
+  - Stabilized discovery pagination in `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/tasks/services/task_service.dart` and `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/home/viewmodels/home_view_model.dart` with a composite `created_at + id` cursor.
+  - Added `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/tasks/view/widgets/discovery_task_sliver.dart` and shared it across Home, Tenders, and Booking discovery.
+- **Security / RLS Boundary**
+  - Added repo migrations for `seller_level`, `rpc_get_profile_summaries`, safe `search_profiles`, feed index, and Home-related RLS hardening under `/Users/eros/Dev/Eros_Projects/Sline/sline_app/supabase/migrations/20260301_*home*`.
+  - Switched cross-user enrichment to `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/profile/services/profile_summary_service.dart`.
+- **State + Observability**
+  - Removed the duplicate Home-only saved-task provider from `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/home/view/home_screen.dart`.
+  - Added structured feed/filter telemetry in `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/home/viewmodels/home_view_model.dart` and `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/tasks/viewmodels/task_filter_view_model.dart`.
+  - Added shared discovery feed contract `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/tasks/viewmodels/discovery_feed_view_model_contract.dart`.
+- **Testing + Docs**
+  - Added/updated targeted tests under `/Users/eros/Dev/Eros_Projects/Sline/sline_app/test/unit/home/`, `/Users/eros/Dev/Eros_Projects/Sline/sline_app/test/unit/profile/`, `/Users/eros/Dev/Eros_Projects/Sline/sline_app/test/widget/home/`, `/Users/eros/Dev/Eros_Projects/Sline/sline_app/test/widget/tasks/`, and `/Users/eros/Dev/Eros_Projects/Sline/sline_app/test/widget/booking/`.
+  - Synced `DEVELOPER_GUIDE.md`, `DEVELOPER_GUIDE/Home Feature.md`, `SUPABASE_SETUP.md`, `STRUCTURE.md`, and `MVP_ROADMAP.md`.
+
+#### 📊 Impact
+
+- Home discovery now relies on a least-privilege profile summary contract instead of direct cross-user `profiles` reads.
+- Pagination is deterministic for same-timestamp rows.
+- Advanced filters are functional and measurable.
+- Tender and Booking discovery surfaces no longer depend on a Home-specific API contract.
+
+#### 🧪 Verification
+
+- Plan: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.TODO/home.TODO.md`
+- Migration Plan: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.TODO/MIGRATION_HomeFeedSellerLevel_2026-03-01.md`
+- Contract: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.TODO/CONTRACT_HomeFeedFilters_2026-03-01.md`
+- RLS Matrix: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.TODO/RLS_HOME_MATRIX_2026-03-01.md`
+- Review: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.TODO/CODEGUARD_REVIEW_2026-03-01_home.md`
+
+#### 🔧 Technical Notes
+
+- This release depends on the `20260301_*home*` Supabase migrations being applied before promotion.
+- Home/Tenders/Bookings now share one discovery feed notifier instance via `DiscoveryFeedViewModelContract`.
+
 ### 🟢 Version 2.16.4 — Documentation Refresh and Reference Audit
 
 **Date:** 2026-03-01
@@ -1345,6 +1387,8 @@ lib/
 - **Documented all architectural decisions** and patterns
 
 #### 📁 New Project Structure (v1.0)
+
+> Historical snapshot note: the tree below is an archival v1 structure example. The live repository no longer uses `controllers/` / `presentation/` folders here, and `lib/features/home/view/widgets/service_card.dart` has been removed.
 
 ```
 lib/

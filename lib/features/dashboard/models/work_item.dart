@@ -48,6 +48,10 @@ class WorkItem {
     this.lastActivityAt,
   });
 
+  bool get actionableNeedsReview => needsReview && permissions.canReview;
+
+  bool get awaitingCounterpartyReview => needsReview && !permissions.canReview;
+
   /// Create a copy with updated counterparty profile info
   WorkItem withCounterparty({required String name, required String avatar}) {
     return WorkItem(

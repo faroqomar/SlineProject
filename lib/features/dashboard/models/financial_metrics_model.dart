@@ -47,11 +47,19 @@ class FinancialMetrics {
   factory FinancialMetrics.fromJson(Map<String, dynamic> json) {
     return FinancialMetrics(
       gmv: ((json['gmv_iqd'] ?? json['gmv'] ?? 0) as num).toDouble(),
-      revenue: ((json['revenue_iqd'] ?? json['revenue'] ?? 0) as num).toDouble(),
-      escrowHeld: ((json['escrow_held_iqd'] ?? json['escrow_held'] ?? 0) as num).toDouble(),
-      platformCash: ((json['platform_cash_iqd'] ?? json['platform_cash'] ?? 0) as num).toDouble(),
-      lifetimeRefunds: ((json['lifetime_refunds_iqd'] ?? json['lifetime_refunds'] ?? 0) as num).toDouble(),
-      calculatedAt: DateTime.tryParse(json['calculated_at'] ?? '') ?? DateTime.now(),
+      revenue: ((json['revenue_iqd'] ?? json['revenue'] ?? 0) as num)
+          .toDouble(),
+      escrowHeld: ((json['escrow_held_iqd'] ?? json['escrow_held'] ?? 0) as num)
+          .toDouble(),
+      platformCash:
+          ((json['platform_cash_iqd'] ?? json['platform_cash'] ?? 0) as num)
+              .toDouble(),
+      lifetimeRefunds:
+          ((json['lifetime_refunds_iqd'] ?? json['lifetime_refunds'] ?? 0)
+                  as num)
+              .toDouble(),
+      calculatedAt:
+          DateTime.tryParse(json['calculated_at'] ?? '') ?? DateTime.now(),
       currency: json['currency'] as String? ?? 'IQD',
     );
   }
@@ -114,7 +122,8 @@ class PeriodFinancialMetrics {
 
   factory PeriodFinancialMetrics.fromJson(Map<String, dynamic> json) {
     return PeriodFinancialMetrics(
-      periodStart: DateTime.tryParse(json['period_start'] ?? '') ?? DateTime.now(),
+      periodStart:
+          DateTime.tryParse(json['period_start'] ?? '') ?? DateTime.now(),
       periodEnd: DateTime.tryParse(json['period_end'] ?? '') ?? DateTime.now(),
       period: json['period'] as String? ?? 'day',
       gmv: ((json['gmv'] ?? 0) as num).toDouble(),

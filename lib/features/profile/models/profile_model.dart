@@ -6,6 +6,7 @@ class ProfileModel {
   final String? bio;
   final String activeRole;
   final List<String> skills;
+  final String? sellerLevel;
   final DateTime createdAt;
 
   ProfileModel({
@@ -16,6 +17,7 @@ class ProfileModel {
     this.bio,
     this.activeRole = 'client',
     this.skills = const [],
+    this.sellerLevel,
     required this.createdAt,
   });
 
@@ -32,6 +34,7 @@ class ProfileModel {
               ?.map((e) => e as String)
               .toList() ??
           [],
+      sellerLevel: json['seller_level'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String).toUtc(),
     );
   }
@@ -45,6 +48,7 @@ class ProfileModel {
       'bio': bio,
       'active_role': activeRole,
       'skills': skills,
+      'seller_level': sellerLevel,
       'created_at': createdAt.toIso8601String(),
     };
   }
@@ -54,6 +58,7 @@ class ProfileModel {
     String? bio,
     String? avatarUrl,
     List<String>? skills,
+    String? sellerLevel,
   }) {
     return ProfileModel(
       id: id,
@@ -63,6 +68,7 @@ class ProfileModel {
       bio: bio ?? this.bio,
       activeRole: activeRole,
       skills: skills ?? this.skills,
+      sellerLevel: sellerLevel ?? this.sellerLevel,
       createdAt: createdAt,
     );
   }

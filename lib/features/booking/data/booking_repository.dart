@@ -44,6 +44,10 @@ class BookingRepository {
     );
   }
 
+  Future<void> acceptBooking(String bookingId) {
+    return _service.acceptBooking(bookingId);
+  }
+
   Future<BookingModel> getBookingById(String bookingId) {
     return _service.getBookingById(bookingId);
   }

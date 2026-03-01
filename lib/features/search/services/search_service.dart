@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/services/logger_service.dart';
 import '../../../../core/utils/error_mapper.dart';
+import '../../profile/services/profile_summary_service.dart';
 import '../../tasks/models/task_model.dart';
 import '../../profile/models/profile_model.dart';
 
@@ -11,9 +12,12 @@ import '../../profile/models/profile_model.dart';
 /// to avoid N+1 queries since RPCs return raw table rows without joins.
 class SearchService {
   final SupabaseClient _client;
+  late final ProfileSummaryService _profileSummaryService;
 
   SearchService([SupabaseClient? client])
-    : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client {
+    _profileSummaryService = ProfileSummaryService(_client);
+  }
 
   /// Search tasks using Full Text Search RPC
   ///
@@ -85,19 +89,12 @@ class SearchService {
     int offset = 0,
   }) async {
     try {
-      final response = await _client.rpc(
-        'search_profiles',
-        params: {
-          'query': query,
-          'role_filter': roleFilter,
-          'limit_val': limit,
-          'offset_val': offset,
-        },
+      return await _profileSummaryService.searchProfiles(
+        query: query,
+        roleFilter: roleFilter,
+        limit: limit,
+        offset: offset,
       );
-
-      return (response as List)
-          .map((e) => ProfileModel.fromJson(e as Map<String, dynamic>))
-          .toList();
     } catch (e, st) {
       AppLogger.e('Search profiles failed', error: e, stackTrace: st);
       throw Exception(ErrorMapper.map(e));
@@ -110,16 +107,7 @@ class SearchService {
   ) async {
     if (userIds.isEmpty) return {};
     try {
-      final response = await _client
-          .from('profiles')
-          .select('id, full_name, avatar_url')
-          .in_('id', userIds.toList());
-
-      final map = <String, Map<String, dynamic>>{};
-      for (final row in (response as List)) {
-        map[row['id'] as String] = row as Map<String, dynamic>;
-      }
-      return map;
+      return await _profileSummaryService.fetchByIds(userIds);
     } catch (e) {
       AppLogger.w('Failed to enrich search results with profiles: $e');
       return {};

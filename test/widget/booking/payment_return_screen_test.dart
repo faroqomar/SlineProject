@@ -70,7 +70,8 @@ void main() {
       chatRepo = _MockChatRepository();
       paymentService = _MockPaymentService();
       when(() => bookingRepo.getBookingById(any())).thenAnswer(
-        (invocation) async => _booking(invocation.positionalArguments.first as String),
+        (invocation) async =>
+            _booking(invocation.positionalArguments.first as String),
       );
       viewModel = BookingViewModel(
         repo: bookingRepo,
@@ -98,11 +99,13 @@ void main() {
       );
       when(
         () => paymentService.recoverBookingPayment(bookingId: 'booking-1'),
-      ).thenAnswer((_) async => const QiCardRecoveryResult(
-        bookingId: 'booking-1',
-        paymentStatus: 'held',
-        recoveryResult: 'applied',
-      ));
+      ).thenAnswer(
+        (_) async => const QiCardRecoveryResult(
+          bookingId: 'booking-1',
+          paymentStatus: 'held',
+          recoveryResult: 'applied',
+        ),
+      );
 
       await _pumpReturnScreen(
         tester,
@@ -120,7 +123,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Payment Complete'), findsOneWidget);
-      expect(find.text('Payment confirmed. Your booking is ready.'), findsOneWidget);
+      expect(
+        find.text('Payment confirmed. Your booking is ready.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('failed recovery shows retryable error UI', (tester) async {
@@ -136,11 +142,13 @@ void main() {
       );
       when(
         () => paymentService.recoverBookingPayment(bookingId: 'booking-2'),
-      ).thenAnswer((_) async => const QiCardRecoveryResult(
-        bookingId: 'booking-2',
-        paymentStatus: 'unpaid',
-        recoveryResult: 'no_action',
-      ));
+      ).thenAnswer(
+        (_) async => const QiCardRecoveryResult(
+          bookingId: 'booking-2',
+          paymentStatus: 'unpaid',
+          recoveryResult: 'no_action',
+        ),
+      );
 
       await _pumpReturnScreen(
         tester,

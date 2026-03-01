@@ -400,12 +400,15 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     final canAccept = vm.isFreelancer && isPendingBooking;
     final canCancel = vm.isClient && isPendingBooking;
     final canReview = vm.canReview;
+    final isAwaitingClientReview =
+        vm.isFreelancer && vm.status == UnifiedWorkStatus.delivered;
 
     if (!canSubmit &&
         !canRequestExtension &&
         !canAccept &&
         !canReview &&
-        !canCancel) {
+        !canCancel &&
+        !isAwaitingClientReview) {
       return null;
     }
 
@@ -440,6 +443,14 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
               ),
             ),
           ] else ...[
+            if (isAwaitingClientReview)
+              Expanded(
+                child: AppButton(
+                  text: 'Waiting for Client Review',
+                  isPrimary: false,
+                  onPressed: null,
+                ),
+              ),
             if (canRequestExtension)
               Expanded(
                 child: AppButton(

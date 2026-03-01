@@ -220,7 +220,9 @@ class WorkItemCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'Needs Review',
+                          item.actionableNeedsReview
+                              ? 'Needs Review'
+                              : 'Awaiting Client Review',
                           style: AppTypography.captionBold.copyWith(
                             color: AppColors.lightRed,
                           ),

@@ -92,6 +92,10 @@ class BookingViewModel extends ChangeNotifier {
           return 'This booking request could not be created. Please refresh and try again.';
         }
 
+        if (msg.contains('client payment is still pending')) {
+          return 'Client payment is still pending.';
+        }
+
         if (msg.contains('booking_package_invalid')) {
           return 'The selected package is no longer available.';
         }
@@ -102,6 +106,13 @@ class BookingViewModel extends ChangeNotifier {
 
       if (e is AuthException) {
         return e.message;
+      }
+
+      final genericMessage = e.toString();
+      if (genericMessage.toLowerCase().contains(
+        'client payment is still pending',
+      )) {
+        return 'Client payment is still pending.';
       }
 
       return e.toString();
@@ -295,10 +306,9 @@ class BookingViewModel extends ChangeNotifier {
   /// Accept booking (Provider).
   Future<void> acceptBooking(String bookingId) async {
     try {
-      await updateBookingStatus(
-        bookingId: bookingId,
-        newStatus: BookingStatus.active,
-      );
+      await _repo.acceptBooking(bookingId);
+      await _refreshBookingInLists(bookingId);
+      notifyListeners();
     } catch (e, st) {
       bookingsError = _mapError(e);
       AppLogger.e(

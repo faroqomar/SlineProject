@@ -5,5 +5,7 @@ bool isIgnoredFlutterWebEngineDisposeError(Object error) {
     return false;
   }
 
-  return error.toString().contains('Trying to render a disposed EngineFlutterView');
+  return error.toString().contains(
+    'Trying to render a disposed EngineFlutterView',
+  );
 }

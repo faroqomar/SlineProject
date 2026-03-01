@@ -1,35 +1,60 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
-import 'package:sline_app/features/home/viewmodels/home_view_model.dart';
 import 'package:sline_app/features/tasks/view/task_details_screen.dart';
+import 'package:sline_app/features/tasks/view/widgets/discovery_task_sliver.dart';
 import 'package:sline_app/features/tasks/view/widgets/task_card.dart';
+import 'package:sline_app/features/tasks/viewmodels/discovery_feed_view_model_contract.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
 
-class BookingsDiscoveryScreen extends StatelessWidget {
+class BookingsDiscoveryScreen extends StatefulWidget {
   const BookingsDiscoveryScreen({super.key});
 
   @override
+  State<BookingsDiscoveryScreen> createState() =>
+      _BookingsDiscoveryScreenState();
+}
+
+class _BookingsDiscoveryScreenState extends State<BookingsDiscoveryScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final homeVm = context.read<DiscoveryFeedViewModelContract>();
+      final filterVm = context.read<TaskFilterViewModel>();
+      if (!homeVm.isLoading && homeVm.featuredTasks.isEmpty) {
+        AppLogger.d(
+          'discovery_screen_bootstrap',
+          tag: 'DiscoveryUI',
+          json: {'surface': 'bookings'},
+        );
+        homeVm.loadFeaturedTasks(
+          filterController: filterVm,
+          surface: 'bookings',
+        );
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Consumer2<HomeViewModel, TaskFilterViewModel>(
+      body: Consumer2<DiscoveryFeedViewModelContract, TaskFilterViewModel>(
         builder: (context, homeVM, filterVM, child) {
-          // Filter for Bookings only
           final bookings = filterVM.filteredTasks
-              .where((t) => !t.isTender) // Assuming !isTender == Booking
+              .where((t) => t.isBooking)
               .toList();
 
           return CustomScrollView(
             slivers: [
-              // Header
               SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(
@@ -58,74 +83,41 @@ class BookingsDiscoveryScreen extends StatelessWidget {
                   ),
                 ),
               ),
-
-              // Show skeleton while loading
-              if (homeVM.isLoading)
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppDimens.p16,
-                    0,
-                    AppDimens.p16,
-                    AppDimens.p100,
-                  ),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (_, __) => const SkeletonBookingCard(),
-                      childCount: 5,
-                    ),
-                  ),
-                )
-              // Show empty state
-              else if (bookings.isEmpty)
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.calendar_today_outlined,
-                          size: 64,
-                          color: colorScheme.textSecondary.withValues(
-                            alpha: 0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No booking services',
-                          style: AppTypography.h5.copyWith(
-                            color: colorScheme.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              // Show actual booking list
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppDimens.p16,
-                    0,
-                    AppDimens.p16,
-                    AppDimens.p100, // Bottom padding for nav bar
-                  ),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final task = bookings[index];
-                      return TaskCard(
-                        task: task,
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => TaskDetailsScreen(task: task),
-                            ),
-                          );
+              DiscoveryTaskSliver(
+                surface: 'bookings',
+                tasks: bookings,
+                isInitialLoading: homeVM.isLoading,
+                isLoadingMore: homeVM.isLoadingMore,
+                hasMore: homeVM.hasMore,
+                onLoadMore: () => homeVM.loadMoreTasks(
+                  filterController: filterVM,
+                  surface: 'bookings',
+                ),
+                emptyTitle: 'No booking services',
+                emptyIcon: Icons.calendar_today_outlined,
+                skeletonItem: const SkeletonBookingCard(),
+                taskBuilder: (context, task) {
+                  return TaskCard(
+                    task: task,
+                    onTap: () {
+                      AppLogger.d(
+                        'discovery_task_opened',
+                        tag: 'DiscoveryUI',
+                        json: {
+                          'surface': 'bookings',
+                          'task_id': task.id,
+                          'task_type': task.taskType.name,
                         },
                       );
-                    }, childCount: bookings.length),
-                  ),
-                ),
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => TaskDetailsScreen(task: task),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ],
           );
         },

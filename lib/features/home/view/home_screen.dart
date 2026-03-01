@@ -1,38 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
-import 'package:sline_app/core/widgets/skeleton_card.dart';
 import 'package:sline_app/features/home/view/widgets/filters_modal.dart';
 import 'package:sline_app/features/notifications/view/widgets/notification_badge_button.dart';
 import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
-import 'package:sline_app/features/saved/data/saved_tasks_service.dart';
 import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
 import 'package:sline_app/features/tasks/view/task_details_screen.dart';
+import 'package:sline_app/features/tasks/view/widgets/discovery_task_sliver.dart';
 import 'package:sline_app/features/tasks/view/widgets/task_card.dart';
+import 'package:sline_app/features/tasks/viewmodels/discovery_feed_view_model_contract.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
 import 'package:sline_app/shared/constants/categories.dart';
-import '../viewmodels/home_view_model.dart';
 
 /// Home screen - main dashboard for the app (MVVM) with Glassmorphism design.
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({
-    super.key,
-    this.autoLoadOnInit = true,
-    this.savedTasksVmFactory,
-  });
+  const HomeScreen({super.key, this.autoLoadOnInit = true});
 
   static const Key searchFieldKey = ValueKey<String>('home_search_field');
   static const Key refreshIndicatorKey = ValueKey<String>(
     'home_refresh_indicator',
   );
+  static const Key filterButtonKey = ValueKey<String>('home_filter_button');
 
   final bool autoLoadOnInit;
-  final SavedTasksViewModel Function()? savedTasksVmFactory;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -43,13 +39,19 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     if (!widget.autoLoadOnInit) return;
+    AppLogger.d(
+      'home_screen_bootstrap_scheduled',
+      tag: 'HomeUI',
+      json: {'surface': 'home'},
+    );
     // Load featured tasks and notify filter controller when screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<HomeViewModel>().loadFeaturedTasks(
+      context.read<DiscoveryFeedViewModelContract>().loadFeaturedTasks(
         filterController: context.read<TaskFilterViewModel>(),
+        surface: 'home',
       );
       // Ensure profile is loaded for the header
-      context.read<ProfileViewModel>().loadProfile();
+      context.read<ProfileViewModel>().loadHeaderProfile();
     });
   }
 
@@ -57,35 +59,48 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final AppColorScheme colorScheme = context.colorScheme;
 
-    return ChangeNotifierProvider(
-      create: (_) {
-        final vm =
-            widget.savedTasksVmFactory?.call() ??
-            SavedTasksViewModel(service: SavedTasksService());
-        // Load saved tasks cache on first build
-        vm.load();
-        return vm;
-      },
-      builder: (context, _) {
-        return Scaffold(
-          backgroundColor:
-              Colors.transparent, // Allow main gradient to show through
-          body: Consumer3<HomeViewModel, TaskFilterViewModel, ProfileViewModel>(
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body:
+          Consumer3<
+            DiscoveryFeedViewModelContract,
+            TaskFilterViewModel,
+            ProfileViewModel
+          >(
             builder:
                 (context, homeViewModel, filterController, profileVM, child) {
-                  // Safe Area padding for the header
                   final topPadding = MediaQuery.of(context).padding.top;
 
                   return RefreshIndicator(
                     key: HomeScreen.refreshIndicatorKey,
                     onRefresh: () async {
                       final saved = context.read<SavedTasksViewModel>();
-                      await homeViewModel.refresh(
-                        filterController: filterController,
+                      AppLogger.i(
+                        'home_refresh_started',
+                        tag: 'HomeUI',
+                        json: {'surface': 'home'},
                       );
-                      await profileVM.loadProfile();
-                      if (!context.mounted) return;
-                      await saved.refresh();
+                      try {
+                        await homeViewModel.refresh(
+                          filterController: filterController,
+                          surface: 'home',
+                        );
+                        await profileVM.loadHeaderProfile();
+                        if (!context.mounted) return;
+                        await saved.refresh();
+                        AppLogger.i(
+                          'home_refresh_succeeded',
+                          tag: 'HomeUI',
+                          json: {'surface': 'home'},
+                        );
+                      } catch (error, stackTrace) {
+                        AppLogger.e(
+                          'home_refresh_failed',
+                          tag: 'HomeUI',
+                          error: error,
+                          stackTrace: stackTrace,
+                        );
+                      }
                     },
                     child: CustomScrollView(
                       slivers: [
@@ -162,7 +177,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                     const SizedBox(width: AppDimens.p12),
                                     GestureDetector(
+                                      key: HomeScreen.filterButtonKey,
                                       onTap: () {
+                                        AppLogger.d(
+                                          'home_filters_opened',
+                                          tag: 'HomeUI',
+                                          json: {'surface': 'home'},
+                                        );
                                         showModalBottomSheet(
                                           context: context,
                                           isScrollControlled: true,
@@ -244,84 +265,46 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
 
-                        // --- Task List ---
-                        if (homeViewModel.isLoading)
-                          SliverPadding(
-                            padding: const EdgeInsets.fromLTRB(
-                              AppDimens.p16,
-                              0,
-                              AppDimens.p16,
-                              AppDimens.p100,
-                            ),
-                            sliver: SliverList(
-                              delegate: SliverChildBuilderDelegate(
-                                (_, __) => const SkeletonTaskCard(),
-                                childCount: 5,
-                              ),
-                            ),
-                          )
-                        else if (filterController.filteredTasks.isEmpty)
-                          SliverFillRemaining(
-                            hasScrollBody: false,
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.work_outline,
-                                    size: 64,
-                                    color: colorScheme.textSecondary.withValues(
-                                      alpha: 0.5,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'No tasks found',
-                                    style: AppTypography.h5.copyWith(
-                                      color: colorScheme.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )
-                        else
-                          SliverPadding(
-                            padding: const EdgeInsets.fromLTRB(
-                              AppDimens.p16,
-                              0,
-                              AppDimens.p16,
-                              AppDimens.p100, // Bottom padding for nav bar
-                            ),
-                            sliver: SliverList(
-                              delegate: SliverChildBuilderDelegate(
-                                (context, index) {
-                                  final task =
-                                      filterController.filteredTasks[index];
-                                  return TaskCard(
-                                    task: task,
-                                    onTap: () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (_) =>
-                                              TaskDetailsScreen(task: task),
-                                        ),
-                                      );
-                                    },
-                                  );
-                                },
-                                childCount:
-                                    filterController.filteredTasks.length,
-                              ),
-                            ),
+                        DiscoveryTaskSliver(
+                          surface: 'home',
+                          tasks: filterController.filteredTasks,
+                          isInitialLoading: homeViewModel.isLoading,
+                          isLoadingMore: homeViewModel.isLoadingMore,
+                          hasMore: homeViewModel.hasMore,
+                          onLoadMore: () => homeViewModel.loadMoreTasks(
+                            filterController: filterController,
+                            surface: 'home',
                           ),
+                          emptyTitle: 'No tasks found',
+                          emptyIcon: Icons.work_outline,
+                          taskBuilder: (context, task) {
+                            return TaskCard(
+                              task: task,
+                              onTap: () {
+                                AppLogger.d(
+                                  'home_task_opened',
+                                  tag: 'HomeUI',
+                                  json: {
+                                    'surface': 'home',
+                                    'task_id': task.id,
+                                    'task_type': task.taskType.name,
+                                  },
+                                );
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        TaskDetailsScreen(task: task),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
                       ],
                     ),
                   );
                 },
           ),
-        );
-      },
     );
   }
 

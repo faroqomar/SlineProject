@@ -6,14 +6,18 @@ import 'package:sline_app/features/dashboard/models/activity_log.dart';
 import 'package:sline_app/features/dashboard/models/dashboard_counters.dart';
 import 'package:sline_app/features/dashboard/models/financial_metrics_model.dart';
 import 'package:sline_app/features/dashboard/services/dashboard_permission_service.dart';
+import 'package:sline_app/features/profile/services/profile_summary_service.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/features/work/models/unified_work_item_model.dart';
 
 class DashboardRepository {
   static const _kTag = 'dashboard.repo';
   final SupabaseClient _client;
+  late final ProfileSummaryService _profileSummaryService;
   DashboardRepository({SupabaseClient? client})
-    : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client {
+    _profileSummaryService = ProfileSummaryService(_client);
+  }
 
   User? get currentUser => _client.auth.currentUser;
   SupabaseClient get client => _client;
@@ -125,18 +129,8 @@ class DashboardRepository {
     if (ids.isEmpty) return items;
 
     try {
-      final profileRows = await _client
-          .from('profiles')
-          .select('id, full_name, avatar_url')
-          .in_('id', ids);
+      final profileMap = await _profileSummaryService.fetchByIds(ids);
 
-      // Build a lookup map
-      final profileMap = <String, Map<String, dynamic>>{};
-      for (final row in profileRows) {
-        profileMap[row['id'] as String] = row;
-      }
-
-      // Enrich each item
       int enriched = 0;
       final result = items.map((item) {
         final profile = profileMap[item.counterpartyId];
@@ -273,7 +267,7 @@ class DashboardRepository {
     needsReview = currentItems
         .where(
           (i) =>
-              i.needsReview &&
+              i.actionableNeedsReview &&
               (i.statusUiBucket == 'Active' || i.statusUiBucket == 'Pending'),
         )
         .length;
@@ -360,7 +354,10 @@ class DashboardRepository {
     int days = 30,
   }) async {
     try {
-      AppLogger.d('Fetching period financial metrics for $days days', tag: _kTag);
+      AppLogger.d(
+        'Fetching period financial metrics for $days days',
+        tag: _kTag,
+      );
 
       final response = await _client
           .from('vw_financial_metrics_period')
@@ -369,13 +366,12 @@ class DashboardRepository {
           .limit(days);
 
       final metrics = (response as List)
-          .map((e) => PeriodFinancialMetrics.fromJson(e as Map<String, dynamic>))
+          .map(
+            (e) => PeriodFinancialMetrics.fromJson(e as Map<String, dynamic>),
+          )
           .toList();
 
-      AppLogger.i(
-        'Fetched ${metrics.length} period metrics',
-        tag: _kTag,
-      );
+      AppLogger.i('Fetched ${metrics.length} period metrics', tag: _kTag);
 
       return metrics;
     } catch (e, st) {
@@ -394,11 +390,7 @@ class DashboardRepository {
   Future<Map<String, double>> fetchWalletBalances() async {
     final uid = _client.auth.currentUser?.id;
     if (uid == null) {
-      return {
-        'available': 0.0,
-        'pending_withdrawal': 0.0,
-        'held': 0.0,
-      };
+      return {'available': 0.0, 'pending_withdrawal': 0.0, 'held': 0.0};
     }
 
     try {
@@ -410,16 +402,13 @@ class DashboardRepository {
           .maybeSingle();
 
       if (response == null) {
-        return {
-          'available': 0.0,
-          'pending_withdrawal': 0.0,
-          'held': 0.0,
-        };
+        return {'available': 0.0, 'pending_withdrawal': 0.0, 'held': 0.0};
       }
 
       final balances = {
         'available': ((response['available_balance'] ?? 0) as num).toDouble(),
-        'pending_withdrawal': ((response['pending_withdrawal_balance'] ?? 0) as num).toDouble(),
+        'pending_withdrawal':
+            ((response['pending_withdrawal_balance'] ?? 0) as num).toDouble(),
         'held': ((response['held_balance'] ?? 0) as num).toDouble(),
       };
 
@@ -436,11 +425,7 @@ class DashboardRepository {
         stackTrace: st,
         tag: _kTag,
       );
-      return {
-        'available': 0.0,
-        'pending_withdrawal': 0.0,
-        'held': 0.0,
-      };
+      return {'available': 0.0, 'pending_withdrawal': 0.0, 'held': 0.0};
     }
   }
 
@@ -470,7 +455,8 @@ class DashboardRepository {
   }
 
   /// Fetches freelancer's awarded but unpaid offers (for "Waiting for Payment" section)
-  Future<List<Map<String, dynamic>>> fetchFreelancerAwardedUnpaidOffers() async {
+  Future<List<Map<String, dynamic>>>
+  fetchFreelancerAwardedUnpaidOffers() async {
     try {
       final result = await _client.rpc('get_freelancer_awarded_unpaid_offers');
       final items = result as List;

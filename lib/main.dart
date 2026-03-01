@@ -12,6 +12,7 @@ import 'package:sline_app/features/booking/data/booking_repository.dart';
 import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 import 'package:sline_app/features/home/viewmodels/home_view_model.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
+import 'package:sline_app/features/tasks/viewmodels/discovery_feed_view_model_contract.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
 import 'features/saved/viewmodels/saved_tasks_view_model.dart';
 import 'features/saved/data/saved_tasks_service.dart';
@@ -189,7 +190,14 @@ class SLineApp extends StatelessWidget {
           create: (_) => CategoriesRepository(Supabase.instance.client),
         ),
       ],
-      child: const _AppWithAuthListener(),
+      child: Builder(
+        builder: (context) {
+          return ListenableProvider<DiscoveryFeedViewModelContract>.value(
+            value: context.read<HomeViewModel>(),
+            child: const _AppWithAuthListener(),
+          );
+        },
+      ),
     );
   }
 }

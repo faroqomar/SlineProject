@@ -265,10 +265,40 @@ class BookingService {
 
   Future<void> acceptBooking(String bookingId) async {
     try {
-      await updateBookingStatus(
-        bookingId: bookingId,
-        newStatus: BookingStatus.active,
-      );
+      final booking = await getBookingById(bookingId);
+
+      if (booking.status == BookingStatus.paidRequestPending) {
+        await updateBookingStatus(
+          bookingId: bookingId,
+          newStatus: BookingStatus.active,
+        );
+      } else if (booking.status == BookingStatus.pending &&
+          booking.paymentStatus == PaymentStatus.held) {
+        AppLogger.w(
+          'Promoting pending held booking before accept',
+          tag: 'Booking',
+          json: {'booking_id': bookingId},
+        );
+        await updateBookingStatus(
+          bookingId: bookingId,
+          newStatus: BookingStatus.paidRequestPending,
+        );
+        await updateBookingStatus(
+          bookingId: bookingId,
+          newStatus: BookingStatus.active,
+        );
+      } else {
+        AppLogger.w(
+          'Blocked accept booking due to invalid state',
+          tag: 'Booking',
+          json: {
+            'booking_id': bookingId,
+            'status': booking.status.name,
+            'payment_status': booking.paymentStatus.name,
+          },
+        );
+        throw StateError('Client payment is still pending.');
+      }
       AppLogger.i('Accepted booking $bookingId', tag: 'Booking');
     } catch (e, st) {
       AppLogger.e(

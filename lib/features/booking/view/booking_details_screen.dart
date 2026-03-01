@@ -240,7 +240,9 @@ class BookingDetailsScreen extends StatelessWidget {
             const SizedBox(height: AppDimens.p24),
 
             // Actions
-            if (isProvider && booking.status == BookingStatus.pending)
+            if (isProvider &&
+                booking.status == BookingStatus.pending &&
+                booking.paymentStatus != PaymentStatus.held)
               Row(
                 children: [
                   Expanded(
@@ -256,14 +258,7 @@ class BookingDetailsScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: AppDimens.p16),
                   Expanded(
-                    child: AppButton(
-                      text: 'Confirm',
-                      onPressed: () => _updateStatus(
-                        context,
-                        booking,
-                        BookingStatus.confirmed,
-                      ),
-                    ),
+                    child: AppButton(text: 'Awaiting Payment', onPressed: null),
                   ),
                 ],
               ),

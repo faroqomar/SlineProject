@@ -185,7 +185,9 @@ class OfferCard extends StatelessWidget {
 
               final bool showAward = ctaMeta.allowedActions.contains('award');
               final bool showPay = ctaMeta.allowedActions.contains('pay');
-              final bool showEscrow = ctaMeta.allowedActions.contains('escrow_hold');
+              final bool showEscrow = ctaMeta.allowedActions.contains(
+                'escrow_hold',
+              );
               final bool showRelease = ctaMeta.allowedActions.contains(
                 'release_with_fee',
               );

@@ -176,7 +176,7 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
 
     // Separate delivered (needs review) from the rest
     final reviewItems = delivered;
-    final otherActive = active.where((i) => !i.needsReview).toList();
+    final otherActive = active.where((i) => !i.actionableNeedsReview).toList();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(

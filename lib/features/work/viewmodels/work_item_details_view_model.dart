@@ -86,6 +86,22 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
       if (_workItem == null) {
         _error = 'Work item not found';
       } else {
+        AppLogger.i(
+          'Work item details loaded',
+          json: {
+            'work_item_id': _workItem!.id,
+            'source_type': _workItem!.sourceType,
+            'status': _workItem!.sourceStatus,
+            'unified_status': _workItem!.unifiedStatus.name,
+            'current_user_id': currentUserId,
+            'client_id': _workItem!.clientId,
+            'freelancer_id': _workItem!.freelancerId,
+            'is_client': isClient,
+            'is_freelancer': isFreelancer,
+            'needs_review': _workItem!.needsReview,
+            'can_review': canReview,
+          },
+        );
         // Fetch User Profile
         final otherUserId = isFreelancer
             ? _workItem!.clientId

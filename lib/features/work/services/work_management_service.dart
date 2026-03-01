@@ -4,6 +4,7 @@ import 'package:sline_app/features/work/models/unified_work_item_model.dart';
 import 'package:sline_app/features/work/models/work_contract_model.dart';
 import 'package:sline_app/features/work/models/change_request_model.dart';
 import 'package:sline_app/features/work/models/extension_request_model.dart';
+import 'package:sline_app/features/profile/services/profile_summary_service.dart';
 import 'package:sline_app/features/booking/models/booking_model.dart';
 import 'package:sline_app/features/booking/services/booking_service.dart';
 import 'package:sline_app/core/app_enums.dart';
@@ -12,9 +13,12 @@ import 'package:sline_app/core/app_enums.dart';
 /// Wraps RPC calls and table queries for the Work Management flow.
 class WorkManagementService {
   final SupabaseClient _supabase;
+  late final ProfileSummaryService _profileSummaryService;
 
   WorkManagementService([SupabaseClient? supabase])
-    : _supabase = supabase ?? Supabase.instance.client;
+    : _supabase = supabase ?? Supabase.instance.client {
+    _profileSummaryService = ProfileSummaryService(_supabase);
+  }
 
   /// Fetches a Unified Work Item by ID and Type.
   Future<UnifiedWorkItemModel?> getUnifiedWorkItem(
@@ -343,12 +347,12 @@ class WorkManagementService {
 
   Future<Map<String, dynamic>?> getProfile(String userId) async {
     try {
-      final response = await _supabase
-          .from('profiles')
-          .select('full_name, avatar_url')
-          .eq('id', userId)
-          .maybeSingle();
-      return response;
+      final response = await _profileSummaryService.fetchById(userId);
+      if (response == null) return null;
+      return {
+        'full_name': response['full_name'],
+        'avatar_url': response['avatar_url'],
+      };
     } catch (e) {
       AppLogger.e('Failed to fetch profile: $userId', error: e);
       return null;

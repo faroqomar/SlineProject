@@ -1,14 +1,18 @@
 // SavedTasksService - CRUD for the `saved_tasks` table (bookmarking tasks).
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/features/profile/services/profile_summary_service.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 import '../models/saved_task_model.dart';
 
 class SavedTasksService {
   final SupabaseClient _client;
+  late final ProfileSummaryService _profileSummaryService;
 
   SavedTasksService({SupabaseClient? client})
-    : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client {
+    _profileSummaryService = ProfileSummaryService(_client);
+  }
 
   String _requireUid() {
     final uid = _client.auth.currentUser?.id;
@@ -99,22 +103,12 @@ class SavedTasksService {
     // tasks.user_id references auth.users which matches profiles.id
     final userIds = rows
         .map((r) => r['task']['user_id'] as String?)
-        .where((id) => id != null)
+        .whereType<String>()
         .toSet()
         .toList();
 
     // 3. Fetch profiles for these users
-    final Map<String, Map<String, dynamic>> profileMap = {};
-    if (userIds.isNotEmpty) {
-      final profiles = await _client
-          .from('profiles')
-          .select('id, full_name, avatar_url')
-          .in_('id', userIds);
-
-      for (final p in profiles) {
-        profileMap[p['id'] as String] = p;
-      }
-    }
+    final profileMap = await _profileSummaryService.fetchByIds(userIds);
 
     // 4. Merge profile data into Task objects
     return rows.map((row) {
@@ -134,6 +128,7 @@ class SavedTasksService {
         task = task.copyWith(
           userName: profile['full_name'],
           userAvatar: profile['avatar_url'],
+          authorSellerLevel: profile['seller_level'] as String?,
         );
       }
       return task;

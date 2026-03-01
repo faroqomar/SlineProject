@@ -207,7 +207,7 @@ class DashboardViewModel extends ChangeNotifier {
     _deliveredWorkCache ??= _workItems.where((i) {
       final isBucketValid =
           i.statusUiBucket == 'Active' || i.statusUiBucket == 'Pending';
-      return i.needsReview && isBucketValid;
+      return i.actionableNeedsReview && isBucketValid;
     }).toList();
     return _deliveredWorkCache!;
   }
@@ -773,6 +773,42 @@ class DashboardViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> acceptBooking(String bookingId) async {
+    try {
+      await _bookingService.acceptBooking(bookingId);
+      AppLogger.i('Accepted booking=$bookingId', tag: _kTag);
+      await refresh();
+    } catch (e) {
+      AppLogger.e('Failed to accept booking=$bookingId', error: e, tag: _kTag);
+      rethrow;
+    }
+  }
+
+  Future<void> declineBooking(String bookingId) async {
+    try {
+      await _bookingService.declineBooking(bookingId);
+      AppLogger.i('Declined booking=$bookingId', tag: _kTag);
+      await refresh();
+    } catch (e) {
+      AppLogger.e('Failed to decline booking=$bookingId', error: e, tag: _kTag);
+      rethrow;
+    }
+  }
+
+  Future<void> cancelBooking(String bookingId) async {
+    try {
+      await _bookingService.updateBookingStatus(
+        bookingId: bookingId,
+        newStatus: BookingStatus.canceled,
+      );
+      AppLogger.i('Canceled booking=$bookingId', tag: _kTag);
+      await refresh();
+    } catch (e) {
+      AppLogger.e('Failed to cancel booking=$bookingId', error: e, tag: _kTag);
+      rethrow;
+    }
+  }
+
   Future<void> performPrimaryAction(WorkItem item) async {
     // v1: Handle navigation-only actions first
     switch (item.primaryActionType) {
@@ -846,7 +882,7 @@ class DashboardViewModel extends ChangeNotifier {
   List<WorkItem> _calculateNextActions() {
     // v1 Priority Tiers with Set-based exclusion (O(1) lookups)
     // Tier 1: Delivered (needs review) — highest urgency
-    final tier1 = _workItems.where((i) => i.needsReview).toList()
+    final tier1 = _workItems.where((i) => i.actionableNeedsReview).toList()
       ..sort((a, b) => b.lastUpdate.compareTo(a.lastUpdate));
     final seen = tier1.map((i) => i.id).toSet();
 
