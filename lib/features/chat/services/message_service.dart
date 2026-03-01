@@ -83,35 +83,18 @@ class MessageService {
     return Conversation.fromJson(Map<String, dynamic>.from(response as Map));
   }
 
-  /// Delete (archive) conversation for a user.
-  /// It will reappear if a new message is received (checked via timestamp).
+  /// Archive conversation for the current user (server time). Uses archive_conversation_v1 RPC.
   Future<void> deleteConversation(String conversationId, String userId) async {
-    // First, find out if user is user1 or user2
-    final convo = await _client
-        .from('conversations')
-        .select('user1_id, user2_id')
-        .eq('id', conversationId)
-        .single();
-
-    final user1 = convo['user1_id'];
-    final user2 = convo['user2_id'];
-
-    if (userId == user1) {
-      await _client
-          .from('conversations')
-          .update({
-            'deleted_at_user1': DateTime.now().toUtc().toIso8601String(),
-          })
-          .eq('id', conversationId);
-    } else if (userId == user2) {
-      await _client
-          .from('conversations')
-          .update({
-            'deleted_at_user2': DateTime.now().toUtc().toIso8601String(),
-          })
-          .eq('id', conversationId);
-    } else {
-      throw Exception('User is not a participant in this conversation');
+    AppLogger.i('[ARCHIVE] start conversationId=$conversationId');
+    try {
+      await _client.rpc(
+        'archive_conversation_v1',
+        params: {'p_conversation_id': conversationId},
+      );
+      AppLogger.i('[ARCHIVE] success conversationId=$conversationId');
+    } catch (e) {
+      AppLogger.e('[ARCHIVE] failed conversationId=$conversationId', error: e);
+      rethrow;
     }
   }
 
@@ -143,6 +126,7 @@ class MessageService {
 
   /// Get conversations for user, filtering out deleted ones unless new messages arrived.
   Future<List<Conversation>> getUserConversations(String userId) async {
+    AppLogger.d('[CONVOS] fetch start');
     try {
       final response = await _client
           .from('conversations')
@@ -226,6 +210,7 @@ class MessageService {
 
   /// Get messages (now returns attachment fields too)
   Future<List<Message>> getMessages(String conversationId) async {
+    AppLogger.d('[MESSAGES] fetch start conversationId=$conversationId');
     final response = await _client
         .from('messages')
         .select(
@@ -310,21 +295,25 @@ class MessageService {
     AppLogger.d('[RECEIPTS] seen marked for convo=$conversationId');
   }
 
-  /// Realtime for a conversation
-  Stream<Message?> subscribeToMessages(String conversationId) {
+  /// Realtime for a conversation. Emits full list per snapshot (no collapse to rows.last).
+  Stream<List<Message>> subscribeToMessages(String conversationId) {
+    AppLogger.d('[REALTIME] messages subscription start conversationId=$conversationId');
     return _client
         .from('messages')
         .stream(primaryKey: ['id'])
         .eq('conversation_id', conversationId)
         .order('created_at', ascending: true)
         .map((rows) {
-          if (rows.isEmpty) return null;
+          if (rows.isEmpty) return <Message>[];
           try {
-            final last = Map<String, dynamic>.from(rows.last as Map);
-            return Message.fromJson(last);
+            final list = rows
+                .map((r) => Message.fromJson(Map<String, dynamic>.from(r as Map)))
+                .toList()
+              ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+            return list;
           } catch (e) {
-            AppLogger.e('Error parsing realtime message: $e');
-            return null;
+            AppLogger.e('Realtime message parse error', error: e);
+            return <Message>[];
           }
         });
   }

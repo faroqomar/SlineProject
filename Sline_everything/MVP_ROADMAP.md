@@ -1,6 +1,6 @@
 # SLine MVP Roadmap
 
-**Last Updated:** 2026-03-01
+**Last Updated:** 2026-03-02
 
 This roadmap tracks the current code-state of the repository. Status values are intentionally simple:
 - `✅ Completed`
@@ -60,8 +60,8 @@ This roadmap tracks the current code-state of the repository. Status values are 
 
 | Feature | Status | Notes |
 | --- | --- | --- |
-| Realtime chat | ✅ Completed | conversations/messages/realtime updates exist |
-| Attachments | ✅ Completed | private attachment flow exists |
+| Realtime chat | ✅ Completed | conversations/messages/realtime updates; archive via RPC `archive_conversation_v1`; offer payload + realtime merger in place |
+| Attachments | ✅ Completed | private attachment flow; participant-scoped access via `can_access_chat_attachment` |
 | Favorites-powered contact flows | ✅ Completed | favorites and chat handoff are implemented |
 | Notifications | 🚧 In Progress | notification feature exists and is integrated into the dashboard shell |
 

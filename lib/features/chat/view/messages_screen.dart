@@ -106,6 +106,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                   )
                 else if (controller.conversations.isEmpty)
                   SliverFillRemaining(
+                    key: const ValueKey('message_list_empty_state'),
                     hasScrollBody: false,
                     child: Center(
                       child: Column(
@@ -216,11 +217,12 @@ class _MessagesScreenState extends State<MessagesScreen> {
                             ) {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Failed to delete: $e'),
+                                  const SnackBar(
+                                    content: Text(
+                                      'Could not archive this conversation. Please try again.',
+                                    ),
                                   ),
                                 );
-                                // Force refresh if failed to restore item
                                 controller.fetchConversations();
                               }
                             });

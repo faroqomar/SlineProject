@@ -216,6 +216,7 @@ Current bundled asset folder:
 
 ## Recent Structure-Sensitive Updates
 
+- Chat feature includes `models/chat_offer_payload.dart` (canonical offer payload) and `services/chat_realtime_merger.dart` (realtime snapshot merge); archive uses RPC `archive_conversation_v1`.
 - Booking flow now uses `payment_checkout_screen.dart`, `payment_webview_screen.dart`, and `payment_return_screen.dart` instead of older slot-sheet-only docs.
 - Core runtime now includes `payment_runtime_config.dart`, `payment_pending_store.dart`, and `flutter_error_filters.dart`.
 - Management now includes `work_log_scope.dart` and `view/widgets/order_management_section.dart`.

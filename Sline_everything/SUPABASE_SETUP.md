@@ -1502,6 +1502,14 @@ Mark all messages in conversation as seen for current user.
 
 Mark all messages in conversation as delivered for current user.
 
+#### `archive_conversation_v1(p_conversation_id uuid) → void` (Chat)
+
+Archive (hide) conversation for the current user only. Stamps `deleted_at_user1` or `deleted_at_user2` with server time. Rejects non-participants. Use instead of client-side timestamp writes.
+
+#### `can_access_chat_attachment(p_object_name text, p_uid uuid) → boolean` (Chat)
+
+Returns true if `p_uid` is a participant of the conversation referenced in the storage path. Path must be `convos/<conversation_id>/...`. Used for participant-scoped storage policies on `chat-attachments`.
+
 ---
 
 ## 10. Indexes

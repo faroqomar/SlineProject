@@ -1,6 +1,3 @@
-
-
-?
 # Chat Feature Reference
 
 ## 1. Human Explanation
@@ -26,7 +23,7 @@ Indexes/Constraints
 - `idx_conversations_task`, `idx_conversations_user1`, `idx_conversations_user2` for fast lookups.
 
 ### 2.2 `public.message_type_enum`
-Values: `text`, `offer`, `offer_update`, `offer_accepted`, `offer_rejected`, `delivery_submitted`, `end_early_request`, `dispute_report`.
+Values: `text`, `offer`, `offer_update`, `offer_accepted`, `offer_rejected`, `delivery_submitted`, `end_early_request`, `dispute_report`. The app model also includes `MessageType.system` for enum parity (see `message_model.dart`).
 
 ### 2.3 `public.messages`
 | Column | Type | Purpose / Usage | Notes |
@@ -54,14 +51,15 @@ Index
 | Table | Action | Policy Summary | Notes |
 | --- | --- | --- | --- |
 | `conversations` | SELECT | Only participants can read | `auth.uid() = user1_id OR auth.uid() = user2_id` |
-| `conversations` | INSERT | Client-only creation | Must be initiator and participant; task-linked requires task owner; DM requires freelancer in client favorites |
+| `conversations` | INSERT | Client-only creation | DM requires freelancer in client favorites; task-linked only via RPC (non-owner starts). |
 | `messages` | SELECT | Only participants can read | Checked via parent conversation |
-| `messages` | INSERT | Only participants can send | `sender_id = auth.uid()`, plus guard for `offer_accepted/offer_rejected` (task owner or initiator) |
+| `messages` | INSERT | Only participants can send | `sender_id = auth.uid()`, plus guard for `offer_accepted`/`offer_rejected` (task owner or initiator) |
 
 Triggers/Functions
-- `trg_conversations_guard`: Only clients can start non-task DMs with favorites; task-linked requires task owner.
-- `trg_messages_validate_payload`: Offer messages require `price` and `days` in `payload`.
+- `trg_conversations_guard`: Only clients can start non-task DMs with favorites; task-linked is started by non-owner via `start_task_conversation_v1`.
+- `trg_messages_validate_payload`: Offer messages require `price` and `days` in `payload` (wire format uses `days`, not `delivery`).
 - `trg_messages_offer_accepted`: On `offer_accepted`, sets `tasks.assigned_freelancer_id` and moves task `status = 'assigned'`.
+- **Archive:** Use RPC `archive_conversation_v1(p_conversation_id)` for per-user, server-timestamped archive (no client timestamp writes).
 
 ## 3. File Inventory
 | File | Layer | Description |
@@ -73,7 +71,9 @@ Triggers/Functions
 | `lib/features/chat/view/messages_screen.dart` | View | Conversations list with previews via joined selects. |
 | `lib/features/chat/view/chat_screen.dart` | View | Single conversation UI (messages + composer). |
 | `lib/features/chat/models/conversation_model.dart` | Model | Conversation with display fields (other user name/avatar, last message). |
-| `lib/features/chat/models/message_model.dart` | Model | Message with attachments, type, payload, and optional receipt fields. |
+| `lib/features/chat/models/message_model.dart` | Model | Message with attachments, type, payload (wire: snake_case message types). |
+| `lib/features/chat/models/chat_offer_payload.dart` | Model | Canonical offer payload: `days` on write; read compatibility for legacy `delivery`. |
+| `lib/features/chat/services/chat_realtime_merger.dart` | Service | Merges realtime message snapshots (dedupe, sort). |
 | `lib/features/chat/attachments/` | Submodule | Upload/compress/pick utils and widgets for attachment UX. |
 
 ## 4. ERD Diagram

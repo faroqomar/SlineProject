@@ -36,10 +36,11 @@ class ChatViewModel extends ChangeNotifier {
 
   bool isLoadingConversations = false;
   bool isLoadingMessages = false;
+  bool isSending = false;
 
   Conversation? activeConversation;
 
-  StreamSubscription<Message?>? _msgSub;
+  StreamSubscription<List<Message>>? _msgSub;
   StreamSubscription<List<Map<String, dynamic>>>? _convoSub;
 
   bool _mounted = true;
@@ -217,6 +218,8 @@ class ChatViewModel extends ChangeNotifier {
         ? activeConversation!.user2Id
         : activeConversation!.user1Id;
 
+    isSending = true;
+    _notify();
     try {
       final message = await _repo.sendMessage(
         conversationId: activeConversation!.id,
@@ -231,27 +234,28 @@ class ChatViewModel extends ChangeNotifier {
         payload: payload,
       );
       currentMessages.add(message);
-      _notify(); // Update UI
+      _notify();
     } catch (e) {
-      AppLogger.e('Error sending message: $e');
+      AppLogger.e('Error sending message', error: e);
+      rethrow;
+    } finally {
+      isSending = false;
+      _notify();
     }
   }
 
   Future<void> acceptOffer(Message offerMsg) async {
-    // Send "Offer Accepted" message
     await sendMessage(
       'Offer Accepted',
-      messageType: 'offerAccepted',
+      messageType: 'offer_accepted',
       payload: {'original_offer_id': offerMsg.id},
     );
-    // TODO: The backend trigger 'trg_messages_after_insert_offer_accept' handles the rest
   }
 
   Future<void> rejectOffer(Message offerMsg) async {
-    // Send "Offer Rejected" message
     await sendMessage(
       'Offer Rejected',
-      messageType: 'offerRejected',
+      messageType: 'offer_rejected',
       payload: {'original_offer_id': offerMsg.id},
     );
   }
@@ -262,29 +266,19 @@ class ChatViewModel extends ChangeNotifier {
     _msgSub = _repo
         .subscribeToMessages(activeConversation!.id)
         .listen(
-          (message) async {
-            if (message == null) return;
-            if (activeConversation != null &&
-                message.conversationId == activeConversation!.id) {
-              final i = currentMessages.indexWhere((m) => m.id == message.id);
-              if (i >= 0) {
-                currentMessages[i] = message;
-              } else {
-                currentMessages.add(message);
-                currentMessages.sort(
-                  (a, b) => a.createdAt.compareTo(b.createdAt),
-                );
-              }
-              await markReceiptsForActive(delivered: true, seen: false);
-              _notify();
-            }
+          (messages) async {
+            if (activeConversation == null) return;
+            currentMessages
+              ..clear()
+              ..addAll(messages);
+            await markReceiptsForActive(delivered: true, seen: false);
+            _notify();
           },
           onError: (error) {
-            AppLogger.e('Realtime subscription error: $error');
+            AppLogger.e('Realtime subscription error', error: error);
           },
         );
 
-    // On open: mark delivered immediately
     unawaited(markReceiptsForActive(delivered: true, seen: false));
   }
 

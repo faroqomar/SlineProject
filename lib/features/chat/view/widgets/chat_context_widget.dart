@@ -43,10 +43,12 @@ class ChatContextWidget extends StatelessWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        AppLogger.e('Error loading task for context nav: $e');
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+        AppLogger.e('Error loading task for context nav', error: e);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open task details. Please try again.'),
+          ),
+        );
       }
     } finally {
       loader.close();

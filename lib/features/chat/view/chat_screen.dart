@@ -11,6 +11,7 @@ import '../viewmodels/chat_view_model.dart';
 import '../../chat/models/conversation_model.dart';
 import 'widgets/chat_context_widget.dart'; // Added
 import '../../chat/models/message_model.dart';
+import '../../chat/models/chat_offer_payload.dart';
 import '../../../core/utils/format_date.dart';
 import '../../../core/services/logger_service.dart';
 
@@ -87,19 +88,20 @@ class _ChatScreenState extends State<ChatScreen> {
   void _showCreateOfferModal() {
     showCreateOfferSheet(
       context,
-      onSubmit: (title, description, price, delivery) {
-        final offerData = {
-          'title': title,
-          'description': description,
-          'price': price,
-          'delivery': delivery,
-          'status': 'pending',
-        };
-        // Send as structured message
+      onSubmit: (title, description, priceStr, deliveryStr) {
+        final price = int.tryParse(priceStr) ?? 0;
+        final days = int.tryParse(deliveryStr) ?? 3;
+        final payload = ChatOfferPayload(
+          price: price,
+          days: days,
+          title: title,
+          description: description,
+          status: 'pending',
+        );
         _chatCtrl.sendMessage(
-          'Offer: $title', // Fallback text
+          'Offer: $title',
           messageType: 'offer',
-          payload: offerData,
+          payload: payload.toMap(),
         );
       },
     );
@@ -151,7 +153,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           description: offerData['description'] ?? '',
                           price: offerData['price']?.toString() ?? '0',
                           deliveryDays:
-                              offerData['delivery']?.toString() ?? '3',
+                              ChatOfferPayload.daysFromPayload(offerData).toString(),
                           status: _parseOfferStatus(offerData['status']),
                           isMine: isMine,
                           time: formatFriendlyTime(msg.createdAt),
@@ -244,39 +246,39 @@ class _ChatScreenState extends State<ChatScreen> {
                   ],
                 ),
 
-                // Action buttons
+                // Action buttons (offer only in task-linked conversations)
                 Row(
                   children: [
-                    // Offer button
-                    GestureDetector(
-                      onTap: _showCreateOfferModal,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppDimens.p12,
-                          vertical: AppDimens.p6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.teal,
-                          borderRadius: BorderRadius.circular(AppDimens.r20),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.attach_money,
-                              color: AppColors.white,
-                              size: AppDimens.iconSizeSmall,
-                            ),
-                            const SizedBox(width: AppDimens.p4),
-                            Text(
-                              'Offer',
-                              style: AppTypography.captionBold.copyWith(
+                    if (_isTaskLinkedConversation(widget.conversation))
+                      GestureDetector(
+                        onTap: _showCreateOfferModal,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppDimens.p12,
+                            vertical: AppDimens.p6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.teal,
+                            borderRadius: BorderRadius.circular(AppDimens.r20),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.attach_money,
                                 color: AppColors.white,
+                                size: AppDimens.iconSizeSmall,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: AppDimens.p4),
+                              Text(
+                                'Offer',
+                                style: AppTypography.captionBold.copyWith(
+                                  color: AppColors.white,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ],
@@ -346,33 +348,60 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           const SizedBox(width: AppDimens.p8),
 
-          // Send button
-          GestureDetector(
-            onTap: () {
-              final text = _messageController.text.trim();
-              if (text.isNotEmpty) {
-                _chatCtrl.sendMessage(text);
-                _messageController.clear();
-              }
+          // Send button (disabled while sending; clear input only on success)
+          Consumer<ChatViewModel>(
+            builder: (context, vm, _) {
+              final sending = vm.isSending;
+              return GestureDetector(
+                onTap: sending
+                    ? null
+                    : () async {
+                        final text = _messageController.text.trim();
+                        if (text.isEmpty) return;
+                        try {
+                          await _chatCtrl.sendMessage(text);
+                          if (context.mounted) _messageController.clear();
+                        } catch (_) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Message could not be sent. Please try again.',
+                                ),
+                              ),
+                            );
+                          }
+                        }
+                      },
+                child: Container(
+                  key: ChatScreen.sendButtonKey,
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: sending
+                        ? AppColors.teal.withValues(alpha: 0.5)
+                        : AppColors.teal,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.send,
+                    color: AppColors.white,
+                    size: AppDimens.p20,
+                  ),
+                ),
+              );
             },
-            child: Container(
-              key: ChatScreen.sendButtonKey,
-              width: 46, // Standard icon button size from design
-              height: 46, // Standard icon button size from design
-              decoration: BoxDecoration(
-                color: AppColors.teal,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.send,
-                color: AppColors.white,
-                size: AppDimens.p20,
-              ),
-            ),
           ),
         ],
       ),
     );
+  }
+
+  bool _isTaskLinkedConversation(Conversation c) {
+    final tid = c.taskId;
+    return tid != null &&
+        tid.isNotEmpty &&
+        tid != '00000000-0000-0000-0000-000000000000';
   }
 
   OfferStatus _parseOfferStatus(String? status) {

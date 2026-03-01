@@ -33,6 +33,26 @@ class ChatRepository {
     user2Id: user2Id,
   );
 
+  /// Direct DM (favorites-gated per RLS). Use for non–task-linked conversations.
+  Future<Conversation> startDirectConversation({
+    required String user1Id,
+    required String user2Id,
+  }) =>
+      _service.createOrGetConversation(
+        taskId: null,
+        user1Id: user1Id,
+        user2Id: user2Id,
+      );
+
+  /// Task-linked conversation. Non-owner starts via RPC start_task_conversation_v1.
+  Future<Conversation> startTaskConversation(String taskId) =>
+      _service.createOrGetConversation(
+        taskId: taskId,
+        user1Id: '',
+        user2Id: '',
+      );
+
+  /// @deprecated Use [startDirectConversation] or [startTaskConversation]. Kept for compatibility.
   Future<Conversation> startConversationByClient({
     String? taskId,
     required String clientId,
@@ -80,8 +100,8 @@ class ChatRepository {
   Future<void> markSeen(String conversationId) =>
       _service.markSeen(conversationId);
 
-  // Realtime
-  Stream<Message?> subscribeToMessages(String conversationId) =>
+  // Realtime (emits full list per snapshot)
+  Stream<List<Message>> subscribeToMessages(String conversationId) =>
       _service.subscribeToMessages(conversationId);
 
   Future<void> deleteConversation(String conversationId) async {

@@ -68,6 +68,7 @@ Future<void> _pumpChatScreen(
 }) async {
   when(() => vm.currentUserId).thenReturn('user-1');
   when(() => vm.currentMessages).thenReturn(messages);
+  when(() => vm.isSending).thenReturn(false);
   when(() => vm.sendMessage(any())).thenAnswer((_) async {});
 
   await pumpApp(

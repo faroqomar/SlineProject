@@ -1594,20 +1594,23 @@ Triggers/Functions
 - `trg_conversations_guard`: Only clients can start non-task DMs with favorites; task-linked requires task owner.
 - `trg_messages_validate_payload`: Offer messages require `price` and `days` in `payload`.
 - `trg_messages_offer_accepted`: On `offer_accepted`, sets `tasks.assigned_freelancer_id` and moves task `status = 'assigned'`.
+- **Archive:** Use RPC `archive_conversation_v1(p_conversation_id)` for per-user server-timestamped archive (no client timestamp writes). See `SUPABASE_SETUP.md`.
 
 ## 3. File Inventory
 
 | File                                                      | Layer      | Description                                                                                                  |
 | --------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------ |
 | `lib/features/chat/data/chat_repository.dart`             | Repository | Wraps `MessageService`; exposes conversation/message APIs, receipts, and Realtime streams.                   |
-| `lib/features/chat/services/message_service.dart`         | Service    | PostgREST + Realtime for conversations/messages, RPCs for receipts and task chats.                           |
+| `lib/features/chat/services/message_service.dart`         | Service    | PostgREST + Realtime for conversations/messages, RPCs for receipts, task chats, and archive.                  |
 | `lib/features/chat/services/attachment_service.dart`      | Service    | Storage upload/delete/signed URL helpers for attachments.                                                    |
+| `lib/features/chat/services/chat_realtime_merger.dart`   | Service    | Merges realtime message snapshots (dedupe, sort).                                                             |
 | `lib/features/chat/viewmodels/chat_view_model.dart`       | ViewModel  | `ChangeNotifier` managing conversation list, active conversation, message list, subscriptions, and receipts. |
 | `lib/features/chat/view/messages_screen.dart`             | View       | Conversations list with previews via joined selects.                                                         |
 | `lib/features/chat/view/chat_screen.dart`                 | View       | Single conversation UI (messages + composer).                                                                |
 | `lib/features/chat/view/widgets/chat_context_widget.dart` | Widget     | Glassmorphic banner showing task context + navigation.                                                       |
 | `lib/features/chat/models/conversation_model.dart`        | Model      | Conversation with display fields (other user name/avatar, last message).                                     |
-| `lib/features/chat/models/message_model.dart`             | Model      | Message with attachments, type, payload, and optional receipt fields.                                        |
+| `lib/features/chat/models/message_model.dart`             | Model      | Message with attachments, type, payload (wire: snake_case); includes `MessageType.system`.                   |
+| `lib/features/chat/models/chat_offer_payload.dart`        | Model      | Canonical offer payload: `days` on write; legacy `delivery` read.                                              |
 | `lib/features/chat/attachments/`                          | Submodule  | Upload/compress/pick utils and widgets for attachment UX.                                                    |
 
 ## 4. ERD Diagram

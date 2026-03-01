@@ -4,6 +4,7 @@ import 'package:sline_app/core/services/logger_service.dart';
 /// Why: Distinguishes message content types for handling and UI rendering.
 enum MessageType {
   text,
+  system,
   offer,
   offerUpdate,
   offerAccepted,
@@ -13,10 +14,23 @@ enum MessageType {
   disputeReport,
 }
 
+/// Canonical wire values are snake_case (DB enum). Legacy camelCase accepted for read only.
 MessageType messageTypeFromString(String type) {
   switch (type) {
     case 'offer':
       return MessageType.offer;
+    case 'offer_update':
+      return MessageType.offerUpdate;
+    case 'offer_accepted':
+      return MessageType.offerAccepted;
+    case 'offer_rejected':
+      return MessageType.offerRejected;
+    case 'delivery_submitted':
+      return MessageType.deliverySubmitted;
+    case 'end_early_request':
+      return MessageType.endEarlyRequest;
+    case 'dispute_report':
+      return MessageType.disputeReport;
     case 'offerUpdate':
       return MessageType.offerUpdate;
     case 'offerAccepted':
@@ -29,28 +43,33 @@ MessageType messageTypeFromString(String type) {
       return MessageType.endEarlyRequest;
     case 'disputeReport':
       return MessageType.disputeReport;
+    case 'system':
+      return MessageType.system;
     case 'text':
     default:
       return MessageType.text;
   }
 }
 
+/// Wire format: snake_case only (DB message_type_enum).
 String messageTypeToString(MessageType type) {
   switch (type) {
     case MessageType.offer:
       return 'offer';
     case MessageType.offerUpdate:
-      return 'offerUpdate';
+      return 'offer_update';
     case MessageType.offerAccepted:
-      return 'offerAccepted';
+      return 'offer_accepted';
     case MessageType.offerRejected:
-      return 'offerRejected';
+      return 'offer_rejected';
     case MessageType.deliverySubmitted:
-      return 'deliverySubmitted';
+      return 'delivery_submitted';
     case MessageType.endEarlyRequest:
-      return 'endEarlyRequest';
+      return 'end_early_request';
     case MessageType.disputeReport:
-      return 'disputeReport';
+      return 'dispute_report';
+    case MessageType.system:
+      return 'system';
     case MessageType.text:
       return 'text';
   }

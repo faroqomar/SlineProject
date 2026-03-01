@@ -1,6 +1,6 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2026-03-01
+**Last Updated:** 2026-03-02
 
 ---
 
@@ -20,6 +20,46 @@
 ---
 
 ## 📋 Version History
+
+### 🟢 Version 2.16.9 — ChatFix (Archive RPC, Offer Payload, Realtime Merger)
+
+**Date:** 2026-03-02  
+**Commit:** _Pending_ — "feat(chat): server-side archive RPC, canonical offer payload, realtime merger, MessageType.system"
+
+#### ✅ Implemented
+
+- **Database (migration)**
+  - `supabase/migrations/20260302_chat_archive_rpc_and_storage_helper.sql`: RPC `archive_conversation_v1(p_conversation_id)` for per-user server-timestamped archive; helper `can_access_chat_attachment(p_object_name, p_uid)` for participant-scoped storage; `deleted_at_user1` / `deleted_at_user2` on `conversations`.
+
+- **Chat feature (lib/features/chat/)**
+  - `lib/features/chat/models/message_model.dart`: snake_case wire for `message_type`; legacy read; added `MessageType.system` for DB enum parity.
+  - `lib/features/chat/models/chat_offer_payload.dart`: canonical offer payload (`days` on write; legacy `delivery` read).
+  - `lib/features/chat/services/chat_realtime_merger.dart`: merges realtime message snapshots (dedupe, sort).
+  - `lib/features/chat/services/message_service.dart`: archive via RPC; `Stream<List<Message>>`; AppLogger on critical flows.
+  - `lib/features/chat/data/chat_repository.dart`: `startDirectConversation`, `startTaskConversation`.
+  - `lib/features/chat/view/chat_screen.dart`: offer creation uses `days` and `ChatOfferPayload`; accept/reject use `offer_accepted`/`offer_rejected`; user-safe error strings; offer button only for task-linked chats.
+
+- **Docs and .TODO**
+  - `Sline_everything/DEVELOPER_GUIDE/Chat Feature.md`, `Sline_everything/SUPABASE_SETUP.md`, `Sline_everything/STRUCTURE.md` updated. `.TODO/` plan, execution log, contract, test strategy, threat model, RLS matrix, rollout matrix, observability, and orchestrator reports (Architect, Observability, SlineDocs, CodeGuard, Master).
+
+#### 📊 Impact
+
+- Archive is server-authoritative; no client timestamp writes. Attachments remain participant-scoped via helper. Offer payload and realtime merge behavior are contract-aligned and documented.
+
+#### 🧪 Verification
+
+- Plan: `.TODO/PLAN_ChatFix_v2_2026-03-01.md`
+- Execution Log: `.TODO/EXECUTION_LOG_PLAN_ChatFix_v2_2026-03-01.md`
+- Review: `.TODO/CODEGUARD_REVIEW_2026-03-02_ChatFix.md`
+- Master Report: `.TODO/MASTER_REPORT_2026-03-02_ChatFix.md`
+- Tests: `test/unit/models/message_model_test.dart`, `test/widget/chat/`
+- Check: `flutter analyze lib/features/chat`; manual archive and task-chat flows verified.
+
+#### 🔧 Technical Notes
+
+- Apply migration before using archive RPC. Rollback: revert app commits; DB migration is additive (RPC + helper + columns). See `.TODO/CHAT_ROLLOUT_MATRIX_2026-03-01.md`.
+
+---
 
 ### 🟢 Version 2.16.8 — Portfolio Feature Recovery
 
