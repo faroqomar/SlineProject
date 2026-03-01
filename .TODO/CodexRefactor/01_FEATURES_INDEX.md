@@ -24,22 +24,22 @@
 
 ## Exact Feature Names (Use These Names When Choosing a Feature)
 
-- `auth`
+- `auth` waiting
 - `booking` done 
 - `categories`
-- `chat`
-- `dashboard`
-- `favorites`
+- `chat` waiting
+- `dashboard` waiting
+- `favorites` waiting
 - `home` done
 - `management`done
 - `notifications`
-- `portfolio`
-- `profile`
+- `portfolio` waiting
+- `profile` waiting
 - `proposals`
 - `saved`
 - `search`
-- `services`
-- `tasks`
+- `services` waiting
+- `tasks` waiting
 - `wallet`
 - `work`
 
