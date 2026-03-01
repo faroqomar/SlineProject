@@ -128,6 +128,7 @@ class QiCardPaymentService implements PaymentService {
     String? note,
     String? packageId,
     Map<String, dynamic>? requirements,
+    String? requestCorrelationId,
   }) async {
     try {
       AppLogger.i(
@@ -139,6 +140,7 @@ class QiCardPaymentService implements PaymentService {
           'has_note': note != null && note.trim().isNotEmpty,
           'requirements_keys': (requirements ?? const <String, dynamic>{}).keys
               .toList(),
+          'request_correlation_id': requestCorrelationId,
         },
       );
       final response = await _client.functions.invoke(
@@ -148,11 +150,14 @@ class QiCardPaymentService implements PaymentService {
           'note': note,
           'package_id': packageId,
           'requirements': requirements ?? const <String, dynamic>{},
+          'request_correlation_id': requestCorrelationId,
         },
       );
 
       final data = _asMap(response.data);
       final serviceError = _extractError(data);
+      final responseRequestCorrelationId =
+          data?['request_correlation_id'] as String? ?? requestCorrelationId;
       if (serviceError != null) {
         AppLogger.w(
           'Booking payment create was rejected by the server for task=$taskId',
@@ -161,6 +166,7 @@ class QiCardPaymentService implements PaymentService {
           json: _safePayloadSummary(data),
         );
         return QiCardCreatePaymentResult(
+          requestCorrelationId: responseRequestCorrelationId,
           error: serviceError,
           errorCode: 'BOOKING_PAYMENT_CREATE_FAILED',
         );
@@ -172,6 +178,7 @@ class QiCardPaymentService implements PaymentService {
           tag: 'QiCard',
         );
         return QiCardCreatePaymentResult(
+          requestCorrelationId: responseRequestCorrelationId,
           error: 'Booking payment could not be created.',
           errorCode: 'BOOKING_PAYMENT_CREATE_FAILED',
         );
@@ -185,6 +192,7 @@ class QiCardPaymentService implements PaymentService {
         providerId: data['provider_id'] as String?,
         expiresAt: _parseDate(data['expires_at']),
         correlationId: data['correlation_id'] as String?,
+        requestCorrelationId: responseRequestCorrelationId,
       );
 
       if (!result.isSuccess) {
@@ -193,7 +201,8 @@ class QiCardPaymentService implements PaymentService {
           tag: 'QiCard',
           json: _safePayloadSummary(data),
         );
-        return const QiCardCreatePaymentResult(
+        return QiCardCreatePaymentResult(
+          requestCorrelationId: responseRequestCorrelationId,
           error: 'Booking payment could not be created.',
           errorCode: 'BOOKING_PAYMENT_CREATE_FAILED',
         );
@@ -211,7 +220,8 @@ class QiCardPaymentService implements PaymentService {
         error: e,
         stackTrace: st,
       );
-      return const QiCardCreatePaymentResult(
+      return QiCardCreatePaymentResult(
+        requestCorrelationId: requestCorrelationId,
         error: 'Cannot start booking payment right now.',
         errorCode: 'BOOKING_PAYMENT_CREATE_FAILED',
       );
@@ -391,6 +401,7 @@ class QiCardPaymentService implements PaymentService {
       'keys': data?.keys.toList() ?? const <String>[],
       'booking_id': data?['booking_id'],
       'correlation_id': data?['correlation_id'],
+      'request_correlation_id': data?['request_correlation_id'],
       'payment_status': data?['payment_status'],
       'recovery_result': data?['recovery_result'],
       'refund_result': data?['refund_result'],

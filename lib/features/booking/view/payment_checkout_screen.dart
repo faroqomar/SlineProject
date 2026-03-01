@@ -136,10 +136,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
       },
     );
 
-    final launched = await launchUrl(
-      paymentUri,
-      webOnlyWindowName: '_self',
-    );
+    final launched = await launchUrl(paymentUri, webOnlyWindowName: '_self');
     if (launched) {
       return;
     }
@@ -279,6 +276,10 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
               createResult.error ??
               vm.bookingsError ??
               'BOOKING_PAYMENT_CREATE_FAILED',
+          json: <String, dynamic>{
+            'task_id': widget.taskId,
+            'request_correlation_id': createResult.requestCorrelationId,
+          },
         );
         setState(() {
           _error =
@@ -322,6 +323,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
           json: <String, dynamic>{
             'booking_id': createResult.bookingId,
             'correlation_id': createResult.correlationId,
+            'request_correlation_id': createResult.requestCorrelationId,
             'callback_hosts': _callbackHosts.toList(),
           },
         );
@@ -338,7 +340,8 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
         }
 
         if (!mounted) return;
-        final paymentReturn = await Navigator.of(context).push<PaymentReturnArgs>(
+        final paymentReturn = await Navigator.of(context)
+            .push<PaymentReturnArgs>(
               MaterialPageRoute(
                 builder: (_) => PaymentWebViewScreen(
                   initialUrl: uri.toString(),

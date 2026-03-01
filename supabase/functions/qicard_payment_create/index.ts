@@ -25,8 +25,18 @@ Deno.serve(async (req: Request) => {
   const auth = await requireAuthenticatedUser(req);
   if (auth.error) return auth.error;
 
+  let requestCorrelationId = `booking_create:${crypto.randomUUID()}`;
+
   try {
     const body = await req.json();
+    const providedRequestCorrelationId =
+      typeof body.request_correlation_id === "string" &&
+        body.request_correlation_id.trim().length > 0
+        ? body.request_correlation_id.trim()
+        : null;
+    if (providedRequestCorrelationId) {
+      requestCorrelationId = providedRequestCorrelationId;
+    }
     const taskId = String(body.task_id || "");
     const note = typeof body.note === "string" ? body.note : null;
     const packageId = typeof body.package_id === "string" ? body.package_id : null;
@@ -36,7 +46,10 @@ Deno.serve(async (req: Request) => {
         : {};
 
     if (!taskId) {
-      return jsonResponse({ error: "task_id is required" }, 400);
+      return jsonResponse(
+        { error: "task_id is required", request_correlation_id: requestCorrelationId },
+        400,
+      );
     }
 
     const { data: booking, error } = await auth.userClient.rpc(
@@ -51,7 +64,10 @@ Deno.serve(async (req: Request) => {
 
     if (error || !booking) {
       return jsonResponse(
-        { error: error?.message || "BOOKING_DRAFT_CREATE_FAILED" },
+        {
+          error: error?.message || "BOOKING_DRAFT_CREATE_FAILED",
+          request_correlation_id: requestCorrelationId,
+        },
         400,
       );
     }
@@ -138,10 +154,17 @@ Deno.serve(async (req: Request) => {
       provider_id: refreshedBooking.provider_id,
       expires_at: expiresAt,
       correlation_id: correlationId,
+      request_correlation_id: requestCorrelationId,
     });
   } catch (error) {
-    console.error("Payment create error:", error);
+    console.error("Payment create error:", {
+      request_correlation_id: requestCorrelationId,
+      error,
+    });
     const message = error instanceof Error ? error.message : String(error);
-    return jsonResponse({ error: message }, 500);
+    return jsonResponse(
+      { error: message, request_correlation_id: requestCorrelationId },
+      500,
+    );
   }
 });

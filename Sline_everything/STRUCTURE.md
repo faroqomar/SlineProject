@@ -1,295 +1,220 @@
-# 📁 SLine App – Folder Structure Guide
+# SLine App - Folder Structure Guide
 
-This document explains the folder structure used in the SLine freelance marketplace app built with Flutter, Supabase, and FastAPI.
+**Last Updated:** 2026-03-01
 
-**Last Updated:** 2025-12-08
+This document describes the current repository layout. It replaces older references to `presentation/` and `controllers/`; the live Flutter codebase uses `view/` and `viewmodels/` under `lib/features/`.
 
----
+## Top-Level Overview
 
-## 🔰 Top-Level Overview
-
-```
+```text
 sline_app/
-├── lib/                    # Flutter source code
-│   ├── app/               # Main navigation, app-level configs
-│   ├── core/              # Shared resources (theme, services, widgets)
-│   ├── features/          # Feature modules (MVVM)
-│   └── main.dart          # App entry point
-├── .cursor/               # Cursor AI configuration
-│   ├── Agents/            # AI agent definitions (7 agents)
-│   ├── rules/             # Coding rules (.mdc files)
-│   └── PROJECT_CONTEXT.md # Quick reference guide
-├── .TODO/                 # Design & planning
-│   ├── New_Design/        # React Native design reference files
-│   └── Future_Plans/      # Feature inventory & roadmap
-├── Sline_everything/      # 📚 Project documentation (SINGLE SOURCE OF TRUTH)
-├── GEMINI.md              # Project overview & agent triggers
-└── .cursorrules           # Always-active rules
+├── .agents/              # Local skills and workflows used by the coding agents
+├── .cursor/              # Cursor agent definitions and project rules
+├── .TODO/                # Audits, plans, execution logs, QA notes, docs-sync notes
+├── Sline_everything/     # Source-of-truth project documentation
+├── assets/               # Bundled app assets
+├── lib/                  # Flutter application source
+├── supabase/             # Edge functions and SQL migrations
+├── test/                 # Unit and widget tests
+├── integration_test/     # End-to-end test entrypoints
+├── android/ ios/ web/    # Platform runners
+├── linux/ macos/ windows/# Desktop runners
+├── pubspec.yaml          # Flutter package manifest
+└── README.md             # Repository overview
 ```
 
----
+## Documentation and Agent Directories
 
-## 📂 `.cursor/` — Cursor AI Configuration
+### `.agents/`
 
-Contains AI agents and coding rules:
+- `skills/`: reusable local workflows such as `docs_sync`, `bug_fixer`, and `supabase_migration`
+- `workflows/`: higher-order coordination docs such as `planner.md`, `executor.md`, and `orchestrator.md`
 
-### `.cursor/Agents/`
+### `.cursor/`
 
-| Agent         | File               | Focus                               |
-| ------------- | ------------------ | ----------------------------------- |
-| @Architect    | `Architect.md`     | Logic, MVVM, refactoring            |
-| @Pixel        | `Pixel.md`         | UI/UX, Glassmorphism, themes        |
-| @Supabase_Ops | `Supabase_Ops.md`  | Database, RLS, SQL                  |
-| @Sentinel     | `Sentinel.md`      | QA, security, testing               |
-| @SlineDocs    | `Sline_Docs.md`    | Documentation updates               |
-| @SlinePlanner | `Sline_Planner.md` | Implementation planning             |
-| @CodeGuard    | `CodeGuard.md`     | Code reviews, performance, security |
+- `Agents/`: role definitions such as `Architect`, `CodeGuard`, `Sline_Docs`, and `Supabase_Ops`
+- project-specific agent guidance and rules used by Cursor tooling
 
-### `.cursor/rules/`
+### `.TODO/`
 
-- `flutter-mvvm.mdc` - MVVM pattern enforcement
-- `supabase-database.mdc` - Database & RLS rules
-- `ui-theme.mdc` - Theme system rules
-- `code-quality.mdc` - Code quality standards
-- `error-handling.mdc` - Error handling patterns
+This folder is active working documentation, not archive-only material.
 
----
+Typical files:
+- feature audits: `management.TODO.md`
+- plans: `PLAN_*.md`
+- execution logs: `EXECUTION_LOG_*.md`
+- review and QA artifacts: `CODEGUARD_REVIEW_*.md`, `SENTINEL_QA_*.md`
+- docs sync notes: `DOCS_SYNC_*.md`
 
-## 📂 `.TODO/` — Design & Planning
+## `Sline_everything/` - Documentation Hub
 
-### `.TODO/New_Design/`
+Primary documents:
+- `SUPABASE_SETUP.md`: database schema, RLS, RPCs, indexes, storage
+- `DEVELOPER_GUIDE.md`: system map plus embedded feature references
+- `DEVELOPER_GUIDE/`: feature-specific deep dives
+- `STRUCTURE.md`: this file
+- `MVP_ROADMAP.md`: current module status tracker
+- `Sline_Log.md`: versioned project history and release notes
+- `ARCHITECTURE_ANALYSIS.md`: long-form architecture guidance
+- `CODE_REVIEW.md`: recurring review findings and reusable practices
 
-React Native/TypeScript design reference files from the designer. Used as visual reference for Flutter implementation.
+## `supabase/` - Backend Runtime Assets
 
-### `.TODO/Future_Plans/`
-
-- `FEATURE_INVENTORY.md` - Tracks implementation status of all design features
-
----
-
-## 📂 `Sline_everything/` — Documentation Hub
-
-The **single source of truth** for all project documentation:
-
-```
-Sline_everything/
-├── SUPABASE_SETUP.md       # Database schema, RLS, triggers (CRITICAL)
-├── DEVELOPER_GUIDE.md      # Complete feature documentation
-├── Sline_Log.md            # Version history & changelog
-├── MVP_ROADMAP.md          # Feature status tracker
-├── STRUCTURE.md            # This file - folder organization
-├── CODE_REVIEW.md          # Code quality patterns
-├── ARCHITECTURE_ANALYSIS.md # Architecture decisions
-├── designer_references/    # Design documentation
-│   └── liquid_glass.md     # iOS 26 liquid glass reference
-└── DEVELOPER_GUIDE/        # Feature-specific deep-dives
+```text
+supabase/
+├── functions/
+│   ├── _shared/                    # Shared edge-function helpers
+│   ├── booking_decline_refund/     # Server-backed booking refund flow
+│   ├── qicard_payment_create/      # Creates validated booking drafts + payment session
+│   ├── qicard_payment_recovery/    # Recovers booking state after gateway return
+│   └── qicard_webhook_handler/     # QiCard webhook verification and ledger entry
+└── migrations/                     # SQL migrations applied to Supabase
 ```
 
----
+Recent migration themes in `supabase/migrations/`:
+- ledger introduction and wallet views
+- booking server authority and payment remediation
+- repeat slotless booking support
+- management timeline scope index
 
-## 📂 `lib/app/`
+## `lib/` - Flutter Application Source
 
-Contains global application configurations such as:
-
-- `main_navigation_screen.dart`: Holds the `BottomNavigationBar` and all main screens.
-- `app_theme.dart`: (Optional) Stores light/dark theme configs.
-
----
-
-## 📂 `lib/core/`
-
-Houses shared logic, services, and UI elements across the app.
-
-- `models/`: Global data models (e.g., user model).
-- `services/` — `supabase_config.dart`, **`logger_service.dart` (AppLogger)**, **`crash_reporting_service.dart`**, pickersubscriptions for messages & conversations), image picker, **logger (AppLogger for debug-only logs)**, etc.
-- `repositories/`: Abstract business logic layer over services.
-- `widgets/`: Shared UI widgets like buttons, nav bars, `custom_bottom_nav_bar.dart` (iOS 26 liquid glass effect).
-- `providers/`: Global state (like navigation).
-- `utils/`: Helper functions (e.g., date/price formatters).
-- `theme/`: **Centralized Theme System** (see below).
-
-### 📂 `lib/core/theme/` — Theme System
-
-The theme system is centralized for easy customization:
-
-```
-theme/
-├── app_colors.dart       # Color palette (AppColors.teal, AppColors.offWhite, etc.)
-├── app_typography.dart   # Text styles (AppTypography.heading1, body, etc.)
-├── app_dimens.dart       # Spacing, padding, border radii (AppDimens.p16, r20, etc.)
-├── app_decorations.dart  # BoxDecoration presets (Glassmorphism, shadows)
-├── app_theme.dart        # ThemeData configuration, AppColorScheme extension
-└── theme_dashboard.dart  # 📋 SINGLE SOURCE OF TRUTH - comprehensive theme reference
+```text
+lib/
+├── app/
+│   └── main_navigation_screen.dart
+├── core/
+│   ├── config/
+│   ├── models/
+│   ├── providers/
+│   ├── services/
+│   ├── theme/
+│   ├── utils/
+│   └── widgets/
+├── features/
+│   └── <feature>/
+│       ├── data/        # Repository / data-access layer when needed
+│       ├── models/      # Feature models
+│       ├── services/    # Supabase / backend integrations
+│       ├── view/        # Screens and widgets
+│       └── viewmodels/  # ChangeNotifier state + orchestration
+├── shared/
+│   └── constants/
+└── main.dart
 ```
 
-**Important:** Always reference `theme_dashboard.dart` before adding new values. Use existing theme tokens instead of hardcoding values.
+### `lib/app/`
 
----
+App-level shell and navigation.
 
-## 📂 `lib/features/`
+Current file:
+- `lib/app/main_navigation_screen.dart`: bottom navigation shell and main app entry after authentication
 
-Each feature has its own isolated folder with this recommended structure:
+### `lib/core/`
 
+Shared cross-cutting infrastructure.
+
+Current subfolders:
+- `config/`: runtime configuration helpers such as `payment_runtime_config.dart`
+- `models/`: global models such as `user_profile.dart` and shared `payment_return_args.dart`
+- `providers/`: app-wide providers such as navigation and theme mode
+- `services/`: Supabase bootstrap, payment services, cache, deep links, crash reporting, logging
+- `theme/`: color, spacing, typography, decorations, theme assembly, theme dashboard
+- `utils/`: error mapping, formatting, loading overlays, URL cache, route transitions, web error filters
+- `widgets/`: shared UI widgets such as signed media, buttons, badges, loaders, bottom nav
+
+Important current core files:
+- `lib/core/services/supabase_config.dart`
+- `lib/core/services/payment_service.dart`
+- `lib/core/services/qicard_payment_service.dart`
+- `lib/core/services/payment_pending_store.dart`
+- `lib/core/utils/loading_utils.dart`
+- `lib/core/utils/flutter_error_filters.dart`
+- `lib/core/widgets/signed_avatar.dart`
+- `lib/core/widgets/signed_image.dart`
+
+### `lib/features/`
+
+Current feature folders:
+- `auth`
+- `booking`
+- `categories`
+- `chat`
+- `dashboard`
+- `favorites`
+- `home`
+- `management`
+- `notifications`
+- `orders`
+- `portfolio`
+- `profile`
+- `proposals`
+- `saved`
+- `search`
+- `services`
+- `tasks`
+- `wallet`
+- `work`
+
+Not every feature uses every subfolder, but the standard live convention is:
+- `view/` instead of `presentation/`
+- `viewmodels/` instead of `controllers/`
+- `data/` for repositories when a repository layer exists
+- `services/` for low-level integrations
+
+### Feature Highlights
+
+- `lib/features/auth/`: login, signup, forgot password, auth session handling
+- `lib/features/booking/`: direct booking checkout, booking lists/details, payment return/webview screens
+- `lib/features/chat/`: conversations, messages, attachments, realtime updates
+- `lib/features/dashboard/`: unified dashboard tabs and role-based work summaries
+- `lib/features/management/`: order timeline / note management for tasks and bookings
+- `lib/features/tasks/`: task creation, details, requests/offers, tender payment, delivery flows
+- `lib/features/wallet/`: wallet state and ledger-backed balance views
+- `lib/features/work/`: unified work item details and CTA resolution
+
+## `test/` - Automated Test Layout
+
+```text
+test/
+├── test_support/
+├── unit/
+│   ├── auth/
+│   ├── booking/
+│   ├── core/
+│   ├── dashboard/
+│   ├── management/
+│   ├── models/
+│   └── tasks/
+└── widget/
+    ├── app/
+    ├── auth/
+    ├── booking/
+    ├── chat/
+    ├── dashboard/
+    ├── home/
+    ├── management/
+    └── tasks/
 ```
-features/
-└── [feature_name]/
-    ├── presentation/   # UI: screens & widgets
-    ├── controllers/    # UI logic (ChangeNotifier or Riverpod)
-    ├── services/       # Feature-specific backend logic
-    └── models/         # Feature-specific data models
-```
 
-### Feature Examples:
+Use `integration_test/` for device/browser flows that need platform navigation or full app boot.
 
-- `auth/`: login/signup
-- `home/`: service cards & feed
-- `chat/`: real-time messaging, attachments, realtime subscriptions
-- `tasks/`: post and manage tasks, offers/requests
-- `profile/`: view and edit user profile, role switch, my tasks, portfolio
-- `booking/`: provider slots, client bookings, **PaymentCheckoutScreen (v2.16)**
-- `work/`: unified work management (active tasks & bookings, contracts, change/extension requests)
+## `assets/`
 
----
+Current bundled asset folder:
+- `assets/images/`
 
-## 📂 `lib/generated/`
+## Structure Rules
 
-Contains generated localization files (`l10n.dart`) if using Flutter Intl for multi-language support.
+- Views do not call Supabase directly.
+- Feature state lives in `viewmodels/`.
+- Low-level DB/storage/network access lives in `services/` and `data/`.
+- Shared UI and runtime helpers belong in `lib/core/`.
+- `Sline_everything/` must be updated whenever structure or contracts change.
 
----
+## Recent Structure-Sensitive Updates
 
-## 🧠 Core Principles
-
-- **Modular Design**: Each feature is self-contained and testable.
-- **Separation of Concerns**: UI, logic, and services are separated.
-- **Scalable**: Easy to add new features without breaking others.
-- **Reusable**: Shared components and services live in `core/`.
-
----
-
-## 📌 Example: Adding a New Feature
-
-To add a `notifications` feature:
-
-```
-lib/features/notifications/
-├── presentation/
-├── controllers/
-├── services/
-└── models/
-```
-
-Then link it to the app via `main_navigation_screen.dart`.
-
----
-
-This structure helps keep SLine maintainable, scalable, and easy to navigate for all contributors.
-
----
-
-## 🔄 Recent Updates
-
-- **2026-02-24**:
-  - **Payment Integration**: Added `PaymentCheckoutScreen` to `booking/view/`.
-  - **Ledger System**: Documented Phase 3 (Escrow Enforced) in `Sline_Log.md`.
-  - **Navigation**: Established returning results pattern for bottom sheets.
-
-- **2026-02-19**:
-  - **Observability**: Added `CrashReportingService` and global error trapping (`runZonedGuarded`) in `main.dart`.
-  - **Security**: Hardened `ProfileRepository` to strictly select safe columns.
-  - **Booking**: Fixed status mapping in `UnifiedWorkItemModel`.
-
-- Integrated Supabase Realtime into the `chat` module for instant messaging updates.
-- Updated `core/services/` with structured logging (AppLogger).
-- Ensured cross-platform fixes for Chrome file uploads (`dart:io.File` vs `storage_client.File`).
-- Improved UX: Added SnackBar confirmation after task publishing.
-- **2025-08-22**:
-- Ownership enforcement in Offers: hide submit for owners; accept/reject visible only to task owner; RLS prevents owner self-bidding.
-  - Added `TaskType` (tender/booking) to `TaskModel` and wired UI splits in `TaskDetailsScreen`.
-  - Completed Offers flow (RequestsListScreen + SubmitRequestSheet) with provider-safe BottomSheet.
-  - Guarded RequestsListScreen for non-tender tasks; booking placeholders connected for Sprint 2.
-    lib/
-    ├── app/ # Main App Configs: navigation, themes, and entry points
-    │ ├── main_navigation_screen.dart # Holds bottom nav and routes to feature screens
-    │ └── app_theme.dart # Custom light/dark themes (if needed)
-    │
-    ├── core/ # Shared, reusable resources across features
-    │ ├── models/ # Global data models used across the app
-    │ │ └── user_model.dart
-    │ ├── services/ # Generic services (e.g., logger, supabase, image picker)
-    │ │ └── supabase_service.dart
-    │ ├── repositories/ # Abstract layer over services (fetchUser, getTasks)
-    │ │ └── user_repository.dart
-    │ ├── widgets/ # Shared custom widgets (e.g., buttons, cards)
-    │ │ └── custom_bottom_nav_bar.dart
-    │ ├── providers/ # App-wide logic state (e.g., navigation state)
-    │ │ └── navigation_provider.dart
-    │ └── utils/ # Helper functions (validators, date formatting, etc.)
-    │ └── format_price.dart
-    │
-    ├── features/ # Each app feature in its own isolated folder
-    │ ├── auth/ # Signup, login, onboarding
-    │ │ ├── presentation/ # UI widgets/screens
-    │ │ │ └── login_screen.dart
-    │ │ ├── controllers/ # UI logic (ChangeNotifier)
-    │ │ │ └── auth_controller.dart
-    │ │ └── services/ # Specific service calls (Supabase Auth etc.)
-    │ │ └── auth_service.dart
-    │
-    │ ├── home/ # Homepage (freelancer/client feed)
-    │ │ ├── presentation/
-    │ │ │ └── home_screen.dart
-    │ │ ├── controllers/
-    │ │ │ └── home_controller.dart
-    │ │ └── widgets/ # Card for task offer, ratings, etc.
-    │ │ └── service_card.dart
-    │
-    │ ├── chat/ # Real-time messaging module
-    │ │ ├── presentation/
-    │ │ │ └── chat_screen.dart
-    │ │ ├── controllers/
-    │ │ │ └── chat_controller.dart
-    │ │ └── models/
-    │ │ └── chat_message_model.dart
-    │
-    │ ├── tasks/ # Posting and bidding on tasks
-    │ │ ├── presentation/
-    │ │ │ ├── tasks_screen.dart
-    │ │ │ └── create_task_screen.dart
-    │ │ ├── controllers/
-    │ │ │ └── task_controller.dart
-    │ │ ├── models/
-    │ │ │ └── task_model.dart
-    │ │ └── services/
-    │ │ └── task_service.dart
-    │
-    │ ├── profile/ # Profile view/edit, role switch
-    │ │ ├── presentation/
-    │ │ │ └── profile_screen.dart
-    │ │ ├── controllers/
-    │ │ │ └── profile_controller.dart
-    │ │ └── widgets/
-    │ │ └── profile_avatar_widget.dart
-    │
-    │ └── booking/ # Booking/reservation module
-    │ ├── presentation/
-    │ │ └── booking_screen.dart
-    │ ├── controllers/
-    │ │ └── booking_controller.dart
-    │ └── models/
-    │ └── booking_model.dart
-    │
-    ├── generated/ # (auto) localization files, if using Flutter intl
-    │ └── l10n.dart
-    │
-    └── main.dart # Entry point of the app → calls MainNavigationScreen
-
-## 🔄 Recent Updates
-
-- **2026-02-19**:
-  - **Observability**: Added `CrashReportingService` and global error trapping (`runZonedGuarded`) in `main.dart`.
-  - **Security**: Hardened `ProfileRepository` to strictly select safe columns.
-  - **Booking**: Fixed status mapping in `UnifiedWorkItemModel`.
-
-- **2025-09-20**:
-  - **Avatars (private)**: Created `avatars` bucket + RLS.
-  - **Task Images (private)**: Created `task-images` bucket + RLS.
+- Booking flow now uses `payment_checkout_screen.dart`, `payment_webview_screen.dart`, and `payment_return_screen.dart` instead of older slot-sheet-only docs.
+- Core runtime now includes `payment_runtime_config.dart`, `payment_pending_store.dart`, and `flutter_error_filters.dart`.
+- Management now includes `work_log_scope.dart` and `view/widgets/order_management_section.dart`.
+- Loading overlays use `LoadingHandle` from `lib/core/utils/loading_utils.dart`; the old dialog `show/hide` pattern is obsolete.

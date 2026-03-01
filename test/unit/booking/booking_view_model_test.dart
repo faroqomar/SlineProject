@@ -100,6 +100,7 @@ void main() {
             note: 'Need it fast',
             packageId: 'Premium',
             requirements: <String, dynamic>{'delivery': 'rush'},
+            requestCorrelationId: any(named: 'requestCorrelationId'),
           ),
         ).thenAnswer(
           (_) async => const QiCardCreatePaymentResult(
@@ -120,6 +121,20 @@ void main() {
           viewModel.bookingsError,
           'This booking is not currently available.',
         );
+        final captured =
+            verify(
+                  () => paymentService.createPaymentForBooking(
+                    taskId: 'task-1',
+                    note: 'Need it fast',
+                    packageId: 'Premium',
+                    requirements: <String, dynamic>{'delivery': 'rush'},
+                    requestCorrelationId: captureAny(
+                      named: 'requestCorrelationId',
+                    ),
+                  ),
+                ).captured.single
+                as String;
+        expect(captured, startsWith('booking_create:'));
       },
     );
 
@@ -132,6 +147,7 @@ void main() {
             note: null,
             packageId: 'Premium',
             requirements: const <String, dynamic>{},
+            requestCorrelationId: any(named: 'requestCorrelationId'),
           ),
         ).thenAnswer(
           (_) async => const QiCardCreatePaymentResult(
@@ -151,6 +167,20 @@ void main() {
         expect(result.isSuccess, isTrue);
         expect(result.bookingId, 'booking-2');
         expect(viewModel.bookingsError, isNull);
+        final captured =
+            verify(
+                  () => paymentService.createPaymentForBooking(
+                    taskId: 'task-1',
+                    note: null,
+                    packageId: 'Premium',
+                    requirements: const <String, dynamic>{},
+                    requestCorrelationId: captureAny(
+                      named: 'requestCorrelationId',
+                    ),
+                  ),
+                ).captured.single
+                as String;
+        expect(captured, startsWith('booking_create:'));
       },
     );
 

@@ -4,6 +4,8 @@
 **Analysis Type**: Full Codebase Review, Architecture Analysis, Feature Enhancement Planning
 **Conducted By**: Claude Code
 
+> Historical analysis note: this file is an archival summary of an earlier full-repo review. It is not the live source of truth for file paths or current feature contracts. Use `Sline_everything/DEVELOPER_GUIDE.md`, `Sline_everything/STRUCTURE.md`, and `Sline_everything/SUPABASE_SETUP.md` for current state.
+
 ---
 
 ## 📊 Executive Summary

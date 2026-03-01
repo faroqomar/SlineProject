@@ -1,126 +1,134 @@
-
 # Core Module Reference
 
 ## 1. Human Explanation
-The core module (`lib/core/`) provides shared infrastructure used across all features:
-- **Supabase bootstrapping** via `supabase_config.dart`.
-- **Global state** like navigation via `providers/`.
-- **Cross-cutting utilities** (date/price formatting), **theme** constants, and **shared widgets** (signed images/avatars, bottom nav).
-- **Lightweight models** reused across features (e.g., `UserProfile`).
-This keeps feature modules small and focused while centralizing common concerns.
 
-## 2. Database & Supabase Mapping
-Core does not own tables, but it integrates with key Supabase resources used throughout the app.
+The core module (`lib/core/`) contains runtime infrastructure shared across the whole app:
+- Supabase bootstrap and shared service contracts
+- payment orchestration helpers used by booking flows
+- logging, crash reporting, and error filtering
+- theme tokens, shared widgets, and formatting utilities
+- small shared models used across multiple features
 
-### 2.1 `public.profiles` (consumed by core model/widgets)
-| Column | Type | Purpose / Usage | Notes |
+It is the place for cross-feature code. Feature-specific business rules stay in `lib/features/<feature>/`.
+
+## 2. Platform and Supabase Mapping
+
+Core does not own product tables, but it provides the app-wide runtime used to read them safely.
+
+### 2.1 Shared Supabase resources consumed by core
+
+| Resource | Purpose | Used by | Notes |
 | --- | --- | --- | --- |
-| `id` | `uuid` | User identity (FK → `auth.users.id`) | Mirrors Supabase Auth user id |
-| `full_name` | `text` | Display name | Optional |
-| `email` | `text` | Cached email for display | Should mirror `auth.users.email` |
-| `avatar_url` | `text` | Private storage path to avatar | Used by `SignedAvatar` to create signed URL |
-| `created_at` | `timestamptz` | Profile creation time (UTC) | Default `now()` |
+| `public.profiles` | shared user identity metadata | `UserProfile`, `SignedAvatar` consumers | avatar path is stored in DB; signed URL is created at render time |
+| `avatars` bucket | private avatar storage | `SignedAvatar`, profile flows | signed URL required for display |
+| `task-images` bucket | private task image storage | `SignedImage`, task flows | signed URL required for display |
+| `chat-attachments` bucket | private chat file storage | chat feature widgets/services | same signed-URL pattern |
 
-RLS: Users can read/update only their own row (`auth.uid() = id`). This affects any profile reads from core helpers/widgets.
+### 2.2 Shared payment runtime contracts
 
-### 2.2 Storage buckets (private)
-| Bucket | Purpose | Used by | Notes |
-| --- | --- | --- | --- |
-| `avatars` | Store profile avatars | `SignedAvatar` | Private; generate short-lived signed URLs before rendering |
-| `task-images` | Store task images | `SignedImage` | Private; signed URL generation on demand |
+Core owns the app-side payment runtime interfaces used by the booking feature:
+- `PaymentService`: abstract contract for payment providers
+- `QiCardPaymentService`: server-backed QiCard integration
+- `DemoPaymentService`: fallback/demo provider
+- `PaymentPendingStore`: persists pending browser payment state on web
+- `payment_runtime_config.dart`: callback host validation and callback parsing
 
-Policies: Buckets are private; reads require signed URLs. Writes require authenticated user and policy compliance (feature-specific).
+### 2.3 Web safety helpers
 
-### 2.3 Supabase client (SDK)
-- Core exposes a single configured client from `supabase_config.dart` for the rest of the app.
-- All repositories/services import it to perform queries and to ensure consistent session handling for RLS.
+Core also owns two browser-specific stability helpers:
+- `LoadingUtils.show(...) -> LoadingHandle`: overlay-based loading UI with no navigator mutation
+- `flutter_error_filters.dart`: filters the known disposed `EngineFlutterView` assertion on web before crash-reporting/log spam
 
 ## 3. File Inventory
+
 | File | Layer | Description |
 | --- | --- | --- |
-| `lib/core/services/supabase_config.dart` | Service bootstrap | Initializes Supabase SDK once; exposes `Supabase.instance.client`. |
-| `lib/core/services/logger_service.dart` | Utility | Centralized logging (`AppLogger`) with safe formatting. |
-| `lib/core/providers/navigation_provider.dart` | Provider | App-wide bottom navigation state (`ChangeNotifier`). |
-| `lib/core/utils/format_date.dart` | Utility | UTC-to-local formatting (`formatUtcToLocal`, `formatRangeUtcToLocal`). |
-| `lib/core/utils/format_price.dart` | Utility | Integer-to-currency formatting for budgets/prices. |
-| `lib/core/theme/app_colors.dart` | Theme | Material 3 color constants used across features. |
-| `lib/core/widgets/custom_bottom_nav_bar.dart` | Widget | Bottom navigation bar bound to `NavigationProvider`. |
-| `lib/core/widgets/signed_avatar.dart` | Widget | Renders a profile avatar from a private storage path via signed URL. |
-| `lib/core/widgets/signed_image.dart` | Widget | Renders an image from a private storage path via signed URL. |
-| `lib/core/models/user_profile.dart` | Model | Maps DB `profiles` row to a typed object used across features. |
+| `lib/core/services/supabase_config.dart` | bootstrap | Initializes Supabase once and exposes the shared client. |
+| `lib/core/services/logger_service.dart` | service | `AppLogger` for structured debug/error logging. |
+| `lib/core/services/crash_reporting_service.dart` | service | Crash-reporting abstraction with a quiet no-op implementation by default. |
+| `lib/core/services/payment_service.dart` | contract | Shared payment DTOs and the `PaymentService` interface. |
+| `lib/core/services/demo_payment_service.dart` | service | Local/demo payment implementation and legacy fallback path. |
+| `lib/core/services/qicard_payment_service.dart` | service | Server-backed QiCard create/recover/refund orchestration. |
+| `lib/core/services/payment_pending_store.dart` | service | Persists pending payment context across same-tab web redirects. |
+| `lib/core/services/deep_link_service.dart` | service | Shared deep-link plumbing used by app navigation flows. |
+| `lib/core/config/payment_runtime_config.dart` | config | Compile-time finish URL, callback host rules, payment callback parsing. |
+| `lib/core/utils/loading_utils.dart` | utility | Root overlay loading helper that returns an idempotent `LoadingHandle`. |
+| `lib/core/utils/flutter_error_filters.dart` | utility | Filters the known web engine disposal assertion. |
+| `lib/core/utils/error_mapper.dart` | utility | Shared PostgREST/Auth/network error mapping. |
+| `lib/core/utils/format_date.dart` | utility | UTC-to-local date/time formatting helpers. |
+| `lib/core/utils/format_price.dart` | utility | Shared price formatting helpers. |
+| `lib/core/utils/signed_url_cache.dart` | utility | Short-lived cache for generated signed URLs. |
+| `lib/core/providers/navigation_provider.dart` | provider | Global navigation tab state. |
+| `lib/core/providers/theme_mode_provider.dart` | provider | Light/dark theme mode state. |
+| `lib/core/models/user_profile.dart` | model | Shared typed profile model. |
+| `lib/core/models/payment_return_args.dart` | model | Shared typed browser payment callback payload. |
+| `lib/core/theme/app_colors.dart` | theme | Central palette definitions. |
+| `lib/core/theme/app_dimens.dart` | theme | Spacing, radius, sizing tokens. |
+| `lib/core/theme/app_typography.dart` | theme | Shared typography and fallback font configuration. |
+| `lib/core/theme/app_theme.dart` | theme | Builds the app `ThemeData` and `AppThemeExtension`. |
+| `lib/core/widgets/custom_bottom_nav_bar.dart` | widget | Shared app shell bottom nav. |
+| `lib/core/widgets/signed_avatar.dart` | widget | Renders private avatar paths through signed URLs. |
+| `lib/core/widgets/signed_image.dart` | widget | Renders private image paths through signed URLs. |
 
-## 4. ERD Diagram (context)
-```mermaid
-erDiagram
-  AUTH_USERS ||--|| PROFILES : "id=id"
-  PROFILES ||--o{ TASKS : "user_id"
-  PROFILES ||--o{ STORAGE_AVATARS : "avatar_url (path)"
+## 4. Runtime Patterns
 
-  AUTH_USERS { uuid id PK }
-  PROFILES { uuid id PK/FK, text full_name, text email, text avatar_url }
-  TASKS { uuid id PK, uuid user_id FK }
-  STORAGE_AVATARS { text path PK }
-```
+### 4.1 App bootstrap
 
-```text
-auth.users (id)
-   └── profiles (id, full_name, email, avatar_url)
-            └──(path) avatars bucket (private, signed URLs)
-```
+- `main.dart` initializes Supabase through `SupabaseConfig.init()`.
+- Shared providers are registered at app root, including `SupabaseClient`, `ProfileRepository`, `CategoriesRepository`, and `PaymentPendingStore`.
+- `FlutterError.onError`, `PlatformDispatcher.instance.onError`, and `runZonedGuarded` are wired through the core logging/crash-reporting path.
 
-## 5. Supabase Snippets
+### 4.2 Loading overlays
 
-### 5.1 Initialize Supabase client once
+The current pattern is overlay-based, not dialog-based.
+
 ```dart
-// lib/core/services/supabase_config.dart
-import 'package:supabase_flutter/supabase_flutter.dart';
-
-class SupabaseConfig {
-  static Future<void> init({required String url, required String anonKey}) async {
-    await Supabase.initialize(url: url, anonKey: anonKey);
-  }
-}
-
-// Usage at app startup (e.g., main())
-// await SupabaseConfig.init(url: kSupabaseUrl, anonKey: kSupabaseAnonKey);
-final supabase = Supabase.instance.client;
-```
-
-### 5.2 Fetch profile for current user (RLS requires session)
-```dart
-final user = Supabase.instance.client.auth.currentUser;
-if (user != null) {
-  final row = await Supabase.instance.client
-      .from('profiles')
-      .select('id, full_name, email, avatar_url')
-      .eq('id', user.id)
-      .maybeSingle();
+final loader = LoadingUtils.show(context, debugLabel: 'open_chat');
+try {
+  await doSomethingAsync();
+} finally {
+  loader.close();
 }
 ```
 
-### 5.3 Create a signed URL for a private avatar path
+Do not use `Navigator.pop()` to dismiss loading UI. The old `LoadingUtils.hide(context)` pattern is obsolete.
+
+### 4.3 Web payment callback parsing
+
 ```dart
-// Given a storage path like 'avatars/<uid>/<file>.jpg'
-final storage = Supabase.instance.client.storage.from('avatars');
-final String signedUrl = await storage.createSignedUrl(path, 60 * 10); // 10 minutes
+final paymentReturn = parsePaymentReturnArgs(Uri.base);
+if (paymentReturn != null) {
+  return PaymentReturnScreen(initialArgs: paymentReturn);
+}
 ```
 
-## 6. Error Handling
-| Origin | Error | User Message | Mitigation |
-| --- | --- | --- | --- |
-| Profiles read | `42501` (RLS denied) | "Session expired. Please log in again." | Refresh session, re-authenticate. |
-| Storage read | 404 (object missing) | "Image not available." | Show placeholder; allow re-upload. |
-| Signed URL | Expired URL | "Session for image expired. Refreshing…" | Regenerate signed URL lazily. |
-| Supabase init | Invalid URL/key | "App configuration error." | Validate env vars; avoid hardcoding secrets in code. |
+The callback parser validates host + path shape against `kQiCardFinishUrl` and `buildQiCardCallbackHosts()`.
 
-## 7. Extra Notes & Testing Checklist
-- **Secrets**: Do not hardcode the Supabase anon key in source for production. Prefer env/CI secrets.
-- **UTC**: All timestamps are UTC; use `formatUtcToLocal()` for display.
-- **Caching**: `SignedAvatar/SignedImage` may cache signed URLs for a short time to reduce churn.
-- **RLS**: Ensure `auth.currentUser` is present before any RLS-protected fetch.
+### 4.4 Typography and fallback fonts
 
-Testing checklist:
-- Initialize Supabase on app start and verify a simple `select` from `profiles` works only when logged in.
-- Render `SignedAvatar` with a valid private `avatar_url` path and confirm the image loads.
-- Expire a signed URL and confirm the widget regenerates it and rerenders.
-- Navigate tabs with `NavigationProvider` and confirm `CustomBottomNavBar` syncs state.
+`AppTypography` now centralizes fallback font families for missing glyphs:
+- `Noto Sans`
+- `Noto Sans Arabic`
+- `Roboto`
+- `Arial`
+- `sans-serif`
+
+This allows user-generated Arabic text to render without forcing feature code to manage font fallback.
+
+## 5. Error Handling Notes
+
+| Origin | Error | Handling |
+| --- | --- | --- |
+| Supabase bootstrap | bad URL/key/session setup | fail fast during app startup; log through `AppLogger` |
+| Signed URL creation | missing object / expired URL | return placeholder and regenerate URL when needed |
+| Web engine assertion | disposed `EngineFlutterView` | filtered by `isIgnoredFlutterWebEngineDisposeError(...)` |
+| Payment callback parsing | invalid host / invalid booking reference | handled in `PaymentReturnScreen` with explicit terminal messaging |
+
+## 6. Testing Checklist
+
+- Boot the app and confirm `SupabaseConfig.init()` succeeds before rendering feature screens.
+- Render `SignedAvatar` and `SignedImage` using valid private paths.
+- Verify `LoadingHandle.close()` is safe even when a route closes during async work.
+- On web, confirm a payment callback loads `PaymentReturnScreen` instead of falling back to the main shell immediately.
+- Confirm the known disposed `EngineFlutterView` assertion is filtered and not duplicated in debug logs.
+- Confirm Arabic user-generated text renders with the theme fallback stack.

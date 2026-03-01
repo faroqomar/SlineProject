@@ -8,6 +8,7 @@ import '../data/booking_repository.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/services/payment_service.dart';
 import 'package:sline_app/core/services/demo_payment_service.dart';
+import 'package:uuid/uuid.dart';
 
 /// BookingViewModel — MVVM state holder for Booking/Scheduling feature.
 ///
@@ -42,6 +43,7 @@ class BookingViewModel extends ChangeNotifier {
   final BookingRepository _repo;
   final ChatRepository _chatRepository;
   final PaymentService _paymentService;
+  final Uuid _uuid = const Uuid();
   String get paymentServiceType => _paymentService.runtimeType.toString();
 
   static const int _pageSize = 50;
@@ -438,6 +440,7 @@ class BookingViewModel extends ChangeNotifier {
     String? packageId,
     Map<String, dynamic>? requirements,
   }) async {
+    final requestCorrelationId = 'booking_create:${_uuid.v4()}';
     AppLogger.i(
       'Requesting server-backed booking payment task=$taskId package=${packageId ?? 'none'}',
       tag: 'Booking',
@@ -447,6 +450,7 @@ class BookingViewModel extends ChangeNotifier {
         'has_note': note != null && note.trim().isNotEmpty,
         'requirements_keys': (requirements ?? const <String, dynamic>{}).keys
             .toList(),
+        'request_correlation_id': requestCorrelationId,
       },
     );
     final result = await _paymentService.createPaymentForBooking(
@@ -454,6 +458,7 @@ class BookingViewModel extends ChangeNotifier {
       note: note,
       packageId: packageId,
       requirements: requirements,
+      requestCorrelationId: requestCorrelationId,
     );
 
     if (!result.isSuccess) {
@@ -462,12 +467,22 @@ class BookingViewModel extends ChangeNotifier {
         'Booking payment request failed for task=$taskId',
         tag: 'Booking',
         error: bookingsError ?? result.error ?? 'BOOKING_PAYMENT_CREATE_FAILED',
+        json: <String, dynamic>{
+          'task_id': taskId,
+          'request_correlation_id':
+              result.requestCorrelationId ?? requestCorrelationId,
+        },
       );
       notifyListeners();
     } else {
       AppLogger.i(
         'Booking payment draft created booking=${result.bookingId} correlation=${result.correlationId}',
         tag: 'Booking',
+        json: <String, dynamic>{
+          'task_id': taskId,
+          'request_correlation_id':
+              result.requestCorrelationId ?? requestCorrelationId,
+        },
       );
     }
 

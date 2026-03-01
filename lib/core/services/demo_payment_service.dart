@@ -138,9 +138,11 @@ class DemoPaymentService implements PaymentService {
     String? note,
     String? packageId,
     Map<String, dynamic>? requirements,
+    String? requestCorrelationId,
   }) async {
     await Future.delayed(delay);
-    return const QiCardCreatePaymentResult(
+    return QiCardCreatePaymentResult(
+      requestCorrelationId: requestCorrelationId,
       error: 'Booking checkout is not available in demo mode.',
       errorCode: 'DEMO_BOOKING_CREATE_UNSUPPORTED',
     );

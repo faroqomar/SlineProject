@@ -1,376 +1,90 @@
-# 📌 Sline MVP Roadmap
-
-Each feature below is broken down step-by-step for clarity.  
-This file serves as the central reference for MVP development progress.
-
----
-
-## 🔹 1. Project Initialization
-
-| Step | Feature                      | Description                                                      | Status       |
-| ---- | ---------------------------- | ---------------------------------------------------------------- | ------------ |
-| 1.1  | Create clean Flutter project | Modular folder structure with **core**, **features**, **shared** | ✅ Completed |
-| 1.2  | Setup Supabase               | Create Supabase project, enable **auth**, **roles**, **storage** | ✅ Completed |
-| 1.3  | Connect Supabase to Flutter  | Using `supabase_flutter`, add keys via env config                | ✅ Completed |
-
----
-
-## 🔹 2. App Navigation
-
-| Step | Feature                   | Description                                                 | Status       |
-| ---- | ------------------------- | ----------------------------------------------------------- | ------------ |
-| 2.1  | Add Bottom Navigation Bar | 4 tabs: Home, Messages, Tasks, Profile                      | ✅ Completed |
-| 2.2  | Add placeholder screens   | Each tab shows a page with its name                         | ✅ Completed |
-| 2.3  | Setup Navigation Provider | Centralized navigation state with Provider (`IndexedStack`) | ✅ Completed |
-
----
-
-## 🔹 3. Authentication
-
-| Step | Feature                 | Description                              | Status       |
-| ---- | ----------------------- | ---------------------------------------- | ------------ |
-| 3.1  | Sign up / Sign in       | Email/password login via Supabase Auth   | ✅ Completed |
-| 3.2  | Social login (optional) | Apple/Google sign-in (optional for MVP)  | ⏳ Planned   |
-| 3.3  | Auth state management   | Redirect login ↔ home based on session   | ✅ Completed |
-| 3.4  | Role selection          | Assign Client/Freelancer role on sign up | ✅ Completed |
-
----
-
-## 🔹 4. Tasks Module
-
-| Step | Feature                          | Description                                                                  | Status       |
-| ---- | -------------------------------- | ---------------------------------------------------------------------------- | ------------ |
-| 4.1  | Create `tasks` table in Supabase | Columns: id, title, description, budget, category, skills, status, createdAt | ✅ Completed |
-| 4.2  | TaskModel                        | Flutter model for tasks with JSON serialization                              | ✅ Completed |
-| 4.3  | TaskService                      | Supabase CRUD (createTask, getTasks)                                         | ✅ Completed |
-| 4.4  | Create Task Screen               | Form to create new task with validation                                      | ✅ Completed |
-| 4.5  | HomeController integration       | Fetch tasks from Supabase and manage state                                   | ✅ Completed |
-| 4.6  | HomeScreen UI                    | Show tasks list with `TaskCard`                                              | ✅ Completed |
-| 4.7  | Task Details Screen              | Full view of a task with PriceFormatter & DateFormatter                      | ✅ Completed |
-| 4.8  | TaskCard widget                  | Beautiful summary card for each task                                         | ✅ Completed |
-| 4.9  | Search & Filter                  | Filter by category/skills, search tasks by keyword                           | ✅ Completed |
-| 4.10 | Edit/Delete Task                 | Allow owners to update/remove tasks                                          | ✅ Completed |
-| 4.11 | Display Publisher Info           | Show user name and avatar in task cards                                      | ✅ Completed |
-
----
-
-## 🔹 5. Messaging System
-
-| Step | Feature               | Description                                                                                      | Status         |
-| ---- | --------------------- | ------------------------------------------------------------------------------------------------ | -------------- |
-| 5.1  | Message model         | Store senderId, receiverId, content, timestamp in Supabase                                       | ✅ Completed   |
-| 5.2  | Real-time messaging   | Realtime integration planned, initial groundwork completed with conversation fetching and logger | ⏳ In Progress |
-| 5.3  | Chat UI               | Task-specific chat thread in "Messages" tab                                                      | ✅ Completed   |
-| 5.4  | Link chat to requests | Each conversation tied to a task                                                                 | ✅ Completed   |
-
----
-
-## 🔹 6. Task Requests Management
-
-| Step | Feature                | Description                                  | Status     |
-| ---- | ---------------------- | -------------------------------------------- | ---------- |
-| 6.1  | Requests Screen        | Placeholder for offers/requests per task     | ⏳ Planned |
-| 6.2  | Accept/Reject requests | Clients can accept or reject freelancer bids | ⏳ Planned |
-| 6.3  | Connect with Messaging | Requests auto-create chat thread             | ⏳ Planned |
-
----
-
-## 🔹 7. Profile & Settings
-
-| Step | Feature            | Description                            | Status       |
-| ---- | ------------------ | -------------------------------------- | ------------ |
-| 7.1  | Profile screen     | Show avatar, full name, email, phone   | ✅ Completed |
-| 7.2  | Edit profile       | Update avatar, name, phone             | ✅ Completed |
-| 7.3  | Switch role        | Toggle between Client ↔ Freelancer     | ⏳ Planned   |
-| 7.4  | My Tasks           | List tasks created by current user     | ✅ Completed |
-| 7.5  | Account management | Logout, delete account, reset password | ⏳ Planned   |
-
----
-
-## 🔹 8. Infrastructure
-
-| Step | Feature            | Description                                                           | Status               |
-| ---- | ------------------ | --------------------------------------------------------------------- | -------------------- |
-| 8.1  | Logger service     | Centralized debug/error logs with PrettyPrinter (debug-only)          | ✅ Completed         |
-| 8.2  | Constants & Config | Shared constants and env setup                                        | ✅ Completed         |
-| 8.3  | Theme system       | Material 3 Light/Dark theme with centralized dashboard                | ✅ Completed         |
-| 8.4  | Theme Dashboard    | `theme_dashboard.dart` - single source of truth for all theme values  | ✅ Completed         |
-| 8.5  | Localization       | Arabic (RTL) + English (LTR)                                          | ⏳ Planned           |
-| 8.6  | Documentation      | STRUCTURE.md, SUPABASE_SETUP.md, Sline_Log.md synced                  | ✅ Completed         |
-| 8.7  | AI Agents          | 7 specialized agents for different tasks (CodeGuard, Architect, etc.) | ✅ Completed         |
-| 8.8  | **Observability**  | Crash reporting foundation & `runZonedGuarded`                        | ✅ Completed (v2.15) |
-| 8.9  | **Security**       | Public Profile PII hardening & Threat Modeling                        | ✅ Completed (v2.15) |
-
----
-
-# 🎯 Summary
-
-- ✅ Completed: Initialization, Navigation, Authentication, Tasks, Theme System, AI Agents, Messaging, **Notifications**
-- 🔜 Next focus: Localization (RTL support), Supabase v2 migration, CodeGuard Audit
-- 📦 This roadmap ensures Sline MVP is production-ready once remaining features are complete.
-
-# 📌 Sline MVP Roadmap (Updated)
-
-**Last Updated:** 2025-12-08
-
-Each feature below is broken down step-by-step for clarity.
-
----
-
-## 🔹 1. Project Initialization — ✅ Completed
-
-## 🔹 2. App Navigation — ✅ Completed
-
-## 🔹 3. Authentication — ✅ Completed
-
-## 🔹 4. Tasks Module — ✅ Completed
-
----
-
-## 🔹 5. Messaging System
-
-| Step | Feature              | Description                                           | Status              |
-| ---- | -------------------- | ----------------------------------------------------- | ------------------- |
-| 5.1  | Message model        | senderId, receiverId, content, timestamp              | ✅ Completed        |
-| 5.2  | Real-time messaging  | Realtime on conversations/messages with subscriptions | ✅ Completed        |
-| 5.3  | Chat UI              | Task-specific chat thread + WhatsApp-like list        | ✅ Completed        |
-| 5.4  | Conversation linking | Conversation tied to a task and participant pair      | ✅ Completed        |
-| 5.5  | **Attachments**      | Image/File upload to **private** bucket + signed URLs | ✅ Completed (v1.4) |
-| 5.6  | Read receipts        | Message read status + UI tick marks                   | ⏳ Planned          |
-| 5.7  | Typing indicators    | Per-conversation typing state                         | ⏳ Planned          |
-
----
-
-## 🔹 6. Task Requests Management
-
-| Step | Feature             | Description                            | Status     |
-| ---- | ------------------- | -------------------------------------- | ---------- |
-| 6.1  | Requests Screen     | Offers/requests per task               | ⏳ Planned |
-| 6.2  | Accept/Reject       | Client accepts/rejects freelancer bids | ⏳ Planned |
-| 6.3  | Link with Messaging | Requests auto-create chat thread       | ⏳ Planned |
-
----
-
-## 🔹 7. Profile & Settings
-
-| Step | Feature            | Description                                 | Status              |
-| ---- | ------------------ | ------------------------------------------- | ------------------- |
-| 7.1  | Profile screen     | Avatar, name, email, phone                  | ✅ Completed        |
-| 7.2  | Edit profile       | Update avatar, name, phone                  | ✅ Completed        |
-| 7.3  | Switch role        | Toggle Client ↔ Freelancer                  | ⏳ Planned          |
-| 7.4  | My Tasks           | List and manage user’s posted tasks         | ✅ Completed        |
-| 7.5  | Account management | Logout, delete account, reset password      | ⏳ Planned          |
-| 7.6  | Saved Tasks        | Bookmark/Unsaving, Badge Count, List Screen | ✅ Completed (v2.5) |
-| 7.7  | Forgot Password    | Reset link request flow                     | ✅ Completed (v2.6) |
-
----
-
-## 🔹 8. Infrastructure
-
-| Step | Feature            | Description                    | Status       |
-| ---- | ------------------ | ------------------------------ | ------------ |
-| 8.1  | Logger service     | Pretty-printed debug logs      | ✅ Completed |
-| 8.2  | Constants & Config | Shared constants and env       | ✅ Completed |
-| 8.3  | Theme system       | Material 3 Light/Dark          | ⏳ Planned   |
-| 8.4  | Localization       | Arabic (RTL) + English (LTR)   | ⏳ Planned   |
-| 8.5  | Documentation      | Keep docs synced (this update) | ✅ Completed |
-
----
-
-# 🎯 Summary
-
-- ✅ Messaging now supports **attachments** with private storage + signed URLs.
-- 🔜 Next: **Read receipts** (5.6) ثم **Typing indicators** (5.7).
-
-# 📌 Sline MVP Roadmap (Up-to-date)
-
-**Last Updated:** 2025-08-17
-
-This file is the single source of truth for MVP progress. Each step is bite-sized and traceable to code or SQL.
-
----
-
-## 🔹 1) Project Initialization — ✅ Completed
-
-## 🔹 2) App Navigation — ✅ Completed
-
-## 🔹 3) Authentication — ✅ Completed
-
-## 🔹 4) Tasks Module — ✅ Completed
-
----
-
-## 🔹 5) Messaging System
-
-| Step | Feature                   | Description                                       | Status                             |
-| ---- | ------------------------- | ------------------------------------------------- | ---------------------------------- |
-| 5.1  | Message model             | `sender_id`, `receiver_id`, `content`, timestamps | ✅ Completed                       |
-| 5.2  | Realtime messaging        | Channels for conversations & messages             | ✅ Completed                       |
-| 5.3  | Chat UI                   | WhatsApp-like thread + conversations list         | ✅ Completed                       |
-| 5.4  | Conversation linking      | Each pair+task → single conversation              | ✅ Completed                       |
-| 5.5  | **Attachments**           | Private storage bucket + signed URLs              | ✅ Completed (v1.4)                |
-| 5.6  | **Realtime optimization** | Upsert-in-place (no full refetch per event)       | ✅ Completed (v1.5)                |
-| 5.7  | Read receipts             | Persisted read/delivered + UI indicators          | ⏳ Planned                         |
-| 5.8  | Typing indicators         | Presence table + UI                               | 🚧 Deferred (out of scope for now) |
-
----
-
-## 🔹 6) Task Requests Management — ⏳ Planned
-
-- Requests screen, accept/reject, auto-create chat
-
-## 🔹 7) Profile & Settings — 🟡 Mixed
-
-- Profile view/edit, avatar upload — ✅
-- My Tasks — ✅
-- **Portfolio Management — ✅ Completed (v2.4)**
-- Switch role — ⏳ Planned
-- Account management (logout/reset/delete) — ⏳ Planned
-
-## 🔹 8) Infrastructure — 🟡 Mixed
-
-- Logger service (AppLogger) — ✅
-- Constants & config — ✅
-- **Notification System (Realtime) — ✅ Completed (v2.7)**
-- Theme (M3 Light/Dark) — ⏳ Planned
-
-# 🎯 Summary (v2.7.2)
-
-- ✅ Attachments with private storage & signed URLs
-- ✅ Realtime optimized (no full list refetch)
-- ✅ Immediate image bubble rendering on send
-- ✅ **Portfolio Management with image upload** (v2.4)
-- ✅ **Saved Tasks Feature** (Global State + UI Toggles) (v2.5)
-- ✅ **Forgot Password Flow** (v2.6)
-- ✅ **Notification System** (Realtime + Task Lifecycle) (v2.7)
-- ✅ **Skeleton Loading States** (Home, Tenders, Bookings, Messages) (v2.7.2)
-- ✅ **Smooth Tab Transitions** (AnimatedSwitcher) (v2.7.2)
-- ✅ **iOS stability fixes** (FilePicker, memory optimization)
-- 🔜 Read receipts & requests flow next
-
-## 🔹 9) Booking & Payment (v2.8) — ✅ Completed
-
-| Step | Feature                | Description                                               | Status       |
-| ---- | ---------------------- | --------------------------------------------------------- | ------------ |
-| 9.1  | **Booking Packages**   | JSONB structure in Tasks for Basic/Standard/Premium tiers | ✅ Completed |
-| 9.2  | **Availability Logic** | Slots overlapping, booking guard triggers                 | ✅ Completed |
-| 9.3  | **Payment UI**         | `PaymentMethodScreen` with Credit Card input (Demo)       | ✅ Completed |
-| 9.4  | **Payment Service**    | `PaymentService` abstraction + `DemoPaymentService`       | ✅ Completed |
-| 9.5  | **Integration**        | Booking flow -> Payment -> Confirmed Booking              | ✅ Completed |
-
-# 🎯 Summary (v2.8)
-
-- ✅ **Booking Packages System** (3-tier pricing)
-- ✅ **Payment Infrastructure** (Demo Service + UI)
-- ✅ **Sentinel Workflow** optimized (Verification only)
-- ✅ **Documentation** fully synced
-
-- 🔜 Next: Localization & Real Payment Integration
-
-# 🎯 Summary (v2.9)
-
-- ✅ **Booking Flow v2**: "Pay First" logic with `paid_request_pending` and `active` states.
-- ✅ **Wallet Foundation**: `wallet_transactions` table and `WalletScreen`.
-- ✅ **Secure Infrastructure**: RPC-based state transitions (`escrow`, `release`, `refund`).
-- ✅ **UI Updates**: Status banners and simulated payment flow in `BookingDetailsScreen`.
-
-# 🎯 Summary (v2.10)
-
-- ✅ **Unified Management System**:
-  - ✅ **Database**: `work_logs` table with RLS.
-  - ✅ **UI**: `OrderManagementPanel` for private notes and timeline events.
-  - ✅ **Integration**: Added to Booking and Task details screens.
-
-# 🎯 Summary (v2.11)
-
-- ✅ **Freelancer Wallet MVP**:
-  - ✅ **Database**: `wallet_balances` secure view.
-  - ✅ **UI**: Split "Available" vs "Escrow" balance dashboard.
-
-# 🎯 Summary (v2.12)
-
-- ✅ **Unified Profile**: Tabs for Portfolio, History, Reviews.
-- ✅ **Search Polish**: Visual consistency and performance optimization.
-- ✅ **Lint Cleanliness**: Zero analysis issues.
-
-## 🔹 10) Freelancer Unified Flow (v2.13) — ✅ Completed
-
-| Step | Feature                 | Description                                                     | Status       |
-| ---- | ----------------------- | --------------------------------------------------------------- | ------------ |
-| 10.1 | **Unified View**        | `vw_unified_work_items` DB view (UNION tasks + bookings)        | ✅ Completed |
-| 10.2 | **Work Contracts**      | Versioned scope snapshots in `work_contracts` table             | ✅ Completed |
-| 10.3 | **Change Requests**     | Scope/price/days change proposals via `change_requests`         | ✅ Completed |
-| 10.4 | **Extension Requests**  | Deadline extension proposals via `extension_requests`           | ✅ Completed |
-| 10.5 | **Delivery & Revision** | `rpc_submit_delivery` + `rpc_request_revision` RPCs             | ✅ Completed |
-| 10.6 | **Contract Freeze**     | `trg_freeze_contract_fields` prevents direct scope changes      | ✅ Completed |
-| 10.7 | **Work Details UI**     | `WorkItemDetailsScreen` (3-tab: Overview, Extensions, Contract) | ✅ Completed |
-| 10.8 | **Unit Tests**          | 7 ViewModel unit tests with mock service                        | ✅ Completed |
-
-# 🎯 Summary (v2.13)
-
-- ✅ **Freelancer Unified Flow**: Full MVVM module for managing active work.
-- ✅ **Database**: 3 new tables, 1 view, 4 RPCs, 2 triggers, all with RLS.
-- ✅ **UI**: 3-tab detail screen with delivery/extension modals.
-- ✅ **Tests**: 7 ViewModel unit tests passing.
-- ✅ **CodeGuard**: Approved with 0 blockers.
-- 🔜 Next: Chat navigation from Work detail, `supabase_flutter` v2.x migration.
-
-## 🟢 Version 2.13 — Freelancer Unified Flow (Polish)
-
-**Date:** 2026-02-16
-**Status:** ✅ Complete
-
-## 🔹 11. Delivery & Dashboard Optimization (v2.14) — ✅ Completed
-
-| Step | Feature                   | Description                                        | Status       |
-| ---- | ------------------------- | -------------------------------------------------- | ------------ |
-| 11.1 | **Delivery Approval**     | Client-side `approveDelivery` RPC and UI Modal     | ✅ Completed |
-| 11.2 | **Dashboard Performance** | Parallel data loading (F1-F9) + DI for testability | ✅ Completed |
-| 11.3 | **Observability**         | Structured JSON logging for critical Work flows    | ✅ Completed |
-| 11.4 | **Security**              | Threat Model auditing for delivery state machine   | ✅ Completed |
-
-# 🎯 Summary (v2.14)
-
-- ✅ **Work Delivery**: Full "Submit -> Review -> Approve" cycle is now production-ready.
-- ✅ **Dashboard**: Optimized for scale (parallel fetching, O(1) lookups).
-- ✅ **Audit**: Threat model & Observability rules enforced.
-- 🔜 Next: Client-side "Request Revision" UX refinements.
-
-## 🔹 12. Chat Routing & Dashboard Actions (v2.15) — ✅ Completed
-
-| Step | Feature                   | Description                                      | Status       |
-| ---- | ------------------------- | ------------------------------------------------ | ------------ |
-| 12.1 | **Next Actions Routing**  | DeepLinkService wiring for Dashboard Review/Pay  | ✅ Completed |
-| 12.2 | **Task Chat Integration** | RPC idempotency to route to correct task chat    | ✅ Completed |
-| 12.3 | **UI Chat Launchers**     | OrdersDashboard and WorkItemDetails push to Chat | ✅ Completed |
-| 12.4 | **Dispute Placeholder**   | Safe fallback UI for dispute transition          | ✅ Completed |
-
-# 🎯 Summary (v2.15)
-
-- ✅ **Chat Routing**: Added `getTaskConversation` and integrated seamlessly across Dashboards and Work Details.
-- ✅ **Next Actions**: Replaced TODOs with robust `DeepLinkService` navigation logic.
-- 🔜 Next: Client-side "Request Revision" UX refinements.
-
-## 🔹 13) Payment Ledger System (v2.16) — 🚧 In Progress
-
-| Step | Feature                  | Description                                        | Status       |
-| ---- | ------------------------ | -------------------------------------------------- | ------------ |
-| 13.1 | **Ledger Foundation**    | Tables: journal_entries, ledger_lines, accounts    | ✅ Completed |
-| 13.2 | **RPC Processing**       | `process_payment_event_ledger` for all money moves | ✅ Completed |
-| 13.3 | **Ledger Phase 3**       | Enforce Escrow, Freeze Legacy, Backfill Data       | ✅ Completed |
-| 13.4 | **Checkout Integration** | Dedicated `PaymentCheckoutScreen` + Nav Crash Fix  | ✅ Completed |
-| 13.5 | **Real Gateway**         | QiCard flow integrated (sandbox); production via `--dart-define` | 🚧 In Progress |
-
-# 🎯 Summary (v2.16.1)
-
-- ✅ **QiCard integration (sandbox)**: End-to-end flow (draft → initiatePayment → WebView → webhook → held); feature flag `USE_QICARD_PAYMENT`; default credentials in `qicard_payment_service.dart`.
-- ✅ **Delivery RPC fixes**: `rpc_submit_delivery` booking transition (confirmed/paid_request_pending → active → delivered); `rpc_approve_delivery` uses `extensions.digest` for ledger idempotency.
-- ✅ **Architecture Guard**: Views no direct Supabase; app-level providers for `SupabaseClient`, `ProfileRepository`, `CategoriesRepository`; task requests via ViewModel only.
-- 🔜 Next: Production QiCard credentials; follow-ups in `.TODO/TECHNICAL_DEBT.md`.
-
-# 🎯 Summary (v2.16)
-
-- ✅ **Payment Ledger Foundation**: Production-ready double-entry system.
-- ✅ **Legacy Freeze**: Writes to `wallet_transactions` are now prevented.
-- ✅ **Secure Booking**: Mandatory escrow payment before booking confirmation.
-- ✅ **Navigation Stability**: Eliminated `_state!` null assertion crashes in booking.
+# SLine MVP Roadmap
+
+**Last Updated:** 2026-03-01
+
+This roadmap tracks the current code-state of the repository. Status values are intentionally simple:
+- `✅ Completed`
+- `🚧 In Progress`
+- `⏳ Planned`
+
+## 1. Foundation
+
+| Area | Status | Notes |
+| --- | --- | --- |
+| Flutter app shell and navigation | ✅ Completed | `main.dart` + `lib/app/main_navigation_screen.dart` |
+| Supabase bootstrap and app providers | ✅ Completed | shared client/bootstrap in `lib/core/services/supabase_config.dart` and root providers in `main.dart` |
+| Theme system | ✅ Completed | centralized in `lib/core/theme/` |
+| Logging and crash boundaries | ✅ Completed | `AppLogger`, `CrashReportingService`, zoned/global handlers |
+| Documentation hub | ✅ Completed | maintained under `Sline_everything/` |
+
+## 2. Identity and Profile
+
+| Feature | Status | Notes |
+| --- | --- | --- |
+| Email/password auth | ✅ Completed | login, signup, forgot password |
+| Session-aware logout and auth listener | ✅ Completed | `AuthViewModel` + app-shell callback |
+| Profile editing and avatar handling | ✅ Completed | profile repository/service/viewmodel flow exists |
+| Role switching | ✅ Completed | role flows exist in profile/dashboard surfaces |
+
+## 3. Marketplace Discovery
+
+| Feature | Status | Notes |
+| --- | --- | --- |
+| Home feed and task discovery | ✅ Completed | `home`, `tasks`, and filters are live |
+| Category-backed task browsing | ✅ Completed | categories feature and task filters exist |
+| Booking discovery feed | ✅ Completed | `BookingsDiscoveryScreen` reuses the task feed for booking tasks |
+| Search | 🚧 In Progress | dedicated `search/` feature exists; ongoing refinement |
+| Services/proposals surfacing | 🚧 In Progress | feature folders exist; product surface is still maturing |
+
+## 4. Tasks and Tender Workflows
+
+| Feature | Status | Notes |
+| --- | --- | --- |
+| Task creation and editing | ✅ Completed | create/detail/edit flows exist |
+| Task requests / tender offers | ✅ Completed | request services, inbox award flow, task detail actions |
+| Delivery submission and approval | ✅ Completed | RPC-backed delivery flow exists |
+| Tender payment flow | 🚧 In Progress | payment path exists and is still being hardened alongside ledger flows |
+
+## 5. Booking and Payment Flows
+
+| Feature | Status | Notes |
+| --- | --- | --- |
+| Direct booking checkout | ✅ Completed | `PaymentCheckoutScreen` + server-backed draft creation |
+| QiCard integration | 🚧 In Progress | create/recovery/webhook flow exists and continues to be hardened |
+| Web payment callback handling | ✅ Completed | same-tab redirect + `PaymentReturnScreen` |
+| Mobile payment callback handling | ✅ Completed | `PaymentWebViewScreen` validates trusted callbacks |
+| Repeat slotless direct bookings | ✅ Completed | same client can create multiple slotless bookings for one booking task |
+| Booking details and history | ✅ Completed | client/provider history lists and detail screen exist |
+
+## 6. Collaboration and Communication
+
+| Feature | Status | Notes |
+| --- | --- | --- |
+| Realtime chat | ✅ Completed | conversations/messages/realtime updates exist |
+| Attachments | ✅ Completed | private attachment flow exists |
+| Favorites-powered contact flows | ✅ Completed | favorites and chat handoff are implemented |
+| Notifications | 🚧 In Progress | notification feature exists and is integrated into the dashboard shell |
+
+## 7. Workspace, Orders, and Management
+
+| Feature | Status | Notes |
+| --- | --- | --- |
+| Unified dashboard/workspace | 🚧 In Progress | `dashboard`, `work`, and `orders` features are implemented and still being refined |
+| Booking/task CTA resolution | ✅ Completed | unified CTA resolver is used by work/booking screens |
+| Order management timeline | ✅ Completed | management feature is live for task and booking details |
+| Wallet and ledger views | 🚧 In Progress | wallet feature and ledger schema exist; ongoing finance hardening continues |
+
+## 8. Quality and Operations
+
+| Area | Status | Notes |
+| --- | --- | --- |
+| Unit and widget test coverage | 🚧 In Progress | targeted coverage exists under `test/unit` and `test/widget` |
+| Supabase migrations | ✅ Completed | repo contains live migration history under `supabase/migrations/` |
+| Edge functions | ✅ Completed | booking/payment functions are checked into `supabase/functions/` |
+| Docs sync discipline | ✅ Completed | docs now reflect current `view/viewmodels/data/services` layout and payment/runtime helpers |
+
+## 9. Current Focus
+
+1. Continue hardening QiCard webhook/recovery behavior.
+2. Expand automated coverage around dashboard, wallet, and payment edge cases.
+3. Keep `Sline_everything/` aligned with code and Supabase migrations after every flow change.

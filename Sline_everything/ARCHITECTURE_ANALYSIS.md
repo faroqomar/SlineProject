@@ -4,6 +4,8 @@
 **Version**: 1.9+
 **Architecture Pattern**: MVVM with Provider
 
+> Historical analysis note: this document captures architectural assessment snapshots over time. For the current live repository layout and active contracts, use `Sline_everything/STRUCTURE.md`, `Sline_everything/DEVELOPER_GUIDE.md`, and `Sline_everything/SUPABASE_SETUP.md`.
+
 ---
 
 ## Table of Contents

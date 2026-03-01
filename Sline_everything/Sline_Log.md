@@ -1,6 +1,6 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2026-02-24
+**Last Updated:** 2026-03-01
 
 ---
 
@@ -20,6 +20,77 @@
 ---
 
 ## 📋 Version History
+
+### 🟢 Version 2.16.4 — Documentation Refresh and Reference Audit
+
+**Date:** 2026-03-01
+**Commit:** _Pending_ — "docs: refresh repo docs and fix stale references"
+
+#### ✅ Implemented
+
+- **Structure Documentation**
+  - Rewrote `Sline_everything/STRUCTURE.md` to match the live repository tree, current feature layout, and active `supabase/` assets.
+- **Developer Guide Sync**
+  - Refreshed `Sline_everything/DEVELOPER_GUIDE.md` and the embedded Core/Auth/Booking sections to match the live codebase.
+  - Rewrote:
+    - `Sline_everything/DEVELOPER_GUIDE/Core Module.md`
+    - `Sline_everything/DEVELOPER_GUIDE/Auth Feature.md`
+    - `Sline_everything/DEVELOPER_GUIDE/Booking Feature.md`
+- **Roadmap Cleanup**
+  - Replaced duplicated historical roadmap blocks in `Sline_everything/MVP_ROADMAP.md` with a single current-state module matrix.
+- **Historical Doc Guardrails**
+  - Added historical-context notices to `Sline_everything/ARCHITECTURE_ANALYSIS.md`, `Sline_everything/CODE_REVIEW.md`, and `Sline_everything/COMPREHENSIVE_ANALYSIS_SUMMARY.md` so older references are not mistaken for live structure.
+
+#### 📊 Impact
+
+- Live documentation now matches the current `view/viewmodels/services/data/models` Flutter layout.
+- Auth docs no longer point to deleted files.
+- Booking docs now reflect the server-backed QiCard flow, web callback handling, and repeat slotless booking support.
+- Supporting analysis docs are clearly framed as historical snapshots instead of live architecture references.
+
+#### 🧪 Verification
+
+- Docs Sync: `.TODO/DOCS_SYNC_2026-03-01_Repo_Documentation_Refresh.md`
+- Reference Fix: `.TODO/DOCS_REFERENCE_FIX_2026-03-01_Repo_Documentation_Refresh.md`
+
+#### 🔧 Technical Notes
+
+- Historical release notes still mention removed files where appropriate; those entries remain as audit history.
+- Live path validation for the refreshed doc set completed with no missing file references.
+
+### 🟢 Version 2.16.3 — Repeat Slotless Booking Support & Create-Flow Correlation
+
+**Date:** 2026-03-01
+**Commit:** _Pending_ — "fix(booking): allow repeat slotless bookings and trace create attempts"
+
+#### ✅ Implemented
+
+- **Booking Draft Rule Update**
+  - Removed the unique partial index `uq_bookings_active_task_client` for slotless direct bookings and replaced it with lookup index `idx_bookings_task_client_active`.
+  - Updated `public.rpc_create_booking_draft_validated(...)` so the same client can create multiple slotless bookings for the same booking task.
+  - Synced repo migration at `/Users/eros/Dev/Eros_Projects/Sline/sline_app/supabase/migrations/20260301_allow_multiple_slotless_bookings_per_client.sql`.
+- **Booking Create Telemetry**
+  - Added request-scoped correlation IDs across `BookingViewModel`, `QiCardPaymentService`, `PaymentCheckoutScreen`, and edge function `qicard_payment_create`.
+  - Rejected draft-create attempts now keep a stable `request_correlation_id` even when no `booking_id` exists yet.
+- **Client Copy Alignment**
+  - Replaced stale fallback text in `BookingViewModel` that implied only one active booking per service was allowed.
+
+#### 📊 Impact
+
+- **Product Behavior**: Clients can place repeat slotless direct bookings for the same service task when they want multiple projects.
+- **Supportability**: Failed booking-create attempts are now traceable across client and edge logs before a booking row exists.
+- **Consistency**: Docs and runtime behavior align on the new slotless booking rule.
+
+#### 🧪 Verification
+
+- Execution Log: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.TODO/EXECUTION_LOG_2026-03-01_Booking_Repeat_Slotless_Booking.md`
+- Master Report: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.TODO/MASTER_REPORT_2026-03-01_Booking_Repeat_Slotless_Booking.md`
+- Review: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.TODO/CODEGUARD_REVIEW_2026-03-01_Booking_Repeat_Slotless_Booking.md`
+
+#### 🔧 Technical Notes
+
+- Slot exclusivity still applies to slot-based bookings.
+- Repeat slotless booking support is a business-rule change, not an RLS change.
 
 ### 🟢 Version 2.16.2 — Payment Flow Polish & UI Themes
 

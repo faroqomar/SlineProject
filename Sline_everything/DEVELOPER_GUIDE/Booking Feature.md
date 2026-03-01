@@ -1,255 +1,167 @@
 # Booking Feature Reference
 
-1. Human-Readable Overview
+## 1. Human-Readable Overview
 
-The Booking feature lets a client reserve a provider’s available time slot for a task.
-It covers two flows:
-• Provider flow: create/manage availability slots (open or blocked), see incoming bookings, confirm or complete work.
-• Client flow: browse a provider’s available slots, request a booking for a specific task, and cancel if needed.
+The booking feature currently supports direct service bookings with server-backed payment initiation and recovery.
 
-Key design choices:
-• All timestamps are stored in UTC; UI always displays local time.
-• A slot can be booked by at most one active booking (pending/confirmed); slotless direct bookings may be created multiple times for the same client/task pair.
-• RLS ensures each party only sees/edits what they own (provider vs. client rules).
+Primary user flows:
+- clients can purchase a booking package from a booking task
+- providers can review booking requests, accept or decline them, and mark work as delivered
+- clients can review details and approve release after delivery
+- both sides can inspect booking history and the embedded management timeline
 
-⸻
+Important current behavior:
+- slotless direct bookings are allowed multiple times for the same client/task pair
+- slot-based rows still exist in the schema and UI as legacy/historical support
+- QiCard is the default payment provider, but payment initiation and reconciliation are server-backed through Supabase edge functions
 
-2. Supabase Mapping (Tables, Columns, Policies)
+## 2. Supabase Mapping
 
-2.1 Tables & Columns
+### 2.1 Core tables
 
-### availability_slots
+#### `public.bookings`
 
-| Column        | Type                        | Purpose / Usage                | Notes                                              |
-| ------------- | --------------------------- | ------------------------------ | -------------------------------------------------- |
-| `id`          | `uuid` (PK)                 | Slot identifier                | Default `gen_random_uuid()`                        |
-| `provider_id` | `uuid` (FK → `profiles.id`) | Owner of the slot (freelancer) | RLS requires `auth.uid() = provider_id` for writes |
-| `starts_at`   | `timestamptz`               | UTC start time                 | Convert local → UTC before insert                  |
-| `ends_at`     | `timestamptz`               | UTC end time                   | `chk_slot_time` enforces `ends_at > starts_at`     |
-| `is_blocked`  | `boolean`                   | Not bookable when true         | Default `false`                                    |
-| `created_at`  | `timestamptz`               | Audit timestamp                | Default `now()` (UTC)                              |
+| Column | Type | Purpose / Usage | Notes |
+| --- | --- | --- | --- |
+| `id` | `uuid` | booking identifier | primary key |
+| `task_id` | `uuid` | linked booking task | nullable in model but expected for current flow |
+| `provider_id` | `uuid` | service provider | used for provider-side lists and RLS |
+| `client_id` | `uuid` | booking client | used for client-side lists and RLS |
+| `slot_id` | `uuid` | optional legacy slot link | nullable for direct slotless bookings |
+| `status` | `booking_status_enum` | booking lifecycle | app maps `paid_request_pending`, `active`, `delivered`, `completed`, `canceled`, `refunded`, `expired_unanswered`, `no_show` |
+| `payment_status` | `payment_status_enum` | payment lifecycle | `unpaid`, `held`, `released`, `refunded` |
+| `price` | `numeric` | canonical amount | server-derived for booking drafts |
+| `package_id` | `text` | selected package tier | optional |
+| `requirements` | `jsonb` | selected package/request payload | optional |
+| `note` | `text` | client note | optional |
+| `delivery_days` | `integer` | delivery estimate | used in checkout/details timeline |
+| `due_at` | `timestamptz` | due date | shown in booking details timeline |
+| `completed_at` | `timestamptz` | completion timestamp | set when work is completed/released |
+| `created_at` | `timestamptz` | audit timestamp | UTC |
 
-### bookings
+#### `public.availability_slots`
 
-| Column        | Type                                  | Purpose / Usage                | Notes                                          |
-| ------------- | ------------------------------------- | ------------------------------ | ---------------------------------------------- |
-| `id`          | `uuid` (PK)                           | Booking identifier             | Default `gen_random_uuid()`                    |
-| `task_id`     | `uuid` (FK → `tasks.id`)              | Linked task context            | ON DELETE CASCADE                              |
-| `provider_id` | `uuid` (FK → `profiles.id`)           | Provider receiving the booking | Scopes provider views                          |
-| `client_id`   | `uuid` (FK → `profiles.id`)           | Client making the booking      | Must equal `auth.uid()` on insert (RLS)        |
-| `slot_id`     | `uuid` (FK → `availability_slots.id`) | The reserved slot              | Unique while status in ('pending','confirmed') |
-| `status`      | `booking_status_enum`                 | Lifecycle                      | Default `pending`                              |
-| `note`        | `text`                                | Optional message               | Nullable                                       |
-| `created_at`  | `timestamptz`                         | Audit timestamp                | Default `now()` (UTC)                          |
+This table still exists and is still documented in `SUPABASE_SETUP.md`, but the current Flutter booking flow no longer exposes slot-creation screens. Existing rows are treated as historical/legacy support, and `BookingModel` still reads slot timing when `slot_id` is present.
 
-2.2 Enums
+### 2.2 Payment and workflow backend objects
 
-| Enum                  | Values                                          | Notes                                                       |
-| --------------------- | ----------------------------------------------- | ----------------------------------------------------------- |
-| `booking_status_enum` | `pending`, `confirmed`, `canceled`, `completed` | Guarded by trigger `fn_booking_guard` for valid transitions |
+Current server-backed booking/payment flow depends on:
+- `rpc_create_booking_draft_validated(...)`
+- `qicard_payment_create`
+- `qicard_payment_recovery`
+- `booking_decline_refund`
+- `rpc_submit_delivery`
+- `rpc_approve_delivery`
+- `process_payment_event_ledger(...)`
 
-2.3 Indexes & Constraints
-• No double booking on the same slot:
+### 2.3 RLS summary
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_bookings_slot_active
-ON public.bookings (slot_id)
-WHERE status IN ('pending','confirmed');
+- clients can see and mutate only their own bookings where allowed by policy
+- providers can see and mutate their own incoming bookings where allowed by policy
+- payment/ledger side effects are enforced server-side via RPCs and edge functions; the client is not authoritative for privileged transitions
 
-    •	Performance indexes:
-    •	idx_slots_provider_starts (provider_id, starts_at)
-    •	idx_bookings_client_created (client_id, created_at desc)
-    •	idx_bookings_provider_created (provider_id, created_at desc)
+## 3. File Inventory
 
-2.4 RLS Policies (Summary)
+| File | Layer | Description |
+| --- | --- | --- |
+| `lib/features/booking/models/booking_model.dart` | model | Typed booking row with UTC timestamps, payment status, due date, and legacy slot fallback parsing. |
+| `lib/features/booking/models/payment_return_args.dart` | model | Feature re-export for the shared payment callback DTO. |
+| `lib/features/booking/services/booking_service.dart` | service | Reads bookings, updates status, submits ledger-backed booking actions, fetches single booking rows. |
+| `lib/features/booking/data/booking_repository.dart` | repository | Thin abstraction over `BookingService` plus current-user access. |
+| `lib/features/booking/viewmodels/booking_view_model.dart` | viewmodel | Orchestrates booking lists, payment creation/recovery, delivery/release actions, and chat handoff. |
+| `lib/features/booking/view/bookings_discovery_screen.dart` | view | Booking-task discovery surface powered by the home/task feed. |
+| `lib/features/booking/view/payment_checkout_screen.dart` | view | Direct booking checkout screen; creates draft booking and launches payment flow. |
+| `lib/features/booking/view/payment_webview_screen.dart` | view | Mobile webview payment container for trusted callback flows. |
+| `lib/features/booking/view/payment_return_screen.dart` | view | Web callback landing screen that validates callback state and triggers recovery. |
+| `lib/features/booking/view/payment_method_screen.dart` | view | Demo/manual payment form used by non-QiCard paths. |
+| `lib/features/booking/view/bookings_list_screen.dart` | view | Client/provider booking history list with filtering and pagination. |
+| `lib/features/booking/view/booking_details_screen.dart` | view | Detailed booking view with CTA resolution, management timeline, and message handoff. |
+| `lib/features/booking/view/widgets/booking_card.dart` | widget | Shared summary card for booking rows. |
 
-| Table                | Policy                            | Who           | Action               | Rule                                                 |
-| -------------------- | --------------------------------- | ------------- | -------------------- | ---------------------------------------------------- |
-| `availability_slots` | `slots_select_all`                | authenticated | SELECT               | `true`                                               |
-| `availability_slots` | `slots_cud_owner`                 | authenticated | INSERT/UPDATE/DELETE | `provider_id = auth.uid()`                           |
-| `bookings`           | `bookings_select_owner_or_client` | authenticated | SELECT               | `provider_id = auth.uid() OR client_id = auth.uid()` |
-| `bookings`           | `bookings_insert_client_only`     | authenticated | INSERT               | `client_id = auth.uid()` AND slot not already active |
-| `bookings`           | `bookings_update_roles`           | authenticated | UPDATE               | Provider can confirm/complete; Client can cancel     |
+## 4. Current Flutter Flow
 
-2.5 Triggers / Business Guards
-• No overlapping open slots for the same provider:
-• Trigger: trg_no_overlap_slots → fn_reject_overlapping_slots
-• Booking status transitions guard:
-• Trigger: trg_booking_guard → fn_booking_guard
-• Allowed:
-• pending → confirmed (provider) / canceled (client)
-• confirmed → completed (provider) / canceled (client)
+### 4.1 Checkout
 
-⸻
+1. A client opens a booking task and starts checkout.
+2. `PaymentCheckoutScreen` calls `BookingViewModel.createPaymentForBooking(...)`.
+3. `QiCardPaymentService` invokes `qicard_payment_create`.
+4. The server validates the task/package/request payload, creates a canonical booking draft, and returns `booking_id`, `form_url`, and correlation identifiers.
 
-3. File Inventory (Flutter)
+### 4.2 Gateway handoff
 
-File Layer Description
-lib/features/booking/data/booking_repository.dart Repository Wraps BookingService and exposes methods for slots/bookings; surfaces current user.
-lib/features/booking/services/booking_service.dart Service Executes PostgREST calls for `availability_slots` and `bookings` (list/create/update) and maps to models.
-lib/features/booking/viewmodels/booking_view_model.dart ViewModel ChangeNotifier with DI injected BookingService, holding UI state, pagination cursors, optimistic updates, and friendly error mapping.
-lib/features/booking/view/availability_screen.dart View Provider availability browser with pull-to-refresh, infinite scroll, and + button for `AddSlotSheet`.
-lib/features/booking/view/add_slot_sheet.dart View Bottom sheet to pick local start/end, convert to UTC, and call `BookingViewModel.createSlot()`.
-lib/features/booking/view/booking_sheet.dart View Client booking sheet with AppDimens enforcement and optional note; calls `BookingViewModel.bookSlot()`.
-lib/features/booking/view/bookings_list_screen.dart View Dual-tab history (As Client / As Provider) with filters, pagination, and action buttons (future confirm/complete/cancel).
+- **Mobile**: `PaymentWebViewScreen` opens the payment URL and only accepts trusted callback hosts/booking identifiers.
+- **Web**: checkout persists `PendingPaymentContext` through `PaymentPendingStore` and redirects the browser in the same tab.
 
-Convention: Service owns Supabase calls, ViewModel owns UI state + orchestration, UI is dumb (reads state, triggers ViewModel methods).
+### 4.3 Recovery
 
-⸻
+- When the gateway returns, the app uses `PaymentReturnArgs` plus stored pending context.
+- `PaymentReturnScreen` or `PaymentCheckoutScreen` calls `recoverBookingPaymentWithRetries(...)`.
+- Recovery succeeds only when the booking reaches `payment_status = held`.
 
-4. ERD (Mini)
+### 4.4 Post-payment actions
 
-```mermaid
-erDiagram
-  PROFILES ||--o{ AVAILABILITY_SLOTS : "provider_id"
-  PROFILES ||--o{ BOOKINGS : "provider_id / client_id"
-  AVAILABILITY_SLOTS ||--o{ BOOKINGS : "slot_id"
-  TASKS ||--o{ BOOKINGS : "task_id"
+Provider-side actions:
+- accept booking
+- decline/refund booking
+- mark delivered
 
-  PROFILES {
-    uuid id PK
-    text full_name
-  }
-  AVAILABILITY_SLOTS {
-    uuid id PK
-    uuid provider_id FK
-    timestamptz starts_at
-    timestamptz ends_at
-    bool is_blocked
-  }
-  BOOKINGS {
-    uuid id PK
-    uuid task_id FK
-    uuid provider_id FK
-    uuid client_id FK
-    uuid slot_id FK
-    booking_status_enum status
-    text note
-  }
-  TASKS {
-    uuid id PK
-    uuid user_id
-  }
+Client-side actions:
+- release booking payment with fee handling
+- message provider
+- review timeline/history
+
+`BookingDetailsScreen` also embeds `OrderManagementSection` with `WorkLogScope(entityId: booking.id, entityType: 'booking')`.
+
+## 5. Example Snippets
+
+### Create payment-backed booking draft
+
+```dart
+final result = await bookingViewModel.createPaymentForBooking(
+  taskId: taskId,
+  note: note,
+  packageId: packageId,
+  requirements: packageData,
+);
 ```
 
-ASCII (fallback)
+### Recover payment after trusted callback
 
-profiles (id) ──< availability_slots (provider_id)
-│ │
-│ └─< bookings (slot_id, provider_id, client_id)
-│
-tasks (id) ────────────────────────────────┘ (task_id)
+```dart
+final recovery = await bookingViewModel.recoverBookingPaymentWithRetries(
+  bookingId: bookingId,
+);
+```
 
-⸻
+### Load paged history
 
-5. Example SQL & Supabase Dart Snippets
+```dart
+await bookingViewModel.loadBookingsAsClient();
+await bookingViewModel.loadMoreBookingsAsProvider();
+```
 
-5.1 Create Slot (Provider)
+## 6. Error Handling and Notes
 
-Dart (Service)
+Current mapped booking/payment messages include:
+- task not bookable
+- self-booking forbidden
+- invalid package
+- slot unavailable
+- booking create/recovery failure
 
-final insert = await supabase
-.from('availability_slots')
-.insert({
-'provider_id': providerId, // must equal auth.uid() under RLS
-'starts_at' : startsUtc.toIso8601String(),
-'ends_at' : endsUtc.toIso8601String(),
-'is_blocked' : isBlocked,
-})
-.select()
-.single();
+Additional notes:
+- the client can create repeat slotless direct bookings for the same service task
+- slot exclusivity still applies to slot-based bookings through database constraints/policies
+- `BookingModel.dueAtUtc` falls back to `availability_slots.starts_at` for historical slot-based rows
+- `PaymentMethodScreen` remains in the repo for demo/manual payment paths, but QiCard is the default provider in `main.dart`
 
-5.2 List Provider Slots (Paged)
+## 7. Testing Checklist
 
-final rows = await supabase
-.from('availability_slots')
-.select()
-.eq('provider_id', providerId)
-.gte('starts_at', sinceUtc.toIso8601String())
-.order('starts_at') // server-side sort
-.range(offset, offset + limit - 1);
-
-5.3 Book a Slot (Client)
-
-final row = await supabase
-.from('bookings')
-.insert({
-'task_id' : taskId,
-'provider_id': providerId,
-'client_id' : clientId, // must equal auth.uid() under RLS
-'slot_id' : slotId,
-'note' : note,
-})
-.select()
-.single();
-
-5.4 List My Bookings (As Client)
-
-final rows = await supabase
-.from('bookings')
-.select("""
-_,
-availability_slots!inner(_)
-""")
-.eq('client_id', myId) // RLS also enforces this
-.order('created_at', ascending: false)
-.range(offset, offset + limit - 1);
-
-5.5 Confirm / Complete (Provider) & Cancel (Client)
-
-// Provider confirms
-await supabase.from('bookings').update({'status': 'confirmed'}).eq('id', bookingId);
-
-// Provider completes
-await supabase.from('bookings').update({'status': 'completed'}).eq('id', bookingId);
-
-// Client cancels
-await supabase.from('bookings').update({'status': 'canceled'}).eq('id', bookingId);
-
-The trigger (fn_booking_guard) and RLS (bookings_update_roles) jointly ensure only valid transitions by the authorized party.
-
-⸻
-
-6. Error Handling & Common Pitfalls
-
-Client/ViewModel conventions
-• Map Postgres error codes (e.g., 23505 unique violation) → user-friendly messages:
-• “This time slot is already booked. Please choose another.”
-• For overlap trigger errors on slot creation:
-• “This slot overlaps with an existing one.”
-
-Common pitfalls
-• Timezone bugs: Always convert UI local → UTC before insert; and UTC → local for display.
-• RLS denials:
-• Creating a slot with mismatched provider_id (must be auth.uid()).
-• Inserting a booking with client_id != auth.uid().
-• Ordering + Pagination: Apply filters before `.order()`. Use `.limit()` with time-based cursors (e.g., `gt/lt` on `starts_at` or `created_at`) instead of client-side slicing.
-• Double booking race: Unique partial index on bookings(slot_id) with active statuses prevents it.
-
-⸻
-
-7. Testing Checklist (Manual / Automated)
-   • Provider creates a non-overlapping open slot → appears in list.
-   • Provider tries overlapping slot → fails with friendly error.
-   • Client books an open slot → status pending.
-   • Provider confirms, then completes → allowed.
-   • Client cancels from pending/confirmed → allowed.
-   • Second client tries to book the same slot while active → fails.
-   • Lists (as Client / as Provider) show correct items with correct sorting & pagination.
-   • All date/times render in local timezone.
-
-⸻
-
-8. UI Flow (High-level)
-   • AvailabilityScreen (provider):
-   • FAB → AddSlotSheet → create open/blocked slot → refresh → list updates.
-   • TaskDetails → BookingSheet (client):
-   • Pick provider slot → submit booking (pending) → success SnackBar.
-   • BookingsListScreen:
-   • Tabs: As Client / As Provider → action chips (Confirm, Complete, Cancel).
-
-⸻
-
-9. Integration Notes
-   • Works alongside Tasks: A booking always references a task (task_id).
-   • Compatible with Chat: You can later notify participants on status changes with Realtime or Notifications.
-   • Plays well with Profile: Avatars, names, etc., pulled via joins or client caches.
+- create a booking draft for a booking task and verify checkout opens correctly
+- on web, confirm same-tab redirect returns to `PaymentReturnScreen`
+- on mobile, confirm `PaymentWebViewScreen` accepts only trusted callback URLs
+- verify successful recovery reaches `payment_status = held`
+- verify repeat slotless direct bookings for the same client/task pair are allowed
+- verify provider can accept/decline/deliver and client can release after delivery
+- verify booking details show due date, delivery days, and management timeline correctly
+- verify legacy slot-based bookings still render safely when `slot_id` is present

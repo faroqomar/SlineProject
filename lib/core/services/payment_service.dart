@@ -95,6 +95,7 @@ class QiCardCreatePaymentResult {
     this.providerId,
     this.expiresAt,
     this.correlationId,
+    this.requestCorrelationId,
     this.error,
     this.errorCode,
   });
@@ -106,6 +107,7 @@ class QiCardCreatePaymentResult {
   final String? providerId;
   final DateTime? expiresAt;
   final String? correlationId;
+  final String? requestCorrelationId;
   final String? error;
   final String? errorCode;
 
@@ -228,6 +230,7 @@ abstract class PaymentService {
     String? note,
     String? packageId,
     Map<String, dynamic>? requirements,
+    String? requestCorrelationId,
   });
 
   /// Recover booking payment state for the caller's own booking.
