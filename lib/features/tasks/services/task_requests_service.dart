@@ -1,13 +1,16 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/logger_service.dart';
 import '../models/task_request_model.dart';
-import '../../notifications/services/notification_service.dart';
-import '../../notifications/models/notification_model.dart';
 
 /// Service for handling task offer/bid operations.
 class TaskRequestsService {
   final SupabaseClient _client;
-  final NotificationService _notificationService = NotificationService();
+  static const String _selectWithProfile = '''
+    id, task_id, bidder_id, freelancer_id, price, days, duration_days,
+    note, message, status, payment_status, created_at, updated_at, deleted_at,
+    profiles!task_requests_freelancer_id_fkey(full_name, avatar_url),
+    tasks(title)
+  ''';
 
   TaskRequestsService({SupabaseClient? client})
     : _client = client ?? Supabase.instance.client;
@@ -19,6 +22,10 @@ class TaskRequestsService {
     final uid = _client.auth.currentUser?.id;
     if (uid == null) return null;
     try {
+      AppLogger.d(
+        'Checking existing active offer for task $taskId and user $uid',
+        tag: 'Offers',
+      );
       final rows = await _client
           .from('task_requests')
           .select()
@@ -29,7 +36,13 @@ class TaskRequestsService {
           .limit(1);
       if (rows.isEmpty) return null;
       return TaskRequest.fromMap(rows.first as Map<String, dynamic>);
-    } catch (_) {
+    } catch (e, st) {
+      AppLogger.e(
+        'Failed to load existing active offer for task $taskId',
+        tag: 'Offers',
+        error: e,
+        stackTrace: st,
+      );
       return null;
     }
   }
@@ -46,10 +59,9 @@ class TaskRequestsService {
       // Select * from task_requests and join profiles using explicit FK
       final query = _client
           .from('task_requests')
-          .select(
-            '*, profiles!task_requests_freelancer_id_fkey(full_name, avatar_url)',
-          )
-          .eq('task_id', taskId);
+          .select(_selectWithProfile)
+          .eq('task_id', taskId)
+          .is_('deleted_at', null);
 
       if (before != null) {
         query.lt('created_at', before.toUtc().toIso8601String());
@@ -129,30 +141,6 @@ class TaskRequestsService {
       final model = TaskRequest.fromMap(inserted as Map<String, dynamic>);
       AppLogger.i('Offer submitted: ${model.id}', tag: 'Offers');
 
-      // Notify Task Owner
-      try {
-        // We need to fetch the task owner
-        final taskRes = await _client
-            .from('tasks')
-            .select('client_id')
-            .eq('id', taskId)
-            .single();
-        final ownerId = taskRes['client_id'] as String?;
-
-        if (ownerId != null && ownerId != uid) {
-          _notificationService.createNotification(
-            userId: ownerId,
-            title: 'New Bid on Task',
-            message: 'You have received a new bid of ${model.price}',
-            type: NotificationType.offer,
-            relatedEntityId: taskId,
-            relatedEntityType: 'task',
-          );
-        }
-      } catch (e) {
-        AppLogger.w('Failed to notify task owner: $e');
-      }
-
       return model;
     } on PostgrestException catch (e, st) {
       final msg = (e.message).toLowerCase();
@@ -197,7 +185,7 @@ class TaskRequestsService {
     }
 
     try {
-      final res = await _client.rpc(
+      await _client.rpc(
         'replace_task_request',
         params: {
           'p_task_id': taskId,
@@ -208,7 +196,10 @@ class TaskRequestsService {
         },
       );
 
-      final model = TaskRequest.fromMap(res as Map<String, dynamic>);
+      final model = await getExistingActiveOfferForCurrentUser(taskId);
+      if (model == null) {
+        throw Exception('Offer was updated, but the refreshed offer could not be loaded.');
+      }
       AppLogger.i('Offer replaced: ${model.id}', tag: 'Offers');
       return model;
     } catch (e, st) {
@@ -223,39 +214,16 @@ class TaskRequestsService {
   }
 
   /// Accept an offer (task owner action).
-  Future<TaskRequest> accept(String requestId) async {
+  Future<TaskRequest> accept(String requestId, {String? taskId}) async {
     AppLogger.d('Accepting offer $requestId', tag: 'Offers');
     try {
-      final res = await _client.rpc(
+      final resolvedTaskId = taskId ?? await _resolveTaskId(requestId);
+      await _client.rpc(
         'accept_task_request',
-        params: {'p_request_id': requestId},
+        params: {'p_task_id': resolvedTaskId, 'p_request_id': requestId},
       );
-
-      Map<String, dynamic> map;
-      if (res is Map<String, dynamic>) {
-        map = res;
-      } else if (res is List &&
-          res.isNotEmpty &&
-          res.first is Map<String, dynamic>) {
-        map = res.first as Map<String, dynamic>;
-      } else {
-        throw Exception('Unexpected RPC result format for accept_task_request');
-      }
-
-      final model = TaskRequest.fromMap(map);
+      final model = await _fetchRequestById(requestId);
       AppLogger.i('Offer accepted: ${model.id}', tag: 'Offers');
-
-      // Notify Freelancer (Bidder)
-      if (model.bidderId.isNotEmpty) {
-        _notificationService.createNotification(
-          userId: model.bidderId,
-          title: 'Offer Accepted',
-          message: 'Your offer has been accepted!',
-          type: NotificationType.offer,
-          relatedEntityId: model.taskId,
-          relatedEntityType: 'task',
-        );
-      }
 
       return model;
     } catch (e, st) {
@@ -265,44 +233,21 @@ class TaskRequestsService {
         error: e,
         stackTrace: st,
       );
-      rethrow;
+      throw Exception(_mapDecisionError(e));
     }
   }
 
   /// Reject an offer (task owner action).
-  Future<TaskRequest> reject(String requestId) async {
+  Future<TaskRequest> reject(String requestId, {String? taskId}) async {
     AppLogger.d('Rejecting offer $requestId', tag: 'Offers');
     try {
-      final res = await _client.rpc(
+      final resolvedTaskId = taskId ?? await _resolveTaskId(requestId);
+      await _client.rpc(
         'reject_task_request',
-        params: {'p_request_id': requestId},
+        params: {'p_task_id': resolvedTaskId, 'p_request_id': requestId},
       );
-
-      Map<String, dynamic> map;
-      if (res is Map<String, dynamic>) {
-        map = res;
-      } else if (res is List &&
-          res.isNotEmpty &&
-          res.first is Map<String, dynamic>) {
-        map = res.first as Map<String, dynamic>;
-      } else {
-        throw Exception('Unexpected RPC result format for reject_task_request');
-      }
-
-      final model = TaskRequest.fromMap(map);
+      final model = await _fetchRequestById(requestId);
       AppLogger.i('Offer rejected: ${model.id}', tag: 'Offers');
-
-      // Notify Freelancer (Bidder)
-      if (model.bidderId.isNotEmpty) {
-        _notificationService.createNotification(
-          userId: model.bidderId,
-          title: 'Offer Rejected',
-          message: 'Your offer was not selected.',
-          type: NotificationType.offer,
-          relatedEntityId: model.taskId,
-          relatedEntityType: 'task',
-        );
-      }
 
       return model;
     } catch (e, st) {
@@ -312,7 +257,38 @@ class TaskRequestsService {
         error: e,
         stackTrace: st,
       );
-      rethrow;
+      throw Exception(_mapDecisionError(e));
     }
+  }
+
+  Future<String> _resolveTaskId(String requestId) async {
+    final row = await _client
+        .from('task_requests')
+        .select('task_id')
+        .eq('id', requestId)
+        .single();
+    return row['task_id'] as String;
+  }
+
+  Future<TaskRequest> _fetchRequestById(String requestId) async {
+    final row = await _client
+        .from('task_requests')
+        .select(_selectWithProfile)
+        .eq('id', requestId)
+        .single();
+    return TaskRequest.fromMap(row as Map<String, dynamic>);
+  }
+
+  String _mapDecisionError(Object error) {
+    final message = error.toString().toLowerCase();
+    if (message.contains('only task owner') || message.contains('forbidden')) {
+      return 'Only the task owner can perform this action.';
+    }
+    if (message.contains('already processed') ||
+        message.contains('not pending') ||
+        message.contains('request not found')) {
+      return 'This offer is no longer available for action.';
+    }
+    return 'Unable to update the offer right now. Please try again.';
   }
 }

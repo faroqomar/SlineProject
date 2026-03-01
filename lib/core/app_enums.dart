@@ -2,6 +2,9 @@
 library;
 
 /// Represents the possible views or tabs in the main navigation of the application.
+///
+/// `orders` is a legacy enum name preserved to avoid a broad navigation rename.
+/// The live slot renders the unified dashboard, not the removed orders module.
 enum NavView { home, tender, booking, orders, messages, profile, wallet }
 
 /// User Roles in the application.
@@ -40,7 +43,7 @@ enum BookingStatus {
 enum PaymentStatus { unpaid, held, released, refunded }
 
 /// Status of an Offer (Task Request).
-enum OfferStatus { pending, accepted, rejected, withdrawn }
+enum OfferStatus { pending, accepted, rejected, withdrawn, unknown }
 
 /// Type of item in the Unified Workspace.
 enum WorkItemType { task, booking }

@@ -27,7 +27,10 @@ List<Widget> _stubScreens() {
       child: Text('Stub Tender Screen'),
     ),
     Center(child: Text('Stub Booking Screen')),
-    Center(child: Text('Stub Dashboard Screen')),
+    Center(
+      key: ValueKey('main_nav_stub_dashboard'),
+      child: Text('Stub Dashboard Screen'),
+    ),
     Center(child: Text('Stub Messages Screen')),
     Center(child: Text('Stub Profile Screen')),
     Center(child: Text('Stub Wallet Screen')),
@@ -96,6 +99,30 @@ void main() {
         find.byKey(const ValueKey('main_nav_stub_tenders')),
         findsOneWidget,
       );
+    });
+
+    testWidgets('T53 dashboard nav index renders dashboard screen', (
+      tester,
+    ) async {
+      final navigationProvider = NavigationProvider();
+
+      await pumpApp(
+        tester,
+        ChangeNotifierProvider<NavigationProvider>.value(
+          value: navigationProvider,
+          child: MainNavigationScreen(screens: _stubScreens()),
+        ),
+      );
+
+      navigationProvider.setCurrentIndex(3);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(
+        find.byKey(const ValueKey('main_nav_stub_dashboard')),
+        findsOneWidget,
+      );
+      expect(find.text('Stub Dashboard Screen'), findsOneWidget);
     });
   });
 }

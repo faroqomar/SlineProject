@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
@@ -213,7 +214,13 @@ class OfferCard extends StatelessWidget {
                     if (isClientView) ...[
                       if (onReject != null && isPending)
                         TextButton(
-                          onPressed: onReject,
+                          onPressed: () {
+                            AppLogger.i(
+                              'Offer card reject tapped for offer=${offer.id}',
+                              tag: 'OfferCard',
+                            );
+                            onReject?.call();
+                          },
                           style: TextButton.styleFrom(
                             foregroundColor: AppColors.lightRed,
                           ),
@@ -223,7 +230,13 @@ class OfferCard extends StatelessWidget {
                       // New two-step flow: Award button
                       if (showAward)
                         FilledButton(
-                          onPressed: onAccept,
+                          onPressed: () {
+                            AppLogger.i(
+                              'Offer card award tapped for offer=${offer.id}',
+                              tag: 'OfferCard',
+                            );
+                            onAccept();
+                          },
                           style: FilledButton.styleFrom(
                             backgroundColor: AppColors.teal,
                           ),
@@ -232,7 +245,13 @@ class OfferCard extends StatelessWidget {
                       // Pay button for awarded but unpaid offers
                       if (showPay)
                         FilledButton(
-                          onPressed: onAccept,
+                          onPressed: () {
+                            AppLogger.i(
+                              'Offer card pay tapped for offer=${offer.id}',
+                              tag: 'OfferCard',
+                            );
+                            onAccept();
+                          },
                           style: FilledButton.styleFrom(
                             backgroundColor: Colors.orange,
                           ),
@@ -240,7 +259,13 @@ class OfferCard extends StatelessWidget {
                         ),
                       if (showEscrow)
                         FilledButton(
-                          onPressed: onAccept,
+                          onPressed: () {
+                            AppLogger.i(
+                              'Offer card escrow tapped for offer=${offer.id}',
+                              tag: 'OfferCard',
+                            );
+                            onAccept();
+                          },
                           style: FilledButton.styleFrom(
                             backgroundColor: AppColors.teal,
                           ),
@@ -250,7 +275,13 @@ class OfferCard extends StatelessWidget {
                         ),
                       if (!showEscrow && !showAward && !showPay && isPending)
                         FilledButton(
-                          onPressed: onAccept,
+                          onPressed: () {
+                            AppLogger.i(
+                              'Offer card accept tapped for offer=${offer.id}',
+                              tag: 'OfferCard',
+                            );
+                            onAccept();
+                          },
                           style: FilledButton.styleFrom(
                             backgroundColor: AppColors.teal,
                           ),
@@ -258,7 +289,13 @@ class OfferCard extends StatelessWidget {
                         ),
                       if (onRelease != null && showRelease)
                         FilledButton(
-                          onPressed: onRelease,
+                          onPressed: () {
+                            AppLogger.i(
+                              'Offer card release tapped for offer=${offer.id}',
+                              tag: 'OfferCard',
+                            );
+                            onRelease?.call();
+                          },
                           style: FilledButton.styleFrom(
                             backgroundColor: AppColors.teal,
                           ),
@@ -266,7 +303,13 @@ class OfferCard extends StatelessWidget {
                         ),
                       if (onRefund != null && showRefund)
                         TextButton(
-                          onPressed: onRefund,
+                          onPressed: () {
+                            AppLogger.i(
+                              'Offer card refund tapped for offer=${offer.id}',
+                              tag: 'OfferCard',
+                            );
+                            onRefund?.call();
+                          },
                           style: TextButton.styleFrom(
                             foregroundColor: AppColors.lightRed,
                           ),
@@ -276,7 +319,13 @@ class OfferCard extends StatelessWidget {
                       // Freelancer View
                       if (onWithdraw != null && isPending)
                         OutlinedButton.icon(
-                          onPressed: onWithdraw,
+                          onPressed: () {
+                            AppLogger.i(
+                              'Offer card withdraw tapped for offer=${offer.id}',
+                              tag: 'OfferCard',
+                            );
+                            onWithdraw?.call();
+                          },
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.lightRed,
                             side: BorderSide(
@@ -305,6 +354,7 @@ class OfferCard extends StatelessWidget {
         return AppColors.teal;
       case OfferStatus.rejected:
       case OfferStatus.withdrawn:
+      case OfferStatus.unknown:
         return AppColors.lightRed;
     }
   }
@@ -331,6 +381,9 @@ class _StatusBadge extends StatelessWidget {
         break;
       case OfferStatus.withdrawn:
         label = 'Withdrawn';
+        break;
+      case OfferStatus.unknown:
+        label = 'Unavailable';
         break;
     }
 

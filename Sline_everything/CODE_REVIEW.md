@@ -7,6 +7,23 @@
 
 > Historical review note: this document records review findings and fixes from earlier passes. Treat references to removed files or older structure as historical context; the current live structure is documented in `Sline_everything/STRUCTURE.md` and `Sline_everything/DEVELOPER_GUIDE.md`.
 
+## Current Guardrail Notes (2026-03-01)
+
+### Navigation Consolidation Must Remove Orphaned Runtime Surfaces
+
+**Pattern**:
+- A feature tab gets consolidated onto another live screen, but the old feature folder, provider, tests, and docs stay behind.
+
+**Why it matters**:
+- This creates false audit targets, stale providers, and duplicate mental models for the same user-facing surface.
+
+**Required cleanup checklist**:
+- Remove the old provider from `lib/main.dart` or the relevant local composition root.
+- Delete dead runtime files instead of leaving them compiled-but-unreachable.
+- Keep one explicit tombstone note if the old folder path must remain for transition clarity.
+- Update `Sline_everything/DEVELOPER_GUIDE.md`, `Sline_everything/STRUCTURE.md`, `Sline_everything/MVP_ROADMAP.md`, and `Sline_everything/Sline_Log.md` in the same patch.
+- Add or update a navigation/widget test so the surviving tab contract is asserted directly.
+
 ## Executive Summary
 
 Following **Phase 1 Foundation** completion using CodeGuard, Architect, and Sentinel agents, the SLine Flutter application now includes **comprehensive error handling**, **image caching**, **cursor-based pagination**, and **session expiry management**. The app demonstrates **excellent architectural compliance**, **optimal performance patterns**, and **robust error handling**.

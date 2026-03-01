@@ -2,15 +2,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/logger_service.dart';
 import '../models/conversation_model.dart';
 import '../models/message_model.dart';
-import '../../notifications/services/notification_service.dart';
-import '../../notifications/models/notification_model.dart';
 
 /// Why this service exists: encapsulates Supabase queries/streams so UI/controllers remain clean
 /// and to centralize schema changes (attachments, receipts, typing) in one place.
 class MessageService {
   /// Encapsulated Supabase client; allows injection for testing.
   final SupabaseClient _client;
-  final NotificationService _notificationService = NotificationService();
 
   MessageService([SupabaseClient? client])
     : _client = client ?? Supabase.instance.client;
@@ -255,60 +252,42 @@ class MessageService {
     String? messageType, // e.g. 'text', 'offer', etc.
     Map<String, dynamic>? payload,
   }) async {
-    final insertMap = <String, dynamic>{
-      'conversation_id': conversationId,
-      'sender_id': senderId,
-      'receiver_id': receiverId,
-      'content': content,
-      'message_type': messageType ?? 'text',
-      'payload': payload ?? {},
-    };
-    if (attachmentUrl != null) insertMap['attachment_url'] = attachmentUrl;
-    if (attachmentType != null) insertMap['attachment_type'] = attachmentType;
-    if (attachmentName != null) insertMap['attachment_name'] = attachmentName;
-    if (attachmentSize != null) insertMap['attachment_size'] = attachmentSize;
+    try {
+      AppLogger.d(
+        'Sending message to conversation=$conversationId type=${messageType ?? 'text'}',
+      );
+      final insertMap = <String, dynamic>{
+        'conversation_id': conversationId,
+        'sender_id': senderId,
+        'receiver_id': receiverId,
+        'content': content,
+        'message_type': messageType ?? 'text',
+        'payload': payload ?? {},
+      };
+      if (attachmentUrl != null) insertMap['attachment_url'] = attachmentUrl;
+      if (attachmentType != null) insertMap['attachment_type'] = attachmentType;
+      if (attachmentName != null) insertMap['attachment_name'] = attachmentName;
+      if (attachmentSize != null) insertMap['attachment_size'] = attachmentSize;
 
-    final response = await _client
-        .from('messages')
-        .insert(insertMap)
-        .select(
-          'id, conversation_id, sender_id, receiver_id, content, created_at, attachment_url, attachment_type, attachment_name, attachment_size, delivered_at, seen_at, message_type, payload',
-        )
-        .single();
+      final response = await _client
+          .from('messages')
+          .insert(insertMap)
+          .select(
+            'id, conversation_id, sender_id, receiver_id, content, created_at, attachment_url, attachment_type, attachment_name, attachment_size, delivered_at, seen_at, message_type, payload',
+          )
+          .single();
 
-    final msg = Message.fromJson(Map<String, dynamic>.from(response as Map));
-
-    // Create notification for receiver
-    String notifTitle = 'New Message';
-    String notifBody = content;
-    NotificationType notifType = NotificationType.message;
-
-    if (messageType == 'offer') {
-      notifTitle = 'New Offer Received';
-      notifBody = 'You received an offer of ${payload?['price'] ?? '?'}';
-      notifType = NotificationType.offer;
-    } else if (messageType == 'offer_accepted') {
-      notifTitle = 'Offer Accepted';
-      notifBody = 'Your offer has been accepted!';
-      notifType = NotificationType.offer;
-    } else if (messageType == 'offer_rejected') {
-      notifTitle = 'Offer Rejected';
-      notifBody = 'Your offer has been rejected.';
-      notifType = NotificationType.offer;
+      final message = Message.fromJson(Map<String, dynamic>.from(response as Map));
+      AppLogger.i('Sent message=${message.id} conversation=$conversationId');
+      return message;
+    } catch (e, st) {
+      AppLogger.e(
+        'Failed to send message to conversation=$conversationId',
+        error: e,
+        stackTrace: st,
+      );
+      rethrow;
     }
-
-    // Fire and forget notification creation (don't await to block UI)
-    // Use createOrUpdate to prevent spamming notifications for active chats
-    _notificationService.createOrUpdateNotification(
-      userId: receiverId,
-      title: notifTitle,
-      message: notifBody,
-      type: notifType,
-      relatedEntityId: conversationId,
-      relatedEntityType: 'conversation',
-    );
-
-    return msg;
   }
 
   /// Mark all messages in a conversation as delivered for the current receiver.

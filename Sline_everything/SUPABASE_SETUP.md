@@ -1016,19 +1016,15 @@ Cross-user profile summaries must go through `public.rpc_get_profile_summaries(u
 
 ### 7.2 `tasks` Policies
 
-| Policy                        | Command | Rule                                                                                                                                             |
-| ----------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `tasks_select_authenticated_feed` | SELECT  | `auth.role() = 'authenticated' AND (status = 'open' OR user_id = auth.uid() OR client_id = auth.uid() OR owner_id = auth.uid() OR freelancer_id = auth.uid() OR assigned_freelancer_id = auth.uid())` |
-| `Allow insert own tasks`      | INSERT  | `auth.uid() = user_id`                                                                                                                           |
-| `tasks_insert_policy`         | INSERT  | `is_client(auth.uid()) AND client_id = auth.uid()`                                                                                               |
-| `tasks_insert_self`           | INSERT  | `client_id = auth.uid()`                                                                                                                         |
-| `tasks_insert_owner`          | INSERT  | `owner_id = auth.uid()`                                                                                                                          |
-| `Allow update own tasks`      | UPDATE  | `auth.uid() = user_id`                                                                                                                           |
-| `tasks_update_policy`         | UPDATE  | `client_id = auth.uid()`                                                                                                                         |
-| `tasks_update_involved`       | UPDATE  | `client_id = auth.uid() OR freelancer_id = auth.uid()`                                                                                           |
-| `tasks_update_owner`          | UPDATE  | `owner_id = auth.uid()`                                                                                                                          |
-| `Allow delete own tasks`      | DELETE  | `auth.uid() = user_id`                                                                                                                           |
-| `tasks_delete_policy`         | DELETE  | `client_id = auth.uid()`                                                                                                                         |
+| Policy | Command | Rule |
+| ------ | ------- | ---- |
+| `tasks_select_authenticated_open_or_involved` | SELECT | `status = 'open' OR owner_id = auth.uid() OR freelancer_id = auth.uid() OR assigned_freelancer_id = auth.uid()` |
+| `tasks_insert_owner` | INSERT | `owner_id = auth.uid()` |
+| `tasks_update_involved` | UPDATE | `owner_id = auth.uid() OR freelancer_id = auth.uid() OR assigned_freelancer_id = auth.uid()` |
+| `tasks_update_owner` | UPDATE | `owner_id = auth.uid()` |
+| `tasks_delete_owner` | DELETE | `owner_id = auth.uid()` |
+
+`owner_id` is the canonical authorization column for task ownership. `owner_id` is generated from `COALESCE(client_id, user_id)` for compatibility with legacy rows, but new RLS and owner-side RPC checks must bind to `owner_id`.
 
 ### 7.3 `task_requests` Policies
 
@@ -1392,29 +1388,32 @@ final convo = await supabase.rpc('start_task_conversation_v1', params: {
 });
 ```
 
-#### `accept_task_request(p_request_id uuid) → task_requests`
+#### `accept_task_request(p_task_id uuid, p_request_id uuid) → uuid`
 
-Accept a pending offer.
+Canonical owner-side offer acceptance RPC.
 
 **What it does:**
 
-1. Validates caller is task owner
-2. Rejects all other pending offers
-3. Accepts this offer
-4. Updates task status to 'assigned'
-5. Sets assigned_freelancer_id
+1. Validates caller is the canonical task owner via `tasks.owner_id`
+2. Accepts the selected pending offer
+3. Rejects other pending offers on the same task
+4. Moves the task to `assigned` and sets both freelancer columns
+5. Creates or reuses the task conversation
+6. Logs the acceptance system message
+7. Creates the freelancer notification server-side
 
 **Usage:**
 
 ```dart
-final result = await supabase.rpc('accept_task_request', params: {
+final conversationId = await supabase.rpc('accept_task_request', params: {
+  'p_task_id': taskId,
   'p_request_id': requestId,
 });
 ```
 
-#### `accept_task_request(p_task_id uuid, p_request_id uuid) → uuid`
+#### `accept_task_request(p_request_id uuid) → task_requests`
 
-Alternative signature that also creates conversation and logs message.
+Legacy compatibility wrapper. It resolves `task_id`, delegates to the canonical two-argument RPC above, and returns the refreshed `task_requests` row.
 
 #### `process_payment_event_ledger(event_type, related_entity_type, related_entity_id, amount_override)` (v2.16)
 
@@ -1453,17 +1452,32 @@ The core orchestration function for the double-entry system.
 
 Finds >24h pending requests, expires them, and triggers refund.
 
-#### `reject_task_request(p_request_id uuid) → task_requests`
-
-Reject a pending offer.
-
 #### `reject_task_request(p_task_id uuid, p_request_id uuid) → uuid`
 
-Alternative signature with conversation creation.
+Canonical owner-side offer rejection RPC. It validates `tasks.owner_id`, rejects the selected pending offer, creates or reuses the task conversation, logs an `offer_rejected` system message, and creates the freelancer notification server-side.
 
-#### `replace_task_request(...)`
+#### `reject_task_request(p_request_id uuid) → task_requests`
 
-Archive previous offer and create new one.
+Legacy compatibility wrapper. It resolves `task_id`, delegates to the canonical two-argument RPC above, and returns the refreshed `task_requests` row.
+
+#### `replace_task_request(...) → void`
+
+Archive the previous offer and create a replacement offer.
+
+Frontend contract:
+
+- The function does not return the replacement row.
+- Clients must re-fetch the caller's active `task_requests` row after the RPC succeeds.
+
+#### Notification write contract (2026-03-01)
+
+- Client code must not insert into `public.notifications` directly.
+- Orders, offers, chat, and task-status notifications are server-side:
+  - `trg_task_requests_after_insert_notify_owner` notifies the task owner on new bids
+  - `accept_task_request(...)` and `reject_task_request(...)` notify the bidder on offer decisions
+  - `trg_messages_after_insert_notify_receiver` upserts unread conversation notifications
+  - `trg_tasks_after_status_change_notify_parties` notifies the assigned freelancer when the owner closes or cancels a task
+- `notifications_insert_any` was removed. Reads remain user-scoped via `notifications_select_own`; updates remain user-scoped via `notifications_update_own`.
 
 **Parameters:**
 

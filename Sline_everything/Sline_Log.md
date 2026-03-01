@@ -21,6 +21,54 @@
 
 ## 📋 Version History
 
+### 🟢 Version 2.16.7 — Legacy Orders Dashboard Decommission
+
+**Date:** 2026-03-01
+**Commit:** _Pending_ — "refactor(dashboard): remove legacy orders module and sync docs"
+
+#### ✅ Implemented
+
+- **Runtime Cleanup**
+  - Removed the unused app-root `OrdersViewModel` provider from `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/main.dart`.
+  - Removed the dead standalone orders runtime under `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/orders/` and kept a tombstone note at `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/orders/README.md`.
+  - Kept the active dashboard route on `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/dashboard/view/dashboard_screen.dart` and clarified in code comments that the bottom-nav still uses the legacy `NavView.orders` enum slot.
+- **Tests**
+  - Updated `/Users/eros/Dev/Eros_Projects/Sline/sline_app/test/widget/app/main_navigation_screen_test.dart` so the legacy tab index is asserted as the dashboard screen, not the removed orders screen.
+- **Docs Sync**
+  - Updated `Sline_everything/DEVELOPER_GUIDE.md`, `Sline_everything/DEVELOPER_GUIDE/Orders Feature.md`, `Sline_everything/STRUCTURE.md`, `Sline_everything/MVP_ROADMAP.md`, and `.TODO/CodexRefactor/01_FEATURES_INDEX.md` to reflect the decommissioned module and the live dashboard contract.
+  - Replaced `.TODO/CONTRACT_Orders_Runtime_2026-03-01.md` with a retirement note so it no longer claims `OrdersDashboardScreen` is live.
+  - Stamped the legacy `.TODO/*orders*` audit, plan, review, observability, and pipeline files as historical/superseded so they no longer read like current runtime truth.
+
+#### 📊 Impact
+
+- The repo no longer carries an unused second dashboard implementation or its provider/test surface.
+- The dashboard slot contract is now single-source: the app renders `DashboardScreen`, while the old `orders` module is explicitly retired.
+- Current docs and feature inventory no longer point contributors toward dead runtime code.
+
+#### 🧪 Verification
+
+- Plan: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.TODO/PLAN_OrdersFix_2026-03-01.md`
+- Execution Log: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.TODO/EXECUTION_LOG_PLAN_OrdersFix_2026-03-01.md`
+- Review: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.TODO/CODEGUARD_REVIEW_2026-03-01_orders.md`
+- QA: `UNVERIFIED` for a dedicated Sentinel QA artifact; this decommission was verified with analyzer + targeted widget tests only.
+- Docs Sync: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.TODO/DOCS_SYNC_2026-03-01_Orders_Dashboard_Decommission.md`
+- Test: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/test/widget/app/main_navigation_screen_test.dart`
+- Test: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/test/widget/dashboard/dashboard_screen_test.dart`
+- Check: `flutter analyze`
+- Check: `flutter test test/widget/app/main_navigation_screen_test.dart test/widget/dashboard/dashboard_screen_test.dart`
+
+#### 🔧 Technical Notes
+
+- `NavView.orders` remains in `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/core/app_enums.dart` to avoid a broad enum rename during the cleanup.
+- Historical `.TODO/` audit artifacts that discussed the removed module are left as snapshots; the authoritative current contract is now documented in `Sline_everything/` and the active feature index.
+- Key code paths:
+  - `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/main.dart`
+  - `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/app/main_navigation_screen.dart`
+  - `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/core/app_enums.dart`
+  - `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/dashboard/view/dashboard_screen.dart`
+- Key DB objects:
+  - none; this was a repo/runtime cleanup only and introduced no schema change.
+
 ### 🟢 Version 2.16.6 — Dashboard Review Ownership Sync & Work Detail CTA Clarification
 
 **Date:** 2026-03-01

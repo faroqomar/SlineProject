@@ -1,4 +1,5 @@
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 
 /// Enum for task type (bidding vs. scheduling)
 enum TaskType {
@@ -110,67 +111,118 @@ class Task {
   ///
   /// This avoids N+1 queries by getting all data in a single request.
   factory Task.fromJson(Map<String, dynamic> json) {
-    // Map database string to TaskType enum; default to tender for backward compatibility
-    final String? typeStr = json['task_type'] as String?;
-    final TaskType parsedTaskType = (typeStr == 'booking')
-        ? TaskType.booking
-        : TaskType.tender;
+    try {
+      // Map database string to TaskType enum; default to tender for backward compatibility
+      final String? typeStr = json['task_type'] as String?;
+      final TaskType parsedTaskType = (typeStr == 'booking')
+          ? TaskType.booking
+          : TaskType.tender;
 
-    final rawPaths = (json['image_paths'] as List?) ?? const [];
-    final parsedImagePaths = rawPaths
-        .map((e) => e?.toString() ?? '')
-        .where((s) => s.isNotEmpty)
-        .toList();
+      final rawPaths = (json['image_paths'] as List?) ?? const [];
+      final parsedImagePaths = rawPaths
+          .map((e) => e?.toString() ?? '')
+          .where((s) => s.isNotEmpty)
+          .toList();
 
-    // Extract profile data from JOIN (nested under 'profiles' key)
-    // or from flat fields (for backward compatibility with existing code)
-    final profileData = json['profiles'] as Map<String, dynamic>?;
-    final String? parsedUserName =
-        profileData?['full_name'] as String? ?? json['user_name'] as String?;
-    final String? parsedUserAvatar =
-        profileData?['avatar_url'] as String? ?? json['user_avatar'] as String?;
-    final String? parsedAuthorSellerLevel =
-        profileData?['seller_level'] as String? ??
-        json['author_seller_level'] as String?;
+      // Extract profile data from JOIN (nested under 'profiles' key)
+      // or from flat fields (for backward compatibility with existing code)
+      final profileData = json['profiles'] as Map<String, dynamic>?;
+      final String? parsedUserName =
+          profileData?['full_name'] as String? ?? json['user_name'] as String?;
+      final String? parsedUserAvatar =
+          profileData?['avatar_url'] as String? ?? json['user_avatar'] as String?;
+      final String? parsedAuthorSellerLevel =
+          profileData?['seller_level'] as String? ??
+          json['author_seller_level'] as String?;
 
-    return Task(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      description: json['description'] as String,
-      budget: (json['budget'] as num).toDouble(),
-      userId: json['user_id'] as String,
-      status: TaskStatus.values.firstWhere(
-        (e) => e.name == json['status'],
-        orElse: () => TaskStatus.open,
-      ),
-      taskType: parsedTaskType,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      deadline: json['deadline'] != null
-          ? DateTime.parse(json['deadline'] as String)
-          : null,
-      skills:
-          (json['skills'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          [],
-      // New DB-first FK (nullable)
-      categoryId: json['category_id'] as String?,
-      // Legacy text (nullable for rollback/fallback)
-      category: json['category'] as String?,
-      // Resolved name from embedded relation (if present), fallback to legacy text
-      categoryName:
-          ((json['categories'] as Map?)?['name'] as String?) ??
-          (json['category'] as String?),
-      userName: parsedUserName,
-      userAvatar: parsedUserAvatar,
-      authorSellerLevel: parsedAuthorSellerLevel,
-      assignedFreelancerId:
-          (json['assigned_freelancer_id'] as String?) ??
-          (json['freelancer_id'] as String?),
-      imagePaths: parsedImagePaths,
-      packages: json['packages'] as Map<String, dynamic>?,
-      offers: (json['offers'] as int?) ?? 0,
-    );
+      final String parsedOwnerId =
+          (json['owner_id'] as String?) ??
+          (json['client_id'] as String?) ??
+          (json['user_id'] as String?) ??
+          '';
+
+      return Task(
+        id: json['id'] as String,
+        title: json['title'] as String,
+        description: json['description'] as String,
+        budget: (json['budget'] as num).toDouble(),
+        userId: parsedOwnerId,
+        status: _parseTaskStatus(json['status'] as String?),
+        taskType: parsedTaskType,
+        createdAt: DateTime.parse(json['created_at'] as String),
+        deadline: json['deadline'] != null
+            ? DateTime.parse(json['deadline'] as String)
+            : null,
+        skills:
+            (json['skills'] as List<dynamic>?)
+                ?.map((e) => e as String)
+                .toList() ??
+            [],
+        // New DB-first FK (nullable)
+        categoryId: json['category_id'] as String?,
+        // Legacy text (nullable for rollback/fallback)
+        category: json['category'] as String?,
+        // Resolved name from embedded relation (if present), fallback to legacy text
+        categoryName:
+            ((json['categories'] as Map?)?['name'] as String?) ??
+            (json['category'] as String?),
+        userName: parsedUserName,
+        userAvatar: parsedUserAvatar,
+        authorSellerLevel: parsedAuthorSellerLevel,
+        assignedFreelancerId:
+            (json['assigned_freelancer_id'] as String?) ??
+            (json['freelancer_id'] as String?),
+        imagePaths: parsedImagePaths,
+        packages: json['packages'] as Map<String, dynamic>?,
+        offers: (json['offers'] as int?) ?? 0,
+      );
+    } catch (e, st) {
+      AppLogger.e(
+        'Failed to parse Task',
+        tag: 'Tasks',
+        error: e,
+        stackTrace: st,
+      );
+      rethrow;
+    }
+  }
+
+  static TaskStatus _parseTaskStatus(String? rawStatus) {
+    switch (rawStatus) {
+      case 'open':
+        return TaskStatus.open;
+      case 'assigned':
+        return TaskStatus.assigned;
+      case 'in_progress':
+      case 'inProgress':
+        return TaskStatus.inProgress;
+      case 'delivered':
+        return TaskStatus.inProgress;
+      case 'completed':
+        return TaskStatus.completed;
+      case 'closed':
+        return TaskStatus.closed;
+      case 'canceled':
+      case 'cancelled':
+        return TaskStatus.canceled;
+      case 'draft':
+        return TaskStatus.draft;
+      default:
+        AppLogger.w(
+          'Unknown task status "$rawStatus" encountered, falling back to draft',
+          tag: 'Tasks',
+        );
+        return TaskStatus.draft;
+    }
+  }
+
+  static String _mapTaskStatusToDb(TaskStatus status) {
+    switch (status) {
+      case TaskStatus.inProgress:
+        return 'in_progress';
+      default:
+        return status.name;
+    }
   }
 
   /// Convert Task to JSON
@@ -180,7 +232,7 @@ class Task {
       'description': description,
       'budget': budget,
       'user_id': userId,
-      'status': status.name,
+      'status': _mapTaskStatusToDb(status),
       'task_type': taskType.name,
       'deadline': deadline?.toIso8601String(),
       'skills': skills,

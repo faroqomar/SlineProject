@@ -1,6 +1,6 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.16.4 (docs refresh, web payment callback flow, repeat slotless bookings)
+**Version**: 2.16.7 (orders dashboard decommissioning + dashboard contract sync)
 **Last Updated**: 2026-03-01
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
@@ -17,7 +17,7 @@ This comprehensive guide consolidates all feature-specific documentation into a 
 - [Home Feature Reference](#home-feature-reference)
 - [Core Module Reference](#core-module-reference)
 - [Auth Feature Reference](#auth-feature-reference)
-- [Orders Feature Reference](#orders-feature-reference)
+- [Legacy Orders Dashboard (Decommissioned)](#legacy-orders-dashboard-decommissioned)
 - [Chat Feature Reference](#chat-feature-reference)
 - [Booking Feature Reference](#booking-feature-reference)
 - [Order Management Feature Reference](DEVELOPER_GUIDE/Order_Management_Feature.md)
@@ -70,7 +70,7 @@ Conventions
 | Area       | Tables (FKs)                                                                             | Notes                                                                 |
 | ---------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | Identity   | `auth.users` → `public.profiles(id)`                                                     | App identity row per user; RLS owner-only update.                     |
-| Tasks      | `tasks(user_id → profiles.id)`                                                           | `task_type_enum` = `tender`/`booking`; `status` open/assigned/closed. |
+| Tasks      | `tasks(owner_id, user_id, client_id → profiles.id)`                                      | `owner_id` is the generated canonical owner key; app code keeps compatibility reads on legacy `user_id`/`client_id`. |
 | Requests   | `task_requests(task_id, bidder_id → profiles.id)`                                        | Tender only; unique pending per (task,bidder); guarded triggers.      |
 | Booking    | `availability_slots(provider_id)` → `bookings(task_id, provider_id, client_id, slot_id)` | RLS enforces roles; status guard trigger.                             |
 | Categories | `categories` → `tasks(category_id)`                                                      | DB‑first with unique lower(name).                                     |
@@ -1484,34 +1484,35 @@ Repository logging masks email addresses before logging.
 
 
 
+## Legacy Orders Dashboard (Decommissioned)
+
 ## 1. Human Explanation
 
-The Orders feature (often referred to as "My Published Tasks" or "Dashboard") allows clients to manage the tasks they have created. It aggregates functionality from the Tasks module to list published tasks, view incoming offers (requests), and accept/reject them.
+The standalone `orders` dashboard module was removed on 2026-03-01.
 
-- **UI**: `lib/features/orders/view/` contains the dashboard and offer management sheets.
-- **Service**: `OrdersService` allows fetching "my tasks" and delegating offer actions to `TaskRequestsService`.
+- The live bottom-nav dashboard entry is `lib/features/dashboard/view/dashboard_screen.dart`.
+- `lib/app/main_navigation_screen.dart` still uses the legacy enum slot name `NavView.orders` for compatibility, but that slot no longer maps to `lib/features/orders/`.
+- The old `orders` module is intentionally not part of the runtime anymore; only `lib/features/orders/README.md` remains as a tombstone note.
 
-## 2. Database & Supabase Mapping
+## 2. Replacement Contract
 
-This feature primarily acts as a view over the `tasks` and `task_requests` tables. It does not introduce new tables.
+- **Navigation entry**: `lib/app/main_navigation_screen.dart`
+- **Bottom-nav shell**: `lib/core/widgets/custom_bottom_nav_bar.dart`
+- **Dashboard UI**: `lib/features/dashboard/view/dashboard_screen.dart`
+- **Dashboard state**: `lib/features/dashboard/viewmodels/dashboard_view_model.dart`
+- **Legacy placeholder**: `lib/features/orders/README.md`
 
-- **Reads**: `tasks` where `user_id = auth.uid()`.
-- **Offers**: `task_requests` linked to those tasks.
+## 3. Why It Was Removed
 
-## 3. File Inventory
+- The main app had already consolidated the dashboard tab onto `DashboardScreen`.
+- `OrdersViewModel` remained app-root scoped in `lib/main.dart` even though no live route instantiated the standalone orders dashboard.
+- Keeping both `dashboard` and `orders` modules created two competing dashboard surfaces and stale documentation.
 
-| File                                                     | Layer     | Description                                                                       |
-| -------------------------------------------------------- | --------- | --------------------------------------------------------------------------------- |
-| `lib/features/orders/services/orders_service.dart`       | Service   | Aggregator for `TaskService` and `TaskRequestsService` to manage my tasks/offers. |
-| `lib/features/orders/view/orders_dashboard_screen.dart`  | View      | Dashboard showing published tasks and their status.                               |
-| `lib/features/orders/view/widgets/offer_list_sheet.dart` | View      | Sheet to view and act on offers for a specific task.                              |
-| `lib/features/orders/viewmodels/orders_view_model.dart`  | ViewModel | State management for the dashboard.                                               |
+## 4. Verification Checklist
 
-## 4. Testing Checklist
-
-- **List**: Verify all my created tasks appear.
-- **Offers**: Check that incoming offers for my tasks are visible.
-- **Actions**: Accept/Reject offer updates the status in `task_requests` and `tasks` (if accepted).
+- Confirm `lib/main.dart` no longer imports or provides `OrdersViewModel`.
+- Confirm `lib/app/main_navigation_screen.dart` still renders `DashboardScreen()` in the legacy `NavView.orders` slot.
+- Confirm repo search for `OrdersDashboardScreen`, `OrdersViewModel`, and `OrdersService` returns no live Dart references outside historical `.TODO/` artifacts.
 
 ---
 

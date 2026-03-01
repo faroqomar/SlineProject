@@ -42,6 +42,7 @@ class TaskRequest {
   bool get isPending => status == OfferStatus.pending;
   bool get isAccepted => status == OfferStatus.accepted;
   bool get isRejected => status == OfferStatus.rejected;
+  bool get isUnknown => status == OfferStatus.unknown;
 
   factory TaskRequest.fromMap(Map<String, dynamic> map) {
     try {
@@ -67,12 +68,9 @@ class TaskRequest {
             (map['bidder_id'] as String?) ??
             '', // Fallback to empty string if both are null
         price: priceValue,
-        days: map['days'] as int,
-        note: map['note'] as String?,
-        status: OfferStatus.values.firstWhere(
-          (e) => e.name == map['status'],
-          orElse: () => OfferStatus.pending,
-        ),
+        days: (map['days'] as int?) ?? (map['duration_days'] as int?) ?? 0,
+        note: (map['note'] ?? map['message']) as String?,
+        status: _mapDbOfferStatusToEnum(map['status'] as String?),
         paymentStatus: _mapDbPaymentStatusToEnum(
           map['payment_status'] as String?,
         ),
@@ -164,9 +162,11 @@ class TaskRequest {
           other.days == days &&
           other.note == note &&
           other.status == status &&
+          other.paymentStatus == paymentStatus &&
           other.createdAt == createdAt &&
           other.bidderName == bidderName &&
-          other.bidderAvatar == bidderAvatar);
+          other.bidderAvatar == bidderAvatar &&
+          other.taskTitle == taskTitle);
 
   @override
   int get hashCode => Object.hash(
@@ -189,6 +189,14 @@ class TaskRequest {
     return PaymentStatus.values.firstWhere(
       (e) => e.name == status,
       orElse: () => PaymentStatus.unpaid,
+    );
+  }
+
+  static OfferStatus _mapDbOfferStatusToEnum(String? status) {
+    if (status == null) return OfferStatus.unknown;
+    return OfferStatus.values.firstWhere(
+      (e) => e.name == status,
+      orElse: () => OfferStatus.unknown,
     );
   }
 }

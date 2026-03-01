@@ -25,15 +25,14 @@
 ## Exact Feature Names (Use These Names When Choosing a Feature)
 
 - `auth`
-- `booking`
+- `booking` done 
 - `categories`
 - `chat`
 - `dashboard`
 - `favorites`
-- `home`
-- `management`
+- `home` done
+- `management`done
 - `notifications`
-- `orders`
 - `portfolio`
 - `profile`
 - `proposals`
@@ -181,12 +180,11 @@ Apply this template to each feature, then add the feature-specific checks listed
 | `booking` | Availability slots and bookings lifecycle | `BookingsDiscoveryScreen`, `AvailabilityScreen`, booking detail/sheets | Global `BookingViewModel` | `availability_slots`, `bookings`, joined `tasks`, RPC `process_payment_event` |
 | `categories` | Categories listing/lookup | `CategoriesScreen` | Local `CategoriesViewModel` (screen provider) | `categories` table |
 | `chat` | Conversations, messages, attachments, realtime | `MessagesScreen`, `ChatScreen`, `CreateOfferSheet` | Global `ChatViewModel` | `conversations`, `messages`, realtime streams, RPCs, bucket `chat-attachments` |
-| `dashboard` | Aggregated role-based dashboard/work overview | `DashboardScreen` (+ tabs/widgets) | Global `DashboardViewModel` | `profiles`, `activity_log`, view `vw_unified_work_items` |
+| `dashboard` | Aggregated role-based dashboard/work overview | `DashboardScreen` (+ tabs/widgets) | Global `DashboardViewModel` | `profiles`, `activity_log`, view `vw_unified_work_items`; bottom-nav still uses legacy `NavView.orders` enum slot |
 | `favorites` | Saved freelancers / favorite contacts | `FavoritesScreen` | Global `FavoritesViewModel` + local `.value` wrappers | `favorites` table |
 | `home` | Home feed + filters coordination | `HomeScreen`, `FiltersModal` | Global `HomeViewModel` + global `TaskFilterViewModel` | Indirect via `TaskService` (`tasks`, `profiles`) |
 | `management` | Work log / order management panel | `OrderManagementPanel` | Local `OrderManagementViewModel` | `work_logs` table |
 | `notifications` | Notification stream, badge, modal UI | `NotificationsModal`, badge widget | Global `NotificationViewModel` | `notifications` table + realtime stream |
-| `orders` | “My Orders” orchestration over tasks/offers | `OrdersDashboardScreen`, `OfferListSheet` | Global `OrdersViewModel` | Indirect: `tasks`, `task_requests`, RPCs via task request services |
 | `portfolio` | Portfolio CRUD + media uploads | `PortfolioScreen`, add/edit/detail sheets | Local `PortfolioViewModel` | `portfolio_items`, bucket `portfolio` |
 | `profile` | Profile settings, public profile, avatar, related actions | `ProfileScreen`, `PublicProfileScreen`, settings/edit/manage screens | Global `ProfileViewModel` + local `PublicProfileViewModel` | `profiles`, `portfolio_items`, `portfolio`, `tasks`, bucket `avatars` |
 | `proposals` | Proposal details modal UI (currently UI-centric) | `ProposalDetailsModal` | No feature VM observed | No direct Supabase usage observed in feature file |
@@ -712,56 +710,18 @@ Each feature section below includes:
 
 ---
 
-## Feature: `orders`
+## Feature: `orders` (decommissioned)
 
 ### Inventory (Observed)
 
-- Main folders: `lib/features/orders/services`, `lib/features/orders/view`, `lib/features/orders/viewmodels`
-- Entry UI screens/sheets:
-  - `OrdersDashboardScreen`
-  - `OfferListSheet`
-- ViewModels/Controllers:
-  - `OrdersViewModel` (global provider)
-- Repositories/Services:
-  - `OrdersService` (orchestrates `TaskService` + `TaskRequestsService`)
-- Models/DTOs:
-  - no feature-local models (reuses `Task` and `TaskRequest`)
-- DB/Auth/RPC/Policies involved (best effort):
-  - Indirect tables: `tasks`, `task_requests`, `profiles`
-  - Indirect RPCs via task request services: `accept_task_request`, `reject_task_request`, `replace_task_request`
-  - Policies to verify later: task owner offer-management permissions
+- The standalone runtime feature was removed on 2026-03-01.
+- `lib/features/orders/README.md` is the only remaining file in the folder.
+- The live bottom-nav dashboard entry is `DashboardScreen` under the `dashboard` feature.
 
-### A) Structure & Architecture
+### Audit Note
 
-- Apply `A1`–`A6`.
-- [ ] Verify `OrdersService` remains an orchestration layer and does not duplicate core task/request business logic already in task services.
-- [ ] Verify UI actions (accept/reject/delete/close) flow through `OrdersViewModel` and service abstractions cleanly.
-
-### B) Code Quality & Maintainability
-
-- Apply `B1`–`B7`.
-- [ ] Verify status-tab filtering logic is synchronized with task status enums and centralized constants where appropriate.
-- [ ] Verify pass-through service methods are justified and documented (or flagged for later consolidation during audit).
-
-### C) Security & Privacy
-
-- Apply `C1`–`C8`.
-- [ ] Verify order management actions (delete/close/accept/reject offer) rely on backend authorization/RLS/RPC, not just current-user checks in client code.
-
-### D) Performance & UX
-
-- Apply `D1`–`D5`.
-- [ ] Verify order list refresh and offer-sheet loading do not trigger redundant nested task/request fetches.
-
-### E) Data Integrity & Domain Logic
-
-- Apply `E1`–`E5`.
-- [ ] Verify task status updates shown in order tabs align with underlying task/request acceptance state changes.
-
-### F) Fix Strategy Blueprint (No Changes Yet)
-
-- Apply `F1`–`F5`.
-- [ ] Define post-fix flows: list orders, open offers, accept/reject offer, delete/close task, refresh.
+- Do not schedule new audit or fix work against `orders` as a live feature.
+- If future product work revives this surface, add it back as a new feature contract instead of reusing stale assumptions from the removed module.
 
 ---
 
@@ -1293,4 +1253,3 @@ Each feature section below includes:
 
 - This file intentionally stops at planning.
 - Actual feature auditing should produce findings/evidence per feature only after you choose the first target feature.
-

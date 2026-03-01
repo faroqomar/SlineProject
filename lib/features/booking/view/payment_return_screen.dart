@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/config/payment_runtime_config.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/services/payment_pending_store.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
@@ -38,7 +39,23 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
     final pendingStore = context.read<PaymentPendingStore>();
     final pendingContext = pendingStore.load();
 
+    AppLogger.i(
+      'Resolving payment return',
+      tag: 'Payment',
+      json: <String, dynamic>{
+        'uri': Uri.base.toString(),
+        'has_initial_args': widget.initialArgs != null,
+        'pending_booking_id': pendingContext?.bookingId,
+        'pending_correlation_id': pendingContext?.correlationId,
+      },
+    );
+
     if (paymentReturn == null) {
+      AppLogger.w(
+        'Payment return rejected: invalid callback payload',
+        tag: 'Payment',
+        error: Uri.base.toString(),
+      );
       _setTerminalState(
         message: 'The payment callback is invalid.',
         isRecoverable: false,
@@ -48,6 +65,11 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
 
     final bookingId = paymentReturn.bookingId ?? pendingContext?.bookingId;
     if (bookingId == null || bookingId.isEmpty) {
+      AppLogger.w(
+        'Payment return rejected: missing booking reference',
+        tag: 'Payment',
+        error: paymentReturn.rawUri.toString(),
+      );
       _setTerminalState(
         message: 'The payment callback is missing the booking reference.',
         isRecoverable: false,
@@ -59,6 +81,14 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
       final expectedHosts = pendingContext.callbackHosts;
       final callbackHost = paymentReturn.rawUri.host.toLowerCase();
       if (expectedHosts.isNotEmpty && !expectedHosts.contains(callbackHost)) {
+        AppLogger.w(
+          'Payment return rejected: callback host mismatch',
+          tag: 'Payment',
+          json: <String, dynamic>{
+            'callback_host': callbackHost,
+            'expected_hosts': expectedHosts.toList(),
+          },
+        );
         _setTerminalState(
           message:
               'The payment callback host does not match the pending payment.',
@@ -69,6 +99,14 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
 
       if (paymentReturn.bookingId != null &&
           paymentReturn.bookingId != pendingContext.bookingId) {
+        AppLogger.w(
+          'Payment return rejected: booking mismatch',
+          tag: 'Payment',
+          json: <String, dynamic>{
+            'callback_booking_id': paymentReturn.bookingId,
+            'pending_booking_id': pendingContext.bookingId,
+          },
+        );
         _setTerminalState(
           message: 'The payment callback does not match the pending booking.',
           isRecoverable: false,
@@ -79,6 +117,14 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
       if (paymentReturn.correlationId != null &&
           pendingContext.correlationId != null &&
           paymentReturn.correlationId != pendingContext.correlationId) {
+        AppLogger.w(
+          'Payment return rejected: correlation mismatch',
+          tag: 'Payment',
+          json: <String, dynamic>{
+            'callback_correlation_id': paymentReturn.correlationId,
+            'pending_correlation_id': pendingContext.correlationId,
+          },
+        );
         _setTerminalState(
           message:
               'The payment callback correlation does not match the pending payment.',
@@ -89,6 +135,14 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
     }
 
     if (paymentReturn.isFailure) {
+      AppLogger.w(
+        'Payment return reported failure',
+        tag: 'Payment',
+        json: <String, dynamic>{
+          'booking_id': bookingId,
+          'status': paymentReturn.normalizedStatus,
+        },
+      );
       await context.read<BookingViewModel>().cancelBookingDraftIfUnpaid(
         bookingId,
       );
@@ -101,6 +155,15 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
       return;
     }
 
+    AppLogger.i(
+      'Payment return accepted, starting recovery',
+      tag: 'Payment',
+      json: <String, dynamic>{
+        'booking_id': bookingId,
+        'status': paymentReturn.normalizedStatus,
+        'correlation_id': paymentReturn.correlationId,
+      },
+    );
     final recovery = await context
         .read<BookingViewModel>()
         .recoverBookingPaymentWithRetries(bookingId: bookingId);
@@ -109,6 +172,15 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
 
     if (recovery.isSuccess && recovery.paymentStatus == 'held') {
       await pendingStore.clear();
+      AppLogger.i(
+        'Payment recovery succeeded',
+        tag: 'Payment',
+        json: <String, dynamic>{
+          'booking_id': bookingId,
+          'recovery_result': recovery.recoveryResult,
+          'payment_status': recovery.paymentStatus,
+        },
+      );
       setState(() {
         _isLoading = false;
         _isRecoverable = false;
@@ -118,6 +190,16 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
       return;
     }
 
+    AppLogger.w(
+      'Payment recovery completed without held status',
+      tag: 'Payment',
+      error: recovery.error ?? 'BOOKING_PAYMENT_NOT_HELD',
+      json: <String, dynamic>{
+        'booking_id': bookingId,
+        'recovery_result': recovery.recoveryResult,
+        'payment_status': recovery.paymentStatus,
+      },
+    );
     setState(() {
       _isLoading = false;
       _isRecoverable = true;

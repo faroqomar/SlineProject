@@ -335,9 +335,29 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
       final uri = currentUrl != null ? Uri.tryParse(currentUrl) : null;
 
       if (uri != null) {
+        final paymentReturn = parsePaymentReturnArgs(
+          uri,
+          callbackHosts: widget.callbackHosts,
+        );
         final currentPath = uri.path.toLowerCase();
         final isTrustedCallback = _isTrustedWebCallback(uri);
         final matchesExpectedCallback = _matchesExpectedCallback(uri);
+
+        if (paymentReturn != null &&
+            matchesExpectedCallback &&
+            isTrustedCallback) {
+          AppLogger.i(
+            'Back navigation resolved to payment callback status=${paymentReturn.normalizedStatus}',
+            tag: 'QiCard',
+            json: <String, dynamic>{
+              'booking_id': paymentReturn.bookingId,
+              'correlation_id': paymentReturn.correlationId,
+              'payment_id': paymentReturn.paymentId,
+            },
+          );
+          _popWithResult(paymentReturn);
+          return;
+        }
 
         // Check if we're on a success/receipt page
         final isOnSuccessPage =

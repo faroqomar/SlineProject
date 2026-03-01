@@ -6,6 +6,13 @@
 
 > Historical analysis note: this document captures architectural assessment snapshots over time. For the current live repository layout and active contracts, use `Sline_everything/STRUCTURE.md`, `Sline_everything/DEVELOPER_GUIDE.md`, and `Sline_everything/SUPABASE_SETUP.md`.
 
+## Current Live Architecture Notes (2026-03-01)
+
+- The bottom navigation still uses the legacy enum member `NavView.orders` in `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/core/app_enums.dart`, but the live slot renders `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/dashboard/view/dashboard_screen.dart`.
+- The standalone runtime under `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/orders/` was removed; `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/orders/README.md` is the only remaining file in that folder.
+- The cleanup also removed the orphaned app-root `OrdersViewModel` provider from `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/main.dart`, which reduced stale state risk from an unreachable feature surface.
+- Architectural rule reinforced by this change: when a navigation surface is consolidated, remove the orphaned provider/test/doc surface in the same patch instead of leaving a dead parallel feature tree.
+
 ---
 
 ## Table of Contents
@@ -219,6 +226,9 @@ lib/features/
 - Shared widgets need careful placement
 
 **Assessment**: **Ideal for multi-feature app**
+
+**2026-03-01 Current Note**:
+- Feature-based organization only stays healthy when decommissioned features are actually removed from runtime wiring. The retired `orders` module was a concrete example of a feature folder that had drifted out of navigation ownership while still keeping a provider and docs alive.
 
 ---
 

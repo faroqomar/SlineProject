@@ -449,6 +449,7 @@ class BookingViewModel extends ChangeNotifier {
     String? note,
     String? packageId,
     Map<String, dynamic>? requirements,
+    String? finishUrl,
   }) async {
     final requestCorrelationId = 'booking_create:${_uuid.v4()}';
     AppLogger.i(
@@ -458,6 +459,7 @@ class BookingViewModel extends ChangeNotifier {
         'task_id': taskId,
         'package_id': packageId,
         'has_note': note != null && note.trim().isNotEmpty,
+        'finish_url': finishUrl,
         'requirements_keys': (requirements ?? const <String, dynamic>{}).keys
             .toList(),
         'request_correlation_id': requestCorrelationId,
@@ -468,6 +470,7 @@ class BookingViewModel extends ChangeNotifier {
       note: note,
       packageId: packageId,
       requirements: requirements,
+      finishUrl: finishUrl,
       requestCorrelationId: requestCorrelationId,
     );
 

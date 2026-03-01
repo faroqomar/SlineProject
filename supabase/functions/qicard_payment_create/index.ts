@@ -10,6 +10,7 @@ import {
   QICARD_FINISH_URL,
   recordBookingAudit,
   requireAuthenticatedUser,
+  resolveQiCardFinishUrl,
   withQueryParams,
 } from "../_shared/bookin_payment.ts";
 
@@ -40,6 +41,10 @@ Deno.serve(async (req: Request) => {
     const taskId = String(body.task_id || "");
     const note = typeof body.note === "string" ? body.note : null;
     const packageId = typeof body.package_id === "string" ? body.package_id : null;
+    const requestedFinishUrl =
+      typeof body.finish_url === "string" && body.finish_url.trim().length > 0
+        ? body.finish_url.trim()
+        : null;
     const requirements =
       body.requirements && typeof body.requirements === "object"
         ? body.requirements
@@ -75,10 +80,13 @@ Deno.serve(async (req: Request) => {
     const bookingId = String(booking.id);
     const correlationId = buildCorrelationId(bookingId, "create");
     const paymentRequestId = crypto.randomUUID();
-    const finishPaymentUrl = withQueryParams(QICARD_FINISH_URL, {
-      booking_id: bookingId,
-      correlation_id: correlationId,
-    });
+    const finishPaymentUrl = withQueryParams(
+      resolveQiCardFinishUrl(req, requestedFinishUrl ?? QICARD_FINISH_URL),
+      {
+        booking_id: bookingId,
+        correlation_id: correlationId,
+      },
+    );
     const amount = Number(booking.price || 0);
     const expiresAt = new Date(
       Date.now() + BOOKING_PAYMENT_EXPIRY_MINUTES * 60 * 1000,

@@ -17,7 +17,7 @@ export const QICARD_NOTIFICATION_URL =
   Deno.env.get("QICARD_NOTIFICATION_URL") ||
   `${SUPABASE_URL}/functions/v1/qicard_webhook_handler`;
 export const QICARD_FINISH_URL =
-  Deno.env.get("QICARD_FINISH_URL") || "https://sline.app/payment/success";
+  Deno.env.get("QICARD_FINISH_URL") || "https://sline.app/?payment_return=1";
 export const BOOKING_PAYMENT_EXPIRY_MINUTES = Number(
   Deno.env.get("BOOKING_PAYMENT_EXPIRY_MINUTES") || "30",
 );
@@ -92,6 +92,77 @@ export function withQueryParams(
     url.searchParams.set(key, value);
   });
   return url.toString();
+}
+
+export function normalizeQiCardFinishUrl(baseUrl: string) {
+  const url = new URL(baseUrl);
+
+  if (url.protocol === "https:" || url.protocol === "http:") {
+    url.search = "";
+    url.hash = "";
+    url.searchParams.set("payment_return", "1");
+  }
+
+  return url.toString();
+}
+
+function isTrustedFinishUrl(url: URL) {
+  if (url.protocol === "https:") {
+    return true;
+  }
+
+  return url.protocol === "http:" &&
+    (url.hostname === "localhost" || url.hostname === "127.0.0.1");
+}
+
+function safeParseUrl(value: string | null | undefined) {
+  if (!value || value.trim().length === 0) {
+    return null;
+  }
+
+  try {
+    return new URL(value.trim());
+  } catch {
+    return null;
+  }
+}
+
+function readRequestOrigin(req: Request) {
+  const origin = safeParseUrl(req.headers.get("origin"));
+  if (origin && isTrustedFinishUrl(origin)) {
+    return origin;
+  }
+
+  const referer = safeParseUrl(req.headers.get("referer"));
+  if (referer && isTrustedFinishUrl(referer)) {
+    return referer;
+  }
+
+  return null;
+}
+
+function sameOrigin(left: URL, right: URL) {
+  return left.protocol === right.protocol &&
+    left.hostname === right.hostname &&
+    left.port === right.port;
+}
+
+export function resolveQiCardFinishUrl(
+  req: Request,
+  requestedFinishUrl?: string | null,
+) {
+  const defaultFinishUrl = normalizeQiCardFinishUrl(QICARD_FINISH_URL);
+  const requested = safeParseUrl(requestedFinishUrl);
+  if (!requested || !isTrustedFinishUrl(requested)) {
+    return defaultFinishUrl;
+  }
+
+  const requestOrigin = readRequestOrigin(req);
+  if (!requestOrigin || !sameOrigin(requested, requestOrigin)) {
+    return defaultFinishUrl;
+  }
+
+  return normalizeQiCardFinishUrl(requested.toString());
 }
 
 export async function recordBookingAudit(

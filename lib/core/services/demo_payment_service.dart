@@ -138,6 +138,7 @@ class DemoPaymentService implements PaymentService {
     String? note,
     String? packageId,
     Map<String, dynamic>? requirements,
+    String? finishUrl,
     String? requestCorrelationId,
   }) async {
     await Future.delayed(delay);

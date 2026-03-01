@@ -145,7 +145,6 @@ Current feature folders:
 - `home`
 - `management`
 - `notifications`
-- `orders`
 - `portfolio`
 - `profile`
 - `proposals`
@@ -167,8 +166,9 @@ Not every feature uses every subfolder, but the standard live convention is:
 - `lib/features/auth/`: login, signup, forgot password, auth session handling
 - `lib/features/booking/`: direct booking checkout, booking lists/details, payment return/webview screens
 - `lib/features/chat/`: conversations, messages, attachments, realtime updates
-- `lib/features/dashboard/`: unified dashboard tabs and role-based work summaries
+- `lib/features/dashboard/`: unified dashboard tabs and role-based work summaries, including the live bottom-nav dashboard slot
 - `lib/features/management/`: order timeline / note management for tasks and bookings
+- `lib/features/orders/`: decommissioned placeholder folder with `README.md` only; standalone orders runtime was removed on 2026-03-01
 - `lib/features/tasks/`: task creation, details, requests/offers, tender payment, delivery flows
 - `lib/features/wallet/`: wallet state and ledger-backed balance views
 - `lib/features/work/`: unified work item details and CTA resolution

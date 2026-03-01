@@ -230,6 +230,7 @@ abstract class PaymentService {
     String? note,
     String? packageId,
     Map<String, dynamic>? requirements,
+    String? finishUrl,
     String? requestCorrelationId,
   });
 

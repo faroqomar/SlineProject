@@ -10,6 +10,7 @@ class PendingPaymentContext {
     required this.entityType,
     required this.callbackHosts,
     this.correlationId,
+    this.returnUrl,
   });
 
   final String bookingId;
@@ -18,6 +19,7 @@ class PendingPaymentContext {
   final DateTime startedAt;
   final String entityType;
   final Set<String> callbackHosts;
+  final String? returnUrl;
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
@@ -27,6 +29,7 @@ class PendingPaymentContext {
       'started_at': startedAt.toUtc().toIso8601String(),
       'entity_type': entityType,
       'callback_hosts': callbackHosts.toList(),
+      'return_url': returnUrl,
     };
   }
 
@@ -43,6 +46,7 @@ class PendingPaymentContext {
         (json['callback_hosts'] as List<dynamic>? ?? const <dynamic>[])
             .whereType<String>(),
       ),
+      returnUrl: json['return_url'] as String?,
     );
   }
 }

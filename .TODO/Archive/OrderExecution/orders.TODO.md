@@ -1,3 +1,12 @@
+> Historical Status: Superseded on 2026-03-01. Do not treat this file as the current runtime contract for the dashboard/orders surface.
+
+> Current authoritative references:
+> - `.TODO/DOCS_SYNC_2026-03-01_Orders_Dashboard_Decommission.md`
+> - `.TODO/DOCS_REFERENCE_FIX_2026-03-01_Orders_Dashboard_Decommission.md`
+> - `Sline_everything/DEVELOPER_GUIDE.md`
+> - `Sline_everything/DEVELOPER_GUIDE/Orders Feature.md`
+> - `lib/features/orders/README.md`
+
 # orders — Feature Audit (Phase 1) + Verified Fix Plan
 
 ## 0) Overview

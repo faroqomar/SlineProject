@@ -57,13 +57,28 @@ void main() {
       },
     );
 
-    test('T24 Task.fromJson unknown status defaults to TaskStatus.open', () {
+    test('T24 Task.fromJson maps owner and runtime statuses safely', () {
+      final task = Task.fromJson(
+        _taskJson(
+          overrides: {
+            'owner_id': 'owner-77',
+            'user_id': 'legacy-user',
+            'status': 'in_progress',
+          },
+        ),
+      );
+
+      expect(task.id, 'task-1');
+      expect(task.userId, 'owner-77');
+      expect(task.status, TaskStatus.inProgress);
+    });
+
+    test('T24b Task.fromJson unknown status defaults to TaskStatus.draft', () {
       final task = Task.fromJson(
         _taskJson(overrides: {'status': 'legacy_unknown_status'}),
       );
 
-      expect(task.id, 'task-1');
-      expect(task.status, TaskStatus.open);
+      expect(task.status, TaskStatus.draft);
     });
 
     test(
@@ -92,5 +107,21 @@ void main() {
         expect(json['category'], 'Design');
       },
     );
+
+    test('T25b Task.toJson serializes TaskStatus.inProgress as in_progress', () {
+      final task = Task(
+        id: 'task-progress',
+        title: 'Task title',
+        description: 'Task description',
+        budget: 150.0,
+        userId: 'user-1',
+        status: TaskStatus.inProgress,
+        createdAt: DateTime.utc(2026, 2, 24, 10),
+      );
+
+      final json = task.toJson();
+
+      expect(json['status'], 'in_progress');
+    });
   });
 }

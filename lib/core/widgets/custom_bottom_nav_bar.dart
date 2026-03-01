@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
@@ -22,6 +23,8 @@ class CustomBottomNavBar extends StatelessWidget {
   static const Key tendersNavKey = ValueKey<String>('bottom_nav_tenders');
   static const Key bookingsNavKey = ValueKey<String>('bottom_nav_bookings');
   static const Key dashboardNavKey = ValueKey<String>('bottom_nav_dashboard');
+  @Deprecated('Use dashboardNavKey instead.')
+  static const Key ordersNavKey = dashboardNavKey;
   static const Key messagesNavKey = ValueKey<String>('bottom_nav_messages');
   static const Key profileNavKey = ValueKey<String>('bottom_nav_profile');
 
@@ -82,6 +85,12 @@ class CustomBottomNavBar extends StatelessWidget {
           0,
           navItems.length - 1,
         );
+        if (currentIndex != navigationProvider.currentIndex) {
+          AppLogger.w(
+            'Clamped navigation index ${navigationProvider.currentIndex} -> $currentIndex',
+            tag: 'Navigation',
+          );
+        }
 
         return Positioned(
           bottom: AppDimens.p16,
@@ -103,8 +112,13 @@ class CustomBottomNavBar extends StatelessWidget {
                         return _LiquidGlassNavItem(
                           item: item,
                           isActive: isActive,
-                          onTap: () =>
-                              navigationProvider.setCurrentIndex(index),
+                          onTap: () {
+                            AppLogger.i(
+                              'Bottom nav tap -> ${item.label} ($index)',
+                              tag: 'Navigation',
+                            );
+                            navigationProvider.setCurrentIndex(index);
+                          },
                           colorScheme: colorScheme,
                         );
                       }).toList(),
@@ -126,8 +140,13 @@ class CustomBottomNavBar extends StatelessWidget {
                           return _LiquidGlassNavItem(
                             item: item,
                             isActive: isActive,
-                            onTap: () =>
-                                navigationProvider.setCurrentIndex(index),
+                            onTap: () {
+                              AppLogger.i(
+                                'Bottom nav tap -> ${item.label} ($index)',
+                                tag: 'Navigation',
+                              );
+                              navigationProvider.setCurrentIndex(index);
+                            },
                             colorScheme: colorScheme,
                           );
                         }).toList(),

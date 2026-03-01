@@ -116,7 +116,7 @@ void main() {
           bookingId: 'booking-1',
           correlationId: 'corr-1',
           rawUri: Uri.parse(
-            'https://sline.app/payment/success?booking_id=booking-1&correlation_id=corr-1',
+            'https://sline.app/?payment_return=1&booking_id=booking-1&correlation_id=corr-1',
           ),
         ),
       );
@@ -159,7 +159,7 @@ void main() {
           bookingId: 'booking-2',
           correlationId: 'corr-2',
           rawUri: Uri.parse(
-            'https://sline.app/payment/success?booking_id=booking-2&correlation_id=corr-2',
+            'https://sline.app/?payment_return=1&booking_id=booking-2&correlation_id=corr-2',
           ),
         ),
       );

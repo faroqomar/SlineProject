@@ -4,10 +4,9 @@ import '../../../core/utils/error_mapper.dart';
 import '../../../core/app_enums.dart';
 import '../../profile/services/profile_summary_service.dart';
 import '../models/task_model.dart';
-import '../../notifications/services/notification_service.dart';
-import '../../notifications/models/notification_model.dart';
 
 import '../models/task_request_model.dart';
+import 'task_requests_service.dart';
 import '../../wallet/services/ledger_service.dart';
 
 /// Service for handling task operations with Supabase.
@@ -20,12 +19,13 @@ import '../../wallet/services/ledger_service.dart';
 /// profiles.id, which doesn't exist in the current schema.
 class TaskService {
   final SupabaseClient _client;
-  final NotificationService _notificationService = NotificationService();
   late final ProfileSummaryService _profileSummaryService;
+  late final TaskRequestsService _taskRequestsService;
 
   TaskService([SupabaseClient? client])
     : _client = client ?? Supabase.instance.client {
     _profileSummaryService = ProfileSummaryService(_client);
+    _taskRequestsService = TaskRequestsService(client: _client);
   }
 
   /// Standard SELECT clause for tasks (without profile JOIN).
@@ -33,7 +33,8 @@ class TaskService {
   /// Why no JOIN: The tasks.user_id FK points to auth.users, not profiles.
   /// Profile data is fetched separately via batch query to avoid N+1.
   static const String _selectBasic = '''
-    id, title, description, budget, user_id, status, task_type,
+    id, title, description, budget, user_id, owner_id, client_id, freelancer_id,
+    status, task_type,
     category_id, category, created_at, deadline, skills, image_paths,
     assigned_freelancer_id, packages,
     categories(name)
@@ -75,7 +76,10 @@ class TaskService {
   ) {
     return rows.map((json) {
       final taskJson = Map<String, dynamic>.from(json as Map);
-      final userId = taskJson['user_id'] as String?;
+      final userId =
+          taskJson['owner_id'] as String? ??
+          taskJson['client_id'] as String? ??
+          taskJson['user_id'] as String?;
       if (userId != null && profilesMap.containsKey(userId)) {
         taskJson['profiles'] = profilesMap[userId];
       }
@@ -96,7 +100,12 @@ class TaskService {
 
       final rows = response as List;
       final userIds = rows
-          .map((r) => r['user_id'] as String?)
+          .map(
+            (r) =>
+                r['owner_id'] as String? ??
+                r['client_id'] as String? ??
+                r['user_id'] as String?,
+          )
           .whereType<String>()
           .toSet();
 
@@ -138,7 +147,10 @@ class TaskService {
           .single();
 
       final taskJson = Map<String, dynamic>.from(response as Map);
-      final userId = taskJson['user_id'] as String?;
+      final userId =
+          taskJson['owner_id'] as String? ??
+          taskJson['client_id'] as String? ??
+          taskJson['user_id'] as String?;
 
       if (userId != null) {
         final profilesMap = await _fetchProfilesByIds({userId});
@@ -170,23 +182,8 @@ class TaskService {
   }
 
   /// Update task status (simple update, no profile data needed).
-  ///
-  /// Also triggers notifications for important status changes (completed, cancelled).
   Future<void> updateTaskStatus(String taskId, TaskStatus status) async {
     try {
-      // 1. Fetch task details BEFORE update to know who to notify
-      final taskRes = await _client
-          .from('tasks')
-          .select('user_id, assigned_freelancer_id, title')
-          .eq('id', taskId)
-          .single();
-
-      final ownerId = taskRes['user_id'] as String;
-      final freelancerId = taskRes['assigned_freelancer_id'] as String?;
-      final taskTitle = taskRes['title'] as String;
-      final currentUid = _client.auth.currentUser?.id;
-
-      // 2. Perform the update
       await _client
           .from('tasks')
           .update({'status': _mapStatusToDb(status)})
@@ -195,42 +192,6 @@ class TaskService {
         'Task status updated: $taskId → ${status.name}',
         tag: 'Tasks',
       );
-
-      // 3. Send Notifications
-      if (freelancerId != null && currentUid != null) {
-        String? notifyUserId;
-        String? title;
-        String? message;
-
-        // If Owner changed status -> Notify Freelancer
-        if (currentUid == ownerId) {
-          notifyUserId = freelancerId;
-          if (status == TaskStatus.closed) {
-            title = 'Task Completed';
-            message = 'The client has marked "$taskTitle" as completed.';
-          } else if (status == TaskStatus.canceled) {
-            title = 'Task Cancelled';
-            message = 'The client has cancelled "$taskTitle".';
-          }
-        }
-        // If Freelancer changed status (e.g. if we allow them to mark as complete?)
-        // Currently typically only client updates status to complete, but if freelancer does:
-        else if (currentUid == freelancerId) {
-          notifyUserId = ownerId;
-          // Add logic here if freelancer can change status (e.g. to 'submitted' or 'completed')
-        }
-
-        if (notifyUserId != null && title != null && message != null) {
-          _notificationService.createNotification(
-            userId: notifyUserId,
-            title: title,
-            message: message,
-            type: NotificationType.task,
-            relatedEntityId: taskId,
-            relatedEntityType: 'task',
-          );
-        }
-      }
     } on PostgrestException catch (e, st) {
       AppLogger.e(
         'Failed to update task status',
@@ -280,17 +241,27 @@ class TaskService {
   ///
   /// Performance: 2 queries (tasks + profiles batch) - no N+1 issue.
   Future<List<Task>> getTasksByUser(String userId) async {
+    return getTasksByOwner(userId);
+  }
+
+  /// Get tasks by owner with compatibility coverage for legacy `user_id` rows.
+  Future<List<Task>> getTasksByOwner(String ownerId) async {
     try {
       // Custom select to include offer count
       final response = await _client
           .from('tasks')
           .select('$_selectBasic, task_requests(count)')
-          .eq('user_id', userId)
+          .or('owner_id.eq.$ownerId,user_id.eq.$ownerId,client_id.eq.$ownerId')
           .order('created_at', ascending: false);
 
       final rows = response as List;
       final userIds = rows
-          .map((r) => r['user_id'] as String?)
+          .map(
+            (r) =>
+                r['owner_id'] as String? ??
+                r['client_id'] as String? ??
+                r['user_id'] as String?,
+          )
           .whereType<String>()
           .toSet();
 
@@ -300,7 +271,10 @@ class TaskService {
         final taskJson = Map<String, dynamic>.from(json as Map);
 
         // Profiles Mapping
-        final userId = taskJson['user_id'] as String?;
+        final userId =
+            taskJson['owner_id'] as String? ??
+            taskJson['client_id'] as String? ??
+            taskJson['user_id'] as String?;
         if (userId != null && profilesMap.containsKey(userId)) {
           taskJson['profiles'] = profilesMap[userId];
         }
@@ -317,7 +291,7 @@ class TaskService {
       }).toList();
     } on PostgrestException catch (e, st) {
       AppLogger.e(
-        'Failed to get tasks by user',
+        'Failed to get tasks by owner',
         tag: 'Tasks',
         error: e,
         stackTrace: st,
@@ -325,7 +299,7 @@ class TaskService {
       throw Exception(ErrorMapper.map(e));
     } catch (e, st) {
       AppLogger.e(
-        'Failed to get tasks by user',
+        'Failed to get tasks by owner',
         tag: 'Tasks',
         error: e,
         stackTrace: st,
@@ -342,12 +316,17 @@ class TaskService {
       final response = await _client
           .from('tasks')
           .select(_selectBasic)
-          .eq('status', status.name)
+          .eq('status', _mapStatusToDb(status))
           .order('created_at', ascending: false);
 
       final rows = response as List;
       final userIds = rows
-          .map((r) => r['user_id'] as String?)
+          .map(
+            (r) =>
+                r['owner_id'] as String? ??
+                r['client_id'] as String? ??
+                r['user_id'] as String?,
+          )
           .whereType<String>()
           .toSet();
 
@@ -538,20 +517,28 @@ class TaskService {
   /// Returns a flat list of pending offers on tasks owned by [userId].
   Future<List<TaskRequest>> getOffersReceived(String userId) async {
     try {
-      // Fetch pending offers where task owner is userId
-      // Strategy:
-      // 1. Fetch tasks owned by user IDs
-      // 2. Or specialized query on task_requests joining tasks
-      //
-      // Supabase query:
-      // select *, tasks!inner(user_id) where tasks.user_id = uid AND status = pending
+      final ownedTasks = await _client
+          .from('tasks')
+          .select('id')
+          .or('owner_id.eq.$userId,user_id.eq.$userId,client_id.eq.$userId');
+
+      final taskIds = (ownedTasks as List<dynamic>)
+          .map((row) => row['id'] as String?)
+          .whereType<String>()
+          .toList();
+
+      if (taskIds.isEmpty) {
+        return [];
+      }
+
       final response = await _client
           .from('task_requests')
           .select(
-            '*, tasks!inner(user_id, title), profiles!task_requests_freelancer_id_fkey(full_name, avatar_url)',
+            'id, task_id, bidder_id, freelancer_id, price, days, duration_days, note, message, status, payment_status, created_at, deleted_at, tasks(title), profiles!task_requests_freelancer_id_fkey(full_name, avatar_url)',
           )
           .eq('status', 'pending')
-          .eq('tasks.user_id', userId)
+          .is_('deleted_at', null)
+          .in_('task_id', taskIds)
           .order('created_at', ascending: false);
 
       return (response as List).map((json) {
@@ -611,41 +598,22 @@ class TaskService {
   /// Accepts an offer using atomic RPC
   Future<void> acceptOffer(String offerId) async {
     try {
-      await _client.rpc(
-        'accept_task_request',
-        params: {'p_request_id': offerId},
-      );
+      await _taskRequestsService.accept(offerId);
       AppLogger.i('Offer accepted via RPC: $offerId');
-    } on PostgrestException catch (e, st) {
-      if (e.message.contains('not the task owner')) {
-        throw Exception('Only task owner can accept offers');
-      }
-      if (e.message.contains('already assigned')) {
-        throw Exception('Task already assigned');
-      }
+    } catch (e, st) {
       AppLogger.e('Failed to accept offer', error: e, stackTrace: st);
-      throw Exception(ErrorMapper.map(e));
+      rethrow;
     }
   }
 
   /// Rejects an offer
   Future<void> rejectOffer(String offerId) async {
     try {
-      // Try direct update (RLS policy tr_update_by_owner allows task owner)
-      await _client
-          .from('task_requests')
-          .update({'status': 'rejected'})
-          .eq('id', offerId);
-
+      await _taskRequestsService.reject(offerId);
       AppLogger.i('Offer rejected: $offerId');
-    } on PostgrestException catch (e, st) {
-      if (e.code == '42501') {
-        // RLS blocks direct update, log clear error
-        AppLogger.w('Need reject_task_request RPC - RLS blocks direct update');
-        throw Exception('Need reject_task_request RPC - contact backend team');
-      }
+    } catch (e, st) {
       AppLogger.e('Failed to reject offer', error: e, stackTrace: st);
-      throw Exception(ErrorMapper.map(e));
+      rethrow;
     }
   }
 

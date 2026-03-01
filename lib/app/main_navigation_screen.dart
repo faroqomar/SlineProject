@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/utils/app_animations.dart';
 import 'package:sline_app/features/booking/view/bookings_discovery_screen.dart';
 import 'package:sline_app/features/chat/view/messages_screen.dart';
-import 'package:sline_app/features/home/view/home_screen.dart';
 import 'package:sline_app/features/dashboard/view/dashboard_screen.dart';
-// import 'package:sline_app/features/orders/view/orders_dashboard_screen.dart';
+import 'package:sline_app/features/home/view/home_screen.dart';
 import 'package:sline_app/features/profile/view/profile_screen.dart';
 import 'package:sline_app/features/tasks/view/create_task_screen.dart';
 import 'package:sline_app/features/tasks/view/tenders_screen.dart';
@@ -35,7 +36,8 @@ class MainNavigationScreen extends StatelessWidget {
     final WidgetBuilder createTaskBuilder =
         createTaskScreenBuilder ?? ((_) => const CreateTaskScreen());
 
-    // Screens matching NavView enum order: home, tender, booking, orders, messages, profile, wallet
+    // Screens match NavView enum order. The legacy `orders` slot now hosts the
+    // unified dashboard instead of the removed standalone orders module.
     final List<Widget> screens =
         this.screens ??
         const [
@@ -47,6 +49,13 @@ class MainNavigationScreen extends StatelessWidget {
           ProfileScreen(),
           WalletDashboardScreen(),
         ];
+
+    if (screens.length != NavView.values.length) {
+      AppLogger.w(
+        'MainNavigationScreen received ${screens.length} screens, expected ${NavView.values.length}',
+        tag: 'Navigation',
+      );
+    }
 
     return Consumer<NavigationProvider>(
       builder: (context, navigationProvider, child) {
@@ -98,6 +107,10 @@ class MainNavigationScreen extends StatelessWidget {
                 child: AnimatedRotationButton(
                   rotationAngle: 0.125, // 45 degrees
                   onTap: () {
+                    AppLogger.i(
+                      'Opening create task screen from main navigation FAB',
+                      tag: 'Navigation',
+                    );
                     Navigator.of(
                       context,
                     ).push(MaterialPageRoute(builder: createTaskBuilder));

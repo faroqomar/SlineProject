@@ -31,13 +31,13 @@ import 'app/main_navigation_screen.dart';
 import 'core/providers/navigation_provider.dart';
 import 'package:provider/provider.dart';
 import 'features/booking/viewmodels/booking_view_model.dart';
-import 'features/orders/viewmodels/orders_view_model.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/providers/theme_mode_provider.dart';
 import 'features/notifications/viewmodels/notification_view_model.dart';
 import 'features/wallet/viewmodels/wallet_view_model.dart';
 import 'core/services/deep_link_service.dart';
 import 'core/services/dashboard_cache_service.dart';
+import 'features/dashboard/view/dashboard_screen.dart';
 import 'features/dashboard/viewmodels/dashboard_view_model.dart';
 import 'core/services/payment_service.dart';
 import 'core/services/demo_payment_service.dart';
@@ -45,6 +45,7 @@ import 'core/services/qicard_payment_service.dart';
 import 'package:sline_app/core/utils/flutter_error_filters.dart';
 import 'package:sline_app/features/profile/data/profile_repository.dart';
 import 'package:sline_app/features/categories/data/categories_repository.dart';
+import 'package:sline_app/features/booking/models/payment_return_args.dart';
 import 'package:sline_app/features/booking/view/payment_return_screen.dart';
 
 const bool kUseQiCardPayment = bool.fromEnvironment(
@@ -162,9 +163,7 @@ class SLineApp extends StatelessWidget {
             paymentService: createPaymentService(),
           ),
         ),
-        // Orders dashboard state
-        ChangeNotifierProvider(create: (_) => OrdersViewModel()),
-        // Main freelancer dashboard state
+        // Main unified dashboard state (hosted on the legacy NavView.orders slot)
         ChangeNotifierProvider(create: (_) => DashboardViewModel()),
         // Notifications state
         ChangeNotifierProvider(create: (_) => NotificationViewModel()),
@@ -217,14 +216,54 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener> {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   Widget _buildHome() {
+    final currentUser = Supabase.instance.client.auth.currentUser;
     if (kIsWeb) {
+      final pendingPayment = context.read<PaymentPendingStore>().load();
       final paymentReturn = parsePaymentReturnArgs(Uri.base);
       if (paymentReturn != null) {
+        AppLogger.i(
+          'Detected explicit web payment callback at app start',
+          tag: 'Payment',
+          json: <String, dynamic>{
+            'uri': Uri.base.toString(),
+            'booking_id': paymentReturn.bookingId,
+            'correlation_id': paymentReturn.correlationId,
+            'status': paymentReturn.normalizedStatus,
+          },
+        );
         return PaymentReturnScreen(initialArgs: paymentReturn);
+      }
+
+      if (currentUser != null &&
+          pendingPayment != null &&
+          shouldResumePendingWebPayment(
+            currentUri: Uri.base,
+            startedAt: pendingPayment.startedAt,
+            callbackHosts: pendingPayment.callbackHosts,
+            expectedReturnUrl: pendingPayment.returnUrl,
+          )) {
+        AppLogger.i(
+          'Resuming pending web payment without explicit callback params',
+          tag: 'Payment',
+          json: <String, dynamic>{
+            'uri': Uri.base.toString(),
+            'booking_id': pendingPayment.bookingId,
+            'correlation_id': pendingPayment.correlationId,
+            'return_url': pendingPayment.returnUrl,
+          },
+        );
+        return PaymentReturnScreen(
+          initialArgs: PaymentReturnArgs(
+            status: 'UNKNOWN',
+            bookingId: pendingPayment.bookingId,
+            correlationId: pendingPayment.correlationId,
+            rawUri: Uri.base,
+          ),
+        );
       }
     }
 
-    return Supabase.instance.client.auth.currentUser != null
+    return currentUser != null
         ? const MainNavigationScreen()
         : const LoginScreen();
   }
@@ -252,6 +291,17 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener> {
   Widget build(BuildContext context) {
     return Consumer<ThemeModeProvider>(
       builder: (context, themeModeProvider, child) {
+        final Map<String, WidgetBuilder> routes = <String, WidgetBuilder>{
+          '/login': (BuildContext _) => const LoginScreen(),
+          '/main': (BuildContext _) => const MainNavigationScreen(),
+          '/signup': (BuildContext _) => const SignupScreen(),
+          '/home': (BuildContext _) => const HomeScreen(),
+          '/dashboard': (BuildContext _) => const DashboardScreen(),
+          '/categories': (BuildContext _) => const CategoriesScreen(),
+          FavoritesRoutes.routeName: (BuildContext _) =>
+              const FavoritesScreen(),
+        };
+
         return MaterialApp(
           navigatorKey: _navigatorKey,
           title: 'SLine App',
@@ -260,14 +310,7 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener> {
           darkTheme: AppTheme.dark(),
           themeMode: themeModeProvider.themeMode,
           home: _buildHome(),
-          routes: {
-            '/login': (_) => const LoginScreen(),
-            '/main': (_) => const MainNavigationScreen(),
-            '/signup': (_) => const SignupScreen(),
-            '/home': (_) => const HomeScreen(),
-            '/categories': (_) => const CategoriesScreen(),
-            FavoritesRoutes.routeName: (_) => const FavoritesScreen(),
-          },
+          routes: routes,
         );
       },
     );

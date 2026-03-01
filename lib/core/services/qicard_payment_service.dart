@@ -128,6 +128,7 @@ class QiCardPaymentService implements PaymentService {
     String? note,
     String? packageId,
     Map<String, dynamic>? requirements,
+    String? finishUrl,
     String? requestCorrelationId,
   }) async {
     try {
@@ -138,6 +139,7 @@ class QiCardPaymentService implements PaymentService {
           'task_id': taskId,
           'package_id': packageId,
           'has_note': note != null && note.trim().isNotEmpty,
+          'finish_url': finishUrl,
           'requirements_keys': (requirements ?? const <String, dynamic>{}).keys
               .toList(),
           'request_correlation_id': requestCorrelationId,
@@ -150,6 +152,7 @@ class QiCardPaymentService implements PaymentService {
           'note': note,
           'package_id': packageId,
           'requirements': requirements ?? const <String, dynamic>{},
+          'finish_url': finishUrl,
           'request_correlation_id': requestCorrelationId,
         },
       );

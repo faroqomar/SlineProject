@@ -49,6 +49,32 @@ void main() {
       expect(request.price, 250);
     });
 
+    test('T32b TaskRequest.fromMap uses message and duration fallback fields', () {
+      final request = TaskRequest.fromMap(
+        _taskRequestMap(
+          overrides: {
+            'days': null,
+            'duration_days': 5,
+            'note': null,
+            'message': 'Fallback message',
+          },
+        ),
+      );
+
+      expect(request.days, 5);
+      expect(request.note, 'Fallback message');
+    });
+
+    test('T32c TaskRequest.fromMap maps unknown statuses to unknown', () {
+      final request = TaskRequest.fromMap(
+        _taskRequestMap(overrides: {'status': 'expired_by_system'}),
+      );
+
+      expect(request.status, OfferStatus.unknown);
+      expect(request.isUnknown, isTrue);
+      expect(request.isPending, isFalse);
+    });
+
     test('T33 TaskRequest.toMap(forInsert: true) excludes system fields', () {
       final request = TaskRequest(
         id: 'req-system',

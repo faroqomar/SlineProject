@@ -61,7 +61,10 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
   BookingViewModel? _vm;
   Timer? _orphanDraftTimer;
 
-  Set<String> get _callbackHosts => buildQiCardCallbackHosts();
+  String get _runtimeFinishUrl => buildQiCardFinishUrlForRuntime();
+
+  Set<String> get _callbackHosts =>
+      buildQiCardCallbackHosts(finishUrl: _runtimeFinishUrl);
 
   DateTime? get _estimatedDueAt {
     if (widget.deliveryDays != null) {
@@ -123,6 +126,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
         startedAt: DateTime.now().toUtc(),
         entityType: 'booking',
         callbackHosts: _callbackHosts,
+        returnUrl: _runtimeFinishUrl,
       ),
     );
 
@@ -132,6 +136,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
       json: <String, dynamic>{
         'booking_id': createResult.bookingId,
         'correlation_id': createResult.correlationId,
+        'finish_url': _runtimeFinishUrl,
         'callback_hosts': _callbackHosts.toList(),
       },
     );
@@ -256,6 +261,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
         'package_id': widget.packageTier,
         'delivery_days': widget.deliveryDays,
         'task_deadline': widget.taskDeadline?.toUtc().toIso8601String(),
+        'finish_url': _runtimeFinishUrl,
         'has_note': _trimmedNote != null,
       },
     );
@@ -266,6 +272,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
         note: _trimmedNote,
         packageId: widget.packageTier,
         requirements: widget.packageData,
+        finishUrl: _runtimeFinishUrl,
       );
 
       if (!createResult.isSuccess || createResult.bookingId == null) {
@@ -324,6 +331,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
             'booking_id': createResult.bookingId,
             'correlation_id': createResult.correlationId,
             'request_correlation_id': createResult.requestCorrelationId,
+            'finish_url': _runtimeFinishUrl,
             'callback_hosts': _callbackHosts.toList(),
           },
         );
