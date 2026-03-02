@@ -1,6 +1,6 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.17.1 (Notifications completion + approve-and-release ledger fix)
+**Version**: 2.17.2 (Dashboard remediation, refresh on all tabs)
 **Last Updated**: 2026-03-02
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
@@ -1504,6 +1504,16 @@ The standalone `orders` dashboard module was removed on 2026-03-01.
 - **Dashboard UI**: `lib/features/dashboard/view/dashboard_screen.dart`
 - **Dashboard state**: `lib/features/dashboard/viewmodels/dashboard_view_model.dart`
 - **Legacy placeholder**: `lib/features/orders/README.md`
+
+### 2.1 Current dashboard behavior (2026-03)
+
+- **Cache**: `DashboardCacheService` is provided in `main.dart` and injected into `DashboardViewModel`; overview data can be served from cache when appropriate.
+- **Lazy-load by tab**: Overview data loads first; Bookings and Inbox data load on first visit to those tabs. Full refresh still loads all datasets.
+- **Wallet snapshot**: On first entry to the dashboard, `OverviewTab` triggers `WalletViewModel.loadWallet()` so the balance snapshot is visible without a separate wallet visit.
+- **My Services**: `MyServicesScreen` (profile) uses `MyServicesViewModel` and `ServicesService.getMyServices(uid)`; it no longer depends on dashboard state.
+- **Tender payment**: Awarded offers open `TenderPaymentScreen` backed by `TenderPaymentCoordinator` and `TenderPaymentViewModel`; the screen uses only the ViewModel (no direct service calls in the widget). Inbox and Requests list create the coordinator + ViewModel and push with `ChangeNotifierProvider`; `TaskService` is provided in `main.dart`.
+- **Dashboard cards**: Booking card lives in `lib/features/booking/view/widgets/dashboard_booking_card.dart` (callbacks for actions); offer card in `lib/features/tasks/view/widgets/dashboard_offer_card.dart`; wallet snapshot in `lib/features/wallet/view/widgets/wallet_snapshot_card.dart`. Shared status color/label helpers: `lib/core/utils/status_presenter.dart`.
+- **Pull-to-refresh on every tab**: All four dashboard tabs support pull-to-refresh and call `DashboardViewModel.refresh()` (full reload). Implemented in: `lib/features/dashboard/view/tabs/overview_tab.dart` (ListView wrapped in `RefreshIndicator`), `lib/features/dashboard/view/tabs/bookings_tab.dart` (empty state and list both wrapped; empty uses `SingleChildScrollView` + `AlwaysScrollableScrollPhysics`), `lib/features/dashboard/view/tabs/inbox_tab.dart` (empty state wrapped; list already had `RefreshIndicator`), `lib/features/dashboard/view/tabs/work_tab.dart` (Active, Done, Cancelled sub-tabs each have `RefreshIndicator` for both empty and filled lists).
 
 ## 3. Why It Was Removed
 

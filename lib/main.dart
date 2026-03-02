@@ -14,6 +14,8 @@ import 'package:sline_app/features/home/viewmodels/home_view_model.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
 import 'package:sline_app/features/tasks/viewmodels/discovery_feed_view_model_contract.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
+import 'package:sline_app/features/tasks/services/task_service.dart';
+import 'package:sline_app/features/services/viewmodels/my_services_view_model.dart';
 import 'features/saved/viewmodels/saved_tasks_view_model.dart';
 import 'features/saved/data/saved_tasks_service.dart';
 import 'features/tasks/services/task_requests_service.dart';
@@ -170,12 +172,20 @@ class SLineApp extends StatelessWidget {
             paymentService: createPaymentService(),
           ),
         ),
+        // Dashboard Cache (must be before DashboardViewModel so it can be injected)
+        Provider(create: (_) => DashboardCacheService(prefs)),
         // Main unified dashboard state (hosted on the legacy NavView.orders slot)
-        ChangeNotifierProvider(create: (_) => DashboardViewModel()),
+        ChangeNotifierProvider(
+          create: (ctx) => DashboardViewModel(
+            cacheService: ctx.read<DashboardCacheService>(),
+          ),
+        ),
         // Notifications state
         ChangeNotifierProvider(create: (_) => NotificationViewModel()),
         // Task Requests Service (Stateless)
         Provider(create: (_) => TaskRequestsService()),
+        // Task Service (for tender payment coordinator and dashboard)
+        Provider(create: (_) => TaskService()),
         // Favorites state
         ChangeNotifierProvider(
           create: (_) => FavoritesViewModel(service: FavoritesService()),
@@ -187,8 +197,6 @@ class SLineApp extends StatelessWidget {
         Provider<DirectOffersService>(
           create: (_) => DirectOffersService(Supabase.instance.client),
         ),
-        // Dashboard Cache Service (Stateless)
-        Provider(create: (_) => DashboardCacheService(prefs)),
         Provider(create: (_) => PaymentPendingStore(prefs)),
         // Wallet state
         ChangeNotifierProvider(create: (_) => WalletViewModel()),
@@ -200,6 +208,8 @@ class SLineApp extends StatelessWidget {
         Provider<CategoriesRepository>(
           create: (_) => CategoriesRepository(Supabase.instance.client),
         ),
+        // My Services (profile) - no longer depends on dashboard
+        ChangeNotifierProvider(create: (_) => MyServicesViewModel()),
       ],
       child: Builder(
         builder: (context) {

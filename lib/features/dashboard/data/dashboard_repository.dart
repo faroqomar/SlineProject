@@ -4,7 +4,6 @@ import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/dashboard/models/work_item.dart';
 import 'package:sline_app/features/dashboard/models/activity_log.dart';
 import 'package:sline_app/features/dashboard/models/dashboard_counters.dart';
-import 'package:sline_app/features/dashboard/models/financial_metrics_model.dart';
 import 'package:sline_app/features/dashboard/services/dashboard_permission_service.dart';
 import 'package:sline_app/features/profile/services/profile_summary_service.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
@@ -433,81 +432,8 @@ class DashboardRepository {
     );
   }
 
-  // ==========================================================================
-  // Financial Metrics from Ledger Views
-  // ==========================================================================
-
-  /// Fetches real-time financial metrics from the ledger.
-  /// These metrics reflect the current platform financial state.
-  Future<FinancialMetrics> fetchFinancialMetrics() async {
-    try {
-      AppLogger.d('Fetching financial metrics from ledger', tag: _kTag);
-
-      final response = await _client
-          .from('vw_financial_metrics_realtime')
-          .select()
-          .maybeSingle();
-
-      if (response == null) {
-        AppLogger.w('No financial metrics found, returning zeros', tag: _kTag);
-        return FinancialMetrics.zero();
-      }
-
-      final metrics = FinancialMetrics.fromJson(response);
-      AppLogger.i(
-        'Financial metrics: GMV=${metrics.gmv}, Revenue=${metrics.revenue}, Escrow=${metrics.escrowHeld}',
-        tag: _kTag,
-      );
-
-      return metrics;
-    } catch (e, st) {
-      AppLogger.e(
-        'Failed to fetch financial metrics',
-        error: e,
-        stackTrace: st,
-        tag: _kTag,
-      );
-      return FinancialMetrics.zero();
-    }
-  }
-
-  /// Fetches period-based financial metrics for dashboard charts.
-  ///
-  /// [days] - Number of days to fetch (default 30)
-  Future<List<PeriodFinancialMetrics>> fetchPeriodFinancialMetrics({
-    int days = 30,
-  }) async {
-    try {
-      AppLogger.d(
-        'Fetching period financial metrics for $days days',
-        tag: _kTag,
-      );
-
-      final response = await _client
-          .from('vw_financial_metrics_period')
-          .select()
-          .order('period_start', ascending: false)
-          .limit(days);
-
-      final metrics = (response as List)
-          .map(
-            (e) => PeriodFinancialMetrics.fromJson(e as Map<String, dynamic>),
-          )
-          .toList();
-
-      AppLogger.i('Fetched ${metrics.length} period metrics', tag: _kTag);
-
-      return metrics;
-    } catch (e, st) {
-      AppLogger.e(
-        'Failed to fetch period financial metrics',
-        error: e,
-        stackTrace: st,
-        tag: _kTag,
-      );
-      return [];
-    }
-  }
+  // Financial metrics (platform-wide) are not available to standard dashboard.
+  // See CONTRACT_Dashboard_Finance_Boundary_2026-03-01.md; use admin RPC if needed.
 
   /// Fetches wallet balance for the current user from ledger.
   /// This is used by the dashboard to show user's available balance.

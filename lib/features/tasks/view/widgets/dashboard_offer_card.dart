@@ -6,21 +6,22 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_date.dart';
+import 'package:sline_app/core/utils/status_presenter.dart';
+import 'package:sline_app/core/utils/unified_cta_resolver.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
-import 'package:sline_app/core/utils/unified_cta_resolver.dart';
 
-class OfferCard extends StatelessWidget {
+/// Dashboard-style offer card for inbox; lives in tasks feature.
+class DashboardOfferCard extends StatelessWidget {
   final TaskRequest offer;
-  final bool
-  isClientView; // True if viewing offers received, False if viewing submitted
+  final bool isClientView;
   final VoidCallback onAccept;
   final VoidCallback? onReject;
   final VoidCallback? onWithdraw;
   final VoidCallback? onRelease;
   final VoidCallback? onRefund;
 
-  const OfferCard({
+  const DashboardOfferCard({
     super.key,
     required this.offer,
     required this.isClientView,
@@ -34,7 +35,7 @@ class OfferCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final statusColor = _getStatusColor();
+    final statusColor = StatusPresenter.offerStatusColor(offer.status);
     final isPending = offer.status == OfferStatus.pending;
 
     return Container(
@@ -54,7 +55,6 @@ class OfferCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Container(
             padding: const EdgeInsets.symmetric(
               horizontal: AppDimens.p16,
@@ -97,19 +97,15 @@ class OfferCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                _StatusBadge(status: offer.status, color: statusColor),
+                _OfferStatusBadge(status: offer.status, color: statusColor),
               ],
             ),
           ),
-
-          // Body
           Padding(
             padding: const EdgeInsets.all(AppDimens.p16),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Avatar (Show Bidder if Client view, else maybe Task Owner or empty?)
-                // For layout simplicity, let's show Bidder Avatar always for now
                 if (offer.bidderAvatar != null)
                   Padding(
                     padding: const EdgeInsets.only(right: AppDimens.p12),
@@ -118,7 +114,6 @@ class OfferCard extends StatelessWidget {
                       radius: 20,
                     ),
                   ),
-
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,7 +121,7 @@ class OfferCard extends StatelessWidget {
                       Text(
                         isClientView
                             ? (offer.bidderName ?? 'Freelancer')
-                            : 'My Offer', // Or show who we sent it to? (Logic separate)
+                            : 'My Offer',
                         style: AppTypography.h4,
                       ),
                       const SizedBox(height: AppDimens.p4),
@@ -137,8 +132,6 @@ class OfferCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: AppDimens.p12),
-
-                      // Offer Details Row
                       Row(
                         children: [
                           _InfoChip(
@@ -154,7 +147,6 @@ class OfferCard extends StatelessWidget {
                           ),
                         ],
                       ),
-
                       if (offer.note != null && offer.note!.isNotEmpty) ...[
                         const SizedBox(height: AppDimens.p12),
                         Text(
@@ -173,8 +165,6 @@ class OfferCard extends StatelessWidget {
               ],
             ),
           ),
-
-          // Actions Footer
           Builder(
             builder: (ctx) {
               final ctaMeta = UnifiedCtaResolver.resolveActions(
@@ -183,19 +173,14 @@ class OfferCard extends StatelessWidget {
                 actorRole: isClientView ? 'client' : 'provider',
                 entityType: 'task_request',
               );
-
               final bool showAward = ctaMeta.allowedActions.contains('award');
               final bool showPay = ctaMeta.allowedActions.contains('pay');
-              final bool showEscrow = ctaMeta.allowedActions.contains(
-                'escrow_hold',
-              );
-              final bool showRelease = ctaMeta.allowedActions.contains(
-                'release_with_fee',
-              );
-              final bool showRefund = ctaMeta.allowedActions.contains('refund');
-
-              // If no specific payment actions are resolved but it's still pending, we fallback to our generic logic for non-payment MVP states
-              // Actually, since we wired escrow_hold, let's just use it combined with legacy.
+              final bool showEscrow =
+                  ctaMeta.allowedActions.contains('escrow_hold');
+              final bool showRelease =
+                  ctaMeta.allowedActions.contains('release_with_fee');
+              final bool showRefund =
+                  ctaMeta.allowedActions.contains('refund');
 
               if (!isPending && !showRelease && !showRefund && !showPay) {
                 return const SizedBox.shrink();
@@ -227,7 +212,6 @@ class OfferCard extends StatelessWidget {
                           child: const Text('Reject'),
                         ),
                       const SizedBox(width: AppDimens.p8),
-                      // New two-step flow: Award button
                       if (showAward)
                         FilledButton(
                           onPressed: () {
@@ -242,7 +226,6 @@ class OfferCard extends StatelessWidget {
                           ),
                           child: const Text('Award'),
                         ),
-                      // Pay button for awarded but unpaid offers
                       if (showPay)
                         FilledButton(
                           onPressed: () {
@@ -269,9 +252,7 @@ class OfferCard extends StatelessWidget {
                           style: FilledButton.styleFrom(
                             backgroundColor: AppColors.teal,
                           ),
-                          child: const Text(
-                            'Escrow Funds',
-                          ), // Replaced 'Accept' with Escrow
+                          child: const Text('Escrow Funds'),
                         ),
                       if (!showEscrow && !showAward && !showPay && isPending)
                         FilledButton(
@@ -316,7 +297,6 @@ class OfferCard extends StatelessWidget {
                           child: const Text('Refund'),
                         ),
                     ] else ...[
-                      // Freelancer View
                       if (onWithdraw != null && isPending)
                         OutlinedButton.icon(
                           onPressed: () {
@@ -345,48 +325,17 @@ class OfferCard extends StatelessWidget {
       ),
     );
   }
-
-  Color _getStatusColor() {
-    switch (offer.status) {
-      case OfferStatus.pending:
-        return AppColors.gold;
-      case OfferStatus.accepted:
-        return AppColors.teal;
-      case OfferStatus.rejected:
-      case OfferStatus.withdrawn:
-      case OfferStatus.unknown:
-        return AppColors.lightRed;
-    }
-  }
 }
 
-class _StatusBadge extends StatelessWidget {
+class _OfferStatusBadge extends StatelessWidget {
   final OfferStatus status;
   final Color color;
 
-  const _StatusBadge({required this.status, required this.color});
+  const _OfferStatusBadge({required this.status, required this.color});
 
   @override
   Widget build(BuildContext context) {
-    String label;
-    switch (status) {
-      case OfferStatus.pending:
-        label = 'Pending';
-        break;
-      case OfferStatus.accepted:
-        label = 'Accepted';
-        break;
-      case OfferStatus.rejected:
-        label = 'Rejected';
-        break;
-      case OfferStatus.withdrawn:
-        label = 'Withdrawn';
-        break;
-      case OfferStatus.unknown:
-        label = 'Unavailable';
-        break;
-    }
-
+    final label = StatusPresenter.offerStatusLabel(status);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(

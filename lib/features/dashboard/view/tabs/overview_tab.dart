@@ -4,11 +4,12 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/features/wallet/viewmodels/wallet_view_model.dart';
 import '../../viewmodels/dashboard_view_model.dart';
 import '../widgets/activity_feed_preview.dart';
 import '../widgets/dashboard_counters_grid.dart';
 import '../widgets/next_actions_list.dart';
-import '../widgets/wallet_snapshot_card.dart';
+import 'package:sline_app/features/wallet/view/widgets/wallet_snapshot_card.dart';
 
 class OverviewTab extends StatefulWidget {
   const OverviewTab({super.key});
@@ -21,53 +22,62 @@ class _OverviewTabState extends State<OverviewTab> {
   bool _showAllActivity = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Ensure wallet loads when dashboard overview is first shown (snapshot contract)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<WalletViewModel>().loadWallet();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final vm = context.watch<DashboardViewModel>();
     final colorScheme = context.colorScheme;
 
-    return ListView(
-      padding: const EdgeInsets.all(AppDimens.p16),
-      children: [
-        Text(
-          "Hello, ${vm.userName}!",
-          style: AppTypography.h3.copyWith(color: colorScheme.text),
-        ),
-        Text(
-          vm.currentRole == UserRole.freelancer
-              ? "Ready to pick up some work?"
-              : "Let's get your projects moving.",
-          style: AppTypography.bodyMedium.copyWith(
-            color: colorScheme.textSecondary,
+    return RefreshIndicator(
+      onRefresh: () => vm.refresh(),
+      child: ListView(
+        padding: const EdgeInsets.all(AppDimens.p16),
+        children: [
+          Text(
+            "Hello, ${vm.userName}!",
+            style: AppTypography.h3.copyWith(color: colorScheme.text),
           ),
-        ),
-        const SizedBox(height: AppDimens.p20),
-        const WalletSnapshotCard(),
-        const SizedBox(height: AppDimens.p20),
-
-        DashboardCountersGrid(),
-
-        const SizedBox(height: AppDimens.p24),
-
-        _SectionHeader(title: "Next Actions"),
-        const NextActionsList(),
-
-        const SizedBox(height: AppDimens.p24),
-
-        _SectionHeader(
-          title: "Recent Activity",
-          action: TextButton(
-            onPressed: () {
-              setState(() {
-                _showAllActivity = !_showAllActivity;
-              });
-            },
-            child: Text(_showAllActivity ? "Show Less" : "See All"),
+          Text(
+            vm.currentRole == UserRole.freelancer
+                ? "Ready to pick up some work?"
+                : "Let's get your projects moving.",
+            style: AppTypography.bodyMedium.copyWith(
+              color: colorScheme.textSecondary,
+            ),
           ),
-        ),
-        ActivityFeedPreview(limit: _showAllActivity ? null : 3),
-        // Add some bottom padding for navigation bar
-        const SizedBox(height: AppDimens.p100),
-      ],
+          const SizedBox(height: AppDimens.p20),
+          const WalletSnapshotCard(),
+          const SizedBox(height: AppDimens.p20),
+          DashboardCountersGrid(),
+          const SizedBox(height: AppDimens.p24),
+          _SectionHeader(title: "Next Actions"),
+          const NextActionsList(),
+          const SizedBox(height: AppDimens.p24),
+          _SectionHeader(
+            title: "Recent Activity",
+            action: TextButton(
+              onPressed: () {
+                setState(() {
+                  _showAllActivity = !_showAllActivity;
+                });
+              },
+              child: Text(_showAllActivity ? "Show Less" : "See All"),
+            ),
+          ),
+          ActivityFeedPreview(limit: _showAllActivity ? null : 3),
+          // Add some bottom padding for navigation bar
+          const SizedBox(height: AppDimens.p100),
+        ],
+      ),
     );
   }
 }

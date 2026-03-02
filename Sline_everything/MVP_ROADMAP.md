@@ -43,7 +43,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | Task creation and editing | ✅ Completed | create/detail/edit flows exist |
 | Task requests / tender offers | ✅ Completed | request services, inbox award flow, task detail actions |
 | Delivery submission and approval | ✅ Completed | RPC-backed delivery flow exists |
-| Tender payment flow | 🚧 In Progress | payment path exists and is still being hardened alongside ledger flows |
+| Tender payment flow | ✅ Completed | `TenderPaymentCoordinator` + `TenderPaymentViewModel`; award → pay from Inbox/Requests; ledger-backed |
 
 ## 5. Booking and Payment Flows
 
@@ -70,7 +70,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 
 | Feature | Status | Notes |
 | --- | --- | --- |
-| Unified dashboard/workspace | 🚧 In Progress | `dashboard` and `work` are the live workspace surfaces; the standalone `orders` dashboard was removed after consolidation into the unified dashboard slot |
+| Unified dashboard/workspace | ✅ Completed | Single `DashboardScreen`; cache wiring, lazy-load by tab, wallet snapshot on entry; MyServices off dashboard; booking/offer/wallet cards in owning features + `StatusPresenter` |
 | Booking/task CTA resolution | ✅ Completed | unified CTA resolver is used by work/booking screens |
 | Order management timeline | ✅ Completed | management feature is live for task and booking details |
 | Wallet and ledger views | 🚧 In Progress | wallet feature and ledger schema exist; ongoing finance hardening continues |

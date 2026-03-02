@@ -7,21 +7,14 @@ import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/glass_card.dart';
 import 'package:sline_app/features/wallet/viewmodels/wallet_view_model.dart';
 
+/// Compact wallet balance snapshot for dashboard overview.
 class WalletSnapshotCard extends StatelessWidget {
   const WalletSnapshotCard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // We assume WalletViewModel is available in context (provided at top level or dashboard)
-    // If not, DashboardScreen might need to ensure it's provided or we load it here.
-    // DashboardScreen doesn't usually provide WalletViewModel, main.dart does.
     final walletVM = context.watch<WalletViewModel>();
     final colorScheme = context.colorScheme;
-
-    // Auto-load if empty?
-    // Usually DashboardViewModel or MainNavigation loads this.
-    // We can trigger load if balance is zero and not loading?
-    // Ideally handled by parent logic.
 
     return GlassCard(
       padding: const EdgeInsets.all(AppDimens.p20),
@@ -48,8 +41,6 @@ class WalletSnapshotCard extends StatelessWidget {
               ),
             ],
           ),
-
-          // Split for Available / Held
           Row(
             children: [
               _BalanceItem(

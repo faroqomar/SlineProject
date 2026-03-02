@@ -727,6 +727,10 @@ class TaskService {
   /// This triggers escrow hold and activates the work.
   /// After success, freelancer can start working.
   Future<Map<String, dynamic>> payAwardedOffer(String offerId) async {
+    AppLogger.i(
+      'payAwardedOffer started for request $offerId',
+      tag: 'TaskService',
+    );
     try {
       // 1. First, get offer details and validate it can be paid
       final offerData = await _client

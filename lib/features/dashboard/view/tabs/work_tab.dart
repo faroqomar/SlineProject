@@ -150,36 +150,47 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
     required List<WorkItem> active,
     required List<WorkItem> delivered,
   }) {
+    final vm = context.read<DashboardViewModel>();
     if (active.isEmpty && delivered.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.work_off_outlined,
-              size: 48,
-              color: context.colorScheme.textSecondary.withValues(alpha: 0.5),
-            ),
-            const SizedBox(height: AppDimens.p16),
-            Text(
-              "No active work.",
-              style: AppTypography.bodyMedium.copyWith(
-                color: context.colorScheme.textSecondary,
+      return RefreshIndicator(
+        onRefresh: () => vm.refresh(),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height * 0.5,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.work_off_outlined,
+                    size: 48,
+                    color: context.colorScheme.textSecondary.withValues(alpha: 0.5),
+                  ),
+                  const SizedBox(height: AppDimens.p16),
+                  Text(
+                    "No active work.",
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: context.colorScheme.textSecondary,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       );
     }
 
-    final vm = context.read<DashboardViewModel>();
     final colorScheme = context.colorScheme;
 
     // Separate delivered (needs review) from the rest
     final reviewItems = delivered;
     final otherActive = active.where((i) => !i.actionableNeedsReview).toList();
 
-    return ListView(
+    return RefreshIndicator(
+      onRefresh: () => vm.refresh(),
+      child: ListView(
       padding: const EdgeInsets.fromLTRB(
         AppDimens.p16,
         0,
@@ -248,6 +259,7 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
           ),
         ],
       ],
+      ),
     );
   }
 
@@ -312,31 +324,41 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
     required String emptyMessage,
     bool isDimmed = false,
   }) {
+    final vm = context.read<DashboardViewModel>();
     if (items.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.work_off_outlined,
-              size: 48,
-              color: context.colorScheme.textSecondary.withValues(alpha: 0.5),
-            ),
-            const SizedBox(height: AppDimens.p16),
-            Text(
-              emptyMessage,
-              style: AppTypography.bodyMedium.copyWith(
-                color: context.colorScheme.textSecondary,
+      return RefreshIndicator(
+        onRefresh: () => vm.refresh(),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height * 0.5,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.work_off_outlined,
+                    size: 48,
+                    color: context.colorScheme.textSecondary.withValues(alpha: 0.5),
+                  ),
+                  const SizedBox(height: AppDimens.p16),
+                  Text(
+                    emptyMessage,
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: context.colorScheme.textSecondary,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       );
     }
 
-    final vm = context.read<DashboardViewModel>();
-
-    return ListView.separated(
+    return RefreshIndicator(
+      onRefresh: () => vm.refresh(),
+      child: ListView.separated(
       padding: const EdgeInsets.fromLTRB(
         AppDimens.p16,
         0,
@@ -355,6 +377,7 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
           ),
         );
       },
+      ),
     );
   }
 }

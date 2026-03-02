@@ -170,7 +170,7 @@ Not every feature uses every subfolder, but the standard live convention is:
 - `lib/features/auth/`: login, signup, forgot password, auth session handling
 - `lib/features/booking/`: direct booking checkout, booking lists/details, payment return/webview screens
 - `lib/features/chat/`: conversations, messages, attachments, realtime updates
-- `lib/features/dashboard/`: unified dashboard tabs and role-based work summaries, including the live bottom-nav dashboard slot
+- `lib/features/dashboard/`: unified dashboard tabs and role-based work summaries, including the live bottom-nav dashboard slot. Tab cards (booking, offer, wallet snapshot) live in owning features: `booking/view/widgets/dashboard_booking_card.dart`, `tasks/view/widgets/dashboard_offer_card.dart`, `wallet/view/widgets/wallet_snapshot_card.dart`; shared status helpers in `core/utils/status_presenter.dart`
 - `lib/features/direct_offers/`: direct chat offers (create, accept, pay, deliver, complete) and payment recovery
 - `lib/features/management/`: order timeline / note management for tasks and bookings
 - `lib/features/orders/`: decommissioned placeholder folder with `README.md` only; standalone orders runtime was removed on 2026-03-01

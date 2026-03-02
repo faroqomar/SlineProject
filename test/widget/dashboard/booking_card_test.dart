@@ -1,17 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
-import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/features/booking/models/booking_model.dart';
-import 'package:sline_app/features/dashboard/view/widgets/booking_card.dart';
-import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
+import 'package:sline_app/features/booking/view/widgets/dashboard_booking_card.dart';
 
 import '../../test_support/pump_app.dart';
-
-class _MockDashboardViewModel extends Mock
-    with ChangeNotifier
-    implements DashboardViewModel {}
 
 BookingModel _booking({
   required String id,
@@ -38,16 +31,27 @@ BookingModel _booking({
 void main() {
   Future<void> pumpBookingCard(
     WidgetTester tester, {
-    required DashboardViewModel viewModel,
     required BookingModel booking,
     required bool isProvider,
+    Future<bool?> Function(BookingModel)? onTapDetails,
+    VoidCallback? onRefresh,
+    void Function(String)? onAccept,
+    void Function(String)? onDecline,
+    void Function(String)? onCancel,
+    void Function(String, BookingStatus)? onUpdateStatus,
   }) async {
     await pumpApp(
       tester,
-      ChangeNotifierProvider<DashboardViewModel>.value(
-        value: viewModel,
-        child: Scaffold(
-          body: BookingCard(booking: booking, isProvider: isProvider),
+      Scaffold(
+        body: DashboardBookingCard(
+          booking: booking,
+          isProvider: isProvider,
+          onTapDetails: onTapDetails ?? ((_) async => null),
+          onRefresh: onRefresh,
+          onAccept: onAccept ?? (_) {},
+          onDecline: onDecline ?? (_) {},
+          onCancel: onCancel ?? (_) {},
+          onUpdateStatus: onUpdateStatus ?? (_, __) {},
         ),
       ),
     );
@@ -56,19 +60,16 @@ void main() {
   testWidgets('provider paid request pending shows Accept and no Confirm', (
     tester,
   ) async {
-    final vm = _MockDashboardViewModel();
-    when(() => vm.acceptBooking('booking-1')).thenAnswer((_) async {});
-    when(() => vm.declineBooking('booking-1')).thenAnswer((_) async {});
-
+    String? acceptedId;
     await pumpBookingCard(
       tester,
-      viewModel: vm,
       booking: _booking(
         id: 'booking-1',
         status: BookingStatus.paidRequestPending,
         paymentStatus: PaymentStatus.held,
       ),
       isProvider: true,
+      onAccept: (id) => acceptedId = id,
     );
 
     expect(find.text('Accept'), findsOneWidget);
@@ -77,24 +78,22 @@ void main() {
     await tester.tap(find.text('Accept'));
     await tester.pump();
 
-    verify(() => vm.acceptBooking('booking-1')).called(1);
+    expect(acceptedId, 'booking-1');
   });
 
   testWidgets(
     'provider pending unpaid shows Awaiting Payment instead of Confirm',
     (tester) async {
-      final vm = _MockDashboardViewModel();
-      when(() => vm.cancelBooking('booking-2')).thenAnswer((_) async {});
-
+      String? canceledId;
       await pumpBookingCard(
         tester,
-        viewModel: vm,
         booking: _booking(
           id: 'booking-2',
           status: BookingStatus.pending,
           paymentStatus: PaymentStatus.unpaid,
         ),
         isProvider: true,
+        onCancel: (id) => canceledId = id,
       );
 
       expect(find.text('Awaiting Payment'), findsOneWidget);
@@ -103,7 +102,7 @@ void main() {
       await tester.tap(find.text('Decline'));
       await tester.pump();
 
-      verify(() => vm.cancelBooking('booking-2')).called(1);
+      expect(canceledId, 'booking-2');
     },
   );
 }

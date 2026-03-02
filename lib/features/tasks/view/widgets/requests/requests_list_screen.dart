@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
-import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_requests_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/core/utils/format_price.dart';
+import 'package:sline_app/core/services/payment_service.dart';
+import 'package:sline_app/features/tasks/services/task_service.dart';
+import 'package:sline_app/features/tasks/services/tender_payment_coordinator.dart';
 import 'package:sline_app/features/tasks/view/tender_payment_screen.dart';
+import 'package:sline_app/features/tasks/viewmodels/tender_payment_view_model.dart';
 import 'widgets/request_tile.dart';
 import 'submit_request_sheet.dart';
 
@@ -137,20 +140,27 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
     setState(() => _isAwarding = false);
 
     if (result != null && result['success'] == true) {
-      // Navigate to payment screen
-      final clientId = context.read<AuthViewModel>().currentUserId ?? '';
+      final taskService = context.read<TaskService>();
+      final paymentService = context.read<PaymentService>();
+      final coordinator = TenderPaymentCoordinator(
+        taskService: taskService,
+        paymentService: paymentService,
+      );
+      final paymentDeadline = DateTime.parse(
+        result['payment_deadline'] as String,
+      );
       await Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => TenderPaymentScreen(
-            requestId: request.id,
-            taskId: request.taskId,
-            taskTitle: widget.taskId, // We should get this from somewhere
-            freelancerName: request.bidderName ?? 'Freelancer',
-            amount: request.price.toDouble(),
-            paymentDeadline: DateTime.parse(
-              result['payment_deadline'] as String,
+          builder: (_) => ChangeNotifierProvider<TenderPaymentViewModel>(
+            create: (_) => TenderPaymentViewModel(
+              coordinator: coordinator,
+              requestId: request.id,
+              taskTitle: widget.taskId,
+              freelancerName: request.bidderName ?? 'Freelancer',
+              amount: request.price.toDouble(),
+              paymentDeadline: paymentDeadline,
             ),
-            clientId: clientId,
+            child: const TenderPaymentScreen(),
           ),
         ),
       );

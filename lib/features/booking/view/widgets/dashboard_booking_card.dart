@@ -1,38 +1,45 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_date.dart';
+import 'package:sline_app/core/utils/status_presenter.dart';
 import 'package:sline_app/core/widgets/glass_card.dart';
 import 'package:sline_app/core/widgets/status_badge.dart';
 import 'package:sline_app/features/booking/models/booking_model.dart';
-import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
-import '../../../../core/app_enums.dart';
 
-import 'package:sline_app/features/work/view/work_item_details_screen.dart';
-
-class BookingCard extends StatelessWidget {
+/// Dashboard-style booking card with actions; uses callbacks so the widget
+/// stays in the booking feature without depending on DashboardViewModel.
+class DashboardBookingCard extends StatelessWidget {
   final BookingModel booking;
   final bool isProvider;
+  final Future<bool?> Function(BookingModel) onTapDetails;
+  final VoidCallback? onRefresh;
+  final void Function(String bookingId) onAccept;
+  final void Function(String bookingId) onDecline;
+  final void Function(String bookingId) onCancel;
+  final void Function(String bookingId, BookingStatus status) onUpdateStatus;
 
-  const BookingCard({
+  const DashboardBookingCard({
     super.key,
     required this.booking,
     required this.isProvider,
+    required this.onTapDetails,
+    this.onRefresh,
+    required this.onAccept,
+    required this.onDecline,
+    required this.onCancel,
+    required this.onUpdateStatus,
   });
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final vm = context.read<DashboardViewModel>();
-
-    // Determine task title
     final taskTitle = booking.taskData?['title'] ?? 'Task';
     final bookingDue = booking.dueAtUtc ?? booking.scheduledAt;
 
-    // Parse note to hide metadata if present
     String? displayNote = booking.note;
     if (displayNote != null && displayNote.contains('---')) {
       final parts = displayNote.split('---');
@@ -48,44 +55,8 @@ class BookingCard extends StatelessWidget {
       displayNote = null;
     }
 
-    // Status Color Helper
-    Color getStatusColor(BookingStatus status) {
-      switch (status) {
-        case BookingStatus.confirmed:
-        case BookingStatus.active:
-          return AppColors.teal;
-        case BookingStatus.pending:
-        case BookingStatus.paidRequestPending:
-          return AppColors.gold;
-        case BookingStatus.canceled:
-        case BookingStatus.declined:
-          return AppColors.lightRed;
-        case BookingStatus.delivered:
-          return AppColors.lightRed;
-        case BookingStatus.completed:
-          return AppColors.gold; // Awaiting client review
-        default:
-          return colorScheme.textSecondary;
-      }
-    }
-
-    // Human-readable status label
-    String getStatusLabel(BookingStatus status) {
-      switch (status) {
-        case BookingStatus.paidRequestPending:
-          return 'REQUEST PENDING';
-        case BookingStatus.inProgress:
-          return 'IN PROGRESS';
-        case BookingStatus.noShow:
-          return 'NO SHOW';
-        case BookingStatus.expiredUnanswered:
-          return 'EXPIRED';
-        default:
-          return status.name.toUpperCase();
-      }
-    }
-
-    final statusColor = getStatusColor(booking.status);
+    final statusColor = StatusPresenter.bookingStatusColor(booking.status);
+    final statusLabel = StatusPresenter.bookingStatusLabel(booking.status);
     final canProviderAccept =
         isProvider &&
         (booking.status == BookingStatus.paidRequestPending ||
@@ -100,17 +71,9 @@ class BookingCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppDimens.p16),
       margin: const EdgeInsets.only(bottom: AppDimens.p16),
       onTap: () async {
-        final result = await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => WorkItemDetailsScreen(
-              id: booking.id,
-              type: WorkItemType.booking,
-            ),
-          ),
-        );
-        if (result == true && context.mounted) {
-          vm.refresh();
+        final result = await onTapDetails(booking);
+        if (result == true && context.mounted && onRefresh != null) {
+          onRefresh!();
         }
       },
       child: Column(
@@ -143,7 +106,7 @@ class BookingCard extends StatelessWidget {
                 ),
               ),
               StatusBadge(
-                text: getStatusLabel(booking.status),
+                text: statusLabel,
                 color: statusColor,
                 isSmall: true,
               ),
@@ -167,7 +130,6 @@ class BookingCard extends StatelessWidget {
               ),
             ),
           ],
-
           if (booking.deliveryDays != null) ...[
             const SizedBox(height: AppDimens.p12),
             Text(
@@ -177,10 +139,7 @@ class BookingCard extends StatelessWidget {
               ),
             ),
           ],
-
           const SizedBox(height: AppDimens.p16),
-
-          // Actions
           if (booking.status == BookingStatus.pending ||
               booking.status == BookingStatus.paidRequestPending)
             Row(
@@ -189,7 +148,7 @@ class BookingCard extends StatelessWidget {
                   Expanded(
                     child: FilledButton(
                       onPressed: canProviderAccept
-                          ? () => vm.acceptBooking(booking.id)
+                          ? () => onAccept(booking.id)
                           : null,
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.teal,
@@ -204,11 +163,11 @@ class BookingCard extends StatelessWidget {
                     child: OutlinedButton(
                       onPressed: () {
                         if (canProviderAccept) {
-                          vm.declineBooking(booking.id);
+                          onDecline(booking.id);
                           return;
                         }
                         if (awaitingClientPayment) {
-                          vm.cancelBooking(booking.id);
+                          onCancel(booking.id);
                         }
                       },
                       style: OutlinedButton.styleFrom(
@@ -221,7 +180,7 @@ class BookingCard extends StatelessWidget {
                 ] else ...[
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => vm.cancelBooking(booking.id),
+                      onPressed: () => onCancel(booking.id),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.lightRed,
                         side: BorderSide(color: AppColors.lightRed),
@@ -232,7 +191,6 @@ class BookingCard extends StatelessWidget {
                 ],
               ],
             ),
-
           if (booking.status == BookingStatus.confirmed)
             Row(
               children: [
@@ -251,10 +209,8 @@ class BookingCard extends StatelessWidget {
                 if (!isProvider)
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => vm.updateBookingStatus(
-                        booking.id,
-                        BookingStatus.canceled,
-                      ),
+                      onPressed: () =>
+                          onUpdateStatus(booking.id, BookingStatus.canceled),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.lightRed,
                         side: BorderSide(color: AppColors.lightRed),

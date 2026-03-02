@@ -21,6 +21,54 @@
 
 ## 📋 Version History
 
+### 🟢 Version 2.17.2 — Dashboard Full Remediation (Widget Moves, Lazy-Load, StatusPresenter)
+
+**Date:** 2026-03-02  
+**Commit:** _Pending_ — "refactor(dashboard): move cards to owning features, StatusPresenter, lazy-load flags, lint fix"
+
+#### ✅ Implemented
+
+- **Widget moves**
+  - `lib/features/booking/view/widgets/dashboard_booking_card.dart`: Dashboard booking card with callback API (onTapDetails, onAccept, onDecline, onCancel, onUpdateStatus, onRefresh); no DashboardViewModel dependency.
+  - `lib/features/tasks/view/widgets/dashboard_offer_card.dart`: Dashboard offer card moved from dashboard; uses `StatusPresenter` for badge.
+  - `lib/features/wallet/view/widgets/wallet_snapshot_card.dart`: Wallet snapshot card moved from dashboard to wallet feature.
+  - Removed: `lib/features/dashboard/view/widgets/booking_card.dart`, `offer_card.dart`, `wallet_snapshot_card.dart`.
+
+- **Shared status**
+  - `lib/core/utils/status_presenter.dart`: Booking and offer status color/label helpers used by dashboard booking and offer cards.
+
+- **Dashboard behavior**
+  - Lazy-load by tab: overview loads first; Bookings and Inbox load on first visit. Full refresh sets `_bookingsLoaded` and `_inboxLoaded` so tab switch does not reload.
+  - BookingsTab and InboxTab pass VM callbacks to `DashboardBookingCard` and `DashboardOfferCard`; OverviewTab imports `WalletSnapshotCard` from wallet feature.
+
+- **Pull-to-refresh on every tab**
+  - Overview, Bookings, Inbox, and Work tabs (including Work sub-tabs Active / Done / Cancelled) each wrap content in `RefreshIndicator` with `onRefresh: () => vm.refresh()`. Empty states use `SingleChildScrollView` + `AlwaysScrollableScrollPhysics` so pull works. Files: `lib/features/dashboard/view/tabs/overview_tab.dart`, `bookings_tab.dart`, `inbox_tab.dart`, `work_tab.dart`.
+
+- **Lint**
+  - Removed unnecessary non-null assertions in `lib/features/dashboard/viewmodels/dashboard_view_model.dart` (cache use in `_loadOverviewData` and cache save after overview fetch).
+
+- **Docs**
+  - `Sline_everything/DEVELOPER_GUIDE.md`: §2.1 Current dashboard behavior (cache, lazy-load, wallet snapshot, MyServices, tender payment, card paths, StatusPresenter).
+  - `Sline_everything/MVP_ROADMAP.md`: Tender payment flow and Unified dashboard/workspace set to ✅ Completed.
+  - `Sline_everything/STRUCTURE.md`: Dashboard bullet updated with card paths and `status_presenter.dart`.
+  - `Sline_everything/DEVELOPER_GUIDE.md`: §2.1 extended with pull-to-refresh on every tab (paths for overview_tab, bookings_tab, inbox_tab, work_tab).
+
+#### 📊 Impact
+
+- Dashboard cards live in owning features; status presentation is centralized. Lazy-load reduces initial load; refresh correctly marks tab data as loaded. Docs and roadmap reflect current behavior.
+
+#### 🧪 Verification
+
+- Plan: `.TODO/PLAN_Dashboard_Full_Remediation_2026-03-01.md`
+- Reports: `.TODO/ARCHITECT_REPORT_2026-03-02_DashboardRemediation.md`, `.TODO/CODEGUARD_REVIEW_2026-03-02_DashboardRemediation.md`, `.TODO/MASTER_REPORT_2026-03-02_DashboardRemediation.md`
+- Test: `flutter test test/widget/dashboard/booking_card_test.dart`; `flutter analyze` (no warnings in dashboard_view_model.dart for this scope).
+
+#### 🔧 Technical Notes
+
+- No DB or RLS changes. Rollback: revert widget moves and doc edits; restore deleted dashboard widget files from git.
+
+---
+
 ### 🟢 Version 2.17.0 — Direct Chat Offers (Accept-then-Pay, QiCard, Dashboard)
 
 **Date:** 2026-03-02  

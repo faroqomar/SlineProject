@@ -55,7 +55,7 @@ class DashboardViewModel extends ChangeNotifier {
 
     _loadCachedRole();
     _syncRoleFromBackend();
-    _loadData();
+    _loadOverviewData();
   }
 
   @override
@@ -191,6 +191,10 @@ class DashboardViewModel extends ChangeNotifier {
 
   List<Task> _pendingPaymentTenders = [];
   List<Task> get pendingPaymentTenders => _pendingPaymentTenders;
+
+  // Lazy-load: only fetch tab data when that tab is first shown
+  bool _bookingsLoaded = false;
+  bool _inboxLoaded = false;
 
   // --- Filtered Work Buckets (cached, invalidated on _workItems change) ---
 
@@ -348,12 +352,120 @@ class DashboardViewModel extends ChangeNotifier {
     );
     _currentTab = tab;
     _safeNotify();
+
+    // Lazy-load tab data when first switching to that tab
+    if (tab == DashboardTab.bookings && !_bookingsLoaded) {
+      _loadBookingsData();
+    } else if (tab == DashboardTab.inbox && !_inboxLoaded) {
+      _loadInboxData();
+    }
   }
 
   /// Refreshes all dashboard data from the API
   Future<void> refresh() => _loadData(forceRefresh: true);
 
-  /// Load dashboard data with stale-while-revalidate caching
+  /// Load only overview data (work items, activity, counters with empty inbox).
+  /// Called on init so opening Overview does not fetch Bookings/Inbox.
+  Future<void> _loadOverviewData() async {
+    AppLogger.d('Loading overview data only (lazy tab)', tag: _kTag);
+    final sw = Stopwatch()..start();
+
+    final cache = _cacheService;
+    if (cache != null) {
+      final cachedWorkItems = await cache.getCachedWorkItems(_currentRole);
+      final cachedActivity = await cache.getCachedActivityFeed();
+      final cachedCounters = await cache.getCachedCounters();
+      if (cachedWorkItems != null || cachedActivity != null) {
+        AppLogger.i('⚡ Overview loaded from cache', tag: _kTag);
+        _workItems = cachedWorkItems ?? [];
+        _activityFeed = cachedActivity ?? [];
+        _invalidateWorkCaches();
+        if (cachedCounters != null) {
+          _counters = DashboardCounters.fromMap(cachedCounters);
+        }
+        _isLoading = false;
+        _safeNotify();
+      }
+    }
+
+    _isLoading = true;
+    _safeNotify();
+
+    try {
+      final fetchedRole = await _repository.fetchUserRole();
+      if (_currentRole != fetchedRole) _currentRole = fetchedRole;
+      if (_abortIfDisposed()) return;
+
+      _userName =
+          _repository.currentUser?.userMetadata?['full_name'] as String?;
+
+      _workItems = await _repository.fetchWorkItems(_currentRole);
+      if (_abortIfDisposed()) return;
+      _activityFeed = await _repository.fetchActivityFeed();
+      if (_abortIfDisposed()) return;
+
+      _invalidateWorkCaches();
+      _counters = await _repository.fetchCounters(
+        _currentRole,
+        _workItems,
+        [], // Inbox not loaded yet
+      );
+      final cacheForSave = _cacheService;
+      if (cacheForSave != null && !_abortIfDisposed()) {
+        await cacheForSave.cacheWorkItems(_workItems, _currentRole);
+        await cacheForSave.cacheActivityFeed(_activityFeed);
+        await cacheForSave.cacheCounters(_counters.toMap());
+      }
+      sw.stop();
+      AppLogger.i(
+        '✅ Overview refreshed in ${sw.elapsedMilliseconds}ms',
+        tag: _kTag,
+      );
+    } catch (e) {
+      sw.stop();
+      AppLogger.e('Overview load error', error: e, tag: _kTag);
+    }
+    _isLoading = false;
+    _safeNotify();
+  }
+
+  Future<void> _loadBookingsData() async {
+    if (_bookingsLoaded) return;
+    try {
+      _bookings = await _fetchBookingsInternal();
+      _bookingsLoaded = true;
+      AppLogger.d('Bookings tab data loaded', tag: _kTag);
+      _safeNotify();
+    } catch (e) {
+      AppLogger.e('Failed to load bookings', error: e, tag: _kTag);
+      _safeNotify();
+    }
+  }
+
+  Future<void> _loadInboxData() async {
+    if (_inboxLoaded) return;
+    try {
+      _inboxOffers = await _fetchInboxInternal();
+      if (_abortIfDisposed()) return;
+      final pending = await _fetchPendingItemsInternal();
+      _pendingRequests = pending['requests'] as List<BookingModel>;
+      _pendingPaymentTenders = pending['tenders'] as List<Task>;
+      _inboxLoaded = true;
+      _invalidateWorkCaches();
+      _counters = await _repository.fetchCounters(
+        _currentRole,
+        _workItems,
+        _inboxOffers,
+      );
+      AppLogger.d('Inbox tab data loaded', tag: _kTag);
+      _safeNotify();
+    } catch (e) {
+      AppLogger.e('Failed to load inbox', error: e, tag: _kTag);
+      _safeNotify();
+    }
+  }
+
+  /// Load dashboard data with stale-while-revalidate caching (full load)
   Future<void> _loadData({bool forceRefresh = false}) async {
     AppLogger.d(
       'Loading dashboard data (forceRefresh=$forceRefresh)...',
@@ -442,6 +554,9 @@ class DashboardViewModel extends ChangeNotifier {
         await _cacheService.cacheCounters(_counters.toMap());
         AppLogger.i('💾 Dashboard data cached', tag: _kTag);
       }
+
+      _bookingsLoaded = true;
+      _inboxLoaded = true;
 
       sw.stop();
       AppLogger.i(

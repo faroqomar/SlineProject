@@ -4,9 +4,13 @@ import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/services/payment_service.dart';
+import 'package:sline_app/features/tasks/services/task_service.dart';
+import 'package:sline_app/features/tasks/services/tender_payment_coordinator.dart';
 import 'package:sline_app/features/tasks/view/tender_payment_screen.dart';
+import 'package:sline_app/features/tasks/viewmodels/tender_payment_view_model.dart';
+import 'package:sline_app/features/tasks/view/widgets/dashboard_offer_card.dart';
 import '../../viewmodels/dashboard_view_model.dart';
-import '../widgets/offer_card.dart';
 
 class InboxTab extends StatefulWidget {
   const InboxTab({super.key});
@@ -25,6 +29,8 @@ class _InboxTabState extends State<InboxTab> {
   ) async {
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
+    final taskService = context.read<TaskService>();
+    final paymentService = context.read<PaymentService>();
     setState(() => _isAwarding = true);
 
     try {
@@ -38,18 +44,23 @@ class _InboxTabState extends State<InboxTab> {
         final paymentDeadline = DateTime.parse(
           result['payment_deadline'] as String,
         );
-        final clientId = vm.currentUserId ?? '';
+        final coordinator = TenderPaymentCoordinator(
+          taskService: taskService,
+          paymentService: paymentService,
+        );
 
         await navigator.push(
           MaterialPageRoute(
-            builder: (_) => TenderPaymentScreen(
-              requestId: offer.id,
-              taskId: offer.taskId,
-              taskTitle: offer.taskTitle ?? 'Task',
-              freelancerName: offer.bidderName ?? 'Freelancer',
-              amount: offer.price.toDouble(),
-              paymentDeadline: paymentDeadline,
-              clientId: clientId,
+            builder: (_) => ChangeNotifierProvider<TenderPaymentViewModel>(
+              create: (_) => TenderPaymentViewModel(
+                coordinator: coordinator,
+                requestId: offer.id,
+                taskTitle: offer.taskTitle ?? 'Task',
+                freelancerName: offer.bidderName ?? 'Freelancer',
+                amount: offer.price.toDouble(),
+                paymentDeadline: paymentDeadline,
+              ),
+              child: const TenderPaymentScreen(),
             ),
           ),
         );
@@ -85,18 +96,25 @@ class _InboxTabState extends State<InboxTab> {
 
     // For awarded offers, use a 24-hour deadline from now as fallback
     final paymentDeadline = DateTime.now().add(const Duration(hours: 24));
-    final clientId = vm.currentUserId ?? '';
+    final taskService = context.read<TaskService>();
+    final paymentService = context.read<PaymentService>();
+    final coordinator = TenderPaymentCoordinator(
+      taskService: taskService,
+      paymentService: paymentService,
+    );
 
     await navigator.push(
       MaterialPageRoute(
-        builder: (_) => TenderPaymentScreen(
-          requestId: offer.id,
-          taskId: offer.taskId,
-          taskTitle: offer.taskTitle ?? 'Task',
-          freelancerName: offer.bidderName ?? 'Freelancer',
-          amount: offer.price.toDouble(),
-          paymentDeadline: paymentDeadline,
-          clientId: clientId,
+        builder: (_) => ChangeNotifierProvider<TenderPaymentViewModel>(
+          create: (_) => TenderPaymentViewModel(
+            coordinator: coordinator,
+            requestId: offer.id,
+            taskTitle: offer.taskTitle ?? 'Task',
+            freelancerName: offer.bidderName ?? 'Freelancer',
+            amount: offer.price.toDouble(),
+            paymentDeadline: paymentDeadline,
+          ),
+          child: const TenderPaymentScreen(),
         ),
       ),
     );
@@ -117,7 +135,16 @@ class _InboxTabState extends State<InboxTab> {
         final label = isClient ? 'Proposals' : 'Offers';
 
         if (vm.inboxOffers.isEmpty) {
-          return _EmptyInboxState(label: label);
+          return RefreshIndicator(
+            onRefresh: () => vm.refresh(),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.6,
+                child: _EmptyInboxState(label: label),
+              ),
+            ),
+          );
         }
 
         return RefreshIndicator(
@@ -147,7 +174,7 @@ class _InboxTabState extends State<InboxTab> {
                 acceptHandler = () {};
               }
 
-              return OfferCard(
+              return DashboardOfferCard(
                 offer: offer,
                 isClientView: isClient,
                 onAccept: acceptHandler,
