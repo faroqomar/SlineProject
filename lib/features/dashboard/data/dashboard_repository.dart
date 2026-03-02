@@ -9,6 +9,7 @@ import 'package:sline_app/features/dashboard/services/dashboard_permission_servi
 import 'package:sline_app/features/profile/services/profile_summary_service.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/features/work/models/unified_work_item_model.dart';
+import 'package:sline_app/features/direct_offers/models/direct_offer_model.dart';
 
 class DashboardRepository {
   static const _kTag = 'dashboard.repo';
@@ -96,8 +97,25 @@ class DashboardRepository {
           .map((u) => _mapUnifiedToWorkItem(u, role))
           .toList();
 
+      // Fetch direct offers (active/delivered/completed) and merge
+      final directOffers = await _fetchDirectOffers(uid);
+      final byRole = role == UserRole.client
+          ? directOffers.where((o) => o.clientId == uid).toList()
+          : directOffers.where((o) => o.freelancerId == uid).toList();
+      final directWorkItems = byRole
+          .map((o) => _mapDirectOfferToWorkItem(o, uid, role))
+          .toList();
+      final merged = <WorkItem>[...items, ...directWorkItems]
+        ..sort((a, b) {
+          final rank = (a.sortRank).compareTo(b.sortRank);
+          if (rank != 0) return rank;
+          final aAt = a.lastActivityAt ?? a.lastUpdate;
+          final bAt = b.lastActivityAt ?? b.lastUpdate;
+          return bAt.compareTo(aAt);
+        });
+
       // Batch-fetch counterparty profiles (single query, no N+1)
-      final enrichedItems = await _enrichWithProfiles(items);
+      final enrichedItems = await _enrichWithProfiles(merged);
 
       AppLogger.i(
         'Fetched ${enrichedItems.length} unified work items',
@@ -197,6 +215,111 @@ class DashboardRepository {
     );
   }
 
+  Future<List<DirectOffer>> _fetchDirectOffers(String uid) async {
+    try {
+      final response = await _client
+          .from('direct_offers')
+          .select()
+          .or('client_id.eq.$uid,freelancer_id.eq.$uid')
+          .in_('status', ['accepted', 'active', 'delivered', 'completed']);
+      return (response as List)
+          .map((e) => DirectOffer.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList();
+    } catch (e, st) {
+      AppLogger.e(
+        'Failed to fetch direct offers',
+        error: e,
+        stackTrace: st,
+        tag: _kTag,
+      );
+      return [];
+    }
+  }
+
+  static UnifiedWorkStatus _directOfferStatusToUnified(
+    String status,
+    String paymentStatus,
+  ) {
+    if (status == 'accepted' && paymentStatus == 'unpaid') {
+      return UnifiedWorkStatus.pendingPayment;
+    }
+    switch (status) {
+      case 'active':
+        return UnifiedWorkStatus.active;
+      case 'delivered':
+        return UnifiedWorkStatus.delivered;
+      case 'completed':
+        return UnifiedWorkStatus.completed;
+      default:
+        return UnifiedWorkStatus.active;
+    }
+  }
+
+  static String _directOfferStatusToBucket(
+    String status,
+    String paymentStatus,
+  ) {
+    if (status == 'accepted' && paymentStatus == 'unpaid') return 'Pending';
+    switch (status) {
+      case 'active':
+        return 'Active';
+      case 'delivered':
+        return 'Active';
+      case 'completed':
+        return 'Done';
+      default:
+        return 'Active';
+    }
+  }
+
+  WorkItem _mapDirectOfferToWorkItem(DirectOffer o, String uid, UserRole role) {
+    final isClient = role == UserRole.client;
+    final counterpartyId = isClient ? o.freelancerId : o.clientId;
+    final unifiedStatus = _directOfferStatusToUnified(
+      o.status,
+      o.paymentStatus,
+    );
+    final sortRank = o.status == 'accepted' && o.paymentStatus == 'unpaid'
+        ? 2
+        : o.status == 'active'
+        ? 4
+        : o.status == 'delivered'
+        ? 5
+        : 6;
+    return WorkItem(
+      id: o.id,
+      type: WorkItemType.directOffer,
+      title: o.title?.isNotEmpty == true ? o.title! : 'Custom Offer',
+      counterpartyId: counterpartyId,
+      counterpartyName: 'Loading...',
+      counterpartyAvatar: '',
+      counterpartyRole: isClient ? 'Freelancer' : 'Client',
+      sourceId: o.id,
+      statusRaw: o.status == 'accepted' && o.paymentStatus == 'unpaid'
+          ? 'accepted'
+          : o.status,
+      statusUiBucket: _directOfferStatusToBucket(o.status, o.paymentStatus),
+      createdAt: o.createdAt,
+      scheduledAt: null,
+      lastUpdate: o.updatedAt,
+      primaryActionType: DashboardPermissionService.getPrimaryAction(
+        userRole: role,
+        type: WorkItemType.directOffer,
+        status: unifiedStatus,
+      ),
+      permissions: DashboardPermissionService.calculatePermissions(
+        userRole: role,
+        type: WorkItemType.directOffer,
+        status: unifiedStatus,
+      ),
+      workItemId: 'direct_offer:${o.id}',
+      needsReview: o.status == 'delivered' && isClient,
+      sortRank: sortRank,
+      lastActivityAt: o.updatedAt,
+      conversationId: o.conversationId,
+    );
+  }
+
   /// Maps unified status to UI bucket.
   /// Buckets: 'Pending', 'Active', 'Done', 'Cancelled'
   String _mapUnifiedStatusToBucket(UnifiedWorkStatus status) {
@@ -278,7 +401,8 @@ class DashboardRepository {
       }).length;
 
       pendingPayment = currentItems.where((i) {
-        return i.statusRaw == 'paid_request_pending';
+        return i.statusRaw == 'paid_request_pending' ||
+            (i.type == WorkItemType.directOffer && i.statusRaw == 'accepted');
       }).length;
 
       // Use pre-fetched inbox offers (no re-query)

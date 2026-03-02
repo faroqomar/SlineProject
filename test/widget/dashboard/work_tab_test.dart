@@ -22,8 +22,9 @@ class _FakeDeepLinkService extends Fake implements DeepLinkService {
   Future<dynamic> handleWorkItem(
     BuildContext context,
     String type,
-    String id,
-  ) async => null;
+    String id, {
+    String? conversationId,
+  }) async => null;
 }
 
 WorkItem _buildWorkItem({

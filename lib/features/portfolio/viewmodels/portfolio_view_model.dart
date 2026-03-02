@@ -11,7 +11,8 @@ import '../models/portfolio_item.dart';
 class PortfolioViewModel extends ChangeNotifier {
   /// Creates with explicit repository (preferred for testing/dependency injection).
   PortfolioViewModel({PortfolioRepository? repository, SupabaseClient? client})
-    : _repo = repository ?? PortfolioRepository(client ?? Supabase.instance.client),
+    : _repo =
+          repository ?? PortfolioRepository(client ?? Supabase.instance.client),
       _tag = 'PortfolioVM' {
     AppLogger.d('PortfolioViewModel created', tag: _tag);
   }
@@ -76,10 +77,11 @@ class PortfolioViewModel extends ChangeNotifier {
     _items.clear();
     _notify();
 
-    AppLogger.i('Loading portfolio', tag: _tag, json: {
-      'ownerId': uid,
-      'pageSize': pageSize,
-    });
+    AppLogger.i(
+      'Loading portfolio',
+      tag: _tag,
+      json: {'ownerId': uid, 'pageSize': pageSize},
+    );
 
     try {
       final page = await _repo.listItems(ownerId: _ownerId!, limit: pageSize);
@@ -88,13 +90,19 @@ class PortfolioViewModel extends ChangeNotifier {
         _cursorCreatedAtIso = _items.last.createdAt.toIso8601String();
       }
       _hasMore = page.length >= pageSize;
-      AppLogger.i('Loaded ${page.length} portfolio items', tag: _tag, json: {
-        'totalItems': _items.length,
-        'hasMore': _hasMore,
-      });
+      AppLogger.i(
+        'Loaded ${page.length} portfolio items',
+        tag: _tag,
+        json: {'totalItems': _items.length, 'hasMore': _hasMore},
+      );
     } catch (e, st) {
       _setError(e);
-      AppLogger.e('Failed to load portfolio', tag: _tag, error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to load portfolio',
+        tag: _tag,
+        error: e,
+        stackTrace: st,
+      );
       _hasMore = false;
     } finally {
       _initialLoading = false;
@@ -121,10 +129,11 @@ class PortfolioViewModel extends ChangeNotifier {
     _clearError();
     _notify();
 
-    AppLogger.i('Loading more portfolio items', tag: _tag, json: {
-      'cursor': _cursorCreatedAtIso,
-      'pageSize': pageSize,
-    });
+    AppLogger.i(
+      'Loading more portfolio items',
+      tag: _tag,
+      json: {'cursor': _cursorCreatedAtIso, 'pageSize': pageSize},
+    );
 
     try {
       final page = await _repo.listItems(
@@ -137,13 +146,19 @@ class PortfolioViewModel extends ChangeNotifier {
         _cursorCreatedAtIso = page.last.createdAt.toIso8601String();
       }
       _hasMore = page.length >= pageSize;
-      AppLogger.i('Loaded ${page.length} more items', tag: _tag, json: {
-        'totalItems': _items.length,
-        'hasMore': _hasMore,
-      });
+      AppLogger.i(
+        'Loaded ${page.length} more items',
+        tag: _tag,
+        json: {'totalItems': _items.length, 'hasMore': _hasMore},
+      );
     } catch (e, st) {
       _setError(e);
-      AppLogger.e('Failed to load more portfolio items', tag: _tag, error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to load more portfolio items',
+        tag: _tag,
+        error: e,
+        stackTrace: st,
+      );
       _hasMore = false;
     } finally {
       _loadingMore = false;
@@ -168,10 +183,11 @@ class PortfolioViewModel extends ChangeNotifier {
     _clearError();
     _notify();
 
-    AppLogger.i('Adding portfolio item', tag: _tag, json: {
-      'title': title,
-      'hasImage': imageBytes != null,
-    });
+    AppLogger.i(
+      'Adding portfolio item',
+      tag: _tag,
+      json: {'title': title, 'hasImage': imageBytes != null},
+    );
 
     try {
       final created = await _repo.addItem(
@@ -190,7 +206,12 @@ class PortfolioViewModel extends ChangeNotifier {
       return true;
     } catch (e, st) {
       _setError(e);
-      AppLogger.e('Failed to add portfolio item', tag: _tag, error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to add portfolio item',
+        tag: _tag,
+        error: e,
+        stackTrace: st,
+      );
       _notify();
       return false;
     }
@@ -214,7 +235,12 @@ class PortfolioViewModel extends ChangeNotifier {
       return true;
     } catch (e, st) {
       _setError(e);
-      AppLogger.e('Failed to delete item $id', tag: _tag, error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to delete item $id',
+        tag: _tag,
+        error: e,
+        stackTrace: st,
+      );
       _notify();
       return false;
     }
@@ -226,10 +252,11 @@ class PortfolioViewModel extends ChangeNotifier {
     required String title,
     String? description,
   }) async {
-    AppLogger.i('Updating portfolio item', tag: _tag, json: {
-      'id': id,
-      'title': title,
-    });
+    AppLogger.i(
+      'Updating portfolio item',
+      tag: _tag,
+      json: {'id': id, 'title': title},
+    );
 
     try {
       await _repo.updateItem(id: id, title: title, description: description);
@@ -245,7 +272,12 @@ class PortfolioViewModel extends ChangeNotifier {
       return true;
     } catch (e, st) {
       _setError(e);
-      AppLogger.e('Failed to update item $id', tag: _tag, error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to update item $id',
+        tag: _tag,
+        error: e,
+        stackTrace: st,
+      );
       _notify();
       return false;
     }

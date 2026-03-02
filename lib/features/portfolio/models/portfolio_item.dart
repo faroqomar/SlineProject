@@ -10,9 +10,11 @@ class PortfolioItem {
   final String ownerId;
   final String title;
   final String? description;
+
   /// **Canonical:** Storage path (e.g., "ownerId/filename.jpg")
   /// Prefer this over imageUrl for new code.
   final String? imagePath;
+
   /// **Legacy:** Public URL (backwards compatibility only)
   /// Use only when imagePath is null.
   final String? imageUrl;

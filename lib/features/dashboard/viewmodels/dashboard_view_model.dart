@@ -13,7 +13,9 @@ import '../../tasks/models/task_model.dart';
 import '../../tasks/services/task_service.dart';
 import '../../booking/models/booking_model.dart';
 import '../../booking/services/booking_service.dart';
+import '../../direct_offers/services/direct_offers_service.dart';
 import '../../tasks/models/task_request_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Generates a short trace ID for correlating multi-step operations.
 String _traceId() {
@@ -25,6 +27,7 @@ class DashboardViewModel extends ChangeNotifier {
   static const _kTag = 'dashboard';
   final DashboardRepository _repository;
   final DashboardCacheService? _cacheService;
+  final DirectOffersService _directOffersService;
 
   // Dispose guard
   bool _isDisposed = false;
@@ -36,13 +39,17 @@ class DashboardViewModel extends ChangeNotifier {
     TaskService? taskService,
     ServicesService? servicesService,
     BookingService? bookingService,
+    DirectOffersService? directOffersService,
   }) : _repository = repository ?? DashboardRepository(),
        _cacheService = cacheService,
        _taskService = taskService ?? TaskService(),
        _servicesService = servicesService ?? ServicesService(),
        _bookingService =
            bookingService ??
-           BookingService((repository ?? DashboardRepository()).client) {
+           BookingService((repository ?? DashboardRepository()).client),
+       _directOffersService =
+           directOffersService ??
+           DirectOffersService(Supabase.instance.client) {
     _currentTab = DashboardTab.overview;
     _currentRole = UserRole.freelancer;
 
@@ -834,6 +841,17 @@ class DashboardViewModel extends ChangeNotifier {
       case PrimaryActionType.markCompleted:
         break; // Handle below
     }
+
+    // Direct offer: Pay Now from dashboard (escrow hold)
+    if (item.type == WorkItemType.directOffer &&
+        item.primaryActionType == PrimaryActionType.payEscrow) {
+      await _directOffersService.payNow(item.id);
+      await _loadData();
+      return;
+    }
+
+    // Direct offer + other actions: navigation only (handled by View)
+    if (item.type == WorkItemType.directOffer) return;
 
     try {
       if (item.type == WorkItemType.booking) {

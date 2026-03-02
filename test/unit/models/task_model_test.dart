@@ -108,20 +108,23 @@ void main() {
       },
     );
 
-    test('T25b Task.toJson serializes TaskStatus.inProgress as in_progress', () {
-      final task = Task(
-        id: 'task-progress',
-        title: 'Task title',
-        description: 'Task description',
-        budget: 150.0,
-        userId: 'user-1',
-        status: TaskStatus.inProgress,
-        createdAt: DateTime.utc(2026, 2, 24, 10),
-      );
+    test(
+      'T25b Task.toJson serializes TaskStatus.inProgress as in_progress',
+      () {
+        final task = Task(
+          id: 'task-progress',
+          title: 'Task title',
+          description: 'Task description',
+          budget: 150.0,
+          userId: 'user-1',
+          status: TaskStatus.inProgress,
+          createdAt: DateTime.utc(2026, 2, 24, 10),
+        );
 
-      final json = task.toJson();
+        final json = task.toJson();
 
-      expect(json['status'], 'in_progress');
-    });
+        expect(json['status'], 'in_progress');
+      },
+    );
   });
 }

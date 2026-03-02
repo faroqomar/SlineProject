@@ -26,10 +26,11 @@ class PortfolioRepository {
     int limit = 30,
     String? cursorCreatedAtIso,
   }) async {
-    AppLogger.d('Repository: listItems', tag: _tag, json: {
-      'ownerId': ownerId,
-      'limit': limit,
-    });
+    AppLogger.d(
+      'Repository: listItems',
+      tag: _tag,
+      json: {'ownerId': ownerId, 'limit': limit},
+    );
     try {
       return await _service.listItems(
         ownerId: ownerId,
@@ -37,7 +38,12 @@ class PortfolioRepository {
         cursorCreatedAtIso: cursorCreatedAtIso,
       );
     } catch (e, st) {
-      AppLogger.e('Repository: listItems failed', tag: _tag, error: e, stackTrace: st);
+      AppLogger.e(
+        'Repository: listItems failed',
+        tag: _tag,
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
@@ -50,10 +56,11 @@ class PortfolioRepository {
     Uint8List? imageBytes,
     String? imageFilename,
   }) async {
-    AppLogger.i('Repository: addItem', tag: _tag, json: {
-      'ownerId': ownerId,
-      'title': title,
-    });
+    AppLogger.i(
+      'Repository: addItem',
+      tag: _tag,
+      json: {'ownerId': ownerId, 'title': title},
+    );
     try {
       return await _service.addItem(
         ownerId: ownerId,
@@ -63,18 +70,34 @@ class PortfolioRepository {
         imageFilename: imageFilename,
       );
     } catch (e, st) {
-      AppLogger.e('Repository: addItem failed', tag: _tag, error: e, stackTrace: st);
+      AppLogger.e(
+        'Repository: addItem failed',
+        tag: _tag,
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
 
   /// Deletes a portfolio item and optionally its image.
-  Future<void> deleteItem({required String id, bool alsoDeleteImage = true}) async {
+  Future<void> deleteItem({
+    required String id,
+    bool alsoDeleteImage = true,
+  }) async {
     AppLogger.i('Repository: deleteItem', tag: _tag, json: {'id': id});
     try {
-      return await _service.deleteItem(id: id, alsoDeleteImage: alsoDeleteImage);
+      return await _service.deleteItem(
+        id: id,
+        alsoDeleteImage: alsoDeleteImage,
+      );
     } catch (e, st) {
-      AppLogger.e('Repository: deleteItem failed', tag: _tag, error: e, stackTrace: st);
+      AppLogger.e(
+        'Repository: deleteItem failed',
+        tag: _tag,
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
@@ -85,10 +108,11 @@ class PortfolioRepository {
     required String title,
     String? description,
   }) async {
-    AppLogger.i('Repository: updateItem', tag: _tag, json: {
-      'id': id,
-      'title': title,
-    });
+    AppLogger.i(
+      'Repository: updateItem',
+      tag: _tag,
+      json: {'id': id, 'title': title},
+    );
     try {
       await _client
           .from('portfolio_items')
@@ -101,7 +125,12 @@ class PortfolioRepository {
           .eq('id', id);
       AppLogger.i('Repository: updateItem success', tag: _tag);
     } catch (e, st) {
-      AppLogger.e('Repository: updateItem failed', tag: _tag, error: e, stackTrace: st);
+      AppLogger.e(
+        'Repository: updateItem failed',
+        tag: _tag,
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }

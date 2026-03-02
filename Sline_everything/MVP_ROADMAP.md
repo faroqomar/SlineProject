@@ -61,6 +61,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | Feature | Status | Notes |
 | --- | --- | --- |
 | Realtime chat | ✅ Completed | conversations/messages/realtime updates; archive via RPC `archive_conversation_v1`; offer payload + realtime merger in place |
+| Direct Chat Offers | ✅ Completed | accept in chat → Pending Payment in dashboard → Pay from dashboard (QiCard); `lib/features/direct_offers/`; edge functions `qicard_payment_create_direct_offer`, `qicard_payment_recovery_direct_offer` |
 | Attachments | ✅ Completed | private attachment flow; participant-scoped access via `can_access_chat_attachment` |
 | Favorites-powered contact flows | ✅ Completed | favorites and chat handoff are implemented |
 | Notifications | 🚧 In Progress | notification feature exists and is integrated into the dashboard shell |

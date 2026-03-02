@@ -19,9 +19,11 @@ class EditPortfolioSheet extends StatefulWidget {
     PortfolioItem item,
     PortfolioViewModel controller,
   ) {
-    AppLogger.d('Opening edit portfolio sheet', tag: 'EditPortfolioSheet', json: {
-      'itemId': item.id,
-    });
+    AppLogger.d(
+      'Opening edit portfolio sheet',
+      tag: 'EditPortfolioSheet',
+      json: {'itemId': item.id},
+    );
     return showModalBottomSheet<bool>(
       context: context,
       useSafeArea: true,
@@ -57,10 +59,11 @@ class _EditPortfolioSheetState extends State<EditPortfolioSheet> {
       return;
     }
 
-    AppLogger.i('Saving portfolio item changes', tag: 'EditPortfolioSheet', json: {
-      'itemId': widget.item.id,
-      'newTitle': _title.text.trim(),
-    });
+    AppLogger.i(
+      'Saving portfolio item changes',
+      tag: 'EditPortfolioSheet',
+      json: {'itemId': widget.item.id, 'newTitle': _title.text.trim()},
+    );
 
     setState(() => _saving = true);
     try {
@@ -71,15 +74,20 @@ class _EditPortfolioSheetState extends State<EditPortfolioSheet> {
       );
       if (!mounted) return;
       if (ok) {
-        AppLogger.i('Portfolio item updated successfully', tag: 'EditPortfolioSheet');
-        Navigator.of(context).pop(true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Updated successfully')),
+        AppLogger.i(
+          'Portfolio item updated successfully',
+          tag: 'EditPortfolioSheet',
         );
+        Navigator.of(context).pop(true);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Updated successfully')));
       } else {
-        AppLogger.w('Portfolio item update failed', tag: 'EditPortfolioSheet', json: {
-          'error': widget.controller.error,
-        });
+        AppLogger.w(
+          'Portfolio item update failed',
+          tag: 'EditPortfolioSheet',
+          json: {'error': widget.controller.error},
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -89,7 +97,12 @@ class _EditPortfolioSheetState extends State<EditPortfolioSheet> {
         );
       }
     } catch (e, st) {
-      AppLogger.e('Error saving portfolio item', tag: 'EditPortfolioSheet', error: e, stackTrace: st);
+      AppLogger.e(
+        'Error saving portfolio item',
+        tag: 'EditPortfolioSheet',
+        error: e,
+        stackTrace: st,
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('An error occurred. Please try again.')),

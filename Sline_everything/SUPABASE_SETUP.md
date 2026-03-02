@@ -1,7 +1,7 @@
 # Supabase Setup for SLine — Complete Database Reference
 
-**Last Updated**: 2026-02-24 (Phase 3: Double-Entry Ledger Integrated)
-**Version**: 2.16
+**Last Updated**: 2026-03-02 (Direct Chat Offers accept-then-pay, ledger event_type enum)
+**Version**: 2.17
 **Database Version**: PostgreSQL 17.4.1
 **Project ID**: `isddrknbjsgaantjojhm`
 **Region**: `eu-north-1` (Stockholm)
@@ -23,6 +23,7 @@ This document is the **single source of truth** for all Supabase backend setup: 
 | `tasks`                 | ✅  | 1    | Job postings (tender/booking)      |
 | `task_requests`         | ✅  | 0    | Bids/proposals on tasks            |
 | `conversations`         | ✅  | 0    | Chat threads                       |
+| `direct_offers`         | ✅  | 0    | Chat-to-work offers (no task/booking) |
 | `messages`              | ✅  | 1    | Chat messages                      |
 | `conversation_presence` | ✅  | 0    | Typing indicators                  |
 | `categories`            | ✅  | 0    | Service categories                 |
@@ -302,7 +303,8 @@ CREATE TYPE public.related_entity_type_enum AS ENUM (
   'booking',
   'task_request',
   'withdrawal_request',
-  'admin_adjustment'
+  'admin_adjustment',
+  'direct_offer'  -- added 2026-03-03 for Direct Chat Offers
 );
 ```
 
@@ -662,6 +664,33 @@ Requests to extend the deadline.
 
 ---
 
+### 5.14 `direct_offers` (v2.17 – Direct Chat Offers)
+
+Offers created from chat without a task or booking. Lifecycle: **sent** → **accepted** (unpaid; client accepts in chat only) → client pays from Dashboard (QiCard) → **active** (payment_status held) → **delivered** → **completed** (release_with_fee).
+
+| Column             | Type                    | Nullable | Default   | Description                          |
+| ------------------ | ----------------------- | -------- | --------- | ------------------------------------ |
+| `id`               | uuid                    | ❌       | `gen_random_uuid()` | Primary key                  |
+| `conversation_id`   | uuid                    | ❌       | -         | FK to conversations                  |
+| `client_id`        | uuid                    | ❌       | -         | FK to profiles (payer)               |
+| `freelancer_id`    | uuid                    | ❌       | -         | FK to profiles (offer creator)       |
+| `task_id`          | uuid                    | ✅       | -         | Optional FK to tasks                 |
+| `title`            | text                    | ✅       | -         | Optional summary                     |
+| `description`      | text                    | ✅       | -         | Scope/notes                          |
+| `price`            | numeric                 | ❌       | -         | Amount (IQD)                         |
+| `days`             | int                     | ❌       | -         | Delivery days                        |
+| `status`           | text                    | ❌       | `'sent'`  | sent, accepted, rejected, active, delivered, completed, canceled, refunded |
+| `payment_status`   | payment_status_enum     | ❌       | `'unpaid'` | unpaid, held, released, refunded   |
+| `created_at`       | timestamptz             | ❌       | `now()`   | Creation timestamp                   |
+| `updated_at`       | timestamptz             | ❌       | `now()`   | Last update                          |
+
+**Indexes:** `idx_direct_offers_conversation`, `idx_direct_offers_client_status`, `idx_direct_offers_freelancer_status`  
+**RLS:** SELECT for client or freelancer; INSERT for freelancer (conversation participant); UPDATE for client/freelancer per role.  
+**Trigger:** `fn_direct_offer_guard` enforces valid status/payment transitions.  
+**Ledger:** `process_payment_event_ledger` supports `escrow_hold`, `release_with_fee`, `refund` for `related_entity_type = 'direct_offer'`.
+
+---
+
 ### 5.15 `work_logs`
 
 Centralized immutable record of notes and system events.
@@ -670,19 +699,16 @@ Centralized immutable record of notes and system events.
 | --------------------- | ----------- | -------- | ------------------- | --------------------------- |
 | `id`                  | uuid        | ❌       | `gen_random_uuid()` | Primary key                 |
 | `author_id`           | uuid        | ❌       | -                   | FK to profiles              |
-| `related_entity_id`   | uuid        | ❌       | -                   | task_id or booking_id       |
-| `related_entity_type` | text        | ❌       | -                   | 'task' or 'booking'         |
+| `related_entity_id`   | uuid        | ❌       | -                   | task_id, booking_id, or direct_offer id |
+| `related_entity_type` | text        | ❌       | -                   | 'task', 'booking', or 'direct_offer'   |
 | `content`             | text        | ❌       | -                   | Note content or event label |
 | `is_private`          | boolean     | ❌       | `false`             | Access control flag         |
 | `metadata`            | jsonb       | ✅       | `'{}'`              | Event metadata              |
 | `created_at`          | timestamptz | ❌       | `now()`             | Creation timestamp          |
 
 **Indexes:** `idx_work_logs_entity` (related_entity_id, created_at desc), `idx_work_logs_entity_scope_created_at` (related_entity_id, related_entity_type, created_at desc)
-| `status` | text | ❌ | - | 'held', 'released', 'completed', 'refunded' |
-| `related_entity_id` | uuid | ✅ | - | Linked entity ID (booking) |
-| `related_entity_type` | text | ✅ | - | Linked entity type ('booking', 'task') |
-| `related_txn_id` | uuid | ✅ | - | Parent transaction ID |
-| `created_at` | timestamptz | ❌ | `now()` | Creation timestamp |
+
+**Note:** `is_work_log_participant()` supports `related_entity_type = 'direct_offer'` (client_id/freelancer_id from `direct_offers`).
 
 ---
 

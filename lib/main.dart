@@ -42,7 +42,11 @@ import 'features/dashboard/viewmodels/dashboard_view_model.dart';
 import 'core/services/payment_service.dart';
 import 'core/services/demo_payment_service.dart';
 import 'core/services/qicard_payment_service.dart';
+import 'features/direct_offers/services/direct_offers_service.dart';
 import 'package:sline_app/core/utils/flutter_error_filters.dart';
+import 'package:sline_app/core/webview_platform_init_stub.dart'
+    if (dart.library.html) 'package:sline_app/core/webview_platform_init_web.dart'
+    as webview_platform;
 import 'package:sline_app/features/profile/data/profile_repository.dart';
 import 'package:sline_app/features/categories/data/categories_repository.dart';
 import 'package:sline_app/features/booking/models/payment_return_args.dart';
@@ -101,6 +105,9 @@ void main() async {
       };
 
       await SupabaseConfig.init();
+
+      // Web: register WebView platform so in-app payment WebView works
+      webview_platform.initWebViewPlatform();
 
       // Set logger level (info = clean logs, debug = verbose logs)
       AppLogger.currentLevel = LogLevel.info;
@@ -175,6 +182,11 @@ class SLineApp extends StatelessWidget {
         ),
         // Deep Link Service (Stateless)
         Provider(create: (_) => DeepLinkService()),
+        // Payment & direct offers (for details screen / QiCard direct-offer flow)
+        Provider<PaymentService>(create: (_) => createPaymentService()),
+        Provider<DirectOffersService>(
+          create: (_) => DirectOffersService(Supabase.instance.client),
+        ),
         // Dashboard Cache Service (Stateless)
         Provider(create: (_) => DashboardCacheService(prefs)),
         Provider(create: (_) => PaymentPendingStore(prefs)),
@@ -220,6 +232,19 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener> {
     if (kIsWeb) {
       final pendingPayment = context.read<PaymentPendingStore>().load();
       final paymentReturn = parsePaymentReturnArgs(Uri.base);
+      final offerId = Uri.base.queryParameters['offer_id'];
+      // Direct offer return: payment_return=1&offer_id=... — handle in dashboard (recovery + clear URL).
+      if (paymentReturn != null && offerId != null && offerId.isNotEmpty) {
+        AppLogger.i(
+          'Detected web direct-offer payment return; will recover from dashboard',
+          tag: 'Payment',
+          json: <String, dynamic>{
+            'uri': Uri.base.toString(),
+            'offer_id': offerId,
+          },
+        );
+        return const MainNavigationScreen();
+      }
       if (paymentReturn != null) {
         AppLogger.i(
           'Detected explicit web payment callback at app start',

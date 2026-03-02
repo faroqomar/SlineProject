@@ -201,7 +201,10 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                     // Note: Image handling is done via pickAndUploadPortfolioImage first
                     // then the path is stored. For now, we just add without image if
                     // no image was picked in this flow.
-                    final effectiveImagePath = (localImagePath != null && localImagePath != 'loading') ? localImagePath : null;
+                    final effectiveImagePath =
+                        (localImagePath != null && localImagePath != 'loading')
+                        ? localImagePath
+                        : null;
                     await vm.addPortfolioItem(
                       title: titleController.text.trim(),
                       description: descController.text.trim(),

@@ -8,6 +8,7 @@ import '../models/message_model.dart';
 import '../../../core/services/logger_service.dart';
 import '../attachments/services/send_attachment_usecase.dart';
 import '../../tasks/models/task_model.dart';
+import '../../direct_offers/services/direct_offers_service.dart';
 
 /// ChatViewModel — MVVM state holder for Chat feature.
 ///
@@ -27,12 +28,19 @@ import '../../tasks/models/task_model.dart';
 /// - This prevents unnecessary updates and conserves resources
 class ChatViewModel extends ChangeNotifier {
   ChatViewModel({SupabaseClient? client})
-    : _repo = ChatRepository(client ?? Supabase.instance.client);
+    : _repo = ChatRepository(client ?? Supabase.instance.client),
+      _directOffersService = DirectOffersService(
+        client ?? Supabase.instance.client,
+      );
 
   final ChatRepository _repo;
+  final DirectOffersService _directOffersService;
 
   final List<Conversation> conversations = [];
   final List<Message> currentMessages = [];
+
+  /// Cache of direct offer id -> status for current session (updated on accept/deliver/complete).
+  final Map<String, String> _offerStatusCache = {};
 
   bool isLoadingConversations = false;
   bool isLoadingMessages = false;
@@ -58,6 +66,10 @@ class ChatViewModel extends ChangeNotifier {
 
   /// Expose current authenticated user id for UI decisions when needed.
   String? get currentUserId => _repo.currentUser?.id;
+
+  /// Resolved status for a direct offer (from cache or null to use payload).
+  String? getOfferStatus(String? offerId) =>
+      offerId != null ? _offerStatusCache[offerId] : null;
 
   // --- Receipts ---
   Future<void> markReceiptsForActive({
@@ -244,20 +256,106 @@ class ChatViewModel extends ChangeNotifier {
     }
   }
 
+  /// Create a direct offer (DB row + offer message with offer_id). Realtime will add the message.
+  Future<void> createDirectOffer({
+    String? title,
+    String? description,
+    required int price,
+    required int days,
+  }) async {
+    final user = _repo.currentUser;
+    if (user == null || activeConversation == null) return;
+    final convo = activeConversation!;
+    final clientId = convo.user1Id == user.id ? convo.user2Id : convo.user1Id;
+    final freelancerId = user.id;
+    final receiverId = clientId;
+
+    isSending = true;
+    _notify();
+    try {
+      await _directOffersService.createOffer(
+        conversationId: convo.id,
+        clientId: clientId,
+        freelancerId: freelancerId,
+        senderId: user.id,
+        receiverId: receiverId,
+        taskId: convo.taskId,
+        title: title,
+        description: description,
+        price: price,
+        days: days,
+      );
+    } catch (e) {
+      AppLogger.e('Error creating direct offer', error: e);
+      rethrow;
+    } finally {
+      isSending = false;
+      _notify();
+    }
+  }
+
   Future<void> acceptOffer(Message offerMsg) async {
-    await sendMessage(
-      'Offer Accepted',
-      messageType: 'offer_accepted',
-      payload: {'original_offer_id': offerMsg.id},
-    );
+    final offerId = offerMsg.payload['offer_id'] as String?;
+    if (offerId != null) {
+      try {
+        await _directOffersService.acceptOfferWithoutPayment(offerId);
+        _offerStatusCache[offerId] = 'accepted';
+        _notify();
+        // Do not send 'offer_accepted' message for direct offers: conversation may be
+        // task-linked and backend can treat that message as task acceptance. Acceptance
+        // is recorded in work_log; payment happens from dashboard.
+      } catch (e) {
+        AppLogger.e('Error accepting offer', error: e);
+        rethrow;
+      }
+    } else {
+      await sendMessage(
+        'Offer Accepted',
+        messageType: 'offer_accepted',
+        payload: {'original_offer_id': offerMsg.id},
+      );
+    }
   }
 
   Future<void> rejectOffer(Message offerMsg) async {
+    final offerId = offerMsg.payload['offer_id'] as String?;
+    if (offerId != null) {
+      try {
+        await _directOffersService.rejectOffer(offerId);
+      } catch (e) {
+        AppLogger.e('Error rejecting offer', error: e);
+        rethrow;
+      }
+    }
     await sendMessage(
       'Offer Rejected',
       messageType: 'offer_rejected',
-      payload: {'original_offer_id': offerMsg.id},
+      payload: {
+        'original_offer_id': offerMsg.id,
+        if (offerId != null) 'offer_id': offerId,
+      },
     );
+  }
+
+  /// Freelancer cancels a sent direct offer.
+  Future<void> cancelOffer(String offerId) async {
+    await _directOffersService.cancelOffer(offerId);
+    _offerStatusCache[offerId] = 'canceled';
+    _notify();
+  }
+
+  /// Freelancer marks direct offer work as delivered.
+  Future<void> markOfferDelivered(String offerId) async {
+    await _directOffersService.markDelivered(offerId);
+    _offerStatusCache[offerId] = 'delivered';
+    _notify();
+  }
+
+  /// Client completes (approve & release payment) for a delivered direct offer.
+  Future<void> completeOffer(String offerId) async {
+    await _directOffersService.completeOffer(offerId);
+    _offerStatusCache[offerId] = 'completed';
+    _notify();
   }
 
   void subscribeToActiveConversation() {

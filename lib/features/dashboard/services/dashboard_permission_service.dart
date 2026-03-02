@@ -13,6 +13,9 @@ class DashboardPermissionService {
       return _getBookingPermissions(userRole, status);
     } else if (type == WorkItemType.task && status is TaskStatus) {
       return _getTaskPermissions(userRole, status);
+    } else if (type == WorkItemType.directOffer &&
+        status is UnifiedWorkStatus) {
+      return _getUnifiedPermissions(userRole, status);
     } else if (status is UnifiedWorkStatus) {
       return _getUnifiedPermissions(userRole, status);
     }

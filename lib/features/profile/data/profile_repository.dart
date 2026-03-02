@@ -163,11 +163,14 @@ class ProfileRepository {
   /// Gets portfolio items for a user.
   /// Delegates to PortfolioRepository.
   Future<List<PortfolioItem>> getPortfolioItems(String userId) async {
-    AppLogger.d('Delegating getPortfolioItems to PortfolioRepository', tag: 'ProfileRepo');
+    AppLogger.d(
+      'Delegating getPortfolioItems to PortfolioRepository',
+      tag: 'ProfileRepo',
+    );
     return _portfolioRepository.listItems(ownerId: userId);
   }
 
-    /// Adds a portfolio item.
+  /// Adds a portfolio item.
   /// Delegates to PortfolioRepository.
   /// If imagePath is provided (existing storage path), creates item with that path.
   Future<PortfolioItem> addPortfolioItem({
@@ -178,11 +181,15 @@ class ProfileRepository {
     String? imageFilename,
     String? imagePath, // Existing storage path (when upload already done)
   }) async {
-    AppLogger.d('Delegating addPortfolioItem to PortfolioRepository', tag: 'ProfileRepo', json: {
-      'hasImagePath': imagePath != null,
-      'hasImageBytes': imageBytes != null,
-    });
-    
+    AppLogger.d(
+      'Delegating addPortfolioItem to PortfolioRepository',
+      tag: 'ProfileRepo',
+      json: {
+        'hasImagePath': imagePath != null,
+        'hasImageBytes': imageBytes != null,
+      },
+    );
+
     // If we have an existing image path, create item directly
     if (imagePath != null) {
       // Insert with the existing path
@@ -198,7 +205,7 @@ class ProfileRepository {
           .single();
       return PortfolioItem.fromJson(row as Map<String, dynamic>);
     }
-    
+
     // Otherwise, use the normal flow with upload
     return _portfolioRepository.addItem(
       ownerId: userId,
@@ -216,7 +223,10 @@ class ProfileRepository {
     required String title,
     String? description,
   }) async {
-    AppLogger.d('Delegating updatePortfolioItem to PortfolioRepository', tag: 'ProfileRepo');
+    AppLogger.d(
+      'Delegating updatePortfolioItem to PortfolioRepository',
+      tag: 'ProfileRepo',
+    );
     return _portfolioRepository.updateItem(
       id: itemId,
       title: title,
@@ -227,7 +237,10 @@ class ProfileRepository {
   /// Deletes a portfolio item.
   /// Delegates to PortfolioRepository.
   Future<void> deletePortfolioItem(String itemId) async {
-    AppLogger.d('Delegating deletePortfolioItem to PortfolioRepository', tag: 'ProfileRepo');
+    AppLogger.d(
+      'Delegating deletePortfolioItem to PortfolioRepository',
+      tag: 'ProfileRepo',
+    );
     return _portfolioRepository.deleteItem(id: itemId);
   }
 
@@ -239,7 +252,10 @@ class ProfileRepository {
     required String contentType,
     required String fileExt,
   }) async {
-    AppLogger.d('Delegating uploadPortfolioImage to PortfolioRepository', tag: 'ProfileRepo');
+    AppLogger.d(
+      'Delegating uploadPortfolioImage to PortfolioRepository',
+      tag: 'ProfileRepo',
+    );
     // Use a temporary item addition that only uploads the image
     // Since PortfolioService handles upload internally, we create a dummy item
     // This is a workaround - ideally, the upload should be a separate service method
@@ -253,7 +269,10 @@ class ProfileRepository {
     // Return just the image path from the created item
     if (result.imagePath != null) {
       // Delete the temporary item, keeping the image for reuse
-      await _portfolioRepository.deleteItem(id: result.id, alsoDeleteImage: false);
+      await _portfolioRepository.deleteItem(
+        id: result.id,
+        alsoDeleteImage: false,
+      );
       return result.imagePath!;
     }
     throw StateError('Image upload failed - no path returned');
@@ -276,7 +295,11 @@ class ProfileRepository {
           .createSignedUrl(pathOrUrl, 7200); // 2 hours
       return signed;
     } catch (e) {
-      AppLogger.w('Failed to resolve portfolio image URL', tag: 'ProfileRepo', json: {'path': pathOrUrl, 'error': e.toString()});
+      AppLogger.w(
+        'Failed to resolve portfolio image URL',
+        tag: 'ProfileRepo',
+        json: {'path': pathOrUrl, 'error': e.toString()},
+      );
       return null;
     }
   }
@@ -289,7 +312,9 @@ class ProfileRepository {
     final profileModel = ProfileModel.fromJson(profileData);
 
     // 2. Fetch Portfolio Items (delegated to PortfolioRepository)
-    final portfolioItems = await _portfolioRepository.listItems(ownerId: userId);
+    final portfolioItems = await _portfolioRepository.listItems(
+      ownerId: userId,
+    );
 
     // 3. Mock Reviews (for now, as table doesn't exist)
     // TODO: Implement reviews table and fetching

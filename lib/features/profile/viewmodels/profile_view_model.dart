@@ -189,33 +189,53 @@ class ProfileViewModel extends ChangeNotifier {
   Future<void> fetchPortfolio() async {
     final user = _repo.currentUser;
     if (user == null) {
-      AppLogger.w('Cannot fetch portfolio - not authenticated', tag: 'ProfileVM');
+      AppLogger.w(
+        'Cannot fetch portfolio - not authenticated',
+        tag: 'ProfileVM',
+      );
       return;
     }
 
     isLoadingPortfolio = true;
     notifyListeners();
 
-    AppLogger.i('Fetching portfolio', tag: 'ProfileVM', json: {'userId': user.id});
+    AppLogger.i(
+      'Fetching portfolio',
+      tag: 'ProfileVM',
+      json: {'userId': user.id},
+    );
 
     try {
       final items = await _repo.getPortfolioItems(user.id);
       _portfolioItems.clear();
       // Resolve all image URLs in parallel
-      final resolvedItems = await Future.wait(items.map((item) async {
-        final resolvedUrl = await _repo.resolvePortfolioImageUrl(item.effectiveImageRef);
-        return {
-          'id': item.id,
-          'title': item.title,
-          'description': item.description,
-          'image_url': resolvedUrl,
-          'created_at': item.createdAt.toIso8601String(),
-        };
-      }).toList());
+      final resolvedItems = await Future.wait(
+        items.map((item) async {
+          final resolvedUrl = await _repo.resolvePortfolioImageUrl(
+            item.effectiveImageRef,
+          );
+          return {
+            'id': item.id,
+            'title': item.title,
+            'description': item.description,
+            'image_url': resolvedUrl,
+            'created_at': item.createdAt.toIso8601String(),
+          };
+        }).toList(),
+      );
       _portfolioItems.addAll(resolvedItems);
-      AppLogger.i('Portfolio fetched', tag: 'ProfileVM', json: {'count': items.length});
+      AppLogger.i(
+        'Portfolio fetched',
+        tag: 'ProfileVM',
+        json: {'count': items.length},
+      );
     } catch (e, st) {
-      AppLogger.e('Error loading portfolio', tag: 'ProfileVM', error: e, stackTrace: st);
+      AppLogger.e(
+        'Error loading portfolio',
+        tag: 'ProfileVM',
+        error: e,
+        stackTrace: st,
+      );
     } finally {
       isLoadingPortfolio = false;
       notifyListeners();
@@ -264,10 +284,11 @@ class ProfileViewModel extends ChangeNotifier {
         return null;
       }
 
-      AppLogger.i('Uploading portfolio image', tag: 'ProfileVM', json: {
-        'filename': file.name,
-        'size': bytes.length,
-      });
+      AppLogger.i(
+        'Uploading portfolio image',
+        tag: 'ProfileVM',
+        json: {'filename': file.name, 'size': bytes.length},
+      );
 
       // Compress image to prevent OOM and reduce upload size
       Uint8List? compressedBytes;
@@ -278,10 +299,14 @@ class ProfileViewModel extends ChangeNotifier {
           minHeight: 1920,
           quality: 80,
         );
-        AppLogger.i('Image compressed', tag: 'ProfileVM', json: {
-          'originalSize': bytes.length,
-          'compressedSize': compressedBytes.length,
-        });
+        AppLogger.i(
+          'Image compressed',
+          tag: 'ProfileVM',
+          json: {
+            'originalSize': bytes.length,
+            'compressedSize': compressedBytes.length,
+          },
+        );
       } catch (e) {
         AppLogger.w('Compression failed, using original: $e', tag: 'ProfileVM');
         compressedBytes = bytes;
@@ -300,13 +325,24 @@ class ProfileViewModel extends ChangeNotifier {
         contentType: contentType,
         fileExt: fileExt,
       );
-      AppLogger.i('Portfolio image uploaded', tag: 'ProfileVM', json: {'path': path});
+      AppLogger.i(
+        'Portfolio image uploaded',
+        tag: 'ProfileVM',
+        json: {'path': path},
+      );
       return path;
     } catch (e, st) {
-      AppLogger.e('Error uploading portfolio image', tag: 'ProfileVM', error: e, stackTrace: st);
+      AppLogger.e(
+        'Error uploading portfolio image',
+        tag: 'ProfileVM',
+        error: e,
+        stackTrace: st,
+      );
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to upload image. Please try again.')),
+          const SnackBar(
+            content: Text('Failed to upload image. Please try again.'),
+          ),
         );
       }
       return null;
@@ -329,10 +365,11 @@ class ProfileViewModel extends ChangeNotifier {
       return;
     }
 
-    AppLogger.i('Adding portfolio item', tag: 'ProfileVM', json: {
-      'title': title,
-      'hasImage': imagePath != null,
-    });
+    AppLogger.i(
+      'Adding portfolio item',
+      tag: 'ProfileVM',
+      json: {'title': title, 'hasImage': imagePath != null},
+    );
 
     try {
       // Note: This is a workaround since the repository expects bytes
@@ -347,7 +384,12 @@ class ProfileViewModel extends ChangeNotifier {
       await fetchPortfolio();
       AppLogger.i('Portfolio item added successfully', tag: 'ProfileVM');
     } catch (e, st) {
-      AppLogger.e('Error adding portfolio item', tag: 'ProfileVM', error: e, stackTrace: st);
+      AppLogger.e(
+        'Error adding portfolio item',
+        tag: 'ProfileVM',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
@@ -358,10 +400,11 @@ class ProfileViewModel extends ChangeNotifier {
     required String title,
     String? description,
   }) async {
-    AppLogger.i('Updating portfolio item', tag: 'ProfileVM', json: {
-      'itemId': itemId,
-      'title': title,
-    });
+    AppLogger.i(
+      'Updating portfolio item',
+      tag: 'ProfileVM',
+      json: {'itemId': itemId, 'title': title},
+    );
 
     try {
       await _repo.updatePortfolioItem(
@@ -372,21 +415,35 @@ class ProfileViewModel extends ChangeNotifier {
       await fetchPortfolio();
       AppLogger.i('Portfolio item updated successfully', tag: 'ProfileVM');
     } catch (e, st) {
-      AppLogger.e('Error updating portfolio item', tag: 'ProfileVM', error: e, stackTrace: st);
+      AppLogger.e(
+        'Error updating portfolio item',
+        tag: 'ProfileVM',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
 
   /// Deletes a portfolio item.
   Future<void> deletePortfolioItem(String itemId) async {
-    AppLogger.i('Deleting portfolio item', tag: 'ProfileVM', json: {'itemId': itemId});
+    AppLogger.i(
+      'Deleting portfolio item',
+      tag: 'ProfileVM',
+      json: {'itemId': itemId},
+    );
 
     try {
       await _repo.deletePortfolioItem(itemId);
       await fetchPortfolio();
       AppLogger.i('Portfolio item deleted successfully', tag: 'ProfileVM');
     } catch (e, st) {
-      AppLogger.e('Error deleting portfolio item', tag: 'ProfileVM', error: e, stackTrace: st);
+      AppLogger.e(
+        'Error deleting portfolio item',
+        tag: 'ProfileVM',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }

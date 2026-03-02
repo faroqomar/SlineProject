@@ -1,6 +1,12 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/utils/web_url_utils_stub.dart'
+    if (dart.library.html) 'package:sline_app/core/utils/web_url_utils_web.dart'
+    as web_url_utils;
+import 'package:sline_app/features/direct_offers/services/direct_offers_service.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/app_enums.dart';
@@ -45,11 +51,54 @@ class _DashboardContent extends StatefulWidget {
 class _DashboardContentState extends State<_DashboardContent>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  bool _webPaymentReturnHandled = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    if (kIsWeb && !_webPaymentReturnHandled) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _handleWebPaymentReturnIfPresent(),
+      );
+    }
+  }
+
+  /// Web: when user returns from QiCard with ?payment_return=1&offer_id=...&payment_request_id=...,
+  /// run direct-offer recovery and clear the URL.
+  Future<void> _handleWebPaymentReturnIfPresent() async {
+    if (!mounted || !kIsWeb) return;
+    final uri = Uri.base;
+    if (uri.queryParameters['payment_return'] != '1') return;
+    final offerId = uri.queryParameters['offer_id'];
+    if (offerId == null || offerId.isEmpty) return;
+
+    _webPaymentReturnHandled = true;
+    final paymentRequestId = uri.queryParameters['payment_request_id'];
+    final directOffers = context.read<DirectOffersService>();
+    final vm = context.read<DashboardViewModel>();
+
+    if (paymentRequestId != null && paymentRequestId.isNotEmpty) {
+      try {
+        await directOffers.recoverPaymentAfterCallback(
+          offerId,
+          paymentRequestId,
+        );
+        AppLogger.i(
+          'Web direct-offer recovery succeeded',
+          tag: 'Dashboard',
+          json: <String, dynamic>{'offer_id': offerId},
+        );
+      } catch (e) {
+        AppLogger.e(
+          'Web direct-offer recovery failed offer_id=$offerId',
+          tag: 'Dashboard',
+          error: e,
+        );
+      }
+    }
+    web_url_utils.clearPaymentReturnParamsFromUrl();
+    if (mounted) vm.refresh();
   }
 
   @override

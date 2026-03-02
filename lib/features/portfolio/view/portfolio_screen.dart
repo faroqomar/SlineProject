@@ -52,7 +52,10 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
   Future<void> _reload() async {
     final ctrl = _ctrlRef;
     if (ctrl == null) {
-      AppLogger.w('Reload called but controller is null', tag: 'PortfolioScreen');
+      AppLogger.w(
+        'Reload called but controller is null',
+        tag: 'PortfolioScreen',
+      );
       return;
     }
     AppLogger.i('Reloading portfolio', tag: 'PortfolioScreen');
@@ -62,7 +65,10 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
   void _openAddSheet() {
     final ctrl = _ctrlRef;
     if (ctrl == null) {
-      AppLogger.w('Cannot open add sheet - controller is null', tag: 'PortfolioScreen');
+      AppLogger.w(
+        'Cannot open add sheet - controller is null',
+        tag: 'PortfolioScreen',
+      );
       return;
     }
     AppLogger.d('Opening add portfolio sheet', tag: 'PortfolioScreen');
@@ -74,9 +80,9 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
         controller: ctrl,
         onCreated: () {
           Navigator.of(ctx).pop();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Portfolio item added')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Portfolio item added')));
           AppLogger.i('Portfolio item added via sheet', tag: 'PortfolioScreen');
         },
       ),
@@ -89,7 +95,10 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
       // MVVM Compliant: ViewModel creates its own repository internally.
       // No direct SupabaseClient reference from the view.
       create: (ctx) {
-        AppLogger.d('Creating PortfolioViewModel from PortfolioScreen', tag: 'PortfolioScreen');
+        AppLogger.d(
+          'Creating PortfolioViewModel from PortfolioScreen',
+          tag: 'PortfolioScreen',
+        );
         return PortfolioViewModel();
       },
       child: Consumer<PortfolioViewModel>(
@@ -101,9 +110,11 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
           if (!_bootstrapped) {
             _bootstrapped = true;
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              AppLogger.i('Bootstrapping portfolio load', tag: 'PortfolioScreen', json: {
-                'ownerId': widget.ownerId,
-              });
+              AppLogger.i(
+                'Bootstrapping portfolio load',
+                tag: 'PortfolioScreen',
+                json: {'ownerId': widget.ownerId},
+              );
               ctrl.load(ownerId: widget.ownerId);
             });
           }
@@ -140,7 +151,10 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
       return const Center(child: CircularProgressIndicator());
     }
     if (ctrl.error != null) {
-      AppLogger.w('Portfolio error state: ${ctrl.error}', tag: 'PortfolioScreen');
+      AppLogger.w(
+        'Portfolio error state: ${ctrl.error}',
+        tag: 'PortfolioScreen',
+      );
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -191,10 +205,11 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                 item: item,
                 controller: ctrl,
                 onLongPress: () async {
-                  AppLogger.d('Long press on portfolio item', tag: 'PortfolioScreen', json: {
-                    'itemId': item.id,
-                    'title': item.title,
-                  });
+                  AppLogger.d(
+                    'Long press on portfolio item',
+                    tag: 'PortfolioScreen',
+                    json: {'itemId': item.id, 'title': item.title},
+                  );
                   final messenger = ScaffoldMessenger.of(context);
                   final ok = await showDialog<bool>(
                     context: context,
@@ -216,12 +231,17 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                     ),
                   );
                   if (ok == true) {
-                    AppLogger.i('User confirmed delete', tag: 'PortfolioScreen', json: {
-                      'itemId': item.id,
-                    });
+                    AppLogger.i(
+                      'User confirmed delete',
+                      tag: 'PortfolioScreen',
+                      json: {'itemId': item.id},
+                    );
                     final success = await ctrl.deleteItem(item.id);
                     if (success) {
-                      AppLogger.i('Item deleted successfully', tag: 'PortfolioScreen');
+                      AppLogger.i(
+                        'Item deleted successfully',
+                        tag: 'PortfolioScreen',
+                      );
                     } else {
                       AppLogger.w('Item delete failed', tag: 'PortfolioScreen');
                     }

@@ -130,7 +130,8 @@ class Task {
       final String? parsedUserName =
           profileData?['full_name'] as String? ?? json['user_name'] as String?;
       final String? parsedUserAvatar =
-          profileData?['avatar_url'] as String? ?? json['user_avatar'] as String?;
+          profileData?['avatar_url'] as String? ??
+          json['user_avatar'] as String?;
       final String? parsedAuthorSellerLevel =
           profileData?['seller_level'] as String? ??
           json['author_seller_level'] as String?;

@@ -322,6 +322,63 @@ export async function submitGatewayEscrowHold(
   };
 }
 
+/** Gateway escrow for direct offer (QiCard success). Called by webhook when additionalInfo.offer_id is set. */
+export async function submitDirectOfferGatewayEscrow(
+  adminClient: ReturnType<typeof createAdminClient>,
+  {
+    offerId,
+    paymentId,
+    requestId,
+    amount,
+    currency,
+    timestamp,
+    correlationId,
+  }: {
+    offerId: string;
+    paymentId: string;
+    requestId: string;
+    amount: number;
+    currency: string;
+    timestamp: string;
+    correlationId: string;
+  },
+) {
+  const idempotencyKey = `qicard:${paymentId}:gateway_escrow_direct_offer:SUCCESS`;
+  const meta = {
+    psp_provider: QICARD_PROVIDER_NAME,
+    psp_event_id: requestId,
+    psp_payment_id: paymentId,
+    psp_request_id: requestId,
+    psp_status: "SUCCESS",
+    psp_timestamp: timestamp,
+    correlation_id: correlationId,
+  };
+
+  const { data, error } = await adminClient.rpc("process_gateway_escrow_direct_offer", {
+    p_offer_id: offerId,
+    p_amount_gross: amount,
+    p_currency: currency,
+    p_idempotency_key: idempotencyKey,
+    p_meta: meta,
+  });
+
+  if (error) {
+    if (error.message?.includes("ERR_IDEMPOTENCY_REPLAY")) {
+      return { replayed: true, journalEntryId: null };
+    }
+    throw new Error(error.message || "LEDGER_GATEWAY_ESCROW_DIRECT_OFFER_FAILED");
+  }
+
+  if (data?.ok === false) {
+    throw new Error(extractLedgerError(data.error));
+  }
+
+  return {
+    replayed: false,
+    journalEntryId: data?.journal_entry_id ?? null,
+  };
+}
+
 function extractLedgerError(error: unknown): string {
   if (typeof error === "string" && error.length > 0) {
     return error;

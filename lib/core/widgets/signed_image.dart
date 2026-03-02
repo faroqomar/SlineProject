@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/utils/signed_url_cache.dart';
 import 'package:sline_app/features/tasks/services/task_image_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -123,6 +124,11 @@ class _SignedImageState extends State<SignedImage> {
       });
     } catch (e) {
       if (!mounted) return;
+      AppLogger.w(
+        'Failed to resolve signed image URL',
+        tag: 'SignedImage',
+        json: {'path': widget.storagePathOrUrl, 'error': e.toString()},
+      );
       setState(() => _loading = false);
     }
   }

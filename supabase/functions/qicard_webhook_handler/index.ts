@@ -12,6 +12,7 @@ import {
   QICARD_PROVIDER_NAME,
   recordBookingAudit,
   submitGatewayEscrowHold,
+  submitDirectOfferGatewayEscrow,
 } from "../_shared/bookin_payment.ts";
 
 // Type definitions for QiCard webhook payload
@@ -236,6 +237,7 @@ async function handleQiCardPaymentWebhook(
   const creationDate = payload.creationDate || new Date().toISOString();
   const additionalInfo = payload.additionalInfo || {};
   const bookingId = additionalInfo.booking_id || "";
+  const offerId = additionalInfo.offer_id || "";
 
   if (!paymentId || !requestId || !status) {
     return jsonResponse({ error: "Missing required payment webhook fields" }, 400);
@@ -248,21 +250,44 @@ async function handleQiCardPaymentWebhook(
     return jsonResponse({ ok: true, message: "Ignored non-success status" }, 200);
   }
 
-  if (!bookingId || !isUuid(bookingId)) {
-    console.warn(
-      `Skipping webhook: invalid additionalInfo.booking_id paymentId=${paymentId}`,
-    );
-    return jsonResponse(
-      { ok: true, message: "Missing or invalid booking_id. Skipped safely." },
-      200,
-    );
-  }
-
   const correlationId =
     typeof additionalInfo.correlation_id === "string" &&
         additionalInfo.correlation_id.length > 0
       ? additionalInfo.correlation_id
-      : buildCorrelationId(bookingId, "recover");
+      : (bookingId ? buildCorrelationId(bookingId, "recover") : `direct_offer:${offerId}:create`);
+
+  if (offerId && isUuid(offerId)) {
+    try {
+      const escrowResult = await submitDirectOfferGatewayEscrow(supabase, {
+        offerId,
+        paymentId,
+        requestId,
+        amount,
+        currency,
+        timestamp: creationDate,
+        correlationId,
+      });
+      return jsonResponse({
+        ok: true,
+        journal_entry_id: escrowResult.journalEntryId,
+        replayed: escrowResult.replayed,
+      }, 200);
+    } catch (error) {
+      console.error("Webhook direct offer payment handler error:", error);
+      const message = error instanceof Error ? error.message : String(error);
+      return jsonResponse({ error: message }, 400);
+    }
+  }
+
+  if (!bookingId || !isUuid(bookingId)) {
+    console.warn(
+      `Skipping webhook: invalid additionalInfo.booking_id and no offer_id paymentId=${paymentId}`,
+    );
+    return jsonResponse(
+      { ok: true, message: "Missing or invalid booking_id/offer_id. Skipped safely." },
+      200,
+    );
+  }
 
   try {
     const escrowResult = await submitGatewayEscrowHold(supabase, {

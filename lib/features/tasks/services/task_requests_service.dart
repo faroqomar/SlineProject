@@ -198,7 +198,9 @@ class TaskRequestsService {
 
       final model = await getExistingActiveOfferForCurrentUser(taskId);
       if (model == null) {
-        throw Exception('Offer was updated, but the refreshed offer could not be loaded.');
+        throw Exception(
+          'Offer was updated, but the refreshed offer could not be loaded.',
+        );
       }
       AppLogger.i('Offer replaced: ${model.id}', tag: 'Offers');
       return model;

@@ -130,7 +130,8 @@ void main() {
                     note: 'Need it fast',
                     packageId: 'Premium',
                     requirements: <String, dynamic>{'delivery': 'rush'},
-                    finishUrl: 'https://app.example.com/dashboard?payment_return=1',
+                    finishUrl:
+                        'https://app.example.com/dashboard?payment_return=1',
                     requestCorrelationId: captureAny(
                       named: 'requestCorrelationId',
                     ),
@@ -179,7 +180,8 @@ void main() {
                     note: null,
                     packageId: 'Premium',
                     requirements: const <String, dynamic>{},
-                    finishUrl: 'https://app.example.com/dashboard?payment_return=1',
+                    finishUrl:
+                        'https://app.example.com/dashboard?payment_return=1',
                     requestCorrelationId: captureAny(
                       named: 'requestCorrelationId',
                     ),

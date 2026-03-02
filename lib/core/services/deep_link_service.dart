@@ -9,6 +9,7 @@ import '../../features/chat/services/message_service.dart';
 import '../../features/tasks/view/task_details_screen.dart';
 import '../../features/booking/view/booking_details_screen.dart';
 import '../../features/chat/view/chat_screen.dart';
+import '../../features/direct_offers/view/direct_offer_details_screen.dart';
 import '../../features/work/view/work_item_details_screen.dart';
 import '../../features/profile/view/public_profile_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
@@ -56,18 +57,40 @@ class DeepLinkService {
     await navigateToEntity(context, activity.entityType, activity.entityId);
   }
 
+  /// Open the chat screen for a conversation (e.g. from direct offer details).
+  Future<void> openConversation(
+    BuildContext context,
+    String conversationId,
+  ) async {
+    return _navigateToConversation(context, conversationId);
+  }
+
   /// Handle tap on a dashboard work item.
-  /// Uses [type] as string ("task" or "booking") and [id].
-  /// Navigates to the Work Progress screen (not the raw task/booking page).
+  /// Uses [type] as string ("task", "booking", or "directOffer") and [id].
+  /// For direct offers, opens [DirectOfferDetailsScreen]; [conversationId] is passed for "Open chat".
   Future<dynamic> handleWorkItem(
     BuildContext context,
     String type,
-    String id,
-  ) async {
+    String id, {
+    String? conversationId,
+  }) async {
     AppLogger.i('Handling work item tap: $type - $id');
     if (!context.mounted) return;
 
-    final workItemType = type.toLowerCase() == 'booking'
+    final typeLower = type.toLowerCase();
+    if (typeLower == 'directoffer') {
+      return Navigator.push(
+        context,
+        MaterialPageRoute<void>(
+          builder: (_) => DirectOfferDetailsScreen(
+            offerId: id,
+            conversationId: conversationId,
+          ),
+        ),
+      );
+    }
+
+    final workItemType = typeLower == 'booking'
         ? WorkItemType.booking
         : WorkItemType.task;
 
@@ -102,6 +125,17 @@ class DeepLinkService {
         case 'conversation':
         case 'message':
           await _navigateToConversation(context, id);
+          break;
+        case 'direct_offer':
+        case 'directoffer':
+          if (!context.mounted) return;
+          Navigator.push(
+            context,
+            MaterialPageRoute<void>(
+              builder: (_) =>
+                  DirectOfferDetailsScreen(offerId: id, conversationId: null),
+            ),
+          );
           break;
         case 'profile':
           _navigateToProfile(context);

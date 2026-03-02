@@ -7,6 +7,7 @@ import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 import 'package:sline_app/features/dashboard/view/widgets/work_item_card.dart';
 import 'package:sline_app/features/dashboard/models/work_item.dart';
+import 'package:sline_app/features/wallet/view/wallet_screen.dart';
 
 class WorkTab extends StatefulWidget {
   const WorkTab({super.key});
@@ -208,7 +209,7 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
               padding: const EdgeInsets.only(bottom: AppDimens.p12),
               child: WorkItemCard(
                 item: item,
-                onPrimaryAction: () => vm.performPrimaryAction(item),
+                onPrimaryAction: () => _onPrimaryAction(context, vm, item),
               ),
             ),
           ),
@@ -241,12 +242,67 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
               padding: const EdgeInsets.only(bottom: AppDimens.p12),
               child: WorkItemCard(
                 item: item,
-                onPrimaryAction: () => vm.performPrimaryAction(item),
+                onPrimaryAction: () => _onPrimaryAction(context, vm, item),
               ),
             ),
           ),
         ],
       ],
+    );
+  }
+
+  Future<void> _onPrimaryAction(
+    BuildContext context,
+    DashboardViewModel vm,
+    WorkItem item,
+  ) async {
+    try {
+      await vm.performPrimaryAction(item);
+      if (context.mounted) vm.refresh();
+    } on FormatException catch (e) {
+      if (!context.mounted) return;
+      if (e.message.contains('Insufficient')) {
+        _showInsufficientFundsDialog(context);
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e is Exception ? e.toString() : 'Something went wrong'),
+        ),
+      );
+    }
+  }
+
+  void _showInsufficientFundsDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Insufficient balance'),
+        content: const Text(
+          'Add funds to your wallet and try again from the Dashboard.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.push(
+                context,
+                MaterialPageRoute<void>(builder: (_) => const WalletScreen()),
+              );
+            },
+            child: const Text('Add funds'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -295,7 +351,7 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
           opacity: isDimmed ? 0.7 : 1.0,
           child: WorkItemCard(
             item: item,
-            onPrimaryAction: () => vm.performPrimaryAction(item),
+            onPrimaryAction: () => _onPrimaryAction(context, vm, item),
           ),
         );
       },

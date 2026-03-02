@@ -171,4 +171,19 @@ class DemoPaymentService implements PaymentService {
       errorCode: 'DEMO_BOOKING_REFUND_UNSUPPORTED',
     );
   }
+
+  @override
+  Future<QiCardDirectOfferPaymentResult> createPaymentForDirectOffer({
+    required String offerId,
+    required double amount,
+    String? finishUrl,
+    String? requestCorrelationId,
+  }) async {
+    await Future.delayed(delay);
+    return QiCardDirectOfferPaymentResult(
+      offerId: offerId,
+      error: 'Pay with card is not available in demo mode.',
+      errorCode: 'DEMO_DIRECT_OFFER_PAYMENT_UNSUPPORTED',
+    );
+  }
 }

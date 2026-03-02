@@ -3,7 +3,8 @@ import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/features/profile/models/profile_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 // Canonical PortfolioItem from portfolio feature
-import 'package:sline_app/features/portfolio/models/portfolio_item.dart' show PortfolioItem;
+import 'package:sline_app/features/portfolio/models/portfolio_item.dart'
+    show PortfolioItem;
 import 'dart:math';
 
 /// FreelancerProfile model for public profile display.

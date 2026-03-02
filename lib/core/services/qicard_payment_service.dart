@@ -390,6 +390,102 @@ class QiCardPaymentService implements PaymentService {
     }
   }
 
+  @override
+  Future<QiCardDirectOfferPaymentResult> createPaymentForDirectOffer({
+    required String offerId,
+    required double amount,
+    String? finishUrl,
+    String? requestCorrelationId,
+  }) async {
+    try {
+      AppLogger.i(
+        'Creating direct offer payment offer=$offerId amount=$amount',
+        tag: 'QiCard',
+      );
+      final response = await _client.functions.invoke(
+        'qicard_payment_create_direct_offer',
+        body: <String, dynamic>{
+          'offer_id': offerId,
+          'amount': amount,
+          'finish_url': finishUrl,
+          'request_correlation_id': requestCorrelationId,
+        },
+      );
+
+      final data = _asMap(response.data);
+      final serviceError =
+          _extractError(data) ?? _extractErrorFromPayload(data);
+      if (serviceError != null) {
+        AppLogger.w(
+          'Direct offer payment create rejected for offer=$offerId',
+          tag: 'QiCard',
+          error: serviceError,
+          json: _safePayloadSummary(data),
+        );
+        return QiCardDirectOfferPaymentResult(
+          offerId: offerId,
+          error: serviceError,
+          errorCode: 'DIRECT_OFFER_PAYMENT_CREATE_FAILED',
+        );
+      }
+
+      if (data == null) {
+        AppLogger.w(
+          'Direct offer payment create returned no payload for offer=$offerId',
+          tag: 'QiCard',
+        );
+        return QiCardDirectOfferPaymentResult(
+          offerId: offerId,
+          error: 'Payment could not be created.',
+          errorCode: 'DIRECT_OFFER_PAYMENT_CREATE_FAILED',
+        );
+      }
+
+      final payloadError = _extractErrorFromPayload(data);
+      final result = QiCardDirectOfferPaymentResult(
+        offerId: data['offer_id'] as String? ?? offerId,
+        formUrl: data['form_url'] as String?,
+        correlationId: data['correlation_id'] as String?,
+        paymentRequestId: data['payment_request_id'] as String?,
+        amount: (data['amount'] as num?)?.toDouble(),
+        error: payloadError,
+        errorCode: 'DIRECT_OFFER_PAYMENT_CREATE_FAILED',
+      );
+
+      if (!result.isSuccess) {
+        AppLogger.w(
+          'Direct offer payment create returned incomplete or error payload for offer=$offerId',
+          tag: 'QiCard',
+          json: _safePayloadSummary(data),
+        );
+        return QiCardDirectOfferPaymentResult(
+          offerId: offerId,
+          error:
+              payloadError ?? result.error ?? 'Payment could not be created.',
+          errorCode: result.errorCode ?? 'DIRECT_OFFER_PAYMENT_CREATE_FAILED',
+        );
+      }
+
+      AppLogger.i(
+        'Direct offer payment created offer=$offerId correlation=${result.correlationId}',
+        tag: 'QiCard',
+      );
+      return result;
+    } catch (e, st) {
+      AppLogger.e(
+        'createPaymentForDirectOffer failed',
+        tag: 'QiCard',
+        error: e,
+        stackTrace: st,
+      );
+      return QiCardDirectOfferPaymentResult(
+        offerId: offerId,
+        error: 'Cannot start payment right now.',
+        errorCode: 'DIRECT_OFFER_PAYMENT_CREATE_FAILED',
+      );
+    }
+  }
+
   Map<String, dynamic>? _asMap(dynamic data) {
     if (data is Map<String, dynamic>) return data;
     if (data is Map) {
@@ -414,6 +510,17 @@ class QiCardPaymentService implements PaymentService {
 
   String? _extractError(Map<String, dynamic>? data) {
     return _normalizeErrorValue(data?['error']);
+  }
+
+  /// Top-level code/message (e.g. edge function error response).
+  String? _extractErrorFromPayload(Map<String, dynamic>? data) {
+    if (data == null) return null;
+    final msg = data['message'];
+    final code = data['code'];
+    if (msg is String && msg.isNotEmpty)
+      return code is String && code.isNotEmpty ? '$code: $msg' : msg;
+    if (code is String && code.isNotEmpty) return code;
+    return null;
   }
 
   String? _normalizeErrorValue(dynamic error) {

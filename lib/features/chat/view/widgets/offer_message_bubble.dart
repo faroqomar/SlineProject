@@ -9,7 +9,7 @@ import 'package:sline_app/core/widgets/app_button.dart';
 enum OfferStatus { pending, accepted, declined }
 
 /// A message bubble widget for displaying custom offers in chat.
-/// Matches the new design system with glass effect and action buttons.
+/// Supports both legacy (message-only) and direct offers (offer_id + lifecycle).
 class OfferMessageBubble extends StatelessWidget {
   final String title;
   final String description;
@@ -20,6 +20,15 @@ class OfferMessageBubble extends StatelessWidget {
   final String time;
   final VoidCallback? onAccept;
   final VoidCallback? onDecline;
+
+  /// Direct offer id (from payload). When set, lifecycle actions are shown.
+  final String? offerId;
+
+  /// Raw status from payload: sent, active, delivered, completed, rejected, canceled, refunded.
+  final String? rawStatus;
+  final VoidCallback? onCancel;
+  final VoidCallback? onDeliver;
+  final VoidCallback? onComplete;
 
   const OfferMessageBubble({
     super.key,
@@ -32,6 +41,11 @@ class OfferMessageBubble extends StatelessWidget {
     required this.time,
     this.onAccept,
     this.onDecline,
+    this.offerId,
+    this.rawStatus,
+    this.onCancel,
+    this.onDeliver,
+    this.onComplete,
   });
 
   @override
@@ -169,15 +183,53 @@ class OfferMessageBubble extends StatelessWidget {
   }
 
   Widget _buildActions(AppColorScheme colorScheme) {
-    // Show status badge if not pending
-    if (status != OfferStatus.pending) {
+    final isSent = rawStatus == 'sent';
+    final isActive = rawStatus == 'active';
+    final isDelivered = rawStatus == 'delivered';
+    final isAcceptedPendingPayment = rawStatus == 'accepted';
+
+    // Direct offer: accepted but not yet paid (client must pay from dashboard)
+    if (isAcceptedPendingPayment && offerId != null) {
       return Container(
         padding: const EdgeInsets.symmetric(
           horizontal: AppDimens.p12,
           vertical: AppDimens.p8,
         ),
         decoration: BoxDecoration(
-          color: status == OfferStatus.accepted
+          color: AppColors.gold.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(AppDimens.r8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.payment, size: 16, color: AppColors.gold),
+            const SizedBox(width: 6),
+            Text(
+              'Pending Payment',
+              style: AppTypography.captionBold.copyWith(color: AppColors.gold),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final isEndState =
+        status != OfferStatus.pending ||
+        rawStatus == 'completed' ||
+        rawStatus == 'rejected' ||
+        rawStatus == 'canceled' ||
+        rawStatus == 'refunded';
+
+    if (isEndState) {
+      final accepted =
+          status == OfferStatus.accepted || rawStatus == 'completed';
+      return Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimens.p12,
+          vertical: AppDimens.p8,
+        ),
+        decoration: BoxDecoration(
+          color: accepted
               ? AppColors.lightTeal.withValues(alpha: 0.2)
               : AppColors.lightRed.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(AppDimens.r8),
@@ -186,21 +238,17 @@ class OfferMessageBubble extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              status == OfferStatus.accepted
-                  ? Icons.check_circle
-                  : Icons.cancel,
+              accepted ? Icons.check_circle : Icons.cancel,
               size: 16,
-              color: status == OfferStatus.accepted
-                  ? AppColors.lightTeal
-                  : AppColors.lightRed,
+              color: accepted ? AppColors.lightTeal : AppColors.lightRed,
             ),
             const SizedBox(width: 6),
             Text(
-              status == OfferStatus.accepted ? 'Accepted' : 'Declined',
+              accepted
+                  ? 'Accepted'
+                  : (rawStatus == 'canceled' ? 'Canceled' : 'Declined'),
               style: AppTypography.captionBold.copyWith(
-                color: status == OfferStatus.accepted
-                    ? AppColors.lightTeal
-                    : AppColors.lightRed,
+                color: accepted ? AppColors.lightTeal : AppColors.lightRed,
               ),
             ),
           ],
@@ -208,51 +256,105 @@ class OfferMessageBubble extends StatelessWidget {
       );
     }
 
-    // Show action buttons for pending offers (only if not mine)
+    // Client actions (not mine)
     if (!isMine) {
-      return Row(
-        children: [
-          Expanded(
-            child: AppButton(
-              text: 'Accept',
-              height: 40,
-              onPressed: onAccept ?? () {},
-            ),
-          ),
-          const SizedBox(width: AppDimens.p8),
-          Expanded(
-            child: Container(
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(AppDimens.r14),
-                border: Border.all(
-                  color: AppColors.teal.withValues(alpha: 0.3),
-                ),
+      if (isSent && (onAccept != null || onDecline != null)) {
+        return Row(
+          children: [
+            Expanded(
+              child: AppButton(
+                text: offerId != null ? 'Accept' : 'Accept',
+                height: 40,
+                onPressed: onAccept ?? () {},
               ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: onDecline,
+            ),
+            const SizedBox(width: AppDimens.p8),
+            Expanded(
+              child: Container(
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
                   borderRadius: BorderRadius.circular(AppDimens.r14),
-                  child: Center(
-                    child: Text(
-                      'Decline',
-                      style: AppTypography.bodySmall.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.text,
+                  border: Border.all(
+                    color: AppColors.teal.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: onDecline,
+                    borderRadius: BorderRadius.circular(AppDimens.r14),
+                    child: Center(
+                      child: Text(
+                        'Decline',
+                        style: AppTypography.bodySmall.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.text,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
             ),
+          ],
+        );
+      }
+      if (isDelivered && onComplete != null) {
+        return SizedBox(
+          width: double.infinity,
+          child: AppButton(
+            text: 'Approve & Complete',
+            height: 40,
+            onPressed: onComplete,
           ),
-        ],
-      );
+        );
+      }
     }
 
-    // For sender's own pending offers
+    // Freelancer actions (mine)
+    if (isMine) {
+      if (isSent && onCancel != null) {
+        return SizedBox(
+          width: double.infinity,
+          child: Container(
+            height: 40,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppDimens.r14),
+              border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onCancel,
+                borderRadius: BorderRadius.circular(AppDimens.r14),
+                child: Center(
+                  child: Text(
+                    'Cancel Offer',
+                    style: AppTypography.bodySmall.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.text,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+      if (isActive && onDeliver != null) {
+        return SizedBox(
+          width: double.infinity,
+          child: AppButton(
+            text: 'Mark Delivered',
+            height: 40,
+            onPressed: onDeliver,
+          ),
+        );
+      }
+    }
+
+    // Pending response (no action for this viewer)
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimens.p12,

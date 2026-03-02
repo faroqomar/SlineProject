@@ -22,9 +22,11 @@ class PortfolioDetailsSheet extends StatelessWidget {
     PortfolioItem item,
     PortfolioViewModel controller,
   ) {
-    AppLogger.d('Opening portfolio details sheet', tag: 'PortfolioDetailsSheet', json: {
-      'itemId': item.id,
-    });
+    AppLogger.d(
+      'Opening portfolio details sheet',
+      tag: 'PortfolioDetailsSheet',
+      json: {'itemId': item.id},
+    );
     return showModalBottomSheet(
       context: context,
       useSafeArea: true,
@@ -39,10 +41,11 @@ class PortfolioDetailsSheet extends StatelessWidget {
     final createdLocal = item.createdAt.toLocal();
     final imageUrl = controller.getImageUrl(item);
 
-    AppLogger.d('Building portfolio details', tag: 'PortfolioDetailsSheet', json: {
-      'itemId': item.id,
-      'hasImage': imageUrl != null,
-    });
+    AppLogger.d(
+      'Building portfolio details',
+      tag: 'PortfolioDetailsSheet',
+      json: {'itemId': item.id, 'hasImage': imageUrl != null},
+    );
 
     return SafeArea(
       child: Padding(
@@ -74,8 +77,11 @@ class PortfolioDetailsSheet extends StatelessWidget {
                   imageUrl,
                   fit: BoxFit.cover,
                   errorBuilder: (_, error, __) {
-                    AppLogger.w('Failed to load portfolio image in details',
-                        tag: 'PortfolioDetailsSheet', error: error);
+                    AppLogger.w(
+                      'Failed to load portfolio image in details',
+                      tag: 'PortfolioDetailsSheet',
+                      error: error,
+                    );
                     return ImagePlaceholder(title: item.title, height: 200);
                   },
                 ),
@@ -106,7 +112,10 @@ class PortfolioDetailsSheet extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () async {
-                      AppLogger.d('Edit button pressed', tag: 'PortfolioDetailsSheet');
+                      AppLogger.d(
+                        'Edit button pressed',
+                        tag: 'PortfolioDetailsSheet',
+                      );
                       final updated = await EditPortfolioSheet.open(
                         context,
                         item,
@@ -128,7 +137,10 @@ class PortfolioDetailsSheet extends StatelessWidget {
                       foregroundColor: Theme.of(context).colorScheme.onError,
                     ),
                     onPressed: () async {
-                      AppLogger.d('Delete button pressed', tag: 'PortfolioDetailsSheet');
+                      AppLogger.d(
+                        'Delete button pressed',
+                        tag: 'PortfolioDetailsSheet',
+                      );
                       final ok = await showDialog<bool>(
                         context: context,
                         builder: (ctx) => AlertDialog(
@@ -150,7 +162,10 @@ class PortfolioDetailsSheet extends StatelessWidget {
                       );
                       if (!context.mounted) return;
                       if (ok == true) {
-                        AppLogger.i('User confirmed delete', tag: 'PortfolioDetailsSheet');
+                        AppLogger.i(
+                          'User confirmed delete',
+                          tag: 'PortfolioDetailsSheet',
+                        );
                         final messenger = ScaffoldMessenger.of(context);
                         final success = await controller.deleteItem(item.id);
                         if (!context.mounted) return;

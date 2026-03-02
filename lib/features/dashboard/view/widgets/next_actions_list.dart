@@ -5,6 +5,35 @@ import 'work_item_card.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/deep_link_service.dart'
     as sline_deep_link;
+import 'package:sline_app/features/wallet/view/wallet_screen.dart';
+
+void _showInsufficientFundsDialog(BuildContext context) {
+  showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Insufficient balance'),
+      content: const Text(
+        'Add funds to your wallet and try again from the Dashboard.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () {
+            Navigator.pop(ctx);
+            Navigator.push(
+              context,
+              MaterialPageRoute<void>(builder: (_) => const WalletScreen()),
+            );
+          },
+          child: const Text('Add funds'),
+        ),
+      ],
+    ),
+  );
+}
 
 class NextActionsList extends StatelessWidget {
   const NextActionsList({super.key});
@@ -34,21 +63,77 @@ class NextActionsList extends StatelessWidget {
               item: item,
               onPrimaryAction: () async {
                 final action = item.primaryActionType;
+                final vm = context.read<DashboardViewModel>();
+                // Direct offer Pay Now: perform payment from dashboard
+                if (item.type == WorkItemType.directOffer &&
+                    action == PrimaryActionType.payEscrow) {
+                  try {
+                    await vm.performPrimaryAction(item);
+                    if (context.mounted) vm.refresh();
+                  } on FormatException catch (e) {
+                    if (!context.mounted) return;
+                    if (e.message.contains('Insufficient')) {
+                      _showInsufficientFundsDialog(context);
+                    } else {
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(e.message)));
+                    }
+                  } catch (e) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          e is Exception
+                              ? e.toString()
+                              : 'Something went wrong',
+                        ),
+                      ),
+                    );
+                  }
+                  return;
+                }
+                // Navigate for review/pay/view (booking/task pay goes to details)
                 if (action == PrimaryActionType.reviewDelivery ||
                     action == PrimaryActionType.submitEvidence ||
                     action == PrimaryActionType.payEscrow ||
                     action == PrimaryActionType.viewDetails) {
-                  // Navigate using deep link service
                   final result = await context
                       .read<sline_deep_link.DeepLinkService>()
-                      .handleWorkItem(context, item.type.name, item.id);
+                      .handleWorkItem(
+                        context,
+                        item.type.name,
+                        item.id,
+                        conversationId: item.conversationId,
+                      );
                   if (result == true && context.mounted) {
-                    context.read<DashboardViewModel>().refresh();
+                    vm.refresh();
                   }
                 } else {
-                  await context.read<DashboardViewModel>().performPrimaryAction(
-                    item,
-                  );
+                  try {
+                    await vm.performPrimaryAction(item);
+                    if (context.mounted) vm.refresh();
+                  } on FormatException catch (e) {
+                    if (!context.mounted) return;
+                    if (e.message.contains('Insufficient')) {
+                      _showInsufficientFundsDialog(context);
+                    } else {
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(e.message)));
+                    }
+                  } catch (e) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          e is Exception
+                              ? e.toString()
+                              : 'Something went wrong',
+                        ),
+                      ),
+                    );
+                  }
                 }
               },
             ),

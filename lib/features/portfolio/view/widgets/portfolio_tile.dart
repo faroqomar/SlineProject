@@ -24,12 +24,16 @@ class PortfolioTile extends StatelessWidget {
     // Get effective image URL (canonical path or legacy URL)
     final imageUrl = controller.getImageUrl(item);
 
-    AppLogger.d('Building portfolio tile', tag: 'PortfolioTile', json: {
-      'itemId': item.id,
-      'hasImage': imageUrl != null,
-      'imagePath': item.imagePath,
-      'imageUrl': item.imageUrl != null ? '(legacy)' : null,
-    });
+    AppLogger.d(
+      'Building portfolio tile',
+      tag: 'PortfolioTile',
+      json: {
+        'itemId': item.id,
+        'hasImage': imageUrl != null,
+        'imagePath': item.imagePath,
+        'imageUrl': item.imageUrl != null ? '(legacy)' : null,
+      },
+    );
 
     final border = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(12),
@@ -41,9 +45,11 @@ class PortfolioTile extends StatelessWidget {
         onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          AppLogger.d('Opening portfolio details', tag: 'PortfolioTile', json: {
-            'itemId': item.id,
-          });
+          AppLogger.d(
+            'Opening portfolio details',
+            tag: 'PortfolioTile',
+            json: {'itemId': item.id},
+          );
           PortfolioDetailsSheet.open(context, item, controller);
         },
         child: Column(
@@ -59,8 +65,11 @@ class PortfolioTile extends StatelessWidget {
                         imageUrl,
                         fit: BoxFit.cover,
                         errorBuilder: (_, error, __) {
-                          AppLogger.w('Failed to load portfolio image',
-                              tag: 'PortfolioTile', error: error);
+                          AppLogger.w(
+                            'Failed to load portfolio image',
+                            tag: 'PortfolioTile',
+                            error: error,
+                          );
                           return ImagePlaceholder(title: item.title);
                         },
                       )

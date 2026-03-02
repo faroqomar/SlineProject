@@ -46,13 +46,54 @@ class LedgerService {
         },
       );
 
-      return response as Map<String, dynamic>;
+      final result = response as Map<String, dynamic>;
+      if (result['ok'] == false) {
+        final err = result['error'];
+        final message = err is Map
+            ? (err['message'] as String? ??
+                  err['code'] as String? ??
+                  'Payment failed.')
+            : 'Payment failed.';
+        AppLogger.e(
+          'Ledger RPC returned ok: false',
+          tag: 'LedgerService',
+          error: err is Map ? err.toString() : err,
+        );
+        final userMessage =
+            _mapLedgerCode(err is Map ? err['code'] as String? : null) ??
+            message;
+        throw Exception(userMessage);
+      }
+      return result;
     } on PostgrestException catch (e) {
       AppLogger.e('Ledger RPC Failed: ${e.message}', error: e);
       throw FormatException(_mapLedgerError(e));
     } catch (e) {
       AppLogger.e('Unexpected Ledger Error', error: e);
       throw const FormatException('An unexpected payment error occurred.');
+    }
+  }
+
+  /// Map RPC error code from jsonb response to user-facing message.
+  String? _mapLedgerCode(String? code) {
+    if (code == null) return null;
+    switch (code) {
+      case 'ERR_GATE_NOT_ALLOWED':
+        return 'Event not allowed for current status.';
+      case 'ERR_ENTITY_NOT_FOUND':
+        return 'Related entity not found.';
+      case 'ERR_MISSING_IDEMPOTENCY_KEY':
+        return 'Missing idempotency key. Please try again.';
+      case 'ERR_IDEMPOTENCY_REPLAY':
+        return 'This transaction was already processed.';
+      case 'ERR_AMOUNT_MISMATCH':
+        return 'Amount mismatch detected.';
+      case 'ERR_CURRENCY_MISMATCH':
+        return 'Currency mismatch. Only IQD is supported.';
+      case 'ERR_INSUFFICIENT_FUNDS':
+        return 'Insufficient available balance.';
+      default:
+        return null;
     }
   }
 

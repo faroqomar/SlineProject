@@ -29,18 +29,19 @@ class PortfolioService {
     int limit = 30,
     String? cursorCreatedAtIso,
   }) async {
-    AppLogger.d('Listing portfolio items', tag: _tag, json: {
-      'ownerId': ownerId,
-      'limit': limit,
-      'cursorCreatedAt': cursorCreatedAtIso,
-    });
+    AppLogger.d(
+      'Listing portfolio items',
+      tag: _tag,
+      json: {
+        'ownerId': ownerId,
+        'limit': limit,
+        'cursorCreatedAt': cursorCreatedAtIso,
+      },
+    );
 
     try {
       // Build the base query
-      var query = _client
-          .from(_table)
-          .select()
-          .eq('owner_id', ownerId);
+      var query = _client.from(_table).select().eq('owner_id', ownerId);
 
       // Apply cursor filter for pagination (server-side)
       // Use filter() with 'lt' operator for created_at < cursor
@@ -60,7 +61,12 @@ class PortfolioService {
       AppLogger.i('Listed ${items.length} portfolio items', tag: _tag);
       return items;
     } catch (e, st) {
-      AppLogger.e('Failed to list portfolio items', tag: _tag, error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to list portfolio items',
+        tag: _tag,
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
@@ -74,11 +80,15 @@ class PortfolioService {
     required Uint8List bytes,
     required String filename,
   }) async {
-    AppLogger.d('Uploading image bytes', tag: _tag, json: {
-      'ownerId': ownerId,
-      'filename': filename,
-      'bytesLength': bytes.length,
-    });
+    AppLogger.d(
+      'Uploading image bytes',
+      tag: _tag,
+      json: {
+        'ownerId': ownerId,
+        'filename': filename,
+        'bytesLength': bytes.length,
+      },
+    );
 
     // Derive content-type from filename; fall back to 'application/octet-stream'
     final contentType = lookupMimeType(filename) ?? 'application/octet-stream';
@@ -113,11 +123,15 @@ class PortfolioService {
     Uint8List? imageBytes,
     String? imageFilename, // e.g. "photo.jpg"
   }) async {
-    AppLogger.i('Adding portfolio item', tag: _tag, json: {
-      'ownerId': ownerId,
-      'title': title,
-      'hasImage': imageBytes != null,
-    });
+    AppLogger.i(
+      'Adding portfolio item',
+      tag: _tag,
+      json: {
+        'ownerId': ownerId,
+        'title': title,
+        'hasImage': imageBytes != null,
+      },
+    );
 
     String? imagePath;
 
@@ -146,7 +160,12 @@ class PortfolioService {
       AppLogger.i('Portfolio item created', tag: _tag, json: {'id': item.id});
       return item;
     } catch (e, st) {
-      AppLogger.e('Failed to create portfolio item', tag: _tag, error: e, stackTrace: st);
+      AppLogger.e(
+        'Failed to create portfolio item',
+        tag: _tag,
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
@@ -162,7 +181,11 @@ class PortfolioService {
     // Fetch item to find its image reference
     final row = await _client.from(_table).select().eq('id', id).maybeSingle();
     if (row == null) {
-      AppLogger.w('Portfolio item not found for deletion', tag: _tag, json: {'id': id});
+      AppLogger.w(
+        'Portfolio item not found for deletion',
+        tag: _tag,
+        json: {'id': id},
+      );
       return;
     }
     final item = PortfolioItem.fromJson(row as Map<String, dynamic>);
@@ -191,11 +214,18 @@ class PortfolioService {
       if (storagePath != null) {
         try {
           await _client.storage.from(_bucket).remove([storagePath]);
-          AppLogger.i('Deleted storage object', tag: _tag, json: {'path': storagePath});
+          AppLogger.i(
+            'Deleted storage object',
+            tag: _tag,
+            json: {'path': storagePath},
+          );
         } catch (e) {
           // Log but don't fail UX if storage cleanup fails
-          AppLogger.w('Failed to delete storage object (non-critical)',
-              tag: _tag, error: e);
+          AppLogger.w(
+            'Failed to delete storage object (non-critical)',
+            tag: _tag,
+            error: e,
+          );
         }
       } else {
         AppLogger.d('No resolvable storage path for cleanup', tag: _tag);

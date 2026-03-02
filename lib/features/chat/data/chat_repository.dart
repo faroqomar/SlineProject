@@ -37,20 +37,15 @@ class ChatRepository {
   Future<Conversation> startDirectConversation({
     required String user1Id,
     required String user2Id,
-  }) =>
-      _service.createOrGetConversation(
-        taskId: null,
-        user1Id: user1Id,
-        user2Id: user2Id,
-      );
+  }) => _service.createOrGetConversation(
+    taskId: null,
+    user1Id: user1Id,
+    user2Id: user2Id,
+  );
 
   /// Task-linked conversation. Non-owner starts via RPC start_task_conversation_v1.
-  Future<Conversation> startTaskConversation(String taskId) =>
-      _service.createOrGetConversation(
-        taskId: taskId,
-        user1Id: '',
-        user2Id: '',
-      );
+  Future<Conversation> startTaskConversation(String taskId) => _service
+      .createOrGetConversation(taskId: taskId, user1Id: '', user2Id: '');
 
   /// @deprecated Use [startDirectConversation] or [startTaskConversation]. Kept for compatibility.
   Future<Conversation> startConversationByClient({

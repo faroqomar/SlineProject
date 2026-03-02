@@ -262,7 +262,9 @@ class MessageService {
           )
           .single();
 
-      final message = Message.fromJson(Map<String, dynamic>.from(response as Map));
+      final message = Message.fromJson(
+        Map<String, dynamic>.from(response as Map),
+      );
       AppLogger.i('Sent message=${message.id} conversation=$conversationId');
       return message;
     } catch (e, st) {
@@ -297,19 +299,32 @@ class MessageService {
 
   /// Realtime for a conversation. Emits full list per snapshot (no collapse to rows.last).
   Stream<List<Message>> subscribeToMessages(String conversationId) {
-    AppLogger.d('[REALTIME] messages subscription start conversationId=$conversationId');
+    AppLogger.d(
+      '[REALTIME] messages subscription start conversationId=$conversationId',
+    );
     return _client
         .from('messages')
         .stream(primaryKey: ['id'])
         .eq('conversation_id', conversationId)
         .order('created_at', ascending: true)
+        .handleError((e, st) {
+          AppLogger.e(
+            'Realtime messages stream error (payload/transform)',
+            error: e,
+            stackTrace: st,
+          );
+        })
         .map((rows) {
           if (rows.isEmpty) return <Message>[];
           try {
-            final list = rows
-                .map((r) => Message.fromJson(Map<String, dynamic>.from(r as Map)))
-                .toList()
-              ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+            final list =
+                rows
+                    .map(
+                      (r) =>
+                          Message.fromJson(Map<String, dynamic>.from(r as Map)),
+                    )
+                    .toList()
+                  ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
             return list;
           } catch (e) {
             AppLogger.e('Realtime message parse error', error: e);
@@ -324,6 +339,13 @@ class MessageService {
         .from('conversations')
         .stream(primaryKey: ['id'])
         .order('created_at')
+        .handleError((e, st) {
+          AppLogger.e(
+            'Realtime conversations stream error (payload/transform)',
+            error: e,
+            stackTrace: st,
+          );
+        })
         .asyncMap((rows) async {
           if (rows.isEmpty) return <Map<String, dynamic>>[];
           // We need to re-fetch with relationships to get full details

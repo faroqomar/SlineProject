@@ -19,10 +19,14 @@ class WorkItem {
   final String? deepLinkRoute;
   final WorkItemPermissions permissions;
   // v1 additions
-  final String workItemId; // 'task:<uuid>' or 'booking:<uuid>'
+  final String
+  workItemId; // 'task:<uuid>' or 'booking:<uuid>' or 'direct_offer:<uuid>'
   final bool needsReview;
   final int sortRank;
   final DateTime? lastActivityAt;
+
+  /// For direct offers: conversation to open when tapping the card.
+  final String? conversationId;
 
   WorkItem({
     required this.id,
@@ -46,6 +50,7 @@ class WorkItem {
     this.needsReview = false,
     this.sortRank = 6,
     this.lastActivityAt,
+    this.conversationId,
   });
 
   bool get actionableNeedsReview => needsReview && permissions.canReview;
@@ -76,6 +81,7 @@ class WorkItem {
       needsReview: needsReview,
       sortRank: sortRank,
       lastActivityAt: lastActivityAt,
+      conversationId: conversationId,
     );
   }
 
@@ -103,6 +109,7 @@ class WorkItem {
       'needsReview': needsReview,
       'sortRank': sortRank,
       'lastActivityAt': lastActivityAt?.toIso8601String(),
+      'conversationId': conversationId,
     };
   }
 
@@ -141,6 +148,7 @@ class WorkItem {
       lastActivityAt: json['lastActivityAt'] != null
           ? DateTime.parse(json['lastActivityAt'] as String)
           : null,
+      conversationId: json['conversationId'] as String?,
     );
   }
 }

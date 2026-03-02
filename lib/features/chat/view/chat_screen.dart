@@ -88,21 +88,30 @@ class _ChatScreenState extends State<ChatScreen> {
   void _showCreateOfferModal() {
     showCreateOfferSheet(
       context,
-      onSubmit: (title, description, priceStr, deliveryStr) {
+      onSubmit: (title, description, priceStr, deliveryStr) async {
         final price = int.tryParse(priceStr) ?? 0;
         final days = int.tryParse(deliveryStr) ?? 3;
-        final payload = ChatOfferPayload(
-          price: price,
-          days: days,
-          title: title,
-          description: description,
-          status: 'pending',
-        );
-        _chatCtrl.sendMessage(
-          'Offer: $title',
-          messageType: 'offer',
-          payload: payload.toMap(),
-        );
+        if (price <= 0) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Please enter a valid price')),
+            );
+          }
+          return;
+        }
+        try {
+          await _chatCtrl.createDirectOffer(
+            title: title.isNotEmpty ? title : null,
+            description: description.isNotEmpty ? description : null,
+            price: price,
+            days: days,
+          );
+        } catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Failed to create offer: $e')));
+        }
       },
     );
   }
@@ -148,17 +157,35 @@ class _ChatScreenState extends State<ChatScreen> {
                       }
 
                       if (offerData.isNotEmpty) {
+                        final offerId = offerData['offer_id'] as String?;
+                        final rawStatus =
+                            controller.getOfferStatus(offerId) ??
+                            offerData['status']?.toString() ??
+                            'sent';
                         return OfferMessageBubble(
                           title: offerData['title'] ?? '',
                           description: offerData['description'] ?? '',
                           price: offerData['price']?.toString() ?? '0',
-                          deliveryDays:
-                              ChatOfferPayload.daysFromPayload(offerData).toString(),
-                          status: _parseOfferStatus(offerData['status']),
+                          deliveryDays: ChatOfferPayload.daysFromPayload(
+                            offerData,
+                          ).toString(),
+                          status: _parseOfferStatus(rawStatus),
                           isMine: isMine,
                           time: formatFriendlyTime(msg.createdAt),
-                          onAccept: () => _chatCtrl.acceptOffer(msg),
+                          onAccept: () =>
+                              _onAcceptOffer(context, msg, offerData),
                           onDecline: () => _chatCtrl.rejectOffer(msg),
+                          offerId: offerId,
+                          rawStatus: rawStatus,
+                          onCancel: offerId != null
+                              ? () => _chatCtrl.cancelOffer(offerId)
+                              : null,
+                          onDeliver: offerId != null
+                              ? () => _chatCtrl.markOfferDelivered(offerId)
+                              : null,
+                          onComplete: offerId != null
+                              ? () => _chatCtrl.completeOffer(offerId)
+                              : null,
                         );
                       }
                     }
@@ -246,46 +273,45 @@ class _ChatScreenState extends State<ChatScreen> {
                   ],
                 ),
 
-                // Action buttons (offer only in task-linked conversations)
+                // Offer button: show in all 1:1 chats (direct or task-linked)
                 Row(
                   children: [
-                    if (_isTaskLinkedConversation(widget.conversation))
-                      GestureDetector(
-                        onTap: _showCreateOfferModal,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppDimens.p12,
-                            vertical: AppDimens.p6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.teal,
-                            borderRadius: BorderRadius.circular(AppDimens.r20),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.attach_money,
+                    GestureDetector(
+                      onTap: _showCreateOfferModal,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppDimens.p12,
+                          vertical: AppDimens.p6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.teal,
+                          borderRadius: BorderRadius.circular(AppDimens.r20),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.attach_money,
+                              color: AppColors.white,
+                              size: AppDimens.iconSizeSmall,
+                            ),
+                            const SizedBox(width: AppDimens.p4),
+                            Text(
+                              'Offer',
+                              style: AppTypography.captionBold.copyWith(
                                 color: AppColors.white,
-                                size: AppDimens.iconSizeSmall,
                               ),
-                              const SizedBox(width: AppDimens.p4),
-                              Text(
-                                'Offer',
-                                style: AppTypography.captionBold.copyWith(
-                                  color: AppColors.white,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
+                    ),
                   ],
                 ),
               ],
             ),
           ),
         ),
-        // Context Widget
+        // Task context banner when conversation is task-linked
         ChatContextWidget(conversation: widget.conversation),
       ],
     );
@@ -397,18 +423,43 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  bool _isTaskLinkedConversation(Conversation c) {
-    final tid = c.taskId;
-    return tid != null &&
-        tid.isNotEmpty &&
-        tid != '00000000-0000-0000-0000-000000000000';
+  Future<void> _onAcceptOffer(
+    BuildContext context,
+    Message msg,
+    Map<String, dynamic> offerData,
+  ) async {
+    try {
+      await _chatCtrl.acceptOffer(msg);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Offer accepted. Complete payment from your Dashboard.',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e is Exception ? e.toString() : 'Failed to accept offer',
+          ),
+        ),
+      );
+    }
   }
 
   OfferStatus _parseOfferStatus(String? status) {
+    if (status == null) return OfferStatus.pending;
     switch (status) {
       case 'accepted':
+      case 'completed':
         return OfferStatus.accepted;
       case 'declined':
+      case 'rejected':
+      case 'canceled':
+      case 'refunded':
         return OfferStatus.declined;
       default:
         return OfferStatus.pending;

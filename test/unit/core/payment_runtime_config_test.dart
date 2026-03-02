@@ -31,28 +31,28 @@ void main() {
       expect(args.paymentId, 'p1');
     });
 
-    test('parsePaymentReturnArgs accepts root callback url with query signal', () {
-      final args = parsePaymentReturnArgs(
-        Uri.parse(
-          'https://sline.app/?payment_return=1&booking_id=b1&correlation_id=c1',
-        ),
-      );
+    test(
+      'parsePaymentReturnArgs accepts root callback url with query signal',
+      () {
+        final args = parsePaymentReturnArgs(
+          Uri.parse(
+            'https://sline.app/?payment_return=1&booking_id=b1&correlation_id=c1',
+          ),
+        );
 
-      expect(args, isNotNull);
-      expect(args!.normalizedStatus, 'UNKNOWN');
-      expect(args.bookingId, 'b1');
-      expect(args.correlationId, 'c1');
-    });
+        expect(args, isNotNull);
+        expect(args!.normalizedStatus, 'UNKNOWN');
+        expect(args.bookingId, 'b1');
+        expect(args.correlationId, 'c1');
+      },
+    );
 
     test('buildQiCardFinishUrlForRuntime preserves the current web path', () {
       final finishUrl = buildQiCardFinishUrlForRuntime(
         runtimeUri: Uri.parse('https://app.example.com/dashboard?tab=bookings'),
       );
 
-      expect(
-        finishUrl,
-        'https://app.example.com/dashboard?payment_return=1',
-      );
+      expect(finishUrl, 'https://app.example.com/dashboard?payment_return=1');
     });
 
     test('buildQiCardCallbackHosts uses the runtime finish host', () {

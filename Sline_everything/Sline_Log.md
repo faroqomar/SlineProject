@@ -21,6 +21,59 @@
 
 ## 📋 Version History
 
+### 🟢 Version 2.17.0 — Direct Chat Offers (Accept-then-Pay, QiCard, Dashboard)
+
+**Date:** 2026-03-02  
+**Commit:** _Pending_ — "feat(direct_offers): accept-then-pay flow, QiCard gateway, dashboard pay, recovery, webview"
+
+#### ✅ Implemented
+
+- **Flow (Accept first, Pay from Dashboard)**
+  - Chat: Client taps **Accept** only → `DirectOffersService.acceptOfferWithoutPayment(offerId)` → `direct_offers.status = 'accepted'`, `payment_status = 'unpaid'`; work_log entry; optional offer_accepted message.
+  - Dashboard: Client sees work item as **Pending Payment**; taps **Pay & Confirm** → QiCard payment session (edge `qicard_payment_create_direct_offer`) → WebView (mobile) or browser (web); on return, `recoverPaymentAfterCallback` runs → ledger `escrow_hold` → `status = 'active'`, `payment_status = 'held'`.
+  - Deliver/Complete unchanged: freelancer Mark Delivered → client Approve & release → `process_payment_event_ledger('release_with_fee', 'direct_offer', id)`.
+
+- **App (lib/features/direct_offers/)**
+  - `lib/features/direct_offers/services/direct_offers_service.dart`: `acceptOfferWithoutPayment`, `payNow(offerId)` (ledger escrow only), `recoverPaymentAfterCallback` (post-QiCard return).
+  - `lib/features/direct_offers/view/direct_offer_details_screen.dart`: Detail screen with Cancel / Pay (QiCard); Open chat; Mark Delivered / Approve & release by role.
+  - `lib/features/direct_offers/viewmodels/direct_offer_details_view_model.dart`: Load offer, createPaymentForCard, payNow, markDelivered, completeOffer; uses `AuthViewModel.currentUserId` (no Supabase in view).
+
+- **Chat**
+  - `lib/features/chat/viewmodels/chat_view_model.dart`: For direct offers (`offer_id` present), calls `acceptOfferWithoutPayment(offerId)` instead of acceptWithPayment; no payment in chat.
+  - `lib/features/chat/view/widgets/offer_message_bubble.dart`: Button **Accept** (not "Accept & Pay") for direct offers; payment only from dashboard.
+
+- **Dashboard**
+  - `lib/features/dashboard/data/dashboard_repository.dart`: `_fetchDirectOffers` includes `status = 'accepted'`; map to `UnifiedWorkStatus.pendingPayment`, `primaryActionType = payEscrow` for client.
+  - `lib/features/dashboard/viewmodels/dashboard_view_model.dart`: `performPrimaryAction` for directOffer + payEscrow calls `DirectOffersService.payNow(item.id)`; on web, opens payment in browser (no WebView).
+
+- **Payment / Web**
+  - `lib/features/booking/view/payment_webview_screen.dart`: Supports direct-offer return args (`offer_id`, `correlation_id`, `payment_request_id`); recovery delegates to `DirectOffersService.recoverPaymentAfterCallback`. On web: `webview_flutter_web` registered in `main.dart`; fallback `url_launcher` when WebView not implemented on platform.
+  - `lib/core/utils/web_url_utils_web.dart`: Uses `package:web` for `clearPaymentReturnParamsFromUrl` (no `dart:html`).
+
+- **Database (migrations)**
+  - Guard: `fn_direct_offer_guard` allows `sent` → `accepted` with `payment_status = 'unpaid'`.
+  - Ledger RPC: `escrow_hold` for `direct_offer` when `status IN ('sent','accepted')` and `payment_status = 'unpaid'`.
+  - Ledger: `payment_event_type_enum` used for `journal_entries.event_type` (migration `20260307_fix_ledger_event_type_enum.sql`).
+
+- **Observability / Cleanup**
+  - Realtime payload guarded against non-map payload (avoids `payload[$_get] is not a function`). Debug instrumentation removed from `direct_offer_details_screen` and `lib/core/debug_session_log.dart` (if present).
+
+#### 📊 Impact
+
+- Direct offers follow Accept → Pending Payment (dashboard) → Pay (QiCard) → Active → Deliver → Complete. Payment happens only from dashboard; chat is gateway only. Client and freelancer both see work items in unified dashboard; freelancer can Submit Work, client can Approve & release.
+
+#### 🧪 Verification
+
+- Plan: `.TODO/` Direct Offer Accept-then-Pay plan; Direct_Chat_Offers.md.
+- Flows: Accept in chat → item in dashboard Pending Payment; Pay & Confirm → QiCard → return → recovery → Active; Deliver → Approve → Completed.
+- Web: Payment opens in browser; return URL cleared via `package:web`; no WebView platform errors.
+
+#### 🔧 Technical Notes
+
+- Edge functions: `qicard_payment_create_direct_offer`, `qicard_payment_recovery_direct_offer` (Supabase). Ledger RPC and guard in migrations 20260303–20260307. Rollback: revert app + migrations; feature is additive.
+
+---
+
 ### 🟢 Version 2.16.9 — ChatFix (Archive RPC, Offer Payload, Realtime Merger)
 
 **Date:** 2026-03-02  

@@ -33,7 +33,8 @@ class ChatOfferPayload {
     final d = payload['days'];
     if (d != null) return (d is int) ? d : int.tryParse(d.toString()) ?? 0;
     final leg = payload['delivery'];
-    if (leg != null) return (leg is int) ? leg : int.tryParse(leg.toString()) ?? 0;
+    if (leg != null)
+      return (leg is int) ? leg : int.tryParse(leg.toString()) ?? 0;
     return 0;
   }
 

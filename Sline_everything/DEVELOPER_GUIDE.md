@@ -19,6 +19,7 @@ This comprehensive guide consolidates all feature-specific documentation into a 
 - [Auth Feature Reference](#auth-feature-reference)
 - [Legacy Orders Dashboard (Decommissioned)](#legacy-orders-dashboard-decommissioned)
 - [Chat Feature Reference](#chat-feature-reference)
+- [Direct Chat Offers (Direct Offers Feature)](DEVELOPER_GUIDE/Direct_Offers_Feature.md)
 - [Booking Feature Reference](#booking-feature-reference)
 - [Order Management Feature Reference](DEVELOPER_GUIDE/Order_Management_Feature.md)
 - [Wallet Feature Reference](DEVELOPER_GUIDE/Wallet_Feature.md)
@@ -1533,6 +1534,8 @@ The chat module provides one-to-one messaging between a client and a freelancer.
 - `ChatContextWidget`: Glassmorphism banner linking chat to its task. Tapping navigates to Task Details.
 - `LoadingUtils`: Used to show blocking loaders during navigation or heavy actions.
 
+**Direct Chat Offers (v2.17)**: Freelancer creates an offer from any 1:1 chat (no task required). Client accepts in chat only; payment is from Dashboard (QiCard). Full flow, DB mapping, and file inventory: [Direct Chat Offers (Direct Offers Feature)](DEVELOPER_GUIDE/Direct_Offers_Feature.md).
+
 ## 2. Database & Supabase Mapping
 
 ### 2.1 `public.conversations`
@@ -1593,8 +1596,13 @@ Triggers/Functions
 
 - `trg_conversations_guard`: Only clients can start non-task DMs with favorites; task-linked requires task owner.
 - `trg_messages_validate_payload`: Offer messages require `price` and `days` in `payload`.
-- `trg_messages_offer_accepted`: On `offer_accepted`, sets `tasks.assigned_freelancer_id` and moves task `status = 'assigned'`.
-- **Archive:** Use RPC `archive_conversation_v1(p_conversation_id)` for per-user server-timestamped archive (no client timestamp writes). See `SUPABASE_SETUP.md`.
+
+### 2.6 Direct Chat Offers (v2.17)
+
+- **Table:** `direct_offers`. Lifecycle: sent → accepted (unpaid) → pay from Dashboard → active → delivered → completed. See `Sline_everything/SUPABASE_SETUP.md` §5.14.
+- **App:** `lib/features/direct_offers/` (model, service, viewmodel, view). Chat shows **Accept** only; payment from Dashboard via QiCard; detail screen `DirectOfferDetailsScreen`.
+- **Full reference:** [Direct Chat Offers (Direct Offers Feature)](DEVELOPER_GUIDE/Direct_Offers_Feature.md) — flow, DB, ledger, edge functions, file inventory, integration points.
+- `trg_messages_offer_accepted`: Task-linked offers only; pure direct_offers do not touch `tasks`. **Archive:** RPC `archive_conversation_v1` — see `SUPABASE_SETUP.md`.
 
 ## 3. File Inventory
 
@@ -1612,6 +1620,7 @@ Triggers/Functions
 | `lib/features/chat/models/message_model.dart`             | Model      | Message with attachments, type, payload (wire: snake_case); includes `MessageType.system`.                   |
 | `lib/features/chat/models/chat_offer_payload.dart`        | Model      | Canonical offer payload: `days` on write; legacy `delivery` read.                                              |
 | `lib/features/chat/attachments/`                          | Submodule  | Upload/compress/pick utils and widgets for attachment UX.                                                    |
+| `lib/features/direct_offers/`                             | Feature    | Direct Chat Offers: model, service (`acceptOfferWithoutPayment`, `payNow`, `recoverPaymentAfterCallback`), viewmodel, view (`DirectOfferDetailsScreen`). |
 
 ## 4. ERD Diagram
 
@@ -1752,6 +1761,14 @@ Testing checklist
 - Send offer without required payload → trigger error; validate client-side.
 
 
+
+# Direct Chat Offers
+
+**Full reference:** [Direct Chat Offers (Direct Offers Feature)](DEVELOPER_GUIDE/Direct_Offers_Feature.md)
+
+Chat-to-work: freelancer creates an offer from a 1:1 chat; client accepts in chat (no payment there); offer appears as **Pending Payment** in Dashboard; client pays from Dashboard (QiCard); then deliver/complete like a booking. Covers flow, `direct_offers` table, ledger, edge functions `qicard_payment_create_direct_offer` / `qicard_payment_recovery_direct_offer`, and all app files in `lib/features/direct_offers/` plus Chat/Dashboard/Payment integration.
+
+---
 
 # Booking Feature Reference
 

@@ -31,7 +31,10 @@ void main() {
         ),
       );
 
-      expect(find.byKey(const ValueKey('message_list_empty_state')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('message_list_empty_state')),
+        findsOneWidget,
+      );
       expect(find.text('No messages yet'), findsOneWidget);
     });
 

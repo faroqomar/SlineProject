@@ -32,7 +32,8 @@ String buildQiCardFinishUrlForRuntime({
   }
 
   final fallbackCandidate = Uri.tryParse(fallbackFinishUrl ?? kQiCardFinishUrl);
-  if (fallbackCandidate != null && _isTrustedRuntimeFinishUri(fallbackCandidate)) {
+  if (fallbackCandidate != null &&
+      _isTrustedRuntimeFinishUri(fallbackCandidate)) {
     return _normalizeRuntimeFinishUri(fallbackCandidate).toString();
   }
 
@@ -62,7 +63,9 @@ Uri _normalizeRuntimeFinishUri(Uri uri) {
 bool isWebPaymentCallbackUri(Uri uri, {Set<String>? callbackHosts}) {
   final hosts = callbackHosts ?? buildQiCardCallbackHosts();
   final host = uri.host.toLowerCase();
-  if (!hosts.contains(host)) {
+  final hostAllowed =
+      hosts.contains(host) || (host == 'localhost' || host == '127.0.0.1');
+  if (!hostAllowed) {
     return false;
   }
 

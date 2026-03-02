@@ -46,10 +46,11 @@ class _AddPortfolioSheetState extends State<AddPortfolioSheet> {
       }
 
       final bytes = await picked.readAsBytes();
-      AppLogger.i('Image picked', tag: 'AddPortfolioSheet', json: {
-        'filename': picked.name,
-        'size': bytes.length,
-      });
+      AppLogger.i(
+        'Image picked',
+        tag: 'AddPortfolioSheet',
+        json: {'filename': picked.name, 'size': bytes.length},
+      );
 
       if (!mounted) return;
       setState(() {
@@ -57,10 +58,17 @@ class _AddPortfolioSheetState extends State<AddPortfolioSheet> {
         _imageFilename = picked.name;
       });
     } catch (e, st) {
-      AppLogger.e('Image pick failed', tag: 'AddPortfolioSheet', error: e, stackTrace: st);
+      AppLogger.e(
+        'Image pick failed',
+        tag: 'AddPortfolioSheet',
+        error: e,
+        stackTrace: st,
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to pick image. Please try again.')),
+        const SnackBar(
+          content: Text('Failed to pick image. Please try again.'),
+        ),
       );
     }
   }
@@ -78,10 +86,11 @@ class _AddPortfolioSheetState extends State<AddPortfolioSheet> {
       return;
     }
 
-    AppLogger.i('Submitting portfolio item', tag: 'AddPortfolioSheet', json: {
-      'title': _title.text.trim(),
-      'hasImage': _imageBytes != null,
-    });
+    AppLogger.i(
+      'Submitting portfolio item',
+      tag: 'AddPortfolioSheet',
+      json: {'title': _title.text.trim(), 'hasImage': _imageBytes != null},
+    );
 
     setState(() => _submitting = true);
 
@@ -96,16 +105,22 @@ class _AddPortfolioSheetState extends State<AddPortfolioSheet> {
     if (!mounted) return;
 
     if (ok) {
-      AppLogger.i('Portfolio item added successfully', tag: 'AddPortfolioSheet');
+      AppLogger.i(
+        'Portfolio item added successfully',
+        tag: 'AddPortfolioSheet',
+      );
       widget.onCreated();
     } else {
-      AppLogger.w('Failed to add portfolio item', tag: 'AddPortfolioSheet', json: {
-        'error': widget.controller.error,
-      });
+      AppLogger.w(
+        'Failed to add portfolio item',
+        tag: 'AddPortfolioSheet',
+        json: {'error': widget.controller.error},
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            widget.controller.error ?? 'Failed to create item. Please try again.',
+            widget.controller.error ??
+                'Failed to create item. Please try again.',
           ),
         ),
       );

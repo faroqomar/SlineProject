@@ -7,7 +7,8 @@ import 'package:sline_app/core/widgets/signed_image.dart';
 // Import both for the extension methods on PortfolioItem
 import 'package:sline_app/features/profile/models/freelancer_profile.dart';
 // Canonical PortfolioItem from portfolio feature
-import 'package:sline_app/features/portfolio/models/portfolio_item.dart' show PortfolioItem;
+import 'package:sline_app/features/portfolio/models/portfolio_item.dart'
+    show PortfolioItem;
 
 /// Portfolio grid widget with masonry-style layout matching the new design.
 class PublicProfilePortfolio extends StatelessWidget {
@@ -135,9 +136,7 @@ class _PortfolioCard extends StatelessWidget {
                   )
                 else
                   // Fallback to color background when no image
-                  Positioned.fill(
-                    child: Container(color: displayColor),
-                  ),
+                  Positioned.fill(child: Container(color: displayColor)),
 
                 // Gradient overlay for text readability
                 Positioned.fill(

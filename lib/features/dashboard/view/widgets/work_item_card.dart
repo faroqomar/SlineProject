@@ -30,6 +30,7 @@ class WorkItemCard extends StatelessWidget {
   static String _getStatusDisplayLabel(String raw) {
     switch (raw.toLowerCase()) {
       case 'pending_payment':
+      case 'accepted': // direct offer accepted, waiting for payment
         return 'PENDING PAYMENT';
       case 'request_pending':
       case 'paid_request_pending':
@@ -45,6 +46,7 @@ class WorkItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     final isBooking = item.type == WorkItemType.booking;
+    final isDirectOffer = item.type == WorkItemType.directOffer;
     final deepLinkService = context.read<DeepLinkService>();
 
     Color statusColor;
@@ -52,6 +54,7 @@ class WorkItemCard extends StatelessWidget {
       case 'open':
       case 'pending':
       case 'paid_request_pending':
+      case 'accepted': // direct offer pending payment
         statusColor = AppColors.gold;
         break;
       case 'assigned':
@@ -83,6 +86,7 @@ class WorkItemCard extends StatelessWidget {
           context,
           item.type.name,
           item.id,
+          conversationId: item.conversationId,
         );
         if (result == true && context.mounted) {
           context.read<DashboardViewModel>().refresh();
@@ -112,13 +116,19 @@ class WorkItemCard extends StatelessWidget {
                   child: Row(
                     children: [
                       Icon(
-                        isBooking ? Icons.calendar_today : Icons.assignment,
+                        isDirectOffer
+                            ? Icons.chat_bubble_outline
+                            : (isBooking
+                                  ? Icons.calendar_today
+                                  : Icons.assignment),
                         size: 16,
                         color: statusColor,
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        item.type == WorkItemType.booking ? 'BOOKING' : 'TASK',
+                        isDirectOffer
+                            ? 'CUSTOM OFFER'
+                            : (isBooking ? 'BOOKING' : 'TASK'),
                         style: AppTypography.captionBold.copyWith(
                           color: statusColor,
                         ),

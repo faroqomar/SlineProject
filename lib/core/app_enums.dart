@@ -46,7 +46,7 @@ enum PaymentStatus { unpaid, held, released, refunded }
 enum OfferStatus { pending, accepted, rejected, withdrawn, unknown }
 
 /// Type of item in the Unified Workspace.
-enum WorkItemType { task, booking }
+enum WorkItemType { task, booking, directOffer }
 
 /// Primary action to be taken on a WorkItem.
 enum PrimaryActionType {

@@ -111,7 +111,35 @@ class QiCardCreatePaymentResult {
   final String? error;
   final String? errorCode;
 
-  bool get isSuccess => bookingId != null && formUrl != null && error == null;
+  bool get isSuccess =>
+      (bookingId != null || paymentRequestId != null) &&
+      formUrl != null &&
+      error == null;
+}
+
+/// Result of creating a QiCard payment for a direct offer (accepted, unpaid).
+class QiCardDirectOfferPaymentResult {
+  const QiCardDirectOfferPaymentResult({
+    this.offerId,
+    this.formUrl,
+    this.correlationId,
+    this.paymentRequestId,
+    this.amount,
+    this.error,
+    this.errorCode,
+  });
+
+  final String? offerId;
+  final String? formUrl;
+  final String? correlationId;
+
+  /// For recovery when the app gets the success callback (from URL or create response).
+  final String? paymentRequestId;
+  final double? amount;
+  final String? error;
+  final String? errorCode;
+
+  bool get isSuccess => offerId != null && formUrl != null && error == null;
 }
 
 class QiCardRecoveryResult {
@@ -237,6 +265,15 @@ abstract class PaymentService {
   /// Recover booking payment state for the caller's own booking.
   Future<QiCardRecoveryResult> recoverBookingPayment({
     required String bookingId,
+  });
+
+  /// Create a QiCard payment for an accepted, unpaid direct offer.
+  /// Returns formUrl to open in WebView; on success the edge function records gateway escrow.
+  Future<QiCardDirectOfferPaymentResult> createPaymentForDirectOffer({
+    required String offerId,
+    required double amount,
+    String? finishUrl,
+    String? requestCorrelationId,
   });
 
   /// Decline or cancel a booking and refund when funds are held.

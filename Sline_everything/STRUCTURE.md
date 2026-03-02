@@ -66,7 +66,9 @@ supabase/
 │   ├── _shared/                    # Shared edge-function helpers
 │   ├── booking_decline_refund/     # Server-backed booking refund flow
 │   ├── qicard_payment_create/      # Creates validated booking drafts + payment session
+│   ├── qicard_payment_create_direct_offer/  # Direct-offer payment session creation
 │   ├── qicard_payment_recovery/    # Recovers booking state after gateway return
+│   ├── qicard_payment_recovery_direct_offer/ # Recovers direct-offer state after gateway return
 │   └── qicard_webhook_handler/     # QiCard webhook verification and ledger entry
 └── migrations/                     # SQL migrations applied to Supabase
 ```
@@ -76,6 +78,7 @@ Recent migration themes in `supabase/migrations/`:
 - booking server authority and payment remediation
 - repeat slotless booking support
 - management timeline scope index
+- direct_offers table, RLS, triggers, ledger RPC and enum fix (20260303–20260307)
 
 ## `lib/` - Flutter Application Source
 
@@ -141,6 +144,7 @@ Current feature folders:
 - `categories`
 - `chat`
 - `dashboard`
+- `direct_offers`
 - `favorites`
 - `home`
 - `management`
@@ -167,6 +171,7 @@ Not every feature uses every subfolder, but the standard live convention is:
 - `lib/features/booking/`: direct booking checkout, booking lists/details, payment return/webview screens
 - `lib/features/chat/`: conversations, messages, attachments, realtime updates
 - `lib/features/dashboard/`: unified dashboard tabs and role-based work summaries, including the live bottom-nav dashboard slot
+- `lib/features/direct_offers/`: direct chat offers (create, accept, pay, deliver, complete) and payment recovery
 - `lib/features/management/`: order timeline / note management for tasks and bookings
 - `lib/features/orders/`: decommissioned placeholder folder with `README.md` only; standalone orders runtime was removed on 2026-03-01
 - `lib/features/tasks/`: task creation, details, requests/offers, tender payment, delivery flows
