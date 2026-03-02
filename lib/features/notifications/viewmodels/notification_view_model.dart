@@ -1,22 +1,26 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/services/deep_link_service.dart';
 import '../models/notification_model.dart';
 import '../services/notification_service.dart';
-import 'package:provider/provider.dart';
 
+/// ViewModel for notification list and read state. Context-free; navigation is view-layer responsibility.
 class NotificationViewModel extends ChangeNotifier {
   final NotificationService _service;
   StreamSubscription<List<NotificationItem>>? _subscription;
+  StreamSubscription<AuthState>? _authSubscription;
 
   List<NotificationItem> _notifications = [];
   bool _isLoading = false;
   String? _error;
 
-  NotificationViewModel({NotificationService? service})
-    : _service = service ?? NotificationService() {
-    _init();
+  /// [authStateChanges] optional for tests; if null uses Supabase.instance.client.auth.onAuthStateChange.
+  NotificationViewModel({
+    NotificationService? service,
+    Stream<AuthState>? authStateChanges,
+  }) : _service = service ?? NotificationService() {
+    _init(authStateChanges);
   }
 
   List<NotificationItem> get notifications => List.unmodifiable(_notifications);
@@ -25,14 +29,66 @@ class NotificationViewModel extends ChangeNotifier {
 
   int get unreadCount => _notifications.where((n) => !n.isRead).length;
 
-  void _init() {
-    // Auto-load on init
-    _listenToNotifications();
+  void _init(Stream<AuthState>? authStateChanges) {
+    if (authStateChanges != null) {
+      _authSubscription = authStateChanges.listen((data) {
+        final event = data.event;
+        if (event == AuthChangeEvent.signedIn) {
+          if (data.session?.user != null) {
+            AppLogger.d(
+              'NotificationViewModel: session ready, connecting stream',
+              tag: 'Notifications',
+            );
+            _connect();
+          }
+        } else if (event == AuthChangeEvent.signedOut ||
+            event == AuthChangeEvent.userDeleted) {
+          AppLogger.d(
+            'NotificationViewModel: signed out, disconnecting and clearing state',
+            tag: 'Notifications',
+          );
+          _disconnect();
+        }
+      });
+      return;
+    }
+    final stream = Supabase.instance.client.auth.onAuthStateChange;
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
+      _connect();
+    } else {
+      AppLogger.d(
+        'NotificationViewModel: no session, stream not started',
+        tag: 'Notifications',
+      );
+    }
+    _authSubscription = stream.listen((data) {
+      final event = data.event;
+      if (event == AuthChangeEvent.signedIn) {
+        if (data.session?.user != null) {
+          AppLogger.d(
+            'NotificationViewModel: session ready, connecting stream',
+            tag: 'Notifications',
+          );
+          _connect();
+        }
+      } else if (event == AuthChangeEvent.signedOut ||
+          event == AuthChangeEvent.userDeleted) {
+        AppLogger.d(
+          'NotificationViewModel: signed out, disconnecting and clearing state',
+          tag: 'Notifications',
+        );
+        _disconnect();
+      }
+    });
   }
 
-  void _listenToNotifications() {
+  void _connect() {
+    _subscription?.cancel();
     _isLoading = true;
+    _error = null;
     notifyListeners();
+    AppLogger.d('NotificationViewModel: stream connect', tag: 'Notifications');
 
     _subscription = _service.streamNotifications().listen(
       (items) {
@@ -41,7 +97,11 @@ class NotificationViewModel extends ChangeNotifier {
         notifyListeners();
       },
       onError: (e) {
-        AppLogger.e('Error streaming notifications', error: e);
+        AppLogger.e(
+          'Error streaming notifications',
+          error: e,
+          tag: 'Notifications',
+        );
         _error = 'Failed to load notifications';
         _isLoading = false;
         notifyListeners();
@@ -49,28 +109,46 @@ class NotificationViewModel extends ChangeNotifier {
     );
   }
 
-  @override
-  void dispose() {
+  void _disconnect() {
     _subscription?.cancel();
-    super.dispose();
+    _subscription = null;
+    _notifications = [];
+    _error = null;
+    _isLoading = false;
+    notifyListeners();
   }
 
-  Future<void> handleNotificationTap(
-    BuildContext context,
-    NotificationItem item,
-  ) async {
-    // 1. Mark as read immediately
-    markAsRead(item.id);
+  /// Clears error and reconnects the stream (e.g. after failure).
+  void retry() {
+    _error = null;
+    try {
+      if (Supabase.instance.client.auth.currentUser != null) {
+        _connect();
+      } else {
+        notifyListeners();
+      }
+    } catch (_) {
+      notifyListeners();
+    }
+  }
 
-    // 2. Delegate to DeepLinkService
-    final deepLinkService = context.read<DeepLinkService>();
-    await deepLinkService.handleNotification(context, item);
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    _subscription?.cancel();
+    super.dispose();
   }
 
   Future<void> markAsRead(String id) async {
     try {
       await _service.markAsRead(id);
+      notifyListeners();
     } catch (e) {
+      AppLogger.e(
+        'Failed to update notification',
+        error: e,
+        tag: 'Notifications',
+      );
       _error = 'Failed to update notification';
       notifyListeners();
     }
@@ -79,7 +157,9 @@ class NotificationViewModel extends ChangeNotifier {
   Future<void> markAllAsRead() async {
     try {
       await _service.markAllAsRead();
+      notifyListeners();
     } catch (e) {
+      AppLogger.e('Failed to mark all as read', error: e, tag: 'Notifications');
       _error = 'Failed to mark all as read';
       notifyListeners();
     }

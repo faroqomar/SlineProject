@@ -109,9 +109,9 @@ BEGIN
         user_id,
         type,
         title,
-        body,
-        data,
-        read,
+        message,
+        metadata,
+        is_read,
         created_at
     ) VALUES (
         v_request.freelancer_id,
@@ -132,9 +132,9 @@ BEGIN
         user_id,
         type,
         title,
-        body,
-        data,
-        read,
+        message,
+        metadata,
+        is_read,
         created_at
     ) VALUES (
         p_client_id,
@@ -249,9 +249,9 @@ BEGIN
         user_id,
         type,
         title,
-        body,
-        data,
-        read,
+        message,
+        metadata,
+        is_read,
         created_at
     ) VALUES (
         v_request.freelancer_id,
@@ -404,7 +404,7 @@ BEGIN
         
         -- Notify freelancer that award expired
         INSERT INTO public.notifications (
-            user_id, type, title, body, data, read, created_at
+            user_id, type, title, message, metadata, is_read, created_at
         ) VALUES (
             v_expired.freelancer_id,
             'award_expired',

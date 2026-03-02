@@ -1,6 +1,6 @@
 # Supabase Setup for SLine — Complete Database Reference
 
-**Last Updated**: 2026-03-02 (Direct Chat Offers accept-then-pay, ledger event_type enum)
+**Last Updated**: 2026-03-02 (Notifications + release_with_fee zero-amount and enum cast)
 **Version**: 2.17
 **Database Version**: PostgreSQL 17.4.1
 **Project ID**: `isddrknbjsgaantjojhm`
@@ -1448,7 +1448,7 @@ final conversationId = await supabase.rpc('accept_task_request', params: {
 
 Legacy compatibility wrapper. It resolves `task_id`, delegates to the canonical two-argument RPC above, and returns the refreshed `task_requests` row.
 
-#### `process_payment_event_ledger(event_type, related_entity_type, related_entity_id, amount_override)` (v2.16)
+#### `process_payment_event_ledger(event_type, related_entity_type, related_entity_id, ...)` (v2.16)
 
 The core orchestration function for the double-entry system.
 
@@ -1456,7 +1456,7 @@ The core orchestration function for the double-entry system.
 - **Access**: System-only (enforced by RLS on ledger tables).
 - **Logic**:
   - `escrow_hold`: DR Client Available, CR platform_escrow.
-  - `release_with_fee`: DR platform_escrow, CR Provider Available, CR system_revenue.
+  - `release_with_fee`: DR platform_escrow, CR Provider Available, CR platform_revenue (fee). **As of 2026-03-02:** Only ledger lines with `amount > 0` are inserted (satisfies `ck_ledger_lines_amount_positive`); when `fee_rate_bps` is 0 the revenue line is omitted. Entity updates use explicit enum casts for `bookings` and `direct_offers.payment_status` to avoid prepared-plan type mismatch (migrations `20260307_fix_ledger_event_type_enum.sql`, `20260308_fix_release_with_fee_zero_amount_and_enum.sql`).
   - `refund`: DR platform_escrow, CR Client Available.
 
 #### Booking remediation RPCs / functions (2026-02-28)
@@ -1893,6 +1893,10 @@ All functions use `SECURITY DEFINER` and include explicit `auth.uid()` checks.
 ---
 
 ## 17. Changelog
+
+### Version 2.17.1 (March 2026)
+
+- **Ledger `release_with_fee`:** Insert into `ledger_lines` only rows with `amount > 0` (fixes `ck_ledger_lines_amount_positive` when fee is 0). Entity status updates use explicit casts: `bookings` — `payment_status = 'released'::payment_status_enum`, `status = 'completed'::booking_status_enum`; `direct_offers` — `payment_status = 'released'::payment_status_enum`. Migrations: `20260307_fix_ledger_event_type_enum.sql` (in-file), `20260308_fix_release_with_fee_zero_amount_and_enum.sql` (patch for already-applied DBs). Can be applied remotely via Supabase MCP `apply_migration`.
 
 ### Version 2.16.1 (February 2026)
 

@@ -30,17 +30,23 @@ class NotificationItem {
 
   factory NotificationItem.fromJson(Map<String, dynamic> json) {
     return NotificationItem(
-      id: json['id'] as String,
-      userId: json['user_id'] as String,
-      title: json['title'] as String,
-      message: json['message'] as String,
-      type: _parseType(json['type'] as String),
-      relatedEntityId: json['related_entity_id'] as String?,
+      id: json['id'].toString(),
+      userId: json['user_id'].toString(),
+      title: (json['title'] as String?) ?? '',
+      message: (json['message'] as String?) ?? '',
+      type: _parseType((json['type'] as String?) ?? 'system'),
+      relatedEntityId: json['related_entity_id']?.toString(),
       relatedEntityType: json['related_entity_type'] as String?,
       isRead: json['is_read'] as bool? ?? false,
       createdAt: DateTime.parse(json['created_at'] as String).toUtc(),
-      metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
+      metadata: _parseMetadata(json['metadata']),
     );
+  }
+
+  static Map<String, dynamic> _parseMetadata(dynamic value) {
+    if (value == null) return const {};
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return const {};
   }
 
   Map<String, dynamic> toJson() {

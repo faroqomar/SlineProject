@@ -1,7 +1,7 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.16.7 (orders dashboard decommissioning + dashboard contract sync)
-**Last Updated**: 2026-03-01
+**Version**: 2.17.1 (Notifications completion + approve-and-release ledger fix)
+**Last Updated**: 2026-03-02
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
 
@@ -57,6 +57,7 @@ This section gives any new contributor a complete map of the SLine app: how it�
 - **ViewModel (`viewmodels/`)**: ChangeNotifier with business logic and UI state. Calls repository/service.
 - **Repository/Service (`data/`, `services/`)**: Encapsulate Supabase queries, error mapping, and Storage ops.
 - **Models (`models/`)**: Immutable data models mirroring DB rows (UTC timestamps).
+- **Notifications**: All notification rows are created server-side (triggers, RPCs). The client only reads and updates (e.g. mark as read) via `NotificationService`; no client inserts into `public.notifications`.
 
 **App-level providers** (in `lib/main.dart`): `Provider<SupabaseClient>`, `Provider<ProfileRepository>`, `Provider<CategoriesRepository>` so that views that need to construct ViewModels with a client or repository get them via `context.read<>()` instead of referencing Supabase directly.
 

@@ -517,8 +517,9 @@ class QiCardPaymentService implements PaymentService {
     if (data == null) return null;
     final msg = data['message'];
     final code = data['code'];
-    if (msg is String && msg.isNotEmpty)
+    if (msg is String && msg.isNotEmpty) {
       return code is String && code.isNotEmpty ? '$code: $msg' : msg;
+    }
     if (code is String && code.isNotEmpty) return code;
     return null;
   }

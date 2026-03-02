@@ -17,7 +17,20 @@ import 'package:provider/provider.dart';
 import '../providers/navigation_provider.dart';
 
 /// Service to handle deep linking and routing from notifications/activity feed.
+/// Supported entity types (task_request is handled in [handleNotification] via metadata).
 class DeepLinkService {
+  static const List<String> supportedEntityTypes = [
+    'task',
+    'offer',
+    'booking',
+    'conversation',
+    'message',
+    'direct_offer',
+    'directoffer',
+    'profile',
+    'user',
+  ];
+
   final TaskService _taskService;
   final BookingService _bookingService;
   final MessageService _messageService;
@@ -32,13 +45,40 @@ class DeepLinkService {
        _messageService = messageService ?? MessageService();
 
   /// Handle tap on a notification item.
+  /// For task_request, routes using metadata: conversation_id first, else task_id.
   Future<void> handleNotification(
     BuildContext context,
     NotificationItem item,
   ) async {
     AppLogger.i(
-      'Handling notification tap: ${item.type} - ${item.relatedEntityId}',
+      'handleNotification: entityType=${item.relatedEntityType} id=${item.relatedEntityId}',
+      tag: 'DeepLink',
     );
+    final type = item.relatedEntityType?.toLowerCase();
+    if (type == 'task_request') {
+      final convId = item.metadata['conversation_id']?.toString();
+      final taskId = item.metadata['task_id']?.toString();
+      if (convId != null && convId.isNotEmpty) {
+        AppLogger.d(
+          'task_request: routing to conversation $convId',
+          tag: 'DeepLink',
+        );
+        await navigateToEntity(context, 'conversation', convId);
+      } else if (taskId != null && taskId.isNotEmpty) {
+        AppLogger.d('task_request: routing to task $taskId', tag: 'DeepLink');
+        await navigateToEntity(context, 'task', taskId);
+      } else {
+        AppLogger.w(
+          'task_request: no conversation_id or task_id in metadata',
+          tag: 'DeepLink',
+        );
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cannot open this notification.')),
+        );
+      }
+      return;
+    }
     await navigateToEntity(
       context,
       item.relatedEntityType,
@@ -53,6 +93,7 @@ class DeepLinkService {
   ) async {
     AppLogger.i(
       'Handling activity tap: ${activity.entityType} - ${activity.entityId}',
+      tag: 'DeepLink',
     );
     await navigateToEntity(context, activity.entityType, activity.entityId);
   }
@@ -74,7 +115,10 @@ class DeepLinkService {
     String id, {
     String? conversationId,
   }) async {
-    AppLogger.i('Handling work item tap: $type - $id');
+    AppLogger.i(
+      'Handling work item tap: $type - $id',
+      tag: 'DeepLink',
+    );
     if (!context.mounted) return;
 
     final typeLower = type.toLowerCase();
@@ -109,7 +153,10 @@ class DeepLinkService {
     String? id,
   ) async {
     if (id == null || type == null) {
-      AppLogger.w('Cannot navigate: ID or Type is null');
+      AppLogger.w(
+        'Cannot navigate: ID or Type is null',
+        tag: 'DeepLink',
+      );
       return;
     }
 
@@ -118,13 +165,25 @@ class DeepLinkService {
         case 'task':
         case 'offer': // Offers usually link to the task details or inbox
           await _navigateToTask(context, id);
+          AppLogger.i(
+            'deep_link_routed entityType=$type id=$id',
+            tag: 'DeepLink',
+          );
           break;
         case 'booking':
           await _navigateToBooking(context, id);
+          AppLogger.i(
+            'deep_link_routed entityType=$type id=$id',
+            tag: 'DeepLink',
+          );
           break;
         case 'conversation':
         case 'message':
           await _navigateToConversation(context, id);
+          AppLogger.i(
+            'deep_link_routed entityType=$type id=$id',
+            tag: 'DeepLink',
+          );
           break;
         case 'direct_offer':
         case 'directoffer':
@@ -136,22 +195,37 @@ class DeepLinkService {
                   DirectOfferDetailsScreen(offerId: id, conversationId: null),
             ),
           );
+          AppLogger.i(
+            'deep_link_routed entityType=$type id=$id',
+            tag: 'DeepLink',
+          );
           break;
         case 'profile':
           _navigateToProfile(context);
+          AppLogger.i(
+            'deep_link_routed entityType=$type id=$id',
+            tag: 'DeepLink',
+          );
           break;
         case 'user':
           _navigateToUserProfile(context, id);
+          AppLogger.i(
+            'deep_link_routed entityType=$type id=$id',
+            tag: 'DeepLink',
+          );
           break;
         default:
-          AppLogger.w('Unknown entity type for deep link: $type');
+          AppLogger.w(
+            'Notification route not supported: entityType=$type',
+            tag: 'DeepLink',
+          );
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Cannot open this item type: $type')),
           );
       }
     } catch (e) {
-      AppLogger.e('Deep link navigation failed', error: e);
+      AppLogger.e('Deep link navigation failed', error: e, tag: 'DeepLink');
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to open item. Please try again.')),

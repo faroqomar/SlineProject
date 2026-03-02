@@ -139,7 +139,7 @@ Main RPC for all payment operations. **Never write directly to ledger tables.**
 | Event | Actor | Effect |
 | --- | --- | --- |
 | `escrow_hold` | Client | DEBIT user_available, CREDIT platform_escrow |
-| `release_with_fee` | Client | DEBIT platform_escrow, CREDIT user_available (provider net), CREDIT platform_revenue (fee) |
+| `release_with_fee` | Client | DEBIT platform_escrow, CREDIT user_available (provider net), CREDIT platform_revenue (fee). Only lines with amount > 0 are inserted (zero fee → revenue line omitted). Entity status uses explicit enum casts (migrations 20260307–20260308). |
 | `refund` | Provider/System | DEBIT platform_escrow, CREDIT user_available (client) |
 | `withdrawal_request` | User | DEBIT user_available, CREDIT user_pending_withdrawal |
 | `withdrawal_complete` | System | DEBIT user_pending_withdrawal, CREDIT platform_cash |

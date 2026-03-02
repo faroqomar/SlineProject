@@ -74,6 +74,50 @@
 
 ---
 
+### 🟢 Version 2.17.1 — Notifications Completion + Approve-and-Release Ledger Fix
+
+**Date:** 2026-03-02  
+**Commit:** _Pending_ — "fix(notifications,ledger): server-authority notifications, release_with_fee zero-amount and enum cast"
+
+#### ✅ Implemented
+
+- **Notifications (server-authority, auth-aware, deep links)**
+  - `lib/features/notifications/services/notification_service.dart`: Read/update-only; all queries filtered by `user_id` from `auth.currentUser`; `getNotifications`, `streamNotifications`, `markAsRead`, `markAllAsRead`; AppLogger tag `Notifications`.
+  - `lib/features/notifications/viewmodels/notification_view_model.dart`: No `BuildContext`; auth-aware stream (connect on sign-in, disconnect on sign-out); optional `authStateChanges` for tests; `retry()`; navigation delegated to view layer.
+  - `lib/core/services/deep_link_service.dart`: `task_request` routing from metadata (`conversation_id` first, else `task_id`); AppLogger tag `DeepLink`.
+  - `lib/features/notifications/view/notifications_modal.dart`: `NotificationsModal.show(context)` returns `Future<NotificationItem?>`; stable keys `NotificationsModalKeys`; error UI with Retry.
+  - `lib/features/notifications/view/widgets/notification_badge_button.dart`: Opens modal, on selection calls `DeepLinkService.handleNotification(context, selected)`.
+  - `lib/features/notifications/models/notification_model.dart`: `fromJson` hardened (`_parseMetadata`, safe `toString()` for id/userId/relatedEntityId, type default `'system'`).
+  - DB: `supabase/migrations/20260226_tender_award_payment_flow.sql` — notification INSERTs use `message`, `metadata`, `is_read` (not `body`, `data`, `read`).
+
+- **Approve-and-Release (ledger)**
+  - **Issue 1:** With `fee_rate_bps: 0`, `release_with_fee` inserted a platform_revenue line with `amount = 0`, violating `ck_ledger_lines_amount_positive`.
+  - **Issue 2:** `UPDATE bookings SET payment_status = 'released', status = 'completed'` caused prepared-plan type mismatch (parameter 40: `booking_status_enum` vs text).
+  - **Fix:** `supabase/migrations/20260307_fix_ledger_event_type_enum.sql` (in-file) and `supabase/migrations/20260308_fix_release_with_fee_zero_amount_and_enum.sql` (patch for already-applied DBs): (1) Ledger lines inserted only where `amount > 0` (INSERT...SELECT FROM VALUES...WHERE line.amount > 0); (2) Explicit enum casts for bookings/direct_offers: `payment_status = 'released'::public.payment_status_enum`, `status = 'completed'::public.booking_status_enum` (bookings only; direct_offers status remains text).
+  - Remote DB: Fix applied via Supabase MCP `apply_migration` (project `isddrknbjsgaantjojhm`).
+
+- **Misc**
+  - `lib/core/services/qicard_payment_service.dart`: `_errorMessageFromResponse` — added braces for clarity (lint/style).
+
+#### 📊 Impact
+
+- Notifications are server-authoritative; client only reads and marks read; auth-aware stream avoids stale data after sign-out. Approve and release works for bookings/direct_offers with zero fee and avoids enum/plan mismatch errors.
+
+#### 🧪 Verification
+
+- Plan: `.TODO/Archive/NotificationExecution/PLAN_NotificationsFix_2026-03-01.md`
+- Execution Log: `.TODO/Archive/NotificationExecution/EXECUTION_LOG_PLAN_NotificationsFix_2026-03-01.md`
+- Manual checklist: `.TODO/Archive/NotificationExecution/CHECKLIST_NotificationsFix_Manual_Test.md`
+- Ledger: Manual approve-and-release flow on remote DB after MCP migration.
+
+#### 🔧 Technical Notes
+
+- For existing DBs that already ran 20260307, run 20260308 (patch) or apply the same SQL via Dashboard/MCP. Local `supabase migration up` requires `supabase start`; `supabase db push` may report version mismatch if remote history uses different migration version names.
+
+- **Docs sync:** `.TODO/DOCS_SYNC_2026-03-02_NotificationsAndReleaseFix.md`
+
+---
+
 ### 🟢 Version 2.16.9 — ChatFix (Archive RPC, Offer Payload, Realtime Merger)
 
 **Date:** 2026-03-02  

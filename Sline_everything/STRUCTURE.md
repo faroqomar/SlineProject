@@ -1,6 +1,6 @@
 # SLine App - Folder Structure Guide
 
-**Last Updated:** 2026-03-01
+**Last Updated:** 2026-03-02
 
 This document describes the current repository layout. It replaces older references to `presentation/` and `controllers/`; the live Flutter codebase uses `view/` and `viewmodels/` under `lib/features/`.
 
@@ -78,7 +78,7 @@ Recent migration themes in `supabase/migrations/`:
 - booking server authority and payment remediation
 - repeat slotless booking support
 - management timeline scope index
-- direct_offers table, RLS, triggers, ledger RPC and enum fix (20260303–20260307)
+- direct_offers table, RLS, triggers, ledger RPC and enum fix (20260303–20260308); 20260308 fixes release_with_fee zero-amount and enum cast
 
 ## `lib/` - Flutter Application Source
 

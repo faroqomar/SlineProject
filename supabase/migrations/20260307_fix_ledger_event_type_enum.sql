@@ -380,21 +380,25 @@ BEGIN
             p_idempotency_key, v_actor_user_id, p_currency, v_new_meta, 'posted'
         ) RETURNING id INTO v_journal_entry_id;
 
-        -- Create ledger lines
-        -- DEBIT platform_escrow, CREDIT provider_available, CREDIT platform_revenue
+        -- Create ledger lines (only insert lines with amount > 0; ck_ledger_lines_amount_positive)
+        -- DEBIT platform_escrow, CREDIT provider_available, CREDIT platform_revenue (fee line skipped when 0)
         INSERT INTO public.ledger_lines (journal_entry_id, account_id, direction, amount, currency)
-        VALUES
-            (v_journal_entry_id, v_platform_escrow_id, 'DEBIT', v_entity_amount_gross, p_currency),
-            (v_journal_entry_id, v_user_available_id, 'CREDIT', v_net_amount, p_currency),
-            (v_journal_entry_id, v_platform_revenue_id, 'CREDIT', v_fee_amount, p_currency);
+        SELECT v_journal_entry_id, line.account_id, line.direction, line.amount, p_currency
+        FROM (
+            VALUES
+                (v_platform_escrow_id, 'DEBIT'::public.ledger_direction_enum, v_entity_amount_gross),
+                (v_user_available_id, 'CREDIT'::public.ledger_direction_enum, v_net_amount),
+                (v_platform_revenue_id, 'CREDIT'::public.ledger_direction_enum, v_fee_amount)
+        ) AS line(account_id, direction, amount)
+        WHERE line.amount > 0;
 
-        -- Update entity
+        -- Update entity (explicit enum casts to avoid prepared-plan type mismatch)
         IF p_related_entity_type = 'booking' THEN
-            UPDATE public.bookings SET payment_status = 'released', status = 'completed' WHERE id = p_related_entity_id;
+            UPDATE public.bookings SET payment_status = 'released'::public.payment_status_enum, status = 'completed'::public.booking_status_enum WHERE id = p_related_entity_id;
         ELSIF p_related_entity_type = 'task_request' THEN
             UPDATE public.task_requests SET payment_status = 'released', status = 'completed' WHERE id = p_related_entity_id;
         ELSIF p_related_entity_type = 'direct_offer' THEN
-            UPDATE public.direct_offers SET payment_status = 'released', status = 'completed' WHERE id = p_related_entity_id;
+            UPDATE public.direct_offers SET payment_status = 'released'::public.payment_status_enum, status = 'completed' WHERE id = p_related_entity_id;
         END IF;
 
         -- Audit log

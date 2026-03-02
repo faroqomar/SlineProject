@@ -30,6 +30,7 @@ class LedgerService {
 
     AppLogger.i(
       'Submitting Ledger Event: $eventType for $relatedEntityType:$relatedEntityId',
+      tag: 'LedgerService',
     );
 
     try {
@@ -64,12 +65,24 @@ class LedgerService {
             message;
         throw Exception(userMessage);
       }
+      AppLogger.i(
+        'Ledger event succeeded: $eventType $relatedEntityType:$relatedEntityId',
+        tag: 'LedgerService',
+      );
       return result;
     } on PostgrestException catch (e) {
-      AppLogger.e('Ledger RPC Failed: ${e.message}', error: e);
+      AppLogger.e(
+        'Ledger RPC Failed: ${e.message}',
+        error: e,
+        tag: 'LedgerService',
+      );
       throw FormatException(_mapLedgerError(e));
     } catch (e) {
-      AppLogger.e('Unexpected Ledger Error', error: e);
+      AppLogger.e(
+        'Unexpected Ledger Error',
+        error: e,
+        tag: 'LedgerService',
+      );
       throw const FormatException('An unexpected payment error occurred.');
     }
   }
