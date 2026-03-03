@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sline_app/features/favorites/models/favorite_model.dart';
+import 'package:sline_app/core/utils/format_date.dart';
+import 'package:sline_app/features/favorites/models/favorite_with_profile_model.dart';
 
 /// Simple favorite card showing a freelancer and actions.
 /// NOTE: In MVP we only have freelancerId; later we can enrich with profile data.
@@ -18,6 +19,7 @@ class FavoriteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      key: Key('favorite_card_${favorite.freelancerId}'),
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -45,7 +47,7 @@ class FavoriteCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Added: ${favorite.createdAt}',
+                    'Added: ${formatUtcToLocal(favorite.createdAt)}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -53,10 +55,12 @@ class FavoriteCard extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             FilledButton(
+              key: Key('favorite_card_start_chat_${favorite.freelancerId}'),
               onPressed: onStartChat,
               child: const Text('Start Chat'),
             ),
             IconButton(
+              key: Key('favorite_card_remove_${favorite.freelancerId}'),
               tooltip: 'Remove',
               onPressed: onRemove,
               icon: const Icon(Icons.delete_outline),

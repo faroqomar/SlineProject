@@ -1,7 +1,7 @@
 // FavoritesService - CRUD for Supabase `favorites` table.
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import '../models/favorite_model.dart';
+import '../models/favorite_with_profile_model.dart';
 
 class FavoritesService {
   final SupabaseClient _client;
@@ -18,48 +18,30 @@ class FavoritesService {
     return uid;
   }
 
-  /// List current user's favorites.
-  Future<List<FavoriteModel>> listFavorites() async {
+  /// Single canonical read: favorites with optional joined freelancer profile.
+  /// Root freelancer_id included for null-safe parsing when join is missing.
+  Future<List<FavoriteWithProfile>> listFavoritesWithProfile() async {
     final uid = _requireUid();
-    try {
-      final res = await _client
-          .from('favorites')
-          .select()
-          .eq('client_id', uid)
-          .order('created_at', ascending: false);
-
-      return (res as List)
-          .cast<Map<String, dynamic>>()
-          .map(FavoriteModel.fromMap)
-          .toList();
-    } catch (e, st) {
-      AppLogger.e(
-        'Failed to list favorites',
-        tag: 'Favorites',
-        error: e,
-        stackTrace: st,
-      );
-      rethrow;
-    }
-  }
-
-  /// List favorites with freelancer profile info.
-  Future<List<Map<String, dynamic>>> listFavoritesWithProfile() async {
-    final uid = _requireUid();
+    AppLogger.d('Loading favorites with profile', tag: 'FavoritesService');
     try {
       final res = await _client
           .from('favorites')
           .select(
-            'created_at, freelancer:freelancer_id (id, full_name, avatar_url)',
+            'id, client_id, freelancer_id, created_at, freelancer:freelancer_id(id, full_name, avatar_url)',
           )
           .eq('client_id', uid)
           .order('created_at', ascending: false);
 
-      return (res as List).cast<Map<String, dynamic>>();
+      final list = (res as List)
+          .cast<Map<String, dynamic>>()
+          .map(FavoriteWithProfile.fromMap)
+          .toList();
+      AppLogger.i('Loaded ${list.length} favorites', tag: 'FavoritesService');
+      return list;
     } catch (e, st) {
       AppLogger.e(
         'Failed to list favorites with profile',
-        tag: 'Favorites',
+        tag: 'FavoritesService',
         error: e,
         stackTrace: st,
       );
@@ -70,15 +52,17 @@ class FavoritesService {
   /// Add freelancer to favorites.
   Future<void> addFavorite(String freelancerId) async {
     final uid = _requireUid();
+    AppLogger.d('Adding favorite: $freelancerId', tag: 'FavoritesService');
     try {
       await _client.from('favorites').insert({
         'client_id': uid,
         'freelancer_id': freelancerId,
       });
+      AppLogger.i('Added favorite: $freelancerId', tag: 'FavoritesService');
     } catch (e, st) {
       AppLogger.e(
         'Failed to add favorite',
-        tag: 'Favorites',
+        tag: 'FavoritesService',
         error: e,
         stackTrace: st,
       );
@@ -89,16 +73,18 @@ class FavoritesService {
   /// Remove freelancer from favorites.
   Future<void> removeFavorite(String freelancerId) async {
     final uid = _requireUid();
+    AppLogger.d('Removing favorite: $freelancerId', tag: 'FavoritesService');
     try {
       await _client
           .from('favorites')
           .delete()
           .eq('client_id', uid)
           .eq('freelancer_id', freelancerId);
+      AppLogger.i('Removed favorite: $freelancerId', tag: 'FavoritesService');
     } catch (e, st) {
       AppLogger.e(
         'Failed to remove favorite',
-        tag: 'Favorites',
+        tag: 'FavoritesService',
         error: e,
         stackTrace: st,
       );

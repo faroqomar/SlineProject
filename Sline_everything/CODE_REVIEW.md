@@ -260,11 +260,11 @@ Future<bool> login({required String email, ...}) async {
 **Location**: `lib/features/tasks/view/widgets/requests/widgets/request_tile.dart`
 **Status**: **RESOLVED**
 
-**What was fixed**:
+**What was fixed** (Favorites Fix 2026-03):
 
-- Added optional `FavoritesViewModel? favoritesVM` parameter
-- Extracted `_handleAddFavorite()` method with ViewModel preference
-- Legacy service call kept as fallback for backward compatibility
+- RequestTile uses **only** `FavoritesViewModel` (from app-level provider); no direct `FavoritesService` call.
+- `requests_list_screen.dart` passes `context.read<FavoritesViewModel>()` into RequestTile.
+- Add-to-favorites uses typed `FavoritesMutationResult` for success/duplicate/error feedback.
 
 ---
 

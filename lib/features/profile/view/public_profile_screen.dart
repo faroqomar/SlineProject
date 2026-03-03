@@ -53,6 +53,20 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
     );
   }
 
+  bool _favoritesEnsureLoadedDone = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_favoritesEnsureLoadedDone) {
+      _favoritesEnsureLoadedDone = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<FavoritesViewModel>().ensureLoaded();
+      });
+    }
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -160,13 +174,17 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
                                               : colorScheme.textSecondary;
 
                                           return CircleIconButton(
+                                            key: const Key(
+                                                'public_profile_favorite_toggle'),
                                             icon: icon,
                                             iconColor: color,
-                                            onTap: () {
+                                            onTap: () async {
                                               if (isFavorited) {
-                                                favoritesVm.remove(profile.id);
+                                                await favoritesVm.remove(
+                                                    profile.id);
                                               } else {
-                                                favoritesVm.add(profile.id);
+                                                await favoritesVm.add(
+                                                    profile.id);
                                               }
                                             },
                                           );

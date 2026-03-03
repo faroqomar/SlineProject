@@ -80,7 +80,7 @@ This document is the **single source of truth** for all Supabase backend setup: 
 ### Key Business Rules (Enforced by Triggers)
 
 - ✅ Bids only allowed on `tender` tasks (not `booking`)
-- ❌ DM conversations NO LONGER require `favorites` relationship (Changed v2.1)
+- ✅ Direct client-initiated DMs **require** the freelancer to be in the client’s favorites (see DECISION_Favorites_DM; policy `conversations_insert_client_only`)
 - ✅ Task-linked conversations: non-owner starts chat
 - ✅ Booking status transitions enforced
 - ✅ Slot overlap prevention for providers
@@ -442,7 +442,7 @@ Chat threads between two users (optional task context).
 
 - `user1_id` and `user2_id` are normalized (user1_id < user2_id) by trigger
 - Task-linked conversations: Only non-owner can initiate
-- Direct DMs: No longer requires favorites relationship (v2.1 update)
+- Direct DMs: Require favorites relationship (client can start DM only with a favorited freelancer; see DECISION_Favorites_DM)
 
 ---
 

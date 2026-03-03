@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/services/logger_service.dart';
 import '../viewmodels/favorites_view_model.dart';
-import '../data/favorites_service.dart';
+import '../models/favorites_mutation_result.dart';
 import 'widgets/favorite_card.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 import 'package:sline_app/features/chat/view/chat_screen.dart';
 
 /// FavoritesScreen (MVVM)
-/// Shows the current user's favorite freelancers with simple actions.
+/// Uses app-level FavoritesViewModel only; no local service/VM.
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
 
@@ -17,27 +18,18 @@ class FavoritesScreen extends StatefulWidget {
 }
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
-  late final FavoritesViewModel _vm;
-
-  @override
-  void initState() {
-    super.initState();
-    _vm = FavoritesViewModel(service: FavoritesService());
-    _vm.load();
-  }
-
-  @override
-  void dispose() {
-    _vm.dispose();
-    super.dispose();
-  }
+  bool _ensureLoadedScheduled = false;
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<FavoritesViewModel>.value(
-      value: _vm,
-      child: const _FavoritesView(),
-    );
+    final vm = context.watch<FavoritesViewModel>();
+    if (!_ensureLoadedScheduled) {
+      _ensureLoadedScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        vm.ensureLoaded();
+      });
+    }
+    return const _FavoritesView();
   }
 }
 
@@ -49,16 +41,21 @@ class _FavoritesView extends StatelessWidget {
     final vm = context.watch<FavoritesViewModel>();
 
     return Scaffold(
+      key: const Key('favorites_screen'),
       appBar: AppBar(title: const Text('Favorites')),
       body: RefreshIndicator(
         onRefresh: vm.refresh,
         child: Builder(
           builder: (context) {
             if (vm.isLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(
+                key: Key('favorites_loading'),
+                child: CircularProgressIndicator(),
+              );
             }
             if (vm.error != null) {
               return ListView(
+                key: const Key('favorites_error'),
                 children: [
                   const SizedBox(height: 120),
                   Center(
@@ -75,6 +72,7 @@ class _FavoritesView extends StatelessWidget {
             final items = vm.itemsWithProfile;
             if (items.isEmpty) {
               return ListView(
+                key: const Key('favorites_empty'),
                 children: const [
                   SizedBox(height: 120),
                   Center(child: Text('No favorites yet.')),
@@ -82,11 +80,13 @@ class _FavoritesView extends StatelessWidget {
               );
             }
             return ListView.builder(
+              key: const Key('favorites_list'),
               physics: const AlwaysScrollableScrollPhysics(),
               itemCount: items.length,
               itemBuilder: (context, index) {
                 final favorite = items[index];
                 return FavoriteCard(
+                  key: Key('favorite_card_${favorite.freelancerId}'),
                   favorite: favorite,
                   onStartChat: () async {
                     // MVVM: use ChatViewModel to create/get conversation and open ChatScreen
@@ -114,18 +114,39 @@ class _FavoritesView extends StatelessWidget {
                         ),
                       );
                     } catch (e) {
+                      AppLogger.e(
+                        'Chat start failed',
+                        tag: 'Favorites',
+                        error: e,
+                      );
                       if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Failed to start chat: $e')),
+                        const SnackBar(
+                          content: Text(
+                            'Could not start chat. Please try again.',
+                          ),
+                        ),
                       );
                     }
                   },
                   onRemove: () async {
-                    await vm.remove(favorite.freelancerId);
+                    final result = await vm.remove(favorite.freelancerId);
                     if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Removed from favorites')),
-                    );
+                    if (result == FavoritesMutationResult.success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Removed from favorites'),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            vm.error ?? 'Could not remove. Please try again.',
+                          ),
+                        ),
+                      );
+                    }
                   },
                 );
               },

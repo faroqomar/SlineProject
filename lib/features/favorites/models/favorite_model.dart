@@ -47,28 +47,3 @@ class FavoriteModel {
     };
   }
 }
-
-/// Model representing a Favorite joined with freelancer profile info.
-class FavoriteWithProfile {
-  final String freelancerId;
-  final String? freelancerName;
-  final String? freelancerAvatar;
-  final DateTime createdAt;
-
-  FavoriteWithProfile({
-    required this.freelancerId,
-    required this.createdAt,
-    this.freelancerName,
-    this.freelancerAvatar,
-  });
-
-  factory FavoriteWithProfile.fromMap(Map<String, dynamic> map) {
-    final freelancer = map['freelancer'] as Map?;
-    return FavoriteWithProfile(
-      freelancerId: freelancer?['id'] as String,
-      freelancerName: freelancer?['full_name'] as String?,
-      freelancerAvatar: freelancer?['avatar_url'] as String?,
-      createdAt: DateTime.parse(map['created_at'] as String),
-    );
-  }
-}

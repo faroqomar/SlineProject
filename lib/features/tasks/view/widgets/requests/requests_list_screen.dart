@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
+import 'package:sline_app/features/favorites/viewmodels/favorites_view_model.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_requests_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/core/utils/format_price.dart';
@@ -281,6 +282,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
           );
         }
         final TaskRequest req = c.items[index];
+        final favoritesVM = context.read<FavoritesViewModel>();
         return RequestTile(
           request: req,
           onAccept: c.canActOn(req) && !_isAwarding
@@ -291,6 +293,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
               : null,
           isOwner: widget.isOwner,
           isLoading: _isAwarding,
+          favoritesVM: favoritesVM,
         );
       },
     );

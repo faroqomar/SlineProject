@@ -26,8 +26,8 @@ RLS Policies (Summary)
 | Table | Action | Policy | Rule |
 | --- | --- | --- | --- |
 | `favorites` | SELECT | `favorites_select_own` | `client_id = auth.uid()` |
-| `favorites` | INSERT | `favorites_insert_own` | `client_id = auth.uid()` |
-| `favorites` | DELETE | `favorites_delete_own` | `client_id = auth.uid()` |
+| `favorites` | INSERT | `favorites_insert_self` | `client_id = auth.uid()` |
+| `favorites` | DELETE | `favorites_delete_self` | `client_id = auth.uid()` |
 
 Related Policies
 - Chat DM creation references `favorites` via `trg_conversations_guard`: only a client can start a non-task conversation with someone in their favorites.
@@ -36,9 +36,11 @@ Related Policies
 | File | Layer | Description |
 | --- | --- | --- |
 | `lib/features/favorites/data/favorites_service.dart` | Service | CRUD for `favorites` with RLS-safe patterns; joins profiles for display. |
-| `lib/features/favorites/models/favorite_model.dart` | Model | `FavoriteModel` and `FavoriteWithProfile` (joined row with freelancer profile). |
-| `lib/features/favorites/viewmodels/favorites_view_model.dart` | ViewModel | `ChangeNotifier` holding list, loading state, and calling service methods. |
-| `lib/features/favorites/view/favorites_screen.dart` | View | List of favorited freelancers with add/remove actions. |
+| `lib/features/favorites/models/favorite_model.dart` | Model | `FavoriteModel` (base row). |
+| `lib/features/favorites/models/favorite_with_profile_model.dart` | Model | `FavoriteWithProfile` (joined row; null-safe when profile missing). |
+| `lib/features/favorites/models/favorites_mutation_result.dart` | Model | Typed result for add/remove (success, duplicate, unauthenticated, forbidden, failure). |
+| `lib/features/favorites/viewmodels/favorites_view_model.dart` | ViewModel | Single app-level instance; `ensureLoaded()`, add/remove return `FavoritesMutationResult`. |
+| `lib/features/favorites/view/favorites_screen.dart` | View | Consumes app-level `FavoritesViewModel`; list with remove/chat actions. |
 | `lib/features/favorites/view/widgets/` | Widgets | Cards/widgets for rendering favorites (if present). |
 | `lib/features/favorites/routes/favorites_routes.dart` | Routes | Navigation entry-points to favorites UI. |
 
@@ -87,6 +89,9 @@ where client_id = auth.uid() and freelancer_id = '<freelancer_id>';
 ```
 
 ### 5.2 Dart (supabase_flutter)
+
+The app uses a single canonical read: `listFavoritesWithProfile()` returns `List<FavoriteWithProfile>`. Add/remove use typed `FavoritesMutationResult` (see CONTRACT_FavoritesMutation). The simple `listFavorites()` method was removed; the ViewModel derives a simple list from the joined result when needed.
+
 ```dart
 final supabase = Supabase.instance.client;
 
@@ -98,24 +103,14 @@ Future<void> addFavorite(String freelancerId) async {
   });
 }
 
-// List (simple)
-Future<List<Map<String, dynamic>>> listFavorites() async {
+// List with profile (canonical) — returns FavoriteWithProfile; root freelancer_id required for null-safe parse
+Future<List<FavoriteWithProfile>> listFavoritesWithProfile() async {
   final rows = await supabase
       .from('favorites')
-      .select()
+      .select('id, client_id, freelancer_id, created_at, freelancer:freelancer_id(id, full_name, avatar_url)')
       .eq('client_id', supabase.auth.currentUser!.id)
       .order('created_at', ascending: false);
-  return (rows as List).cast<Map<String, dynamic>>();
-}
-
-// List with profile fields
-Future<List<Map<String, dynamic>>> listFavoritesWithProfile() async {
-  final rows = await supabase
-      .from('favorites')
-      .select('created_at, freelancer:freelancer_id (id, full_name, avatar_url)')
-      .eq('client_id', supabase.auth.currentUser!.id)
-      .order('created_at', ascending: false);
-  return (rows as List).cast<Map<String, dynamic>>();
+  return (rows as List).cast<Map<String, dynamic>>().map(FavoriteWithProfile.fromMap).toList();
 }
 
 // Remove
@@ -126,20 +121,8 @@ Future<void> removeFavorite(String freelancerId) async {
       .eq('freelancer_id', freelancerId);
 }
 
-// Friendly error mapping
-Future<void> safeAddFavorite(String freelancerId) async {
-  try {
-    await addFavorite(freelancerId);
-  } on PostgrestException catch (e) {
-    if (e.code == '23505') {
-      throw const FormatException('This freelancer is already in your favorites.');
-    }
-    if (e.code == '42501') {
-      throw const FormatException('You can only manage your own favorites.');
-    }
-    rethrow;
-  }
-}
+// ViewModel: add/remove return FavoritesMutationResult (success, duplicate, unauthenticated, forbidden, failure)
+// Friendly error mapping for UI: map 23505 → "Already in favorites.", RLS → "Not allowed for your role."
 ```
 
 ## 6. Error Handling
@@ -150,9 +133,10 @@ Future<void> safeAddFavorite(String freelancerId) async {
 | Fetch join | Missing profile row | "Profile unavailable." | Render placeholder name/avatar. |
 
 ## 7. Extra Notes & Testing Checklist
-- **DM integration**: Starting a non-task conversation requires the freelancer to be in the client’s favorites; enforced by triggers/policies in conversations.
-- **UTC**: `created_at` is UTC; format with `formatUtcToLocal()` for display.
-- **Performance**: Use the simple list for most screens; join with profiles only when fields are needed.
+- **DM integration**: Direct client-initiated DMs **require** the freelancer to be in the client’s favorites (locked in DECISION_Favorites_DM); enforced by DB policy/trigger.
+- **UTC**: `created_at` is UTC; use `formatUtcToLocal()` in UI (e.g. FavoriteCard).
+- **Single read path**: One canonical `listFavoritesWithProfile()`; root `freelancer_id` used when joined profile is null (see CONTRACT_FavoritesJoin).
+- **Request tile**: Add-to-favorites uses app-level `FavoritesViewModel` only (no direct service in view).
 
 Testing checklist:
 - Add → list shows the freelancer at top.
