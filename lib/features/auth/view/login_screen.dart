@@ -7,6 +7,7 @@ import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
+import 'package:sline_app/core/providers/system_config_view_model.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
 import 'package:sline_app/features/auth/view/forgot_password_screen.dart';
 
@@ -79,6 +80,8 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colorScheme = context.colorScheme;
+    final signupsDisabled =
+        context.watch<SystemConfigViewModel?>()?.config.disableSignups ?? false;
 
     return ChangeNotifierProvider(
       create: (_) => widget.authViewModelFactory?.call() ?? AuthViewModel(),
@@ -151,6 +154,17 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         textAlign: TextAlign.center,
                       ),
+                      if (signupsDisabled) ...[
+                        const SizedBox(height: AppDimens.p8),
+                        Text(
+                          'New account registration is currently disabled.',
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.lightRed,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                       const SizedBox(height: AppDimens.p32),
 
                       // --- Form Fields ---

@@ -1242,12 +1242,12 @@ Core does not own product tables, but it provides the app-wide runtime used to r
 
 ### 2.2 Shared payment runtime contracts
 
-Core owns the app-side payment runtime interfaces used by the booking feature:
-- `PaymentService`: abstract contract for payment providers
-- `QiCardPaymentService`: server-backed QiCard integration
+Core owns the app-side payment runtime interfaces used by the booking and tender features:
+- `PaymentService`: abstract contract for payment providers (booking, direct offer, tender).
+- `QiCardPaymentService`: server-backed QiCard create/recover for booking, direct offer, and tender. Tender flow: create (edge `qicard_payment_create_tender`) → WebView → recovery (edge `qicard_payment_recovery_tender`) → ledger gateway_escrow + task assignment.
 - `DemoPaymentService`: fallback/demo provider
 - `PaymentPendingStore`: persists pending browser payment state on web
-- `payment_runtime_config.dart`: callback host validation and callback parsing
+- `payment_runtime_config.dart`: callback host validation and callback parsing (supports `request_id`/`payment_request_id` for tender return URLs).
 
 ### 2.3 Web safety helpers
 
@@ -1511,7 +1511,8 @@ The standalone `orders` dashboard module was removed on 2026-03-01.
 - **Lazy-load by tab**: Overview data loads first; Bookings and Inbox data load on first visit to those tabs. Full refresh still loads all datasets.
 - **Wallet snapshot**: On first entry to the dashboard, `OverviewTab` triggers `WalletViewModel.loadWallet()` so the balance snapshot is visible without a separate wallet visit.
 - **My Services**: `MyServicesScreen` (profile) uses `MyServicesViewModel` and `ServicesService.getMyServices(uid)`; it no longer depends on dashboard state.
-- **Tender payment**: Awarded offers open `TenderPaymentScreen` backed by `TenderPaymentCoordinator` and `TenderPaymentViewModel`; the screen uses only the ViewModel (no direct service calls in the widget). Inbox and Requests list create the coordinator + ViewModel and push with `ChangeNotifierProvider`; `TaskService` is provided in `main.dart`.
+- **Tender payment**: Awarded offers open `TenderPaymentScreen` backed by `TenderPaymentCoordinator` and `TenderPaymentViewModel`; the screen uses only the ViewModel (no direct service calls in the widget). Awarding an offer moves the task to the Work tab as "Waiting payment"; the client can Pay or Cancel from there (Cancel reverts the award so the task reappears in Inbox). Inbox and Work/NextActions create the coordinator + ViewModel and push with `ChangeNotifierProvider`; `TaskService` is provided in `main.dart`. **QiCard (March 2026):** When the app uses `QiCardPaymentService`, the Pay button is enabled: the coordinator calls the edge function `qicard_payment_create_tender` to get a `form_url`, the screen opens `PaymentWebViewScreen` for the user to pay; on return the app calls `recoverTenderPaymentAfterCallback` (edge function `qicard_payment_recovery_tender`), which runs `process_payment_event_ledger(gateway_escrow, task_request)` and assigns the task (freelancer, in_progress). **Demo:** When using `DemoPaymentService`, the Pay button is disabled (fail-closed); tender state never advances.
+- **Offer submission:** Task offer submit no longer mutates `profiles.active_role`; RLS (`is_freelancer(auth.uid())`) controls insert. If insert is denied (e.g. user not in freelancer role), the app shows: "You must be in freelancer mode to submit an offer. Switch your role in profile settings."
 - **Dashboard cards**: Booking card lives in `lib/features/booking/view/widgets/dashboard_booking_card.dart` (callbacks for actions); offer card in `lib/features/tasks/view/widgets/dashboard_offer_card.dart`; wallet snapshot in `lib/features/wallet/view/widgets/wallet_snapshot_card.dart`. Shared status color/label helpers: `lib/core/utils/status_presenter.dart`.
 - **Pull-to-refresh on every tab**: All four dashboard tabs support pull-to-refresh and call `DashboardViewModel.refresh()` (full reload). Implemented in: `lib/features/dashboard/view/tabs/overview_tab.dart` (ListView wrapped in `RefreshIndicator`), `lib/features/dashboard/view/tabs/bookings_tab.dart` (empty state and list both wrapped; empty uses `SingleChildScrollView` + `AlwaysScrollableScrollPhysics`), `lib/features/dashboard/view/tabs/inbox_tab.dart` (empty state wrapped; list already had `RefreshIndicator`), `lib/features/dashboard/view/tabs/work_tab.dart` (Active, Done, Cancelled sub-tabs each have `RefreshIndicator` for both empty and filled lists).
 
@@ -1994,7 +1995,7 @@ UI (WorkItemDetailsScreen)
 
 | Object                       | Type    | Purpose                                                                                                                                                 |
 | ---------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `vw_unified_work_items`      | View    | UNION ALL of tasks + bookings with normalized status                                                                                                    |
+| `vw_unified_work_items`      | View    | UNION ALL of tasks (in progress + awarded pending payment) and bookings with normalized status; see SUPABASE_SETUP.md §6.4.                               |
 | `work_contracts`             | Table   | Versioned scope snapshots (price, days, description)                                                                                                    |
 | `change_requests`            | Table   | Scope/price/days change proposals                                                                                                                       |
 | `extension_requests`         | Table   | Deadline extension proposals                                                                                                                            |
@@ -2116,3 +2117,45 @@ if (draft.formUrl != null) {
 - [x] Release: Check `user_available` increases and `platform_escrow` decreases on completion.
 - [x] Fee calculation: Verification of `system_revenue` account credits.
 - [x] Idempotency: Retrying the same transaction ID results in `already_processed` check.
+
+## 5. Dashboard-App Link Runtime Guards (March 2026)
+
+This release adds app-side enforcement and trust/safety UI so dashboard actions are visible in Flutter immediately.
+
+### 5.1 App Guard and Moderation
+
+- `lib/core/services/account_guard_service.dart` evaluates `profiles.account_status` and `profiles.force_logout_after`.
+- `lib/main.dart` runs guard checks on startup/resume and routes to:
+  - `lib/features/auth/view/account_restricted_screen.dart` for suspended/banned users.
+  - login flow for revoked sessions (`force_logout_after > session_iat`).
+- Sensitive actions now check guard state before execution in:
+  - `lib/features/chat/viewmodels/chat_view_model.dart`
+  - `lib/features/wallet/viewmodels/wallet_view_model.dart`
+  - `lib/features/tasks/view/task_details_screen.dart`
+
+### 5.2 Public System Config Wiring
+
+- `lib/core/services/system_config_service.dart` reads public config via RPC `get_public_system_config`.
+- `lib/core/providers/system_config_view_model.dart` exposes runtime flags to UI:
+  - maintenance mode
+  - minimum app version
+  - disable signups
+  - app banner
+- App shell/auth integration:
+  - `lib/features/auth/view/maintenance_screen.dart`
+  - `lib/features/auth/view/update_required_screen.dart`
+  - signup/login UX in `lib/features/auth/view/signup_screen.dart` and `lib/features/auth/view/login_screen.dart`
+  - global banner in `lib/app/main_navigation_screen.dart`
+
+### 5.3 Reports and Disputes UX
+
+- New safety MVVM layer:
+  - `lib/features/safety/services/report_service.dart`
+  - `lib/features/safety/services/dispute_service.dart`
+  - `lib/features/safety/viewmodels/safety_view_model.dart`
+- UI entry points:
+  - Task reporting in `lib/features/tasks/view/task_details_screen.dart`
+  - Chat/user reporting in `lib/features/chat/view/chat_screen.dart`
+  - Booking dispute submission in `lib/features/booking/view/booking_details_screen.dart`
+  - Public profile reporting in `lib/features/profile/view/public_profile_screen.dart`
+  - Support/safety shortcut in `lib/features/profile/view/settings_screen.dart`

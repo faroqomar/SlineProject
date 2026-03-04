@@ -32,6 +32,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
 import 'app/main_navigation_screen.dart';
 import 'core/providers/navigation_provider.dart';
 import 'package:provider/provider.dart';
+import 'core/providers/system_config_view_model.dart';
 import 'features/booking/viewmodels/booking_view_model.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/providers/theme_mode_provider.dart';
@@ -39,6 +40,7 @@ import 'features/notifications/viewmodels/notification_view_model.dart';
 import 'features/wallet/viewmodels/wallet_view_model.dart';
 import 'core/services/deep_link_service.dart';
 import 'core/services/dashboard_cache_service.dart';
+import 'core/services/account_guard_service.dart';
 import 'features/dashboard/view/dashboard_screen.dart';
 import 'features/dashboard/viewmodels/dashboard_view_model.dart';
 import 'core/services/payment_service.dart';
@@ -53,6 +55,10 @@ import 'package:sline_app/features/profile/data/profile_repository.dart';
 import 'package:sline_app/features/categories/data/categories_repository.dart';
 import 'package:sline_app/features/booking/models/payment_return_args.dart';
 import 'package:sline_app/features/booking/view/payment_return_screen.dart';
+import 'package:sline_app/features/auth/view/account_restricted_screen.dart';
+import 'package:sline_app/features/auth/view/maintenance_screen.dart';
+import 'package:sline_app/features/auth/view/update_required_screen.dart';
+import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
 
 const bool kUseQiCardPayment = bool.fromEnvironment(
   'USE_QICARD_PAYMENT',
@@ -81,7 +87,8 @@ void main() async {
 
       // Global Flutter framework error handler (widget build errors, etc.)
       FlutterError.onError = (FlutterErrorDetails details) {
-        if (isIgnoredFlutterWebEngineDisposeError(details.exception)) {
+        if (isIgnoredFlutterWebEngineDisposeError(details.exception) ||
+            isIgnoredRealtimeEncodeError(details.exception)) {
           return;
         }
         AppLogger.e(
@@ -94,7 +101,8 @@ void main() async {
 
       // Global platform error handler (native crashes, isolate errors)
       PlatformDispatcher.instance.onError = (error, stack) {
-        if (isIgnoredFlutterWebEngineDisposeError(error)) {
+        if (isIgnoredFlutterWebEngineDisposeError(error) ||
+            isIgnoredRealtimeEncodeError(error)) {
           return true;
         }
         AppLogger.e(
@@ -121,7 +129,8 @@ void main() async {
       runApp(SLineApp(prefs: prefs));
     },
     (error, stack) {
-      if (isIgnoredFlutterWebEngineDisposeError(error)) {
+      if (isIgnoredFlutterWebEngineDisposeError(error) ||
+          isIgnoredRealtimeEncodeError(error)) {
         return;
       }
       // Catches any uncaught async exceptions outside the Flutter framework
@@ -152,6 +161,8 @@ class SLineApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => NavigationProvider()),
         // Theme - light/dark mode toggle
         ChangeNotifierProvider(create: (_) => ThemeModeProvider()),
+        // Public runtime flags/config from system_config
+        ChangeNotifierProvider(create: (_) => SystemConfigViewModel()..load()),
         // Saved Tasks - global bookmark state
         ChangeNotifierProvider(
           create: (_) => SavedTasksViewModel(service: SavedTasksService()),
@@ -192,6 +203,7 @@ class SLineApp extends StatelessWidget {
         ),
         // Deep Link Service (Stateless)
         Provider(create: (_) => DeepLinkService()),
+        Provider(create: (_) => AccountGuardService()),
         // Payment & direct offers (for details screen / QiCard direct-offer flow)
         Provider<PaymentService>(create: (_) => createPaymentService()),
         Provider<DirectOffersService>(
@@ -200,6 +212,8 @@ class SLineApp extends StatelessWidget {
         Provider(create: (_) => PaymentPendingStore(prefs)),
         // Wallet state
         ChangeNotifierProvider(create: (_) => WalletViewModel()),
+        // Safety flows (reports/disputes)
+        ChangeNotifierProvider(create: (_) => SafetyViewModel()),
         // App-level data dependencies (views must not reference Supabase directly)
         Provider<SupabaseClient>(create: (_) => Supabase.instance.client),
         Provider<ProfileRepository>(
@@ -234,23 +248,49 @@ class _AppWithAuthListener extends StatefulWidget {
   State<_AppWithAuthListener> createState() => _AppWithAuthListenerState();
 }
 
-class _AppWithAuthListenerState extends State<_AppWithAuthListener> {
+class _AppWithAuthListenerState extends State<_AppWithAuthListener>
+    with WidgetsBindingObserver {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  bool _guardCheckRunning = false;
+  bool _restrictedScreenShown = false;
 
-  Widget _buildHome() {
+  Widget _buildHome(SystemConfigViewModel configVm) {
     final currentUser = Supabase.instance.client.auth.currentUser;
     if (kIsWeb) {
       final pendingPayment = context.read<PaymentPendingStore>().load();
       final paymentReturn = parsePaymentReturnArgs(Uri.base);
       final offerId = Uri.base.queryParameters['offer_id'];
+      final requestId = Uri.base.queryParameters['request_id'];
+      final paymentRequestId = Uri.base.queryParameters['payment_request_id'];
+
       // Direct offer return: payment_return=1&offer_id=... — handle in dashboard (recovery + clear URL).
-      if (paymentReturn != null && offerId != null && offerId.isNotEmpty) {
+      if (paymentReturn != null &&
+          offerId != null &&
+          offerId.isNotEmpty &&
+          paymentRequestId != null &&
+          paymentRequestId.isNotEmpty) {
         AppLogger.i(
           'Detected web direct-offer payment return; will recover from dashboard',
           tag: 'Payment',
           json: <String, dynamic>{
             'uri': Uri.base.toString(),
             'offer_id': offerId,
+          },
+        );
+        return const MainNavigationScreen();
+      }
+      // Tender return: payment_return=1&request_id=...&payment_request_id=... — handle in dashboard.
+      if (paymentReturn != null &&
+          requestId != null &&
+          requestId.isNotEmpty &&
+          paymentRequestId != null &&
+          paymentRequestId.isNotEmpty) {
+        AppLogger.i(
+          'Detected web tender payment return; will recover from dashboard',
+          tag: 'Payment',
+          json: <String, dynamic>{
+            'uri': Uri.base.toString(),
+            'request_id': requestId,
           },
         );
         return const MainNavigationScreen();
@@ -298,6 +338,17 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener> {
       }
     }
 
+    if (configVm.config.maintenanceEnabled) {
+      return MaintenanceScreen(message: configVm.config.maintenanceMessage);
+    }
+
+    if (configVm.isUpdateRequired()) {
+      final minVersion = defaultTargetPlatform == TargetPlatform.iOS
+          ? configVm.config.minVersionIos
+          : configVm.config.minVersionAndroid;
+      return UpdateRequiredScreen(minimumVersion: minVersion);
+    }
+
     return currentUser != null
         ? const MainNavigationScreen()
         : const LoginScreen();
@@ -306,11 +357,28 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Set up session expiry callback after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authVm = context.read<AuthViewModel>();
       authVm.onSessionExpired = _handleSessionExpired;
+      context.read<SystemConfigViewModel>().load();
+      _runAccountGuards();
     });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      context.read<SystemConfigViewModel>().load();
+      _runAccountGuards();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   void _handleSessionExpired() {
@@ -320,6 +388,64 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener> {
       '/login',
       (route) => false,
     );
+  }
+
+  Future<void> _runAccountGuards() async {
+    if (_guardCheckRunning || !mounted) return;
+    if (Supabase.instance.client.auth.currentUser == null) return;
+
+    _guardCheckRunning = true;
+    try {
+      final guard = await context
+          .read<AccountGuardService>()
+          .evaluateCurrentUser();
+      if (!mounted) return;
+
+      if (guard.isRevoked) {
+        AppLogger.w(
+          'Session revoked by force_logout_after. Signing out.',
+          tag: 'Auth',
+          json: <String, dynamic>{
+            'force_logout_after': guard.forceLogoutAfterUtc?.toIso8601String(),
+            'session_iat': guard.sessionIssuedAtUtc?.toIso8601String(),
+          },
+        );
+        await context.read<AuthViewModel>().logout();
+        if (!mounted) return;
+        _restrictedScreenShown = false;
+        _navigatorKey.currentState?.pushNamedAndRemoveUntil(
+          '/login',
+          (route) => false,
+        );
+        return;
+      }
+
+      if (guard.isRestricted) {
+        if (_restrictedScreenShown) return;
+        _restrictedScreenShown = true;
+        _navigatorKey.currentState?.pushAndRemoveUntil(
+          MaterialPageRoute<void>(
+            builder: (_) => AccountRestrictedScreen(
+              status: guard.accountStatus,
+              reason: guard.moderationReason,
+            ),
+          ),
+          (route) => false,
+        );
+        return;
+      }
+
+      _restrictedScreenShown = false;
+    } catch (e, st) {
+      AppLogger.e(
+        'Account guard evaluation failed',
+        tag: 'Auth',
+        error: e,
+        stackTrace: st,
+      );
+    } finally {
+      _guardCheckRunning = false;
+    }
   }
 
   @override
@@ -344,7 +470,7 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener> {
           theme: AppTheme.light(),
           darkTheme: AppTheme.dark(),
           themeMode: themeModeProvider.themeMode,
-          home: _buildHome(),
+          home: _buildHome(context.watch<SystemConfigViewModel>()),
           routes: routes,
         );
       },

@@ -13,11 +13,13 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sline_app/core/services/account_guard_service.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/auth/data/auth_repository.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final AuthRepository _authRepo;
+  final AccountGuardService? _accountGuardService;
   final Stream<AuthState> _authStateChanges;
   StreamSubscription<AuthState>? _authSubscription;
 
@@ -42,10 +44,15 @@ class AuthViewModel extends ChangeNotifier {
 
   VoidCallback? get onSessionExpired => _onSessionExpired;
 
-  AuthViewModel({AuthRepository? authRepo, Stream<AuthState>? authStateChanges})
-    : _authRepo = authRepo ?? AuthRepository(),
-      _authStateChanges =
-          authStateChanges ?? Supabase.instance.client.auth.onAuthStateChange {
+  AuthViewModel({
+    AuthRepository? authRepo,
+    Stream<AuthState>? authStateChanges,
+    AccountGuardService? accountGuardService,
+  }) : _authRepo = authRepo ?? AuthRepository(),
+       _accountGuardService =
+           accountGuardService ?? _buildDefaultGuardService(),
+       _authStateChanges =
+           authStateChanges ?? Supabase.instance.client.auth.onAuthStateChange {
     _initAuthListener();
   }
 
@@ -137,6 +144,23 @@ class AuthViewModel extends ChangeNotifier {
       if (profile != null) {
         AppLogger.i("User profile loaded: ${profile['full_name']}");
       }
+      if (_accountGuardService != null) {
+        final guard = await _accountGuardService.evaluateCurrentUser();
+        if (guard.isRestricted) {
+          await _authRepo.signOut();
+          _setError(
+            guard.accountStatus == 'banned'
+                ? 'Your account has been banned.'
+                : 'Your account is temporarily suspended.',
+          );
+          return false;
+        }
+        if (guard.isRevoked) {
+          await _authRepo.signOut();
+          _setError('Your session is no longer valid. Please sign in again.');
+          return false;
+        }
+      }
       return true;
     } catch (e) {
       final errorMessage = _mapAuthError(e);
@@ -145,6 +169,15 @@ class AuthViewModel extends ChangeNotifier {
       return false;
     } finally {
       _setLoading(false);
+    }
+  }
+
+  static AccountGuardService? _buildDefaultGuardService() {
+    try {
+      return AccountGuardService(client: Supabase.instance.client);
+    } catch (_) {
+      // In widget tests Supabase can be intentionally uninitialized.
+      return null;
     }
   }
 

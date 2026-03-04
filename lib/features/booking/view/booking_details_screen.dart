@@ -16,6 +16,7 @@ import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/features/management/models/work_log_scope.dart';
 import 'package:sline_app/features/management/view/widgets/order_management_section.dart';
 import 'package:sline_app/core/utils/unified_cta_resolver.dart';
+import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
 
 class BookingDetailsScreen extends StatelessWidget {
   final BookingModel booking;
@@ -372,23 +373,7 @@ class BookingDetailsScreen extends StatelessWidget {
                 const SizedBox(height: AppDimens.p12),
                 Center(
                   child: TextButton(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('Dispute Flow'),
-                          content: const Text(
-                            'The dispute resolution center is coming soon.',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: const Text('OK'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+                    onPressed: () => _showDisputeDialog(context, booking),
                     child: Text(
                       'Report Issue',
                       style: AppTypography.bodySmall.copyWith(
@@ -434,6 +419,71 @@ class BookingDetailsScreen extends StatelessWidget {
     return Text(
       title,
       style: AppTypography.h5.copyWith(color: context.colorScheme.text),
+    );
+  }
+
+  Future<void> _showDisputeDialog(
+    BuildContext context,
+    BookingModel booking,
+  ) async {
+    if (booking.taskId == null || booking.taskId!.isEmpty) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'This booking cannot be disputed because task data is missing.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    String draftReason = '';
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Report Issue'),
+        content: TextField(
+          maxLines: 4,
+          onChanged: (value) => draftReason = value,
+          decoration: const InputDecoration(
+            hintText: 'Describe the problem with this booking',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, draftReason.trim()),
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
+    );
+
+    if (!context.mounted || reason == null || reason.isEmpty) return;
+
+    final currentUserId = context.read<BookingViewModel>().currentUserId;
+    final defendantId = currentUserId == booking.clientId
+        ? booking.providerId
+        : booking.clientId;
+
+    final vm = context.read<SafetyViewModel>();
+    final ok = await vm.submitDispute(
+      taskId: booking.taskId!,
+      reason: reason,
+      defendantId: defendantId,
+    );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok ? 'Dispute submitted.' : (vm.error ?? 'Dispute failed.'),
+        ),
+      ),
     );
   }
 

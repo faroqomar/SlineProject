@@ -112,6 +112,32 @@ class SettingsScreen extends StatelessWidget {
                 const SizedBox(height: AppDimens.p12),
                 _buildSettingsTile(
                   context,
+                  icon: Icons.gpp_good_outlined,
+                  title: 'Support & Safety',
+                  subtitle: 'Reporting and account safety',
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Support & Safety'),
+                        content: const Text(
+                          'You can report abusive content from task details, chat conversations, and public profiles. '
+                          'For booking issues, open a booking and tap "Report Issue".',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Close'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: AppDimens.p12),
+                _buildSettingsTile(
+                  context,
                   icon: Icons.language,
                   title: 'Language',
                   subtitle: 'English',

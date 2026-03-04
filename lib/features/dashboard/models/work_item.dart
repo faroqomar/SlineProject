@@ -28,6 +28,12 @@ class WorkItem {
   /// For direct offers: conversation to open when tapping the card.
   final String? conversationId;
 
+  /// For awarded pending-payment tasks: task_request id for Pay/Cancel.
+  final String? awardedRequestId;
+  final DateTime? paymentDeadline;
+  /// Optional price (e.g. for tender pending payment) for payment screen.
+  final double? price;
+
   WorkItem({
     required this.id,
     required this.type,
@@ -51,6 +57,9 @@ class WorkItem {
     this.sortRank = 6,
     this.lastActivityAt,
     this.conversationId,
+    this.awardedRequestId,
+    this.paymentDeadline,
+    this.price,
   });
 
   bool get actionableNeedsReview => needsReview && permissions.canReview;
@@ -82,6 +91,9 @@ class WorkItem {
       sortRank: sortRank,
       lastActivityAt: lastActivityAt,
       conversationId: conversationId,
+      awardedRequestId: awardedRequestId,
+      paymentDeadline: paymentDeadline,
+      price: price,
     );
   }
 
@@ -110,6 +122,9 @@ class WorkItem {
       'sortRank': sortRank,
       'lastActivityAt': lastActivityAt?.toIso8601String(),
       'conversationId': conversationId,
+      'awardedRequestId': awardedRequestId,
+      'paymentDeadline': paymentDeadline?.toIso8601String(),
+      'price': price,
     };
   }
 
@@ -149,6 +164,11 @@ class WorkItem {
           ? DateTime.parse(json['lastActivityAt'] as String)
           : null,
       conversationId: json['conversationId'] as String?,
+      awardedRequestId: json['awardedRequestId'] as String?,
+      paymentDeadline: json['paymentDeadline'] != null
+          ? DateTime.parse(json['paymentDeadline'] as String)
+          : null,
+      price: (json['price'] as num?)?.toDouble(),
     );
   }
 }

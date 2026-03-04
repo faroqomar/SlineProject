@@ -1,6 +1,6 @@
 # SLine MVP Roadmap
 
-**Last Updated:** 2026-03-02
+**Last Updated:** 2026-03-03
 
 This roadmap tracks the current code-state of the repository. Status values are intentionally simple:
 - `✅ Completed`
@@ -23,6 +23,8 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | --- | --- | --- |
 | Email/password auth | ✅ Completed | login, signup, forgot password |
 | Session-aware logout and auth listener | ✅ Completed | `AuthViewModel` + app-shell callback |
+| Admin force-logout enforcement | ✅ Completed | app guard compares `profiles.force_logout_after` vs session issue time on app start/resume |
+| Moderation enforcement (`active/suspended/banned`) | ✅ Completed | restricted accounts are blocked from sensitive actions and routed to dedicated restricted UX |
 | Profile editing and avatar handling | ✅ Completed | profile repository/service/viewmodel flow exists |
 | Role switching | ✅ Completed | role flows exist in profile/dashboard surfaces |
 
@@ -43,7 +45,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | Task creation and editing | ✅ Completed | create/detail/edit flows exist |
 | Task requests / tender offers | ✅ Completed | request services, inbox award flow, task detail actions |
 | Delivery submission and approval | ✅ Completed | RPC-backed delivery flow exists |
-| Tender payment flow | ✅ Completed | `TenderPaymentCoordinator` + `TenderPaymentViewModel`; award → pay from Inbox/Requests; ledger-backed |
+| Tender payment flow | ✅ Completed | `TenderPaymentCoordinator` + `TenderPaymentViewModel`; award → pay from Inbox/Requests; ledger-backed; fail-closed when Demo/QiCard (March 2026); `replace_task_request` in migrations; offer submit no longer mutates `active_role` |
 
 ## 5. Booking and Payment Flows
 
@@ -65,6 +67,8 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | Attachments | ✅ Completed | private attachment flow; participant-scoped access via `can_access_chat_attachment` |
 | Favorites-powered contact flows | ✅ Completed | favorites and chat handoff are implemented |
 | Notifications | ✅ Completed | server-authority: client read/update only; badge, modal, deep links; auth-aware stream; `.TODO/Archive/NotificationExecution/PLAN_NotificationsFix_2026-03-01.md` |
+| Report flows (task/user/chat) | ✅ Completed | app can submit `reports` rows from task detail, chat menu, and public profile |
+| Booking dispute submission | ✅ Completed | booking details `Report Issue` now submits dispute instead of placeholder |
 
 ## 7. Workspace, Orders, and Management
 
@@ -74,6 +78,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | Booking/task CTA resolution | ✅ Completed | unified CTA resolver is used by work/booking screens |
 | Order management timeline | ✅ Completed | management feature is live for task and booking details |
 | Wallet and ledger views | 🚧 In Progress | wallet feature and ledger schema exist; ongoing finance hardening continues |
+| Runtime system config UX | ✅ Completed | maintenance screen, minimum-version gate, signup-disable messaging, and shell app-banner are wired to public config |
 
 ## 8. Quality and Operations
 
@@ -87,5 +92,5 @@ This roadmap tracks the current code-state of the repository. Status values are 
 ## 9. Current Focus
 
 1. Continue hardening QiCard webhook/recovery behavior.
-2. Expand automated coverage around dashboard, wallet, and payment edge cases.
+2. Expand automated coverage around moderation/report/dispute edge cases.
 3. Keep `Sline_everything/` aligned with code and Supabase migrations after every flow change.

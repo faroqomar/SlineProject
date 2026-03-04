@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:sline_app/core/config/payment_runtime_config.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/booking/models/payment_return_args.dart';
 
@@ -14,6 +16,7 @@ class PaymentWebViewScreen extends StatefulWidget {
     this.expectedBookingId,
     this.expectedCorrelationId,
     this.expectedOfferId,
+    this.expectedRequestId,
   });
 
   final String initialUrl;
@@ -24,16 +27,21 @@ class PaymentWebViewScreen extends StatefulWidget {
   /// For direct-offer payments: callback URL may include offer_id.
   final String? expectedOfferId;
 
+  /// For tender (task_request) payments: callback URL may include request_id.
+  final String? expectedRequestId;
+
   @override
   State<PaymentWebViewScreen> createState() => _PaymentWebViewScreenState();
 }
 
 class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
-  late final WebViewController _controller;
+  WebViewController? _controller;
   bool _isLoading = true;
   String? _loadError;
   bool _hasPopped = false;
   bool _isDisposed = false;
+  /// On web, WebView platform does not implement NavigationDelegate; use external browser + manual completion.
+  bool _useWebFallback = false;
 
   void _popWithResult(PaymentReturnArgs result) {
     if (!mounted || _hasPopped || _isDisposed) return;
@@ -63,7 +71,13 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
     final matchesOffer =
         widget.expectedOfferId == null ||
         uri.queryParameters['offer_id'] == widget.expectedOfferId;
-    return matchesBooking && matchesCorrelation && matchesOffer;
+    final matchesRequest =
+        widget.expectedRequestId == null ||
+        uri.queryParameters['request_id'] == widget.expectedRequestId;
+    return matchesBooking &&
+        matchesCorrelation &&
+        matchesOffer &&
+        matchesRequest;
   }
 
   bool _isTrustedWebCallback(Uri? uri) {
@@ -100,11 +114,15 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
       },
     );
 
-    _controller = WebViewController();
-    if (!kIsWeb) {
-      _controller.setJavaScriptMode(JavaScriptMode.unrestricted);
+    if (kIsWeb) {
+      _useWebFallback = true;
+      _isLoading = false;
+      return;
     }
-    _controller.setNavigationDelegate(
+
+    _controller = WebViewController();
+    _controller!.setJavaScriptMode(JavaScriptMode.unrestricted);
+    _controller!.setNavigationDelegate(
       NavigationDelegate(
         onPageStarted: (url) {
           AppLogger.d(
@@ -323,16 +341,21 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
         },
       ),
     );
-    _controller.loadRequest(Uri.parse(widget.initialUrl));
+    _controller!.loadRequest(Uri.parse(widget.initialUrl));
   }
 
   Future<void> _handleBackNavigation() async {
-    // Prevent any navigation if already disposed
     if (_isDisposed) return;
+    if (_useWebFallback) {
+      _popWithResult(
+        PaymentReturnArgs(status: 'CANCELED', rawUri: Uri.parse('about:blank')),
+      );
+      return;
+    }
 
     try {
-      if (await _controller.canGoBack()) {
-        await _controller.goBack();
+      if (await _controller!.canGoBack()) {
+        await _controller!.goBack();
         return;
       }
     } catch (e) {
@@ -342,7 +365,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
     // Check current URL before returning CANCELED
     // If user is on a success/receipt page, return SUCCESS instead
     try {
-      final currentUrl = await _controller.currentUrl();
+      final currentUrl = await _controller!.currentUrl();
       final uri = currentUrl != null ? Uri.tryParse(currentUrl) : null;
 
       if (uri != null) {
@@ -459,9 +482,82 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
             },
           ),
         ),
-        body: Stack(
+        body: _useWebFallback ? _buildWebFallbackBody(context) : _buildWebViewBody(context),
+      ),
+    );
+  }
+
+  Widget _buildWebFallbackBody(BuildContext context) {
+    final uri = Uri.tryParse(widget.initialUrl);
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimens.p24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            WebViewWidget(controller: _controller),
+            const SizedBox(height: AppDimens.p16),
+            Icon(Icons.open_in_browser, size: 48, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(height: AppDimens.p16),
+            Text(
+              'Payment in browser',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppDimens.p8),
+            Text(
+              'You\'ll leave this page to pay securely. After payment you\'ll be brought back here and your payment will be completed automatically.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppDimens.p24),
+            FilledButton.icon(
+              onPressed: uri != null
+                  ? () async {
+                      final messenger = ScaffoldMessenger.of(context);
+                      // Open in same tab so QiCard redirect back lands here with payment_return=1&request_id&payment_request_id and dashboard runs recovery
+                      final launched = await launchUrl(uri, webOnlyWindowName: '_self');
+                      if (!launched) {
+                        messenger.showSnackBar(
+                          const SnackBar(content: Text('Could not open payment link')),
+                        );
+                      }
+                    }
+                  : null,
+              icon: const Icon(Icons.payment),
+              label: const Text('Open payment page'),
+            ),
+            const SizedBox(height: AppDimens.p12),
+            FilledButton.tonalIcon(
+              onPressed: () {
+                AppLogger.i('Web fallback: user completed payment', tag: 'QiCard');
+                _popWithResult(
+                  PaymentReturnArgs(
+                    status: 'SUCCESS',
+                    rawUri: uri ?? Uri.parse('about:blank'),
+                    bookingId: widget.expectedBookingId,
+                    correlationId: widget.expectedCorrelationId,
+                    offerId: widget.expectedOfferId,
+                  ),
+                );
+              },
+              icon: const Icon(Icons.check_circle_outline),
+              label: const Text('I\'ve completed payment'),
+            ),
+            const SizedBox(height: AppDimens.p8),
+            TextButton(
+              onPressed: () => _handleBackNavigation(),
+              child: const Text('Cancel'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWebViewBody(BuildContext context) {
+    return Stack(
+      children: [
+        WebViewWidget(controller: _controller!),
             if (_isLoading)
               Center(child: CircularProgressIndicator(color: AppColors.teal)),
             if (_loadError != null)
@@ -485,7 +581,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
                             _isLoading = true;
                             _loadError = null;
                           });
-                          _controller.reload();
+                          _controller?.reload();
                         },
                         child: const Text('Retry'),
                       ),
@@ -493,9 +589,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
                   ),
                 ),
               ),
-          ],
-        ),
-      ),
-    );
+        ],
+      );
   }
 }

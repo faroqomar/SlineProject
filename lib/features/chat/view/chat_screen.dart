@@ -14,6 +14,7 @@ import '../../chat/models/message_model.dart';
 import '../../chat/models/chat_offer_payload.dart';
 import '../../../core/utils/format_date.dart';
 import '../../../core/services/logger_service.dart';
+import '../../safety/viewmodels/safety_view_model.dart';
 
 import 'widgets/message_bubble.dart';
 import 'widgets/offer_message_bubble.dart';
@@ -305,6 +306,26 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                       ),
                     ),
+                    PopupMenuButton<String>(
+                      icon: Icon(Icons.more_vert, color: colorScheme.text),
+                      onSelected: (value) {
+                        if (value == 'report_chat') {
+                          _reportConversation(context);
+                        } else if (value == 'report_user') {
+                          _reportUser(context);
+                        }
+                      },
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(
+                          value: 'report_chat',
+                          child: Text('Report Conversation'),
+                        ),
+                        PopupMenuItem(
+                          value: 'report_user',
+                          child: Text('Report User'),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ],
@@ -464,5 +485,84 @@ class _ChatScreenState extends State<ChatScreen> {
       default:
         return OfferStatus.pending;
     }
+  }
+
+  Future<void> _reportConversation(BuildContext context) async {
+    final reason = await _showReasonDialog(
+      context,
+      title: 'Report Conversation',
+    );
+    if (!context.mounted || reason == null) return;
+    final vm = context.read<SafetyViewModel>();
+    final ok = await vm.submitReport(
+      entityType: 'chat',
+      entityId: widget.conversation.id,
+      reason: reason,
+    );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok ? 'Report submitted.' : (vm.error ?? 'Report failed.'),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _reportUser(BuildContext context) async {
+    final me = context.read<ChatViewModel>().currentUserId;
+    if (me == null) return;
+    final targetUserId = widget.conversation.user1Id == me
+        ? widget.conversation.user2Id
+        : widget.conversation.user1Id;
+    final reason = await _showReasonDialog(context, title: 'Report User');
+    if (!context.mounted || reason == null) return;
+    final vm = context.read<SafetyViewModel>();
+    final ok = await vm.submitReport(
+      entityType: 'user',
+      entityId: targetUserId,
+      reason: reason,
+    );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok ? 'Report submitted.' : (vm.error ?? 'Report failed.'),
+        ),
+      ),
+    );
+  }
+
+  Future<String?> _showReasonDialog(
+    BuildContext context, {
+    required String title,
+  }) async {
+    String draftReason = '';
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: TextField(
+          maxLines: 4,
+          onChanged: (value) => draftReason = value,
+          decoration: const InputDecoration(
+            hintText: 'Describe the issue',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, draftReason.trim()),
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
+    );
+    if (result == null || result.isEmpty) return null;
+    return result;
   }
 }

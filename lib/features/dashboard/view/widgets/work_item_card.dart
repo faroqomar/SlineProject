@@ -261,6 +261,17 @@ class WorkItemCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                if (onSecondaryAction != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppDimens.p8),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: TextButton(
+                        onPressed: onSecondaryAction,
+                        child: const Text('Cancel payment'),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),

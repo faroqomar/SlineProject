@@ -4,6 +4,7 @@ import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/providers/system_config_view_model.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/utils/app_animations.dart';
 import 'package:sline_app/features/booking/view/bookings_discovery_screen.dart';
@@ -59,6 +60,7 @@ class MainNavigationScreen extends StatelessWidget {
 
     return Consumer<NavigationProvider>(
       builder: (context, navigationProvider, child) {
+        final runtimeConfig = context.watch<SystemConfigViewModel?>()?.config;
         return Scaffold(
           // IMPORTANT: extendBody must be true for the liquid glass effect to work
           // This allows the body to paint behind the bottom navigation bar
@@ -96,6 +98,34 @@ class MainNavigationScreen extends StatelessWidget {
                   child: screens[navigationProvider.currentIndex],
                 ),
               ),
+
+              if (runtimeConfig?.bannerEnabled == true &&
+                  runtimeConfig!.bannerText.trim().isNotEmpty)
+                Positioned(
+                  top: MediaQuery.of(context).padding.top + AppDimens.p8,
+                  left: AppDimens.p16,
+                  right: AppDimens.p16,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimens.p12,
+                      vertical: AppDimens.p10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _bannerColor(
+                        runtimeConfig.bannerType,
+                      ).withValues(alpha: 0.92),
+                      borderRadius: BorderRadius.circular(AppDimens.r12),
+                    ),
+                    child: Text(
+                      runtimeConfig.bannerText,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
 
               // 4. iOS 26 Liquid Glass Bottom Navigation Bar
               const CustomBottomNavBar(),
@@ -140,5 +170,17 @@ class MainNavigationScreen extends StatelessWidget {
         );
       },
     );
+  }
+
+  Color _bannerColor(String type) {
+    switch (type.toLowerCase()) {
+      case 'warning':
+        return AppColors.gold;
+      case 'error':
+      case 'danger':
+        return AppColors.lightRed;
+      default:
+        return AppColors.teal;
+    }
   }
 }

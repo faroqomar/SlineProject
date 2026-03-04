@@ -6,6 +6,7 @@ import '../data/chat_repository.dart';
 import '../models/conversation_model.dart';
 import '../models/message_model.dart';
 import '../../../core/services/logger_service.dart';
+import '../../../core/services/account_guard_service.dart';
 import '../attachments/services/send_attachment_usecase.dart';
 import '../../tasks/models/task_model.dart';
 import '../../direct_offers/services/direct_offers_service.dart';
@@ -29,11 +30,15 @@ import '../../direct_offers/services/direct_offers_service.dart';
 class ChatViewModel extends ChangeNotifier {
   ChatViewModel({SupabaseClient? client})
     : _repo = ChatRepository(client ?? Supabase.instance.client),
+      _accountGuardService = AccountGuardService(
+        client: client ?? Supabase.instance.client,
+      ),
       _directOffersService = DirectOffersService(
         client ?? Supabase.instance.client,
       );
 
   final ChatRepository _repo;
+  final AccountGuardService _accountGuardService;
   final DirectOffersService _directOffersService;
 
   final List<Conversation> conversations = [];
@@ -225,6 +230,7 @@ class ChatViewModel extends ChangeNotifier {
   }) async {
     final user = _repo.currentUser;
     if (user == null || activeConversation == null) return;
+    await _ensureSensitiveActionAllowed();
 
     final receiverId = activeConversation!.user1Id == user.id
         ? activeConversation!.user2Id
@@ -265,6 +271,7 @@ class ChatViewModel extends ChangeNotifier {
   }) async {
     final user = _repo.currentUser;
     if (user == null || activeConversation == null) return;
+    await _ensureSensitiveActionAllowed();
     final convo = activeConversation!;
     final clientId = convo.user1Id == user.id ? convo.user2Id : convo.user1Id;
     final freelancerId = user.id;
@@ -391,11 +398,19 @@ class ChatViewModel extends ChangeNotifier {
     final me = currentUserId;
     final convo = activeConversation;
     if (me == null || convo == null) return;
+    await _ensureSensitiveActionAllowed();
     final receiverId = convo.user1Id == me ? convo.user2Id : convo.user1Id;
     await sendImageAttachment(
       conversationId: convo.id,
       senderId: me,
       receiverId: receiverId,
     );
+  }
+
+  Future<void> _ensureSensitiveActionAllowed() async {
+    final allowed = await _accountGuardService.canPerformSensitiveAction();
+    if (!allowed) {
+      throw Exception('Your account is restricted. Please contact support.');
+    }
   }
 }

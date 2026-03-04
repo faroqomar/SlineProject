@@ -20,6 +20,8 @@ import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 import 'package:sline_app/features/management/models/work_log_scope.dart';
 import 'package:sline_app/features/management/view/widgets/order_management_section.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/services/account_guard_service.dart';
+import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
 
 /// Shows details of a task with Glassmorphism design.
 class TaskDetailsScreen extends StatefulWidget {
@@ -296,7 +298,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                   child: AppButton(
                     text: _getButtonLabel(isOwner, isTender, isBooking),
                     onPressed: _canTriggerPrimaryAction(isOwner, isBooking)
-                        ? () => _handlePrimaryAction(
+                        ? () async => _handlePrimaryAction(
                             context,
                             isOwner,
                             isTender,
@@ -314,12 +316,62 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                     borderRadius: BorderRadius.circular(AppDimens.r14),
                     border: Border.all(color: colorScheme.cardBorder),
                   ),
-                  child: Icon(Icons.favorite_border, color: colorScheme.text),
+                  child: IconButton(
+                    icon: Icon(Icons.flag_outlined, color: colorScheme.text),
+                    onPressed: () => _showReportTaskDialog(context, task.id),
+                  ),
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _showReportTaskDialog(
+    BuildContext context,
+    String taskId,
+  ) async {
+    String draftReason = '';
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Report Task'),
+        content: TextField(
+          maxLines: 4,
+          onChanged: (value) => draftReason = value,
+          decoration: const InputDecoration(
+            hintText: 'Describe the issue',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, draftReason.trim()),
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
+    );
+    if (!context.mounted || reason == null || reason.isEmpty) return;
+
+    final vm = context.read<SafetyViewModel>();
+    final ok = await vm.submitReport(
+      entityType: 'task',
+      entityId: taskId,
+      reason: reason,
+    );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok ? 'Report submitted.' : (vm.error ?? 'Report failed.'),
+        ),
       ),
     );
   }
@@ -330,6 +382,19 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     String ownerId,
     String? currentUserId,
   ) async {
+    final allowed = await context
+        .read<AccountGuardService>()
+        .canPerformSensitiveAction();
+    if (!context.mounted) return;
+    if (!allowed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Your account is restricted. Please contact support.'),
+        ),
+      );
+      return;
+    }
+
     if (currentUserId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('You must be logged in to chat.')),
@@ -549,12 +614,25 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     return int.tryParse(raw?.toString() ?? '');
   }
 
-  void _handlePrimaryAction(
+  Future<void> _handlePrimaryAction(
     BuildContext context,
     bool isOwner,
     bool isTender,
     bool isBooking,
-  ) {
+  ) async {
+    final allowed = await context
+        .read<AccountGuardService>()
+        .canPerformSensitiveAction();
+    if (!context.mounted) return;
+    if (!allowed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Your account is restricted. Please contact support.'),
+        ),
+      );
+      return;
+    }
+
     if (isOwner) {
       // Owner logic (maybe edit or view offers)
       return;

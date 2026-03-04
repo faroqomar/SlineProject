@@ -5,7 +5,13 @@ import 'work_item_card.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/deep_link_service.dart'
     as sline_deep_link;
+import 'package:sline_app/core/services/payment_service.dart';
+import 'package:sline_app/features/tasks/services/task_service.dart';
+import 'package:sline_app/features/tasks/services/tender_payment_coordinator.dart';
+import 'package:sline_app/features/tasks/view/tender_payment_screen.dart';
+import 'package:sline_app/features/tasks/viewmodels/tender_payment_view_model.dart';
 import 'package:sline_app/features/wallet/view/wallet_screen.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 
 void _showInsufficientFundsDialog(BuildContext context) {
   showDialog<void>(
@@ -93,6 +99,41 @@ class NextActionsList extends StatelessWidget {
                   }
                   return;
                 }
+                // Task awarded pending payment: open TenderPaymentScreen
+                if (item.type == WorkItemType.task &&
+                    action == PrimaryActionType.payEscrow &&
+                    item.awardedRequestId != null) {
+                  AppLogger.i(
+                    'NextActions: opening tender payment request=${item.awardedRequestId}',
+                    tag: 'dashboard.work',
+                  );
+                  final taskService = context.read<TaskService>();
+                  final paymentService = context.read<PaymentService>();
+                  final coordinator = TenderPaymentCoordinator(
+                    taskService: taskService,
+                    paymentService: paymentService,
+                  );
+                  final deadline = item.paymentDeadline ??
+                      DateTime.now().add(const Duration(hours: 24));
+                  await Navigator.of(context).push<void>(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          ChangeNotifierProvider<TenderPaymentViewModel>(
+                        create: (_) => TenderPaymentViewModel(
+                          coordinator: coordinator,
+                          requestId: item.awardedRequestId!,
+                          taskTitle: item.title,
+                          freelancerName: item.counterpartyName,
+                          amount: item.price ?? 0,
+                          paymentDeadline: deadline,
+                        ),
+                        child: const TenderPaymentScreen(),
+                      ),
+                    ),
+                  );
+                  if (context.mounted) vm.refresh();
+                  return;
+                }
                 // Navigate for review/pay/view (booking/task pay goes to details)
                 if (action == PrimaryActionType.reviewDelivery ||
                     action == PrimaryActionType.submitEvidence ||
@@ -136,6 +177,39 @@ class NextActionsList extends StatelessWidget {
                   }
                 }
               },
+              onSecondaryAction: item.permissions.canCancel &&
+                      item.awardedRequestId != null
+                  ? () async {
+                      try {
+                        await context
+                            .read<DashboardViewModel>()
+                            .cancelAwardedOffer(item.awardedRequestId!);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Award cancelled. Task is open again.',
+                              ),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                e is Exception
+                                    ? e.toString()
+                                    : 'Failed to cancel',
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    }
+                  : null,
             ),
           )
           .toList(),

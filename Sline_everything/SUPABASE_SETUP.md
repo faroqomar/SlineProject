@@ -966,57 +966,19 @@ GROUP BY p.id;
 
 ### 6.4 `vw_unified_work_items`
 
-Maps Tasks and Bookings to a single schema for the 'Work Management' UI.
+Maps Tasks and Bookings to a single schema for the 'Work Management' UI. Includes three branches:
 
-```sql
-CREATE OR REPLACE VIEW public.vw_unified_work_items AS
-SELECT
-    t.id,
-    'task' AS source_type,
-    t.status AS source_status,
-    CASE
-        WHEN t.status = 'in_progress' THEN 'active'
-        WHEN t.status = 'delivered' THEN 'delivered'
-        WHEN t.status = 'completed' THEN 'completed'
-        WHEN t.status = 'canceled' THEN 'canceled'
-        ELSE t.status
-    END AS unified_status,
-    t.title,
-    t.budget AS price,
-    t.deadline,
-    t.client_id,
-    t.assigned_freelancer_id AS freelancer_id,
-    t.delivered_at,
-    t.review_expires_at,
-    t.revisions_total,
-    t.revisions_used
-FROM public.tasks t
-WHERE t.assigned_freelancer_id IS NOT NULL
-  AND t.status IN ('in_progress', 'delivered', 'completed')
+1. **Tasks in progress** — `assigned_freelancer_id IS NOT NULL`, status in `('in_progress','delivered','completed')`
+2. **Bookings** — status in `('active','delivered','completed')`
+3. **Awarded pending payment** — tasks with `status = 'assigned'`, no freelancer set yet, and an accepted/unpaid `task_request`; exposes `awarded_request_id` and `payment_deadline` for Pay/Cancel from the Work tab.
 
-UNION ALL
+Columns: `id`, `source_type`, `source_status`, `unified_status`, `title`, `price`, `deadline`, `client_id`, `freelancer_id`, `delivered_at`, `review_expires_at`, `revisions_total`, `revisions_used`, `work_item_id`, `last_activity_at`, `needs_review`, `sort_rank`, `awarded_request_id`, `payment_deadline`.
 
-SELECT
-    b.id,
-    'booking' AS source_type,
-    b.status::text AS source_status,
-    b.status::text AS unified_status,
-    (t.title || ' - Session') AS title,
-    b.price,
-    av.starts_at AS deadline,
-    b.client_id,
-    b.provider_id AS freelancer_id,
-    b.delivered_at,
-    b.review_expires_at,
-    b.revisions_total,
-    b.revisions_used
-FROM public.bookings b
-LEFT JOIN public.tasks t ON b.task_id = t.id
-LEFT JOIN public.availability_slots av ON b.slot_id = av.id
-WHERE b.status IN ('active', 'delivered', 'completed');
-```
+The app filters by `client_id` (client role) or `freelancer_id` (freelancer role). For the awarded-pending-payment branch, `client_id` is `COALESCE(t.client_id, t.owner_id)` and `freelancer_id` is from the awarded `task_request`.
 
-**⚠️ Security Warning:** This view uses `SECURITY INVOKER` (default). RLS on base tables (`tasks`, `bookings`) will apply.
+**Definition:** See migration `20260315000000_award_to_work_cancel_and_view.sql` for the full `CREATE VIEW` (all three branches).
+
+**⚠️ Security Warning:** This view uses `SECURITY INVOKER` (default). RLS on base tables (`tasks`, `bookings`, `task_requests`) will apply.
 
 ### 6.3 `users` ⚠️ SECURITY RISK
 
@@ -1893,6 +1855,34 @@ All functions use `SECURITY DEFINER` and include explicit `auth.uid()` checks.
 ---
 
 ## 17. Changelog
+
+### Version 2.18.1 (March 2026)
+
+- **Tasks Tender Fix:** Migration `20260311000000_replace_task_request.sql` adds RPC `replace_task_request(p_task_id, p_freelancer_id, p_message, p_price, p_days)` RETURNS VOID. Withdraws caller's pending offer and inserts a replacement; enforces caller = p_freelancer_id, task open/not own, and `profiles.active_role = 'freelancer'`. GRANT EXECUTE TO authenticated. Documented in §15 and RPC list.
+
+### Version 2.18 (March 2026)
+
+- **Dashboard ↔ App parity migrations** added:
+  - `20260310100000_dashboard_admin_approvals_and_pii_logs.sql`
+  - `20260310101000_dashboard_public_config_reports_disputes_bridge.sql`
+  - `20260310102000_dashboard_core_user_controls_and_reports.sql`
+- **Admin data contracts**:
+  - Added/standardized `admin_approvals` (queue + idempotency + approval RPCs).
+  - Added `admin_pii_access_logs` (audit trail for sensitive reveals).
+  - Added `admin_update_system_config` RPC parity.
+- **App-safe runtime bridges**:
+  - Added `get_public_system_config()` RPC exposing only:
+    `maintenance_mode`, `min_app_version`, `disable_signups`, `app_banner`.
+  - Added `reports` RLS for authenticated users to insert/select own rows.
+  - Added `disputes` RLS for complainant insert and party visibility.
+- **Profile controls parity**:
+  - Added/ensured `profiles` moderation and revocation fields:
+    `account_status`, `moderation_reason`, `restriction_scope`, `moderated_at`, `moderated_by_admin_id`, `force_logout_after`.
+  - Added/ensured admin RPCs: `admin_set_user_moderation`, `admin_force_logout_user`, `admin_triage_report`, `admin_close_report`.
+
+### Version 2.17.2 (March 2026)
+
+- **Tender QiCard payment**: Edge functions `qicard_payment_create_tender` and `qicard_payment_recovery_tender` support server-backed tender (task_request) payment: create returns `form_url` for WebView; recovery verifies payment with QiCard then calls `process_payment_event_ledger` with `gateway_escrow` and `task_request`. Migration `20260314000000_tender_gateway_escrow_accept_assigned.sql` patches `process_payment_event_ledger`: for `gateway_escrow` + `task_request` the gate allows `status = 'accepted'` and `payment_status = 'unpaid'` (awarded, not yet paid); after setting `task_requests.payment_status = 'held'` the function also updates the linked task (`freelancer_id`, `assigned_freelancer_id`, `status = 'in_progress'`).
 
 ### Version 2.17.1 (March 2026)
 

@@ -7,6 +7,7 @@ import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
+import 'package:sline_app/core/providers/system_config_view_model.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
 
 /// Signup screen (MVVM) with Glassmorphism design.
@@ -39,6 +40,15 @@ class _SignupScreenState extends State<SignupScreen> {
 
   /// Handle registration action - validates, calls ViewModel, and manages navigation.
   Future<void> _handleRegister(AuthViewModel authVM) async {
+    if (context.read<SystemConfigViewModel?>()?.config.disableSignups ??
+        false) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Signups are temporarily disabled.')),
+      );
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
 
     final name = _nameController.text.trim();
@@ -82,6 +92,8 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colorScheme = context.colorScheme;
+    final bool signupsDisabled =
+        context.watch<SystemConfigViewModel?>()?.config.disableSignups ?? false;
 
     return ChangeNotifierProvider(
       create: (_) => AuthViewModel(),
@@ -158,6 +170,34 @@ class _SignupScreenState extends State<SignupScreen> {
                             ),
                             textAlign: TextAlign.center,
                           ),
+                          if (signupsDisabled) ...[
+                            const SizedBox(height: AppDimens.p12),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(AppDimens.p12),
+                              decoration: BoxDecoration(
+                                color: AppColors.lightRed.withValues(
+                                  alpha: 0.1,
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                  AppDimens.r12,
+                                ),
+                                border: Border.all(
+                                  color: AppColors.lightRed.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                ),
+                              ),
+                              child: Text(
+                                'Signups are currently disabled.',
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: AppColors.lightRed,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: AppDimens.p32),
 
                           // --- Form Fields ---
@@ -267,7 +307,9 @@ class _SignupScreenState extends State<SignupScreen> {
                             text: 'Create Account',
                             isLoading: authVM.isLoading,
                             width: double.infinity,
-                            onPressed: () => _handleRegister(authVM),
+                            onPressed: signupsDisabled
+                                ? null
+                                : () => _handleRegister(authVM),
                           ),
                           const SizedBox(height: AppDimens.p24),
 

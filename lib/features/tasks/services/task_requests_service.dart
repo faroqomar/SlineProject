@@ -104,19 +104,16 @@ class TaskRequestsService {
     }
 
     try {
-      // RLS Policy Enforcer: Ensure active_role is 'freelancer'
+      // RLS allows insert only when is_freelancer(auth.uid()) is true (profiles.active_role = 'freelancer').
+      // Ensure active_role is freelancer for this insert so the user can submit without leaving to Dashboard first.
       final profile = await _client
           .from('profiles')
           .select('active_role')
           .eq('id', uid)
           .single();
-
       final activeRole = profile['active_role'] as String?;
       if (activeRole != 'freelancer') {
-        AppLogger.i(
-          'Switching active_role to freelancer for offer submission',
-          tag: 'Offers',
-        );
+        AppLogger.d('Setting active_role to freelancer for offer submission', tag: 'Offers');
         await _client
             .from('profiles')
             .update({'active_role': 'freelancer'})
@@ -150,6 +147,12 @@ class TaskRequestsService {
               msg.contains('bidder_id'))) {
         AppLogger.w('Duplicate pending offer', tag: 'Offers');
         throw Exception('You already have a pending offer on this task.');
+      }
+      if (e.code == '42501' || msg.contains('policy') || msg.contains('row-level security')) {
+        AppLogger.w('Offer submit denied by RLS (e.g. not in freelancer role)', tag: 'Offers');
+        throw Exception(
+          'You must be in freelancer mode to submit an offer. Switch your role in profile settings.',
+        );
       }
       AppLogger.e(
         'Failed to submit offer',

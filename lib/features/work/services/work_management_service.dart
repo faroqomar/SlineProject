@@ -21,13 +21,13 @@ class WorkManagementService {
   }
 
   /// Fetches a Unified Work Item by ID and Type.
+  /// For tasks, if the view returns null (e.g. awarded pending-payment row missing),
+  /// falls back to fetching task + accepted/unpaid task_request so details still load.
   Future<UnifiedWorkItemModel?> getUnifiedWorkItem(
     String id,
     String type,
   ) async {
     try {
-      // We query the view using the ID. Since ID is UUID, it might collide across tables
-      // if not careful, but here we filter by source_type as well.
       final response = await _supabase
           .from('vw_unified_work_items')
           .select()
@@ -35,8 +35,17 @@ class WorkManagementService {
           .eq('source_type', type)
           .maybeSingle();
 
-      if (response == null) return null;
-      return UnifiedWorkItemModel.fromJson(response);
+      if (response != null) {
+        return UnifiedWorkItemModel.fromJson(response);
+      }
+
+      // Fallback for task: view may not have awarded pending-payment row (RLS or branch not in DB).
+      if (type == 'task') {
+        final fallback = await _getTaskUnifiedWorkItemFallback(id);
+        if (fallback != null) return fallback;
+      }
+
+      return null;
     } catch (e, stack) {
       AppLogger.e(
         'Failed to fetch UnifiedWorkItem: $id ($type)',
@@ -44,6 +53,77 @@ class WorkManagementService {
         stackTrace: stack,
       );
       rethrow;
+    }
+  }
+
+  /// Fetch task + accepted/unpaid task_request and build UnifiedWorkItemModel (branch 3 shape).
+  Future<UnifiedWorkItemModel?> _getTaskUnifiedWorkItemFallback(String taskId) async {
+    try {
+      final response = await _supabase
+          .from('task_requests')
+          .select(
+            'id, task_id, price, payment_deadline, updated_at, freelancer_id, bidder_id, '
+            'tasks!task_id(id, title, deadline, owner_id, client_id, status, updated_at)',
+          )
+          .eq('task_id', taskId)
+          .eq('status', 'accepted')
+          .eq('payment_status', 'unpaid')
+          .maybeSingle();
+
+      if (response == null) return null;
+
+      final map = Map<String, dynamic>.from(response);
+      final tasksMap = map['tasks'] as Map<String, dynamic>?;
+      if (tasksMap == null) return null;
+
+      final t = Map<String, dynamic>.from(tasksMap);
+      final trId = map['id'] as String?;
+      final price = (map['price'] as num?)?.toDouble() ?? 0.0;
+      final freelancerId =
+          (map['freelancer_id'] as String?) ?? (map['bidder_id'] as String?) ?? '';
+      final clientId = (t['client_id'] as String?) ?? (t['owner_id'] as String?) ?? '';
+      final paymentDeadline = map['payment_deadline'] != null
+          ? DateTime.tryParse(map['payment_deadline'] as String)
+          : null;
+      final trUpdated = map['updated_at'] != null
+          ? DateTime.tryParse(map['updated_at'] as String)
+          : null;
+      final tUpdated = t['updated_at'] != null
+          ? DateTime.tryParse(t['updated_at'] as String)
+          : null;
+      final deadline = t['deadline'] != null
+          ? DateTime.tryParse(t['deadline'] as String)
+          : null;
+
+      final viewRow = <String, dynamic>{
+        'id': taskId,
+        'source_type': 'task',
+        'source_status': 'assigned',
+        'unified_status': 'pending_payment',
+        'title': t['title'] as String? ?? 'Task',
+        'price': price,
+        'deadline': deadline?.toIso8601String(),
+        'client_id': clientId,
+        'freelancer_id': freelancerId,
+        'delivered_at': null,
+        'review_expires_at': null,
+        'revisions_total': 3,
+        'revisions_used': 0,
+        'work_item_id': 'task:$taskId',
+        'last_activity_at': (trUpdated ?? tUpdated)?.toIso8601String(),
+        'needs_review': false,
+        'sort_rank': 2,
+        'awarded_request_id': trId,
+        'payment_deadline': paymentDeadline?.toIso8601String(),
+      };
+      return UnifiedWorkItemModel.fromJson(viewRow);
+    } catch (e, stack) {
+      AppLogger.e(
+        'Task fallback fetch failed: $taskId',
+        error: e,
+        stackTrace: stack,
+      );
+      return null;
     }
   }
 

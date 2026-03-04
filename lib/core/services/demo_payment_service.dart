@@ -186,4 +186,33 @@ class DemoPaymentService implements PaymentService {
       errorCode: 'DEMO_DIRECT_OFFER_PAYMENT_UNSUPPORTED',
     );
   }
+
+  @override
+  Future<QiCardTenderPaymentResult> createPaymentForTenderOffer({
+    required String requestId,
+    required double amount,
+    String currency = 'IQD',
+    String? description,
+    String? finishUrl,
+    String? requestCorrelationId,
+  }) async {
+    await Future.delayed(delay);
+    return QiCardTenderPaymentResult(
+      requestId: requestId,
+      error: 'Tender card payment is not available in demo mode.',
+      errorCode: 'DEMO_TENDER_PAYMENT_UNSUPPORTED',
+    );
+  }
+
+  @override
+  Future<QiCardTenderRecoveryResult> recoverTenderPaymentAfterCallback({
+    required String requestId,
+    required String paymentRequestId,
+  }) async {
+    await Future.delayed(delay);
+    return const QiCardTenderRecoveryResult(
+      error: 'Tender recovery is not available in demo mode.',
+      errorCode: 'DEMO_TENDER_RECOVERY_UNSUPPORTED',
+    );
+  }
 }

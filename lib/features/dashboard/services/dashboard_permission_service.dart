@@ -34,12 +34,12 @@ class DashboardPermissionService {
         canCancel: false,
       );
     } else {
-      // Client permissions
+      // Client permissions (task awarded pending payment: can pay or cancel)
       return WorkItemPermissions(
         canStart: false,
         canComplete: false,
         canApprove: false,
-        canCancel: false,
+        canCancel: status == UnifiedWorkStatus.pendingPayment,
         // v1 client permissions
         canReview: status == UnifiedWorkStatus.delivered,
         canDispute:

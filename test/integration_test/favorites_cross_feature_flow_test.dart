@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'support/helpers.dart';
 
 /// Favorites cross-feature flow (profile ↔ favorites screen ↔ request tile).
 /// Uses fixtures from FIXTURES_Favorites and selectors from TEST_INFRA_Favorites.

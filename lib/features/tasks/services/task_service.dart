@@ -515,6 +515,8 @@ class TaskService {
   /// Get offers received for a client's tasks.
   ///
   /// Returns a flat list of pending offers on tasks owned by [userId].
+  /// Bidder name and avatar are loaded via rpc_get_profile_summaries (RLS on
+  /// profiles only allows reading own profile, so we avoid JOIN and batch-fetch).
   Future<List<TaskRequest>> getOffersReceived(String userId) async {
     try {
       final ownedTasks = await _client
@@ -534,21 +536,39 @@ class TaskService {
       final response = await _client
           .from('task_requests')
           .select(
-            'id, task_id, bidder_id, freelancer_id, price, days, duration_days, note, message, status, payment_status, created_at, deleted_at, tasks(title), profiles!task_requests_freelancer_id_fkey(full_name, avatar_url)',
+            'id, task_id, bidder_id, freelancer_id, price, days, duration_days, note, message, status, payment_status, created_at, deleted_at, tasks(title)',
           )
           .eq('status', 'pending')
           .is_('deleted_at', null)
           .in_('task_id', taskIds)
           .order('created_at', ascending: false);
 
-      return (response as List).map((json) {
-        // Map Task Title and Profile for UI convenience
-        // Profiles is joined as 'profiles' object
-        // Tasks is joined as 'tasks' object
-        // TaskRequest.fromMap handles profiles mapping?
-        // We might need to augment the map or update model
-        // Actually TaskRequest model expects profiles flat or nested?
-        return TaskRequest.fromMap(json as Map<String, dynamic>);
+      final rows = response as List;
+      if (rows.isEmpty) return [];
+
+      final bidderIds = rows
+          .map((r) =>
+              (r['freelancer_id'] as String?) ?? (r['bidder_id'] as String?))
+          .whereType<String>()
+          .where((id) => id.isNotEmpty)
+          .toSet();
+
+      final profilesMap = await _fetchProfilesByIds(
+        bidderIds,
+        source: 'getOffersReceived',
+      );
+
+      return rows.map((json) {
+        final map = Map<String, dynamic>.from(json as Map);
+        final bidderId = map['freelancer_id'] as String? ?? map['bidder_id'] as String?;
+        if (bidderId != null && profilesMap.containsKey(bidderId)) {
+          final p = profilesMap[bidderId]!;
+          map['profiles'] = {
+            'full_name': p['full_name'],
+            'avatar_url': p['avatar_url'],
+          };
+        }
+        return TaskRequest.fromMap(map);
       }).toList();
     } on PostgrestException catch (e, st) {
       AppLogger.e('Failed to get offers received', error: e, stackTrace: st);
@@ -782,6 +802,27 @@ class TaskService {
       return result;
     } on PostgrestException catch (e, st) {
       AppLogger.e('Failed to pay for awarded offer', error: e, stackTrace: st);
+      throw Exception(ErrorMapper.map(e));
+    }
+  }
+
+  /// Cancel an awarded-but-unpaid offer. Task returns to open and reappears in Inbox.
+  Future<Map<String, dynamic>> cancelAwardedOffer(String requestId) async {
+    try {
+      final result = await _client.rpc(
+        'cancel_awarded_offer',
+        params: {'p_request_id': requestId},
+      ) as Map<String, dynamic>;
+      if (result['success'] == true) {
+        AppLogger.i('Cancelled awarded offer: $requestId');
+      }
+      return result;
+    } on PostgrestException catch (e, st) {
+      AppLogger.e(
+        'Failed to cancel awarded offer',
+        error: e,
+        stackTrace: st,
+      );
       throw Exception(ErrorMapper.map(e));
     }
   }

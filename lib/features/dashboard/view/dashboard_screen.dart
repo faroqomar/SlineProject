@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/services/payment_service.dart';
 import 'package:sline_app/core/utils/web_url_utils_stub.dart'
     if (dart.library.html) 'package:sline_app/core/utils/web_url_utils_web.dart'
     as web_url_utils;
@@ -64,21 +65,30 @@ class _DashboardContentState extends State<_DashboardContent>
     }
   }
 
-  /// Web: when user returns from QiCard with ?payment_return=1&offer_id=...&payment_request_id=...,
-  /// run direct-offer recovery and clear the URL.
+  /// Web: when user returns from QiCard with payment_return=1 and either
+  /// offer_id+payment_request_id (direct offer) or request_id+payment_request_id (tender),
+  /// run recovery and clear the URL.
   Future<void> _handleWebPaymentReturnIfPresent() async {
     if (!mounted || !kIsWeb) return;
     final uri = Uri.base;
     if (uri.queryParameters['payment_return'] != '1') return;
+
     final offerId = uri.queryParameters['offer_id'];
-    if (offerId == null || offerId.isEmpty) return;
+    final requestId = uri.queryParameters['request_id'];
+    final paymentRequestId = uri.queryParameters['payment_request_id'];
+
+    final isDirectOffer =
+        offerId != null && offerId.isNotEmpty && paymentRequestId != null && paymentRequestId.isNotEmpty;
+    final isTender =
+        requestId != null && requestId.isNotEmpty && paymentRequestId != null && paymentRequestId.isNotEmpty;
+
+    if (!isDirectOffer && !isTender) return;
 
     _webPaymentReturnHandled = true;
-    final paymentRequestId = uri.queryParameters['payment_request_id'];
-    final directOffers = context.read<DirectOffersService>();
     final vm = context.read<DashboardViewModel>();
 
-    if (paymentRequestId != null && paymentRequestId.isNotEmpty) {
+    if (isDirectOffer) {
+      final directOffers = context.read<DirectOffersService>();
       try {
         await directOffers.recoverPaymentAfterCallback(
           offerId,
@@ -96,7 +106,38 @@ class _DashboardContentState extends State<_DashboardContent>
           error: e,
         );
       }
+    } else if (isTender) {
+      final paymentService = context.read<PaymentService>();
+      try {
+        final result = await paymentService.recoverTenderPaymentAfterCallback(
+          requestId: requestId,
+          paymentRequestId: paymentRequestId,
+        );
+        if (result.isSuccess) {
+          AppLogger.i(
+            'Web tender recovery succeeded',
+            tag: 'Dashboard',
+            json: <String, dynamic>{'request_id': requestId},
+          );
+        } else {
+          AppLogger.w(
+            'Web tender recovery returned not ok',
+            tag: 'Dashboard',
+            json: <String, dynamic>{
+              'request_id': requestId,
+              'error': result.error,
+            },
+          );
+        }
+      } catch (e) {
+        AppLogger.e(
+          'Web tender recovery failed request_id=$requestId',
+          tag: 'Dashboard',
+          error: e,
+        );
+      }
     }
+
     web_url_utils.clearPaymentReturnParamsFromUrl();
     if (mounted) vm.refresh();
   }

@@ -20,6 +20,12 @@ import 'package:sline_app/features/chat/view/chat_screen.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
+import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
+import 'package:sline_app/features/tasks/services/tender_payment_coordinator.dart';
+import 'package:sline_app/features/tasks/view/tender_payment_screen.dart';
+import 'package:sline_app/features/tasks/viewmodels/tender_payment_view_model.dart';
+import 'package:sline_app/core/services/payment_service.dart';
+import 'package:sline_app/features/tasks/services/task_service.dart';
 
 class WorkItemDetailsScreen extends StatelessWidget {
   final String id;
@@ -166,9 +172,104 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
           const SizedBox(height: AppDimens.p24),
           _buildUnifiedStatus(vm),
           const SizedBox(height: AppDimens.p24),
+          _buildPendingPaymentActions(context, vm),
+          const SizedBox(height: AppDimens.p24),
           _buildContractInfo(vm),
         ],
       ),
+    );
+  }
+
+  /// Pay & Confirm and Cancel payment on Overview when task is awarded and unpaid.
+  Widget _buildPendingPaymentActions(
+    BuildContext context,
+    WorkItemDetailsViewModel vm,
+  ) {
+    final isTaskPendingPayment = widget.type == WorkItemType.task &&
+        vm.status == UnifiedWorkStatus.pendingPayment &&
+        vm.isClient &&
+        vm.workItem?.awardedRequestId != null;
+
+    if (!isTaskPendingPayment) return const SizedBox.shrink();
+
+    final requestId = vm.workItem!.awardedRequestId!;
+    final taskId = widget.id;
+    final taskTitle = vm.title;
+    final amount = vm.workItem!.price;
+    final deadline = vm.workItem?.paymentDeadline ??
+        DateTime.now().add(const Duration(hours: 24));
+    final otherName = vm.otherPartyProfile?['full_name'] ?? 'Freelancer';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: () async {
+              final taskService = context.read<TaskService>();
+              final paymentService = context.read<PaymentService>();
+              final coordinator = TenderPaymentCoordinator(
+                taskService: taskService,
+                paymentService: paymentService,
+              );
+              await Navigator.of(context).push<void>(
+                MaterialPageRoute(
+                  builder: (_) => ChangeNotifierProvider<TenderPaymentViewModel>(
+                    create: (_) => TenderPaymentViewModel(
+                      coordinator: coordinator,
+                      requestId: requestId,
+                      taskTitle: taskTitle,
+                      freelancerName: otherName,
+                      amount: amount,
+                      paymentDeadline: deadline,
+                    ),
+                    child: const TenderPaymentScreen(),
+                  ),
+                ),
+              );
+              if (context.mounted) {
+                context.read<DashboardViewModel>().refresh();
+                context.read<WorkItemDetailsViewModel>().loadData(taskId, 'task');
+              }
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.teal,
+            ),
+            child: const Text('Pay & Confirm'),
+          ),
+        ),
+        const SizedBox(height: AppDimens.p8),
+        SizedBox(
+          width: double.infinity,
+          child: TextButton(
+            onPressed: () async {
+              try {
+                await context.read<DashboardViewModel>().cancelAwardedOffer(requestId);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Award cancelled. Task is open again.'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                  Navigator.of(context).pop();
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(e is Exception ? e.toString() : 'Failed to cancel'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Cancel payment'),
+          ),
+        ),
+      ],
     );
   }
 

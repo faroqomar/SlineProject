@@ -36,7 +36,7 @@ class ProfileRepository {
     final res = await _client
         .from('profiles')
         .select(
-          'id, full_name, email, avatar_url, bio, active_role, skills, created_at, seller_level',
+          'id, full_name, email, avatar_url, bio, active_role, skills, created_at, seller_level, account_status, moderation_reason, restriction_scope, force_logout_after',
         )
         .eq('id', userId)
         .single();
@@ -53,7 +53,7 @@ class ProfileRepository {
       final res = await _client
           .from('profiles')
           .select(
-            'id, full_name, avatar_url, bio, active_role, skills, created_at, seller_level',
+            'id, full_name, avatar_url, bio, active_role, skills, created_at, seller_level, account_status, moderation_reason, restriction_scope, force_logout_after',
           )
           .eq('id', userId)
           .single();

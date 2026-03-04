@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/config/payment_runtime_config.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/utils/format_price.dart';
+import 'package:sline_app/features/booking/models/payment_return_args.dart';
+import 'package:sline_app/features/booking/view/payment_webview_screen.dart';
+import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 import 'package:sline_app/features/tasks/viewmodels/tender_payment_view_model.dart';
 
 /// Payment screen for completing payment on an awarded tender.
@@ -17,6 +21,7 @@ class TenderPaymentScreen extends StatefulWidget {
 
 class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
   bool _successHandled = false;
+  bool _webViewPushed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -24,15 +29,55 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
       builder: (context, vm, _) {
         if (vm.success && !_successHandled && mounted) {
           _successHandled = true;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
             if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
+            final navigator = Navigator.of(context);
+            final messenger = ScaffoldMessenger.of(context);
+            try {
+              final dashboardVm = context.read<DashboardViewModel>();
+              await dashboardVm.refresh();
+            } catch (_) {}
+            messenger.showSnackBar(
               const SnackBar(
                 content: Text('Payment successful! Work is now active.'),
                 backgroundColor: Colors.green,
               ),
             );
-            Navigator.of(context).popUntil((route) => route.isFirst);
+            navigator.popUntil((route) => route.isFirst);
+          });
+        }
+
+        if (vm.hasPendingWebPayment &&
+            !_webViewPushed &&
+            vm.pendingFormUrl != null &&
+            vm.pendingRequestId != null &&
+            vm.pendingPaymentRequestId != null) {
+          _webViewPushed = true;
+          final requestId = vm.pendingRequestId!;
+          final paymentRequestId = vm.pendingPaymentRequestId!;
+          final formUrl = vm.pendingFormUrl!;
+          final callbackHosts = buildQiCardCallbackHosts();
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            if (!mounted) return;
+            final result = await Navigator.of(context).push<PaymentReturnArgs>(
+              MaterialPageRoute<PaymentReturnArgs>(
+                builder: (context) => PaymentWebViewScreen(
+                  initialUrl: formUrl,
+                  callbackHosts: callbackHosts,
+                  expectedRequestId: requestId,
+                ),
+              ),
+            );
+            if (!mounted) return;
+            if (result != null && result.isSuccess) {
+              await vm.completeRecovery(
+                requestId: requestId,
+                paymentRequestId: paymentRequestId,
+              );
+            } else {
+              vm.clearPendingWebPayment();
+            }
+            if (mounted) setState(() => _webViewPushed = false);
           });
         }
         final timeRemaining = vm.timeRemaining;
@@ -58,6 +103,8 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
                   _buildOrderSummary(context, vm),
                   const Divider(height: AppDimens.p32),
                   _buildPaymentMethod(context),
+                  if (!vm.isTenderPaymentAvailable)
+                    _buildTenderUnavailableBanner(context),
                   const Spacer(),
                   if (vm.errorMessage != null)
                     _buildErrorSection(context, vm.errorMessage!),
@@ -223,11 +270,40 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
     );
   }
 
+  Widget _buildTenderUnavailableBanner(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.p12),
+      margin: const EdgeInsets.only(top: AppDimens.p16),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(AppDimens.r8),
+        border: Border.all(color: Colors.amber.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline, color: Colors.amber.shade800),
+          const SizedBox(width: AppDimens.p12),
+          Expanded(
+            child: Text(
+              'Card payment for this flow is not yet available. Use Pay Later and complete payment when server-backed payment is enabled.',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.amber.shade900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPayButton(BuildContext context, TenderPaymentViewModel vm) {
+    final canPay = vm.isTenderPaymentAvailable && !vm.isProcessing && !vm.isExpired;
+    final finishUrl = buildQiCardFinishUrlForRuntime();
     return SizedBox(
       width: double.infinity,
       child: FilledButton(
-        onPressed: vm.isProcessing || vm.isExpired ? null : () => vm.submit(),
+        onPressed: canPay ? () => vm.submit(finishUrl: finishUrl) : null,
         child: vm.isProcessing
             ? const SizedBox(
                 height: 20,

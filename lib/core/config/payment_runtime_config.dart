@@ -85,7 +85,9 @@ bool isWebPaymentCallbackUri(Uri uri, {Set<String>? callbackHosts}) {
       query.containsKey('payment_id') ||
       (query.containsKey('booking_id') &&
           (query.containsKey('correlation_id') ||
-              query['payment_return'] == '1'));
+              query['payment_return'] == '1')) ||
+      (query.containsKey('request_id') &&
+          query.containsKey('payment_request_id'));
 
   if (!hasPaymentPath && !hasRootPaymentSignal) {
     return false;
@@ -124,6 +126,9 @@ PaymentReturnArgs? parsePaymentReturnArgs(
     bookingId: uri.queryParameters['booking_id'],
     correlationId: uri.queryParameters['correlation_id'],
     paymentId: uri.queryParameters['payment_id'],
+    offerId: uri.queryParameters['offer_id'],
+    requestId: uri.queryParameters['request_id'],
+    paymentRequestId: uri.queryParameters['payment_request_id'],
     rawUri: uri,
   );
 }

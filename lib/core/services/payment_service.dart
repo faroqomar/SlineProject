@@ -142,6 +142,30 @@ class QiCardDirectOfferPaymentResult {
   bool get isSuccess => offerId != null && formUrl != null && error == null;
 }
 
+/// Result of creating a QiCard payment for an awarded tender (task_request).
+class QiCardTenderPaymentResult {
+  const QiCardTenderPaymentResult({
+    this.requestId,
+    this.formUrl,
+    this.correlationId,
+    this.paymentRequestId,
+    this.amount,
+    this.error,
+    this.errorCode,
+  });
+
+  final String? requestId;
+  final String? formUrl;
+  final String? correlationId;
+  final String? paymentRequestId;
+  final double? amount;
+  final String? error;
+  final String? errorCode;
+
+  bool get isSuccess =>
+      requestId != null && formUrl != null && error == null;
+}
+
 class QiCardRecoveryResult {
   const QiCardRecoveryResult({
     this.bookingId,
@@ -281,4 +305,41 @@ abstract class PaymentService {
     required String bookingId,
     required String reason,
   });
+
+  /// Create a QiCard payment for an awarded, unpaid tender (task_request).
+  /// Returns formUrl to open in WebView; on return the app calls [recoverTenderPaymentAfterCallback].
+  Future<QiCardTenderPaymentResult> createPaymentForTenderOffer({
+    required String requestId,
+    required double amount,
+    String currency = 'IQD',
+    String? description,
+    String? finishUrl,
+    String? requestCorrelationId,
+  });
+
+  /// Recover tender payment after WebView callback (QiCard success).
+  /// Call after the user returns from the payment WebView with success.
+  Future<QiCardTenderRecoveryResult> recoverTenderPaymentAfterCallback({
+    required String requestId,
+    required String paymentRequestId,
+  });
+}
+
+/// Result of tender payment recovery (after WebView return).
+class QiCardTenderRecoveryResult {
+  const QiCardTenderRecoveryResult({
+    this.ok,
+    this.recovered,
+    this.message,
+    this.error,
+    this.errorCode,
+  });
+
+  final bool? ok;
+  final bool? recovered;
+  final String? message;
+  final String? error;
+  final String? errorCode;
+
+  bool get isSuccess => ok == true && error == null;
 }

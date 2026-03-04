@@ -19,6 +19,7 @@ import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/features/favorites/viewmodels/favorites_view_model.dart';
 import 'package:sline_app/features/tasks/view/widgets/task_card.dart';
+import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
 
 class PublicProfileScreen extends StatefulWidget {
   final String userId;
@@ -175,20 +176,32 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
 
                                           return CircleIconButton(
                                             key: const Key(
-                                                'public_profile_favorite_toggle'),
+                                              'public_profile_favorite_toggle',
+                                            ),
                                             icon: icon,
                                             iconColor: color,
                                             onTap: () async {
                                               if (isFavorited) {
                                                 await favoritesVm.remove(
-                                                    profile.id);
+                                                  profile.id,
+                                                );
                                               } else {
                                                 await favoritesVm.add(
-                                                    profile.id);
+                                                  profile.id,
+                                                );
                                               }
                                             },
                                           );
                                         },
+                                      ),
+                                      const SizedBox(width: 8),
+                                      CircleIconButton(
+                                        icon: Icons.flag_outlined,
+                                        iconColor: AppColors.lightRed,
+                                        onTap: () => _reportUserProfileAction(
+                                          context,
+                                          profile.id,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -465,5 +478,52 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
     } finally {
       loader.close();
     }
+  }
+
+  Future<void> _reportUserProfileAction(
+    BuildContext context,
+    String targetUserId,
+  ) async {
+    String draftReason = '';
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Report User'),
+        content: TextField(
+          maxLines: 4,
+          onChanged: (value) => draftReason = value,
+          decoration: const InputDecoration(
+            hintText: 'Describe the issue',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, draftReason.trim()),
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
+    );
+    if (!context.mounted || reason == null || reason.isEmpty) return;
+
+    final vm = context.read<SafetyViewModel>();
+    final ok = await vm.submitReport(
+      entityType: 'user',
+      entityId: targetUserId,
+      reason: reason,
+    );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok ? 'Report submitted.' : (vm.error ?? 'Report failed.'),
+        ),
+      ),
+    );
   }
 }

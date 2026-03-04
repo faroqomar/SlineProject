@@ -379,6 +379,63 @@ export async function submitDirectOfferGatewayEscrow(
   };
 }
 
+/** Gateway escrow for tender (task_request) after QiCard success. Calls process_payment_event_ledger. */
+export async function submitTenderGatewayEscrow(
+  adminClient: ReturnType<typeof createAdminClient>,
+  {
+    requestId,
+    paymentId,
+    amount,
+    currency,
+    timestamp,
+    correlationId,
+  }: {
+    requestId: string;
+    paymentId: string;
+    amount: number;
+    currency: string;
+    timestamp: string;
+    correlationId: string;
+  },
+) {
+  const idempotencyKey = `qicard:${paymentId}:gateway_escrow_tender:SUCCESS`;
+  const meta = {
+    psp_provider: QICARD_PROVIDER_NAME,
+    psp_event_id: paymentId,
+    psp_payment_id: paymentId,
+    psp_request_id: paymentId,
+    psp_status: "SUCCESS",
+    psp_timestamp: timestamp,
+    correlation_id: correlationId,
+  };
+
+  const { data, error } = await adminClient.rpc("process_payment_event_ledger", {
+    p_event_type: "gateway_escrow",
+    p_related_entity_type: "task_request",
+    p_related_entity_id: requestId,
+    p_idempotency_key: idempotencyKey,
+    p_amount_gross: amount,
+    p_currency: currency,
+    p_meta: meta,
+  });
+
+  if (error) {
+    if (error.message?.includes("ERR_IDEMPOTENCY_REPLAY")) {
+      return { replayed: true, journalEntryId: null };
+    }
+    throw new Error(error.message || "LEDGER_GATEWAY_ESCROW_TENDER_FAILED");
+  }
+
+  if (data?.ok === false) {
+    throw new Error(extractLedgerError(data.error));
+  }
+
+  return {
+    replayed: false,
+    journalEntryId: data?.journal_entry_id ?? null,
+  };
+}
+
 function extractLedgerError(error: unknown): string {
   if (typeof error === "string" && error.length > 0) {
     return error;

@@ -7,6 +7,10 @@ class ProfileModel {
   final String activeRole;
   final List<String> skills;
   final String? sellerLevel;
+  final String accountStatus;
+  final String? moderationReason;
+  final String? restrictionScope;
+  final DateTime? forceLogoutAfterUtc;
   final DateTime createdAt;
 
   ProfileModel({
@@ -18,6 +22,10 @@ class ProfileModel {
     this.activeRole = 'client',
     this.skills = const [],
     this.sellerLevel,
+    this.accountStatus = 'active',
+    this.moderationReason,
+    this.restrictionScope,
+    this.forceLogoutAfterUtc,
     required this.createdAt,
   });
 
@@ -35,6 +43,12 @@ class ProfileModel {
               .toList() ??
           [],
       sellerLevel: json['seller_level'] as String?,
+      accountStatus: (json['account_status'] as String?) ?? 'active',
+      moderationReason: json['moderation_reason'] as String?,
+      restrictionScope: json['restriction_scope'] as String?,
+      forceLogoutAfterUtc: json['force_logout_after'] != null
+          ? DateTime.tryParse(json['force_logout_after'].toString())?.toUtc()
+          : null,
       createdAt: DateTime.parse(json['created_at'] as String).toUtc(),
     );
   }
@@ -49,6 +63,10 @@ class ProfileModel {
       'active_role': activeRole,
       'skills': skills,
       'seller_level': sellerLevel,
+      'account_status': accountStatus,
+      'moderation_reason': moderationReason,
+      'restriction_scope': restrictionScope,
+      'force_logout_after': forceLogoutAfterUtc?.toIso8601String(),
       'created_at': createdAt.toIso8601String(),
     };
   }
@@ -59,6 +77,10 @@ class ProfileModel {
     String? avatarUrl,
     List<String>? skills,
     String? sellerLevel,
+    String? accountStatus,
+    String? moderationReason,
+    String? restrictionScope,
+    DateTime? forceLogoutAfterUtc,
   }) {
     return ProfileModel(
       id: id,
@@ -69,6 +91,10 @@ class ProfileModel {
       activeRole: activeRole,
       skills: skills ?? this.skills,
       sellerLevel: sellerLevel ?? this.sellerLevel,
+      accountStatus: accountStatus ?? this.accountStatus,
+      moderationReason: moderationReason ?? this.moderationReason,
+      restrictionScope: restrictionScope ?? this.restrictionScope,
+      forceLogoutAfterUtc: forceLogoutAfterUtc ?? this.forceLogoutAfterUtc,
       createdAt: createdAt,
     );
   }

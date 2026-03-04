@@ -931,6 +931,27 @@ class DashboardViewModel extends ChangeNotifier {
     }
   }
 
+  /// Cancels an awarded-but-unpaid offer. Task returns to open and reappears in Inbox.
+  Future<void> cancelAwardedOffer(String requestId) async {
+    final tid = _traceId();
+    try {
+      await _taskService.cancelAwardedOffer(requestId);
+      if (_abortIfDisposed()) return;
+      await refresh();
+      AppLogger.i(
+        'Cancelled awarded offer=$requestId [trace:$tid]',
+        tag: '$_kTag.inbox',
+      );
+    } catch (e) {
+      AppLogger.e(
+        'Failed to cancel awarded offer=$requestId [trace:$tid]',
+        error: e,
+        tag: '$_kTag.inbox',
+      );
+      rethrow;
+    }
+  }
+
   Future<void> performPrimaryAction(WorkItem item) async {
     // v1: Handle navigation-only actions first
     switch (item.primaryActionType) {

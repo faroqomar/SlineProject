@@ -10,8 +10,21 @@ class UserProfile {
   /// Example: `avatars/{uid}/{timestamp}.jpg`.
   /// UI must call `AvatarService.createSignedUrl(avatarUrl!)` to display the image.
   final String? avatarUrl; // Profile picture (optional)
+  final String? accountStatus;
+  final String? moderationReason;
+  final String? restrictionScope;
+  final DateTime? forceLogoutAfterUtc;
 
-  UserProfile({required this.id, this.fullName, this.email, this.avatarUrl});
+  UserProfile({
+    required this.id,
+    this.fullName,
+    this.email,
+    this.avatarUrl,
+    this.accountStatus,
+    this.moderationReason,
+    this.restrictionScope,
+    this.forceLogoutAfterUtc,
+  });
 
   /// Converts a Supabase row into a UserProfile object.
   factory UserProfile.fromMap(Map<String, dynamic> map) {
@@ -20,6 +33,12 @@ class UserProfile {
       fullName: map['full_name'] as String?,
       email: map['email'] as String?,
       avatarUrl: map['avatar_url'] as String?,
+      accountStatus: map['account_status'] as String?,
+      moderationReason: map['moderation_reason'] as String?,
+      restrictionScope: map['restriction_scope'] as String?,
+      forceLogoutAfterUtc: map['force_logout_after'] != null
+          ? DateTime.tryParse(map['force_logout_after'].toString())?.toUtc()
+          : null,
     );
   }
 
@@ -30,6 +49,10 @@ class UserProfile {
       'full_name': fullName,
       'email': email,
       'avatar_url': avatarUrl,
+      'account_status': accountStatus,
+      'moderation_reason': moderationReason,
+      'restriction_scope': restrictionScope,
+      'force_logout_after': forceLogoutAfterUtc?.toIso8601String(),
     };
   }
 }

@@ -50,8 +50,9 @@ class DirectOffersService {
     };
     if (taskId != null) insertMap['task_id'] = taskId;
     if (title != null && title.isNotEmpty) insertMap['title'] = title;
-    if (description != null && description.isNotEmpty)
+    if (description != null && description.isNotEmpty) {
       insertMap['description'] = description;
+    }
 
     final response = await _client
         .from('direct_offers')
@@ -101,8 +102,9 @@ class DirectOffersService {
   Future<void> acceptOfferWithoutPayment(String offerId) async {
     final offer = await getOffer(offerId);
     if (offer == null) throw Exception('Offer not found.');
-    if (offer.clientId != _uid)
+    if (offer.clientId != _uid) {
       throw Exception('Only the client can accept this offer.');
+    }
     if (!offer.isSent || offer.paymentStatus != 'unpaid') {
       throw Exception('Offer is not in a state that can be accepted.');
     }
@@ -125,8 +127,9 @@ class DirectOffersService {
   Future<void> payNow(String offerId) async {
     final offer = await getOffer(offerId);
     if (offer == null) throw Exception('Offer not found.');
-    if (offer.clientId != _uid)
+    if (offer.clientId != _uid) {
       throw Exception('Only the client can pay this offer.');
+    }
     if (offer.status != 'accepted' || offer.paymentStatus != 'unpaid') {
       throw Exception('Offer must be accepted and unpaid to pay.');
     }
@@ -154,8 +157,9 @@ class DirectOffersService {
   ) async {
     final offer = await getOffer(offerId);
     if (offer == null) throw Exception('Offer not found.');
-    if (offer.clientId != _uid)
+    if (offer.clientId != _uid) {
       throw Exception('Only the client can recover this offer.');
+    }
     final response = await _client.functions.invoke(
       'qicard_payment_recovery_direct_offer',
       body: <String, dynamic>{
@@ -183,8 +187,9 @@ class DirectOffersService {
   Future<void> acceptWithPayment(String offerId) async {
     final offer = await getOffer(offerId);
     if (offer == null) throw Exception('Offer not found.');
-    if (offer.clientId != _uid)
+    if (offer.clientId != _uid) {
       throw Exception('Only the client can accept this offer.');
+    }
     if (!offer.isSent || offer.paymentStatus != 'unpaid') {
       throw Exception('Offer is not in a state that can be accepted.');
     }
@@ -209,8 +214,9 @@ class DirectOffersService {
   Future<void> cancelAcceptedOffer(String offerId) async {
     final offer = await getOffer(offerId);
     if (offer == null) throw Exception('Offer not found.');
-    if (offer.clientId != _uid)
+    if (offer.clientId != _uid) {
       throw Exception('Only the client can cancel this offer.');
+    }
     if (offer.status != 'accepted' || offer.paymentStatus != 'unpaid') {
       throw Exception(
         'Only accepted, unpaid offers can be canceled by the client.',
@@ -228,10 +234,12 @@ class DirectOffersService {
   Future<void> rejectOffer(String offerId) async {
     final offer = await getOffer(offerId);
     if (offer == null) throw Exception('Offer not found.');
-    if (offer.clientId != _uid)
+    if (offer.clientId != _uid) {
       throw Exception('Only the client can reject this offer.');
-    if (!offer.isSent)
+    }
+    if (!offer.isSent) {
       throw Exception('Offer cannot be rejected in its current state.');
+    }
 
     await _client
         .from('direct_offers')
@@ -244,10 +252,12 @@ class DirectOffersService {
   Future<void> cancelOffer(String offerId) async {
     final offer = await getOffer(offerId);
     if (offer == null) throw Exception('Offer not found.');
-    if (offer.freelancerId != _uid)
+    if (offer.freelancerId != _uid) {
       throw Exception('Only the freelancer can cancel this offer.');
-    if (!offer.isSent)
+    }
+    if (!offer.isSent) {
       throw Exception('Offer cannot be canceled in its current state.');
+    }
 
     await _client
         .from('direct_offers')
@@ -260,10 +270,12 @@ class DirectOffersService {
   Future<void> markDelivered(String offerId) async {
     final offer = await getOffer(offerId);
     if (offer == null) throw Exception('Offer not found.');
-    if (offer.freelancerId != _uid)
+    if (offer.freelancerId != _uid) {
       throw Exception('Only the freelancer can mark delivered.');
-    if (!offer.isActive)
+    }
+    if (!offer.isActive) {
       throw Exception('Offer must be active to mark delivered.');
+    }
 
     await _client
         .from('direct_offers')
@@ -281,8 +293,9 @@ class DirectOffersService {
   Future<void> completeOffer(String offerId) async {
     final offer = await getOffer(offerId);
     if (offer == null) throw Exception('Offer not found.');
-    if (offer.clientId != _uid)
+    if (offer.clientId != _uid) {
       throw Exception('Only the client can complete this offer.');
+    }
     if (!offer.isDelivered || offer.paymentStatus != 'held') {
       throw Exception('Offer must be delivered and payment held to complete.');
     }

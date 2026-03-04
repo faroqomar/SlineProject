@@ -19,6 +19,8 @@ Quick reference guide for Cursor AI to understand the SLine Flutter app architec
 
 - **Theme System**: `lib/core/theme/` (AppColors, AppTheme, AppDimens, AppTypography, AppDecorations)
 - **Services**: `lib/core/services/` (SupabaseConfig, AppLogger)
+- **Runtime Guards**: `lib/core/services/account_guard_service.dart` (moderation + force logout checks)
+- **Runtime Config**: `lib/core/services/system_config_service.dart`, `lib/core/providers/system_config_view_model.dart`
 - **Widgets**: `lib/core/widgets/` (GlassContainer, SignedAvatar, AppButton, etc.)
 - **Utils**: `lib/core/utils/` (format_date.dart, format_price.dart, transitions)
 - **Main App**: `lib/main.dart` (Provider setup, MaterialApp configuration)
@@ -146,12 +148,21 @@ features/[feature_name]/
 | `conversations` | Chat threads | `id`, `user1_id`, `user2_id`, `task_id` |
 | `messages` | Chat messages | `id`, `conversation_id`, `sender_id`, `content` |
 | `bookings` | Reservations | `id`, `task_id`, `provider_id`, `client_id`, `slot_id` |
+| `system_config` | Runtime flags | `maintenance_mode`, `disable_signups`, `min_app_version`, `app_banner` keys |
+| `reports` | User safety reports | `reporter_user_id`, `entity_type`, `entity_id`, `status` |
+| `disputes` | Booking/task disputes | `task_id`, `complainant_id`, `defendant_id`, `status` |
 | `availability_slots` | Provider slots | `id`, `provider_id`, `starts_at`, `ends_at` |
 | `favorites` | Saved freelancers | `id`, `client_id`, `freelancer_id` |
 | `saved_tasks` | Bookmarked tasks | `id`, `user_id`, `task_id` |
 | `portfolio_items` | Portfolio work | `id`, `owner_id`, `title`, `image_url` |
 
 **Reference**: See `Sline_everything/SUPABASE_SETUP.md` for complete schema.
+
+## Dashboard Link Notes (March 2026)
+
+- App enforces dashboard moderation and force-logout signals through startup/resume guard checks in `lib/main.dart`.
+- Public config is consumed from Supabase via `get_public_system_config` and drives maintenance, min-version, signup block, and app banner.
+- Safety surfaces are active from task/chat/public-profile/booking screens using `lib/features/safety/viewmodels/safety_view_model.dart`.
 
 ## Building and Running
 

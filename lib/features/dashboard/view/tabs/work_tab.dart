@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/services/payment_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
@@ -7,7 +9,12 @@ import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 import 'package:sline_app/features/dashboard/view/widgets/work_item_card.dart';
 import 'package:sline_app/features/dashboard/models/work_item.dart';
+import 'package:sline_app/features/tasks/services/task_service.dart';
+import 'package:sline_app/features/tasks/services/tender_payment_coordinator.dart';
+import 'package:sline_app/features/tasks/view/tender_payment_screen.dart';
+import 'package:sline_app/features/tasks/viewmodels/tender_payment_view_model.dart';
 import 'package:sline_app/features/wallet/view/wallet_screen.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 
 class WorkTab extends StatefulWidget {
   const WorkTab({super.key});
@@ -221,6 +228,10 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
               child: WorkItemCard(
                 item: item,
                 onPrimaryAction: () => _onPrimaryAction(context, vm, item),
+                onSecondaryAction: item.permissions.canCancel &&
+                        item.awardedRequestId != null
+                    ? () => _onCancelAward(context, vm, item)
+                    : null,
               ),
             ),
           ),
@@ -254,6 +265,10 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
               child: WorkItemCard(
                 item: item,
                 onPrimaryAction: () => _onPrimaryAction(context, vm, item),
+                onSecondaryAction: item.permissions.canCancel &&
+                        item.awardedRequestId != null
+                    ? () => _onCancelAward(context, vm, item)
+                    : null,
               ),
             ),
           ),
@@ -268,6 +283,41 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
     DashboardViewModel vm,
     WorkItem item,
   ) async {
+    // Task awarded pending payment: open TenderPaymentScreen from Work
+    if (item.type == WorkItemType.task &&
+        item.primaryActionType == PrimaryActionType.payEscrow &&
+        item.awardedRequestId != null) {
+      AppLogger.i(
+        'Work: opening tender payment for request=${item.awardedRequestId} task=${item.id}',
+        tag: 'dashboard.work',
+      );
+      final taskService = context.read<TaskService>();
+      final paymentService = context.read<PaymentService>();
+      final coordinator = TenderPaymentCoordinator(
+        taskService: taskService,
+        paymentService: paymentService,
+      );
+      final deadline = item.paymentDeadline ??
+          DateTime.now().add(const Duration(hours: 24));
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (_) => ChangeNotifierProvider<TenderPaymentViewModel>(
+            create: (_) => TenderPaymentViewModel(
+              coordinator: coordinator,
+              requestId: item.awardedRequestId!,
+              taskTitle: item.title,
+              freelancerName: item.counterpartyName,
+              amount: item.price ?? 0,
+              paymentDeadline: deadline,
+            ),
+            child: const TenderPaymentScreen(),
+          ),
+        ),
+      );
+      if (context.mounted) vm.refresh();
+      return;
+    }
+
     try {
       await vm.performPrimaryAction(item);
       if (context.mounted) vm.refresh();
@@ -287,6 +337,38 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
           content: Text(e is Exception ? e.toString() : 'Something went wrong'),
         ),
       );
+    }
+  }
+
+  Future<void> _onCancelAward(
+    BuildContext context,
+    DashboardViewModel vm,
+    WorkItem item,
+  ) async {
+    if (item.awardedRequestId == null) return;
+    AppLogger.i(
+      'Work: cancel award request=${item.awardedRequestId}',
+      tag: 'dashboard.work',
+    );
+    try {
+      await vm.cancelAwardedOffer(item.awardedRequestId!);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Award cancelled. Task is open again.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e is Exception ? e.toString() : 'Failed to cancel'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -374,6 +456,10 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
           child: WorkItemCard(
             item: item,
             onPrimaryAction: () => _onPrimaryAction(context, vm, item),
+          onSecondaryAction: item.permissions.canCancel &&
+                  item.awardedRequestId != null
+              ? () => _onCancelAward(context, vm, item)
+              : null,
           ),
         );
       },

@@ -1,6 +1,6 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2026-03-02
+**Last Updated:** 2026-03-04
 
 ---
 
@@ -20,6 +20,49 @@
 ---
 
 ## 📋 Version History
+
+### 🟢 Award → Work Waiting Payment — cancel_awarded_offer, vw_unified_work_items third branch
+
+**Date:** 2026-03-04  
+**Plan:** Award → Work Section + Waiting Payment + Cancel
+
+#### ✅ Implemented
+
+- **Award → Work:** After awarding an offer from Inbox, the task appears in the Work tab as "Waiting payment"; the client can Pay (opens `TenderPaymentScreen`) or Cancel from there.
+- **cancel_awarded_offer RPC:** Reverts an awarded-unpaid offer (task_request → rejected, task → open), notifies freelancer; client-only, SECURITY DEFINER with owner check.
+- **vw_unified_work_items:** Extended with a third branch: tasks with `status = 'assigned'`, no freelancer, joined to accepted/unpaid `task_requests`; exposes `awarded_request_id`, `payment_deadline` for Pay/Cancel UI.
+- **App:** WorkItem/DashboardRepository map new fields; DashboardPermissionService sets `canCancel` for client + pendingPayment; TaskService/DashboardViewModel `cancelAwardedOffer`; Work tab and NextActionsList open TenderPaymentScreen for task+payEscrow+awardedRequestId and show Cancel when applicable.
+- **Observability:** AppLogger in work_tab (Pay/Cancel from Work), next_actions_list (opening tender payment), inbox_tab (award success, switching to Work tab). Tag: `dashboard.work`, `dashboard.inbox`.
+- **Docs:** DEVELOPER_GUIDE.md updated (vw_unified_work_items description, Award → Work sentence); SUPABASE_SETUP.md §6.4 describes view branches and migration.
+
+#### 📊 Impact
+
+- Single source of truth for "waiting payment" items in Work tab; cancel path allows re-award without payment.
+
+---
+
+### 🟢 Tasks Tender Fix — Fail-Closed Payment, replace_task_request, active_role Removal
+
+**Date:** 2026-03-04  
+**Plan:** `.TODO/PLAN_Tasks_Fix_All_2026-03-01.md` (executed subset)
+
+#### ✅ Implemented
+
+- **Tender payment fail-closed:** `TenderPaymentCoordinator` throws before ledger/pay when `PaymentService` is `DemoPaymentService` or `QiCardPaymentService` (processPayment delegates to demo). Prevents tender state advancing on demo success; server-backed tender flow required for real payment.
+- **replace_task_request RPC:** Migration `20260311000000_replace_task_request.sql` defines `replace_task_request(p_task_id, p_freelancer_id, p_message, p_price, p_days)` RETURNS VOID. Withdraws caller's pending offer, inserts replacement; enforces caller = p_freelancer_id, task open/not own, and `profiles.active_role = 'freelancer'`. GRANT EXECUTE TO authenticated.
+- **Offer submit (no active_role mutation):** `TaskRequestsService.submitOffer()` no longer updates `profiles.active_role`; RLS (`is_freelancer(auth.uid())`) controls insert. On RLS denial (e.g. 42501), app shows: "You must be in freelancer mode to submit an offer. Switch your role in profile settings."
+- **Tests:** `test/unit/tasks/tender_payment_coordinator_test.dart` — fail-closed tests for Demo and QiCard payment services; payAwardedOffer never called when payment is demo.
+
+#### 📊 Impact
+
+- Tender payment cannot advance from demo/client-only result. replace_task_request is in repo migrations; offer submission relies on server-side role.
+
+#### 🧪 Verification
+
+- Execution log: `.TODO/EXECUTION_LOG_PLAN_Tasks_Fix_All_2026-03-01.md`
+- Multi-agent review: `.TODO/MASTER_REPORT_2026-03-04_TasksTenderFix.md` (Architect, Observability, SlineDocs, CodeGuard)
+
+---
 
 ### 🟢 Version 2.17.2 — Dashboard Full Remediation (Widget Moves, Lazy-Load, StatusPresenter)
 

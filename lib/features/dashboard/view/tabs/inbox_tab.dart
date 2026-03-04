@@ -11,6 +11,7 @@ import 'package:sline_app/features/tasks/view/tender_payment_screen.dart';
 import 'package:sline_app/features/tasks/viewmodels/tender_payment_view_model.dart';
 import 'package:sline_app/features/tasks/view/widgets/dashboard_offer_card.dart';
 import '../../viewmodels/dashboard_view_model.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 
 class InboxTab extends StatefulWidget {
   const InboxTab({super.key});
@@ -27,46 +28,20 @@ class _InboxTabState extends State<InboxTab> {
     DashboardViewModel vm,
     dynamic offer,
   ) async {
-    final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final taskService = context.read<TaskService>();
-    final paymentService = context.read<PaymentService>();
     setState(() => _isAwarding = true);
 
     try {
-      // Step 1: Award the offer
       final result = await vm.awardOffer(offer);
       if (!mounted) return;
       setState(() => _isAwarding = false);
 
       if (result != null && result['success'] == true) {
-        // Navigate to payment screen
-        final paymentDeadline = DateTime.parse(
-          result['payment_deadline'] as String,
-        );
-        final coordinator = TenderPaymentCoordinator(
-          taskService: taskService,
-          paymentService: paymentService,
-        );
-
-        await navigator.push(
-          MaterialPageRoute(
-            builder: (_) => ChangeNotifierProvider<TenderPaymentViewModel>(
-              create: (_) => TenderPaymentViewModel(
-                coordinator: coordinator,
-                requestId: offer.id,
-                taskTitle: offer.taskTitle ?? 'Task',
-                freelancerName: offer.bidderName ?? 'Freelancer',
-                amount: offer.price.toDouble(),
-                paymentDeadline: paymentDeadline,
-              ),
-              child: const TenderPaymentScreen(),
-            ),
-          ),
-        );
-
-        if (!mounted) return;
+        // Task moves to Work tab as "Waiting payment"; user can Pay or Cancel from there
         await vm.refresh();
+        if (!mounted) return;
+        vm.setTab(DashboardTab.activeWork.index, workSubTab: 0);
+        AppLogger.i('Inbox: award success, switching to Work tab', tag: 'dashboard.inbox');
       } else {
         // Show error
         if (!mounted) return;

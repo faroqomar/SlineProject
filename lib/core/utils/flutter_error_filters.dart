@@ -9,3 +9,10 @@ bool isIgnoredFlutterWebEngineDisposeError(Object error) {
     'Trying to render a disposed EngineFlutterView',
   );
 }
+
+/// Realtime heartbeat can contain JS interop objects that jsonEncode cannot serialize on web.
+bool isIgnoredRealtimeEncodeError(Object error) {
+  return error.toString().contains('LegacyJavaScriptObject') ||
+      (error.toString().contains('encodable') &&
+          error.toString().contains('realtime'));
+}

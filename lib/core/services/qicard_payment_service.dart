@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/demo_payment_service.dart';
 import 'package:sline_app/core/services/logger_service.dart';
@@ -482,6 +483,170 @@ class QiCardPaymentService implements PaymentService {
         offerId: offerId,
         error: 'Cannot start payment right now.',
         errorCode: 'DIRECT_OFFER_PAYMENT_CREATE_FAILED',
+      );
+    }
+  }
+
+  @override
+  Future<QiCardTenderPaymentResult> createPaymentForTenderOffer({
+    required String requestId,
+    required double amount,
+    String currency = 'IQD',
+    String? description,
+    String? finishUrl,
+    String? requestCorrelationId,
+  }) async {
+    try {
+      AppLogger.i(
+        'Creating tender payment request=$requestId amount=$amount',
+        tag: 'QiCard',
+      );
+      final response = await _client.functions.invoke(
+        'qicard_payment_create_tender',
+        body: <String, dynamic>{
+          'request_id': requestId,
+          'amount': amount,
+          'currency': currency,
+          'description': description,
+          'finish_url': finishUrl,
+          'request_correlation_id': requestCorrelationId,
+        },
+      );
+
+      final data = _asMap(response.data);
+      final serviceError =
+          _extractError(data) ?? _extractErrorFromPayload(data);
+      if (serviceError != null) {
+        AppLogger.w(
+          'Tender payment create rejected for request=$requestId',
+          tag: 'QiCard',
+          error: serviceError,
+          json: _safePayloadSummary(data),
+        );
+        return QiCardTenderPaymentResult(
+          requestId: requestId,
+          error: serviceError,
+          errorCode: 'TENDER_PAYMENT_CREATE_FAILED',
+        );
+      }
+
+      if (data == null) {
+        AppLogger.w(
+          'Tender payment create returned no payload for request=$requestId',
+          tag: 'QiCard',
+        );
+        return QiCardTenderPaymentResult(
+          requestId: requestId,
+          error: 'Payment could not be created.',
+          errorCode: 'TENDER_PAYMENT_CREATE_FAILED',
+        );
+      }
+
+      final payloadError = _extractErrorFromPayload(data);
+      final result = QiCardTenderPaymentResult(
+        requestId: data['request_id'] as String? ?? requestId,
+        formUrl: data['form_url'] as String?,
+        correlationId: data['correlation_id'] as String?,
+        paymentRequestId: data['payment_request_id'] as String?,
+        amount: (data['amount'] as num?)?.toDouble(),
+        error: payloadError,
+        errorCode: 'TENDER_PAYMENT_CREATE_FAILED',
+      );
+
+      if (!result.isSuccess) {
+        AppLogger.w(
+          'Tender payment create returned incomplete or error payload for request=$requestId',
+          tag: 'QiCard',
+          json: _safePayloadSummary(data),
+        );
+        return QiCardTenderPaymentResult(
+          requestId: requestId,
+          error:
+              payloadError ?? result.error ?? 'Payment could not be created.',
+          errorCode: result.errorCode ?? 'TENDER_PAYMENT_CREATE_FAILED',
+        );
+      }
+
+      AppLogger.i(
+        'Tender payment created request=$requestId correlation=${result.correlationId}',
+        tag: 'QiCard',
+      );
+      return result;
+    } catch (e, st) {
+      AppLogger.e(
+        'createPaymentForTenderOffer failed',
+        tag: 'QiCard',
+        error: e,
+        stackTrace: st,
+      );
+      return QiCardTenderPaymentResult(
+        requestId: requestId,
+        error: 'Cannot start payment right now.',
+        errorCode: 'TENDER_PAYMENT_CREATE_FAILED',
+      );
+    }
+  }
+
+  @override
+  Future<QiCardTenderRecoveryResult> recoverTenderPaymentAfterCallback({
+    required String requestId,
+    required String paymentRequestId,
+  }) async {
+    try {
+      AppLogger.i(
+        'Recovering tender payment request=$requestId paymentRequestId=$paymentRequestId',
+        tag: 'QiCard',
+      );
+      final response = await _client.functions.invoke(
+        'qicard_payment_recovery_tender',
+        body: <String, dynamic>{
+          'request_id': requestId,
+          'payment_request_id': paymentRequestId,
+        },
+      );
+
+      final data = _asMap(response.data);
+      final serviceError =
+          _extractError(data) ?? _extractErrorFromPayload(data);
+      if (serviceError != null) {
+        AppLogger.w(
+          'Tender recovery rejected for request=$requestId',
+          tag: 'QiCard',
+          error: serviceError,
+          json: _safePayloadSummary(data),
+        );
+        return QiCardTenderRecoveryResult(
+          error: serviceError,
+          errorCode: 'TENDER_RECOVERY_FAILED',
+        );
+      }
+
+      if (data == null) {
+        return QiCardTenderRecoveryResult(
+          error: 'Recovery failed.',
+          errorCode: 'TENDER_RECOVERY_FAILED',
+        );
+      }
+
+      final ok = data['ok'] as bool? ?? false;
+      final recovered = data['recovered'] as bool? ?? false;
+      return QiCardTenderRecoveryResult(
+        ok: ok,
+        recovered: recovered,
+        message: data['message'] as String?,
+      );
+    } catch (e, st) {
+      AppLogger.e(
+        'recoverTenderPaymentAfterCallback failed',
+        tag: 'QiCard',
+        error: e,
+        stackTrace: st,
+      );
+      final baseMessage = 'Cannot recover payment right now.';
+      final detail = kDebugMode ? ' (${e.toString()})' : '';
+      return QiCardTenderRecoveryResult(
+        error: '$baseMessage$detail',
+        errorCode: 'TENDER_RECOVERY_FAILED',
       );
     }
   }

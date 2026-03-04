@@ -4,12 +4,17 @@ import '../data/wallet_repository.dart';
 import '../models/wallet_activity_model.dart';
 import '../models/wallet_balance_model.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/services/account_guard_service.dart';
 
 class WalletViewModel extends ChangeNotifier {
   WalletViewModel({SupabaseClient? client})
-    : _repo = WalletRepository(client ?? Supabase.instance.client);
+    : _repo = WalletRepository(client ?? Supabase.instance.client),
+      _accountGuardService = AccountGuardService(
+        client: client ?? Supabase.instance.client,
+      );
 
   final WalletRepository _repo;
+  final AccountGuardService _accountGuardService;
 
   bool isLoading = false;
   String? error;
@@ -82,6 +87,11 @@ class WalletViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final allowed = await _accountGuardService.canPerformSensitiveAction();
+      if (!allowed) {
+        error = 'Your account is restricted. Please contact support.';
+        return false;
+      }
       await _repo.requestWithdrawal(amount: amount);
       // Refresh balances to reflect the locked funds
       balance = await _repo.getWalletBalance();

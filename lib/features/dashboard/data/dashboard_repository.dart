@@ -92,9 +92,21 @@ class DashboardRepository {
           .map((e) => UnifiedWorkItemModel.fromJson(e))
           .toList();
 
-      final items = unifiedItems
+      var items = unifiedItems
           .map((u) => _mapUnifiedToWorkItem(u, role))
           .toList();
+
+      // Fallback: if view has no third branch (awarded pending payment), fetch from task_requests + tasks so Work tab shows them
+      if (role == UserRole.client) {
+        final fallback = await _fetchAwardedPendingPaymentFallback(uid);
+        final fromViewIds = items.map((i) => i.id).toSet();
+        for (final w in fallback) {
+          if (!fromViewIds.contains(w.id)) {
+            items = [...items, w];
+            fromViewIds.add(w.id);
+          }
+        }
+      }
 
       // Fetch direct offers (active/delivered/completed) and merge
       final directOffers = await _fetchDirectOffers(uid);
@@ -211,7 +223,90 @@ class DashboardRepository {
       needsReview: u.needsReview,
       sortRank: u.sortRank,
       lastActivityAt: u.lastActivityAt,
+      awardedRequestId: u.awardedRequestId,
+      paymentDeadline: u.paymentDeadline,
+      price: u.price,
     );
+  }
+
+  /// Fallback when vw_unified_work_items has no third branch: fetch awarded-unpaid task_requests (client only).
+  /// RLS allows SELECT for task owner; merge into work items so "Waiting payment" shows on Work tab.
+  Future<List<WorkItem>> _fetchAwardedPendingPaymentFallback(String uid) async {
+    try {
+      final response = await _client
+          .from('task_requests')
+          .select('id, task_id, price, payment_deadline, updated_at, freelancer_id, bidder_id, tasks!task_id(id, title, deadline, owner_id, status)')
+          .eq('status', 'accepted')
+          .eq('payment_status', 'unpaid');
+
+      final list = response as List;
+      final workItems = <WorkItem>[];
+      for (final e in list) {
+        final map = Map<String, dynamic>.from(e as Map);
+        final taskMap = map['tasks'] as Map<String, dynamic>?;
+        if (taskMap == null) continue;
+        final taskId = taskMap['id'] as String?;
+        final ownerId = taskMap['owner_id'] as String?;
+        if (taskId == null || ownerId != uid) continue;
+        final title = taskMap['title'] as String? ?? '';
+        final deadline = map['payment_deadline'] != null
+            ? DateTime.tryParse(map['payment_deadline'] as String)
+            : null;
+        final requestId = map['id'] as String? ?? '';
+        final freelancerId = (map['freelancer_id'] as String?) ?? (map['bidder_id'] as String?) ?? '';
+        final price = (map['price'] as num?)?.toDouble() ?? 0.0;
+        final updatedAt = map['updated_at'] != null
+            ? DateTime.tryParse(map['updated_at'] as String) ?? DateTime.now()
+            : DateTime.now();
+        final paymentDeadline = map['payment_deadline'] != null
+            ? DateTime.tryParse(map['payment_deadline'] as String)
+            : null;
+
+        workItems.add(WorkItem(
+          id: taskId,
+          type: WorkItemType.task,
+          title: title,
+          counterpartyId: freelancerId,
+          counterpartyName: 'Loading...',
+          counterpartyAvatar: '',
+          counterpartyRole: 'Freelancer',
+          sourceId: taskId,
+          statusRaw: 'assigned',
+          statusUiBucket: 'Pending',
+          createdAt: updatedAt,
+          scheduledAt: deadline,
+          lastUpdate: updatedAt,
+          primaryActionType: PrimaryActionType.payEscrow,
+          permissions: DashboardPermissionService.calculatePermissions(
+            userRole: UserRole.client,
+            type: WorkItemType.task,
+            status: UnifiedWorkStatus.pendingPayment,
+          ),
+          workItemId: 'task:$taskId',
+          needsReview: false,
+          sortRank: 2,
+          lastActivityAt: updatedAt,
+          awardedRequestId: requestId,
+          paymentDeadline: paymentDeadline,
+          price: price,
+        ));
+      }
+      if (workItems.isNotEmpty) {
+        AppLogger.d(
+          'Fallback: fetched ${workItems.length} awarded pending-payment items',
+          tag: _kTag,
+        );
+      }
+      return workItems;
+    } catch (e, st) {
+      AppLogger.e(
+        'Fallback awarded pending-payment fetch failed',
+        error: e,
+        stackTrace: st,
+        tag: _kTag,
+      );
+      return [];
+    }
   }
 
   Future<List<DirectOffer>> _fetchDirectOffers(String uid) async {
@@ -400,7 +495,8 @@ class DashboardRepository {
       }).length;
 
       pendingPayment = currentItems.where((i) {
-        return i.statusRaw == 'paid_request_pending' ||
+        return i.awardedRequestId != null ||
+            i.statusRaw == 'paid_request_pending' ||
             (i.type == WorkItemType.directOffer && i.statusRaw == 'accepted');
       }).length;
 

@@ -22,6 +22,9 @@ class UnifiedWorkItemModel {
   final int sortRank;
   final String? resolutionType; // placeholder, nullable
   final bool? disputeRequiresUserAction; // placeholder, nullable
+  /// Set for awarded pending-payment tasks (branch from vw_unified_work_items).
+  final String? awardedRequestId;
+  final DateTime? paymentDeadline;
 
   const UnifiedWorkItemModel({
     required this.id,
@@ -43,6 +46,8 @@ class UnifiedWorkItemModel {
     this.sortRank = 6,
     this.resolutionType,
     this.disputeRequiresUserAction,
+    this.awardedRequestId,
+    this.paymentDeadline,
   });
 
   factory UnifiedWorkItemModel.fromJson(Map<String, dynamic> json) {
@@ -74,6 +79,10 @@ class UnifiedWorkItemModel {
       sortRank: json['sort_rank'] as int? ?? 6,
       resolutionType: json['resolution_type'] as String?,
       disputeRequiresUserAction: json['dispute_requires_user_action'] as bool?,
+      awardedRequestId: json['awarded_request_id'] as String?,
+      paymentDeadline: json['payment_deadline'] != null
+          ? DateTime.parse(json['payment_deadline'] as String)
+          : null,
     );
   }
 
