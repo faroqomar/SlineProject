@@ -27,19 +27,19 @@
 - `auth` waiting
 - `booking` ✅ 
 - `categories`
-- `chat` waiting
-- `dashboard` waiting
-- `favorites` waiting
+- `chat` ✅
+- `dashboard` ✅
+- `favorites` ✅
 - `home` ✅
 - `management` ✅
-- `notifications`
+- `notifications` ✅
 - `portfolio` ✅
-- `profile` waiting
+- `profile` ✅
 - `proposals`
 - `saved`
 - `search`
-- `services` waiting
-- `tasks` waiting
+- `services` ✅
+- `tasks` ✅
 - `wallet`
 - `work`
 
