@@ -149,6 +149,7 @@ class BookingModel {
   static BookingStatus _mapDbStatusToEnum(String status) {
     switch (status) {
       case 'paid_request_pending':
+      case 'accepted': // Legacy/backward compat: some flows wrote accepted; treat as paid_request_pending
         return BookingStatus.paidRequestPending;
       case 'active':
         return BookingStatus.active;

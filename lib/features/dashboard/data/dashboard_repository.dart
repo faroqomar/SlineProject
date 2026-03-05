@@ -8,6 +8,7 @@ import 'package:sline_app/features/dashboard/services/dashboard_permission_servi
 import 'package:sline_app/features/profile/services/profile_summary_service.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/features/work/models/unified_work_item_model.dart';
+import 'package:sline_app/features/work/models/unified_work_item_fallback_mapper.dart';
 import 'package:sline_app/features/direct_offers/models/direct_offer_model.dart';
 
 class DashboardRepository {
@@ -230,12 +231,12 @@ class DashboardRepository {
   }
 
   /// Fallback when vw_unified_work_items has no third branch: fetch awarded-unpaid task_requests (client only).
-  /// RLS allows SELECT for task owner; merge into work items so "Waiting payment" shows on Work tab.
+  /// Uses shared [UnifiedWorkItemFallbackMapper] so dashboard and work detail share one contract.
   Future<List<WorkItem>> _fetchAwardedPendingPaymentFallback(String uid) async {
     try {
       final response = await _client
           .from('task_requests')
-          .select('id, task_id, price, payment_deadline, updated_at, freelancer_id, bidder_id, tasks!task_id(id, title, deadline, owner_id, status)')
+          .select('id, task_id, price, payment_deadline, updated_at, freelancer_id, bidder_id, tasks!task_id(id, title, deadline, owner_id, client_id, status, updated_at)')
           .eq('status', 'accepted')
           .eq('payment_status', 'unpaid');
 
@@ -245,51 +246,12 @@ class DashboardRepository {
         final map = Map<String, dynamic>.from(e as Map);
         final taskMap = map['tasks'] as Map<String, dynamic>?;
         if (taskMap == null) continue;
-        final taskId = taskMap['id'] as String?;
         final ownerId = taskMap['owner_id'] as String?;
-        if (taskId == null || ownerId != uid) continue;
-        final title = taskMap['title'] as String? ?? '';
-        final deadline = map['payment_deadline'] != null
-            ? DateTime.tryParse(map['payment_deadline'] as String)
-            : null;
-        final requestId = map['id'] as String? ?? '';
-        final freelancerId = (map['freelancer_id'] as String?) ?? (map['bidder_id'] as String?) ?? '';
-        final price = (map['price'] as num?)?.toDouble() ?? 0.0;
-        final updatedAt = map['updated_at'] != null
-            ? DateTime.tryParse(map['updated_at'] as String) ?? DateTime.now()
-            : DateTime.now();
-        final paymentDeadline = map['payment_deadline'] != null
-            ? DateTime.tryParse(map['payment_deadline'] as String)
-            : null;
-
-        workItems.add(WorkItem(
-          id: taskId,
-          type: WorkItemType.task,
-          title: title,
-          counterpartyId: freelancerId,
-          counterpartyName: 'Loading...',
-          counterpartyAvatar: '',
-          counterpartyRole: 'Freelancer',
-          sourceId: taskId,
-          statusRaw: 'assigned',
-          statusUiBucket: 'Pending',
-          createdAt: updatedAt,
-          scheduledAt: deadline,
-          lastUpdate: updatedAt,
-          primaryActionType: PrimaryActionType.payEscrow,
-          permissions: DashboardPermissionService.calculatePermissions(
-            userRole: UserRole.client,
-            type: WorkItemType.task,
-            status: UnifiedWorkStatus.pendingPayment,
-          ),
-          workItemId: 'task:$taskId',
-          needsReview: false,
-          sortRank: 2,
-          lastActivityAt: updatedAt,
-          awardedRequestId: requestId,
-          paymentDeadline: paymentDeadline,
-          price: price,
-        ));
+        if (ownerId != uid) continue;
+        final unified = UnifiedWorkItemFallbackMapper.fromTaskRequestAndTaskMap(map);
+        if (unified != null) {
+          workItems.add(_mapUnifiedToWorkItem(unified, UserRole.client));
+        }
       }
       if (workItems.isNotEmpty) {
         AppLogger.d(

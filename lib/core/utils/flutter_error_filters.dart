@@ -16,3 +16,10 @@ bool isIgnoredRealtimeEncodeError(Object error) {
       (error.toString().contains('encodable') &&
           error.toString().contains('realtime'));
 }
+
+/// Realtime can emit malformed payloads (e.g. null or wrong shape) causing getEnrichedPayload to throw in the client.
+bool isIgnoredRealtimePayloadError(Object error) {
+  final s = error.toString();
+  return (error is NoSuchMethodError && s.contains('payload')) ||
+      (s.contains('getEnrichedPayload') && s.contains('non-function'));
+}

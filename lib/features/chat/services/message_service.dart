@@ -23,6 +23,7 @@ class MessageService {
     // (b) returns existing convo if already present, otherwise creates one,
     // (c) normalizes participant order (user1_id/user2_id) on the server.
     if (taskId != null) {
+      AppLogger.d('Chat: using task-linked path (taskId provided)');
       try {
         final response = await _client
             .rpc('start_task_conversation_v1', params: {'p_task_id': taskId})
@@ -40,7 +41,8 @@ class MessageService {
       }
     }
 
-    // ----- Plain DM (no task_id) path: keep existing behavior -----
+    // ----- Plain DM (no task_id) path: used for booking work or direct DMs -----
+    AppLogger.d('Chat: using DM path (no taskId)');
     final base = _client.from('conversations').select();
 
     // Filter by pair regardless of order

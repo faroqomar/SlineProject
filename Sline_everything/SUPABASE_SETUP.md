@@ -1,6 +1,6 @@
 # Supabase Setup for SLine — Complete Database Reference
 
-**Last Updated**: 2026-03-05 (Proposal RPC contract: 20260304060000–20260304062000; reject-offer conversation guard: 20260305071000)
+**Last Updated**: 2026-03-05 (Proposal RPC contract: 20260304060000–20260304062000; reject-offer: 20260305071000; work tables & RPCs: 20260305180000, 20260305180100)
 **Version**: 2.17
 **Database Version**: PostgreSQL 17.4.1
 **Project ID**: `isddrknbjsgaantjojhm`
@@ -624,6 +624,8 @@ Immutable snapshots of the work agreement at the moment of activation (or scope 
 | `created_at`          | timestamptz | ❌       | `now()`             | Creation timestamp     |
 
 **Constraints:** `UNIQUE(related_entity_type, related_entity_id, version)`
+
+**Migration:** `supabase/migrations/20260305180000_work_contracts_change_extension_requests.sql` (creates work_contracts, change_requests, extension_requests and RLS).
 
 ---
 
@@ -1456,6 +1458,13 @@ Canonical owner-side offer rejection RPC. It validates `tasks.owner_id`, rejects
 #### `reject_task_request(p_request_id uuid) → task_requests`
 
 Legacy compatibility wrapper. It resolves `task_id`, delegates to the canonical two-argument RPC above, and returns the refreshed `task_requests` row.
+
+#### Work revision and change RPCs (2026-03-05)
+
+- **`rpc_request_revision(entity_type text, entity_id uuid, p_note text)`** — Submits a revision request for a delivery; SECURITY DEFINER with participant check.
+- **`rpc_accept_change_request(request_id uuid)`** — Accepts a pending change request; SECURITY DEFINER with participant check.
+
+**Migration:** `supabase/migrations/20260305180100_work_revision_and_change_rpcs.sql`.
 
 #### `replace_task_request(...) → void`
 

@@ -2,21 +2,31 @@ import 'package:flutter/foundation.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/work/models/unified_work_item_model.dart';
+import 'package:sline_app/features/work/models/unified_work_item_fallback_mapper.dart';
 import 'package:sline_app/features/work/models/work_contract_model.dart';
 import 'package:sline_app/features/work/models/change_request_model.dart';
 import 'package:sline_app/features/work/models/extension_request_model.dart';
 import 'package:sline_app/features/work/services/work_management_service.dart';
 import 'package:sline_app/features/booking/models/booking_model.dart';
+import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
+import 'package:sline_app/features/chat/models/conversation_model.dart';
+import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 
 class WorkItemDetailsViewModel extends ChangeNotifier {
   final WorkManagementService _workService;
   final String currentUserId;
+  final ChatViewModel? _chatViewModel;
+  final DashboardViewModel? _dashboardViewModel;
 
   WorkItemDetailsViewModel({
     WorkManagementService? workService,
     required String uid,
-  }) : _workService = workService ?? WorkManagementService(),
-       currentUserId = uid {
+    ChatViewModel? chatViewModel,
+    DashboardViewModel? dashboardViewModel,
+  })  : _workService = workService ?? WorkManagementService(),
+        currentUserId = uid,
+        _chatViewModel = chatViewModel,
+        _dashboardViewModel = dashboardViewModel {
     if (currentUserId.isEmpty) {
       AppLogger.w('WorkItemDetailsViewModel initialized without user ID');
     }
@@ -62,13 +72,12 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Parallel fetch
+      // Parallel fetch with partial-failure tolerance: only work item (and booking fallback) is required.
       final results = await Future.wait([
         _workService.getUnifiedWorkItem(id, type),
-        _workService.getActiveContract(id, type),
-        _workService.getPendingChangeRequests(id, type),
-        _workService.getPendingExtensionRequests(id, type),
-        // Always try to fetch booking details if type is booking
+        _workService.getActiveContract(id, type).catchError((_) => null),
+        _workService.getPendingChangeRequests(id, type).catchError((_) => <ChangeRequestModel>[]),
+        _workService.getPendingExtensionRequests(id, type).catchError((_) => <ExtensionRequestModel>[]),
         type == 'booking' ? _workService.getBooking(id) : Future.value(null),
       ]);
 
@@ -78,26 +87,20 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
       _extensionRequests = results[3] as List<ExtensionRequestModel>;
       _booking = results[4] as BookingModel?;
 
-      // Fallback: If UnifiedWorkItem is missing but we have booking data, create a temporary one
+      // Fallback: If UnifiedWorkItem is missing but we have booking data, use shared mapper
       if (_workItem == null && _booking != null) {
-        _workItem = _createFallbackWorkItem(_booking!);
+        _workItem = UnifiedWorkItemFallbackMapper.fromBooking(_booking!);
       }
 
       if (_workItem == null) {
         _error = 'Work item not found';
       } else {
-        AppLogger.i(
+        AppLogger.d(
           'Work item details loaded',
           json: {
             'work_item_id': _workItem!.id,
             'source_type': _workItem!.sourceType,
-            'status': _workItem!.sourceStatus,
             'unified_status': _workItem!.unifiedStatus.name,
-            'current_user_id': currentUserId,
-            'client_id': _workItem!.clientId,
-            'freelancer_id': _workItem!.freelancerId,
-            'is_client': isClient,
-            'is_freelancer': isFreelancer,
             'needs_review': _workItem!.needsReview,
             'can_review': canReview,
           },
@@ -117,47 +120,6 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
-  }
-
-  UnifiedWorkItemModel _createFallbackWorkItem(BookingModel b) {
-    // Map BookingStatus to UnifiedWorkStatus
-    UnifiedWorkStatus uStatus;
-    switch (b.status) {
-      case BookingStatus.pending:
-      case BookingStatus.paidRequestPending:
-        uStatus = UnifiedWorkStatus.pending;
-        break;
-      case BookingStatus.confirmed:
-      case BookingStatus.active:
-      case BookingStatus.inProgress:
-        uStatus = UnifiedWorkStatus.active;
-        break;
-      case BookingStatus.completed:
-      case BookingStatus.delivered:
-        uStatus = UnifiedWorkStatus.delivered; // or completed
-        break;
-      case BookingStatus.declined:
-      case BookingStatus.canceled:
-      case BookingStatus.refunded:
-      case BookingStatus.expiredUnanswered:
-      case BookingStatus.noShow:
-        uStatus = UnifiedWorkStatus.canceled;
-        break;
-    }
-
-    return UnifiedWorkItemModel(
-      id: b.id,
-      sourceType: 'booking',
-      sourceStatus: b.status.name,
-      unifiedStatus: uStatus,
-      title: b.taskData?['title'] ?? 'Booking Task',
-      price: (b.price ?? 0).toDouble(),
-      deadline: b.dueAtUtc ?? b.scheduledAt,
-      clientId: b.clientId,
-      freelancerId: b.providerId,
-      revisionsTotal: 0,
-      revisionsUsed: 0,
-    );
   }
 
   // --- Actions ---
@@ -324,5 +286,27 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// Opens conversation for current work item (task-linked or DM for booking). Returns null if unavailable.
+  Future<Conversation?> openConversation() async {
+    final item = _workItem;
+    if (item == null || _chatViewModel == null) return null;
+    return _chatViewModel.createOrGetConversation(
+      taskId: item.isTask ? item.id : null,
+      user1Id: item.clientId,
+      user2Id: item.freelancerId,
+    );
+  }
+
+  /// Refreshes dashboard work list (e.g. after payment). No-op if dashboard not injected.
+  void refreshDashboard() {
+    _dashboardViewModel?.refresh();
+  }
+
+  /// Cancels awarded offer. No-op if dashboard not injected. Caller should handle errors.
+  Future<void> cancelAward(String requestId) async {
+    if (_dashboardViewModel == null) return;
+    await _dashboardViewModel.cancelAwardedOffer(requestId);
   }
 }

@@ -90,7 +90,8 @@ void main() async {
       // Global Flutter framework error handler (widget build errors, etc.)
       FlutterError.onError = (FlutterErrorDetails details) {
         if (isIgnoredFlutterWebEngineDisposeError(details.exception) ||
-            isIgnoredRealtimeEncodeError(details.exception)) {
+            isIgnoredRealtimeEncodeError(details.exception) ||
+            isIgnoredRealtimePayloadError(details.exception)) {
           return;
         }
         AppLogger.e(
@@ -104,7 +105,8 @@ void main() async {
       // Global platform error handler (native crashes, isolate errors)
       PlatformDispatcher.instance.onError = (error, stack) {
         if (isIgnoredFlutterWebEngineDisposeError(error) ||
-            isIgnoredRealtimeEncodeError(error)) {
+            isIgnoredRealtimeEncodeError(error) ||
+            isIgnoredRealtimePayloadError(error)) {
           return true;
         }
         AppLogger.e(
@@ -132,7 +134,8 @@ void main() async {
     },
     (error, stack) {
       if (isIgnoredFlutterWebEngineDisposeError(error) ||
-          isIgnoredRealtimeEncodeError(error)) {
+          isIgnoredRealtimeEncodeError(error) ||
+          isIgnoredRealtimePayloadError(error)) {
         return;
       }
       // Catches any uncaught async exceptions outside the Flutter framework

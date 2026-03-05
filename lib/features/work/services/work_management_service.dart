@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/work/models/unified_work_item_model.dart';
+import 'package:sline_app/features/work/models/unified_work_item_fallback_mapper.dart';
 import 'package:sline_app/features/work/models/work_contract_model.dart';
 import 'package:sline_app/features/work/models/change_request_model.dart';
 import 'package:sline_app/features/work/models/extension_request_model.dart';
@@ -57,6 +58,7 @@ class WorkManagementService {
   }
 
   /// Fetch task + accepted/unpaid task_request and build UnifiedWorkItemModel (branch 3 shape).
+  /// Uses shared [UnifiedWorkItemFallbackMapper] for consistent semantics with dashboard.
   Future<UnifiedWorkItemModel?> _getTaskUnifiedWorkItemFallback(String taskId) async {
     try {
       final response = await _supabase
@@ -71,52 +73,9 @@ class WorkManagementService {
           .maybeSingle();
 
       if (response == null) return null;
-
-      final map = Map<String, dynamic>.from(response);
-      final tasksMap = map['tasks'] as Map<String, dynamic>?;
-      if (tasksMap == null) return null;
-
-      final t = Map<String, dynamic>.from(tasksMap);
-      final trId = map['id'] as String?;
-      final price = (map['price'] as num?)?.toDouble() ?? 0.0;
-      final freelancerId =
-          (map['freelancer_id'] as String?) ?? (map['bidder_id'] as String?) ?? '';
-      final clientId = (t['client_id'] as String?) ?? (t['owner_id'] as String?) ?? '';
-      final paymentDeadline = map['payment_deadline'] != null
-          ? DateTime.tryParse(map['payment_deadline'] as String)
-          : null;
-      final trUpdated = map['updated_at'] != null
-          ? DateTime.tryParse(map['updated_at'] as String)
-          : null;
-      final tUpdated = t['updated_at'] != null
-          ? DateTime.tryParse(t['updated_at'] as String)
-          : null;
-      final deadline = t['deadline'] != null
-          ? DateTime.tryParse(t['deadline'] as String)
-          : null;
-
-      final viewRow = <String, dynamic>{
-        'id': taskId,
-        'source_type': 'task',
-        'source_status': 'assigned',
-        'unified_status': 'pending_payment',
-        'title': t['title'] as String? ?? 'Task',
-        'price': price,
-        'deadline': deadline?.toIso8601String(),
-        'client_id': clientId,
-        'freelancer_id': freelancerId,
-        'delivered_at': null,
-        'review_expires_at': null,
-        'revisions_total': 3,
-        'revisions_used': 0,
-        'work_item_id': 'task:$taskId',
-        'last_activity_at': (trUpdated ?? tUpdated)?.toIso8601String(),
-        'needs_review': false,
-        'sort_rank': 2,
-        'awarded_request_id': trId,
-        'payment_deadline': paymentDeadline?.toIso8601String(),
-      };
-      return UnifiedWorkItemModel.fromJson(viewRow);
+      return UnifiedWorkItemFallbackMapper.fromTaskRequestAndTaskMap(
+        Map<String, dynamic>.from(response),
+      );
     } catch (e, stack) {
       AppLogger.e(
         'Task fallback fetch failed: $taskId',
@@ -257,8 +216,8 @@ class WorkManagementService {
           'note': note,
         },
       );
-      AppLogger.i(
-        'Work delivered: $entityId',
+      AppLogger.d(
+        'Work delivered',
         json: {'type': entityType, 'note_length': note.length},
       );
     } catch (e, stack) {
@@ -286,8 +245,8 @@ class WorkManagementService {
           'p_note': note,
         },
       );
-      AppLogger.i(
-        'Revision requested: $entityId',
+      AppLogger.d(
+        'Revision requested',
         json: {'type': entityType, 'note_length': note.length},
       );
     } catch (e, stack) {
@@ -310,7 +269,7 @@ class WorkManagementService {
         'rpc_approve_delivery',
         params: {'entity_type': entityType, 'entity_id': entityId},
       );
-      AppLogger.i('Delivery approved: $entityId', json: {'type': entityType});
+      AppLogger.d('Delivery approved', json: {'type': entityType});
     } catch (e, stack) {
       AppLogger.e(
         'Failed to approve delivery: $entityId ($entityType)',
@@ -339,7 +298,7 @@ class WorkManagementService {
         'rpc_accept_change_request',
         params: {'request_id': requestId},
       );
-      AppLogger.i('Change request accepted: $requestId');
+      AppLogger.d('Change request accepted');
     } catch (e, stack) {
       AppLogger.e(
         'Failed to accept change request',
@@ -366,7 +325,7 @@ class WorkManagementService {
         'reason': reason,
         'requester_id': requesterId,
       });
-      AppLogger.i('Extension requested: $entityId');
+      AppLogger.d('Extension requested');
     } catch (e, stack) {
       AppLogger.e('Failed to request extension', error: e, stackTrace: stack);
       rethrow;
@@ -377,7 +336,7 @@ class WorkManagementService {
   Future<void> acceptBooking(String bookingId) async {
     try {
       await BookingService(_supabase).acceptBooking(bookingId);
-      AppLogger.i('Booking accepted: $bookingId');
+      AppLogger.d('Booking accepted');
     } catch (e, stack) {
       AppLogger.e('Failed to accept booking', error: e, stackTrace: stack);
       rethrow;
@@ -388,7 +347,7 @@ class WorkManagementService {
   Future<void> declineBooking(String bookingId) async {
     try {
       await BookingService(_supabase).declineBooking(bookingId);
-      AppLogger.i('Booking declined (refunded): $bookingId');
+      AppLogger.d('Booking declined (refunded)');
     } catch (e, stack) {
       AppLogger.e('Failed to decline booking', error: e, stackTrace: stack);
       rethrow;
@@ -402,7 +361,7 @@ class WorkManagementService {
         bookingId: bookingId,
         newStatus: BookingStatus.canceled,
       );
-      AppLogger.i('Booking canceled: $bookingId');
+      AppLogger.d('Booking canceled');
     } catch (e, stack) {
       AppLogger.e('Failed to cancel booking', error: e, stackTrace: stack);
       rethrow;

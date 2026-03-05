@@ -38,7 +38,11 @@ class WorkItemDetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final uid = context.read<AuthViewModel>().currentUserId ?? '';
     return ChangeNotifierProvider(
-      create: (_) => WorkItemDetailsViewModel(uid: uid),
+      create: (ctx) => WorkItemDetailsViewModel(
+        uid: uid,
+        chatViewModel: ctx.read<ChatViewModel>(),
+        dashboardViewModel: ctx.read<DashboardViewModel>(),
+      ),
       child: _WorkItemDetailsContent(id: id, type: type),
     );
   }
@@ -215,7 +219,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
               );
               await openProposalPayment(context, summary: summary, launcherSource: 'work_item_details');
               if (context.mounted) {
-                context.read<DashboardViewModel>().refresh();
+                context.read<WorkItemDetailsViewModel>().refreshDashboard();
                 context.read<WorkItemDetailsViewModel>().loadData(taskId, 'task');
               }
             },
@@ -231,7 +235,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
           child: TextButton(
             onPressed: () async {
               try {
-                await context.read<DashboardViewModel>().cancelAwardedOffer(requestId);
+                await context.read<WorkItemDetailsViewModel>().cancelAward(requestId);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -645,20 +649,19 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     BuildContext context,
     WorkItemDetailsViewModel vm,
   ) async {
-    final item = vm.workItem;
-    if (item == null) return;
+    if (vm.workItem == null) return;
 
-    final chatVm = context.read<ChatViewModel>();
     final loader = LoadingUtils.show(context, debugLabel: 'work_item_chat');
 
     try {
-      final convo = await chatVm.createOrGetConversation(
-        taskId: item.id,
-        user1Id: item.clientId,
-        user2Id: item.freelancerId,
-      );
+      final convo = await vm.openConversation();
       if (!context.mounted) return;
-
+      if (convo == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open conversation')),
+        );
+        return;
+      }
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => ChatScreen(conversation: convo)),

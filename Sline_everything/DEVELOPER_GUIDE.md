@@ -2018,7 +2018,7 @@ UI (WorkItemDetailsScreen)
 ## Key Patterns
 
 1. **Parallel Data Fetching**: `loadData()` uses `Future.wait` with 5 concurrent queries
-2. **Fallback Mapper**: When `vw_unified_work_items` has refresh lag, creates a temporary model from raw booking data
+2. **Fallback Mapper**: Single source in `lib/features/work/models/unified_work_item_fallback_mapper.dart`. When `vw_unified_work_items` has refresh lag, work detail and dashboard use it to build a temporary model from task_requests+tasks or booking; completed bookings map to `UnifiedWorkStatus.completed` (not delivered).
 3. **Review Ownership Contract**:
    - `vw_unified_work_items.needs_review` is a raw delivered-state flag, not an authorization result.
    - Client-facing review UI must combine that flag with role-derived permissions before showing review sections or CTAs.
@@ -2026,12 +2026,13 @@ UI (WorkItemDetailsScreen)
      - `actionableNeedsReview` → current role can review now
      - `awaitingCounterpartyReview` → delivered work is waiting on the other side
    - Provider/freelancer users should see `Awaiting Client Review` in dashboard cards and `Waiting for Client Review` in `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/work/view/work_item_details_screen.dart`.
-4. **Status Mapping**:
+4. **Booking chat**: From work detail, booking work opens chat via plain DM (no `taskId`); task work uses task-linked RPC. See `.TODO/Archive/WorkExectuion/DECISION_work_chat_contract_2026-03-04.md`.
+5. **Status Mapping**:
    - `declineBooking` maps to DB `refunded` status (per `fn_booking_guard` transitions).
    - `paid_request_pending` maps to `UnifiedWorkStatus.requestPending` to expose actions (Accept/Decline).
-5. **Observability**:
+6. **Observability**:
    - `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/work/viewmodels/work_item_details_view_model.dart` logs role/status context on detail load so CTA mismatches can be traced from AppLogger output.
-6. **Error Handling**:
+7. **Error Handling**:
    - Work detail actions set screen-safe user-facing errors in the ViewModel and log full traces through `AppLogger`; review action routing is role-gated before any modal is opened.
 
 ## Verification

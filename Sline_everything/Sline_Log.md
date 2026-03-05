@@ -21,6 +21,27 @@
 
 ## 📋 Version History
 
+### 🟢 Work Full Remediation — fallback mapper, booking chat, work tables & RPCs
+
+**Date:** 2026-03-05  
+**Plan:** `.TODO/Archive/WorkExectuion/PLAN_Work_Full_Remediation_2026-03-04.md`, `work.TODO.md`
+
+#### ✅ Implemented
+
+- **UnifiedWorkItemFallbackMapper** (`lib/features/work/models/unified_work_item_fallback_mapper.dart`): Single source for mapping task_requests+tasks or booking to `UnifiedWorkItemModel`; completed → `UnifiedWorkStatus.completed` (not delivered). Used by work service, work detail ViewModel, and dashboard repo for awarded-pending fallback.
+- **Booking chat:** Work detail uses taskId only when `item.isTask` (task-linked path); booking uses DM path. MessageService logs path at debug.
+- **WorkItemDetailsViewModel:** Optional `ChatViewModel` and `DashboardViewModel`; `openConversation()`, `refreshDashboard()`, `cancelAward(requestId)`; partial-failure tolerance in `loadData` (optional contract/requests failure does not blank screen).
+- **Work detail screen:** Provider create injects Chat/Dashboard VMs; no direct chat/dashboard orchestration from view.
+- **Migrations:** `20260305180000_work_contracts_change_extension_requests.sql` (work_contracts, change_requests, extension_requests + RLS); `20260305180100_work_revision_and_change_rpcs.sql` (rpc_request_revision, rpc_accept_change_request). Applied via Supabase MCP.
+- **Observability:** Work service success logs at debug; work VM logs at debug (no PII at info).
+- **Docs:** DEVELOPER_GUIDE work section; SUPABASE_SETUP migration refs; this log entry.
+
+#### 📊 Impact
+
+- Work tab and work detail load reliably; booking and task semantics aligned; optional data failures no longer blank the screen.
+
+---
+
 ### 🟢 Reject-offer conversation guard — owner can create task convo from reject path
 
 **Date:** 2026-03-05  
