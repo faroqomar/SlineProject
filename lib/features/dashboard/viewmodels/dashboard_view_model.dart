@@ -7,8 +7,7 @@ import '../models/activity_log.dart';
 import '../models/dashboard_counters.dart';
 import '../models/inbox_task_group.dart';
 import 'package:sline_app/core/services/dashboard_cache_service.dart';
-import '../../services/models/service_model.dart';
-import '../../services/services/services_service.dart';
+
 import '../../tasks/models/task_model.dart';
 import '../../tasks/services/task_service.dart';
 import '../../booking/models/booking_model.dart';
@@ -37,13 +36,13 @@ class DashboardViewModel extends ChangeNotifier {
     DashboardRepository? repository,
     DashboardCacheService? cacheService,
     TaskService? taskService,
-    ServicesService? servicesService,
+
     BookingService? bookingService,
     DirectOffersService? directOffersService,
   }) : _repository = repository ?? DashboardRepository(),
        _cacheService = cacheService,
        _taskService = taskService ?? TaskService(),
-       _servicesService = servicesService ?? ServicesService(),
+
        _bookingService =
            bookingService ??
            BookingService((repository ?? DashboardRepository()).client),
@@ -116,8 +115,6 @@ class DashboardViewModel extends ChangeNotifier {
   DashboardCounters get counters => _counters;
 
   // Phase 4: Management Data
-  List<ServiceModel> _myServices = [];
-  List<ServiceModel> get myServices => _myServices;
 
   List<Task> _myTasks = [];
   List<Task> get myTasks => _myTasks;
@@ -165,7 +162,6 @@ class DashboardViewModel extends ChangeNotifier {
   }
 
   // Services (injected or defaulted)
-  final ServicesService _servicesService;
   final TaskService _taskService;
   late final BookingService _bookingService;
 
@@ -534,7 +530,6 @@ class DashboardViewModel extends ChangeNotifier {
       _pendingPaymentTenders = pendingResult['tenders'] as List<Task>;
 
       final mgmtResult = results[5] as Map<String, dynamic>;
-      _myServices = mgmtResult['services'] as List<ServiceModel>;
       _myTasks = mgmtResult['tasks'] as List<Task>;
 
       // Invalidate cached computations
@@ -582,19 +577,17 @@ class DashboardViewModel extends ChangeNotifier {
   Future<Map<String, dynamic>> _loadManagementDataInternal() async {
     final uid = _repository.currentUser?.id;
     if (uid == null) {
-      return {'services': <ServiceModel>[], 'tasks': <Task>[]};
+      return {'tasks': <Task>[]};
     }
     try {
-      if (_currentRole == UserRole.freelancer) {
-        final services = await _servicesService.getMyServices(uid);
-        return {'services': services, 'tasks': <Task>[]};
-      } else {
+      if (_currentRole == UserRole.client) {
         final tasks = await _taskService.getTasksByUser(uid);
-        return {'services': <ServiceModel>[], 'tasks': tasks};
+        return {'tasks': tasks};
       }
+      return {'tasks': <Task>[]};
     } catch (e) {
       AppLogger.e('Failed to load management data', error: e, tag: _kTag);
-      return {'services': <ServiceModel>[], 'tasks': <Task>[]};
+      return {'tasks': <Task>[]};
     }
   }
 
@@ -715,7 +708,6 @@ class DashboardViewModel extends ChangeNotifier {
       if (_abortIfDisposed()) return;
 
       final mgmt = await _loadManagementDataInternal();
-      _myServices = mgmt['services'] as List<ServiceModel>;
       _myTasks = mgmt['tasks'] as List<Task>;
       if (_abortIfDisposed()) return;
 
@@ -754,7 +746,6 @@ class DashboardViewModel extends ChangeNotifier {
       if (_abortIfDisposed()) return;
 
       final mgmt = await _loadManagementDataInternal();
-      _myServices = mgmt['services'] as List<ServiceModel>;
       _myTasks = mgmt['tasks'] as List<Task>;
       if (_abortIfDisposed()) return;
 

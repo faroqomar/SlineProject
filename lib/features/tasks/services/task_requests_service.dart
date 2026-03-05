@@ -104,21 +104,7 @@ class TaskRequestsService {
     }
 
     try {
-      // RLS allows insert only when is_freelancer(auth.uid()) is true (profiles.active_role = 'freelancer').
-      // Do not mutate active_role from the client; require user to switch role explicitly.
-      final profile = await _client
-          .from('profiles')
-          .select('active_role')
-          .eq('id', uid)
-          .single();
-      final activeRole = profile['active_role'] as String?;
-      if (activeRole != 'freelancer') {
-        AppLogger.w('Proposal submit rejected: user not in freelancer role', tag: 'Offers');
-        throw Exception(
-          'You must be in freelancer mode to submit a proposal. Switch your role in profile settings first.',
-        );
-      }
-
+      // No active_role check required; any user can submit an offer.
       final insertData = <String, dynamic>{
         'task_id': taskId,
         'bidder_id': uid,
@@ -147,10 +133,15 @@ class TaskRequestsService {
         AppLogger.w('Duplicate pending offer', tag: 'Offers');
         throw Exception('You already have a pending offer on this task.');
       }
-      if (e.code == '42501' || msg.contains('policy') || msg.contains('row-level security')) {
-        AppLogger.w('Offer submit denied by RLS (e.g. not in freelancer role)', tag: 'Offers');
+      if (e.code == '42501' ||
+          msg.contains('policy') ||
+          msg.contains('row-level security')) {
+        AppLogger.w(
+          'Offer submit denied by RLS (e.g. task is closed or user is owner)',
+          tag: 'Offers',
+        );
         throw Exception(
-          'You must be in freelancer mode to submit an offer. Switch your role in profile settings.',
+          'You cannot submit an offer. The task might be closed or you are the task owner.',
         );
       }
       AppLogger.e(

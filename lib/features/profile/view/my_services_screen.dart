@@ -42,56 +42,66 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
       body: vm.isLoading && services.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : vm.error != null && services.isEmpty
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppDimens.p16),
-                    child: Text(
-                      vm.error!,
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: context.colorScheme.error,
-                      ),
-                      textAlign: TextAlign.center,
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(AppDimens.p16),
+                child: Text(
+                  vm.error!,
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: context.colorScheme.error,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            )
+          : services.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.design_services_outlined,
+                    size: 64,
+                    color: context.colorScheme.textSecondary,
+                  ),
+                  const SizedBox(height: AppDimens.p16),
+                  Text(
+                    'No services found.',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: context.colorScheme.textSecondary,
                     ),
                   ),
-                )
-              : services.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.design_services_outlined,
-                            size: 64,
-                            color: context.colorScheme.textSecondary,
-                          ),
-                          const SizedBox(height: AppDimens.p16),
-                          Text(
-                            'No services found.',
-                            style: AppTypography.bodyMedium.copyWith(
-                              color: context.colorScheme.textSecondary,
-                            ),
-                          ),
-                        ],
+                ],
+              ),
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.all(AppDimens.p16),
+              itemCount: services.length,
+              separatorBuilder: (_, __) =>
+                  const SizedBox(height: AppDimens.p16),
+              itemBuilder: (context, index) {
+                final service = services[index];
+                return ServiceCard(
+                  service: service,
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Edit service coming soon'),
+                        behavior: SnackBarBehavior.floating,
                       ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.all(AppDimens.p16),
-                      itemCount: services.length,
-                      separatorBuilder: (_, __) =>
-                          const SizedBox(height: AppDimens.p16),
-                      itemBuilder: (context, index) {
-                        final service = services[index];
-                        return ServiceCard(
-                          service: service,
-                          onTap: () {
-                            // Navigate to service details or edit
-                          },
-                        );
-                      },
-                    ),
+                    );
+                  },
+                );
+              },
+            ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Navigate to create service
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Create service coming soon'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
         },
         backgroundColor: context.colorScheme.primary,
         child: const Icon(Icons.add, color: Colors.white),

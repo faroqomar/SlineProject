@@ -17,36 +17,36 @@ This document is the **single source of truth** for all Supabase backend setup: 
 
 ### Core Tables (Public Schema)
 
-| Table                   | RLS | Rows | Purpose                            |
-| ----------------------- | --- | ---- | ---------------------------------- |
-| `profiles`              | ✅  | 0    | User profiles linked to auth.users |
-| `tasks`                 | ✅  | 1    | Job postings (tender/booking)      |
-| `task_requests`         | ✅  | 0    | Bids/proposals on tasks            |
-| `conversations`         | ✅  | 0    | Chat threads                       |
+| Table                   | RLS | Rows | Purpose                               |
+| ----------------------- | --- | ---- | ------------------------------------- |
+| `profiles`              | ✅  | 0    | User profiles linked to auth.users    |
+| `tasks`                 | ✅  | 1    | Job postings (tender/booking)         |
+| `task_requests`         | ✅  | 0    | Bids/proposals on tasks               |
+| `conversations`         | ✅  | 0    | Chat threads                          |
 | `direct_offers`         | ✅  | 0    | Chat-to-work offers (no task/booking) |
-| `messages`              | ✅  | 1    | Chat messages                      |
-| `conversation_presence` | ✅  | 0    | Typing indicators                  |
-| `categories`            | ✅  | 0    | Service categories                 |
-| `favorites`             | ✅  | 0    | Client's saved freelancers         |
-| `saved_tasks`           | ✅  | 0    | Bookmarked tasks                   |
-| `availability_slots`    | ✅  | 0    | Provider availability              |
-| `bookings`              | ✅  | 1    | Session bookings                   |
-| `portfolio_items`       | ✅  | 0    | Freelancer portfolio               |
-| `notifications`         | ✅  | 1    | User notifications                 |
-| `work_contracts`        | ✅  | 0    | Versioned scope snapshots          |
-| `change_requests`       | ✅  | 0    | Scope/price/days change proposals  |
-| `extension_requests`    | ✅  | 0    | Deadline extension proposals       |
-| `accounts`              | ✅  | -    | **NEW**: Ledger account chart      |
-| `journal_entries`       | ✅  | -    | **NEW**: Double-entry journal      |
-| `ledger_lines`          | ✅  | -    | **NEW**: Double-entry ledger lines |
-| `admin_logs`            | ✅  | 0    | Audit logs for admin actions       |
-| `disputes`              | ✅  | 0    | Formal dispute tickets             |
-| `dispute_messages`      | ✅  | 0    | Messages in dispute threads        |
-| `dispute_evidence`      | ✅  | 0    | Attached dispute files             |
-| `withdrawal_requests`   | ✅  | 0    | Freelancer fund withdrawals        |
-| `support_tickets`       | ✅  | 0    | General support tickets            |
-| `ticket_messages`       | ✅  | 0    | Messages in support tickets        |
-| `services`              | ✅  | 0    | Pre-defined freelancer services    |
+| `messages`              | ✅  | 1    | Chat messages                         |
+| `conversation_presence` | ✅  | 0    | Typing indicators                     |
+| `categories`            | ✅  | 0    | Service categories                    |
+| `favorites`             | ✅  | 0    | Client's saved freelancers            |
+| `saved_tasks`           | ✅  | 0    | Bookmarked tasks                      |
+| `availability_slots`    | ✅  | 0    | Provider availability                 |
+| `bookings`              | ✅  | 1    | Session bookings                      |
+| `portfolio_items`       | ✅  | 0    | Freelancer portfolio                  |
+| `notifications`         | ✅  | 1    | User notifications                    |
+| `work_contracts`        | ✅  | 0    | Versioned scope snapshots             |
+| `change_requests`       | ✅  | 0    | Scope/price/days change proposals     |
+| `extension_requests`    | ✅  | 0    | Deadline extension proposals          |
+| `accounts`              | ✅  | -    | **NEW**: Ledger account chart         |
+| `journal_entries`       | ✅  | -    | **NEW**: Double-entry journal         |
+| `ledger_lines`          | ✅  | -    | **NEW**: Double-entry ledger lines    |
+| `admin_logs`            | ✅  | 0    | Audit logs for admin actions          |
+| `disputes`              | ✅  | 0    | Formal dispute tickets                |
+| `dispute_messages`      | ✅  | 0    | Messages in dispute threads           |
+| `dispute_evidence`      | ✅  | 0    | Attached dispute files                |
+| `withdrawal_requests`   | ✅  | 0    | Freelancer fund withdrawals           |
+| `support_tickets`       | ✅  | 0    | General support tickets               |
+| `ticket_messages`       | ✅  | 0    | Messages in support tickets           |
+| `services`              | ✅  | 0    | Pre-defined freelancer services       |
 
 ### Views
 
@@ -316,17 +316,17 @@ CREATE TYPE public.related_entity_type_enum AS ENUM (
 
 User profile information linked to Supabase Auth.
 
-| Column        | Type        | Nullable | Default      | Description                                    |
-| ------------- | ----------- | -------- | ------------ | ---------------------------------------------- |
-| `id`          | uuid        | ❌       | -            | PK, FK to auth.users(id) ON DELETE CASCADE     |
-| `full_name`   | text        | ✅       | -            | Display name                                   |
-| `email`       | text        | ✅       | -            | Email address                                  |
-| `avatar_url`  | text        | ✅       | -            | Storage path in 'avatars' bucket               |
-| `roles`       | text[]      | ✅       | `['client']` | Available roles array                          |
-| `active_role` | text        | ✅       | `'client'`   | Current active role ('client' or 'freelancer') |
-| `seller_level`| seller_level_enum | ✅  | `'new_seller'` | Discovery tier for safe public summaries     |
-| `skills`      | text[]      | ✅       | `'{}'`       | List of professional skills                    |
-| `created_at`  | timestamptz | ✅       | `now()`      | Creation timestamp (UTC)                       |
+| Column         | Type              | Nullable | Default        | Description                                    |
+| -------------- | ----------------- | -------- | -------------- | ---------------------------------------------- |
+| `id`           | uuid              | ❌       | -              | PK, FK to auth.users(id) ON DELETE CASCADE     |
+| `full_name`    | text              | ✅       | -              | Display name                                   |
+| `email`        | text              | ✅       | -              | Email address                                  |
+| `avatar_url`   | text              | ✅       | -              | Storage path in 'avatars' bucket               |
+| `roles`        | text[]            | ✅       | `['client']`   | Available roles array                          |
+| `active_role`  | text              | ✅       | `'client'`     | Current active role ('client' or 'freelancer') |
+| `seller_level` | seller_level_enum | ✅       | `'new_seller'` | Discovery tier for safe public summaries       |
+| `skills`       | text[]            | ✅       | `'{}'`         | List of professional skills                    |
+| `created_at`   | timestamptz       | ✅       | `now()`        | Creation timestamp (UTC)                       |
 
 **Key Relations:**
 
@@ -525,31 +525,31 @@ Provider availability windows for booking tasks.
 
 Client bookings on provider slots.
 
-| Column                  | Type                | Nullable | Default             | Description              |
-| ----------------------- | ------------------- | -------- | ------------------- | ------------------------ |
-| `id`                    | uuid                | ❌       | `gen_random_uuid()` | Primary key              |
-| `task_id`               | uuid                | ✅       | -                   | FK to tasks              |
-| `provider_id`           | uuid                | ❌       | -                   | FK to auth.users         |
-| `client_id`             | uuid                | ❌       | -                   | FK to auth.users         |
-| `slot_id`               | uuid                | ✅       | -                   | FK to availability_slots |
-| `status`                | booking_status_enum | ❌       | `'pending'`         | Booking status           |
-| `payment_status`        | payment_status_enum | ❌       | `'unpaid'`          | Payment status           |
-| `price`                 | numeric             | ✅       | `0`                 | Agreed price             |
-| `package_id`            | text                | ✅       | -                   | Chosen package ID        |
-| `requirements`          | jsonb               | ✅       | `'{}'`              | Client requirements      |
-| `payment_request_id`    | text                | ✅       | -                   | Server-side QiCard request id |
-| `payment_gateway_id`    | text                | ✅       | -                   | QiCard payment id        |
-| `payment_correlation_id`| text                | ✅       | -                   | Canonical booking correlation |
-| `payment_expires_at`    | timestamptz         | ✅       | -                   | Payment session expiry   |
-| `payment_recovered_at`  | timestamptz         | ✅       | -                   | Last successful reconciliation |
-| `note`                  | text                | ✅       | -                   | Booking notes            |
-| `delivered_at`          | timestamptz         | ✅       | -                   | When work was submitted  |
-| `review_expires_at`     | timestamptz         | ✅       | -                   | Auto-approval deadline   |
-| `revisions_total`       | int                 | ❌       | `3`                 | Max revisions allowed    |
-| `revisions_used`        | int                 | ❌       | `0`                 | Revisions consumed       |
-| `revision_note`         | text                | ✅       | -                   | Last revision feedback   |
-| `revision_requested_at` | timestamptz         | ✅       | -                   | When revision was asked  |
-| `created_at`            | timestamptz         | ❌       | `now()`             | Creation timestamp       |
+| Column                   | Type                | Nullable | Default             | Description                    |
+| ------------------------ | ------------------- | -------- | ------------------- | ------------------------------ |
+| `id`                     | uuid                | ❌       | `gen_random_uuid()` | Primary key                    |
+| `task_id`                | uuid                | ✅       | -                   | FK to tasks                    |
+| `provider_id`            | uuid                | ❌       | -                   | FK to auth.users               |
+| `client_id`              | uuid                | ❌       | -                   | FK to auth.users               |
+| `slot_id`                | uuid                | ✅       | -                   | FK to availability_slots       |
+| `status`                 | booking_status_enum | ❌       | `'pending'`         | Booking status                 |
+| `payment_status`         | payment_status_enum | ❌       | `'unpaid'`          | Payment status                 |
+| `price`                  | numeric             | ✅       | `0`                 | Agreed price                   |
+| `package_id`             | text                | ✅       | -                   | Chosen package ID              |
+| `requirements`           | jsonb               | ✅       | `'{}'`              | Client requirements            |
+| `payment_request_id`     | text                | ✅       | -                   | Server-side QiCard request id  |
+| `payment_gateway_id`     | text                | ✅       | -                   | QiCard payment id              |
+| `payment_correlation_id` | text                | ✅       | -                   | Canonical booking correlation  |
+| `payment_expires_at`     | timestamptz         | ✅       | -                   | Payment session expiry         |
+| `payment_recovered_at`   | timestamptz         | ✅       | -                   | Last successful reconciliation |
+| `note`                   | text                | ✅       | -                   | Booking notes                  |
+| `delivered_at`           | timestamptz         | ✅       | -                   | When work was submitted        |
+| `review_expires_at`      | timestamptz         | ✅       | -                   | Auto-approval deadline         |
+| `revisions_total`        | int                 | ❌       | `3`                 | Max revisions allowed          |
+| `revisions_used`         | int                 | ❌       | `0`                 | Revisions consumed             |
+| `revision_note`          | text                | ✅       | -                   | Last revision feedback         |
+| `revision_requested_at`  | timestamptz         | ✅       | -                   | When revision was asked        |
+| `created_at`             | timestamptz         | ❌       | `now()`             | Creation timestamp             |
 
 ---
 
@@ -670,21 +670,21 @@ Requests to extend the deadline.
 
 Offers created from chat without a task or booking. Lifecycle: **sent** → **accepted** (unpaid; client accepts in chat only) → client pays from Dashboard (QiCard) → **active** (payment_status held) → **delivered** → **completed** (release_with_fee).
 
-| Column             | Type                    | Nullable | Default   | Description                          |
-| ------------------ | ----------------------- | -------- | --------- | ------------------------------------ |
-| `id`               | uuid                    | ❌       | `gen_random_uuid()` | Primary key                  |
-| `conversation_id`   | uuid                    | ❌       | -         | FK to conversations                  |
-| `client_id`        | uuid                    | ❌       | -         | FK to profiles (payer)               |
-| `freelancer_id`    | uuid                    | ❌       | -         | FK to profiles (offer creator)       |
-| `task_id`          | uuid                    | ✅       | -         | Optional FK to tasks                 |
-| `title`            | text                    | ✅       | -         | Optional summary                     |
-| `description`      | text                    | ✅       | -         | Scope/notes                          |
-| `price`            | numeric                 | ❌       | -         | Amount (IQD)                         |
-| `days`             | int                     | ❌       | -         | Delivery days                        |
-| `status`           | text                    | ❌       | `'sent'`  | sent, accepted, rejected, active, delivered, completed, canceled, refunded |
-| `payment_status`   | payment_status_enum     | ❌       | `'unpaid'` | unpaid, held, released, refunded   |
-| `created_at`       | timestamptz             | ❌       | `now()`   | Creation timestamp                   |
-| `updated_at`       | timestamptz             | ❌       | `now()`   | Last update                          |
+| Column            | Type                | Nullable | Default             | Description                                                                |
+| ----------------- | ------------------- | -------- | ------------------- | -------------------------------------------------------------------------- |
+| `id`              | uuid                | ❌       | `gen_random_uuid()` | Primary key                                                                |
+| `conversation_id` | uuid                | ❌       | -                   | FK to conversations                                                        |
+| `client_id`       | uuid                | ❌       | -                   | FK to profiles (payer)                                                     |
+| `freelancer_id`   | uuid                | ❌       | -                   | FK to profiles (offer creator)                                             |
+| `task_id`         | uuid                | ✅       | -                   | Optional FK to tasks                                                       |
+| `title`           | text                | ✅       | -                   | Optional summary                                                           |
+| `description`     | text                | ✅       | -                   | Scope/notes                                                                |
+| `price`           | numeric             | ❌       | -                   | Amount (IQD)                                                               |
+| `days`            | int                 | ❌       | -                   | Delivery days                                                              |
+| `status`          | text                | ❌       | `'sent'`            | sent, accepted, rejected, active, delivered, completed, canceled, refunded |
+| `payment_status`  | payment_status_enum | ❌       | `'unpaid'`          | unpaid, held, released, refunded                                           |
+| `created_at`      | timestamptz         | ❌       | `now()`             | Creation timestamp                                                         |
+| `updated_at`      | timestamptz         | ❌       | `now()`             | Last update                                                                |
 
 **Indexes:** `idx_direct_offers_conversation`, `idx_direct_offers_client_status`, `idx_direct_offers_freelancer_status`  
 **RLS:** SELECT for client or freelancer; INSERT for freelancer (conversation participant); UPDATE for client/freelancer per role.  
@@ -697,16 +697,16 @@ Offers created from chat without a task or booking. Lifecycle: **sent** → **ac
 
 Centralized immutable record of notes and system events.
 
-| Column                | Type        | Nullable | Default             | Description                 |
-| --------------------- | ----------- | -------- | ------------------- | --------------------------- |
-| `id`                  | uuid        | ❌       | `gen_random_uuid()` | Primary key                 |
-| `author_id`           | uuid        | ❌       | -                   | FK to profiles              |
+| Column                | Type        | Nullable | Default             | Description                             |
+| --------------------- | ----------- | -------- | ------------------- | --------------------------------------- |
+| `id`                  | uuid        | ❌       | `gen_random_uuid()` | Primary key                             |
+| `author_id`           | uuid        | ❌       | -                   | FK to profiles                          |
 | `related_entity_id`   | uuid        | ❌       | -                   | task_id, booking_id, or direct_offer id |
-| `related_entity_type` | text        | ❌       | -                   | 'task', 'booking', or 'direct_offer'   |
-| `content`             | text        | ❌       | -                   | Note content or event label |
-| `is_private`          | boolean     | ❌       | `false`             | Access control flag         |
-| `metadata`            | jsonb       | ✅       | `'{}'`              | Event metadata              |
-| `created_at`          | timestamptz | ❌       | `now()`             | Creation timestamp          |
+| `related_entity_type` | text        | ❌       | -                   | 'task', 'booking', or 'direct_offer'    |
+| `content`             | text        | ❌       | -                   | Note content or event label             |
+| `is_private`          | boolean     | ❌       | `false`             | Access control flag                     |
+| `metadata`            | jsonb       | ✅       | `'{}'`              | Event metadata                          |
+| `created_at`          | timestamptz | ❌       | `now()`             | Creation timestamp                      |
 
 **Indexes:** `idx_work_logs_entity` (related_entity_id, created_at desc), `idx_work_logs_entity_scope_created_at` (related_entity_id, related_entity_type, created_at desc)
 
@@ -718,17 +718,18 @@ Centralized immutable record of notes and system events.
 
 Freelancer work gallery.
 
-| Column        | Type        | Nullable | Default             | Description                        |
-| ------------- | ----------- | -------- | ------------------- | ---------------------------------- |
-| `id`          | uuid        | ❌       | `gen_random_uuid()` | Primary key                        |
-| `owner_id`    | uuid        | ❌       | -                   | FK to profiles                     |
-| `title`       | text        | ❌       | -                   | Item title                         |
-| `description` | text        | ✅       | -                   | Item description                   |
+| Column        | Type        | Nullable | Default             | Description                                                                      |
+| ------------- | ----------- | -------- | ------------------- | -------------------------------------------------------------------------------- |
+| `id`          | uuid        | ❌       | `gen_random_uuid()` | Primary key                                                                      |
+| `owner_id`    | uuid        | ❌       | -                   | FK to profiles                                                                   |
+| `title`       | text        | ❌       | -                   | Item title                                                                       |
+| `description` | text        | ✅       | -                   | Item description                                                                 |
 | `image_path`  | text        | ✅       | -                   | **Canonical**: Storage path in 'portfolio' bucket (e.g., `ownerId/filename.jpg`) |
-| `image_url`   | text        | ✅       | -                   | **Legacy**: Public URL (deprecated, backwards compatibility) |
-| `created_at`  | timestamptz | ❌       | `now()`             | Creation timestamp                 |
+| `image_url`   | text        | ✅       | -                   | **Legacy**: Public URL (deprecated, backwards compatibility)                     |
+| `created_at`  | timestamptz | ❌       | `now()`             | Creation timestamp                                                               |
 
 **Image Resolution Pattern (v2.16.8+)**:
+
 - New code writes to `image_path` only
 - `ProfileRepository.resolvePortfolioImageUrl()` generates signed URLs (2-hour TTL)
 - Legacy rows with `image_url` still render via `effectiveImageRef` fallback
@@ -898,17 +899,29 @@ Messages within a support ticket.
 
 Pre-defined service packages offered by freelancers.
 
-| Column          | Type        | Nullable | Default             | Description               |
-| --------------- | ----------- | -------- | ------------------- | ------------------------- |
-| `id`            | uuid        | ❌       | `gen_random_uuid()` | Primary key               |
-| `freelancer_id` | uuid        | ✅       | -                   | FK to profiles            |
-| `title`         | text        | ✅       | -                   | Service title             |
-| `description`   | text        | ✅       | -                   | What the service includes |
-| `price`         | numeric     | ✅       | -                   | Fixed price               |
-| `delivery_days` | integer     | ✅       | -                   | Expected delivery time    |
-| `status`        | text        | ✅       | -                   | 'active', 'paused'        |
-| `image_urls`    | text[]      | ✅       | -                   | Service images            |
-| `created_at`    | timestamptz | ✅       | `now()`             | Timestamp                 |
+| Column          | Type        | Nullable | Default             | Description                      |
+| --------------- | ----------- | -------- | ------------------- | -------------------------------- |
+| `id`            | uuid        | ❌       | `gen_random_uuid()` | Primary key                      |
+| `freelancer_id` | uuid        | ❌       | -                   | FK to profiles (RLS: auth.uid()) |
+| `title`         | text        | ❌       | -                   | Service title                    |
+| `description`   | text        | ✅       | -                   | What the service includes        |
+| `price`         | numeric     | ✅       | -                   | Fixed price                      |
+| `delivery_days` | integer     | ✅       | -                   | Expected delivery time           |
+| `status`        | text        | ❌       | `'draft'`           | 'active', 'draft', 'paused'      |
+| `image_urls`    | text[]      | ✅       | `'{}'`              | Service images                   |
+| `created_at`    | timestamptz | ✅       | `now()`             | Timestamp                        |
+
+**RLS Policies:**
+
+- `Freelancers can view own services` — SELECT where `auth.uid() = freelancer_id`
+- `Public can view active services` — SELECT where `status = 'active'`
+- `Freelancers can insert own services` — INSERT with check `auth.uid() = freelancer_id`
+- `Freelancers can update own services` — UPDATE where `auth.uid() = freelancer_id`
+- `Freelancers can delete own services` — DELETE where `auth.uid() = freelancer_id`
+
+**Indexes:** `services_pkey`, `idx_services_freelancer_id`, `idx_services_status`
+
+**Constraints:** `chk_services_status CHECK (status IN ('active', 'draft', 'paused'))`
 
 ---
 
@@ -1001,37 +1014,37 @@ All tables have Row Level Security (RLS) enabled. The tables below describe the 
 
 ### 7.1 `profiles` Policies
 
-| Policy                                   | Command | Rule              |
-| ---------------------------------------- | ------- | ----------------- |
-| `profiles_select_self`                   | SELECT  | `auth.uid() = id` |
-| `Allow insert for authenticated users`   | INSERT  | `auth.uid() = id` |
-| `Users can insert their own profile`     | INSERT  | `auth.uid() = id` |
-| `Users can update their own profile`     | UPDATE  | `auth.uid() = id` |
-| `Users can delete their own profile`     | DELETE  | `auth.uid() = id` |
+| Policy                                 | Command | Rule              |
+| -------------------------------------- | ------- | ----------------- |
+| `profiles_select_self`                 | SELECT  | `auth.uid() = id` |
+| `Allow insert for authenticated users` | INSERT  | `auth.uid() = id` |
+| `Users can insert their own profile`   | INSERT  | `auth.uid() = id` |
+| `Users can update their own profile`   | UPDATE  | `auth.uid() = id` |
+| `Users can delete their own profile`   | DELETE  | `auth.uid() = id` |
 
 Cross-user profile summaries must go through `public.rpc_get_profile_summaries(uuid[])` or the safe `public.search_profiles(...)` function. Base-table reads are intentionally self-only because `profiles` contains sensitive fields such as `email` and `metadata`.
 
 ### 7.2 `tasks` Policies
 
-| Policy | Command | Rule |
-| ------ | ------- | ---- |
-| `tasks_select_authenticated_open_or_involved` | SELECT | `status = 'open' OR owner_id = auth.uid() OR freelancer_id = auth.uid() OR assigned_freelancer_id = auth.uid()` |
-| `tasks_insert_owner` | INSERT | `owner_id = auth.uid()` |
-| `tasks_update_involved` | UPDATE | `owner_id = auth.uid() OR freelancer_id = auth.uid() OR assigned_freelancer_id = auth.uid()` |
-| `tasks_update_owner` | UPDATE | `owner_id = auth.uid()` |
-| `tasks_delete_owner` | DELETE | `owner_id = auth.uid()` |
+| Policy                                        | Command | Rule                                                                                                            |
+| --------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------- |
+| `tasks_select_authenticated_open_or_involved` | SELECT  | `status = 'open' OR owner_id = auth.uid() OR freelancer_id = auth.uid() OR assigned_freelancer_id = auth.uid()` |
+| `tasks_insert_owner`                          | INSERT  | `owner_id = auth.uid()`                                                                                         |
+| `tasks_update_involved`                       | UPDATE  | `owner_id = auth.uid() OR freelancer_id = auth.uid() OR assigned_freelancer_id = auth.uid()`                    |
+| `tasks_update_owner`                          | UPDATE  | `owner_id = auth.uid()`                                                                                         |
+| `tasks_delete_owner`                          | DELETE  | `owner_id = auth.uid()`                                                                                         |
 
 `owner_id` is the canonical authorization column for task ownership. `owner_id` is generated from `COALESCE(client_id, user_id)` for compatibility with legacy rows, but new RLS and owner-side RPC checks must bind to `owner_id`.
 
 ### 7.3 `task_requests` Policies
 
-| Policy               | Command | Rule                                                                           |
-| -------------------- | ------- | ------------------------------------------------------------------------------ |
-| `tr_select`          | SELECT  | `freelancer_id = auth.uid() OR EXISTS(task owner check)`                       |
-| `tr_insert`          | INSERT  | `is_freelancer(uid) AND freelancer_id = uid AND task is open AND not own task` |
-| `tr_update`          | UPDATE  | `freelancer_id = uid AND status = 'pending'`                                   |
-| `tr_update_by_owner` | UPDATE  | Task owner can update                                                          |
-| `tr_delete`          | DELETE  | `freelancer_id = uid AND status = 'pending'`                                   |
+| Policy               | Command | Rule                                                     |
+| -------------------- | ------- | -------------------------------------------------------- |
+| `tr_select`          | SELECT  | `freelancer_id = auth.uid() OR EXISTS(task owner check)` |
+| `tr_insert`          | INSERT  | `freelancer_id = uid AND task is open AND not own task`  |
+| `tr_update`          | UPDATE  | `freelancer_id = uid AND status = 'pending'`             |
+| `tr_update_by_owner` | UPDATE  | Task owner can update                                    |
+| `tr_delete`          | DELETE  | `freelancer_id = uid AND status = 'pending'`             |
 
 ### 7.4 `conversations` Policies
 
@@ -1219,13 +1232,13 @@ Cross-user profile summaries must go through `public.rpc_get_profile_summaries(u
 
 ## 10. Indexes
 
-| Table      | Columns                                                     | Type | Purpose          |
-| ---------- | ----------------------------------------------------------- | ---- | ---------------- |
-| `tasks`    | `(to_tsvector('english', title \|\| ' ' \|\| description))` | GIN  | Full-text search |
-| `tasks`    | `(skills)`                                                  | GIN  | Skills filtering |
-| `tasks`    | `(status, created_at DESC, id DESC)`                        | BTREE| Home feed pagination |
-| `profiles` | `(to_tsvector('english', full_name))`                       | GIN  | Full-text search |
-| `profiles` | `(skills)`                                                  | GIN  | Skills filtering |
+| Table      | Columns                                                     | Type  | Purpose              |
+| ---------- | ----------------------------------------------------------- | ----- | -------------------- |
+| `tasks`    | `(to_tsvector('english', title \|\| ' ' \|\| description))` | GIN   | Full-text search     |
+| `tasks`    | `(skills)`                                                  | GIN   | Skills filtering     |
+| `tasks`    | `(status, created_at DESC, id DESC)`                        | BTREE | Home feed pagination |
+| `profiles` | `(to_tsvector('english', full_name))`                       | GIN   | Full-text search     |
+| `profiles` | `(skills)`                                                  | GIN   | Skills filtering     |
 
 | Trigger                                  | Event         | Function                               | Purpose                          |
 | ---------------------------------------- | ------------- | -------------------------------------- | -------------------------------- |

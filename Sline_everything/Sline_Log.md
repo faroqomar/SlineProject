@@ -21,6 +21,28 @@
 
 ## 📋 Version History
 
+### 🟢 Offer Submission Role Requirement Fix — removed active_role check
+
+**Date:** 2026-03-05  
+**Issue:** Freelancers had to explicitly switch `active_role` to `freelancer` to submit an offer, which caused friction and errors in the UI.
+
+#### ✅ Implemented
+
+- **Database RLS:** Removed the `is_freelancer(auth.uid()) = true` check from the `tr_insert` policy on the `public.task_requests` table.
+- **Client Code:** Removed the explicit pre-insert check for `active_role == 'freelancer'` inside `lib/features/tasks/services/task_requests_service.dart`.
+- **Error Messages:** Updated the client-side error fallback to correctly state the RLS reasoning (task is closed or user is task owner) instead of demanding a role switch.
+
+#### 📊 Impact
+
+- Users currently in `client` mode can submit offers on tasks without explicitly switching roles in the settings page. Friction reduced.
+
+#### 🧪 Verification
+
+- Verified SQL constraints via Supabase MCP.
+- Ran `flutter test test/unit/services/` and `flutter analyze` successfully.
+
+---
+
 ### 🟢 Work Full Remediation — fallback mapper, booking chat, work tables & RPCs
 
 **Date:** 2026-03-05  

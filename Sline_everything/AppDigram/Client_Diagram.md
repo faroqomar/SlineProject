@@ -4,13 +4,14 @@ config:
   theme: neo-dark
   layout: dagre
 ---
+
 flowchart LR
 
 C(("Client"))
 F(("Freelancer"))
 
 %% =========================================================
-%% ENTRY POINTS (Client)  +  STRICT SEPARATION NOTE
+%% ENTRY POINTS (Client) + STRICT SEPARATION NOTE
 %% =========================================================
 subgraph ENTRY_C["Entry Points (Pre-Activation)"]
 direction TB
@@ -114,37 +115,36 @@ It must be shown inside **Work tab** as an “Active Work Item”.
 Use only these states in the UI:
 
 1. **Draft / Open Tender**
-    
-    Tender is posted and collecting proposals.
-    
+
+   Tender is posted and collecting proposals.
+
 2. **Pending Payment (Awarded)**
-    
-    Client awarded a freelancer but hasn’t paid yet (tender only).
-    
+
+   Client awarded a freelancer but hasn’t paid yet (tender only).
+
 3. **Request Pending (Escrow Held)**
-    
-    Client paid, but freelancer has not accepted yet (booking only).
-    
+
+   Client paid, but freelancer has not accepted yet (booking only).
+
 4. **Active (Requirements Frozen)**
-    
-    Work started. Requirements are frozen.
-    
+
+   Work started. Requirements are frozen.
+
 5. **Delivered (Needs Review)**
-    
-    Freelancer delivered work. Client must decide.
-    
+
+   Freelancer delivered work. Client must decide.
+
 6. **Completed (Payout Released)**
-    
-    Work finished. Payment released.
-    
+
+   Work finished. Payment released.
+
 7. **Cancelled (Refund Policy Applied)**
-    
-    Work ended early. Refund/payout handled.
-    
+
+   Work ended early. Refund/payout handled.
+
 8. **Dispute (Admin Review)**
-    
-    Conflict escalated. Admin decides payout/refund/split.
-    
+
+   Conflict escalated. Admin decides payout/refund/split.
 
 ---
 
@@ -430,9 +430,9 @@ Trigger condition:
 Inside the work item as a structured object:
 
 - “Change Request” with:
-    - scope change summary
-    - added time
-    - added price (if any)
+  - scope change summary
+  - added time
+  - added price (if any)
 
 ## **5.3 Client decision**
 
@@ -498,9 +498,7 @@ Open the delivery and choose one of:
 - Approve
 - Request revision (if remaining)
 - Dispute
-    
-    Or do nothing (auto-approve happens)
-    
+  Or do nothing (auto-approve happens)
 
 ---
 
@@ -666,9 +664,9 @@ Must show:
 1. Delivered needs review (highest priority)
 2. Tender awarded but pending payment (very high priority)
 3. Dispute requiring evidence / admin updates (high priority)
-    
-    Then:
-    
+
+   Then:
+
 - Pending freelancer acceptance (booking request pending)
 
 **Counters grid:**
@@ -699,9 +697,7 @@ Must show filters:
 - Active
 - Done
 - Cancelled
-    
-    Optionally:
-    
+  Optionally:
 - Needs Review (Delivered) as a special filter or as top of Active.
 
 ---
@@ -794,19 +790,19 @@ graph TD
 **Components:**
 
 1. **Greeting:** "Hello, [Name]!" with a role-specific tagline.
-    - *Freelancer:* "Ready to pick up some work?"
-    - *Client:* "Let's get your projects moving."
+   - _Freelancer:_ "Ready to pick up some work?"
+   - _Client:_ "Let's get your projects moving."
 2. **Wallet Snapshot (`WalletSnapshotCard`):** Displays current balance (mocked or from Wallet feature).
 3. **Counters Grid (`DashboardCountersGrid`):**
-    - 4 Stats: Active Jobs, Pending Requests, Completed, Rating/Earnings.
+   - 4 Stats: Active Jobs, Pending Requests, Completed, Rating/Earnings.
 4. **Next Actions (`NextActionsList`):**
-    - **Logic:** The VM calculates the top 3 most urgent items based on:
-        - **Money/Trust:** Pending payments, delivered work needing review. (Highest Priority)
-        - **Urgency:** Items scheduled within 48 hours.
-        - **Recency:** Most recently updated active items.
+   - **Logic:** The VM calculates the top 3 most urgent items based on:
+     - **Money/Trust:** Pending payments, delivered work needing review. (Highest Priority)
+     - **Urgency:** Items scheduled within 48 hours.
+     - **Recency:** Most recently updated active items.
 5. **Activity Feed (`ActivityFeedPreview`):**
-    - Shows recent logs (e.g., "New offer received", "Booking confirmed").
-    - Expandable with "See All".
+   - Shows recent logs (e.g., "New offer received", "Booking confirmed").
+   - Expandable with "See All".
 
 ### B. Bookings Tab (`BookingsTab`)
 
@@ -817,8 +813,8 @@ graph TD
 - **Freelancer View:** Shows bookings where user is the `Provider`.
 - **Client View:** Shows bookings where user is the `Client`.
 - **Sections:**
-    1. **Upcoming:** `scheduledAt` is in the future OR status is Pending/Confirmed.
-    2. **Past:** `scheduledAt` is past.
+  1. **Upcoming:** `scheduledAt` is in the future OR status is Pending/Confirmed.
+  2. **Past:** `scheduledAt` is past.
 
 ### C. Work Tab (`WorkTab`)
 
@@ -828,13 +824,13 @@ graph TD
 Uses a nested `TabBar` with 3 filters:
 
 1. **Active:**
-    - Statuses: `open`, `assigned`, `pending`, `confirmed`, `inprogress`, `paid_request_pending`.
-    - Sorted by: Urgency (Schedule) > Creation Date.
+   - Statuses: `open`, `assigned`, `pending`, `confirmed`, `inprogress`, `paid_request_pending`.
+   - Sorted by: Urgency (Schedule) > Creation Date.
 2. **Done:**
-    - Statuses: `completed`, `paid`, `reviewed`.
-    - Sorted by: Completion Date (Newest first).
+   - Statuses: `completed`, `paid`, `reviewed`.
+   - Sorted by: Completion Date (Newest first).
 3. **Cancelled:**
-    - Statuses: `cancelled`, `rejected`, `declined`.
+   - Statuses: `cancelled`, `rejected`, `declined`.
 
 **Item Model (`WorkItem`):**
 
@@ -847,9 +843,9 @@ Uses a nested `TabBar` with 3 filters:
 
 **Logic:**
 
-- **Client View:** Shows offers *received* from freelancers.
-- **Freelancer View:** Shows offers *submitted* to clients.
-- **Grouped View (VM Logic):** Offers are grouped by `Task` (e.g., "Fix my Sink" might have 3 offers). *Note: The UI currently shows a flat list in `InboxTab` but the VM supports grouping.*
+- **Client View:** Shows offers _received_ from freelancers.
+- **Freelancer View:** Shows offers _submitted_ to clients.
+- **Grouped View (VM Logic):** Offers are grouped by `Task` (e.g., "Fix my Sink" might have 3 offers). _Note: The UI currently shows a flat list in `InboxTab` but the VM supports grouping._
 
 **Actions:**
 
@@ -863,15 +859,15 @@ Uses a nested `TabBar` with 3 filters:
 - **DashboardCacheService:** Local storage (Hive/SharedPreferences) for offline access.
 - **TaskService:** Fetches Tasks, Offers, Tenders.
 - **BookingService:** Fetches Calendar Bookings.
-- **ServicesService:** Fetches User's listed services (for Management view - currently lazy loaded).
+- **ServicesRepository:** Centralized data-access for the user's services; handles full CRUD operations with RLS-safe writes.
 
 ## 5. User Roles (Client vs Freelancer)
 
 - **Freelancer Mode:**
-    - See jobs assigned to YOU.
-    - See bookings where YOU are the provider.
-    - See offers YOU sent.
+  - See jobs assigned to YOU.
+  - See bookings where YOU are the provider.
+  - See offers YOU sent.
 - **Client Mode:**
-    - See jobs YOU posted.
-    - See bookings where YOU hired someone.
-    - See offers YOU received.
+  - See jobs YOU posted.
+  - See bookings where YOU hired someone.
+  - See offers YOU received.

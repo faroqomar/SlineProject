@@ -70,16 +70,16 @@ Conventions
 
 ## 4. Data Model (Key Tables)
 
-| Area       | Tables (FKs)                                                                             | Notes                                                                 |
-| ---------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| Identity   | `auth.users` → `public.profiles(id)`                                                     | App identity row per user; RLS owner-only update.                     |
+| Area       | Tables (FKs)                                                                             | Notes                                                                                                                |
+| ---------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Identity   | `auth.users` → `public.profiles(id)`                                                     | App identity row per user; RLS owner-only update.                                                                    |
 | Tasks      | `tasks(owner_id, user_id, client_id → profiles.id)`                                      | `owner_id` is the generated canonical owner key; app code keeps compatibility reads on legacy `user_id`/`client_id`. |
-| Requests   | `task_requests(task_id, bidder_id → profiles.id)`                                        | Tender only; unique pending per (task,bidder); guarded triggers.      |
-| Booking    | `availability_slots(provider_id)` → `bookings(task_id, provider_id, client_id, slot_id)` | RLS enforces roles; status guard trigger.                             |
-| Categories | `categories` → `tasks(category_id)`                                                      | DB‑first with unique lower(name).                                     |
-| Chat       | `conversations(user1_id,user2_id,task_id,initiated_by)` → `messages(conversation_id)`    | RLS: participants only; DM requires favorite.                         |
-| Favorites  | `favorites(client_id, freelancer_id)`                                                    | Unique per pair; used to allow DM creation.                           |
-| Portfolio  | `portfolio_items(owner_id)`                                                              | Public bucket by default; can switch to private + signed URLs.        |
+| Requests   | `task_requests(task_id, bidder_id → profiles.id)`                                        | Tender only; unique pending per (task,bidder); guarded triggers.                                                     |
+| Booking    | `availability_slots(provider_id)` → `bookings(task_id, provider_id, client_id, slot_id)` | RLS enforces roles; status guard trigger.                                                                            |
+| Categories | `categories` → `tasks(category_id)`                                                      | DB‑first with unique lower(name).                                                                                    |
+| Chat       | `conversations(user1_id,user2_id,task_id,initiated_by)` → `messages(conversation_id)`    | RLS: participants only; DM requires favorite.                                                                        |
+| Favorites  | `favorites(client_id, freelancer_id)`                                                    | Unique per pair; used to allow DM creation.                                                                          |
+| Portfolio  | `portfolio_items(owner_id)`                                                              | Public bucket by default; can switch to private + signed URLs.                                                       |
 
 ### Mini ERD
 
@@ -257,15 +257,15 @@ RLS (summary): direct `public.profiles` reads are self-only (`auth.uid() = id`).
 
 ## 3. File Inventory
 
-| File                                                           | Layer      | Description                                                                                                                      |
-| -------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `lib/features/profile/data/profile_repository.dart`            | Repository | Wraps self-only `profiles` reads/writes, email updates, role change, password reset, avatar upload, and my-tasks helpers.       |
-| `lib/features/profile/services/avatar_service.dart`            | Service    | Uploads avatar to `avatars` bucket and creates short-lived signed URLs. Stores only the storage path in DB.                      |
-| `lib/features/profile/services/profile_summary_service.dart`   | Service    | Calls `rpc_get_profile_summaries` and `search_profiles`; only safe summary fields are exposed cross-user.                        |
-| `lib/features/profile/view/widgets/profile_preview_modal.dart` | Widget     | Helper `showProfilePreview(context, userId)` to launch public profile in a modal sheet.                                          |
+| File                                                           | Layer      | Description                                                                                                                                    |
+| -------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lib/features/profile/data/profile_repository.dart`            | Repository | Wraps self-only `profiles` reads/writes, email updates, role change, password reset, avatar upload, and my-tasks helpers.                      |
+| `lib/features/profile/services/avatar_service.dart`            | Service    | Uploads avatar to `avatars` bucket and creates short-lived signed URLs. Stores only the storage path in DB.                                    |
+| `lib/features/profile/services/profile_summary_service.dart`   | Service    | Calls `rpc_get_profile_summaries` and `search_profiles`; only safe summary fields are exposed cross-user.                                      |
+| `lib/features/profile/view/widgets/profile_preview_modal.dart` | Widget     | Helper `showProfilePreview(context, userId)` to launch public profile in a modal sheet.                                                        |
 | `lib/features/profile/viewmodels/profile_view_model.dart`      | ViewModel  | `ChangeNotifier` that binds form controllers, updates profile, uploads avatar, handles logout/role change, and exposes full/header load paths. |
-| `lib/features/profile/view/profile_screen.dart`                | View       | Material 3 profile UI with form fields, avatar, role toggle, password reset, and sign out.                                       |
-| `lib/features/profile/view/widgets/profile_avatar_widget.dart` | Widget     | Renders a profile avatar via a signed URL for a private storage path.                                                            |
+| `lib/features/profile/view/profile_screen.dart`                | View       | Material 3 profile UI with form fields, avatar, role toggle, password reset, and sign out.                                                     |
+| `lib/features/profile/view/widgets/profile_avatar_widget.dart` | Widget     | Renders a profile avatar via a signed URL for a private storage path.                                                                          |
 
 ## 4. ERD Diagram (Context)
 
@@ -400,15 +400,15 @@ Legacy MVVM flow (if using standalone module):
 
 ### 2.1 `public.portfolio_items`
 
-| Column        | Type                        | Purpose / Usage           | Notes                                                            |
-| ------------- | --------------------------- | ------------------------- | ---------------------------------------------------------------- |
-| `id`          | `uuid` (PK)                 | Portfolio item id         | Default `gen_random_uuid()`                                      |
-| `owner_id`    | `uuid` (FK → `profiles.id`) | Owner profile id          | `ON DELETE CASCADE`                                              |
-| `title`       | `text`                      | Work title                | Required                                                         |
-| `description` | `text`                      | Details                   | Optional                                                         |
-| `image_path`  | `text`                      | Storage path (canonical)  | **Canonical**: Store path like `ownerId/filename.jpg`, resolve to signed URL at render |
-| `image_url`   | `text`                      | Legacy public URL         | **Deprecated**: Legacy public URL (backwards compatibility only) |
-| `created_at`  | `timestamptz`               | When created (UTC)        | Default `now()`                                                  |
+| Column        | Type                        | Purpose / Usage          | Notes                                                                                  |
+| ------------- | --------------------------- | ------------------------ | -------------------------------------------------------------------------------------- |
+| `id`          | `uuid` (PK)                 | Portfolio item id        | Default `gen_random_uuid()`                                                            |
+| `owner_id`    | `uuid` (FK → `profiles.id`) | Owner profile id         | `ON DELETE CASCADE`                                                                    |
+| `title`       | `text`                      | Work title               | Required                                                                               |
+| `description` | `text`                      | Details                  | Optional                                                                               |
+| `image_path`  | `text`                      | Storage path (canonical) | **Canonical**: Store path like `ownerId/filename.jpg`, resolve to signed URL at render |
+| `image_url`   | `text`                      | Legacy public URL        | **Deprecated**: Legacy public URL (backwards compatibility only)                       |
+| `created_at`  | `timestamptz`               | When created (UTC)       | Default `now()`                                                                        |
 
 Indexes
 
@@ -1139,14 +1139,14 @@ RLS: Home reads depend on authenticated-only `public.tasks` access. Direct `publ
 
 ## 3. File Inventory
 
-| File                                                        | Layer     | Description                                                                                       |
-| ----------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------- |
-| `lib/features/home/view/home_screen.dart`                   | View      | Discovery UI with search, filters, refresh, and navigation to details/create/saved tasks.          |
-| `lib/features/home/view/widgets/filters_modal.dart`         | Widget    | Bottom sheet for sort, category, price, delivery-time, and seller-level filters.                   |
-| `lib/features/home/viewmodels/home_view_model.dart`         | ViewModel | `ChangeNotifier` that loads/refreshes featured tasks, tracks composite pagination, and updates filters. |
-| `lib/features/tasks/viewmodels/discovery_feed_view_model_contract.dart` | ViewModel contract | Shared discovery-feed API consumed by Home, Tenders, and Bookings without a Home-specific dependency. |
-| `lib/features/tasks/view/widgets/discovery_task_sliver.dart`| Widget    | Shared list/empty/load-more sliver used by Home, Tenders, and Bookings discovery surfaces.         |
-| `lib/features/tasks/viewmodels/task_filter_view_model.dart` | ViewModel | Holds filtered list, search text, category, price, delivery-time, seller-level, and sort state.   |
+| File                                                                    | Layer              | Description                                                                                             |
+| ----------------------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------- |
+| `lib/features/home/view/home_screen.dart`                               | View               | Discovery UI with search, filters, refresh, and navigation to details/create/saved tasks.               |
+| `lib/features/home/view/widgets/filters_modal.dart`                     | Widget             | Bottom sheet for sort, category, price, delivery-time, and seller-level filters.                        |
+| `lib/features/home/viewmodels/home_view_model.dart`                     | ViewModel          | `ChangeNotifier` that loads/refreshes featured tasks, tracks composite pagination, and updates filters. |
+| `lib/features/tasks/viewmodels/discovery_feed_view_model_contract.dart` | ViewModel contract | Shared discovery-feed API consumed by Home, Tenders, and Bookings without a Home-specific dependency.   |
+| `lib/features/tasks/view/widgets/discovery_task_sliver.dart`            | Widget             | Shared list/empty/load-more sliver used by Home, Tenders, and Bookings discovery surfaces.              |
+| `lib/features/tasks/viewmodels/task_filter_view_model.dart`             | ViewModel          | Holds filtered list, search text, category, price, delivery-time, seller-level, and sort state.         |
 
 ## 4. ERD Diagram (Context)
 
@@ -1216,12 +1216,12 @@ Testing checklist:
 - Navigate to task details and back; state is preserved.
 - Create a new task → returning to Home refreshes and shows it if `open`.
 
-
 # Core Module Reference
 
 ## 1. Human Explanation
 
 The core module (`lib/core/`) contains runtime infrastructure shared across the whole app:
+
 - Supabase bootstrap and shared service contracts
 - payment orchestration helpers used by booking flows
 - logging, crash reporting, and error filtering
@@ -1236,16 +1236,17 @@ Core does not own product tables, but it provides the app-wide runtime used to r
 
 ### 2.1 Shared Supabase resources consumed by core
 
-| Resource | Purpose | Used by | Notes |
-| --- | --- | --- | --- |
-| `public.profiles` | shared user identity metadata | `UserProfile`, `SignedAvatar` consumers | avatar path is stored in DB; signed URL is created at render time |
-| `avatars` bucket | private avatar storage | `SignedAvatar`, profile flows | signed URL required for display |
-| `task-images` bucket | private task image storage | `SignedImage`, task flows | signed URL required for display |
-| `chat-attachments` bucket | private chat file storage | chat feature widgets/services | same signed-URL pattern |
+| Resource                  | Purpose                       | Used by                                 | Notes                                                             |
+| ------------------------- | ----------------------------- | --------------------------------------- | ----------------------------------------------------------------- |
+| `public.profiles`         | shared user identity metadata | `UserProfile`, `SignedAvatar` consumers | avatar path is stored in DB; signed URL is created at render time |
+| `avatars` bucket          | private avatar storage        | `SignedAvatar`, profile flows           | signed URL required for display                                   |
+| `task-images` bucket      | private task image storage    | `SignedImage`, task flows               | signed URL required for display                                   |
+| `chat-attachments` bucket | private chat file storage     | chat feature widgets/services           | same signed-URL pattern                                           |
 
 ### 2.2 Shared payment runtime contracts
 
 Core owns the app-side payment runtime interfaces used by the booking and tender features:
+
 - `PaymentService`: abstract contract for payment providers (booking, direct offer, tender).
 - `QiCardPaymentService`: server-backed QiCard create/recover for booking, direct offer, and tender. Tender flow: create (edge `qicard_payment_create_tender`) → WebView → recovery (edge `qicard_payment_recovery_tender`) → ledger gateway_escrow + task assignment.
 - `DemoPaymentService`: fallback/demo provider
@@ -1255,39 +1256,40 @@ Core owns the app-side payment runtime interfaces used by the booking and tender
 ### 2.3 Web safety helpers
 
 Core also owns two browser-specific stability helpers:
+
 - `LoadingUtils.show(...) -> LoadingHandle`: overlay-based loading UI with no navigator mutation
 - `flutter_error_filters.dart`: filters the known disposed `EngineFlutterView` assertion on web before crash-reporting/log spam
 
 ## 3. File Inventory
 
-| File | Layer | Description |
-| --- | --- | --- |
-| `lib/core/services/supabase_config.dart` | bootstrap | Initializes Supabase once and exposes the shared client. |
-| `lib/core/services/logger_service.dart` | service | `AppLogger` for structured debug/error logging. |
-| `lib/core/services/crash_reporting_service.dart` | service | Crash-reporting abstraction with a quiet no-op implementation by default. |
-| `lib/core/services/payment_service.dart` | contract | Shared payment DTOs and the `PaymentService` interface. |
-| `lib/core/services/demo_payment_service.dart` | service | Local/demo payment implementation and legacy fallback path. |
-| `lib/core/services/qicard_payment_service.dart` | service | Server-backed QiCard create/recover/refund orchestration. |
-| `lib/core/services/payment_pending_store.dart` | service | Persists pending payment context across same-tab web redirects. |
-| `lib/core/services/deep_link_service.dart` | service | Shared deep-link plumbing used by app navigation flows. |
-| `lib/core/config/payment_runtime_config.dart` | config | Compile-time finish URL, callback host rules, payment callback parsing. |
-| `lib/core/utils/loading_utils.dart` | utility | Root overlay loading helper that returns an idempotent `LoadingHandle`. |
-| `lib/core/utils/flutter_error_filters.dart` | utility | Filters the known web engine disposal assertion. |
-| `lib/core/utils/error_mapper.dart` | utility | Shared PostgREST/Auth/network error mapping. |
-| `lib/core/utils/format_date.dart` | utility | UTC-to-local date/time formatting helpers. |
-| `lib/core/utils/format_price.dart` | utility | Shared price formatting helpers. |
-| `lib/core/utils/signed_url_cache.dart` | utility | Short-lived cache for generated signed URLs. |
-| `lib/core/providers/navigation_provider.dart` | provider | Global navigation tab state. |
-| `lib/core/providers/theme_mode_provider.dart` | provider | Light/dark theme mode state. |
-| `lib/core/models/user_profile.dart` | model | Shared typed profile model. |
-| `lib/core/models/payment_return_args.dart` | model | Shared typed browser payment callback payload. |
-| `lib/core/theme/app_colors.dart` | theme | Central palette definitions. |
-| `lib/core/theme/app_dimens.dart` | theme | Spacing, radius, sizing tokens. |
-| `lib/core/theme/app_typography.dart` | theme | Shared typography and fallback font configuration. |
-| `lib/core/theme/app_theme.dart` | theme | Builds the app `ThemeData` and `AppThemeExtension`. |
-| `lib/core/widgets/custom_bottom_nav_bar.dart` | widget | Shared app shell bottom nav. |
-| `lib/core/widgets/signed_avatar.dart` | widget | Renders private avatar paths through signed URLs. |
-| `lib/core/widgets/signed_image.dart` | widget | Renders private image paths through signed URLs. |
+| File                                             | Layer     | Description                                                               |
+| ------------------------------------------------ | --------- | ------------------------------------------------------------------------- |
+| `lib/core/services/supabase_config.dart`         | bootstrap | Initializes Supabase once and exposes the shared client.                  |
+| `lib/core/services/logger_service.dart`          | service   | `AppLogger` for structured debug/error logging.                           |
+| `lib/core/services/crash_reporting_service.dart` | service   | Crash-reporting abstraction with a quiet no-op implementation by default. |
+| `lib/core/services/payment_service.dart`         | contract  | Shared payment DTOs and the `PaymentService` interface.                   |
+| `lib/core/services/demo_payment_service.dart`    | service   | Local/demo payment implementation and legacy fallback path.               |
+| `lib/core/services/qicard_payment_service.dart`  | service   | Server-backed QiCard create/recover/refund orchestration.                 |
+| `lib/core/services/payment_pending_store.dart`   | service   | Persists pending payment context across same-tab web redirects.           |
+| `lib/core/services/deep_link_service.dart`       | service   | Shared deep-link plumbing used by app navigation flows.                   |
+| `lib/core/config/payment_runtime_config.dart`    | config    | Compile-time finish URL, callback host rules, payment callback parsing.   |
+| `lib/core/utils/loading_utils.dart`              | utility   | Root overlay loading helper that returns an idempotent `LoadingHandle`.   |
+| `lib/core/utils/flutter_error_filters.dart`      | utility   | Filters the known web engine disposal assertion.                          |
+| `lib/core/utils/error_mapper.dart`               | utility   | Shared PostgREST/Auth/network error mapping.                              |
+| `lib/core/utils/format_date.dart`                | utility   | UTC-to-local date/time formatting helpers.                                |
+| `lib/core/utils/format_price.dart`               | utility   | Shared price formatting helpers.                                          |
+| `lib/core/utils/signed_url_cache.dart`           | utility   | Short-lived cache for generated signed URLs.                              |
+| `lib/core/providers/navigation_provider.dart`    | provider  | Global navigation tab state.                                              |
+| `lib/core/providers/theme_mode_provider.dart`    | provider  | Light/dark theme mode state.                                              |
+| `lib/core/models/user_profile.dart`              | model     | Shared typed profile model.                                               |
+| `lib/core/models/payment_return_args.dart`       | model     | Shared typed browser payment callback payload.                            |
+| `lib/core/theme/app_colors.dart`                 | theme     | Central palette definitions.                                              |
+| `lib/core/theme/app_dimens.dart`                 | theme     | Spacing, radius, sizing tokens.                                           |
+| `lib/core/theme/app_typography.dart`             | theme     | Shared typography and fallback font configuration.                        |
+| `lib/core/theme/app_theme.dart`                  | theme     | Builds the app `ThemeData` and `AppThemeExtension`.                       |
+| `lib/core/widgets/custom_bottom_nav_bar.dart`    | widget    | Shared app shell bottom nav.                                              |
+| `lib/core/widgets/signed_avatar.dart`            | widget    | Renders private avatar paths through signed URLs.                         |
+| `lib/core/widgets/signed_image.dart`             | widget    | Renders private image paths through signed URLs.                          |
 
 ## 4. Runtime Patterns
 
@@ -1326,6 +1328,7 @@ The callback parser validates host + path shape against `kQiCardFinishUrl` and `
 ### 4.4 Typography and fallback fonts
 
 `AppTypography` now centralizes fallback font families for missing glyphs:
+
 - `Noto Sans`
 - `Noto Sans Arabic`
 - `Roboto`
@@ -1336,11 +1339,11 @@ This allows user-generated Arabic text to render without forcing feature code to
 
 ## 5. Error Handling Notes
 
-| Origin | Error | Handling |
-| --- | --- | --- |
-| Supabase bootstrap | bad URL/key/session setup | fail fast during app startup; log through `AppLogger` |
-| Signed URL creation | missing object / expired URL | return placeholder and regenerate URL when needed |
-| Web engine assertion | disposed `EngineFlutterView` | filtered by `isIgnoredFlutterWebEngineDisposeError(...)` |
+| Origin                   | Error                                    | Handling                                                          |
+| ------------------------ | ---------------------------------------- | ----------------------------------------------------------------- |
+| Supabase bootstrap       | bad URL/key/session setup                | fail fast during app startup; log through `AppLogger`             |
+| Signed URL creation      | missing object / expired URL             | return placeholder and regenerate URL when needed                 |
+| Web engine assertion     | disposed `EngineFlutterView`             | filtered by `isIgnoredFlutterWebEngineDisposeError(...)`          |
 | Payment callback parsing | invalid host / invalid booking reference | handled in `PaymentReturnScreen` with explicit terminal messaging |
 
 ## 6. Testing Checklist
@@ -1352,12 +1355,12 @@ This allows user-generated Arabic text to render without forcing feature code to
 - Confirm the known disposed `EngineFlutterView` assertion is filtered and not duplicated in debug logs.
 - Confirm Arabic user-generated text renders with the theme fallback stack.
 
-
 # Auth Feature Reference
 
 ## 1. Human Explanation
 
 The auth feature is the gatekeeper for the app. It handles:
+
 - email/password sign up
 - email/password sign in
 - password reset initiation
@@ -1365,6 +1368,7 @@ The auth feature is the gatekeeper for the app. It handles:
 - loading the signed-in user's profile row after authentication
 
 The current architecture is MVVM with repository-backed data access:
+
 - views render forms and navigation
 - `AuthViewModel` owns loading/error state and session listeners
 - `AuthRepository` owns Supabase Auth and `profiles` reads/writes
@@ -1373,22 +1377,22 @@ The current architecture is MVVM with repository-backed data access:
 
 ## 2. Database and Supabase Mapping
 
-| Resource | Purpose | Notes |
-| --- | --- | --- |
-| `auth.users` | primary Supabase identity | created by `supabase.auth.signUp()` |
-| `public.profiles` | app-level user profile row | inserted after successful signup/session establishment |
-| `auth.sessions` | active authenticated session | required for any RLS-protected follow-up query |
+| Resource          | Purpose                      | Notes                                                  |
+| ----------------- | ---------------------------- | ------------------------------------------------------ |
+| `auth.users`      | primary Supabase identity    | created by `supabase.auth.signUp()`                    |
+| `public.profiles` | app-level user profile row   | inserted after successful signup/session establishment |
+| `auth.sessions`   | active authenticated session | required for any RLS-protected follow-up query         |
 
 ### `public.profiles` fields used by auth flows
 
-| Column | Type | Purpose |
-| --- | --- | --- |
-| `id` | `uuid` | matches `auth.users.id` |
-| `full_name` | `text` | captured at signup |
-| `email` | `text` | cached for app reads |
-| `avatar_url` | `text` | optional storage path, used elsewhere |
-| `role` | `text` | current persona used by the UI |
-| `created_at` | `timestamptz` | audit timestamp |
+| Column       | Type          | Purpose                               |
+| ------------ | ------------- | ------------------------------------- |
+| `id`         | `uuid`        | matches `auth.users.id`               |
+| `full_name`  | `text`        | captured at signup                    |
+| `email`      | `text`        | cached for app reads                  |
+| `avatar_url` | `text`        | optional storage path, used elsewhere |
+| `role`       | `text`        | current persona used by the UI        |
+| `created_at` | `timestamptz` | audit timestamp                       |
 
 ### RLS Summary
 
@@ -1398,13 +1402,13 @@ The current architecture is MVVM with repository-backed data access:
 
 ## 3. File Inventory
 
-| File | Layer | Description |
-| --- | --- | --- |
-| `lib/features/auth/data/auth_repository.dart` | repository | Owns signup, signin, signout, password reset, and current profile fetch. |
-| `lib/features/auth/viewmodels/auth_view_model.dart` | viewmodel | Tracks loading/error state, maps auth errors, listens for auth-state changes, exposes `onSessionExpired`. |
-| `lib/features/auth/view/login_screen.dart` | view | Login form and success/failure UI. |
-| `lib/features/auth/view/signup_screen.dart` | view | Registration form and profile bootstrap entrypoint. |
-| `lib/features/auth/view/forgot_password_screen.dart` | view | Password reset request UI. |
+| File                                                 | Layer      | Description                                                                                               |
+| ---------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------- |
+| `lib/features/auth/data/auth_repository.dart`        | repository | Owns signup, signin, signout, password reset, and current profile fetch.                                  |
+| `lib/features/auth/viewmodels/auth_view_model.dart`  | viewmodel  | Tracks loading/error state, maps auth errors, listens for auth-state changes, exposes `onSessionExpired`. |
+| `lib/features/auth/view/login_screen.dart`           | view       | Login form and success/failure UI.                                                                        |
+| `lib/features/auth/view/signup_screen.dart`          | view       | Registration form and profile bootstrap entrypoint.                                                       |
+| `lib/features/auth/view/forgot_password_screen.dart` | view       | Password reset request UI.                                                                                |
 
 There is no live `lib/features/auth/services/auth_service.dart` file anymore. `AuthRepository` is the current single source of truth for auth data access.
 
@@ -1427,6 +1431,7 @@ There is no live `lib/features/auth/services/auth_service.dart` file anymore. `A
 ### 4.3 Password reset
 
 `AuthRepository.sendPasswordResetEmail(...)` calls Supabase with the current mobile redirect:
+
 - `io.supabase.sline://login-callback`
 
 ### 4.4 Session expiry handling
@@ -1472,6 +1477,7 @@ if (success) {
 `AuthViewModel` maps common raw auth failures to user-facing messages.
 
 Examples:
+
 - invalid credentials -> `Invalid email or password. Please try again.`
 - unconfirmed email -> `Please verify your email before logging in.`
 - duplicate account -> `An account with this email already exists.`
@@ -1487,8 +1493,6 @@ Repository logging masks email addresses before logging.
 - Trigger password reset and verify the reset request succeeds.
 - Sign out and confirm the app returns to `/login`.
 - Simulate a session-expiry or sign-out event and verify `onSessionExpired` returns the app to the login route.
-
-
 
 ## Legacy Orders Dashboard (Decommissioned)
 
@@ -1513,9 +1517,9 @@ The standalone `orders` dashboard module was removed on 2026-03-01.
 - **Cache**: `DashboardCacheService` is provided in `main.dart` and injected into `DashboardViewModel`; overview data can be served from cache when appropriate.
 - **Lazy-load by tab**: Overview data loads first; Bookings and Inbox data load on first visit to those tabs. Full refresh still loads all datasets.
 - **Wallet snapshot**: On first entry to the dashboard, `OverviewTab` triggers `WalletViewModel.loadWallet()` so the balance snapshot is visible without a separate wallet visit.
-- **My Services**: `MyServicesScreen` (profile) uses `MyServicesViewModel` and `ServicesService.getMyServices(uid)`; it no longer depends on dashboard state.
+- **My Services**: `MyServicesScreen` (profile) uses `MyServicesViewModel` and `ServicesRepository.fetchMyServices()`; it no longer depends on dashboard state.
 - **Tender payment**: All payment entry points (Inbox, Work, Next Actions, Work Details, Requests list after award) use `openProposalPayment(context, summary)` from `lib/features/proposals/routes/proposal_payment_route.dart`; see [Proposals Feature](DEVELOPER_GUIDE/Proposals_Feature.md). That route builds `TenderPaymentScreen` with `TenderPaymentCoordinator` and `TenderPaymentViewModel`; the screen uses only the ViewModel (no direct service calls in the widget). Awarding an offer moves the task to the Work tab as "Waiting payment"; the client can Pay or Cancel from there (Cancel reverts the award so the task reappears in Inbox). `TaskService` is provided in `main.dart`. **QiCard (March 2026):** When the app uses `QiCardPaymentService`, the Pay button is enabled: the coordinator calls the edge function `qicard_payment_create_tender` to get a `form_url`, the screen opens `PaymentWebViewScreen` for the user to pay; on return the app calls `recoverTenderPaymentAfterCallback` (edge function `qicard_payment_recovery_tender`), which runs `process_payment_event_ledger(gateway_escrow, task_request)` and assigns the task (freelancer, in_progress). **Demo:** When using `DemoPaymentService`, the Pay button is disabled (fail-closed); tender state never advances.
-- **Offer submission:** Task offer submit no longer mutates `profiles.active_role`; RLS (`is_freelancer(auth.uid())`) controls insert. If insert is denied (e.g. user not in freelancer role), the app shows: "You must be in freelancer mode to submit an offer. Switch your role in profile settings."
+- **Offer submission:** Task offer submit no longer mutates `profiles.active_role`. RLS does not require the user to be in the freelancer role. If insert is denied (e.g., trying to bid on your own task or a closed task), the app shows: "You cannot submit an offer. The task might be closed or you are the task owner."
 - **Dashboard cards**: Booking card lives in `lib/features/booking/view/widgets/dashboard_booking_card.dart` (callbacks for actions); offer card in `lib/features/tasks/view/widgets/dashboard_offer_card.dart`; wallet snapshot in `lib/features/wallet/view/widgets/wallet_snapshot_card.dart`. Shared status color/label helpers: `lib/core/utils/status_presenter.dart`.
 - **Pull-to-refresh on every tab**: All four dashboard tabs support pull-to-refresh and call `DashboardViewModel.refresh()` (full reload). Implemented in: `lib/features/dashboard/view/tabs/overview_tab.dart` (ListView wrapped in `RefreshIndicator`), `lib/features/dashboard/view/tabs/bookings_tab.dart` (empty state and list both wrapped; empty uses `SingleChildScrollView` + `AlwaysScrollableScrollPhysics`), `lib/features/dashboard/view/tabs/inbox_tab.dart` (empty state wrapped; list already had `RefreshIndicator`), `lib/features/dashboard/view/tabs/work_tab.dart` (Active, Done, Cancelled sub-tabs each have `RefreshIndicator` for both empty and filled lists).
 
@@ -1621,20 +1625,20 @@ Triggers/Functions
 
 ## 3. File Inventory
 
-| File                                                      | Layer      | Description                                                                                                  |
-| --------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------ |
-| `lib/features/chat/data/chat_repository.dart`             | Repository | Wraps `MessageService`; exposes conversation/message APIs, receipts, and Realtime streams.                   |
-| `lib/features/chat/services/message_service.dart`         | Service    | PostgREST + Realtime for conversations/messages, RPCs for receipts, task chats, and archive.                  |
-| `lib/features/chat/services/attachment_service.dart`      | Service    | Storage upload/delete/signed URL helpers for attachments.                                                    |
-| `lib/features/chat/services/chat_realtime_merger.dart`   | Service    | Merges realtime message snapshots (dedupe, sort).                                                             |
-| `lib/features/chat/viewmodels/chat_view_model.dart`       | ViewModel  | `ChangeNotifier` managing conversation list, active conversation, message list, subscriptions, and receipts. |
-| `lib/features/chat/view/messages_screen.dart`             | View       | Conversations list with previews via joined selects.                                                         |
-| `lib/features/chat/view/chat_screen.dart`                 | View       | Single conversation UI (messages + composer).                                                                |
-| `lib/features/chat/view/widgets/chat_context_widget.dart` | Widget     | Glassmorphic banner showing task context + navigation.                                                       |
-| `lib/features/chat/models/conversation_model.dart`        | Model      | Conversation with display fields (other user name/avatar, last message).                                     |
-| `lib/features/chat/models/message_model.dart`             | Model      | Message with attachments, type, payload (wire: snake_case); includes `MessageType.system`.                   |
-| `lib/features/chat/models/chat_offer_payload.dart`        | Model      | Canonical offer payload: `days` on write; legacy `delivery` read.                                              |
-| `lib/features/chat/attachments/`                          | Submodule  | Upload/compress/pick utils and widgets for attachment UX.                                                    |
+| File                                                      | Layer      | Description                                                                                                                                              |
+| --------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lib/features/chat/data/chat_repository.dart`             | Repository | Wraps `MessageService`; exposes conversation/message APIs, receipts, and Realtime streams.                                                               |
+| `lib/features/chat/services/message_service.dart`         | Service    | PostgREST + Realtime for conversations/messages, RPCs for receipts, task chats, and archive.                                                             |
+| `lib/features/chat/services/attachment_service.dart`      | Service    | Storage upload/delete/signed URL helpers for attachments.                                                                                                |
+| `lib/features/chat/services/chat_realtime_merger.dart`    | Service    | Merges realtime message snapshots (dedupe, sort).                                                                                                        |
+| `lib/features/chat/viewmodels/chat_view_model.dart`       | ViewModel  | `ChangeNotifier` managing conversation list, active conversation, message list, subscriptions, and receipts.                                             |
+| `lib/features/chat/view/messages_screen.dart`             | View       | Conversations list with previews via joined selects.                                                                                                     |
+| `lib/features/chat/view/chat_screen.dart`                 | View       | Single conversation UI (messages + composer).                                                                                                            |
+| `lib/features/chat/view/widgets/chat_context_widget.dart` | Widget     | Glassmorphic banner showing task context + navigation.                                                                                                   |
+| `lib/features/chat/models/conversation_model.dart`        | Model      | Conversation with display fields (other user name/avatar, last message).                                                                                 |
+| `lib/features/chat/models/message_model.dart`             | Model      | Message with attachments, type, payload (wire: snake_case); includes `MessageType.system`.                                                               |
+| `lib/features/chat/models/chat_offer_payload.dart`        | Model      | Canonical offer payload: `days` on write; legacy `delivery` read.                                                                                        |
+| `lib/features/chat/attachments/`                          | Submodule  | Upload/compress/pick utils and widgets for attachment UX.                                                                                                |
 | `lib/features/direct_offers/`                             | Feature    | Direct Chat Offers: model, service (`acceptOfferWithoutPayment`, `payNow`, `recoverPaymentAfterCallback`), viewmodel, view (`DirectOfferDetailsScreen`). |
 
 ## 4. ERD Diagram
@@ -1775,8 +1779,6 @@ Testing checklist
 - Attempt non-participant send → denied by RLS.
 - Send offer without required payload → trigger error; validate client-side.
 
-
-
 # Direct Chat Offers
 
 **Full reference:** [Direct Chat Offers (Direct Offers Feature)](DEVELOPER_GUIDE/Direct_Offers_Feature.md)
@@ -1792,12 +1794,14 @@ Chat-to-work: freelancer creates an offer from a 1:1 chat; client accepts in cha
 The booking feature currently supports direct service bookings with server-backed payment initiation and recovery.
 
 Primary user flows:
+
 - clients can purchase a booking package from a booking task
 - providers can review booking requests, accept or decline them, and mark work as delivered
 - clients can review details and approve release after delivery
 - both sides can inspect booking history and the embedded management timeline
 
 Important current behavior:
+
 - slotless direct bookings are allowed multiple times for the same client/task pair
 - slot-based rows still exist in the schema and UI as legacy/historical support
 - QiCard is the default payment provider, but payment initiation and reconciliation are server-backed through Supabase edge functions
@@ -1808,23 +1812,23 @@ Important current behavior:
 
 #### `public.bookings`
 
-| Column | Type | Purpose / Usage | Notes |
-| --- | --- | --- | --- |
-| `id` | `uuid` | booking identifier | primary key |
-| `task_id` | `uuid` | linked booking task | nullable in model but expected for current flow |
-| `provider_id` | `uuid` | service provider | used for provider-side lists and RLS |
-| `client_id` | `uuid` | booking client | used for client-side lists and RLS |
-| `slot_id` | `uuid` | optional legacy slot link | nullable for direct slotless bookings |
-| `status` | `booking_status_enum` | booking lifecycle | app maps `paid_request_pending`, `active`, `delivered`, `completed`, `canceled`, `refunded`, `expired_unanswered`, `no_show` |
-| `payment_status` | `payment_status_enum` | payment lifecycle | `unpaid`, `held`, `released`, `refunded` |
-| `price` | `numeric` | canonical amount | server-derived for booking drafts |
-| `package_id` | `text` | selected package tier | optional |
-| `requirements` | `jsonb` | selected package/request payload | optional |
-| `note` | `text` | client note | optional |
-| `delivery_days` | `integer` | delivery estimate | used in checkout/details timeline |
-| `due_at` | `timestamptz` | due date | shown in booking details timeline |
-| `completed_at` | `timestamptz` | completion timestamp | set when work is completed/released |
-| `created_at` | `timestamptz` | audit timestamp | UTC |
+| Column           | Type                  | Purpose / Usage                  | Notes                                                                                                                        |
+| ---------------- | --------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `id`             | `uuid`                | booking identifier               | primary key                                                                                                                  |
+| `task_id`        | `uuid`                | linked booking task              | nullable in model but expected for current flow                                                                              |
+| `provider_id`    | `uuid`                | service provider                 | used for provider-side lists and RLS                                                                                         |
+| `client_id`      | `uuid`                | booking client                   | used for client-side lists and RLS                                                                                           |
+| `slot_id`        | `uuid`                | optional legacy slot link        | nullable for direct slotless bookings                                                                                        |
+| `status`         | `booking_status_enum` | booking lifecycle                | app maps `paid_request_pending`, `active`, `delivered`, `completed`, `canceled`, `refunded`, `expired_unanswered`, `no_show` |
+| `payment_status` | `payment_status_enum` | payment lifecycle                | `unpaid`, `held`, `released`, `refunded`                                                                                     |
+| `price`          | `numeric`             | canonical amount                 | server-derived for booking drafts                                                                                            |
+| `package_id`     | `text`                | selected package tier            | optional                                                                                                                     |
+| `requirements`   | `jsonb`               | selected package/request payload | optional                                                                                                                     |
+| `note`           | `text`                | client note                      | optional                                                                                                                     |
+| `delivery_days`  | `integer`             | delivery estimate                | used in checkout/details timeline                                                                                            |
+| `due_at`         | `timestamptz`         | due date                         | shown in booking details timeline                                                                                            |
+| `completed_at`   | `timestamptz`         | completion timestamp             | set when work is completed/released                                                                                          |
+| `created_at`     | `timestamptz`         | audit timestamp                  | UTC                                                                                                                          |
 
 #### `public.availability_slots`
 
@@ -1833,6 +1837,7 @@ This table still exists and is still documented in `SUPABASE_SETUP.md`, but the 
 ### 2.2 Payment and workflow backend objects
 
 Current server-backed booking/payment flow depends on:
+
 - `rpc_create_booking_draft_validated(...)`
 - `qicard_payment_create`
 - `qicard_payment_recovery`
@@ -1849,21 +1854,21 @@ Current server-backed booking/payment flow depends on:
 
 ## 3. File Inventory
 
-| File | Layer | Description |
-| --- | --- | --- |
-| `lib/features/booking/models/booking_model.dart` | model | Typed booking row with UTC timestamps, payment status, due date, and legacy slot fallback parsing. |
-| `lib/features/booking/models/payment_return_args.dart` | model | Feature re-export for the shared payment callback DTO. |
-| `lib/features/booking/services/booking_service.dart` | service | Reads bookings, updates status, submits ledger-backed booking actions, fetches single booking rows. |
-| `lib/features/booking/data/booking_repository.dart` | repository | Thin abstraction over `BookingService` plus current-user access. |
-| `lib/features/booking/viewmodels/booking_view_model.dart` | viewmodel | Orchestrates booking lists, payment creation/recovery, delivery/release actions, and chat handoff. |
-| `lib/features/booking/view/bookings_discovery_screen.dart` | view | Booking-task discovery surface powered by the home/task feed. |
-| `lib/features/booking/view/payment_checkout_screen.dart` | view | Direct booking checkout screen; creates draft booking and launches payment flow. |
-| `lib/features/booking/view/payment_webview_screen.dart` | view | Mobile webview payment container for trusted callback flows. |
-| `lib/features/booking/view/payment_return_screen.dart` | view | Web callback landing screen that validates callback state and triggers recovery. |
-| `lib/features/booking/view/payment_method_screen.dart` | view | Demo/manual payment form used by non-QiCard paths. |
-| `lib/features/booking/view/bookings_list_screen.dart` | view | Client/provider booking history list with filtering and pagination. |
-| `lib/features/booking/view/booking_details_screen.dart` | view | Detailed booking view with CTA resolution, management timeline, and message handoff. |
-| `lib/features/booking/view/widgets/booking_card.dart` | widget | Shared summary card for booking rows. |
+| File                                                       | Layer      | Description                                                                                         |
+| ---------------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------- |
+| `lib/features/booking/models/booking_model.dart`           | model      | Typed booking row with UTC timestamps, payment status, due date, and legacy slot fallback parsing.  |
+| `lib/features/booking/models/payment_return_args.dart`     | model      | Feature re-export for the shared payment callback DTO.                                              |
+| `lib/features/booking/services/booking_service.dart`       | service    | Reads bookings, updates status, submits ledger-backed booking actions, fetches single booking rows. |
+| `lib/features/booking/data/booking_repository.dart`        | repository | Thin abstraction over `BookingService` plus current-user access.                                    |
+| `lib/features/booking/viewmodels/booking_view_model.dart`  | viewmodel  | Orchestrates booking lists, payment creation/recovery, delivery/release actions, and chat handoff.  |
+| `lib/features/booking/view/bookings_discovery_screen.dart` | view       | Booking-task discovery surface powered by the home/task feed.                                       |
+| `lib/features/booking/view/payment_checkout_screen.dart`   | view       | Direct booking checkout screen; creates draft booking and launches payment flow.                    |
+| `lib/features/booking/view/payment_webview_screen.dart`    | view       | Mobile webview payment container for trusted callback flows.                                        |
+| `lib/features/booking/view/payment_return_screen.dart`     | view       | Web callback landing screen that validates callback state and triggers recovery.                    |
+| `lib/features/booking/view/payment_method_screen.dart`     | view       | Demo/manual payment form used by non-QiCard paths.                                                  |
+| `lib/features/booking/view/bookings_list_screen.dart`      | view       | Client/provider booking history list with filtering and pagination.                                 |
+| `lib/features/booking/view/booking_details_screen.dart`    | view       | Detailed booking view with CTA resolution, management timeline, and message handoff.                |
+| `lib/features/booking/view/widgets/booking_card.dart`      | widget     | Shared summary card for booking rows.                                                               |
 
 ## 4. Current Flutter Flow
 
@@ -1888,11 +1893,13 @@ Current server-backed booking/payment flow depends on:
 ### 4.4 Post-payment actions
 
 Provider-side actions:
+
 - accept booking
 - decline/refund booking
 - mark delivered
 
 Client-side actions:
+
 - release booking payment with fee handling
 - message provider
 - review timeline/history
@@ -1930,6 +1937,7 @@ await bookingViewModel.loadMoreBookingsAsProvider();
 ## 6. Error Handling and Notes
 
 Current mapped booking/payment messages include:
+
 - task not bookable
 - self-booking forbidden
 - invalid package
@@ -1937,6 +1945,7 @@ Current mapped booking/payment messages include:
 - booking create/recovery failure
 
 Additional notes:
+
 - the client can create repeat slotless direct bookings for the same service task
 - slot exclusivity still applies to slot-based bookings through database constraints/policies
 - `BookingModel.dueAtUtc` falls back to `availability_slots.starts_at` for historical slot-based rows
@@ -1952,8 +1961,6 @@ Additional notes:
 - verify provider can accept/decline/deliver and client can release after delivery
 - verify booking details show due date, delivery days, and management timeline correctly
 - verify legacy slot-based bookings still render safely when `slot_id` is present
-
-
 
 **Added in v2.13** — 2026-02-16
 
@@ -1998,7 +2005,7 @@ UI (WorkItemDetailsScreen)
 
 | Object                       | Type    | Purpose                                                                                                                                                 |
 | ---------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `vw_unified_work_items`      | View    | UNION ALL of tasks (in progress + awarded pending payment) and bookings with normalized status; see SUPABASE_SETUP.md §6.4.                               |
+| `vw_unified_work_items`      | View    | UNION ALL of tasks (in progress + awarded pending payment) and bookings with normalized status; see SUPABASE_SETUP.md §6.4.                             |
 | `work_contracts`             | Table   | Versioned scope snapshots (price, days, description)                                                                                                    |
 | `change_requests`            | Table   | Scope/price/days change proposals                                                                                                                       |
 | `extension_requests`         | Table   | Deadline extension proposals                                                                                                                            |
