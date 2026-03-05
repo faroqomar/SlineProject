@@ -21,11 +21,8 @@ import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
-import 'package:sline_app/features/tasks/services/tender_payment_coordinator.dart';
-import 'package:sline_app/features/tasks/view/tender_payment_screen.dart';
-import 'package:sline_app/features/tasks/viewmodels/tender_payment_view_model.dart';
-import 'package:sline_app/core/services/payment_service.dart';
-import 'package:sline_app/features/tasks/services/task_service.dart';
+import 'package:sline_app/features/proposals/models/proposal_payment_summary.dart';
+import 'package:sline_app/features/proposals/routes/proposal_payment_route.dart';
 
 class WorkItemDetailsScreen extends StatelessWidget {
   final String id;
@@ -206,28 +203,17 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
         SizedBox(
           width: double.infinity,
           child: FilledButton(
+            key: const Key('work_item_details_pay_cta'),
             onPressed: () async {
-              final taskService = context.read<TaskService>();
-              final paymentService = context.read<PaymentService>();
-              final coordinator = TenderPaymentCoordinator(
-                taskService: taskService,
-                paymentService: paymentService,
+              final summary = ProposalPaymentSummary(
+                requestId: requestId,
+                taskId: taskId,
+                taskTitle: taskTitle,
+                freelancerName: otherName,
+                amount: amount,
+                paymentDeadline: deadline,
               );
-              await Navigator.of(context).push<void>(
-                MaterialPageRoute(
-                  builder: (_) => ChangeNotifierProvider<TenderPaymentViewModel>(
-                    create: (_) => TenderPaymentViewModel(
-                      coordinator: coordinator,
-                      requestId: requestId,
-                      taskTitle: taskTitle,
-                      freelancerName: otherName,
-                      amount: amount,
-                      paymentDeadline: deadline,
-                    ),
-                    child: const TenderPaymentScreen(),
-                  ),
-                ),
-              );
+              await openProposalPayment(context, summary: summary, launcherSource: 'work_item_details');
               if (context.mounted) {
                 context.read<DashboardViewModel>().refresh();
                 context.read<WorkItemDetailsViewModel>().loadData(taskId, 'task');

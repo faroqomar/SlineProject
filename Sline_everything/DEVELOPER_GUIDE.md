@@ -1,7 +1,7 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.17.2 (Dashboard remediation, refresh on all tabs)
-**Last Updated**: 2026-03-02
+**Version**: 2.17.3 (Proposals remediation, route + repos + docs)
+**Last Updated**: 2026-03-05
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
 
@@ -22,6 +22,7 @@ This comprehensive guide consolidates all feature-specific documentation into a 
 - [Direct Chat Offers (Direct Offers Feature)](DEVELOPER_GUIDE/Direct_Offers_Feature.md)
 - [Booking Feature Reference](#booking-feature-reference)
 - [Order Management Feature Reference](DEVELOPER_GUIDE/Order_Management_Feature.md)
+- [Proposals Feature Reference](DEVELOPER_GUIDE/Proposals_Feature.md)
 - [Wallet Feature Reference](DEVELOPER_GUIDE/Wallet_Feature.md)
 - [Work Management (Unified Flow)](#work-management-unified-flow)
 - [Finance & Payment Ledger Reference](#finance--payment-ledger-reference)
@@ -106,6 +107,7 @@ erDiagram
 - **Auth**: `lib/features/auth/` – signup/login, session
 - **Profile**: `lib/features/profile/` – profile edit, avatar upload, role switch, my tasks
 - **Tasks**: `lib/features/tasks/` – create/list/details, images, requests (offers)
+- **Proposals**: `lib/features/proposals/` – proposal models, repositories, payment route; list/submit/award/pay entry points (UI re-exports from tasks)
 - **Booking**: `lib/features/booking/` – direct booking checkout, payment recovery, client/provider booking histories
 - **Chat**: `lib/features/chat/` – conversations/messages, attachments, realtime
 - **Favorites**: `lib/features/favorites/` – client’s saved freelancers, enables DMs
@@ -199,6 +201,7 @@ try {
 - Categories: `DEVELOPER_GUIDE/Categories Feature.md`
 - Inventory: `DEVELOPER_GUIDE/Inventory Feature.md` (Planned)
 - Order Management: `DEVELOPER_GUIDE/Order_Management_Feature.md`
+- Proposals: `DEVELOPER_GUIDE/Proposals_Feature.md`
 
 ## 12. Gotchas & Tips
 
@@ -1511,7 +1514,7 @@ The standalone `orders` dashboard module was removed on 2026-03-01.
 - **Lazy-load by tab**: Overview data loads first; Bookings and Inbox data load on first visit to those tabs. Full refresh still loads all datasets.
 - **Wallet snapshot**: On first entry to the dashboard, `OverviewTab` triggers `WalletViewModel.loadWallet()` so the balance snapshot is visible without a separate wallet visit.
 - **My Services**: `MyServicesScreen` (profile) uses `MyServicesViewModel` and `ServicesService.getMyServices(uid)`; it no longer depends on dashboard state.
-- **Tender payment**: Awarded offers open `TenderPaymentScreen` backed by `TenderPaymentCoordinator` and `TenderPaymentViewModel`; the screen uses only the ViewModel (no direct service calls in the widget). Awarding an offer moves the task to the Work tab as "Waiting payment"; the client can Pay or Cancel from there (Cancel reverts the award so the task reappears in Inbox). Inbox and Work/NextActions create the coordinator + ViewModel and push with `ChangeNotifierProvider`; `TaskService` is provided in `main.dart`. **QiCard (March 2026):** When the app uses `QiCardPaymentService`, the Pay button is enabled: the coordinator calls the edge function `qicard_payment_create_tender` to get a `form_url`, the screen opens `PaymentWebViewScreen` for the user to pay; on return the app calls `recoverTenderPaymentAfterCallback` (edge function `qicard_payment_recovery_tender`), which runs `process_payment_event_ledger(gateway_escrow, task_request)` and assigns the task (freelancer, in_progress). **Demo:** When using `DemoPaymentService`, the Pay button is disabled (fail-closed); tender state never advances.
+- **Tender payment**: All payment entry points (Inbox, Work, Next Actions, Work Details, Requests list after award) use `openProposalPayment(context, summary)` from `lib/features/proposals/routes/proposal_payment_route.dart`; see [Proposals Feature](DEVELOPER_GUIDE/Proposals_Feature.md). That route builds `TenderPaymentScreen` with `TenderPaymentCoordinator` and `TenderPaymentViewModel`; the screen uses only the ViewModel (no direct service calls in the widget). Awarding an offer moves the task to the Work tab as "Waiting payment"; the client can Pay or Cancel from there (Cancel reverts the award so the task reappears in Inbox). `TaskService` is provided in `main.dart`. **QiCard (March 2026):** When the app uses `QiCardPaymentService`, the Pay button is enabled: the coordinator calls the edge function `qicard_payment_create_tender` to get a `form_url`, the screen opens `PaymentWebViewScreen` for the user to pay; on return the app calls `recoverTenderPaymentAfterCallback` (edge function `qicard_payment_recovery_tender`), which runs `process_payment_event_ledger(gateway_escrow, task_request)` and assigns the task (freelancer, in_progress). **Demo:** When using `DemoPaymentService`, the Pay button is disabled (fail-closed); tender state never advances.
 - **Offer submission:** Task offer submit no longer mutates `profiles.active_role`; RLS (`is_freelancer(auth.uid())`) controls insert. If insert is denied (e.g. user not in freelancer role), the app shows: "You must be in freelancer mode to submit an offer. Switch your role in profile settings."
 - **Dashboard cards**: Booking card lives in `lib/features/booking/view/widgets/dashboard_booking_card.dart` (callbacks for actions); offer card in `lib/features/tasks/view/widgets/dashboard_offer_card.dart`; wallet snapshot in `lib/features/wallet/view/widgets/wallet_snapshot_card.dart`. Shared status color/label helpers: `lib/core/utils/status_presenter.dart`.
 - **Pull-to-refresh on every tab**: All four dashboard tabs support pull-to-refresh and call `DashboardViewModel.refresh()` (full reload). Implemented in: `lib/features/dashboard/view/tabs/overview_tab.dart` (ListView wrapped in `RefreshIndicator`), `lib/features/dashboard/view/tabs/bookings_tab.dart` (empty state and list both wrapped; empty uses `SingleChildScrollView` + `AlwaysScrollableScrollPhysics`), `lib/features/dashboard/view/tabs/inbox_tab.dart` (empty state wrapped; list already had `RefreshIndicator`), `lib/features/dashboard/view/tabs/work_tab.dart` (Active, Done, Cancelled sub-tabs each have `RefreshIndicator` for both empty and filled lists).
@@ -1606,8 +1609,8 @@ Index
 
 Triggers/Functions
 
-- `trg_conversations_guard`: Only clients can start non-task DMs with favorites; task-linked requires task owner.
-- `trg_messages_validate_payload`: Offer messages require `price` and `days` in `payload`.
+- `trg_conversations_before_insert_guard` / `conversations_before_insert_guard()`: Only clients can start non-task DMs with favorites; task-linked normally requires non-owner to initiate. Exception: the task owner may create a task-linked conversation when rejecting an offer via `reject_task_request` (RPC sets `app.allow_owner_task_conversation`; see SUPABASE_SETUP.md §8.3 and migration `20260305071000_conversations_guard_allow_owner_reject.sql`).
+- `trg_messages_before_insert_validate` / `messages_before_insert_validate`: Offer messages require `price` and `days` in `payload`.
 
 ### 2.6 Direct Chat Offers (v2.17)
 

@@ -1,6 +1,6 @@
 # SLine App - Folder Structure Guide
 
-**Last Updated:** 2026-03-02
+**Last Updated:** 2026-03-05
 
 This document describes the current repository layout. It replaces older references to `presentation/` and `controllers/`; the live Flutter codebase uses `view/` and `viewmodels/` under `lib/features/`.
 
@@ -174,6 +174,7 @@ Not every feature uses every subfolder, but the standard live convention is:
 - `lib/features/direct_offers/`: direct chat offers (create, accept, pay, deliver, complete) and payment recovery
 - `lib/features/management/`: order timeline / note management for tasks and bookings
 - `lib/features/orders/`: decommissioned placeholder folder with `README.md` only; standalone orders runtime was removed on 2026-03-01
+- `lib/features/proposals/`: proposal models, data (repositories), routes (payment); view re-exports from tasks for list/submit/tile/payment screens
 - `lib/features/tasks/`: task creation, details, requests/offers, tender payment, delivery flows
 - `lib/features/wallet/`: wallet state and ledger-backed balance views
 - `lib/features/work/`: unified work item details and CTA resolution
@@ -192,6 +193,7 @@ test/
 │   ├── management/
 │   ├── models/
 │   ├── profile/
+│   ├── proposals/
 │   └── tasks/
 └── widget/
     ├── app/
@@ -201,6 +203,7 @@ test/
     ├── dashboard/
     ├── home/
     ├── management/
+    ├── proposals/
     └── tasks/
 ```
 

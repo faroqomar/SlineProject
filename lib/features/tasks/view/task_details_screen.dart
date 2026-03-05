@@ -11,7 +11,7 @@ import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/core/widgets/signed_image.dart';
 import 'package:sline_app/features/profile/view/widgets/profile_preview_modal.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
-import 'package:sline_app/features/tasks/view/widgets/requests/requests_list_screen.dart';
+import 'package:sline_app/features/proposals/view/proposals_list_screen.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
 import 'package:sline_app/features/chat/view/chat_screen.dart'; // Added
 import 'package:sline_app/features/booking/view/payment_checkout_screen.dart';

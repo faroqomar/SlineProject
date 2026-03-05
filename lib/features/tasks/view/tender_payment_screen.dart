@@ -85,6 +85,7 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
         final minutes = (timeRemaining.inMinutes % 60).clamp(0, 59);
 
         return Scaffold(
+          key: const Key('proposal_payment_screen'),
           appBar: AppBar(
             title: const Text('Complete Payment'),
             leading: IconButton(

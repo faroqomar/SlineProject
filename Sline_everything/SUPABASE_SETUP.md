@@ -1,6 +1,6 @@
 # Supabase Setup for SLine — Complete Database Reference
 
-**Last Updated**: 2026-03-02 (Notifications + release_with_fee zero-amount and enum cast)
+**Last Updated**: 2026-03-05 (Proposal RPC contract: 20260304060000–20260304062000; reject-offer conversation guard: 20260305071000)
 **Version**: 2.17
 **Database Version**: PostgreSQL 17.4.1
 **Project ID**: `isddrknbjsgaantjojhm`
@@ -81,7 +81,7 @@ This document is the **single source of truth** for all Supabase backend setup: 
 
 - ✅ Bids only allowed on `tender` tasks (not `booking`)
 - ✅ Direct client-initiated DMs **require** the freelancer to be in the client’s favorites (see DECISION_Favorites_DM; policy `conversations_insert_client_only`)
-- ✅ Task-linked conversations: non-owner starts chat
+- ✅ Task-linked conversations: non-owner starts chat (exception: owner may create via `reject_task_request`, which sets `app.allow_owner_task_conversation`; migration 20260305071000)
 - ✅ Booking status transitions enforced
 - ✅ Slot overlap prevention for providers
 - ✅ Auto-assign freelancer on offer acceptance
@@ -441,7 +441,7 @@ Chat threads between two users (optional task context).
 **Important Notes:**
 
 - `user1_id` and `user2_id` are normalized (user1_id < user2_id) by trigger
-- Task-linked conversations: Only non-owner can initiate
+- Task-linked conversations: Only non-owner can initiate, except when `reject_task_request` sets `app.allow_owner_task_conversation = 'true'` so the owner can create the conversation for the `offer_rejected` message (migration `20260305071000_conversations_guard_allow_owner_reject.sql`).
 - Direct DMs: Require favorites relationship (client can start DM only with a favorited freelancer; see DECISION_Favorites_DM)
 
 ---
@@ -1171,6 +1171,8 @@ Cross-user profile summaries must go through `public.rpc_get_profile_summaries(u
 | `trg_conversations_before_insert_guard` | BEFORE INSERT        | `conversations_before_insert_guard()` | Validate DM/task-linked rules |
 | `trg_normalize_conversation_users`      | BEFORE INSERT/UPDATE | `normalize_conversation_users()`      | Normalize user1_id < user2_id |
 
+**Guard behavior (`conversations_before_insert_guard`):** Enforces `initiated_by = auth.uid()`. For task-linked rows, initiator must not be the task owner unless `app.allow_owner_task_conversation = 'true'` (set by `reject_task_request` only). Migration: `20260305071000_conversations_guard_allow_owner_reject.sql`.
+
 ### 8.5 Work Contract Triggers
 
 | `t_freeze_contract_fields` | BEFORE UPDATE | `trg_freeze_contract_fields()` | Prevent direct updates to frozen fields on active items |
@@ -1449,7 +1451,7 @@ Finds >24h pending requests, expires them, and triggers refund.
 
 #### `reject_task_request(p_task_id uuid, p_request_id uuid) → uuid`
 
-Canonical owner-side offer rejection RPC. It validates `tasks.owner_id`, rejects the selected pending offer, creates or reuses the task conversation, logs an `offer_rejected` system message, and creates the freelancer notification server-side.
+Canonical owner-side offer rejection RPC. It validates `tasks.owner_id`, rejects the selected pending offer, sets `app.allow_owner_task_conversation = 'true'` (transaction-local) so the conversations guard allows the owner to create the task-linked conversation, creates or reuses the conversation with `initiated_by = v_owner`, logs an `offer_rejected` system message, and creates the freelancer notification server-side. Migration: `20260305071000_conversations_guard_allow_owner_reject.sql`.
 
 #### `reject_task_request(p_request_id uuid) → task_requests`
 
@@ -1855,6 +1857,10 @@ All functions use `SECURITY DEFINER` and include explicit `auth.uid()` checks.
 ---
 
 ## 17. Changelog
+
+### Version 2.17.3 (March 2026)
+
+- **Reject-offer conversation guard:** Migration `20260305071000_conversations_guard_allow_owner_reject.sql` fixes reject-from-Inbox (and task Offers list) which previously failed with "task owner cannot start a task-linked conversation" and "initiated_by must equal current user". The guard `conversations_before_insert_guard()` now allows the task owner to create a task-linked conversation when `app.allow_owner_task_conversation = 'true'` (set only by `reject_task_request` for that transaction). The RPC creates the conversation with `initiated_by = v_owner` so both guard rules are satisfied. Documented in §5.5, §8.3, and RPC `reject_task_request`. App verification: `.TODO/Archive/ProposalesExecution/CHECKLIST_Proposals_App_Verification_2026-03-05.md`.
 
 ### Version 2.18.1 (March 2026)
 

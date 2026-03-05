@@ -7,6 +7,9 @@ import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
 import 'package:sline_app/features/profile/view/public_profile_screen.dart';
 
+/// Deprecated: No call sites. Use RequestsListScreen + RequestTile for offer
+/// details. See DEPRECATION_Proposals_2026-03-04.md.
+@Deprecated('Use proposals list and tile; see DEPRECATION_Proposals_2026-03-04')
 class ProposalDetailsModal extends StatelessWidget {
   final Map<String, dynamic>? proposal; // Pass mock proposal or real one later
 

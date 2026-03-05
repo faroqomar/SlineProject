@@ -4,6 +4,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/features/proposals/models/proposal_model.dart';
 
 @immutable
 class TaskRequest {
@@ -88,6 +89,24 @@ class TaskRequest {
       );
       rethrow;
     }
+  }
+
+  /// Builds a TaskRequest from a ProposalModel (e.g. when owner list uses ProposalRepository).
+  factory TaskRequest.fromProposal(ProposalModel p) {
+    return TaskRequest(
+      id: p.id,
+      taskId: p.taskId,
+      bidderId: p.bidderId,
+      price: p.price,
+      days: p.days,
+      note: p.note,
+      status: p.status,
+      paymentStatus: p.paymentStatus,
+      createdAt: p.createdAt,
+      bidderName: p.bidderName,
+      bidderAvatar: p.bidderAvatar,
+      taskTitle: p.taskTitle,
+    );
   }
 
   Map<String, dynamic> toMap({bool forInsert = false}) {

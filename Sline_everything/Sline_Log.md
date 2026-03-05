@@ -1,6 +1,6 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2026-03-04
+**Last Updated:** 2026-03-05
 
 ---
 
@@ -20,6 +20,54 @@
 ---
 
 ## 📋 Version History
+
+### 🟢 Reject-offer conversation guard — owner can create task convo from reject path
+
+**Date:** 2026-03-05  
+**Checklist:** `.TODO/Archive/ProposalesExecution/CHECKLIST_Proposals_App_Verification_2026-03-05.md`
+
+#### ✅ Implemented
+
+- **DB migration** `supabase/migrations/20260305071000_conversations_guard_allow_owner_reject.sql`:
+  - Replaces `conversations_before_insert_guard()` so task-linked conversation creation allows the task owner when `app.allow_owner_task_conversation = 'true'` (transaction-local GUC). Otherwise enforces `initiated_by = auth.uid()` and non-owner for task-linked.
+  - Updates `reject_task_request(p_task_id, p_request_id)`: sets the GUC before inserting the conversation, uses `initiated_by = v_owner` so both "initiated_by must equal current user" and the non-owner rule (with GUC exception) pass.
+- **Superseded:** `20260305070000_reject_task_request_conversation_initiator.sql` (used `initiated_by = v_freelancer`, which violated "initiated_by must equal current user").
+
+#### 📊 Impact
+
+- Reject offer from Inbox (Offer card) and from task Offers list succeeds; conversation and `offer_rejected` message are created; freelancer receives notification.
+
+#### 🧪 Verification
+
+- App verification: `.TODO/Archive/ProposalesExecution/CHECKLIST_Proposals_App_Verification_2026-03-05.md` (Reject-offer fix section).
+
+#### 🔧 Technical Notes
+
+- Apply migration `20260305071000_conversations_guard_allow_owner_reject.sql` to live DB (Dashboard SQL or Supabase MCP). If your live `conversations_before_insert_guard()` has extra logic (e.g. DM/favorites), merge it into the migration function before applying.
+
+---
+
+### 🟢 Proposals Remediation — Secure RPCs, route helper, proposals module boundary
+
+**Date:** 2026-03-05  
+**Plan:** `.TODO/Archive/ProposalesExecution/PLAN_ProposalsRemediation_v2_2026-03-04.md`
+
+#### ✅ Implemented
+
+- **Proposals feature boundary:** `lib/features/proposals/` — models (`ProposalModel`, `ProposalPaymentSummary`), repositories (`ProposalRepository`, `ProposalAwardRepository`), route `openProposalPayment(context, summary)`; view re-exports for list/submit/tile/payment from tasks.
+- **Secure RPCs:** Migrations bind all proposal RPCs to `auth.uid()` (award_task_offer, pay_awarded_offer, cancel_awarded_offer, get_client/freelancer_awarded_unpaid_offers); `get_proposal_bidder_summaries` for owner list; `finalize_awarded_offer_payment` wrapper.
+- **Payment entry:** Inbox, Work tab, Next Actions, Work item details, and Requests list (after award) use `openProposalPayment` with `ProposalPaymentSummary` (server-derived deadline/task title where available).
+- **No client active_role mutation:** Submit offer fails fast with role message; RLS enforces freelancer.
+- **Self-favorite guard:** Request tile hides favorite button when viewer is the bidder.
+- **Deprecated:** `ProposalDetailsModal` (no call sites); DEPRECATION_Proposals doc.
+- **Tests:** Unit (proposal_model, proposal_payment_summary), widget (proposal_payment_screen), integration placeholder under `test/integration_test/proposals/`.
+- **Docs:** DEVELOPER_GUIDE.md, STRUCTURE.md, MVP_ROADMAP.md, Sline_Log; new `DEVELOPER_GUIDE/Proposals_Feature.md`.
+
+#### 📊 Impact
+
+- Single payment entry point; RLS-safe profile reads; release blocked until live DB evidence per RELEASE_CHECKLIST.
+
+---
 
 ### 🟢 Award → Work Waiting Payment — cancel_awarded_offer, vw_unified_work_items third branch
 

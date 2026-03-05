@@ -1,6 +1,6 @@
 # SLine MVP Roadmap
 
-**Last Updated:** 2026-03-03
+**Last Updated:** 2026-03-05
 
 This roadmap tracks the current code-state of the repository. Status values are intentionally simple:
 - `✅ Completed`
@@ -36,7 +36,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | Category-backed task browsing | ✅ Completed | categories feature and task filters exist |
 | Booking discovery feed | ✅ Completed | `BookingsDiscoveryScreen` reuses the task feed for booking tasks |
 | Search | 🚧 In Progress | dedicated `search/` feature exists; ongoing refinement |
-| Services/proposals surfacing | 🚧 In Progress | feature folders exist; product surface is still maturing |
+| Services/proposals surfacing | ✅ Completed | Proposals remediation (Mar 2026): models, repositories, payment route, view re-exports; secure RPCs; list/submit/award/pay from Inbox/Work/Requests; see DEVELOPER_GUIDE/Proposals_Feature.md |
 
 ## 4. Tasks and Tender Workflows
 

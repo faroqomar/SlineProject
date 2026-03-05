@@ -105,7 +105,7 @@ class TaskRequestsService {
 
     try {
       // RLS allows insert only when is_freelancer(auth.uid()) is true (profiles.active_role = 'freelancer').
-      // Ensure active_role is freelancer for this insert so the user can submit without leaving to Dashboard first.
+      // Do not mutate active_role from the client; require user to switch role explicitly.
       final profile = await _client
           .from('profiles')
           .select('active_role')
@@ -113,11 +113,10 @@ class TaskRequestsService {
           .single();
       final activeRole = profile['active_role'] as String?;
       if (activeRole != 'freelancer') {
-        AppLogger.d('Setting active_role to freelancer for offer submission', tag: 'Offers');
-        await _client
-            .from('profiles')
-            .update({'active_role': 'freelancer'})
-            .eq('id', uid);
+        AppLogger.w('Proposal submit rejected: user not in freelancer role', tag: 'Offers');
+        throw Exception(
+          'You must be in freelancer mode to submit a proposal. Switch your role in profile settings first.',
+        );
       }
 
       final insertData = <String, dynamic>{

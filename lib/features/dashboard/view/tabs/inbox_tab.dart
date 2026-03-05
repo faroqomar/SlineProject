@@ -4,11 +4,8 @@ import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/services/payment_service.dart';
-import 'package:sline_app/features/tasks/services/task_service.dart';
-import 'package:sline_app/features/tasks/services/tender_payment_coordinator.dart';
-import 'package:sline_app/features/tasks/view/tender_payment_screen.dart';
-import 'package:sline_app/features/tasks/viewmodels/tender_payment_view_model.dart';
+import 'package:sline_app/features/proposals/models/proposal_payment_summary.dart';
+import 'package:sline_app/features/proposals/routes/proposal_payment_route.dart';
 import 'package:sline_app/features/tasks/view/widgets/dashboard_offer_card.dart';
 import '../../viewmodels/dashboard_view_model.dart';
 import 'package:sline_app/core/services/logger_service.dart';
@@ -67,33 +64,15 @@ class _InboxTabState extends State<InboxTab> {
     dynamic offer,
   ) async {
     final vm = context.read<DashboardViewModel>();
-    final navigator = Navigator.of(context);
-
-    // For awarded offers, use a 24-hour deadline from now as fallback
-    final paymentDeadline = DateTime.now().add(const Duration(hours: 24));
-    final taskService = context.read<TaskService>();
-    final paymentService = context.read<PaymentService>();
-    final coordinator = TenderPaymentCoordinator(
-      taskService: taskService,
-      paymentService: paymentService,
+    final summary = ProposalPaymentSummary(
+      requestId: offer.id,
+      taskId: offer.taskId ?? '',
+      taskTitle: offer.taskTitle ?? 'Task',
+      freelancerName: offer.bidderName ?? 'Freelancer',
+      amount: offer.price.toDouble(),
+      paymentDeadline: offer.paymentDeadline as DateTime?,
     );
-
-    await navigator.push(
-      MaterialPageRoute(
-        builder: (_) => ChangeNotifierProvider<TenderPaymentViewModel>(
-          create: (_) => TenderPaymentViewModel(
-            coordinator: coordinator,
-            requestId: offer.id,
-            taskTitle: offer.taskTitle ?? 'Task',
-            freelancerName: offer.bidderName ?? 'Freelancer',
-            amount: offer.price.toDouble(),
-            paymentDeadline: paymentDeadline,
-          ),
-          child: const TenderPaymentScreen(),
-        ),
-      ),
-    );
-
+    await openProposalPayment(context, summary: summary, launcherSource: 'inbox_tab');
     if (!mounted) return;
     await vm.refresh();
   }
@@ -123,6 +102,7 @@ class _InboxTabState extends State<InboxTab> {
         }
 
         return RefreshIndicator(
+          key: const Key('inbox_tab'),
           onRefresh: () => vm.refresh(),
           child: ListView.builder(
             padding: const EdgeInsets.all(AppDimens.p16),

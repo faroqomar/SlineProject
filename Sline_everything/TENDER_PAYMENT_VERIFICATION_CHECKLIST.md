@@ -15,6 +15,7 @@ This document provides a comprehensive verification checklist for testing the ne
 - ✅ Added indexes for efficient queries
 
 ### Code Changes Implemented
+- ✅ **Payment entry:** All launchers use `openProposalPayment(context, summary)` from `lib/features/proposals/routes/proposal_payment_route.dart` (see [Proposals Feature](DEVELOPER_GUIDE/Proposals_Feature.md)).
 - ✅ `TaskService.awardOffer()` - Awards offer without payment
 - ✅ `TaskService.payAwardedOffer()` - Completes payment + creates escrow
 - ✅ `TaskService.getClientAwardedUnpaidOffers()` - For dashboard integration

@@ -5,11 +5,8 @@ import 'work_item_card.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/deep_link_service.dart'
     as sline_deep_link;
-import 'package:sline_app/core/services/payment_service.dart';
-import 'package:sline_app/features/tasks/services/task_service.dart';
-import 'package:sline_app/features/tasks/services/tender_payment_coordinator.dart';
-import 'package:sline_app/features/tasks/view/tender_payment_screen.dart';
-import 'package:sline_app/features/tasks/viewmodels/tender_payment_view_model.dart';
+import 'package:sline_app/features/proposals/models/proposal_payment_summary.dart';
+import 'package:sline_app/features/proposals/routes/proposal_payment_route.dart';
 import 'package:sline_app/features/wallet/view/wallet_screen.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 
@@ -63,6 +60,7 @@ class NextActionsList extends StatelessWidget {
     final displayItems = items.take(3).toList();
 
     return Column(
+      key: const Key('next_actions_list'),
       children: displayItems
           .map(
             (item) => WorkItemCard(
@@ -99,7 +97,7 @@ class NextActionsList extends StatelessWidget {
                   }
                   return;
                 }
-                // Task awarded pending payment: open TenderPaymentScreen
+                // Task awarded pending payment: open via shared route
                 if (item.type == WorkItemType.task &&
                     action == PrimaryActionType.payEscrow &&
                     item.awardedRequestId != null) {
@@ -107,30 +105,15 @@ class NextActionsList extends StatelessWidget {
                     'NextActions: opening tender payment request=${item.awardedRequestId}',
                     tag: 'dashboard.work',
                   );
-                  final taskService = context.read<TaskService>();
-                  final paymentService = context.read<PaymentService>();
-                  final coordinator = TenderPaymentCoordinator(
-                    taskService: taskService,
-                    paymentService: paymentService,
+                  final summary = ProposalPaymentSummary(
+                    requestId: item.awardedRequestId!,
+                    taskId: item.id,
+                    taskTitle: item.title,
+                    freelancerName: item.counterpartyName,
+                    amount: item.price ?? 0,
+                    paymentDeadline: item.paymentDeadline,
                   );
-                  final deadline = item.paymentDeadline ??
-                      DateTime.now().add(const Duration(hours: 24));
-                  await Navigator.of(context).push<void>(
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          ChangeNotifierProvider<TenderPaymentViewModel>(
-                        create: (_) => TenderPaymentViewModel(
-                          coordinator: coordinator,
-                          requestId: item.awardedRequestId!,
-                          taskTitle: item.title,
-                          freelancerName: item.counterpartyName,
-                          amount: item.price ?? 0,
-                          paymentDeadline: deadline,
-                        ),
-                        child: const TenderPaymentScreen(),
-                      ),
-                    ),
-                  );
+                  await openProposalPayment(context, summary: summary, launcherSource: 'next_actions_list');
                   if (context.mounted) vm.refresh();
                   return;
                 }

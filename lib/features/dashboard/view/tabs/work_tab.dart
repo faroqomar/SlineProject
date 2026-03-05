@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
-import 'package:sline_app/core/services/payment_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
@@ -9,10 +8,8 @@ import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 import 'package:sline_app/features/dashboard/view/widgets/work_item_card.dart';
 import 'package:sline_app/features/dashboard/models/work_item.dart';
-import 'package:sline_app/features/tasks/services/task_service.dart';
-import 'package:sline_app/features/tasks/services/tender_payment_coordinator.dart';
-import 'package:sline_app/features/tasks/view/tender_payment_screen.dart';
-import 'package:sline_app/features/tasks/viewmodels/tender_payment_view_model.dart';
+import 'package:sline_app/features/proposals/models/proposal_payment_summary.dart';
+import 'package:sline_app/features/proposals/routes/proposal_payment_route.dart';
 import 'package:sline_app/features/wallet/view/wallet_screen.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 
@@ -62,6 +59,7 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
     }
 
     return Column(
+      key: const Key('work_tab'),
       children: [
         // Header & Tab Bar
         Container(
@@ -283,7 +281,7 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
     DashboardViewModel vm,
     WorkItem item,
   ) async {
-    // Task awarded pending payment: open TenderPaymentScreen from Work
+    // Task awarded pending payment: open payment via shared route
     if (item.type == WorkItemType.task &&
         item.primaryActionType == PrimaryActionType.payEscrow &&
         item.awardedRequestId != null) {
@@ -291,29 +289,15 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
         'Work: opening tender payment for request=${item.awardedRequestId} task=${item.id}',
         tag: 'dashboard.work',
       );
-      final taskService = context.read<TaskService>();
-      final paymentService = context.read<PaymentService>();
-      final coordinator = TenderPaymentCoordinator(
-        taskService: taskService,
-        paymentService: paymentService,
+      final summary = ProposalPaymentSummary(
+        requestId: item.awardedRequestId!,
+        taskId: item.id,
+        taskTitle: item.title,
+        freelancerName: item.counterpartyName,
+        amount: item.price ?? 0,
+        paymentDeadline: item.paymentDeadline,
       );
-      final deadline = item.paymentDeadline ??
-          DateTime.now().add(const Duration(hours: 24));
-      await Navigator.of(context).push<void>(
-        MaterialPageRoute(
-          builder: (_) => ChangeNotifierProvider<TenderPaymentViewModel>(
-            create: (_) => TenderPaymentViewModel(
-              coordinator: coordinator,
-              requestId: item.awardedRequestId!,
-              taskTitle: item.title,
-              freelancerName: item.counterpartyName,
-              amount: item.price ?? 0,
-              paymentDeadline: deadline,
-            ),
-            child: const TenderPaymentScreen(),
-          ),
-        ),
-      );
+      await openProposalPayment(context, summary: summary, launcherSource: 'work_tab');
       if (context.mounted) vm.refresh();
       return;
     }

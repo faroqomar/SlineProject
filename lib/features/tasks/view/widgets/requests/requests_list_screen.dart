@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
+import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
 import 'package:sline_app/features/favorites/viewmodels/favorites_view_model.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_requests_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/core/utils/format_price.dart';
-import 'package:sline_app/core/services/payment_service.dart';
-import 'package:sline_app/features/tasks/services/task_service.dart';
-import 'package:sline_app/features/tasks/services/tender_payment_coordinator.dart';
-import 'package:sline_app/features/tasks/view/tender_payment_screen.dart';
-import 'package:sline_app/features/tasks/viewmodels/tender_payment_view_model.dart';
+import 'package:sline_app/features/proposals/data/proposal_repository.dart';
+import 'package:sline_app/features/proposals/models/proposal_payment_summary.dart';
+import 'package:sline_app/features/proposals/routes/proposal_payment_route.dart';
 import 'widgets/request_tile.dart';
 import 'submit_request_sheet.dart';
 
@@ -141,30 +140,18 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
     setState(() => _isAwarding = false);
 
     if (result != null && result['success'] == true) {
-      final taskService = context.read<TaskService>();
-      final paymentService = context.read<PaymentService>();
-      final coordinator = TenderPaymentCoordinator(
-        taskService: taskService,
-        paymentService: paymentService,
+      final paymentDeadline = result['payment_deadline'] != null
+          ? DateTime.tryParse(result['payment_deadline'] as String)
+          : null;
+      final summary = ProposalPaymentSummary(
+        requestId: request.id,
+        taskId: request.taskId,
+        taskTitle: request.taskTitle ?? 'Task',
+        freelancerName: request.bidderName ?? 'Freelancer',
+        amount: request.price.toDouble(),
+        paymentDeadline: paymentDeadline,
       );
-      final paymentDeadline = DateTime.parse(
-        result['payment_deadline'] as String,
-      );
-      await Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => ChangeNotifierProvider<TenderPaymentViewModel>(
-            create: (_) => TenderPaymentViewModel(
-              coordinator: coordinator,
-              requestId: request.id,
-              taskTitle: widget.taskId,
-              freelancerName: request.bidderName ?? 'Freelancer',
-              amount: request.price.toDouble(),
-              paymentDeadline: paymentDeadline,
-            ),
-            child: const TenderPaymentScreen(),
-          ),
-        ),
-      );
+      await openProposalPayment(context, summary: summary, launcherSource: 'requests_list');
       if (!mounted) return;
     } else {
       // Show error
@@ -194,10 +181,12 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
       );
     }
     return ChangeNotifierProvider<TaskRequestsViewModel>(
-      create: (_) {
+      create: (ctx) {
+        final proposalRepo = widget.isOwner ? ctx.read<ProposalRepository>() : null;
         final c = TaskRequestsViewModel(
           taskId: widget.taskId,
           isOwner: widget.isOwner,
+          proposalRepo: proposalRepo,
         );
         c.loadInitial();
         return c;
@@ -218,6 +207,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
         return Consumer<TaskRequestsViewModel>(
           builder: (context, c, __) {
             return Scaffold(
+              key: const Key('requests_list_screen'),
               appBar: AppBar(title: const Text('Offers')),
               body: RefreshIndicator(
                 onRefresh: () async => c.loadInitial(),
@@ -283,6 +273,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
         }
         final TaskRequest req = c.items[index];
         final favoritesVM = context.read<FavoritesViewModel>();
+        final viewerUserId = context.read<AuthViewModel>().currentUserId;
         return RequestTile(
           request: req,
           onAccept: c.canActOn(req) && !_isAwarding
@@ -294,6 +285,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
           isOwner: widget.isOwner,
           isLoading: _isAwarding,
           favoritesVM: favoritesVM,
+          viewerUserId: viewerUserId,
         );
       },
     );

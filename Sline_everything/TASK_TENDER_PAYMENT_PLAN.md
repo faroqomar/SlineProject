@@ -1,5 +1,7 @@
 # Task/Tender Payment Flow Implementation Plan
 
+**Note (2026-03):** Payment entry is now centralized via `openProposalPayment(context, summary)` from `lib/features/proposals/routes/proposal_payment_route.dart`; see [Proposals Feature](DEVELOPER_GUIDE/Proposals_Feature.md). Inbox, Work, Next Actions, Work Details, and the Requests list after award all use this route.
+
 ## Overview
 
 This plan implements the missing **Two-Step Award → Payment Flow** for Task Tenders to match the Client/Freelancer diagram specifications.

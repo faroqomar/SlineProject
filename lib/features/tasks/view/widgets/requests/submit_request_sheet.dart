@@ -80,6 +80,7 @@ Future<void> showSubmitRequestSheet(
       final insets = MediaQuery.of(ctx).viewInsets;
 
       return Container(
+        key: const Key('submit_proposal_sheet'),
         height: MediaQuery.of(ctx).size.height * 0.85,
         decoration: BoxDecoration(
           color: colorScheme.cardBackground,

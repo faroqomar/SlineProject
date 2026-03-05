@@ -19,6 +19,8 @@ import 'package:sline_app/features/services/viewmodels/my_services_view_model.da
 import 'features/saved/viewmodels/saved_tasks_view_model.dart';
 import 'features/saved/data/saved_tasks_service.dart';
 import 'features/tasks/services/task_requests_service.dart';
+import 'package:sline_app/features/proposals/data/proposal_repository.dart';
+import 'package:sline_app/features/proposals/data/proposal_award_repository.dart';
 import 'core/services/supabase_config.dart';
 import 'core/services/logger_service.dart';
 import 'features/auth/view/login_screen.dart';
@@ -195,6 +197,11 @@ class SLineApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => NotificationViewModel()),
         // Task Requests Service (Stateless)
         Provider(create: (_) => TaskRequestsService()),
+        // Proposal repositories (RLS-safe list/award/payment; used by owner list and payment route)
+        Provider(create: (ctx) => ProposalRepository(
+          taskRequestsService: ctx.read<TaskRequestsService>(),
+        )),
+        Provider(create: (_) => ProposalAwardRepository()),
         // Task Service (for tender payment coordinator and dashboard)
         Provider(create: (_) => TaskService()),
         // Favorites state

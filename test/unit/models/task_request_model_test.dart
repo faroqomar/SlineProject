@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/features/proposals/models/proposal_model.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 
 Map<String, dynamic> _taskRequestMap({Map<String, dynamic>? overrides}) {
@@ -101,6 +102,35 @@ void main() {
       expect(payload['price'], 999);
       expect(payload['days'], 7);
       expect(payload['note'], 'Please hire me');
+    });
+
+    test('TaskRequest.fromProposal maps ProposalModel to TaskRequest', () {
+      final createdAt = DateTime.utc(2026, 3, 4, 12, 0);
+      final p = ProposalModel(
+        id: 'req-p',
+        taskId: 'task-p',
+        bidderId: 'bidder-p',
+        price: 100,
+        days: 5,
+        note: 'Cover',
+        status: OfferStatus.accepted,
+        paymentStatus: PaymentStatus.held,
+        createdAt: createdAt,
+        bidderName: 'Jane',
+        taskTitle: 'My Task',
+      );
+      final request = TaskRequest.fromProposal(p);
+      expect(request.id, 'req-p');
+      expect(request.taskId, 'task-p');
+      expect(request.bidderId, 'bidder-p');
+      expect(request.price, 100);
+      expect(request.days, 5);
+      expect(request.note, 'Cover');
+      expect(request.status, OfferStatus.accepted);
+      expect(request.paymentStatus, PaymentStatus.held);
+      expect(request.createdAt, createdAt);
+      expect(request.bidderName, 'Jane');
+      expect(request.taskTitle, 'My Task');
     });
   });
 }

@@ -18,6 +18,9 @@ class RequestTile extends StatelessWidget {
   /// FavoritesViewModel from app-level provider. Required for add-to-favorites when !isOwner.
   final FavoritesViewModel? favoritesVM;
 
+  /// When set, favorite button is hidden for the current user's own offer (self-favorite guard).
+  final String? viewerUserId;
+
   const RequestTile({
     super.key,
     required this.request,
@@ -25,6 +28,7 @@ class RequestTile extends StatelessWidget {
     this.onReject,
     required this.isOwner,
     this.favoritesVM,
+    this.viewerUserId,
     this.isLoading = false,
   });
 
@@ -36,6 +40,7 @@ class RequestTile extends StatelessWidget {
         request.isPending && onAccept != null && onReject != null && !isLoading;
 
     return Card(
+      key: Key('request_tile_${request.id}'),
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
@@ -47,7 +52,7 @@ class RequestTile extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (!isOwner && favoritesVM != null)
+            if (!isOwner && favoritesVM != null && request.bidderId != viewerUserId)
               Consumer<FavoritesViewModel>(
                 builder: (context, vm, _) {
                   final pending = vm.isPending(request.bidderId);

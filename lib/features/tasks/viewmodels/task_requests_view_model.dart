@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/features/tasks/services/task_requests_service.dart';
 import 'package:sline_app/features/tasks/services/task_service.dart';
+import 'package:sline_app/features/proposals/data/proposal_repository.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 
 /// TaskRequestsViewModel — MVVM state holder for Task Requests (Offers)
@@ -11,14 +12,17 @@ class TaskRequestsViewModel extends ChangeNotifier {
   final bool isOwner;
   final TaskRequestsService _service;
   final TaskService _taskService;
+  final ProposalRepository? _proposalRepo;
 
   TaskRequestsViewModel({
     required this.taskId,
     this.isOwner = false,
     TaskRequestsService? service,
     TaskService? taskService,
-  }) : _service = service ?? TaskRequestsService(),
-       _taskService = taskService ?? TaskService();
+    ProposalRepository? proposalRepo,
+  })  : _service = service ?? TaskRequestsService(),
+        _taskService = taskService ?? TaskService(),
+        _proposalRepo = proposalRepo;
 
   // Paging state
   final List<TaskRequest> _items = <TaskRequest>[];
@@ -46,16 +50,31 @@ class TaskRequestsViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       _cursorBefore = null;
-      final list = await _service.listByTask(
-        taskId: taskId,
-        limit: _pageSize,
-        before: null,
-      );
-      _items
-        ..clear()
-        ..addAll(list);
-      _hasMore = list.length == _pageSize;
-      _cursorBefore = list.isEmpty ? null : list.last.createdAt;
+      if (isOwner && _proposalRepo != null) {
+        final proposals = await _proposalRepo.listByTask(
+          taskId: taskId,
+          limit: _pageSize,
+          before: null,
+          isOwner: true,
+        );
+        final list = proposals.map(TaskRequest.fromProposal).toList();
+        _items
+          ..clear()
+          ..addAll(list);
+        _hasMore = list.length == _pageSize;
+        _cursorBefore = list.isEmpty ? null : list.last.createdAt;
+      } else {
+        final list = await _service.listByTask(
+          taskId: taskId,
+          limit: _pageSize,
+          before: null,
+        );
+        _items
+          ..clear()
+          ..addAll(list);
+        _hasMore = list.length == _pageSize;
+        _cursorBefore = list.isEmpty ? null : list.last.createdAt;
+      }
     } catch (e, st) {
       _errorMessage = _friendlyError(e);
       AppLogger.e(
@@ -75,14 +94,27 @@ class TaskRequestsViewModel extends ChangeNotifier {
     _isLoadingMore = true;
     notifyListeners();
     try {
-      final list = await _service.listByTask(
-        taskId: taskId,
-        limit: _pageSize,
-        before: _cursorBefore,
-      );
-      _items.addAll(list);
-      _hasMore = list.length == _pageSize;
-      _cursorBefore = list.isEmpty ? _cursorBefore : list.last.createdAt;
+      if (isOwner && _proposalRepo != null) {
+        final proposals = await _proposalRepo.listByTask(
+          taskId: taskId,
+          limit: _pageSize,
+          before: _cursorBefore,
+          isOwner: true,
+        );
+        final list = proposals.map(TaskRequest.fromProposal).toList();
+        _items.addAll(list);
+        _hasMore = list.length == _pageSize;
+        _cursorBefore = list.isEmpty ? _cursorBefore : list.last.createdAt;
+      } else {
+        final list = await _service.listByTask(
+          taskId: taskId,
+          limit: _pageSize,
+          before: _cursorBefore,
+        );
+        _items.addAll(list);
+        _hasMore = list.length == _pageSize;
+        _cursorBefore = list.isEmpty ? _cursorBefore : list.last.createdAt;
+      }
     } catch (e, st) {
       _errorMessage = _friendlyError(e);
       AppLogger.e(
@@ -120,12 +152,7 @@ class TaskRequestsViewModel extends ChangeNotifier {
     try {
       final result = await _taskService.awardOffer(requestId);
 
-      // Refresh the list
-      final list = await _service.listByTask(taskId: taskId, limit: 100);
-      _items.clear();
-      _items.addAll(list);
-      notifyListeners();
-
+      await _refreshListAfterMutation();
       return result;
     } catch (e, st) {
       _errorMessage = _friendlyError(e);
@@ -148,12 +175,7 @@ class TaskRequestsViewModel extends ChangeNotifier {
     try {
       final result = await _taskService.payAwardedOffer(requestId);
 
-      // Refresh the list
-      final list = await _service.listByTask(taskId: taskId, limit: 100);
-      _items.clear();
-      _items.addAll(list);
-      notifyListeners();
-
+      await _refreshListAfterMutation();
       return result;
     } catch (e, st) {
       _errorMessage = _friendlyError(e);
@@ -175,10 +197,7 @@ class TaskRequestsViewModel extends ChangeNotifier {
   Future<void> accept(String requestId) async {
     try {
       await _taskService.escrowHoldOffer(requestId);
-      final list = await _service.listByTask(taskId: taskId, limit: 100);
-      _items.clear();
-      _items.addAll(list);
-      notifyListeners();
+      await _refreshListAfterMutation();
     } catch (e, st) {
       _errorMessage = _friendlyError(e);
       AppLogger.e(
@@ -234,6 +253,24 @@ class TaskRequestsViewModel extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  Future<void> _refreshListAfterMutation() async {
+    if (isOwner && _proposalRepo != null) {
+      final proposals = await _proposalRepo.listByTask(
+        taskId: taskId,
+        limit: 100,
+        before: null,
+        isOwner: true,
+      );
+      _items.clear();
+      _items.addAll(proposals.map(TaskRequest.fromProposal).toList());
+    } else {
+      final list = await _service.listByTask(taskId: taskId, limit: 100);
+      _items.clear();
+      _items.addAll(list);
+    }
+    notifyListeners();
   }
 
   void _replace(TaskRequest updated) {
