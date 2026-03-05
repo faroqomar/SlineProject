@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
-import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
+import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
 import 'package:sline_app/features/favorites/viewmodels/favorites_view_model.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_requests_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
@@ -273,7 +273,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
         }
         final TaskRequest req = c.items[index];
         final favoritesVM = context.read<FavoritesViewModel>();
-        final viewerUserId = context.read<AuthViewModel>().currentUserId;
+        final viewerUserId = context.read<AuthSessionViewModel>().currentUserId;
         return RequestTile(
           request: req,
           onAccept: c.canActOn(req) && !_isAwarding

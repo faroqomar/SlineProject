@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
+import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
@@ -37,7 +37,7 @@ class DirectOfferDetailsScreen extends StatelessWidget {
           create: (_) => DirectOfferDetailsViewModel(
             offerId: offerId,
             conversationId: conversationId,
-            currentUserId: context.read<AuthViewModel>().currentUserId,
+            currentUserId: context.read<AuthSessionViewModel>().currentUserId,
             directOffersService: context.read<DirectOffersService>(),
             paymentService: context.read<PaymentService>(),
           )..loadOffer(),

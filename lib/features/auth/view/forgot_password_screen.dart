@@ -6,10 +6,15 @@ import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
-import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
+import 'package:sline_app/features/auth/viewmodels/auth_form_view_model.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
+
+  static const Key emailFieldKey = ValueKey<String>('forgot_email_field');
+  static const Key sendResetLinkButtonKey = ValueKey<String>(
+    'forgot_send_link_button',
+  );
 
   @override
   State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
@@ -25,7 +30,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  Future<void> _handleReset(AuthViewModel authVM) async {
+  Future<void> _handleReset(AuthFormViewModel authVM) async {
     if (!_formKey.currentState!.validate()) return;
 
     final email = _emailController.text.trim();
@@ -55,7 +60,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final colorScheme = context.colorScheme;
 
     return ChangeNotifierProvider(
-      create: (_) => AuthViewModel(),
+      create: (_) => AuthFormViewModel(),
       child: Scaffold(
         extendBodyBehindAppBar: true,
         appBar: AppBar(
@@ -134,6 +139,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ),
                     const SizedBox(height: AppDimens.p8),
                     AppTextField(
+                      key: ForgotPasswordScreen.emailFieldKey,
                       controller: _emailController,
                       hintText: 'your@email.com',
                       keyboardType: TextInputType.emailAddress,
@@ -150,9 +156,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     const SizedBox(height: AppDimens.p32),
 
                     // Action Button
-                    Consumer<AuthViewModel>(
+                    Consumer<AuthFormViewModel>(
                       builder: (context, authVM, child) {
                         return AppButton(
+                          key: ForgotPasswordScreen.sendResetLinkButtonKey,
                           text: 'Send Reset Link',
                           isLoading: authVM.isLoading,
                           width: double.infinity,

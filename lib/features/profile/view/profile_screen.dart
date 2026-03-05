@@ -7,7 +7,7 @@ import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/core/widgets/signed_image.dart';
-import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
+import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
 import 'package:sline_app/features/profile/view/edit_profile_screen.dart';
 import 'package:sline_app/features/profile/view/my_services_screen.dart';
 import 'package:sline_app/features/profile/view/public_profile_screen.dart'; // Added
@@ -452,7 +452,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       AppColors.lightTeal,
                       onTap: () {
                         final userId = context
-                            .read<AuthViewModel>()
+                            .read<AuthSessionViewModel>()
                             .currentUserId;
                         if (userId != null) {
                           Navigator.push(
@@ -506,18 +506,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     // Logout button
                     GestureDetector(
                       onTap: () async {
-                        final authVM = context.read<AuthViewModel>();
-                        final success = await authVM.logout();
+                        final authVM = context.read<AuthSessionViewModel>();
+                        await authVM.logout();
                         if (!context.mounted) return;
-                        if (success) {
-                          Navigator.of(context).pushReplacementNamed('/login');
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(authVM.error ?? 'Logout failed'),
-                            ),
-                          );
-                        }
+
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          '/login',
+                          (route) => false,
+                        );
                       },
                       child: Container(
                         height: 54,

@@ -8,15 +8,24 @@ import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
 import 'package:sline_app/core/providers/system_config_view_model.dart';
-import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
+import 'package:sline_app/features/auth/viewmodels/auth_form_view_model.dart';
 
 /// Signup screen (MVVM) with Glassmorphism design.
 ///
-/// Architecture: Uses a local AuthViewModel provider for scoped state.
+/// Architecture: Uses a local AuthFormViewModel provider for scoped state.
 /// The View handles navigation and SnackBar display based on ViewModel state,
 /// keeping the ViewModel framework-agnostic.
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
+
+  static const Key nameFieldKey = ValueKey<String>('signup_name_field');
+  static const Key emailFieldKey = ValueKey<String>('signup_email_field');
+  static const Key passwordFieldKey = ValueKey<String>('signup_password_field');
+  static const Key confirmPasswordFieldKey = ValueKey<String>(
+    'signup_confirm_password_field',
+  );
+  static const Key signUpButtonKey = ValueKey<String>('signup_button');
+  static const Key signInLinkKey = ValueKey<String>('signup_signin_link');
 
   @override
   State<SignupScreen> createState() => _SignupScreenState();
@@ -39,7 +48,7 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   /// Handle registration action - validates, calls ViewModel, and manages navigation.
-  Future<void> _handleRegister(AuthViewModel authVM) async {
+  Future<void> _handleRegister(AuthFormViewModel authVM) async {
     if (context.read<SystemConfigViewModel?>()?.config.disableSignups ??
         false) {
       if (!mounted) return;
@@ -96,7 +105,7 @@ class _SignupScreenState extends State<SignupScreen> {
         context.watch<SystemConfigViewModel?>()?.config.disableSignups ?? false;
 
     return ChangeNotifierProvider(
-      create: (_) => AuthViewModel(),
+      create: (_) => AuthFormViewModel(),
       child: Scaffold(
         body: Container(
           width: double.infinity,
@@ -120,7 +129,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 child: Form(
                   key: _formKey,
-                  child: Consumer<AuthViewModel>(
+                  child: Consumer<AuthFormViewModel>(
                     builder: (context, authVM, _) {
                       return Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -213,6 +222,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                           const SizedBox(height: AppDimens.p8),
                           AppTextField(
+                            key: SignupScreen.nameFieldKey,
                             controller: _nameController,
                             hintText: 'John Doe',
                             validator: (value) {
@@ -236,6 +246,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                           const SizedBox(height: AppDimens.p8),
                           AppTextField(
+                            key: SignupScreen.emailFieldKey,
                             controller: _emailController,
                             hintText: 'your@email.com',
                             keyboardType: TextInputType.emailAddress,
@@ -263,6 +274,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                           const SizedBox(height: AppDimens.p8),
                           AppTextField(
+                            key: SignupScreen.passwordFieldKey,
                             controller: _passwordController,
                             hintText: 'Create a password',
                             obscureText: true,
@@ -290,6 +302,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                           const SizedBox(height: AppDimens.p8),
                           AppTextField(
+                            key: SignupScreen.confirmPasswordFieldKey,
                             controller: _confirmPasswordController,
                             hintText: 'Confirm password',
                             obscureText: true,
@@ -304,49 +317,13 @@ class _SignupScreenState extends State<SignupScreen> {
 
                           // --- Actions ---
                           AppButton(
+                            key: SignupScreen.signUpButtonKey,
                             text: 'Create Account',
                             isLoading: authVM.isLoading,
                             width: double.infinity,
                             onPressed: signupsDisabled
                                 ? null
                                 : () => _handleRegister(authVM),
-                          ),
-                          const SizedBox(height: AppDimens.p24),
-
-                          // Divider
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Divider(color: colorScheme.divider),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppDimens.p8,
-                                ),
-                                child: Text(
-                                  'OR',
-                                  style: AppTypography.captionBold.copyWith(
-                                    color: colorScheme.textSecondary,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: Divider(color: colorScheme.divider),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: AppDimens.p24),
-
-                          // Social Logins
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _buildSocialButton(context, Icons.g_mobiledata),
-                              const SizedBox(width: AppDimens.p12),
-                              _buildSocialButton(context, Icons.facebook),
-                              const SizedBox(width: AppDimens.p12),
-                              _buildSocialButton(context, Icons.apple),
-                            ],
                           ),
                           const SizedBox(height: AppDimens.p24),
 
@@ -361,6 +338,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                 ),
                               ),
                               GestureDetector(
+                                key: SignupScreen.signInLinkKey,
                                 onTap: () {
                                   Navigator.pop(context);
                                 },
@@ -382,28 +360,6 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSocialButton(BuildContext context, IconData icon) {
-    final AppColorScheme colorScheme = context.colorScheme;
-    return Container(
-      width: 50,
-      height: 50,
-      decoration: BoxDecoration(
-        color: colorScheme.authInputBackground,
-        borderRadius: BorderRadius.circular(AppDimens.r14),
-        border: Border.all(color: colorScheme.authInputBorder),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(AppDimens.r14),
-        child: InkWell(
-          onTap: () {},
-          borderRadius: BorderRadius.circular(AppDimens.r14),
-          child: Center(child: Icon(icon, size: 24, color: colorScheme.text)),
         ),
       ),
     );

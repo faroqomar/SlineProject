@@ -8,12 +8,12 @@ import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
 import 'package:sline_app/core/providers/system_config_view_model.dart';
-import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
+import 'package:sline_app/features/auth/viewmodels/auth_form_view_model.dart';
 import 'package:sline_app/features/auth/view/forgot_password_screen.dart';
 
 /// Login screen for user authentication (MVVM) with Glassmorphism design.
 ///
-/// Architecture: Uses a local AuthViewModel provider for scoped state.
+/// Architecture: Uses a local AuthFormViewModel provider for scoped state.
 /// The View handles navigation and SnackBar display based on ViewModel state,
 /// keeping the ViewModel framework-agnostic.
 class LoginScreen extends StatefulWidget {
@@ -23,7 +23,7 @@ class LoginScreen extends StatefulWidget {
     this.mainNavigationBuilder,
   });
 
-  final AuthViewModel Function()? authViewModelFactory;
+  final AuthFormViewModel Function()? authViewModelFactory;
   final WidgetBuilder? mainNavigationBuilder;
 
   static const Key emailFieldKey = ValueKey<String>('login_email_field');
@@ -47,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   /// Handle login action - calls ViewModel and manages navigation/feedback.
-  Future<void> _handleLogin(AuthViewModel authVM) async {
+  Future<void> _handleLogin(AuthFormViewModel authVM) async {
     if (!_formKey.currentState!.validate()) return;
 
     final success = await authVM.login(
@@ -84,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
         context.watch<SystemConfigViewModel?>()?.config.disableSignups ?? false;
 
     return ChangeNotifierProvider(
-      create: (_) => widget.authViewModelFactory?.call() ?? AuthViewModel(),
+      create: (_) => widget.authViewModelFactory?.call() ?? AuthFormViewModel(),
       child: Scaffold(
         body: Container(
           width: double.infinity,
@@ -244,7 +244,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       // --- Actions ---
                       // Login Button
-                      Consumer<AuthViewModel>(
+                      Consumer<AuthFormViewModel>(
                         builder: (context, authVM, child) {
                           return AppButton(
                             tapTargetKey: LoginScreen.signInButtonKey,
@@ -254,39 +254,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             onPressed: () => _handleLogin(authVM),
                           );
                         },
-                      ),
-                      const SizedBox(height: AppDimens.p24),
-
-                      // Divider
-                      Row(
-                        children: [
-                          Expanded(child: Divider(color: colorScheme.divider)),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppDimens.p8,
-                            ),
-                            child: Text(
-                              'OR',
-                              style: AppTypography.captionBold.copyWith(
-                                color: colorScheme.textSecondary,
-                              ),
-                            ),
-                          ),
-                          Expanded(child: Divider(color: colorScheme.divider)),
-                        ],
-                      ),
-                      const SizedBox(height: AppDimens.p24),
-
-                      // Social Logins
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _buildSocialButton(context, Icons.g_mobiledata),
-                          const SizedBox(width: AppDimens.p12),
-                          _buildSocialButton(context, Icons.facebook),
-                          const SizedBox(width: AppDimens.p12),
-                          _buildSocialButton(context, Icons.apple),
-                        ],
                       ),
                       const SizedBox(height: AppDimens.p24),
 
@@ -320,28 +287,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSocialButton(BuildContext context, IconData icon) {
-    final AppColorScheme colorScheme = context.colorScheme;
-    return Container(
-      width: 50,
-      height: 50,
-      decoration: BoxDecoration(
-        color: colorScheme.authInputBackground,
-        borderRadius: BorderRadius.circular(AppDimens.r14),
-        border: Border.all(color: colorScheme.authInputBorder),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(AppDimens.r14),
-        child: InkWell(
-          onTap: () {},
-          borderRadius: BorderRadius.circular(AppDimens.r14),
-          child: Center(child: Icon(icon, size: 24, color: colorScheme.text)),
         ),
       ),
     );

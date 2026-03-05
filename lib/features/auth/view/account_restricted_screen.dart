@@ -4,7 +4,7 @@ import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
+import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
 
 class AccountRestrictedScreen extends StatelessWidget {
   const AccountRestrictedScreen({super.key, required this.status, this.reason});
@@ -54,7 +54,7 @@ class AccountRestrictedScreen extends StatelessWidget {
                       ),
                     ),
                     onPressed: () async {
-                      final authVm = context.read<AuthViewModel>();
+                      final authVm = context.read<AuthSessionViewModel>();
                       await authVm.logout();
                       if (!context.mounted) return;
                       Navigator.of(

@@ -2,6 +2,7 @@
 // Why: Keeps data access isolated from UI/controllers to follow repository pattern.
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/logger_service.dart';
+import '../../../core/models/user_profile.dart';
 
 class AuthRepository {
   final _client = Supabase.instance.client;
@@ -16,9 +17,10 @@ class AuthRepository {
     final response = await _client.auth.signUp(
       email: email,
       password: password,
+      data: {'full_name': fullName, 'active_role': 'client'},
     );
 
-    // تأكد من وجود session، إذا لا، قم بتسجيل الدخول
+    // Ensure session exists.
     final session = response.session;
     if (session == null) {
       await _client.auth.signInWithPassword(email: email, password: password);
@@ -26,12 +28,6 @@ class AuthRepository {
 
     final userId = _client.auth.currentUser?.id;
     if (userId == null) throw Exception("User not authenticated");
-
-    await _client.from('profiles').insert({
-      'id': userId,
-      'full_name': fullName,
-      'email': email,
-    });
 
     // Info: User registration completed successfully
     AppLogger.i('User registration completed for: ${_maskEmail(email)}');
@@ -61,6 +57,12 @@ class AuthRepository {
     AppLogger.i('Password reset email sent to: ${_maskEmail(email)}');
   }
 
+  Future<void> updatePassword(String newPassword) async {
+    AppLogger.i('Updating user password');
+    await _client.auth.updateUser(UserAttributes(password: newPassword));
+    AppLogger.i('User password updated successfully');
+  }
+
   Future<void> signOut() async {
     final userEmail = _client.auth.currentUser?.email;
     // Info: User signing out
@@ -72,7 +74,7 @@ class AuthRepository {
 
   User? get currentUser => _client.auth.currentUser;
 
-  Future<Map<String, dynamic>?> getCurrentUserProfile() async {
+  Future<UserProfile?> getCurrentUserProfile() async {
     final user = _client.auth.currentUser;
     if (user == null) return null;
 
@@ -81,8 +83,7 @@ class AuthRepository {
         .select()
         .eq('id', user.id)
         .single();
-
-    return response;
+    return UserProfile.fromMap(response);
   }
 
   String _maskEmail(String email) {

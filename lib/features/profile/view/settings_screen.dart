@@ -7,7 +7,7 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
-import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
+import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -152,12 +152,15 @@ class SettingsScreen extends StatelessWidget {
                 // Logout
                 GestureDetector(
                   onTap: () async {
-                    final authVM = context.read<AuthViewModel>();
-                    final success = await authVM.logout();
+                    final authVM = context.read<AuthSessionViewModel>();
+                    await authVM.logout();
                     if (!context.mounted) return;
-                    if (success) {
-                      Navigator.of(context).pushReplacementNamed('/login');
-                    }
+
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/login',
+                      (route) => false,
+                    );
                   },
                   child: Container(
                     padding: const EdgeInsets.all(AppDimens.p16),

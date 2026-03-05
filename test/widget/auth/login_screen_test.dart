@@ -8,37 +8,56 @@ import 'package:sline_app/app/main_navigation_screen.dart';
 import 'package:sline_app/core/providers/navigation_provider.dart';
 import 'package:sline_app/features/auth/data/auth_repository.dart';
 import 'package:sline_app/features/auth/view/login_screen.dart';
-import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sline_app/features/auth/viewmodels/auth_form_view_model.dart';
 
 import '../../test_support/pump_app.dart';
 
 class _MockAuthRepository extends Mock implements AuthRepository {}
 
-class _FakeAuthViewModel extends AuthViewModel {
-  _FakeAuthViewModel({required this.loginResult, this.errorMessage})
-    : super(
-        authRepo: _MockAuthRepository(),
-        authStateChanges: const Stream<AuthState>.empty(),
-      );
+// A fake AuthFormViewModel that allows us to control the outcome of auth operations
+class _FakeAuthFormViewModel extends AuthFormViewModel {
+  // Changed class name and extends
+  bool _isLoading = false;
+  String? _error;
+  bool shouldSucceed = true; // New property
+  String? expectedEmail; // New property
+  String? expectedPassword; // New property
 
-  final bool loginResult;
-  final String? errorMessage;
-
-  String? capturedEmail;
-  String? capturedPassword;
+  _FakeAuthFormViewModel({
+    this.shouldSucceed = true,
+    String? initialError,
+  }) // Adjusted constructor
+  : _error = initialError,
+       super(
+         authRepo: _MockAuthRepository(),
+       ); // AuthFormViewModel requires authRepo
 
   @override
-  bool get isLoading => false;
+  bool get isLoading => _isLoading; // New getter implementation
 
   @override
-  String? get error => errorMessage;
+  String? get error => _error; // New getter implementation
 
   @override
   Future<bool> login({required String email, required String password}) async {
-    capturedEmail = email;
-    capturedPassword = password;
-    return loginResult;
+    // Adjusted method signature
+    expectedEmail = email;
+    expectedPassword = password;
+    _isLoading = true;
+    notifyListeners();
+
+    _isLoading = false;
+    if (shouldSucceed) {
+      _error = null;
+      notifyListeners();
+      return true;
+    } else {
+      _error =
+          _error ??
+          'Invalid credentials'; // Use initialError if provided, otherwise default
+      notifyListeners();
+      return false;
+    }
   }
 }
 
@@ -74,7 +93,7 @@ WidgetBuilder _stubMainNavigationBuilder() {
 void main() {
   group('LoginScreen T46-T49', () {
     testWidgets('T46 form shows required validation messages', (tester) async {
-      final fakeAuthVm = _FakeAuthViewModel(loginResult: false);
+      final fakeAuthVm = _FakeAuthFormViewModel(shouldSucceed: false);
 
       await pumpApp(
         tester,
@@ -91,9 +110,9 @@ void main() {
     testWidgets('T47 sign-in tap calls login with trimmed email/password', (
       tester,
     ) async {
-      final fakeAuthVm = _FakeAuthViewModel(
-        loginResult: false,
-        errorMessage: 'ignored',
+      final fakeAuthVm = _FakeAuthFormViewModel(
+        shouldSucceed: false,
+        initialError: 'ignored',
       );
 
       await pumpApp(
@@ -103,23 +122,23 @@ void main() {
 
       await tester.enterText(
         find.byKey(LoginScreen.emailFieldKey),
-        '  faroqomar97@gmail.com  ',
+        '  test@example.com  ',
       );
       await tester.enterText(
         find.byKey(LoginScreen.passwordFieldKey),
-        '  11223344  ',
+        '  password123  ',
       );
       await tester.tap(find.byKey(LoginScreen.signInButtonKey));
       await tester.pump();
 
-      expect(fakeAuthVm.capturedEmail, 'faroqomar97@gmail.com');
-      expect(fakeAuthVm.capturedPassword, '11223344');
+      expect(fakeAuthVm.expectedEmail, 'test@example.com');
+      expect(fakeAuthVm.expectedPassword, 'password123');
     });
 
     testWidgets('T48 successful login navigates to main navigation screen', (
       tester,
     ) async {
-      final fakeAuthVm = _FakeAuthViewModel(loginResult: true);
+      final fakeAuthVm = _FakeAuthFormViewModel(shouldSucceed: true);
       final observer = _TestNavigatorObserver();
 
       await pumpApp(
@@ -147,9 +166,9 @@ void main() {
     });
 
     testWidgets('T49 failed login shows snackbar error text', (tester) async {
-      final fakeAuthVm = _FakeAuthViewModel(
-        loginResult: false,
-        errorMessage: 'Invalid login attempt from fake VM',
+      final fakeAuthVm = _FakeAuthFormViewModel(
+        shouldSucceed: false,
+        initialError: 'Invalid login attempt from fake VM',
       );
 
       await pumpApp(

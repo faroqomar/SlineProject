@@ -5,7 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sline_app/core/config/payment_runtime_config.dart';
 import 'package:sline_app/core/services/payment_pending_store.dart';
 import 'package:sline_app/features/auth/view/signup_screen.dart';
-import 'package:sline_app/features/auth/viewmodels/auth_view_model.dart';
+import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
+import 'package:sline_app/features/auth/view/reset_password_update_screen.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 import 'package:sline_app/features/chat/data/chat_repository.dart';
 import 'package:sline_app/features/booking/data/booking_repository.dart';
@@ -159,7 +160,7 @@ class SLineApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         // Auth - needed globally for logout from any screen
-        ChangeNotifierProvider(create: (_) => AuthViewModel()),
+        ChangeNotifierProvider(create: (_) => AuthSessionViewModel()),
         // Profile - user profile state
         ChangeNotifierProvider(create: (_) => ProfileViewModel()),
         // Navigation - bottom nav state
@@ -201,9 +202,11 @@ class SLineApp extends StatelessWidget {
         // Task Requests Service (Stateless)
         Provider(create: (_) => TaskRequestsService()),
         // Proposal repositories (RLS-safe list/award/payment; used by owner list and payment route)
-        Provider(create: (ctx) => ProposalRepository(
-          taskRequestsService: ctx.read<TaskRequestsService>(),
-        )),
+        Provider(
+          create: (ctx) => ProposalRepository(
+            taskRequestsService: ctx.read<TaskRequestsService>(),
+          ),
+        ),
         Provider(create: (_) => ProposalAwardRepository()),
         // Task Service (for tender payment coordinator and dashboard)
         Provider(create: (_) => TaskService()),
@@ -250,7 +253,7 @@ class SLineApp extends StatelessWidget {
 /// Wrapper widget that sets up auth state listening.
 ///
 /// Why separate widget: MaterialApp needs to be inside the Provider tree
-/// so we can access AuthViewModel to set up session expiry callback.
+/// so we can access AuthSessionViewModel to set up session expiry callback.
 class _AppWithAuthListener extends StatefulWidget {
   const _AppWithAuthListener();
 
@@ -370,8 +373,9 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener>
     WidgetsBinding.instance.addObserver(this);
     // Set up session expiry callback after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authVm = context.read<AuthViewModel>();
+      final authVm = context.read<AuthSessionViewModel>();
       authVm.onSessionExpired = _handleSessionExpired;
+      authVm.onPasswordRecovery = _handlePasswordRecovery;
       context.read<SystemConfigViewModel>().load();
       _runAccountGuards();
     });
@@ -400,6 +404,11 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener>
     );
   }
 
+  void _handlePasswordRecovery() {
+    AppLogger.i('Handling password recovery callback', tag: 'Auth');
+    _navigatorKey.currentState?.pushNamed('/reset-password');
+  }
+
   Future<void> _runAccountGuards() async {
     if (_guardCheckRunning || !mounted) return;
     if (Supabase.instance.client.auth.currentUser == null) return;
@@ -420,7 +429,7 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener>
             'session_iat': guard.sessionIssuedAtUtc?.toIso8601String(),
           },
         );
-        await context.read<AuthViewModel>().logout();
+        await context.read<AuthSessionViewModel>().logout();
         if (!mounted) return;
         _restrictedScreenShown = false;
         _navigatorKey.currentState?.pushNamedAndRemoveUntil(
@@ -466,6 +475,8 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener>
           '/login': (BuildContext _) => const LoginScreen(),
           '/main': (BuildContext _) => const MainNavigationScreen(),
           '/signup': (BuildContext _) => const SignupScreen(),
+          '/reset-password': (BuildContext _) =>
+              const ResetPasswordUpdateScreen(),
           '/home': (BuildContext _) => const HomeScreen(),
           '/dashboard': (BuildContext _) => const DashboardScreen(),
           '/categories': (BuildContext _) => const CategoriesScreen(),
