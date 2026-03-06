@@ -1,6 +1,6 @@
 # Supabase Setup for SLine — Complete Database Reference
 
-**Last Updated**: 2026-03-05 (Proposal RPC contract: 20260304060000–20260304062000; reject-offer: 20260305071000; work tables & RPCs: 20260305180000, 20260305180100)
+**Last Updated**: 2026-03-06 (Auth profile provisioning: view/function/pg_cron 20260306120000, 20260306120100; Proposal RPC, reject-offer, work tables as in prior line)
 **Version**: 2.17
 **Database Version**: PostgreSQL 17.4.1
 **Project ID**: `isddrknbjsgaantjojhm`
@@ -54,6 +54,7 @@ This document is the **single source of truth** for all Supabase backend setup: 
 | ----------------------- | -------------------------------------------- |
 | `vw_unified_work_items` | UNION ALL of tasks + bookings (normalized)   |
 | `wallet_balances`       | Aggregated wallet balance (available/escrow) |
+| `vw_orphaned_auth_users`| Auth users with no profile row (monitoring)   |
 
 ### Enums
 
@@ -92,6 +93,7 @@ This document is the **single source of truth** for all Supabase backend setup: 
 - ✅ Revision requests check limit before resetting status (`rpc_request_revision`)
 - ✅ **Double-Entry Ledger Implementation (v2.16)**: All financial events go through `process_payment_event_ledger`.
 - ✅ **Legacy Freeze**: `wallet_transactions` table is now read-only to prevent drift.
+- ✅ **Auth profile provisioning**: Trigger `on_auth_user_created` creates `public.profiles` on `auth.users` INSERT. Function `sweep_orphaned_auth_users()` deletes auth users with no profile older than 15 minutes. Extension `pg_cron` is enabled; cron job `sweep-orphaned-auth-users` runs every 15 minutes (`*/15 * * * *`). View `vw_orphaned_auth_users` for monitoring.
 
 ---
 

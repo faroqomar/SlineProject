@@ -71,7 +71,7 @@ Defined under `supabase/functions/`; see `Sline_everything/STRUCTURE.md`.
 | ---- | ----- | ----------- |
 | `lib/features/direct_offers/models/direct_offer_model.dart` | Model | `DirectOffer` — immutable model for a direct_offers row (id, conversationId, clientId, freelancerId, price, days, status, payment_status, etc.). |
 | `lib/features/direct_offers/services/direct_offers_service.dart` | Service | `DirectOffersService` — createOffer, acceptOfferWithoutPayment, payNow (ledger escrow only), recoverPaymentAfterCallback (post-QiCard), rejectOffer, cancelOffer, markDelivered, completeOffer. Uses Supabase client, MessageService, LedgerService, WorkLogService. |
-| `lib/features/direct_offers/viewmodels/direct_offer_details_view_model.dart` | ViewModel | `DirectOfferDetailsViewModel` — ChangeNotifier; loadOffer, createPaymentForCard (QiCard), payNow, markDelivered, completeOffer; uses AuthViewModel.currentUserId (no Supabase in view). |
+| `lib/features/direct_offers/viewmodels/direct_offer_details_view_model.dart` | ViewModel | `DirectOfferDetailsViewModel` — ChangeNotifier; loadOffer, createPaymentForCard (QiCard), payNow, markDelivered, completeOffer; uses `AuthSessionViewModel.currentUserId` (no Supabase in view). |
 | `lib/features/direct_offers/view/direct_offer_details_screen.dart` | View | `DirectOfferDetailsScreen` — detail UI: Cancel, Pay (QiCard), Open chat; Mark Delivered / Approve & release by role. Uses Provider for ViewModel and services. |
 
 ### 3.1 Integration points (other features)

@@ -1,7 +1,7 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
 **Version**: 2.17.3 (Proposals remediation, route + repos + docs)
-**Last Updated**: 2026-03-05
+**Last Updated**: 2026-03-06
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
 
@@ -104,7 +104,7 @@ erDiagram
 ## 5. Feature Map (Where to look)
 
 - **Core**: `lib/core/` – Supabase bootstrap, logging, theme, utils, shared widgets (signed avatar/image)
-- **Auth**: `lib/features/auth/` – signup/login, session
+- **Auth**: `lib/features/auth/` – signup/login, session. Profile fetch after signup/session restore uses retry (see `AuthConfig` in `lib/core/config/auth_config.dart`). `AccountGuardService` is invoked on login and on cold start (session restore) in `main.dart` to block banned/suspended users.
 - **Profile**: `lib/features/profile/` – profile edit, avatar upload, role switch, my tasks
 - **Tasks**: `lib/features/tasks/` – create/list/details, images, requests (offers)
 - **Proposals**: `lib/features/proposals/` – proposal models, repositories, payment route; list/submit/award/pay entry points (UI re-exports from tasks)
@@ -1433,13 +1433,17 @@ There is no live `lib/features/auth/services/auth_service.dart` file anymore. `A
 3. On success, `AuthFormViewModel` returns `true`.
 4. `AuthSessionViewModel` detects the auth state change and loads the profile.
 
-### 4.3 Password reset
+### 4.3 Profile provisioning retry
+
+After signup or when restoring a session, the app fetches the current user's `profiles` row. Because the profile row is created by a Postgres trigger, it can be briefly delayed. The app uses a short retry loop (see `AuthConfig` in `lib/core/config/auth_config.dart`: `profileFetchMaxAttempts`, `profileFetchRetryDelayMs`, and `enableProfileFetchRetry`). `AuthRepository.getCurrentUserProfileWithRetry()` performs the fetch; on success the session continues; if the profile is still missing after all attempts, the user is signed out and shown a configured message (e.g. "Profile creation failed. Please try again."). This avoids showing a broken session when the trigger is slow.
+
+### 4.4 Password reset
 
 `AuthRepository.sendPasswordResetEmail(...)` calls Supabase with the current mobile redirect:
 
 - `io.supabase.sline://login-callback`
 
-### 4.4 Session expiry / Logout
+### 4.5 Session expiry / Logout
 
 - `AuthSessionViewModel` subscribes to `Supabase.instance.client.auth.onAuthStateChange`.
 - `main.dart` listens to `AuthSessionViewModel` and redirects to `/login` if `currentProfile` becomes null or session expires.

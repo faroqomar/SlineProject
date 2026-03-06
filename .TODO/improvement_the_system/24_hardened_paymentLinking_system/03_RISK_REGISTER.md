@@ -1,0 +1,19 @@
+# Risk Register - Hardened Payment Linking System
+
+**Skills applied**: Threat Modeling (Security), RLS & Privilege Boundaries.
+
+## 1. Design Risks (Current Proposal)
+
+| Risk ID | Risk Category | Description                                                                                                                                                     | Severity | Likelihood | Impact                | Mitigation                                                                                                                           |
+| ------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ---------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| R1      | Security      | **Signature/Key Exposure**: If the server-side secret used for HMAC signatures is leaked, an attacker can create valid metadata for arbitrary amounts.          | Critical | Low        | Maximum               | Use Google Cloud Secret Manager or Supabase Vault; Rotate keys periodically.                                                         |
+| R2      | Atomic        | **Partial Transaction Failure**: The payment succeeds at the gateway, but the webhook fails to record the event or trigger the ledger due to database downtime. | High     | Medium     | Inconsistent Balances | **Idempotency & Retries**: Webhook endpoint must be retried by Gateway. Ensure `payment_events` are inserted FIRST before any logic. |
+| R3      | Race          | **Simultaneous Webhook/Redirect**: User is redirected back to the app while the webhook is still processing. UI shows "Processing" but user expects "Paid".     | Medium   | High       | User Confusion        | Realtime subscriptions to `payment_intents` status.                                                                                  |
+| R4      | Integration   | **Unmatched Metadata**: Gateway strips or truncates metadata (standard in some older integrations), breaking the binding signature.                             | High     | Low        | Orphan Payments       | Use `gateway_intent_id` as the primary lookup; keep metadata minimal or used as secondary verification.                              |
+
+## 2. Implementation Risks (Migration)
+
+| Risk ID | Risk Category | Description                                                                                                                                      | Severity | Likelihood | Impact               | Mitigation                                                                                                              |
+| ------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | ---------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| R5      | Operational   | **Orphan Explosion**: If the signature logic is too strict (e.g., whitespace sensitivity), valid payments might be quarantined.                  | Medium   | Medium     | Increased Admin Load | Log full metadata for orphans; allow "Manual Match" button for admins.                                                  |
+| R6      | Logic         | **Double Escrow**: If a user cancels and restarts payment, multiple `payment_intents` might exist. If both pay (unlikely), double escrow occurs. | High     | Low        | Financial Liability  | Enforce `unique(entity_type, entity_id)` status 'created'/'gateway_created'. Cancel old intents when creating new ones. |

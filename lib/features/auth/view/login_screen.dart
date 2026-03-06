@@ -9,6 +9,7 @@ import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
 import 'package:sline_app/core/providers/system_config_view_model.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_form_view_model.dart';
+import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
 import 'package:sline_app/features/auth/view/forgot_password_screen.dart';
 
 /// Login screen for user authentication (MVVM) with Glassmorphism design.
@@ -38,6 +39,26 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      try {
+        final sessionVm = context.read<AuthSessionViewModel>();
+        final sessionError = sessionVm.error;
+        if (sessionError != null && sessionError.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(sessionError)),
+          );
+          sessionVm.clearError();
+        }
+      } catch (_) {
+        // AuthSessionViewModel not provided (e.g. in tests)
+      }
+    });
+  }
 
   @override
   void dispose() {

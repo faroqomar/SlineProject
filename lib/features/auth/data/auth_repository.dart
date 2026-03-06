@@ -1,11 +1,15 @@
 // What: Repository that wraps Supabase auth/profile calls used by auth flows.
 // Why: Keeps data access isolated from UI/controllers to follow repository pattern.
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/config/auth_config.dart';
 import '../../../core/services/logger_service.dart';
 import '../../../core/models/user_profile.dart';
 
 class AuthRepository {
-  final _client = Supabase.instance.client;
+  AuthRepository({SupabaseClient? client})
+      : _client = client ?? Supabase.instance.client;
+
+  final SupabaseClient _client;
 
   Future<void> signUp({
     required String email,
@@ -74,7 +78,9 @@ class AuthRepository {
 
   User? get currentUser => _client.auth.currentUser;
 
-  Future<UserProfile?> getCurrentUserProfile() async {
+  /// Single attempt to fetch current user profile (no retry).
+  /// Returns null if no profile row exists (e.g. trigger not yet committed).
+  Future<UserProfile?> _fetchProfileOnce() async {
     final user = _client.auth.currentUser;
     if (user == null) return null;
 
@@ -82,8 +88,67 @@ class AuthRepository {
         .from('profiles')
         .select()
         .eq('id', user.id)
-        .single();
-    return UserProfile.fromMap(response);
+        .maybeSingle();
+
+    return response != null ? UserProfile.fromMap(response) : null;
+  }
+
+  /// Fetches current user profile with retry for race condition handling.
+  /// Retries up to [maxRetries] with [retryDelay] between attempts.
+  Future<UserProfile?> getCurrentUserProfileWithRetry({
+    int? maxRetries,
+    Duration? retryDelay,
+  }) async {
+    final retries = maxRetries ?? AuthConfig.profileFetchMaxRetries;
+    final delay = retryDelay ??
+        const Duration(milliseconds: AuthConfig.profileFetchRetryDelayMs);
+
+    if (!AuthConfig.enableProfileFetchRetry) {
+      return _fetchProfileOnce();
+    }
+
+    for (int attempt = 1; attempt <= retries; attempt++) {
+      AppLogger.d(
+        'Profile fetch attempt $attempt of $retries',
+        tag: 'Auth',
+      );
+      try {
+        final profile = await _fetchProfileOnce();
+        if (profile != null) {
+          AppLogger.i(
+            'Profile fetch succeeded on attempt $attempt',
+            tag: 'Auth',
+          );
+          return profile;
+        }
+      } catch (e) {
+        AppLogger.w(
+          'Profile fetch attempt $attempt failed',
+          tag: 'Auth',
+          json: <String, dynamic>{'error': e.toString()},
+        );
+      }
+
+      if (attempt < retries) {
+        AppLogger.d(
+          'Waiting ${delay.inMilliseconds}ms before retry',
+          tag: 'Auth',
+        );
+        await Future.delayed(delay);
+      }
+    }
+
+    AppLogger.w(
+      'Profile fetch failed after $retries attempts',
+      tag: 'Auth',
+    );
+    return null;
+  }
+
+  /// Fetches current user profile (single attempt, for backward compatibility).
+  /// Prefer [getCurrentUserProfileWithRetry] for signup/session load.
+  Future<UserProfile?> getCurrentUserProfile() async {
+    return _fetchProfileOnce();
   }
 
   String _maskEmail(String email) {

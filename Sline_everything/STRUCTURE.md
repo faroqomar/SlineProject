@@ -1,6 +1,6 @@
 # SLine App - Folder Structure Guide
 
-**Last Updated:** 2026-03-05
+**Last Updated:** 2026-03-06
 
 This document describes the current repository layout. It replaces older references to `presentation/` and `controllers/`; the live Flutter codebase uses `view/` and `viewmodels/` under `lib/features/`.
 
@@ -118,7 +118,7 @@ Current file:
 Shared cross-cutting infrastructure.
 
 Current subfolders:
-- `config/`: runtime configuration helpers such as `payment_runtime_config.dart`
+- `config/`: runtime configuration (e.g. `auth_config.dart`, `payment_runtime_config.dart`); user-facing auth strings in `lib/core/constants/auth_messages.dart`
 - `models/`: global models such as `user_profile.dart` and shared `payment_return_args.dart`
 - `providers/`: app-wide providers such as navigation and theme mode
 - `services/`: Supabase bootstrap, payment services, cache, deep links, crash reporting, logging

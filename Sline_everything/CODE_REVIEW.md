@@ -115,7 +115,7 @@ Future<void> loadMoreTasks() async {
 
 ### 4. Session Expiry Handling - NEW ✅
 
-**Location**: `lib/features/auth/viewmodels/auth_view_model.dart`, `lib/main.dart`
+**Location**: `lib/features/auth/viewmodels/` (then `auth_view_model.dart`; now split into `auth_session_view_model.dart` and `auth_form_view_model.dart`), `lib/main.dart`
 **Status**: **IMPLEMENTED**
 
 Added auth state listener with pending queue for race condition prevention:
@@ -271,13 +271,13 @@ Future<bool> login({required String email, ...}) async {
 ### 6. Missing AuthViewModel Provider - FIXED ✅
 
 **Location**: `lib/main.dart`
-**Status**: **RESOLVED**
+**Status**: **RESOLVED** (as of 2026-03-05; as of 2026-03-06 auth uses **AuthSessionViewModel** + **AuthFormViewModel** split—see DEVELOPER_GUIDE.md Auth Feature Reference)
 
 **What was fixed**:
 
-- Added `AuthViewModel` to global `MultiProvider`
+- Added auth ViewModel(s) to global `MultiProvider` (now `AuthSessionViewModel` and `AuthFormViewModel`)
 - Added descriptive comments for all providers
-- Profile screen now uses global `AuthViewModel` for logout
+- Profile screen uses global `AuthSessionViewModel` for logout
 
 ---
 
@@ -329,7 +329,7 @@ Future<bool> login({required String email, ...}) async {
 
 ### Core
 
-- `lib/main.dart` - Added error boundary, AuthViewModel provider, comments
+- `lib/main.dart` - Added error boundary, AuthSessionViewModel + AuthFormViewModel providers, comments
 - `lib/core/services/supabase_config.dart` - Added security documentation
 - `lib/core/services/logger_service.dart` - Enhanced documentation
 - `lib/core/utils/signed_url_cache.dart` - NEW: Shared cache utility
@@ -339,7 +339,7 @@ Future<bool> login({required String email, ...}) async {
 ### Auth Feature
 
 - `lib/features/auth/services/auth_service.dart` - DELETED (duplicate)
-- `lib/features/auth/viewmodels/auth_view_model.dart` - Complete rewrite
+- `lib/features/auth/viewmodels/` - Auth logic split into `auth_session_view_model.dart` and `auth_form_view_model.dart` (replacing former `auth_view_model.dart`)
 - `lib/features/auth/view/login_screen.dart` - Updated for new ViewModel API
 - `lib/features/auth/view/signup_screen.dart` - Updated for new ViewModel API
 
@@ -351,7 +351,7 @@ Future<bool> login({required String email, ...}) async {
 
 ### Other Features
 
-- `lib/features/profile/view/profile_screen.dart` - Use global AuthViewModel
+- `lib/features/profile/view/profile_screen.dart` - Use global AuthSessionViewModel for logout
 - `lib/features/favorites/viewmodels/favorites_view_model.dart` - Use AppLogger
 - `lib/features/saved/viewmodels/saved_tasks_view_model.dart` - Use AppLogger
 - `lib/features/home/viewmodels/home_view_model.dart` - Added documentation

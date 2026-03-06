@@ -1,6 +1,6 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2026-03-05
+**Last Updated:** 2026-03-06
 
 ---
 
@@ -20,6 +20,42 @@
 ---
 
 ## 📋 Version History
+
+### 🟢 Auth profile provisioning hardening — retry, orphan sweep, guard on cold start
+
+**Date:** 2026-03-06  
+**Plan:** `.TODO/PLAN_AuthProfileProvisioning_CRITIC_2026-03-06.md`
+
+#### ✅ Implemented
+
+- **Repository:** `AuthRepository.getCurrentUserProfileWithRetry()` with configurable max retries and delay (`AuthConfig`). Single-attempt `_fetchProfileOnce()` uses `.maybeSingle()`. Full AppLogger on attempt/success/failure.
+- **ViewModels:** `AuthSessionViewModel._loadInitialProfile()` uses retry; on null after retries or exception: logout and set user-facing error (`AuthMessages`). `AuthFormViewModel.register()` calls retry after signUp; on null: signOut and show profile provisioning failed message.
+- **UI:** `LoginScreen` shows `AuthSessionViewModel.error` in SnackBar when present (e.g. after session restore failure). Centralized strings in `lib/core/constants/auth_messages.dart`.
+- **Database:** View `vw_orphaned_auth_users`, function `sweep_orphaned_auth_users()` (SECURITY DEFINER, 15‑minute filter). Optional `pg_cron` schedule documented in migration (run manually if pg_cron not enabled).
+- **Docs:** `SUPABASE_SETUP.md` updated with view, function, and auth provisioning rule. `DEVELOPER_GUIDE.md` updated with retry and AccountGuard cold start. Subsection "4.3 Profile provisioning retry" added under Auth Feature Reference.
+- **Post–Master Report fixes (2026-03-06):** `AuthFormViewModel`: all auth failure logs use `AppLogger.e(message, tag: 'Auth', error: e)` (no exception interpolation in message). `AuthSessionViewModel.logout()` calls `clearError()` so stale session error is cleared on sign-out.
+
+#### 📊 Impact
+
+- New signups tolerate profile trigger latency (retry up to ~1.5s). Failed provisioning clears session and shows error instead of corrupt state.
+- Orphaned auth users (no profile) can be cleaned up; monitoring via `vw_orphaned_auth_users`.
+- Banned/suspended users are blocked on cold start as well as on explicit login.
+
+#### 🧪 Verification
+
+- `flutter test test/unit test/widget`: 158 passed. `test/unit/auth/auth_repository_test.dart` covers null-user retry path.
+- Supabase MCP: RLS and trigger verified; orphan count query returns 0.
+
+#### 🔗 References
+
+- Plan: `.TODO/PLAN_AuthProfileProvisioning_CRITIC_2026-03-06.md`
+- Execution log: `.TODO/EXECUTION_LOG_AuthProfileProvisioning_CRITIC.md`
+- Review: `.TODO/CODEGUARD_REVIEW_2026-03-06_AuthProfileProvisioning.md`
+- Master report: `.TODO/MASTER_REPORT_2026-03-06_AuthProfileProvisioning.md`
+- App verification checklist: `.TODO/CHECKLIST_AuthProfileProvisioning_Verification.md`
+- Docs sync: `.TODO/DOCS_SYNC_2026-03-06_SlineDocsFullSync.md`
+
+---
 
 ### 🟢 Auth Refactor — Split ViewModels and Trigger-Based Bootstrapping
 

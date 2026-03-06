@@ -1,6 +1,6 @@
 # SLine MVP Roadmap
 
-**Last Updated:** 2026-03-05
+**Last Updated:** 2026-03-06
 
 This roadmap tracks the current code-state of the repository. Status values are intentionally simple:
 - `✅ Completed`
@@ -22,7 +22,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | Feature | Status | Notes |
 | --- | --- | --- |
 | Email/password auth | ✅ Completed | login, signup, forgot password |
-| Session-aware logout and auth listener | ✅ Completed | `AuthViewModel` + app-shell callback |
+| Session-aware logout and auth listener | ✅ Completed | `AuthSessionViewModel` + `AuthFormViewModel` + app-shell callback |
 | Admin force-logout enforcement | ✅ Completed | app guard compares `profiles.force_logout_after` vs session issue time on app start/resume |
 | Moderation enforcement (`active/suspended/banned`) | ✅ Completed | restricted accounts are blocked from sensitive actions and routed to dedicated restricted UX |
 | Profile editing and avatar handling | ✅ Completed | profile repository/service/viewmodel flow exists |

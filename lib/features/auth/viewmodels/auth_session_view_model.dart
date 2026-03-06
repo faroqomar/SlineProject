@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sline_app/core/constants/auth_messages.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/auth/data/auth_repository.dart';
 import 'package:sline_app/core/models/user_profile.dart';
@@ -43,6 +44,14 @@ class AuthSessionViewModel extends ChangeNotifier {
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
+
+  String? _error;
+  String? get error => _error;
+
+  void clearError() {
+    _error = null;
+    notifyListeners();
+  }
 
   String? get currentUserId => _authRepo.currentUser?.id;
   String? get currentUserEmail => _authRepo.currentUser?.email;
@@ -106,15 +115,27 @@ class AuthSessionViewModel extends ChangeNotifier {
   Future<void> _loadInitialProfile() async {
     if (!isAuthenticated) return;
     _isLoading = true;
+    _error = null;
     notifyListeners();
     try {
-      _currentUserProfile = await _authRepo.getCurrentUserProfile();
-    } catch (e) {
+      _currentUserProfile = await _authRepo.getCurrentUserProfileWithRetry();
+      if (_currentUserProfile == null && isAuthenticated) {
+        AppLogger.w(
+          'Profile not found after retries - signing out',
+          tag: 'Auth',
+        );
+        await logout();
+        _error = AuthMessages.profileProvisioningFailed;
+      }
+    } catch (e, st) {
       AppLogger.e(
-        'Failed to load profile on auth change',
+        'Failed to load profile',
         tag: 'Auth',
         error: e,
+        stackTrace: st,
       );
+      await logout();
+      _error = AuthMessages.sessionInvalid;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -123,6 +144,7 @@ class AuthSessionViewModel extends ChangeNotifier {
 
   Future<void> logout() async {
     _isLoading = true;
+    clearError();
     notifyListeners();
     try {
       await _authRepo.signOut();

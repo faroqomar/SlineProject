@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:sline_app/core/constants/auth_messages.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/utils/error_mapper.dart';
 import 'package:sline_app/features/auth/data/auth_repository.dart';
@@ -57,21 +58,21 @@ class AuthFormViewModel extends ChangeNotifier {
           await _authRepo.signOut();
           _setError(
             guard.accountStatus == 'banned'
-                ? 'Your account has been banned.'
-                : 'Your account is temporarily suspended.',
+                ? AuthMessages.accountBanned
+                : AuthMessages.accountSuspended,
           );
           return false;
         }
         if (guard.isRevoked) {
           await _authRepo.signOut();
-          _setError('Your session is no longer valid. Please sign in again.');
+          _setError(AuthMessages.sessionInvalid);
           return false;
         }
       }
       return true;
     } catch (e) {
       _setError(ErrorMapper.map(e));
-      AppLogger.e('Login failed: $e');
+      AppLogger.e('Login failed', tag: 'Auth', error: e);
       return false;
     } finally {
       if (hasListeners) {
@@ -93,10 +94,20 @@ class AuthFormViewModel extends ChangeNotifier {
         password: password,
         fullName: fullName,
       );
+      final profile = await _authRepo.getCurrentUserProfileWithRetry();
+      if (profile == null) {
+        AppLogger.w(
+          'Profile creation failed after signup - signing out',
+          tag: 'Auth',
+        );
+        await _authRepo.signOut();
+        _setError(AuthMessages.profileProvisioningFailed);
+        return false;
+      }
       return true;
     } catch (e) {
       _setError(ErrorMapper.map(e));
-      AppLogger.e('Registration failed: $e');
+      AppLogger.e('Registration failed', tag: 'Auth', error: e);
       return false;
     } finally {
       if (hasListeners) {
@@ -113,7 +124,7 @@ class AuthFormViewModel extends ChangeNotifier {
       return true;
     } catch (e) {
       _setError(ErrorMapper.map(e));
-      AppLogger.e('Password reset failed: $e');
+      AppLogger.e('Password reset failed', tag: 'Auth', error: e);
       return false;
     } finally {
       if (hasListeners) {
@@ -130,7 +141,7 @@ class AuthFormViewModel extends ChangeNotifier {
       return true;
     } catch (e) {
       _setError(ErrorMapper.map(e));
-      AppLogger.e('Password update failed: $e');
+      AppLogger.e('Password update failed', tag: 'Auth', error: e);
       return false;
     } finally {
       if (hasListeners) {

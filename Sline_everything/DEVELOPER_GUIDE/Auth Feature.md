@@ -1,5 +1,7 @@
 # Auth Feature Reference
 
+**Note:** The canonical Auth section is in the main `DEVELOPER_GUIDE.md` (Feature Map + Auth Feature Reference there). This file is a condensed mirror; keep it aligned with that section.
+
 ## 1. Human Explanation
 
 The auth feature is the gatekeeper for the app. It handles:
@@ -11,10 +13,11 @@ The auth feature is the gatekeeper for the app. It handles:
 
 The current architecture is MVVM with repository-backed data access:
 - views render forms and navigation
-- `AuthViewModel` owns loading/error state and session listeners
+- `AuthSessionViewModel` owns session state, profile loading, session listeners, and logout
+- `AuthFormViewModel` owns transient loading/error state for login, signup, and reset flows
 - `AuthRepository` owns Supabase Auth and `profiles` reads/writes
 
-`AuthViewModel` does not hold a `BuildContext`. It returns success/failure to the UI and exposes an `onSessionExpired` callback that is wired by `main.dart`.
+Neither ViewModel holds a `BuildContext`. They return success/failure to the UI; `AuthSessionViewModel` exposes `onSessionExpired` and `onPasswordRecovery` callbacks wired by `main.dart`.
 
 ## 2. Database and Supabase Mapping
 
@@ -38,15 +41,15 @@ The current architecture is MVVM with repository-backed data access:
 ### RLS Summary
 
 - `profiles` insert/update/select works only when `auth.uid() = id`.
-- Auth APIs themselves are handled by Supabase Auth, but profile bootstrapping still depends on a live session.
-- The repository therefore ensures a session exists before inserting the `profiles` row on signup.
+- Auth APIs are handled by Supabase Auth. Profile rows are created by the Postgres trigger `trg_on_auth_user_created` on `auth.users` INSERT. The app uses `AuthRepository.getCurrentUserProfileWithRetry()` to tolerate trigger latency.
 
 ## 3. File Inventory
 
 | File | Layer | Description |
 | --- | --- | --- |
 | `lib/features/auth/data/auth_repository.dart` | repository | Owns signup, signin, signout, password reset, and current profile fetch. |
-| `lib/features/auth/viewmodels/auth_view_model.dart` | viewmodel | Tracks loading/error state, maps auth errors, listens for auth-state changes, exposes `onSessionExpired`. |
+| `lib/features/auth/viewmodels/auth_session_view_model.dart` | viewmodel | Tracks current profile, listens for auth-state changes, handles logout, exposes `onSessionExpired` / `onPasswordRecovery`. |
+| `lib/features/auth/viewmodels/auth_form_view_model.dart` | viewmodel | Tracks loading/error state for login, signup, password reset/update; maps auth errors. |
 | `lib/features/auth/view/login_screen.dart` | view | Login form and success/failure UI. |
 | `lib/features/auth/view/signup_screen.dart` | view | Registration form and profile bootstrap entrypoint. |
 | `lib/features/auth/view/forgot_password_screen.dart` | view | Password reset request UI. |
@@ -57,28 +60,28 @@ There is no live `lib/features/auth/services/auth_service.dart` file anymore. `A
 
 ### 4.1 Sign up
 
-1. `SignupScreen` calls `AuthViewModel.register(...)`.
-2. `AuthViewModel` delegates to `AuthRepository.signUp(...)`.
-3. `AuthRepository` calls `supabase.auth.signUp(...)`.
-4. If Supabase does not return a session immediately, the repository signs in with the same credentials.
-5. Once `currentUser` exists, the repository inserts the matching `public.profiles` row.
+1. `SignupScreen` calls `AuthFormViewModel.register(...)`.
+2. `AuthFormViewModel` delegates to `AuthRepository.signUp(...)`.
+3. `AuthRepository` calls `supabase.auth.signUp(...)`; trigger `trg_on_auth_user_created` creates `public.profiles`.
+4. `AuthFormViewModel` calls `AuthRepository.getCurrentUserProfileWithRetry()`; on null after retries, signs out and shows profile provisioning failed.
+5. On success, `AuthSessionViewModel` (via auth state) loads the profile.
 
 ### 4.2 Sign in
 
-1. `LoginScreen` calls `AuthViewModel.login(...)`.
+1. `LoginScreen` calls `AuthFormViewModel.login(...)`.
 2. `AuthRepository.signIn(...)` performs `signInWithPassword(...)`.
-3. On success, `AuthViewModel` loads the current profile and returns `true`.
+3. On success, `AuthFormViewModel` returns `true`; `AuthSessionViewModel` detects auth state change and loads profile via `getCurrentUserProfileWithRetry()`.
 
 ### 4.3 Password reset
 
 `AuthRepository.sendPasswordResetEmail(...)` calls Supabase with the current mobile redirect:
 - `io.supabase.sline://login-callback`
 
-### 4.4 Session expiry handling
+### 4.4 Session expiry / Logout
 
-- `AuthViewModel` subscribes to `Supabase.instance.client.auth.onAuthStateChange`.
-- `main.dart` sets `authVm.onSessionExpired = _handleSessionExpired`.
-- The app shell then clears the navigation stack back to `/login` when necessary.
+- `AuthSessionViewModel` subscribes to `Supabase.instance.client.auth.onAuthStateChange`.
+- `main.dart` sets `AuthSessionViewModel.onSessionExpired` (and `onPasswordRecovery`); redirects to `/login` when profile is null or session expires.
+- `AuthSessionViewModel.logout()` calls `AuthRepository.signOut()` and clears error state.
 
 ## 5. Example Snippets
 
@@ -101,7 +104,7 @@ await _client.from('profiles').insert({
 ### ViewModel usage from UI
 
 ```dart
-final success = await context.read<AuthViewModel>().login(
+final success = await context.read<AuthFormViewModel>().login(
   email: email,
   password: password,
 );
@@ -114,7 +117,7 @@ if (success) {
 
 ## 6. Error Handling
 
-`AuthViewModel` maps common raw auth failures to user-facing messages.
+`AuthFormViewModel` (and `ErrorMapper`) map common raw auth failures to user-facing messages (`AuthMessages`).
 
 Examples:
 - invalid credentials -> `Invalid email or password. Please try again.`
@@ -127,7 +130,7 @@ Repository logging masks email addresses before logging.
 ## 7. Testing Checklist
 
 - Sign up a new user and confirm the `profiles` row is created.
-- Sign in with a valid account and confirm `AuthViewModel.login()` returns `true`.
+- Sign in with a valid account and confirm `AuthFormViewModel.login()` returns `true`.
 - Enter invalid credentials and confirm the mapped error is shown without clearing fields.
 - Trigger password reset and verify the reset request succeeds.
 - Sign out and confirm the app returns to `/login`.

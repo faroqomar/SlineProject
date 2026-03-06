@@ -39,5 +39,6 @@ Skills live under `.cursor/skills/` and reference `.cursor/rules/` and `.cursor/
 - `bug-fixer` — triage and fix workflow
 - `commit-helper` — conventional commits
 - `supabase-migration` — migrations and RLS
+- `evidence-first-reading` — prove every code claim with file, symbol, and snippet
 
 When working on SLine, **always reference @.cursor** (rules, agents, PROJECT_CONTEXT, prompt).
