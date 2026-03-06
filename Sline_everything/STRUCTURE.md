@@ -121,16 +121,19 @@ Current subfolders:
 - `config/`: runtime configuration (e.g. `auth_config.dart`, `payment_runtime_config.dart`); user-facing auth strings in `lib/core/constants/auth_messages.dart`
 - `models/`: global models such as `user_profile.dart` and shared `payment_return_args.dart`
 - `providers/`: app-wide providers such as navigation and theme mode
-- `services/`: Supabase bootstrap, payment services, cache, deep links, crash reporting, logging
+- `services/`: Supabase bootstrap, payment services, cache, deep links, crash reporting, logging, **role switch coordinator**
 - `theme/`: color, spacing, typography, decorations, theme assembly, theme dashboard
 - `utils/`: error mapping, formatting, loading overlays, URL cache, route transitions, web error filters
 - `widgets/`: shared UI widgets such as signed media, buttons, badges, loaders, bottom nav
+- `mixins/`: shared behavior mixins such as `role_switch_aware.dart`
 
 Important current core files:
 - `lib/core/services/supabase_config.dart`
 - `lib/core/services/payment_service.dart`
 - `lib/core/services/qicard_payment_service.dart`
 - `lib/core/services/payment_pending_store.dart`
+- `lib/core/services/role_switch_coordinator.dart` — Cross-ViewModel teardown coordination for role switching
+- `lib/core/mixins/role_switch_aware.dart` — Mixin interface for ViewModels participating in role switch teardown
 - `lib/core/utils/loading_utils.dart`
 - `lib/core/utils/flutter_error_filters.dart`
 - `lib/core/widgets/signed_avatar.dart`
@@ -169,6 +172,10 @@ Not every feature uses every subfolder, but the standard live convention is:
 
 - `lib/features/auth/`: login, signup, forgot password, auth session handling
 - `lib/features/booking/`: direct booking checkout, booking lists/details, payment return/webview screens
+- `lib/features/profile/`: profile editing, avatar upload, **role switching (v2.18)**, portfolio management
+  - `data/profile_repository.dart` — Main profile repository (legacy `changeRole()` deprecated)
+  - `data/role_switch_repository.dart` — **NEW (v2.18)** Atomic role switching with RPC, session refresh, JWT verification
+  - `models/role_switch_result.dart` — **NEW (v2.18)** RPC response model with error taxonomy
 - `lib/features/chat/`: conversations, messages, attachments, realtime updates
 - `lib/features/dashboard/`: unified dashboard tabs and role-based work summaries, including the live bottom-nav dashboard slot. Tab cards (booking, offer, wallet snapshot) live in owning features: `booking/view/widgets/dashboard_booking_card.dart`, `tasks/view/widgets/dashboard_offer_card.dart`, `wallet/view/widgets/wallet_snapshot_card.dart`; shared status helpers in `core/utils/status_presenter.dart`
 - `lib/features/direct_offers/`: direct chat offers (create, accept, pay, deliver, complete) and payment recovery
@@ -184,6 +191,18 @@ Not every feature uses every subfolder, but the standard live convention is:
 ```text
 test/
 ├── test_support/
+├── fixtures/           # Test data fixtures
+│   └── profiles.dart   # Role switching fixtures, JWT payloads, error responses
+├── helpers/            # Test utilities and mocks
+│   ├── mock_supabase.dart      # Mock Supabase client for unit testing
+│   └── role_switch_helpers.dart # Role switch coordinator mock, simulator
+├── rls/                # RLS policy security tests
+│   ├── rls_test_helper.dart    # RLS assertion library (8 methods)
+│   ├── fixtures/
+│   │   └── rls_test_users.dart # Test user definitions (5 users)
+│   ├── critical_blockers_test.dart  # 4 critical security tests (12 total)
+│   ├── view_security_test.dart      # View security tests (7 tests)
+│   └── role_switch_jwt_test.dart  # JWT policy tests (7 tests)
 ├── unit/
 │   ├── auth/
 │   ├── booking/
@@ -193,6 +212,7 @@ test/
 │   ├── management/
 │   ├── models/
 │   ├── profile/
+│   │   └── role_switch_result_test.dart  # RoleSwitchResult model tests
 │   ├── proposals/
 │   └── tasks/
 └── widget/
@@ -224,6 +244,7 @@ Current bundled asset folder:
 
 ## Recent Structure-Sensitive Updates
 
+- **Role Switching (v2.18, 2026-03-06):** New `lib/core/services/role_switch_coordinator.dart`, `lib/core/mixins/role_switch_aware.dart`, `lib/features/profile/data/role_switch_repository.dart`. ViewModels implementing teardown contract: `ChatViewModel`, `DashboardViewModel`, `TaskViewModel`, `HomeViewModel`.
 - Chat feature includes `models/chat_offer_payload.dart` (canonical offer payload) and `services/chat_realtime_merger.dart` (realtime snapshot merge); archive uses RPC `archive_conversation_v1`.
 - Booking flow now uses `payment_checkout_screen.dart`, `payment_webview_screen.dart`, and `payment_return_screen.dart` instead of older slot-sheet-only docs.
 - Core runtime now includes `payment_runtime_config.dart`, `payment_pending_store.dart`, and `flutter_error_filters.dart`.

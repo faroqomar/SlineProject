@@ -1,7 +1,7 @@
 # Supabase Setup for SLine — Complete Database Reference
 
-**Last Updated**: 2026-03-06 (Auth profile provisioning: view/function/pg_cron 20260306120000, 20260306120100; Proposal RPC, reject-offer, work tables as in prior line)
-**Version**: 2.17
+**Last Updated**: 2026-03-06 (Role switching: RPC, trigger, JWT-based RLS policies; Auth profile provisioning: view/function/pg_cron)
+**Version**: 2.18
 **Database Version**: PostgreSQL 17.4.1
 **Project ID**: `isddrknbjsgaantjojhm`
 **Region**: `eu-north-1` (Stockholm)
@@ -47,6 +47,14 @@ This document is the **single source of truth** for all Supabase backend setup: 
 | `support_tickets`       | ✅  | 0    | General support tickets               |
 | `ticket_messages`       | ✅  | 0    | Messages in support tickets           |
 | `services`              | ✅  | 0    | Pre-defined freelancer services       |
+
+### Functions (RPC)
+
+| Function | Parameters | Returns | Purpose | Security |
+|----------|------------|---------|---------|----------|
+| `switch_active_role` | `p_expected_old_role TEXT, p_new_role TEXT` | `JSONB` | Atomic role switching with race condition protection | SECURITY DEFINER |
+| `check_role_switch_rate_limit` | — | `BOOLEAN` | Check if user is within rate limit (3 switches/minute) | SECURITY DEFINER |
+| `sync_role_to_jwt_claims` | (trigger function) | `TRIGGER` | Syncs `profiles.active_role` to `auth.users.app_metadata` | SECURITY DEFINER |
 
 ### Views
 
@@ -94,6 +102,7 @@ This document is the **single source of truth** for all Supabase backend setup: 
 - ✅ **Double-Entry Ledger Implementation (v2.16)**: All financial events go through `process_payment_event_ledger`.
 - ✅ **Legacy Freeze**: `wallet_transactions` table is now read-only to prevent drift.
 - ✅ **Auth profile provisioning**: Trigger `on_auth_user_created` creates `public.profiles` on `auth.users` INSERT. Function `sweep_orphaned_auth_users()` deletes auth users with no profile older than 15 minutes. Extension `pg_cron` is enabled; cron job `sweep-orphaned-auth-users` runs every 15 minutes (`*/15 * * * *`). View `vw_orphaned_auth_users` for monitoring.
+- ✅ **Role switching (v2.18)**: RPC `switch_active_role` provides atomic role switching with `expected_old_role` guard, rate limiting (3/minute), and audit logging. Trigger `trg_sync_role_to_jwt` syncs role to JWT claims. RLS policies use `auth.jwt()->'app_metadata'->>'active_role'` for performant role enforcement.
 
 ---
 
@@ -1035,18 +1044,24 @@ Cross-user profile summaries must go through `public.rpc_get_profile_summaries(u
 | `tasks_update_involved`                       | UPDATE  | `owner_id = auth.uid() OR freelancer_id = auth.uid() OR assigned_freelancer_id = auth.uid()`                    |
 | `tasks_update_owner`                          | UPDATE  | `owner_id = auth.uid()`                                                                                         |
 | `tasks_delete_owner`                          | DELETE  | `owner_id = auth.uid()`                                                                                         |
+| `tasks_insert_client_jwt`                     | INSERT  | `owner_id = auth.uid() AND jwt_active_role = 'client'` (v2.18)                                                  |
 
 `owner_id` is the canonical authorization column for task ownership. `owner_id` is generated from `COALESCE(client_id, user_id)` for compatibility with legacy rows, but new RLS and owner-side RPC checks must bind to `owner_id`.
 
+**v2.18 Note:** JWT-based policy ensures only clients in client mode can create tasks. Uses `auth.jwt()->'app_metadata'->>'active_role'`.
+
 ### 7.3 `task_requests` Policies
 
-| Policy               | Command | Rule                                                     |
-| -------------------- | ------- | -------------------------------------------------------- |
-| `tr_select`          | SELECT  | `freelancer_id = auth.uid() OR EXISTS(task owner check)` |
-| `tr_insert`          | INSERT  | `freelancer_id = uid AND task is open AND not own task`  |
-| `tr_update`          | UPDATE  | `freelancer_id = uid AND status = 'pending'`             |
-| `tr_update_by_owner` | UPDATE  | Task owner can update                                    |
-| `tr_delete`          | DELETE  | `freelancer_id = uid AND status = 'pending'`             |
+| Policy                               | Command | Rule                                                     |
+| ------------------------------------ | ------- | -------------------------------------------------------- |
+| `tr_select`                          | SELECT  | `freelancer_id = auth.uid() OR EXISTS(task owner check)` |
+| `tr_insert`                          | INSERT  | `freelancer_id = uid AND task is open AND not own task`  |
+| `tr_update`                          | UPDATE  | `freelancer_id = uid AND status = 'pending'`             |
+| `tr_update_by_owner`                 | UPDATE  | Task owner can update                                    |
+| `tr_delete`                          | DELETE  | `freelancer_id = uid AND status = 'pending'`             |
+| `task_requests_insert_freelancer_jwt`| INSERT  | `freelancer_id = uid AND jwt_active_role = 'freelancer'` (v2.18) |
+
+**v2.18 Note:** JWT-based policy for role-enforced proposal submission. Uses `auth.jwt()->'app_metadata'->>'active_role'`. Dual-policy approach during migration.
 
 ### 7.4 `conversations` Policies
 
@@ -1075,10 +1090,14 @@ Cross-user profile summaries must go through `public.rpc_get_profile_summaries(u
 
 ### 7.6 `availability_slots` Policies
 
-| Policy              | Command | Rule                       |
-| ------------------- | ------- | -------------------------- |
-| `slots_select_read` | SELECT  | `true` (all authenticated) |
-| `slots_write_owner` | ALL     | `provider_id = auth.uid()` |
+| Policy                                   | Command | Rule                                                                       |
+| ---------------------------------------- | ------- | -------------------------------------------------------------------------- |
+| `slots_select_read`                      | SELECT  | `true` (all authenticated)                                                 |
+| `slots_write_owner`                      | ALL     | `provider_id = auth.uid()`                                                 |
+| `availability_slots_insert_freelancer_jwt` | INSERT  | `provider_id = auth.uid() AND jwt_active_role = 'freelancer'` (v2.18)     |
+| `availability_slots_update_freelancer_jwt` | UPDATE  | `provider_id = auth.uid() AND jwt_active_role = 'freelancer'` (v2.18)     |
+
+**Note:** JWT-based policies (v2.18) use `auth.jwt()->'app_metadata'->>'active_role'` for performant role checking without table joins. Dual-policy approach during migration window.
 
 ### 7.7 `bookings` Policies
 
@@ -1230,6 +1249,41 @@ Cross-user profile summaries must go through `public.rpc_get_profile_summaries(u
 - Input: array of profile ids
 - Returns: safe summary rows only: `id`, `full_name`, `avatar_url`, `bio`, `active_role`, `skills`, `created_at`, `seller_level`
 
+### 9.2 Role Switching (v2.18)
+
+**`switch_active_role(p_expected_old_role TEXT, p_new_role TEXT)`**
+
+- **Security:** SECURITY DEFINER
+- **Purpose:** Atomically switch user role with race condition protection
+- **Parameters:**
+  - `p_expected_old_role`: The role user thinks they currently have (atomic guard)
+  - `p_new_role`: Target role (`'client'` or `'freelancer'`)
+- **Returns:** JSONB with fields:
+  - `success` (boolean): Whether switch succeeded
+  - `new_role` (text, optional): The new role if success
+  - `error` (text, optional): Error code (`stale_state`, `invalid_role`, `db_error`, `session_error`)
+  - `message` (text, optional): Human-readable error message
+- **Behavior:**
+  1. Verifies current role matches `p_expected_old_role` (atomic guard against race conditions)
+  2. Idempotent: returns success if role already equals `p_new_role`
+  3. Validates `p_new_role` is either `'client'` or `'freelancer'`
+  4. Updates `profiles.active_role` with `WHERE active_role = p_expected_old_role` (double-check)
+  5. Logs to `audit_logs` (success and failure paths)
+  6. Trigger `trg_sync_role_to_jwt` syncs to `auth.users.app_metadata`
+- **Error Codes:**
+  - `stale_state`: Role was already changed elsewhere (concurrent modification)
+  - `invalid_role`: Invalid role value provided
+  - `db_error`: Database error during update
+  - `session_error`: No authenticated user
+
+**`check_role_switch_rate_limit()`**
+
+- **Security:** SECURITY DEFINER
+- **Purpose:** Check if user is within rate limit for role switches
+- **Returns:** BOOLEAN (`true` if allowed, `false` if rate limited)
+- **Rate Limit:** Max 3 successful switches per minute per user
+- **Implementation:** Counts recent `role_switch` entries in `audit_logs` table
+
 ---
 
 ## 10. Indexes
@@ -1267,6 +1321,18 @@ Cross-user profile summaries must go through `public.rpc_get_profile_summaries(u
 | Trigger               | Event               | Function                   | Purpose                       |
 | --------------------- | ------------------- | -------------------------- | ----------------------------- |
 | `trg_expire_presence` | AFTER INSERT/UPDATE | `expire_typing_presence()` | Clean up old presence records |
+
+### 8.8 Role Switching Triggers (v2.18)
+
+| Trigger                | Event                        | Function                    | Purpose                                          |
+| ---------------------- | ---------------------------- | --------------------------- | ------------------------------------------------ |
+| `trg_sync_role_to_jwt` | AFTER UPDATE OF active_role  | `sync_role_to_jwt_claims()` | Sync `profiles.active_role` to JWT `app_metadata` |
+
+**Trigger Details:**
+- Fires only when `active_role` column changes (not on other profile updates)
+- Updates `auth.users.raw_app_meta_data` to include `active_role` claim
+- Enables RLS policies to use `auth.jwt()->'app_metadata'->>'active_role'` instead of joining `profiles` table
+- Logs sync event to `audit_logs` table
 
 ---
 
@@ -1806,6 +1872,28 @@ VALUES (auth.uid(), '<other-user>', auth.uid());
 -- Task-linked as owner → should FAIL
 -- (Only non-owner can start task conversations)
 ```
+
+### 15.4 RLS Test Infrastructure
+
+Automated testing for RLS policies is in `test/rls/`:
+
+| File | Purpose |
+|------|---------|
+| `rls_test_helper.dart` | Assertion library with 8 methods: `assertCanSelect`, `assertCannotInsert`, etc. |
+| `fixtures/rls_test_users.dart` | Test user fixtures (5 users: client, freelancer, other client, admin, service) |
+| `critical_blockers_test.dart` | 4 critical security tests (12 total) — cross-user access, log injection, etc. |
+| `view_security_test.dart` | 7 view security tests — PII exposure, `security_invoker` validation |
+| `role_switch_jwt_test.dart` | 7 JWT policy tests — role-based access enforcement |
+
+**Run with:**
+```bash
+flutter test test/rls/
+```
+
+**References:**
+- Test README: `test/rls/README.md`
+- Plan: `.TODO/PLAN_RLS_Authorization_Map_CRITIC_2026-03-06.md`
+- Execution Log: `.TODO/EXECUTION_LOG_RLS_Authorization_Map_CRITIC_2026-03-06.md`
 
 ---
 

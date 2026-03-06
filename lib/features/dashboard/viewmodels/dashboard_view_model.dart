@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import '../../../core/mixins/role_switch_aware.dart';
+import '../../../core/services/role_switch_coordinator.dart';
 import '../data/dashboard_repository.dart';
 import '../models/work_item.dart';
 import '../models/activity_log.dart';
@@ -22,7 +24,7 @@ String _traceId() {
   return now.toRadixString(36).padLeft(8, '0').substring(0, 8);
 }
 
-class DashboardViewModel extends ChangeNotifier {
+class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
   static const _kTag = 'dashboard';
   final DashboardRepository _repository;
   final DashboardCacheService? _cacheService;
@@ -55,12 +57,44 @@ class DashboardViewModel extends ChangeNotifier {
     _loadCachedRole();
     _syncRoleFromBackend();
     _loadOverviewData();
+    
+    // Register with role switch coordinator
+    RoleSwitchCoordinator().register(this);
   }
 
   @override
   void dispose() {
     _isDisposed = true;
+    RoleSwitchCoordinator().unregister(this);
     super.dispose();
+  }
+
+  /// RoleSwitchAware implementation: Teardown during role switch.
+  @override
+  Future<void> teardownForRoleSwitch() async {
+    AppLogger.i('dashboard_teardown_role_switch', tag: _kTag);
+
+    // Clear all cached data
+    _workItems = [];
+    _invalidateWorkCaches();
+    _activityFeed = [];
+    _counters = const DashboardCounters();
+    _myTasks = [];
+    _bookings = [];
+    _inboxOffers = [];
+    _pendingRequests = [];
+    _pendingPaymentTenders = [];
+    
+    // Reset lazy-load flags
+    _bookingsLoaded = false;
+    _inboxLoaded = false;
+    
+    // Note: Dashboard cache is not cleared here as there's no clearAll method.
+    // The cache will naturally be refreshed when new role data is loaded.
+    // Individual cache entries are keyed by role, so they're isolated.
+
+    AppLogger.i('dashboard_teardown_complete', tag: _kTag);
+    _safeNotify();
   }
 
   /// Safe notify - silent if disposed

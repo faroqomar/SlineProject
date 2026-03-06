@@ -26,7 +26,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | Admin force-logout enforcement | ✅ Completed | app guard compares `profiles.force_logout_after` vs session issue time on app start/resume |
 | Moderation enforcement (`active/suspended/banned`) | ✅ Completed | restricted accounts are blocked from sensitive actions and routed to dedicated restricted UX |
 | Profile editing and avatar handling | ✅ Completed | profile repository/service/viewmodel flow exists |
-| Role switching | ✅ Completed | role flows exist in profile/dashboard surfaces |
+| Role switching | ✅ Completed | v2.18: Atomic RPC with race protection, JWT claim sync, teardown contract, audit logging. See `lib/features/profile/data/role_switch_repository.dart`, `lib/core/services/role_switch_coordinator.dart`, `supabase/migrations/20260306_role_switch_foundation.sql` |
 
 ## 3. Marketplace Discovery
 
@@ -84,7 +84,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 
 | Area | Status | Notes |
 | --- | --- | --- |
-| Unit and widget test coverage | 🚧 In Progress | targeted coverage exists under `test/unit` and `test/widget` |
+| Unit and widget test coverage | 🚧 In Progress | targeted coverage exists under `test/unit` and `test/widget`; ✅ RLS test infrastructure complete (26 tests in `test/rls/`) |
 | Supabase migrations | ✅ Completed | repo contains live migration history under `supabase/migrations/` |
 | Edge functions | ✅ Completed | booking/payment functions are checked into `supabase/functions/` |
 | Docs sync discipline | ✅ Completed | docs now reflect current `view/viewmodels/data/services` layout and payment/runtime helpers |

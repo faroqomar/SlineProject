@@ -1,6 +1,6 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.17.3 (Proposals remediation, route + repos + docs)
+**Version**: 2.18.0 (Role switching hardening: atomic RPC, JWT claims, teardown contract)
 **Last Updated**: 2026-03-06
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
@@ -10,6 +10,7 @@ This comprehensive guide consolidates all feature-specific documentation into a 
 ## 📑 Table of Contents
 
 - [Profile Feature Reference](#profile-feature-reference)
+  - [Role Switching (v2.18)](#8-role-switching-v218)
 - [Portfolio Feature Reference](#portfolio-feature-reference)
 - [Favorites Feature Reference](#favorites-feature-reference)
 - [Saved Feature Reference](#saved-feature-reference)
@@ -374,7 +375,191 @@ Testing checklist:
 - Upload avatar → path saved, signed URL generated, and image renders.
 - Change email → Auth email updated; cached profile email optional sync.
 - Change role → Home reflects the role after reload.
-- Fetch my tasks → user’s tasks load and render; delete/update works.
+- Fetch my tasks → user's tasks load and render; delete/update works.
+
+## 8. Role Switching (v2.18)
+
+### 8.1 Overview
+
+The Role Switching feature allows a single user account to toggle between **Client** and **Freelancer** personas. The v2.18 implementation provides atomic, race-condition-protected role switching with comprehensive teardown to prevent data leakage between personas.
+
+### 8.2 Architecture
+
+**Flow:**
+1. **Rate Limit Check** — Max 3 switches per minute per user
+2. **Atomic RPC** — `switch_active_role()` with `expected_old_role` guard
+3. **Session Refresh** — Gets new JWT token with updated role claim
+4. **JWT Verification** — Confirms token contains expected role
+5. **Teardown Contract** — All ViewModels clear cached data
+6. **Profile Reload** — Fetches fresh data for new role
+
+**Key Components:**
+
+| Component | Purpose | File |
+|-----------|---------|------|
+| `RoleSwitchRepository` | RPC calls, session refresh, JWT verification | `lib/features/profile/data/role_switch_repository.dart` |
+| `RoleSwitchCoordinator` | Cross-ViewModel teardown coordination | `lib/core/services/role_switch_coordinator.dart` |
+| `RoleSwitchAware` | Mixin interface for ViewModels | `lib/core/mixins/role_switch_aware.dart` |
+| `RoleSwitchResult` | Type-safe RPC response model | `lib/features/profile/models/role_switch_result.dart` |
+
+### 8.3 Database Layer
+
+**RPC Function:**
+```sql
+-- Atomic role switching with race protection
+switch_active_role(
+  p_expected_old_role TEXT,  -- Guard: must match current DB state
+  p_new_role TEXT            -- Target: 'client' or 'freelancer'
+) RETURNS JSONB
+```
+
+**Trigger:**
+```sql
+-- Syncs profiles.active_role to auth.users.app_metadata
+-- Enables JWT-based RLS (faster than table joins)
+trigger trg_sync_role_to_jwt ON profiles
+```
+
+**RLS Policies (JWT-based):**
+- `task_requests_insert_freelancer_jwt` — Only freelancers can submit proposals
+- `availability_slots_insert/update_freelancer_jwt` — Only freelancers manage slots
+- `tasks_insert_client_jwt` — Only clients create tasks
+
+### 8.4 ViewModel Teardown Contract
+
+All ViewModels with cached data implement `RoleSwitchAware`:
+
+| ViewModel | Teardown Action |
+|-----------|-----------------|
+| `ChatViewModel` | Cancel subscriptions, remove Supabase channels, clear conversations/messages |
+| `DashboardViewModel` | Clear work items, bookings, inbox, counters, reset lazy-load flags |
+| `TaskViewModel` | Clear task lists, picked images |
+| `HomeViewModel` | Clear featured tasks, reset pagination cursors |
+
+### 8.5 Error Handling
+
+| Error Code | When | User Message |
+|------------|------|--------------|
+| `stale_state` | Role changed on another device | "Role was already changed. Please refresh." |
+| `rate_limit` | >3 switches in 1 minute | "Too many role switches. Please wait a minute." |
+| `session_error` | Session refresh failed | "Session expired. Please log in again." |
+| `db_error` | Database error | "Failed to switch role. Please try again." |
+
+### 8.6 Usage
+
+```dart
+// In ProfileViewModel
+Future<bool> changeRole(String newRole) async {
+  // Full atomic flow with teardown
+  final success = await changeRole(newRole);
+  if (success) {
+    // Navigate to Dashboard with new role data
+  } else {
+    // Show error from _profileError
+  }
+}
+```
+
+### 8.7 Testing Checklist
+
+- Switch to Freelancer → Dashboard shows freelancer work items
+- Switch back to Client → Dashboard shows client tasks
+- Double-tap switch button → Second attempt blocked with stale_state
+- Rate limit → 4th rapid switch shows rate_limit error
+- Multi-device → Switch on device A, device B shows stale_state on next attempt
+- Chat cleanup → Old conversations not visible after switch
+
+### 8.8 References
+
+- Plan: `.TODO/PLAN_RoleSwitchingFlow_CRITIC_2026-03-06.md`
+- Migration: `supabase/migrations/20260306_role_switch_foundation.sql`
+- Execution Log: `.TODO/EXECUTION_LOG_RoleSwitchingFlow_CRITIC_2026-03-06.md`
+
+---
+
+## 8.1 RLS Testing Guide
+
+The `test/rls/` directory contains automated tests for Supabase RLS policies.
+
+### Running RLS Tests
+
+```bash
+# Run all RLS tests
+flutter test test/rls/
+
+# Run specific test file
+flutter test test/rls/critical_blockers_test.dart
+
+# Run with verbose output
+flutter test test/rls/ -v
+```
+
+### Test Categories
+
+| File | Tests | Purpose |
+|------|-------|---------|
+| `critical_blockers_test.dart` | 12 | 4 critical security vulnerabilities (cross-user access, log injection) |
+| `view_security_test.dart` | 7 | PII exposure prevention, `security_invoker` validation |
+| `role_switch_jwt_test.dart` | 7 | JWT-based role enforcement (client vs freelancer operations) |
+
+### Writing RLS Tests
+
+Use `RlsTestHelper` assertion methods:
+
+```dart
+import 'rls_test_helper.dart';
+import 'fixtures/rls_test_users.dart';
+
+void main() {
+  late RlsTestHelper helper;
+
+  setUp(() {
+    helper = RlsTestHelper();
+  });
+
+  test('user can read own data', () async {
+    await helper.assertCanSelect(
+      'messages',
+      {'conversation_id': 'conv-123'},
+      asUserId: TestUsers.clientUser.id,
+    );
+  });
+
+  test('user cannot read others data', () async {
+    await helper.assertCannotSelect(
+      'messages',
+      {'conversation_id': 'others-conv'},
+      asUserId: TestUsers.otherClientUser.id,
+    );
+  });
+}
+```
+
+### Available Assertions
+
+- `assertCanSelect()` / `assertCannotSelect()`
+- `assertCanInsert()` / `assertCannotInsert()`
+- `assertCanUpdate()` / `assertCannotUpdate()`
+- `assertCanDelete()` / `assertCannotDelete()`
+- `assertViewDoesNotExist()`
+
+### Test Users
+
+| User | Role | Purpose |
+|------|------|---------|
+| `clientUser` | client | Primary client persona |
+| `freelancerUser` | freelancer | Primary freelancer persona |
+| `otherClientUser` | client | Cross-user isolation testing |
+| `adminUser` | admin | Admin privilege testing |
+| `serviceRole` | service | Service role operations |
+
+### References
+
+- Test README: `test/rls/README.md`
+- Plan: `.TODO/PLAN_RLS_Authorization_Map_CRITIC_2026-03-06.md`
+- Execution Log: `.TODO/EXECUTION_LOG_RLS_Authorization_Map_CRITIC_2026-03-06.md`
+
+---
 
 # Portfolio Feature Reference
 

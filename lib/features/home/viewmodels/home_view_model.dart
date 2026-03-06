@@ -22,18 +22,24 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/services/logger_service.dart';
+import '../../../core/mixins/role_switch_aware.dart';
+import '../../../core/services/role_switch_coordinator.dart';
 import '../../tasks/models/task_model.dart';
 import '../../tasks/services/task_service.dart';
 import '../../tasks/viewmodels/discovery_feed_view_model_contract.dart';
 import '../../tasks/viewmodels/task_filter_view_model.dart';
 
 class HomeViewModel extends ChangeNotifier
+    with RoleSwitchAware
     implements DiscoveryFeedViewModelContract {
   final TaskService _taskService;
   static int _requestSequence = 0;
 
   HomeViewModel({TaskService? taskService})
-    : _taskService = taskService ?? TaskService();
+      : _taskService = taskService ?? TaskService() {
+    // Register with role switch coordinator
+    RoleSwitchCoordinator().register(this);
+  }
 
   final List<Task> _featuredTasks = [];
   bool _isLoading = false;
@@ -269,5 +275,29 @@ class HomeViewModel extends ChangeNotifier
         if (hasMore != null) 'has_more': hasMore,
       },
     );
+  }
+
+  @override
+  void dispose() {
+    RoleSwitchCoordinator().unregister(this);
+    super.dispose();
+  }
+
+  /// RoleSwitchAware implementation: Teardown during role switch.
+  @override
+  Future<void> teardownForRoleSwitch() async {
+    AppLogger.i('home_teardown_role_switch', tag: 'HomeVM');
+
+    // Clear all cached feed data
+    _featuredTasks.clear();
+    _isLoading = false;
+    _isLoadingMore = false;
+    _cursorCreatedAtIso = null;
+    _cursorId = null;
+    _hasMore = true;
+    _requestSequence = 0;
+
+    AppLogger.i('home_teardown_complete', tag: 'HomeVM');
+    notifyListeners();
   }
 }

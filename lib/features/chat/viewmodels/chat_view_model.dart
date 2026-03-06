@@ -7,6 +7,8 @@ import '../models/conversation_model.dart';
 import '../models/message_model.dart';
 import '../../../core/services/logger_service.dart';
 import '../../../core/services/account_guard_service.dart';
+import '../../../core/mixins/role_switch_aware.dart';
+import '../../../core/services/role_switch_coordinator.dart';
 import '../attachments/services/send_attachment_usecase.dart';
 import '../../tasks/models/task_model.dart';
 import '../../direct_offers/services/direct_offers_service.dart';
@@ -27,19 +29,22 @@ import '../../direct_offers/services/direct_offers_service.dart';
 /// - Conversation list subscription runs while on messages list screen
 /// - Active conversation subscription runs only when viewing a specific chat
 /// - This prevents unnecessary updates and conserves resources
-class ChatViewModel extends ChangeNotifier {
-  ChatViewModel({SupabaseClient? client})
-    : _repo = ChatRepository(client ?? Supabase.instance.client),
-      _accountGuardService = AccountGuardService(
-        client: client ?? Supabase.instance.client,
-      ),
-      _directOffersService = DirectOffersService(
-        client ?? Supabase.instance.client,
-      );
+class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
+  ChatViewModel({SupabaseClient? client}) {
+    _repo = ChatRepository(client ?? Supabase.instance.client);
+    _accountGuardService = AccountGuardService(
+      client: client ?? Supabase.instance.client,
+    );
+    _directOffersService = DirectOffersService(
+      client ?? Supabase.instance.client,
+    );
+    // Register with coordinator for role switch teardown
+    RoleSwitchCoordinator().register(this);
+  }
 
-  final ChatRepository _repo;
-  final AccountGuardService _accountGuardService;
-  final DirectOffersService _directOffersService;
+  late final ChatRepository _repo;
+  late final AccountGuardService _accountGuardService;
+  late final DirectOffersService _directOffersService;
 
   final List<Conversation> conversations = [];
   final List<Message> currentMessages = [];
@@ -57,12 +62,53 @@ class ChatViewModel extends ChangeNotifier {
   StreamSubscription<List<Map<String, dynamic>>>? _convoSub;
 
   bool _mounted = true;
+
   @override
   void dispose() {
     _mounted = false;
+    // Unregister from role switch coordinator
+    RoleSwitchCoordinator().unregister(this);
     _msgSub?.cancel();
     _convoSub?.cancel();
     super.dispose();
+  }
+
+  /// RoleSwitchAware implementation: Teardown during role switch.
+  ///
+  /// This clears all cached data and disconnects from realtime channels
+  /// to prevent data leakage between client and freelancer personas.
+  @override
+  Future<void> teardownForRoleSwitch() async {
+    AppLogger.i('chat_teardown_role_switch', tag: 'ChatVM');
+
+    // Cancel realtime subscriptions first
+    _msgSub?.cancel();
+    _msgSub = null;
+    _convoSub?.cancel();
+    _convoSub = null;
+
+    // Also remove Supabase realtime channels (not just Dart streams)
+    try {
+      final client = Supabase.instance.client;
+      client.removeAllChannels();
+      AppLogger.d('chat_removed_all_supabase_channels', tag: 'ChatVM');
+    } catch (e) {
+      AppLogger.w('chat_remove_channels_warning: $e', tag: 'ChatVM');
+    }
+
+    // Clear all cached data
+    conversations.clear();
+    currentMessages.clear();
+    _offerStatusCache.clear();
+    activeConversation = null;
+
+    // Reset loading states
+    isLoadingConversations = false;
+    isLoadingMessages = false;
+    isSending = false;
+
+    AppLogger.i('chat_teardown_complete', tag: 'ChatVM');
+    _notify();
   }
 
   void _notify() {

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/logger_service.dart';
+import '../../../core/services/role_switch_coordinator.dart';
 import '../../tasks/models/task_model.dart';
 import '../data/profile_repository.dart';
 import '../models/profile_model.dart';
@@ -498,10 +499,131 @@ class ProfileViewModel extends ChangeNotifier {
     }
   }
 
-  // Change user role (toggle between client and freelancer)
-  Future<void> changeRole(String newRole) async {
+  /// Enhanced role change with atomic protection, session refresh, and teardown.
+  ///
+  /// This is the NEW implementation that replaces the naive changeRole().
+  /// It uses the atomic RPC, refreshes the session for JWT claims, and executes
+  /// the teardown contract across all registered ViewModels.
+  Future<bool> changeRole(String newRole) async {
+    final user = _repo.currentUser;
+    if (user == null) {
+      AppLogger.w('change_role_no_user', tag: 'ProfileVM');
+      return false;
+    }
+
+    // Get current role for expected_old_role guard
+    final currentRole = _profile?.activeRole ?? 'client';
+    if (currentRole == newRole) {
+      AppLogger.d('change_role_same_role', tag: 'ProfileVM');
+      return true; // Nothing to do
+    }
+
+    _isLoadingUpdate = true;
+    _profileError = null;
+    notifyListeners();
+
+    AppLogger.i(
+      'role_switch_initiated',
+      tag: 'ProfileVM',
+      json: {'from': currentRole, 'to': newRole},
+    );
+
+    try {
+      // 1. Check rate limit
+      final rateLimitOk = await _repo.roleSwitch.checkRateLimit();
+      if (!rateLimitOk) {
+        _profileError = 'Too many role switches. Please wait a minute.';
+        AppLogger.w('role_switch_rate_limited', tag: 'ProfileVM');
+        _isLoadingUpdate = false;
+        notifyListeners();
+        return false;
+      }
+
+      // 2. Call atomic RPC
+      final result = await _repo.roleSwitch.switchRole(
+        expectedOldRole: currentRole,
+        newRole: newRole,
+      );
+
+      if (!result.success) {
+        _profileError = result.displayError;
+        AppLogger.w(
+          'role_switch_rpc_failed: ${result.errorCode}',
+          tag: 'ProfileVM',
+        );
+        _isLoadingUpdate = false;
+        notifyListeners();
+        return false;
+      }
+
+      // 3. Session refresh - HARD BLOCKER
+      AppLogger.d('role_switch_refreshing_session', tag: 'ProfileVM');
+      final refreshSuccess = await _repo.roleSwitch.refreshSession(maxRetries: 3);
+      if (!refreshSuccess) {
+        _profileError = 'Session refresh failed. Please log in again.';
+        AppLogger.e('role_switch_session_refresh_failed', tag: 'ProfileVM');
+        _isLoadingUpdate = false;
+        notifyListeners();
+        return false;
+      }
+
+      // 4. Verify JWT role matches
+      final jwtMatches = _repo.roleSwitch.verifyJwtRole(newRole);
+      if (!jwtMatches) {
+        AppLogger.w('role_switch_jwt_mismatch, retrying once', tag: 'ProfileVM');
+        // Retry session refresh once
+        await Future.delayed(const Duration(milliseconds: 500));
+        final retrySuccess = await _repo.roleSwitch.refreshSession(maxRetries: 1);
+        if (!retrySuccess || !_repo.roleSwitch.verifyJwtRole(newRole)) {
+          _profileError = 'Role sync failed. Please log in again.';
+          AppLogger.e('role_switch_jwt_verification_failed', tag: 'ProfileVM');
+          _isLoadingUpdate = false;
+          notifyListeners();
+          return false;
+        }
+      }
+
+      // 5. Execute teardown contract via coordinator
+      AppLogger.i('role_switch_teardown_begin', tag: 'ProfileVM');
+      try {
+        await RoleSwitchCoordinator().teardownAll();
+        AppLogger.i('role_switch_teardown_complete', tag: 'ProfileVM');
+      } catch (e) {
+        AppLogger.e('role_switch_teardown_failed: $e', tag: 'ProfileVM');
+        // Continue even if teardown has errors - better to proceed with warnings
+      }
+
+      // 6. Update local profile state (note: ProfileModel.activeRole is immutable via copyWith)
+      // We reload the profile in step 7 to get fresh data from the server
+
+      // 7. Reload profile to confirm
+      await loadUserData();
+
+      AppLogger.i('role_switch_success', tag: 'ProfileVM');
+      _isLoadingUpdate = false;
+      notifyListeners();
+      return true;
+    } catch (e, stackTrace) {
+      AppLogger.e(
+        'role_switch_exception',
+        tag: 'ProfileVM',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      _profileError = 'Failed to switch role. Please try again.';
+      _isLoadingUpdate = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Legacy role change - DEPRECATED.
+  /// Use [changeRole] with the new atomic implementation.
+  @Deprecated('Use changeRole() for atomic role switching with full teardown')
+  Future<void> changeRoleLegacy(String newRole) async {
     final user = _repo.currentUser;
     if (user == null) return;
+    AppLogger.w('change_role_legacy_called', tag: 'ProfileVM');
     await _repo.changeRole(userId: user.id, newRole: newRole);
     notifyListeners();
   }

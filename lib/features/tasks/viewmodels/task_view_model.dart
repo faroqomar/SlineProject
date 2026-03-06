@@ -7,14 +7,19 @@ import '../services/task_image_service.dart';
 
 import '../../../core/services/logger_service.dart';
 import '../../../core/app_enums.dart';
+import '../../../core/mixins/role_switch_aware.dart';
+import '../../../core/services/role_switch_coordinator.dart';
 
 /// TaskViewModel — MVVM state holder for Tasks feature.
 ///
 /// Performance: Optimized to minimize redundant notifyListeners() calls.
 /// Each state-changing method calls notifyListeners() only once at the end.
-class TaskViewModel extends ChangeNotifier {
+class TaskViewModel extends ChangeNotifier with RoleSwitchAware {
   TaskViewModel({TaskRepository? repo, SupabaseClient? client})
-    : _repo = repo ?? TaskRepository(client ?? Supabase.instance.client);
+      : _repo = repo ?? TaskRepository(client ?? Supabase.instance.client) {
+    // Register with role switch coordinator
+    RoleSwitchCoordinator().register(this);
+  }
 
   final TaskRepository _repo;
 
@@ -170,5 +175,26 @@ class TaskViewModel extends ChangeNotifier {
 
   Future<Task?> getTaskById(String taskId) async {
     return _repo.getTaskById(taskId);
+  }
+
+  @override
+  void dispose() {
+    RoleSwitchCoordinator().unregister(this);
+    super.dispose();
+  }
+
+  /// RoleSwitchAware implementation: Teardown during role switch.
+  @override
+  Future<void> teardownForRoleSwitch() async {
+    AppLogger.i('task_teardown_role_switch', tag: 'TaskVM');
+
+    // Clear all cached task data
+    _tasks.clear();
+    _pickedImages.clear();
+    _isLoading = false;
+    _uploadingImages = false;
+
+    AppLogger.i('task_teardown_complete', tag: 'TaskVM');
+    notifyListeners();
   }
 }

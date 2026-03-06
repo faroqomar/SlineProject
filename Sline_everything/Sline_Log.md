@@ -4,6 +4,126 @@
 
 ---
 
+## 🟢 Role Switching Flow Hardening — Atomic RPC, JWT Claims, Teardown Contract
+
+**Date:** 2026-03-06  
+**Plan:** `.TODO/PLAN_RoleSwitchingFlow_CRITIC_2026-03-06.md`  
+**Master Report:** `.TODO/MASTER_REPORT_2026-03-06_RoleSwitching.md`
+
+### ✅ Implemented
+
+- **Database Layer:**
+  - `switch_active_role` RPC — Atomic role switching with `expected_old_role` guard, idempotency, rate limiting (3/minute), and audit logging
+  - `sync_role_to_jwt_claims` trigger — Syncs `profiles.active_role` to `auth.users.app_metadata` for JWT claims
+  - `check_role_switch_rate_limit` function — Server-side rate limiting enforcement
+  - 4 new JWT-based RLS policies — `task_requests_insert_freelancer_jwt`, `availability_slots_insert/update_freelancer_jwt`, `tasks_insert_client_jwt`
+  - Full audit trail — All role switches logged to `audit_logs` table (success and failure)
+
+- **Application Layer:**
+  - `RoleSwitchCoordinator` singleton — Cross-ViewModel teardown coordination without violating MVVM boundaries
+  - `RoleSwitchAware` mixin — Standardized teardown interface for ViewModels
+  - `RoleSwitchRepository` — Encapsulates RPC calls, session refresh, JWT verification
+  - `RoleSwitchResult` model — Type-safe RPC response handling with error taxonomy
+  - Enhanced `ProfileViewModel.changeRole()` — Full atomic flow: rate check → RPC → session refresh → JWT verification → teardown → profile reload
+
+- **ViewModel Teardown Contract:**
+  - `ChatViewModel` — Disconnects realtime channels, clears conversations/messages
+  - `DashboardViewModel` — Clears work items, bookings, inbox, counters
+  - `TaskViewModel` — Clears task lists, picked images
+  - `HomeViewModel` — Clears featured tasks, resets pagination
+
+- **Test Infrastructure:**
+  - `test/fixtures/profiles.dart` — Profile fixtures, JWT payloads, error responses
+  - `test/helpers/mock_supabase.dart` — Mock Supabase client
+  - `test/helpers/role_switch_helpers.dart` — Coordinator mock, simulator, verification utilities
+  - `test/unit/profile/role_switch_result_test.dart` — Model unit tests (17 tests, all passing)
+
+- **Migration:** `supabase/migrations/20260306_role_switch_foundation.sql`
+
+### 📊 Impact
+
+- **Security:** Atomic role switching prevents race conditions (multi-device, double-tap). JWT claims enable performant RLS without table joins.
+- **Data Integrity:** Teardown contract prevents persona data leakage (no client messages visible in freelancer mode).
+- **Observability:** 40+ AppLogger events for complete flow tracing. Full audit trail in database.
+- **Backward Compatibility:** Legacy `changeRole()` deprecated but functional during 14-day migration window.
+
+### 🧪 Verification
+
+- All 17 unit tests pass (`flutter test test/unit/profile/`)
+- `flutter analyze` — no issues
+- Supabase MCP verification — all 3 functions, 1 trigger, 4 RLS policies confirmed active
+
+### 🔗 References
+
+- Plan: `.TODO/PLAN_RoleSwitchingFlow_CRITIC_2026-03-06.md`
+- Execution log: `.TODO/EXECUTION_LOG_RoleSwitchingFlow_CRITIC_2026-03-06.md`
+- Architect review: `.TODO/ARCHITECT_REPORT_2026-03-06_RoleSwitching.md`
+- Observability review: `.TODO/OBSERVABILITY_REPORT_2026-03-06_RoleSwitching.md`
+- Docs review: `.TODO/DOCS_REPORT_2026-03-06_RoleSwitching.md`
+- CodeGuard review: `.TODO/CODEGUARD_REVIEW_2026-03-06_RoleSwitching.md`
+
+---
+
+## 🔒 RLS Authorization Map Implementation — Policy Hardening & Test Infrastructure
+
+**Date:** 2026-03-06  
+**Plan:** `.TODO/PLAN_RLS_Authorization_Map_CRITIC_2026-03-06.md`  
+**Execution Log:** `.TODO/EXECUTION_LOG_RLS_Authorization_Map_CRITIC_2026-03-06.md`
+
+### ✅ Implemented
+
+**Security Fixes (4 Critical Blockers):**
+- Dropped `public.users` view (PII exposure fix)
+- Removed wide-open messages policies (cross-user read/insert protection)
+- Fixed `admin_logs` INSERT to service_role only (log injection prevention)
+- Dropped `bookings_update_status_only` policy with NULL with_check
+
+**Policy Migration:**
+- Migrated ~30 policies from `public` → `authenticated` role
+- Dropped ~17 redundant/dangerous policies
+- Created ~15 new authenticated policies
+
+**View Hardening:**
+- Dropped `wallet_balances` legacy view
+- Recreated `tasks_mvp` and `user_conversations` with `security_invoker = true`
+- Restricted 6 admin/analytics views to service_role only
+
+**Test Infrastructure:**
+- `test/rls/rls_test_helper.dart` — 8 assertion methods for RLS testing
+- `test/rls/fixtures/rls_test_users.dart` — 5 test user fixtures
+- `test/rls/critical_blockers_test.dart` — 4 critical security tests (12 total)
+- `test/rls/view_security_test.dart` — 7 view security tests
+- `test/rls/role_switch_jwt_test.dart` — 7 JWT policy tests
+- **Total: 26 automated RLS tests**
+
+**Artifacts:**
+- `.TODO/VIEW_USAGE_AUDIT.md` — View usage verification (0 references found)
+- `.TODO/BACKUP_policies_2026-03-06.json` — 108 policy backup for rollback
+
+### 📊 Impact
+
+- **Security:** 4 critical vulnerabilities resolved; 108 policies now enforce proper access control
+- **Performance:** JWT-based policies eliminate table joins for role checks
+- **Testability:** Automated RLS test suite prevents security regressions
+- **Observability:** Full AppLogger instrumentation throughout test infrastructure
+
+### 🧪 Verification
+
+- All 26 RLS tests pass (`flutter test test/rls/`)
+- All 17 role switch unit tests pass
+- `flutter analyze` — no issues
+- 12 SQL migrations executed via Supabase MCP
+
+### 🔗 References
+
+- Plan: `.TODO/PLAN_RLS_Authorization_Map_CRITIC_2026-03-06.md`
+- Execution Log: `.TODO/EXECUTION_LOG_RLS_Authorization_Map_CRITIC_2026-03-06.md`
+- View Audit: `.TODO/VIEW_USAGE_AUDIT.md`
+- Policy Backup: `.TODO/BACKUP_policies_2026-03-06.json`
+- Master Report: `.TODO/MASTER_REPORT_2026-03-06_RLS_Authorization_Map.md`
+
+---
+
 ## 🎯 Project Overview
 
 **SLine** is a Flutter-based freelance marketplace application that connects clients with freelancers. The app enables users to post jobs, find freelancers, communicate, and manage projects through a modern mobile interface.

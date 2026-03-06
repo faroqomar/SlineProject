@@ -293,6 +293,98 @@ class TaskRepository {
 
 ---
 
+### Decision 6: Coordinator Pattern for Cross-ViewModel Communication (v2.18)
+**Status**: ✅ Excellent Choice
+
+**Context**: Role switching requires cleaning up cached data across multiple ViewModels (Chat, Dashboard, Task, Home). Direct ViewModel-to-ViewModel references violate MVVM boundaries (ViewModels are independent units).
+
+**Problem**: How to signal ViewModels to teardown when the active role changes?
+
+**Solution**: Implement the **Coordinator Pattern** with a singleton coordinator and a mixin interface.
+
+```dart
+// Mixin interface for ViewModels that need teardown
+mixin RoleSwitchAware {
+  Future<void> teardownForRoleSwitch();
+}
+
+// Singleton coordinator that manages registrations
+class RoleSwitchCoordinator {
+  static final RoleSwitchCoordinator _instance = RoleSwitchCoordinator._internal();
+  factory RoleSwitchCoordinator() => _instance;
+  RoleSwitchCoordinator._internal();
+
+  final List<RoleSwitchAware> _registered = [];
+
+  void register(RoleSwitchAware vm) => _registered.add(vm);
+  void unregister(RoleSwitchAware vm) => _registered.remove(vm);
+
+  Future<void> teardownAll() async {
+    final errors = <String>[];
+    for (final vm in _registered) {
+      try {
+        await vm.teardownForRoleSwitch();
+      } catch (e) {
+        errors.add(e.toString());
+      }
+    }
+    if (errors.isNotEmpty) throw RoleSwitchTeardownException(errors);
+  }
+}
+```
+
+**Usage in ViewModels**:
+```dart
+class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
+  ChatViewModel() {
+    RoleSwitchCoordinator().register(this);
+  }
+
+  @override
+  Future<void> teardownForRoleSwitch() async {
+    // Cancel subscriptions
+    await _client.removeAllChannels();
+    // Clear cached data
+    _conversations.clear();
+    _messages.clear();
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    RoleSwitchCoordinator().unregister(this);
+    super.dispose();
+  }
+}
+```
+
+**Pros**:
+- ✅ Maintains MVVM boundaries (no direct ViewModel references)
+- ✅ Type-safe (mixin interface contract)
+- ✅ Testable (mock coordinator in tests)
+- ✅ Extensible (can add other global events beyond role switching)
+- ✅ Backward compatible (ViewModels opt-in via mixin)
+
+**Cons**:
+- ⚠️ Global state (singleton) — manageable, but requires testing discipline
+- ⚠️ Registration cleanup critical (must call `unregister()` in `dispose()`)
+- ⚠️ No compile-time safety for forgetting to call `teardownForRoleSwitch()`
+
+**Assessment**: **Elegant solution to cross-cutting concern within MVVM**
+
+**When to Use**:
+- Cross-ViewModel events (e.g., logout, role switch, theme change)
+- Global state teardown (clear all cached data)
+- Synchronized refresh across multiple screens
+
+**When NOT to Use**:
+- Simple ViewModel-to-View data flow (use standard Provider/Consumer)
+- Feature-specific coordination (keep within feature boundary)
+
+**Related**: See `CODE_REVIEW.md` section 8 for implementation details.
+
+---
+
 ## Scalability Assessment
 
 ### Current Load Capacity

@@ -373,6 +373,7 @@ These excellent practices remain in place:
 7. **✅ UTC Timestamp Handling**: Proper conversion to local for display
 8. **✅ Signed URL Pattern**: Correctly storing paths and generating signed URLs on demand
 9. **✅ Cursor-Based Pagination**: BookingViewModel demonstrates best practice
+10. **✅ Coordinator Pattern (NEW v2.18)**: `RoleSwitchCoordinator` enables cross-ViewModel teardown without violating MVVM boundaries
 
 ---
 
@@ -500,6 +501,54 @@ if (item.actionableNeedsReview) {
 ```
 
 Use this rule anywhere `vw_unified_work_items.needs_review` is consumed. The DB view tells you the item is delivered; the app must still decide whether the current user is the reviewing side.
+
+### 8. Coordinator Pattern for Cross-ViewModel Communication (v2.18)
+
+When a global app event (like role switching) needs to affect multiple ViewModels, use the **Coordinator Pattern** instead of direct ViewModel-to-ViewModel references.
+
+**Problem**: ProfileViewModel cannot access DashboardViewModel/ChatViewModel directly (different Provider branches, MVVM violation).
+
+**Solution**: Use a singleton coordinator that ViewModels register with:
+
+```dart
+// lib/core/mixins/role_switch_aware.dart
+mixin RoleSwitchAware {
+  Future<void> teardownForRoleSwitch();
+}
+
+// lib/core/services/role_switch_coordinator.dart
+class RoleSwitchCoordinator {
+  void register(RoleSwitchAware vm) { ... }
+  void unregister(RoleSwitchAware vm) { ... }
+  Future<void> teardownAll() async {
+    // Call teardown on all registered ViewModels
+  }
+}
+
+// In ViewModels
+class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
+  ChatViewModel() {
+    RoleSwitchCoordinator().register(this);
+  }
+  
+  @override
+  Future<void> teardownForRoleSwitch() async {
+    // Clear caches, disconnect channels
+  }
+  
+  @override
+  void dispose() {
+    RoleSwitchCoordinator().unregister(this);
+    super.dispose();
+  }
+}
+```
+
+**Benefits**:
+- Maintains MVVM boundaries (no direct ViewModel references)
+- Enables cross-cutting concerns (teardown, reset, refresh)
+- Testable (mock coordinator)
+- Type-safe (mixin interface)
 
 ---
 

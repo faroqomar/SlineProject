@@ -1,0 +1,18 @@
+/// Test helpers barrel file
+///
+/// Export all test helpers from this library for convenient importing.
+///
+/// Usage:
+/// ```dart
+/// import '../helpers/helpers.dart';
+/// ```
+library;
+
+// Mock Supabase client and related classes
+export 'mock_supabase.dart';
+
+// Role switch testing helpers
+export 'role_switch_helpers.dart';
+
+// Ledger RPC invoker for fee locking tests
+export 'ledger_rpc_invoker.dart';

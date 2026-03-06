@@ -10,6 +10,7 @@ import '../../portfolio/data/portfolio_repository.dart';
 import '../../portfolio/models/portfolio_item.dart';
 import '../models/profile_model.dart';
 import '../models/freelancer_profile.dart';
+import 'role_switch_repository.dart';
 
 /// Repository layer for Profile feature.
 /// Encapsulates all Supabase and storage calls.
@@ -22,13 +23,15 @@ class ProfileRepository {
       _avatarService = AvatarService(client),
       _taskService = TaskService(client),
       _profileSummaryService = ProfileSummaryService(client),
-      _portfolioRepository = PortfolioRepository(client);
+      _portfolioRepository = PortfolioRepository(client),
+      _roleSwitchRepository = RoleSwitchRepository(client);
 
   final SupabaseClient _client;
   final AvatarService _avatarService;
   final TaskService _taskService;
   final ProfileSummaryService _profileSummaryService;
   final PortfolioRepository _portfolioRepository;
+  final RoleSwitchRepository _roleSwitchRepository;
 
   User? get currentUser => _client.auth.currentUser;
 
@@ -101,15 +104,32 @@ class ProfileRepository {
     await _client.auth.signOut();
   }
 
+  /// Legacy role change method - DEPRECATED.
+  ///
+  /// This method performs a simple UPDATE without atomic protection.
+  /// It remains for backward compatibility during the migration window.
+  /// Use [RoleSwitchRepository.switchRole] for production code.
+  @Deprecated(
+    'Use RoleSwitchRepository.switchRole() for atomic role switching with race protection. '
+    'This method will be removed after 2026-03-20.',
+  )
   Future<void> changeRole({
     required String userId,
     required String newRole,
   }) async {
+    AppLogger.w(
+      'legacy_change_role_called',
+      tag: 'ProfileRepo',
+      json: {'user_id': userId, 'new_role': newRole},
+    );
     await _client
         .from('profiles')
         .update({'active_role': newRole})
         .eq('id', userId);
   }
+
+  /// Get the role switch repository for atomic role operations.
+  RoleSwitchRepository get roleSwitch => _roleSwitchRepository;
 
   Future<void> resetPasswordForEmail(String email) async {
     await _client.auth.resetPasswordForEmail(email);
