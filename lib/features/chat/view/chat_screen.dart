@@ -141,9 +141,11 @@ class _ChatScreenState extends State<ChatScreen> {
                   itemBuilder: (context, index) {
                     final Message msg = controller.currentMessages[index];
                     final isMine = (me != null) && msg.senderId == me;
-                    final status = msg.seenAt != null
-                        ? 'read'
-                        : (msg.deliveredAt != null ? 'delivered' : 'sent');
+                    final status = controller.isPresenceReceiptsEnabled && isMine
+                        ? (msg.seenAt != null
+                            ? 'read'
+                            : (msg.deliveredAt != null ? 'delivered' : 'sent'))
+                        : (isMine ? 'sent' : null);
 
                     // Check for Offer (Structured or Legacy JSON)
                     if (msg.messageType == MessageType.offer ||
@@ -332,6 +334,22 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
         ),
+        // Typing indicator (feature-flagged; 15s TTL in ViewModel)
+        Consumer<ChatViewModel>(
+          builder: (context, vm, _) {
+            if (!vm.otherUserTyping) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(left: AppDimens.p16, bottom: AppDimens.p4),
+              child: Text(
+                'Typing...',
+                style: AppTypography.caption.copyWith(
+                  color: colorScheme.textSecondary,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            );
+          },
+        ),
         // Task context banner when conversation is task-linked
         ChatContextWidget(conversation: widget.conversation),
       ],
@@ -390,6 +408,9 @@ class _ChatScreenState extends State<ChatScreen> {
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.only(bottom: AppDimens.p10),
                 ),
+                onChanged: (value) {
+                  _chatCtrl.setTyping(value.trim().isNotEmpty);
+                },
               ),
             ),
           ),

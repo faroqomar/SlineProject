@@ -22,23 +22,29 @@ class ConversationListTile extends StatelessWidget {
 
   bool _isUnread(String? myUserId) {
     if (myUserId == null) return false;
-    // Unread if last message is NOT from me AND not seen
     final isFromOther =
         conversation.lastMessageSenderId != null &&
         conversation.lastMessageSenderId != myUserId;
     if (!isFromOther) return false;
-
     return conversation.lastMessageSeenAt == null;
+  }
+
+  static bool _isTypingWithin15s(DateTime? presenceUpdatedAt, bool otherUserTyping) {
+    if (!otherUserTyping || presenceUpdatedAt == null) return false;
+    return DateTime.now().difference(presenceUpdatedAt).inSeconds <= 15;
   }
 
   @override
   Widget build(BuildContext context) {
     final AppColorScheme colorScheme = context.colorScheme;
-    final myId = context.read<ChatViewModel>().currentUserId;
+    final vm = context.read<ChatViewModel>();
+    final myId = vm.currentUserId;
     final bool isUnread = _isUnread(myId);
 
-    // TODO: Online presence is not yet in Conversation model, assume false or implement presence service
-    final bool isOnline = false;
+    final bool isActiveConvo = vm.activeConversation?.id == conversation.id;
+    final bool isOnline = isActiveConvo
+        ? vm.otherUserTyping
+        : _isTypingWithin15s(conversation.presenceUpdatedAt, conversation.otherUserTyping);
 
     return GestureDetector(
       onTap: onTap,

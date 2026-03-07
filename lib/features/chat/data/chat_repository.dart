@@ -20,8 +20,11 @@ class ChatRepository {
   Future<List<Conversation>> getUserConversations(String userId) =>
       _service.getUserConversations(userId);
 
-  Stream<List<Map<String, dynamic>>> subscribeToConversations(String userId) =>
-      _service.subscribeToConversations(userId);
+  Stream<List<Message>> subscribeToInboxMessages(String userId) =>
+      _service.subscribeToInboxMessages(userId);
+
+  Future<Conversation> getConversationById(String conversationId) =>
+      _service.getConversationById(conversationId);
 
   Future<Conversation> createOrGetConversation({
     String? taskId,
@@ -94,6 +97,13 @@ class ChatRepository {
       _service.markDelivered(conversationId);
   Future<void> markSeen(String conversationId) =>
       _service.markSeen(conversationId);
+
+  // Presence (typing indicator; feature-flagged)
+  Future<bool> isPresenceReceiptsEnabled() => _service.isPresenceReceiptsEnabled();
+  Future<void> upsertPresence(String conversationId, String userId, bool isTyping) =>
+      _service.upsertPresence(conversationId, userId, isTyping);
+  Stream<List<Map<String, dynamic>>> subscribeToPresence(String conversationId) =>
+      _service.subscribeToPresence(conversationId);
 
   // Realtime (emits full list per snapshot)
   Stream<List<Message>> subscribeToMessages(String conversationId) =>

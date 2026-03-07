@@ -1,6 +1,6 @@
 # Supabase Setup for SLine — Complete Database Reference
 
-**Last Updated**: 2026-03-08 (accept_task_request: reject remaining bids; Inbox award: optimistic price lock; escrow idempotency: stable key + FOR UPDATE; vw_wallet_activity_user: include spent / gateway_escrow; docs reference integrity: 09/16 → Done)
+**Last Updated**: 2026-03-08 (Direct Chat Offer Flow hardening: §5.14 trigger/cron, §5.24 disputes direct_offer_id, §9.5 fee from row, §17 changelog; reference integrity: 21_Wallet → Done)
 **Version**: 2.20.1
 **Database Version**: PostgreSQL 17.4.1
 **Project ID**: `isddrknbjsgaantjojhm`
@@ -518,7 +518,7 @@ Typing indicators for real-time chat.
 | `is_typing`       | boolean     | ❌       | `false` | Currently typing              |
 | `updated_at`      | timestamptz | ❌       | `now()` | Last update timestamp         |
 
-**Note:** Presence records are automatically expired after 15 seconds by `expire_typing_presence` trigger.
+**Note:** Presence expiry is **client-only**: the app ignores `is_typing` when `updated_at` is older than 15 seconds. No DB trigger is used; see Chat Feature §2.6 and plan `.TODO/PLAN_ChatRealtimeSync_2026-03-07_PlanCritic.md`.
 
 ---
 
@@ -538,6 +538,7 @@ Application configuration and feature flags.
 | Key                              | Purpose                                   | Example Values              |
 | -------------------------------- | ----------------------------------------- | --------------------------- |
 | `enable_direct_conversation_rpc` | Feature flag for Chat Creation Matrix RPC | `'false'` (gradual rollout) |
+| `chat_presence_receipts_enabled` | Enable typing indicator and delivered/read receipt ticks in chat | `'true'` / `'false'` |
 
 **RLS:** SELECT for authenticated; ALL for service_role only.
 
@@ -727,11 +728,24 @@ Offers created from chat without a task or booking. Lifecycle: **sent** → **ac
 | `payment_status`  | payment_status_enum | ❌       | `'unpaid'`          | unpaid, held, released, refunded                                           |
 | `created_at`      | timestamptz         | ❌       | `now()`             | Creation timestamp                                                         |
 | `updated_at`      | timestamptz         | ❌       | `now()`             | Last update                                                                |
+| `fee_rate_applied_bps` | integer          | ✅       | -                   | Locked fee rate in basis points (set at escrow). See `20260307_02_add_fee_columns.sql`. |
+| `fee_amount`      | bigint              | ✅       | -                   | Calculated platform fee (IQD).                                             |
+| `net_amount`      | bigint              | ✅       | -                   | Net amount to freelancer (IQD).                                            |
+| `currency`        | text                | ❌       | `'IQD'`             | Locked at offer creation. See `20260319000000_direct_offer_flow_harden.sql`. |
+| `payment_request_id` | text             | ✅       | -                   | Payment traceability.                                                      |
+| `payment_gateway_id` | text             | ✅       | -                   | Payment traceability.                                                      |
+| `payment_correlation_id` | text          | ✅       | -                   | Payment traceability.                                                      |
+| `payment_expires_at` | timestamptz      | ✅       | -                   | Payment window expiry.                                                     |
+| `payment_recovered_at` | timestamptz     | ✅       | -                   | When payment was recovered (e.g. after callback).                          |
+| `delivered_at`    | timestamptz         | ✅       | -                   | Set when freelancer marks delivered; used with review_expires_at.          |
+| `review_expires_at` | timestamptz       | ✅       | -                   | Auto-approval deadline (e.g. delivered_at + 3 days).                       |
 
-**Indexes:** `idx_direct_offers_conversation`, `idx_direct_offers_client_status`, `idx_direct_offers_freelancer_status`  
+**Indexes:** `idx_direct_offers_conversation`, `idx_direct_offers_client_status`, `idx_direct_offers_freelancer_status`, `idx_direct_offers_processing` (partial: status='accepted' AND payment_status='unpaid' AND payment_request_id IS NOT NULL; see `20260319000000_direct_offer_flow_harden.sql`).  
 **RLS:** SELECT for client or freelancer; INSERT for freelancer (conversation participant); UPDATE for client/freelancer per role.  
-**Trigger:** `fn_direct_offer_guard` enforces valid status/payment transitions.  
-**Ledger:** `process_payment_event_ledger` supports `escrow_hold`, `release_with_fee`, `refund` for `related_entity_type = 'direct_offer'`.
+**Triggers:** `fn_direct_offer_guard` enforces valid status/payment transitions; `fn_direct_offer_guard_insert` (BEFORE INSERT) rejects rows where `client_id = freelancer_id` (self-offer). `trg_direct_offer_protect_price_currency` (BEFORE UPDATE) calls `fn_direct_offer_protect_price_currency` — rejects UPDATE of price, currency, and fee_rate_applied_bps when status != 'sent' or payment_status != 'unpaid'. See `20260319110000_direct_offer_guard_rls_ledger.sql`, `20260319130000_direct_offer_protect_fee_in_trigger.sql`.  
+**Cron:** Function `run_auto_release_expired_direct_offers()` (SECURITY DEFINER) selects delivered+held offers with review_expires_at < now(), calls process_payment_event_ledger release_with_fee with fee from row, then updates status/payment_status. Scheduled via pg_cron as `auto-release-expired-direct-offers` (hourly). See `20260319120000_direct_offer_auto_release_cron.sql`.  
+**Ledger:** `process_payment_event_ledger` supports `escrow_hold`, `release_with_fee`, `refund` for `related_entity_type = 'direct_offer'`.  
+**Admin:** `admin_refund_direct_offer(p_offer_id, p_reason, p_idempotency_key)` — admin-only RPC (caller must be in `public.admin_users`); idempotent; performs refund and updates offer to `refunded`. Admin views: `admin.vw_direct_offer_money_story` (ledger story per offer), `admin.vw_direct_offer_stuck_funds` (delivered 7+ days or active 30+ days with payment held). Access: service_role only for views; RPC GRANT to authenticated + service_role, REVOKE from anon.
 
 ---
 
@@ -842,19 +856,23 @@ Audit logs for admin actions.
 
 ### 5.24 `disputes`
 
-Formal dispute tickets between clients and freelancers.
+Formal dispute tickets between clients and freelancers. Exactly one of `task_id` or `direct_offer_id` must be set.
 
-| Column           | Type        | Nullable | Default             | Description              |
-| ---------------- | ----------- | -------- | ------------------- | ------------------------ |
-| `id`             | uuid        | ❌       | `gen_random_uuid()` | Primary key              |
-| `task_id`        | uuid        | ✅       | -                   | FK to tasks              |
-| `complainant_id` | uuid        | ✅       | -                   | FK to profiles           |
-| `defendant_id`   | uuid        | ✅       | -                   | FK to profiles           |
-| `reason`         | text        | ✅       | -                   | Dispute reason           |
-| `status`         | text        | ✅       | -                   | 'open', 'resolved', etc. |
-| `resolution`     | text        | ✅       | -                   | Admin decision           |
-| `created_at`     | timestamptz | ✅       | `now()`             | Creation timestamp       |
-| `resolved_at`    | timestamptz | ✅       | -                   | Resolution timestamp     |
+| Column            | Type        | Nullable | Default             | Description              |
+| ----------------- | ----------- | -------- | ------------------- | ------------------------ |
+| `id`              | uuid        | ❌       | `gen_random_uuid()` | Primary key              |
+| `task_id`         | uuid        | ✅       | -                   | FK to tasks              |
+| `direct_offer_id` | uuid        | ✅       | -                   | FK to direct_offers      |
+| `complainant_id`  | uuid        | ✅       | -                   | FK to profiles           |
+| `defendant_id`    | uuid        | ✅       | -                   | FK to profiles           |
+| `reason`          | text        | ✅       | -                   | Dispute reason           |
+| `status`          | text        | ✅       | -                   | 'open', 'resolved', etc. |
+| `resolution`      | text        | ✅       | -                   | Admin decision           |
+| `created_at`      | timestamptz | ✅       | `now()`             | Creation timestamp       |
+| `resolved_at`     | timestamptz | ✅       | -                   | Resolution timestamp     |
+
+**Constraint:** `chk_dispute_entity` — (task_id IS NOT NULL AND direct_offer_id IS NULL) OR (task_id IS NULL AND direct_offer_id IS NOT NULL).  
+**RLS:** INSERT policy `disputes_insert_own`: complainant_id = auth.uid() and (task_id IS NOT NULL OR (direct_offer_id IS NOT NULL and EXISTS (SELECT 1 FROM direct_offers d WHERE d.id = direct_offer_id AND (d.client_id = auth.uid() OR d.freelancer_id = auth.uid()))). See `20260319110000_direct_offer_guard_rls_ledger.sql`.
 
 ---
 
@@ -1467,11 +1485,9 @@ Cross-user profile summaries must go through `public.rpc_get_profile_summaries(u
 | -------------------------- | -------------------- | ------------------------ | ------------------------ |
 | `trg_lock_tasks_client_id` | BEFORE INSERT/UPDATE | `lock_tasks_client_id()` | Make client_id immutable |
 
-### 8.7 Conversation Presence Triggers
+### 8.7 Conversation Presence
 
-| Trigger               | Event               | Function                   | Purpose                       |
-| --------------------- | ------------------- | -------------------------- | ----------------------------- |
-| `trg_expire_presence` | AFTER INSERT/UPDATE | `expire_typing_presence()` | Clean up old presence records |
+No triggers. Typing presence is expired **client-side** (15s TTL in app). See §5.7 and Chat Realtime Sync plan.
 
 ### 8.8 Role Switching Triggers (v2.18)
 
@@ -2073,15 +2089,13 @@ SELECT schemaname, tablename
 FROM pg_publication_tables
 WHERE pubname = 'supabase_realtime';
 
--- Result:
+-- Result (verified 2026-03-08):
 -- public | messages
+-- public | notifications
+-- public | conversation_presence
 ```
 
-**Note:** Only `messages` table is currently in the realtime publication. Add `conversations` if needed:
-
-```sql
-ALTER PUBLICATION supabase_realtime ADD TABLE public.conversations;
-```
+**Note:** Tables in the realtime publication: `messages`, `notifications`, `conversation_presence`. **Do NOT add `conversations`** — Inbox realtime is driven by the messages stream (receiver_id=userId) to avoid N+1 and global RLS evaluation. Enforced by migration `20260307230000_realtime_topology_no_conversations.sql` (idempotent drop if ever added). See `Sline_everything/AppDigram/All_Diagrams/18_realtime-subscription-topology.md`.
 
 ### Flutter Integration
 
@@ -2266,7 +2280,7 @@ All functions use `SECURITY DEFINER` and include explicit `auth.uid()` checks.
   - **Tasks**: Sets `status='completed'`, clears `review_expires_at`.
   - **Bookings**: If `payment_status='held'`, locks row with `SELECT ... FROM bookings WHERE id = entity_id FOR UPDATE`, then computes **stable** idempotency key: `encode(extensions.digest(entity_id::text || ':release_with_fee:' || v_status || ':' || v_payment_status, 'sha256'), 'hex')` (no `now()` — same key on retry). Calls `process_payment_event_ledger('release_with_fee', 'booking', entity_id, idempotency_key, ...)`. On success, clears `review_expires_at` (status/payment_status updated inside ledger RPC). If payment is not held, only updates status and review_expires_at.
   - **Direct offers**: If `payment_status='held'` and `status='delivered'`, locks row with `SELECT ... FROM direct_offers WHERE id = entity_id FOR UPDATE`, validates `client_id = auth.uid()`, computes same stable idempotency key pattern, calls `process_payment_event_ledger('release_with_fee', 'direct_offer', entity_id, idempotency_key, ...)`, then updates `direct_offers` to `payment_status='released'`, `status='completed'`.
-- **Migrations**: `20260224_fix_rpc_approve_delivery_digest_schema.sql` (digest schema); `20260307000001_escrow_idempotency_stable_key.sql` (stable key + FOR UPDATE, drop duplicate index `idx_journal_entries_idempotency`); `20260307120000_rpc_approve_delivery_direct_offer.sql` (direct_offer branch).
+- **Migrations**: `20260224_fix_rpc_approve_delivery_digest_schema.sql` (digest schema); `20260307000001_escrow_idempotency_stable_key.sql` (stable key + FOR UPDATE, drop duplicate index `idx_journal_entries_idempotency`); `20260307120000_rpc_approve_delivery_direct_offer.sql` (direct_offer branch); `20260319110000_direct_offer_guard_rls_ledger.sql` (direct_offer branch reads fee_rate_applied_bps from direct_offers row and passes it in p_meta to process_payment_event_ledger).
 
 ### 9.6 Task Request Bid Flow RPCs (v2.18 - March 2026)
 
@@ -2438,6 +2452,9 @@ Returns minimum-field profile summaries for all bidders on a task (for owner vie
 
 ### Version 2.20.1 (March 2026)
 
+- **Plan 19 (Direct Offers Work Contract) — §5.14 doc sync:** `direct_offers` table in §5.14 completed with all columns from migrations: fee columns `fee_rate_applied_bps`, `fee_amount`, `net_amount` (`20260307_02_add_fee_columns.sql`); `currency`, payment_*, `delivered_at`, `review_expires_at` (`20260319000000_direct_offer_flow_harden.sql`). Admin objects (admin schema, views, self-offer guard, `admin_refund_direct_offer` RPC) already documented in §5.14. Plan: `.TODO/improvement_the_system/ImplementReady/19_direct-offers-work-contract/PLAN_DirectOffersWorkContract_2026-03-07.md`.
+- **Chat Realtime Sync — docs & migration (2026-03-08):** Documentation fixes: §5.7 `conversation_presence` — removed reference to non-existent `expire_typing_presence` trigger; documented client-only 15s TTL. §5.8 `app_config` — added `chat_presence_receipts_enabled`. §8.7 — removed `trg_expire_presence` row; presence is client-only. §12 Realtime — added `conversation_presence` to publication list (with messages, notifications). Migration `20260307220000_chat_realtime_presence_publication.sql` made idempotent (DO block with IF NOT EXISTS before ADD TABLE). No schema change; docs and migration safety only.
+- **Direct Chat Offer Flow hardening (2026-03-07/08):** direct_offers: currency, payment_*, delivered_at, review_expires_at (migration `20260319000000_direct_offer_flow_harden.sql`); trigger `trg_direct_offer_protect_price_currency` and extension to protect fee_rate_applied_bps (`20260319110000_direct_offer_guard_rls_ledger.sql`, `20260319130000_direct_offer_protect_fee_in_trigger.sql`); disputes: direct_offer_id, chk_dispute_entity, disputes_insert_own RLS (`20260319000000`, `20260319110000`); rpc_approve_delivery direct_offer branch reads fee from row (`20260319110000`); cron `run_auto_release_expired_direct_offers` (`20260319120000_direct_offer_auto_release_cron.sql`). Plan: `.TODO/PLAN_DirectChatOfferFlow_2026-03-07_CRITIC.md`.
 - **Wallet activity — include spent:** Migration `20260307160000_wallet_activity_include_spent.sql` replaces `vw_wallet_activity_user` so it includes client "spent" transactions (user_available DEBIT and user_pending_withdrawal DEBIT for gateway_escrow). Wallet UI can show "Money spent" and full money story. Documented in §6.6 and diagram 21.
 - **accept_task_request — Single Winner Rule:** Migration `20260308000000_accept_task_request_reject_remaining_bids.sql` adds atomic rejection of all other pending bids on the same task when one bid is accepted. Ensures only one accepted offer per task. Documented in §9.6 Task Request Bid Flow RPCs.
 - **Escrow idempotency — stable key + FOR UPDATE:** Migration `20260307000001_escrow_idempotency_stable_key.sql` updates `rpc_approve_delivery` (booking branch): idempotency key is now `entity_id || ':release_with_fee:' || v_status || ':' || v_payment_status` (no `now()`), and the booking row is locked with `SELECT ... FOR UPDATE` before key generation and ledger call. Drops duplicate index `idx_journal_entries_idempotency`. Approve delivery is safe to retry without double release. Documented in §9.5 and diagram 16.

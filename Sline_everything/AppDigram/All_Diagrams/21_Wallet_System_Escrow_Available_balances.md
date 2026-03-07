@@ -328,7 +328,7 @@ Required: UNIQUE on `journal_entries.idempotency_key`; CHECK on ledger line amou
 
 ---
 
-**Contract:** `.TODO/improvement_the_system/ImplementReady/21_Wallet_System_Escrow_Available_balances/CONTRACT_rpc_approve_delivery.md`  
-**Execution log:** `.TODO/improvement_the_system/ImplementReady/21_Wallet_System_Escrow_Available_balances/EXECUTION_LOG_PLAN_WalletEscrowAvailableBalances_2026-03-07.md`  
-**Checklist & summary:** `.TODO/improvement_the_system/ImplementReady/21_Wallet_System_Escrow_Available_balances/CHECKLIST_AND_SUMMARY_2026-03-07.md`  
+**Contract:** `.TODO/improvement_the_system/Done/21_Wallet_System_Escrow_Available_balances/CONTRACT_rpc_approve_delivery.md`  
+**Execution log:** `.TODO/improvement_the_system/Done/21_Wallet_System_Escrow_Available_balances/EXECUTION_LOG_PLAN_WalletEscrowAvailableBalances_2026-03-07.md`  
+**Checklist & summary:** `.TODO/improvement_the_system/Done/21_Wallet_System_Escrow_Available_balances/CHECKLIST_AND_SUMMARY_2026-03-07.md`  
 **Wallet activity migration:** `supabase/migrations/20260307160000_wallet_activity_include_spent.sql`

@@ -131,7 +131,7 @@ Columns:
 
 For **bookings** and **direct offers**, the app releases escrow via a single RPC: `rpc_approve_delivery(entity_type, entity_id)`. The client calls it with `entity_type` = `'booking'` or `'direct_offer'`; the RPC validates ownership, then calls `process_payment_event_ledger('release_with_fee', ...)` with a deterministic idempotency key. Booking flow: `WorkManagementService.approveDelivery()`. Direct offer flow: `DirectOffersService.completeOffer()` → `rpc_approve_delivery(entity_type: 'direct_offer', entity_id)`.
 
-Contract: `.TODO/improvement_the_system/ImplementReady/21_Wallet_System_Escrow_Available_balances/CONTRACT_rpc_approve_delivery.md`.
+Contract: `.TODO/improvement_the_system/Done/21_Wallet_System_Escrow_Available_balances/CONTRACT_rpc_approve_delivery.md`.
 
 ## 5. RPC: process_payment_event_ledger
 

@@ -1,6 +1,6 @@
 # Direct Chat Offers Feature Reference (v2.17)
 
-**Last Updated:** 2026-03-02
+**Last Updated:** 2026-03-08
 
 This document is the single reference for the Direct Chat Offers feature: chat-to-work offers created from a 1:1 conversation (no task or booking required). Client accepts in chat; payment is performed only from the Dashboard.
 
@@ -43,11 +43,17 @@ The feature follows MVVM: UI in `lib/features/direct_offers/view/`; `DirectOffer
 
 **Lifecycle:** `sent` → `accepted` (unpaid) → client pays from Dashboard (QiCard) → `active` (payment_status `held`) → `delivered` → `completed` (release_with_fee).
 
-**Indexes:** `idx_direct_offers_conversation`, `idx_direct_offers_client_status`, `idx_direct_offers_freelancer_status`  
-**RLS:** SELECT for client or freelancer; INSERT for freelancer (conversation participant); UPDATE for client/freelancer per role.  
-**Trigger:** `fn_direct_offer_guard` enforces valid status/payment transitions (e.g. allows `sent` → `accepted` with `payment_status = 'unpaid'`; allows `accepted` → `active` when payment is held).
+**Lifecycle (timestamps):** On Mark Delivered the service sets `delivered_at` and `review_expires_at` (e.g. now + 3 days). If the client does not Approve before `review_expires_at`, a cron job auto-releases the offer (no permanent escrow lock). Completion can be manual (client Approve & release) or automatic when `review_expires_at` has passed (cron runs `run_auto_release_expired_direct_offers`).
 
-Full schema and enum details: `Sline_everything/SUPABASE_SETUP.md` §5.14.
+Full column list including `currency`, `fee_rate_applied_bps`, `payment_*`, `delivered_at`, `review_expires_at`: see `Sline_everything/SUPABASE_SETUP.md` §5.14.
+
+**Indexes:** `idx_direct_offers_conversation`, `idx_direct_offers_client_status`, `idx_direct_offers_freelancer_status`, `idx_direct_offers_processing`.  
+**RLS:** SELECT for client or freelancer; INSERT for freelancer (conversation participant); UPDATE for client/freelancer per role.  
+**Triggers:** `fn_direct_offer_guard` enforces valid status/payment transitions; `fn_direct_offer_guard_insert` rejects INSERT when `client_id = freelancer_id` (self-offer); `trg_direct_offer_protect_price_currency` blocks UPDATE of price, currency, and fee_rate_applied_bps when not sent/unpaid.
+
+**Admin tooling (service_role / dashboard):** `admin.vw_direct_offer_money_story`, `admin.vw_direct_offer_stuck_funds`; RPC `admin_refund_direct_offer(offer_id, reason, idempotency_key)` for dispute/refund (caller must be in `public.admin_users`). Contract: `.TODO/improvement_the_system/ImplementReady/19_direct-offers-work-contract/CONTRACT_admin_refund_direct_offer.md`.
+
+**Contract (payment intent, release fee-from-row, disputes):** `.TODO/06_direct_offer_contract.md`.
 
 ### 2.2 Ledger and work_logs
 
@@ -119,8 +125,9 @@ Defined under `supabase/functions/`; see `Sline_everything/STRUCTURE.md`.
 
 ### 4.5 Deliver and complete
 
-1. Freelancer: Mark Delivered → service updates status to `delivered`.
+1. Freelancer: Mark Delivered → service updates status to `delivered`, sets `delivered_at` and `review_expires_at` (e.g. now + 3 days).
 2. Client: Approve & release → `DirectOffersService.completeOffer(offerId)` calls `rpc_approve_delivery(entity_type: 'direct_offer', entity_id)` → RPC runs ledger release and updates status `completed`, payment_status `released`.
+3. Auto-release: If the client does not approve before `review_expires_at`, cron job `run_auto_release_expired_direct_offers()` (hourly) releases the offer automatically so escrow is not permanently locked.
 
 ---
 

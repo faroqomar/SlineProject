@@ -1824,7 +1824,7 @@ Triggers/Functions
 | File                                                      | Layer      | Description                                                                                                                                              |
 | --------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `lib/features/chat/data/chat_repository.dart`             | Repository | Wraps `MessageService`; exposes conversation/message APIs, receipts, and Realtime streams.                                                               |
-| `lib/features/chat/services/message_service.dart`         | Service    | PostgREST + Realtime for conversations/messages, RPCs for receipts, task chats, and archive.                                                             |
+| `lib/features/chat/services/message_service.dart`         | Service    | PostgREST + Realtime for messages (active chat + Inbox), RPCs for receipts, task chats, and archive. Inbox uses `subscribeToInboxMessages(userId)`; conversations table is not in realtime publication. See diagram 18. |
 | `lib/features/chat/services/attachment_service.dart`      | Service    | Storage upload/delete/signed URL helpers for attachments.                                                                                                |
 | `lib/features/chat/services/chat_realtime_merger.dart`    | Service    | Merges realtime message snapshots (dedupe, sort).                                                                                                        |
 | `lib/features/chat/viewmodels/chat_view_model.dart`       | ViewModel  | `ChangeNotifier` managing conversation list, active conversation, message list, subscriptions, and receipts.                                             |
@@ -1961,7 +1961,7 @@ Future<void> sendImage({required String convId, required String receiverId, requ
 
 ## 7. Extra Notes & Testing Checklist
 
-- **Realtime**: Subscribe to `messages` and `conversations` streams for live updates.
+- **Realtime**: Subscribe to `messages` stream only: active chat via `.eq('conversation_id')`, Inbox via `.eq('receiver_id', userId)`. The `conversations` table is not in the realtime publication. See `Sline_everything/AppDigram/All_Diagrams/18_realtime-subscription-topology.md`.
 - **Signed URLs**: Keep attachments private; generate signed URLs on demand and cache short-term.
 - **Time zones**: `created_at` stored in UTC; format locally in UI.
 - **Receipts**: RPCs `mark_conversation_delivered` and `mark_conversation_seen` update delivery/read states.

@@ -61,11 +61,33 @@ Triggers/Functions
 - `trg_messages_offer_accepted`: On `offer_accepted`, sets `tasks.assigned_freelancer_id` and moves task `status = 'assigned'`.
 - **Archive:** Use RPC `archive_conversation_v1(p_conversation_id)` for per-user, server-timestamped archive (no client timestamp writes).
 
+### 2.6 `public.conversation_presence` (typing indicator)
+
+| Column | Type | Purpose |
+| --- | --- | --- |
+| `conversation_id` | uuid (PK part) | FK to conversations |
+| `user_id` | uuid (PK part) | FK to profiles |
+| `is_typing` | boolean | true when user is typing |
+| `updated_at` | timestamptz | Last update (client ignores typing if older than 15s) |
+
+RLS: participant SELECT; self-only INSERT/UPDATE. Realtime: table is in `supabase_realtime` publication. Feature flag: `app_config.chat_presence_receipts_enabled` (when `'false'`, no presence upsert and no receipt ticks in UI).
+
+### 2.7 Receipt lifecycle (delivered / read)
+
+- **Columns on `messages`:** `delivered_at`, `seen_at` (timestamptz, nullable). RPCs: `mark_conversation_delivered(p_conversation_id)`, `mark_conversation_seen(p_conversation_id)` — receiver only (RLS `messages_update_by_receiver`).
+- **UI:** Single tick (sent), double grey (delivered), double blue (read). Only shown when `chat_presence_receipts_enabled` is true; otherwise single tick only.
+- **Merge:** `ChatViewModel` keeps `_lastMessages` and uses `ChatRealtimeMerger.merge` on each message stream emission to dedupe by id and sort by `created_at` (avoids duplicates on reconnect). Receipts are marked only when new messages from the other party arrive (receiver = current user). Offer status refresh is debounced (500 ms) to limit DB calls under heavy realtime traffic.
+
+### 2.8 Realtime (Inbox + Active Chat + Presence)
+
+- **Active chat:** `subscribeToMessages(conversationId)` — stream on `messages`; ViewModel merges with `_lastMessages` via `ChatRealtimeMerger`. `subscribeToPresence(conversationId)` — stream on `conversation_presence` for typing indicator (when feature flag on).
+- **Inbox (conversation list):** `subscribeToInboxMessages(userId)` — stream on `messages` with `.eq('receiver_id', userId)`. The `conversations` table is **not** in the `supabase_realtime` publication; Inbox updates are driven by incoming messages. `ChatViewModel` merges each message event into the local conversation list (updates last_message_*, re-sorts). New conversations (message for unknown conversation_id) are hydrated via `getConversationById` with a guard to prevent duplicate fetches. See `Sline_everything/AppDigram/All_Diagrams/18_realtime-subscription-topology.md`.
+
 ## 3. File Inventory
 | File | Layer | Description |
 | --- | --- | --- |
 | `lib/features/chat/data/chat_repository.dart` | Repository | Wraps `MessageService`; exposes conversation/message APIs, receipts, and Realtime streams. |
-| `lib/features/chat/services/message_service.dart` | Service | PostgREST + Realtime for conversations/messages, RPCs for receipts and task chats. |
+| `lib/features/chat/services/message_service.dart` | Service | PostgREST + Realtime for messages (active chat + Inbox), RPCs for receipts and task chats. |
 | `lib/features/chat/services/attachment_service.dart` | Service | Storage upload/delete/signed URL helpers for attachments. |
 | `lib/features/chat/viewmodels/chat_view_model.dart` | ViewModel | `ChangeNotifier` managing conversation list, active conversation, message list, subscriptions, and receipts. |
 | `lib/features/chat/view/messages_screen.dart` | View | Conversations list with previews via joined selects. |
@@ -74,6 +96,7 @@ Triggers/Functions
 | `lib/features/chat/models/message_model.dart` | Model | Message with attachments, type, payload (wire: snake_case message types). |
 | `lib/features/chat/models/chat_offer_payload.dart` | Model | Canonical offer payload: `days` on write; read compatibility for legacy `delivery`. |
 | `lib/features/chat/services/chat_realtime_merger.dart` | Service | Merges realtime message snapshots (dedupe, sort). |
+| `test/features/chat/services/chat_realtime_merger_test.dart` | Test | Unit tests for merger (empty merge, dedupe, order, skip unparseable). |
 | `lib/features/chat/attachments/` | Submodule | Upload/compress/pick utils and widgets for attachment UX. |
 
 ## 4. ERD Diagram
@@ -195,7 +218,7 @@ Future<void> sendImage({required String convId, required String receiverId, requ
 | IDs | `22P02` invalid UUID | "Invalid chat identifier." | Validate IDs before calling APIs. |
 
 ## 7. Extra Notes & Testing Checklist
-- **Realtime**: Subscribe to `messages` and `conversations` streams for live updates.
+- **Realtime**: Subscribe to `messages` stream only: active chat via `.eq('conversation_id')`, Inbox via `.eq('receiver_id', userId)`. The `conversations` table is not in the realtime publication. See diagram 18.
 - **Signed URLs**: Keep attachments private; generate signed URLs on demand and cache short-term.
 - **Time zones**: `created_at` stored in UTC; format locally in UI.
 - **Receipts**: RPCs `mark_conversation_delivered` and `mark_conversation_seen` update delivery/read states.

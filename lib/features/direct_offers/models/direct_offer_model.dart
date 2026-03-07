@@ -1,4 +1,5 @@
 /// Model for a direct offer (chat-to-work, no task/booking).
+/// Aligns with contract: currency, fee_rate_applied_bps, payment_*, delivered_at, review_expires_at.
 class DirectOffer {
   const DirectOffer({
     required this.id,
@@ -14,6 +15,15 @@ class DirectOffer {
     required this.paymentStatus,
     required this.createdAt,
     required this.updatedAt,
+    this.currency,
+    this.feeRateAppliedBps,
+    this.paymentRequestId,
+    this.paymentGatewayId,
+    this.paymentCorrelationId,
+    this.paymentExpiresAt,
+    this.paymentRecoveredAt,
+    this.deliveredAt,
+    this.reviewExpiresAt,
   });
 
   final String id;
@@ -29,6 +39,15 @@ class DirectOffer {
   final String paymentStatus;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? currency;
+  final int? feeRateAppliedBps;
+  final String? paymentRequestId;
+  final String? paymentGatewayId;
+  final String? paymentCorrelationId;
+  final DateTime? paymentExpiresAt;
+  final DateTime? paymentRecoveredAt;
+  final DateTime? deliveredAt;
+  final DateTime? reviewExpiresAt;
 
   factory DirectOffer.fromJson(Map<String, dynamic> json) {
     return DirectOffer(
@@ -49,6 +68,25 @@ class DirectOffer {
       paymentStatus: json['payment_status'] as String? ?? 'unpaid',
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
+      currency: json['currency'] as String?,
+      feeRateAppliedBps: json['fee_rate_applied_bps'] is int
+          ? json['fee_rate_applied_bps'] as int
+          : int.tryParse(json['fee_rate_applied_bps']?.toString() ?? ''),
+      paymentRequestId: json['payment_request_id'] as String?,
+      paymentGatewayId: json['payment_gateway_id'] as String?,
+      paymentCorrelationId: json['payment_correlation_id'] as String?,
+      paymentExpiresAt: json['payment_expires_at'] != null
+          ? DateTime.parse(json['payment_expires_at'] as String)
+          : null,
+      paymentRecoveredAt: json['payment_recovered_at'] != null
+          ? DateTime.parse(json['payment_recovered_at'] as String)
+          : null,
+      deliveredAt: json['delivered_at'] != null
+          ? DateTime.parse(json['delivered_at'] as String)
+          : null,
+      reviewExpiresAt: json['review_expires_at'] != null
+          ? DateTime.parse(json['review_expires_at'] as String)
+          : null,
     );
   }
 

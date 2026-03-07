@@ -109,9 +109,7 @@ class DirectOffersService {
     final list = response as List<dynamic>? ?? [];
     final map = <String, DirectOffer>{};
     for (final row in list) {
-      final offer = DirectOffer.fromJson(
-        Map<String, dynamic>.from(row as Map),
-      );
+      final offer = DirectOffer.fromJson(Map<String, dynamic>.from(row as Map));
       map[offer.id] = offer;
     }
     return map;
@@ -120,7 +118,14 @@ class DirectOffersService {
   /// Client accepts the offer (no payment). Work item appears in dashboard as Pending Payment.
   Future<void> acceptOfferWithoutPayment(String offerId) async {
     final offer = await getOffer(offerId);
-    if (offer == null) throw Exception('Offer not found.');
+    if (offer == null) {
+      AppLogger.w(
+        '[DirectOffers] acceptOfferWithoutPayment: offer not found',
+        tag: 'DirectOffers',
+        json: {'offerId': offerId},
+      );
+      throw Exception('Offer not found.');
+    }
     if (offer.clientId != _uid) {
       throw Exception('Only the client can accept this offer.');
     }
@@ -128,9 +133,15 @@ class DirectOffersService {
       throw Exception('Offer is not in a state that can be accepted.');
     }
 
+    const defaultFeeBps = 1000;
+    const defaultCurrency = 'IQD';
     await _client
         .from('direct_offers')
-        .update({'status': 'accepted'})
+        .update({
+          'status': 'accepted',
+          'fee_rate_applied_bps': defaultFeeBps,
+          'currency': defaultCurrency,
+        })
         .eq('id', offerId);
     await _workLogService.logEvent(
       scope: WorkLogScope(entityId: offerId, entityType: 'direct_offer'),
@@ -138,14 +149,21 @@ class DirectOffersService {
       description: 'Offer accepted, waiting for payment',
     );
     AppLogger.i(
-      '[DirectOffers] acceptOfferWithoutPayment completed offer=$offerId',
+      '[DirectOffers] acceptOfferWithoutPayment completed offer=$offerId fee_rate_applied_bps=$defaultFeeBps currency=$defaultCurrency',
     );
   }
 
   /// Client pays from dashboard (escrow hold). Call only when status is accepted and unpaid.
   Future<void> payNow(String offerId) async {
     final offer = await getOffer(offerId);
-    if (offer == null) throw Exception('Offer not found.');
+    if (offer == null) {
+      AppLogger.w(
+        '[DirectOffers] payNow: offer not found',
+        tag: 'DirectOffers',
+        json: {'offerId': offerId},
+      );
+      throw Exception('Offer not found.');
+    }
     if (offer.clientId != _uid) {
       throw Exception('Only the client can pay this offer.');
     }
@@ -175,7 +193,14 @@ class DirectOffersService {
     String paymentRequestId,
   ) async {
     final offer = await getOffer(offerId);
-    if (offer == null) throw Exception('Offer not found.');
+    if (offer == null) {
+      AppLogger.w(
+        '[DirectOffers] recoverPaymentAfterCallback: offer not found',
+        tag: 'DirectOffers',
+        json: {'offerId': offerId},
+      );
+      throw Exception('Offer not found.');
+    }
     if (offer.clientId != _uid) {
       throw Exception('Only the client can recover this offer.');
     }
@@ -191,14 +216,24 @@ class DirectOffersService {
       if (data['ok'] == true) {
         AppLogger.i(
           '[DirectOffers] recoverPaymentAfterCallback completed offer=$offerId',
+          tag: 'DirectOffers',
+          json: {'offerId': offerId, 'payment_request_id': paymentRequestId},
         );
         return;
       }
       final msg = data['message'] as String? ?? data['code'] as String?;
-      if (msg != null) throw Exception(msg);
+      if (msg != null) {
+        AppLogger.e(
+          '[DirectOffers] recoverPaymentAfterCallback failed offer=$offerId: $msg',
+          tag: 'DirectOffers',
+        );
+        throw Exception(msg);
+      }
     }
     AppLogger.i(
       '[DirectOffers] recoverPaymentAfterCallback completed offer=$offerId',
+      tag: 'DirectOffers',
+      json: {'offerId': offerId, 'payment_request_id': paymentRequestId},
     );
   }
 
@@ -232,7 +267,14 @@ class DirectOffersService {
   /// Client cancels an accepted-but-unpaid offer (e.g. from details screen).
   Future<void> cancelAcceptedOffer(String offerId) async {
     final offer = await getOffer(offerId);
-    if (offer == null) throw Exception('Offer not found.');
+    if (offer == null) {
+      AppLogger.w(
+        '[DirectOffers] cancelAcceptedOffer: offer not found',
+        tag: 'DirectOffers',
+        json: {'offerId': offerId},
+      );
+      throw Exception('Offer not found.');
+    }
     if (offer.clientId != _uid) {
       throw Exception('Only the client can cancel this offer.');
     }
@@ -252,7 +294,14 @@ class DirectOffersService {
   /// Client rejects the offer.
   Future<void> rejectOffer(String offerId) async {
     final offer = await getOffer(offerId);
-    if (offer == null) throw Exception('Offer not found.');
+    if (offer == null) {
+      AppLogger.w(
+        '[DirectOffers] rejectOffer: offer not found',
+        tag: 'DirectOffers',
+        json: {'offerId': offerId},
+      );
+      throw Exception('Offer not found.');
+    }
     if (offer.clientId != _uid) {
       throw Exception('Only the client can reject this offer.');
     }
@@ -270,7 +319,14 @@ class DirectOffersService {
   /// Freelancer cancels a sent offer.
   Future<void> cancelOffer(String offerId) async {
     final offer = await getOffer(offerId);
-    if (offer == null) throw Exception('Offer not found.');
+    if (offer == null) {
+      AppLogger.w(
+        '[DirectOffers] cancelOffer: offer not found',
+        tag: 'DirectOffers',
+        json: {'offerId': offerId},
+      );
+      throw Exception('Offer not found.');
+    }
     if (offer.freelancerId != _uid) {
       throw Exception('Only the freelancer can cancel this offer.');
     }
@@ -285,10 +341,17 @@ class DirectOffersService {
     AppLogger.i('[DirectOffers] canceled offer=$offerId');
   }
 
-  /// Freelancer marks work as delivered.
+  /// Freelancer marks work as delivered. Sets delivered_at and review_expires_at (3 days) for cron auto-release.
   Future<void> markDelivered(String offerId) async {
     final offer = await getOffer(offerId);
-    if (offer == null) throw Exception('Offer not found.');
+    if (offer == null) {
+      AppLogger.w(
+        '[DirectOffers] markDelivered: offer not found',
+        tag: 'DirectOffers',
+        json: {'offerId': offerId},
+      );
+      throw Exception('Offer not found.');
+    }
     if (offer.freelancerId != _uid) {
       throw Exception('Only the freelancer can mark delivered.');
     }
@@ -296,39 +359,75 @@ class DirectOffersService {
       throw Exception('Offer must be active to mark delivered.');
     }
 
+    final now = DateTime.now().toUtc();
+    final reviewExpiresAt = now.add(const Duration(days: 3));
     await _client
         .from('direct_offers')
-        .update({'status': 'delivered'})
+        .update({
+          'status': 'delivered',
+          'delivered_at': now.toIso8601String(),
+          'review_expires_at': reviewExpiresAt.toIso8601String(),
+        })
         .eq('id', offerId);
     await _workLogService.logEvent(
       scope: WorkLogScope(entityId: offerId, entityType: 'direct_offer'),
       eventType: 'delivery_submitted',
       description: 'Work delivered',
     );
-    AppLogger.i('[DirectOffers] marked delivered offer=$offerId');
+    AppLogger.i(
+      '[DirectOffers] marked delivered offer=$offerId delivered_at=${now.toIso8601String()} review_expires_at=${reviewExpiresAt.toIso8601String()}',
+    );
   }
 
   /// Client approves and releases payment via rpc_approve_delivery (single exit point for escrow release).
   Future<void> completeOffer(String offerId) async {
     final offer = await getOffer(offerId);
-    if (offer == null) throw Exception('Offer not found.');
+    if (offer == null) {
+      AppLogger.w(
+        '[DirectOffers] completeOffer: offer not found',
+        tag: 'DirectOffers',
+        json: {'offerId': offerId},
+      );
+      throw Exception('Offer not found.');
+    }
     if (offer.clientId != _uid) {
-      AppLogger.w('completeOffer: not client', tag: 'DirectOffers', json: {'offerId': offerId});
+      AppLogger.w(
+        'completeOffer: not client',
+        tag: 'DirectOffers',
+        json: {'offerId': offerId},
+      );
       throw Exception('Only the client can complete this offer.');
     }
     if (!offer.isDelivered || offer.paymentStatus != 'held') {
-      AppLogger.w('completeOffer: invalid state', tag: 'DirectOffers', json: {'offerId': offerId, 'delivered': offer.isDelivered, 'paymentStatus': offer.paymentStatus});
+      AppLogger.w(
+        'completeOffer: invalid state',
+        tag: 'DirectOffers',
+        json: {
+          'offerId': offerId,
+          'delivered': offer.isDelivered,
+          'paymentStatus': offer.paymentStatus,
+        },
+      );
       throw Exception('Offer must be delivered and payment held to complete.');
     }
 
-    AppLogger.i('Completing direct offer (approve delivery)', tag: 'DirectOffers', json: {'offerId': offerId});
+    AppLogger.i(
+      'Completing direct offer (approve delivery)',
+      tag: 'DirectOffers',
+      json: {'offerId': offerId},
+    );
     try {
       await _client.rpc(
         'rpc_approve_delivery',
         params: {'entity_type': 'direct_offer', 'entity_id': offerId},
       );
     } catch (e, st) {
-      AppLogger.e('completeOffer failed offerId=$offerId', tag: 'DirectOffers', error: e, stackTrace: st);
+      AppLogger.e(
+        'completeOffer failed offerId=$offerId',
+        tag: 'DirectOffers',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
 
@@ -337,6 +436,10 @@ class DirectOffersService {
       eventType: 'completed',
       description: 'Completed',
     );
-    AppLogger.i('Direct offer completed', tag: 'DirectOffers', json: {'offerId': offerId});
+    AppLogger.i(
+      'Direct offer completed',
+      tag: 'DirectOffers',
+      json: {'offerId': offerId},
+    );
   }
 }

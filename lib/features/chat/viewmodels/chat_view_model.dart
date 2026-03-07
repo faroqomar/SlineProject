@@ -10,6 +10,7 @@ import '../../../core/services/account_guard_service.dart';
 import '../../../core/mixins/role_switch_aware.dart';
 import '../../../core/services/role_switch_coordinator.dart';
 import '../attachments/services/send_attachment_usecase.dart';
+import '../services/chat_realtime_merger.dart';
 import '../../tasks/models/task_model.dart';
 import '../../direct_offers/services/direct_offers_service.dart';
 
@@ -21,7 +22,7 @@ import '../../direct_offers/services/direct_offers_service.dart';
 /// - Tracks subscription state via `_mounted` flag to prevent memory leaks
 ///
 /// Memory Management:
-/// - Subscriptions are stored in `_msgSub` and `_convoSub`
+/// - Subscriptions are stored in `_msgSub` and `_inboxMsgSub`
 /// - dispose() cancels all subscriptions and sets `_mounted = false`
 /// - `_notify()` checks `_mounted` before calling notifyListeners()
 ///
@@ -63,17 +64,36 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
   Conversation? activeConversation;
 
   StreamSubscription<List<Message>>? _msgSub;
-  StreamSubscription<List<Map<String, dynamic>>>? _convoSub;
+  StreamSubscription<List<Message>>? _inboxMsgSub;
+  StreamSubscription<List<Map<String, dynamic>>>? _presenceSub;
+
+  /// Debounce timer for refreshOfferStatusesForCurrentMessages (avoid calling on every emission).
+  Timer? _offerRefreshDebounce;
+
+  /// Guard: at most one in-flight getConversationById per conversation_id (prevents double fetch).
+  final Set<String> _fetchingConversationIds = {};
 
   bool _mounted = true;
+
+  /// Last message list for active conversation (for merge/dedupe on stream).
+  List<Message> _lastMessages = [];
+
+  /// Feature flag: presence and receipt ticks (null until first check).
+  bool? _presenceReceiptsEnabled;
+
+  /// Other participant typing state (15s TTL applied when reading).
+  bool _otherUserTyping = false;
+  DateTime? _presenceUpdatedAt;
 
   @override
   void dispose() {
     _mounted = false;
-    // Unregister from role switch coordinator
+    _offerRefreshDebounce?.cancel();
+    _offerRefreshDebounce = null;
     RoleSwitchCoordinator().unregister(this);
     _msgSub?.cancel();
-    _convoSub?.cancel();
+    _inboxMsgSub?.cancel();
+    _presenceSub?.cancel();
     super.dispose();
   }
 
@@ -88,8 +108,10 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
     // Cancel realtime subscriptions first
     _msgSub?.cancel();
     _msgSub = null;
-    _convoSub?.cancel();
-    _convoSub = null;
+    _inboxMsgSub?.cancel();
+    _inboxMsgSub = null;
+    _presenceSub?.cancel();
+    _presenceSub = null;
 
     // Also remove Supabase realtime channels (not just Dart streams)
     try {
@@ -103,8 +125,11 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
     // Clear all cached data
     conversations.clear();
     currentMessages.clear();
+    _lastMessages = [];
     _offerStatusCache.clear();
     activeConversation = null;
+    _otherUserTyping = false;
+    _presenceUpdatedAt = null;
 
     // Reset loading states
     isLoadingConversations = false;
@@ -138,7 +163,15 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
       if (delivered) await _repo.markDelivered(activeConversation!.id);
       if (seen) await _repo.markSeen(activeConversation!.id);
     } catch (e) {
-      AppLogger.e('Error marking receipts: $e');
+      final op = [
+        if (delivered) 'delivered',
+        if (seen) 'seen',
+      ].join('+');
+      AppLogger.e(
+        'Error marking receipts conversation_id=${activeConversation!.id} operation=$op',
+        tag: 'ChatVM',
+        error: e,
+      );
     }
   }
 
@@ -164,45 +197,81 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
 
   void subscribeToUserConversations() {
     final user = _repo.currentUser;
-    if (user == null) return;
-    _convoSub?.cancel();
-    _convoSub = _repo
-        .subscribeToConversations(user.id)
+    if (user == null) {
+      AppLogger.d('[REALTIME] subscribeToUserConversations: no user, skip');
+      return;
+    }
+    _inboxMsgSub?.cancel();
+    AppLogger.d('[REALTIME] subscribeToUserConversations: starting inbox messages stream');
+    _inboxMsgSub = _repo
+        .subscribeToInboxMessages(user.id)
         .listen(
-          (rows) {
+          (messages) {
+            if (!_mounted) return;
+            if (messages.isEmpty) return;
             try {
-              final updated = rows.map((json) {
-                final isUser1 = json['user1_id'] == user.id;
-                final otherUser = isUser1 ? json['user2'] : json['user1'];
-                return Conversation.fromJson({
-                  ...json,
-                  'task_title': json['tasks']?['title'] ?? 'Untitled Task',
-                  'user1_name': json['user1']?['full_name'] ?? 'User',
-                  'user2_name': json['user2']?['full_name'] ?? 'User',
-                  'other_user_name': otherUser?['full_name'],
-                  'other_user_avatar': otherUser?['avatar_url'],
-                });
-              }).toList();
-              conversations
-                ..clear()
-                ..addAll(updated);
-              AppLogger.i(
-                '✅ Conversations updated in viewmodel: ${conversations.length}',
-              );
+              _mergeInboxMessages(messages);
+              conversations.sort((a, b) {
+                final aTime = a.lastMessageTime ?? a.createdAt;
+                final bTime = b.lastMessageTime ?? b.createdAt;
+                return bTime.compareTo(aTime);
+              });
+              AppLogger.d('[REALTIME] Inbox merged: ${conversations.length} conversations');
               _notify();
             } catch (e) {
-              AppLogger.e('Error parsing realtime conversations: $e');
+              AppLogger.e('Error merging inbox messages', error: e);
             }
           },
           onError: (error) {
-            AppLogger.e('Realtime conversation subscription error: $error');
+            AppLogger.e('Realtime inbox messages subscription error', error: error);
           },
         );
   }
 
+  /// Merges incoming messages into conversation list (new Conversation instances; no mutation).
+  void _mergeInboxMessages(List<Message> messages) {
+    for (final message in messages) {
+      final idx = conversations.indexWhere((c) => c.id == message.conversationId);
+      if (idx >= 0) {
+        final c = conversations[idx];
+        conversations[idx] = c.copyWith(
+          lastMessage: message.content,
+          lastMessageTime: message.createdAt,
+          lastMessageSenderId: message.senderId,
+        );
+      } else {
+        if (_fetchingConversationIds.contains(message.conversationId)) continue;
+        _fetchingConversationIds.add(message.conversationId);
+        _repo.getConversationById(message.conversationId).then((convo) {
+          if (!_mounted) return;
+          _fetchingConversationIds.remove(message.conversationId);
+          final merged = convo.copyWith(
+            lastMessage: message.content,
+            lastMessageTime: message.createdAt,
+            lastMessageSenderId: message.senderId,
+          );
+          if (!conversations.any((c) => c.id == merged.id)) {
+            conversations.add(merged);
+            conversations.sort((a, b) {
+              final aTime = a.lastMessageTime ?? a.createdAt;
+              final bTime = b.lastMessageTime ?? b.createdAt;
+              return bTime.compareTo(aTime);
+            });
+            AppLogger.d('[REALTIME] New conversation added from inbox message: ${merged.id}');
+            _notify();
+          }
+        }).catchError((e) {
+          _fetchingConversationIds.remove(message.conversationId);
+          AppLogger.w('getConversationById failed for ${message.conversationId}', error: e);
+        });
+      }
+    }
+  }
+
   void unsubscribeFromUserConversations() {
-    _convoSub?.cancel();
-    _convoSub = null;
+    _inboxMsgSub?.cancel();
+    _inboxMsgSub = null;
+    AppLogger.d('[REALTIME] unsubscribeFromUserConversations: inbox stream cancelled');
   }
 
   // Utility to start or fetch a conversation with loading state and error handling
@@ -320,6 +389,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
     _notify();
     try {
       final msgs = await _repo.getMessages(conversationId);
+      _lastMessages = List.from(msgs);
       currentMessages
         ..clear()
         ..addAll(msgs);
@@ -503,32 +573,123 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
     }
   }
 
-  void subscribeToActiveConversation() {
+  Future<void> subscribeToActiveConversation() async {
     if (activeConversation == null) return;
     _msgSub?.cancel();
+    _presenceSub?.cancel();
+    _offerRefreshDebounce?.cancel();
+    _offerRefreshDebounce = null;
+    final cid = activeConversation!.id;
+    // Defensive: ensure merge state is for this conversation only (e.g. if entry point did not call fetchMessages first).
+    if (_lastMessages.isNotEmpty) {
+      final lastCid = _lastMessages.first.conversationId;
+      if (lastCid != cid) _lastMessages = [];
+    }
+    _presenceReceiptsEnabled = await _repo.isPresenceReceiptsEnabled();
+
     _msgSub = _repo
-        .subscribeToMessages(activeConversation!.id)
+        .subscribeToMessages(cid)
         .listen(
           (messages) async {
             if (activeConversation == null) return;
+            final newRows = messages.map((m) => m.toJson()).toList();
+            final merged = ChatRealtimeMerger.merge(_lastMessages, newRows, Message.fromJson);
+            final uid = currentUserId;
+            final hasNewFromOther = uid != null &&
+                merged.any((m) =>
+                    m.receiverId == uid && !_lastMessages.any((l) => l.id == m.id));
+            _lastMessages = merged;
             currentMessages
               ..clear()
-              ..addAll(messages);
-            await markReceiptsForActive(delivered: true, seen: false);
-            await refreshOfferStatusesForCurrentMessages();
+              ..addAll(merged);
+            if (_presenceReceiptsEnabled == true && hasNewFromOther) {
+              unawaited(markReceiptsForActive(delivered: true, seen: false));
+            }
+            _offerRefreshDebounce?.cancel();
+            _offerRefreshDebounce = Timer(
+              const Duration(milliseconds: 500),
+              () {
+                if (_mounted && activeConversation != null) {
+                  refreshOfferStatusesForCurrentMessages();
+                }
+              },
+            );
+            AppLogger.d('[CHAT] messages merged count=${merged.length}', tag: 'ChatVM');
             _notify();
           },
           onError: (error) {
-            AppLogger.e('Realtime subscription error', error: error);
+            AppLogger.e('[CHAT] stream_error messages subscription', tag: 'ChatVM', error: error);
+            currentMessages.clear();
+            currentMessages.addAll(_lastMessages);
+            _notify();
           },
         );
 
-    unawaited(markReceiptsForActive(delivered: true, seen: false));
+    if (_presenceReceiptsEnabled == true) {
+      unawaited(markReceiptsForActive(delivered: true, seen: false));
+      final otherId = activeConversation!.user1Id == currentUserId
+          ? activeConversation!.user2Id
+          : activeConversation!.user1Id;
+      _presenceSub = _repo.subscribeToPresence(cid).listen(
+            (rows) {
+              if (activeConversation == null || !_mounted) return;
+              final list = rows.where((r) => r['user_id'] == otherId).toList();
+              final otherRow = list.isNotEmpty ? list.first : null;
+              if (otherRow != null) {
+                _otherUserTyping = otherRow['is_typing'] as bool? ?? false;
+                final u = otherRow['updated_at'] as String?;
+                _presenceUpdatedAt = u != null ? DateTime.tryParse(u) : null;
+                AppLogger.d('[CHAT] presence_updated otherTyping=$_otherUserTyping', tag: 'ChatVM');
+              } else {
+                _otherUserTyping = false;
+                _presenceUpdatedAt = null;
+              }
+              final idx = conversations.indexWhere((c) => c.id == activeConversation!.id);
+              if (idx >= 0) {
+                conversations[idx] = conversations[idx].copyWith(
+                  otherUserTyping: _otherUserTyping,
+                  presenceUpdatedAt: _presenceUpdatedAt,
+                );
+              }
+              _notify();
+            },
+            onError: (e) {
+              AppLogger.e('[CHAT] presence stream error', tag: 'ChatVM', error: e);
+            },
+          );
+    }
   }
 
   void unsubscribeFromConversation() {
+    _offerRefreshDebounce?.cancel();
+    _offerRefreshDebounce = null;
     _msgSub?.cancel();
     _msgSub = null;
+    _presenceSub?.cancel();
+    _presenceSub = null;
+  }
+
+  /// Whether presence and receipt UI is enabled (from feature flag).
+  bool get isPresenceReceiptsEnabled => _presenceReceiptsEnabled == true;
+
+  /// Whether the other participant is typing (false if presence older than 15s).
+  bool get otherUserTyping {
+    if (!_otherUserTyping) return false;
+    if (_presenceUpdatedAt == null) return false;
+    if (DateTime.now().difference(_presenceUpdatedAt!).inSeconds > 15) return false;
+    return true;
+  }
+
+  /// Call when user starts or stops typing. Throttled in service; no-op if feature flag off.
+  Future<void> setTyping(bool isTyping) async {
+    if (_presenceReceiptsEnabled != true || activeConversation == null) return;
+    final uid = currentUserId;
+    if (uid == null) return;
+    try {
+      await _repo.upsertPresence(activeConversation!.id, uid, isTyping);
+    } catch (e) {
+      AppLogger.w('[CHAT] setTyping failed: $e', tag: 'ChatVM');
+    }
   }
 
   /// High-level helper to send an image attachment for the active conversation.

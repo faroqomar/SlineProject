@@ -4,14 +4,113 @@
 
 ---
 
-## 🏷️ Docs Sync — Reference Integrity & Diagram Standard (2026-03-08)
+## 🏷️ Docs Sync — Realtime Topology (18) reference integrity (2026-03-08)
+
+**Workflow:** `.agents/workflows/slinedocs.md`  
+**Note:** `.TODO/DOCS_SYNC_2026-03-08_RealtimeTopology.md`
+
+### ✅ Updated
+
+- **DEVELOPER_GUIDE.md:** Chat message_service description and §7 Realtime bullet — "messages (active chat + Inbox)" only; conversations not in realtime publication; link to diagram 18.
+- **DEVELOPER_GUIDE/Chat Feature.md:** §7 Realtime bullet — same correction (messages stream only; diagram 18).
+- **MVP_ROADMAP.md:** Realtime chat row — added 18_topology; Inbox subscribeToInboxMessages; plan 18 and diagram 18 refs.
+- **STRUCTURE.md:** Chat bullet — Inbox realtime subscribeToInboxMessages; diagram 18 and plan 18 refs.
+
+### 📊 Impact
+
+- No remaining "Subscribe to messages and conversations streams" in core docs. Single source of truth: Inbox = messages stream (receiver_id); conversations not in publication.
+
+### 🔗 References
+
+- DOCS_SYNC: `.TODO/DOCS_SYNC_2026-03-08_RealtimeTopology.md`
+- Plan 18: `.TODO/PLAN_RealtimeSubscriptionTopology_2026-03-07.md`
+- Diagram 18: `Sline_everything/AppDigram/All_Diagrams/18_realtime-subscription-topology.md`
+
+---
+
+## 🏷️ Chat Realtime Sync — Presence, Receipts, Feature Flag (2026-03-08)
+
+**Date:** 2026-03-08  
+**Plan:** `.TODO/PLAN_ChatRealtimeSync_2026-03-07_PlanCritic.md`  
+**Execution:** `.TODO/EXECUTION_LOG_ChatRealtimeSync_2026-03-07.md`
+
+### ✅ Implemented
+
+- **Presence:** `conversation_presence` table (conversation_id, user_id, is_typing, updated_at); RLS policies (participant SELECT, self INSERT/UPDATE); table in `supabase_realtime`; client 15s TTL for typing; 5s throttle on upsert.
+- **Receipts:** `delivered_at`/`seen_at` on messages; RPCs `mark_conversation_delivered`, `mark_conversation_seen`; UI ticks (sent/delivered/read) when feature flag on.
+- **Feature flag:** `app_config.chat_presence_receipts_enabled` (`'true'`/`'false'`); when false, no presence upsert, no receipt ticks (single tick only).
+- **Realtime merge:** ChatRealtimeMerger in ViewModel; accumulation in ViewModel (`_lastMessages`); stream error restores last list.
+- **Migrations:** `20260307219900_chat_presence_and_rls_full.sql` (canonical: table, RLS, publication, app_config), `20260307220000_chat_realtime_presence_publication.sql` (idempotent ADD TABLE), `20260307220100_chat_presence_receipts_flag.sql` (app_config insert).
+
+### 🔗 References
+
+- Plan: `.TODO/PLAN_ChatRealtimeSync_2026-03-07_PlanCritic.md`
+- Execution log: `.TODO/EXECUTION_LOG_ChatRealtimeSync_2026-03-07.md`
+- Contract: `.TODO/08_chat_realtime_contract.md`
+- RLS matrix: `.TODO/RLS_Matrix_Chat_2026-03-07.md`
+- RLS verification: `.TODO/08_RLS_verification_chat.md`
+- Master report: `.TODO/MASTER_REPORT_2026-03-08_ChatRealtimeSync.md`
+- Checklist & app verification: `.TODO/CHECKLIST_AND_SUMMARY_ChatRealtimeSync_Fixes_2026-03-08.md`
+- Docs sync (this pass): `.TODO/DOCS_SYNC_2026-03-08_SlineDocsUpToDate.md`
+
+---
+
+## 🏷️ Direct Chat Offer Flow — Hardening (2026-03-08)
+
+**Date:** 2026-03-08  
+**Plan:** `.TODO/PLAN_DirectChatOfferFlow_2026-03-07_CRITIC.md`  
+**Execution Log:** `.TODO/EXECUTION_LOG_DirectChatOfferFlow_2026-03-07_CRITIC.md`
+
+### ✅ Implemented
+
+- **Migrations:** `20260319000000_direct_offer_flow_harden.sql` (currency, payment_*, delivered_at, review_expires_at on direct_offers; direct_offer_id and chk_dispute_entity on disputes; idx_direct_offers_processing); `20260319110000_direct_offer_guard_rls_ledger.sql` (trigger protect price/currency, disputes_insert_own RLS, rpc_approve_delivery fee from row); `20260319120000_direct_offer_auto_release_cron.sql` (run_auto_release_expired_direct_offers + pg_cron hourly); `20260319130000_direct_offer_protect_fee_in_trigger.sql` (trigger also protects fee_rate_applied_bps).
+- **DirectOffer model:** New nullable fields (currency, feeRateAppliedBps, paymentRequestId, paymentGatewayId, paymentCorrelationId, paymentExpiresAt, paymentRecoveredAt, deliveredAt, reviewExpiresAt).
+- **DirectOffersService:** acceptOfferWithoutPayment stamps fee_rate_applied_bps and currency; markDelivered sets delivered_at and review_expires_at (now + 3 days); recoverPaymentAfterCallback success log includes payment_request_id.
+- **Tests:** `test/features/direct_offers/direct_offers_service_test.dart` (client cannot cancelOffer, freelancer cannot payNow, markDelivered throws when !isActive).
+- **.TODO artifacts:** 06_direct_offer_contract.md, 06_direct_offer_threat_model.md, 06_direct_offer_migration_plan.md, 06_direct_offers_rls_matrix.md.
+
+### 🔗 References
+
+- Plan: `.TODO/PLAN_DirectChatOfferFlow_2026-03-07_CRITIC.md`
+- Execution log: `.TODO/EXECUTION_LOG_DirectChatOfferFlow_2026-03-07_CRITIC.md`
+- Master Report: `.TODO/MASTER_REPORT_2026-03-08_DirectChatOfferFlow.md`
+
+---
+
+## 🏷️ Plan 19 — Direct Offers Work Contract (2026-03-07 / 2026-03-08)
+
+**Date:** 2026-03-07 (execution); 2026-03-08 (docs sync + report fixes)  
+**Plan:** `.TODO/improvement_the_system/ImplementReady/19_direct-offers-work-contract/PLAN_DirectOffersWorkContract_2026-03-07.md`  
+**Execution Log:** `.TODO/improvement_the_system/ImplementReady/19_direct-offers-work-contract/EXECUTION_LOG_PLAN_DirectOffersWorkContract_2026-03-07.md`
+
+### ✅ Implemented
+
+- **DB (Supabase):** `admin` schema; views `admin.vw_direct_offer_money_story`, `admin.vw_direct_offer_stuck_funds`; trigger `trg_direct_offer_guard_insert` + `fn_direct_offer_guard_insert` (reject INSERT when `client_id = freelancer_id`); RPC `admin_refund_direct_offer(p_offer_id, p_reason, p_idempotency_key)` — admin-only, idempotent. Migrations: `20260307180000_admin_direct_offer_views.sql`, `20260307180100_direct_offer_self_offer_guard.sql`, `20260307180200_admin_refund_direct_offer.sql`.
+- **App:** `lib/features/direct_offers/services/direct_offers_service.dart` — AppLogger for accept/pay/recover/cancelAccepted/markDelivered/completeOffer (offer not found + success/failure); after Master Report fixes: AppLogger.w for "offer not found" in `rejectOffer` and `cancelOffer`.
+- **Docs:** `Sline_everything/SUPABASE_SETUP.md` §5.14 — `direct_offers` table completed with columns from migrations: `fee_rate_applied_bps`, `fee_amount`, `net_amount` (`20260307_02_add_fee_columns.sql`); `currency`, `payment_request_id`, `payment_gateway_id`, `payment_correlation_id`, `payment_expires_at`, `payment_recovered_at`, `delivered_at`, `review_expires_at` (`20260319000000_direct_offer_flow_harden.sql`). No app code calls admin RPC; admin tooling is service_role/dashboard only.
+- **Artifacts:** Contract `.TODO/improvement_the_system/ImplementReady/19_direct-offers-work-contract/CONTRACT_admin_refund_direct_offer.md`; RLS matrix in folder 19; execution summary in folder 19; orchestrator reports and Master Report in `.TODO/`.
+
+### 🔗 References
+
+- Plan: `.TODO/improvement_the_system/ImplementReady/19_direct-offers-work-contract/PLAN_DirectOffersWorkContract_2026-03-07.md`
+- Execution log: `.TODO/improvement_the_system/ImplementReady/19_direct-offers-work-contract/EXECUTION_LOG_PLAN_DirectOffersWorkContract_2026-03-07.md`
+- Master report: `.TODO/improvement_the_system/ImplementReady/19_direct-offers-work-contract/MASTER_REPORT_2026-03-07_DirectOffersWorkContract.md`
+- Contract: `.TODO/improvement_the_system/ImplementReady/19_direct-offers-work-contract/CONTRACT_admin_refund_direct_offer.md`
+- Docs sync (this pass): `.TODO/improvement_the_system/ImplementReady/19_direct-offers-work-contract/DOCS_SYNC_2026-03-08_Plan19_DirectOffersWorkContract.md`
+- Checklist/summary: `.TODO/improvement_the_system/ImplementReady/19_direct-offers-work-contract/CHECKLIST_AND_SUMMARY_Plan19_DirectOffersWorkContract.md`
+
+---
+
+## 🏷️ Docs Sync — Reference Integrity & Full Sync (2026-03-08)
 
 **Date:** 2026-03-08  
 **Workflow:** `.agents/workflows/slinedocs.md`
 
 ### ✅ Implemented
 
-- **Reference integrity:** All `Sline_everything/` references to ledger (09) and escrow idempotency (16) now point to **Done** folders. Paths `ImplementReady/09_ledger-event-flow/` and `ImplementReady/16_escrow-invariants-idempotency/` were dead after 09/16 were moved to Done. Updated: `Sline_Log.md` (4 refs), `DEVELOPER_GUIDE.md` (1 ref), `DEVELOPER_GUIDE/Wallet_Feature.md` (1 ref).
+- **Reference integrity (09/16):** All `Sline_everything/` references to ledger (09) and escrow idempotency (16) point to **Done** folders. Paths `ImplementReady/09_ledger-event-flow/` and `ImplementReady/16_escrow-invariants-idempotency/` were updated in a prior pass.
+- **Reference integrity (21):** Plan 21 (Wallet System Escrow Available balances) was moved to **Done**. All references in `Sline_everything/` updated: `Sline_Log.md`, `AppDigram/All_Diagrams/21_Wallet_System_Escrow_Available_balances.md`, `DEVELOPER_GUIDE/Wallet_Feature.md`, `MVP_ROADMAP.md` now point to `.TODO/improvement_the_system/Done/21_Wallet_System_Escrow_Available_balances/`.
+- **Direct Chat Offer Flow:** Sline_Log entry completed with Impact, Verification, Technical Notes; MVP_ROADMAP Direct Chat Offers row updated with hardening note and plan path; SUPABASE_SETUP and STRUCTURE Last Updated lines refreshed.
 - **Diagram 09:** `Sline_everything/AppDigram/All_Diagrams/09_ledger-event-flow.md` updated to full diagram-doc standard (checklist, OLD diagram preserved, Implemented diagram v2 with forensics/idempotency/gates/withdrawal/gateway); references in diagram point to `.TODO/improvement_the_system/Done/09_ledger-event-flow/`.
 - **SUPABASE_SETUP:** §6.6 `vw_wallet_activity_user` updated to match migration `20260307160000_wallet_activity_include_spent.sql` (include spent / gateway_escrow; security_invoker; new columns). Changelog §17: added bullet for this view change.
 
@@ -27,6 +126,34 @@
 - Diagram 09: `Sline_everything/AppDigram/All_Diagrams/09_ledger-event-flow.md`
 - Done 09: `.TODO/improvement_the_system/Done/09_ledger-event-flow/`
 - Done 16: `.TODO/improvement_the_system/Done/16_escrow-invariants-idempotency/`
+
+---
+
+## 🏷️ Realtime Subscription Topology — Inbox from messages stream (2026-03-07)
+
+**Date:** 2026-03-07  
+**Plan:** `.TODO/PLAN_RealtimeSubscriptionTopology_2026-03-07.md`  
+**Execution Log:** `.TODO/EXECUTION_LOG_PLAN_RealtimeSubscriptionTopology_2026-03-07.md`
+
+### ✅ Implemented
+
+- **Inbox realtime:** Inbox (conversation list) is driven by the **messages** stream (`receiver_id=userId`), not the `conversations` table. `subscribeToConversations` removed; `subscribeToInboxMessages(userId)` added in `message_service.dart`. ChatViewModel merges message events into the conversation list (new Conversation instances via copyWith); new conversations hydrated via `getConversationById` with guard to prevent double fetch.
+- **N+1 removed:** No `.select()` or asyncMap over stream payload; no bulk `conversations ... IN (...)` in realtime handlers.
+- **Publication contract:** `conversations` is **not** in `supabase_realtime`. Migration `20260307230000_realtime_topology_no_conversations.sql` enforces it (idempotent drop if ever added). Publication contains messages, notifications (and conversation_presence for typing).
+- **Docs:** Diagram 18, SUPABASE_SETUP Realtime section, DEVELOPER_GUIDE Chat Feature §2.6 updated. Manual E2E script: `.TODO/improvement_the_system/ImplementReady/18_realtime-subscription-topology/MANUAL_E2E_INBOX_REALTIME.md`.
+- **Review fix:** `Conversation.copyWith` preserves `otherUserTyping` and `presenceUpdatedAt` so typing indicator is not lost on Inbox merge.
+
+### 📊 Impact
+
+- Inbox updates in realtime when the user receives a message (no full refetch). No N+1; single stream and guarded single fetch per new conversation.
+- Diagram and docs match code and DB; future misuse (adding conversations to publication) is prevented by migration.
+
+### 🔗 References
+
+- Plan: `.TODO/PLAN_RealtimeSubscriptionTopology_2026-03-07.md`
+- Master Report: `.TODO/MASTER_REPORT_2026-03-07_RealtimeSubscriptionTopology.md`
+- Diagram 18: `Sline_everything/AppDigram/All_Diagrams/18_realtime-subscription-topology.md`
+- Migration: `supabase/migrations/20260307230000_realtime_topology_no_conversations.sql`
 
 ---
 
@@ -86,14 +213,14 @@
 ## 🏷️ Wallet Escrow Available Balances — direct_offer in rpc_approve_delivery (2026-03-07)
 
 **Date:** 2026-03-07  
-**Plan:** `.TODO/improvement_the_system/ImplementReady/21_Wallet_System_Escrow_Available_balances/PLAN_WalletEscrowAvailableBalances_2026-03-07_CRITIC.md`  
-**Execution Log:** `.TODO/improvement_the_system/ImplementReady/21_Wallet_System_Escrow_Available_balances/EXECUTION_LOG_PLAN_WalletEscrowAvailableBalances_2026-03-07.md`
+**Plan:** `.TODO/improvement_the_system/Done/21_Wallet_System_Escrow_Available_balances/PLAN_WalletEscrowAvailableBalances_2026-03-07_CRITIC.md`  
+**Execution Log:** `.TODO/improvement_the_system/Done/21_Wallet_System_Escrow_Available_balances/EXECUTION_LOG_PLAN_WalletEscrowAvailableBalances_2026-03-07.md`
 
 ### ✅ Implemented
 
 - **Database:** `rpc_approve_delivery` extended with **direct_offer** branch (migration `20260307120000_rpc_approve_delivery_direct_offer.sql`). Client can approve delivery and release escrow for direct offers; same deterministic idempotency key and FOR UPDATE pattern as booking.
 - **App:** `DirectOffersService.completeOffer()` now calls `rpc_approve_delivery(entity_type: 'direct_offer', entity_id)` instead of LedgerService.submitPaymentEvent for release — single exit point for escrow release. AppLogger added for completeOffer (start, validation, error, success) and WalletService.getWalletBalance (error path).
-- **Docs:** Diagram 21 (Withdraw = Upcoming; entry point wording); CONTRACT_rpc_approve_delivery, LIVE_SCAN, RLS_CHECK_MATRIX in `.TODO/improvement_the_system/ImplementReady/21_Wallet_System_Escrow_Available_balances/`; DEVELOPER_GUIDE Wallet_Feature (§4 Approve delivery), Direct_Offers_Feature (4.5), SUPABASE_SETUP §9.5 (entity_type task, booking, direct_offer).
+- **Docs:** Diagram 21 (Withdraw = Upcoming; entry point wording); CONTRACT_rpc_approve_delivery, LIVE_SCAN, RLS_CHECK_MATRIX in `.TODO/improvement_the_system/Done/21_Wallet_System_Escrow_Available_balances/`; DEVELOPER_GUIDE Wallet_Feature (§4 Approve delivery), Direct_Offers_Feature (4.5), SUPABASE_SETUP §9.5 (entity_type task, booking, direct_offer).
 
 ### 📊 Impact
 
@@ -102,8 +229,8 @@
 
 ### 🔗 References
 
-- Master Report: `.TODO/improvement_the_system/ImplementReady/21_Wallet_System_Escrow_Available_balances/MASTER_REPORT_2026-03-07_WalletEscrowAvailableBalances.md`
-- Contract: `.TODO/improvement_the_system/ImplementReady/21_Wallet_System_Escrow_Available_balances/CONTRACT_rpc_approve_delivery.md`
+- Master Report: `.TODO/improvement_the_system/Done/21_Wallet_System_Escrow_Available_balances/MASTER_REPORT_2026-03-07_WalletEscrowAvailableBalances.md`
+- Contract: `.TODO/improvement_the_system/Done/21_Wallet_System_Escrow_Available_balances/CONTRACT_rpc_approve_delivery.md`
 
 ---
 
@@ -114,7 +241,7 @@
 
 ### ✅ Implemented / Updated
 
-- **Diagram 21:** `Sline_everything/AppDigram/All_Diagrams/21_Wallet_System_Escrow_Available_balances.md` — Full checklist (Purpose, Scope, Glossary, Legend, Actors, System Components, Step-by-step Flow, State Machine, Invariants, Guards, Failure Modes, Security, Data Model, Observability, Verification, Dependencies, Open Questions, Final Status). OLD diagram (v1 legacy) retained; NEW/Implemented diagram (v2) updated with gateway_escrow, `vw_wallet_activity_user` including spent (user_available DEBIT, user_pending_withdrawal DEBIT). References fixed to use full paths under `.TODO/improvement_the_system/ImplementReady/21_Wallet_System_Escrow_Available_balances/`.
+- **Diagram 21:** `Sline_everything/AppDigram/All_Diagrams/21_Wallet_System_Escrow_Available_balances.md` — Full checklist (Purpose, Scope, Glossary, Legend, Actors, System Components, Step-by-step Flow, State Machine, Invariants, Guards, Failure Modes, Security, Data Model, Observability, Verification, Dependencies, Open Questions, Final Status). OLD diagram (v1 legacy) retained; NEW/Implemented diagram (v2) updated with gateway_escrow, `vw_wallet_activity_user` including spent (user_available DEBIT, user_pending_withdrawal DEBIT). References fixed to use full paths under `.TODO/improvement_the_system/Done/21_Wallet_System_Escrow_Available_balances/`.
 - **Wallet activity view:** Migration `supabase/migrations/20260307160000_wallet_activity_include_spent.sql` — `vw_wallet_activity_user` expanded to include client “spent” (user_available DEBIT, user_pending_withdrawal DEBIT for gateway_escrow). Documented in diagram 21, SUPABASE_SETUP changelog, DEVELOPER_GUIDE Wallet_Feature.
 - **Reference fixes:** Execution log and plan paths in diagram 21 and Sline_Log corrected to full `.TODO/.../21_Wallet_System_Escrow_Available_balances/` paths. Master Report path in Sline_Log Wallet Escrow entry corrected.
 
@@ -131,7 +258,7 @@
 ### 🔗 References
 
 - Workflow: `.agents/workflows/slinedocs.md`
-- Contract: `.TODO/improvement_the_system/ImplementReady/21_Wallet_System_Escrow_Available_balances/CONTRACT_rpc_approve_delivery.md`
+- Contract: `.TODO/improvement_the_system/Done/21_Wallet_System_Escrow_Available_balances/CONTRACT_rpc_approve_delivery.md`
 
 ---
 
@@ -170,7 +297,7 @@
 ## 🏷️ Task Request Bid Flow — FULL_REPORT Fixes (v2.20.1)
 
 **Date:** 2026-03-08  
-**Report:** `.TODO/improvement_the_system/ImplementReady/21_Wallet_System_Escrow_Available_balances/diagram_consistency_audit/04_task-request-bid-flow/FULL_REPORT.md`
+**Report:** `.TODO/improvement_the_system/Done/21_Wallet_System_Escrow_Available_balances/diagram_consistency_audit/04_task-request-bid-flow/FULL_REPORT.md`
 
 ### ✅ Implemented
 

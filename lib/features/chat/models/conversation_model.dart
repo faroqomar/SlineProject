@@ -1,5 +1,3 @@
-import '../../../core/services/logger_service.dart';
-
 /// Represents a conversation between two users about a specific task
 class Conversation {
   final String id;
@@ -24,6 +22,12 @@ class Conversation {
   /// The avatar URL of the other participant
   final String? otherUserAvatar;
 
+  /// Whether the other participant is currently typing (from presence).
+  final bool otherUserTyping;
+
+  /// Last presence update time (for 15s TTL; ignore typing if older).
+  final DateTime? presenceUpdatedAt;
+
   Conversation({
     required this.id,
     this.taskId,
@@ -40,7 +44,40 @@ class Conversation {
     this.lastMessageSeenAt,
     this.otherUserName,
     this.otherUserAvatar,
+    this.otherUserTyping = false,
+    this.presenceUpdatedAt,
   });
+
+  /// Copy with updated last-message fields (for realtime Inbox merge; Conversation is immutable).
+  /// Preserves otherUserTyping and presenceUpdatedAt so typing indicator is not lost on merge.
+  Conversation copyWith({
+    String? lastMessage,
+    DateTime? lastMessageTime,
+    String? lastMessageSenderId,
+    DateTime? lastMessageSeenAt,
+    bool? otherUserTyping,
+    DateTime? presenceUpdatedAt,
+  }) {
+    return Conversation(
+      id: id,
+      taskId: taskId,
+      user1Id: user1Id,
+      user2Id: user2Id,
+      createdAt: createdAt,
+      taskTitle: taskTitle,
+      taskType: taskType,
+      user1Name: user1Name,
+      user2Name: user2Name,
+      lastMessage: lastMessage ?? this.lastMessage,
+      lastMessageTime: lastMessageTime ?? this.lastMessageTime,
+      lastMessageSenderId: lastMessageSenderId ?? this.lastMessageSenderId,
+      lastMessageSeenAt: lastMessageSeenAt ?? this.lastMessageSeenAt,
+      otherUserName: otherUserName,
+      otherUserAvatar: otherUserAvatar,
+      otherUserTyping: otherUserTyping ?? this.otherUserTyping,
+      presenceUpdatedAt: presenceUpdatedAt ?? this.presenceUpdatedAt,
+    );
+  }
 
   factory Conversation.fromJson(Map<String, dynamic> json) {
     String? lastMessage;
@@ -49,10 +86,7 @@ class Conversation {
     DateTime? lastMessageSeenAt;
 
     final rawLastMessage = json['last_message'];
-    // Add debug printing to inspect the shape of last_message
-    // ignore: avoid_print
-    // Debug: Processing last message data
-    AppLogger.d('🔎 last_message raw: $rawLastMessage');
+    // Do not log rawLastMessage — may contain message content (PII).
 
     void parseMsg(Map<String, dynamic> m) {
       lastMessage = m['content'] as String?;
@@ -71,9 +105,7 @@ class Conversation {
       parseMsg(Map<String, dynamic>.from(rawLastMessage.last));
     }
 
-    AppLogger.d(
-      '👤 Parsed other user: ${json['other_user_name']} | avatar: ${json['other_user_avatar']}',
-    );
+    // Do not log other_user_name or other_user_avatar (PII).
 
     return Conversation(
       id: json['id'] as String,
@@ -91,6 +123,10 @@ class Conversation {
       lastMessageSeenAt: lastMessageSeenAt,
       otherUserName: json['other_user_name'] as String?,
       otherUserAvatar: json['other_user_avatar'] as String?,
+      otherUserTyping: json['other_user_typing'] as bool? ?? false,
+      presenceUpdatedAt: json['presence_updated_at'] != null
+          ? DateTime.tryParse(json['presence_updated_at'] as String)
+          : null,
     );
   }
 
@@ -109,6 +145,8 @@ class Conversation {
       'last_message_time': lastMessageTime?.toIso8601String(),
       'other_user_name': otherUserName,
       'other_user_avatar': otherUserAvatar,
+      'other_user_typing': otherUserTyping,
+      'presence_updated_at': presenceUpdatedAt?.toIso8601String(),
     };
   }
 }

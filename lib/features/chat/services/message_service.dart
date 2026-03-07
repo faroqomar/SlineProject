@@ -51,6 +51,76 @@ class MessageService {
     }
   }
 
+  /// Feature flag: presence and receipt ticks (typing indicator, delivered/read).
+  bool? _presenceReceiptsFlagCache;
+  DateTime? _presenceReceiptsFlagTime;
+
+  /// Check if presence and receipt UI is enabled. Caches 1 minute.
+  Future<bool> isPresenceReceiptsEnabled() async {
+    if (_presenceReceiptsFlagCache != null &&
+        _presenceReceiptsFlagTime != null &&
+        DateTime.now().difference(_presenceReceiptsFlagTime!) < _featureFlagCacheDuration) {
+      return _presenceReceiptsFlagCache!;
+    }
+    try {
+      final response = await _client
+          .from('app_config')
+          .select('value')
+          .eq('key', 'chat_presence_receipts_enabled')
+          .maybeSingle();
+      final enabled = response?['value'] == 'true';
+      _presenceReceiptsFlagCache = enabled;
+      _presenceReceiptsFlagTime = DateTime.now();
+      AppLogger.d('[CHAT] feature flag chat_presence_receipts_enabled = $enabled', tag: 'Chat');
+      return enabled;
+    } catch (e) {
+      AppLogger.w('[CHAT] Failed to check chat_presence_receipts_enabled, default false: $e', tag: 'Chat');
+      return false;
+    }
+  }
+
+  /// Throttle: min 5s between presence upserts per conversation.
+  final Map<String, DateTime> _lastPresenceUpsertByConvo = {};
+
+  /// Upsert typing presence. Throttled to at most once per 5s per conversation.
+  Future<void> upsertPresence(String conversationId, String userId, bool isTyping) async {
+    final now = DateTime.now().toUtc();
+    final last = _lastPresenceUpsertByConvo[conversationId];
+    if (last != null && now.difference(last).inSeconds < 5) {
+      AppLogger.d('[CHAT] presence upsert throttled conversationId=$conversationId', tag: 'Chat');
+      return;
+    }
+    try {
+      await _client.from('conversation_presence').upsert(
+            {
+              'conversation_id': conversationId,
+              'user_id': userId,
+              'is_typing': isTyping,
+              'updated_at': now.toIso8601String(),
+            },
+            onConflict: 'conversation_id,user_id',
+          );
+      _lastPresenceUpsertByConvo[conversationId] = now;
+      AppLogger.d('[CHAT] presence_upsert conversationId=$conversationId isTyping=$isTyping', tag: 'Chat');
+    } catch (e, st) {
+      AppLogger.e('[CHAT] presence upsert failed', tag: 'Chat', error: e, stackTrace: st);
+      rethrow;
+    }
+  }
+
+  /// Stream presence for a conversation (for typing indicator). Emits list of rows.
+  Stream<List<Map<String, dynamic>>> subscribeToPresence(String conversationId) {
+    AppLogger.d('[CHAT] presence subscription start conversationId=$conversationId', tag: 'Chat');
+    return _client
+        .from('conversation_presence')
+        .stream(primaryKey: ['conversation_id', 'user_id'])
+        .eq('conversation_id', conversationId)
+        .handleError((e, st) {
+          AppLogger.e('[CHAT] presence stream error', tag: 'Chat', error: e, stackTrace: st);
+        })
+        .map((rows) => rows.map((r) => Map<String, dynamic>.from(r as Map)).toList());
+  }
+
   /// Create or get conversation (order-insensitive pair). taskId can be null.
   Future<Conversation> createOrGetConversation({
     String? taskId,
@@ -443,86 +513,36 @@ class MessageService {
         });
   }
 
-  /// Realtime for conversations (as-is)
-  Stream<List<Map<String, dynamic>>> subscribeToConversations(String userId) {
+  /// Realtime for Inbox: messages where current user is receiver.
+  /// Drives conversation list updates without subscribing to conversations table
+  /// (conversations is not in supabase_realtime publication; no N+1).
+  Stream<List<Message>> subscribeToInboxMessages(String userId) {
+    AppLogger.d('[REALTIME] inbox messages subscription start receiver_id=$userId');
     return _client
-        .from('conversations')
+        .from('messages')
         .stream(primaryKey: ['id'])
-        .order('created_at')
+        .eq('receiver_id', userId)
+        .order('created_at', ascending: true)
         .handleError((e, st) {
-          AppLogger.e(
-            'Realtime conversations stream error (payload/transform)',
+          AppLogger.w(
+            '[REALTIME] Inbox messages stream error (timeout/protocol/connection)',
             error: e,
-            stackTrace: st,
           );
+          AppLogger.d('[REALTIME] Inbox stream error stackTrace', json: st?.toString());
         })
-        .asyncMap((rows) async {
-          if (rows.isEmpty) return <Map<String, dynamic>>[];
-          // We need to re-fetch with relationships to get full details
-          // And ideally apply deletion logic (though realtime often used for just updates,
-          // a full refresh via fetchConversations is often triggered on open).
-          // For now, we return raw stream, but ViewModel should probably re-fetch to respect deletion status.
-          // Or we implement the fetch logic here.
-
-          final convoIds = rows.map((row) => (row as Map)['id']).toList();
-          final response = await _client
-              .from('conversations')
-              .select('''
-                id,
-                task_id,
-                user1_id,
-                user2_id,
-                created_at,
-                deleted_at_user1,
-                deleted_at_user2,
-                tasks(title),
-                user1:profiles!conversations_user1_id_fkey(full_name, avatar_url),
-                user2:profiles!conversations_user2_id_fkey(full_name, avatar_url),
-                last_message:messages!conversation_id(content, created_at)
-              ''')
-              .in_('id', convoIds)
-              .order('created_at', foreignTable: 'messages', ascending: false)
-              .limit(1, foreignTable: 'messages')
-              .order('created_at', ascending: false);
-
-          return (response as List)
-              .map((raw) => Map<String, dynamic>.from(raw as Map))
-              .where((json) {
-                // Apply deletion filter
-                final isUser1 = json['user1_id'] == userId;
-                final deletedAtStr = isUser1
-                    ? json['deleted_at_user1']
-                    : json['deleted_at_user2'];
-                if (deletedAtStr != null) {
-                  final deletedAt = DateTime.parse(deletedAtStr);
-                  final lastMsg = json['last_message'];
-                  if (lastMsg == null || (lastMsg is List && lastMsg.isEmpty)) {
-                    return false;
-                  }
-                  final msgData = lastMsg is List ? lastMsg.first : lastMsg;
-                  final msgTime = DateTime.parse(msgData['created_at']);
-                  return msgTime.isAfter(deletedAt);
-                }
-                return true;
-              })
-              .toList()
-            ..sort((a, b) {
-              // Parse timestamps for sorting
-              DateTime getTime(Map<String, dynamic> json) {
-                final lastMsg = json['last_message'];
-                if (lastMsg != null && lastMsg is List && lastMsg.isNotEmpty) {
-                  return DateTime.parse(lastMsg.first['created_at']);
-                } else if (lastMsg != null && lastMsg is Map) {
-                  // handle single object if changed
-                  return DateTime.parse(lastMsg['created_at']);
-                }
-                return DateTime.parse(json['created_at']);
-              }
-
-              final aTime = getTime(a);
-              final bTime = getTime(b);
-              return bTime.compareTo(aTime);
-            });
+        .map((rows) {
+          if (rows.isEmpty) return <Message>[];
+          try {
+            final list = rows
+                .map((r) => Message.fromJson(Map<String, dynamic>.from(r as Map)))
+                .toList()
+              ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+            AppLogger.d('[REALTIME] inbox messages event count=${list.length}');
+            return list;
+          } catch (e) {
+            AppLogger.e('Realtime inbox message parse error', error: e);
+            return <Message>[];
+          }
         });
   }
 

@@ -17,12 +17,8 @@ void main() {
     });
 
     test('repro bad state', () {
-      print('Starting stubbing...');
       when(() => mockClient.auth).thenReturn(mockAuth);
-      print('Stubbing primary ok.');
       when(() => mockAuth.currentUser).thenReturn(null);
-      print('Stubbing secondary ok.');
-
       expect(mockClient.auth, equals(mockAuth));
     });
   });

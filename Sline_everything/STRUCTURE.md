@@ -1,6 +1,6 @@
 # SLine App - Folder Structure Guide
 
-**Last Updated:** 2026-03-08 (docs sync: escrow idempotency, ledger event flow forensics)
+**Last Updated:** 2026-03-08 (Direct Chat Offer Flow hardening migrations; 21_Wallet refs → Done)
 
 This document describes the current repository layout. It replaces older references to `presentation/` and `controllers/`; the live Flutter codebase uses `view/` and `viewmodels/` under `lib/features/`.
 
@@ -84,6 +84,8 @@ Recent migration themes in `supabase/migrations/`:
 - escrow idempotency (stable key + FOR UPDATE in `rpc_approve_delivery`, migration `20260307000001_escrow_idempotency_stable_key.sql`)
 - **Hardened Payment Gateway & Administrator Views (v2.20, 2026-03-07):** Added `payment_intents`, `payment_events`, and `orphan_payments` tables. New admin financial views `vw_admin_finance_metrics`, `vw_admin_escrow_open`, and `vw_admin_booking_finance`.
 - direct_offers table, RLS, triggers, ledger RPC and enum fix (20260303–20260308); 20260308 fixes release_with_fee zero-amount and enum cast
+- **Direct Offers Work Contract (Plan 19, 2026-03-07):** `admin` schema; `admin.vw_direct_offer_money_story`, `admin.vw_direct_offer_stuck_funds`; self-offer guard `trg_direct_offer_guard_insert`; RPC `admin_refund_direct_offer` (migrations `20260307180000_admin_direct_offer_views`, `20260307180100_direct_offer_self_offer_guard`, `20260307180200_admin_refund_direct_offer`)
+- **Direct Chat Offer Flow hardening (Plan DirectChatOfferFlow CRITIC, 2026-03-07/08):** `20260319000000_direct_offer_flow_harden.sql` (currency, payment_*, delivered_at, review_expires_at on direct_offers; direct_offer_id and chk_dispute_entity on disputes); `20260319110000_direct_offer_guard_rls_ledger.sql` (trigger protect price/currency, disputes_insert_own RLS, rpc_approve_delivery fee from direct_offers row); `20260319120000_direct_offer_auto_release_cron.sql` (run_auto_release_expired_direct_offers + pg_cron); `20260319130000_direct_offer_protect_fee_in_trigger.sql` (trigger also protects fee_rate_applied_bps)
 
 ## `lib/` - Flutter Application Source
 
@@ -265,7 +267,8 @@ Current bundled asset folder:
 - **Tender Task Lifecycle (v2.20, 2026-03-06):** New `lib/features/tasks/exceptions/offer_exceptions.dart` with `PriceMismatchException` and `OfferAlreadyAcceptedException`. New `lib/features/tasks/viewmodels/award_expiration_monitor.dart` for payment deadline countdown. New test folder `test/unit/tender/` with comprehensive unit tests. Database indexes `idx_task_requests_awarded_unpaid` and `idx_one_accepted_per_task`. RPCs: `award_task_offer`, `pay_awarded_offer`, `cleanup_expired_awards`. See migration `20260306_tender_guardrails.sql`.
 - **Chat Creation Matrix (v2.19, 2026-03-06):** New atomic RPC path for conversation creation. `MessageService` now routes via feature flag (`enable_direct_conversation_rpc`). New RPC functions: `start_direct_conversation_v1`, `is_client`, `check_conversation_rate_limit`. Hardened guard trigger `conversations_before_insert_guard`. Updated UI call sites handle nullable `Conversation?` returns.
 - **Role Switching (v2.18, 2026-03-06):** New `lib/core/services/role_switch_coordinator.dart`, `lib/core/mixins/role_switch_aware.dart`, `lib/features/profile/data/role_switch_repository.dart`. ViewModels implementing teardown contract: `ChatViewModel`, `DashboardViewModel`, `TaskViewModel`, `HomeViewModel`.
-- Chat feature includes `models/chat_offer_payload.dart` (canonical offer payload) and `services/chat_realtime_merger.dart` (realtime snapshot merge); archive uses RPC `archive_conversation_v1`.
+- **Chat Realtime Sync (08, 2026-03-08):** Presence table `conversation_presence`, typing indicator (15s TTL client-side), delivered/read receipts, feature flag `chat_presence_receipts_enabled`; `chat_realtime_merger.dart` + `chat_realtime_merger_test.dart`; ViewModel accumulation + debounced offer refresh.
+- Chat feature includes `models/chat_offer_payload.dart` (canonical offer payload) and `services/chat_realtime_merger.dart` (realtime snapshot merge); archive uses RPC `archive_conversation_v1`. Inbox realtime: `subscribeToInboxMessages(userId)` (messages stream, not conversations); see diagram 18 and `.TODO/PLAN_RealtimeSubscriptionTopology_2026-03-07.md`.
 - Booking flow now uses `payment_checkout_screen.dart`, `payment_webview_screen.dart`, and `payment_return_screen.dart` instead of older slot-sheet-only docs.
 - Core runtime now includes `payment_runtime_config.dart`, `payment_pending_store.dart`, and `flutter_error_filters.dart`.
 - Management now includes `work_log_scope.dart` and `view/widgets/order_management_section.dart`.
