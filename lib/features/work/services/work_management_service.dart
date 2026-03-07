@@ -260,19 +260,40 @@ class WorkManagementService {
   }
 
   /// Approves delivery and completes the work.
+  /// Idempotent: server uses stable key (entity_id + status + payment_status); retries safe.
+  /// [correlationId] optional; when provided, logged for tracing across VM → Service.
   Future<void> approveDelivery({
     required String entityId,
     required String entityType,
+    String? correlationId,
   }) async {
+    AppLogger.i(
+      'Approve delivery requested',
+      tag: 'WorkManagement',
+      json: {
+        'entityType': entityType,
+        'entityId': entityId,
+        if (correlationId != null) 'correlationId': correlationId,
+      },
+    );
     try {
       await _supabase.rpc(
         'rpc_approve_delivery',
         params: {'entity_type': entityType, 'entity_id': entityId},
       );
-      AppLogger.d('Delivery approved', json: {'type': entityType});
+      AppLogger.d(
+        'Delivery approved',
+        tag: 'WorkManagement',
+        json: {
+          'type': entityType,
+          'entityId': entityId,
+          if (correlationId != null) 'correlationId': correlationId,
+        },
+      );
     } catch (e, stack) {
       AppLogger.e(
         'Failed to approve delivery: $entityId ($entityType)',
+        tag: 'WorkManagement',
         error: e,
         stackTrace: stack,
       );

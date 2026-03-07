@@ -1,10 +1,13 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/utils/ledger_forensics.dart';
 
 class LedgerService {
-  LedgerService(this._client);
+  LedgerService(this._client, [LedgerForensics? forensics])
+      : _forensics = forensics ?? LedgerForensics();
   final SupabaseClient _client;
+  final LedgerForensics _forensics;
   final Uuid _uuid = const Uuid();
 
   /// Constant namespace for Ledger idempotency generation
@@ -18,7 +21,8 @@ class LedgerService {
     );
   }
 
-  /// Submits a payment event to the ledger RPC
+  /// Submits a payment event to the ledger RPC.
+  /// Injects forensics (session_id, request_id) into [meta] per CONTRACT_ledger_event_flow.
   Future<Map<String, dynamic>> submitPaymentEvent({
     required String eventType,
     required String relatedEntityType,
@@ -27,9 +31,11 @@ class LedgerService {
     required Map<String, dynamic> meta,
   }) async {
     final idempotencyKey = generateIdempotencyKey(relatedEntityId, eventType);
+    final metaWithForensics = _mergeForensics(meta);
+    final requestId = metaWithForensics['request_id'] as String?;
 
     AppLogger.i(
-      'Submitting Ledger Event: $eventType for $relatedEntityType:$relatedEntityId',
+      'Submitting Ledger Event: $eventType for $relatedEntityType:$relatedEntityId${requestId != null ? ' request_id:$requestId' : ''}',
       tag: 'LedgerService',
     );
 
@@ -43,7 +49,7 @@ class LedgerService {
           'p_idempotency_key': idempotencyKey,
           'p_amount_gross': amountGross,
           'p_currency': 'IQD', // Always IQD for MVP
-          'p_meta': meta,
+          'p_meta': metaWithForensics,
         },
       );
 
@@ -56,7 +62,7 @@ class LedgerService {
                   'Payment failed.')
             : 'Payment failed.';
         AppLogger.e(
-          'Ledger RPC returned ok: false',
+          'Ledger RPC returned ok: false${requestId != null ? ' request_id:$requestId' : ''}',
           tag: 'LedgerService',
           error: err is Map ? err.toString() : err,
         );
@@ -66,25 +72,37 @@ class LedgerService {
         throw Exception(userMessage);
       }
       AppLogger.i(
-        'Ledger event succeeded: $eventType $relatedEntityType:$relatedEntityId',
+        'Ledger event succeeded: $eventType $relatedEntityType:$relatedEntityId${requestId != null ? ' request_id:$requestId' : ''}',
         tag: 'LedgerService',
       );
       return result;
     } on PostgrestException catch (e) {
       AppLogger.e(
-        'Ledger RPC Failed: ${e.message}',
+        'Ledger RPC Failed: ${e.message}${requestId != null ? ' request_id:$requestId' : ''}',
         error: e,
         tag: 'LedgerService',
       );
       throw FormatException(_mapLedgerError(e));
     } catch (e) {
       AppLogger.e(
-        'Unexpected Ledger Error',
+        'Unexpected Ledger Error${requestId != null ? ' request_id:$requestId' : ''}',
         error: e,
         tag: 'LedgerService',
       );
       throw const FormatException('An unexpected payment error occurred.');
     }
+  }
+
+  /// Merges forensics (session_id, request_id) into meta per CONTRACT_ledger_event_flow.
+  /// Caller meta takes precedence; forensics fill in missing keys only.
+  Map<String, dynamic> _mergeForensics(Map<String, dynamic> meta) {
+    final sessionId = _client.auth.currentUser?.id;
+    final forensics = _forensics.build(sessionId: sessionId, includeRequestId: true);
+    final merged = <String, dynamic>{...meta};
+    for (final e in forensics.entries) {
+      merged[e.key] ??= e.value;
+    }
+    return merged;
   }
 
   /// Map RPC error code from jsonb response to user-facing message.

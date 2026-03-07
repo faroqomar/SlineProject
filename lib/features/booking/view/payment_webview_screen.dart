@@ -40,6 +40,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
   String? _loadError;
   bool _hasPopped = false;
   bool _isDisposed = false;
+
   /// On web, WebView platform does not implement NavigationDelegate; use external browser + manual completion.
   bool _useWebFallback = false;
 
@@ -104,7 +105,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
     super.initState();
     AppLogger.i(
       'Opening payment webview',
-      tag: 'QiCard',
+      tag: 'Payment',
       json: <String, dynamic>{
         'initial_url': _describeUri(Uri.tryParse(widget.initialUrl)),
         'expected_booking_id': widget.expectedBookingId,
@@ -127,7 +128,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
         onPageStarted: (url) {
           AppLogger.d(
             'Payment webview page started: ${_describeUri(Uri.tryParse(url))}',
-            tag: 'QiCard',
+            tag: 'Payment',
           );
           _safeSetState(() {
             _isLoading = true;
@@ -137,7 +138,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
         onPageFinished: (url) {
           AppLogger.d(
             'Payment webview page finished: ${_describeUri(Uri.tryParse(url))}',
-            tag: 'QiCard',
+            tag: 'Payment',
           );
           _safeSetState(() {
             _isLoading = false;
@@ -146,7 +147,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
         onWebResourceError: (error) {
           AppLogger.e(
             'Payment webview resource error',
-            tag: 'QiCard',
+            tag: 'Payment',
             error: '${error.errorCode}: ${error.description}',
           );
           _safeSetState(() {
@@ -206,7 +207,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
               uri.scheme != 'sline') {
             AppLogger.w(
               'Rejected insecure payment callback URL',
-              tag: 'QiCard',
+              tag: 'Payment',
               error: _describeUri(uri) ?? 'UNKNOWN_CALLBACK_URL',
             );
             return NavigationDecision.prevent;
@@ -216,7 +217,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
             if (!matchesExpectedCallback) {
               AppLogger.w(
                 'Rejected payment finish callback due to booking/correlation mismatch',
-                tag: 'QiCard',
+                tag: 'Payment',
                 error: _describeUri(uri) ?? 'UNKNOWN_CALLBACK_URL',
               );
               return NavigationDecision.prevent;
@@ -226,7 +227,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
             final paymentId = uri.queryParameters['payment_id'];
             AppLogger.i(
               'Accepted payment finish callback status=$status',
-              tag: 'QiCard',
+              tag: 'Payment',
               json: <String, dynamic>{
                 'booking_id': uri.queryParameters['booking_id'],
                 'correlation_id': uri.queryParameters['correlation_id'],
@@ -249,7 +250,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
             if (!matchesExpectedCallback) {
               AppLogger.w(
                 'Rejected payment callback due to booking/correlation mismatch',
-                tag: 'QiCard',
+                tag: 'Payment',
                 error: _describeUri(uri) ?? 'UNKNOWN_CALLBACK_URL',
               );
               return NavigationDecision.prevent;
@@ -258,13 +259,13 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
             if (paymentReturn.isFailure) {
               AppLogger.w(
                 'Accepted payment failure callback status=${paymentReturn.normalizedStatus}',
-                tag: 'QiCard',
+                tag: 'Payment',
                 error: _describeUri(uri) ?? 'UNKNOWN_CALLBACK_URL',
               );
             } else {
               AppLogger.i(
                 'Accepted payment callback status=${paymentReturn.normalizedStatus}',
-                tag: 'QiCard',
+                tag: 'Payment',
                 json: <String, dynamic>{
                   'booking_id': paymentReturn.bookingId,
                   'correlation_id': paymentReturn.correlationId,
@@ -281,14 +282,14 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
             if (!matchesExpectedCallback) {
               AppLogger.w(
                 'Rejected payment success callback due to booking/correlation mismatch',
-                tag: 'QiCard',
+                tag: 'Payment',
                 error: _describeUri(uri) ?? 'UNKNOWN_CALLBACK_URL',
               );
               return NavigationDecision.prevent;
             }
             AppLogger.i(
               'Accepted payment success callback',
-              tag: 'QiCard',
+              tag: 'Payment',
               json: <String, dynamic>{
                 'booking_id': uri.queryParameters['booking_id'],
                 'correlation_id': uri.queryParameters['correlation_id'],
@@ -312,7 +313,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
             if (!matchesExpectedCallback) {
               AppLogger.w(
                 'Rejected payment failure callback due to booking/correlation mismatch',
-                tag: 'QiCard',
+                tag: 'Payment',
                 error: _describeUri(uri) ?? 'UNKNOWN_CALLBACK_URL',
               );
               return NavigationDecision.prevent;
@@ -322,7 +323,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
                 (uri.path.contains('cancel') ? 'CANCELED' : 'FAILED');
             AppLogger.w(
               'Accepted payment failure callback status=$status',
-              tag: 'QiCard',
+              tag: 'Payment',
               error: _describeUri(uri) ?? 'UNKNOWN_CALLBACK_URL',
             );
             _popWithResult(
@@ -382,7 +383,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
             isTrustedCallback) {
           AppLogger.i(
             'Back navigation resolved to payment callback status=${paymentReturn.normalizedStatus}',
-            tag: 'QiCard',
+            tag: 'Payment',
             json: <String, dynamic>{
               'booking_id': paymentReturn.bookingId,
               'correlation_id': paymentReturn.correlationId,
@@ -412,7 +413,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
         if (isOnSuccessPage) {
           AppLogger.i(
             'Back navigation resolved to payment success page',
-            tag: 'QiCard',
+            tag: 'Payment',
             json: <String, dynamic>{
               'booking_id': uri.queryParameters['booking_id'],
               'correlation_id': uri.queryParameters['correlation_id'],
@@ -433,7 +434,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
           final status = currentPath.contains('cancel') ? 'CANCELED' : 'FAILED';
           AppLogger.w(
             'Back navigation resolved to payment failure page status=$status',
-            tag: 'QiCard',
+            tag: 'Payment',
             error: _describeUri(uri) ?? 'UNKNOWN_CURRENT_URL',
           );
           _popWithResult(
@@ -450,14 +451,14 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
     } catch (e) {
       AppLogger.w(
         'Failed to inspect payment webview URL during back navigation',
-        tag: 'QiCard',
+        tag: 'Payment',
         error: e,
       );
     }
 
     AppLogger.i(
       'Payment webview closed without callback; returning canceled',
-      tag: 'QiCard',
+      tag: 'Payment',
     );
     _popWithResult(
       PaymentReturnArgs(status: 'CANCELED', rawUri: Uri.parse('about:blank')),
@@ -482,7 +483,9 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
             },
           ),
         ),
-        body: _useWebFallback ? _buildWebFallbackBody(context) : _buildWebViewBody(context),
+        body: _useWebFallback
+            ? _buildWebFallbackBody(context)
+            : _buildWebViewBody(context),
       ),
     );
   }
@@ -496,17 +499,25 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: AppDimens.p16),
-            Icon(Icons.open_in_browser, size: 48, color: Theme.of(context).colorScheme.primary),
+            Icon(
+              Icons.open_in_browser,
+              size: 48,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             const SizedBox(height: AppDimens.p16),
             Text(
               'Payment in browser',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppDimens.p8),
             Text(
               'You\'ll leave this page to pay securely. After payment you\'ll be brought back here and your payment will be completed automatically.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppDimens.p24),
@@ -515,10 +526,15 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
                   ? () async {
                       final messenger = ScaffoldMessenger.of(context);
                       // Open in same tab so QiCard redirect back lands here with payment_return=1&request_id&payment_request_id and dashboard runs recovery
-                      final launched = await launchUrl(uri, webOnlyWindowName: '_self');
+                      final launched = await launchUrl(
+                        uri,
+                        webOnlyWindowName: '_self',
+                      );
                       if (!launched) {
                         messenger.showSnackBar(
-                          const SnackBar(content: Text('Could not open payment link')),
+                          const SnackBar(
+                            content: Text('Could not open payment link'),
+                          ),
                         );
                       }
                     }
@@ -529,7 +545,10 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
             const SizedBox(height: AppDimens.p12),
             FilledButton.tonalIcon(
               onPressed: () {
-                AppLogger.i('Web fallback: user completed payment', tag: 'QiCard');
+                AppLogger.i(
+                  'Web fallback: user completed payment',
+                  tag: 'Payment',
+                );
                 _popWithResult(
                   PaymentReturnArgs(
                     status: 'SUCCESS',
@@ -558,38 +577,38 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
     return Stack(
       children: [
         WebViewWidget(controller: _controller!),
-            if (_isLoading)
-              Center(child: CircularProgressIndicator(color: AppColors.teal)),
-            if (_loadError != null)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.error_outline, color: AppColors.lightRed),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Failed to load payment page.\n$_loadError',
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 12),
-                      FilledButton(
-                        onPressed: () {
-                          if (_isDisposed) return;
-                          _safeSetState(() {
-                            _isLoading = true;
-                            _loadError = null;
-                          });
-                          _controller?.reload();
-                        },
-                        child: const Text('Retry'),
-                      ),
-                    ],
+        if (_isLoading)
+          Center(child: CircularProgressIndicator(color: AppColors.teal)),
+        if (_loadError != null)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.error_outline, color: AppColors.lightRed),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Failed to load payment page.\n$_loadError',
+                    textAlign: TextAlign.center,
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    onPressed: () {
+                      if (_isDisposed) return;
+                      _safeSetState(() {
+                        _isLoading = true;
+                        _loadError = null;
+                      });
+                      _controller?.reload();
+                    },
+                    child: const Text('Retry'),
+                  ),
+                ],
               ),
-        ],
-      );
+            ),
+          ),
+      ],
+    );
   }
 }

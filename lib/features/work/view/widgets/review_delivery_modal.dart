@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
@@ -26,6 +27,7 @@ class _ReviewDeliveryModalState extends State<ReviewDeliveryModal> {
   _ReviewMode _mode = _ReviewMode.initial;
   final TextEditingController _reasonController = TextEditingController();
   bool _isLoading = false;
+  bool _hasApproved = false;
 
   @override
   void dispose() {
@@ -34,12 +36,27 @@ class _ReviewDeliveryModalState extends State<ReviewDeliveryModal> {
   }
 
   Future<void> _handleApprove() async {
+    if (_hasApproved) {
+      AppLogger.d('Approve already in progress or done', tag: 'ReviewDelivery');
+      return;
+    }
+    _hasApproved = true;
+    AppLogger.i('Approve delivery tapped', tag: 'ReviewDelivery');
     setState(() => _isLoading = true);
     try {
       await widget.onApprove();
-      if (mounted) Navigator.pop(context, true);
-    } catch (_) {
-      // Error handling by parent usually, but loading state reset needed
+      if (mounted) {
+        AppLogger.d('Approve delivery success', tag: 'ReviewDelivery');
+        Navigator.pop(context, true);
+      }
+    } catch (e, st) {
+      _hasApproved = false;
+      AppLogger.e(
+        'Approve delivery failed',
+        tag: 'ReviewDelivery',
+        error: e,
+        stackTrace: st,
+      );
       if (mounted) setState(() => _isLoading = false);
     }
   }

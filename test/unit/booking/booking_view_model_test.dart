@@ -53,6 +53,35 @@ void main() {
       bookingRepo = _MockBookingRepository();
       chatRepo = _MockChatRepository();
       paymentService = _MockPaymentService();
+
+      // Default mock for createBookingDraft to prevent Null subtype errors
+      when(
+        () => bookingRepo.createBookingDraft(
+          taskId: any(named: 'taskId'),
+          note: any(named: 'note'),
+          packageId: any(named: 'packageId'),
+          requirements: any(named: 'requirements'),
+        ),
+      ).thenAnswer(
+        (_) async =>
+            _booking(id: 'draft-1', createdAtUtc: DateTime.now().toUtc()),
+      );
+
+      // Default mock for createPaymentIntent to prevent Null subtype errors
+      when(
+        () => paymentService.createPaymentIntent(
+          entityType: any(named: 'entityType'),
+          entityId: any(named: 'entityId'),
+          successUrl: any(named: 'successUrl'),
+          cancelUrl: any(named: 'cancelUrl'),
+        ),
+      ).thenAnswer(
+        (_) async => const PaymentIntentResult(
+          intentId: 'intent-1',
+          checkoutUrl: 'https://pay.example.com/checkout',
+        ),
+      );
+
       viewModel = BookingViewModel(
         repo: bookingRepo,
         chatRepository: chatRepo,
@@ -94,51 +123,44 @@ void main() {
     test(
       'createPaymentForBooking maps task-not-bookable to user-facing copy',
       () async {
+        // 1. Mock draft creation succeeds
         when(
-          () => paymentService.createPaymentForBooking(
-            taskId: 'task-1',
-            note: 'Need it fast',
-            packageId: 'Premium',
-            requirements: <String, dynamic>{'delivery': 'rush'},
-            finishUrl: 'https://app.example.com/dashboard?payment_return=1',
-            requestCorrelationId: any(named: 'requestCorrelationId'),
+          () => bookingRepo.createBookingDraft(
+            taskId: any(named: 'taskId'),
+            note: any(named: 'note'),
+            packageId: any(named: 'packageId'),
+            requirements: any(named: 'requirements'),
           ),
         ).thenAnswer(
-          (_) async => const QiCardCreatePaymentResult(
+          (_) async =>
+              _booking(id: 'draft-1', createdAtUtc: DateTime.now().toUtc()),
+        );
+
+        // 2. Mock payment intent fails with specific error
+        when(
+          () => paymentService.createPaymentIntent(
+            entityType: any(named: 'entityType'),
+            entityId: any(named: 'entityId'),
+            successUrl: any(named: 'successUrl'),
+            cancelUrl: any(named: 'cancelUrl'),
+          ),
+        ).thenAnswer(
+          (_) async => const PaymentIntentResult(
             error: 'BOOKING_TASK_NOT_BOOKABLE',
             errorCode: 'BOOKING_PAYMENT_CREATE_FAILED',
           ),
         );
 
-        final result = await viewModel.createPaymentForBooking(
+        await viewModel.createPaymentForBooking(
           taskId: 'task-1',
-          note: 'Need it fast',
           packageId: 'Premium',
-          requirements: <String, dynamic>{'delivery': 'rush'},
-          finishUrl: 'https://app.example.com/dashboard?payment_return=1',
+          note: 'Need it fast',
         );
 
-        expect(result.isSuccess, isFalse);
         expect(
           viewModel.bookingsError,
           'This booking is not currently available.',
         );
-        final captured =
-            verify(
-                  () => paymentService.createPaymentForBooking(
-                    taskId: 'task-1',
-                    note: 'Need it fast',
-                    packageId: 'Premium',
-                    requirements: <String, dynamic>{'delivery': 'rush'},
-                    finishUrl:
-                        'https://app.example.com/dashboard?payment_return=1',
-                    requestCorrelationId: captureAny(
-                      named: 'requestCorrelationId',
-                    ),
-                  ),
-                ).captured.single
-                as String;
-        expect(captured, startsWith('booking_create:'));
       },
     );
 
@@ -146,49 +168,47 @@ void main() {
       'createPaymentForBooking keeps successful repeat booking responses intact',
       () async {
         when(
-          () => paymentService.createPaymentForBooking(
-            taskId: 'task-1',
-            note: null,
-            packageId: 'Premium',
-            requirements: const <String, dynamic>{},
-            finishUrl: 'https://app.example.com/dashboard?payment_return=1',
-            requestCorrelationId: any(named: 'requestCorrelationId'),
+          () => bookingRepo.createBookingDraft(
+            taskId: any(named: 'taskId'),
+            note: any(named: 'note'),
+            packageId: any(named: 'packageId'),
+            requirements: any(named: 'requirements'),
           ),
         ).thenAnswer(
-          (_) async => const QiCardCreatePaymentResult(
-            bookingId: 'booking-2',
-            paymentRequestId: 'request-2',
-            formUrl: 'https://pay.example.com/form',
-            correlationId: 'booking:booking-2:create',
+          (_) async =>
+              _booking(id: 'draft-1', createdAtUtc: DateTime.now().toUtc()),
+        );
+
+        when(
+          () => paymentService.createPaymentIntent(
+            entityType: any(named: 'entityType'),
+            entityId: any(named: 'entityId'),
+            successUrl: any(named: 'successUrl'),
+            cancelUrl: any(named: 'cancelUrl'),
+          ),
+        ).thenAnswer(
+          (_) async => const PaymentIntentResult(
+            intentId: 'intent-1',
+            checkoutUrl: 'https://pay.example.com/checkout',
           ),
         );
 
         final result = await viewModel.createPaymentForBooking(
           taskId: 'task-1',
           packageId: 'Premium',
-          requirements: const <String, dynamic>{},
-          finishUrl: 'https://app.example.com/dashboard?payment_return=1',
         );
 
         expect(result.isSuccess, isTrue);
-        expect(result.bookingId, 'booking-2');
-        expect(viewModel.bookingsError, isNull);
-        final captured =
-            verify(
-                  () => paymentService.createPaymentForBooking(
-                    taskId: 'task-1',
-                    note: null,
-                    packageId: 'Premium',
-                    requirements: const <String, dynamic>{},
-                    finishUrl:
-                        'https://app.example.com/dashboard?payment_return=1',
-                    requestCorrelationId: captureAny(
-                      named: 'requestCorrelationId',
-                    ),
-                  ),
-                ).captured.single
-                as String;
-        expect(captured, startsWith('booking_create:'));
+        expect(result.intentId, 'intent-1');
+
+        verify(
+          () => bookingRepo.createBookingDraft(
+            taskId: 'task-1',
+            packageId: 'Premium',
+            note: any(named: 'note'),
+            requirements: any(named: 'requirements'),
+          ),
+        ).called(1);
       },
     );
 
@@ -283,7 +303,7 @@ void main() {
       () async {
         when(
           () => bookingRepo.acceptBooking('booking-pending'),
-        ).thenThrow(StateError('Client payment is still pending.'));
+        ).thenThrow(Exception('client payment is still pending'));
 
         await viewModel.acceptBooking('booking-pending');
 

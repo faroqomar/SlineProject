@@ -1,6 +1,6 @@
 # Supabase Setup for SLine — Complete Database Reference
 
-**Last Updated**: 2026-03-08 (accept_task_request: reject remaining bids; Inbox award: optimistic price lock)
+**Last Updated**: 2026-03-08 (accept_task_request: reject remaining bids; Inbox award: optimistic price lock; escrow idempotency: stable key + FOR UPDATE; vw_wallet_activity_user: include spent / gateway_escrow; docs reference integrity: 09/16 → Done)
 **Version**: 2.20.1
 **Database Version**: PostgreSQL 17.4.1
 **Project ID**: `isddrknbjsgaantjojhm`
@@ -50,26 +50,28 @@ This document is the **single source of truth** for all Supabase backend setup: 
 
 ### Functions (RPC)
 
-| Function | Parameters | Returns | Purpose | Security |
-|----------|------------|---------|---------|----------|
-| `switch_active_role` | `p_expected_old_role TEXT, p_new_role TEXT` | `JSONB` | Atomic role switching with race condition protection | SECURITY DEFINER |
-| `check_role_switch_rate_limit` | — | `BOOLEAN` | Check if user is within rate limit (3 switches/minute) | SECURITY DEFINER |
-| `sync_role_to_jwt_claims` | (trigger function) | `TRIGGER` | Syncs `profiles.active_role` to `auth.users.app_metadata` | SECURITY DEFINER |
-| `start_direct_conversation_v1` | `p_target_id UUID` | `conversations` | Atomic DM creation with rate limit (20/hr), favorites check, role enforcement | SECURITY DEFINER |
-| `is_client` | `p_user_id UUID` | `BOOLEAN` | Check if user has active_role = 'client' | SECURITY DEFINER |
-| `check_conversation_rate_limit` | `p_user_id UUID` | `BOOLEAN` | Check if user is within conversation rate limit (20/hr) | SECURITY DEFINER |
-| `admin_set_config` | `p_key TEXT, p_value TEXT` | `VOID` | Update app_config (feature flags) | SECURITY DEFINER |
-| `award_task_offer` | `p_task_id UUID, p_request_id UUID, p_expected_price_cents BIGINT` | `JSONB` | Award offer with price validation, idempotency | SECURITY DEFINER |
-| `pay_awarded_offer` | `p_task_id UUID, p_request_id UUID, p_expected_price_cents BIGINT` | `JSONB` | Pay for awarded offer, move to escrow | SECURITY DEFINER |
-| `cleanup_expired_awards` | — | `VOID` | Cron job: expire unpaid awards after deadline | SECURITY DEFINER |
+| Function                        | Parameters                                                         | Returns         | Purpose                                                                       | Security         |
+| ------------------------------- | ------------------------------------------------------------------ | --------------- | ----------------------------------------------------------------------------- | ---------------- |
+| `switch_active_role`            | `p_expected_old_role TEXT, p_new_role TEXT`                        | `JSONB`         | Atomic role switching with race condition protection                          | SECURITY DEFINER |
+| `check_role_switch_rate_limit`  | —                                                                  | `BOOLEAN`       | Check if user is within rate limit (3 switches/minute)                        | SECURITY DEFINER |
+| `sync_role_to_jwt_claims`       | (trigger function)                                                 | `TRIGGER`       | Syncs `profiles.active_role` to `auth.users.app_metadata`                     | SECURITY DEFINER |
+| `start_direct_conversation_v1`  | `p_target_id UUID`                                                 | `conversations` | Atomic DM creation with rate limit (20/hr), favorites check, role enforcement | SECURITY DEFINER |
+| `is_client`                     | `p_user_id UUID`                                                   | `BOOLEAN`       | Check if user has active_role = 'client'                                      | SECURITY DEFINER |
+| `check_conversation_rate_limit` | `p_user_id UUID`                                                   | `BOOLEAN`       | Check if user is within conversation rate limit (20/hr)                       | SECURITY DEFINER |
+| `admin_set_config`              | `p_key TEXT, p_value TEXT`                                         | `VOID`          | Update app_config (feature flags)                                             | SECURITY DEFINER |
+| `award_task_offer`              | `p_task_id UUID, p_request_id UUID, p_expected_price_cents BIGINT` | `JSONB`         | Award offer with price validation, idempotency                                | SECURITY DEFINER |
+| `pay_awarded_offer`             | `p_task_id UUID, p_request_id UUID, p_expected_price_cents BIGINT` | `JSONB`         | Pay for awarded offer, move to escrow                                         | SECURITY DEFINER |
+| `cleanup_expired_awards`        | —                                                                  | `VOID`          | Cron job: expire unpaid awards after deadline                                 | SECURITY DEFINER |
 
 ### Views
 
-| View                    | Purpose                                      |
-| ----------------------- | -------------------------------------------- |
-| `vw_unified_work_items` | UNION ALL of tasks + bookings (normalized)   |
-| `wallet_balances`       | Aggregated wallet balance (available/escrow) |
-| `vw_orphaned_auth_users`| Auth users with no profile row (monitoring)   |
+| View                       | Purpose                                         |
+| -------------------------- | ----------------------------------------------- |
+| `vw_unified_work_items`    | UNION ALL of tasks + bookings (normalized)      |
+| `vw_wallet_balances_user`  | User wallet balances (Available/Escrow/Pending) |
+| `vw_wallet_activity_user`  | User wallet transaction history                 |
+| `vw_admin_booking_finance` | Admin financial audit per booking               |
+| `vw_orphaned_auth_users`   | Auth users with no profile row (monitoring)     |
 
 ### Enums
 
@@ -524,17 +526,17 @@ Typing indicators for real-time chat.
 
 Application configuration and feature flags.
 
-| Column      | Type        | Nullable | Default | Description                       |
-| ----------- | ----------- | -------- | ------- | --------------------------------- |
-| `key`       | text        | ❌       | -       | Configuration key (PK)          |
-| `value`     | text        | ❌       | -       | Configuration value               |
-| `description` | text      | ✅       | -       | Human-readable description        |
-| `updated_at` | timestamptz | ✅    | `now()` | Last update timestamp             |
+| Column        | Type        | Nullable | Default | Description                |
+| ------------- | ----------- | -------- | ------- | -------------------------- |
+| `key`         | text        | ❌       | -       | Configuration key (PK)     |
+| `value`       | text        | ❌       | -       | Configuration value        |
+| `description` | text        | ✅       | -       | Human-readable description |
+| `updated_at`  | timestamptz | ✅       | `now()` | Last update timestamp      |
 
 **Key Configurations:**
 
-| Key | Purpose | Example Values |
-|-----|---------|----------------|
+| Key                              | Purpose                                   | Example Values              |
+| -------------------------------- | ----------------------------------------- | --------------------------- |
 | `enable_direct_conversation_rpc` | Feature flag for Chat Creation Matrix RPC | `'false'` (gradual rollout) |
 
 **RLS:** SELECT for authenticated; ALL for service_role only.
@@ -969,32 +971,32 @@ Pre-defined service packages offered by freelancers.
 
 Runtime configuration table for application settings and feature flags.
 
-| Column        | Type    | Nullable | Default             | Description                        |
-| ------------- | ------- | -------- | ------------------- | ---------------------------------- |
-| `key`         | TEXT    | ❌       | -                   | Primary key, unique setting name   |
-| `value`       | JSONB   | ❌       | '{}'                | Configuration value (JSON)         |
-| `description` | TEXT    | ✅       | NULL                | Human-readable description         |
-| `updated_at`  | TIMESTAMPTZ | ✅   | NOW()               | Last modification timestamp        |
+| Column        | Type        | Nullable | Default | Description                      |
+| ------------- | ----------- | -------- | ------- | -------------------------------- |
+| `key`         | TEXT        | ❌       | -       | Primary key, unique setting name |
+| `value`       | JSONB       | ❌       | '{}'    | Configuration value (JSON)       |
+| `description` | TEXT        | ✅       | NULL    | Human-readable description       |
+| `updated_at`  | TIMESTAMPTZ | ✅       | NOW()   | Last modification timestamp      |
 
 **Primary Key:** `key`
 
 **Tender/Bid Flow Configuration Keys:**
 
-| Key | Value Format | Default | Purpose |
-|-----|--------------|---------|---------|
-| `tender_payment_timeout_hours` | `{"timeout_hours": 48}` | 48 hours | Payment window duration after offer award |
-| `platform_fee_bps` | `{"default_rate_bps": 1000}` | 1000 (10%) | Platform fee rate in basis points (100 bps = 1%) |
+| Key                            | Value Format                 | Default    | Purpose                                          |
+| ------------------------------ | ---------------------------- | ---------- | ------------------------------------------------ |
+| `tender_payment_timeout_hours` | `{"timeout_hours": 48}`      | 48 hours   | Payment window duration after offer award        |
+| `platform_fee_bps`             | `{"default_rate_bps": 1000}` | 1000 (10%) | Platform fee rate in basis points (100 bps = 1%) |
 
 **Other Common Keys:**
 
-| Key | Value Format | Purpose |
-|-----|--------------|---------|
-| `maintenance_mode` | `{"enabled": false, "message": "..."}` | App maintenance state |
-| `min_app_version` | `{"version": "2.0.0", "force_update": false}` | Minimum required app version |
-| `disable_signups` | `{"disabled": false}` | Disable new user registrations |
-| `app_banner` | `{"enabled": false, "message": "...", "type": "info"}` | Global app banner |
-| `storage_rls_v2_enabled` | `true/false` | Feature flag for hardened storage RLS |
-| `app_config` | `{"allow_owner_task_conversation": false}` | Feature flags for conversation guards |
+| Key                      | Value Format                                           | Purpose                               |
+| ------------------------ | ------------------------------------------------------ | ------------------------------------- |
+| `maintenance_mode`       | `{"enabled": false, "message": "..."}`                 | App maintenance state                 |
+| `min_app_version`        | `{"version": "2.0.0", "force_update": false}`          | Minimum required app version          |
+| `disable_signups`        | `{"disabled": false}`                                  | Disable new user registrations        |
+| `app_banner`             | `{"enabled": false, "message": "...", "type": "info"}` | Global app banner                     |
+| `storage_rls_v2_enabled` | `true/false`                                           | Feature flag for hardened storage RLS |
+| `app_config`             | `{"allow_owner_task_conversation": false}`             | Feature flags for conversation guards |
 
 ---
 
@@ -1068,16 +1070,103 @@ The app filters by `client_id` (client role) or `freelancer_id` (freelancer role
 
 **⚠️ Security Warning:** This view uses `SECURITY INVOKER` (default). RLS on base tables (`tasks`, `bookings`, `task_requests`) will apply.
 
-### 6.3 `users` ⚠️ SECURITY RISK
+### 6.5 `vw_wallet_balances_user` (v2.20)
+
+Optimized view for the Flutter Wallet Tab. Provides atomic balances with RLS enforcement.
 
 ```sql
-SELECT id, email,
-  raw_user_meta_data->>'full_name' AS full_name,
-  raw_user_meta_data->>'avatar_url' AS avatar_url
-FROM auth.users u;
+CREATE OR REPLACE VIEW public.vw_wallet_balances_user AS
+SELECT
+    a.owner_id AS id, -- PK for stream()
+    a.owner_id AS user_id,
+    COALESCE(SUM(CASE WHEN a.account_code LIKE 'user_available%' THEN l.amount * (CASE WHEN l.direction = 'CREDIT' THEN 1 ELSE -1 END) ELSE 0 END), 0) AS available_balance,
+    COALESCE(SUM(CASE WHEN a.account_code LIKE 'user_pending_withdrawal%' THEN l.amount * (CASE WHEN l.direction = 'CREDIT' THEN 1 ELSE -1 END) ELSE 0 END), 0) AS pending_withdrawal_balance,
+    COALESCE(SUM(CASE WHEN a.account_code LIKE 'user_escrow%' THEN l.amount * (CASE WHEN l.direction = 'CREDIT' THEN 1 ELSE -1 END) ELSE 0 END), 0) AS held_balance
+FROM public.accounts a
+LEFT JOIN public.ledger_lines l ON l.account_id = a.id
+WHERE a.owner_id IS NOT NULL
+AND (auth.uid() = a.owner_id OR auth.jwt()->'app_metadata'->>'role' = 'service_role')
+GROUP BY a.owner_id;
 ```
 
-**🚨 CRITICAL:** This view exposes `auth.users` to the `anon` role. **Should be removed or restricted immediately.**
+### 6.6 `vw_wallet_activity_user` (v2.20; updated 20260307160000)
+
+Transaction history for the Wallet UI: available balance movements and **spent** transactions (including gateway_escrow via `user_pending_withdrawal` DEBIT). Migration: `supabase/migrations/20260307160000_wallet_activity_include_spent.sql`.
+
+- **Included:** Lines where `owner_id = auth.uid()` and account is `user_available:%` OR (`user_pending_withdrawal:%` and direction = DEBIT). So users see both received (CREDIT) and spent (DEBIT) activity, including QiCard payments that debit `user_pending_withdrawal`.
+- **Output columns:** `journal_entry_id`, `created_at`, `event_type`, `amount_gross`, `amount_net`, `fee_amount`, `currency`, `related_entity_type`, `related_entity_id`, `counterparty_user_id`, `status`.
+
+```sql
+-- As of 20260307160000_wallet_activity_include_spent.sql (idempotent: DROP then CREATE)
+DROP VIEW IF EXISTS public.vw_wallet_activity_user;
+
+CREATE VIEW public.vw_wallet_activity_user
+WITH (security_invoker = on) AS
+WITH user_ledger_lines AS (
+    SELECT ll.id AS ledger_line_id, ll.journal_entry_id, ll.account_id, ll.direction, ll.amount, ll.currency
+    FROM public.ledger_lines ll
+    JOIN public.accounts a ON ll.account_id = a.id
+    WHERE a.owner_id = auth.uid()
+    AND (
+        a.account_code LIKE 'user_available:%'
+        OR (a.account_code LIKE 'user_pending_withdrawal:%' AND ll.direction = 'DEBIT'::public.ledger_direction_enum)
+    )
+),
+user_journals AS (
+    SELECT DISTINCT je.id AS journal_entry_id, je.event_type, je.related_entity_type, je.related_entity_id, je.created_at, je.meta, je.currency
+    FROM public.journal_entries je
+    JOIN user_ledger_lines ull ON je.id = ull.journal_entry_id
+    WHERE je.status = 'posted'
+)
+SELECT
+    uj.journal_entry_id, uj.created_at, uj.event_type,
+    COALESCE((SELECT SUM(ll.amount) FROM public.ledger_lines ll JOIN public.accounts a ON ll.account_id = a.id
+        WHERE ll.journal_entry_id = uj.journal_entry_id AND a.account_code != 'platform_revenue'
+        AND ll.direction = (CASE WHEN uj.event_type IN ('escrow_hold', 'withdrawal_request', 'gateway_escrow') THEN 'DEBIT'::public.ledger_direction_enum ELSE 'CREDIT'::public.ledger_direction_enum END)), 0) AS amount_gross,
+    COALESCE((SELECT SUM(CASE WHEN ull.direction = 'CREDIT'::public.ledger_direction_enum THEN ull.amount ELSE -ull.amount END) FROM user_ledger_lines ull WHERE ull.journal_entry_id = uj.journal_entry_id), 0) AS amount_net,
+    COALESCE((SELECT SUM(ll.amount) FROM public.ledger_lines ll JOIN public.accounts a ON ll.account_id = a.id WHERE ll.journal_entry_id = uj.journal_entry_id AND a.account_code = 'platform_revenue'), 0) AS fee_amount,
+    uj.currency, uj.related_entity_type, uj.related_entity_id,
+    CASE WHEN uj.event_type = 'escrow_hold' THEN (uj.meta->>'provider_id')::UUID WHEN uj.event_type = 'gateway_escrow' THEN (uj.meta->>'provider_id')::UUID WHEN uj.event_type = 'release_with_fee' THEN (uj.meta->>'client_id')::UUID WHEN uj.event_type = 'refund' THEN (uj.meta->>'provider_id')::UUID ELSE NULL END AS counterparty_user_id,
+    'posted'::TEXT AS status
+FROM user_journals uj
+ORDER BY uj.created_at DESC;
+```
+
+### 6.7 `vw_admin_booking_finance` (v2.20)
+
+Administrative view for granular financial auditing of bookings.
+
+```sql
+CREATE OR REPLACE VIEW public.vw_admin_booking_finance AS
+SELECT
+    b.id AS booking_id,
+    b.task_id,
+    b.client_id,
+    b.provider_id,
+    b.status AS booking_status,
+    b.price AS amount_gross,
+    COALESCE(
+      SUM(l.amount) FILTER (WHERE j.event_type = 'escrow_hold' AND l.direction = 'CREDIT' AND a.account_code LIKE 'user_escrow%'),
+      0
+    ) -
+    COALESCE(
+      SUM(l.amount) FILTER (WHERE (j.event_type IN ('release_with_fee', 'refund')) AND l.direction = 'DEBIT' AND a.account_code LIKE 'user_escrow%'),
+      0
+    ) AS amount_in_escrow,
+    COALESCE(
+      SUM(l.amount) FILTER (WHERE j.event_type = 'release_with_fee' AND l.direction = 'CREDIT' AND a.account_code LIKE 'user_available%'),
+      0
+    ) AS amount_released_to_provider,
+    COALESCE(
+      SUM(l.amount) FILTER (WHERE j.event_type = 'release_with_fee' AND l.direction = 'CREDIT' AND a.account_code LIKE 'platform_revenue%'),
+      0
+    ) AS platform_fee_collected
+FROM public.bookings b
+LEFT JOIN public.journal_entries j ON j.related_entity_id = b.id AND j.related_entity_type = 'booking'
+LEFT JOIN public.ledger_lines l ON l.journal_entry_id = j.id
+LEFT JOIN public.accounts a ON l.account_id = a.id
+GROUP BY b.id, b.task_id, b.client_id, b.provider_id, b.status, b.price;
+```
 
 ---
 
@@ -1114,14 +1203,14 @@ Cross-user profile summaries must go through `public.rpc_get_profile_summaries(u
 
 ### 7.3 `task_requests` Policies
 
-| Policy                               | Command | Rule                                                     |
-| ------------------------------------ | ------- | -------------------------------------------------------- |
-| `tr_select`                          | SELECT  | `freelancer_id = auth.uid() OR EXISTS(task owner check)` |
-| `tr_insert`                          | INSERT  | `freelancer_id = uid AND task is open AND not own task`  |
-| `tr_update`                          | UPDATE  | `freelancer_id = uid AND status = 'pending'`             |
-| `tr_update_by_owner`                 | UPDATE  | Task owner can update                                    |
-| `tr_delete`                          | DELETE  | `freelancer_id = uid AND status = 'pending'`             |
-| `task_requests_insert_freelancer_jwt`| INSERT  | `freelancer_id = uid AND jwt_active_role = 'freelancer'` (v2.18) |
+| Policy                                | Command | Rule                                                             |
+| ------------------------------------- | ------- | ---------------------------------------------------------------- |
+| `tr_select`                           | SELECT  | `freelancer_id = auth.uid() OR EXISTS(task owner check)`         |
+| `tr_insert`                           | INSERT  | `freelancer_id = uid AND task is open AND not own task`          |
+| `tr_update`                           | UPDATE  | `freelancer_id = uid AND status = 'pending'`                     |
+| `tr_update_by_owner`                  | UPDATE  | Task owner can update                                            |
+| `tr_delete`                           | DELETE  | `freelancer_id = uid AND status = 'pending'`                     |
+| `task_requests_insert_freelancer_jwt` | INSERT  | `freelancer_id = uid AND jwt_active_role = 'freelancer'` (v2.18) |
 
 **v2.18 Note:** JWT-based policy for role-enforced proposal submission. Uses `auth.jwt()->'app_metadata'->>'active_role'`. Dual-policy approach during migration.
 
@@ -1152,12 +1241,12 @@ Cross-user profile summaries must go through `public.rpc_get_profile_summaries(u
 
 ### 7.6 `availability_slots` Policies
 
-| Policy                                   | Command | Rule                                                                       |
-| ---------------------------------------- | ------- | -------------------------------------------------------------------------- |
-| `slots_select_read`                      | SELECT  | `true` (all authenticated)                                                 |
-| `slots_write_owner`                      | ALL     | `provider_id = auth.uid()`                                                 |
-| `availability_slots_insert_freelancer_jwt` | INSERT  | `provider_id = auth.uid() AND jwt_active_role = 'freelancer'` (v2.18)     |
-| `availability_slots_update_freelancer_jwt` | UPDATE  | `provider_id = auth.uid() AND jwt_active_role = 'freelancer'` (v2.18)     |
+| Policy                                     | Command | Rule                                                                  |
+| ------------------------------------------ | ------- | --------------------------------------------------------------------- |
+| `slots_select_read`                        | SELECT  | `true` (all authenticated)                                            |
+| `slots_write_owner`                        | ALL     | `provider_id = auth.uid()`                                            |
+| `availability_slots_insert_freelancer_jwt` | INSERT  | `provider_id = auth.uid() AND jwt_active_role = 'freelancer'` (v2.18) |
+| `availability_slots_update_freelancer_jwt` | UPDATE  | `provider_id = auth.uid() AND jwt_active_role = 'freelancer'` (v2.18) |
 
 **Note:** JWT-based policies (v2.18) use `auth.jwt()->'app_metadata'->>'active_role'` for performant role checking without table joins. Dual-policy approach during migration window.
 
@@ -1386,11 +1475,12 @@ Cross-user profile summaries must go through `public.rpc_get_profile_summaries(u
 
 ### 8.8 Role Switching Triggers (v2.18)
 
-| Trigger                | Event                        | Function                    | Purpose                                          |
-| ---------------------- | ---------------------------- | --------------------------- | ------------------------------------------------ |
-| `trg_sync_role_to_jwt` | AFTER UPDATE OF active_role  | `sync_role_to_jwt_claims()` | Sync `profiles.active_role` to JWT `app_metadata` |
+| Trigger                | Event                       | Function                    | Purpose                                           |
+| ---------------------- | --------------------------- | --------------------------- | ------------------------------------------------- |
+| `trg_sync_role_to_jwt` | AFTER UPDATE OF active_role | `sync_role_to_jwt_claims()` | Sync `profiles.active_role` to JWT `app_metadata` |
 
 **Trigger Details:**
+
 - Fires only when `active_role` column changes (not on other profile updates)
 - Updates `auth.users.raw_app_meta_data` to include `active_role` claim
 - Enables RLS policies to use `auth.jwt()->'app_metadata'->>'active_role'` instead of joining `profiles` table
@@ -1522,7 +1612,7 @@ CREATE OR REPLACE FUNCTION public.is_admin(p_uid uuid)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = public AS $$
   SELECT EXISTS (
-    SELECT 1 FROM public.profiles 
+    SELECT 1 FROM public.profiles
     WHERE id = p_uid AND roles @> '{admin}'
   );
 $$;
@@ -1538,7 +1628,7 @@ SELECT can_access_chat_attachment('convos/abc-123/file.jpg', auth.uid());  -- tr
 
 -- Implementation:
 CREATE OR REPLACE FUNCTION public.can_access_chat_attachment(
-  p_object_name text, 
+  p_object_name text,
   p_uid uuid
 )
 RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER
@@ -1592,7 +1682,7 @@ SELECT can_access_task_image('user-123/file.jpg', auth.uid());  -- true/false
 
 -- Implementation:
 CREATE OR REPLACE FUNCTION public.can_access_task_image(
-  p_object_name text, 
+  p_object_name text,
   p_uid uuid
 )
 RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER
@@ -1611,7 +1701,7 @@ BEGIN
 
   -- Path format: <user_id>/<filename>
   v_owner_id := split_part(p_object_name, '/', 1);
-  
+
   RETURN v_owner_id = p_uid::text;
 END;
 $$;
@@ -1712,6 +1802,7 @@ Legacy compatibility wrapper. It resolves `task_id`, delegates to the canonical 
 #### Tender Task Lifecycle RPCs (v2.20)
 
 **`award_task_offer(p_task_id UUID, p_request_id UUID, p_expected_price_cents BIGINT DEFAULT NULL) → JSONB`**:
+
 - Awards a pending offer to a freelancer
 - Optimistic concurrency: validates `p_expected_price_cents` against current price
 - Idempotency: returns `already_accepted` if request already accepted
@@ -1722,6 +1813,7 @@ Legacy compatibility wrapper. It resolves `task_id`, delegates to the canonical 
 - Writes `OFFER_ACCEPTED` to `activity_log` for client dashboard
 
 **`pay_awarded_offer(p_task_id UUID, p_request_id UUID, p_expected_price_cents BIGINT DEFAULT NULL) → JSONB`**:
+
 - Processes payment for an already-awarded offer
 - Moves funds to escrow via `process_payment_event_ledger`
 - Updates task status to `in_progress`
@@ -1730,6 +1822,7 @@ Legacy compatibility wrapper. It resolves `task_id`, delegates to the canonical 
 - Errors: `ALREADY_PAID`, `PAYMENT_DEADLINE_EXPIRED`, `INSUFFICIENT_FUNDS`
 
 **`cleanup_expired_awards() → VOID`**:
+
 - Cron-scheduled function (runs every 10 minutes via `pg_cron`)
 - Expires unpaid awards past payment deadline (with 1-hour grace period)
 - Resets task status from `assigned` → `open`
@@ -1739,6 +1832,7 @@ Legacy compatibility wrapper. It resolves `task_id`, delegates to the canonical 
 - Security: only callable by `service_role`, `postgres`, `supabase_admin`, or `authenticator`
 
 **`replace_task_request(...)` → VOID**:
+
 - Allows freelancer to update their pending offer (price, days, note)
 - Cannot modify offers that are already accepted or rejected
 - Creates new offer if existing one has responses (soft-delete pattern)
@@ -1855,12 +1949,12 @@ Returns true if `p_uid` is a participant of the conversation referenced in the s
 
 **Tender Lifecycle Indexes (v2.18):**
 
-| Index | Columns | Condition | Purpose |
-|-------|---------|-----------|---------|
-| `idx_task_requests_awarded_unpaid` | `(status, payment_status, awarded_at)` | `status = 'accepted' AND payment_status = 'unpaid'` | Optimizes `cleanup_expired_awards` cron queries |
-| `idx_one_accepted_per_task` | `(task_id)` | `status = 'accepted'` | Partial unique index enforces one accepted offer per task (race condition prevention) |
-| `idx_task_requests_awarded_unpaid` | `(status, payment_status, awarded_at)` | `status = 'accepted' AND payment_status = 'unpaid'` | Optimizes cleanup_expired_awards cron queries |
-| `idx_one_accepted_per_task` | `(task_id)` | `status = 'accepted'` | Partial unique index enforces one accepted offer per task |
+| Index                              | Columns                                | Condition                                           | Purpose                                                                               |
+| ---------------------------------- | -------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `idx_task_requests_awarded_unpaid` | `(status, payment_status, awarded_at)` | `status = 'accepted' AND payment_status = 'unpaid'` | Optimizes `cleanup_expired_awards` cron queries                                       |
+| `idx_one_accepted_per_task`        | `(task_id)`                            | `status = 'accepted'`                               | Partial unique index enforces one accepted offer per task (race condition prevention) |
+| `idx_task_requests_awarded_unpaid` | `(status, payment_status, awarded_at)` | `status = 'accepted' AND payment_status = 'unpaid'` | Optimizes cleanup_expired_awards cron queries                                         |
+| `idx_one_accepted_per_task`        | `(task_id)`                            | `status = 'accepted'`                               | Partial unique index enforces one accepted offer per task                             |
 
 ### 10.5 Availability Slots Indexes
 
@@ -1901,42 +1995,44 @@ Returns true if `p_uid` is a participant of the conversation referenced in the s
 Storage RLS policies were hardened in v2 to prevent unauthorized access via path guessing. The new policies use helper functions to validate access at the object level rather than bucket level.
 
 **Feature Flag**: `app_config.storage_rls_v2_enabled` controls enforcement:
+
 - `false` (default): Falls back to broad access (migration compatibility)
 - `true`: Enforces strict participant/owner checks
 
 **Helper Functions**:
+
 - `is_admin(uid)` - Returns true if user has admin role
 - `can_access_chat_attachment(path, uid)` - Validates conversation participation
 - `can_access_task_image(path, uid)` - Validates image ownership
 
 #### Avatars Bucket
 
-| Policy                        | Command | Rule                                                         |
-| ----------------------------- | ------- | ------------------------------------------------------------ |
-| `avatars_select_authenticated`| SELECT  | `bucket_id = 'avatars'` (any authenticated user; profile pics are discoverable) |
-| `avatars_insert_own_folder`   | INSERT  | `bucket_id = 'avatars' AND name LIKE auth.uid()::text || '/%'` |
-| `avatars_update_own_folder`  | UPDATE  | Same as insert                                               |
-| `avatars_delete_own_folder`  | DELETE  | Same as insert                                               |
+| Policy                         | Command | Rule                                                                            |
+| ------------------------------ | ------- | ------------------------------------------------------------------------------- | --- | ----- |
+| `avatars_select_authenticated` | SELECT  | `bucket_id = 'avatars'` (any authenticated user; profile pics are discoverable) |
+| `avatars_insert_own_folder`    | INSERT  | `bucket_id = 'avatars' AND name LIKE auth.uid()::text                           |     | '/%'` |
+| `avatars_update_own_folder`    | UPDATE  | Same as insert                                                                  |
+| `avatars_delete_own_folder`    | DELETE  | Same as insert                                                                  |
 
 **Note**: SELECT is broad so signed URLs work for all profile avatars (feed, cards). INSERT/UPDATE/DELETE are restricted to the user's own folder (`{uid}/{filename}`). Migration `20260306180000_avatars_storage_fix.sql` ensures these policies.
 
 #### Task Images Bucket
 
-| Policy                           | Command | Rule                                                                                          |
-| -------------------------------- | ------- | --------------------------------------------------------------------------------------------- |
-| `task_images_select_restricted_v2` | SELECT | `bucket_id = 'task-images' AND (can_access_task_image(name, auth.uid()) OR NOT (SELECT storage_rls_v2_enabled FROM app_config LIMIT 1))` |
-| `task_images_insert_own_folder`    | INSERT | `bucket_id = 'task-images' AND name LIKE auth.uid() || '/%'`                                  |
-| `task_images_update_own_folder`    | UPDATE | Same as insert                                                                                |
-| `task_images_delete_own_folder`    | DELETE | Same as insert                                                                                |
+| Policy                             | Command | Rule                                                                                                                                     |
+| ---------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------- | --- | ----- |
+| `task_images_select_restricted_v2` | SELECT  | `bucket_id = 'task-images' AND (can_access_task_image(name, auth.uid()) OR NOT (SELECT storage_rls_v2_enabled FROM app_config LIMIT 1))` |
+| `task_images_insert_own_folder`    | INSERT  | `bucket_id = 'task-images' AND name LIKE auth.uid()                                                                                      |     | '/%'` |
+| `task_images_update_own_folder`    | UPDATE  | Same as insert                                                                                                                           |
+| `task_images_delete_own_folder`    | DELETE  | Same as insert                                                                                                                           |
 
 **Migration Note**: Replaced `task_images_select_authenticated` (broad bucket check) with `task_images_select_restricted_v2` (owner check via helper).
 
 #### Chat Attachments Bucket
 
-| Policy                             | Command | Rule                                                                                           |
-| ---------------------------------- | ------- | ---------------------------------------------------------------------------------------------- |
+| Policy                             | Command | Rule                                                                                                                                               |
+| ---------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `chat_attach_select_restricted_v2` | SELECT  | `bucket_id = 'chat-attachments' AND (can_access_chat_attachment(name, auth.uid()) OR NOT (SELECT storage_rls_v2_enabled FROM app_config LIMIT 1))` |
-| `chat_attach_insert_auth`          | INSERT  | `bucket_id = 'chat-attachments'`                                                               |
+| `chat_attach_insert_auth`          | INSERT  | `bucket_id = 'chat-attachments'`                                                                                                                   |
 
 **Migration Note**: Replaced `chat_attach_select_auth` (broad bucket check) with `chat_attach_select_restricted_v2` (participant check via helper). Path format: `convos/<conversation_id>/<filename>`.
 
@@ -2108,20 +2204,22 @@ VALUES (auth.uid(), '<other-user>', auth.uid());
 
 Automated testing for RLS policies is in `test/rls/`:
 
-| File | Purpose |
-|------|---------|
-| `rls_test_helper.dart` | Assertion library with 8 methods: `assertCanSelect`, `assertCannotInsert`, etc. |
-| `fixtures/rls_test_users.dart` | Test user fixtures (5 users: client, freelancer, other client, admin, service) |
-| `critical_blockers_test.dart` | 4 critical security tests (12 total) — cross-user access, log injection, etc. |
-| `view_security_test.dart` | 7 view security tests — PII exposure, `security_invoker` validation |
-| `role_switch_jwt_test.dart` | 7 JWT policy tests — role-based access enforcement |
+| File                           | Purpose                                                                         |
+| ------------------------------ | ------------------------------------------------------------------------------- |
+| `rls_test_helper.dart`         | Assertion library with 8 methods: `assertCanSelect`, `assertCannotInsert`, etc. |
+| `fixtures/rls_test_users.dart` | Test user fixtures (5 users: client, freelancer, other client, admin, service)  |
+| `critical_blockers_test.dart`  | 4 critical security tests (12 total) — cross-user access, log injection, etc.   |
+| `view_security_test.dart`      | 7 view security tests — PII exposure, `security_invoker` validation             |
+| `role_switch_jwt_test.dart`    | 7 JWT policy tests — role-based access enforcement                              |
 
 **Run with:**
+
 ```bash
 flutter test test/rls/
 ```
 
 **References:**
+
 - Test README: `test/rls/README.md`
 - Plan: `.TODO/PLAN_RLS_Authorization_Map_CRITIC_2026-03-06.md`
 - Execution Log: `.TODO/EXECUTION_LOG_RLS_Authorization_Map_CRITIC_2026-03-06.md`
@@ -2161,12 +2259,14 @@ All functions use `SECURITY DEFINER` and include explicit `auth.uid()` checks.
 
 ### 9.5 `rpc_approve_delivery`
 
-- **Purpose**: Client approves delivered work; completes the order and releases funds when payment is held.
+- **Purpose**: Client approves delivered work; completes the order and releases funds when payment is held. Idempotent under retry (stable key + FOR UPDATE).
 - **Access**: Client (owner) only.
+- **Parameters**: `entity_type` (text): one of `task`, `booking`, `direct_offer`; `entity_id` (uuid): the task, booking, or direct_offer id.
 - **Logic**:
   - **Tasks**: Sets `status='completed'`, clears `review_expires_at`.
-  - **Bookings**: If `payment_status='held'`, computes idempotency key via `extensions.digest(entity_id::text || ':release_with_fee:' || now()::text, 'sha256')` (hex-encoded), then calls `process_payment_event_ledger('release_with_fee', 'booking', entity_id, idempotency_key, ...)`. On success, updates `status='completed'` and clears `review_expires_at`. If payment is not held, only updates status.
-- **Migration**: `supabase/migrations/20260224_fix_rpc_approve_delivery_digest_schema.sql` (ensures `extensions.digest` is used where pgcrypto is in `extensions` schema).
+  - **Bookings**: If `payment_status='held'`, locks row with `SELECT ... FROM bookings WHERE id = entity_id FOR UPDATE`, then computes **stable** idempotency key: `encode(extensions.digest(entity_id::text || ':release_with_fee:' || v_status || ':' || v_payment_status, 'sha256'), 'hex')` (no `now()` — same key on retry). Calls `process_payment_event_ledger('release_with_fee', 'booking', entity_id, idempotency_key, ...)`. On success, clears `review_expires_at` (status/payment_status updated inside ledger RPC). If payment is not held, only updates status and review_expires_at.
+  - **Direct offers**: If `payment_status='held'` and `status='delivered'`, locks row with `SELECT ... FROM direct_offers WHERE id = entity_id FOR UPDATE`, validates `client_id = auth.uid()`, computes same stable idempotency key pattern, calls `process_payment_event_ledger('release_with_fee', 'direct_offer', entity_id, idempotency_key, ...)`, then updates `direct_offers` to `payment_status='released'`, `status='completed'`.
+- **Migrations**: `20260224_fix_rpc_approve_delivery_digest_schema.sql` (digest schema); `20260307000001_escrow_idempotency_stable_key.sql` (stable key + FOR UPDATE, drop duplicate index `idx_journal_entries_idempotency`); `20260307120000_rpc_approve_delivery_direct_offer.sql` (direct_offer branch).
 
 ### 9.6 Task Request Bid Flow RPCs (v2.18 - March 2026)
 
@@ -2338,7 +2438,10 @@ Returns minimum-field profile summaries for all bidders on a task (for owner vie
 
 ### Version 2.20.1 (March 2026)
 
+- **Wallet activity — include spent:** Migration `20260307160000_wallet_activity_include_spent.sql` replaces `vw_wallet_activity_user` so it includes client "spent" transactions (user_available DEBIT and user_pending_withdrawal DEBIT for gateway_escrow). Wallet UI can show "Money spent" and full money story. Documented in §6.6 and diagram 21.
 - **accept_task_request — Single Winner Rule:** Migration `20260308000000_accept_task_request_reject_remaining_bids.sql` adds atomic rejection of all other pending bids on the same task when one bid is accepted. Ensures only one accepted offer per task. Documented in §9.6 Task Request Bid Flow RPCs.
+- **Escrow idempotency — stable key + FOR UPDATE:** Migration `20260307000001_escrow_idempotency_stable_key.sql` updates `rpc_approve_delivery` (booking branch): idempotency key is now `entity_id || ':release_with_fee:' || v_status || ':' || v_payment_status` (no `now()`), and the booking row is locked with `SELECT ... FOR UPDATE` before key generation and ledger call. Drops duplicate index `idx_journal_entries_idempotency`. Approve delivery is safe to retry without double release. Documented in §9.5 and diagram 16.
+- **vw_wallet_activity_user — include spent (gateway_escrow):** Migration `20260307160000_wallet_activity_include_spent.sql` replaces the view so Wallet UI shows both received and **spent** transactions. Includes lines from `user_available` and (for DEBIT only) `user_pending_withdrawal`, so QiCard/gateway payments appear as client “spent”. View uses `security_invoker = on`; output columns include `amount_gross`, `amount_net`, `fee_amount`, `counterparty_user_id`. Documented in §6.6.
 
 ### Version 2.17.3 (March 2026)
 

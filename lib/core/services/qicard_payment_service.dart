@@ -124,6 +124,84 @@ class QiCardPaymentService implements PaymentService {
   }
 
   @override
+  Future<PaymentIntentResult> createPaymentIntent({
+    required String entityType,
+    required String entityId,
+    required String successUrl,
+    required String cancelUrl,
+  }) async {
+    try {
+      AppLogger.i(
+        'Creating hardned payment intent for $entityType $entityId',
+        tag: 'Payment',
+        json: {
+          'entity_type': entityType,
+          'entity_id': entityId,
+          'success_url': successUrl,
+          'cancel_url': cancelUrl,
+        },
+      );
+
+      final response = await _client.functions.invoke(
+        'create_payment_intent',
+        body: {
+          'entity_type': entityType,
+          'entity_id': entityId,
+          'success_url': successUrl,
+          'cancel_url': cancelUrl,
+        },
+      );
+
+      final data = _asMap(response.data);
+      final error = _extractError(data) ?? _extractErrorFromPayload(data);
+
+      if (error != null) {
+        AppLogger.w('Intent creation rejected', tag: 'Payment', error: error);
+        return PaymentIntentResult(error: error, errorCode: 'INTENT_REJECTED');
+      }
+
+      final intentId = data?['intent_id'] as String?;
+      final checkoutUrl = data?['checkout_url'] as String?;
+
+      if (intentId == null || checkoutUrl == null) {
+        return const PaymentIntentResult(
+          error: 'Invalid intent payload',
+          errorCode: 'INVALID_PAYLOAD',
+        );
+      }
+
+      return PaymentIntentResult(intentId: intentId, checkoutUrl: checkoutUrl);
+    } catch (e, st) {
+      AppLogger.e(
+        'createPaymentIntent failed',
+        tag: 'Payment',
+        error: e,
+        stackTrace: st,
+      );
+      return const PaymentIntentResult(
+        error: 'Failed to communicate with payment gateway.',
+        errorCode: 'INTENT_CRASH',
+      );
+    }
+  }
+
+  @override
+  Stream<String> streamPaymentIntentStatus(String intentId) {
+    AppLogger.i(
+      'Subscribing to realtime updates for intent=$intentId',
+      tag: 'Payment',
+    );
+    return _client
+        .from('payment_intents')
+        .stream(primaryKey: ['id'])
+        .eq('id', intentId)
+        .map((rows) {
+          if (rows.isEmpty) return 'created';
+          return rows.first['status'] as String? ?? 'created';
+        });
+  }
+
+  @override
   Future<QiCardCreatePaymentResult> createPaymentForBooking({
     required String taskId,
     String? note,
@@ -135,7 +213,7 @@ class QiCardPaymentService implements PaymentService {
     try {
       AppLogger.i(
         'Creating booking payment task=$taskId package=${packageId ?? 'none'}',
-        tag: 'QiCard',
+        tag: 'Payment',
         json: <String, dynamic>{
           'task_id': taskId,
           'package_id': packageId,
@@ -165,7 +243,7 @@ class QiCardPaymentService implements PaymentService {
       if (serviceError != null) {
         AppLogger.w(
           'Booking payment create was rejected by the server for task=$taskId',
-          tag: 'QiCard',
+          tag: 'Payment',
           error: serviceError,
           json: _safePayloadSummary(data),
         );
@@ -179,7 +257,7 @@ class QiCardPaymentService implements PaymentService {
       if (data == null) {
         AppLogger.w(
           'Booking payment create returned no payload for task=$taskId',
-          tag: 'QiCard',
+          tag: 'Payment',
         );
         return QiCardCreatePaymentResult(
           requestCorrelationId: responseRequestCorrelationId,
@@ -202,7 +280,7 @@ class QiCardPaymentService implements PaymentService {
       if (!result.isSuccess) {
         AppLogger.w(
           'Booking payment create returned an incomplete payload for task=$taskId',
-          tag: 'QiCard',
+          tag: 'Payment',
           json: _safePayloadSummary(data),
         );
         return QiCardCreatePaymentResult(
@@ -214,13 +292,13 @@ class QiCardPaymentService implements PaymentService {
 
       AppLogger.i(
         'Booking payment created booking=${result.bookingId} correlation=${result.correlationId}',
-        tag: 'QiCard',
+        tag: 'Payment',
       );
       return result;
     } catch (e, st) {
       AppLogger.e(
         'createPaymentForBooking failed',
-        tag: 'QiCard',
+        tag: 'Payment',
         error: e,
         stackTrace: st,
       );
@@ -239,7 +317,7 @@ class QiCardPaymentService implements PaymentService {
     try {
       AppLogger.i(
         'Recovering booking payment state for booking=$bookingId',
-        tag: 'QiCard',
+        tag: 'Payment',
       );
       final response = await _client.functions.invoke(
         'qicard_payment_recovery',
@@ -251,7 +329,7 @@ class QiCardPaymentService implements PaymentService {
       if (serviceError != null) {
         AppLogger.w(
           'Booking recovery was rejected for booking=$bookingId',
-          tag: 'QiCard',
+          tag: 'Payment',
           error: serviceError,
           json: _safePayloadSummary(data),
         );
@@ -264,7 +342,7 @@ class QiCardPaymentService implements PaymentService {
       if (data == null) {
         AppLogger.w(
           'Booking recovery returned no payload for booking=$bookingId',
-          tag: 'QiCard',
+          tag: 'Payment',
         );
         return QiCardRecoveryResult(
           error: 'Booking recovery failed.',
@@ -283,7 +361,7 @@ class QiCardPaymentService implements PaymentService {
       if (!result.isSuccess) {
         AppLogger.w(
           'Booking recovery returned an incomplete payload for booking=$bookingId',
-          tag: 'QiCard',
+          tag: 'Payment',
           json: _safePayloadSummary(data),
         );
         return const QiCardRecoveryResult(
@@ -294,13 +372,13 @@ class QiCardPaymentService implements PaymentService {
 
       AppLogger.i(
         'Booking recovery finished booking=$bookingId status=${result.paymentStatus} outcome=${result.recoveryResult}',
-        tag: 'QiCard',
+        tag: 'Payment',
       );
       return result;
     } catch (e, st) {
       AppLogger.e(
         'recoverBookingPayment failed',
-        tag: 'QiCard',
+        tag: 'Payment',
         error: e,
         stackTrace: st,
       );
@@ -319,7 +397,7 @@ class QiCardPaymentService implements PaymentService {
     try {
       AppLogger.i(
         'Requesting booking refund for booking=$bookingId',
-        tag: 'QiCard',
+        tag: 'Payment',
       );
       final response = await _client.functions.invoke(
         'booking_decline_refund',
@@ -331,7 +409,7 @@ class QiCardPaymentService implements PaymentService {
       if (serviceError != null) {
         AppLogger.w(
           'Booking refund was rejected for booking=$bookingId',
-          tag: 'QiCard',
+          tag: 'Payment',
           error: serviceError,
           json: _safePayloadSummary(data),
         );
@@ -344,7 +422,7 @@ class QiCardPaymentService implements PaymentService {
       if (data == null) {
         AppLogger.w(
           'Booking refund returned no payload for booking=$bookingId',
-          tag: 'QiCard',
+          tag: 'Payment',
         );
         return BookingRefundResult(
           error: 'Booking refund failed.',
@@ -363,7 +441,7 @@ class QiCardPaymentService implements PaymentService {
       if (!result.isSuccess) {
         AppLogger.w(
           'Booking refund returned an incomplete payload for booking=$bookingId',
-          tag: 'QiCard',
+          tag: 'Payment',
           json: _safePayloadSummary(data),
         );
         return const BookingRefundResult(
@@ -374,13 +452,13 @@ class QiCardPaymentService implements PaymentService {
 
       AppLogger.i(
         'Booking refund finished booking=$bookingId status=${result.paymentStatus} outcome=${result.refundResult}',
-        tag: 'QiCard',
+        tag: 'Payment',
       );
       return result;
     } catch (e, st) {
       AppLogger.e(
         'declineAndRefundBooking failed',
-        tag: 'QiCard',
+        tag: 'Payment',
         error: e,
         stackTrace: st,
       );
@@ -401,7 +479,7 @@ class QiCardPaymentService implements PaymentService {
     try {
       AppLogger.i(
         'Creating direct offer payment offer=$offerId amount=$amount',
-        tag: 'QiCard',
+        tag: 'Payment',
       );
       final response = await _client.functions.invoke(
         'qicard_payment_create_direct_offer',
@@ -419,7 +497,7 @@ class QiCardPaymentService implements PaymentService {
       if (serviceError != null) {
         AppLogger.w(
           'Direct offer payment create rejected for offer=$offerId',
-          tag: 'QiCard',
+          tag: 'Payment',
           error: serviceError,
           json: _safePayloadSummary(data),
         );
@@ -433,7 +511,7 @@ class QiCardPaymentService implements PaymentService {
       if (data == null) {
         AppLogger.w(
           'Direct offer payment create returned no payload for offer=$offerId',
-          tag: 'QiCard',
+          tag: 'Payment',
         );
         return QiCardDirectOfferPaymentResult(
           offerId: offerId,
@@ -456,7 +534,7 @@ class QiCardPaymentService implements PaymentService {
       if (!result.isSuccess) {
         AppLogger.w(
           'Direct offer payment create returned incomplete or error payload for offer=$offerId',
-          tag: 'QiCard',
+          tag: 'Payment',
           json: _safePayloadSummary(data),
         );
         return QiCardDirectOfferPaymentResult(
@@ -469,13 +547,13 @@ class QiCardPaymentService implements PaymentService {
 
       AppLogger.i(
         'Direct offer payment created offer=$offerId correlation=${result.correlationId}',
-        tag: 'QiCard',
+        tag: 'Payment',
       );
       return result;
     } catch (e, st) {
       AppLogger.e(
         'createPaymentForDirectOffer failed',
-        tag: 'QiCard',
+        tag: 'Payment',
         error: e,
         stackTrace: st,
       );
@@ -499,7 +577,7 @@ class QiCardPaymentService implements PaymentService {
     try {
       AppLogger.i(
         'Creating tender payment request=$requestId amount=$amount',
-        tag: 'QiCard',
+        tag: 'Payment',
       );
       final response = await _client.functions.invoke(
         'qicard_payment_create_tender',
@@ -519,7 +597,7 @@ class QiCardPaymentService implements PaymentService {
       if (serviceError != null) {
         AppLogger.w(
           'Tender payment create rejected for request=$requestId',
-          tag: 'QiCard',
+          tag: 'Payment',
           error: serviceError,
           json: _safePayloadSummary(data),
         );
@@ -533,7 +611,7 @@ class QiCardPaymentService implements PaymentService {
       if (data == null) {
         AppLogger.w(
           'Tender payment create returned no payload for request=$requestId',
-          tag: 'QiCard',
+          tag: 'Payment',
         );
         return QiCardTenderPaymentResult(
           requestId: requestId,
@@ -556,7 +634,7 @@ class QiCardPaymentService implements PaymentService {
       if (!result.isSuccess) {
         AppLogger.w(
           'Tender payment create returned incomplete or error payload for request=$requestId',
-          tag: 'QiCard',
+          tag: 'Payment',
           json: _safePayloadSummary(data),
         );
         return QiCardTenderPaymentResult(
@@ -569,13 +647,13 @@ class QiCardPaymentService implements PaymentService {
 
       AppLogger.i(
         'Tender payment created request=$requestId correlation=${result.correlationId}',
-        tag: 'QiCard',
+        tag: 'Payment',
       );
       return result;
     } catch (e, st) {
       AppLogger.e(
         'createPaymentForTenderOffer failed',
-        tag: 'QiCard',
+        tag: 'Payment',
         error: e,
         stackTrace: st,
       );
@@ -595,7 +673,7 @@ class QiCardPaymentService implements PaymentService {
     try {
       AppLogger.i(
         'Recovering tender payment request=$requestId paymentRequestId=$paymentRequestId',
-        tag: 'QiCard',
+        tag: 'Payment',
       );
       final response = await _client.functions.invoke(
         'qicard_payment_recovery_tender',
@@ -611,7 +689,7 @@ class QiCardPaymentService implements PaymentService {
       if (serviceError != null) {
         AppLogger.w(
           'Tender recovery rejected for request=$requestId',
-          tag: 'QiCard',
+          tag: 'Payment',
           error: serviceError,
           json: _safePayloadSummary(data),
         );
@@ -638,7 +716,7 @@ class QiCardPaymentService implements PaymentService {
     } catch (e, st) {
       AppLogger.e(
         'recoverTenderPaymentAfterCallback failed',
-        tag: 'QiCard',
+        tag: 'Payment',
         error: e,
         stackTrace: st,
       );

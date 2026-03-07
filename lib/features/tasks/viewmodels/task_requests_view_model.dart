@@ -413,8 +413,8 @@ class TaskRequestsViewModel extends ChangeNotifier {
     );
 
     try {
-      // Calculate price in cents if not provided
-      final priceCents = expectedPriceCents ?? request.price;
+      // DB stores task_requests.price in IQD; RPC expects p_expected_price_cents = price * 100
+      final priceCents = expectedPriceCents ?? (request.price * 100);
 
       AppLogger.d(
         'Accepting offer \${request.id} with expected price: \$priceCents cents',

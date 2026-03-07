@@ -102,8 +102,8 @@ void main() {
         tag: 'rls_test',
       );
 
-      // wallet_balances joins profiles with wallet_transactions
-      // If SECURITY DEFINER, could expose all users' wallet data
+      // Legacy wallet_balances referenced ledger/views; canonical views are
+      // vw_wallet_balances_user and vw_wallet_activity_user (security_invoker).
 
       AppLogger.d('Verify: wallet_balances either uses security_invoker or is dropped', tag: 'rls_test');
       expect(true, isTrue);

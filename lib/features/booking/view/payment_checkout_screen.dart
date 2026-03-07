@@ -60,6 +60,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
   String? _draftBookingId;
   BookingViewModel? _vm;
   Timer? _orphanDraftTimer;
+  StreamSubscription<String>? _intentSubscription;
 
   String get _runtimeFinishUrl => buildQiCardFinishUrlForRuntime();
 
@@ -80,6 +81,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
 
   @override
   void dispose() {
+    _intentSubscription?.cancel();
     _orphanDraftTimer?.cancel();
     final draftBookingId = _draftBookingId;
     if (!_paymentSuccess &&
@@ -104,6 +106,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
   Future<void> _cancelDraftIfPossible(String bookingId) async {
     _orphanDraftTimer?.cancel();
     _orphanDraftTimer = null;
+    _intentSubscription?.cancel();
     AppLogger.i(
       'Attempting to cancel unpaid booking draft booking=$bookingId',
       tag: 'Payment',
@@ -185,7 +188,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
       'paymentId=${paymentReturn.paymentId} '
       'correlation=${paymentReturn.correlationId} '
       'status=$resultStatus',
-      tag: 'QiCard',
+      tag: 'Payment',
     );
 
     final recovery = await vm.recoverBookingPaymentWithRetries(
@@ -212,8 +215,13 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
 
     if (recovery.paymentStatus == 'held') {
       AppLogger.i(
-        'Booking payment completed successfully for booking=$bookingId',
+        'Checkout Success: Booking confirmed and funds held for booking=$bookingId',
         tag: 'Payment',
+        json: {
+          'booking_id': bookingId,
+          'task_id': widget.taskId,
+          'amount': widget.price,
+        },
       );
       _orphanDraftTimer?.cancel();
       _orphanDraftTimer = null;
@@ -307,6 +315,34 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
       });
 
       if (createResult.formUrl != null) {
+        if (createResult.intentId != null) {
+          _intentSubscription?.cancel();
+          _intentSubscription = vm
+              .streamPaymentIntentStatus(createResult.intentId!)
+              .listen((status) {
+                if (_paymentSuccess) return;
+                AppLogger.i(
+                  'Payment intent realtime status updated: $status',
+                  tag: 'Payment',
+                );
+                if (status == 'succeeded' || status == 'failed') {
+                  _intentSubscription?.cancel();
+                  if (mounted && Navigator.canPop(context)) {
+                    Navigator.of(context).pop(
+                      PaymentReturnArgs(
+                        paymentId: null,
+                        correlationId: createResult.correlationId,
+                        status: status == 'succeeded' ? 'SUCCESS' : 'FAILED',
+                        rawUri: Uri.parse(
+                          'sline://payment_sync?status=$status',
+                        ),
+                      ),
+                    );
+                  }
+                }
+              });
+        }
+
         final uri = Uri.tryParse(createResult.formUrl!);
         if (uri == null) {
           AppLogger.w(

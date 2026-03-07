@@ -19,22 +19,46 @@ void main() {
   group('Storage RLS Security Tests (T50-T53)', () {
     late StorageRlsTestHarness harness;
 
+    setUpAll(() async {
+      // Initialize Supabase with dummy values for tests
+      // This prevents 'You must initialize the supabase instance' errors
+      try {
+        Supabase.instance;
+      } catch (_) {
+        await Supabase.initialize(
+          url: 'https://test.supabase.co',
+          anonKey: 'dummy-key',
+          debug: false,
+        );
+      }
+    });
+
     setUp(() {
       // For integration tests, inject real client
       // For unit tests, use mock mode (client = null)
-      final client = Supabase.instance.client;
+      SupabaseClient? client;
+      try {
+        client = Supabase.instance.client;
+      } catch (_) {
+        // Fallback for environments where initialization might be different
+      }
       harness = StorageRlsTestHarness(client: client);
     });
 
     tearDown(() {
-      harness.logSummary();
+      try {
+        harness.logSummary();
+      } catch (_) {}
     });
 
     // Test data - matches fixtures/storage_rls_test_data.sql
     const testConversationId = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
-    const testChatAttachmentPath = 'convos/$testConversationId/test-attachment.jpg';
-    const testTaskImagePath = '11111111-1111-1111-1111-111111111111/test-task-image.jpg';
-    const testAvatarPath = '11111111-1111-1111-1111-111111111111/test-avatar.jpg';
+    const testChatAttachmentPath =
+        'convos/$testConversationId/test-attachment.jpg';
+    const testTaskImagePath =
+        '11111111-1111-1111-1111-111111111111/test-task-image.jpg';
+    const testAvatarPath =
+        '11111111-1111-1111-1111-111111111111/test-avatar.jpg';
 
     group('T50: Chat Attachments - Participant Access', () {
       test('T50a client participant CAN access chat attachment', () async {
@@ -42,7 +66,8 @@ void main() {
           bucket: 'chat-attachments',
           path: testChatAttachmentPath,
           asUserId: TestUsers.clientUser.id,
-          description: 'Client (participant) should access their conversation attachment',
+          description:
+              'Client (participant) should access their conversation attachment',
         );
       });
 
@@ -51,28 +76,34 @@ void main() {
           bucket: 'chat-attachments',
           path: testChatAttachmentPath,
           asUserId: TestUsers.freelancerUser.id,
-          description: 'Freelancer (participant) should access their conversation attachment',
+          description:
+              'Freelancer (participant) should access their conversation attachment',
         );
       });
     });
 
     group('T51: Chat Attachments - Non-Participant Denial', () {
-      test('T51 other client (non-participant) CANNOT access chat attachment', () async {
-        await harness.assertCannotAccessStorage(
-          bucket: 'chat-attachments',
-          path: testChatAttachmentPath,
-          asUserId: TestUsers.otherClientUser.id,
-          description: 'Other client (non-participant) should be blocked from accessing chat attachment',
-          expectedError: '403',
-        );
-      });
+      test(
+        'T51 other client (non-participant) CANNOT access chat attachment',
+        () async {
+          await harness.assertCannotAccessStorage(
+            bucket: 'chat-attachments',
+            path: testChatAttachmentPath,
+            asUserId: TestUsers.otherClientUser.id,
+            description:
+                'Other client (non-participant) should be blocked from accessing chat attachment',
+            expectedError: '403',
+          );
+        },
+      );
 
       test('T51b anonymous user CANNOT access chat attachment', () async {
         await harness.assertCannotAccessStorage(
           bucket: 'chat-attachments',
           path: testChatAttachmentPath,
           asUserId: '',
-          description: 'Anonymous user should be blocked from accessing chat attachment',
+          description:
+              'Anonymous user should be blocked from accessing chat attachment',
           expectedError: 'JWT',
         );
       });
@@ -93,7 +124,8 @@ void main() {
           bucket: 'task-images',
           path: testTaskImagePath,
           asUserId: TestUsers.otherClientUser.id,
-          description: 'Non-owner should be blocked from accessing others task image',
+          description:
+              'Non-owner should be blocked from accessing others task image',
           expectedError: '403',
         );
       });
@@ -105,7 +137,8 @@ void main() {
           bucket: 'chat-attachments',
           path: testChatAttachmentPath,
           asUserId: TestUsers.adminUser.id,
-          description: 'Admin should access any chat attachment for dispute resolution',
+          description:
+              'Admin should access any chat attachment for dispute resolution',
         );
       });
 
@@ -114,7 +147,8 @@ void main() {
           bucket: 'task-images',
           path: testTaskImagePath,
           asUserId: TestUsers.adminUser.id,
-          description: 'Admin should access any task image for dispute resolution',
+          description:
+              'Admin should access any task image for dispute resolution',
         );
       });
 

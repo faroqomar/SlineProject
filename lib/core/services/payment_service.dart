@@ -89,6 +89,7 @@ class PaymentStatusResult {
 class QiCardCreatePaymentResult {
   const QiCardCreatePaymentResult({
     this.bookingId,
+    this.intentId,
     this.paymentRequestId,
     this.formUrl,
     this.amount,
@@ -101,6 +102,7 @@ class QiCardCreatePaymentResult {
   });
 
   final String? bookingId;
+  final String? intentId;
   final String? paymentRequestId;
   final String? formUrl;
   final double? amount;
@@ -115,6 +117,23 @@ class QiCardCreatePaymentResult {
       (bookingId != null || paymentRequestId != null) &&
       formUrl != null &&
       error == null;
+}
+
+class PaymentIntentResult {
+  const PaymentIntentResult({
+    this.intentId,
+    this.checkoutUrl,
+    this.error,
+    this.errorCode,
+  });
+
+  final String? intentId;
+  final String? checkoutUrl;
+  final String? error;
+  final String? errorCode;
+
+  bool get isSuccess =>
+      intentId != null && checkoutUrl != null && error == null;
 }
 
 /// Result of creating a QiCard payment for a direct offer (accepted, unpaid).
@@ -162,8 +181,7 @@ class QiCardTenderPaymentResult {
   final String? error;
   final String? errorCode;
 
-  bool get isSuccess =>
-      requestId != null && formUrl != null && error == null;
+  bool get isSuccess => requestId != null && formUrl != null && error == null;
 }
 
 class QiCardRecoveryResult {
@@ -276,6 +294,14 @@ abstract class PaymentService {
   /// Returns [PaymentStatusResult] with current status or error information.
   Future<PaymentStatusResult> getPaymentStatus({required String paymentId});
 
+  /// Unified hardned payment intent creation mapping to the secure Edge Function.
+  Future<PaymentIntentResult> createPaymentIntent({
+    required String entityType,
+    required String entityId,
+    required String successUrl,
+    required String cancelUrl,
+  });
+
   /// Create a booking draft and QiCard payment request on the server.
   Future<QiCardCreatePaymentResult> createPaymentForBooking({
     required String taskId,
@@ -323,6 +349,9 @@ abstract class PaymentService {
     required String requestId,
     required String paymentRequestId,
   });
+
+  /// Streams the status of a payment intent directly from the database.
+  Stream<String> streamPaymentIntentStatus(String intentId);
 }
 
 /// Result of tender payment recovery (after WebView return).

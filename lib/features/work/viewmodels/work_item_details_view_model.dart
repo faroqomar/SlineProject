@@ -148,6 +148,17 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
 
   Future<void> approveDelivery() async {
     if (_workItem == null) return;
+    final correlationId =
+        'apv_${_workItem!.id}_${DateTime.now().millisecondsSinceEpoch}';
+    AppLogger.i(
+      'approveDelivery called',
+      tag: 'WorkItemDetails',
+      json: {
+        'entityId': _workItem!.id,
+        'sourceType': _workItem!.sourceType,
+        'correlationId': correlationId,
+      },
+    );
     try {
       _isLoading = true;
       notifyListeners();
@@ -155,12 +166,18 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
       await _workService.approveDelivery(
         entityId: _workItem!.id,
         entityType: _workItem!.sourceType,
+        correlationId: correlationId,
       );
 
       await loadData(_workItem!.id, _workItem!.sourceType);
     } catch (e, stack) {
       _error = 'Failed to approve delivery';
-      AppLogger.e('Approve delivery error', error: e, stackTrace: stack);
+      AppLogger.e(
+        'Approve delivery error',
+        tag: 'WorkItemDetails',
+        error: e,
+        stackTrace: stack,
+      );
     } finally {
       _isLoading = false;
       notifyListeners();

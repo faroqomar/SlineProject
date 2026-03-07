@@ -1,6 +1,6 @@
 # SLine App - Folder Structure Guide
 
-**Last Updated:** 2026-03-06 (Tender Task Lifecycle v2.20: exceptions folder, test/unit/tender, award_expiration_monitor)
+**Last Updated:** 2026-03-08 (docs sync: escrow idempotency, ledger event flow forensics)
 
 This document describes the current repository layout. It replaces older references to `presentation/` and `controllers/`; the live Flutter codebase uses `view/` and `viewmodels/` under `lib/features/`.
 
@@ -40,6 +40,7 @@ sline_app/
 This folder is active working documentation, not archive-only material.
 
 Typical files:
+
 - feature audits: `management.TODO.md`
 - plans: `PLAN_*.md`
 - execution logs: `EXECUTION_LOG_*.md`
@@ -49,6 +50,7 @@ Typical files:
 ## `Sline_everything/` - Documentation Hub
 
 Primary documents:
+
 - `SUPABASE_SETUP.md`: database schema, RLS, RPCs, indexes, storage
 - `DEVELOPER_GUIDE.md`: system map plus embedded feature references
 - `DEVELOPER_GUIDE/`: feature-specific deep dives
@@ -74,10 +76,13 @@ supabase/
 ```
 
 Recent migration themes in `supabase/migrations/`:
+
 - ledger introduction and wallet views
 - booking server authority and payment remediation
 - repeat slotless booking support
 - management timeline scope index
+- escrow idempotency (stable key + FOR UPDATE in `rpc_approve_delivery`, migration `20260307000001_escrow_idempotency_stable_key.sql`)
+- **Hardened Payment Gateway & Administrator Views (v2.20, 2026-03-07):** Added `payment_intents`, `payment_events`, and `orphan_payments` tables. New admin financial views `vw_admin_finance_metrics`, `vw_admin_escrow_open`, and `vw_admin_booking_finance`.
 - direct_offers table, RLS, triggers, ledger RPC and enum fix (20260303–20260308); 20260308 fixes release_with_fee zero-amount and enum cast
 
 ## `lib/` - Flutter Application Source
@@ -111,6 +116,7 @@ lib/
 App-level shell and navigation.
 
 Current file:
+
 - `lib/app/main_navigation_screen.dart`: bottom navigation shell and main app entry after authentication
 
 ### `lib/core/`
@@ -118,16 +124,18 @@ Current file:
 Shared cross-cutting infrastructure.
 
 Current subfolders:
+
 - `config/`: runtime configuration (e.g. `auth_config.dart`, `payment_runtime_config.dart`); user-facing auth strings in `lib/core/constants/auth_messages.dart`
 - `models/`: global models such as `user_profile.dart` and shared `payment_return_args.dart`
 - `providers/`: app-wide providers such as navigation and theme mode
 - `services/`: Supabase bootstrap, payment services, cache, deep links, crash reporting, logging, **role switch coordinator**
 - `theme/`: color, spacing, typography, decorations, theme assembly, theme dashboard
-- `utils/`: error mapping, formatting, loading overlays, URL cache, route transitions, web error filters
+- `utils/`: error mapping, formatting, loading overlays, URL cache, route transitions, web error filters, **ledger forensics** (p_meta session_id/request_id for ledger event flow)
 - `widgets/`: shared UI widgets such as signed media, buttons, badges, loaders, bottom nav
 - `mixins/`: shared behavior mixins such as `role_switch_aware.dart`
 
 Important current core files:
+
 - `lib/core/services/supabase_config.dart`
 - `lib/core/services/payment_service.dart`
 - `lib/core/services/qicard_payment_service.dart`
@@ -136,12 +144,14 @@ Important current core files:
 - `lib/core/mixins/role_switch_aware.dart` — Mixin interface for ViewModels participating in role switch teardown
 - `lib/core/utils/loading_utils.dart`
 - `lib/core/utils/flutter_error_filters.dart`
+- `lib/core/utils/ledger_forensics.dart` — Ledger forensics (session_id, request_id) for p_meta; single source for ledger event flow (09)
 - `lib/core/widgets/signed_avatar.dart`
 - `lib/core/widgets/signed_image.dart`
 
 ### `lib/features/`
 
 Current feature folders:
+
 - `auth`
 - `booking`
 - `categories`
@@ -163,6 +173,7 @@ Current feature folders:
 - `work`
 
 Not every feature uses every subfolder, but the standard live convention is:
+
 - `view/` instead of `presentation/`
 - `viewmodels/` instead of `controllers/`
 - `data/` for repositories when a repository layer exists
@@ -177,7 +188,7 @@ Not every feature uses every subfolder, but the standard live convention is:
   - `data/role_switch_repository.dart` — **NEW (v2.18)** Atomic role switching with RPC, session refresh, JWT verification
   - `models/role_switch_result.dart` — **NEW (v2.18)** RPC response model with error taxonomy
 - `lib/features/chat/`: conversations, messages, attachments, realtime updates
-- `lib/features/dashboard/`: unified dashboard tabs and role-based work summaries, including the live bottom-nav dashboard slot. Tab cards (booking, offer, wallet snapshot) live in owning features: `booking/view/widgets/dashboard_booking_card.dart`, `tasks/view/widgets/dashboard_offer_card.dart`, `wallet/view/widgets/wallet_snapshot_card.dart`; shared status helpers in `core/utils/status_presenter.dart`
+- `lib/features/dashboard/`: unified dashboard tabs (Overview, Bookings, Work, Wallet, Inbox) and role-based work summaries, including the live bottom-nav dashboard slot. Tab cards (booking, offer, wallet snapshot) live in owning features: `booking/view/widgets/dashboard_booking_card.dart`, `tasks/view/widgets/dashboard_offer_card.dart`, `wallet/view/widgets/wallet_snapshot_card.dart`; dedicated Wallet tab in `view/tabs/wallet_tab.dart`; shared status helpers in `core/utils/status_presenter.dart`
 - `lib/features/direct_offers/`: direct chat offers (create, accept, pay, deliver, complete) and payment recovery
 - `lib/features/management/`: order timeline / note management for tasks and bookings
 - `lib/features/orders/`: decommissioned placeholder folder with `README.md` only; standalone orders runtime was removed on 2026-03-01
@@ -185,7 +196,7 @@ Not every feature uses every subfolder, but the standard live convention is:
 - `lib/features/tasks/`: task creation, details, requests/offers, tender payment, delivery flows
   - `exceptions/offer_exceptions.dart` — **NEW (v2.20)** Custom exceptions: `PriceMismatchException`, `OfferAlreadyAcceptedException`
   - `viewmodels/award_expiration_monitor.dart` — **NEW (v2.20)** Countdown timer for unpaid awards with urgency levels
-- `lib/features/wallet/`: wallet state and ledger-backed balance views
+- `lib/features/wallet/`: wallet state and ledger-backed balance views; `utils/transaction_label_helper.dart` — human-readable transaction source/destination labels
 - `lib/features/work/`: unified work item details and CTA resolution
 
 ## `test/` - Automated Test Layout
@@ -238,6 +249,7 @@ Use `integration_test/` for device/browser flows that need platform navigation o
 ## `assets/`
 
 Current bundled asset folder:
+
 - `assets/images/`
 
 ## Structure Rules

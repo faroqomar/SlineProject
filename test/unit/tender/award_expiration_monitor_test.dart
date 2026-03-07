@@ -19,7 +19,10 @@ void main() {
     });
 
     test('should format countdown correctly for hours and minutes', () {
-      final deadline = DateTime.now().add(const Duration(hours: 47, minutes: 32));
+      // Add a small buffer (5s) to ensure we stay in the same minute during test execution
+      final deadline = DateTime.now().add(
+        const Duration(hours: 47, minutes: 32, seconds: 5),
+      );
       monitor.startMonitoring(deadline);
 
       expect(monitor.countdownText, '47h 32m');
@@ -50,7 +53,9 @@ void main() {
     });
 
     test('should return critical urgency when < 6 hours remain', () {
-      final deadline = DateTime.now().add(const Duration(hours: 5, minutes: 30));
+      final deadline = DateTime.now().add(
+        const Duration(hours: 5, minutes: 30),
+      );
       monitor.startMonitoring(deadline);
 
       expect(monitor.urgencyLevel, UrgencyLevel.critical);
@@ -79,37 +84,39 @@ void main() {
       expect(monitor.urgencyColor, 'red');
 
       // Expired - grey
-      monitor.startMonitoring(DateTime.now().subtract(const Duration(hours: 1)));
+      monitor.startMonitoring(
+        DateTime.now().subtract(const Duration(hours: 1)),
+      );
       expect(monitor.urgencyColor, 'grey');
     });
 
     test('should notify listeners when started', () {
       final deadline = DateTime.now().add(const Duration(hours: 24));
-      
+
       var notificationCount = 0;
       monitor.addListener(() => notificationCount++);
-      
+
       monitor.startMonitoring(deadline);
-      
+
       // Should notify immediately on start
       expect(notificationCount, greaterThanOrEqualTo(1));
     });
 
     test('should properly dispose and prevent operations', () {
       final deadline = DateTime.now().add(const Duration(hours: 24));
-      
+
       monitor.startMonitoring(deadline);
       expect(monitor.isDisposed, false);
-      
+
       monitor.dispose();
-      
+
       expect(monitor.isDisposed, true);
       expect(monitor.paymentDeadline, null);
     });
 
     test('should not crash when operations called on disposed monitor', () {
       monitor.dispose();
-      
+
       // These should not throw
       final deadline = DateTime.now().add(const Duration(hours: 24));
       monitor.startMonitoring(deadline); // Should log warning but not crash

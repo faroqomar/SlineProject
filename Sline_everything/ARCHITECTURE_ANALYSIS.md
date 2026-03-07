@@ -1,12 +1,15 @@
 # SLine Architecture Analysis & Optimization Guide
 
-**Date**: October 31, 2024
-**Version**: 1.9+
+**Date**: March 7, 2024
+**Version**: 2.20
 **Architecture Pattern**: MVVM with Provider
 
 > Historical analysis note: this document captures architectural assessment snapshots over time. For the current live repository layout and active contracts, use `Sline_everything/STRUCTURE.md`, `Sline_everything/DEVELOPER_GUIDE.md`, and `Sline_everything/SUPABASE_SETUP.md`.
 
-## Current Live Architecture Notes (2026-03-01)
+## Current Live Architecture Notes (2026-03-07)
+
+- **Hardened Payment Gateway (v2.20)**: Architecture shifted to "Server Authority" for payment lifecycle. Clients no longer initiate sessions directly. `payment_intents` and `payment_events` act as the source of truth, synchronized via Supabase Realtime in the UI layer.
+- The bottom navigation still uses the legacy enum member `NavView.orders` in `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/core/app_enums.dart`, but the live slot renders `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/dashboard/view/dashboard_screen.dart`.
 
 - The bottom navigation still uses the legacy enum member `NavView.orders` in `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/core/app_enums.dart`, but the live slot renders `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/dashboard/view/dashboard_screen.dart`.
 - The standalone runtime under `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/orders/` was removed; `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/orders/README.md` is the only remaining file in that folder.
@@ -16,6 +19,7 @@
 ---
 
 ## Table of Contents
+
 1. [Current Architecture Overview](#current-architecture-overview)
 2. [Architecture Decision Analysis](#architecture-decision-analysis)
 3. [Scalability Assessment](#scalability-assessment)
@@ -92,15 +96,18 @@ User Action → View → ViewModel → Repository → Service → Supabase
 ## Architecture Decision Analysis
 
 ### Decision 1: MVVM Pattern
+
 **Status**: ✅ Good Choice
 
 **Pros**:
+
 - Clear separation of concerns
 - Testable business logic (ViewModels)
 - UI independent of data layer
 - Easy to reason about data flow
 
 **Cons**:
+
 - More boilerplate than simple setState
 - Can be over-engineered for simple screens
 - ViewModels can become "god objects"
@@ -108,21 +115,25 @@ User Action → View → ViewModel → Repository → Service → Supabase
 **Assessment**: **Appropriate for this application's complexity**
 
 **Improvements**:
+
 - Consider splitting large ViewModels (e.g., TaskViewModel could be split into TaskListViewModel and TaskDetailsViewModel)
 - Add clear naming conventions (e.g., `fetchTasks()` vs `loadTasks()`)
 
 ---
 
 ### Decision 2: Provider for State Management
+
 **Status**: ✅ Good Choice (for now)
 
 **Pros**:
+
 - Native Flutter solution
 - Simple to understand
 - Good ecosystem support
 - Sufficient for current complexity
 
 **Cons**:
+
 - No compile-time safety
 - Manual `notifyListeners()` calls (error-prone)
 - Difficult to debug state changes
@@ -131,6 +142,7 @@ User Action → View → ViewModel → Repository → Service → Supabase
 **Assessment**: **Good for MVP, consider migration path**
 
 **Future Consideration**:
+
 ```dart
 // Current: Provider + ChangeNotifier
 class TaskViewModel extends ChangeNotifier {
@@ -162,9 +174,11 @@ class TaskNotifier extends _$TaskNotifier {
 ---
 
 ### Decision 3: Supabase as Backend
+
 **Status**: ✅ Excellent Choice
 
 **Pros**:
+
 - Open source (no vendor lock-in)
 - PostgreSQL (powerful relational DB)
 - Built-in auth, storage, realtime
@@ -173,6 +187,7 @@ class TaskNotifier extends _$TaskNotifier {
 - Self-hostable
 
 **Cons**:
+
 - Smaller ecosystem than Firebase
 - Less mature mobile SDKs
 - Free tier has limits (auto-pause)
@@ -181,6 +196,7 @@ class TaskNotifier extends _$TaskNotifier {
 **Assessment**: **Perfect for this use case**
 
 **RLS Advantages**:
+
 ```sql
 -- Security at DATABASE level (can't bypass from client)
 CREATE POLICY "Users can only see their own data"
@@ -202,9 +218,11 @@ USING (auth.uid() = id);
 ---
 
 ### Decision 4: Feature-Based Organization
+
 **Status**: ✅ Excellent Choice
 
 **Current Structure**:
+
 ```
 lib/features/
 ├── auth/
@@ -216,26 +234,31 @@ lib/features/
 ```
 
 **Pros**:
+
 - Easy to find related code
 - Clear feature boundaries
 - Enables team parallelization
 - Easy to delete features
 
 **Cons**:
+
 - Can lead to code duplication
 - Shared widgets need careful placement
 
 **Assessment**: **Ideal for multi-feature app**
 
 **2026-03-01 Current Note**:
+
 - Feature-based organization only stays healthy when decommissioned features are actually removed from runtime wiring. The retired `orders` module was a concrete example of a feature folder that had drifted out of navigation ownership while still keeping a provider and docs alive.
 
 ---
 
 ### Decision 5: Repository Pattern (Partial Implementation)
+
 **Status**: ⚠️ Inconsistent
 
 **Current State**:
+
 - Some features have Repository layer (Auth, Tasks)
 - Some features only have Service layer (Chat, Favorites)
 - Auth has BOTH Service AND Repository (duplication!)
@@ -243,6 +266,7 @@ lib/features/
 **Assessment**: **Needs standardization**
 
 **Recommendation**:
+
 ```
 Option 1 (Recommended): Keep Repository for all features
 ViewModel → Repository → Service → Supabase
@@ -258,6 +282,7 @@ Mixed approach causes confusion
 ```
 
 **Suggested Standard**:
+
 ```dart
 // Service: Direct Supabase interaction
 class TaskService {
@@ -294,6 +319,7 @@ class TaskRepository {
 ---
 
 ### Decision 6: Coordinator Pattern for Cross-ViewModel Communication (v2.18)
+
 **Status**: ✅ Excellent Choice
 
 **Context**: Role switching requires cleaning up cached data across multiple ViewModels (Chat, Dashboard, Task, Home). Direct ViewModel-to-ViewModel references violate MVVM boundaries (ViewModels are independent units).
@@ -334,6 +360,7 @@ class RoleSwitchCoordinator {
 ```
 
 **Usage in ViewModels**:
+
 ```dart
 class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
   ChatViewModel() {
@@ -359,6 +386,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
 ```
 
 **Pros**:
+
 - ✅ Maintains MVVM boundaries (no direct ViewModel references)
 - ✅ Type-safe (mixin interface contract)
 - ✅ Testable (mock coordinator in tests)
@@ -366,6 +394,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
 - ✅ Backward compatible (ViewModels opt-in via mixin)
 
 **Cons**:
+
 - ⚠️ Global state (singleton) — manageable, but requires testing discipline
 - ⚠️ Registration cleanup critical (must call `unregister()` in `dispose()`)
 - ⚠️ No compile-time safety for forgetting to call `teardownForRoleSwitch()`
@@ -373,11 +402,13 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
 **Assessment**: **Elegant solution to cross-cutting concern within MVVM**
 
 **When to Use**:
+
 - Cross-ViewModel events (e.g., logout, role switch, theme change)
 - Global state teardown (clear all cached data)
 - Synchronized refresh across multiple screens
 
 **When NOT to Use**:
+
 - Simple ViewModel-to-View data flow (use standard Provider/Consumer)
 - Feature-specific coordination (keep within feature boundary)
 
@@ -390,12 +421,14 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
 ### Current Load Capacity
 
 **Estimated Limits (Before Optimization)**:
+
 - Concurrent Users: ~1,000
 - Database Queries/sec: ~50 (bottleneck: N+1 queries)
 - Realtime Connections: ~500 (Supabase free tier limit)
 - Storage: 1GB (Supabase free tier)
 
 **After Optimization**:
+
 - Concurrent Users: ~10,000
 - Database Queries/sec: ~500+ (after fixing N+1)
 - Realtime Connections: Limited by tier
@@ -404,12 +437,14 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
 ### Bottlenecks Identified
 
 #### 1. Database Query Inefficiency ⚠️
+
 **Issue**: N+1 queries in TaskService
 **Impact**: 10-50x performance degradation
 **Fix**: JOIN queries or batch fetching
 **Priority**: CRITICAL
 
 #### 2. No Caching Strategy ⚠️
+
 **Issue**: Every request hits Supabase
 **Impact**: Slow loading, high costs
 **Fix**: Implement Repository-level caching
@@ -440,6 +475,7 @@ class CacheManager {
 ```
 
 #### 3. No Pagination on Large Lists ⚠️
+
 **Issue**: Fetching all tasks at once
 **Impact**: Slow initial load, high memory
 **Fix**: Implement cursor-based pagination
@@ -468,6 +504,7 @@ class TaskRepository {
 ```
 
 #### 4. Realtime Subscriptions Always Active ⚠️
+
 **Issue**: Chat subscriptions active even when app backgrounded
 **Impact**: Battery drain, unnecessary data transfer
 **Fix**: Pause subscriptions when app paused
@@ -499,6 +536,7 @@ class ChatViewModel extends ChangeNotifier with WidgetsBindingObserver {
 ```
 
 #### 5. No Image Optimization ⚠️
+
 **Issue**: Full-size images loaded for thumbnails
 **Impact**: Slow loading, high data usage
 **Fix**: Use Supabase image transformations
@@ -525,6 +563,7 @@ final url = supabase.storage.from('avatars').getPublicUrl(
 ### 1. Query Optimization (CRITICAL)
 
 **Current Performance**:
+
 ```dart
 // ❌ 51 queries for 50 tasks
 for (var task in tasks) {
@@ -533,6 +572,7 @@ for (var task in tasks) {
 ```
 
 **Optimized**:
+
 ```dart
 // ✅ 1 query for 50 tasks
 final tasks = await supabase.from('tasks').select('''
@@ -719,6 +759,7 @@ class OptimizedImage extends StatelessWidget {
 ### Current Security Posture: ✅ STRONG
 
 #### 1. Row-Level Security (RLS) ✅
+
 **Status**: Properly implemented
 
 ```sql
@@ -739,6 +780,7 @@ FOR SELECT USING (
 ---
 
 #### 2. Private Storage with Signed URLs ✅
+
 **Status**: Correctly implemented
 
 ```dart
@@ -757,6 +799,7 @@ final signedUrl = await supabase.storage
 ---
 
 #### 3. Input Validation ⚠️
+
 **Status**: Needs improvement
 
 **Current**: Basic validation in UI
@@ -785,6 +828,7 @@ $$ LANGUAGE plpgsql;
 ---
 
 #### 4. Secrets Management ⚠️
+
 **Status**: Needs improvement
 
 **Current**: Hardcoded in `supabase_config.dart`
@@ -816,6 +860,7 @@ SUPABASE_ANON_KEY=eyJhbGci...
 ---
 
 #### 5. Rate Limiting ⚠️
+
 **Status**: Not implemented
 
 **Recommendation**: Add Supabase edge functions with rate limiting
@@ -852,12 +897,14 @@ serve(async (req) => {
 ### 1. Migrate to Riverpod (6-12 months)
 
 **Benefits**:
+
 - Compile-time safety
 - Better DevTools
 - Immutable state
 - Easier testing
 
 **Migration Path**:
+
 ```dart
 // Phase 1: Add Riverpod alongside Provider
 dependencies:
@@ -934,6 +981,7 @@ class TaskEventStore {
 ### 4. Microservices for Heavy Operations
 
 **Candidates**:
+
 - Image processing (resize, compress, format conversion)
 - Video transcoding (if adding video)
 - PDF generation (invoices, contracts)
@@ -987,21 +1035,25 @@ await AnalyticsService().trackEvent('task_created', properties: {
 ### Path 1: Provider → Riverpod (Recommended Timeline: 6-12 months)
 
 **Phase 1 (Month 1-2)**: Setup & New Features
+
 - Add `flutter_riverpod` dependency
 - Create Riverpod providers for new features only
 - Team training on Riverpod
 
 **Phase 2 (Month 3-6)**: Migrate Read-Only Features
+
 - Start with simple features (Categories, Portfolio)
 - Migrate ViewModels to StateNotifier/AsyncNotifier
 - Test thoroughly
 
 **Phase 3 (Month 7-10)**: Migrate Complex Features
+
 - Migrate Auth, Tasks, Chat
 - Update all widget trees to use ConsumerWidget
 - Remove Provider dependencies
 
 **Phase 4 (Month 11-12)**: Cleanup & Optimization
+
 - Remove all Provider code
 - Optimize with Riverpod features (autodispose, family, etc.)
 - Final testing & performance tuning
@@ -1011,6 +1063,7 @@ await AnalyticsService().trackEvent('task_created', properties: {
 ### Path 2: Add Offline Support (Recommended Timeline: 3-6 months)
 
 **Phase 1 (Month 1)**: Local Storage Setup
+
 ```dart
 dependencies:
   hive: ^2.2.3
@@ -1023,6 +1076,7 @@ await Hive.openBox<Task>('tasks');
 ```
 
 **Phase 2 (Month 2-3)**: Repository Pattern with Offline
+
 ```dart
 class TaskRepository {
   final TaskService _remoteService;
@@ -1048,11 +1102,13 @@ class TaskRepository {
 ```
 
 **Phase 3 (Month 4-5)**: Sync Strategy
+
 - Implement queue for pending operations
 - Handle conflicts (last-write-wins or manual resolution)
 - Add background sync
 
 **Phase 4 (Month 6)**: Polish & Testing
+
 - Handle edge cases
 - Add UI indicators for offline mode
 - Thorough testing on various network conditions
@@ -1083,6 +1139,7 @@ sline_app/
 ```
 
 **Benefits**:
+
 - Clear boundaries
 - Independent versioning
 - Easier testing

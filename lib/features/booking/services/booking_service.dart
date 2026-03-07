@@ -114,6 +114,38 @@ class BookingService {
     }
   }
 
+  Future<BookingModel> createBookingDraft({
+    required String taskId,
+    String? note,
+    String? packageId,
+    Map<String, dynamic>? requirements,
+  }) async {
+    try {
+      AppLogger.i(
+        'Calling rpc_create_booking_draft_validated for task $taskId',
+        tag: 'Booking',
+      );
+      final res = await _client.rpc(
+        'rpc_create_booking_draft_validated',
+        params: {
+          'p_task_id': taskId,
+          'p_note': note,
+          'p_package_id': packageId,
+          'p_requirements': requirements ?? {},
+        },
+      );
+      return BookingModel.fromJson(res as Map<String, dynamic>);
+    } catch (e, st) {
+      AppLogger.e(
+        'Failed to create booking draft for task $taskId',
+        error: e,
+        stackTrace: st,
+        tag: 'Booking',
+      );
+      rethrow;
+    }
+  }
+
   Future<BookingModel> updateBookingStatus({
     required String bookingId,
     required BookingStatus newStatus,

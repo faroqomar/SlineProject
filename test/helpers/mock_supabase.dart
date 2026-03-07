@@ -33,16 +33,12 @@ const String _logTag = 'test_fixture';
 
 /// Mock implementation of [SupabaseClient] for testing
 class MockSupabaseClient extends Mock implements SupabaseClient {
-  MockSupabaseClient() {
-    AppLogger.d('MockSupabaseClient created', tag: _logTag);
-  }
+  MockSupabaseClient();
 }
 
 /// Mock implementation of [GoTrueClient] for auth operations
 class MockGoTrueClient extends Mock implements GoTrueClient {
-  MockGoTrueClient() {
-    AppLogger.d('MockGoTrueClient created', tag: _logTag);
-  }
+  MockGoTrueClient();
 }
 
 /// Mock implementation of [User] for auth user testing
@@ -77,10 +73,12 @@ void configureMockSession(
   int? expiresIn,
 }) {
   AppLogger.d('Configuring MockSession', tag: _logTag);
-  when(() => session.accessToken)
-      .thenReturn(accessToken ?? 'mock-access-token');
-  when(() => session.refreshToken)
-      .thenReturn(refreshToken ?? 'mock-refresh-token');
+  when(
+    () => session.accessToken,
+  ).thenReturn(accessToken ?? 'mock-access-token');
+  when(
+    () => session.refreshToken,
+  ).thenReturn(refreshToken ?? 'mock-refresh-token');
   when(() => session.user).thenReturn(user ?? MockUser());
   when(() => session.expiresIn).thenReturn(expiresIn ?? 3600);
 }
@@ -104,12 +102,8 @@ MockUser createMockClientUser({String? id, String? email}) {
     user,
     id: id ?? 'client-user-id',
     email: email ?? 'client@test.com',
-    appMetadata: <String, dynamic>{
-      'active_role': 'client',
-    },
-    userMetadata: <String, dynamic>{
-      'full_name': 'Test Client',
-    },
+    appMetadata: <String, dynamic>{'active_role': 'client'},
+    userMetadata: <String, dynamic>{'full_name': 'Test Client'},
   );
   return user;
 }
@@ -121,12 +115,8 @@ MockUser createMockFreelancerUser({String? id, String? email}) {
     user,
     id: id ?? 'freelancer-user-id',
     email: email ?? 'freelancer@test.com',
-    appMetadata: <String, dynamic>{
-      'active_role': 'freelancer',
-    },
-    userMetadata: <String, dynamic>{
-      'full_name': 'Test Freelancer',
-    },
+    appMetadata: <String, dynamic>{'active_role': 'freelancer'},
+    userMetadata: <String, dynamic>{'full_name': 'Test Freelancer'},
   );
   return user;
 }
@@ -143,10 +133,7 @@ MockSession createMockSessionWithRole(
     user,
     id: userId ?? 'test-user-id',
     email: email ?? 'test@test.com',
-    appMetadata: <String, dynamic>{
-      'active_role': role,
-      'provider': 'email',
-    },
+    appMetadata: <String, dynamic>{'active_role': role, 'provider': 'email'},
   );
   final session = MockSession();
   configureMockSession(

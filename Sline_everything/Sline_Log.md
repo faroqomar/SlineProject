@@ -4,6 +4,169 @@
 
 ---
 
+## 🏷️ Docs Sync — Reference Integrity & Diagram Standard (2026-03-08)
+
+**Date:** 2026-03-08  
+**Workflow:** `.agents/workflows/slinedocs.md`
+
+### ✅ Implemented
+
+- **Reference integrity:** All `Sline_everything/` references to ledger (09) and escrow idempotency (16) now point to **Done** folders. Paths `ImplementReady/09_ledger-event-flow/` and `ImplementReady/16_escrow-invariants-idempotency/` were dead after 09/16 were moved to Done. Updated: `Sline_Log.md` (4 refs), `DEVELOPER_GUIDE.md` (1 ref), `DEVELOPER_GUIDE/Wallet_Feature.md` (1 ref).
+- **Diagram 09:** `Sline_everything/AppDigram/All_Diagrams/09_ledger-event-flow.md` updated to full diagram-doc standard (checklist, OLD diagram preserved, Implemented diagram v2 with forensics/idempotency/gates/withdrawal/gateway); references in diagram point to `.TODO/improvement_the_system/Done/09_ledger-event-flow/`.
+- **SUPABASE_SETUP:** §6.6 `vw_wallet_activity_user` updated to match migration `20260307160000_wallet_activity_include_spent.sql` (include spent / gateway_escrow; security_invoker; new columns). Changelog §17: added bullet for this view change.
+
+### 📊 Impact
+
+- No dead paths in core docs; plan/contract/runbook links resolve.
+- Single source of truth for wallet activity view and ledger/escrow artifact locations.
+
+### 🔗 References
+
+- DOCS_SYNC note: `.TODO/DOCS_SYNC_2026-03-08_SlineDocsReferenceIntegrity.md`
+- This pass (full scan + ref integrity): `.TODO/DOCS_SYNC_2026-03-08_SlineDocsUpToDate.md` — Sline_Log 16/21 paths, MVP_ROADMAP full paths, SUPABASE_SETUP changelog bullet for wallet_activity_include_spent.
+- Diagram 09: `Sline_everything/AppDigram/All_Diagrams/09_ledger-event-flow.md`
+- Done 09: `.TODO/improvement_the_system/Done/09_ledger-event-flow/`
+- Done 16: `.TODO/improvement_the_system/Done/16_escrow-invariants-idempotency/`
+
+---
+
+## 🏷️ Dashboard Wallet Tab (2026-03-07)
+
+**Date:** 2026-03-07  
+**Plan:** Dashboard Wallet Tab Implementation Plan
+
+### ✅ Implemented
+
+- **Dashboard:** New **Wallet** tab (5 tabs: Overview, Bookings, Work, Wallet, Inbox). `lib/features/dashboard/view/tabs/wallet_tab.dart` — total balance, available to withdraw, Coming Soon withdraw section, transaction history with Money received / Money spent subsections and source/destination labels.
+- **Helper:** `lib/features/wallet/utils/transaction_label_helper.dart` — `getTransactionSourceOrDestination()`, `isReceivedTransaction()` for human-readable labels.
+- **Balance rule:** All displayed balances clamped to non-negative; spent shown only in transaction rows.
+- **Tests:** `test/widget/dashboard/dashboard_screen_test.dart` updated for 5 tabs.
+
+### 📊 Impact
+
+- **UX:** Dedicated wallet visibility in dashboard; users see balance and activity without leaving dashboard.
+- **Consistency:** Reuses WalletViewModel; same data as WalletScreen and Overview snapshot.
+
+### 🔗 References
+
+- Master Report: `.TODO/MASTER_REPORT_2026-03-07_DashboardWalletAndEscrow.md`
+- Wallet Feature: `Sline_everything/DEVELOPER_GUIDE/Wallet_Feature.md`
+
+---
+
+## 🏷️ Ledger Event Flow — Forensics, Contract, Tests, Runbook (2026-03-07)
+
+**Date:** 2026-03-07  
+**Plan:** `.TODO/PLAN_LedgerEventFlow_2026-03-07.md`  
+**Contract:** `.TODO/improvement_the_system/Done/09_ledger-event-flow/CONTRACT_ledger_event_flow.md`
+
+### ✅ Implemented
+
+- **Forensics:** LedgerService injects `session_id` (auth user id) and `request_id` (per-call UUID) into `p_meta` via `lib/core/utils/ledger_forensics.dart`; single source for all ledger call sites.
+- **Logging:** AppLogger only; start/success/error log lines include optional `request_id` for correlation; no PII or full meta in logs.
+- **Tests:** `test/unit/wallet/ledger_service_test.dart`, `wallet_service_test.dart`, `test/rls/ledger_rls_test.dart`; 6 tests passing.
+- **Docs:** DEVELOPER_GUIDE (Finance & Payment Ledger), Wallet_Feature.md updated; CONTRACT and SMOKE_CHECKLIST_AND_RUNBOOK in 09_ledger-event-flow folder.
+- **Runbook:** Withdrawal orphan detection query and runbook steps in SMOKE_CHECKLIST_AND_RUNBOOK.md.
+
+### 📊 Impact
+
+- **Audit:** journal_entries.meta stores session_id and request_id for dispute forensics.
+- **Observability:** request_id in logs enables correlation with DB journal entry.
+
+### 🧪 Verification
+
+- Plan: `.TODO/PLAN_LedgerEventFlow_2026-03-07.md`
+- Execution Log: `.TODO/EXECUTION_LOG_PLAN_LedgerEventFlow_2026-03-07.md`
+- Review: `.TODO/CODEGUARD_REVIEW_2026-03-07_LedgerEventFlow.md`
+- Master Report: `.TODO/MASTER_REPORT_2026-03-07_LedgerEventFlow.md`
+- Contract / Runbook: `.TODO/improvement_the_system/Done/09_ledger-event-flow/`
+
+---
+
+## 🏷️ Wallet Escrow Available Balances — direct_offer in rpc_approve_delivery (2026-03-07)
+
+**Date:** 2026-03-07  
+**Plan:** `.TODO/improvement_the_system/ImplementReady/21_Wallet_System_Escrow_Available_balances/PLAN_WalletEscrowAvailableBalances_2026-03-07_CRITIC.md`  
+**Execution Log:** `.TODO/improvement_the_system/ImplementReady/21_Wallet_System_Escrow_Available_balances/EXECUTION_LOG_PLAN_WalletEscrowAvailableBalances_2026-03-07.md`
+
+### ✅ Implemented
+
+- **Database:** `rpc_approve_delivery` extended with **direct_offer** branch (migration `20260307120000_rpc_approve_delivery_direct_offer.sql`). Client can approve delivery and release escrow for direct offers; same deterministic idempotency key and FOR UPDATE pattern as booking.
+- **App:** `DirectOffersService.completeOffer()` now calls `rpc_approve_delivery(entity_type: 'direct_offer', entity_id)` instead of LedgerService.submitPaymentEvent for release — single exit point for escrow release. AppLogger added for completeOffer (start, validation, error, success) and WalletService.getWalletBalance (error path).
+- **Docs:** Diagram 21 (Withdraw = Upcoming; entry point wording); CONTRACT_rpc_approve_delivery, LIVE_SCAN, RLS_CHECK_MATRIX in `.TODO/improvement_the_system/ImplementReady/21_Wallet_System_Escrow_Available_balances/`; DEVELOPER_GUIDE Wallet_Feature (§4 Approve delivery), Direct_Offers_Feature (4.5), SUPABASE_SETUP §9.5 (entity_type task, booking, direct_offer).
+
+### 📊 Impact
+
+- **Consistency:** Booking and direct offer both use the same RPC for approve delivery; idempotency and auth enforced in one place.
+- **Observability:** Wallet and direct-offer completion flows logged with AppLogger.
+
+### 🔗 References
+
+- Master Report: `.TODO/improvement_the_system/ImplementReady/21_Wallet_System_Escrow_Available_balances/MASTER_REPORT_2026-03-07_WalletEscrowAvailableBalances.md`
+- Contract: `.TODO/improvement_the_system/ImplementReady/21_Wallet_System_Escrow_Available_balances/CONTRACT_rpc_approve_delivery.md`
+
+---
+
+## 🏷️ Diagram 21 + Wallet activity include spent (2026-03-08)
+
+**Date:** 2026-03-08  
+**Scope:** Documentation sync (SlineDocs); reference integrity; diagram and schema docs aligned with implemented behaviour.
+
+### ✅ Implemented / Updated
+
+- **Diagram 21:** `Sline_everything/AppDigram/All_Diagrams/21_Wallet_System_Escrow_Available_balances.md` — Full checklist (Purpose, Scope, Glossary, Legend, Actors, System Components, Step-by-step Flow, State Machine, Invariants, Guards, Failure Modes, Security, Data Model, Observability, Verification, Dependencies, Open Questions, Final Status). OLD diagram (v1 legacy) retained; NEW/Implemented diagram (v2) updated with gateway_escrow, `vw_wallet_activity_user` including spent (user_available DEBIT, user_pending_withdrawal DEBIT). References fixed to use full paths under `.TODO/improvement_the_system/ImplementReady/21_Wallet_System_Escrow_Available_balances/`.
+- **Wallet activity view:** Migration `supabase/migrations/20260307160000_wallet_activity_include_spent.sql` — `vw_wallet_activity_user` expanded to include client “spent” (user_available DEBIT, user_pending_withdrawal DEBIT for gateway_escrow). Documented in diagram 21, SUPABASE_SETUP changelog, DEVELOPER_GUIDE Wallet_Feature.
+- **Reference fixes:** Execution log and plan paths in diagram 21 and Sline_Log corrected to full `.TODO/.../21_Wallet_System_Escrow_Available_balances/` paths. Master Report path in Sline_Log Wallet Escrow entry corrected.
+
+### 📊 Impact
+
+- **Single source of truth:** Diagram 21 and core docs now match implemented behaviour (direct_offer release, activity include spent, gateway_escrow).
+- **Reference integrity:** No dead paths; all cross-references validated per SlineDocs workflow.
+
+### 🧪 Verification
+
+- Docs sync note: `.TODO/DOCS_SYNC_2026-03-08_Diagram21_WalletDocs.md`
+- Diagram 21: `Sline_everything/AppDigram/All_Diagrams/21_Wallet_System_Escrow_Available_balances.md`
+
+### 🔗 References
+
+- Workflow: `.agents/workflows/slinedocs.md`
+- Contract: `.TODO/improvement_the_system/ImplementReady/21_Wallet_System_Escrow_Available_balances/CONTRACT_rpc_approve_delivery.md`
+
+---
+
+## 🏷️ Escrow Idempotency — Stable Key & FOR UPDATE (2026-03-07)
+
+**Date:** 2026-03-07  
+**Plan:** `.TODO/PLAN_EscrowInvariantsIdempotency_2026-03-07_CRITIC.md`  
+**Commit:** _Pending_ — "feat(escrow): stable idempotency key + FOR UPDATE for approve delivery"
+
+### ✅ Implemented
+
+- **Database:** `rpc_approve_delivery` — booking branch now uses a **stable idempotency key** (entity_id + status + payment_status, no `now()`) and `SELECT ... FOR UPDATE` so retries do not double-release escrow. Duplicate index `idx_journal_entries_idempotency` dropped.
+- **Migration:** `supabase/migrations/20260307000001_escrow_idempotency_stable_key.sql` (applied via Supabase MCP).
+- **App:** `lib/features/work/services/work_management_service.dart` — `approveDelivery` with optional `correlationId`, AppLogger (tag WorkManagement). `lib/features/work/viewmodels/work_item_details_view_model.dart` — `approveDelivery` generates correlationId and passes to service; AppLogger (tag WorkItemDetails). `lib/features/work/view/widgets/review_delivery_modal.dart` — `_hasApproved` one-shot guard, AppLogger (tag ReviewDelivery).
+- **Docs:** Diagram 16 and SUPABASE_SETUP §9.5 updated; CONTRACT and RUNBOOK in `.TODO/improvement_the_system/Done/16_escrow-invariants-idempotency/`; DEVELOPER_GUIDE Finance & Payment Ledger idempotency bullet added.
+
+### 📊 Impact
+
+- **Data integrity:** Approve delivery is safe to retry; at most one release per entity.
+- **Observability:** Approval flow tagged and logged with optional correlationId for tracing.
+
+### 🧪 Verification
+
+- Plan: `.TODO/PLAN_EscrowInvariantsIdempotency_2026-03-07_CRITIC.md`
+- Execution Log: `.TODO/EXECUTION_LOG_PLAN_EscrowInvariantsIdempotency_2026-03-07.md`
+- Review: `.TODO/CODEGUARD_REVIEW_2026-03-07_EscrowInvariantsIdempotency.md`
+- Master Report: `.TODO/MASTER_REPORT_2026-03-07_EscrowInvariantsIdempotency.md`
+- RUNBOOK (T1/T2/T4): `.TODO/improvement_the_system/Done/16_escrow-invariants-idempotency/RUNBOOK_EscrowIdempotency_T1_T2.md`
+
+### 🔧 Technical Notes
+
+- No breaking changes; RPC signature unchanged. Rollback: redeploy previous `rpc_approve_delivery` body; recreate `idx_journal_entries_idempotency` if needed.
+
+---
+
 ## 🏷️ Task Request Bid Flow — FULL_REPORT Fixes (v2.20.1)
 
 **Date:** 2026-03-08  

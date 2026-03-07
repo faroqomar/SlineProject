@@ -453,53 +453,86 @@ class BookingViewModel extends ChangeNotifier {
   }) async {
     final requestCorrelationId = 'booking_create:${_uuid.v4()}';
     AppLogger.i(
-      'Requesting server-backed booking payment task=$taskId package=${packageId ?? 'none'}',
+      'Requesting server-backed booking payment intent task=$taskId package=${packageId ?? 'none'}',
       tag: 'Booking',
       json: <String, dynamic>{
         'task_id': taskId,
         'package_id': packageId,
         'has_note': note != null && note.trim().isNotEmpty,
         'finish_url': finishUrl,
-        'requirements_keys': (requirements ?? const <String, dynamic>{}).keys
-            .toList(),
         'request_correlation_id': requestCorrelationId,
       },
     );
-    final result = await _paymentService.createPaymentForBooking(
-      taskId: taskId,
-      note: note,
-      packageId: packageId,
-      requirements: requirements,
-      finishUrl: finishUrl,
-      requestCorrelationId: requestCorrelationId,
-    );
 
-    if (!result.isSuccess) {
-      bookingsError = _mapServiceError(result.error);
-      AppLogger.w(
-        'Booking payment request failed for task=$taskId',
-        tag: 'Booking',
-        error: bookingsError ?? result.error ?? 'BOOKING_PAYMENT_CREATE_FAILED',
-        json: <String, dynamic>{
-          'task_id': taskId,
-          'request_correlation_id':
-              result.requestCorrelationId ?? requestCorrelationId,
-        },
+    try {
+      // 1. Create booking draft via Postgres RPC
+      final draft = await _repo.createBookingDraft(
+        taskId: taskId,
+        note: note,
+        packageId: packageId,
+        requirements: requirements,
       );
-      notifyListeners();
-    } else {
+
+      // 2. Create the payment intent using the edge function
+      final intentResult = await _paymentService.createPaymentIntent(
+        entityType: 'booking',
+        entityId: draft.id,
+        successUrl: finishUrl ?? 'https://sline.app/?payment_return=1',
+        cancelUrl: 'https://sline.app/?payment_return=0',
+      );
+
+      if (!intentResult.isSuccess) {
+        bookingsError = _mapServiceError(intentResult.error);
+        AppLogger.w(
+          'Booking payment intent request failed for task=$taskId',
+          tag: 'Booking',
+          error:
+              bookingsError ??
+              intentResult.error ??
+              'BOOKING_PAYMENT_CREATE_FAILED',
+        );
+        notifyListeners();
+        return QiCardCreatePaymentResult(
+          bookingId: draft.id,
+          error: intentResult.error,
+          errorCode: intentResult.errorCode,
+          requestCorrelationId: requestCorrelationId,
+        );
+      }
+
       AppLogger.i(
-        'Booking payment draft created booking=${result.bookingId} correlation=${result.correlationId}',
+        'Booking payment intent created booking=${draft.id} intent=${intentResult.intentId}',
         tag: 'Booking',
-        json: <String, dynamic>{
-          'task_id': taskId,
-          'request_correlation_id':
-              result.requestCorrelationId ?? requestCorrelationId,
-        },
+      );
+
+      return QiCardCreatePaymentResult(
+        bookingId: draft.id,
+        intentId: intentResult.intentId,
+        formUrl: intentResult.checkoutUrl,
+        amount: draft.price?.toDouble(),
+        providerId: draft.providerId,
+        requestCorrelationId: requestCorrelationId,
+      );
+    } catch (e, st) {
+      AppLogger.e(
+        'createPaymentForBooking failed',
+        error: e,
+        stackTrace: st,
+        tag: 'Booking',
+      );
+      bookingsError = _mapError(e);
+      notifyListeners();
+      return QiCardCreatePaymentResult(
+        error: bookingsError,
+        errorCode: 'BOOKING_PAYMENT_CREATE_FAILED',
+        requestCorrelationId: requestCorrelationId,
       );
     }
+  }
 
-    return result;
+  /// Streams the status of a payment intent directly from the database
+  Stream<String> streamPaymentIntentStatus(String intentId) {
+    return _paymentService.streamPaymentIntentStatus(intentId);
   }
 
   Future<QiCardRecoveryResult> recoverBookingPayment({

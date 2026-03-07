@@ -17,7 +17,8 @@ List<Widget> _stubTabViews() {
     Center(key: ValueKey('dashboard_tab_body_0'), child: Text('Overview Body')),
     Center(key: ValueKey('dashboard_tab_body_1'), child: Text('Bookings Body')),
     Center(key: ValueKey('dashboard_tab_body_2'), child: Text('Work Body')),
-    Center(key: ValueKey('dashboard_tab_body_3'), child: Text('Inbox Body')),
+    Center(key: ValueKey('dashboard_tab_body_3'), child: Text('Wallet Body')),
+    Center(key: ValueKey('dashboard_tab_body_4'), child: Text('Inbox Body')),
   ];
 }
 
@@ -41,7 +42,7 @@ Future<void> _pumpDashboardScreen(
 
 void main() {
   group('DashboardScreen T56-T58', () {
-    testWidgets('T56 shows 4 tabs Overview Bookings Work Inbox', (
+    testWidgets('T56 shows 5 tabs Overview Bookings Work Wallet Inbox', (
       tester,
     ) async {
       final vm = _MockDashboardViewModel();
@@ -51,6 +52,7 @@ void main() {
       expect(find.text('Overview'), findsOneWidget);
       expect(find.text('Bookings'), findsOneWidget);
       expect(find.text('Work'), findsOneWidget);
+      expect(find.text('Wallet'), findsOneWidget);
       expect(find.text('Inbox'), findsOneWidget);
       expect(
         find.byKey(const ValueKey('dashboard_tab_body_0')),

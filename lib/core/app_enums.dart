@@ -60,7 +60,7 @@ enum PrimaryActionType {
 }
 
 /// Tabs in the Unified Dashboard.
-enum DashboardTab { overview, bookings, activeWork, inbox }
+enum DashboardTab { overview, bookings, activeWork, wallet, inbox }
 
 /// Tabs for the Search Screen
 enum SearchTab {

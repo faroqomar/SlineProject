@@ -67,7 +67,10 @@ class AwardExpirationMonitor extends ChangeNotifier {
   /// Cancels any existing timer and starts a new one that fires every minute.
   void startMonitoring(DateTime deadline) {
     if (_disposed) {
-      AppLogger.w('Attempted to start monitoring on disposed monitor', tag: _logTag);
+      AppLogger.w(
+        'Attempted to start monitoring on disposed monitor',
+        tag: _logTag,
+      );
       return;
     }
 
@@ -191,11 +194,13 @@ class AwardExpirationMonitor extends ChangeNotifier {
   ///
   /// Returns true when less than 6 hours remain to draw attention.
   bool get shouldPulse {
-    return urgencyLevel == UrgencyLevel.critical || urgencyLevel == UrgencyLevel.expired;
+    return urgencyLevel == UrgencyLevel.critical ||
+        urgencyLevel == UrgencyLevel.expired;
   }
 
   @override
   void dispose() {
+    if (_disposed) return;
     AppLogger.d('Disposing AwardExpirationMonitor', tag: _logTag);
     _disposed = true;
     _cancelTimer();

@@ -78,7 +78,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | Unified dashboard/workspace | ✅ Completed | Single `DashboardScreen`; cache wiring, lazy-load by tab, wallet snapshot on entry; MyServices off dashboard; booking/offer/wallet cards in owning features + `StatusPresenter` |
 | Booking/task CTA resolution | ✅ Completed | unified CTA resolver is used by work/booking screens |
 | Order management timeline | ✅ Completed | management feature is live for task and booking details |
-| Wallet and ledger views | 🚧 In Progress | wallet feature and ledger schema exist; ongoing finance hardening continues |
+| Wallet and ledger views | 🚧 In Progress | Wallet feature and ledger schema exist; ongoing finance hardening. **2026-03-07:** Escrow idempotency (stable key + FOR UPDATE); **rpc_approve_delivery** extended for **direct_offer** (single exit for escrow release); DirectOffersService.completeOffer uses RPC. Dashboard includes dedicated **Wallet tab** (balance, activity, Coming Soon withdraw). See `.TODO/improvement_the_system/ImplementReady/21_Wallet_System_Escrow_Available_balances/PLAN_WalletEscrowAvailableBalances_2026-03-07_CRITIC.md`, `.TODO/improvement_the_system/ImplementReady/21_Wallet_System_Escrow_Available_balances/EXECUTION_LOG_PLAN_WalletEscrowAvailableBalances_2026-03-07.md`, `Sline_everything/DEVELOPER_GUIDE/Wallet_Feature.md` §4, `.TODO/improvement_the_system/Done/09_ledger-event-flow/CONTRACT_ledger_event_flow.md`. Withdraw = Upcoming. |
 | Runtime system config UX | ✅ Completed | maintenance screen, minimum-version gate, signup-disable messaging, and shell app-banner are wired to public config |
 
 ## 8. Quality and Operations

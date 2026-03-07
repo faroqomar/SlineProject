@@ -44,6 +44,20 @@ class BookingRepository {
     );
   }
 
+  Future<BookingModel> createBookingDraft({
+    required String taskId,
+    String? note,
+    String? packageId,
+    Map<String, dynamic>? requirements,
+  }) {
+    return _service.createBookingDraft(
+      taskId: taskId,
+      note: note,
+      packageId: packageId,
+      requirements: requirements,
+    );
+  }
+
   Future<void> acceptBooking(String bookingId) {
     return _service.acceptBooking(bookingId);
   }

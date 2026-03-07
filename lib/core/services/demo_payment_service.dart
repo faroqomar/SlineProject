@@ -133,6 +133,20 @@ class DemoPaymentService implements PaymentService {
   }
 
   @override
+  Future<PaymentIntentResult> createPaymentIntent({
+    required String entityType,
+    required String entityId,
+    required String successUrl,
+    required String cancelUrl,
+  }) async {
+    await Future.delayed(delay);
+    return const PaymentIntentResult(
+      error: 'Payment Intents are not available in demo mode.',
+      errorCode: 'DEMO_INTENTS_UNSUPPORTED',
+    );
+  }
+
+  @override
   Future<QiCardCreatePaymentResult> createPaymentForBooking({
     required String taskId,
     String? note,
@@ -214,5 +228,10 @@ class DemoPaymentService implements PaymentService {
       error: 'Tender recovery is not available in demo mode.',
       errorCode: 'DEMO_TENDER_RECOVERY_UNSUPPORTED',
     );
+  }
+
+  @override
+  Stream<String> streamPaymentIntentStatus(String intentId) {
+    return Stream.value('succeeded');
   }
 }

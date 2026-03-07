@@ -136,8 +136,9 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
     TaskRequest request,
     TaskRequestsViewModel vm,
   ) async {
-    // Capture the price at the moment the dialog opens (optimistic concurrency)
-    final expectedPriceCents = request.price;
+    // Capture the price at the moment the dialog opens (optimistic concurrency).
+    // DB stores task_requests.price in IQD; RPC expects p_expected_price_cents = price * 100.
+    final expectedPriceCents = request.price * 100;
 
     // Log dialog open event
     AppLogger.i(

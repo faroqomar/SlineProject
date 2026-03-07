@@ -308,30 +308,35 @@ class DirectOffersService {
     AppLogger.i('[DirectOffers] marked delivered offer=$offerId');
   }
 
-  /// Client approves and releases payment. RPC updates offer to completed + released.
+  /// Client approves and releases payment via rpc_approve_delivery (single exit point for escrow release).
   Future<void> completeOffer(String offerId) async {
     final offer = await getOffer(offerId);
     if (offer == null) throw Exception('Offer not found.');
     if (offer.clientId != _uid) {
+      AppLogger.w('completeOffer: not client', tag: 'DirectOffers', json: {'offerId': offerId});
       throw Exception('Only the client can complete this offer.');
     }
     if (!offer.isDelivered || offer.paymentStatus != 'held') {
+      AppLogger.w('completeOffer: invalid state', tag: 'DirectOffers', json: {'offerId': offerId, 'delivered': offer.isDelivered, 'paymentStatus': offer.paymentStatus});
       throw Exception('Offer must be delivered and payment held to complete.');
     }
 
-    await _ledgerService.submitPaymentEvent(
-      eventType: 'release_with_fee',
-      relatedEntityType: 'direct_offer',
-      relatedEntityId: offerId,
-      amountGross: offer.price,
-      meta: {'client_id': offer.clientId, 'freelancer_id': offer.freelancerId},
-    );
+    AppLogger.i('Completing direct offer (approve delivery)', tag: 'DirectOffers', json: {'offerId': offerId});
+    try {
+      await _client.rpc(
+        'rpc_approve_delivery',
+        params: {'entity_type': 'direct_offer', 'entity_id': offerId},
+      );
+    } catch (e, st) {
+      AppLogger.e('completeOffer failed offerId=$offerId', tag: 'DirectOffers', error: e, stackTrace: st);
+      rethrow;
+    }
 
     await _workLogService.logEvent(
       scope: WorkLogScope(entityId: offerId, entityType: 'direct_offer'),
       eventType: 'completed',
       description: 'Completed',
     );
-    AppLogger.i('[DirectOffers] completed offer=$offerId');
+    AppLogger.i('Direct offer completed', tag: 'DirectOffers', json: {'offerId': offerId});
   }
 }

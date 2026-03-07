@@ -26,6 +26,7 @@ This comprehensive guide consolidates all feature-specific documentation into a 
 - [Proposals Feature Reference](DEVELOPER_GUIDE/Proposals_Feature.md)
 - [Wallet Feature Reference](DEVELOPER_GUIDE/Wallet_Feature.md)
 - [Work Management (Unified Flow)](#work-management-unified-flow)
+- [Hardened Payment Gateway (v2.20)](#hardened-payment-gateway-v220)
 - [Finance & Payment Ledger Reference](#finance--payment-ledger-reference)
 - [Tender Task Lifecycle](#tender-task-lifecycle)
 - [Task Request (Bid) Flow](#task-request-bid-flow)
@@ -388,6 +389,7 @@ The Role Switching feature allows a single user account to toggle between **Clie
 ### 8.2 Architecture
 
 **Flow:**
+
 1. **Rate Limit Check** — Max 3 switches per minute per user
 2. **Atomic RPC** — `switch_active_role()` with `expected_old_role` guard
 3. **Session Refresh** — Gets new JWT token with updated role claim
@@ -397,16 +399,17 @@ The Role Switching feature allows a single user account to toggle between **Clie
 
 **Key Components:**
 
-| Component | Purpose | File |
-|-----------|---------|------|
-| `RoleSwitchRepository` | RPC calls, session refresh, JWT verification | `lib/features/profile/data/role_switch_repository.dart` |
-| `RoleSwitchCoordinator` | Cross-ViewModel teardown coordination | `lib/core/services/role_switch_coordinator.dart` |
-| `RoleSwitchAware` | Mixin interface for ViewModels | `lib/core/mixins/role_switch_aware.dart` |
-| `RoleSwitchResult` | Type-safe RPC response model | `lib/features/profile/models/role_switch_result.dart` |
+| Component               | Purpose                                      | File                                                    |
+| ----------------------- | -------------------------------------------- | ------------------------------------------------------- |
+| `RoleSwitchRepository`  | RPC calls, session refresh, JWT verification | `lib/features/profile/data/role_switch_repository.dart` |
+| `RoleSwitchCoordinator` | Cross-ViewModel teardown coordination        | `lib/core/services/role_switch_coordinator.dart`        |
+| `RoleSwitchAware`       | Mixin interface for ViewModels               | `lib/core/mixins/role_switch_aware.dart`                |
+| `RoleSwitchResult`      | Type-safe RPC response model                 | `lib/features/profile/models/role_switch_result.dart`   |
 
 ### 8.3 Database Layer
 
 **RPC Function:**
+
 ```sql
 -- Atomic role switching with race protection
 switch_active_role(
@@ -416,6 +419,7 @@ switch_active_role(
 ```
 
 **Trigger:**
+
 ```sql
 -- Syncs profiles.active_role to auth.users.app_metadata
 -- Enables JWT-based RLS (faster than table joins)
@@ -423,6 +427,7 @@ trigger trg_sync_role_to_jwt ON profiles
 ```
 
 **RLS Policies (JWT-based):**
+
 - `task_requests_insert_freelancer_jwt` — Only freelancers can submit proposals
 - `availability_slots_insert/update_freelancer_jwt` — Only freelancers manage slots
 - `tasks_insert_client_jwt` — Only clients create tasks
@@ -431,21 +436,21 @@ trigger trg_sync_role_to_jwt ON profiles
 
 All ViewModels with cached data implement `RoleSwitchAware`:
 
-| ViewModel | Teardown Action |
-|-----------|-----------------|
-| `ChatViewModel` | Cancel subscriptions, remove Supabase channels, clear conversations/messages |
-| `DashboardViewModel` | Clear work items, bookings, inbox, counters, reset lazy-load flags |
-| `TaskViewModel` | Clear task lists, picked images |
-| `HomeViewModel` | Clear featured tasks, reset pagination cursors |
+| ViewModel            | Teardown Action                                                              |
+| -------------------- | ---------------------------------------------------------------------------- |
+| `ChatViewModel`      | Cancel subscriptions, remove Supabase channels, clear conversations/messages |
+| `DashboardViewModel` | Clear work items, bookings, inbox, counters, reset lazy-load flags           |
+| `TaskViewModel`      | Clear task lists, picked images                                              |
+| `HomeViewModel`      | Clear featured tasks, reset pagination cursors                               |
 
 ### 8.5 Error Handling
 
-| Error Code | When | User Message |
-|------------|------|--------------|
-| `stale_state` | Role changed on another device | "Role was already changed. Please refresh." |
-| `rate_limit` | >3 switches in 1 minute | "Too many role switches. Please wait a minute." |
-| `session_error` | Session refresh failed | "Session expired. Please log in again." |
-| `db_error` | Database error | "Failed to switch role. Please try again." |
+| Error Code      | When                           | User Message                                    |
+| --------------- | ------------------------------ | ----------------------------------------------- |
+| `stale_state`   | Role changed on another device | "Role was already changed. Please refresh."     |
+| `rate_limit`    | >3 switches in 1 minute        | "Too many role switches. Please wait a minute." |
+| `session_error` | Session refresh failed         | "Session expired. Please log in again."         |
+| `db_error`      | Database error                 | "Failed to switch role. Please try again."      |
 
 ### 8.6 Usage
 
@@ -498,11 +503,11 @@ flutter test test/rls/ -v
 
 ### Test Categories
 
-| File | Tests | Purpose |
-|------|-------|---------|
-| `critical_blockers_test.dart` | 12 | 4 critical security vulnerabilities (cross-user access, log injection) |
-| `view_security_test.dart` | 7 | PII exposure prevention, `security_invoker` validation |
-| `role_switch_jwt_test.dart` | 7 | JWT-based role enforcement (client vs freelancer operations) |
+| File                          | Tests | Purpose                                                                |
+| ----------------------------- | ----- | ---------------------------------------------------------------------- |
+| `critical_blockers_test.dart` | 12    | 4 critical security vulnerabilities (cross-user access, log injection) |
+| `view_security_test.dart`     | 7     | PII exposure prevention, `security_invoker` validation                 |
+| `role_switch_jwt_test.dart`   | 7     | JWT-based role enforcement (client vs freelancer operations)           |
 
 ### Writing RLS Tests
 
@@ -547,13 +552,13 @@ void main() {
 
 ### Test Users
 
-| User | Role | Purpose |
-|------|------|---------|
-| `clientUser` | client | Primary client persona |
-| `freelancerUser` | freelancer | Primary freelancer persona |
-| `otherClientUser` | client | Cross-user isolation testing |
-| `adminUser` | admin | Admin privilege testing |
-| `serviceRole` | service | Service role operations |
+| User              | Role       | Purpose                      |
+| ----------------- | ---------- | ---------------------------- |
+| `clientUser`      | client     | Primary client persona       |
+| `freelancerUser`  | freelancer | Primary freelancer persona   |
+| `otherClientUser` | client     | Cross-user isolation testing |
+| `adminUser`       | admin      | Admin privilege testing      |
+| `serviceRole`     | service    | Service role operations      |
 
 ### References
 
@@ -1449,34 +1454,35 @@ Core also owns two browser-specific stability helpers:
 
 ## 3. File Inventory
 
-| File                                             | Layer     | Description                                                               |
-| ------------------------------------------------ | --------- | ------------------------------------------------------------------------- |
-| `lib/core/services/supabase_config.dart`         | bootstrap | Initializes Supabase once and exposes the shared client.                  |
-| `lib/core/services/logger_service.dart`          | service   | `AppLogger` for structured debug/error logging.                           |
-| `lib/core/services/crash_reporting_service.dart` | service   | Crash-reporting abstraction with a quiet no-op implementation by default. |
-| `lib/core/services/payment_service.dart`         | contract  | Shared payment DTOs and the `PaymentService` interface.                   |
-| `lib/core/services/demo_payment_service.dart`    | service   | Local/demo payment implementation and legacy fallback path.               |
-| `lib/core/services/qicard_payment_service.dart`  | service   | Server-backed QiCard create/recover/refund orchestration.                 |
-| `lib/core/services/payment_pending_store.dart`   | service   | Persists pending payment context across same-tab web redirects.           |
-| `lib/core/services/deep_link_service.dart`       | service   | Shared deep-link plumbing used by app navigation flows.                   |
-| `lib/core/config/payment_runtime_config.dart`    | config    | Compile-time finish URL, callback host rules, payment callback parsing.   |
-| `lib/core/utils/loading_utils.dart`              | utility   | Root overlay loading helper that returns an idempotent `LoadingHandle`.   |
-| `lib/core/utils/flutter_error_filters.dart`      | utility   | Filters the known web engine disposal assertion.                          |
-| `lib/core/utils/error_mapper.dart`               | utility   | Shared PostgREST/Auth/network error mapping.                              |
-| `lib/core/utils/format_date.dart`                | utility   | UTC-to-local date/time formatting helpers.                                |
-| `lib/core/utils/format_price.dart`               | utility   | Shared price formatting helpers.                                          |
-| `lib/core/utils/signed_url_cache.dart`           | utility   | Short-lived cache for generated signed URLs.                              |
-| `lib/core/providers/navigation_provider.dart`    | provider  | Global navigation tab state.                                              |
-| `lib/core/providers/theme_mode_provider.dart`    | provider  | Light/dark theme mode state.                                              |
-| `lib/core/models/user_profile.dart`              | model     | Shared typed profile model.                                               |
-| `lib/core/models/payment_return_args.dart`       | model     | Shared typed browser payment callback payload.                            |
-| `lib/core/theme/app_colors.dart`                 | theme     | Central palette definitions.                                              |
-| `lib/core/theme/app_dimens.dart`                 | theme     | Spacing, radius, sizing tokens.                                           |
-| `lib/core/theme/app_typography.dart`             | theme     | Shared typography and fallback font configuration.                        |
-| `lib/core/theme/app_theme.dart`                  | theme     | Builds the app `ThemeData` and `AppThemeExtension`.                       |
-| `lib/core/widgets/custom_bottom_nav_bar.dart`    | widget    | Shared app shell bottom nav.                                              |
-| `lib/core/widgets/signed_avatar.dart`            | widget    | Renders private avatar paths through signed URLs.                         |
-| `lib/core/widgets/signed_image.dart`             | widget    | Renders private image paths through signed URLs.                          |
+| File                                             | Layer     | Description                                                                             |
+| ------------------------------------------------ | --------- | --------------------------------------------------------------------------------------- |
+| `lib/core/services/supabase_config.dart`         | bootstrap | Initializes Supabase once and exposes the shared client.                                |
+| `lib/core/services/logger_service.dart`          | service   | `AppLogger` for structured debug/error logging.                                         |
+| `lib/core/services/crash_reporting_service.dart` | service   | Crash-reporting abstraction with a quiet no-op implementation by default.               |
+| `lib/core/services/payment_service.dart`         | contract  | Shared payment DTOs and the `PaymentService` interface.                                 |
+| `lib/core/services/demo_payment_service.dart`    | service   | Local/demo payment implementation and legacy fallback path.                             |
+| `lib/core/services/qicard_payment_service.dart`  | service   | Server-backed QiCard create/recover/refund orchestration.                               |
+| `lib/core/services/payment_pending_store.dart`   | service   | Persists pending payment context across same-tab web redirects.                         |
+| `lib/core/services/deep_link_service.dart`       | service   | Shared deep-link plumbing used by app navigation flows.                                 |
+| `lib/core/config/payment_runtime_config.dart`    | config    | Compile-time finish URL, callback host rules, payment callback parsing.                 |
+| `lib/core/utils/loading_utils.dart`              | utility   | Root overlay loading helper that returns an idempotent `LoadingHandle`.                 |
+| `lib/core/utils/flutter_error_filters.dart`      | utility   | Filters the known web engine disposal assertion.                                        |
+| `lib/core/utils/error_mapper.dart`               | utility   | Shared PostgREST/Auth/network error mapping.                                            |
+| `lib/core/utils/format_date.dart`                | utility   | UTC-to-local date/time formatting helpers.                                              |
+| `lib/core/utils/format_price.dart`               | utility   | Shared price formatting helpers.                                                        |
+| `lib/core/utils/signed_url_cache.dart`           | utility   | Short-lived cache for generated signed URLs.                                            |
+| `lib/core/utils/ledger_forensics.dart`           | utility   | Ledger p_meta forensics (session_id, request_id); single source for LedgerService (09). |
+| `lib/core/providers/navigation_provider.dart`    | provider  | Global navigation tab state.                                                            |
+| `lib/core/providers/theme_mode_provider.dart`    | provider  | Light/dark theme mode state.                                                            |
+| `lib/core/models/user_profile.dart`              | model     | Shared typed profile model.                                                             |
+| `lib/core/models/payment_return_args.dart`       | model     | Shared typed browser payment callback payload.                                          |
+| `lib/core/theme/app_colors.dart`                 | theme     | Central palette definitions.                                                            |
+| `lib/core/theme/app_dimens.dart`                 | theme     | Spacing, radius, sizing tokens.                                                         |
+| `lib/core/theme/app_typography.dart`             | theme     | Shared typography and fallback font configuration.                                      |
+| `lib/core/theme/app_theme.dart`                  | theme     | Builds the app `ThemeData` and `AppThemeExtension`.                                     |
+| `lib/core/widgets/custom_bottom_nav_bar.dart`    | widget    | Shared app shell bottom nav.                                                            |
+| `lib/core/widgets/signed_avatar.dart`            | widget    | Renders private avatar paths through signed URLs.                                       |
+| `lib/core/widgets/signed_image.dart`             | widget    | Renders private image paths through signed URLs.                                        |
 
 ## 4. Runtime Patterns
 
@@ -1979,29 +1985,30 @@ The Chat Creation Matrix replaces the legacy non-atomic `SELECT-then-INSERT` pat
 
 ### Key Components
 
-| Component | Type | Location | Purpose |
-|-----------|------|----------|---------|
-| `start_direct_conversation_v1()` | RPC | Supabase | Atomic DM creation with all validations |
-| `is_client()` | Function | Supabase | Check if user has `active_role = 'client'` |
-| `check_conversation_rate_limit()` | Function | Supabase | Verify user is within 20/hour limit |
-| `conversations_before_insert_guard` | Trigger | Supabase | Validates ALL conversation inserts |
-| `app_config` | Table | Supabase | Feature flag storage (`enable_direct_conversation_rpc`) |
-| `MessageService` | Service | Flutter | Routes to RPC or legacy path based on flag |
-| `ChatViewModel` | ViewModel | Flutter | Loading states, error handling, double-tap prevention |
+| Component                           | Type      | Location | Purpose                                                 |
+| ----------------------------------- | --------- | -------- | ------------------------------------------------------- |
+| `start_direct_conversation_v1()`    | RPC       | Supabase | Atomic DM creation with all validations                 |
+| `is_client()`                       | Function  | Supabase | Check if user has `active_role = 'client'`              |
+| `check_conversation_rate_limit()`   | Function  | Supabase | Verify user is within 20/hour limit                     |
+| `conversations_before_insert_guard` | Trigger   | Supabase | Validates ALL conversation inserts                      |
+| `app_config`                        | Table     | Supabase | Feature flag storage (`enable_direct_conversation_rpc`) |
+| `MessageService`                    | Service   | Flutter  | Routes to RPC or legacy path based on flag              |
+| `ChatViewModel`                     | ViewModel | Flutter  | Loading states, error handling, double-tap prevention   |
 
 ### Business Rules
 
-| Rule | Enforcement | Error Message |
-|------|-------------|---------------|
-| Only clients initiate DMs | Guard trigger + RPC | "Only clients can start conversations with freelancers" |
-| Favorites required | Guard trigger + RPC | "Add this freelancer to your favorites first" |
-| Rate limit 20/hour | Guard trigger + RPC | "You've reached the conversation limit. Try again in an hour" |
-| Identity integrity | Guard trigger | "initiated_by must equal current user" |
-| Self-conversation prevention | RPC | "You can't start a conversation with yourself" |
+| Rule                         | Enforcement         | Error Message                                                 |
+| ---------------------------- | ------------------- | ------------------------------------------------------------- |
+| Only clients initiate DMs    | Guard trigger + RPC | "Only clients can start conversations with freelancers"       |
+| Favorites required           | Guard trigger + RPC | "Add this freelancer to your favorites first"                 |
+| Rate limit 20/hour           | Guard trigger + RPC | "You've reached the conversation limit. Try again in an hour" |
+| Identity integrity           | Guard trigger       | "initiated_by must equal current user"                        |
+| Self-conversation prevention | RPC                 | "You can't start a conversation with yourself"                |
 
 ### Usage
 
 **Automatic via MessageService**:
+
 ```dart
 try {
   final conversation = await messageService.createOrGetConversation(
@@ -2016,6 +2023,7 @@ try {
 ```
 
 **Direct RPC (advanced)**:
+
 ```dart
 final response = await supabase.rpc(
   'start_direct_conversation_v1',
@@ -2027,13 +2035,13 @@ final response = await supabase.rpc(
 
 All errors are mapped to user-friendly messages via `ErrorMapper`:
 
-| SQL Error | User Message |
-|-----------|--------------|
-| `Freelancers cannot start direct conversations` | "Only clients can start conversations with freelancers" |
+| SQL Error                                                 | User Message                                                          |
+| --------------------------------------------------------- | --------------------------------------------------------------------- |
+| `Freelancers cannot start direct conversations`           | "Only clients can start conversations with freelancers"               |
 | `You can only message freelancers in your favorites list` | "Add this freelancer to your favorites first to start a conversation" |
-| `Rate limit exceeded: maximum 20 conversations per hour` | "You've reached the conversation limit. Try again in an hour" |
-| `Target user not found` | "User not found. They may have deleted their account" |
-| `Cannot create conversation with yourself` | "You can't start a conversation with yourself" |
+| `Rate limit exceeded: maximum 20 conversations per hour`  | "You've reached the conversation limit. Try again in an hour"         |
+| `Target user not found`                                   | "User not found. They may have deleted their account"                 |
+| `Cannot create conversation with yourself`                | "You can't start a conversation with yourself"                        |
 
 ### Feature Flag
 
@@ -2052,6 +2060,7 @@ SELECT admin_set_config('enable_direct_conversation_rpc', 'false');
 ```
 
 **Behavior**:
+
 - `false` (default): Uses legacy direct INSERT path (backward compatible)
 - `true`: Uses new atomic RPC path with full validation
 
@@ -2060,6 +2069,7 @@ SELECT admin_set_config('enable_direct_conversation_rpc', 'false');
 **Zero-downtime migration**: Feature flag defaults to `false`; app continues working during deployment.
 
 **Rollback options**:
+
 1. **Fast** (instant): `UPDATE app_config SET value = 'false'` - App falls back to legacy path
 2. **Emergency**: Bypass guard trigger if critical issues found
 3. **Full**: Drop new functions if needed
@@ -2079,15 +2089,15 @@ flutter test integration_test/chat_creation_test.dart
 
 ### Files
 
-| File | Description |
-|------|-------------|
-| `supabase/migrations/20260306000000_chat_creation_matrix.sql` | Database migration |
-| `lib/features/chat/services/message_service.dart` | Service layer with feature flag routing |
-| `lib/features/chat/viewmodels/chat_view_model.dart` | Loading states and error handling |
-| `lib/core/utils/error_mapper.dart` | Error message mapping |
-| `test/fixtures/chat_fixtures.dart` | Test data |
-| `test/services/message_service_test.dart` | Unit tests |
-| `integration_test/chat_creation_test.dart` | E2E tests |
+| File                                                          | Description                             |
+| ------------------------------------------------------------- | --------------------------------------- |
+| `supabase/migrations/20260306000000_chat_creation_matrix.sql` | Database migration                      |
+| `lib/features/chat/services/message_service.dart`             | Service layer with feature flag routing |
+| `lib/features/chat/viewmodels/chat_view_model.dart`           | Loading states and error handling       |
+| `lib/core/utils/error_mapper.dart`                            | Error message mapping                   |
+| `test/fixtures/chat_fixtures.dart`                            | Test data                               |
+| `test/services/message_service_test.dart`                     | Unit tests                              |
+| `integration_test/chat_creation_test.dart`                    | E2E tests                               |
 
 ---
 
@@ -2323,19 +2333,19 @@ UI (WorkItemDetailsScreen)
 
 ## Database Objects
 
-| Object                       | Type    | Purpose                                                                                                                                                 |
-| ---------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `vw_unified_work_items`      | View    | UNION ALL of tasks (in progress + awarded pending payment) and bookings with normalized status; see SUPABASE_SETUP.md §6.4.                             |
-| `work_contracts`             | Table   | Versioned scope snapshots (price, days, description)                                                                                                    |
-| `change_requests`            | Table   | Scope/price/days change proposals                                                                                                                       |
-| `extension_requests`         | Table   | Deadline extension proposals                                                                                                                            |
-| `rpc_submit_delivery`        | RPC     | Atomic delivery: status + timestamp; for bookings, `confirmed`/`paid_request_pending` → `active` then `delivered`                                       |
-| `rpc_request_revision`       | RPC     | Client revision with limit check                                                                                                                        |
-| `rpc_accept_change_request`  | RPC     | Accept change, create new contract version                                                                                                              |
-| `rpc_approve_delivery`       | RPC     | Client approves delivered work; when `payment_status=held`, calls ledger `release_with_fee` (idempotency via `extensions.digest`) then sets `completed` |
-| `rpc_finalize_auto_approval` | RPC     | Auto-approve after review window                                                                                                                        |
-| `trg_activate_contract`      | Trigger | Auto-create contract on booking confirmation                                                                                                            |
-| `trg_freeze_contract_fields` | Trigger | Block direct scope changes on active work                                                                                                               |
+| Object                       | Type    | Purpose                                                                                                                                                                                                                                                                                       |
+| ---------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vw_unified_work_items`      | View    | UNION ALL of tasks (in progress + awarded pending payment) and bookings with normalized status; see SUPABASE_SETUP.md §6.4.                                                                                                                                                                   |
+| `work_contracts`             | Table   | Versioned scope snapshots (price, days, description)                                                                                                                                                                                                                                          |
+| `change_requests`            | Table   | Scope/price/days change proposals                                                                                                                                                                                                                                                             |
+| `extension_requests`         | Table   | Deadline extension proposals                                                                                                                                                                                                                                                                  |
+| `rpc_submit_delivery`        | RPC     | Atomic delivery: status + timestamp; for bookings, `confirmed`/`paid_request_pending` → `active` then `delivered`                                                                                                                                                                             |
+| `rpc_request_revision`       | RPC     | Client revision with limit check                                                                                                                                                                                                                                                              |
+| `rpc_accept_change_request`  | RPC     | Accept change, create new contract version                                                                                                                                                                                                                                                    |
+| `rpc_approve_delivery`       | RPC     | Client approves delivered work for `entity_type` task, booking, or direct_offer; when `payment_status=held`, calls ledger `release_with_fee` (stable idempotency key + FOR UPDATE) then sets `completed`. See SUPABASE_SETUP §9.5 and [Wallet Feature](DEVELOPER_GUIDE/Wallet_Feature.md) §4. |
+| `rpc_finalize_auto_approval` | RPC     | Auto-approve after review window                                                                                                                                                                                                                                                              |
+| `trg_activate_contract`      | Trigger | Auto-create contract on booking confirmation                                                                                                                                                                                                                                                  |
+| `trg_freeze_contract_fields` | Trigger | Block direct scope changes on active work                                                                                                                                                                                                                                                     |
 
 ## Enums (app_enums.dart)
 
@@ -2373,9 +2383,67 @@ UI (WorkItemDetailsScreen)
 
 ---
 
+# Hardened Payment Gateway (v2.20)
+
+## 1. Overview
+
+The Hardened Payment Gateway is a security-first payment orchestration layer that replaces direct client-side payment creation. It centralizes payment authorization in Supabase Edge Functions and uses a two-table state machine (`payment_intents` and `payment_events`) to ensure idempotency and prevent unauthorized fund movements.
+
+### Key Principles:
+
+- **Server-Side Authorization**: Only Supabase Edge Functions can create or update payment intents.
+- **Atomic State Transitions**: Payments move through `created` → `processing` → `succeeded`/`failed`.
+- **Event Sourcing**: Every state change is recorded as a `payment_event` for auditing.
+- **Orphan Prevention**: Payments without a corresponding entity (draft booking/task) are blocked.
+
+## 2. Database Mapping
+
+### 2.1 `public.payment_intents`
+
+Stores the state and metadata of a payment attempt.
+
+| Column        | Type      | Purpose                                                      |
+| ------------- | --------- | ------------------------------------------------------------ |
+| `id`          | `uuid`    | PK, referenced by external payment providers (QiCard etc.)   |
+| `amount`      | `integer` | Amount in cents                                              |
+| `currency`    | `text`    | e.g., 'IQD'                                                  |
+| `status`      | `text`    | `created`, `processing`, `succeeded`, `failed`, `canceled`   |
+| `entity_type` | `text`    | `booking` or `task`                                          |
+| `entity_id`   | `uuid`    | Reference to the draft booking or awarded task offer         |
+| `user_id`     | `uuid`    | The client making the payment                                |
+| `provider_id` | `text`    | External ID from the payment provider (e.g., QiCard OrderID) |
+
+### 2.2 `public.payment_events`
+
+Audit log of all transitions.
+
+## 3. Implementation Flow (Flutter)
+
+1. **Step 1: Create Draft/Award**: UI calls `BookingService.createBookingDraft` or `ProposalsService.awardTaskOffer`.
+2. **Step 2: Create Intent**: UI calls `QiCardPaymentService.createPaymentIntent(entityType, entityId)`.
+   - This triggers the `create_payment_intent` Edge Function.
+   - It validates the entity belongs to the user and is in a payable state.
+   - Returns a `payment_intent_id` and `payment_url`.
+3. **Step 3: Listen for Status**: UI subscribes to `payment_intents` via Realtime:
+   ```dart
+   supabase.from('payment_intents').stream(primaryKey: ['id']).eq('id', intentId);
+   ```
+4. **Step 4: Webview**: UI opens the `payment_url` in a webview.
+5. **Step 5: Completion**: Edge Function webhook handler updates `payment_intents.status` to `succeeded`. UI detects this via the stream and navigates to success.
+
+## 4. Security & Idempotency
+
+- **RLS**: Clients can only see their own `payment_intents`.
+- **System Only Updates**: Only the `service_role` (Edge Functions) can update payment statuses.
+- **Trigger**: `trg_payment_intent_success_ledger` automatically triggers the ledger functions when status reaches `succeeded`.
+
+---
+
 # Finance & Payment Ledger Reference
 
 **Added in v2.16** — 2026-02-24
+
+**Ledger event flow (09):** Diagram, risk register, contract, smoke checklist and withdrawal runbook: `.TODO/improvement_the_system/Done/09_ledger-event-flow/` — see `06_DIAGRAM_FINAL.md`, `03_RISK_REGISTER.md`, `CONTRACT_ledger_event_flow.md`, `SMOKE_CHECKLIST_AND_RUNBOOK.md`. Forensics: `p_meta` includes `session_id` and `request_id` per contract; the app builds them via `lib/core/utils/ledger_forensics.dart` and `LedgerService` merges them into every RPC call. `admin_adjustment` is scoped out for this release.
 
 ## 1. Human-Readable Overview
 
@@ -2386,6 +2454,7 @@ Key features:
 - **Escrow Enforcement**: Payments for bookings/tasks are held in a platform account until completion.
 - **Legacy Protection**: The old `wallet_transactions` table is frozen (read-only) to preserve history without risk of drift.
 - **Idempotency**: Prevents duplicate charges by using unique keys from the payment gateway.
+- **Approve delivery (escrow release):** Idempotent under retry; the server uses a stable key and `FOR UPDATE` so duplicate approval calls do not double-release funds (see diagram 16 and `rpc_approve_delivery` in SUPABASE_SETUP).
 - **Real-time Balances**: User available/escrow balances are aggregated live from ledger lines.
 
 ## 2. Supabase Integration
@@ -2407,11 +2476,12 @@ Key features:
 
 ### 2.3 Balance View
 
-**`vw_wallet_balances`**
+**`vw_wallet_balances_user`** (canonical user-scoped view; app uses this only)
 
-- Dynamically aggregates balance by summing ledger lines for user accounts.
+- Security invoker: user sees only own row. Dynamically aggregates balance by summing ledger lines for that user's accounts.
 - **Available**: Sum of credits to `user_available:uuid`.
 - **Escrow (Held)**: Sum of credits to `platform_escrow` where linked to the user's jobs.
+- Activity: `vw_wallet_activity_user`. See [Wallet Feature](DEVELOPER_GUIDE/Wallet_Feature.md).
 
 ## 3. Flutter Integration
 
@@ -2536,6 +2606,7 @@ open → assigned (award) → in_progress (payment) → delivered (submit) → c
 ### Database Schema
 
 **task_requests table**:
+
 - `status`: pending → accepted → rejected/expired
 - `payment_status`: unpaid → held → released/refunded
 - `awarded_at`: Timestamp when accepted
@@ -2544,12 +2615,14 @@ open → assigned (award) → in_progress (payment) → delivered (submit) → c
 - `fee_amount`, `net_amount`: Pre-calculated for transparency
 
 **Key Indexes**:
+
 - `idx_task_requests_awarded_unpaid`: Optimizes cron expiry queries
 - `idx_one_accepted_per_task`: Enforces only one accepted offer per task
 
 ### RPC Functions
 
 **award_task_offer(p_request_id, p_expected_price_cents)**:
+
 - Validates ownership (task owner only)
 - Checks for existing accepted offers (idempotency)
 - Validates price if expected_price_cents provided
@@ -2557,6 +2630,7 @@ open → assigned (award) → in_progress (payment) → delivered (submit) → c
 - Logs to admin_logs
 
 **cleanup_expired_awards()**:
+
 - Runs every 10 minutes via pg_cron
 - Finds offers with status='accepted', payment_status='unpaid', payment_deadline < now - 1h
 - Reverts task to 'open'
@@ -2566,23 +2640,28 @@ open → assigned (award) → in_progress (payment) → delivered (submit) → c
 ### Flutter Implementation
 
 **TaskRequestsService** (`lib/features/tasks/services/task_requests_service.dart`):
+
 - `awardOffer(offerId, expectedPriceCents)`: Calls RPC, throws PriceMismatchException
 - `PriceMismatchException`: Custom exception with expected/actual prices
 - `OfferAlreadyAcceptedException`: Idempotency hit
 
 **TaskRequestsViewModel** (`lib/features/tasks/viewmodels/task_requests_view_model.dart`):
+
 - `award(requestId, expectedPriceCents)`: Business logic, error mapping
 - `acceptOffer(request, expectedPriceCents)`: UI-friendly method
 
 **DashboardViewModel** (`lib/features/dashboard/viewmodels/dashboard_view_model.dart`):
+
 - `awardOffer(offer)`: Passes `expectedPriceCents: (offer.price * 100).round()` to `TaskService.awardOffer()` for Inbox tab awards (optimistic price lock)
 
 **AwardExpirationMonitor** (`lib/features/tasks/viewmodels/award_expiration_monitor.dart`):
+
 - Live countdown timer
 - Urgency levels (relaxed/urgent/critical/expired)
 - Proper disposal to prevent memory leaks
 
 **UI Components**:
+
 - `DashboardOfferCard`: Shows countdown badge for accepted unpaid offers
 - `RequestsListScreen`: Handles price mismatch dialog, refresh on mismatch
 
@@ -2611,29 +2690,35 @@ try {
 ## 4. Configuration
 
 **system_config keys**:
+
 - `tender_payment_timeout_hours`: Default 48 hours (configurable)
 - `platform_fee_bps`: Default 1000 (10%, locked at award time)
 
 ## 5. Testing
 
 ### Unit Tests
+
 - `test/unit/tender/award_expiration_monitor_test.dart`: Timer, urgency levels
 - `test/unit/tender/task_requests_service_test.dart`: Price parsing, exceptions
 - `test/unit/tender/task_requests_view_model_test.dart`: Flow logic
 
 ### Fixtures
+
 - `test/fixtures/tender_tasks.dart`: Complete set of task/request fixtures
 
 ### Smoke Test
+
 - `.TODO/SMOKE_TEST_TENDER.md`: 5-minute manual verification
 
 ## 6. Monitoring
 
 ### Rollback Triggers
+
 - Query: `SELECT COUNT(*) FROM task_requests WHERE status='accepted' AND payment_status='unpaid' AND awarded_at < NOW() - INTERVAL '72 hours'`
 - Alert if > 5% of assigned tasks are stuck > 72 hours
 
 ### Admin Logs
+
 - `PRICE_MISMATCH_ATTEMPT`: Security signal for bidding attacks
 - `OFFER_AWARDED`: Successful awards
 - `AWARD_AUTO_EXPIRED`: Cron job expirations
@@ -2656,23 +2741,24 @@ This section documents the centralized storage configuration and signed URL cach
 
 Centralized TTL values for consistent signed URL expiry across all storage buckets:
 
-| Bucket | TTL | Purpose |
-|--------|-----|---------|
-| `chat-attachments` | 3600s (1 hour) | Sensitive chat files |
-| `avatars` | 7200s (2 hours) | Profile images (discoverable) |
-| `task-images` | 7200s (2 hours) | Task images (discoverable) |
+| Bucket             | TTL             | Purpose                       |
+| ------------------ | --------------- | ----------------------------- |
+| `chat-attachments` | 3600s (1 hour)  | Sensitive chat files          |
+| `avatars`          | 7200s (2 hours) | Profile images (discoverable) |
+| `task-images`      | 7200s (2 hours) | Task images (discoverable)    |
 
 ### TTL Alignment Reference
 
-| Data Type | Bucket | TTL | Cache Duration | Refresh Window |
-|-----------|--------|-----|----------------|----------------|
-| Chat Attachments | chat-attachments | 3600s (1hr) | 90min | 30min before expiry |
-| Avatars | avatars | 7200s (2hr) | 90min | 30min before expiry |
-| Task Images | task-images | 7200s (2hr) | 90min | 30min before expiry |
+| Data Type        | Bucket           | TTL         | Cache Duration | Refresh Window      |
+| ---------------- | ---------------- | ----------- | -------------- | ------------------- |
+| Chat Attachments | chat-attachments | 3600s (1hr) | 90min          | 30min before expiry |
+| Avatars          | avatars          | 7200s (2hr) | 90min          | 30min before expiry |
+| Task Images      | task-images      | 7200s (2hr) | 90min          | 30min before expiry |
 
 **Note**: Cache duration (90min) is intentionally less than minimum TTL (3600s) to ensure URLs are refreshed before they expire.
 
 **Usage**:
+
 ```dart
 // Get TTL for any bucket
 final ttl = SharedStorageConfig.ttlForBucket('chat-attachments');
@@ -2694,6 +2780,7 @@ In-memory cache for signed URLs to prevent redundant API calls:
 - **Max size**: 1000 entries (eviction when exceeded)
 
 **Usage**:
+
 ```dart
 // Check cache first
 final cached = SignedUrlCache.get(storagePath);
@@ -2722,14 +2809,17 @@ try {
 ## Widget Integration
 
 **SignedAvatar** (`lib/core/widgets/signed_avatar.dart`):
+
 - Automatically uses `SignedUrlCache`
 - TTL: `SharedStorageConfig.avatarTtlSeconds`
 
 **SignedImage** (`lib/core/widgets/signed_image.dart`):
+
 - Automatically uses `SignedUrlCache`
 - TTL: `SharedStorageConfig.taskImageTtlSeconds`
 
 **AttachmentMessageTile** (`lib/features/chat/attachments/widgets/attachment_message_tile.dart`):
+
 - Uses `SignedUrlCache` for chat attachments
 - Shows loading/error states
 - Caches errors to prevent retry storms
@@ -2751,7 +2841,6 @@ The cache works in conjunction with hardened RLS policies:
 - Storage RLS: `test/storage_rls_test.dart`
 - Full harness: `test/rls/storage_rls_test_harness.dart`
 
-
 ---
 
 # Task Request (Bid) Flow
@@ -2761,6 +2850,7 @@ The cache works in conjunction with hardened RLS policies:
 **Purpose**: Complete documentation for the Task Request (Bid/Offer) lifecycle management system, covering submission, award, payment, and work activation.
 
 **Related Documents**:
+
 - API Contract: `.TODO/improvement_the_system/ImplementReady/04_task-request-bid-flow/API_CONTRACT.md`
 - Threat Model: `.TODO/improvement_the_system/ImplementReady/04_task-request-bid-flow/THREAT_MODEL.md`
 - Execution Log: `.TODO/EXECUTION_LOG_TaskRequestBidFlow.md`
@@ -2801,7 +2891,7 @@ Work begins
 
 1. **Bid Submission**: Freelancers submit one active offer per task (24-hour response window)
 2. **Bid Replacement**: Freelancers can withdraw and replace their pending offer with updated terms
-3. **Two-Step Award**: 
+3. **Two-Step Award**:
    - Step 1: Client awards offer (locks freelancer, sets payment deadline)
    - Step 2: Client completes payment (funds held in escrow, work begins)
 4. **Auto-Expiry**: Unpaid offers automatically expire after 48-hour payment window
@@ -2868,37 +2958,37 @@ lib/features/tasks/
 
 ### task_requests Table (23 columns)
 
-| Column | Type | Purpose |
-|--------|------|---------|
-| `id` | UUID | Primary key |
-| `task_id` | UUID | FK to tasks |
-| `freelancer_id` | UUID | FK to profiles (canonical) |
-| `bidder_id` | UUID | Legacy column (mirrored from freelancer_id) |
-| `client_id` | UUID | Denormalized task owner for queries |
-| `price` | NUMERIC | Offered price |
-| `days` | INTEGER | Delivery duration |
-| `duration_days` | INTEGER | Legacy column (synced to days) |
-| `note` | TEXT | Optional message |
-| `message` | TEXT | Legacy column (synced to note) |
-| `status` | TEXT | `pending`, `accepted`, `rejected`, `withdrawn` |
-| `payment_status` | TEXT | `unpaid`, `held`, `released`, `refunded` |
-| `created_at` | TIMESTAMPTZ | Creation timestamp |
-| `updated_at` | TIMESTAMPTZ | Last update timestamp |
-| `deleted_at` | TIMESTAMPTZ | Soft delete (withdrawn offers) |
-| `awarded_at` | TIMESTAMPTZ | When offer was accepted |
-| `awarded_by` | UUID | Who accepted the offer |
-| `payment_deadline` | TIMESTAMPTZ | Payment window expiration (48h default) |
-| `fee_rate_applied_bps` | INTEGER | Platform fee rate locked at award time |
-| `fee_amount` | BIGINT | Calculated fee in cents |
-| `net_amount` | BIGINT | Freelancer payout in cents |
+| Column                 | Type        | Purpose                                        |
+| ---------------------- | ----------- | ---------------------------------------------- |
+| `id`                   | UUID        | Primary key                                    |
+| `task_id`              | UUID        | FK to tasks                                    |
+| `freelancer_id`        | UUID        | FK to profiles (canonical)                     |
+| `bidder_id`            | UUID        | Legacy column (mirrored from freelancer_id)    |
+| `client_id`            | UUID        | Denormalized task owner for queries            |
+| `price`                | NUMERIC     | Offered price                                  |
+| `days`                 | INTEGER     | Delivery duration                              |
+| `duration_days`        | INTEGER     | Legacy column (synced to days)                 |
+| `note`                 | TEXT        | Optional message                               |
+| `message`              | TEXT        | Legacy column (synced to note)                 |
+| `status`               | TEXT        | `pending`, `accepted`, `rejected`, `withdrawn` |
+| `payment_status`       | TEXT        | `unpaid`, `held`, `released`, `refunded`       |
+| `created_at`           | TIMESTAMPTZ | Creation timestamp                             |
+| `updated_at`           | TIMESTAMPTZ | Last update timestamp                          |
+| `deleted_at`           | TIMESTAMPTZ | Soft delete (withdrawn offers)                 |
+| `awarded_at`           | TIMESTAMPTZ | When offer was accepted                        |
+| `awarded_by`           | UUID        | Who accepted the offer                         |
+| `payment_deadline`     | TIMESTAMPTZ | Payment window expiration (48h default)        |
+| `fee_rate_applied_bps` | INTEGER     | Platform fee rate locked at award time         |
+| `fee_amount`           | BIGINT      | Calculated fee in cents                        |
+| `net_amount`           | BIGINT      | Freelancer payout in cents                     |
 
 ### Key Indexes
 
-| Index | Purpose |
-|-------|---------|
-| `idx_task_requests_awarded_unpaid` | Optimizes cron expiry queries |
-| `idx_one_accepted_per_task` | Partial unique index enforces one accepted offer per task |
-| `uq_task_requests_one_active_per_freelancer` | One active offer per freelancer per task |
+| Index                                        | Purpose                                                   |
+| -------------------------------------------- | --------------------------------------------------------- |
+| `idx_task_requests_awarded_unpaid`           | Optimizes cron expiry queries                             |
+| `idx_one_accepted_per_task`                  | Partial unique index enforces one accepted offer per task |
+| `uq_task_requests_one_active_per_freelancer` | One active offer per freelancer per task                  |
 
 ---
 
@@ -2918,10 +3008,11 @@ RETURNS TEXT  -- 'accepted' or 'already_accepted'
 **Purpose**: Accepts a pending offer (Step 1 of two-step award flow)
 
 **Key Features**:
+
 - **Idempotency**: Returns 'already_accepted' on retry
 - **Price Validation**: Raises PRICE_MISMATCH if offer changed since viewing
 - **Audit Logging**: Logs to admin_logs (PRICE_MISMATCH_ATTEMPT, OFFER_ACCEPTED)
-- **Side Effects**: 
+- **Side Effects**:
   - Sets status='accepted', payment_status='unpaid'
   - Sets awarded_at, payment_deadline (48h default)
   - Locks fee_rate_applied_bps, pre-calculates fee_amount/net_amount
@@ -2941,6 +3032,7 @@ RETURNS UUID  -- conversation_id
 **Purpose**: Rejects a pending offer and creates conversation for follow-up
 
 **Side Effects**:
+
 - Sets status='rejected'
 - Creates or reuses task-linked conversation
 - Inserts 'offer_rejected' message
@@ -2962,11 +3054,13 @@ RETURNS VOID
 **Purpose**: Withdraws current pending offer and inserts replacement
 
 **Authorization**:
+
 - Caller must match p_freelancer_id (auth.uid())
 - Caller must have active_role='freelancer'
 - Task must be 'open' and not owned by caller
 
 **Side Effects**:
+
 - Updates existing pending offer to status='withdrawn'
 - Inserts new offer with status='pending'
 
@@ -2981,12 +3075,14 @@ RETURNS VOID
 
 **Schedule**: Every 10 minutes via pg_cron
 
-**Criteria**: 
-- status='accepted' 
+**Criteria**:
+
+- status='accepted'
 - payment_status='unpaid'
 - payment_deadline < now - 1 hour (1-hour grace period)
 
 **Side Effects**:
+
 - Sets status='rejected' on expired offers
 - Reverts task.status='open'
 - Sends notifications to both parties
@@ -3010,12 +3106,12 @@ class TaskRequest {
   final PaymentStatus paymentStatus;  // unpaid, held, released, refunded
   final DateTime createdAt;
   final DateTime? paymentDeadline;    // Set on award
-  
+
   // Joined fields
   final String? bidderName;
   final String? bidderAvatar;
   final String? taskTitle;
-  
+
   // Helper properties
   bool get isPending => status == OfferStatus.pending;
   bool get isAccepted => status == OfferStatus.accepted;
@@ -3036,7 +3132,7 @@ class TaskRequestsService {
     required int days,
     String? note,
   });
-  
+
   /// Replace existing pending offer
   Future<TaskRequest> replaceOffer({
     required String taskId,
@@ -3044,20 +3140,20 @@ class TaskRequestsService {
     required int days,
     String? note,
   });
-  
+
   /// Accept offer (Step 1: Award)
   Future<TaskRequest> accept(
     String requestId, {
     String? taskId,
     int? expectedPriceCents,  // For optimistic concurrency
   });
-  
+
   /// Reject offer
   Future<TaskRequest> reject(String requestId, {String? taskId});
-  
+
   /// Check if bid is replaceable
   Future<BidReplaceabilityResult> isBidReplaceable(String taskId);
-  
+
   /// Get existing active offer for current user
   Future<TaskRequest?> getExistingActiveOfferForCurrentUser(String taskId);
 }
@@ -3071,18 +3167,18 @@ class TaskRequestsViewModel extends ChangeNotifier {
   bool get isSubmitting => _isSubmitting;
   bool get isAwarding => _isAwarding;
   bool get isRejecting => _isRejecting;
-  
+
   // Two-step award flow
   Future<Map<String, dynamic>?> award(
     String requestId, {
     int? expectedPriceCents,
   });
-  
+
   Future<Map<String, dynamic>?> payForAwardedOffer(String requestId);
-  
+
   // Cancel awarded-but-unpaid offer
   Future<bool> cancelAwardedOffer(String requestId);
-  
+
   // Rate limiting
   bool get isSubmitRateLimited => remainingDebounceMs > 0;
   int get remainingDebounceMs;
@@ -3096,7 +3192,7 @@ class TaskRequestsViewModel extends ChangeNotifier {
 class PriceMismatchException implements Exception {
   final int expectedCents;
   final int actualCents;
-  
+
   String get userMessage {
     final expectedDollars = (expectedCents / 100).toStringAsFixed(2);
     final actualDollars = (actualCents / 100).toStringAsFixed(2);
@@ -3164,23 +3260,27 @@ if (result != null) {
 ## 7. Security & Threat Mitigation
 
 ### T1: Direct Status Manipulation
+
 - **Mitigation**: No UPDATE policy on task_requests; only RPC can modify status
 - **Verification**: `test/rls/task_requests_rls_test.dart`
 
 ### T2: Double Acceptance Race
-- **Mitigation**: 
+
+- **Mitigation**:
   - Database-level unique index: `idx_one_accepted_per_task`
   - RPC-level task status check
   - ViewModel-level `_isAwarding` flag
 - **Verification**: `test/unit/tender/race_condition_test.dart`
 
 ### T3: Work Without Escrow
+
 - **Mitigation**: Two-step flow enforced by state machine
   - `award_task_offer()` → status='accepted', payment_status='unpaid'
   - `pay_awarded_offer()` → payment_status='held', task.status='in_progress'
 - **Verification**: `test/unit/tender/state_machine_test.dart`
 
 ### T4: Bid Spam
+
 - **Mitigation**:
   - One active offer per freelancer per task (unique constraint)
   - Client-side rate limiting (2-second debounce)
@@ -3188,18 +3288,21 @@ if (result != null) {
 - **Verification**: `test/unit/tender/rate_limit_test.dart`
 
 ### T5: Rejection Without Feedback
+
 - **Mitigation**: `reject_task_request()` creates:
   - Notification to freelancer
   - Task-linked conversation
   - System message in conversation
 
 ### T6: Payment Deadline Evasion
+
 - **Mitigation**:
   - Deadline validation in `pay_awarded_offer()`
   - Cron job auto-expires stale awards every 10 minutes
 - **Verification**: `test/unit/tender/expiration_test.dart`
 
 ### T7: Unauthorized Bid Replacement
+
 - **Mitigation**: `replace_task_request()` verifies caller identity
   - `auth.uid()` must match `p_freelancer_id`
   - JWT role must be 'freelancer'
@@ -3210,15 +3313,15 @@ if (result != null) {
 
 ### system_config Keys
 
-| Key | Default | Purpose |
-|-----|---------|---------|
-| `tender_payment_timeout_hours` | 48 | Payment window duration |
-| `platform_fee_bps` | 1000 (10%) | Platform fee rate |
+| Key                            | Default    | Purpose                 |
+| ------------------------------ | ---------- | ----------------------- |
+| `tender_payment_timeout_hours` | 48         | Payment window duration |
+| `platform_fee_bps`             | 1000 (10%) | Platform fee rate       |
 
 ### Cron Schedule
 
-| Job | Schedule | Function |
-|-----|----------|----------|
+| Job                      | Schedule         | Function                   |
+| ------------------------ | ---------------- | -------------------------- |
 | `cleanup-expired-awards` | Every 10 minutes | `cleanup_expired_awards()` |
 
 ---
@@ -3227,30 +3330,30 @@ if (result != null) {
 
 ### Unit Tests
 
-| File | Purpose |
-|------|---------|
-| `test/unit/tender/task_requests_service_test.dart` | Service layer, exceptions |
-| `test/unit/tender/task_requests_view_model_test.dart` | ViewModel state management |
+| File                                                  | Purpose                         |
+| ----------------------------------------------------- | ------------------------------- |
+| `test/unit/tender/task_requests_service_test.dart`    | Service layer, exceptions       |
+| `test/unit/tender/task_requests_view_model_test.dart` | ViewModel state management      |
 | `test/unit/tender/award_expiration_monitor_test.dart` | Countdown timer, urgency levels |
 
 ### Widget Tests
 
-| File | Purpose |
-|------|---------|
+| File                                               | Purpose                |
+| -------------------------------------------------- | ---------------------- |
 | `test/widget/tasks/expiration_countdown_test.dart` | Countdown UI rendering |
 
 ### RLS Tests
 
-| File | Purpose |
-|------|---------|
+| File                                   | Purpose            |
+| -------------------------------------- | ------------------ |
 | `test/rls/task_requests_rls_test.dart` | Policy enforcement |
 
 ### Fixtures
 
-| File | Purpose |
-|------|---------|
-| `test/fixtures/tender_tasks.dart` | Complete test data |
-| `test/fixtures/task_request_factory.dart` | Factory methods |
+| File                                      | Purpose            |
+| ----------------------------------------- | ------------------ |
+| `test/fixtures/tender_tasks.dart`         | Complete test data |
+| `test/fixtures/task_request_factory.dart` | Factory methods    |
 
 ### Smoke Test
 
@@ -3264,19 +3367,19 @@ if (result != null) {
 
 ```sql
 -- Alert if > 5% of assigned tasks are stuck > 72 hours
-SELECT COUNT(*) FROM task_requests 
-WHERE status='accepted' 
-AND payment_status='unpaid' 
+SELECT COUNT(*) FROM task_requests
+WHERE status='accepted'
+AND payment_status='unpaid'
 AND awarded_at < NOW() - INTERVAL '72 hours';
 ```
 
 ### Admin Logs
 
-| Action | Description |
-|--------|-------------|
+| Action                   | Description                         |
+| ------------------------ | ----------------------------------- |
 | `PRICE_MISMATCH_ATTEMPT` | Security signal for bidding attacks |
-| `OFFER_ACCEPTED` | Successful awards |
-| `AWARD_AUTO_EXPIRED` | Cron job expirations |
+| `OFFER_ACCEPTED`         | Successful awards                   |
+| `AWARD_AUTO_EXPIRED`     | Cron job expirations                |
 
 ---
 
@@ -3284,13 +3387,13 @@ AND awarded_at < NOW() - INTERVAL '72 hours';
 
 ### Common Error Codes
 
-| Code | Meaning | User Message |
-|------|---------|--------------|
-| `PRICE_MISMATCH` | Offer changed during award | "The freelancer updated their offer..." |
-| `already_accepted` | Idempotency hit | "This offer has already been accepted" |
-| `deadline expired` | Payment window closed | "The payment deadline has expired" |
-| `only task owner` | Authorization failure | "Only the task owner can perform this action" |
-| `42501` | RLS denial | "You cannot submit an offer on this task" |
+| Code               | Meaning                    | User Message                                  |
+| ------------------ | -------------------------- | --------------------------------------------- |
+| `PRICE_MISMATCH`   | Offer changed during award | "The freelancer updated their offer..."       |
+| `already_accepted` | Idempotency hit            | "This offer has already been accepted"        |
+| `deadline expired` | Payment window closed      | "The payment deadline has expired"            |
+| `only task owner`  | Authorization failure      | "Only the task owner can perform this action" |
+| `42501`            | RLS denial                 | "You cannot submit an offer on this task"     |
 
 ### Error Mapping Pattern
 
@@ -3299,16 +3402,16 @@ AND awarded_at < NOW() - INTERVAL '72 hours';
 String _mapSubmitOfferError(PostgrestException error) {
   final message = error.message.toLowerCase();
   final code = error.code;
-  
+
   if (message.contains('ux_task_requests_pending_per_user') ||
       message.contains('duplicate key')) {
     return 'You already have a pending offer on this task.';
   }
-  
+
   if (code == '42501' || message.contains('policy')) {
     return 'You cannot submit an offer. The task might be closed.';
   }
-  
+
   // ... more mappings
 }
 ```
@@ -3317,16 +3420,15 @@ String _mapSubmitOfferError(PostgrestException error) {
 
 ## 12. Migration Files
 
-| File | Purpose |
-|------|---------|
-| `20260306_tender_guardrails.sql` | Indexes, accept_task_request, cleanup_expired_awards |
+| File                                                           | Purpose                                                       |
+| -------------------------------------------------------------- | ------------------------------------------------------------- |
+| `20260306_tender_guardrails.sql`                               | Indexes, accept_task_request, cleanup_expired_awards          |
 | `20260308000000_accept_task_request_reject_remaining_bids.sql` | Reject remaining bids when accepting one (Single Winner Rule) |
-| `20260305*.sql` | reject_task_request with conversation creation |
-| `20260311*.sql` | replace_task_request RPC |
+| `20260305*.sql`                                                | reject_task_request with conversation creation                |
+| `20260311*.sql`                                                | replace_task_request RPC                                      |
 
 ---
 
 **Document End**
 
-*Verification: All 8 RPCs documented, all 7 threat scenarios covered, complete file references.*
-
+_Verification: All 8 RPCs documented, all 7 threat scenarios covered, complete file references._

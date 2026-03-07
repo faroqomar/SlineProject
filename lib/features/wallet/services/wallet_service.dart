@@ -41,6 +41,7 @@ class WalletService {
       if (data == null) return WalletBalanceModel.zero();
       return WalletBalanceModel.fromJson(data);
     } catch (e) {
+      AppLogger.w('getWalletBalance failed, returning zero', tag: 'Wallet', error: e);
       return WalletBalanceModel.zero();
     }
   }

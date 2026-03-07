@@ -16,7 +16,7 @@ import 'tabs/overview_tab.dart';
 // import 'tabs/manage_tab.dart'; // Removed
 import 'tabs/bookings_tab.dart';
 import 'tabs/work_tab.dart';
-// ... (in imports section)
+import 'tabs/wallet_tab.dart';
 import 'tabs/inbox_tab.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -57,7 +57,7 @@ class _DashboardContentState extends State<_DashboardContent>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     if (kIsWeb && !_webPaymentReturnHandled) {
       WidgetsBinding.instance.addPostFrameCallback(
         (_) => _handleWebPaymentReturnIfPresent(),
@@ -213,9 +213,9 @@ class _DashboardContentState extends State<_DashboardContent>
             onTap: (index) => vm.setTab(index),
             tabs: const [
               Tab(icon: Icon(Icons.dashboard_outlined), text: "Overview"),
-              // Manage tab removed
               Tab(icon: Icon(Icons.calendar_month_outlined), text: "Bookings"),
               Tab(icon: Icon(Icons.work_history_outlined), text: "Work"),
+              Tab(icon: Icon(Icons.account_balance_wallet_outlined), text: "Wallet"),
               Tab(icon: Icon(Icons.inbox_outlined), text: "Inbox"),
             ],
           ),
@@ -232,9 +232,9 @@ class _DashboardContentState extends State<_DashboardContent>
               widget.tabViews ??
               const [
                 OverviewTab(),
-                // ManageTab removed
                 BookingsTab(),
                 WorkTab(),
+                WalletTab(),
                 InboxTab(),
               ],
         ),

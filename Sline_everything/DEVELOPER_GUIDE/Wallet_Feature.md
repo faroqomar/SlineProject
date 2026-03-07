@@ -9,6 +9,8 @@ The Wallet feature provides a financial dashboard for Freelancers (and Clients).
 
 The feature relies on a **double-entry ledger system** using `journal_entries` and `ledger_lines` tables, replacing the legacy `wallet_transactions` table.
 
+**Event flow and runbook:** See `.TODO/improvement_the_system/Done/09_ledger-event-flow/` — diagram (`06_DIAGRAM_FINAL.md`), risk register (`03_RISK_REGISTER.md`), contract (`CONTRACT_ledger_event_flow.md`), smoke checklist and withdrawal orphan runbook (`SMOKE_CHECKLIST_AND_RUNBOOK.md`). Unit tests: `flutter test test/unit/wallet/`. RLS tests: `flutter test test/rls/ledger_rls_test.dart`. Forensics (`session_id`, `request_id` in `p_meta`) are built by `lib/core/utils/ledger_forensics.dart` and merged by `LedgerService` on every ledger call.
+
 ## 2. Database & Supabase Mapping
 
 ### 2.1 Ledger Core Tables
@@ -88,6 +90,8 @@ Columns:
 
 Security: `security_invoker = on`
 
+**As of migration `20260307160000_wallet_activity_include_spent`**, the view includes both credits to the user and **debits (spent)**: `user_available` DEBIT and `user_pending_withdrawal` DEBIT (e.g. `gateway_escrow`), so clients see a full money story. See diagram 21 and SUPABASE_SETUP §6.6.
+
 Columns:
 - `journal_entry_id` - Transaction ID
 - `created_at` - Timestamp
@@ -118,16 +122,24 @@ Columns:
 | `lib/features/wallet/models/wallet_activity_model.dart` | Model | Activity/transaction details |
 | `lib/features/wallet/viewmodels/wallet_view_model.dart` | ViewModel | Manages wallet state |
 | `lib/features/wallet/view/wallet_screen.dart` | UI | Wallet dashboard and history |
+| `lib/features/dashboard/view/tabs/wallet_tab.dart` | UI | Dashboard Wallet tab: total balance, available, Coming Soon withdraw, transaction history (received/spent). Uses WalletViewModel. |
+| `lib/features/wallet/utils/transaction_label_helper.dart` | Helper | Human-readable transaction source/destination labels from event type and related entity |
 | `lib/features/dashboard/data/dashboard_repository.dart` | Data | Includes ledger-based financial metrics |
 | `lib/features/dashboard/models/financial_metrics_model.dart` | Model | Platform financial metrics |
 
-## 4. RPC: process_payment_event_ledger
+## 4. Approve delivery (single exit point for escrow release)
+
+For **bookings** and **direct offers**, the app releases escrow via a single RPC: `rpc_approve_delivery(entity_type, entity_id)`. The client calls it with `entity_type` = `'booking'` or `'direct_offer'`; the RPC validates ownership, then calls `process_payment_event_ledger('release_with_fee', ...)` with a deterministic idempotency key. Booking flow: `WorkManagementService.approveDelivery()`. Direct offer flow: `DirectOffersService.completeOffer()` → `rpc_approve_delivery(entity_type: 'direct_offer', entity_id)`.
+
+Contract: `.TODO/improvement_the_system/ImplementReady/21_Wallet_System_Escrow_Available_balances/CONTRACT_rpc_approve_delivery.md`.
+
+## 5. RPC: process_payment_event_ledger
 
 Main RPC for all payment operations. **Never write directly to ledger tables.**
 
 ### Parameters
 - `p_event_type` - Event type (see event catalog)
-- `p_related_entity_type` - Entity type ('booking', 'task_request', 'withdrawal_request')
+- `p_related_entity_type` - Entity type ('booking', 'task_request', 'withdrawal_request', 'direct_offer')
 - `p_related_entity_id` - Entity UUID
 - `p_idempotency_key` - UUIDv5 deterministic key
 - `p_amount_gross` - Amount (optional, read from entity when possible)
@@ -160,9 +172,9 @@ Main RPC for all payment operations. **Never write directly to ledger tables.**
 - `ERR_AMOUNT_MISMATCH` - Client amount differs from entity
 - `ERR_WITHDRAWAL_AMOUNT_INVALID` - Invalid withdrawal amount
 
-## 5. Usage Snippets
+## 6. Usage Snippets
 
-### 5.1 Checking Balance
+### 6.1 Checking Balance
 
 ```dart
 final balance = await walletService.getWalletBalance();
@@ -171,7 +183,7 @@ print('Pending Withdrawal: ${balance.pendingWithdrawalBalance}');
 print('Held in Escrow: ${balance.heldBalance}');
 ```
 
-### 5.2 Creating a Withdrawal Request
+### 6.2 Creating a Withdrawal Request
 
 ```dart
 final withdrawalId = await walletService.requestWithdrawal(
@@ -201,7 +213,7 @@ final idempotencyKey = ledgerService.generateIdempotencyKey(
 // Format: UUIDv5(NAMESPACE, 'sline:ledger:{namespace}:{entityId}_{eventType}')
 ```
 
-## 6. Migration Notes
+## 7. Migration Notes
 
 ### Legacy System (Frozen)
 
@@ -219,7 +231,7 @@ The `wallet_transactions` table is **frozen** via trigger:
 4. **Multi-Currency Ready** - Currency column prepared for future expansion
 5. **Platform Metrics** - Real-time GMV, Revenue, Escrow calculations
 
-## 7. Testing Checklist
+## 8. Testing Checklist
 
 - [ ] **Escrow**: Create booking -> Escrow funds -> Verify `held_balance` increases
 - [ ] **Release**: Mark delivered -> Release funds -> Verify `available_balance` increases for provider
@@ -231,14 +243,14 @@ The `wallet_transactions` table is **frozen** via trigger:
 - [ ] **Ledger Balance**: Verify SUM(all debits) == SUM(all credits) across all accounts
 - [ ] **Audit Trail**: Check `audit_logs` has entry for every payment event
 
-## 8. Security
+## 9. Security
 
 - **RLS**: Users can only see their own accounts and ledger lines
 - **Append-Only**: `journal_entries` and `ledger_lines` cannot be updated or deleted
 - **RPC Gate**: All payment events go through `process_payment_event_ledger` with actor validation
 - **Idempotency**: Prevents double-spend via unique constraint on `idempotency_key`
 
-## 9. Webhook Integration
+## 10. Webhook Integration
 
 Edge Function: `qicard_webhook_handler`
 
@@ -247,7 +259,7 @@ Edge Function: `qicard_webhook_handler`
 - Uses deterministic idempotency keys: `qicard:{paymentId}:{eventType}:{status}`
 - Required env vars: `QICARD_RSA_PUBLIC_KEY_PEM`, `QICARD_PROVIDER_NAME`
 
-## 10. References
+## 11. References
 
 - Plan: `.TODO/PaymentPlan/PLAN_PaymentLedger_2026-02-23.md`
 - System Spec: `.TODO/PaymentPlan/PAYMENT_LEDGER_SYSTEM_SPEC.md`

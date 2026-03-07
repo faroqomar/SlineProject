@@ -12,11 +12,7 @@
 /// - Guard trigger error scenarios
 library;
 
-import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/chat/models/conversation_model.dart';
-
-/// Log tag for chat test fixture operations
-const String _logTag = 'chat_test_fixture';
 
 // ============================================================================
 // TEST USER UUIDs
@@ -44,7 +40,6 @@ const String testConversationId = '550e8400-e29b-41d4-a716-446655440030';
 /// Client profile fixture - active_role = 'client'
 /// This user can initiate DMs to freelancers in their favorites list
 final Map<String, dynamic> chatClientProfile = () {
-  AppLogger.d('Creating chatClientProfile fixture', tag: _logTag);
   return <String, dynamic>{
     'id': testClientId,
     'full_name': 'Test Chat Client',
@@ -65,7 +60,6 @@ final Map<String, dynamic> chatClientProfile = () {
 /// Freelancer A profile fixture - active_role = 'freelancer'
 /// This freelancer IS in the client's favorites list
 final Map<String, dynamic> chatFreelancerAProfile = () {
-  AppLogger.d('Creating chatFreelancerAProfile fixture', tag: _logTag);
   return <String, dynamic>{
     'id': testFreelancerAId,
     'full_name': 'Test Freelancer A',
@@ -86,7 +80,6 @@ final Map<String, dynamic> chatFreelancerAProfile = () {
 /// Freelancer B profile fixture - active_role = 'freelancer'
 /// This freelancer is NOT in the client's favorites list (for negative tests)
 final Map<String, dynamic> chatFreelancerBProfile = () {
-  AppLogger.d('Creating chatFreelancerBProfile fixture', tag: _logTag);
   return <String, dynamic>{
     'id': testFreelancerBId,
     'full_name': 'Test Freelancer B',
@@ -111,7 +104,6 @@ final Map<String, dynamic> chatFreelancerBProfile = () {
 /// Favorite relationship: Client → Freelancer A
 /// This enables the client to DM freelancer A
 final Map<String, dynamic> clientFavoritesFreelancerA = () {
-  AppLogger.d('Creating clientFavoritesFreelancerA fixture', tag: _logTag);
   return <String, dynamic>{
     'id': '550e8400-e29b-41d4-a716-446655440040',
     'client_id': testClientId,
@@ -130,7 +122,6 @@ final Map<String, dynamic> clientFavoritesFreelancerA = () {
 /// Direct DM conversation fixture (task_id = null)
 /// Client and Freelancer A have an existing DM conversation
 final Map<String, dynamic> existingDirectConversation = () {
-  AppLogger.d('Creating existingDirectConversation fixture', tag: _logTag);
   return <String, dynamic>{
     'id': testConversationId,
     'task_id': null,
@@ -150,7 +141,6 @@ final Map<String, dynamic> existingDirectConversation = () {
 /// Task-linked conversation fixture
 /// Conversation between Client and Freelancer A about a specific task
 final Map<String, dynamic> existingTaskConversation = () {
-  AppLogger.d('Creating existingTaskConversation fixture', tag: _logTag);
   return <String, dynamic>{
     'id': '550e8400-e29b-41d4-a716-446655440031',
     'task_id': testTaskId,
@@ -173,7 +163,6 @@ final Map<String, dynamic> existingTaskConversation = () {
 /// New conversation response from start_direct_conversation_v1 RPC
 /// Returned when a new DM conversation is successfully created
 final Map<String, dynamic> newDirectConversationResponse = () {
-  AppLogger.d('Creating newDirectConversationResponse fixture', tag: _logTag);
   return <String, dynamic>{
     'id': '550e8400-e29b-41d4-a716-446655440032',
     'task_id': null,
@@ -192,7 +181,6 @@ final Map<String, dynamic> newDirectConversationResponse = () {
 /// Existing conversation response from start_direct_conversation_v1 RPC
 /// Returned when conversation already exists (ON CONFLICT DO UPDATE)
 final Map<String, dynamic> existingDirectConversationResponse = () {
-  AppLogger.d('Creating existingDirectConversationResponse fixture', tag: _logTag);
   return <String, dynamic>{
     'id': testConversationId, // Same ID as existing
     'task_id': null,
@@ -215,7 +203,6 @@ final Map<String, dynamic> existingDirectConversationResponse = () {
 /// RPC Error: Freelancer attempting to start DM
 /// Error returned when a freelancer calls start_direct_conversation_v1
 final Map<String, dynamic> freelancerCannotStartDmError = () {
-  AppLogger.d('Creating freelancerCannotStartDmError fixture', tag: _logTag);
   return <String, dynamic>{
     'code': 'P0001', // User-defined exception code
     'message': 'Freelancers cannot start direct conversations',
@@ -227,7 +214,6 @@ final Map<String, dynamic> freelancerCannotStartDmError = () {
 /// RPC Error: Client DM to non-favorited freelancer
 /// Error returned when client tries to DM freelancer not in favorites
 final Map<String, dynamic> notInFavoritesError = () {
-  AppLogger.d('Creating notInFavoritesError fixture', tag: _logTag);
   return <String, dynamic>{
     'code': 'P0001',
     'message': 'You can only message freelancers in your favorites list',
@@ -239,7 +225,6 @@ final Map<String, dynamic> notInFavoritesError = () {
 /// RPC Error: Rate limit exceeded
 /// Error returned when user exceeds 20 conversations/hour
 final Map<String, dynamic> rateLimitExceededError = () {
-  AppLogger.d('Creating rateLimitExceededError fixture', tag: _logTag);
   return <String, dynamic>{
     'code': 'P0001',
     'message': 'Rate limit exceeded: maximum 20 conversations per hour',
@@ -251,7 +236,6 @@ final Map<String, dynamic> rateLimitExceededError = () {
 /// RPC Error: Target user not found
 /// Error returned when target_id doesn't exist in profiles
 final Map<String, dynamic> targetUserNotFoundError = () {
-  AppLogger.d('Creating targetUserNotFoundError fixture', tag: _logTag);
   return <String, dynamic>{
     'code': 'P0001',
     'message': 'Target user not found',
@@ -263,7 +247,6 @@ final Map<String, dynamic> targetUserNotFoundError = () {
 /// RPC Error: Self-conversation attempt
 /// Error returned when user tries to create conversation with themselves
 final Map<String, dynamic> selfConversationError = () {
-  AppLogger.d('Creating selfConversationError fixture', tag: _logTag);
   return <String, dynamic>{
     'code': 'P0001',
     'message': 'Cannot create conversation with yourself',
@@ -275,10 +258,10 @@ final Map<String, dynamic> selfConversationError = () {
 /// Network timeout error
 /// Simulated error for poor connectivity testing
 final Map<String, dynamic> networkTimeoutError = () {
-  AppLogger.d('Creating networkTimeoutError fixture', tag: _logTag);
   return <String, dynamic>{
     'code': 'network_timeout',
-    'message': 'Connection timeout. Please check your internet connection and try again.',
+    'message':
+        'Connection timeout. Please check your internet connection and try again.',
     'details': 'Request exceeded 10 second timeout',
     'hint': 'Retry the operation',
   };
@@ -290,19 +273,16 @@ final Map<String, dynamic> networkTimeoutError = () {
 
 /// Creates a Conversation model from the new direct conversation response
 Conversation createNewDirectConversationModel() {
-  AppLogger.d('Creating new direct Conversation model', tag: _logTag);
   return Conversation.fromJson(newDirectConversationResponse);
 }
 
 /// Creates a Conversation model from the existing conversation response
 Conversation createExistingDirectConversationModel() {
-  AppLogger.d('Creating existing direct Conversation model', tag: _logTag);
   return Conversation.fromJson(existingDirectConversationResponse);
 }
 
 /// Creates a task-linked Conversation model
 Conversation createTaskConversationModel() {
-  AppLogger.d('Creating task-linked Conversation model', tag: _logTag);
   return Conversation.fromJson(existingTaskConversation);
 }
 
@@ -314,21 +294,12 @@ Map<String, dynamic> createCustomConversation(
   Map<String, dynamic> baseConversation,
   Map<String, dynamic> overrides,
 ) {
-  AppLogger.d(
-    'Creating custom conversation fixture',
-    tag: _logTag,
-    json: {'base_id': baseConversation['id'], 'overrides': overrides.keys.toList()},
-  );
-  return <String, dynamic>{
-    ...baseConversation,
-    ...overrides,
-  };
+  return <String, dynamic>{...baseConversation, ...overrides};
 }
 
 /// Helper to simulate rate limit exhaustion
 /// Returns a list of 20 conversation creation timestamps within the last hour
 List<DateTime> generateRateLimitExhaustedTimestamps() {
-  AppLogger.d('Generating rate limit exhausted timestamps', tag: _logTag);
   final now = DateTime.now().toUtc();
   return List.generate(
     20,
