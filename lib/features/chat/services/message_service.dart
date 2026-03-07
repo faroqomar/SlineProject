@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/logger_service.dart';
 import '../models/conversation_model.dart';
@@ -12,12 +14,52 @@ class MessageService {
   MessageService([SupabaseClient? client])
     : _client = client ?? Supabase.instance.client;
 
+  /// Feature flag cache to avoid repeated lookups
+  bool? _featureFlagCache;
+  DateTime? _featureFlagCacheTime;
+  static const _featureFlagCacheDuration = Duration(minutes: 1);
+
+  /// Check if atomic RPC for direct conversations is enabled via feature flag.
+  /// Caches result for 1 minute to reduce database queries.
+  Future<bool> _isDirectConversationRpcEnabled() async {
+    // Return cached value if still valid
+    if (_featureFlagCache != null && _featureFlagCacheTime != null) {
+      if (DateTime.now().difference(_featureFlagCacheTime!) < _featureFlagCacheDuration) {
+        return _featureFlagCache!;
+      }
+    }
+
+    try {
+      final response = await _client
+          .from('app_config')
+          .select('value')
+          .eq('key', 'enable_direct_conversation_rpc')
+          .maybeSingle();
+
+      // Default to false if flag not found
+      final enabled = response?['value'] == 'true';
+      
+      // Update cache
+      _featureFlagCache = enabled;
+      _featureFlagCacheTime = DateTime.now();
+      
+      AppLogger.d('Feature flag enable_direct_conversation_rpc = $enabled');
+      return enabled;
+    } catch (e) {
+      AppLogger.w('Failed to check feature flag, defaulting to false: $e');
+      return false;
+    }
+  }
+
   /// Create or get conversation (order-insensitive pair). taskId can be null.
   Future<Conversation> createOrGetConversation({
     String? taskId,
     required String user1Id,
     required String user2Id,
+    Duration? timeout,
   }) async {
+    final effectiveTimeout = timeout ?? const Duration(seconds: 10);
+
     // If this is a task-linked conversation, delegate to the RPC which
     // (a) blocks task owner from starting a convo with themselves,
     // (b) returns existing convo if already present, otherwise creates one,
@@ -30,11 +72,15 @@ class MessageService {
             .select(
               '*, tasks(title, task_type), user1:profiles!conversations_user1_id_fkey(full_name, avatar_url), user2:profiles!conversations_user2_id_fkey(full_name, avatar_url)',
             )
-            .single();
+            .single()
+            .timeout(effectiveTimeout);
         AppLogger.i('🧭 RPC start_task_conversation_v1 returned conversation');
         return Conversation.fromJson(
           Map<String, dynamic>.from(response as Map),
         );
+      } on TimeoutException catch (e) {
+        AppLogger.e('❌ RPC start_task_conversation timed out: $e');
+        throw TimeoutException('Connection timeout. Please check your internet and try again.');
       } catch (e) {
         AppLogger.e('❌ RPC start_task_conversation failed: $e');
         rethrow;
@@ -43,6 +89,67 @@ class MessageService {
 
     // ----- Plain DM (no task_id) path: used for booking work or direct DMs -----
     AppLogger.d('Chat: using DM path (no taskId)');
+
+    // Check if atomic RPC is enabled via feature flag
+    final useRpc = await _isDirectConversationRpcEnabled();
+
+    if (useRpc) {
+      // Use new atomic RPC path (Chat Creation Matrix)
+      AppLogger.d('Chat: using atomic RPC path (feature flag enabled)');
+      return _createDirectConversationViaRpc(
+        targetId: user2Id,
+        timeout: effectiveTimeout,
+      );
+    } else {
+      // Use legacy direct INSERT path
+      AppLogger.d('Chat: using legacy direct INSERT path (feature flag disabled)');
+      return _createDirectConversationViaInsert(
+        user1Id: user1Id,
+        user2Id: user2Id,
+        timeout: effectiveTimeout,
+      );
+    }
+  }
+
+  /// Create direct conversation using the new atomic RPC.
+  /// This is the preferred path when feature flag is enabled.
+  Future<Conversation> _createDirectConversationViaRpc({
+    required String targetId,
+    required Duration timeout,
+  }) async {
+    try {
+      final response = await _client
+          .rpc('start_direct_conversation_v1', params: {'p_target_id': targetId})
+          .select('''
+            *,
+            user1:profiles!conversations_user1_id_fkey(full_name, avatar_url),
+            user2:profiles!conversations_user2_id_fkey(full_name, avatar_url)
+          ''')
+          .single()
+          .timeout(timeout);
+
+      AppLogger.i('🆕 RPC start_direct_conversation_v1 succeeded');
+      return Conversation.fromJson(Map<String, dynamic>.from(response as Map));
+    } on TimeoutException catch (e) {
+      AppLogger.e('❌ RPC start_direct_conversation_v1 timed out: $e');
+      throw TimeoutException('Connection timeout. Please check your internet and try again.');
+    } on PostgrestException catch (e) {
+      AppLogger.e('❌ RPC start_direct_conversation_v1 failed: ${e.message}');
+      // Let the error propagate for ErrorMapper to handle
+      rethrow;
+    } catch (e) {
+      AppLogger.e('❌ RPC start_direct_conversation_v1 failed: $e');
+      rethrow;
+    }
+  }
+
+  /// Create direct conversation using direct INSERT (legacy path).
+  /// Used when feature flag is disabled for backward compatibility.
+  Future<Conversation> _createDirectConversationViaInsert({
+    required String user1Id,
+    required String user2Id,
+    required Duration timeout,
+  }) async {
     final base = _client.from('conversations').select();
 
     // Filter by pair regardless of order
@@ -52,7 +159,7 @@ class MessageService {
     // Only look for DMs (task_id IS NULL)
     final query = base.is_('task_id', null).or(pairFilter).limit(1);
 
-    final existing = await query;
+    final existing = await query.timeout(timeout);
 
     AppLogger.d(
       '🔎 Existing DM conversations found: ${existing is List ? existing.length : 'n/a'}',
@@ -75,7 +182,8 @@ class MessageService {
         .from('conversations')
         .insert(insertMap)
         .select()
-        .single();
+        .single()
+        .timeout(timeout);
 
     try {
       final id = (response as Map)['id'];

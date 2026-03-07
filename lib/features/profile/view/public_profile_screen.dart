@@ -461,6 +461,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
         user2Id: targetUserId,
       );
 
+      // Handle double-tap or error (conversation is null)
+      if (conversation == null) {
+        loader.close();
+        return;
+      }
       if (!context.mounted) return;
 
       Navigator.push(

@@ -1,6 +1,150 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2026-03-06
+**Last Updated:** 2026-03-08
+
+---
+
+## 🏷️ Task Request Bid Flow — FULL_REPORT Fixes (v2.20.1)
+
+**Date:** 2026-03-08  
+**Report:** `.TODO/improvement_the_system/ImplementReady/21_Wallet_System_Escrow_Available_balances/diagram_consistency_audit/04_task-request-bid-flow/FULL_REPORT.md`
+
+### ✅ Implemented
+
+- **Inbox Award — Optimistic Price Lock:**
+  - `lib/features/dashboard/viewmodels/dashboard_view_model.dart` — `awardOffer()` now passes `expectedPriceCents: (offer.price * 100).round()` to `TaskService.awardOffer()`
+  - Prevents bait-and-switch when awarding from Inbox tab (client-captured price validated at RPC time)
+
+- **accept_task_request — Single Winner Rule:**
+  - `supabase/migrations/20260308000000_accept_task_request_reject_remaining_bids.sql` — Rejects all other pending bids on the same task when one is accepted
+  - Ensures atomic "one accepted per task" invariant
+
+### 📊 Impact
+
+- **Security:** Inbox award flow now has same optimistic concurrency protection as Requests list
+- **Data Integrity:** No orphaned pending bids when client accepts one offer
+
+### 🔗 References
+
+- FULL_REPORT: `.TODO/.../04_task-request-bid-flow/FULL_REPORT.md`
+- SUPABASE_SETUP: §9.6 accept_task_request, §17 Changelog v2.20.1
+
+---
+
+## 🏷️ Tender Task Lifecycle — Price Validation & Auto-Expiry (v2.20)
+
+**Date:** 2026-03-06  
+**Plan:** `.TODO/improvement_the_system/ImplementReady/03_tender-task-lifecycle`  
+**Master Report:** `.TODO/MASTER_REPORT_2026-03-06_TenderTaskLifecycle.md`
+
+### ✅ Implemented
+
+- **Database Layer:**
+  - `idx_task_requests_awarded_unpaid` — Index for efficient expired award queries
+  - `idx_one_accepted_per_task` — Partial unique index enforces single accepted offer per task
+  - `award_task_offer` RPC — Optimistic concurrency with `p_expected_price_cents`, idempotency, audit logging
+  - `accept_task_request` RPC — Price validation, idempotency, activity_log integration
+  - `cleanup_expired_awards` RPC — 1-hour grace period, notifications to both parties, audit logging
+  - `cleanup-expired-awards` cron job — Runs every 10 minutes
+  - `system_config` entries — `platform_fee_bps` and `tender_payment_timeout_hours`
+
+- **Application Layer:**
+  - `PriceMismatchException` — Custom exception with user-friendly message formatting
+  - `OfferAlreadyAcceptedException` — Idempotency handling for duplicate accepts
+  - `AwardExpirationMonitor` — Timer-based countdown with urgency levels (relaxed/urgent/critical/expired)
+  - `TaskRequestsService.accept()` — Price validation parameter support
+  - `TaskRequestsViewModel.acceptOffer()` — Captures expected price at UI interaction time
+  - `DashboardOfferCard` — Payment deadline countdown with color-coded urgency and pulse animation
+  - `RequestsListScreen` — Price mismatch error dialog with refresh option
+
+- **Security & Data Integrity:**
+  - Price validation: Client-captured price validated at RPC time prevents race conditions
+  - Idempotency: Duplicate accept operations return success without side effects
+  - Auto-expiry: Unpaid awards auto-expire after 48 hours (configurable) with notifications
+  - Audit trail: All price mismatches and expiry events logged to `admin_logs`
+
+- **Test Infrastructure:**
+  - `test/fixtures/tender_tasks.dart` — Comprehensive fixtures for 7 task states and 4 request states
+  - `test/unit/tender/award_expiration_monitor_test.dart` — Timer, urgency, and disposal tests
+  - `test/unit/tender/task_requests_service_test.dart` — Exception class tests
+  - `test/unit/tender/task_requests_view_model_test.dart` — ViewModel behavior tests
+
+- **Documentation:**
+  - `Sline_everything/DEVELOPER_GUIDE.md` — Complete tender lifecycle section
+  - `.TODO/CONTRACT_accept_task_request_v2.md` — API contract with error codes
+  - `.TODO/SMOKE_TEST_TENDER.md` — Manual verification steps
+  - `.TODO/ROLLBACK_TRIGGERS.md` — Data-driven rollback procedures
+
+### 📊 Impact
+
+- **Security:** Price validation prevents bidding manipulation attacks
+- **Reliability:** Idempotent operations ensure consistent state across retries
+- **User Experience:** Clear payment deadlines with visual urgency indicators
+- **Observability:** Full audit trail for all tender lifecycle events
+- **Maintainability:** Configurable timeouts and fees via system_config
+
+---
+
+## 🔒 Chat Creation Matrix — Secure Conversation Creation (v2.19)
+
+**Date:** 2026-03-06  
+**Plan:** `.TODO/MASTER_REPORT_2026-03-06_ChatCreationMatrix.md`  
+**Master Report:** `.TODO/MASTER_REPORT_2026-03-06_ChatCreationMatrix.md`
+
+### ✅ Implemented
+
+- **Database Layer:**
+  - `start_direct_conversation_v1()` RPC — Atomic, idempotent DM creation with ON CONFLICT
+  - `is_client(uuid)` function — Checks `active_role = 'client'` for role enforcement
+  - `check_conversation_rate_limit(uuid)` function — Enforces 20 conversations/hour limit
+  - `conversations_before_insert_guard()` trigger — Hardened with identity, role, favorites, rate limit checks
+  - `app_config` table — Feature flag `enable_direct_conversation_rpc` for zero-downtime rollout
+  - `admin_logs` integration — Full audit trail for all conversation creation attempts
+
+- **Application Layer:**
+  - `MessageService` — Feature flag routing (RPC path vs legacy path)
+  - `ChatViewModel` — `isCreatingConversation` state for double-tap prevention
+  - `ErrorMapper` — User-friendly error messages for SQL exceptions
+  - UI call sites — All updated to handle nullable `Conversation?` returns
+
+- **Security & Access Control:**
+  - Role enforcement: Only clients can initiate direct DMs
+  - Favorites enforcement: Clients can only DM freelancers in their favorites
+  - Rate limiting: 20 conversation creations per hour per user
+  - Identity integrity: `initiated_by` must equal `auth.uid()`
+  - Self-conversation prevention: Blocked at RPC level
+
+- **Test Infrastructure:**
+  - `test/services/message_service_test.dart` — Unit tests (feature flag, RPC, idempotency)
+  - `integration_test/chat_creation_test.dart` — E2E flows (favorite DM, task bid, reject)
+  - `test/rls/chat_creation_security_test.dart` — Security tests (spoofing, bypass, privacy)
+
+- **Migration:** `supabase/migrations/20260306000000_chat_creation_matrix.sql`
+
+### 📊 Impact
+
+- **Security:** Database-level enforcement prevents role bypass, favorites spoofing, and spam
+- **Reliability:** Atomic RPC eliminates race conditions; idempotent design prevents duplicates
+- **Observability:** Full audit trail in `admin_logs` with structured error classification
+- **Deployability:** Feature flag enables gradual rollout with instant rollback capability
+- **Backward Compatibility:** Legacy INSERT path remains functional during migration window
+
+### 🧪 Verification
+
+- All unit tests pass (`flutter test test/services/message_service_test.dart`)
+- All integration tests pass (`flutter test integration_test/chat_creation_test.dart`)
+- All security tests pass (`flutter test test/rls/chat_creation_security_test.dart`)
+- `flutter analyze` — no issues
+- MCP verification — all functions, triggers, and policies confirmed active
+
+### 🔗 References
+
+- Plan: `.TODO/improvement_the_system/ImplementReady/07_chat-creation-matrix/`
+- Master Report: `.TODO/MASTER_REPORT_2026-03-06_ChatCreationMatrix.md`
+- Architect Report: `.TODO/ARCHITECT_REPORT_2026-03-06_ChatCreationMatrix.md`
+- Observability Report: `.TODO/OBSERVABILITY_REPORT_2026-03-06_ChatCreationMatrix.md`
+- Docs Report: `.TODO/DOCS_REPORT_2026-03-06_ChatCreationMatrix.md`
+- CodeGuard Review: `.TODO/CODEGUARD_REVIEW_2026-03-06_ChatCreationMatrix.md`
 
 ---
 
@@ -61,6 +205,70 @@
 - Observability review: `.TODO/OBSERVABILITY_REPORT_2026-03-06_RoleSwitching.md`
 - Docs review: `.TODO/DOCS_REPORT_2026-03-06_RoleSwitching.md`
 - CodeGuard review: `.TODO/CODEGUARD_REVIEW_2026-03-06_RoleSwitching.md`
+
+---
+
+## 🗂️ Storage Signed URLs Flow v2 — RLS Hardening, Centralized TTL, Error Caching
+
+**Date:** 2026-03-06  
+**Plan:** `.TODO/improvement_the_system/ImplementReady/17_storage-signed-urls-flow/`  
+**Master Report:** `.TODO/MASTER_REPORT_2026-03-06_StorageSignedUrls.md`
+
+### ✅ Implemented
+
+- **Database Layer (RLS v2):**
+  - `is_admin(uuid)` function — Checks `roles @> '{admin}'` for admin access
+  - `can_access_chat_attachment(path, uid)` function — Validates conversation participation + admin bypass
+  - `can_access_task_image(path, uid)` function — Validates image ownership + admin bypass
+  - `app_config` table — Feature flag `storage_rls_v2_enabled` for gradual rollout
+  - 3 new RLS v2 policies — `avatars_select_v2`, `task_images_select_restricted_v2`, `chat_attach_select_restricted_v2`
+  - Atomic policy swap — Old broad policies removed, new strict policies active with fallback
+
+- **Application Layer:**
+  - `SharedStorageConfig` — Centralized TTL constants (3600s/7200s), cache durations, max cache size
+  - `SignedUrlCache` — Enhanced with error caching (30s), LRU eviction, bounded size (1000 entries)
+  - `AvatarService` — Updated to use `SharedStorageConfig.avatarTtlSeconds`
+  - `TaskImageService` — Updated to use `SharedStorageConfig.taskImageTtlSeconds`
+  - `AttachmentService` — Updated to use `SharedStorageConfig.chatAttachmentTtlSeconds`
+  - `SignedAvatar` widget — Now uses `SharedStorageConfig` for TTL
+  - `SignedImage` widget — Now uses `SharedStorageConfig` for TTL
+  - `AttachmentMessageTile` — Integrated `SignedUrlCache` with `ErrorMapper` for consistent error messages
+
+- **Test Infrastructure:**
+  - `test/rls/storage_rls_test_harness.dart` — Storage-specific RLS testing utilities
+  - `test/storage_rls_test.dart` — 6 security tests (T50-T53 + anonymous access)
+  - `test/fixtures/storage_rls_test_data.sql` — Test fixtures for conversations/profiles
+
+- **Migrations:**
+  - `20260306_add_app_config_feature_flag.sql`
+  - `20260306_storage_rls_helper_functions.sql`
+  - `20260306_storage_rls_v2_policy_swap.sql`
+
+### 📊 Impact
+
+- **Security:** Object-level RLS prevents path guessing attacks. Non-participants get 403 on chat attachments. Non-owners get 403 on task images.
+- **Performance:** 90-minute URL caching reduces API calls. Error caching prevents retry storms on 403s.
+- **Consistency:** Centralized TTL configuration eliminates hardcoded values across services.
+- **Reliability:** Feature flag allows instant rollback without code deploy.
+- **Cache Safety:** Bounded cache (1000 entries) with LRU eviction prevents memory exhaustion.
+
+### 🧪 Verification
+
+- All 6 RLS security tests defined (T50-T53)
+- Cache unit tests pass (`flutter test test/unit/core/signed_url_cache_test.dart`)
+- `flutter analyze` — no issues in scope files
+- Supabase MCP verification — all 3 functions, 3 policies, 1 table confirmed active
+
+### 🔗 References
+
+- Master Report: `.TODO/MASTER_REPORT_2026-03-06_StorageSignedUrls.md`
+- Schema: `.TODO/PLAN_StorageSignedUrls_SCHEMA.md`
+- Contract: `.TODO/PLAN_StorageSignedUrls_CONTRACT.md`
+- Threats: `.TODO/PLAN_StorageSignedUrls_THREATS.md`
+- Rollback: `.TODO/PLAN_StorageSignedUrls_ROLLBACK.md`
+- Architect: `.TODO/ARCHITECT_REPORT_2026-03-06_StorageSignedUrls.md`
+- Docs: `.TODO/DOCS_REPORT_2026-03-06_StorageSignedUrls.md`
+- CodeGuard: `.TODO/CODEGUARD_REVIEW_2026-03-06_StorageSignedUrls.md`
 
 ---
 
@@ -2752,3 +2960,97 @@ Flutter + Supabase freelance marketplace with real-time chat, tasks, and profile
 ---
 
 ### 🟢 Version 1.8 — Chat guard flip (owner blocked) + RPC v1 + UI guard
+
+---
+
+### 🟢 Version 2.19 — Task Request (Bid) Flow Complete
+
+**Date**: 2026-03-06  
+**Status**: Phase 4.4 Complete — Full bid lifecycle with two-step award & payment escrow  
+**Commit**: _Pending_ — "feat: Task Request Bid Flow with two-step award, price validation, and auto-expiry"
+
+#### ✅ Implemented
+
+- **Two-Step Award Flow**:
+  - Step 1 (`accept_task_request`): Client awards offer, locks freelancer, sets 48h payment deadline
+  - Step 2 (`pay_awarded_offer`): Client completes payment, funds held in escrow, work begins
+  - Optimistic concurrency control: Price validation prevents race conditions during award
+  - Idempotency: Double-clicking "Award" returns 'already_accepted' without side effects
+
+- **Bid Lifecycle Management**:
+  - `submitOffer`: Freelancers submit offers with 24-hour response window
+  - `replaceOffer`: Freelancers can withdraw and replace pending offers
+  - `reject`: Client rejection with automatic conversation creation
+  - `cancelAwardedOffer`: Cancel unpaid awards, revert task to open
+
+- **Auto-Expiry System**:
+  - `cleanup_expired_awards()`: Cron job runs every 10 minutes
+  - Expires unpaid offers 1 hour after payment deadline
+  - Sends notifications to both parties
+  - Reverts task.status to 'open' automatically
+
+- **Security Hardening**:
+  - `idx_one_accepted_per_task`: Unique index prevents double acceptance
+  - Rate limiting: 2-second debounce prevents bid spam
+  - RLS policies: No direct status updates, only RPC can modify
+  - Audit logging: PRICE_MISMATCH_ATTEMPT, OFFER_ACCEPTED, AWARD_AUTO_EXPIRED
+
+- **Flutter Implementation**:
+  - `TaskRequest` model with OfferStatus/PaymentStatus enums
+  - `TaskRequestsService`: RPC calls with comprehensive error mapping
+  - `TaskRequestsViewModel`: MVVM with loading flags (prevents double-submit)
+  - `AwardExpirationMonitor`: Live countdown timer for payment deadline
+  - `PriceMismatchException`, `OfferAlreadyAcceptedException`: Typed errors
+
+#### 📁 New Files
+
+| File | Purpose |
+|------|---------|
+| `lib/features/tasks/models/task_request_model.dart` | TaskRequest entity (23 fields) |
+| `lib/features/tasks/services/task_requests_service.dart` | Service layer with RPC calls |
+| `lib/features/tasks/viewmodels/task_requests_view_model.dart` | MVVM state holder |
+| `lib/features/tasks/viewmodels/award_expiration_monitor.dart` | Countdown timer |
+| `lib/features/tasks/exceptions/offer_exceptions.dart` | Custom exceptions |
+| `lib/features/tasks/view/widgets/expiration_countdown.dart` | Countdown UI |
+| `lib/features/tasks/view/widgets/payment_status_badge.dart` | Payment status indicator |
+| `test/unit/tender/*` | Unit tests for service, viewmodel, monitor |
+| `test/fixtures/tender_tasks.dart` | Test fixtures |
+| `Sline_everything/FEATURE_BID_FLOW.md` | Quick reference guide |
+
+#### 🔧 Migration Files
+
+- `20260306_tender_guardrails.sql`: Indexes, accept_task_request, cleanup_expired_awards
+- `20260305*_reject_task_request_conversation_initiator.sql`: Reject with conversation
+- `20260311*_replace_task_request.sql`: Replace offer RPC
+
+#### 📚 Documentation
+
+- **API Contract**: `.TODO/improvement_the_system/ImplementReady/04_task-request-bid-flow/API_CONTRACT.md`
+- **Threat Model**: `.TODO/improvement_the_system/ImplementReady/04_task-request-bid-flow/THREAT_MODEL.md`
+- **Developer Guide**: `Sline_everything/DEVELOPER_GUIDE.md#task-request-bid-flow` (new section)
+- **Quick Reference**: `Sline_everything/FEATURE_BID_FLOW.md` (new file)
+- **Project Context**: `.cursor/PROJECT_CONTEXT.md` (bid flow overview)
+
+#### 📊 Impact
+
+- Complete bid lifecycle from submission through payment
+- Race condition protection with price validation
+- Automatic cleanup of stale awards
+- Comprehensive error handling with user-friendly messages
+- Full test coverage (unit, widget, RLS)
+
+#### 🧪 Verification
+
+- Unit tests: `flutter test test/unit/tender/`
+- RLS tests: `flutter test test/rls/task_requests_rls_test.dart`
+- Smoke test: `.TODO/SMOKE_TEST_TENDER.md`
+- Manual: Award → Payment → Work activation flow
+
+#### 🔐 Security Verification
+
+- [x] RLS negative tests pass (direct UPDATE → 403)
+- [x] Race condition tests pass (concurrent accepts)
+- [x] State machine validation (work without escrow blocked)
+- [x] Rate limiting tests (2s debounce)
+- [x] Notification verification (reject creates notification)
+

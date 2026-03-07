@@ -1,7 +1,7 @@
 # Supabase Setup for SLine — Complete Database Reference
 
-**Last Updated**: 2026-03-06 (Role switching: RPC, trigger, JWT-based RLS policies; Auth profile provisioning: view/function/pg_cron)
-**Version**: 2.18
+**Last Updated**: 2026-03-08 (accept_task_request: reject remaining bids; Inbox award: optimistic price lock)
+**Version**: 2.20.1
 **Database Version**: PostgreSQL 17.4.1
 **Project ID**: `isddrknbjsgaantjojhm`
 **Region**: `eu-north-1` (Stockholm)
@@ -55,6 +55,13 @@ This document is the **single source of truth** for all Supabase backend setup: 
 | `switch_active_role` | `p_expected_old_role TEXT, p_new_role TEXT` | `JSONB` | Atomic role switching with race condition protection | SECURITY DEFINER |
 | `check_role_switch_rate_limit` | — | `BOOLEAN` | Check if user is within rate limit (3 switches/minute) | SECURITY DEFINER |
 | `sync_role_to_jwt_claims` | (trigger function) | `TRIGGER` | Syncs `profiles.active_role` to `auth.users.app_metadata` | SECURITY DEFINER |
+| `start_direct_conversation_v1` | `p_target_id UUID` | `conversations` | Atomic DM creation with rate limit (20/hr), favorites check, role enforcement | SECURITY DEFINER |
+| `is_client` | `p_user_id UUID` | `BOOLEAN` | Check if user has active_role = 'client' | SECURITY DEFINER |
+| `check_conversation_rate_limit` | `p_user_id UUID` | `BOOLEAN` | Check if user is within conversation rate limit (20/hr) | SECURITY DEFINER |
+| `admin_set_config` | `p_key TEXT, p_value TEXT` | `VOID` | Update app_config (feature flags) | SECURITY DEFINER |
+| `award_task_offer` | `p_task_id UUID, p_request_id UUID, p_expected_price_cents BIGINT` | `JSONB` | Award offer with price validation, idempotency | SECURITY DEFINER |
+| `pay_awarded_offer` | `p_task_id UUID, p_request_id UUID, p_expected_price_cents BIGINT` | `JSONB` | Pay for awarded offer, move to escrow | SECURITY DEFINER |
+| `cleanup_expired_awards` | — | `VOID` | Cron job: expire unpaid awards after deadline | SECURITY DEFINER |
 
 ### Views
 
@@ -103,6 +110,7 @@ This document is the **single source of truth** for all Supabase backend setup: 
 - ✅ **Legacy Freeze**: `wallet_transactions` table is now read-only to prevent drift.
 - ✅ **Auth profile provisioning**: Trigger `on_auth_user_created` creates `public.profiles` on `auth.users` INSERT. Function `sweep_orphaned_auth_users()` deletes auth users with no profile older than 15 minutes. Extension `pg_cron` is enabled; cron job `sweep-orphaned-auth-users` runs every 15 minutes (`*/15 * * * *`). View `vw_orphaned_auth_users` for monitoring.
 - ✅ **Role switching (v2.18)**: RPC `switch_active_role` provides atomic role switching with `expected_old_role` guard, rate limiting (3/minute), and audit logging. Trigger `trg_sync_role_to_jwt` syncs role to JWT claims. RLS policies use `auth.jwt()->'app_metadata'->>'active_role'` for performant role enforcement.
+- ✅ **Chat Creation Matrix (v2.19)**: RPC `start_direct_conversation_v1` provides atomic, idempotent DM creation with rate limiting (20/hour), favorites enforcement, and role verification. Guard trigger `conversations_before_insert_guard` hardens all conversation creation paths. Feature flag `enable_direct_conversation_rpc` controls gradual rollout.
 
 ---
 
@@ -512,7 +520,28 @@ Typing indicators for real-time chat.
 
 ---
 
-### 5.8 `availability_slots`
+### 5.8 `app_config`
+
+Application configuration and feature flags.
+
+| Column      | Type        | Nullable | Default | Description                       |
+| ----------- | ----------- | -------- | ------- | --------------------------------- |
+| `key`       | text        | ❌       | -       | Configuration key (PK)          |
+| `value`     | text        | ❌       | -       | Configuration value               |
+| `description` | text      | ✅       | -       | Human-readable description        |
+| `updated_at` | timestamptz | ✅    | `now()` | Last update timestamp             |
+
+**Key Configurations:**
+
+| Key | Purpose | Example Values |
+|-----|---------|----------------|
+| `enable_direct_conversation_rpc` | Feature flag for Chat Creation Matrix RPC | `'false'` (gradual rollout) |
+
+**RLS:** SELECT for authenticated; ALL for service_role only.
+
+---
+
+### 5.9 `availability_slots`
 
 Provider availability windows for booking tasks.
 
@@ -933,6 +962,39 @@ Pre-defined service packages offered by freelancers.
 **Indexes:** `services_pkey`, `idx_services_freelancer_id`, `idx_services_status`
 
 **Constraints:** `chk_services_status CHECK (status IN ('active', 'draft', 'paused'))`
+
+---
+
+### 5.19 `system_config`
+
+Runtime configuration table for application settings and feature flags.
+
+| Column        | Type    | Nullable | Default             | Description                        |
+| ------------- | ------- | -------- | ------------------- | ---------------------------------- |
+| `key`         | TEXT    | ❌       | -                   | Primary key, unique setting name   |
+| `value`       | JSONB   | ❌       | '{}'                | Configuration value (JSON)         |
+| `description` | TEXT    | ✅       | NULL                | Human-readable description         |
+| `updated_at`  | TIMESTAMPTZ | ✅   | NOW()               | Last modification timestamp        |
+
+**Primary Key:** `key`
+
+**Tender/Bid Flow Configuration Keys:**
+
+| Key | Value Format | Default | Purpose |
+|-----|--------------|---------|---------|
+| `tender_payment_timeout_hours` | `{"timeout_hours": 48}` | 48 hours | Payment window duration after offer award |
+| `platform_fee_bps` | `{"default_rate_bps": 1000}` | 1000 (10%) | Platform fee rate in basis points (100 bps = 1%) |
+
+**Other Common Keys:**
+
+| Key | Value Format | Purpose |
+|-----|--------------|---------|
+| `maintenance_mode` | `{"enabled": false, "message": "..."}` | App maintenance state |
+| `min_app_version` | `{"version": "2.0.0", "force_update": false}` | Minimum required app version |
+| `disable_signups` | `{"disabled": false}` | Disable new user registrations |
+| `app_banner` | `{"enabled": false, "message": "...", "type": "info"}` | Global app banner |
+| `storage_rls_v2_enabled` | `true/false` | Feature flag for hardened storage RLS |
+| `app_config` | `{"allow_owner_task_conversation": false}` | Feature flags for conversation guards |
 
 ---
 
@@ -1448,6 +1510,113 @@ Check if user is participant in conversation.
 SELECT is_conversation_participant('...', auth.uid());  -- true/false
 ```
 
+#### `is_admin(uid uuid) → boolean` (Storage RLS v2)
+
+Returns true if user has `'admin'` in their `roles` array. Used for storage RLS admin bypass.
+
+```sql
+SELECT is_admin(auth.uid());  -- true/false
+
+-- Implementation:
+CREATE OR REPLACE FUNCTION public.is_admin(p_uid uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles 
+    WHERE id = p_uid AND roles @> '{admin}'
+  );
+$$;
+```
+
+#### `can_access_chat_attachment(path text, uid uuid) → boolean` (Storage RLS v2)
+
+Validates that user is a participant in the conversation for chat attachment paths.
+Handles paths in format: `convos/<conversation_id>/<filename>`.
+
+```sql
+SELECT can_access_chat_attachment('convos/abc-123/file.jpg', auth.uid());  -- true/false
+
+-- Implementation:
+CREATE OR REPLACE FUNCTION public.can_access_chat_attachment(
+  p_object_name text, 
+  p_uid uuid
+)
+RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public AS $$
+DECLARE
+  v_parts text[];
+  v_conversation_id uuid;
+  v_user1 uuid;
+  v_user2 uuid;
+BEGIN
+  IF p_uid IS NULL OR p_object_name IS NULL OR p_object_name = '' THEN
+    RETURN false;
+  END IF;
+
+  -- Admin bypass
+  IF public.is_admin(p_uid) THEN
+    RETURN true;
+  END IF;
+
+  -- Expected path: convos/<conversation_id>/...
+  v_parts := string_to_array(p_object_name, '/');
+  IF array_length(v_parts, 1) < 2 OR v_parts[1] <> 'convos' THEN
+    RETURN false;
+  END IF;
+
+  BEGIN
+    v_conversation_id := v_parts[2]::uuid;
+  EXCEPTION WHEN OTHERS THEN
+    RETURN false;
+  END;
+
+  SELECT user1_id, user2_id INTO v_user1, v_user2
+  FROM public.conversations
+  WHERE id = v_conversation_id;
+
+  IF NOT FOUND THEN
+    RETURN false;
+  END IF;
+
+  RETURN p_uid = v_user1 OR p_uid = v_user2;
+END;
+$$;
+```
+
+#### `can_access_task_image(path text, uid uuid) → boolean` (Storage RLS v2)
+
+Validates that user is the owner of the task image path. Path format: `<user_id>/<filename>`.
+
+```sql
+SELECT can_access_task_image('user-123/file.jpg', auth.uid());  -- true/false
+
+-- Implementation:
+CREATE OR REPLACE FUNCTION public.can_access_task_image(
+  p_object_name text, 
+  p_uid uuid
+)
+RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public AS $$
+DECLARE
+  v_owner_id text;
+BEGIN
+  IF p_uid IS NULL OR p_object_name IS NULL OR p_object_name = '' THEN
+    RETURN false;
+  END IF;
+
+  -- Admin bypass
+  IF public.is_admin(p_uid) THEN
+    RETURN true;
+  END IF;
+
+  -- Path format: <user_id>/<filename>
+  v_owner_id := split_part(p_object_name, '/', 1);
+  
+  RETURN v_owner_id = p_uid::text;
+END;
+$$;
+```
+
 ### 9.2 RPC Functions
 
 #### `start_task_conversation_v1(p_task_id uuid) → conversations`
@@ -1539,6 +1708,40 @@ Canonical owner-side offer rejection RPC. It validates `tasks.owner_id`, rejects
 #### `reject_task_request(p_request_id uuid) → task_requests`
 
 Legacy compatibility wrapper. It resolves `task_id`, delegates to the canonical two-argument RPC above, and returns the refreshed `task_requests` row.
+
+#### Tender Task Lifecycle RPCs (v2.20)
+
+**`award_task_offer(p_task_id UUID, p_request_id UUID, p_expected_price_cents BIGINT DEFAULT NULL) → JSONB`**:
+- Awards a pending offer to a freelancer
+- Optimistic concurrency: validates `p_expected_price_cents` against current price
+- Idempotency: returns `already_accepted` if request already accepted
+- Sets `payment_deadline` based on `system_config.tender_payment_timeout_hours` (default 48h)
+- Locks `fee_rate_applied_bps` at award time (immutable after)
+- Pre-calculates `fee_amount` and `net_amount` for payment phase
+- Audit logs: writes `PRICE_MISMATCH_ATTEMPT` to `admin_logs` on validation failure
+- Writes `OFFER_ACCEPTED` to `activity_log` for client dashboard
+
+**`pay_awarded_offer(p_task_id UUID, p_request_id UUID, p_expected_price_cents BIGINT DEFAULT NULL) → JSONB`**:
+- Processes payment for an already-awarded offer
+- Moves funds to escrow via `process_payment_event_ledger`
+- Updates task status to `in_progress`
+- Updates request `payment_status` from `unpaid` to `held`
+- Validates price if `p_expected_price_cents` provided (raises `PRICE_MISMATCH`)
+- Errors: `ALREADY_PAID`, `PAYMENT_DEADLINE_EXPIRED`, `INSUFFICIENT_FUNDS`
+
+**`cleanup_expired_awards() → VOID`**:
+- Cron-scheduled function (runs every 10 minutes via `pg_cron`)
+- Expires unpaid awards past payment deadline (with 1-hour grace period)
+- Resets task status from `assigned` → `open`
+- Resets request status from `accepted` → `rejected` with system note
+- Sends notifications to both client and freelancer
+- Logs to `admin_logs` with action `AWARD_AUTO_EXPIRED`
+- Security: only callable by `service_role`, `postgres`, `supabase_admin`, or `authenticator`
+
+**`replace_task_request(...)` → VOID**:
+- Allows freelancer to update their pending offer (price, days, note)
+- Cannot modify offers that are already accepted or rejected
+- Creates new offer if existing one has responses (soft-delete pattern)
 
 #### Work revision and change RPCs (2026-03-05)
 
@@ -1650,6 +1853,15 @@ Returns true if `p_uid` is a participant of the conversation referenced in the s
 | `ix_tr_task_bidder_status`                   | `(task_id, bidder_id, status)`                      | Status check         |
 | `uq_task_requests_one_active_per_freelancer` | `(task_id, freelancer_id) WHERE deleted_at IS NULL` | One active offer     |
 
+**Tender Lifecycle Indexes (v2.18):**
+
+| Index | Columns | Condition | Purpose |
+|-------|---------|-----------|---------|
+| `idx_task_requests_awarded_unpaid` | `(status, payment_status, awarded_at)` | `status = 'accepted' AND payment_status = 'unpaid'` | Optimizes `cleanup_expired_awards` cron queries |
+| `idx_one_accepted_per_task` | `(task_id)` | `status = 'accepted'` | Partial unique index enforces one accepted offer per task (race condition prevention) |
+| `idx_task_requests_awarded_unpaid` | `(status, payment_status, awarded_at)` | `status = 'accepted' AND payment_status = 'unpaid'` | Optimizes cleanup_expired_awards cron queries |
+| `idx_one_accepted_per_task` | `(task_id)` | `status = 'accepted'` | Partial unique index enforces one accepted offer per task |
+
 ### 10.5 Availability Slots Indexes
 
 | Index                      | Columns                                                  | Purpose           |
@@ -1682,32 +1894,51 @@ Returns true if `p_uid` is a participant of the conversation referenced in the s
 | chat-attachments | `chat-attachments` | ❌ Private | Unlimited  | Any        | 2025-08-16 |
 | portfolio        | `portfolio`        | ✅ Public  | Unlimited  | Any        | 2025-08-23 |
 
-### 11.2 Storage Policies
+### 11.2 Storage Policies (v2 - Security Hardened)
+
+#### Overview
+
+Storage RLS policies were hardened in v2 to prevent unauthorized access via path guessing. The new policies use helper functions to validate access at the object level rather than bucket level.
+
+**Feature Flag**: `app_config.storage_rls_v2_enabled` controls enforcement:
+- `false` (default): Falls back to broad access (migration compatibility)
+- `true`: Enforces strict participant/owner checks
+
+**Helper Functions**:
+- `is_admin(uid)` - Returns true if user has admin role
+- `can_access_chat_attachment(path, uid)` - Validates conversation participation
+- `can_access_task_image(path, uid)` - Validates image ownership
 
 #### Avatars Bucket
 
-| Policy                         | Command | Rule                                     |
-| ------------------------------ | ------- | ---------------------------------------- | --- | ----- |
-| `avatars_select_authenticated` | SELECT  | `bucket_id = 'avatars'`                  |
-| `avatars_insert_own_folder`    | INSERT  | `bucket_id = 'avatars' AND name LIKE uid |     | '/%'` |
-| `avatars_update_own_folder`    | UPDATE  | `bucket_id = 'avatars' AND name LIKE uid |     | '/%'` |
-| `avatars_delete_own_folder`    | DELETE  | `bucket_id = 'avatars' AND name LIKE uid |     | '/%'` |
+| Policy                        | Command | Rule                                                         |
+| ----------------------------- | ------- | ------------------------------------------------------------ |
+| `avatars_select_authenticated`| SELECT  | `bucket_id = 'avatars'` (any authenticated user; profile pics are discoverable) |
+| `avatars_insert_own_folder`   | INSERT  | `bucket_id = 'avatars' AND name LIKE auth.uid()::text || '/%'` |
+| `avatars_update_own_folder`  | UPDATE  | Same as insert                                               |
+| `avatars_delete_own_folder`  | DELETE  | Same as insert                                               |
+
+**Note**: SELECT is broad so signed URLs work for all profile avatars (feed, cards). INSERT/UPDATE/DELETE are restricted to the user's own folder (`{uid}/{filename}`). Migration `20260306180000_avatars_storage_fix.sql` ensures these policies.
 
 #### Task Images Bucket
 
-| Policy                             | Command | Rule                                         |
-| ---------------------------------- | ------- | -------------------------------------------- | --- | ----- |
-| `task_images_select_authenticated` | SELECT  | `bucket_id = 'task-images'`                  |
-| `task_images_insert_own_folder`    | INSERT  | `bucket_id = 'task-images' AND name LIKE uid |     | '/%'` |
-| `task_images_update_own_folder`    | UPDATE  | Same as insert                               |
-| `task_images_delete_own_folder`    | DELETE  | Same as insert                               |
+| Policy                           | Command | Rule                                                                                          |
+| -------------------------------- | ------- | --------------------------------------------------------------------------------------------- |
+| `task_images_select_restricted_v2` | SELECT | `bucket_id = 'task-images' AND (can_access_task_image(name, auth.uid()) OR NOT (SELECT storage_rls_v2_enabled FROM app_config LIMIT 1))` |
+| `task_images_insert_own_folder`    | INSERT | `bucket_id = 'task-images' AND name LIKE auth.uid() || '/%'`                                  |
+| `task_images_update_own_folder`    | UPDATE | Same as insert                                                                                |
+| `task_images_delete_own_folder`    | DELETE | Same as insert                                                                                |
+
+**Migration Note**: Replaced `task_images_select_authenticated` (broad bucket check) with `task_images_select_restricted_v2` (owner check via helper).
 
 #### Chat Attachments Bucket
 
-| Policy                    | Command | Rule                                                    |
-| ------------------------- | ------- | ------------------------------------------------------- |
-| `chat_attach_select_auth` | SELECT  | `bucket_id = 'chat-attachments'`                        |
-| `chat_attach_insert_auth` | INSERT  | `bucket_id = 'chat-attachments' AND owner = auth.uid()` |
+| Policy                             | Command | Rule                                                                                           |
+| ---------------------------------- | ------- | ---------------------------------------------------------------------------------------------- |
+| `chat_attach_select_restricted_v2` | SELECT  | `bucket_id = 'chat-attachments' AND (can_access_chat_attachment(name, auth.uid()) OR NOT (SELECT storage_rls_v2_enabled FROM app_config LIMIT 1))` |
+| `chat_attach_insert_auth`          | INSERT  | `bucket_id = 'chat-attachments'`                                                               |
+
+**Migration Note**: Replaced `chat_attach_select_auth` (broad bucket check) with `chat_attach_select_restricted_v2` (participant check via helper). Path format: `convos/<conversation_id>/<filename>`.
 
 #### Portfolio Bucket
 
@@ -1937,6 +2168,141 @@ All functions use `SECURITY DEFINER` and include explicit `auth.uid()` checks.
   - **Bookings**: If `payment_status='held'`, computes idempotency key via `extensions.digest(entity_id::text || ':release_with_fee:' || now()::text, 'sha256')` (hex-encoded), then calls `process_payment_event_ledger('release_with_fee', 'booking', entity_id, idempotency_key, ...)`. On success, updates `status='completed'` and clears `review_expires_at`. If payment is not held, only updates status.
 - **Migration**: `supabase/migrations/20260224_fix_rpc_approve_delivery_digest_schema.sql` (ensures `extensions.digest` is used where pgcrypto is in `extensions` schema).
 
+### 9.6 Task Request Bid Flow RPCs (v2.18 - March 2026)
+
+#### `accept_task_request(p_task_id UUID, p_request_id UUID, p_expected_price_cents BIGINT DEFAULT NULL)`
+
+Accepts a pending task request/offer, transitioning it to `accepted` status and marking the task as `assigned`.
+
+- **Security**: SECURITY DEFINER
+- **Returns**: `'accepted'` or `'already_accepted'` (idempotency)
+- **Features**:
+  - **Optimistic Concurrency Control**: If `p_expected_price_cents` provided, validates against current price; raises `PRICE_MISMATCH` if different
+  - **Idempotency**: Returns 'already_accepted' on retry without side effects
+  - **Fee Locking**: Locks `fee_rate_applied_bps` at award time (from `system_config.platform_fee_bps`)
+  - **Pre-calculation**: Computes `fee_amount` and `net_amount` for transparency
+  - **Payment Deadline**: Sets `payment_deadline` to `NOW() + tender_payment_timeout_hours` (default 48h)
+- **Side Effects**:
+  - Updates `task_requests`: status='accepted', payment_status='unpaid', awarded_at, awarded_by, payment_deadline
+  - **Rejects all other pending bids** on the same task (Single Winner Rule)
+  - Updates `tasks`: status='assigned', assigned_freelancer_id
+  - Inserts `admin_logs` entry (PRICE_MISMATCH_ATTEMPT on price mismatch, OFFER_ACCEPTED on success)
+  - Inserts `activity_log` entry for client dashboard
+- **Migration**: `20260308000000_accept_task_request_reject_remaining_bids.sql`
+- **Errors**:
+  - `Request not found`
+  - `Cannot accept request with status: {status}`
+  - `Request {id} does not belong to task {id}`
+  - `Not authorized to accept offers on this task`
+  - `Cannot accept offers on task with status: {status}`
+  - `PRICE_MISMATCH: Offer price changed from {expected} to {actual} cents`
+
+#### `reject_task_request(p_task_id UUID, p_request_id UUID)`
+
+Rejects a pending task request/offer and creates a task-linked conversation for communication.
+
+- **Security**: SECURITY DEFINER
+- **Returns**: `UUID` (conversation ID for follow-up)
+- **Side Effects**:
+  - Updates `task_requests`: status='rejected', updated_at
+  - Creates or reuses task-linked `conversations` with `initiated_by=freelancer`
+  - Inserts `offer_rejected` message into `messages`
+  - Sends notification to freelancer via `private_create_notification`
+- **Errors**:
+  - `unauthenticated`
+  - `task_not_found`
+  - `only task owner can reject`
+  - `request not found or already processed`
+
+#### `replace_task_request(p_task_id UUID, p_freelancer_id UUID, p_message TEXT, p_price NUMERIC, p_days INTEGER)`
+
+Withdraws the freelancer's current pending offer and inserts a replacement with updated terms.
+
+- **Security**: SECURITY DEFINER
+- **Authorization**: Caller must match `p_freelancer_id` (auth.uid()) and have `active_role='freelancer'`
+- **Returns**: VOID
+- **Side Effects**:
+  - Updates existing pending `task_requests` to `withdrawn` status for this task/freelancer
+  - Inserts new `task_requests` row with `pending` status
+- **Errors**:
+  - `unauthenticated`
+  - `only the offer owner can replace their offer`
+  - `only freelancers can replace offers`
+  - `task_not_found_or_not_open_or_own_task`
+
+#### `award_task_offer(p_request_id UUID, p_client_id UUID DEFAULT NULL)`
+
+Awards an offer to a freelancer (first step of two-step award flow). Sets up payment deadline.
+
+- **Security**: SECURITY DEFINER
+- **Returns**: JSONB `{"success": true, "payment_deadline": "..."}`
+- **Side Effects**:
+  - Updates `task_requests`: status='accepted', payment_status='unpaid', awarded_at, payment_deadline
+  - Updates `tasks`: status='assigned'
+  - Rejects all other pending offers on same task
+  - Sends notifications (`offer_awarded` to freelancer, `payment_required` to client)
+- **Errors**:
+  - `Not authenticated`
+  - `Request not found` (or not pending)
+  - `Only task owner can award`
+  - `Task already has accepted offer`
+
+#### `pay_awarded_offer(p_request_id UUID, p_client_id UUID DEFAULT NULL)`
+
+Completes payment for an awarded offer (second step of two-step award flow). Transitions to active work state.
+
+- **Security**: SECURITY DEFINER
+- **Returns**: JSONB `{"success": true, "payment_status": "held"}`
+- **Side Effects**:
+  - If deadline expired: Rejects offer and reverts task to `open`
+  - Updates `task_requests`: payment_status='held'
+  - Updates `tasks`: status='in_progress', freelancer_id, assigned_freelancer_id
+  - Sends notification to freelancer (`work_active`)
+- **Errors**:
+  - `Not authenticated`
+  - `Request not found` (or not in accepted/unpaid state)
+  - `Payment deadline expired`
+  - `Only task owner can pay`
+
+#### `cancel_awarded_offer(p_request_id UUID, p_client_id UUID DEFAULT NULL)`
+
+Cancels an awarded but unpaid offer, reverting the task to open status.
+
+- **Security**: SECURITY DEFINER
+- **Returns**: JSONB `{"success": true}`
+- **Side Effects**:
+  - Updates `task_requests`: status='rejected', clears payment fields, sets `deleted_at`
+  - Updates `tasks`: status='open', clears freelancer assignments
+  - Sends notification to freelancer (`offer_award_cancelled`)
+- **Errors**:
+  - `Not authenticated`
+  - `Request not found or not in awarded-unpaid state`
+  - `Task not found`
+  - `Only task owner can cancel the award`
+
+#### `cleanup_expired_awards()`
+
+Cron-scheduled function that automatically expires awarded offers where payment deadline has passed.
+
+- **Security**: SECURITY DEFINER
+- **Schedule**: Every 10 minutes via `pg_cron`
+- **Authorization**: Restricted to service role, postgres, supabase_admin, or cron jobs
+- **Returns**: VOID
+- **Processing**:
+  - Finds offers: status='accepted', payment_status='unpaid', payment_deadline < now - 1 hour (1-hour grace)
+  - Sets status='rejected', appends expiry note
+  - Reverts task.status='open', clears assignments
+  - Sends `award_expired` notifications to both parties
+  - Logs to `admin_logs` with action `AWARD_AUTO_EXPIRED`
+
+#### `get_proposal_bidder_summaries(p_task_id UUID)`
+
+Returns minimum-field profile summaries for all bidders on a task (for owner view).
+
+- **Security**: SECURITY DEFINER, STABLE (read-only optimization)
+- **Returns**: TABLE (id UUID, full_name TEXT, avatar_url TEXT)
+- **Authorization**: Only returns data for tasks owned by `auth.uid()`
+
 ---
 
 ## 16. Troubleshooting
@@ -1969,6 +2335,10 @@ All functions use `SECURITY DEFINER` and include explicit `auth.uid()` checks.
 ---
 
 ## 17. Changelog
+
+### Version 2.20.1 (March 2026)
+
+- **accept_task_request — Single Winner Rule:** Migration `20260308000000_accept_task_request_reject_remaining_bids.sql` adds atomic rejection of all other pending bids on the same task when one bid is accepted. Ensures only one accepted offer per task. Documented in §9.6 Task Request Bid Flow RPCs.
 
 ### Version 2.17.3 (March 2026)
 

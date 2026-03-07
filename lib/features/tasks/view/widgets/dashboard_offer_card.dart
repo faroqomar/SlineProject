@@ -10,6 +10,7 @@ import 'package:sline_app/core/utils/status_presenter.dart';
 import 'package:sline_app/core/utils/unified_cta_resolver.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
+import 'package:sline_app/features/tasks/viewmodels/award_expiration_monitor.dart';
 
 /// Dashboard-style offer card for inbox; lives in tasks feature.
 class DashboardOfferCard extends StatelessWidget {
@@ -101,6 +102,11 @@ class DashboardOfferCard extends StatelessWidget {
               ],
             ),
           ),
+          // Payment deadline countdown for accepted unpaid offers
+          if (offer.status == OfferStatus.accepted &&
+              offer.paymentStatus == PaymentStatus.unpaid &&
+              offer.paymentDeadline != null)
+            _PaymentDeadlineCountdown(deadline: offer.paymentDeadline!),
           Padding(
             padding: const EdgeInsets.all(AppDimens.p16),
             child: Row(
@@ -383,5 +389,142 @@ class _InfoChip extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Payment deadline countdown widget for accepted unpaid offers.
+///
+/// Shows a live countdown badge that changes color based on urgency:
+/// - Green: > 24 hours remaining
+/// - Orange: 6-24 hours remaining
+/// - Red + pulse: < 6 hours remaining
+class _PaymentDeadlineCountdown extends StatefulWidget {
+  final DateTime deadline;
+
+  const _PaymentDeadlineCountdown({required this.deadline});
+
+  @override
+  State<_PaymentDeadlineCountdown> createState() =>
+      _PaymentDeadlineCountdownState();
+}
+
+class _PaymentDeadlineCountdownState extends State<_PaymentDeadlineCountdown>
+    with SingleTickerProviderStateMixin {
+  late final AwardExpirationMonitor _monitor;
+  AnimationController? _pulseController;
+
+  @override
+  void initState() {
+    super.initState();
+    _monitor = AwardExpirationMonitor();
+    _monitor.startMonitoring(widget.deadline);
+    _monitor.addListener(_onMonitorUpdate);
+
+    // Set up pulse animation for critical urgency
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+  }
+
+  void _onMonitorUpdate() {
+    if (!mounted) return;
+
+    // Start/stop pulse animation based on urgency
+    if (_monitor.shouldPulse && !_pulseController!.isAnimating) {
+      _pulseController!.repeat(reverse: true);
+    } else if (!_monitor.shouldPulse && _pulseController!.isAnimating) {
+      _pulseController!.stop();
+      _pulseController!.value = 1.0;
+    }
+
+    setState(() {});
+  }
+
+  Color _getUrgencyColor(AppColorScheme colorScheme) {
+    switch (_monitor.urgencyLevel) {
+      case UrgencyLevel.relaxed:
+        return Colors.green;
+      case UrgencyLevel.urgent:
+        return Colors.orange;
+      case UrgencyLevel.critical:
+      case UrgencyLevel.expired:
+        return Colors.red;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final urgencyColor = _getUrgencyColor(colorScheme);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: urgencyColor.withValues(alpha: 0.1),
+        border: Border(
+          bottom: BorderSide(
+            color: urgencyColor.withValues(alpha: 0.2),
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          AnimatedBuilder(
+            animation: _pulseController!,
+            builder: (context, child) {
+              return Transform.scale(
+                scale: _monitor.shouldPulse
+                    ? 1.0 + (_pulseController!.value * 0.1)
+                    : 1.0,
+                child: Icon(
+                  Icons.access_time_filled,
+                  size: 16,
+                  color: urgencyColor,
+                ),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _monitor.isExpired
+                  ? 'Payment window closed'
+                  : 'Payment deadline: ${_monitor.countdownText ?? ''}',
+              style: AppTypography.captionBold.copyWith(
+                color: urgencyColor,
+              ),
+            ),
+          ),
+          if (!_monitor.isExpired)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: urgencyColor.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                _monitor.urgencyLevel == UrgencyLevel.critical
+                    ? 'URGENT'
+                    : _monitor.urgencyLevel == UrgencyLevel.urgent
+                        ? 'SOON'
+                        : 'PENDING',
+                style: AppTypography.captionBold.copyWith(
+                  color: urgencyColor,
+                  fontSize: 10,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseController?.dispose();
+    _monitor.removeListener(_onMonitorUpdate);
+    _monitor.dispose();
+    super.dispose();
   }
 }

@@ -700,11 +700,17 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
   ///
   /// This creates an "Awarded - Pending Payment" state with 24h deadline.
   /// Returns the award result including payment_deadline for navigation.
+  ///
+  /// Passes [offer.price] as expectedPriceCents (already in cents, BIGINT) for
+  /// optimistic concurrency control (prevents bait-and-switch if freelancer edits price).
   Future<Map<String, dynamic>?> awardOffer(TaskRequest offer) async {
     final tid = _traceId();
     try {
-      // 1. Award the offer (without payment)
-      final result = await _taskService.awardOffer(offer.id);
+      final expectedPriceCents = offer.price;
+      final result = await _taskService.awardOffer(
+        offer.id,
+        expectedPriceCents: expectedPriceCents,
+      );
       if (_abortIfDisposed()) return null;
 
       AppLogger.i(

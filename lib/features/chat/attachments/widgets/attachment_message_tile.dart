@@ -1,10 +1,36 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sline_app/core/config/storage_config.dart';
+import 'package:sline_app/core/utils/error_mapper.dart';
+import 'package:sline_app/core/utils/signed_url_cache.dart';
 import '../services/upload_service.dart';
+
+// #region agent log
+void _agentDebugLog(String location, String message, Map<String, dynamic> data, String hypothesisId) {
+  try {
+    final line = jsonEncode({
+      'sessionId': '9844e5',
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+      'location': location,
+      'message': message,
+      'data': data,
+      'hypothesisId': hypothesisId,
+    });
+    File('/Users/eros/Dev/Eros_Projects/Sline/sline_app/.cursor/debug-9844e5.log').writeAsStringSync('$line\n', mode: FileMode.append);
+  } catch (_) {}
+}
+// #endregion
 
 typedef AttachmentSignedUrlResolver =
     Future<String> Function(String storagePath);
 
 /// Renders an image attachment bubble and resolves a signed URL for private files.
+///
+/// This widget now uses [SignedUrlCache] to prevent redundant API calls
+/// when scrolling through chat history. It also handles error states
+/// gracefully and caches errors to prevent retry storms.
 class AttachmentMessageTile extends StatefulWidget {
   final bool isMine;
   final String storagePath; // e.g. chat-attachments/convos/<id>/file.jpg
@@ -26,17 +52,110 @@ class AttachmentMessageTile extends StatefulWidget {
 }
 
 class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
-  late final Future<String> _signedUrlFuture;
+  String? _resolvedUrl;
+  bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _signedUrlFuture =
-        widget.signedUrlResolver?.call(widget.storagePath) ??
-        SupabaseAttachmentUploader().createSignedUrl(
-          widget.storagePath,
-          expiresInSeconds: 3600,
-        );
+    _loadSignedUrl();
+  }
+
+  @override
+  void didUpdateWidget(covariant AttachmentMessageTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Re-load if storage path changed
+    if (oldWidget.storagePath != widget.storagePath) {
+      _loading = true;
+      _error = null;
+      _resolvedUrl = null;
+      _loadSignedUrl();
+    }
+  }
+
+  /// Loads the signed URL with caching
+  ///
+  /// Checks error cache first, then success cache, then calls API
+  Future<void> _loadSignedUrl() async {
+    // #region agent log
+    _agentDebugLog('attachment_message_tile.dart:_loadSignedUrl', 'load_start', {'storagePath': widget.storagePath}, 'H-B');
+    // #endregion
+    // Check error cache first to prevent retry storms
+    if (SignedUrlCache.hasError(widget.storagePath)) {
+      // #region agent log
+      _agentDebugLog('attachment_message_tile.dart:_loadSignedUrl', 'error_cache_hit', {'storagePath': widget.storagePath}, 'H-C');
+      // #endregion
+      if (mounted) {
+        setState(() {
+          _error = 'Access denied';
+          _loading = false;
+        });
+      }
+      return;
+    }
+
+    // Check success cache
+    final cached = SignedUrlCache.get(widget.storagePath);
+    if (cached != null) {
+      if (mounted) {
+        setState(() {
+          _resolvedUrl = cached;
+          _loading = false;
+        });
+      }
+      return;
+    }
+
+    // Generate new signed URL
+    try {
+      // #region agent log
+      _agentDebugLog('attachment_message_tile.dart:_loadSignedUrl', 'create_signed_url_before', {'storagePath': widget.storagePath}, 'H-A');
+      // #endregion
+      final url = await (widget.signedUrlResolver?.call(widget.storagePath) ??
+          SupabaseAttachmentUploader().createSignedUrl(
+            widget.storagePath,
+            expiresInSeconds: SharedStorageConfig.chatAttachmentTtlSeconds,
+          ));
+
+      // Cache the successful URL
+      SignedUrlCache.set(widget.storagePath, url);
+
+      if (mounted) {
+        setState(() {
+          _resolvedUrl = url;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      // #region agent log
+      _agentDebugLog('attachment_message_tile.dart:_loadSignedUrl', 'create_signed_url_catch', {
+        'storagePath': widget.storagePath,
+        'errorType': e.runtimeType.toString(),
+        'errorToString': e.toString(),
+        'mappedMessage': ErrorMapper.map(e),
+      }, 'H-A');
+      // #endregion
+      // Cache only auth/permission failures so transient errors (network, timeout) can retry
+      final isAuthFailure = e is StorageException &&
+          (e.statusCode == '403' ||
+              e.statusCode == '401' ||
+              e.message.toLowerCase().contains('permission') ||
+              e.message.toLowerCase().contains('policy'));
+      if (isAuthFailure) {
+        SignedUrlCache.setError(widget.storagePath);
+      }
+
+      // Map error to user-friendly message
+      final errorMessage = ErrorMapper.map(e);
+
+      if (mounted) {
+        setState(() {
+          _error = errorMessage;
+          _loading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -71,30 +190,7 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
                   : CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                FutureBuilder<String>(
-                  future: _signedUrlFuture,
-                  builder: (context, snap) {
-                    if (snap.connectionState == ConnectionState.waiting) {
-                      return _placeholder(height: 180);
-                    }
-                    if (!snap.hasData || snap.data!.isEmpty) {
-                      return _errorBox('Failed to load image');
-                    }
-                    return GestureDetector(
-                      onTap: () => _showFullScreen(context, snap.data!),
-                      child: Image.network(
-                        snap.data!,
-                        height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (c, child, progress) => progress == null
-                            ? child
-                            : _placeholder(height: 180),
-                        errorBuilder: (c, e, st) => _errorBox('Image error'),
-                      ),
-                    );
-                  },
-                ),
+                _buildImageSection(),
                 if (widget.caption != null && widget.caption!.trim().isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(
@@ -130,6 +226,33 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildImageSection() {
+    // Loading state
+    if (_loading) {
+      return _placeholder(height: 180);
+    }
+
+    // Error state
+    if (_error != null || _resolvedUrl == null || _resolvedUrl!.isEmpty) {
+      return _errorBox(_error ?? 'Failed to load image');
+    }
+
+    // Success state - display image
+    return GestureDetector(
+      onTap: () => _showFullScreen(context, _resolvedUrl!),
+      child: Image.network(
+        _resolvedUrl!,
+        height: 180,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        loadingBuilder: (c, child, progress) => progress == null
+            ? child
+            : _placeholder(height: 180),
+        errorBuilder: (c, e, st) => _errorBox('Image error'),
       ),
     );
   }

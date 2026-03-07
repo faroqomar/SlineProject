@@ -107,6 +107,8 @@ class _FavoritesView extends StatelessWidget {
                         user1Id: clientId,
                         user2Id: favorite.freelancerId,
                       );
+                      // Handle double-tap or error (conversation is null)
+                      if (convo == null) return;
                       if (!context.mounted) return;
                       Navigator.of(context).push(
                         MaterialPageRoute(

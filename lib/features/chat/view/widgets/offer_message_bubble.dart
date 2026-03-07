@@ -183,33 +183,36 @@ class OfferMessageBubble extends StatelessWidget {
   }
 
   Widget _buildActions(AppColorScheme colorScheme) {
-    final isSent = rawStatus == 'sent';
-    final isActive = rawStatus == 'active';
-    final isDelivered = rawStatus == 'delivered';
-    final isAcceptedPendingPayment = rawStatus == 'accepted';
+    final isSent = rawStatus == 'sent' || rawStatus == 'sent_unpaid';
+    final isActive =
+        rawStatus == 'active' || rawStatus == 'active_held';
+    final isDelivered =
+        rawStatus == 'delivered' || rawStatus == 'delivered_held';
+    final isAcceptedPendingPayment =
+        rawStatus == 'accepted' || rawStatus == 'accepted_unpaid';
 
     // Direct offer: accepted but not yet paid (client must pay from dashboard)
     if (isAcceptedPendingPayment && offerId != null) {
-      return Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimens.p12,
-          vertical: AppDimens.p8,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.gold.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(AppDimens.r8),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.payment, size: 16, color: AppColors.gold),
-            const SizedBox(width: 6),
-            Text(
-              'Pending Payment',
-              style: AppTypography.captionBold.copyWith(color: AppColors.gold),
-            ),
-          ],
-        ),
+      return _buildStatusChip(
+        'Pending Payment',
+        Icons.payment,
+        AppColors.gold,
+      );
+    }
+
+    // Payment done, work in progress (escrow held)
+    if (isActive && offerId != null) {
+      return _buildStatusChip('Paid', Icons.check_circle, AppColors.lightTeal);
+    }
+
+    // Full lifecycle done (completed and payment released)
+    final isCompletedPaid =
+        rawStatus == 'completed' || rawStatus == 'completed_released';
+    if (isCompletedPaid) {
+      return _buildStatusChip(
+        'Completed • Paid',
+        Icons.check_circle,
+        AppColors.lightTeal,
       );
     }
 
@@ -355,23 +358,31 @@ class OfferMessageBubble extends StatelessWidget {
     }
 
     // Pending response (no action for this viewer)
+    return _buildStatusChip(
+      'Pending Response',
+      Icons.schedule,
+      AppColors.gold,
+    );
+  }
+
+  Widget _buildStatusChip(String label, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimens.p12,
         vertical: AppDimens.p8,
       ),
       decoration: BoxDecoration(
-        color: AppColors.gold.withValues(alpha: 0.2),
+        color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(AppDimens.r8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.schedule, size: 16, color: AppColors.gold),
+          Icon(icon, size: 16, color: color),
           const SizedBox(width: 6),
           Text(
-            'Pending Response',
-            style: AppTypography.captionBold.copyWith(color: AppColors.gold),
+            label,
+            style: AppTypography.captionBold.copyWith(color: color),
           ),
         ],
       ),

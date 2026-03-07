@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use_from_same_package
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/features/proposals/models/proposal_model.dart';

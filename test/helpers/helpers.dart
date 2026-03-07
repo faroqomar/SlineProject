@@ -11,6 +11,9 @@ library;
 // Mock Supabase client and related classes
 export 'mock_supabase.dart';
 
+// Mock Supabase RPC helper with chainable query support
+export 'mock_supabase_rpc.dart';
+
 // Role switch testing helpers
 export 'role_switch_helpers.dart';
 

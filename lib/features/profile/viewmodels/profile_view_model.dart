@@ -715,7 +715,22 @@ class ProfileViewModel extends ChangeNotifier {
         avatarSignedUrl = await _repo.createSignedAvatarUrl(path);
         notifyListeners();
       }
+    } on StorageException catch (e) {
+      avatarSignedUrl = null;
+      notifyListeners();
+      // 404 = file missing in storage (deleted or path stale); expected, no user-facing log
+      if (e.statusCode == '404' || e.message.toLowerCase().contains('not found')) {
+        AppLogger.d(
+          'Avatar object not found in storage, showing placeholder',
+          tag: 'Profile',
+          json: {'error': e.message},
+        );
+      } else {
+        AppLogger.e('Failed to refresh avatar signed url: $e');
+      }
     } catch (e) {
+      avatarSignedUrl = null;
+      notifyListeners();
       AppLogger.e('Failed to refresh avatar signed url: $e');
     }
   }

@@ -98,6 +98,25 @@ class DirectOffersService {
     return DirectOffer.fromJson(Map<String, dynamic>.from(response as Map));
   }
 
+  /// Batch fetch direct offers by IDs. Returns map of offerId -> DirectOffer.
+  /// Used by ChatViewModel to refresh offer statuses without N+1 queries.
+  Future<Map<String, DirectOffer>> getOffersByIds(List<String> ids) async {
+    if (ids.isEmpty) return {};
+    final response = await _client
+        .from('direct_offers')
+        .select()
+        .in_('id', ids);
+    final list = response as List<dynamic>? ?? [];
+    final map = <String, DirectOffer>{};
+    for (final row in list) {
+      final offer = DirectOffer.fromJson(
+        Map<String, dynamic>.from(row as Map),
+      );
+      map[offer.id] = offer;
+    }
+    return map;
+  }
+
   /// Client accepts the offer (no payment). Work item appears in dashboard as Pending Payment.
   Future<void> acceptOfferWithoutPayment(String offerId) async {
     final offer = await getOffer(offerId);

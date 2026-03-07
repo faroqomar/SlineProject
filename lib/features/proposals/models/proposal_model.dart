@@ -3,6 +3,16 @@
 import 'package:flutter/foundation.dart';
 import 'package:sline_app/core/app_enums.dart';
 
+// Migration: Use TaskRequest instead. ProposalModel is being consolidated into TaskRequest
+// for a unified domain model. See MODEL_CONSOLIDATION_PLAN.md for details.
+// Scheduled removal: Sprint N+2 (2 weeks from now).
+@Deprecated(
+  'Use TaskRequest instead. '
+  'ProposalModel is being consolidated into TaskRequest for a unified domain model. '
+  'Migration: Replace ProposalModel with TaskRequest in your code. '
+  'See MODEL_CONSOLIDATION_PLAN.md for details. '
+  'Scheduled removal: Sprint N+2 (2 weeks from now).',
+)
 @immutable
 class ProposalModel {
   final String id;

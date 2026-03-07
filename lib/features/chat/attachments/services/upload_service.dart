@@ -11,7 +11,7 @@ class SupabaseAttachmentUploader {
     required List<int> bytes,
   }) {
     return _svc.uploadBytes(
-      conversationId: 'convos/$conversationId',
+      conversationId: conversationId,
       filename: filename,
       bytes: bytes,
     );

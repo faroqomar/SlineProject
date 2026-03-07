@@ -475,7 +475,13 @@ class _ChatScreenState extends State<ChatScreen> {
     if (status == null) return OfferStatus.pending;
     switch (status) {
       case 'accepted':
+      case 'accepted_unpaid':
+      case 'active':
+      case 'active_held':
+      case 'delivered':
+      case 'delivered_held':
       case 'completed':
+      case 'completed_released':
         return OfferStatus.accepted;
       case 'declined':
       case 'rejected':

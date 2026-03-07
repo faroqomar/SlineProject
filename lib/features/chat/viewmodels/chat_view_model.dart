@@ -55,6 +55,10 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
   bool isLoadingConversations = false;
   bool isLoadingMessages = false;
   bool isSending = false;
+  bool isCreatingConversation = false;
+
+  /// Error state for conversation creation (Chat Creation Matrix)
+  String? conversationCreationError;
 
   Conversation? activeConversation;
 
@@ -106,6 +110,8 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
     isLoadingConversations = false;
     isLoadingMessages = false;
     isSending = false;
+    isCreatingConversation = false;
+    conversationCreationError = null;
 
     AppLogger.i('chat_teardown_complete', tag: 'ChatVM');
     _notify();
@@ -199,17 +205,75 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
     _convoSub = null;
   }
 
-  // Utility to start or fetch a conversation (kept simple for UI usage)
-  Future<Conversation> createOrGetConversation({
+  // Utility to start or fetch a conversation with loading state and error handling
+  Future<Conversation?> createOrGetConversation({
     String? taskId,
     required String user1Id,
     required String user2Id,
-  }) {
-    return _repo.createOrGetConversation(
-      taskId: taskId,
-      user1Id: user1Id,
-      user2Id: user2Id,
-    );
+  }) async {
+    // Prevent double-tap: if already creating, return null
+    if (isCreatingConversation) {
+      AppLogger.d('createOrGetConversation: already in progress, ignoring double-tap');
+      return null;
+    }
+
+    isCreatingConversation = true;
+    conversationCreationError = null;
+    _notify();
+
+    try {
+      final conversation = await _repo.createOrGetConversation(
+        taskId: taskId,
+        user1Id: user1Id,
+        user2Id: user2Id,
+      );
+      AppLogger.i('✅ Conversation created/fetched: ${conversation.id}');
+      return conversation;
+    } catch (e) {
+      final errorMessage = _mapConversationError(e);
+      conversationCreationError = errorMessage;
+      AppLogger.e('❌ Error creating conversation: $errorMessage');
+      _notify();
+      rethrow;
+    } finally {
+      isCreatingConversation = false;
+      _notify();
+    }
+  }
+
+  /// Clear conversation creation error (call when user dismisses error UI)
+  void clearConversationError() {
+    conversationCreationError = null;
+    _notify();
+  }
+
+  /// Map technical errors to user-friendly messages for conversation creation
+  String _mapConversationError(dynamic error) {
+    final message = error.toString().toLowerCase();
+
+    if (message.contains('freelancers cannot start')) {
+      return 'Only clients can start conversations with freelancers.';
+    }
+    if (message.contains('favorites list')) {
+      return 'Add this freelancer to your favorites first to start a conversation.';
+    }
+    if (message.contains('rate limit exceeded')) {
+      return "You've reached the conversation limit. Try again in an hour.";
+    }
+    if (message.contains('target user not found')) {
+      return 'User not found. They may have deleted their account.';
+    }
+    if (message.contains('cannot create conversation with yourself')) {
+      return "You can't start a conversation with yourself.";
+    }
+    if (message.contains('timeout') || message.contains('timed out')) {
+      return 'Connection timeout. Check your internet and try again.';
+    }
+    if (message.contains('unauthenticated') || message.contains('session')) {
+      return 'Session expired. Please log in again.';
+    }
+
+    return 'Failed to start conversation. Please try again.';
   }
 
   /// High-level helper for UI to easily start/fetch a conversation linked to a Task.
@@ -223,11 +287,15 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
     }
 
     try {
-      return await createOrGetConversation(
+      final conversation = await createOrGetConversation(
         taskId: task.id,
         user1Id: task.userId,
         user2Id: freelancerId,
       );
+      if (conversation == null) {
+        throw Exception('Could not create conversation. Please try again.');
+      }
+      return conversation;
     } catch (e) {
       AppLogger.e('Error getting task conversation for task ${task.id}: $e');
       rethrow;
@@ -352,7 +420,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
     if (offerId != null) {
       try {
         await _directOffersService.acceptOfferWithoutPayment(offerId);
-        _offerStatusCache[offerId] = 'accepted';
+        _offerStatusCache[offerId] = 'accepted_unpaid';
         _notify();
         // Do not send 'offer_accepted' message for direct offers: conversation may be
         // task-linked and backend can treat that message as task acceptance. Acceptance
@@ -400,15 +468,39 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
   /// Freelancer marks direct offer work as delivered.
   Future<void> markOfferDelivered(String offerId) async {
     await _directOffersService.markDelivered(offerId);
-    _offerStatusCache[offerId] = 'delivered';
+    _offerStatusCache[offerId] = 'delivered_held';
     _notify();
   }
 
   /// Client completes (approve & release payment) for a delivered direct offer.
   Future<void> completeOffer(String offerId) async {
     await _directOffersService.completeOffer(offerId);
-    _offerStatusCache[offerId] = 'completed';
+    _offerStatusCache[offerId] = 'completed_released';
     _notify();
+  }
+
+  /// Refreshes offer statuses from DB for all offer messages in currentMessages.
+  /// Called when messages are received so chat reflects payment/delivery done from dashboard.
+  Future<void> refreshOfferStatusesForCurrentMessages() async {
+    final offerIds = <String>{};
+    for (final msg in currentMessages) {
+      if (msg.messageType == MessageType.offer) {
+        final id = msg.payload['offer_id'] as String?;
+        if (id != null && id.isNotEmpty) offerIds.add(id);
+      }
+    }
+    if (offerIds.isEmpty) return;
+    try {
+      final offers = await _directOffersService.getOffersByIds(offerIds.toList());
+      for (final entry in offers.entries) {
+        final offer = entry.value;
+        final key = '${offer.status}_${offer.paymentStatus}';
+        _offerStatusCache[entry.key] = key;
+      }
+      _notify();
+    } catch (e) {
+      AppLogger.w('Failed to refresh offer statuses: $e', tag: 'ChatVM');
+    }
   }
 
   void subscribeToActiveConversation() {
@@ -423,6 +515,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
               ..clear()
               ..addAll(messages);
             await markReceiptsForActive(delivered: true, seen: false);
+            await refreshOfferStatusesForCurrentMessages();
             _notify();
           },
           onError: (error) {

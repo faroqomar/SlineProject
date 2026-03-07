@@ -171,7 +171,7 @@ class RlsTestHelper {
 
     try {
       if (_client != null) {
-        await _client!.from(table).insert(data);
+        await _client.from(table).insert(data);
       }
       AppLogger.i('✓ assertCanInsert passed: $desc', tag: _logTag);
     } catch (e) {
@@ -201,7 +201,7 @@ class RlsTestHelper {
 
     try {
       if (_client != null) {
-        await _client!.from(table).insert(data);
+        await _client.from(table).insert(data);
         AppLogger.e('✗ assertCannotInsert failed: $desc - Insert was allowed when it should be blocked', tag: _logTag);
         fail('Expected INSERT to be blocked but was allowed: $desc');
       }
@@ -231,7 +231,7 @@ class RlsTestHelper {
 
     try {
       if (_client != null) {
-        final query = _client!.from(table).update(data);
+        final query = _client.from(table).update(data);
         filters.forEach((column, value) {
           query.eq(column, value);
         });
@@ -261,7 +261,7 @@ class RlsTestHelper {
 
     try {
       if (_client != null) {
-        final query = _client!.from(table).update(data);
+        final query = _client.from(table).update(data);
         filters.forEach((column, value) {
           query.eq(column, value);
         });
@@ -294,7 +294,7 @@ class RlsTestHelper {
 
     try {
       if (_client != null) {
-        final query = _client!.from(table).delete();
+        final query = _client.from(table).delete();
         filters.forEach((column, value) {
           query.eq(column, value);
         });
@@ -323,7 +323,7 @@ class RlsTestHelper {
 
     try {
       if (_client != null) {
-        final query = _client!.from(table).delete();
+        final query = _client.from(table).delete();
         filters.forEach((column, value) {
           query.eq(column, value);
         });
@@ -350,7 +350,7 @@ class RlsTestHelper {
     try {
       if (_client != null) {
         // Try to select from the view - should fail if it doesn't exist
-        await _client!.from(viewName).select().limit(1);
+        await _client.from(viewName).select().limit(1);
         fail('Expected view $viewName to not exist, but it was accessible');
       }
     } on PostgrestException catch (e) {

@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sline_app/core/config/storage_config.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/utils/signed_url_cache.dart';
 import 'package:sline_app/features/profile/services/avatar_service.dart';
@@ -130,7 +131,7 @@ class _SignedAvatarState extends State<SignedAvatar> {
     try {
       final signed = await _ensureAvatarService().createSignedUrl(
         v,
-        expire: const Duration(hours: 2),
+        expire: SharedStorageConfig.ttlDurationForBucket('avatars'),
       );
       SignedUrlCache.set(v, signed);
       if (!mounted) return;

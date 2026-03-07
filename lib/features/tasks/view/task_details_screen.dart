@@ -412,6 +412,8 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
       );
       loader.close();
 
+      // Handle double-tap or error (conversation is null)
+      if (conversation == null) return;
       if (!context.mounted) return;
 
       Navigator.push(

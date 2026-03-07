@@ -727,15 +727,53 @@ class TaskService {
   ///
   /// This creates an "Awarded but Pending Payment" state.
   /// Client must call [payAwardedOffer] to complete payment and activate work.
-  Future<Map<String, dynamic>> awardOffer(String offerId) async {
+  ///
+  /// [expectedPriceCents] is the price (in cents) the client saw when clicking Award.
+  /// If the freelancer updated their offer since then, a [PriceMismatchException] is thrown.
+  Future<Map<String, dynamic>> awardOffer(
+    String offerId, {
+    int? expectedPriceCents,
+  }) async {
     try {
       final result = await _client.rpc(
         'award_task_offer',
-        params: {'p_request_id': offerId},
+        params: {
+          'p_request_id': offerId,
+          if (expectedPriceCents != null)
+            'p_expected_price_cents': expectedPriceCents,
+        },
       );
 
+      final resultMap = result as Map<String, dynamic>;
+
+      // Check for price mismatch in result
+      if (resultMap['success'] == false &&
+          resultMap['error']?.toString().contains('PRICE_MISMATCH') == true) {
+        final errorMsg = resultMap['error'] as String;
+        final regex = RegExp(r'from (\d+) to (\d+)');
+        final match = regex.firstMatch(errorMsg);
+
+        if (match != null) {
+          final expected = int.tryParse(match.group(1) ?? '0') ?? 0;
+          final actual = int.tryParse(match.group(2) ?? '0') ?? 0;
+          throw PriceMismatchException(
+            expectedCents: expected,
+            actualCents: actual,
+          );
+        }
+      }
+
+      // Check for already accepted (idempotency)
+      if (resultMap['already_accepted'] == true) {
+        throw OfferAlreadyAcceptedException();
+      }
+
       AppLogger.i('Offer awarded (pending payment): $offerId');
-      return result as Map<String, dynamic>;
+      return resultMap;
+    } on PriceMismatchException {
+      rethrow;
+    } on OfferAlreadyAcceptedException {
+      rethrow;
     } on PostgrestException catch (e, st) {
       AppLogger.e('Failed to award offer', error: e, stackTrace: st);
       throw Exception(ErrorMapper.map(e));
@@ -889,15 +927,13 @@ class TaskService {
       // we might just return empty or tasks where we are assigned.
       //
       // Let's assume we want to show tasks where we are assigned.
+      // For tender flow: Get tasks where freelancer has been awarded but not yet paid
+      // Status should be 'assigned' (awarded) or 'in_progress' (paid and active)
       final response = await _client
           .from('tasks')
           .select(_selectBasic)
           .eq('assigned_freelancer_id', uid)
-          .eq(
-            'status',
-            'open',
-          ) // Open means not yet fully kicked off? Or use 'assigned'
-          // .eq('payment_status', 'pending') // if/when we add this
+          .eq('status', 'assigned') // Awarded offers awaiting payment
           .order('created_at', ascending: false);
 
       final rows = response as List;

@@ -138,13 +138,20 @@ features/[feature_name]/
 
 **CRITICAL**: Store paths in DB, NOT signed URLs. Generate signed URLs at render time.
 
+**Configuration**: See `SharedStorageConfig` in `lib/core/config/storage_config.dart`:
+- `avatarTtlSeconds` = 7200s, `taskImageTtlSeconds` = 7200s, `chatAttachmentTtlSeconds` = 3600s
+- `cacheDuration` = 90min, `errorCacheDuration` = 30sec, `maxCacheSize` = 1000
+
+**RLS v2**: `is_admin()`, `can_access_chat_attachment()`, `can_access_task_image()` helpers. Feature flag: `app_config.storage_rls_v2_enabled`.
+
 ## Database Tables Reference
 
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
 | `profiles` | User identity | `id`, `full_name`, `avatar_url`, `role` |
 | `tasks` | Job posts | `id`, `user_id`, `title`, `status`, `task_type` |
-| `task_requests` | Bids/offers | `id`, `task_id`, `bidder_id`, `price`, `days` |
+| `task_requests` | Bids/offers | `id`, `task_id`, `bidder_id`, `price`, `days`, `status`, `payment_status`, `payment_deadline` |
+| `system_config` | Runtime settings | `key`, `value` (JSON) |
 | `conversations` | Chat threads | `id`, `user1_id`, `user2_id`, `task_id` |
 | `messages` | Chat messages | `id`, `conversation_id`, `sender_id`, `content` |
 | `bookings` | Reservations | `id`, `task_id`, `provider_id`, `client_id`, `slot_id` |
@@ -157,6 +164,54 @@ features/[feature_name]/
 | `portfolio_items` | Portfolio work | `id`, `owner_id`, `title`, `image_url` |
 
 **Reference**: See `Sline_everything/SUPABASE_SETUP.md` for complete schema.
+
+## Task Request (Bid) Flow Overview (March 2026)
+
+The Task Request (Bid) Flow manages the complete lifecycle of freelancer offers on tender-type tasks.
+
+### Bid States
+
+```
+pending → accepted → payment_status:unpaid → payment_status:held (work begins)
+    ↓         ↓
+ rejected  withdrawn
+```
+
+### Two-Step Award Flow
+
+1. **Award** (`accept_task_request`): Client selects offer, locks freelancer, sets 48h payment deadline
+2. **Payment** (`pay_awarded_offer`): Client completes payment, funds held in escrow, work begins
+
+### Key Files
+
+| Layer | File | Purpose |
+|-------|------|---------|
+| Model | `lib/features/tasks/models/task_request_model.dart` | TaskRequest entity with OfferStatus/PaymentStatus |
+| Service | `lib/features/tasks/services/task_requests_service.dart` | Supabase RPC calls, error mapping |
+| ViewModel | `lib/features/tasks/viewmodels/task_requests_view_model.dart` | MVVM state holder, two-step award flow |
+| Exceptions | `lib/features/tasks/exceptions/offer_exceptions.dart` | PriceMismatchException, OfferAlreadyAcceptedException |
+
+### Security Features
+
+- **Optimistic Concurrency**: Price validation prevents race conditions during award
+- **Idempotency**: Double-clicking "Award" returns 'already_accepted' without duplicate actions
+- **Auto-Expiry**: Cron job expires unpaid offers after 48-hour payment window
+- **Rate Limiting**: 2-second debounce prevents bid spam
+
+### RPC Functions
+
+- `accept_task_request(task_id, request_id, expected_price_cents)` - Award offer
+- `reject_task_request(task_id, request_id)` - Reject offer + create conversation
+- `replace_task_request(task_id, freelancer_id, message, price, days)` - Update own offer
+- `cleanup_expired_awards()` - Cron job for payment deadline enforcement
+
+### Documentation
+
+- API Contract: `.TODO/improvement_the_system/ImplementReady/04_task-request-bid-flow/API_CONTRACT.md`
+- Threat Model: `.TODO/improvement_the_system/ImplementReady/04_task-request-bid-flow/THREAT_MODEL.md`
+- Developer Guide: `Sline_everything/DEVELOPER_GUIDE.md#task-request-bid-flow`
+
+---
 
 ## Dashboard Link Notes (March 2026)
 

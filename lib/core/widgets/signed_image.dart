@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:sline_app/core/config/storage_config.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/utils/signed_url_cache.dart';
 import 'package:sline_app/features/tasks/services/task_image_service.dart';
@@ -98,7 +99,7 @@ class _SignedImageState extends State<SignedImage> {
         try {
           resolved = await Supabase.instance.client.storage
               .from(widget.bucket!)
-              .createSignedUrl(v, 7200); // 2 hours
+              .createSignedUrl(v, SharedStorageConfig.ttlForBucket(widget.bucket!));
         } catch (e) {
           // If signed URL fails (e.g., public bucket), fall back to public URL
           resolved = Supabase.instance.client.storage
@@ -110,7 +111,7 @@ class _SignedImageState extends State<SignedImage> {
         final signer = TaskImageService();
         resolved = await signer.createSignedUrl(
           v,
-          expire: const Duration(hours: 2),
+          expire: SharedStorageConfig.ttlDurationForBucket('task-images'),
         );
       }
 

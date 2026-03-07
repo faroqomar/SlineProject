@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/config/storage_config.dart';
 
 /// Service responsible for uploading user avatar images to Supabase Storage
 /// and generating short-lived signed URLs for private display.
@@ -7,9 +8,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// NOTE:
 /// - We store only the **storage path** in the DB (e.g. `avatars/<uid>/<ts>.jpg`).
 /// - Display layers should call [createSignedUrl] to obtain a temporary link.
+/// - Uses [SharedStorageConfig] for consistent TTL values.
 class AvatarService {
   /// Private bucket name used for storing avatars.
-  /// We reuse the existing private bucket (e.g., `portfolio`).
   static const String bucket = 'avatars';
 
   final SupabaseClient _supabase;
@@ -49,15 +50,16 @@ class AvatarService {
 
   /// Create a short-lived signed URL for a given [storagePath].
   ///
-  /// [expire] controls how long the URL is valid (default 2 hours).
+  /// Uses [SharedStorageConfig.avatarTtlSeconds] for consistent TTL.
   /// Returns a temporary public URL suitable for display in the UI.
   Future<String> createSignedUrl(
     String storagePath, {
-    Duration expire = const Duration(hours: 2),
+    Duration? expire,
   }) async {
+    final seconds = expire?.inSeconds ?? SharedStorageConfig.avatarTtlSeconds;
     final url = await _supabase.storage
         .from(bucket)
-        .createSignedUrl(storagePath, expire.inSeconds);
+        .createSignedUrl(storagePath, seconds);
     return url;
   }
 }

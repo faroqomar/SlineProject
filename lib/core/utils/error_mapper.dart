@@ -57,6 +57,31 @@ class ErrorMapper {
 
   /// Maps PostgrestException to user-friendly message.
   static String _mapPostgrestError(PostgrestException error) {
+    final message = error.message;
+
+    // Chat Creation Matrix specific errors (P0001 user-defined exceptions)
+    if (message.contains('Freelancers cannot start direct conversations')) {
+      return 'Only clients can start conversations with freelancers.';
+    }
+    if (message.contains('favorites list')) {
+      return 'Add this freelancer to your favorites first to start a conversation.';
+    }
+    if (message.contains('Rate limit exceeded')) {
+      return "You've reached the conversation limit. Try again in an hour.";
+    }
+    if (message.contains('Target user not found')) {
+      return 'User not found. They may have deleted their account.';
+    }
+    if (message.contains('Cannot create conversation with yourself')) {
+      return "You can't start a conversation with yourself.";
+    }
+    if (message.contains('initiated_by must equal current user')) {
+      return 'Session expired. Please log in again.';
+    }
+    if (message.contains('task owner cannot start a task-linked conversation')) {
+      return 'You cannot start a conversation on this task.';
+    }
+
     switch (error.code) {
       case '42501': // RLS denied
         return 'Session expired. Please log in again.';

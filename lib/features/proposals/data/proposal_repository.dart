@@ -21,6 +21,7 @@ class ProposalRepository {
   final TaskRequestsService _taskRequestsService;
 
   /// List proposals for a task. For owner view, enriches with bidder names via RPC.
+  // ignore: deprecated_member_use_from_same_package
   Future<List<ProposalModel>> listByTask({
     required String taskId,
     int limit = 20,
@@ -66,6 +67,7 @@ class ProposalRepository {
         }
       }
 
+      // ignore: deprecated_member_use_from_same_package
       final list = <ProposalModel>[];
       for (final row in data) {
         final map = Map<String, dynamic>.from(row as Map);
@@ -92,6 +94,7 @@ class ProposalRepository {
     }
   }
 
+  // ignore: deprecated_member_use_from_same_package
   static ProposalModel _rowToProposal(
     Map<String, dynamic> map, {
     String? bidderName,
@@ -100,6 +103,7 @@ class ProposalRepository {
   }) {
     final status = map['status'] as String? ?? 'unknown';
     final paymentStatus = map['payment_status'] as String? ?? 'unpaid';
+    // ignore: deprecated_member_use_from_same_package
     return ProposalModel(
       id: map['id'] as String,
       taskId: map['task_id'] as String,

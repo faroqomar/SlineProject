@@ -1,6 +1,6 @@
 # SLine MVP Roadmap
 
-**Last Updated:** 2026-03-06
+**Last Updated:** 2026-03-08
 
 This roadmap tracks the current code-state of the repository. Status values are intentionally simple:
 - `✅ Completed`
@@ -66,6 +66,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | Direct Chat Offers | ✅ Completed | accept in chat → Pending Payment in dashboard → Pay from dashboard (QiCard); `lib/features/direct_offers/`; edge functions `qicard_payment_create_direct_offer`, `qicard_payment_recovery_direct_offer` |
 | Attachments | ✅ Completed | private attachment flow; participant-scoped access via `can_access_chat_attachment` |
 | Favorites-powered contact flows | ✅ Completed | favorites and chat handoff are implemented |
+| Chat Creation Matrix (v2.19) | ✅ Completed | Atomic RPC `start_direct_conversation_v1` with rate limiting (20/hr), favorites enforcement, role verification. Guard trigger hardens all paths. Feature flag `enable_direct_conversation_rpc`. See `supabase/migrations/20260306000000_chat_creation_matrix.sql` |
 | Notifications | ✅ Completed | server-authority: client read/update only; badge, modal, deep links; auth-aware stream; `.TODO/Archive/NotificationExecution/PLAN_NotificationsFix_2026-03-01.md` |
 | Report flows (task/user/chat) | ✅ Completed | app can submit `reports` rows from task detail, chat menu, and public profile |
 | Booking dispute submission | ✅ Completed | booking details `Report Issue` now submits dispute instead of placeholder |

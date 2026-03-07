@@ -25,6 +25,9 @@ class TaskRequest {
   // Joined fields from tasks table
   final String? taskTitle;
 
+  // Tender/award system field - deadline for payment on accepted offers
+  final DateTime? paymentDeadline;
+
   const TaskRequest({
     required this.id,
     required this.taskId,
@@ -38,12 +41,42 @@ class TaskRequest {
     this.bidderName,
     this.bidderAvatar,
     this.taskTitle,
+    this.paymentDeadline,
   });
 
   bool get isPending => status == OfferStatus.pending;
   bool get isAccepted => status == OfferStatus.accepted;
   bool get isRejected => status == OfferStatus.rejected;
   bool get isUnknown => status == OfferStatus.unknown;
+
+  /// True if this pending bid has exceeded the 24-hour response window.
+  /// Only pending bids can expire - accepted/rejected/withdrawn bids do not expire.
+  bool get isExpired {
+    if (status != OfferStatus.pending) return false;
+    final expiration = createdAt.add(const Duration(hours: 24));
+    return DateTime.now().isAfter(expiration);
+  }
+
+  /// The absolute expiration time for pending bids (24h after creation).
+  DateTime get expirationTime => createdAt.add(const Duration(hours: 24));
+
+  /// Returns remaining time until expiration.
+  /// Negative duration means the bid has already expired.
+  Duration timeUntilExpiration() {
+    final expiration = createdAt.add(const Duration(hours: 24));
+    return expiration.difference(DateTime.now());
+  }
+
+  /// True when client accepted but payment not yet made.
+  /// This is a transient state before escrow funding.
+  bool get isPendingPayment =>
+      status == OfferStatus.accepted && paymentStatus == PaymentStatus.unpaid;
+
+  /// True when payment is held in escrow - work can safely begin.
+  /// This addresses T3 (Work Without Escrow) threat: prevents work from
+  /// starting before funds are locked, ensuring freelancer protection.
+  bool get isActive =>
+      status == OfferStatus.accepted && paymentStatus == PaymentStatus.held;
 
   factory TaskRequest.fromMap(Map<String, dynamic> map) {
     try {
@@ -79,6 +112,9 @@ class TaskRequest {
         bidderName: parsedBidderName,
         bidderAvatar: parsedBidderAvatar,
         taskTitle: parsedTaskTitle,
+        paymentDeadline: map['payment_deadline'] != null
+            ? DateTime.tryParse(map['payment_deadline'] as String)
+            : null,
       );
     } catch (e, st) {
       AppLogger.e(
@@ -92,6 +128,8 @@ class TaskRequest {
   }
 
   /// Builds a TaskRequest from a ProposalModel (e.g. when owner list uses ProposalRepository).
+  /// Preserves all fields including paymentDeadline for tender/award functionality.
+  // ignore: deprecated_member_use_from_same_package
   factory TaskRequest.fromProposal(ProposalModel p) {
     return TaskRequest(
       id: p.id,
@@ -106,6 +144,7 @@ class TaskRequest {
       bidderName: p.bidderName,
       bidderAvatar: p.bidderAvatar,
       taskTitle: p.taskTitle,
+      paymentDeadline: p.paymentDeadline,
     );
   }
 
@@ -120,6 +159,8 @@ class TaskRequest {
       'note': note,
       'status': status.name,
       'created_at': createdAt.toIso8601String(),
+      if (paymentDeadline != null)
+        'payment_deadline': paymentDeadline!.toIso8601String(),
     };
 
     if (forInsert) {
@@ -149,6 +190,7 @@ class TaskRequest {
     String? bidderName,
     String? bidderAvatar,
     String? taskTitle,
+    DateTime? paymentDeadline,
   }) {
     return TaskRequest(
       id: id ?? this.id,
@@ -163,12 +205,13 @@ class TaskRequest {
       bidderName: bidderName ?? this.bidderName,
       bidderAvatar: bidderAvatar ?? this.bidderAvatar,
       taskTitle: taskTitle ?? this.taskTitle,
+      paymentDeadline: paymentDeadline ?? this.paymentDeadline,
     );
   }
 
   @override
   String toString() =>
-      'TaskRequest(id: $id, taskId: $taskId, bidderId: $bidderId, price: $price, days: $days, status: ${status.name}, bidderName: $bidderName)';
+      'TaskRequest(id: $id, taskId: $taskId, bidderId: $bidderId, price: $price, days: $days, status: ${status.name}, bidderName: $bidderName, paymentDeadline: $paymentDeadline)';
 
   @override
   bool operator ==(Object other) =>
@@ -185,7 +228,8 @@ class TaskRequest {
           other.createdAt == createdAt &&
           other.bidderName == bidderName &&
           other.bidderAvatar == bidderAvatar &&
-          other.taskTitle == taskTitle);
+          other.taskTitle == taskTitle &&
+          other.paymentDeadline == paymentDeadline);
 
   @override
   int get hashCode => Object.hash(
@@ -201,6 +245,7 @@ class TaskRequest {
     bidderName,
     bidderAvatar,
     taskTitle,
+    paymentDeadline,
   );
 
   static PaymentStatus _mapDbPaymentStatusToEnum(String? status) {

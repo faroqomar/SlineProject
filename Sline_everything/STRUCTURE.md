@@ -1,6 +1,6 @@
 # SLine App - Folder Structure Guide
 
-**Last Updated:** 2026-03-06
+**Last Updated:** 2026-03-06 (Tender Task Lifecycle v2.20: exceptions folder, test/unit/tender, award_expiration_monitor)
 
 This document describes the current repository layout. It replaces older references to `presentation/` and `controllers/`; the live Flutter codebase uses `view/` and `viewmodels/` under `lib/features/`.
 
@@ -183,6 +183,8 @@ Not every feature uses every subfolder, but the standard live convention is:
 - `lib/features/orders/`: decommissioned placeholder folder with `README.md` only; standalone orders runtime was removed on 2026-03-01
 - `lib/features/proposals/`: proposal models, data (repositories), routes (payment); view re-exports from tasks for list/submit/tile/payment screens
 - `lib/features/tasks/`: task creation, details, requests/offers, tender payment, delivery flows
+  - `exceptions/offer_exceptions.dart` — **NEW (v2.20)** Custom exceptions: `PriceMismatchException`, `OfferAlreadyAcceptedException`
+  - `viewmodels/award_expiration_monitor.dart` — **NEW (v2.20)** Countdown timer for unpaid awards with urgency levels
 - `lib/features/wallet/`: wallet state and ledger-backed balance views
 - `lib/features/work/`: unified work item details and CTA resolution
 
@@ -214,7 +216,11 @@ test/
 │   ├── profile/
 │   │   └── role_switch_result_test.dart  # RoleSwitchResult model tests
 │   ├── proposals/
-│   └── tasks/
+│   ├── tasks/
+│   └── tender/               # **NEW (v2.20)** Tender lifecycle unit tests
+│       ├── award_expiration_monitor_test.dart  # Timer and urgency tests
+│       ├── task_requests_service_test.dart      # Exception handling tests
+│       └── task_requests_view_model_test.dart   # Flow logic tests
 └── widget/
     ├── app/
     ├── auth/
@@ -244,6 +250,8 @@ Current bundled asset folder:
 
 ## Recent Structure-Sensitive Updates
 
+- **Tender Task Lifecycle (v2.20, 2026-03-06):** New `lib/features/tasks/exceptions/offer_exceptions.dart` with `PriceMismatchException` and `OfferAlreadyAcceptedException`. New `lib/features/tasks/viewmodels/award_expiration_monitor.dart` for payment deadline countdown. New test folder `test/unit/tender/` with comprehensive unit tests. Database indexes `idx_task_requests_awarded_unpaid` and `idx_one_accepted_per_task`. RPCs: `award_task_offer`, `pay_awarded_offer`, `cleanup_expired_awards`. See migration `20260306_tender_guardrails.sql`.
+- **Chat Creation Matrix (v2.19, 2026-03-06):** New atomic RPC path for conversation creation. `MessageService` now routes via feature flag (`enable_direct_conversation_rpc`). New RPC functions: `start_direct_conversation_v1`, `is_client`, `check_conversation_rate_limit`. Hardened guard trigger `conversations_before_insert_guard`. Updated UI call sites handle nullable `Conversation?` returns.
 - **Role Switching (v2.18, 2026-03-06):** New `lib/core/services/role_switch_coordinator.dart`, `lib/core/mixins/role_switch_aware.dart`, `lib/features/profile/data/role_switch_repository.dart`. ViewModels implementing teardown contract: `ChatViewModel`, `DashboardViewModel`, `TaskViewModel`, `HomeViewModel`.
 - Chat feature includes `models/chat_offer_payload.dart` (canonical offer payload) and `services/chat_realtime_merger.dart` (realtime snapshot merge); archive uses RPC `archive_conversation_v1`.
 - Booking flow now uses `payment_checkout_screen.dart`, `payment_webview_screen.dart`, and `payment_return_screen.dart` instead of older slot-sheet-only docs.

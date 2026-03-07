@@ -107,10 +107,12 @@ class _ResetPasswordUpdateScreenState extends State<ResetPasswordUpdateScreen> {
                     hintText: 'Enter new password',
                     obscureText: true,
                     validator: (value) {
-                      if (value == null || value.isEmpty)
+                      if (value == null || value.isEmpty) {
                         return 'Please enter a password';
-                      if (value.length < 6)
+                      }
+                      if (value.length < 6) {
                         return 'Password must be at least 6 characters';
+                      }
                       return null;
                     },
                   ),
@@ -130,8 +132,9 @@ class _ResetPasswordUpdateScreenState extends State<ResetPasswordUpdateScreen> {
                     hintText: 'Confirm new password',
                     obscureText: true,
                     validator: (value) {
-                      if (value == null || value.isEmpty)
+                      if (value == null || value.isEmpty) {
                         return 'Please confirm your password';
+                      }
                       return null;
                     },
                   ),

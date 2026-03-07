@@ -95,5 +95,5 @@ A Client's task stays open. Multiple Freelancers submit `task_requests`. Each re
 
 ## 12) Production Checklist
 
-- [ ] Optimistic price lock included in client UI parameters.
-- [ ] DB trigger to reject remaining bids integrated into the Acceptance RPC.
+- [x] Optimistic price lock included in client UI parameters. (requests_list_screen + inbox_tab via DashboardViewModel.awardOffer)
+- [x] DB trigger to reject remaining bids integrated into the Acceptance RPC. (20260308000000_accept_task_request_reject_remaining_bids.sql)

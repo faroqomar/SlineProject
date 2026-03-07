@@ -16,3 +16,12 @@ export 'profiles.dart';
 
 // Booking and fee locking fixtures
 export 'booking_fixtures.dart';
+
+// Tender task lifecycle fixtures
+export 'tender_tasks.dart';
+
+// Chat Creation Matrix fixtures (hide testClientId to avoid clash with profiles.dart)
+export 'chat_fixtures.dart' hide testClientId;
+
+// TaskRequest factory for bid/offer testing
+export 'task_request_factory.dart';

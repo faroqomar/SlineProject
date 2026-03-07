@@ -188,3 +188,9 @@ MockPostgrestException createMockPostgrestException({
     details: details ?? 'Test error details',
   );
 }
+
+/// Extension to make MockPostgrestException work like real PostgrestException
+extension MockPostgrestExceptionExtension on MockPostgrestException {
+  /// Returns the message in the same format as real PostgrestException
+  String get errorMessage => toString();
+}

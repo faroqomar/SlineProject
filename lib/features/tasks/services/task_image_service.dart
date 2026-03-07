@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/config/storage_config.dart';
 import '../../../core/services/logger_service.dart';
 
 /// Service for handling task image operations with Supabase Storage.
@@ -10,6 +11,8 @@ import '../../../core/services/logger_service.dart';
 ///
 /// Storage Pattern: Store paths in DB, not signed URLs. Generate signed URLs
 /// at render time using SignedImage widget.
+///
+/// Uses [SharedStorageConfig] for consistent TTL values.
 class TaskImageService {
   final SupabaseClient _supabase;
   final String bucket = 'task-images';
@@ -101,20 +104,22 @@ class TaskImageService {
 
   /// Create a signed URL to view the task image.
   ///
+  /// Uses [SharedStorageConfig.taskImageTtlSeconds] for consistent TTL.
   /// Returns the signed URL string on success, null on failure.
   /// Does not throw - returns null for graceful degradation in UI.
   Future<String?> createSignedUrl(
     String path, {
-    Duration expire = const Duration(hours: 2),
+    Duration? expire,
   }) async {
     if (path.isEmpty) {
       return null;
     }
 
     try {
+      final seconds = expire?.inSeconds ?? SharedStorageConfig.taskImageTtlSeconds;
       final res = await _supabase.storage
           .from(bucket)
-          .createSignedUrl(path, expire.inSeconds);
+          .createSignedUrl(path, seconds);
       return res;
     } on StorageException catch (e) {
       AppLogger.w(
