@@ -85,7 +85,11 @@ class WorkManagementService {
       final response = await query.order('deadline', ascending: true);
 
       final list = (response as List)
-          .map((e) => UnifiedWorkItemModel.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map(
+            (e) => UnifiedWorkItemModel.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ),
+          )
           .toList();
       AppLogger.d(
         'Listed unified work items from view',
@@ -230,15 +234,19 @@ class WorkManagementService {
       AppLogger.d(
         'Revision requested',
         tag: 'WorkManagement',
-        json: {'entityType': entityType, 'entityId': entityId, 'note_length': note.length},
+        json: {
+          'entityType': entityType,
+          'entityId': entityId,
+          'note_length': note.length,
+        },
       );
     } catch (e, stack) {
       final msg = e.toString();
       final outcome = msg.contains('No revisions remaining')
           ? 'limit_reached'
           : msg.contains('Can only request revision on delivered work')
-              ? 'state_invalid'
-              : 'error';
+          ? 'state_invalid'
+          : 'error';
       AppLogger.e(
         'Request revision failed ($entityType $entityId outcome=$outcome)',
         tag: 'WorkManagement',

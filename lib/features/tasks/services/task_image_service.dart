@@ -107,16 +107,14 @@ class TaskImageService {
   /// Uses [SharedStorageConfig.taskImageTtlSeconds] for consistent TTL.
   /// Returns the signed URL string on success, null on failure.
   /// Does not throw - returns null for graceful degradation in UI.
-  Future<String?> createSignedUrl(
-    String path, {
-    Duration? expire,
-  }) async {
+  Future<String?> createSignedUrl(String path, {Duration? expire}) async {
     if (path.isEmpty) {
       return null;
     }
 
     try {
-      final seconds = expire?.inSeconds ?? SharedStorageConfig.taskImageTtlSeconds;
+      final seconds =
+          expire?.inSeconds ?? SharedStorageConfig.taskImageTtlSeconds;
       final res = await _supabase.storage
           .from(bucket)
           .createSignedUrl(path, seconds);

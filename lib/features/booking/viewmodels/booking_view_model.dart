@@ -749,12 +749,21 @@ class BookingViewModel extends ChangeNotifier {
       return true;
     } catch (e, st) {
       bookingsError = _mapError(e);
-      AppLogger.e(
-        'Failed to update booking $bookingId status to $newStatus',
-        error: e,
-        stackTrace: st,
-        tag: 'Booking',
-      );
+      // Guard block (client cancel after delivery) is expected; do not report as crash
+      if (e is StateError) {
+        AppLogger.w(
+          'Booking status update rejected (guard)',
+          tag: 'Booking',
+          error: e,
+        );
+      } else {
+        AppLogger.e(
+          'Failed to update booking $bookingId status to $newStatus',
+          error: e,
+          stackTrace: st,
+          tag: 'Booking',
+        );
+      }
       notifyListeners();
       return false;
     }

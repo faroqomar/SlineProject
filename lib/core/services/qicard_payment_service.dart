@@ -266,8 +266,10 @@ class QiCardPaymentService implements PaymentService {
         );
       }
 
+      final intentId = data['intent_id'] as String?;
       final result = QiCardCreatePaymentResult(
         bookingId: data['booking_id'] as String?,
+        intentId: intentId,
         paymentRequestId: data['payment_request_id'] as String?,
         formUrl: data['form_url'] as String?,
         amount: (data['amount'] as num?)?.toDouble(),
@@ -276,6 +278,14 @@ class QiCardPaymentService implements PaymentService {
         correlationId: data['correlation_id'] as String?,
         requestCorrelationId: responseRequestCorrelationId,
       );
+
+      if (intentId != null) {
+        AppLogger.i(
+          'Booking payment created with intent_id; Realtime subscription available',
+          tag: 'Payment',
+          json: <String, dynamic>{'intent_id': intentId, 'task_id': taskId},
+        );
+      }
 
       if (!result.isSuccess) {
         AppLogger.w(
@@ -521,8 +531,10 @@ class QiCardPaymentService implements PaymentService {
       }
 
       final payloadError = _extractErrorFromPayload(data);
+      final directIntentId = data['intent_id'] as String?;
       final result = QiCardDirectOfferPaymentResult(
         offerId: data['offer_id'] as String? ?? offerId,
+        intentId: directIntentId,
         formUrl: data['form_url'] as String?,
         correlationId: data['correlation_id'] as String?,
         paymentRequestId: data['payment_request_id'] as String?,
@@ -530,6 +542,17 @@ class QiCardPaymentService implements PaymentService {
         error: payloadError,
         errorCode: 'DIRECT_OFFER_PAYMENT_CREATE_FAILED',
       );
+
+      if (directIntentId != null) {
+        AppLogger.i(
+          'Direct offer payment created with intent_id; Realtime subscription available',
+          tag: 'Payment',
+          json: <String, dynamic>{
+            'intent_id': directIntentId,
+            'offer_id': offerId,
+          },
+        );
+      }
 
       if (!result.isSuccess) {
         AppLogger.w(

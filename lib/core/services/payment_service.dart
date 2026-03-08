@@ -140,6 +140,7 @@ class PaymentIntentResult {
 class QiCardDirectOfferPaymentResult {
   const QiCardDirectOfferPaymentResult({
     this.offerId,
+    this.intentId,
     this.formUrl,
     this.correlationId,
     this.paymentRequestId,
@@ -149,6 +150,9 @@ class QiCardDirectOfferPaymentResult {
   });
 
   final String? offerId;
+
+  /// When present, app can subscribe to payment_intents(id) for Realtime resolution.
+  final String? intentId;
   final String? formUrl;
   final String? correlationId;
 

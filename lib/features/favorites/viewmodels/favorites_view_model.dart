@@ -30,7 +30,10 @@ class FavoritesViewModel extends ChangeNotifier {
   /// Ensures favorites are loaded at least once (e.g. for public profile toggle).
   Future<void> ensureLoaded() async {
     if (_loadedOnce) {
-      AppLogger.d('ensureLoaded: skip (already loaded)', tag: 'FavoritesViewModel');
+      AppLogger.d(
+        'ensureLoaded: skip (already loaded)',
+        tag: 'FavoritesViewModel',
+      );
       return;
     }
     if (_loading) return;
@@ -46,14 +49,19 @@ class FavoritesViewModel extends ChangeNotifier {
       final list = await service.listFavoritesWithProfile();
       _itemsWithProfile = list;
       _items = list
-          .map((f) => FavoriteModel(
-                id: f.id,
-                freelancerId: f.freelancerId,
-                createdAt: f.createdAt,
-              ))
+          .map(
+            (f) => FavoriteModel(
+              id: f.id,
+              freelancerId: f.freelancerId,
+              createdAt: f.createdAt,
+            ),
+          )
           .toList();
       _loadedOnce = true;
-      AppLogger.i('Load favorites success: ${list.length} items', tag: 'FavoritesViewModel');
+      AppLogger.i(
+        'Load favorites success: ${list.length} items',
+        tag: 'FavoritesViewModel',
+      );
     } catch (e, st) {
       AppLogger.e(
         'Failed to load favorites',
@@ -71,7 +79,10 @@ class FavoritesViewModel extends ChangeNotifier {
 
   Future<FavoritesMutationResult> add(String freelancerId) async {
     if (_pendingIds.contains(freelancerId)) {
-      AppLogger.d('Add skipped (pending): $freelancerId', tag: 'FavoritesViewModel');
+      AppLogger.d(
+        'Add skipped (pending): $freelancerId',
+        tag: 'FavoritesViewModel',
+      );
       return FavoritesMutationResult.skipped;
     }
     _setError(null);
@@ -83,7 +94,10 @@ class FavoritesViewModel extends ChangeNotifier {
       await load();
       _pendingIds.remove(freelancerId);
       notifyListeners();
-      AppLogger.i('Add favorite success: $freelancerId', tag: 'FavoritesViewModel');
+      AppLogger.i(
+        'Add favorite success: $freelancerId',
+        tag: 'FavoritesViewModel',
+      );
       return FavoritesMutationResult.success;
     } catch (e, st) {
       _pendingIds.remove(freelancerId);
@@ -101,7 +115,10 @@ class FavoritesViewModel extends ChangeNotifier {
 
   Future<FavoritesMutationResult> remove(String freelancerId) async {
     if (_pendingIds.contains(freelancerId)) {
-      AppLogger.d('Remove skipped (pending): $freelancerId', tag: 'FavoritesViewModel');
+      AppLogger.d(
+        'Remove skipped (pending): $freelancerId',
+        tag: 'FavoritesViewModel',
+      );
       return FavoritesMutationResult.skipped;
     }
     _setError(null);
@@ -116,7 +133,10 @@ class FavoritesViewModel extends ChangeNotifier {
           .toList();
       _pendingIds.remove(freelancerId);
       notifyListeners();
-      AppLogger.i('Remove favorite success: $freelancerId', tag: 'FavoritesViewModel');
+      AppLogger.i(
+        'Remove favorite success: $freelancerId',
+        tag: 'FavoritesViewModel',
+      );
       return FavoritesMutationResult.success;
     } catch (e, st) {
       _pendingIds.remove(freelancerId);
@@ -135,10 +155,12 @@ class FavoritesViewModel extends ChangeNotifier {
   FavoritesMutationResult _mapErrorToResult(Object e) {
     final s = e.toString();
     if (s.contains('23505')) return FavoritesMutationResult.duplicate;
-    if (s.toLowerCase().contains('rls') || s.toLowerCase().contains('forbidden')) {
+    if (s.toLowerCase().contains('rls') ||
+        s.toLowerCase().contains('forbidden')) {
       return FavoritesMutationResult.forbidden;
     }
-    if (s.toLowerCase().contains('authenticated') || s.toLowerCase().contains('sign in')) {
+    if (s.toLowerCase().contains('authenticated') ||
+        s.toLowerCase().contains('sign in')) {
       return FavoritesMutationResult.unauthenticated;
     }
     return FavoritesMutationResult.failure;
@@ -160,7 +182,8 @@ class FavoritesViewModel extends ChangeNotifier {
     final s = e.toString();
     if (s.contains('23505')) return 'Already in favorites.';
     if (s.toLowerCase().contains('rls')) return 'Not allowed for your role.';
-    if (s.toLowerCase().contains('authenticated')) return 'Please sign in to use favorites.';
+    if (s.toLowerCase().contains('authenticated'))
+      return 'Please sign in to use favorites.';
     return 'Something went wrong. Please try again.';
   }
 }

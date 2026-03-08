@@ -108,6 +108,10 @@ class _DirectOfferDetailsContentState
           callbackHosts: callbackHosts,
           expectedOfferId: widget.offerId,
           expectedCorrelationId: result.correlationId,
+          paymentIntentId: result.intentId,
+          paymentIntentStatusStream: result.intentId != null
+              ? vm.streamPaymentIntentStatus(result.intentId!)
+              : null,
         ),
       ),
     );
@@ -344,10 +348,14 @@ class _DirectOfferDetailsContentState
                     isLoading: vm.markDeliveredInProgress,
                   ),
                 ],
-                if ((offer.isActive || offer.isDelivered) && (offer.clientId == vm.currentUserId || offer.freelancerId == vm.currentUserId))
+                if ((offer.isActive || offer.isDelivered) &&
+                    (offer.clientId == vm.currentUserId ||
+                        offer.freelancerId == vm.currentUserId))
                   _ReportIssueGuardDirectOffer(
                     offerId: widget.offerId,
-                    defendantId: offer.clientId == vm.currentUserId ? offer.freelancerId : offer.clientId,
+                    defendantId: offer.clientId == vm.currentUserId
+                        ? offer.freelancerId
+                        : offer.clientId,
                     onSubmitted: () => vm.loadOffer(),
                   ),
                 if (vm.canComplete) ...[
@@ -362,9 +370,7 @@ class _DirectOfferDetailsContentState
                         await vm.completeOffer();
                         if (!context.mounted) return;
                         messenger.showSnackBar(
-                          const SnackBar(
-                            content: Text('Payment released.'),
-                          ),
+                          const SnackBar(content: Text('Payment released.')),
                         );
                         navigator.pop(true);
                       } catch (e) {
@@ -423,13 +429,18 @@ class _DirectOfferDisputeBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<bool>(
-      future: context.read<SafetyViewModel>().hasOpenDisputeForDirectOffer(offerId),
+      future: context.read<SafetyViewModel>().hasOpenDisputeForDirectOffer(
+        offerId,
+      ),
       builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done || snapshot.data != true) {
+        if (snapshot.connectionState != ConnectionState.done ||
+            snapshot.data != true) {
           return const SizedBox.shrink();
         }
         return FutureBuilder<String?>(
-          future: context.read<SafetyViewModel>().getDisputeStatusForDirectOffer(offerId),
+          future: context
+              .read<SafetyViewModel>()
+              .getDisputeStatusForDirectOffer(offerId),
           builder: (context, statusSnapshot) {
             final status = statusSnapshot.data;
             final text = status == 'active'
@@ -442,7 +453,11 @@ class _DirectOfferDisputeBanner extends StatelessWidget {
                   padding: const EdgeInsets.all(AppDimens.p12),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, size: 20, color: context.colorScheme.primary),
+                      Icon(
+                        Icons.info_outline,
+                        size: 20,
+                        color: context.colorScheme.primary,
+                      ),
                       const SizedBox(width: AppDimens.p8),
                       Expanded(
                         child: Text(
@@ -479,7 +494,9 @@ class _ReportIssueGuardDirectOffer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<bool>(
-      future: context.read<SafetyViewModel>().hasOpenDisputeForDirectOffer(offerId),
+      future: context.read<SafetyViewModel>().hasOpenDisputeForDirectOffer(
+        offerId,
+      ),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SizedBox.shrink();
@@ -493,7 +510,9 @@ class _ReportIssueGuardDirectOffer extends StatelessWidget {
               onPressed: () => _showDisputeDialog(context),
               child: Text(
                 'Report Issue',
-                style: AppTypography.bodySmall.copyWith(color: AppColors.lightRed),
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.lightRed,
+                ),
               ),
             ),
           ),
@@ -570,14 +589,12 @@ class _ApproveWithDisputeGuard extends StatelessWidget {
       );
     }
     return FutureBuilder<bool>(
-      future: context.read<SafetyViewModel>().hasOpenDisputeForDirectOffer(offerId),
+      future: context.read<SafetyViewModel>().hasOpenDisputeForDirectOffer(
+        offerId,
+      ),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return AppButton(
-            text: 'Checking…',
-            onPressed: null,
-            isPrimary: true,
-          );
+          return AppButton(text: 'Checking…', onPressed: null, isPrimary: true);
         }
         final hasOpenDispute = snapshot.data ?? true;
         return AppButton(

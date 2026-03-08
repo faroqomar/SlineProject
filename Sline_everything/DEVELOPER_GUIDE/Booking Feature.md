@@ -28,7 +28,7 @@ Important current behavior:
 | `provider_id` | `uuid` | service provider | used for provider-side lists and RLS |
 | `client_id` | `uuid` | booking client | used for client-side lists and RLS |
 | `slot_id` | `uuid` | optional legacy slot link | nullable for direct slotless bookings |
-| `status` | `booking_status_enum` | booking lifecycle | app maps `paid_request_pending`, `active`, `delivered`, `completed`, `canceled`, `refunded`, `expired_unanswered`, `no_show` |
+| `status` | `booking_status_enum` | booking lifecycle | app maps `paid_request_pending`, `active`, `delivered`, `completed`, `canceled`, `refunded`, `expired_unanswered`, `no_show`, `disputed` |
 | `payment_status` | `payment_status_enum` | payment lifecycle | `unpaid`, `held`, `released`, `refunded` |
 | `price` | `numeric` | canonical amount | server-derived for booking drafts |
 | `package_id` | `text` | selected package tier | optional |
@@ -53,6 +53,9 @@ Current server-backed booking/payment flow depends on:
 - `rpc_submit_delivery`
 - `rpc_approve_delivery`
 - `process_payment_event_ledger(...)`
+- `fn_booking_guard` — trigger enforcing status transitions (client cannot delivered→canceled; client can delivered→disputed; admin only disputed→completed/refunded; provider/admin active→no_show).
+- `rpc_finalize_auto_approval` — booking branch calls ledger `release_with_fee` when review window expires.
+- `admin_resolve_booking_dispute` — admin-only RPC to resolve disputed booking to completed or refunded.
 
 ### 2.3 RLS summary
 

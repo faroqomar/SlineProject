@@ -6,6 +6,50 @@ import '../models/notification_model.dart';
 class NotificationService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  /// Fetches unread notifications (e.g. for foreground sync before stream).
+  /// Plan: 13_notification-routing — sync unread on foreground.
+  Future<List<NotificationItem>> getUnreadNotifications({
+    int limit = 50,
+  }) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      AppLogger.d(
+        'getUnreadNotifications: no session, returning empty',
+        tag: 'Notifications',
+      );
+      return [];
+    }
+    try {
+      AppLogger.d(
+        'getUnreadNotifications: fetching up to $limit',
+        tag: 'Notifications',
+      );
+      final response = await _supabase
+          .from('notifications')
+          .select()
+          .eq('user_id', userId)
+          .eq('is_read', false)
+          .order('created_at', ascending: false)
+          .limit(limit);
+      final list = (response as List)
+          .map((e) => NotificationItem.fromJson(e))
+          .toList();
+      AppLogger.d(
+        'getUnreadNotifications: got ${list.length} unread',
+        tag: 'Notifications',
+      );
+      return list;
+    } catch (e, stack) {
+      AppLogger.e(
+        'Failed to fetch unread notifications',
+        error: e,
+        stackTrace: stack,
+        tag: 'Notifications',
+      );
+      rethrow;
+    }
+  }
+
   Future<List<NotificationItem>> getNotifications({int limit = 20}) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {

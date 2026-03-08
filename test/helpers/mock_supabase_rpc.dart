@@ -75,10 +75,7 @@ void mockRpcCall({
 
   if (params != null) {
     when<Future<dynamic>>(
-      () => client.rpc(
-        functionName,
-        params: params,
-      ),
+      () => client.rpc(functionName, params: params),
     ).thenAnswer((_) async => returnValue);
   } else {
     when<Future<dynamic>>(
@@ -97,16 +94,10 @@ void mockRpcCallAnyParams({
   required String functionName,
   required dynamic returnValue,
 }) {
-  AppLogger.d(
-    'Mocking RPC call: $functionName with ANY params',
-    tag: _logTag,
-  );
+  AppLogger.d('Mocking RPC call: $functionName with ANY params', tag: _logTag);
 
   when<Future<dynamic>>(
-    () => client.rpc(
-      functionName,
-      params: any(named: 'params'),
-    ),
+    () => client.rpc(functionName, params: any(named: 'params')),
   ).thenAnswer((_) async => returnValue);
 }
 
@@ -129,15 +120,10 @@ void mockRpcError({
 
   if (params != null) {
     when<Future<dynamic>>(
-      () => client.rpc(
-        functionName,
-        params: params,
-      ),
+      () => client.rpc(functionName, params: params),
     ).thenThrow(exception);
   } else {
-    when<Future<dynamic>>(
-      () => client.rpc(functionName),
-    ).thenThrow(exception);
+    when<Future<dynamic>>(() => client.rpc(functionName)).thenThrow(exception);
   }
 }
 
@@ -205,10 +191,7 @@ MockPostgrestFilterBuilder mockSelectWithEqFilters({
   required Map<String, dynamic> filters,
   required List<dynamic> returnValue,
 }) {
-  AppLogger.d(
-    'Mocking SELECT with filters on $table: $filters',
-    tag: _logTag,
-  );
+  AppLogger.d('Mocking SELECT with filters on $table: $filters', tag: _logTag);
 
   final mockQueryBuilder = MockSupabaseQueryBuilder();
   final mockFilterBuilder = MockPostgrestFilterBuilder();
@@ -219,8 +202,9 @@ MockPostgrestFilterBuilder mockSelectWithEqFilters({
 
   // Setup eq filters to return the same builder for chaining
   filters.forEach((column, value) {
-    when(() => mockFilterBuilder.eq(column, value))
-        .thenReturn(mockFilterBuilder);
+    when(
+      () => mockFilterBuilder.eq(column, value),
+    ).thenReturn(mockFilterBuilder);
   });
 
   // Setup other filter chaining
@@ -286,8 +270,9 @@ MockPostgrestFilterBuilder mockUpsert({
 
   // Setup upsert to return the filter builder
   if (onConflict != null) {
-    when(() => mockQueryBuilder.upsert(any(), onConflict: onConflict))
-        .thenReturn(mockFilterBuilder);
+    when(
+      () => mockQueryBuilder.upsert(any(), onConflict: onConflict),
+    ).thenReturn(mockFilterBuilder);
   } else {
     when(() => mockQueryBuilder.upsert(any())).thenReturn(mockFilterBuilder);
   }
@@ -345,10 +330,7 @@ MockPostgrestFilterBuilder mockUpdateWithFilters({
   required Map<String, dynamic> filters,
   required List<dynamic> returnValue,
 }) {
-  AppLogger.d(
-    'Mocking UPDATE with filters on $table: $filters',
-    tag: _logTag,
-  );
+  AppLogger.d('Mocking UPDATE with filters on $table: $filters', tag: _logTag);
 
   final mockQueryBuilder = MockSupabaseQueryBuilder();
   final mockFilterBuilder = MockPostgrestFilterBuilder();
@@ -359,8 +341,9 @@ MockPostgrestFilterBuilder mockUpdateWithFilters({
 
   // Setup eq filters
   filters.forEach((column, value) {
-    when(() => mockFilterBuilder.eq(column, value))
-        .thenReturn(mockFilterBuilder);
+    when(
+      () => mockFilterBuilder.eq(column, value),
+    ).thenReturn(mockFilterBuilder);
   });
 
   // Setup select() and filter chaining
@@ -382,10 +365,7 @@ MockPostgrestFilterBuilder mockDelete({
   required SupabaseClient client,
   required String table,
 }) {
-  AppLogger.d(
-    'Mocking DELETE on $table',
-    tag: _logTag,
-  );
+  AppLogger.d('Mocking DELETE on $table', tag: _logTag);
 
   final mockQueryBuilder = MockSupabaseQueryBuilder();
   final mockFilterBuilder = MockPostgrestFilterBuilder();
@@ -411,10 +391,7 @@ MockPostgrestFilterBuilder mockDeleteWithFilters({
   required String table,
   required Map<String, dynamic> filters,
 }) {
-  AppLogger.d(
-    'Mocking DELETE with filters on $table: $filters',
-    tag: _logTag,
-  );
+  AppLogger.d('Mocking DELETE with filters on $table: $filters', tag: _logTag);
 
   final mockQueryBuilder = MockSupabaseQueryBuilder();
   final mockFilterBuilder = MockPostgrestFilterBuilder();
@@ -425,8 +402,9 @@ MockPostgrestFilterBuilder mockDeleteWithFilters({
 
   // Setup eq filters
   filters.forEach((column, value) {
-    when(() => mockFilterBuilder.eq(column, value))
-        .thenReturn(mockFilterBuilder);
+    when(
+      () => mockFilterBuilder.eq(column, value),
+    ).thenReturn(mockFilterBuilder);
   });
 
   // Setup other filter chaining and select()
@@ -546,9 +524,7 @@ void verifyUpdate({
 /// Verifies that a delete was made on a table
 ///
 /// [queryBuilder] - The mock query builder
-void verifyDelete({
-  required MockSupabaseQueryBuilder queryBuilder,
-}) {
+void verifyDelete({required MockSupabaseQueryBuilder queryBuilder}) {
   AppLogger.d('Verifying delete', tag: _logTag);
   verify(() => queryBuilder.delete()).called(1);
 }

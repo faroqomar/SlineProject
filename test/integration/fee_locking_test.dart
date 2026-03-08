@@ -43,8 +43,11 @@ void main() {
           expectedNetAmount: expectedNet,
         );
 
-        expect(isValid, isTrue,
-            reason: 'Fee calculation failed for: $description');
+        expect(
+          isValid,
+          isTrue,
+          reason: 'Fee calculation failed for: $description',
+        );
       }
 
       AppLogger.i('✅ All edge case calculations passed', tag: _logTag);
@@ -240,7 +243,10 @@ void main() {
       final result = parseRpcResponse(mockResponse);
 
       expect(result.isSuccess, isTrue);
-      expect(result.journalEntryId, equals('550e8400-e29b-41d4-a716-446655440000'));
+      expect(
+        result.journalEntryId,
+        equals('550e8400-e29b-41d4-a716-446655440000'),
+      );
       expect(result.isError, isFalse);
 
       AppLogger.i('✅ Success response parsed correctly', tag: _logTag);
@@ -320,7 +326,10 @@ void main() {
     });
 
     test('should fail validation if fee columns missing', () {
-      AppLogger.i('Testing validation failure for missing columns', tag: _logTag);
+      AppLogger.i(
+        'Testing validation failure for missing columns',
+        tag: _logTag,
+      );
 
       final incompleteBooking = {
         'id': 'test-id',
@@ -337,7 +346,10 @@ void main() {
 
       expect(isValid, isFalse);
 
-      AppLogger.i('✅ Missing columns validation correctly failed', tag: _logTag);
+      AppLogger.i(
+        '✅ Missing columns validation correctly failed',
+        tag: _logTag,
+      );
     });
   });
 
@@ -378,7 +390,10 @@ void main() {
       expect(settings['value']['value'], equals(testFeeRateBps));
       expect(settings['updated_by'], equals('admin-user-id'));
 
-      AppLogger.i('✅ Platform settings fixture created correctly', tag: _logTag);
+      AppLogger.i(
+        '✅ Platform settings fixture created correctly',
+        tag: _logTag,
+      );
     });
   });
 

@@ -37,42 +37,45 @@ void main() {
         'Other user cannot SELECT messages from private conversation';
 
     test(
-        'otherClientUser cannot read messages from clientUser-freelancer conversation',
-        () async {
-      AppLogger.i(
-        'Test: $testDescription',
-        tag: 'rls_test',
-        json: {
-          'user': TestUsers.otherClientUser.id,
-          'conversation': TestConversations.privateConversation['id'],
-        },
-      );
+      'otherClientUser cannot read messages from clientUser-freelancer conversation',
+      () async {
+        AppLogger.i(
+          'Test: $testDescription',
+          tag: 'rls_test',
+          json: {
+            'user': TestUsers.otherClientUser.id,
+            'conversation': TestConversations.privateConversation['id'],
+          },
+        );
 
-      // Given: otherClientUser is NOT a participant in the private conversation
-      // When: they try to SELECT messages from that conversation
-      // Then: RLS should block the access
+        // Given: otherClientUser is NOT a participant in the private conversation
+        // When: they try to SELECT messages from that conversation
+        // Then: RLS should block the access
 
-      // Note: This is a mock assertion for unit testing.
-      // In integration tests with actual Supabase, this would verify:
-      // - The "Allow users to read messages" policy is DROPPED
-      // - Only authenticated SELECT policies with participant checks remain
+        // Note: This is a mock assertion for unit testing.
+        // In integration tests with actual Supabase, this would verify:
+        // - The "Allow users to read messages" policy is DROPPED
+        // - Only authenticated SELECT policies with participant checks remain
 
-      final userContext = rlsHelper.asUser(TestUsers.otherClientUser.id);
+        final userContext = rlsHelper.asUser(TestUsers.otherClientUser.id);
 
-      // This assertion verifies the RLS policy blocks cross-user reads
-      await userContext.cannotSelect(
-        'messages',
-        {'conversation_id': TestConversations.privateConversation['id']},
-      );
+        // This assertion verifies the RLS policy blocks cross-user reads
+        await userContext.cannotSelect('messages', {
+          'conversation_id': TestConversations.privateConversation['id'],
+        });
 
-      // Also verify the user CAN read their own conversation messages
-      await rlsHelper.asUser(TestUsers.clientUser.id).canSelect(
-        'messages',
-        {'conversation_id': TestConversations.clientFreelancerConversation['id']},
-      );
+        // Also verify the user CAN read their own conversation messages
+        await rlsHelper.asUser(TestUsers.clientUser.id).canSelect('messages', {
+          'conversation_id':
+              TestConversations.clientFreelancerConversation['id'],
+        });
 
-      AppLogger.i('✓ Test passed: Cross-user message read is blocked', tag: 'rls_test');
-    });
+        AppLogger.i(
+          '✓ Test passed: Cross-user message read is blocked',
+          tag: 'rls_test',
+        );
+      },
+    );
 
     test('wide-open messages policy is removed', () {
       AppLogger.i(
@@ -90,11 +93,21 @@ void main() {
 
       // In integration tests, query pg_policies to verify these don't exist
       for (final policy in dangerousPolicies) {
-        AppLogger.d('Verifying policy does not exist: $policy', tag: 'rls_test');
+        AppLogger.d(
+          'Verifying policy does not exist: $policy',
+          tag: 'rls_test',
+        );
       }
 
-      expect(dangerousPolicies, isNotEmpty, reason: 'Policy list should not be empty');
-      AppLogger.i('✓ Test passed: Dangerous policies identified for verification', tag: 'rls_test');
+      expect(
+        dangerousPolicies,
+        isNotEmpty,
+        reason: 'Policy list should not be empty',
+      );
+      AppLogger.i(
+        '✓ Test passed: Dangerous policies identified for verification',
+        tag: 'rls_test',
+      );
     });
   });
 
@@ -103,46 +116,51 @@ void main() {
         'Other user cannot INSERT messages into private conversation';
 
     test(
-        'otherClientUser cannot insert messages into clientUser-freelancer conversation',
-        () async {
-      AppLogger.i(
-        'Test: $testDescription',
-        tag: 'rls_test',
-        json: {
-          'user': TestUsers.otherClientUser.id,
-          'conversation': TestConversations.privateConversation['id'],
-          'message': 'Unauthorized insert attempt',
-        },
-      );
+      'otherClientUser cannot insert messages into clientUser-freelancer conversation',
+      () async {
+        AppLogger.i(
+          'Test: $testDescription',
+          tag: 'rls_test',
+          json: {
+            'user': TestUsers.otherClientUser.id,
+            'conversation': TestConversations.privateConversation['id'],
+            'message': 'Unauthorized insert attempt',
+          },
+        );
 
-      // Given: otherClientUser is NOT a participant in the private conversation
-      // When: they try to INSERT a message into that conversation
-      // Then: RLS should block the insert
+        // Given: otherClientUser is NOT a participant in the private conversation
+        // When: they try to INSERT a message into that conversation
+        // Then: RLS should block the insert
 
-      final maliciousMessage = {
-        'conversation_id': TestConversations.privateConversation['id'],
-        'sender_id': TestUsers.otherClientUser.id,
-        'receiver_id': TestUsers.freelancerUser.id,
-        'content': 'This is an unauthorized message insert',
-      };
+        final maliciousMessage = {
+          'conversation_id': TestConversations.privateConversation['id'],
+          'sender_id': TestUsers.otherClientUser.id,
+          'receiver_id': TestUsers.freelancerUser.id,
+          'content': 'This is an unauthorized message insert',
+        };
 
-      final userContext = rlsHelper.asUser(TestUsers.otherClientUser.id);
-      await userContext.cannotInsert('messages', maliciousMessage);
+        final userContext = rlsHelper.asUser(TestUsers.otherClientUser.id);
+        await userContext.cannotInsert('messages', maliciousMessage);
 
-      // Verify participants CAN insert
-      final legitimateMessage = {
-        'conversation_id': TestConversations.clientFreelancerConversation['id'],
-        'sender_id': TestUsers.clientUser.id,
-        'receiver_id': TestUsers.freelancerUser.id,
-        'content': 'This is a legitimate message',
-      };
+        // Verify participants CAN insert
+        final legitimateMessage = {
+          'conversation_id':
+              TestConversations.clientFreelancerConversation['id'],
+          'sender_id': TestUsers.clientUser.id,
+          'receiver_id': TestUsers.freelancerUser.id,
+          'content': 'This is a legitimate message',
+        };
 
-      await rlsHelper
-          .asUser(TestUsers.clientUser.id)
-          .canInsert('messages', legitimateMessage);
+        await rlsHelper
+            .asUser(TestUsers.clientUser.id)
+            .canInsert('messages', legitimateMessage);
 
-      AppLogger.i('✓ Test passed: Cross-user message insert is blocked', tag: 'rls_test');
-    });
+        AppLogger.i(
+          '✓ Test passed: Cross-user message insert is blocked',
+          tag: 'rls_test',
+        );
+      },
+    );
 
     test('wide-open messages insert policy is removed', () {
       AppLogger.i(
@@ -157,11 +175,17 @@ void main() {
       ];
 
       for (final policy in dangerousPolicies) {
-        AppLogger.d('Verifying policy does not exist: $policy', tag: 'rls_test');
+        AppLogger.d(
+          'Verifying policy does not exist: $policy',
+          tag: 'rls_test',
+        );
       }
 
       expect(dangerousPolicies, isNotEmpty);
-      AppLogger.i('✓ Test passed: Dangerous insert policies identified', tag: 'rls_test');
+      AppLogger.i(
+        '✓ Test passed: Dangerous insert policies identified',
+        tag: 'rls_test',
+      );
     });
   });
 
@@ -191,7 +215,10 @@ void main() {
       final userContext = rlsHelper.asUser(TestUsers.clientUser.id);
       await userContext.cannotInsert('admin_logs', fakeLogEntry);
 
-      AppLogger.i('✓ Test passed: Regular user cannot inject admin logs', tag: 'rls_test');
+      AppLogger.i(
+        '✓ Test passed: Regular user cannot inject admin logs',
+        tag: 'rls_test',
+      );
     });
 
     test('service_role can insert into admin_logs', () async {
@@ -216,7 +243,10 @@ void main() {
       final serviceContext = rlsHelper.asUser(TestUsers.serviceRole.id);
       await serviceContext.canInsert('admin_logs', legitimateLogEntry);
 
-      AppLogger.i('✓ Test passed: service_role can insert admin logs', tag: 'rls_test');
+      AppLogger.i(
+        '✓ Test passed: service_role can insert admin logs',
+        tag: 'rls_test',
+      );
     });
 
     test('public role policy for admin_logs is removed', () {
@@ -234,11 +264,17 @@ void main() {
       ];
 
       for (final policy in dangerousPolicies) {
-        AppLogger.d('Verifying policy does not exist on public role: $policy', tag: 'rls_test');
+        AppLogger.d(
+          'Verifying policy does not exist on public role: $policy',
+          tag: 'rls_test',
+        );
       }
 
       expect(dangerousPolicies, isNotEmpty);
-      AppLogger.i('✓ Test passed: Public admin_logs policies identified', tag: 'rls_test');
+      AppLogger.i(
+        '✓ Test passed: Public admin_logs policies identified',
+        tag: 'rls_test',
+      );
     });
   });
 
@@ -270,13 +306,14 @@ void main() {
       };
 
       final userContext = rlsHelper.asUser(TestUsers.clientUser.id);
-      await userContext.cannotUpdate(
-        'bookings',
-        {'id': TestBookings.clientBooking['id']},
-        unauthorizedUpdate,
-      );
+      await userContext.cannotUpdate('bookings', {
+        'id': TestBookings.clientBooking['id'],
+      }, unauthorizedUpdate);
 
-      AppLogger.i('✓ Test passed: Non-status columns cannot be updated', tag: 'rls_test');
+      AppLogger.i(
+        '✓ Test passed: Non-status columns cannot be updated',
+        tag: 'rls_test',
+      );
     });
 
     test('client CAN update status on their own booking', () async {
@@ -294,18 +331,17 @@ void main() {
       // When: they try to UPDATE the status (allowed field)
       // Then: RLS should allow the update
 
-      final authorizedUpdate = {
-        'status': 'canceled',
-      };
+      final authorizedUpdate = {'status': 'canceled'};
 
       final userContext = rlsHelper.asUser(TestUsers.clientUser.id);
-      await userContext.canUpdate(
-        'bookings',
-        {'id': TestBookings.clientBooking['id']},
-        authorizedUpdate,
-      );
+      await userContext.canUpdate('bookings', {
+        'id': TestBookings.clientBooking['id'],
+      }, authorizedUpdate);
 
-      AppLogger.i('✓ Test passed: Status can be updated by owner', tag: 'rls_test');
+      AppLogger.i(
+        '✓ Test passed: Status can be updated by owner',
+        tag: 'rls_test',
+      );
     });
 
     test('bookings_update_status_only policy is removed', () {
@@ -324,13 +360,19 @@ void main() {
       );
 
       expect(dangerousPolicy, isNotEmpty);
-      AppLogger.i('✓ Test passed: Dangerous booking update policy identified', tag: 'rls_test');
+      AppLogger.i(
+        '✓ Test passed: Dangerous booking update policy identified',
+        tag: 'rls_test',
+      );
     });
   });
 
   group('Summary: All Critical Blockers', () {
     test('all 4 critical blockers have test coverage', () {
-      AppLogger.i('Verifying all 4 critical blockers have tests', tag: 'rls_test');
+      AppLogger.i(
+        'Verifying all 4 critical blockers have tests',
+        tag: 'rls_test',
+      );
 
       final blockerTests = [
         'Messages Cross-User Read',
@@ -340,7 +382,10 @@ void main() {
       ];
 
       expect(blockerTests.length, equals(4));
-      AppLogger.i('✓ All 4 critical blockers have test coverage', tag: 'rls_test');
+      AppLogger.i(
+        '✓ All 4 critical blockers have test coverage',
+        tag: 'rls_test',
+      );
     });
 
     test('test suite is ready for integration testing', () {

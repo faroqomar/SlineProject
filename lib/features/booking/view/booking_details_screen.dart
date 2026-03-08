@@ -536,6 +536,10 @@ class BookingDetailsScreen extends StatelessWidget {
         color = AppColors.mediumGrey;
         text = 'Expired';
         break;
+      case BookingStatus.disputed:
+        color = AppColors.gold;
+        text = 'Disputed (Under Review)';
+        break;
     }
 
     return Container(
@@ -632,7 +636,9 @@ class _ReportIssueGuardBooking extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<bool>(
-      future: context.read<SafetyViewModel>().hasOpenDisputeForBooking(bookingId),
+      future: context.read<SafetyViewModel>().hasOpenDisputeForBooking(
+        bookingId,
+      ),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SizedBox.shrink();
@@ -664,13 +670,18 @@ class _BookingDisputeBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<bool>(
-      future: context.read<SafetyViewModel>().hasOpenDisputeForBooking(bookingId),
+      future: context.read<SafetyViewModel>().hasOpenDisputeForBooking(
+        bookingId,
+      ),
       builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done || snapshot.data != true) {
+        if (snapshot.connectionState != ConnectionState.done ||
+            snapshot.data != true) {
           return const SizedBox.shrink();
         }
         return FutureBuilder<String?>(
-          future: context.read<SafetyViewModel>().getDisputeStatusForBooking(bookingId),
+          future: context.read<SafetyViewModel>().getDisputeStatusForBooking(
+            bookingId,
+          ),
           builder: (context, statusSnapshot) {
             final status = statusSnapshot.data;
             final text = status == 'active'
@@ -683,7 +694,11 @@ class _BookingDisputeBanner extends StatelessWidget {
                   padding: const EdgeInsets.all(AppDimens.p12),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, size: 20, color: context.colorScheme.primary),
+                      Icon(
+                        Icons.info_outline,
+                        size: 20,
+                        color: context.colorScheme.primary,
+                      ),
                       const SizedBox(width: AppDimens.p8),
                       Expanded(
                         child: Text(
@@ -718,22 +733,18 @@ class _ApproveWithDisputeGuard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<bool>(
-      future: context.read<SafetyViewModel>().hasOpenDisputeForBooking(booking.id),
+      future: context.read<SafetyViewModel>().hasOpenDisputeForBooking(
+        booking.id,
+      ),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return AppButton(text: 'Checking…', onPressed: null);
         }
         final hasOpenDispute = snapshot.data ?? true;
         if (hasOpenDispute) {
-          return AppButton(
-            text: 'Approve & Release Funds',
-            onPressed: null,
-          );
+          return AppButton(text: 'Approve & Release Funds', onPressed: null);
         }
-        return AppButton(
-          text: 'Approve & Release Funds',
-          onPressed: onRelease,
-        );
+        return AppButton(text: 'Approve & Release Funds', onPressed: onRelease);
       },
     );
   }

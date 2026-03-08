@@ -18,11 +18,7 @@ import 'widgets/request_tile.dart';
 import 'submit_request_sheet.dart';
 
 /// Filter options for expired bids
-enum ExpiredBidFilter {
-  hideExpired,
-  showAll,
-  showOnlyExpired,
-}
+enum ExpiredBidFilter { hideExpired, showAll, showOnlyExpired }
 
 extension ExpiredBidFilterExtension on ExpiredBidFilter {
   String get label {
@@ -154,7 +150,9 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
 
     // Calculate payment deadline (24 hours from now)
     final paymentDeadline = DateTime.now().add(const Duration(hours: 24));
-    final formattedDeadline = DateFormat('MMM d, h:mm a').format(paymentDeadline);
+    final formattedDeadline = DateFormat(
+      'MMM d, h:mm a',
+    ).format(paymentDeadline);
 
     // Parse budget for comparison
     final budgetValue = double.tryParse(widget.budget ?? '0') ?? 0;
@@ -172,7 +170,8 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
     if (isUnderBudget) {
       budgetColor = Colors.green.shade700;
       budgetIcon = Icons.trending_down;
-      budgetMessage = 'Under budget by ${PriceFormatter.formatPrice(budgetDiff.abs())}';
+      budgetMessage =
+          'Under budget by ${PriceFormatter.formatPrice(budgetDiff.abs())}';
     } else if (isAtBudget) {
       budgetColor = Colors.orange.shade700;
       budgetIcon = Icons.check_circle;
@@ -180,7 +179,8 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
     } else {
       budgetColor = Colors.red.shade700;
       budgetIcon = Icons.trending_up;
-      budgetMessage = 'Over budget by ${PriceFormatter.formatPrice(budgetDiff)}';
+      budgetMessage =
+          'Over budget by ${PriceFormatter.formatPrice(budgetDiff)}';
     }
 
     final confirmed = await showDialog<bool>(
@@ -299,7 +299,11 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.access_time, color: Colors.blue.shade700, size: 20),
+                        Icon(
+                          Icons.access_time,
+                          color: Colors.blue.shade700,
+                          size: 20,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           'Payment Required Within 24 Hours',
@@ -420,9 +424,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
             },
             icon: const Icon(Icons.close),
             label: const Text('Cancel'),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.grey.shade700,
-            ),
+            style: TextButton.styleFrom(foregroundColor: Colors.grey.shade700),
           ),
           ElevatedButton.icon(
             onPressed: () {
@@ -506,15 +508,14 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
                   title,
                   style: TextStyle(
                     fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                    color: isActive ? Colors.green.shade800 : Colors.grey.shade800,
+                    color: isActive
+                        ? Colors.green.shade800
+                        : Colors.grey.shade800,
                   ),
                 ),
                 Text(
                   description,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
               ],
             ),
@@ -533,7 +534,10 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
     setState(() => _isAwarding = true);
 
     try {
-      final result = await vm.award(request.id, expectedPriceCents: expectedPriceCents);
+      final result = await vm.award(
+        request.id,
+        expectedPriceCents: expectedPriceCents,
+      );
 
       if (!mounted) return;
       setState(() => _isAwarding = false);
@@ -550,7 +554,11 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
           amount: request.price.toDouble(),
           paymentDeadline: paymentDeadline,
         );
-        await openProposalPayment(context, summary: summary, launcherSource: 'requests_list');
+        await openProposalPayment(
+          context,
+          summary: summary,
+          launcherSource: 'requests_list',
+        );
         if (!mounted) return;
       } else {
         // Show error
@@ -617,7 +625,9 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
                       const Text('Old Price:'),
                       Text(
                         '\$$expectedDollars',
-                        style: const TextStyle(decoration: TextDecoration.lineThrough),
+                        style: const TextStyle(
+                          decoration: TextDecoration.lineThrough,
+                        ),
                       ),
                     ],
                   ),
@@ -683,7 +693,9 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
     }
     return ChangeNotifierProvider<TaskRequestsViewModel>(
       create: (ctx) {
-        final proposalRepo = widget.isOwner ? ctx.read<ProposalRepository>() : null;
+        final proposalRepo = widget.isOwner
+            ? ctx.read<ProposalRepository>()
+            : null;
         final c = TaskRequestsViewModel(
           taskId: widget.taskId,
           isOwner: widget.isOwner,
@@ -708,7 +720,10 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
         return Consumer<TaskRequestsViewModel>(
           builder: (context, c, __) {
             final filteredItems = _getFilteredItems(c.items);
-            final countString = _getCountString(c.items.length, filteredItems.length);
+            final countString = _getCountString(
+              c.items.length,
+              filteredItems.length,
+            );
 
             return Scaffold(
               key: const Key('requests_list_screen'),
@@ -730,10 +745,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
                   // Filter popup menu
                   if (!c.isLoadingInitial && c.items.isNotEmpty)
                     PopupMenuButton<ExpiredBidFilter>(
-                      icon: Icon(
-                        _filter.icon,
-                        color: context.colorScheme.text,
-                      ),
+                      icon: Icon(_filter.icon, color: context.colorScheme.text),
                       tooltip: 'Filter: ${_filter.label}',
                       initialValue: _filter,
                       onSelected: _onFilterChanged,
@@ -877,7 +889,10 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
           errorMessage: c.errorMessage,
           onRetryError: c.isRetryableError(c.errorMessage)
               ? () {
-                  AppLogger.d('User triggered error retry from tile', tag: 'TaskRequests');
+                  AppLogger.d(
+                    'User triggered error retry from tile',
+                    tag: 'TaskRequests',
+                  );
                   c.clearError();
                   c.loadInitial();
                 }
@@ -918,7 +933,10 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
             const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: () {
-                AppLogger.d('User triggered retry after error', tag: 'TaskRequests');
+                AppLogger.d(
+                  'User triggered retry after error',
+                  tag: 'TaskRequests',
+                );
                 c.clearError();
                 c.loadInitial();
               },
@@ -945,7 +963,10 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
   }
 
   /// Polished empty state when there are no offers at all
-  Widget _buildEmptyState(AppColorScheme colorScheme, {required bool hasOffers}) {
+  Widget _buildEmptyState(
+    AppColorScheme colorScheme, {
+    required bool hasOffers,
+  }) {
     final isOwner = widget.isOwner;
 
     // Determine message and CTA based on user role
@@ -953,7 +974,9 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
     final String subtitle = isOwner
         ? 'Share your task to attract more freelancers'
         : 'Be the first to submit a bid and start the conversation';
-    final IconData icon = isOwner ? Icons.inbox_outlined : Icons.local_offer_outlined;
+    final IconData icon = isOwner
+        ? Icons.inbox_outlined
+        : Icons.local_offer_outlined;
 
     AppLogger.d(
       'Empty state rendered: isOwner=$isOwner, hasOffers=$hasOffers',
@@ -1002,7 +1025,10 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
                     // Owner CTA: Share task
                     FilledButton.icon(
                       onPressed: () {
-                        AppLogger.d('Owner tapped share task CTA', tag: 'TaskRequests');
+                        AppLogger.d(
+                          'Owner tapped share task CTA',
+                          tag: 'TaskRequests',
+                        );
                         _showShareOptions();
                       },
                       icon: const Icon(Icons.share),
@@ -1012,7 +1038,10 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
                     // Freelancer CTA: Submit bid
                     FilledButton.icon(
                       onPressed: () {
-                        AppLogger.d('Freelancer tapped submit bid CTA', tag: 'TaskRequests');
+                        AppLogger.d(
+                          'Freelancer tapped submit bid CTA',
+                          tag: 'TaskRequests',
+                        );
                         final prov = _providerCtx ?? context;
                         final vm = context.read<TaskRequestsViewModel>();
                         showSubmitRequestSheet(

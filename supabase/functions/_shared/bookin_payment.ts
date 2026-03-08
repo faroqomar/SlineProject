@@ -266,6 +266,7 @@ export async function submitGatewayEscrowHold(
     currency,
     timestamp,
     correlationId,
+    paymentIntentId,
   }: {
     bookingId: string;
     paymentId: string;
@@ -274,10 +275,11 @@ export async function submitGatewayEscrowHold(
     currency: string;
     timestamp: string;
     correlationId: string;
+    paymentIntentId?: string;
   },
 ) {
   const idempotencyKey = `qicard:${paymentId}:gateway_escrow:SUCCESS`;
-  const meta = {
+  const meta: Record<string, unknown> = {
     psp_provider: QICARD_PROVIDER_NAME,
     psp_event_id: requestId,
     psp_payment_id: paymentId,
@@ -287,6 +289,7 @@ export async function submitGatewayEscrowHold(
     booking_id: bookingId,
     correlation_id: correlationId,
   };
+  if (paymentIntentId) meta.payment_intent_id = paymentIntentId;
 
   const { data, error } = await adminClient.rpc("process_payment_event_ledger", {
     p_event_type: "gateway_escrow",
@@ -333,6 +336,7 @@ export async function submitDirectOfferGatewayEscrow(
     currency,
     timestamp,
     correlationId,
+    paymentIntentId,
   }: {
     offerId: string;
     paymentId: string;
@@ -341,10 +345,11 @@ export async function submitDirectOfferGatewayEscrow(
     currency: string;
     timestamp: string;
     correlationId: string;
+    paymentIntentId?: string;
   },
 ) {
   const idempotencyKey = `qicard:${paymentId}:gateway_escrow_direct_offer:SUCCESS`;
-  const meta = {
+  const meta: Record<string, unknown> = {
     psp_provider: QICARD_PROVIDER_NAME,
     psp_event_id: requestId,
     psp_payment_id: paymentId,
@@ -353,13 +358,14 @@ export async function submitDirectOfferGatewayEscrow(
     psp_timestamp: timestamp,
     correlation_id: correlationId,
   };
+  if (paymentIntentId) meta.payment_intent_id = paymentIntentId;
 
   const { data, error } = await adminClient.rpc("process_gateway_escrow_direct_offer", {
     p_offer_id: offerId,
     p_amount_gross: amount,
     p_currency: currency,
     p_idempotency_key: idempotencyKey,
-    p_meta: meta,
+    p_meta: meta as Record<string, unknown>,
   });
 
   if (error) {

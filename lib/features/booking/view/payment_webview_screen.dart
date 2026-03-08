@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -17,6 +19,8 @@ class PaymentWebViewScreen extends StatefulWidget {
     this.expectedCorrelationId,
     this.expectedOfferId,
     this.expectedRequestId,
+    this.paymentIntentId,
+    this.paymentIntentStatusStream,
   });
 
   final String initialUrl;
@@ -30,6 +34,12 @@ class PaymentWebViewScreen extends StatefulWidget {
   /// For tender (task_request) payments: callback URL may include request_id.
   final String? expectedRequestId;
 
+  /// When set with [paymentIntentStatusStream], webview pops on realtime succeeded/failed.
+  final String? paymentIntentId;
+
+  /// Realtime stream for payment_intents.status; when status is succeeded/failed, pop with result.
+  final Stream<String>? paymentIntentStatusStream;
+
   @override
   State<PaymentWebViewScreen> createState() => _PaymentWebViewScreenState();
 }
@@ -40,6 +50,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
   String? _loadError;
   bool _hasPopped = false;
   bool _isDisposed = false;
+  StreamSubscription<String>? _intentStatusSubscription;
 
   /// On web, WebView platform does not implement NavigationDelegate; use external browser + manual completion.
   bool _useWebFallback = false;
@@ -97,6 +108,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
   @override
   void dispose() {
     _isDisposed = true;
+    _intentStatusSubscription?.cancel();
     super.dispose();
   }
 
@@ -111,9 +123,37 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
         'expected_booking_id': widget.expectedBookingId,
         'expected_correlation_id': widget.expectedCorrelationId,
         'expected_offer_id': widget.expectedOfferId,
+        'payment_intent_id': widget.paymentIntentId,
         'callback_hosts': widget.callbackHosts.toList(),
       },
     );
+
+    if (widget.paymentIntentStatusStream != null) {
+      _intentStatusSubscription = widget.paymentIntentStatusStream!.listen((
+        status,
+      ) {
+        if (_hasPopped || _isDisposed) return;
+        AppLogger.i(
+          'Payment intent realtime status in webview: $status',
+          tag: 'Payment',
+          json: <String, dynamic>{
+            'intent_id': widget.paymentIntentId,
+            'status': status,
+          },
+        );
+        if (status == 'succeeded' || status == 'failed') {
+          _intentStatusSubscription?.cancel();
+          _popWithResult(
+            PaymentReturnArgs(
+              paymentId: null,
+              correlationId: widget.expectedCorrelationId,
+              status: status == 'succeeded' ? 'SUCCESS' : 'FAILED',
+              rawUri: Uri.parse('sline://payment_sync?status=$status'),
+            ),
+          );
+        }
+      });
+    }
 
     if (kIsWeb) {
       _useWebFallback = true;

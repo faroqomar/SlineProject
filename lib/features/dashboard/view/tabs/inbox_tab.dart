@@ -38,7 +38,10 @@ class _InboxTabState extends State<InboxTab> {
         await vm.refresh();
         if (!mounted) return;
         vm.setTab(DashboardTab.activeWork.index, workSubTab: 0);
-        AppLogger.i('Inbox: award success, switching to Work tab', tag: 'dashboard.inbox');
+        AppLogger.i(
+          'Inbox: award success, switching to Work tab',
+          tag: 'dashboard.inbox',
+        );
       } else {
         // Show error
         if (!mounted) return;
@@ -72,7 +75,11 @@ class _InboxTabState extends State<InboxTab> {
       amount: offer.price.toDouble(),
       paymentDeadline: offer.paymentDeadline as DateTime?,
     );
-    await openProposalPayment(context, summary: summary, launcherSource: 'inbox_tab');
+    await openProposalPayment(
+      context,
+      summary: summary,
+      launcherSource: 'inbox_tab',
+    );
     if (!mounted) return;
     await vm.refresh();
   }

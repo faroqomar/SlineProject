@@ -141,10 +141,13 @@ class _ChatScreenState extends State<ChatScreen> {
                   itemBuilder: (context, index) {
                     final Message msg = controller.currentMessages[index];
                     final isMine = (me != null) && msg.senderId == me;
-                    final status = controller.isPresenceReceiptsEnabled && isMine
+                    final status =
+                        controller.isPresenceReceiptsEnabled && isMine
                         ? (msg.seenAt != null
-                            ? 'read'
-                            : (msg.deliveredAt != null ? 'delivered' : 'sent'))
+                              ? 'read'
+                              : (msg.deliveredAt != null
+                                    ? 'delivered'
+                                    : 'sent'))
                         : (isMine ? 'sent' : null);
 
                     // Check for Offer (Structured or Legacy JSON)
@@ -339,7 +342,10 @@ class _ChatScreenState extends State<ChatScreen> {
           builder: (context, vm, _) {
             if (!vm.otherUserTyping) return const SizedBox.shrink();
             return Padding(
-              padding: const EdgeInsets.only(left: AppDimens.p16, bottom: AppDimens.p4),
+              padding: const EdgeInsets.only(
+                left: AppDimens.p16,
+                bottom: AppDimens.p4,
+              ),
               child: Text(
                 'Typing...',
                 style: AppTypography.caption.copyWith(

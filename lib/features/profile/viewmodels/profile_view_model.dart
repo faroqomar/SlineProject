@@ -558,7 +558,9 @@ class ProfileViewModel extends ChangeNotifier {
 
       // 3. Session refresh - HARD BLOCKER
       AppLogger.d('role_switch_refreshing_session', tag: 'ProfileVM');
-      final refreshSuccess = await _repo.roleSwitch.refreshSession(maxRetries: 3);
+      final refreshSuccess = await _repo.roleSwitch.refreshSession(
+        maxRetries: 3,
+      );
       if (!refreshSuccess) {
         _profileError = 'Session refresh failed. Please log in again.';
         AppLogger.e('role_switch_session_refresh_failed', tag: 'ProfileVM');
@@ -570,10 +572,15 @@ class ProfileViewModel extends ChangeNotifier {
       // 4. Verify JWT role matches
       final jwtMatches = _repo.roleSwitch.verifyJwtRole(newRole);
       if (!jwtMatches) {
-        AppLogger.w('role_switch_jwt_mismatch, retrying once', tag: 'ProfileVM');
+        AppLogger.w(
+          'role_switch_jwt_mismatch, retrying once',
+          tag: 'ProfileVM',
+        );
         // Retry session refresh once
         await Future.delayed(const Duration(milliseconds: 500));
-        final retrySuccess = await _repo.roleSwitch.refreshSession(maxRetries: 1);
+        final retrySuccess = await _repo.roleSwitch.refreshSession(
+          maxRetries: 1,
+        );
         if (!retrySuccess || !_repo.roleSwitch.verifyJwtRole(newRole)) {
           _profileError = 'Role sync failed. Please log in again.';
           AppLogger.e('role_switch_jwt_verification_failed', tag: 'ProfileVM');
@@ -719,7 +726,8 @@ class ProfileViewModel extends ChangeNotifier {
       avatarSignedUrl = null;
       notifyListeners();
       // 404 = file missing in storage (deleted or path stale); expected, no user-facing log
-      if (e.statusCode == '404' || e.message.toLowerCase().contains('not found')) {
+      if (e.statusCode == '404' ||
+          e.message.toLowerCase().contains('not found')) {
         AppLogger.d(
           'Avatar object not found in storage, showing placeholder',
           tag: 'Profile',

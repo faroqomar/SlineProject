@@ -99,7 +99,10 @@ class _SignedImageState extends State<SignedImage> {
         try {
           resolved = await Supabase.instance.client.storage
               .from(widget.bucket!)
-              .createSignedUrl(v, SharedStorageConfig.ttlForBucket(widget.bucket!));
+              .createSignedUrl(
+                v,
+                SharedStorageConfig.ttlForBucket(widget.bucket!),
+              );
         } catch (e) {
           // If signed URL fails (e.g., public bucket), fall back to public URL
           resolved = Supabase.instance.client.storage

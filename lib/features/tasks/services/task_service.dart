@@ -540,7 +540,9 @@ class TaskService {
           .select(
             'id, task_id, bidder_id, freelancer_id, price, days, duration_days, note, message, status, payment_status, payment_deadline, awarded_at, awarded_by, created_at, deleted_at, tasks(title)',
           )
-          .or('status.eq.pending,and(status.eq.accepted,payment_status.eq.unpaid)')
+          .or(
+            'status.eq.pending,and(status.eq.accepted,payment_status.eq.unpaid)',
+          )
           .is_('deleted_at', null)
           .in_('task_id', taskIds)
           .order('created_at', ascending: false);
@@ -549,8 +551,10 @@ class TaskService {
       if (rows.isEmpty) return [];
 
       final bidderIds = rows
-          .map((r) =>
-              (r['freelancer_id'] as String?) ?? (r['bidder_id'] as String?))
+          .map(
+            (r) =>
+                (r['freelancer_id'] as String?) ?? (r['bidder_id'] as String?),
+          )
           .whereType<String>()
           .where((id) => id.isNotEmpty)
           .toSet();
@@ -562,7 +566,8 @@ class TaskService {
 
       return rows.map((json) {
         final map = Map<String, dynamic>.from(json as Map);
-        final bidderId = map['freelancer_id'] as String? ?? map['bidder_id'] as String?;
+        final bidderId =
+            map['freelancer_id'] as String? ?? map['bidder_id'] as String?;
         if (bidderId != null && profilesMap.containsKey(bidderId)) {
           final p = profilesMap[bidderId]!;
           map['profiles'] = {
@@ -849,20 +854,18 @@ class TaskService {
   /// Cancel an awarded-but-unpaid offer. Task returns to open and reappears in Inbox.
   Future<Map<String, dynamic>> cancelAwardedOffer(String requestId) async {
     try {
-      final result = await _client.rpc(
-        'cancel_awarded_offer',
-        params: {'p_request_id': requestId},
-      ) as Map<String, dynamic>;
+      final result =
+          await _client.rpc(
+                'cancel_awarded_offer',
+                params: {'p_request_id': requestId},
+              )
+              as Map<String, dynamic>;
       if (result['success'] == true) {
         AppLogger.i('Cancelled awarded offer: $requestId');
       }
       return result;
     } on PostgrestException catch (e, st) {
-      AppLogger.e(
-        'Failed to cancel awarded offer',
-        error: e,
-        stackTrace: st,
-      );
+      AppLogger.e('Failed to cancel awarded offer', error: e, stackTrace: st);
       throw Exception(ErrorMapper.map(e));
     }
   }

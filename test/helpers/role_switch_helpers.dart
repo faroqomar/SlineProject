@@ -92,7 +92,8 @@ class RoleSwitchCoordinatorMock {
   bool get wasTeardownCalled => _wasTeardownCalled;
 
   /// List of registered ViewModels
-  List<RoleSwitchAware> get registeredViewModels => List.unmodifiable(_registeredViewModels);
+  List<RoleSwitchAware> get registeredViewModels =>
+      List.unmodifiable(_registeredViewModels);
 
   /// List of errors that occurred during teardown
   List<String> get teardownErrors => List.unmodifiable(_teardownErrors);
@@ -136,10 +137,7 @@ class RoleSwitchCoordinatorMock {
     for (final vm in _registeredViewModels) {
       try {
         await vm.teardownForRoleSwitch();
-        AppLogger.d(
-          'Teardown succeeded for ${vm.runtimeType}',
-          tag: _logTag,
-        );
+        AppLogger.d('Teardown succeeded for ${vm.runtimeType}', tag: _logTag);
       } catch (e) {
         final errorMsg = '${vm.runtimeType}: $e';
         errors.add(errorMsg);
@@ -156,10 +154,7 @@ class RoleSwitchCoordinatorMock {
       throw RoleSwitchTeardownException(errors);
     }
 
-    AppLogger.i(
-      'TeardownAll completed successfully',
-      tag: _logTag,
-    );
+    AppLogger.i('TeardownAll completed successfully', tag: _logTag);
   }
 
   /// Reset the coordinator state for reuse across tests
@@ -179,10 +174,7 @@ class RoleSwitchCoordinatorMock {
 /// [count] - Number of ViewModels to create
 List<MockRoleSwitchAware> createMockViewModels(int count) {
   AppLogger.d('Creating $count mock ViewModels', tag: _logTag);
-  return List.generate(
-    count,
-    (index) => MockRoleSwitchAware(),
-  );
+  return List.generate(count, (index) => MockRoleSwitchAware());
 }
 
 /// Helper to create a realistic test scenario with multiple ViewModels
@@ -261,8 +253,8 @@ class RoleSwitchSimulator {
   RoleSwitchSimulator({
     RoleSwitchCoordinatorMock? coordinator,
     List<MockRoleSwitchAware>? viewModels,
-  })  : _coordinator = coordinator ?? RoleSwitchCoordinatorMock(),
-        _viewModels = viewModels ?? [] {
+  }) : _coordinator = coordinator ?? RoleSwitchCoordinatorMock(),
+       _viewModels = viewModels ?? [] {
     AppLogger.d(
       'Creating RoleSwitchSimulator with ${_viewModels.length} ViewModels',
       tag: _logTag,
@@ -293,10 +285,7 @@ class RoleSwitchSimulator {
     required Future<void> Function() sessionRefresh,
     required Future<bool> Function() verifyJwtRole,
   }) async {
-    AppLogger.i(
-      'Simulating role switch: $fromRole -> $toRole',
-      tag: _logTag,
-    );
+    AppLogger.i('Simulating role switch: $fromRole -> $toRole', tag: _logTag);
 
     try {
       // Step 1: Call RPC
@@ -323,14 +312,13 @@ class RoleSwitchSimulator {
       AppLogger.d('Step 4: Executing teardown', tag: _logTag);
       await _coordinator.teardownAll();
 
-      AppLogger.i('Role switch simulation completed successfully', tag: _logTag);
+      AppLogger.i(
+        'Role switch simulation completed successfully',
+        tag: _logTag,
+      );
       return true;
     } catch (e) {
-      AppLogger.e(
-        'Role switch simulation failed',
-        tag: _logTag,
-        error: e,
-      );
+      AppLogger.e('Role switch simulation failed', tag: _logTag, error: e);
       return false;
     }
   }
@@ -340,10 +328,7 @@ class RoleSwitchSimulator {
   /// This simulates when the user tries to switch from a role that has
   /// already been changed on another device
   Future<bool> simulateStaleStateSwitch() async {
-    AppLogger.w(
-      'Simulating stale state role switch',
-      tag: _logTag,
-    );
+    AppLogger.w('Simulating stale state role switch', tag: _logTag);
     return false;
   }
 
@@ -351,10 +336,7 @@ class RoleSwitchSimulator {
   ///
   /// This simulates when ViewModel cleanup fails, requiring recovery
   Future<RoleSwitchTeardownResult> simulateTeardownFailure() async {
-    AppLogger.w(
-      'Simulating teardown failure scenario',
-      tag: _logTag,
-    );
+    AppLogger.w('Simulating teardown failure scenario', tag: _logTag);
 
     // Configure one ViewModel to fail
     if (_viewModels.isNotEmpty) {

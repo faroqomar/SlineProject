@@ -31,6 +31,7 @@ class WorkItem {
   /// For awarded pending-payment tasks: task_request id for Pay/Cancel.
   final String? awardedRequestId;
   final DateTime? paymentDeadline;
+
   /// Optional price (e.g. for tender pending payment) for payment screen.
   final double? price;
 

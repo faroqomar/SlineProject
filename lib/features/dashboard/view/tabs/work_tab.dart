@@ -170,7 +170,9 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
                   Icon(
                     Icons.work_off_outlined,
                     size: 48,
-                    color: context.colorScheme.textSecondary.withValues(alpha: 0.5),
+                    color: context.colorScheme.textSecondary.withValues(
+                      alpha: 0.5,
+                    ),
                   ),
                   const SizedBox(height: AppDimens.p16),
                   Text(
@@ -196,82 +198,84 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
     return RefreshIndicator(
       onRefresh: () => vm.refresh(),
       child: ListView(
-      padding: const EdgeInsets.fromLTRB(
-        AppDimens.p16,
-        0,
-        AppDimens.p16,
-        AppDimens.p100,
-      ),
-      children: [
-        // Pinned "Needs Review" section
-        if (reviewItems.isNotEmpty) ...[
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppDimens.p8),
-            child: Row(
-              children: [
-                Icon(Icons.rate_review, size: 16, color: AppColors.lightRed),
-                const SizedBox(width: 6),
-                Text(
-                  'Needs Your Review (${reviewItems.length})',
-                  style: AppTypography.captionBold.copyWith(
-                    color: AppColors.lightRed,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          ...reviewItems.map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: AppDimens.p12),
-              child: WorkItemCard(
-                item: item,
-                onPrimaryAction: () => _onPrimaryAction(context, vm, item),
-                onSecondaryAction: item.permissions.canCancel &&
-                        item.awardedRequestId != null
-                    ? () => _onCancelAward(context, vm, item)
-                    : null,
-              ),
-            ),
-          ),
-          if (otherActive.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(
-                top: AppDimens.p8,
-                bottom: AppDimens.p8,
-              ),
-              child: Divider(
-                color: colorScheme.textSecondary.withValues(alpha: 0.2),
-              ),
-            ),
-        ],
-
-        // Remaining active work
-        if (otherActive.isNotEmpty) ...[
-          if (reviewItems.isNotEmpty)
+        padding: const EdgeInsets.fromLTRB(
+          AppDimens.p16,
+          0,
+          AppDimens.p16,
+          AppDimens.p100,
+        ),
+        children: [
+          // Pinned "Needs Review" section
+          if (reviewItems.isNotEmpty) ...[
             Padding(
               padding: const EdgeInsets.only(bottom: AppDimens.p8),
-              child: Text(
-                'In Progress (${otherActive.length})',
-                style: AppTypography.captionBold.copyWith(
-                  color: colorScheme.textSecondary,
+              child: Row(
+                children: [
+                  Icon(Icons.rate_review, size: 16, color: AppColors.lightRed),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Needs Your Review (${reviewItems.length})',
+                    style: AppTypography.captionBold.copyWith(
+                      color: AppColors.lightRed,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ...reviewItems.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: AppDimens.p12),
+                child: WorkItemCard(
+                  item: item,
+                  onPrimaryAction: () => _onPrimaryAction(context, vm, item),
+                  onSecondaryAction:
+                      item.permissions.canCancel &&
+                          item.awardedRequestId != null
+                      ? () => _onCancelAward(context, vm, item)
+                      : null,
                 ),
               ),
             ),
-          ...otherActive.map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: AppDimens.p12),
-              child: WorkItemCard(
-                item: item,
-                onPrimaryAction: () => _onPrimaryAction(context, vm, item),
-                onSecondaryAction: item.permissions.canCancel &&
-                        item.awardedRequestId != null
-                    ? () => _onCancelAward(context, vm, item)
-                    : null,
+            if (otherActive.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(
+                  top: AppDimens.p8,
+                  bottom: AppDimens.p8,
+                ),
+                child: Divider(
+                  color: colorScheme.textSecondary.withValues(alpha: 0.2),
+                ),
+              ),
+          ],
+
+          // Remaining active work
+          if (otherActive.isNotEmpty) ...[
+            if (reviewItems.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppDimens.p8),
+                child: Text(
+                  'In Progress (${otherActive.length})',
+                  style: AppTypography.captionBold.copyWith(
+                    color: colorScheme.textSecondary,
+                  ),
+                ),
+              ),
+            ...otherActive.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: AppDimens.p12),
+                child: WorkItemCard(
+                  item: item,
+                  onPrimaryAction: () => _onPrimaryAction(context, vm, item),
+                  onSecondaryAction:
+                      item.permissions.canCancel &&
+                          item.awardedRequestId != null
+                      ? () => _onCancelAward(context, vm, item)
+                      : null,
+                ),
               ),
             ),
-          ),
+          ],
         ],
-      ],
       ),
     );
   }
@@ -297,7 +301,11 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
         amount: item.price ?? 0,
         paymentDeadline: item.paymentDeadline,
       );
-      await openProposalPayment(context, summary: summary, launcherSource: 'work_tab');
+      await openProposalPayment(
+        context,
+        summary: summary,
+        launcherSource: 'work_tab',
+      );
       if (context.mounted) vm.refresh();
       return;
     }
@@ -405,7 +413,9 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
                   Icon(
                     Icons.work_off_outlined,
                     size: 48,
-                    color: context.colorScheme.textSecondary.withValues(alpha: 0.5),
+                    color: context.colorScheme.textSecondary.withValues(
+                      alpha: 0.5,
+                    ),
                   ),
                   const SizedBox(height: AppDimens.p16),
                   Text(
@@ -425,28 +435,28 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
     return RefreshIndicator(
       onRefresh: () => vm.refresh(),
       child: ListView.separated(
-      padding: const EdgeInsets.fromLTRB(
-        AppDimens.p16,
-        0,
-        AppDimens.p16,
-        AppDimens.p100,
-      ),
-      itemCount: items.length,
-      separatorBuilder: (_, __) => const SizedBox(height: AppDimens.p12),
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return Opacity(
-          opacity: isDimmed ? 0.7 : 1.0,
-          child: WorkItemCard(
-            item: item,
-            onPrimaryAction: () => _onPrimaryAction(context, vm, item),
-          onSecondaryAction: item.permissions.canCancel &&
-                  item.awardedRequestId != null
-              ? () => _onCancelAward(context, vm, item)
-              : null,
-          ),
-        );
-      },
+        padding: const EdgeInsets.fromLTRB(
+          AppDimens.p16,
+          0,
+          AppDimens.p16,
+          AppDimens.p100,
+        ),
+        itemCount: items.length,
+        separatorBuilder: (_, __) => const SizedBox(height: AppDimens.p12),
+        itemBuilder: (context, index) {
+          final item = items[index];
+          return Opacity(
+            opacity: isDimmed ? 0.7 : 1.0,
+            child: WorkItemCard(
+              item: item,
+              onPrimaryAction: () => _onPrimaryAction(context, vm, item),
+              onSecondaryAction:
+                  item.permissions.canCancel && item.awardedRequestId != null
+                  ? () => _onCancelAward(context, vm, item)
+                  : null,
+            ),
+          );
+        },
       ),
     );
   }

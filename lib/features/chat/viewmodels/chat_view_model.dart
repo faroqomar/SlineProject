@@ -163,10 +163,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
       if (delivered) await _repo.markDelivered(activeConversation!.id);
       if (seen) await _repo.markSeen(activeConversation!.id);
     } catch (e) {
-      final op = [
-        if (delivered) 'delivered',
-        if (seen) 'seen',
-      ].join('+');
+      final op = [if (delivered) 'delivered', if (seen) 'seen'].join('+');
       AppLogger.e(
         'Error marking receipts conversation_id=${activeConversation!.id} operation=$op',
         tag: 'ChatVM',
@@ -202,7 +199,9 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
       return;
     }
     _inboxMsgSub?.cancel();
-    AppLogger.d('[REALTIME] subscribeToUserConversations: starting inbox messages stream');
+    AppLogger.d(
+      '[REALTIME] subscribeToUserConversations: starting inbox messages stream',
+    );
     _inboxMsgSub = _repo
         .subscribeToInboxMessages(user.id)
         .listen(
@@ -216,14 +215,19 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
                 final bTime = b.lastMessageTime ?? b.createdAt;
                 return bTime.compareTo(aTime);
               });
-              AppLogger.d('[REALTIME] Inbox merged: ${conversations.length} conversations');
+              AppLogger.d(
+                '[REALTIME] Inbox merged: ${conversations.length} conversations',
+              );
               _notify();
             } catch (e) {
               AppLogger.e('Error merging inbox messages', error: e);
             }
           },
           onError: (error) {
-            AppLogger.e('Realtime inbox messages subscription error', error: error);
+            AppLogger.e(
+              'Realtime inbox messages subscription error',
+              error: error,
+            );
           },
         );
   }
@@ -231,7 +235,9 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
   /// Merges incoming messages into conversation list (new Conversation instances; no mutation).
   void _mergeInboxMessages(List<Message> messages) {
     for (final message in messages) {
-      final idx = conversations.indexWhere((c) => c.id == message.conversationId);
+      final idx = conversations.indexWhere(
+        (c) => c.id == message.conversationId,
+      );
       if (idx >= 0) {
         final c = conversations[idx];
         conversations[idx] = c.copyWith(
@@ -242,28 +248,36 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
       } else {
         if (_fetchingConversationIds.contains(message.conversationId)) continue;
         _fetchingConversationIds.add(message.conversationId);
-        _repo.getConversationById(message.conversationId).then((convo) {
-          if (!_mounted) return;
-          _fetchingConversationIds.remove(message.conversationId);
-          final merged = convo.copyWith(
-            lastMessage: message.content,
-            lastMessageTime: message.createdAt,
-            lastMessageSenderId: message.senderId,
-          );
-          if (!conversations.any((c) => c.id == merged.id)) {
-            conversations.add(merged);
-            conversations.sort((a, b) {
-              final aTime = a.lastMessageTime ?? a.createdAt;
-              final bTime = b.lastMessageTime ?? b.createdAt;
-              return bTime.compareTo(aTime);
+        _repo
+            .getConversationById(message.conversationId)
+            .then((convo) {
+              if (!_mounted) return;
+              _fetchingConversationIds.remove(message.conversationId);
+              final merged = convo.copyWith(
+                lastMessage: message.content,
+                lastMessageTime: message.createdAt,
+                lastMessageSenderId: message.senderId,
+              );
+              if (!conversations.any((c) => c.id == merged.id)) {
+                conversations.add(merged);
+                conversations.sort((a, b) {
+                  final aTime = a.lastMessageTime ?? a.createdAt;
+                  final bTime = b.lastMessageTime ?? b.createdAt;
+                  return bTime.compareTo(aTime);
+                });
+                AppLogger.d(
+                  '[REALTIME] New conversation added from inbox message: ${merged.id}',
+                );
+                _notify();
+              }
+            })
+            .catchError((e) {
+              _fetchingConversationIds.remove(message.conversationId);
+              AppLogger.w(
+                'getConversationById failed for ${message.conversationId}',
+                error: e,
+              );
             });
-            AppLogger.d('[REALTIME] New conversation added from inbox message: ${merged.id}');
-            _notify();
-          }
-        }).catchError((e) {
-          _fetchingConversationIds.remove(message.conversationId);
-          AppLogger.w('getConversationById failed for ${message.conversationId}', error: e);
-        });
       }
     }
   }
@@ -271,7 +285,9 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
   void unsubscribeFromUserConversations() {
     _inboxMsgSub?.cancel();
     _inboxMsgSub = null;
-    AppLogger.d('[REALTIME] unsubscribeFromUserConversations: inbox stream cancelled');
+    AppLogger.d(
+      '[REALTIME] unsubscribeFromUserConversations: inbox stream cancelled',
+    );
   }
 
   // Utility to start or fetch a conversation with loading state and error handling
@@ -282,7 +298,9 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
   }) async {
     // Prevent double-tap: if already creating, return null
     if (isCreatingConversation) {
-      AppLogger.d('createOrGetConversation: already in progress, ignoring double-tap');
+      AppLogger.d(
+        'createOrGetConversation: already in progress, ignoring double-tap',
+      );
       return null;
     }
 
@@ -561,7 +579,9 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
     }
     if (offerIds.isEmpty) return;
     try {
-      final offers = await _directOffersService.getOffersByIds(offerIds.toList());
+      final offers = await _directOffersService.getOffersByIds(
+        offerIds.toList(),
+      );
       for (final entry in offers.entries) {
         final offer = entry.value;
         final key = '${offer.status}_${offer.paymentStatus}';
@@ -593,11 +613,19 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
           (messages) async {
             if (activeConversation == null) return;
             final newRows = messages.map((m) => m.toJson()).toList();
-            final merged = ChatRealtimeMerger.merge(_lastMessages, newRows, Message.fromJson);
+            final merged = ChatRealtimeMerger.merge(
+              _lastMessages,
+              newRows,
+              Message.fromJson,
+            );
             final uid = currentUserId;
-            final hasNewFromOther = uid != null &&
-                merged.any((m) =>
-                    m.receiverId == uid && !_lastMessages.any((l) => l.id == m.id));
+            final hasNewFromOther =
+                uid != null &&
+                merged.any(
+                  (m) =>
+                      m.receiverId == uid &&
+                      !_lastMessages.any((l) => l.id == m.id),
+                );
             _lastMessages = merged;
             currentMessages
               ..clear()
@@ -614,11 +642,18 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
                 }
               },
             );
-            AppLogger.d('[CHAT] messages merged count=${merged.length}', tag: 'ChatVM');
+            AppLogger.d(
+              '[CHAT] messages merged count=${merged.length}',
+              tag: 'ChatVM',
+            );
             _notify();
           },
           onError: (error) {
-            AppLogger.e('[CHAT] stream_error messages subscription', tag: 'ChatVM', error: error);
+            AppLogger.e(
+              '[CHAT] stream_error messages subscription',
+              tag: 'ChatVM',
+              error: error,
+            );
             currentMessages.clear();
             currentMessages.addAll(_lastMessages);
             _notify();
@@ -630,7 +665,9 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
       final otherId = activeConversation!.user1Id == currentUserId
           ? activeConversation!.user2Id
           : activeConversation!.user1Id;
-      _presenceSub = _repo.subscribeToPresence(cid).listen(
+      _presenceSub = _repo
+          .subscribeToPresence(cid)
+          .listen(
             (rows) {
               if (activeConversation == null || !_mounted) return;
               final list = rows.where((r) => r['user_id'] == otherId).toList();
@@ -639,12 +676,17 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
                 _otherUserTyping = otherRow['is_typing'] as bool? ?? false;
                 final u = otherRow['updated_at'] as String?;
                 _presenceUpdatedAt = u != null ? DateTime.tryParse(u) : null;
-                AppLogger.d('[CHAT] presence_updated otherTyping=$_otherUserTyping', tag: 'ChatVM');
+                AppLogger.d(
+                  '[CHAT] presence_updated otherTyping=$_otherUserTyping',
+                  tag: 'ChatVM',
+                );
               } else {
                 _otherUserTyping = false;
                 _presenceUpdatedAt = null;
               }
-              final idx = conversations.indexWhere((c) => c.id == activeConversation!.id);
+              final idx = conversations.indexWhere(
+                (c) => c.id == activeConversation!.id,
+              );
               if (idx >= 0) {
                 conversations[idx] = conversations[idx].copyWith(
                   otherUserTyping: _otherUserTyping,
@@ -654,7 +696,11 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
               _notify();
             },
             onError: (e) {
-              AppLogger.e('[CHAT] presence stream error', tag: 'ChatVM', error: e);
+              AppLogger.e(
+                '[CHAT] presence stream error',
+                tag: 'ChatVM',
+                error: e,
+              );
             },
           );
     }
@@ -676,7 +722,8 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
   bool get otherUserTyping {
     if (!_otherUserTyping) return false;
     if (_presenceUpdatedAt == null) return false;
-    if (DateTime.now().difference(_presenceUpdatedAt!).inSeconds > 15) return false;
+    if (DateTime.now().difference(_presenceUpdatedAt!).inSeconds > 15)
+      return false;
     return true;
   }
 

@@ -83,12 +83,34 @@ class NotificationViewModel extends ChangeNotifier {
     });
   }
 
-  void _connect() {
+  Future<void> _connect() async {
     _subscription?.cancel();
     _isLoading = true;
     _error = null;
     notifyListeners();
-    AppLogger.d('NotificationViewModel: stream connect', tag: 'Notifications');
+    AppLogger.d(
+      'NotificationViewModel: foreground sync then stream',
+      tag: 'Notifications',
+    );
+
+    // Plan 13_notification-routing: fetch unread first so badge is correct (avoid limit-50 truncation)
+    try {
+      final unread = await _service.getUnreadNotifications(limit: 50);
+      if (unread.isNotEmpty) {
+        _notifications = unread;
+        AppLogger.d(
+          'NotificationViewModel: initial unread=${unread.length}',
+          tag: 'Notifications',
+        );
+        notifyListeners();
+      }
+    } catch (e) {
+      AppLogger.w(
+        'NotificationViewModel: initial unread fetch failed',
+        error: e,
+        tag: 'Notifications',
+      );
+    }
 
     _subscription = _service.streamNotifications().listen(
       (items) {

@@ -198,4 +198,8 @@ class DirectOfferDetailsViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  /// Stream payment_intents.status for realtime resolution (e.g. in PaymentWebViewScreen).
+  Stream<String> streamPaymentIntentStatus(String intentId) =>
+      _paymentService.streamPaymentIntentStatus(intentId);
 }

@@ -14,8 +14,8 @@ class ProposalRepository {
   ProposalRepository({
     SupabaseClient? client,
     required TaskRequestsService taskRequestsService,
-  })  : _client = client ?? Supabase.instance.client,
-        _taskRequestsService = taskRequestsService;
+  }) : _client = client ?? Supabase.instance.client,
+       _taskRequestsService = taskRequestsService;
 
   final SupabaseClient _client;
   final TaskRequestsService _taskRequestsService;
@@ -42,9 +42,9 @@ class ProposalRepository {
         query = query.lt('created_at', before.toUtc().toIso8601String());
       }
 
-      final data = await query
-          .order('created_at', ascending: false)
-          .limit(limit) as List<dynamic>;
+      final data =
+          await query.order('created_at', ascending: false).limit(limit)
+              as List<dynamic>;
 
       if (data.isEmpty) {
         return [];
@@ -53,17 +53,23 @@ class ProposalRepository {
       Map<String, Map<String, dynamic>>? bidderSummaries;
       if (isOwner) {
         try {
-          final summaries = await _client.rpc(
-            'get_proposal_bidder_summaries',
-            params: {'p_task_id': taskId},
-          ) as List<dynamic>?;
+          final summaries =
+              await _client.rpc(
+                    'get_proposal_bidder_summaries',
+                    params: {'p_task_id': taskId},
+                  )
+                  as List<dynamic>?;
           if (summaries != null && summaries.isNotEmpty) {
             bidderSummaries = {
-              for (final s in summaries) (s['id'] as String? ?? ''): s as Map<String, dynamic>
+              for (final s in summaries)
+                (s['id'] as String? ?? ''): s as Map<String, dynamic>,
             };
           }
         } catch (e) {
-          AppLogger.w('Proposals: get_proposal_bidder_summaries failed, list without names', tag: 'Proposals');
+          AppLogger.w(
+            'Proposals: get_proposal_bidder_summaries failed, list without names',
+            tag: 'Proposals',
+          );
         }
       }
 
@@ -71,7 +77,8 @@ class ProposalRepository {
       final list = <ProposalModel>[];
       for (final row in data) {
         final map = Map<String, dynamic>.from(row as Map);
-        final bidderId = map['freelancer_id'] as String? ?? map['bidder_id'] as String?;
+        final bidderId =
+            map['freelancer_id'] as String? ?? map['bidder_id'] as String?;
         String? bidderName;
         String? bidderAvatar;
         if (bidderId != null && bidderSummaries != null) {
@@ -83,13 +90,28 @@ class ProposalRepository {
         }
         final taskData = map['tasks'] as Map<String, dynamic>?;
         final taskTitle = taskData?['title'] as String?;
-        list.add(_rowToProposal(map, bidderName: bidderName, bidderAvatar: bidderAvatar, taskTitle: taskTitle));
+        list.add(
+          _rowToProposal(
+            map,
+            bidderName: bidderName,
+            bidderAvatar: bidderAvatar,
+            taskTitle: taskTitle,
+          ),
+        );
       }
 
-      AppLogger.i('Proposals: loaded ${list.length} for task $taskId', tag: 'Proposals');
+      AppLogger.i(
+        'Proposals: loaded ${list.length} for task $taskId',
+        tag: 'Proposals',
+      );
       return list;
     } catch (e, st) {
-      AppLogger.e('Proposals: listByTask failed', tag: 'Proposals', error: e, stackTrace: st);
+      AppLogger.e(
+        'Proposals: listByTask failed',
+        tag: 'Proposals',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
@@ -107,7 +129,10 @@ class ProposalRepository {
     return ProposalModel(
       id: map['id'] as String,
       taskId: map['task_id'] as String,
-      bidderId: (map['freelancer_id'] as String?) ?? (map['bidder_id'] as String?) ?? '',
+      bidderId:
+          (map['freelancer_id'] as String?) ??
+          (map['bidder_id'] as String?) ??
+          '',
       price: (map['price'] as num?)?.toInt() ?? 0,
       days: (map['days'] as int?) ?? (map['duration_days'] as int?) ?? 0,
       note: (map['note'] ?? map['message']) as String?,
@@ -136,7 +161,12 @@ class ProposalRepository {
     String? note,
   }) async {
     AppLogger.i('Proposals: submitOffer task=$taskId', tag: 'Proposals');
-    return _taskRequestsService.submitOffer(taskId: taskId, price: price, days: days, note: note);
+    return _taskRequestsService.submitOffer(
+      taskId: taskId,
+      price: price,
+      days: days,
+      note: note,
+    );
   }
 
   Future<TaskRequest> replaceOffer({
@@ -146,7 +176,12 @@ class ProposalRepository {
     String? note,
   }) async {
     AppLogger.i('Proposals: replaceOffer task=$taskId', tag: 'Proposals');
-    return _taskRequestsService.replaceOffer(taskId: taskId, price: price, days: days, note: note);
+    return _taskRequestsService.replaceOffer(
+      taskId: taskId,
+      price: price,
+      days: days,
+      note: note,
+    );
   }
 
   Future<TaskRequest> reject(String requestId, {String? taskId}) async {

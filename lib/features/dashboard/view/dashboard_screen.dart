@@ -78,9 +78,15 @@ class _DashboardContentState extends State<_DashboardContent>
     final paymentRequestId = uri.queryParameters['payment_request_id'];
 
     final isDirectOffer =
-        offerId != null && offerId.isNotEmpty && paymentRequestId != null && paymentRequestId.isNotEmpty;
+        offerId != null &&
+        offerId.isNotEmpty &&
+        paymentRequestId != null &&
+        paymentRequestId.isNotEmpty;
     final isTender =
-        requestId != null && requestId.isNotEmpty && paymentRequestId != null && paymentRequestId.isNotEmpty;
+        requestId != null &&
+        requestId.isNotEmpty &&
+        paymentRequestId != null &&
+        paymentRequestId.isNotEmpty;
 
     if (!isDirectOffer && !isTender) return;
 
@@ -215,7 +221,10 @@ class _DashboardContentState extends State<_DashboardContent>
               Tab(icon: Icon(Icons.dashboard_outlined), text: "Overview"),
               Tab(icon: Icon(Icons.calendar_month_outlined), text: "Bookings"),
               Tab(icon: Icon(Icons.work_history_outlined), text: "Work"),
-              Tab(icon: Icon(Icons.account_balance_wallet_outlined), text: "Wallet"),
+              Tab(
+                icon: Icon(Icons.account_balance_wallet_outlined),
+                text: "Wallet",
+              ),
               Tab(icon: Icon(Icons.inbox_outlined), text: "Inbox"),
             ],
           ),

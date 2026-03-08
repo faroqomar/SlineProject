@@ -207,11 +207,14 @@ void main() {
         expect(testService, isNotNull);
       });
 
-      test('getBidExpirationTime returns null when not authenticated', () async {
-        when(() => mockAuth.currentUser).thenReturn(null);
-        final result = await service.getBidExpirationTime('bid-123');
-        expect(result, isNull);
-      });
+      test(
+        'getBidExpirationTime returns null when not authenticated',
+        () async {
+          when(() => mockAuth.currentUser).thenReturn(null);
+          final result = await service.getBidExpirationTime('bid-123');
+          expect(result, isNull);
+        },
+      );
 
       test('isBidReplaceable returns false when not authenticated', () async {
         when(() => mockAuth.currentUser).thenReturn(null);

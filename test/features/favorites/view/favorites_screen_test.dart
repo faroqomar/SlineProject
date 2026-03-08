@@ -20,8 +20,9 @@ void main() {
 
   group('FavoritesScreen', () {
     testWidgets('shows empty state key when empty', (tester) async {
-      when(() => mockService.listFavoritesWithProfile())
-          .thenAnswer((_) async => <FavoriteWithProfile>[]);
+      when(
+        () => mockService.listFavoritesWithProfile(),
+      ).thenAnswer((_) async => <FavoriteWithProfile>[]);
       final vm = FavoritesViewModel(service: mockService);
       await pumpApp(
         tester,
@@ -38,14 +39,16 @@ void main() {
     });
 
     testWidgets('shows list key when items present', (tester) async {
-      when(() => mockService.listFavoritesWithProfile()).thenAnswer((_) async => [
-            FavoriteWithProfile(
-              id: 'f1',
-              freelancerId: 'fl-1',
-              createdAt: DateTime.utc(2026, 3, 1),
-              freelancerName: 'Test User',
-            ),
-          ]);
+      when(() => mockService.listFavoritesWithProfile()).thenAnswer(
+        (_) async => [
+          FavoriteWithProfile(
+            id: 'f1',
+            freelancerId: 'fl-1',
+            createdAt: DateTime.utc(2026, 3, 1),
+            freelancerName: 'Test User',
+          ),
+        ],
+      );
       final vm = FavoritesViewModel(service: mockService);
       await pumpApp(
         tester,
@@ -62,14 +65,16 @@ void main() {
     });
 
     testWidgets('does not show raw exception text in UI', (tester) async {
-      when(() => mockService.listFavoritesWithProfile()).thenAnswer((_) async => [
-            FavoriteWithProfile(
-              id: 'f1',
-              freelancerId: 'fl-1',
-              createdAt: DateTime.utc(2026, 3, 1),
-              freelancerName: 'Test User',
-            ),
-          ]);
+      when(() => mockService.listFavoritesWithProfile()).thenAnswer(
+        (_) async => [
+          FavoriteWithProfile(
+            id: 'f1',
+            freelancerId: 'fl-1',
+            createdAt: DateTime.utc(2026, 3, 1),
+            freelancerName: 'Test User',
+          ),
+        ],
+      );
       final vm = FavoritesViewModel(service: mockService);
       await pumpApp(
         tester,

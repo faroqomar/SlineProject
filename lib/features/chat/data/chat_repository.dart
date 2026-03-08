@@ -99,11 +99,16 @@ class ChatRepository {
       _service.markSeen(conversationId);
 
   // Presence (typing indicator; feature-flagged)
-  Future<bool> isPresenceReceiptsEnabled() => _service.isPresenceReceiptsEnabled();
-  Future<void> upsertPresence(String conversationId, String userId, bool isTyping) =>
-      _service.upsertPresence(conversationId, userId, isTyping);
-  Stream<List<Map<String, dynamic>>> subscribeToPresence(String conversationId) =>
-      _service.subscribeToPresence(conversationId);
+  Future<bool> isPresenceReceiptsEnabled() =>
+      _service.isPresenceReceiptsEnabled();
+  Future<void> upsertPresence(
+    String conversationId,
+    String userId,
+    bool isTyping,
+  ) => _service.upsertPresence(conversationId, userId, isTyping);
+  Stream<List<Map<String, dynamic>>> subscribeToPresence(
+    String conversationId,
+  ) => _service.subscribeToPresence(conversationId);
 
   // Realtime (emits full list per snapshot)
   Stream<List<Message>> subscribeToMessages(String conversationId) =>

@@ -5,7 +5,7 @@ import 'package:sline_app/core/utils/ledger_forensics.dart';
 
 class LedgerService {
   LedgerService(this._client, [LedgerForensics? forensics])
-      : _forensics = forensics ?? LedgerForensics();
+    : _forensics = forensics ?? LedgerForensics();
   final SupabaseClient _client;
   final LedgerForensics _forensics;
   final Uuid _uuid = const Uuid();
@@ -97,7 +97,10 @@ class LedgerService {
   /// Caller meta takes precedence; forensics fill in missing keys only.
   Map<String, dynamic> _mergeForensics(Map<String, dynamic> meta) {
     final sessionId = _client.auth.currentUser?.id;
-    final forensics = _forensics.build(sessionId: sessionId, includeRequestId: true);
+    final forensics = _forensics.build(
+      sessionId: sessionId,
+      includeRequestId: true,
+    );
     final merged = <String, dynamic>{...meta};
     for (final e in forensics.entries) {
       merged[e.key] ??= e.value;

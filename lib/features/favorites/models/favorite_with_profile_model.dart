@@ -27,7 +27,8 @@ class FavoriteWithProfile {
     final String? freelancerAvatar;
 
     if (freelancer != null) {
-      freelancerId = freelancer['id'] as String? ?? rootFreelancerId?.toString() ?? '';
+      freelancerId =
+          freelancer['id'] as String? ?? rootFreelancerId?.toString() ?? '';
       freelancerName = freelancer['full_name'] as String?;
       freelancerAvatar = freelancer['avatar_url'] as String?;
     } else {

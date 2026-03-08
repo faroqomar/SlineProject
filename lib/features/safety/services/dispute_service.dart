@@ -25,14 +25,18 @@ class DisputeService {
     final hasTask = taskId != null && taskId.trim().isNotEmpty;
     final hasOffer = directOfferId != null && directOfferId.trim().isNotEmpty;
     if (hasTask == hasOffer) {
-      throw Exception('Exactly one of taskId or directOfferId must be provided.');
+      throw Exception(
+        'Exactly one of taskId or directOfferId must be provided.',
+      );
     }
 
     final params = <String, dynamic>{
       'p_task_id': hasTask ? taskId : null,
       'p_direct_offer_id': hasOffer ? directOfferId : null,
       'p_reason': reason.trim(),
-      'p_defendant_id': defendantId != null && defendantId.isNotEmpty ? defendantId : null,
+      'p_defendant_id': defendantId != null && defendantId.isNotEmpty
+          ? defendantId
+          : null,
     };
 
     await _client.rpc('rpc_submit_dispute', params: params);

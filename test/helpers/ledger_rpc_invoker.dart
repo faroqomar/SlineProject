@@ -245,7 +245,8 @@ bool validateReleaseUsedLockedRate({
   final expectedFee = (grossAmount * feeRateBps) ~/ 10000;
   final expectedNet = grossAmount - expectedFee;
 
-  final isValid = feeAmount == expectedFee &&
+  final isValid =
+      feeAmount == expectedFee &&
       netAmount == expectedNet &&
       (feeAmount + netAmount == grossAmount);
 
@@ -281,10 +282,7 @@ bool validateImmutabilityEnforced({
       tag: _logTag,
     );
   } else {
-    AppLogger.e(
-      '❌ Immutability validation FAILED: error=$error',
-      tag: _logTag,
-    );
+    AppLogger.e('❌ Immutability validation FAILED: error=$error', tag: _logTag);
   }
 
   return hasImmutabilityError;

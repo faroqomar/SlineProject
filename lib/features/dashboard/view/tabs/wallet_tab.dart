@@ -80,7 +80,9 @@ class _WalletTabState extends State<WalletTab> {
               else ...[
                 if (received.isNotEmpty) ...[
                   _SubSectionHeader(title: 'Money received'),
-                  ...received.map((a) => _buildTransactionRow(context, a, true)),
+                  ...received.map(
+                    (a) => _buildTransactionRow(context, a, true),
+                  ),
                   const SizedBox(height: AppDimens.p16),
                 ],
                 if (spent.isNotEmpty) ...[
@@ -97,8 +99,7 @@ class _WalletTabState extends State<WalletTab> {
     );
   }
 
-  double _clamp(double value) =>
-      value.clamp(0.0, double.infinity);
+  double _clamp(double value) => value.clamp(0.0, double.infinity);
 
   Widget _buildTotalBalanceCard(double totalBalance) {
     final colorScheme = context.colorScheme;
@@ -198,9 +199,12 @@ class _WalletTabState extends State<WalletTab> {
             child: FilledButton(
               onPressed: null,
               style: FilledButton.styleFrom(
-                backgroundColor: colorScheme.textSecondary.withValues(alpha: 0.3),
-                disabledBackgroundColor:
-                    colorScheme.textSecondary.withValues(alpha: 0.2),
+                backgroundColor: colorScheme.textSecondary.withValues(
+                  alpha: 0.3,
+                ),
+                disabledBackgroundColor: colorScheme.textSecondary.withValues(
+                  alpha: 0.2,
+                ),
                 padding: const EdgeInsets.symmetric(vertical: AppDimens.p16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppDimens.r12),
@@ -337,10 +341,7 @@ class _SubSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(
-        bottom: AppDimens.p8,
-        top: AppDimens.p4,
-      ),
+      padding: const EdgeInsets.only(bottom: AppDimens.p8, top: AppDimens.p4),
       child: Text(
         title,
         style: AppTypography.captionBold.copyWith(

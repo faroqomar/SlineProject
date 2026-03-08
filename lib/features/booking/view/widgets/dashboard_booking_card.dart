@@ -105,11 +105,7 @@ class DashboardBookingCard extends StatelessWidget {
                   ],
                 ),
               ),
-              StatusBadge(
-                text: statusLabel,
-                color: statusColor,
-                isSmall: true,
-              ),
+              StatusBadge(text: statusLabel, color: statusColor, isSmall: true),
             ],
           ),
           if (displayNote != null) ...[

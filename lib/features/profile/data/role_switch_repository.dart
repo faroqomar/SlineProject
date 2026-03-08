@@ -38,13 +38,12 @@ class RoleSwitchRepository {
     try {
       final response = await _client.rpc(
         'switch_active_role',
-        params: {
-          'p_expected_old_role': expectedOldRole,
-          'p_new_role': newRole,
-        },
+        params: {'p_expected_old_role': expectedOldRole, 'p_new_role': newRole},
       );
 
-      final result = RoleSwitchResult.fromJson(response as Map<String, dynamic>);
+      final result = RoleSwitchResult.fromJson(
+        response as Map<String, dynamic>,
+      );
 
       if (result.success) {
         AppLogger.i(
@@ -100,7 +99,10 @@ class RoleSwitchRepository {
       }
     }
 
-    AppLogger.e('session_refresh_failed_after_$maxRetries', tag: 'RoleSwitchRepo');
+    AppLogger.e(
+      'session_refresh_failed_after_$maxRetries',
+      tag: 'RoleSwitchRepo',
+    );
     return false;
   }
 
@@ -141,11 +143,7 @@ class RoleSwitchRepository {
       AppLogger.d(
         'verify_jwt_result',
         tag: 'RoleSwitchRepo',
-        json: {
-          'expected': expectedRole,
-          'actual': jwtRole,
-          'matches': matches,
-        },
+        json: {'expected': expectedRole, 'actual': jwtRole, 'matches': matches},
       );
 
       return matches;

@@ -18,14 +18,16 @@ void main() {
 
   group('FavoritesViewModel load', () {
     test('load sets items from listFavoritesWithProfile', () async {
-      when(() => mockService.listFavoritesWithProfile()).thenAnswer((_) async => [
-            FavoriteWithProfile(
-              id: 'f1',
-              freelancerId: 'fl-1',
-              createdAt: DateTime.utc(2026, 3, 1),
-              freelancerName: 'Alice',
-            ),
-          ]);
+      when(() => mockService.listFavoritesWithProfile()).thenAnswer(
+        (_) async => [
+          FavoriteWithProfile(
+            id: 'f1',
+            freelancerId: 'fl-1',
+            createdAt: DateTime.utc(2026, 3, 1),
+            freelancerName: 'Alice',
+          ),
+        ],
+      );
 
       await vm.load();
 
@@ -37,8 +39,9 @@ void main() {
     });
 
     test('load on error sets error and does not crash', () async {
-      when(() => mockService.listFavoritesWithProfile())
-          .thenThrow(Exception('network'));
+      when(
+        () => mockService.listFavoritesWithProfile(),
+      ).thenThrow(Exception('network'));
 
       await vm.load();
 
@@ -46,22 +49,29 @@ void main() {
       expect(vm.error, isNotNull);
     });
 
-    test('ensureLoaded skips when already loaded even with empty list', () async {
-      when(() => mockService.listFavoritesWithProfile()).thenAnswer((_) async => []);
+    test(
+      'ensureLoaded skips when already loaded even with empty list',
+      () async {
+        when(
+          () => mockService.listFavoritesWithProfile(),
+        ).thenAnswer((_) async => []);
 
-      await vm.load();
-      expect(vm.itemsWithProfile, isEmpty);
+        await vm.load();
+        expect(vm.itemsWithProfile, isEmpty);
 
-      await vm.ensureLoaded();
-      await vm.ensureLoaded();
-      verify(() => mockService.listFavoritesWithProfile()).called(1);
-    });
+        await vm.ensureLoaded();
+        await vm.ensureLoaded();
+        verify(() => mockService.listFavoritesWithProfile()).called(1);
+      },
+    );
   });
 
   group('FavoritesViewModel add', () {
     test('add returns success when service succeeds', () async {
       when(() => mockService.addFavorite(any())).thenAnswer((_) async {});
-      when(() => mockService.listFavoritesWithProfile()).thenAnswer((_) async => []);
+      when(
+        () => mockService.listFavoritesWithProfile(),
+      ).thenAnswer((_) async => []);
 
       final result = await vm.add('fl-1');
 
@@ -69,9 +79,9 @@ void main() {
     });
 
     test('add returns duplicate when 23505', () async {
-      when(() => mockService.addFavorite(any())).thenThrow(
-        Exception('23505 unique_violation'),
-      );
+      when(
+        () => mockService.addFavorite(any()),
+      ).thenThrow(Exception('23505 unique_violation'));
 
       final result = await vm.add('fl-1');
 
@@ -92,13 +102,15 @@ void main() {
       when(() => mockService.removeFavorite(any())).thenAnswer((_) async {});
       vm = FavoritesViewModel(service: mockService);
       // Seed state
-      when(() => mockService.listFavoritesWithProfile()).thenAnswer((_) async => [
-            FavoriteWithProfile(
-              id: 'f1',
-              freelancerId: 'fl-1',
-              createdAt: DateTime.utc(2026, 3, 1),
-            ),
-          ]);
+      when(() => mockService.listFavoritesWithProfile()).thenAnswer(
+        (_) async => [
+          FavoriteWithProfile(
+            id: 'f1',
+            freelancerId: 'fl-1',
+            createdAt: DateTime.utc(2026, 3, 1),
+          ),
+        ],
+      );
       await vm.load();
       expect(vm.itemsWithProfile.length, 1);
 

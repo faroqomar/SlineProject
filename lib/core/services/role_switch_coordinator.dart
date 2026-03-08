@@ -27,7 +27,8 @@ import '../mixins/role_switch_aware.dart';
 /// This class is a singleton because role switching is a global app event
 /// that affects all ViewModels across all features.
 class RoleSwitchCoordinator {
-  static final RoleSwitchCoordinator _instance = RoleSwitchCoordinator._internal();
+  static final RoleSwitchCoordinator _instance =
+      RoleSwitchCoordinator._internal();
   factory RoleSwitchCoordinator() => _instance;
   RoleSwitchCoordinator._internal();
 
@@ -95,7 +96,7 @@ class RoleSwitchCoordinator {
         final vmStart = DateTime.now();
         await vm.teardownForRoleSwitch();
         final vmDuration = DateTime.now().difference(vmStart);
-        
+
         AppLogger.d(
           'coordinator_teardown_vm_success',
           tag: 'RoleSwitch',

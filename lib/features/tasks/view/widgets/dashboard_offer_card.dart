@@ -181,12 +181,13 @@ class DashboardOfferCard extends StatelessWidget {
               );
               final bool showAward = ctaMeta.allowedActions.contains('award');
               final bool showPay = ctaMeta.allowedActions.contains('pay');
-              final bool showEscrow =
-                  ctaMeta.allowedActions.contains('escrow_hold');
-              final bool showRelease =
-                  ctaMeta.allowedActions.contains('release_with_fee');
-              final bool showRefund =
-                  ctaMeta.allowedActions.contains('refund');
+              final bool showEscrow = ctaMeta.allowedActions.contains(
+                'escrow_hold',
+              );
+              final bool showRelease = ctaMeta.allowedActions.contains(
+                'release_with_fee',
+              );
+              final bool showRefund = ctaMeta.allowedActions.contains('refund');
 
               if (!isPending && !showRelease && !showRefund && !showPay) {
                 return const SizedBox.shrink();
@@ -463,9 +464,7 @@ class _PaymentDeadlineCountdownState extends State<_PaymentDeadlineCountdown>
       decoration: BoxDecoration(
         color: urgencyColor.withValues(alpha: 0.1),
         border: Border(
-          bottom: BorderSide(
-            color: urgencyColor.withValues(alpha: 0.2),
-          ),
+          bottom: BorderSide(color: urgencyColor.withValues(alpha: 0.2)),
         ),
       ),
       child: Row(
@@ -491,9 +490,7 @@ class _PaymentDeadlineCountdownState extends State<_PaymentDeadlineCountdown>
               _monitor.isExpired
                   ? 'Payment window closed'
                   : 'Payment deadline: ${_monitor.countdownText ?? ''}',
-              style: AppTypography.captionBold.copyWith(
-                color: urgencyColor,
-              ),
+              style: AppTypography.captionBold.copyWith(color: urgencyColor),
             ),
           ),
           if (!_monitor.isExpired)
@@ -507,8 +504,8 @@ class _PaymentDeadlineCountdownState extends State<_PaymentDeadlineCountdown>
                 _monitor.urgencyLevel == UrgencyLevel.critical
                     ? 'URGENT'
                     : _monitor.urgencyLevel == UrgencyLevel.urgent
-                        ? 'SOON'
-                        : 'PENDING',
+                    ? 'SOON'
+                    : 'PENDING',
                 style: AppTypography.captionBold.copyWith(
                   color: urgencyColor,
                   fontSize: 10,

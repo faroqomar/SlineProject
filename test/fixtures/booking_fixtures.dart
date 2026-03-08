@@ -65,9 +65,11 @@ Map<String, dynamic> createBookingFixture({
   final bookingId = id ?? generateTestId();
 
   // Calculate fee amounts if fee rate is provided
-  final calculatedFeeAmount = feeAmount ??
+  final calculatedFeeAmount =
+      feeAmount ??
       (feeRateAppliedBps != null ? (price * feeRateAppliedBps ~/ 10000) : null);
-  final calculatedNetAmount = netAmount ??
+  final calculatedNetAmount =
+      netAmount ??
       (calculatedFeeAmount != null ? price - calculatedFeeAmount : null);
 
   AppLogger.d(
@@ -107,9 +109,11 @@ Map<String, dynamic> createDirectOfferFixture({
 }) {
   final offerId = id ?? generateTestId();
 
-  final calculatedFeeAmount = feeAmount ??
+  final calculatedFeeAmount =
+      feeAmount ??
       (feeRateAppliedBps != null ? (price * feeRateAppliedBps ~/ 10000) : null);
-  final calculatedNetAmount = netAmount ??
+  final calculatedNetAmount =
+      netAmount ??
       (calculatedFeeAmount != null ? price - calculatedFeeAmount : null);
 
   AppLogger.d(
@@ -150,12 +154,16 @@ Map<String, dynamic> createTaskRequestFixture({
 }) {
   final requestId = id ?? generateTestId();
 
-  final calculatedFeeAmount = feeAmount ??
+  final calculatedFeeAmount =
+      feeAmount ??
       (feeRateAppliedBps != null
           ? (proposedPrice * feeRateAppliedBps ~/ 10000)
           : null);
-  final calculatedNetAmount = netAmount ??
-      (calculatedFeeAmount != null ? proposedPrice - calculatedFeeAmount : null);
+  final calculatedNetAmount =
+      netAmount ??
+      (calculatedFeeAmount != null
+          ? proposedPrice - calculatedFeeAmount
+          : null);
 
   AppLogger.d(
     'Creating task_request fixture: id=$requestId, price=$proposedPrice, feeRateAppliedBps=$feeRateAppliedBps',
@@ -258,7 +266,8 @@ bool validateFeeCalculation({
   final calculatedFee = (grossAmount * feeRateBps) ~/ 10000;
   final calculatedNet = grossAmount - calculatedFee;
 
-  final isValid = calculatedFee == expectedFeeAmount &&
+  final isValid =
+      calculatedFee == expectedFeeAmount &&
       calculatedNet == expectedNetAmount &&
       (expectedFeeAmount + expectedNetAmount == grossAmount);
 

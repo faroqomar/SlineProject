@@ -35,9 +35,9 @@ class TaskRequestsViewModel extends ChangeNotifier {
     TaskRequestsService? service,
     TaskService? taskService,
     ProposalRepository? proposalRepo,
-  })  : _service = service ?? TaskRequestsService(),
-        _taskService = taskService ?? TaskService(),
-        _proposalRepo = proposalRepo;
+  }) : _service = service ?? TaskRequestsService(),
+       _taskService = taskService ?? TaskService(),
+       _proposalRepo = proposalRepo;
 
   // ==========================================================================
   // PAGING STATE
@@ -150,7 +150,10 @@ class TaskRequestsViewModel extends ChangeNotifier {
         _hasMore = list.length == _pageSize;
         _cursorBefore = list.isEmpty ? null : list.last.createdAt;
       }
-      AppLogger.d('Loaded \${_items.length} initial items', tag: 'TaskRequests');
+      AppLogger.d(
+        'Loaded \${_items.length} initial items',
+        tag: 'TaskRequests',
+      );
     } catch (e, st) {
       _errorMessage = _friendlyError(e);
       AppLogger.e(
@@ -197,7 +200,10 @@ class TaskRequestsViewModel extends ChangeNotifier {
         _hasMore = list.length == _pageSize;
         _cursorBefore = list.isEmpty ? _cursorBefore : list.last.createdAt;
       }
-      AppLogger.d('Loaded more items, total: \${_items.length}', tag: 'TaskRequests');
+      AppLogger.d(
+        'Loaded more items, total: \${_items.length}',
+        tag: 'TaskRequests',
+      );
     } catch (e, st) {
       _errorMessage = _friendlyError(e);
       AppLogger.e(
@@ -448,7 +454,10 @@ class TaskRequestsViewModel extends ChangeNotifier {
       // Re-throw so UI can show error dialog
       rethrow;
     } on OfferAlreadyAcceptedException catch (_) {
-      AppLogger.w('Offer already accepted (idempotency hit)', tag: 'TaskRequests');
+      AppLogger.w(
+        'Offer already accepted (idempotency hit)',
+        tag: 'TaskRequests',
+      );
 
       // Refresh and return success since it's already accepted
       await _refreshListAfterMutation();

@@ -25,8 +25,10 @@ class _RpcCapture {
 /// Awaitable stub for rpc() so that await client.rpc(...) completes.
 class _StubRpcBuilder extends Fake implements PostgrestFilterBuilder<dynamic> {
   @override
-  Future<R> then<R>(FutureOr<R> Function(dynamic) onValue, {Function? onError}) =>
-      Future<dynamic>.value(null).then(onValue, onError: onError);
+  Future<R> then<R>(
+    FutureOr<R> Function(dynamic) onValue, {
+    Function? onError,
+  }) => Future<dynamic>.value(null).then(onValue, onError: onError);
 }
 
 void main() {
@@ -46,10 +48,12 @@ void main() {
     when(() => mockClient.auth).thenAnswer((_) => mockAuth);
     when(() => mockAuth.currentUser).thenAnswer((_) => mockUser);
     when(() => mockUser.id).thenAnswer((_) => 'user-123');
-    when(() => mockClient.rpc(any(), params: any(named: 'params')))
-        .thenAnswer((invocation) {
+    when(() => mockClient.rpc(any(), params: any(named: 'params'))).thenAnswer((
+      invocation,
+    ) {
       rpcCapture.lastRpcName = invocation.positionalArguments[0] as String;
-      rpcCapture.lastRpcParams = invocation.namedArguments[#params] as Map<String, dynamic>?;
+      rpcCapture.lastRpcParams =
+          invocation.namedArguments[#params] as Map<String, dynamic>?;
       return _StubRpcBuilder();
     });
 
@@ -75,32 +79,32 @@ void main() {
       AppLogger.d('submitDispute RPC params verified', tag: _logTag);
     });
 
-    test('calls rpc_submit_dispute without defendant_id when not provided', () async {
-      final service = DisputeService(client: mockClient);
-      await service.submitDispute(
-        taskId: 'task-2',
-        reason: 'Late delivery',
-      );
+    test(
+      'calls rpc_submit_dispute without defendant_id when not provided',
+      () async {
+        final service = DisputeService(client: mockClient);
+        await service.submitDispute(taskId: 'task-2', reason: 'Late delivery');
 
-      expect(rpcCapture.lastRpcName, 'rpc_submit_dispute');
-      expect(rpcCapture.lastRpcParams, isNotNull);
-      final params = rpcCapture.lastRpcParams!;
-      expect(params['p_task_id'], 'task-2');
-      expect(params['p_reason'], 'Late delivery');
-      expect(params.containsKey('p_defendant_id'), isTrue);
-      expect(params['p_defendant_id'], isNull);
-      AppLogger.d('submitDispute without defendant_id verified', tag: _logTag);
-    });
+        expect(rpcCapture.lastRpcName, 'rpc_submit_dispute');
+        expect(rpcCapture.lastRpcParams, isNotNull);
+        final params = rpcCapture.lastRpcParams!;
+        expect(params['p_task_id'], 'task-2');
+        expect(params['p_reason'], 'Late delivery');
+        expect(params.containsKey('p_defendant_id'), isTrue);
+        expect(params['p_defendant_id'], isNull);
+        AppLogger.d(
+          'submitDispute without defendant_id verified',
+          tag: _logTag,
+        );
+      },
+    );
 
     test('throws when reason is empty', () async {
       when(() => mockUser.id).thenReturn('user-123');
       final service = DisputeService(client: mockClient);
 
       expect(
-        () => service.submitDispute(
-          taskId: 'task-1',
-          reason: '   ',
-        ),
+        () => service.submitDispute(taskId: 'task-1', reason: '   '),
         throwsA(
           isA<Exception>().having(
             (e) => e.toString(),
@@ -118,10 +122,7 @@ void main() {
       final service = DisputeService(client: mockClient);
 
       expect(
-        () => service.submitDispute(
-          taskId: 'task-1',
-          reason: 'Valid reason',
-        ),
+        () => service.submitDispute(taskId: 'task-1', reason: 'Valid reason'),
         throwsA(
           isA<Exception>().having(
             (e) => e.toString(),

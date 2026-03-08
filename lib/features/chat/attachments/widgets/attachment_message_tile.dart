@@ -8,7 +8,12 @@ import 'package:sline_app/core/utils/signed_url_cache.dart';
 import '../services/upload_service.dart';
 
 // #region agent log
-void _agentDebugLog(String location, String message, Map<String, dynamic> data, String hypothesisId) {
+void _agentDebugLog(
+  String location,
+  String message,
+  Map<String, dynamic> data,
+  String hypothesisId,
+) {
   try {
     final line = jsonEncode({
       'sessionId': '9844e5',
@@ -18,7 +23,9 @@ void _agentDebugLog(String location, String message, Map<String, dynamic> data, 
       'data': data,
       'hypothesisId': hypothesisId,
     });
-    File('/Users/eros/Dev/Eros_Projects/Sline/sline_app/.cursor/debug-9844e5.log').writeAsStringSync('$line\n', mode: FileMode.append);
+    File(
+      '/Users/eros/Dev/Eros_Projects/Sline/sline_app/.cursor/debug-9844e5.log',
+    ).writeAsStringSync('$line\n', mode: FileMode.append);
   } catch (_) {}
 }
 // #endregion
@@ -79,12 +86,22 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
   /// Checks error cache first, then success cache, then calls API
   Future<void> _loadSignedUrl() async {
     // #region agent log
-    _agentDebugLog('attachment_message_tile.dart:_loadSignedUrl', 'load_start', {'storagePath': widget.storagePath}, 'H-B');
+    _agentDebugLog(
+      'attachment_message_tile.dart:_loadSignedUrl',
+      'load_start',
+      {'storagePath': widget.storagePath},
+      'H-B',
+    );
     // #endregion
     // Check error cache first to prevent retry storms
     if (SignedUrlCache.hasError(widget.storagePath)) {
       // #region agent log
-      _agentDebugLog('attachment_message_tile.dart:_loadSignedUrl', 'error_cache_hit', {'storagePath': widget.storagePath}, 'H-C');
+      _agentDebugLog(
+        'attachment_message_tile.dart:_loadSignedUrl',
+        'error_cache_hit',
+        {'storagePath': widget.storagePath},
+        'H-C',
+      );
       // #endregion
       if (mounted) {
         setState(() {
@@ -110,13 +127,19 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
     // Generate new signed URL
     try {
       // #region agent log
-      _agentDebugLog('attachment_message_tile.dart:_loadSignedUrl', 'create_signed_url_before', {'storagePath': widget.storagePath}, 'H-A');
+      _agentDebugLog(
+        'attachment_message_tile.dart:_loadSignedUrl',
+        'create_signed_url_before',
+        {'storagePath': widget.storagePath},
+        'H-A',
+      );
       // #endregion
-      final url = await (widget.signedUrlResolver?.call(widget.storagePath) ??
-          SupabaseAttachmentUploader().createSignedUrl(
-            widget.storagePath,
-            expiresInSeconds: SharedStorageConfig.chatAttachmentTtlSeconds,
-          ));
+      final url =
+          await (widget.signedUrlResolver?.call(widget.storagePath) ??
+              SupabaseAttachmentUploader().createSignedUrl(
+                widget.storagePath,
+                expiresInSeconds: SharedStorageConfig.chatAttachmentTtlSeconds,
+              ));
 
       // Cache the successful URL
       SignedUrlCache.set(widget.storagePath, url);
@@ -129,15 +152,21 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
       }
     } catch (e) {
       // #region agent log
-      _agentDebugLog('attachment_message_tile.dart:_loadSignedUrl', 'create_signed_url_catch', {
-        'storagePath': widget.storagePath,
-        'errorType': e.runtimeType.toString(),
-        'errorToString': e.toString(),
-        'mappedMessage': ErrorMapper.map(e),
-      }, 'H-A');
+      _agentDebugLog(
+        'attachment_message_tile.dart:_loadSignedUrl',
+        'create_signed_url_catch',
+        {
+          'storagePath': widget.storagePath,
+          'errorType': e.runtimeType.toString(),
+          'errorToString': e.toString(),
+          'mappedMessage': ErrorMapper.map(e),
+        },
+        'H-A',
+      );
       // #endregion
       // Cache only auth/permission failures so transient errors (network, timeout) can retry
-      final isAuthFailure = e is StorageException &&
+      final isAuthFailure =
+          e is StorageException &&
           (e.statusCode == '403' ||
               e.statusCode == '401' ||
               e.message.toLowerCase().contains('permission') ||
@@ -249,9 +278,8 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
         height: 180,
         width: double.infinity,
         fit: BoxFit.cover,
-        loadingBuilder: (c, child, progress) => progress == null
-            ? child
-            : _placeholder(height: 180),
+        loadingBuilder: (c, child, progress) =>
+            progress == null ? child : _placeholder(height: 180),
         errorBuilder: (c, e, st) => _errorBox('Image error'),
       ),
     );

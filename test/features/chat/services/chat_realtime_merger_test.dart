@@ -56,7 +56,11 @@ void main() {
       expect(result[1].id, 'msg-2');
       expect(result[2].id, 'msg-3');
       for (var i = 1; i < result.length; i++) {
-        expect(result[i].createdAt.isAfter(result[i - 1].createdAt) || result[i].createdAt.isAtSameMomentAs(result[i - 1].createdAt), true);
+        expect(
+          result[i].createdAt.isAfter(result[i - 1].createdAt) ||
+              result[i].createdAt.isAtSameMomentAs(result[i - 1].createdAt),
+          true,
+        );
       }
     });
 
@@ -80,7 +84,9 @@ void main() {
     });
 
     test('merge keeps order by created_at', () {
-      final reversed = messageJson.reversed.map((e) => Map<String, dynamic>.from(e)).toList();
+      final reversed = messageJson.reversed
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
       final result = ChatRealtimeMerger.merge(
         <Message>[],
         reversed,

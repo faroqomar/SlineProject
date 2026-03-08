@@ -12,12 +12,12 @@ class TenderPaymentViewModel extends ChangeNotifier {
     required String freelancerName,
     required double amount,
     required DateTime paymentDeadline,
-  })  : _coordinator = coordinator,
-        _requestId = requestId,
-        _taskTitle = taskTitle,
-        _freelancerName = freelancerName,
-        _amount = amount,
-        _paymentDeadline = paymentDeadline;
+  }) : _coordinator = coordinator,
+       _requestId = requestId,
+       _taskTitle = taskTitle,
+       _freelancerName = freelancerName,
+       _amount = amount,
+       _paymentDeadline = paymentDeadline;
 
   final TenderPaymentCoordinator _coordinator;
   final String _requestId;
@@ -36,6 +36,7 @@ class TenderPaymentViewModel extends ChangeNotifier {
   bool get isProcessing => _isProcessing;
   String? get errorMessage => _errorMessage;
   bool get success => _success;
+
   /// When set, the screen should push PaymentWebViewScreen and on return call [completeRecovery].
   String? get pendingFormUrl => _pendingFormUrl;
   String? get pendingRequestId => _pendingRequestId;
@@ -50,8 +51,7 @@ class TenderPaymentViewModel extends ChangeNotifier {
   String get taskTitle => _taskTitle;
   String get freelancerName => _freelancerName;
   double get amount => _amount;
-  Duration get timeRemaining =>
-      _paymentDeadline.difference(DateTime.now());
+  Duration get timeRemaining => _paymentDeadline.difference(DateTime.now());
   bool get isExpired => timeRemaining.isNegative;
 
   /// Submit payment: for QiCard returns pending WebView URL; for others completes ledger + pay.
@@ -112,7 +112,8 @@ class TenderPaymentViewModel extends ChangeNotifier {
   }
 
   static String _userFriendlyPaymentError(String raw) {
-    if (raw.contains('INVALID_STATE') || raw.contains('must be awarded and unpaid')) {
+    if (raw.contains('INVALID_STATE') ||
+        raw.contains('must be awarded and unpaid')) {
       return 'This tender is not in a state that allows payment. It may already be paid or expired.';
     }
     if (raw.contains('PAYMENT_NOT_SUCCESS') || raw.contains('cannot recover')) {
@@ -124,7 +125,8 @@ class TenderPaymentViewModel extends ChangeNotifier {
     if (raw.contains('FORBIDDEN') || raw.contains('Only the task owner')) {
       return 'Only the task owner can complete this payment.';
     }
-    if (raw.contains('TASK_REQUEST_NOT_FOUND') || raw.contains('TASK_NOT_FOUND')) {
+    if (raw.contains('TASK_REQUEST_NOT_FOUND') ||
+        raw.contains('TASK_NOT_FOUND')) {
       return 'This tender or task could not be found. Please refresh and try again.';
     }
     if (raw.contains('Payment failed:')) return raw;

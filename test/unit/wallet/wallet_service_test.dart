@@ -34,7 +34,10 @@ void main() {
       when(() => mockAuth.currentUser).thenReturn(mockUser);
       when(() => mockUser.id).thenReturn('user-123');
       service = WalletService(mockClient);
-      AppLogger.d('WalletService getWalletBalance tests starting', tag: _logTag);
+      AppLogger.d(
+        'WalletService getWalletBalance tests starting',
+        tag: _logTag,
+      );
     });
 
     test('returns zero when currentUser is null', () async {

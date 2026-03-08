@@ -30,11 +30,13 @@ class DashboardEnv {
     'IT_DASHBOARD_TASK_ID',
     defaultValue: '',
   );
+
   /// Optional: task_request ID for tender payment scenarios.
   static const String taskRequestId = String.fromEnvironment(
     'IT_DASHBOARD_TASK_REQUEST_ID',
     defaultValue: '',
   );
+
   /// Optional: booking ID for booking accept/decline/cancel scenarios.
   static const String bookingId = String.fromEnvironment(
     'IT_DASHBOARD_BOOKING_ID',

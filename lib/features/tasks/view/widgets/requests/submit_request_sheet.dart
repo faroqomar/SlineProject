@@ -93,13 +93,13 @@ Future<void> showSubmitRequestSheet(
     final priceDiffText = priceDiff > 0
         ? '+${price_utils.PriceFormatter.formatPrice(priceDiff.toDouble())}'
         : priceDiff < 0
-            ? '-${price_utils.PriceFormatter.formatPrice(priceDiff.abs().toDouble())}'
-            : 'No change';
+        ? '-${price_utils.PriceFormatter.formatPrice(priceDiff.abs().toDouble())}'
+        : 'No change';
     final daysDiffText = daysDiff > 0
         ? '+$daysDiff days'
         : daysDiff < 0
-            ? '-${daysDiff.abs()} days'
-            : 'No change';
+        ? '-${daysDiff.abs()} days'
+        : 'No change';
 
     AppLogger.d(
       'Showing replace confirmation dialog: '
@@ -115,10 +115,7 @@ Future<void> showSubmitRequestSheet(
             return AlertDialog(
               title: Row(
                 children: [
-                  Icon(
-                    Icons.swap_horiz,
-                    color: AppColors.teal,
-                  ),
+                  Icon(Icons.swap_horiz, color: AppColors.teal),
                   const SizedBox(width: 8),
                   const Text('Replace your bid?'),
                 ],
@@ -206,8 +203,8 @@ Future<void> showSubmitRequestSheet(
                       changeColor: priceDiff > 0
                           ? Colors.green
                           : priceDiff < 0
-                              ? Colors.red
-                              : Colors.grey,
+                          ? Colors.red
+                          : Colors.grey,
                     ),
                     _buildComparisonRow(
                       context: dCtx,
@@ -215,10 +212,12 @@ Future<void> showSubmitRequestSheet(
                       value: '$newDays days',
                       changeIndicator: daysDiffText,
                       changeColor: daysDiff > 0
-                          ? Colors.red // More days = negative
+                          ? Colors
+                                .red // More days = negative
                           : daysDiff < 0
-                              ? Colors.green // Fewer days = positive
-                              : Colors.grey,
+                          ? Colors
+                                .green // Fewer days = positive
+                          : Colors.grey,
                     ),
                     if ((newNote ?? '').isNotEmpty)
                       _buildComparisonRow(
@@ -273,7 +272,9 @@ Future<void> showSubmitRequestSheet(
       return StatefulBuilder(
         builder: (context, setState) {
           return Container(
-            key: Key(isReplaceMode ? 'replace_bid_sheet' : 'submit_proposal_sheet'),
+            key: Key(
+              isReplaceMode ? 'replace_bid_sheet' : 'submit_proposal_sheet',
+            ),
             height: MediaQuery.of(ctx).size.height * 0.85,
             decoration: BoxDecoration(
               color: colorScheme.cardBackground,
@@ -338,8 +339,12 @@ Future<void> showSubmitRequestSheet(
                         ),
                       Expanded(
                         child: Text(
-                          isReplaceMode ? 'Replace Your Bid' : 'Submit Proposal',
-                          style: AppTypography.h4.copyWith(color: colorScheme.text),
+                          isReplaceMode
+                              ? 'Replace Your Bid'
+                              : 'Submit Proposal',
+                          style: AppTypography.h4.copyWith(
+                            color: colorScheme.text,
+                          ),
                         ),
                       ),
                     ],
@@ -349,7 +354,9 @@ Future<void> showSubmitRequestSheet(
                 // Existing bid summary (only in replace mode)
                 if (isReplaceMode && existingBid != null)
                   Container(
-                    margin: const EdgeInsets.symmetric(horizontal: AppDimens.p24),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: AppDimens.p24,
+                    ),
                     padding: const EdgeInsets.all(AppDimens.p16),
                     decoration: BoxDecoration(
                       color: colorScheme.cardBackground.withValues(alpha: 0.5),
@@ -397,7 +404,9 @@ Future<void> showSubmitRequestSheet(
                 // Form
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: AppDimens.p24),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimens.p24,
+                    ),
                     child: Form(
                       key: formKey,
                       child: Column(
@@ -427,7 +436,8 @@ Future<void> showSubmitRequestSheet(
                                       ),
                                       validator: (v) {
                                         final n = double.tryParse(v ?? '');
-                                        if (n == null || n < 0) return 'Invalid';
+                                        if (n == null || n < 0)
+                                          return 'Invalid';
                                         return null;
                                       },
                                     ),
@@ -452,7 +462,8 @@ Future<void> showSubmitRequestSheet(
                                       keyboardType: TextInputType.number,
                                       validator: (v) {
                                         final n = int.tryParse(v ?? '');
-                                        if (n == null || n <= 0) return 'Invalid';
+                                        if (n == null || n <= 0)
+                                          return 'Invalid';
                                         return null;
                                       },
                                     ),
@@ -488,7 +499,9 @@ Future<void> showSubmitRequestSheet(
                                 style: BorderStyle.solid,
                                 width: 1,
                               ),
-                              borderRadius: BorderRadius.circular(AppDimens.r14),
+                              borderRadius: BorderRadius.circular(
+                                AppDimens.r14,
+                              ),
                             ),
                             child: Center(
                               child: Column(
@@ -504,9 +517,8 @@ Future<void> showSubmitRequestSheet(
                                   Text(
                                     'Upload Files (Coming Soon)',
                                     style: AppTypography.captionBold.copyWith(
-                                      color: colorScheme.textSecondary.withValues(
-                                        alpha: 0.5,
-                                      ),
+                                      color: colorScheme.textSecondary
+                                          .withValues(alpha: 0.5),
                                     ),
                                   ),
                                 ],
@@ -628,7 +640,9 @@ Future<void> showSubmitRequestSheet(
                           if (!ctx.mounted) return;
                           messenger.showSnackBar(
                             SnackBar(
-                              content: Text('Failed to replace bid: ${e.toString()}'),
+                              content: Text(
+                                'Failed to replace bid: ${e.toString()}',
+                              ),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -638,10 +652,7 @@ Future<void> showSubmitRequestSheet(
                         AppLogger.i(
                           'Submitting new bid for task $taskId',
                           tag: 'SubmitRequestSheet',
-                          json: {
-                            'price': priceCents,
-                            'days': days,
-                          },
+                          json: {'price': priceCents, 'days': days},
                         );
 
                         final ok = await controller.submitOfferUI(
@@ -687,11 +698,7 @@ Widget _buildExistingBidInfo({
 }) {
   return Row(
     children: [
-      Icon(
-        icon,
-        size: 16,
-        color: Colors.grey,
-      ),
+      Icon(icon, size: 16, color: Colors.grey),
       const SizedBox(width: 4),
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -728,15 +735,15 @@ Widget _buildComparisonRow({
   return Padding(
     padding: const EdgeInsets.only(bottom: 8),
     child: Row(
-      crossAxisAlignment: isMultiline ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+      crossAxisAlignment: isMultiline
+          ? CrossAxisAlignment.start
+          : CrossAxisAlignment.center,
       children: [
         SizedBox(
           width: 80,
           child: Text(
             label,
-            style: AppTypography.caption.copyWith(
-              color: Colors.grey,
-            ),
+            style: AppTypography.caption.copyWith(color: Colors.grey),
           ),
         ),
         Expanded(

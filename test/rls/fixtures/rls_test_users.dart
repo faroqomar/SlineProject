@@ -311,13 +311,8 @@ extension TestUserHelpers on TestUser {
       'aud': 'authenticated',
       'role': isServiceRole ? 'service_role' : 'authenticated',
       'email': email,
-      'app_metadata': {
-        'active_role': role,
-        'provider': 'email',
-      },
-      'user_metadata': {
-        'full_name': fullName,
-      },
+      'app_metadata': {'active_role': role, 'provider': 'email'},
+      'user_metadata': {'full_name': fullName},
     };
   }
 

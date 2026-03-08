@@ -16,7 +16,7 @@ import '../../../core/services/role_switch_coordinator.dart';
 /// Each state-changing method calls notifyListeners() only once at the end.
 class TaskViewModel extends ChangeNotifier with RoleSwitchAware {
   TaskViewModel({TaskRepository? repo, SupabaseClient? client})
-      : _repo = repo ?? TaskRepository(client ?? Supabase.instance.client) {
+    : _repo = repo ?? TaskRepository(client ?? Supabase.instance.client) {
     // Register with role switch coordinator
     RoleSwitchCoordinator().register(this);
   }

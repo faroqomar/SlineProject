@@ -36,7 +36,7 @@ class HomeViewModel extends ChangeNotifier
   static int _requestSequence = 0;
 
   HomeViewModel({TaskService? taskService})
-      : _taskService = taskService ?? TaskService() {
+    : _taskService = taskService ?? TaskService() {
     // Register with role switch coordinator
     RoleSwitchCoordinator().register(this);
   }

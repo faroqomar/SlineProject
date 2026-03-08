@@ -87,7 +87,11 @@ class DashboardRepository {
           .order('last_activity_at', ascending: false);
 
       final unifiedItems = (response as List)
-          .map((e) => UnifiedWorkItemModel.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map(
+            (e) => UnifiedWorkItemModel.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ),
+          )
           .toList();
 
       final items = unifiedItems
@@ -162,8 +166,8 @@ class DashboardRepository {
     final WorkItemType itemType = u.sourceType == 'booking'
         ? WorkItemType.booking
         : u.sourceType == 'direct_offer'
-            ? WorkItemType.directOffer
-            : WorkItemType.task;
+        ? WorkItemType.directOffer
+        : WorkItemType.task;
 
     return WorkItem(
       id: u.id,

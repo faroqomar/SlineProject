@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-
 /// Favorites cross-feature flow (profile ↔ favorites screen ↔ request tile).
 /// Uses fixtures from FIXTURES_Favorites and selectors from TEST_INFRA_Favorites.
 /// Full flow: login as client → open profile → toggle favorite → open Favorites screen → verify list.
@@ -17,7 +16,8 @@ void main() {
         // See .TODO/FIXTURES_Favorites_2026-03-01.md and .TODO/TEST_INFRA_Favorites_2026-03-01.md.
         expect(true, isTrue);
       },
-      skip: true, // Requires staging fixtures and auth; extend when fixtures are ready
+      skip:
+          true, // Requires staging fixtures and auth; extend when fixtures are ready
     );
   });
 }

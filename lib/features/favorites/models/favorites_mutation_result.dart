@@ -2,6 +2,7 @@
 enum FavoritesMutationResult {
   success,
   duplicate,
+
   /// Operation skipped because same id is already in progress (no snackbar).
   skipped,
   unauthenticated,

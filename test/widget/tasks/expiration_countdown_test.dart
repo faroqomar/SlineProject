@@ -12,9 +12,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: ExpirationCountdown(
-              expirationTime: expirationTime,
-            ),
+            body: ExpirationCountdown(expirationTime: expirationTime),
           ),
         ),
       );
@@ -28,9 +26,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: ExpirationCountdown(
-              expirationTime: expirationTime,
-            ),
+            body: ExpirationCountdown(expirationTime: expirationTime),
           ),
         ),
       );
@@ -50,9 +46,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: ExpirationCountdown(
-              expirationTime: expirationTime,
-            ),
+            body: ExpirationCountdown(expirationTime: expirationTime),
           ),
         ),
       );
@@ -69,15 +63,15 @@ void main() {
       expect(borderColor, equals(Colors.green.withValues(alpha: 0.3)));
     });
 
-    testWidgets('uses gold color for warning state (1-4 hours)', (tester) async {
+    testWidgets('uses gold color for warning state (1-4 hours)', (
+      tester,
+    ) async {
       final expirationTime = DateTime.now().add(const Duration(hours: 2));
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: ExpirationCountdown(
-              expirationTime: expirationTime,
-            ),
+            body: ExpirationCountdown(expirationTime: expirationTime),
           ),
         ),
       );
@@ -96,9 +90,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: ExpirationCountdown(
-              expirationTime: expirationTime,
-            ),
+            body: ExpirationCountdown(expirationTime: expirationTime),
           ),
         ),
       );
@@ -150,7 +142,9 @@ void main() {
     });
 
     testWidgets('has correct accessibility label', (tester) async {
-      final expirationTime = DateTime.now().add(const Duration(hours: 2, minutes: 30));
+      final expirationTime = DateTime.now().add(
+        const Duration(hours: 2, minutes: 30),
+      );
 
       await tester.pumpWidget(
         MaterialApp(
@@ -179,11 +173,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: ExpirationBadge(
-              expirationTime: expirationTime,
-            ),
-          ),
+          home: Scaffold(body: ExpirationBadge(expirationTime: expirationTime)),
         ),
       );
 
@@ -192,15 +182,13 @@ void main() {
     });
 
     testWidgets('displays short format for future expiration', (tester) async {
-      final expirationTime = DateTime.now().add(const Duration(hours: 2, minutes: 30));
+      final expirationTime = DateTime.now().add(
+        const Duration(hours: 2, minutes: 30),
+      );
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: ExpirationBadge(
-              expirationTime: expirationTime,
-            ),
-          ),
+          home: Scaffold(body: ExpirationBadge(expirationTime: expirationTime)),
         ),
       );
 

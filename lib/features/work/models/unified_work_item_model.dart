@@ -25,6 +25,7 @@ class UnifiedWorkItemModel {
   /// Set for awarded pending-payment tasks (branch from vw_unified_work_items).
   final String? awardedRequestId;
   final DateTime? paymentDeadline;
+
   /// Set for direct_offer branch only; used for deep link to conversation.
   final String? conversationId;
 

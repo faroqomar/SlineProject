@@ -79,18 +79,15 @@ void main() {
   });
 
   group('ErrorMapper work revision (rpc_request_revision)', () {
-    test(
-      'maps "No revisions remaining" to user message',
-      () {
-        final error = _postgrestException(
-          code: 'P0001',
-          message: 'No revisions remaining',
-        );
-        final mapped = ErrorMapper.map(error);
-        expect(mapped, contains('No revisions remaining'));
-        expect(mapped, contains('allowed revision requests'));
-      },
-    );
+    test('maps "No revisions remaining" to user message', () {
+      final error = _postgrestException(
+        code: 'P0001',
+        message: 'No revisions remaining',
+      );
+      final mapped = ErrorMapper.map(error);
+      expect(mapped, contains('No revisions remaining'));
+      expect(mapped, contains('allowed revision requests'));
+    });
 
     test(
       'maps "Can only request revision on delivered work" to user message',
@@ -105,17 +102,14 @@ void main() {
       },
     );
 
-    test(
-      'maps "Only client can request revision" to user message',
-      () {
-        final error = _postgrestException(
-          code: 'P0001',
-          message: 'Only client can request revision',
-        );
-        final mapped = ErrorMapper.map(error);
-        expect(mapped, contains('Only the client'));
-        expect(mapped, contains('revision'));
-      },
-    );
+    test('maps "Only client can request revision" to user message', () {
+      final error = _postgrestException(
+        code: 'P0001',
+        message: 'Only client can request revision',
+      );
+      final mapped = ErrorMapper.map(error);
+      expect(mapped, contains('Only the client'));
+      expect(mapped, contains('revision'));
+    });
   });
 }

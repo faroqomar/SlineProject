@@ -12,8 +12,8 @@ class TenderPaymentCoordinator {
   TenderPaymentCoordinator({
     required TaskService taskService,
     required PaymentService paymentService,
-  })  : _taskService = taskService,
-        _paymentService = paymentService;
+  }) : _taskService = taskService,
+       _paymentService = paymentService;
 
   final TaskService _taskService;
   final PaymentService _paymentService;

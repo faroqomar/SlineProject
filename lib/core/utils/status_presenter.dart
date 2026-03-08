@@ -22,6 +22,10 @@ class StatusPresenter {
         return AppColors.lightRed;
       case BookingStatus.completed:
         return AppColors.gold;
+      case BookingStatus.disputed:
+        return AppColors.gold; // Under review
+      case BookingStatus.noShow:
+        return AppColors.lightRed;
       default:
         return f;
     }
@@ -37,6 +41,8 @@ class StatusPresenter {
         return 'NO SHOW';
       case BookingStatus.expiredUnanswered:
         return 'EXPIRED';
+      case BookingStatus.disputed:
+        return 'DISPUTED';
       default:
         return status.name.toUpperCase();
     }

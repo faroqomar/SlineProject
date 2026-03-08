@@ -23,10 +23,10 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
     required String uid,
     ChatViewModel? chatViewModel,
     DashboardViewModel? dashboardViewModel,
-  })  : _workService = workService ?? WorkManagementService(),
-        currentUserId = uid,
-        _chatViewModel = chatViewModel,
-        _dashboardViewModel = dashboardViewModel {
+  }) : _workService = workService ?? WorkManagementService(),
+       currentUserId = uid,
+       _chatViewModel = chatViewModel,
+       _dashboardViewModel = dashboardViewModel {
     if (currentUserId.isEmpty) {
       AppLogger.w('WorkItemDetailsViewModel initialized without user ID');
     }
@@ -76,8 +76,12 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
       final results = await Future.wait([
         _workService.getUnifiedWorkItem(id, type),
         _workService.getActiveContract(id, type).catchError((_) => null),
-        _workService.getPendingChangeRequests(id, type).catchError((_) => <ChangeRequestModel>[]),
-        _workService.getPendingExtensionRequests(id, type).catchError((_) => <ExtensionRequestModel>[]),
+        _workService
+            .getPendingChangeRequests(id, type)
+            .catchError((_) => <ChangeRequestModel>[]),
+        _workService
+            .getPendingExtensionRequests(id, type)
+            .catchError((_) => <ExtensionRequestModel>[]),
         type == 'booking' ? _workService.getBooking(id) : Future.value(null),
       ]);
 

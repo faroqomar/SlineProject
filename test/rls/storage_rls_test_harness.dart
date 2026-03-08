@@ -103,8 +103,14 @@ class StorageRlsTestHarness {
 
       AppLogger.i('✓ assertCanAccessStorage passed: $desc', tag: _logTag);
     } catch (e) {
-      AppLogger.e('✗ assertCanAccessStorage failed: $desc', tag: _logTag, error: e);
-      fail('Expected storage access to be allowed but was blocked: $desc\nError: $e');
+      AppLogger.e(
+        '✗ assertCanAccessStorage failed: $desc',
+        tag: _logTag,
+        error: e,
+      );
+      fail(
+        'Expected storage access to be allowed but was blocked: $desc\nError: $e',
+      );
     }
   }
 
@@ -131,25 +137,40 @@ class StorageRlsTestHarness {
       if (_client != null) {
         await _client.storage.from(bucket).createSignedUrl(path, 60);
         // If we get here without exception, the RLS policy allowed access
-        AppLogger.e('✗ assertCannotAccessStorage failed: $desc - Access was allowed when it should be blocked', tag: _logTag);
+        AppLogger.e(
+          '✗ assertCannotAccessStorage failed: $desc - Access was allowed when it should be blocked',
+          tag: _logTag,
+        );
         fail('Expected storage access to be blocked but was allowed: $desc');
       }
     } on StorageException catch (e) {
       // Expected - RLS should block this
       if (expectedError != null) {
-        expect(e.message, contains(expectedError),
-            reason: 'Error message should contain "$expectedError"');
+        expect(
+          e.message,
+          contains(expectedError),
+          reason: 'Error message should contain "$expectedError"',
+        );
       }
       // Verify it's a 403 or similar access denied
       final code = e.statusCode != null ? int.tryParse(e.statusCode!) : null;
       if (code != null && code >= 400) {
-        AppLogger.i('✓ assertCannotAccessStorage passed: $desc (blocked with ${e.statusCode})', tag: _logTag);
+        AppLogger.i(
+          '✓ assertCannotAccessStorage passed: $desc (blocked with ${e.statusCode})',
+          tag: _logTag,
+        );
       } else {
-        AppLogger.i('✓ assertCannotAccessStorage passed: $desc (blocked as expected)', tag: _logTag);
+        AppLogger.i(
+          '✓ assertCannotAccessStorage passed: $desc (blocked as expected)',
+          tag: _logTag,
+        );
       }
     } catch (e) {
       // Other errors might also indicate RLS blocking
-      AppLogger.i('✓ assertCannotAccessStorage passed: $desc (blocked with error: $e)', tag: _logTag);
+      AppLogger.i(
+        '✓ assertCannotAccessStorage passed: $desc (blocked with error: $e)',
+        tag: _logTag,
+      );
     }
   }
 
@@ -174,7 +195,9 @@ class StorageRlsTestHarness {
 
     try {
       if (_client != null) {
-        await _client.storage.from(bucket).uploadBinary(path, Uint8List.fromList(data));
+        await _client.storage
+            .from(bucket)
+            .uploadBinary(path, Uint8List.fromList(data));
       }
       AppLogger.i('✓ assertCanUpload passed: $desc', tag: _logTag);
     } catch (e) {
@@ -204,14 +227,25 @@ class StorageRlsTestHarness {
 
     try {
       if (_client != null) {
-        await _client.storage.from(bucket).uploadBinary(path, Uint8List.fromList(data));
-        AppLogger.e('✗ assertCannotUpload failed: $desc - Upload was allowed when it should be blocked', tag: _logTag);
+        await _client.storage
+            .from(bucket)
+            .uploadBinary(path, Uint8List.fromList(data));
+        AppLogger.e(
+          '✗ assertCannotUpload failed: $desc - Upload was allowed when it should be blocked',
+          tag: _logTag,
+        );
         fail('Expected upload to be blocked but was allowed: $desc');
       }
     } on StorageException catch (e) {
-      AppLogger.i('✓ assertCannotUpload passed: $desc (blocked with ${e.statusCode})', tag: _logTag);
+      AppLogger.i(
+        '✓ assertCannotUpload passed: $desc (blocked with ${e.statusCode})',
+        tag: _logTag,
+      );
     } catch (e) {
-      AppLogger.i('✓ assertCannotUpload passed: $desc (blocked with error: $e)', tag: _logTag);
+      AppLogger.i(
+        '✓ assertCannotUpload passed: $desc (blocked with error: $e)',
+        tag: _logTag,
+      );
     }
   }
 
@@ -253,13 +287,22 @@ class StorageRlsTestHarness {
     try {
       if (_client != null) {
         await _client.storage.from(bucket).remove([path]);
-        AppLogger.e('✗ assertCannotDelete failed: $desc - Delete was allowed when it should be blocked', tag: _logTag);
+        AppLogger.e(
+          '✗ assertCannotDelete failed: $desc - Delete was allowed when it should be blocked',
+          tag: _logTag,
+        );
         fail('Expected delete to be blocked but was allowed: $desc');
       }
     } on StorageException catch (e) {
-      AppLogger.i('✓ assertCannotDelete passed: $desc (blocked with ${e.statusCode})', tag: _logTag);
+      AppLogger.i(
+        '✓ assertCannotDelete passed: $desc (blocked with ${e.statusCode})',
+        tag: _logTag,
+      );
     } catch (e) {
-      AppLogger.i('✓ assertCannotDelete passed: $desc (blocked with error: $e)', tag: _logTag);
+      AppLogger.i(
+        '✓ assertCannotDelete passed: $desc (blocked with error: $e)',
+        tag: _logTag,
+      );
     }
   }
 
@@ -294,7 +337,10 @@ class StorageRlsUserContext {
   }
 
   /// Assert this user cannot access storage path
-  Future<void> cannotAccess({required String bucket, required String path}) async {
+  Future<void> cannotAccess({
+    required String bucket,
+    required String path,
+  }) async {
     await harness.assertCannotAccessStorage(
       bucket: bucket,
       path: path,

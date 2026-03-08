@@ -62,7 +62,7 @@ This section gives any new contributor a complete map of the SLine app: how it�
 - **ViewModel (`viewmodels/`)**: ChangeNotifier with business logic and UI state. Calls repository/service.
 - **Repository/Service (`data/`, `services/`)**: Encapsulate Supabase queries, error mapping, and Storage ops.
 - **Models (`models/`)**: Immutable data models mirroring DB rows (UTC timestamps).
-- **Notifications**: All notification rows are created server-side (triggers, RPCs). The client only reads and updates (e.g. mark as read) via `NotificationService`; no client inserts into `public.notifications`.
+- **Notifications**: All notification rows are created server-side (triggers, RPCs). The client only reads and updates (e.g. mark as read) via `NotificationService`; no client inserts into `public.notifications`. On connect, the ViewModel fetches unread first (foreground sync) then streams the latest 50. Push: device tokens are stored in `user_devices` via `PushDeviceService` (register on login/resume/token refresh when FCM is available); push delivery is server-only (trigger or cron → Edge Function → FCM). Plan: `.TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md`.
 
 **App-level providers** (in `lib/main.dart`): `Provider<SupabaseClient>`, `Provider<ProfileRepository>`, `Provider<CategoriesRepository>` so that views that need to construct ViewModels with a client or repository get them via `context.read<>()` instead of referencing Supabase directly.
 
@@ -2149,7 +2149,7 @@ Important current behavior:
 | `provider_id`    | `uuid`                | service provider                 | used for provider-side lists and RLS                                                                                         |
 | `client_id`      | `uuid`                | booking client                   | used for client-side lists and RLS                                                                                           |
 | `slot_id`        | `uuid`                | optional legacy slot link        | nullable for direct slotless bookings                                                                                        |
-| `status`         | `booking_status_enum` | booking lifecycle                | app maps `paid_request_pending`, `active`, `delivered`, `completed`, `canceled`, `refunded`, `expired_unanswered`, `no_show` |
+| `status`         | `booking_status_enum` | booking lifecycle                | app maps `paid_request_pending`, `active`, `delivered`, `completed`, `canceled`, `refunded`, `expired_unanswered`, `no_show`, `disputed` |
 | `payment_status` | `payment_status_enum` | payment lifecycle                | `unpaid`, `held`, `released`, `refunded`                                                                                     |
 | `price`          | `numeric`             | canonical amount                 | server-derived for booking drafts                                                                                            |
 | `package_id`     | `text`                | selected package tier            | optional                                                                                                                     |
@@ -2175,6 +2175,7 @@ Current server-backed booking/payment flow depends on:
 - `rpc_submit_delivery`
 - `rpc_approve_delivery`
 - `process_payment_event_ledger(...)`
+- **Booking lifecycle (2026-03-08):** Client cannot cancel after delivery (use "Report Issue" → disputed). `fn_booking_guard` blocks delivered→canceled by client; allows delivered→disputed (client). `rpc_finalize_auto_approval` booking branch calls ledger when review window expires. `admin_resolve_booking_dispute` (admin-only) resolves disputed→completed or refunded.
 
 ### 2.3 RLS summary
 
@@ -2388,55 +2389,51 @@ UI (WorkItemDetailsScreen)
 
 ## 1. Overview
 
-The Hardened Payment Gateway is a security-first payment orchestration layer that replaces direct client-side payment creation. It centralizes payment authorization in Supabase Edge Functions and uses a two-table state machine (`payment_intents` and `payment_events`) to ensure idempotency and prevent unauthorized fund movements.
+The Hardened Payment Gateway is a security-first payment orchestration layer that centralizes payment authorization in Supabase Edge Functions. It uses `payment_intents`, `payment_events`, and `orphan_payments` to ensure idempotency, audit every gateway event, and prevent unauthorized fund movements.
 
-### Key Principles:
+### Key Principles
 
-- **Server-Side Authorization**: Only Supabase Edge Functions can create or update payment intents.
-- **Atomic State Transitions**: Payments move through `created` → `processing` → `succeeded`/`failed`.
-- **Event Sourcing**: Every state change is recorded as a `payment_event` for auditing.
-- **Orphan Prevention**: Payments without a corresponding entity (draft booking/task) are blocked.
+- **Server-Side Authorization**: Only Edge Functions create or update payment intents (via `service_role`).
+- **Intent path**: When the gateway sends `additionalInfo.intent_id`, the webhook (`qicard_webhook_handler`) looks up the intent, inserts into `payment_events`, validates amount/currency, then calls the ledger with `payment_intent_id` in `p_meta`; `journal_entries.meta` stores it for forensics.
+- **Append-only audit**: `payment_events` is INSERT-only for `service_role`; a trigger blocks UPDATE/DELETE.
+- **Orphan handling**: Events with no matching intent or amount mismatch are written to `orphan_payments` and never trigger the ledger.
+
+**Contracts and logging:** `.TODO/improvement_the_system/ImplementReady/24_hardened_paymentLinking_system/CONTRACT_HardenedPaymentLinking.md`, `LOGGING_AND_SECRETS.md`.
 
 ## 2. Database Mapping
 
-### 2.1 `public.payment_intents`
+See **SUPABASE_SETUP.md** §5.23–5.25 for full column lists.
 
-Stores the state and metadata of a payment attempt.
+- **`payment_intents`**: State and metadata (entity_type, entity_id, payer_id, receiver_id, gross_amount, currency, status, signature, paid_at, gateway_intent_id). RLS: SELECT for payer; INSERT/UPDATE only `service_role`.
+- **`payment_events`**: One row per webhook hit when intent is known; `gateway_event_id` UNIQUE, `intent_id` FK to payment_intents. RLS: INSERT `service_role` only; trigger enforces append-only.
+- **`orphan_payments`**: Gateway events not linked to a valid intent (reason: intent_not_found, amount_mismatch); optional `investigated` for admin queue.
 
-| Column        | Type      | Purpose                                                      |
-| ------------- | --------- | ------------------------------------------------------------ |
-| `id`          | `uuid`    | PK, referenced by external payment providers (QiCard etc.)   |
-| `amount`      | `integer` | Amount in cents                                              |
-| `currency`    | `text`    | e.g., 'IQD'                                                  |
-| `status`      | `text`    | `created`, `processing`, `succeeded`, `failed`, `canceled`   |
-| `entity_type` | `text`    | `booking` or `task`                                          |
-| `entity_id`   | `uuid`    | Reference to the draft booking or awarded task offer         |
-| `user_id`     | `uuid`    | The client making the payment                                |
-| `provider_id` | `text`    | External ID from the payment provider (e.g., QiCard OrderID) |
+## 3. Webhook Intent Path (QiCard → Edge)
 
-### 2.2 `public.payment_events`
+Canonical webhook: **`qicard_webhook_handler`**. When payload has `additionalInfo.intent_id` (valid UUID):
 
-Audit log of all transitions.
+1. Look up `payment_intents` by `id` or `gateway_intent_id` (= paymentId).
+2. If not found → INSERT `orphan_payments` (reason: intent_not_found), return 200.
+3. INSERT `payment_events` (gateway_event_id, intent_id, event_type, payload); on duplicate gateway_event_id, treat as idempotent.
+4. If intent.status already `succeeded` → return 200 (idempotency).
+5. Validate amount and currency against intent; on mismatch → INSERT `orphan_payments` (amount_mismatch), return 200.
+6. Call `submitGatewayEscrowHold` or `submitDirectOfferGatewayEscrow` with `paymentIntentId`; RPCs merge it into `journal_entries.meta`.
+7. UPDATE `payment_intents` SET status = 'succeeded', paid_at = now().
 
-## 3. Implementation Flow (Flutter)
+Internal HMAC verification (create edge writes signature, webhook verifies) is planned; see LOGGING_AND_SECRETS.md.
 
-1. **Step 1: Create Draft/Award**: UI calls `BookingService.createBookingDraft` or `ProposalsService.awardTaskOffer`.
-2. **Step 2: Create Intent**: UI calls `QiCardPaymentService.createPaymentIntent(entityType, entityId)`.
-   - This triggers the `create_payment_intent` Edge Function.
-   - It validates the entity belongs to the user and is in a payable state.
-   - Returns a `payment_intent_id` and `payment_url`.
-3. **Step 3: Listen for Status**: UI subscribes to `payment_intents` via Realtime:
-   ```dart
-   supabase.from('payment_intents').stream(primaryKey: ['id']).eq('id', intentId);
-   ```
-4. **Step 4: Webview**: UI opens the `payment_url` in a webview.
-5. **Step 5: Completion**: Edge Function webhook handler updates `payment_intents.status` to `succeeded`. UI detects this via the stream and navigates to success.
+## 4. Implementation Flow (Flutter)
 
-## 4. Security & Idempotency
+1. **Create draft / accept offer**: Booking draft or direct offer accepted, unpaid.
+2. **Create payment**: App calls `qicard_payment_create` (booking) or `qicard_payment_create_direct_offer` (direct offer). Edge returns `intent_id` and `form_url` when it inserts a row into `payment_intents`.
+3. **Realtime (when intent_id present)**: UI subscribes to `payment_intents(id)` via `PaymentService.streamPaymentIntentStatus(intentId)`. Booking: `PaymentCheckoutScreen`; direct offer: `PaymentWebViewScreen` (receives `paymentIntentStatusStream`).
+4. **Webview**: User completes payment at `form_url`. On success, webhook updates intent and ledger; Realtime delivers status → UI pops with success. If Realtime is not used (no intent_id), app relies on callback URL and recovery.
 
-- **RLS**: Clients can only see their own `payment_intents`.
-- **System Only Updates**: Only the `service_role` (Edge Functions) can update payment statuses.
-- **Trigger**: `trg_payment_intent_success_ledger` automatically triggers the ledger functions when status reaches `succeeded`.
+## 5. Security & Idempotency
+
+- **RLS**: Clients can only SELECT their own `payment_intents`. Only `service_role` can INSERT/UPDATE payment_intents and INSERT payment_events.
+- **Append-only**: Trigger `trg_payment_events_append_only` rejects UPDATE/DELETE on `payment_events`.
+- **Ledger audit**: `process_payment_event_ledger` (gateway_escrow) and `process_gateway_escrow_direct_offer` persist `payment_intent_id` from `p_meta` into `journal_entries.meta` for forensics.
 
 ---
 

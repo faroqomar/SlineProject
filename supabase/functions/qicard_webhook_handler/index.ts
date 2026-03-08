@@ -226,6 +226,150 @@ Deno.serve(async (req: Request) => {
   }
 });
 
+/** Hardened path: intent_id in additionalInfo → payment_events audit, amount check, ledger with payment_intent_id. Returns Response or null if not intent path. */
+async function handleIntentBasedPayment(
+  payload: QiCardPaymentPayload,
+  paymentId: string,
+  requestId: string,
+  amount: number,
+  currency: string,
+  creationDate: string,
+  additionalInfo: Record<string, unknown>,
+  intentId: string,
+): Promise<Response | null> {
+  const { data: intent, error: intentError } = await supabase
+    .from("payment_intents")
+    .select("id, entity_type, entity_id, status, gross_amount, currency")
+    .or(`id.eq.${intentId},gateway_intent_id.eq.${paymentId}`)
+    .maybeSingle();
+
+  if (intentError || !intent) {
+    console.log(JSON.stringify({ event: "intent_path_orphan", gateway_event_id: paymentId, reason: "intent_not_found" }));
+    await supabase.from("orphan_payments").insert({
+      gateway_event_id: paymentId,
+      error_reason: "intent_not_found",
+      payload: payload as unknown as Record<string, unknown>,
+    });
+    return jsonResponse({ ok: true, message: "Intent not found; recorded as orphan" }, 200);
+  }
+
+  const intentIdResolved = intent.id as string;
+  const { error: insertErr } = await supabase.from("payment_events").insert({
+    gateway_event_id: paymentId,
+    intent_id: intentIdResolved,
+    event_type: "payment_success",
+    payload: payload as unknown as Record<string, unknown>,
+  });
+  if (insertErr) {
+    if (insertErr.code === "23505" || String(insertErr.message || "").toLowerCase().includes("duplicate") || String(insertErr.message || "").toLowerCase().includes("unique")) {
+      // Idempotent: same gateway_event_id already recorded
+    } else {
+      console.error("payment_events insert failed", insertErr);
+      return jsonResponse({ error: "Audit insert failed" }, 500);
+    }
+  }
+
+  if (intent.status === "succeeded") {
+    return jsonResponse({ ok: true, message: "Intent already succeeded" }, 200);
+  }
+
+  const intentAmount = Number(intent.gross_amount) || 0;
+  const intentCurrency = (intent.currency as string) || "IQD";
+  if (intentAmount !== amount || intentCurrency !== currency) {
+    console.log(JSON.stringify({ event: "intent_path_orphan", gateway_event_id: paymentId, reason: "amount_mismatch" }));
+    await supabase.from("orphan_payments").insert({
+      gateway_event_id: paymentId,
+      error_reason: "amount_mismatch",
+      payload: payload as unknown as Record<string, unknown>,
+    });
+    return jsonResponse({ ok: true, message: "Amount/currency mismatch; recorded as orphan" }, 200);
+  }
+
+  const correlationId =
+    typeof additionalInfo.correlation_id === "string" && additionalInfo.correlation_id.length > 0
+      ? additionalInfo.correlation_id
+      : `intent:${intentIdResolved}`;
+
+  const entityType = intent.entity_type as string;
+  const entityId = intent.entity_id as string;
+
+  if (entityType === "direct_offer") {
+    try {
+      const escrowResult = await submitDirectOfferGatewayEscrow(supabase, {
+        offerId: entityId,
+        paymentId,
+        requestId,
+        amount,
+        currency,
+        timestamp: creationDate,
+        correlationId,
+        paymentIntentId: intentIdResolved,
+      });
+      await supabase.from("payment_intents").update({ status: "succeeded", paid_at: new Date().toISOString() }).eq("id", intentIdResolved);
+      console.log(JSON.stringify({ event: "intent_path_processed", intent_id: intentIdResolved, gateway_event_id: paymentId, entity_type: "direct_offer" }));
+      return jsonResponse({
+        ok: true,
+        journal_entry_id: escrowResult.journalEntryId,
+        replayed: escrowResult.replayed,
+      }, 200);
+    } catch (err) {
+      console.error("Intent path direct_offer escrow error", err);
+      return jsonResponse({ error: err instanceof Error ? err.message : String(err) }, 400);
+    }
+  }
+
+  if (entityType === "booking") {
+    try {
+      const escrowResult = await submitGatewayEscrowHold(supabase, {
+        bookingId: entityId,
+        paymentId,
+        requestId,
+        amount,
+        currency,
+        timestamp: creationDate,
+        correlationId,
+        paymentIntentId: intentIdResolved,
+      });
+      await supabase.from("payment_intents").update({ status: "succeeded", paid_at: new Date().toISOString() }).eq("id", intentIdResolved);
+      await recordBookingAudit(supabase, {
+        bookingId: entityId,
+        eventType: "webhook_accept",
+        correlationId,
+        outcome: escrowResult.replayed ? "replayed" : "accepted",
+        payload: { payment_id: paymentId, request_id: requestId, amount, currency },
+      });
+      if (!escrowResult.replayed) {
+        const booking = await fetchBooking(supabase, entityId);
+        await createBookingNotification(supabase, {
+          userId: booking.provider_id,
+          bookingId: entityId,
+          title: "Booking Payment Secured",
+          message: "Payment was secured for a booking request.",
+          metadata: { booking_id: entityId, status: booking.status, payment_status: booking.payment_status },
+        });
+      }
+      console.log(JSON.stringify({ event: "intent_path_processed", intent_id: intentIdResolved, gateway_event_id: paymentId, entity_type: "booking" }));
+      return jsonResponse({
+        ok: true,
+        journal_entry_id: escrowResult.journalEntryId,
+        replayed: escrowResult.replayed,
+      }, 200);
+    } catch (err) {
+      console.error("Intent path booking escrow error", err);
+      await recordBookingAudit(supabase, {
+        bookingId: entityId,
+        eventType: "webhook_reject",
+        correlationId,
+        outcome: "rejected",
+        payload: { payment_id: paymentId, request_id: requestId, error: err instanceof Error ? err.message : String(err) },
+      });
+      return jsonResponse({ error: err instanceof Error ? err.message : String(err) }, 400);
+    }
+  }
+
+  return null;
+}
+
 async function handleQiCardPaymentWebhook(
   payload: QiCardPaymentPayload,
 ): Promise<Response> {
@@ -248,6 +392,13 @@ async function handleQiCardPaymentWebhook(
       `Ignoring non-success payment status=${status} paymentId=${paymentId}`,
     );
     return jsonResponse({ ok: true, message: "Ignored non-success status" }, 200);
+  }
+
+  // Hardened path: when intent_id is present, use payment_intents + payment_events + ledger meta link
+  const intentId = additionalInfo.intent_id ? String(additionalInfo.intent_id).trim() : "";
+  if (intentId && isUuid(intentId)) {
+    const intentResult = await handleIntentBasedPayment(payload, paymentId, requestId, amount, currency, creationDate, additionalInfo, intentId);
+    if (intentResult !== null) return intentResult;
   }
 
   const correlationId =

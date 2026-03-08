@@ -79,6 +79,32 @@ class BookingModel {
     );
   }
 
+  /// DB-safe status string for API writes (e.g. no_show not noShow).
+  static String statusToDbString(BookingStatus status) {
+    switch (status) {
+      case BookingStatus.paidRequestPending:
+        return 'paid_request_pending';
+      case BookingStatus.active:
+        return 'active';
+      case BookingStatus.delivered:
+        return 'delivered';
+      case BookingStatus.refunded:
+        return 'refunded';
+      case BookingStatus.expiredUnanswered:
+        return 'expired_unanswered';
+      case BookingStatus.inProgress:
+        return 'in_progress';
+      case BookingStatus.noShow:
+        return 'no_show';
+      case BookingStatus.disputed:
+        return 'disputed';
+      case BookingStatus.declined:
+        return 'canceled';
+      default:
+        return status.name;
+    }
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -86,7 +112,7 @@ class BookingModel {
       'provider_id': providerId,
       'client_id': clientId,
       'slot_id': slotId,
-      'status': status.name,
+      'status': statusToDbString(status),
       'payment_status': paymentStatus.name,
       'note': note,
       'price': price,
@@ -163,6 +189,8 @@ class BookingModel {
         return BookingStatus.active; // Map legacy/alternative to active
       case 'no_show':
         return BookingStatus.noShow;
+      case 'disputed':
+        return BookingStatus.disputed;
       case 'canceled': // Handle alternative spelling if needed
       case 'cancelled':
         return BookingStatus.canceled;

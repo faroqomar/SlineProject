@@ -29,7 +29,10 @@ class ConversationListTile extends StatelessWidget {
     return conversation.lastMessageSeenAt == null;
   }
 
-  static bool _isTypingWithin15s(DateTime? presenceUpdatedAt, bool otherUserTyping) {
+  static bool _isTypingWithin15s(
+    DateTime? presenceUpdatedAt,
+    bool otherUserTyping,
+  ) {
     if (!otherUserTyping || presenceUpdatedAt == null) return false;
     return DateTime.now().difference(presenceUpdatedAt).inSeconds <= 15;
   }
@@ -44,7 +47,10 @@ class ConversationListTile extends StatelessWidget {
     final bool isActiveConvo = vm.activeConversation?.id == conversation.id;
     final bool isOnline = isActiveConvo
         ? vm.otherUserTyping
-        : _isTypingWithin15s(conversation.presenceUpdatedAt, conversation.otherUserTyping);
+        : _isTypingWithin15s(
+            conversation.presenceUpdatedAt,
+            conversation.otherUserTyping,
+          );
 
     return GestureDetector(
       onTap: onTap,

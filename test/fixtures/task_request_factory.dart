@@ -155,14 +155,18 @@ List<TaskRequest> createTaskRequestList(
     return createTaskRequest(
       id: indexSpecific?.id ?? base?.id ?? '$_defaultRequestId-$index',
       taskId: indexSpecific?.taskId ?? base?.taskId,
-      bidderId: indexSpecific?.bidderId ?? base?.bidderId ?? '$_defaultBidderId-$index',
+      bidderId:
+          indexSpecific?.bidderId ??
+          base?.bidderId ??
+          '$_defaultBidderId-$index',
       price: indexSpecific?.price ?? base?.price,
       days: indexSpecific?.days ?? base?.days,
       note: indexSpecific?.note ?? base?.note ?? 'Bid $index: $_defaultNote',
       status: indexSpecific?.status ?? base?.status,
       paymentStatus: indexSpecific?.paymentStatus ?? base?.paymentStatus,
       createdAt: indexSpecific?.createdAt ?? base?.createdAt,
-      bidderName: indexSpecific?.bidderName ?? base?.bidderName ?? 'Freelancer $index',
+      bidderName:
+          indexSpecific?.bidderName ?? base?.bidderName ?? 'Freelancer $index',
       bidderAvatar: indexSpecific?.bidderAvatar ?? base?.bidderAvatar,
       taskTitle: indexSpecific?.taskTitle ?? base?.taskTitle,
     );
@@ -411,15 +415,13 @@ Map<String, dynamic> createPendingBidRow({
     status: 'pending',
     paymentStatus: 'unpaid',
     createdAt: createdAt,
-    profiles: profiles ??
+    profiles:
+        profiles ??
         <String, dynamic>{
           'full_name': 'Test Freelancer',
           'avatar_url': 'avatars/test-freelancer.png',
         },
-    tasks: tasks ??
-        <String, dynamic>{
-          'title': 'Test Task Title',
-        },
+    tasks: tasks ?? <String, dynamic>{'title': 'Test Task Title'},
   );
 }
 
@@ -442,9 +444,13 @@ Map<String, dynamic> createAcceptedBidRow({
   AppLogger.d('Creating accepted bid DB row fixture', tag: _logTag);
 
   final now = DateTime.now();
-  final effectiveAwardedAt = awardedAt ?? now.subtract(const Duration(hours: 12)).toIso8601String();
-  final effectiveDeadline = paymentDeadline ??
-      DateTime.parse(effectiveAwardedAt).add(const Duration(hours: 48)).toIso8601String();
+  final effectiveAwardedAt =
+      awardedAt ?? now.subtract(const Duration(hours: 12)).toIso8601String();
+  final effectiveDeadline =
+      paymentDeadline ??
+      DateTime.parse(
+        effectiveAwardedAt,
+      ).add(const Duration(hours: 48)).toIso8601String();
 
   return createTaskRequestRow(
     id: id,
@@ -485,8 +491,9 @@ Map<String, dynamic> createExpiredBidRow({
   final now = DateTime.now();
   final expiredAwardedAt =
       awardedAt ?? now.subtract(const Duration(hours: 49)).toIso8601String();
-  final expiredDeadline =
-      DateTime.parse(expiredAwardedAt).add(const Duration(hours: 48)).toIso8601String();
+  final expiredDeadline = DateTime.parse(
+    expiredAwardedAt,
+  ).add(const Duration(hours: 48)).toIso8601String();
 
   return createTaskRequestRow(
     id: id,
@@ -497,8 +504,11 @@ Map<String, dynamic> createExpiredBidRow({
     note: note ?? 'Expired bid - payment deadline passed',
     status: 'accepted',
     paymentStatus: 'unpaid',
-    createdAt: createdAt ??
-        DateTime.parse(expiredAwardedAt).subtract(const Duration(hours: 24)).toIso8601String(),
+    createdAt:
+        createdAt ??
+        DateTime.parse(
+          expiredAwardedAt,
+        ).subtract(const Duration(hours: 24)).toIso8601String(),
     awardedAt: expiredAwardedAt,
     awardedBy: awardedBy ?? clientId ?? _defaultClientId,
     paymentDeadline: expiredDeadline,

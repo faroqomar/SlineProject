@@ -4,6 +4,85 @@
 
 ---
 
+## 🏷️ Hardened Payment Linking (2026-03-08)
+
+**Plan:** `.TODO/PLAN_HardenedPaymentLinking_2026-03-08_PlanCritic.md`  
+**Execution log:** `.TODO/EXECUTION_LOG_HardenedPaymentLinking_2026-03-08.md`  
+**Master report:** `.TODO/MASTER_REPORT_2026-03-08_HardenedPaymentLinking.md`
+
+### ✅ Implemented
+
+- **DB:** `20260308200000_hardened_payment_linking_schema.sql` — payment_intents (signature, currency, paid_at), orphan_payments (investigated), payment_events RLS (service_role INSERT only) + trigger trg_payment_events_append_only, payment_intents policy service_role_all_payment_intents. `20260308200100_hardened_payment_ledger_meta_payment_intent_id.sql` — process_gateway_escrow_direct_offer and process_payment_event_ledger (gateway_escrow branch) merge payment_intent_id from p_meta into journal_entries.meta.
+- **Edge:** qicard_webhook_handler: when additionalInfo.intent_id present, handleIntentBasedPayment (lookup intent, insert payment_events, validate amount/currency, call submit* with paymentIntentId, update payment_intents). _shared/bookin_payment.ts: optional paymentIntentId in submitGatewayEscrowHold and submitDirectOfferGatewayEscrow, passed in p_meta. Structured logs: intent_path_processed, intent_path_orphan (no PII).
+- **App:** qicard_payment_service parses intent_id from create response (booking + direct offer); payment_service QiCardDirectOfferPaymentResult.intentId; PaymentWebViewScreen optional paymentIntentId + paymentIntentStatusStream (pops on Realtime succeeded/failed); DirectOfferDetailsViewModel.streamPaymentIntentStatus; direct_offer_details_screen passes intentId + stream when present. Booking checkout already subscribed when intentId != null.
+
+### 📊 Impact
+
+- Every gateway payment can be tied to a payment_intent; webhook events audited in payment_events; ledger stores payment_intent_id for forensics; app can resolve success via Realtime when create returns intent_id (booking + direct offer).
+
+### 🧪 Verification
+
+- Plan: `.TODO/PLAN_HardenedPaymentLinking_2026-03-08_PlanCritic.md`
+- Execution log: `.TODO/EXECUTION_LOG_HardenedPaymentLinking_2026-03-08.md`
+- Master report: `.TODO/MASTER_REPORT_2026-03-08_HardenedPaymentLinking.md`
+- Orchestrator reports: `.TODO/ARCHITECT_REPORT_2026-03-08_HardenedPaymentLinking.md`, `.TODO/OBSERVABILITY_REPORT_2026-03-08_HardenedPaymentLinking.md`, `.TODO/DOCS_REPORT_2026-03-08_HardenedPaymentLinking.md`, `.TODO/CODEGUARD_REVIEW_2026-03-08_HardenedPaymentLinking.md`
+- Checklist: `.TODO/improvement_the_system/ImplementReady/24_hardened_paymentLinking_system/CHECKLIST_AND_SUMMARY.md`
+
+### 🔧 Technical Notes
+
+- Migrations applied via Supabase MCP. HMAC in create edge and webhook signature verification deferred (PAYMENT_HMAC_SECRET). Legacy webhook path (no intent_id) unchanged. Contract and logging rules: `.TODO/improvement_the_system/ImplementReady/24_hardened_paymentLinking_system/CONTRACT_HardenedPaymentLinking.md`, `LOGGING_AND_SECRETS.md`.
+
+---
+
+## 🏷️ Booking Lifecycle hardening (2026-03-08)
+
+**Plan:** `.TODO/PLAN_BookingLifecycle_2026-03-08_PlanCritic.md` (section H)  
+**Execution:** `.TODO/EXECUTION_LOG_PLAN_BookingLifecycle_2026-03-08.md`  
+**Master report:** `.TODO/MASTER_REPORT_2026-03-08_BookingLifecycle.md`
+
+### ✅ Implemented
+
+- **DB:** Enum `disputed`, `no_show` (`20260308210000_booking_lifecycle_enum.sql`); `fn_booking_guard` replaced — client cannot delivered→canceled, client can delivered→disputed, admin only disputed→completed/refunded, provider/admin active→no_show (`20260308210100_booking_lifecycle_guard.sql`); `rpc_finalize_auto_approval` booking branch calls `process_payment_event_ledger('release_with_fee', ...)` (`20260308210200_rpc_finalize_auto_approval_booking_ledger.sql`); `admin_resolve_booking_dispute` RPC (`20260308210300_admin_resolve_booking_dispute.sql`); ledger patch for disputed+admin (`20260308210400_ledger_allow_disputed_booking_admin.sql`).
+- **App:** `BookingStatus.disputed`; guard in `BookingService.updateBookingStatus` (client+delivered+cancel → StateError); StatusPresenter and UI for disputed/no_show; ViewModel treats StateError (guard) as warning log only (no crash report).
+- **Docs:** 05_booking-lifecycle.md, SUPABASE_SETUP (§4.2, §9), DEVELOPER_GUIDE, MVP_ROADMAP, Sline_Log, STRUCTURE updated.
+
+### 🔗 References
+
+- Plan Critic: `.TODO/PLAN_BookingLifecycle_2026-03-08_PlanCritic.md`
+- Execution log: `.TODO/EXECUTION_LOG_PLAN_BookingLifecycle_2026-03-08.md`
+- Diagram: `Sline_everything/AppDigram/All_Diagrams/05_booking-lifecycle.md`
+
+---
+
+## 🏷️ Notification Routing — Push queue, Edge, foreground sync (2026-03-08)
+
+**Plan:** `.TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md`  
+**Execution:** `.TODO/EXECUTION_LOG_Plan_NotificationRouting_2026-03-08.md`  
+**Master report:** `.TODO/MASTER_REPORT_2026-03-08_NotificationRouting.md`  
+**Runbook:** `.TODO/improvement_the_system/ImplementReady/13_notification-routing/RUNBOOK_notification_push.md`  
+**Checklist:** `.TODO/improvement_the_system/ImplementReady/13_notification-routing/CHECKLIST_AND_SUMMARY.md`
+
+### ✅ Implemented
+
+- **DB:** `user_devices` (user_id, fcm_token, platform) with RLS own-only; `notification_push_queue` (notification_id, user_id, title, message, type, status); trigger `trg_notifications_after_insert_push_queue` enqueues on notifications INSERT. SUPABASE_SETUP §5.13a, §5.13b.
+- **App:** `lib/features/notifications/services/push_device_service.dart` — registerDevice → user_devices upsert (login/resume/token refresh when FCM available); `NotificationService.getUnreadNotifications(50)`; ViewModel fetches unread first (foreground sync) then streams latest 50. No client INSERT into notifications.
+- **Edge:** `push-notify` (single payload; optional PUSH_NOTIFY_SECRET); `process-push-queue` (batch drain; requires CRON_SECRET, 503 if unset). Observability: notification_id in error logs; push_batch structured log (processed, sent, failed).
+- **Docs:** Diagram 13 updated (user_devices, queue, trigger, Edge, foreground sync, booking source); DEVELOPER_GUIDE §3 Notifications bullet; SUPABASE_SETUP §5.13a–5.13b, runbook ref; MVP_ROADMAP, STRUCTURE, Sline_Log.
+
+### 📊 Impact
+
+- In-app notifications: server-authority, foreground sync then stream, badge/modal/deep links. Push: device tokens in user_devices; server-only delivery via queue + Edge → FCM.
+
+### 🔗 References
+
+- Plan: `.TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md`
+- Execution log: `.TODO/EXECUTION_LOG_Plan_NotificationRouting_2026-03-08.md`
+- Master report: `.TODO/MASTER_REPORT_2026-03-08_NotificationRouting.md`
+- Runbook: `.TODO/improvement_the_system/ImplementReady/13_notification-routing/RUNBOOK_notification_push.md`
+- Diagram: `Sline_everything/AppDigram/All_Diagrams/13_notification-routing.md`
+
+---
+
 ## 🏷️ Post-14a fixes and tender/docs sync (2026-03-08)
 
 **Workflow:** `.agents/workflows/slinedocs.md`  
@@ -1081,7 +1160,7 @@
 - **Approve-and-Release (ledger)**
   - **Issue 1:** With `fee_rate_bps: 0`, `release_with_fee` inserted a platform_revenue line with `amount = 0`, violating `ck_ledger_lines_amount_positive`.
   - **Issue 2:** `UPDATE bookings SET payment_status = 'released', status = 'completed'` caused prepared-plan type mismatch (parameter 40: `booking_status_enum` vs text).
-  - **Fix:** `supabase/migrations/20260307_fix_ledger_event_type_enum.sql` (in-file) and `supabase/migrations/20260308_fix_release_with_fee_zero_amount_and_enum.sql` (patch for already-applied DBs): (1) Ledger lines inserted only where `amount > 0` (INSERT...SELECT FROM VALUES...WHERE line.amount > 0); (2) Explicit enum casts for bookings/direct_offers: `payment_status = 'released'::public.payment_status_enum`, `status = 'completed'::public.booking_status_enum` (bookings only; direct_offers status remains text).
+  - **Fix:** `supabase/migrations/20260307_fix_ledger_event_type_enum.sql` (in-file) and `supabase/migrations/Archive/20260308_fix_release_with_fee_zero_amount_and_enum.sql` (patch for already-applied DBs): (1) Ledger lines inserted only where `amount > 0`; (2) Explicit enum casts for bookings/direct_offers. **Follow-up (2026-03-08):** For DBs that had `20260308210400_ledger_allow_disputed_booking_admin` without the Archive enum-cast patch, migration `20260308210500_ledger_release_enum_cast_parameter_40.sql` applies the same casts to the current function body (fixes direct-offer Complete "parameter 40" error). See Sline_Log entry "Ledger release_with_fee enum cast (parameter 40) fix".
   - Remote DB: Fix applied via Supabase MCP `apply_migration` (project `isddrknbjsgaantjojhm`).
 
 - **Misc**

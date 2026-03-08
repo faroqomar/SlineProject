@@ -16,7 +16,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../fixtures/chat_fixtures.dart';
 
 /// Security test suite for Chat Creation Matrix
-/// 
+///
 /// To run these tests:
 /// 1. Ensure Supabase local is running: `supabase start`
 /// 2. Seed test fixtures
@@ -38,7 +38,7 @@ void main() {
       test('cannot create conversation with spoofed initiated_by', () async {
         // This test verifies the guard trigger blocks inserts where
         // initiated_by doesn't match auth.uid()
-        
+
         // Attempt to insert with different initiated_by
         final result = await client.from('conversations').insert({
           'user1_id': testClientId,
@@ -49,11 +49,13 @@ void main() {
         // Should fail with identity error
         expect(
           result,
-          throwsA(isA<PostgrestException>().having(
-            (e) => e.message,
-            'message',
-            contains('initiated_by must equal current user'),
-          )),
+          throwsA(
+            isA<PostgrestException>().having(
+              (e) => e.message,
+              'message',
+              contains('initiated_by must equal current user'),
+            ),
+          ),
         );
       });
     });
@@ -69,11 +71,13 @@ void main() {
             'start_direct_conversation_v1',
             params: {'p_target_id': testClientId},
           ),
-          throwsA(isA<PostgrestException>().having(
-            (e) => e.message,
-            'message',
-            contains('Freelancers cannot start'),
-          )),
+          throwsA(
+            isA<PostgrestException>().having(
+              (e) => e.message,
+              'message',
+              contains('Freelancers cannot start'),
+            ),
+          ),
         );
       });
 
@@ -87,11 +91,13 @@ void main() {
             'initiated_by': testFreelancerAId,
             'task_id': null,
           }),
-          throwsA(isA<PostgrestException>().having(
-            (e) => e.message,
-            'message',
-            contains('Freelancers cannot start'),
-          )),
+          throwsA(
+            isA<PostgrestException>().having(
+              (e) => e.message,
+              'message',
+              contains('Freelancers cannot start'),
+            ),
+          ),
         );
       });
 
@@ -123,59 +129,71 @@ void main() {
             'start_direct_conversation_v1',
             params: {'p_target_id': testFreelancerBId},
           ),
-          throwsA(isA<PostgrestException>().having(
-            (e) => e.message,
-            'message',
-            contains('favorites list'),
-          )),
+          throwsA(
+            isA<PostgrestException>().having(
+              (e) => e.message,
+              'message',
+              contains('favorites list'),
+            ),
+          ),
         );
       });
 
-      test('client cannot DM non-favorited freelancer (direct INSERT)', () async {
-        await _authenticateAsClient(client);
-        await _removeFavorite(client, testFreelancerBId);
+      test(
+        'client cannot DM non-favorited freelancer (direct INSERT)',
+        () async {
+          await _authenticateAsClient(client);
+          await _removeFavorite(client, testFreelancerBId);
 
-        expect(
-          () => client.from('conversations').insert({
-            'user1_id': testClientId,
-            'user2_id': testFreelancerBId,
-            'initiated_by': testClientId,
-            'task_id': null,
-          }),
-          throwsA(isA<PostgrestException>().having(
-            (e) => e.message,
-            'message',
-            contains('favorites list'),
-          )),
-        );
-      });
+          expect(
+            () => client.from('conversations').insert({
+              'user1_id': testClientId,
+              'user2_id': testFreelancerBId,
+              'initiated_by': testClientId,
+              'task_id': null,
+            }),
+            throwsA(
+              isA<PostgrestException>().having(
+                (e) => e.message,
+                'message',
+                contains('favorites list'),
+              ),
+            ),
+          );
+        },
+      );
     });
 
     group('S4: Task Context Spoofing Prevention', () {
-      test('cannot create task-linked conversation for task without bid', () async {
-        await _authenticateAsClient(client);
+      test(
+        'cannot create task-linked conversation for task without bid',
+        () async {
+          await _authenticateAsClient(client);
 
-        // Create a task where user has NOT bid
-        final spoofedTaskId = 'spoofed-task-id';
-        await _createTaskWithoutBid(client, spoofedTaskId);
+          // Create a task where user has NOT bid
+          final spoofedTaskId = 'spoofed-task-id';
+          await _createTaskWithoutBid(client, spoofedTaskId);
 
-        expect(
-          () => client.from('conversations').insert({
-            'user1_id': testClientId,
-            'user2_id': testFreelancerAId,
-            'initiated_by': testClientId,
-            'task_id': spoofedTaskId, // User has no bid on this task
-          }),
-          throwsA(isA<PostgrestException>().having(
-            (e) => e.message,
-            'message',
-            anyOf(
-              contains('task owner cannot start'),
-              contains('active bid'),
+          expect(
+            () => client.from('conversations').insert({
+              'user1_id': testClientId,
+              'user2_id': testFreelancerAId,
+              'initiated_by': testClientId,
+              'task_id': spoofedTaskId, // User has no bid on this task
+            }),
+            throwsA(
+              isA<PostgrestException>().having(
+                (e) => e.message,
+                'message',
+                anyOf(
+                  contains('task owner cannot start'),
+                  contains('active bid'),
+                ),
+              ),
             ),
-          )),
-        );
-      });
+          );
+        },
+      );
     });
 
     group('S5: Rate Limiting Enforcement', () {
@@ -186,7 +204,7 @@ void main() {
         for (var i = 0; i < 20; i++) {
           final freelancerId = 'rate-test-freelancer-$i';
           await _setupFreelancerAndFavorite(client, freelancerId);
-          
+
           await client.rpc(
             'start_direct_conversation_v1',
             params: {'p_target_id': freelancerId},
@@ -199,11 +217,13 @@ void main() {
             'start_direct_conversation_v1',
             params: {'p_target_id': 'one-more-freelancer'},
           ),
-          throwsA(isA<PostgrestException>().having(
-            (e) => e.message,
-            'message',
-            contains('Rate limit exceeded'),
-          )),
+          throwsA(
+            isA<PostgrestException>().having(
+              (e) => e.message,
+              'message',
+              contains('Rate limit exceeded'),
+            ),
+          ),
         );
       });
 
@@ -223,11 +243,13 @@ void main() {
             'start_direct_conversation_v1',
             params: {'p_target_id': testClientId}, // Same as caller
           ),
-          throwsA(isA<PostgrestException>().having(
-            (e) => e.message,
-            'message',
-            contains('Cannot create conversation with yourself'),
-          )),
+          throwsA(
+            isA<PostgrestException>().having(
+              (e) => e.message,
+              'message',
+              contains('Cannot create conversation with yourself'),
+            ),
+          ),
         );
       });
     });
@@ -289,7 +311,10 @@ Future<void> _createTaskWithoutBid(SupabaseClient client, String taskId) async {
   });
 }
 
-Future<void> _setupFreelancerAndFavorite(SupabaseClient client, String freelancerId) async {
+Future<void> _setupFreelancerAndFavorite(
+  SupabaseClient client,
+  String freelancerId,
+) async {
   // Create freelancer profile
   await client.from('profiles').upsert({
     'id': freelancerId,

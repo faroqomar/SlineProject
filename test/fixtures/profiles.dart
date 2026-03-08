@@ -98,9 +98,7 @@ final Map<String, dynamic> jwtPayloadWithClientRole = () {
       'active_role': 'client',
       'provider': 'email',
     },
-    'user_metadata': <String, dynamic>{
-      'full_name': 'Test Client User',
-    },
+    'user_metadata': <String, dynamic>{'full_name': 'Test Client User'},
     'iat': 1705312200,
     'exp': 1705398600,
   };
@@ -120,9 +118,7 @@ final Map<String, dynamic> jwtPayloadWithFreelancerRole = () {
       'active_role': 'freelancer',
       'provider': 'email',
     },
-    'user_metadata': <String, dynamic>{
-      'full_name': 'Test Freelancer User',
-    },
+    'user_metadata': <String, dynamic>{'full_name': 'Test Freelancer User'},
     'iat': 1705312200,
     'exp': 1705398600,
   };
@@ -143,9 +139,7 @@ final Map<String, dynamic> jwtPayloadWithStaleRole = () {
       'active_role': 'client', // JWT says client
       'provider': 'email',
     },
-    'user_metadata': <String, dynamic>{
-      'full_name': 'Test Dual Role User',
-    },
+    'user_metadata': <String, dynamic>{'full_name': 'Test Dual Role User'},
     'iat': 1705312200,
     'exp': 1705398600,
   };
@@ -175,7 +169,8 @@ final Map<String, dynamic> roleSwitchStaleStateResponse = () {
   return <String, dynamic>{
     'success': false,
     'error': 'stale_state',
-    'message': 'Role has changed on another device. Please refresh and try again.',
+    'message':
+        'Role has changed on another device. Please refresh and try again.',
     'current_role': 'freelancer',
     'expected_role': 'client',
   };
@@ -189,7 +184,8 @@ final Map<String, dynamic> roleSwitchInvalidRoleResponse = () {
   return <String, dynamic>{
     'success': false,
     'error': 'invalid_role',
-    'message': "Invalid role specified. Must be either 'client' or 'freelancer'.",
+    'message':
+        "Invalid role specified. Must be either 'client' or 'freelancer'.",
     'provided_role': 'admin',
   };
 }();
@@ -202,7 +198,8 @@ final Map<String, dynamic> roleSwitchDbErrorResponse = () {
   return <String, dynamic>{
     'success': false,
     'error': 'db_error',
-    'message': 'Database error occurred while switching role. Please try again later.',
+    'message':
+        'Database error occurred while switching role. Please try again later.',
   };
 }();
 
@@ -214,7 +211,8 @@ final Map<String, dynamic> roleSwitchSessionErrorResponse = () {
   return <String, dynamic>{
     'success': false,
     'error': 'session_error',
-    'message': 'Failed to refresh session after role switch. Please log in again.',
+    'message':
+        'Failed to refresh session after role switch. Please log in again.',
   };
 }();
 
@@ -277,12 +275,12 @@ Map<String, dynamic> createCustomProfile(
   AppLogger.d(
     'Creating custom profile fixture',
     tag: _logTag,
-    json: {'base': baseProfile['active_role'], 'overrides': overrides.keys.toList()},
+    json: {
+      'base': baseProfile['active_role'],
+      'overrides': overrides.keys.toList(),
+    },
   );
-  return <String, dynamic>{
-    ...baseProfile,
-    ...overrides,
-  };
+  return <String, dynamic>{...baseProfile, ...overrides};
 }
 
 /// Helper to create a customized JWT payload fixture
@@ -302,7 +300,9 @@ Map<String, dynamic> createCustomJwtPayload(
   );
   final result = Map<String, dynamic>.from(basePayload);
   if (role != null) {
-    final appMetadata = Map<String, dynamic>.from(result['app_metadata'] as Map<String, dynamic>);
+    final appMetadata = Map<String, dynamic>.from(
+      result['app_metadata'] as Map<String, dynamic>,
+    );
     appMetadata['active_role'] = role;
     result['app_metadata'] = appMetadata;
   }

@@ -49,9 +49,9 @@ class _LoginScreenState extends State<LoginScreen> {
         final sessionVm = context.read<AuthSessionViewModel>();
         final sessionError = sessionVm.error;
         if (sessionError != null && sessionError.isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(sessionError)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(sessionError)));
           sessionVm.clearError();
         }
       } catch (_) {

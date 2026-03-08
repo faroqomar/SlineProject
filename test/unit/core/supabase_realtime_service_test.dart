@@ -65,7 +65,12 @@ void main() {
         // Verify the method exists with correct signature
         expect(
           service.subscribeToTaskRequests,
-          isA<Stream<Map<String, dynamic>> Function(String, {List<String>? events})>(),
+          isA<
+            Stream<Map<String, dynamic>> Function(
+              String, {
+              List<String>? events,
+            })
+          >(),
         );
       });
 

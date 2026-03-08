@@ -37,11 +37,7 @@ void main() {
       );
       await pumpApp(
         tester,
-        FavoriteCard(
-          favorite: favorite,
-          onStartChat: () {},
-          onRemove: () {},
-        ),
+        FavoriteCard(favorite: favorite, onStartChat: () {}, onRemove: () {}),
       );
 
       expect(find.text('Freelancer'), findsOneWidget);

@@ -113,7 +113,11 @@ class NextActionsList extends StatelessWidget {
                     amount: item.price ?? 0,
                     paymentDeadline: item.paymentDeadline,
                   );
-                  await openProposalPayment(context, summary: summary, launcherSource: 'next_actions_list');
+                  await openProposalPayment(
+                    context,
+                    summary: summary,
+                    launcherSource: 'next_actions_list',
+                  );
                   if (context.mounted) vm.refresh();
                   return;
                 }
@@ -160,8 +164,8 @@ class NextActionsList extends StatelessWidget {
                   }
                 }
               },
-              onSecondaryAction: item.permissions.canCancel &&
-                      item.awardedRequestId != null
+              onSecondaryAction:
+                  item.permissions.canCancel && item.awardedRequestId != null
                   ? () async {
                       try {
                         await context

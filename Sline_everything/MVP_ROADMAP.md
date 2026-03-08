@@ -51,6 +51,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 
 | Feature | Status | Notes |
 | --- | --- | --- |
+| **Booking Lifecycle hardening (2026-03-08)** | ✅ Completed | Enum `disputed`, `no_show`; `fn_booking_guard` blocks client delivered→canceled (use Report Issue→disputed); `rpc_finalize_auto_approval` booking branch calls ledger; `admin_resolve_booking_dispute` for disputed→completed/refunded. Plan: `.TODO/PLAN_BookingLifecycle_2026-03-08_PlanCritic.md`. Execution: `.TODO/EXECUTION_LOG_PLAN_BookingLifecycle_2026-03-08.md`. |
 | Direct booking checkout | ✅ Completed | `PaymentCheckoutScreen` + server-backed draft creation |
 | QiCard integration | 🚧 In Progress | create/recovery/webhook flow exists and continues to be hardened |
 | Web payment callback handling | ✅ Completed | same-tab redirect + `PaymentReturnScreen` |
@@ -67,7 +68,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | Attachments | ✅ Completed | private attachment flow; participant-scoped access via `can_access_chat_attachment` |
 | Favorites-powered contact flows | ✅ Completed | favorites and chat handoff are implemented |
 | Chat Creation Matrix (v2.19) | ✅ Completed | Atomic RPC `start_direct_conversation_v1` with rate limiting (20/hr), favorites enforcement, role verification. Guard trigger hardens all paths. Feature flag `enable_direct_conversation_rpc`. See `supabase/migrations/20260306000000_chat_creation_matrix.sql` |
-| Notifications | ✅ Completed | server-authority: client read/update only; badge, modal, deep links; auth-aware stream; `.TODO/Archive/NotificationExecution/PLAN_NotificationsFix_2026-03-01.md` |
+| Notifications | ✅ Completed | Server-authority: client read/update only; badge, modal, deep links; auth-aware stream. **Notification routing (2026-03-08):** `user_devices` + `notification_push_queue`, trigger enqueue; ViewModel foreground sync then stream; Edge `push-notify`, `process-push-queue` (CRON_SECRET); runbook `.TODO/improvement_the_system/ImplementReady/13_notification-routing/RUNBOOK_notification_push.md`. Plan: `.TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md`. Diagram: `Sline_everything/AppDigram/All_Diagrams/13_notification-routing.md`. |
 | Report flows (task/user/chat) | ✅ Completed | app can submit `reports` rows from task detail, chat menu, and public profile |
 | Booking dispute submission | ✅ Completed | booking details `Report Issue` when active or delivered; **Dispute lifecycle (2026-03-08):** escrow guard in rpc_approve_delivery and rpc_finalize_auto_approval; RLS deny on disputes; dispute_status_enum + trg_dispute_guard + trg_dispute_set_resolved_at; SafetyViewModel.hasOpenDisputeForTask/ForBooking/ForDirectOffer; Approve/Review disabled when disputed on booking, work item, direct offer details; vw_unified_work_items disputed check. **Plan 14a (2026-03-08):** Frozen guards in rpc_submit_delivery and rpc_request_revision; partial unique indexes (one open/active dispute per task/direct_offer); rpc_submit_dispute (eligibility + single-active); Report Issue on task and direct_offer (work item + direct offer details); open/active dispute banners. Migration: 20260308160000. Plan: `.TODO/PLAN_DisputeLifecycle_2026-03-08.md`, `.TODO/PLAN_14a_DisputeExtension_2026-03-08.md`. |
 
@@ -92,6 +93,6 @@ This roadmap tracks the current code-state of the repository. Status values are 
 
 ## 9. Current Focus
 
-1. Continue hardening QiCard webhook/recovery behavior.
+1. Optional: HMAC in create edge and webhook signature verification (PAYMENT_HMAC_SECRET) for Hardened Payment Linking; Admin Orphan Queue and Payment Trace.
 2. Expand automated coverage around moderation/report/dispute edge cases.
 3. Keep `Sline_everything/` aligned with code and Supabase migrations after every flow change.

@@ -69,7 +69,8 @@ class RequestTile extends StatelessWidget {
     final hasPaymentError = _hasPaymentError();
 
     // Disable actions for expired bids
-    final canAct = request.isPending &&
+    final canAct =
+        request.isPending &&
         !isExpired &&
         onAccept != null &&
         onReject != null &&
@@ -81,7 +82,10 @@ class RequestTile extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: hasPaymentError
-            ? BorderSide(color: AppColors.lightRed.withValues(alpha: 0.5), width: 1)
+            ? BorderSide(
+                color: AppColors.lightRed.withValues(alpha: 0.5),
+                width: 1,
+              )
             : BorderSide.none,
       ),
       child: Column(
@@ -123,17 +127,22 @@ class RequestTile extends StatelessWidget {
                     builder: (context, vm, _) {
                       final pending = vm.isPending(request.bidderId);
                       return IconButton(
-                        key: Key('request_tile_add_favorite_${request.bidderId}'),
+                        key: Key(
+                          'request_tile_add_favorite_${request.bidderId}',
+                        ),
                         tooltip: pending ? null : 'Add to favorites',
                         icon: pending
                             ? const SizedBox(
                                 width: 24,
                                 height: 24,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Icon(Icons.favorite_border),
-                        onPressed:
-                            pending ? null : () => _handleAddFavorite(context),
+                        onPressed: pending
+                            ? null
+                            : () => _handleAddFavorite(context),
                       );
                     },
                   ),
@@ -243,7 +252,9 @@ class RequestTile extends StatelessWidget {
               if (!isExpired)
                 ElevatedButton.icon(
                   key: Key('retry_payment_btn_${request.id}'),
-                  onPressed: isLoading ? null : () => _handleRetryPayment(context),
+                  onPressed: isLoading
+                      ? null
+                      : () => _handleRetryPayment(context),
                   icon: isLoading
                       ? const SizedBox(
                           width: 16,
@@ -253,10 +264,18 @@ class RequestTile extends StatelessWidget {
                       : const Icon(Icons.payment, size: 16),
                   label: Text(isLoading ? 'Opening...' : 'Pay Now'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isDeadlineNear ? AppColors.lightRed : AppColors.teal,
+                    backgroundColor: isDeadlineNear
+                        ? AppColors.lightRed
+                        : AppColors.teal,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
 
@@ -269,8 +288,14 @@ class RequestTile extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.darkerGrey,
                   side: BorderSide(color: AppColors.mediumGrey),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -288,7 +313,8 @@ class RequestTile extends StatelessWidget {
 
     String timeText;
     if (hoursLeft > 0) {
-      timeText = '$hoursLeft:${minutesLeft.toString().padLeft(2, '0')} hours left';
+      timeText =
+          '$hoursLeft:${minutesLeft.toString().padLeft(2, '0')} hours left';
     } else {
       timeText = '$minutesLeft minutes left';
     }
@@ -306,7 +332,9 @@ class RequestTile extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            isDeadlineNear ? 'URGENT: $timeText' : 'Payment deadline: $timeText',
+            isDeadlineNear
+                ? 'URGENT: $timeText'
+                : 'Payment deadline: $timeText',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -515,14 +543,14 @@ class RequestTile extends StatelessWidget {
     if (!context.mounted) return;
     switch (result) {
       case FavoritesMutationResult.success:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Added to favorites')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Added to favorites')));
         break;
       case FavoritesMutationResult.duplicate:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Already in favorites')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Already in favorites')));
         break;
       case FavoritesMutationResult.skipped:
         // Already in progress; no snackbar (button is disabled via Consumer).
@@ -531,7 +559,9 @@ class RequestTile extends StatelessWidget {
       case FavoritesMutationResult.forbidden:
       case FavoritesMutationResult.failure:
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(vm.error ?? 'Could not add. Please try again.')),
+          SnackBar(
+            content: Text(vm.error ?? 'Could not add. Please try again.'),
+          ),
         );
         break;
     }

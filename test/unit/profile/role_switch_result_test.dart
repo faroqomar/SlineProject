@@ -6,7 +6,7 @@ void main() {
   group('RoleSwitchResult', () {
     test('fromJson parses success response correctly', () {
       final result = RoleSwitchResult.fromJson(roleSwitchSuccessResponse);
-      
+
       expect(result.success, isTrue);
       expect(result.newRole, equals('freelancer'));
       expect(result.errorCode, isNull);
@@ -15,7 +15,7 @@ void main() {
 
     test('fromJson parses stale_state error response', () {
       final result = RoleSwitchResult.fromJson(roleSwitchStaleStateResponse);
-      
+
       expect(result.success, isFalse);
       expect(result.errorCode, equals('stale_state'));
       expect(result.message, isNotNull);
@@ -23,28 +23,28 @@ void main() {
 
     test('fromJson parses invalid_role error response', () {
       final result = RoleSwitchResult.fromJson(roleSwitchInvalidRoleResponse);
-      
+
       expect(result.success, isFalse);
       expect(result.errorCode, equals('invalid_role'));
     });
 
     test('fromJson parses db_error error response', () {
       final result = RoleSwitchResult.fromJson(roleSwitchDbErrorResponse);
-      
+
       expect(result.success, isFalse);
       expect(result.errorCode, equals('db_error'));
     });
 
     test('fromJson parses session_error error response', () {
       final result = RoleSwitchResult.fromJson(roleSwitchSessionErrorResponse);
-      
+
       expect(result.success, isFalse);
       expect(result.errorCode, equals('session_error'));
     });
 
     test('fromJson handles missing fields gracefully', () {
       final result = RoleSwitchResult.fromJson({});
-      
+
       expect(result.success, isFalse); // Defaults to false
       expect(result.newRole, isNull);
       expect(result.errorCode, isNull);
@@ -57,9 +57,9 @@ void main() {
         errorCode: null,
         message: 'Role switched successfully',
       );
-      
+
       final json = result.toJson();
-      
+
       expect(json['success'], isTrue);
       expect(json['new_role'], equals('freelancer'));
       expect(json['message'], equals('Role switched successfully'));
@@ -104,10 +104,7 @@ void main() {
       });
 
       test('returns db_error fallback message', () {
-        const result = RoleSwitchResult(
-          success: false,
-          errorCode: 'db_error',
-        );
+        const result = RoleSwitchResult(success: false, errorCode: 'db_error');
         expect(result.displayError, contains('Database error'));
       });
 

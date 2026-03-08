@@ -24,9 +24,11 @@ import 'package:sline_app/core/services/logger_service.dart';
 const String _logTag = 'rls_security_test';
 
 // Sample UUIDs for consistent testing
-const String _testFreelancerId = 'freelancer-550e8400-e29b-41d4-a716-446655440001';
+const String _testFreelancerId =
+    'freelancer-550e8400-e29b-41d4-a716-446655440001';
 const String _testOwnerId = 'owner-550e8400-e29b-41d4-a716-446655440002';
-const String _testThirdPartyId = 'thirdparty-550e8400-e29b-41d4-a716-446655440003';
+const String _testThirdPartyId =
+    'thirdparty-550e8400-e29b-41d4-a716-446655440003';
 const String _testTaskId = 'task-550e8400-e29b-41d4-a716-446655440000';
 const String _testRequestId = 'req-550e8400-e29b-41d4-a716-446655440004';
 
@@ -164,45 +166,39 @@ void main() {
     // =======================================================================
     // T1 (continued): Direct DELETE on non-owned bid - Must be blocked
     // =======================================================================
-    test(
-      'Delete non-owned bid → expect 403 Forbidden',
-      () async {
-        AppLogger.d(
-          'Testing: Non-owner DELETE should be blocked by RLS',
-          tag: _logTag,
-        );
+    test('Delete non-owned bid → expect 403 Forbidden', () async {
+      AppLogger.d(
+        'Testing: Non-owner DELETE should be blocked by RLS',
+        tag: _logTag,
+      );
 
-        // Configure mock user as third-party (not bid owner)
-        when(() => mockUser.id).thenReturn(_testThirdPartyId);
+      // Configure mock user as third-party (not bid owner)
+      when(() => mockUser.id).thenReturn(_testThirdPartyId);
 
-        // Setup: from() throws RLS violation
-        when(() => mockClient.from('task_requests')).thenThrow(
-          RlsTestException(
-            message: 'permission denied for table task_requests',
-            code: RlsErrorCodes.insufficientPrivilege,
+      // Setup: from() throws RLS violation
+      when(() => mockClient.from('task_requests')).thenThrow(
+        RlsTestException(
+          message: 'permission denied for table task_requests',
+          code: RlsErrorCodes.insufficientPrivilege,
+        ),
+      );
+
+      // Attempt to delete another freelancer's bid
+      expect(
+        () async {
+          await mockClient.from('task_requests');
+        },
+        throwsA(
+          isA<RlsTestException>().having(
+            (e) => e.code,
+            'error code',
+            RlsErrorCodes.insufficientPrivilege,
           ),
-        );
+        ),
+      );
 
-        // Attempt to delete another freelancer's bid
-        expect(
-          () async {
-            await mockClient.from('task_requests');
-          },
-          throwsA(
-            isA<RlsTestException>().having(
-              (e) => e.code,
-              'error code',
-              RlsErrorCodes.insufficientPrivilege,
-            ),
-          ),
-        );
-
-        AppLogger.i(
-          '✅ PASS: Non-owner DELETE blocked by RLS',
-          tag: _logTag,
-        );
-      },
-    );
+      AppLogger.i('✅ PASS: Non-owner DELETE blocked by RLS', tag: _logTag);
+    });
 
     // =======================================================================
     // T1 (continued): Non-owner calling accept RPC → Must fail
@@ -222,10 +218,7 @@ void main() {
         when(
           () => mockClient.rpc(
             'accept_task_request',
-            params: {
-              'p_task_id': _testTaskId,
-              'p_request_id': _testRequestId,
-            },
+            params: {'p_task_id': _testTaskId, 'p_request_id': _testRequestId},
           ),
         ).thenThrow(
           RlsTestException(
@@ -327,91 +320,78 @@ void main() {
     // =======================================================================
     // T4: Client role trying to insert bid → Must fail
     // =======================================================================
-    test(
-      'Client role attempting to INSERT bid → expect 403 Forbidden',
-      () async {
-        AppLogger.d(
-          'Testing: Client role INSERT should fail with 403',
-          tag: _logTag,
-        );
+    test('Client role attempting to INSERT bid → expect 403 Forbidden', () async {
+      AppLogger.d(
+        'Testing: Client role INSERT should fail with 403',
+        tag: _logTag,
+      );
 
-        // Configure mock as client (not freelancer)
-        when(() => mockUser.id).thenReturn(_testOwnerId);
-        when(() => mockUser.appMetadata)
-            .thenReturn({'active_role': 'client'});
+      // Configure mock as client (not freelancer)
+      when(() => mockUser.id).thenReturn(_testOwnerId);
+      when(() => mockUser.appMetadata).thenReturn({'active_role': 'client'});
 
-        // Setup: from() throws RLS violation for JWT role check
-        when(() => mockClient.from('task_requests')).thenThrow(
-          RlsTestException(
-            message:
-                'new row violates row-level security policy for table "task_requests"',
-            code: RlsErrorCodes.insufficientPrivilege,
+      // Setup: from() throws RLS violation for JWT role check
+      when(() => mockClient.from('task_requests')).thenThrow(
+        RlsTestException(
+          message:
+              'new row violates row-level security policy for table "task_requests"',
+          code: RlsErrorCodes.insufficientPrivilege,
+        ),
+      );
+
+      // Attempt to insert bid as client role
+      expect(
+        () async {
+          await mockClient.from('task_requests');
+        },
+        throwsA(
+          isA<RlsTestException>().having(
+            (e) => e.code,
+            'error code',
+            RlsErrorCodes.insufficientPrivilege,
           ),
-        );
+        ),
+      );
 
-        // Attempt to insert bid as client role
-        expect(
-          () async {
-            await mockClient.from('task_requests');
-          },
-          throwsA(
-            isA<RlsTestException>().having(
-              (e) => e.code,
-              'error code',
-              RlsErrorCodes.insufficientPrivilege,
-            ),
-          ),
-        );
-
-        AppLogger.i(
-          '✅ PASS: Client role INSERT blocked by RLS',
-          tag: _logTag,
-        );
-      },
-    );
+      AppLogger.i('✅ PASS: Client role INSERT blocked by RLS', tag: _logTag);
+    });
 
     // =======================================================================
     // T1: UPDATE on accepted bid → Must fail
     // =======================================================================
-    test(
-      'UPDATE on accepted bid → expect 403 Forbidden',
-      () async {
-        AppLogger.d(
-          'Testing: UPDATE on accepted bid should fail',
-          tag: _logTag,
-        );
+    test('UPDATE on accepted bid → expect 403 Forbidden', () async {
+      AppLogger.d('Testing: UPDATE on accepted bid should fail', tag: _logTag);
 
-        // Configure mock as bid owner
-        when(() => mockUser.id).thenReturn(_testFreelancerId);
+      // Configure mock as bid owner
+      when(() => mockUser.id).thenReturn(_testFreelancerId);
 
-        // Setup: from() throws RLS violation for non-pending update
-        when(() => mockClient.from('task_requests')).thenThrow(
-          RlsTestException(
-            message: 'permission denied for table task_requests',
-            code: RlsErrorCodes.insufficientPrivilege,
+      // Setup: from() throws RLS violation for non-pending update
+      when(() => mockClient.from('task_requests')).thenThrow(
+        RlsTestException(
+          message: 'permission denied for table task_requests',
+          code: RlsErrorCodes.insufficientPrivilege,
+        ),
+      );
+
+      // Attempt to update accepted bid
+      expect(
+        () async {
+          await mockClient.from('task_requests');
+        },
+        throwsA(
+          isA<RlsTestException>().having(
+            (e) => e.code,
+            'error code',
+            RlsErrorCodes.insufficientPrivilege,
           ),
-        );
+        ),
+      );
 
-        // Attempt to update accepted bid
-        expect(
-          () async {
-            await mockClient.from('task_requests');
-          },
-          throwsA(
-            isA<RlsTestException>().having(
-              (e) => e.code,
-              'error code',
-              RlsErrorCodes.insufficientPrivilege,
-            ),
-          ),
-        );
-
-        AppLogger.i(
-          '✅ PASS: UPDATE on accepted bid blocked by RLS',
-          tag: _logTag,
-        );
-      },
-    );
+      AppLogger.i(
+        '✅ PASS: UPDATE on accepted bid blocked by RLS',
+        tag: _logTag,
+      );
+    });
   });
 
   group('RLS Positive Tests (Must Pass)', () {
@@ -420,105 +400,93 @@ void main() {
     // =======================================================================
     // Freelancer can SELECT own bids
     // =======================================================================
-    test(
-      'Freelancer can SELECT own bids → returns rows',
-      () async {
-        AppLogger.d(
-          'Testing: Freelancer SELECT own bids',
-          tag: _logTag,
-        );
+    test('Freelancer can SELECT own bids → returns rows', () async {
+      AppLogger.d('Testing: Freelancer SELECT own bids', tag: _logTag);
 
-        // Configure mock as bid owner
-        when(() => mockUser.id).thenReturn(_testFreelancerId);
-        when(() => mockUser.appMetadata)
-            .thenReturn({'active_role': 'freelancer'});
+      // Configure mock as bid owner
+      when(() => mockUser.id).thenReturn(_testFreelancerId);
+      when(
+        () => mockUser.appMetadata,
+      ).thenReturn({'active_role': 'freelancer'});
 
-        // Create expected bid data
-        final bidData = [
-          {
-            'id': _testRequestId,
-            'task_id': _testTaskId,
-            'freelancer_id': _testFreelancerId,
-            'price': 50000,
-            'status': 'pending',
-            'created_at': DateTime.now().toIso8601String(),
-          }
-        ];
+      // Create expected bid data
+      final bidData = [
+        {
+          'id': _testRequestId,
+          'task_id': _testTaskId,
+          'freelancer_id': _testFreelancerId,
+          'price': 50000,
+          'status': 'pending',
+          'created_at': DateTime.now().toIso8601String(),
+        },
+      ];
 
-        // Setup mock to return data (simulating a successful RLS-permitted SELECT)
-        when(() => mockClient.from('task_requests')).thenReturn(
-          MockQueryBuilder(result: bidData),
-        );
+      // Setup mock to return data (simulating a successful RLS-permitted SELECT)
+      when(
+        () => mockClient.from('task_requests'),
+      ).thenReturn(MockQueryBuilder(result: bidData));
 
-        // Execute SELECT
-        final builder = mockClient.from('task_requests');
-        final result = await builder.select();
+      // Execute SELECT
+      final builder = mockClient.from('task_requests');
+      final result = await builder.select();
 
-        // Verify result
-        expect(result, isA<List>());
-        expect(result.length, equals(1));
-        expect(result.first['id'], equals(_testRequestId));
+      // Verify result
+      expect(result, isA<List>());
+      expect(result.length, equals(1));
+      expect(result.first['id'], equals(_testRequestId));
 
-        AppLogger.i(
-          '✅ PASS: Freelancer SELECT own bids returned rows',
-          tag: _logTag,
-        );
-      },
-    );
+      AppLogger.i(
+        '✅ PASS: Freelancer SELECT own bids returned rows',
+        tag: _logTag,
+      );
+    });
 
     // =======================================================================
     // Owner can SELECT bids on their tasks
     // =======================================================================
-    test(
-      'Owner can SELECT bids on their tasks → returns rows',
-      () async {
-        AppLogger.d(
-          'Testing: Owner SELECT bids on their task',
-          tag: _logTag,
-        );
+    test('Owner can SELECT bids on their tasks → returns rows', () async {
+      AppLogger.d('Testing: Owner SELECT bids on their task', tag: _logTag);
 
-        // Configure mock as task owner
-        when(() => mockUser.id).thenReturn(_testOwnerId);
-        when(() => mockUser.appMetadata)
-            .thenReturn({'active_role': 'client'});
+      // Configure mock as task owner
+      when(() => mockUser.id).thenReturn(_testOwnerId);
+      when(() => mockUser.appMetadata).thenReturn({'active_role': 'client'});
 
-        // Create multiple bid fixtures for owner's task
-        final bidData = [
-          {
-            'id': 'req-001',
-            'task_id': _testTaskId,
-            'freelancer_id': 'freelancer-001',
-            'price': 40000,
-            'status': 'pending',
-          },
-          {
-            'id': 'req-002',
-            'task_id': _testTaskId,
-            'freelancer_id': 'freelancer-002',
-            'price': 50000,
-            'status': 'pending',
-          },
-        ];
+      // Create multiple bid fixtures for owner's task
+      final bidData = [
+        {
+          'id': 'req-001',
+          'task_id': _testTaskId,
+          'freelancer_id': 'freelancer-001',
+          'price': 40000,
+          'status': 'pending',
+        },
+        {
+          'id': 'req-002',
+          'task_id': _testTaskId,
+          'freelancer_id': 'freelancer-002',
+          'price': 50000,
+          'status': 'pending',
+        },
+      ];
 
-        // Setup mock to return data
-        when(() => mockClient.from('task_requests')).thenReturn(
-          MockQueryBuilder(result: bidData),
-        );
+      // Setup mock to return data
+      when(
+        () => mockClient.from('task_requests'),
+      ).thenReturn(MockQueryBuilder(result: bidData));
 
-        // Execute SELECT
-        final builder = mockClient.from('task_requests');
-        final result = await builder.select();
+      // Execute SELECT
+      final builder = mockClient.from('task_requests');
+      final result = await builder.select();
 
-        // Verify result
-        expect(result, isA<List>());
-        expect(result.length, equals(2));
+      // Verify result
+      expect(result, isA<List>());
+      expect(result.length, equals(2));
 
-        AppLogger.i(
-          '✅ PASS: Owner SELECT bids on their task returned rows',
-          tag: _logTag,
-        );
-      },
-    );
+      AppLogger.i(
+        '✅ PASS: Owner SELECT bids on their task returned rows',
+        tag: _logTag,
+      );
+    });
 
     // =======================================================================
     // Freelancer can INSERT new bid (when task open)
@@ -533,8 +501,9 @@ void main() {
 
         // Configure mock as freelancer
         when(() => mockUser.id).thenReturn(_testFreelancerId);
-        when(() => mockUser.appMetadata)
-            .thenReturn({'active_role': 'freelancer'});
+        when(
+          () => mockUser.appMetadata,
+        ).thenReturn({'active_role': 'freelancer'});
 
         // Create the bid data to insert
         final bidData = <String, dynamic>{
@@ -573,86 +542,80 @@ void main() {
     // =======================================================================
     // Freelancer can UPDATE own pending bid (note/price/days)
     // =======================================================================
-    test(
-      'Freelancer can UPDATE own pending bid → 200 OK',
-      () async {
-        AppLogger.d(
-          'Testing: Freelancer UPDATE own pending bid',
-          tag: _logTag,
-        );
+    test('Freelancer can UPDATE own pending bid → 200 OK', () async {
+      AppLogger.d('Testing: Freelancer UPDATE own pending bid', tag: _logTag);
 
-        // Configure mock as bid owner
-        when(() => mockUser.id).thenReturn(_testFreelancerId);
-        when(() => mockUser.appMetadata)
-            .thenReturn({'active_role': 'freelancer'});
+      // Configure mock as bid owner
+      when(() => mockUser.id).thenReturn(_testFreelancerId);
+      when(
+        () => mockUser.appMetadata,
+      ).thenReturn({'active_role': 'freelancer'});
 
-        // Updated bid response
-        final updatedBid = <String, dynamic>{
-          'id': _testRequestId,
-          'task_id': _testTaskId,
-          'freelancer_id': _testFreelancerId,
-          'price': 55000,
-          'days': 7,
-          'note': 'Updated offer',
-          'status': 'pending',
-        };
+      // Updated bid response
+      final updatedBid = <String, dynamic>{
+        'id': _testRequestId,
+        'task_id': _testTaskId,
+        'freelancer_id': _testFreelancerId,
+        'price': 55000,
+        'days': 7,
+        'note': 'Updated offer',
+        'status': 'pending',
+      };
 
-        // Setup mock for successful update
-        final mockBuilder = MockQueryBuilder(result: [updatedBid]);
-        when(() => mockClient.from('task_requests')).thenReturn(mockBuilder);
+      // Setup mock for successful update
+      final mockBuilder = MockQueryBuilder(result: [updatedBid]);
+      when(() => mockClient.from('task_requests')).thenReturn(mockBuilder);
 
-        // Execute UPDATE
-        final builder = mockClient.from('task_requests');
-        final updateData = <String, dynamic>{'price': 55000, 'days': 7, 'note': 'Updated offer'};
-        final result = await builder.update(updateData);
+      // Execute UPDATE
+      final builder = mockClient.from('task_requests');
+      final updateData = <String, dynamic>{
+        'price': 55000,
+        'days': 7,
+        'note': 'Updated offer',
+      };
+      final result = await builder.update(updateData);
 
-        // Verify result
-        expect(result, isA<List>());
-        expect(result.length, equals(1));
-        expect(result.first['price'], equals(55000));
-        expect(result.first['days'], equals(7));
+      // Verify result
+      expect(result, isA<List>());
+      expect(result.length, equals(1));
+      expect(result.first['price'], equals(55000));
+      expect(result.first['days'], equals(7));
 
-        AppLogger.i(
-          '✅ PASS: Freelancer UPDATE own pending bid succeeded',
-          tag: _logTag,
-        );
-      },
-    );
+      AppLogger.i(
+        '✅ PASS: Freelancer UPDATE own pending bid succeeded',
+        tag: _logTag,
+      );
+    });
 
     // =======================================================================
     // Freelancer can DELETE own pending bid
     // =======================================================================
-    test(
-      'Freelancer can DELETE own pending bid → 204 No Content',
-      () async {
-        AppLogger.d(
-          'Testing: Freelancer DELETE own pending bid',
-          tag: _logTag,
-        );
+    test('Freelancer can DELETE own pending bid → 204 No Content', () async {
+      AppLogger.d('Testing: Freelancer DELETE own pending bid', tag: _logTag);
 
-        // Configure mock as bid owner
-        when(() => mockUser.id).thenReturn(_testFreelancerId);
-        when(() => mockUser.appMetadata)
-            .thenReturn({'active_role': 'freelancer'});
+      // Configure mock as bid owner
+      when(() => mockUser.id).thenReturn(_testFreelancerId);
+      when(
+        () => mockUser.appMetadata,
+      ).thenReturn({'active_role': 'freelancer'});
 
-        // Setup mock for successful delete (empty result)
-        final mockBuilder = MockQueryBuilder(result: []);
-        when(() => mockClient.from('task_requests')).thenReturn(mockBuilder);
+      // Setup mock for successful delete (empty result)
+      final mockBuilder = MockQueryBuilder(result: []);
+      when(() => mockClient.from('task_requests')).thenReturn(mockBuilder);
 
-        // Execute DELETE
-        final builder = mockClient.from('task_requests');
-        final result = await builder.delete();
+      // Execute DELETE
+      final builder = mockClient.from('task_requests');
+      final result = await builder.delete();
 
-        // Verify result (empty list after delete)
-        expect(result, isA<List>());
-        expect(result.length, equals(0));
+      // Verify result (empty list after delete)
+      expect(result, isA<List>());
+      expect(result.length, equals(0));
 
-        AppLogger.i(
-          '✅ PASS: Freelancer DELETE own pending bid succeeded',
-          tag: _logTag,
-        );
-      },
-    );
+      AppLogger.i(
+        '✅ PASS: Freelancer DELETE own pending bid succeeded',
+        tag: _logTag,
+      );
+    });
 
     // =======================================================================
     // Owner can accept via RPC (RPC-level authorization check)
@@ -660,34 +623,24 @@ void main() {
     test(
       'Owner can accept bid via accept_task_request RPC → success',
       () async {
-        AppLogger.d(
-          'Testing: Owner RPC accept bid',
-          tag: _logTag,
-        );
+        AppLogger.d('Testing: Owner RPC accept bid', tag: _logTag);
 
         // Configure mock as task owner
         when(() => mockUser.id).thenReturn(_testOwnerId);
-        when(() => mockUser.appMetadata)
-            .thenReturn({'active_role': 'client'});
+        when(() => mockUser.appMetadata).thenReturn({'active_role': 'client'});
 
         // Setup mock for successful RPC call
         when(
           () => mockClient.rpc(
             'accept_task_request',
-            params: {
-              'p_task_id': _testTaskId,
-              'p_request_id': _testRequestId,
-            },
+            params: {'p_task_id': _testTaskId, 'p_request_id': _testRequestId},
           ),
         ).thenAnswer((_) async => 'accepted');
 
         // Execute RPC
         final result = await mockClient.rpc(
           'accept_task_request',
-          params: {
-            'p_task_id': _testTaskId,
-            'p_request_id': _testRequestId,
-          },
+          params: {'p_task_id': _testTaskId, 'p_request_id': _testRequestId},
         );
 
         // Verify result
@@ -697,17 +650,11 @@ void main() {
         verify(
           () => mockClient.rpc(
             'accept_task_request',
-            params: {
-              'p_task_id': _testTaskId,
-              'p_request_id': _testRequestId,
-            },
+            params: {'p_task_id': _testTaskId, 'p_request_id': _testRequestId},
           ),
         ).called(1);
 
-        AppLogger.i(
-          '✅ PASS: Owner RPC accept bid succeeded',
-          tag: _logTag,
-        );
+        AppLogger.i('✅ PASS: Owner RPC accept bid succeeded', tag: _logTag);
       },
     );
 
@@ -717,15 +664,13 @@ void main() {
     test(
       'Bidder can replace their own bid via replace_task_request RPC → success',
       () async {
-        AppLogger.d(
-          'Testing: Bidder RPC replace own bid',
-          tag: _logTag,
-        );
+        AppLogger.d('Testing: Bidder RPC replace own bid', tag: _logTag);
 
         // Configure mock as original bidder
         when(() => mockUser.id).thenReturn(_testFreelancerId);
-        when(() => mockUser.appMetadata)
-            .thenReturn({'active_role': 'freelancer'});
+        when(
+          () => mockUser.appMetadata,
+        ).thenReturn({'active_role': 'freelancer'});
 
         // Setup mock for successful RPC call
         when(
@@ -770,38 +715,33 @@ void main() {
     // =======================================================================
     // Third party cannot SELECT any bids
     // =======================================================================
-    test(
-      'Third party SELECT any bids → returns empty (no rows)',
-      () async {
-        AppLogger.d(
-          'Testing: Third party SELECT should return empty',
-          tag: _logTag,
-        );
+    test('Third party SELECT any bids → returns empty (no rows)', () async {
+      AppLogger.d(
+        'Testing: Third party SELECT should return empty',
+        tag: _logTag,
+      );
 
-        // Configure mock as unrelated third party
-        when(() => mockUser.id).thenReturn(_testThirdPartyId);
-        when(() => mockUser.appMetadata)
-            .thenReturn({'active_role': 'freelancer'});
+      // Configure mock as unrelated third party
+      when(() => mockUser.id).thenReturn(_testThirdPartyId);
+      when(
+        () => mockUser.appMetadata,
+      ).thenReturn({'active_role': 'freelancer'});
 
-        // Setup mock to return empty (RLS filtered - no visible rows)
-        when(() => mockClient.from('task_requests')).thenReturn(
-          MockQueryBuilder(result: []),
-        );
+      // Setup mock to return empty (RLS filtered - no visible rows)
+      when(
+        () => mockClient.from('task_requests'),
+      ).thenReturn(MockQueryBuilder(result: []));
 
-        // Execute SELECT
-        final builder = mockClient.from('task_requests');
-        final result = await builder.select();
+      // Execute SELECT
+      final builder = mockClient.from('task_requests');
+      final result = await builder.select();
 
-        // Verify result is empty (not a 403, just no visible rows)
-        expect(result, isA<List>());
-        expect(result.length, equals(0));
+      // Verify result is empty (not a 403, just no visible rows)
+      expect(result, isA<List>());
+      expect(result.length, equals(0));
 
-        AppLogger.i(
-          '✅ PASS: Third party SELECT returned empty',
-          tag: _logTag,
-        );
-      },
-    );
+      AppLogger.i('✅ PASS: Third party SELECT returned empty', tag: _logTag);
+    });
 
     // =======================================================================
     // Owner rejecting via RPC
@@ -809,15 +749,11 @@ void main() {
     test(
       'Owner can reject bid via reject_task_request RPC → success',
       () async {
-        AppLogger.d(
-          'Testing: Owner RPC reject bid',
-          tag: _logTag,
-        );
+        AppLogger.d('Testing: Owner RPC reject bid', tag: _logTag);
 
         // Configure mock as task owner
         when(() => mockUser.id).thenReturn(_testOwnerId);
-        when(() => mockUser.appMetadata)
-            .thenReturn({'active_role': 'client'});
+        when(() => mockUser.appMetadata).thenReturn({'active_role': 'client'});
 
         // Conversation ID returned on reject
         final conversationId = 'conv-550e8400-e29b-41d4-a716-446655440000';
@@ -826,38 +762,26 @@ void main() {
         when(
           () => mockClient.rpc(
             'reject_task_request',
-            params: {
-              'p_task_id': _testTaskId,
-              'p_request_id': _testRequestId,
-            },
+            params: {'p_task_id': _testTaskId, 'p_request_id': _testRequestId},
           ),
         ).thenAnswer((_) async => conversationId);
 
         // Execute RPC
         final result = await mockClient.rpc(
           'reject_task_request',
-          params: {
-            'p_task_id': _testTaskId,
-            'p_request_id': _testRequestId,
-          },
+          params: {'p_task_id': _testTaskId, 'p_request_id': _testRequestId},
         );
 
         // Verify result
         expect(result, equals(conversationId));
 
-        AppLogger.i(
-          '✅ PASS: Owner RPC reject bid succeeded',
-          tag: _logTag,
-        );
+        AppLogger.i('✅ PASS: Owner RPC reject bid succeeded', tag: _logTag);
       },
     );
   });
 
   tearDownAll(() {
-    AppLogger.i(
-      'All task_requests RLS security tests completed',
-      tag: _logTag,
-    );
+    AppLogger.i('All task_requests RLS security tests completed', tag: _logTag);
   });
 }
 

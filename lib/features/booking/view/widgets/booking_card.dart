@@ -210,6 +210,10 @@ class BookingCard extends StatelessWidget {
         color = AppColors.mediumGrey;
         text = 'EXPIRED';
         break;
+      case BookingStatus.disputed:
+        color = AppColors.gold;
+        text = 'DISPUTED';
+        break;
     }
 
     return Container(

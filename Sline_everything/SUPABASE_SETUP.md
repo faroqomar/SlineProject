@@ -1,6 +1,6 @@
 # Supabase Setup for SLine — Complete Database Reference
 
-**Last Updated**: 2026-03-08 (Direct Chat Offer Flow hardening: §5.14 trigger/cron, §5.24 disputes direct_offer_id, §9.5 fee from row, §17 changelog; reference integrity: 21_Wallet → Done)
+**Last Updated**: 2026-03-08 (Hardened Payment Linking: §5.23–5.25 payment_intents/payment_events/orphan_payments, journal meta payment_intent_id; Direct Chat Offer Flow: §5.14, §5.24, §9.5, §17)
 **Version**: 2.20.1
 **Database Version**: PostgreSQL 17.4.1
 **Project ID**: `isddrknbjsgaantjojhm`
@@ -33,12 +33,17 @@ This document is the **single source of truth** for all Supabase backend setup: 
 | `bookings`              | ✅  | 1    | Session bookings                      |
 | `portfolio_items`       | ✅  | 0    | Freelancer portfolio                  |
 | `notifications`         | ✅  | 1    | User notifications                    |
+| `user_devices`          | ✅  | 0    | FCM/APNs token registry (push)        |
+| `notification_push_queue` | ✅  | 0    | Pending push jobs (drained by Edge)   |
 | `work_contracts`        | ✅  | 0    | Versioned scope snapshots             |
 | `change_requests`       | ✅  | 0    | Scope/price/days change proposals     |
 | `extension_requests`    | ✅  | 0    | Deadline extension proposals          |
 | `accounts`              | ✅  | -    | **NEW**: Ledger account chart         |
 | `journal_entries`       | ✅  | -    | **NEW**: Double-entry journal         |
 | `ledger_lines`          | ✅  | -    | **NEW**: Double-entry ledger lines    |
+| `payment_intents`       | ✅  | 0    | Hardened payment intent state (booking/direct_offer) |
+| `payment_events`        | ✅  | 0    | Append-only audit of gateway payment events |
+| `orphan_payments`       | ✅  | 0    | Gateway events with no/invalid intent |
 | `admin_logs`            | ✅  | 0    | Audit logs for admin actions          |
 | `disputes`              | ✅  | 0    | Formal dispute tickets                |
 | `dispute_messages`      | ✅  | 0    | Messages in dispute threads           |
@@ -78,7 +83,7 @@ This document is the **single source of truth** for all Supabase backend setup: 
 | Enum                  | Values                                                                                                                                     |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | `task_type_enum`      | `tender`, `booking`                                                                                                                        |
-| `booking_status_enum` | `pending`, `confirmed`, `active`, `delivered`, `completed`, `canceled`, `refunded`, `paid_request_pending`, `expired_unanswered`           |
+| `booking_status_enum` | `pending`, `confirmed`, `active`, `delivered`, `completed`, `canceled`, `refunded`, `paid_request_pending`, `expired_unanswered`, `disputed`, `no_show` |
 | `payment_status_enum` | `unpaid`, `held`, `released`, `refunded`                                                                                                   |
 | `message_type_enum`   | `text`, `system`, `offer`, `offer_update`, `offer_accepted`, `offer_rejected`, `delivery_submitted`, `end_early_request`, `dispute_report` |
 | `dispute_status_enum` | `open`, `active`, `resolved`, `canceled`                                                                                                   |
@@ -110,6 +115,7 @@ This document is the **single source of truth** for all Supabase backend setup: 
 - ✅ Delivery submission creates contract snapshot (`rpc_submit_delivery`)
 - ✅ Revision requests enforce status and limit before resetting (`rpc_request_revision`: status='delivered', revisions_used < revisions_total)
 - ✅ **Double-Entry Ledger Implementation (v2.16)**: All financial events go through `process_payment_event_ledger`.
+- ✅ **Hardened Payment Linking (v2.20)**: `payment_intents` (signature, currency, paid_at), `payment_events` (append-only RLS + trigger), `orphan_payments` (investigated). Webhook intent path inserts payment_events, validates amount, calls ledger with `payment_intent_id` in `p_meta`; RPCs store it in `journal_entries.meta`. Migrations: `20260308200000_hardened_payment_linking_schema.sql`, `20260308200100_hardened_payment_ledger_meta_payment_intent_id.sql`.
 - ✅ **Legacy Freeze**: `wallet_transactions` table is now read-only to prevent drift.
 - ✅ **Auth profile provisioning**: Trigger `on_auth_user_created` creates `public.profiles` on `auth.users` INSERT. Function `sweep_orphaned_auth_users()` deletes auth users with no profile older than 15 minutes. Extension `pg_cron` is enabled; cron job `sweep-orphaned-auth-users` runs every 15 minutes (`*/15 * * * *`). View `vw_orphaned_auth_users` for monitoring.
 - ✅ **Role switching (v2.18)**: RPC `switch_active_role` provides atomic role switching with `expected_old_role` guard, rate limiting (3/minute), and audit logging. Trigger `trg_sync_role_to_jwt` syncs role to JWT claims. RLS policies use `auth.jwt()->'app_metadata'->>'active_role'` for performant role enforcement.
@@ -231,11 +237,13 @@ CREATE TYPE public.booking_status_enum AS ENUM (
   'active',
   'delivered',
   'refunded',
-  'expired_unanswered'
+  'expired_unanswered',
+  'disputed',
+  'no_show'
 );
 ````
 
-**Status Transitions** (enforced by `fn_booking_guard` trigger):
+**Status Transitions** (enforced by `fn_booking_guard` trigger; see §9 and migration `20260308210100_booking_lifecycle_guard.sql`):
 
 ```
 pending ──┬──→ paid_request_pending (via "Pay" action)
@@ -246,10 +254,14 @@ paid_request_pending ──┬──→ active (via "Accept" by provider)
                        └──→ expired_unanswered (via system cron)
 
 active ──┬──→ delivered (by provider)
+         ├──→ no_show (by provider or admin only; not by client)
          └──→ canceled (by either side, triggers refund)
 
-delivered ──┬──→ completed (by client approval)
-            └──→ canceled (by client, triggers refund)
+delivered ──┬──→ completed (by client approval or rpc_finalize_auto_approval; ledger release_with_fee)
+            └──→ disputed (by client via "Report Issue"; client cannot set delivered→canceled)
+
+disputed ──┬──→ completed (admin only via admin_resolve_booking_dispute; ledger release_with_fee)
+           └──→ refunded (admin only via admin_resolve_booking_dispute; ledger refund)
 ```
 
 ### 4.3 `message_type_enum`
@@ -651,6 +663,67 @@ Atomic Debit/Credit entries. Must sum to zero per journal entry.
 | `amount`           | numeric | Absolute amount (must be > 0) |
 | `currency`         | text    | Default 'IQD'                 |
 
+**Hardened Payment Linking (v2.20):** For gateway flows, Edge may pass `payment_intent_id` in `p_meta` when calling `process_payment_event_ledger` or `process_gateway_escrow_direct_offer`. Both RPCs merge it into `journal_entries.meta` for audit (migrations `20260308200100_hardened_payment_ledger_meta_payment_intent_id.sql`).
+
+---
+
+### 5.23 `payment_intents` (Hardened Payment Linking, v2.20)
+
+State and metadata for a payment attempt (booking or direct_offer). Created by Edge; webhook updates status and writes ledger with intent id in meta.
+
+| Column               | Type      | Description |
+| -------------------- | --------- | ----------- |
+| `id`                 | uuid      | PK          |
+| `entity_type`        | text      | 'booking', 'direct_offer' |
+| `entity_id`          | uuid      | FK to booking or direct_offer |
+| `payer_id`           | uuid      | FK auth.users |
+| `receiver_id`        | uuid      | FK auth.users |
+| `gross_amount`       | numeric   | Intent amount |
+| `fee_rate_locked`    | int       | Locked fee (bps) |
+| `gateway_intent_id`  | text      | Gateway-provided id (e.g. QiCard paymentId) |
+| `idempotency_key`    | text      | Unique per create |
+| `status`             | payment_intent_status_enum | created, gateway_processing, succeeded, failed |
+| `signature`          | text      | HMAC for webhook verification (optional until HMAC implemented) |
+| `currency`           | text      | Default 'IQD' |
+| `paid_at`            | timestamptz | Set when webhook marks succeeded |
+| `created_at` / `updated_at` | timestamptz | |
+
+**RLS:** SELECT for payer; INSERT/UPDATE only via `service_role` (policy `service_role_all_payment_intents`). **Migrations:** `20260307000000_hardened_payment_gateway.sql`, `20260308200000_hardened_payment_linking_schema.sql`.
+
+---
+
+### 5.24 `payment_events` (Hardened Payment Linking, v2.20)
+
+Append-only audit of gateway payment events. One row per webhook hit when intent is known; links to `payment_intents.id` via `intent_id`.
+
+| Column             | Type   | Description |
+| ------------------ | ------ | ----------- |
+| `id`               | uuid   | PK          |
+| `gateway_event_id` | text   | UNIQUE; idempotency key (e.g. paymentId from gateway) |
+| `intent_id`        | uuid   | FK payment_intents, NOT NULL |
+| `event_type`       | text   | e.g. 'payment_success' |
+| `payload`          | jsonb  | Raw payload (audit) |
+| `created_at`       | timestamptz | |
+
+**RLS:** INSERT for `service_role` only (policy `service_role_insert_payment_events`). No UPDATE/DELETE policies. **Trigger:** `trg_payment_events_append_only` (BEFORE UPDATE OR DELETE) raises exception. **Migration:** `20260308200000_hardened_payment_linking_schema.sql`.
+
+---
+
+### 5.25 `orphan_payments` (Hardened Payment Linking, v2.20)
+
+Gateway events that could not be linked to a valid intent (intent not found, amount/currency mismatch). Admin can triage via Orphan Queue.
+
+| Column             | Type   | Description |
+| ------------------ | ------ | ----------- |
+| `id`               | uuid   | PK          |
+| `gateway_event_id` | text   | Gateway event id |
+| `error_reason`     | text   | e.g. 'intent_not_found', 'amount_mismatch' |
+| `payload`          | jsonb  | Raw payload |
+| `investigated`     | boolean | Default false; admin can mark |
+| `created_at`       | timestamptz | |
+
+**RLS:** INSERT by `service_role`; SELECT for admin. **Migration:** `20260308200000_hardened_payment_linking_schema.sql`.
+
 ---
 
 ### 5.16 `work_contracts`
@@ -810,6 +883,41 @@ User notifications for messages, offers, and system events.
 | `is_read`             | boolean     | ❌       | `false`             | Read status                                     |
 | `metadata`            | jsonb       | ✅       | `'{}'`              | Extra data                                      |
 | `created_at`          | timestamptz | ❌       | `now()`             | Creation timestamp                              |
+
+---
+
+### 5.13a `user_devices` (Notification push registry)
+
+FCM/APNs device tokens for push delivery. One row per (user_id, platform). Plan: `.TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md`.
+
+| Column       | Type        | Nullable | Default             | Description          |
+| ------------ | ----------- | -------- | ------------------- | -------------------- |
+| `id`         | uuid        | ❌       | `gen_random_uuid()` | Primary key          |
+| `user_id`    | uuid        | ❌       | -                   | FK to profiles       |
+| `fcm_token`  | text        | ❌       | -                   | FCM device token     |
+| `platform`   | text        | ❌       | -                   | `ios` \| `android`   |
+| `created_at` | timestamptz | ❌       | `now()`             | First registration   |
+| `updated_at` | timestamptz | ❌       | `now()`             | Last token refresh   |
+
+- **Unique:** `(user_id, platform)`. RLS: user can SELECT/INSERT/UPDATE/DELETE own rows only. Push path (Edge Function) uses service_role to read tokens.
+
+### 5.13b `notification_push_queue` (Push job queue)
+
+Queue for push delivery when pg_net is not used. Trigger `trg_notifications_after_insert_push_queue` inserts one row per new notification. Edge Function `process-push-queue` drains pending rows, sends FCM, updates status to `sent`/`failed`.
+
+| Column            | Type        | Nullable | Default             | Description      |
+| ----------------- | ----------- | -------- | ------------------- | ---------------- |
+| `id`              | uuid        | ❌       | `gen_random_uuid()` | Primary key      |
+| `notification_id` | uuid       | ❌       | -                   | FK notifications |
+| `user_id`         | uuid        | ❌       | -                   | FK profiles      |
+| `title`, `message`, `type` | text | ❌  | -                   | From notification |
+| `related_entity_id` | uuid      | ✅       | -                   |                  |
+| `related_entity_type` | text    | ✅       | -                   |                  |
+| `created_at`      | timestamptz | ❌       | `now()`             |                  |
+| `status`          | text        | ❌       | `'pending'`         | pending \| sent \| failed |
+
+- **Trigger:** `trg_notifications_after_insert_push_queue` AFTER INSERT ON notifications. No RLS on this table (server-only; Edge uses service_role).
+- **Edge Functions:** `push-notify` (single payload), `process-push-queue` (batch drain). Require `CRON_SECRET` for process-push-queue; optional `PUSH_NOTIFY_SECRET` for push-notify. Runbook: `.TODO/improvement_the_system/ImplementReady/13_notification-routing/RUNBOOK_notification_push.md`. Plan: `.TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md`.
 
 ---
 
@@ -1535,69 +1643,15 @@ $$ language plpgsql security definer;
 
 #### `fn_booking_guard()`
 
-Enforces valid booking status transitions (Pay-First Flow).
+Enforces valid booking status transitions (Pay-First Flow). **Current implementation:** migration `20260308210100_booking_lifecycle_guard.sql`. Summary:
 
-```sql
-CREATE OR REPLACE FUNCTION public.fn_booking_guard()
- RETURNS trigger
- LANGUAGE plpgsql
- SECURITY DEFINER
-AS $function$
-DECLARE
-    v_is_client boolean;
-    v_is_provider boolean;
-BEGIN
-    v_is_client := (auth.uid() = OLD.client_id);
-    v_is_provider := (auth.uid() = OLD.provider_id);
+- **pending** → paid_request_pending (client), canceled (client).
+- **paid_request_pending** → active (provider), refunded (provider), expired_unanswered (system).
+- **active** → delivered (provider), no_show (provider or admin only), canceled (either).
+- **delivered** → completed (client or rpc_finalize_auto_approval), **disputed** (client only; "Report Issue"). **Client cannot set delivered→canceled** (guard raises; use Report Issue).
+- **disputed** → completed, refunded (admin only via `admin_resolve_booking_dispute` RPC).
 
-    -- 1. Pending -> Paid Request Pending (Simulated Pay)
-    IF OLD.status = 'pending' AND NEW.status = 'paid_request_pending' THEN
-       RETURN NEW;
-    END IF;
-
-    -- 2. Paid Request -> Active (Provider Accepts)
-    IF OLD.status = 'paid_request_pending' AND NEW.status = 'active' THEN
-        IF NOT v_is_provider THEN
-            RAISE EXCEPTION 'Only provider can accept a booking';
-        END IF;
-        RETURN NEW;
-    END IF;
-
-    -- 3. Paid Request -> Refunded (Provider Declines)
-    IF OLD.status = 'paid_request_pending' AND NEW.status = 'refunded' THEN
-        RETURN NEW; -- Allow decline
-    END IF;
-
-    -- 4. Active -> Delivered (Provider Marks Done)
-    IF OLD.status = 'active' AND NEW.status = 'delivered' THEN
-        IF NOT v_is_provider THEN
-             RAISE EXCEPTION 'Only provider can mark delivered';
-        END IF;
-        RETURN NEW;
-    END IF;
-
-    -- 5. Delivered -> Completed (Client Approves)
-    IF OLD.status = 'delivered' AND NEW.status = 'completed' THEN
-        IF NOT v_is_client THEN
-            RAISE EXCEPTION 'Only client can approve/complete';
-        END IF;
-        RETURN NEW;
-    END IF;
-
-    -- Allow Cancellation
-    IF NEW.status = 'canceled' THEN
-       RETURN NEW;
-    END IF;
-
-    -- Legacy / Fallback
-    IF OLD.status = NEW.status THEN
-        RETURN NEW;
-    END IF;
-
-    RAISE EXCEPTION 'Invalid booking status transition: % -> %', OLD.status, NEW.status;
-END;
-$function$
-```
+Full body: see `supabase/migrations/20260308210100_booking_lifecycle_guard.sql`.
 
 #### `is_client(uid uuid) → boolean`
 
@@ -2296,10 +2350,18 @@ All functions use `SECURITY DEFINER` and include explicit `auth.uid()` checks.
 
 ### 9.4 `rpc_finalize_auto_approval`
 
-- **Purpose**: Auto-complete work if review timer expired.
+- **Purpose**: Auto-complete work if review timer expired. For **booking**, also calls `process_payment_event_ledger('release_with_fee', ...)` when payment is held (releases escrow).
 - **Access**: Public/System (Lazy guard).
-- **Logic**: If an open/active dispute exists for the task (or for the booking’s task), returns current status without updating. Otherwise checks `now() > review_expires_at`, sets `status='completed'`.
-- **Migration**: `20260308140000_dispute_lifecycle_escrow_guard_rls.sql` (dispute guard).
+- **Logic**: If an open/active dispute exists for the task (or for the booking’s task), returns current status without updating. Otherwise checks `now() > review_expires_at`. **Booking branch** (migration `20260308210200_rpc_finalize_auto_approval_booking_ledger.sql`): locks row with `FOR UPDATE`, builds stable idempotency key, calls `process_payment_event_ledger('release_with_fee', 'booking', ...)`, then clears `review_expires_at` (status/payment_status set in ledger). Task/direct_offer branches set `status='completed'` as before.
+- **Migrations**: `20260308140000_dispute_lifecycle_escrow_guard_rls.sql` (dispute guard); `20260308210200_rpc_finalize_auto_approval_booking_ledger.sql` (booking + ledger).
+
+### 9.4a `admin_resolve_booking_dispute`
+
+- **Purpose**: Admin-only: resolve a disputed booking to completed (release to provider) or refunded (refund to client).
+- **Access**: Admin only (`is_admin(auth.uid())`). SECURITY DEFINER.
+- **Parameters**: `p_booking_id` (uuid), `p_resolution` (text: `'completed'` or `'refunded'`), `p_idempotency_key` (text, optional).
+- **Logic**: Validates booking status = `disputed` and payment_status = `held`. For `completed`: calls `process_payment_event_ledger('release_with_fee', ...)` with stable key, then clears `review_expires_at`. For `refunded`: calls `process_payment_event_ledger('refund', ...)`, then sets `bookings.status = 'refunded'`.
+- **Migration**: `20260308210300_admin_resolve_booking_dispute.sql`. Ledger must allow disputed+admin (migration `20260308210400_ledger_allow_disputed_booking_admin.sql`).
 
 ### 9.5 `rpc_approve_delivery`
 
@@ -2483,6 +2545,7 @@ Returns minimum-field profile summaries for all bidders on a task (for owner vie
 
 ### Version 2.20.1 (March 2026)
 
+- **Booking Lifecycle hardening (2026-03-08):** Migrations `20260308210000_booking_lifecycle_enum.sql` (add `disputed`, `no_show` to `booking_status_enum`), `20260308210100_booking_lifecycle_guard.sql` (replace `fn_booking_guard`: client cannot delivered→canceled; client can delivered→disputed; admin only disputed→completed/refunded; provider/admin active→no_show), `20260308210200_rpc_finalize_auto_approval_booking_ledger.sql` (booking branch calls `process_payment_event_ledger('release_with_fee', ...)` when payment held), `20260308210300_admin_resolve_booking_dispute.sql` (admin-only RPC to resolve disputed booking to completed or refunded), `20260308210400_ledger_allow_disputed_booking_admin.sql` (patch `process_payment_event_ledger` to allow release_with_fee/refund when booking status=disputed and actor is admin), `20260308210500_ledger_release_enum_cast_parameter_40.sql` (patch same function: explicit enum casts on release_with_fee UPDATE for bookings and direct_offers to fix "parameter 40 (text) does not match booking_status_enum" on direct-offer complete). Plan: `.TODO/PLAN_BookingLifecycle_2026-03-08_PlanCritic.md`. §4.2, §9.
 - **Unified Work View — 4-branch upgrade (2026-03-08):** Migration `20260308110000_upgrade_unified_work_view.sql`: `vw_unified_work_items` extended to four branches (tasks in progress, bookings, awarded pending payment, **direct_offers**); dispute override; `conversation_id` for direct offers; `security_invoker = true`. Rollback: `20260308100000_rollback_unified_work_view.sql` restores 3-branch view. Plan: `.TODO/PLAN_UnifiedWorkView_2026-03-08_CRITIC.md`. §6.4.
 - **Dispute lifecycle — escrow guard and RLS (2026-03-08):** Migration `20260308140000_dispute_lifecycle_escrow_guard_rls.sql`: `rpc_approve_delivery` and `rpc_finalize_auto_approval` now block when an open/active dispute exists for the task (or booking’s task, or direct_offer). Explicit deny policies on `disputes` (UPDATE/DELETE for authenticated). RLS for `dispute_messages` and `dispute_evidence` (participant-only SELECT/INSERT). Indexes on `disputes(task_id)`, `(direct_offer_id)`, `(status)`. Plan: `.TODO/PLAN_DisputeLifecycle_2026-03-08.md`.
 - **Dispute lifecycle — enum, triggers, view (2026-03-08):** Migration `20260308150000_dispute_enum_guard_resolved_at.sql`: `dispute_status_enum` ('open','active','resolved','canceled'); `disputes.status` altered to enum; triggers `trg_dispute_guard` (transition guard: open→active/canceled, active→resolved), `trg_dispute_set_resolved_at` (sets `resolved_at` when status→resolved); `vw_unified_work_items` recreated with enum-safe disputed check (`d.status IN ('open','active')`).

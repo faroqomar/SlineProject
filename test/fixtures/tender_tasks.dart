@@ -15,11 +15,15 @@ const String _logTag = 'test_fixture';
 // Sample UUIDs for tender task testing - unique to tender fixtures
 const String tenderTestTaskId = 'task-550e8400-e29b-41d4-a716-446655440000';
 const String tenderTestTaskIdOpen = 'task-open-e29b-41d4-a716-446655440001';
-const String tenderTestTaskIdAssigned = 'task-assigned-e29b-41d4-a716-446655440002';
-const String tenderTestTaskIdInProgress = 'task-inprogress-e29b-41d4-a716-446655440003';
+const String tenderTestTaskIdAssigned =
+    'task-assigned-e29b-41d4-a716-446655440002';
+const String tenderTestTaskIdInProgress =
+    'task-inprogress-e29b-41d4-a716-446655440003';
 const String tenderTestRequestId = 'req-550e8400-e29b-41d4-a716-446655440000';
-const String tenderTestRequestIdPending = 'req-pending-e29b-41d4-a716-446655440001';
-const String tenderTestRequestIdAccepted = 'req-accepted-e29b-41d4-a716-446655440002';
+const String tenderTestRequestIdPending =
+    'req-pending-e29b-41d4-a716-446655440001';
+const String tenderTestRequestIdAccepted =
+    'req-accepted-e29b-41d4-a716-446655440002';
 const String tenderTestClientId = '550e8400-e29b-41d4-a716-446655440001';
 const String tenderTestFreelancerId = '550e8400-e29b-41d4-a716-446655440002';
 
@@ -33,7 +37,8 @@ final Map<String, dynamic> openTenderTask = () {
   return <String, dynamic>{
     'id': tenderTestTaskIdOpen,
     'title': 'Open Tender Task - Looking for Flutter Developer',
-    'description': 'I need a Flutter developer to build a mobile app for my business.',
+    'description':
+        'I need a Flutter developer to build a mobile app for my business.',
     'budget': 500.0,
     'budget_cents': 50000,
     'status': 'open',
@@ -348,7 +353,9 @@ final Map<String, dynamic> expiredTaskRequest = () {
     'payment_status': 'unpaid',
     'awarded_at': awardedAt.toIso8601String(),
     'awarded_by': tenderTestClientId,
-    'payment_deadline': awardedAt.add(const Duration(hours: 48)).toIso8601String(),
+    'payment_deadline': awardedAt
+        .add(const Duration(hours: 48))
+        .toIso8601String(),
     'fee_rate_applied_bps': 1000,
     'fee_amount': 3000,
     'net_amount': 27000,
@@ -363,7 +370,10 @@ final Map<String, dynamic> expiredTaskRequest = () {
 ///
 /// Response from accept_task_request on success
 final Map<String, dynamic> acceptTaskRequestSuccessResponse = () {
-  AppLogger.d('Creating acceptTaskRequestSuccessResponse fixture', tag: _logTag);
+  AppLogger.d(
+    'Creating acceptTaskRequestSuccessResponse fixture',
+    tag: _logTag,
+  );
   return <String, dynamic>{
     'result': 'accepted',
     'task_id': tenderTestTaskIdOpen,
@@ -376,7 +386,10 @@ final Map<String, dynamic> acceptTaskRequestSuccessResponse = () {
 ///
 /// Response when task request was already accepted
 final Map<String, dynamic> acceptTaskRequestAlreadyAcceptedResponse = () {
-  AppLogger.d('Creating acceptTaskRequestAlreadyAcceptedResponse fixture', tag: _logTag);
+  AppLogger.d(
+    'Creating acceptTaskRequestAlreadyAcceptedResponse fixture',
+    tag: _logTag,
+  );
   return <String, dynamic>{
     'result': 'already_accepted',
     'task_id': tenderTestTaskIdAssigned,
@@ -389,7 +402,10 @@ final Map<String, dynamic> acceptTaskRequestAlreadyAcceptedResponse = () {
 ///
 /// Response when expected price doesn't match actual
 final Map<String, dynamic> acceptTaskRequestPriceMismatchResponse = () {
-  AppLogger.d('Creating acceptTaskRequestPriceMismatchResponse fixture', tag: _logTag);
+  AppLogger.d(
+    'Creating acceptTaskRequestPriceMismatchResponse fixture',
+    tag: _logTag,
+  );
   return <String, dynamic>{
     'error': 'PRICE_MISMATCH',
     'message': 'Offer price changed from 45000 to 50000 cents',
@@ -439,9 +455,11 @@ MockPostgrestExceptionPriceMismatch createPriceMismatchException({
     json: {'expected_cents': expectedCents, 'actual_cents': actualCents},
   );
   return MockPostgrestExceptionPriceMismatch(
-    message: 'PRICE_MISMATCH: Offer price changed from $expectedCents to $actualCents cents',
+    message:
+        'PRICE_MISMATCH: Offer price changed from $expectedCents to $actualCents cents',
     code: 'P0001',
-    details: 'The freelancer recently updated their offer price. Please review the new terms.',
+    details:
+        'The freelancer recently updated their offer price. Please review the new terms.',
   );
 }
 
@@ -456,12 +474,12 @@ Map<String, dynamic> createCustomTask(
   AppLogger.d(
     'Creating custom task fixture',
     tag: _logTag,
-    json: {'base_status': baseTask['status'], 'overrides': overrides.keys.toList()},
+    json: {
+      'base_status': baseTask['status'],
+      'overrides': overrides.keys.toList(),
+    },
   );
-  return <String, dynamic>{
-    ...baseTask,
-    ...overrides,
-  };
+  return <String, dynamic>{...baseTask, ...overrides};
 }
 
 /// Helper to create a custom task request fixture
@@ -475,10 +493,10 @@ Map<String, dynamic> createCustomTaskRequest(
   AppLogger.d(
     'Creating custom task request fixture',
     tag: _logTag,
-    json: {'base_status': baseRequest['status'], 'overrides': overrides.keys.toList()},
+    json: {
+      'base_status': baseRequest['status'],
+      'overrides': overrides.keys.toList(),
+    },
   );
-  return <String, dynamic>{
-    ...baseRequest,
-    ...overrides,
-  };
+  return <String, dynamic>{...baseRequest, ...overrides};
 }

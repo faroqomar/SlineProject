@@ -33,6 +33,7 @@ enum BookingStatus {
   refunded,
   paidRequestPending,
   expiredUnanswered,
+  disputed, // Client reported issue after delivery; admin resolves
   // Legacy/UI specific (map to DB equivalents)
   inProgress,
   noShow,

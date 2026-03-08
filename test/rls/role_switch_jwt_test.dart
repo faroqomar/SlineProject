@@ -77,10 +77,7 @@ void main() {
       final freelancerContext = rlsHelper.asUser(TestUsers.freelancerUser.id);
       await freelancerContext.canInsert('task_requests', taskRequest);
 
-      AppLogger.i(
-        '✓ Test passed: Freelancer allowed to bid',
-        tag: 'rls_test',
-      );
+      AppLogger.i('✓ Test passed: Freelancer allowed to bid', tag: 'rls_test');
     });
 
     test('freelancer user cannot INSERT tasks (client-only)', () async {
@@ -190,7 +187,10 @@ void main() {
       expect(clientJwt['app_metadata']['active_role'], equals('client'));
 
       final freelancerJwt = TestUsers.freelancerUser.jwtPayload;
-      expect(freelancerJwt['app_metadata']['active_role'], equals('freelancer'));
+      expect(
+        freelancerJwt['app_metadata']['active_role'],
+        equals('freelancer'),
+      );
 
       AppLogger.i(
         '✓ Test passed: JWT payload contains correct active_role',
@@ -213,7 +213,10 @@ void main() {
       // 5. Stop timer
       // Assert: elapsed < 2000ms
 
-      AppLogger.d('Target: < 2000ms for complete role switch flow', tag: 'rls_test');
+      AppLogger.d(
+        'Target: < 2000ms for complete role switch flow',
+        tag: 'rls_test',
+      );
       expect(true, isTrue); // Placeholder for actual latency test
     });
   });
@@ -222,10 +225,7 @@ void main() {
     AppLogger.i(
       'Role Switch JWT test suite completed',
       tag: 'rls_test',
-      json: {
-        'jwt_policies_tested': 4,
-        'role_transitions_tested': 2,
-      },
+      json: {'jwt_policies_tested': 4, 'role_transitions_tested': 2},
     );
   });
 }

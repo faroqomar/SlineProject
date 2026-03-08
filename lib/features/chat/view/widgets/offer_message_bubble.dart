@@ -184,8 +184,7 @@ class OfferMessageBubble extends StatelessWidget {
 
   Widget _buildActions(AppColorScheme colorScheme) {
     final isSent = rawStatus == 'sent' || rawStatus == 'sent_unpaid';
-    final isActive =
-        rawStatus == 'active' || rawStatus == 'active_held';
+    final isActive = rawStatus == 'active' || rawStatus == 'active_held';
     final isDelivered =
         rawStatus == 'delivered' || rawStatus == 'delivered_held';
     final isAcceptedPendingPayment =
@@ -193,11 +192,7 @@ class OfferMessageBubble extends StatelessWidget {
 
     // Direct offer: accepted but not yet paid (client must pay from dashboard)
     if (isAcceptedPendingPayment && offerId != null) {
-      return _buildStatusChip(
-        'Pending Payment',
-        Icons.payment,
-        AppColors.gold,
-      );
+      return _buildStatusChip('Pending Payment', Icons.payment, AppColors.gold);
     }
 
     // Payment done, work in progress (escrow held)
@@ -358,11 +353,7 @@ class OfferMessageBubble extends StatelessWidget {
     }
 
     // Pending response (no action for this viewer)
-    return _buildStatusChip(
-      'Pending Response',
-      Icons.schedule,
-      AppColors.gold,
-    );
+    return _buildStatusChip('Pending Response', Icons.schedule, AppColors.gold);
   }
 
   Widget _buildStatusChip(String label, IconData icon, Color color) {
@@ -380,10 +371,7 @@ class OfferMessageBubble extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: color),
           const SizedBox(width: 6),
-          Text(
-            label,
-            style: AppTypography.captionBold.copyWith(color: color),
-          ),
+          Text(label, style: AppTypography.captionBold.copyWith(color: color)),
         ],
       ),
     );

@@ -40,61 +40,73 @@ void main() {
   });
 
   group('R01: ProposalsListScreen Data Compatibility', () {
-    test('ProposalRepository returns ProposalModel compatible with list screen', () {
-      AppLogger.i('[R01] Testing ProposalRepository data compatibility', tag: logTag);
+    test(
+      'ProposalRepository returns ProposalModel compatible with list screen',
+      () {
+        AppLogger.i(
+          '[R01] Testing ProposalRepository data compatibility',
+          tag: logTag,
+        );
 
-      // Create ProposalModel fixtures
-      final proposals = [
-        // ignore: deprecated_member_use_from_same_package
-        ProposalModel(
-          id: 'proposal-1',
-          taskId: proposalTestTaskId,
-          bidderId: proposalTestFreelancerId,
-          price: 50000,
-          days: 5,
-          note: 'Test proposal 1',
-          status: OfferStatus.pending,
-          paymentStatus: PaymentStatus.unpaid,
-          createdAt: DateTime.now(),
-          bidderName: 'Test Freelancer',
-          bidderAvatar: 'avatars/freelancer.png',
-          taskTitle: 'Test Task',
-          paymentDeadline: DateTime.now().add(const Duration(hours: 48)),
-        ),
-        // ignore: deprecated_member_use_from_same_package
-        ProposalModel(
-          id: 'proposal-2',
-          taskId: proposalTestTaskId,
-          bidderId: 'bidder-2-id',
-          price: 60000,
-          days: 3,
-          note: 'Test proposal 2',
-          status: OfferStatus.pending,
-          paymentStatus: PaymentStatus.unpaid,
-          createdAt: DateTime.now(),
-          bidderName: 'Another Freelancer',
-          bidderAvatar: 'avatars/freelancer2.png',
-          taskTitle: 'Test Task',
-        ),
-      ];
+        // Create ProposalModel fixtures
+        final proposals = [
+          // ignore: deprecated_member_use_from_same_package
+          ProposalModel(
+            id: 'proposal-1',
+            taskId: proposalTestTaskId,
+            bidderId: proposalTestFreelancerId,
+            price: 50000,
+            days: 5,
+            note: 'Test proposal 1',
+            status: OfferStatus.pending,
+            paymentStatus: PaymentStatus.unpaid,
+            createdAt: DateTime.now(),
+            bidderName: 'Test Freelancer',
+            bidderAvatar: 'avatars/freelancer.png',
+            taskTitle: 'Test Task',
+            paymentDeadline: DateTime.now().add(const Duration(hours: 48)),
+          ),
+          // ignore: deprecated_member_use_from_same_package
+          ProposalModel(
+            id: 'proposal-2',
+            taskId: proposalTestTaskId,
+            bidderId: 'bidder-2-id',
+            price: 60000,
+            days: 3,
+            note: 'Test proposal 2',
+            status: OfferStatus.pending,
+            paymentStatus: PaymentStatus.unpaid,
+            createdAt: DateTime.now(),
+            bidderName: 'Another Freelancer',
+            bidderAvatar: 'avatars/freelancer2.png',
+            taskTitle: 'Test Task',
+          ),
+        ];
 
-      // Verify all required fields for list screen
-      for (final proposal in proposals) {
-        expect(proposal.id, isNotEmpty);
-        expect(proposal.taskId, equals(proposalTestTaskId));
-        expect(proposal.bidderId, isNotEmpty);
-        expect(proposal.price, greaterThan(0));
-        expect(proposal.days, greaterThan(0));
-        expect(proposal.status, isNotNull);
-        expect(proposal.createdAt, isNotNull);
-      }
+        // Verify all required fields for list screen
+        for (final proposal in proposals) {
+          expect(proposal.id, isNotEmpty);
+          expect(proposal.taskId, equals(proposalTestTaskId));
+          expect(proposal.bidderId, isNotEmpty);
+          expect(proposal.price, greaterThan(0));
+          expect(proposal.days, greaterThan(0));
+          expect(proposal.status, isNotNull);
+          expect(proposal.createdAt, isNotNull);
+        }
 
-      expect(proposals.length, equals(2));
-      AppLogger.i('[R01] ProposalRepository returns compatible data: PASSED', tag: logTag);
-    });
+        expect(proposals.length, equals(2));
+        AppLogger.i(
+          '[R01] ProposalRepository returns compatible data: PASSED',
+          tag: logTag,
+        );
+      },
+    );
 
     test('get_proposal_bidder_summaries RPC returns correct structure', () {
-      AppLogger.i('[R01] Testing get_proposal_bidder_summaries RPC', tag: logTag);
+      AppLogger.i(
+        '[R01] Testing get_proposal_bidder_summaries RPC',
+        tag: logTag,
+      );
 
       final bidderSummaries = [
         <String, dynamic>{
@@ -114,7 +126,10 @@ void main() {
       expect(bidderSummaries.first['id'], isNotEmpty);
       expect(bidderSummaries.first['full_name'], isNotEmpty);
 
-      AppLogger.i('[R01] get_proposal_bidder_summaries RPC structure: PASSED', tag: logTag);
+      AppLogger.i(
+        '[R01] get_proposal_bidder_summaries RPC structure: PASSED',
+        tag: logTag,
+      );
     });
   });
 
@@ -159,34 +174,49 @@ void main() {
       AppLogger.i('[R02] Repository row mapping: PASSED', tag: logTag);
     });
 
-    test('ProposalRepository submitOffer would delegate to TaskRequestsService', () {
-      AppLogger.i('[R02] Testing submitOffer delegation', tag: logTag);
+    test(
+      'ProposalRepository submitOffer would delegate to TaskRequestsService',
+      () {
+        AppLogger.i('[R02] Testing submitOffer delegation', tag: logTag);
 
-      // Verify the expected insert data pattern that would be sent
-      final expectedInsertData = <String, dynamic>{
-        'task_id': proposalTestTaskId,
-        'bidder_id': proposalTestFreelancerId,
-        'freelancer_id': proposalTestFreelancerId,
-        'price': 450.00,
-        'days': 7,
-        'note': 'Test proposal note',
-      };
+        // Verify the expected insert data pattern that would be sent
+        final expectedInsertData = <String, dynamic>{
+          'task_id': proposalTestTaskId,
+          'bidder_id': proposalTestFreelancerId,
+          'freelancer_id': proposalTestFreelancerId,
+          'price': 450.00,
+          'days': 7,
+          'note': 'Test proposal note',
+        };
 
-      expect(expectedInsertData['task_id'], equals(proposalTestTaskId));
-      expect(expectedInsertData['bidder_id'], equals(proposalTestFreelancerId));
-      expect(expectedInsertData['freelancer_id'], equals(proposalTestFreelancerId));
-      expect(expectedInsertData['price'], equals(450.00));
+        expect(expectedInsertData['task_id'], equals(proposalTestTaskId));
+        expect(
+          expectedInsertData['bidder_id'],
+          equals(proposalTestFreelancerId),
+        );
+        expect(
+          expectedInsertData['freelancer_id'],
+          equals(proposalTestFreelancerId),
+        );
+        expect(expectedInsertData['price'], equals(450.00));
 
-      // Verify TaskRequestsService exists and would be called
-      expect(TaskRequestsService, isNotNull);
+        // Verify TaskRequestsService exists and would be called
+        expect(TaskRequestsService, isNotNull);
 
-      AppLogger.i('[R02] Repository submitOffer delegation pattern: PASSED', tag: logTag);
-    });
+        AppLogger.i(
+          '[R02] Repository submitOffer delegation pattern: PASSED',
+          tag: logTag,
+        );
+      },
+    );
   });
 
   group('R03: Dashboard Inbox Bids', () {
     test('TaskRequest.fromProposal maintains compatibility', () {
-      AppLogger.i('[R03] Testing TaskRequest.fromProposal compatibility', tag: logTag);
+      AppLogger.i(
+        '[R03] Testing TaskRequest.fromProposal compatibility',
+        tag: logTag,
+      );
 
       // Create a ProposalModel (legacy)
       // ignore: deprecated_member_use_from_same_package
@@ -224,7 +254,10 @@ void main() {
       expect(taskRequest.taskTitle, equals(proposal.taskTitle));
       expect(taskRequest.paymentDeadline, equals(proposal.paymentDeadline));
 
-      AppLogger.i('[R03] TaskRequest.fromProposal compatibility: PASSED', tag: logTag);
+      AppLogger.i(
+        '[R03] TaskRequest.fromProposal compatibility: PASSED',
+        tag: logTag,
+      );
     });
 
     test('Inbox bid grouping works with TaskRequest', () {
@@ -341,15 +374,15 @@ void main() {
       // New award response
       final awardResponse = <String, dynamic>{
         'success': true,
-        'payment_deadline': DateTime.now().add(const Duration(hours: 48)).toIso8601String(),
+        'payment_deadline': DateTime.now()
+            .add(const Duration(hours: 48))
+            .toIso8601String(),
       };
       expect(awardResponse['success'], equals(true));
       expect(awardResponse['payment_deadline'], isNotNull);
 
       // New pay RPC parameters
-      final payParams = <String, dynamic>{
-        'p_request_id': 'offer-id',
-      };
+      final payParams = <String, dynamic>{'p_request_id': 'offer-id'};
       expect(payParams['p_request_id'], isNotNull);
 
       // New pay response
@@ -360,7 +393,10 @@ void main() {
       expect(payResponse['success'], equals(true));
       expect(payResponse['payment_status'], equals('held'));
 
-      AppLogger.i('[R05] Two-step flow coexists with legacy: PASSED', tag: logTag);
+      AppLogger.i(
+        '[R05] Two-step flow coexists with legacy: PASSED',
+        tag: logTag,
+      );
     });
 
     test('Data model consistency between flows', () {

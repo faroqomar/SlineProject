@@ -200,7 +200,8 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     BuildContext context,
     WorkItemDetailsViewModel vm,
   ) {
-    final isTaskPendingPayment = widget.type == WorkItemType.task &&
+    final isTaskPendingPayment =
+        widget.type == WorkItemType.task &&
         vm.status == UnifiedWorkStatus.pendingPayment &&
         vm.isClient &&
         vm.workItem?.awardedRequestId != null;
@@ -211,7 +212,8 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     final taskId = widget.id;
     final taskTitle = vm.title;
     final amount = vm.workItem!.price;
-    final deadline = vm.workItem?.paymentDeadline ??
+    final deadline =
+        vm.workItem?.paymentDeadline ??
         DateTime.now().add(const Duration(hours: 24));
     final otherName = vm.otherPartyProfile?['full_name'] ?? 'Freelancer';
 
@@ -231,15 +233,20 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
                 amount: amount,
                 paymentDeadline: deadline,
               );
-              await openProposalPayment(context, summary: summary, launcherSource: 'work_item_details');
+              await openProposalPayment(
+                context,
+                summary: summary,
+                launcherSource: 'work_item_details',
+              );
               if (context.mounted) {
                 context.read<WorkItemDetailsViewModel>().refreshDashboard();
-                context.read<WorkItemDetailsViewModel>().loadData(taskId, 'task');
+                context.read<WorkItemDetailsViewModel>().loadData(
+                  taskId,
+                  'task',
+                );
               }
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.teal,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.teal),
             child: const Text('Pay & Confirm'),
           ),
         ),
@@ -249,7 +256,9 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
           child: TextButton(
             onPressed: () async {
               try {
-                await context.read<WorkItemDetailsViewModel>().cancelAward(requestId);
+                await context.read<WorkItemDetailsViewModel>().cancelAward(
+                  requestId,
+                );
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -263,7 +272,9 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(e is Exception ? e.toString() : 'Failed to cancel'),
+                      content: Text(
+                        e is Exception ? e.toString() : 'Failed to cancel',
+                      ),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -533,10 +544,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
                 onPressed: () => vm.declineBooking(),
               ),
               const SizedBox(width: AppDimens.p16),
-              AppButton(
-                text: 'Accept',
-                onPressed: () => vm.acceptBooking(),
-              ),
+              AppButton(text: 'Accept', onPressed: () => vm.acceptBooking()),
             ] else if (canCancel) ...[
               AppButton(
                 text: 'Cancel Request',
@@ -552,7 +560,8 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
                   onPressed: null,
                 ),
               if (canRequestExtension) ...[
-                if (isAwaitingClientReview) const SizedBox(width: AppDimens.p12),
+                if (isAwaitingClientReview)
+                  const SizedBox(width: AppDimens.p12),
                 AppButton(
                   text: 'Extension',
                   isPrimary: false,
@@ -655,7 +664,8 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
           onReject: (reason) async {
             await vm.requestRevision(reason);
           },
-          canRequestRevision: vm.workItem != null &&
+          canRequestRevision:
+              vm.workItem != null &&
               (vm.workItem!.revisionsUsed < vm.workItem!.revisionsTotal),
           getRevisionError: () => vm.error,
         ),
@@ -674,9 +684,11 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     if (vm.workItem == null) return false;
     final type = vm.workItem!.sourceType;
     final allowedStatus =
-        vm.status == UnifiedWorkStatus.active || vm.status == UnifiedWorkStatus.delivered;
+        vm.status == UnifiedWorkStatus.active ||
+        vm.status == UnifiedWorkStatus.delivered;
     if (!allowedStatus) return false;
-    if (type == 'booking') return vm.booking?.taskId != null && vm.booking!.taskId!.isNotEmpty;
+    if (type == 'booking')
+      return vm.booking?.taskId != null && vm.booking!.taskId!.isNotEmpty;
     return type == 'task' || type == 'direct_offer';
   }
 
@@ -877,7 +889,11 @@ class _DisputeBannerContent extends StatelessWidget {
             padding: const EdgeInsets.all(AppDimens.p12),
             child: Row(
               children: [
-                Icon(Icons.info_outline, size: 20, color: context.colorScheme.primary),
+                Icon(
+                  Icons.info_outline,
+                  size: 20,
+                  color: context.colorScheme.primary,
+                ),
                 const SizedBox(width: AppDimens.p8),
                 Expanded(
                   child: Text(

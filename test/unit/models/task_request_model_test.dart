@@ -273,20 +273,23 @@ void main() {
       expect(heldPayment.isActive, isTrue);
     });
 
-    test('isActive true only when accepted and held (T3: Work Without Escrow)', () {
-      final activeWork = TaskRequest(
-        id: 'req-1',
-        taskId: 'task-1',
-        bidderId: 'bidder-1',
-        price: 100,
-        days: 5,
-        status: OfferStatus.accepted,
-        paymentStatus: PaymentStatus.held,
-        createdAt: DateTime.now(),
-      );
-      expect(activeWork.isActive, isTrue);
-      expect(activeWork.isPendingPayment, isFalse);
-    });
+    test(
+      'isActive true only when accepted and held (T3: Work Without Escrow)',
+      () {
+        final activeWork = TaskRequest(
+          id: 'req-1',
+          taskId: 'task-1',
+          bidderId: 'bidder-1',
+          price: 100,
+          days: 5,
+          status: OfferStatus.accepted,
+          paymentStatus: PaymentStatus.held,
+          createdAt: DateTime.now(),
+        );
+        expect(activeWork.isActive, isTrue);
+        expect(activeWork.isPendingPayment, isFalse);
+      },
+    );
 
     test('isActive false for pending status regardless of payment', () {
       final pendingWithUnpaid = TaskRequest(

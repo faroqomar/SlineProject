@@ -28,8 +28,8 @@ Future<void> openProposalPayment(
     taskService: taskService,
     paymentService: paymentService,
   );
-  final deadline = summary.paymentDeadline ??
-      DateTime.now().add(const Duration(hours: 24));
+  final deadline =
+      summary.paymentDeadline ?? DateTime.now().add(const Duration(hours: 24));
   await Navigator.of(context).push<void>(
     MaterialPageRoute(
       builder: (_) => ChangeNotifierProvider<TenderPaymentViewModel>(

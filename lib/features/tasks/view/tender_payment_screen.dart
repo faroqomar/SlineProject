@@ -133,9 +133,7 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
         color: vm.isExpired ? Colors.red.shade50 : Colors.orange.shade50,
         borderRadius: BorderRadius.circular(AppDimens.r12),
         border: Border.all(
-          color: vm.isExpired
-              ? Colors.red.shade200
-              : Colors.orange.shade200,
+          color: vm.isExpired ? Colors.red.shade200 : Colors.orange.shade200,
         ),
       ),
       child: Row(
@@ -155,9 +153,7 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
                       : 'Payment Required',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: vm.isExpired
-                        ? Colors.red
-                        : Colors.orange.shade800,
+                    color: vm.isExpired ? Colors.red : Colors.orange.shade800,
                   ),
                 ),
                 if (!vm.isExpired)
@@ -182,10 +178,9 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
       children: [
         Text(
           'Order Summary',
-          style: Theme.of(context)
-              .textTheme
-              .titleLarge
-              ?.copyWith(fontWeight: FontWeight.bold),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: AppDimens.p16),
         _buildSummaryRow('Task', vm.taskTitle),
@@ -206,10 +201,9 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
       children: [
         Text(
           'Payment Method',
-          style: Theme.of(context)
-              .textTheme
-              .titleMedium
-              ?.copyWith(fontWeight: FontWeight.bold),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: AppDimens.p12),
         Container(
@@ -261,10 +255,7 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
           Icon(Icons.error_outline, color: Colors.red.shade700),
           const SizedBox(width: AppDimens.p8),
           Expanded(
-            child: Text(
-              message,
-              style: TextStyle(color: Colors.red.shade700),
-            ),
+            child: Text(message, style: TextStyle(color: Colors.red.shade700)),
           ),
         ],
       ),
@@ -287,10 +278,7 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
           Expanded(
             child: Text(
               'Card payment for this flow is not yet available. Use Pay Later and complete payment when server-backed payment is enabled.',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.amber.shade900,
-              ),
+              style: TextStyle(fontSize: 13, color: Colors.amber.shade900),
             ),
           ),
         ],
@@ -299,7 +287,8 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
   }
 
   Widget _buildPayButton(BuildContext context, TenderPaymentViewModel vm) {
-    final canPay = vm.isTenderPaymentAvailable && !vm.isProcessing && !vm.isExpired;
+    final canPay =
+        vm.isTenderPaymentAvailable && !vm.isProcessing && !vm.isExpired;
     final finishUrl = buildQiCardFinishUrlForRuntime();
     return SizedBox(
       width: double.infinity,

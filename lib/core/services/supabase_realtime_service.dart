@@ -66,11 +66,7 @@ class SupabaseRealtimeService {
     AppLogger.i(
       'Subscribing to task requests',
       tag: _logTag,
-      json: {
-        'channel': channelName,
-        'taskId': taskId,
-        'events': listenEvents,
-      },
+      json: {'channel': channelName, 'taskId': taskId, 'events': listenEvents},
     );
 
     // Return existing stream if already subscribed
@@ -301,10 +297,7 @@ class SupabaseRealtimeService {
     // Clear all tracking maps
     _controllers.clear();
 
-    AppLogger.i(
-      'All channels unsubscribed',
-      tag: _logTag,
-    );
+    AppLogger.i('All channels unsubscribed', tag: _logTag);
   }
 
   /// Clean up a specific channel

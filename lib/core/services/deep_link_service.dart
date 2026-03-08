@@ -115,10 +115,7 @@ class DeepLinkService {
     String id, {
     String? conversationId,
   }) async {
-    AppLogger.i(
-      'Handling work item tap: $type - $id',
-      tag: 'DeepLink',
-    );
+    AppLogger.i('Handling work item tap: $type - $id', tag: 'DeepLink');
     if (!context.mounted) return;
 
     final typeLower = type.toLowerCase();
@@ -153,10 +150,7 @@ class DeepLinkService {
     String? id,
   ) async {
     if (id == null || type == null) {
-      AppLogger.w(
-        'Cannot navigate: ID or Type is null',
-        tag: 'DeepLink',
-      );
+      AppLogger.w('Cannot navigate: ID or Type is null', tag: 'DeepLink');
       return;
     }
 

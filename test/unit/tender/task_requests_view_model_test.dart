@@ -173,11 +173,14 @@ void main() {
         expect(() => viewModel.rollbackOptimisticUpdate(), returnsNormally);
       });
 
-      test('rollback clears optimistic state when no optimistic offer exists', () {
-        // Should not throw even when no optimistic offer exists
-        viewModel.rollbackOptimisticUpdate();
-        expect(viewModel.hasOptimisticUpdate, false);
-      });
+      test(
+        'rollback clears optimistic state when no optimistic offer exists',
+        () {
+          // Should not throw even when no optimistic offer exists
+          viewModel.rollbackOptimisticUpdate();
+          expect(viewModel.hasOptimisticUpdate, false);
+        },
+      );
     });
 
     // ==========================================================================
@@ -195,10 +198,13 @@ void main() {
         createdAt: DateTime.now(),
       );
 
-      test('should calculate price in cents when expectedPriceCents not provided', () {
-        final priceCents = (testRequest.price * 100).round();
-        expect(priceCents, 50000);
-      });
+      test(
+        'should calculate price in cents when expectedPriceCents not provided',
+        () {
+          final priceCents = (testRequest.price * 100).round();
+          expect(priceCents, 50000);
+        },
+      );
 
       test('should use provided expectedPriceCents directly', () {
         const providedCents = 49999;
@@ -334,28 +340,34 @@ void main() {
     group('reject - optimistic update', () {
       test('should rollback on reject error', () async {
         // Pre-populate items
-        when(() => mockProposalRepo.listByTask(
+        when(
+          () => mockProposalRepo.listByTask(
+            taskId: testTaskId,
+            limit: any(named: 'limit'),
+            before: any(named: 'before'),
+            isOwner: true,
+          ),
+        ).thenAnswer(
+          (_) async => [
+            ProposalModel(
+              id: 'req-reject-1',
               taskId: testTaskId,
-              limit: any(named: 'limit'),
-              before: any(named: 'before'),
-              isOwner: true,
-            )).thenAnswer((_) async => [
-                  ProposalModel(
-                    id: 'req-reject-1',
-                    taskId: testTaskId,
-                    bidderId: 'user-1',
-                    price: 100,
-                    days: 5,
-                    status: OfferStatus.pending,
-                    paymentStatus: PaymentStatus.unpaid,
-                    createdAt: DateTime.now(),
-                  ),
-                ]);
+              bidderId: 'user-1',
+              price: 100,
+              days: 5,
+              status: OfferStatus.pending,
+              paymentStatus: PaymentStatus.unpaid,
+              createdAt: DateTime.now(),
+            ),
+          ],
+        );
 
         await viewModel.loadInitial();
 
         // Setup reject to fail
-        when(() => mockService.reject('req-reject-1')).thenThrow(Exception('Reject failed'));
+        when(
+          () => mockService.reject('req-reject-1'),
+        ).thenThrow(Exception('Reject failed'));
 
         await viewModel.reject('req-reject-1');
 
@@ -370,12 +382,14 @@ void main() {
     // ==========================================================================
     group('submitOfferUI - optimistic update', () {
       test('should remove optimistic request on error', () async {
-        when(() => mockService.submitOffer(
-              taskId: any(named: 'taskId'),
-              price: any(named: 'price'),
-              days: any(named: 'days'),
-              note: any(named: 'note'),
-            )).thenThrow(Exception('Submit failed'));
+        when(
+          () => mockService.submitOffer(
+            taskId: any(named: 'taskId'),
+            price: any(named: 'price'),
+            days: any(named: 'days'),
+            note: any(named: 'note'),
+          ),
+        ).thenThrow(Exception('Submit failed'));
 
         final result = await viewModel.submitOfferUI(
           taskId: testTaskId,
@@ -395,31 +409,39 @@ void main() {
     group('award - optimistic update', () {
       test('should rollback on price mismatch', () async {
         // Pre-populate items
-        when(() => mockProposalRepo.listByTask(
+        when(
+          () => mockProposalRepo.listByTask(
+            taskId: testTaskId,
+            limit: any(named: 'limit'),
+            before: any(named: 'before'),
+            isOwner: true,
+          ),
+        ).thenAnswer(
+          (_) async => [
+            ProposalModel(
+              id: 'req-award-1',
               taskId: testTaskId,
-              limit: any(named: 'limit'),
-              before: any(named: 'before'),
-              isOwner: true,
-            )).thenAnswer((_) async => [
-                  ProposalModel(
-                    id: 'req-award-1',
-                    taskId: testTaskId,
-                    bidderId: 'user-1',
-                    price: 100,
-                    days: 5,
-                    status: OfferStatus.pending,
-                    paymentStatus: PaymentStatus.unpaid,
-                    createdAt: DateTime.now(),
-                  ),
-                ]);
+              bidderId: 'user-1',
+              price: 100,
+              days: 5,
+              status: OfferStatus.pending,
+              paymentStatus: PaymentStatus.unpaid,
+              createdAt: DateTime.now(),
+            ),
+          ],
+        );
 
         await viewModel.loadInitial();
 
         // Setup award to throw price mismatch
-        when(() => mockTaskService.awardOffer(
-              'req-award-1',
-              expectedPriceCents: any(named: 'expectedPriceCents'),
-            )).thenThrow(PriceMismatchException(expectedCents: 10000, actualCents: 15000));
+        when(
+          () => mockTaskService.awardOffer(
+            'req-award-1',
+            expectedPriceCents: any(named: 'expectedPriceCents'),
+          ),
+        ).thenThrow(
+          PriceMismatchException(expectedCents: 10000, actualCents: 15000),
+        );
 
         expect(
           () => viewModel.award('req-award-1', expectedPriceCents: 10000),

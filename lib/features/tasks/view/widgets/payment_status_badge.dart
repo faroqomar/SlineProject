@@ -39,19 +39,12 @@ class PaymentStatusBadge extends StatelessWidget {
         decoration: BoxDecoration(
           color: config.backgroundColor,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: config.borderColor,
-            width: 1,
-          ),
+          border: Border.all(color: config.borderColor, width: 1),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              config.icon,
-              size: iconSize,
-              color: config.textColor,
-            ),
+            Icon(config.icon, size: iconSize, color: config.textColor),
             const SizedBox(width: 4),
             Flexible(
               child: Column(
@@ -67,7 +60,9 @@ class PaymentStatusBadge extends StatelessWidget {
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
-                  if (showDeadline && deadline != null && status == PaymentStatus.unpaid)
+                  if (showDeadline &&
+                      deadline != null &&
+                      status == PaymentStatus.unpaid)
                     _buildDeadlineText(context),
                 ],
               ),
@@ -117,7 +112,11 @@ class PaymentStatusBadge extends StatelessWidget {
       if (diff.isNegative) {
         return '$baseLabel, deadline expired';
       }
-      return '$baseLabel, ${diff.inDays > 0 ? '${diff.inDays} days' : diff.inHours > 0 ? '${diff.inHours} hours' : '${diff.inMinutes} minutes'} remaining';
+      return '$baseLabel, ${diff.inDays > 0
+          ? '${diff.inDays} days'
+          : diff.inHours > 0
+          ? '${diff.inHours} hours'
+          : '${diff.inMinutes} minutes'} remaining';
     }
 
     return baseLabel;

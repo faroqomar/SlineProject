@@ -146,11 +146,28 @@ class BookingService {
     }
   }
 
+  /// Updates booking status. Enforces guard: client cannot set canceled when status is delivered
+  /// (use Report Issue / dispute flow instead). Plan: PLAN_BookingLifecycle_2026-03-08_PlanCritic.
   Future<BookingModel> updateBookingStatus({
     required String bookingId,
     required BookingStatus newStatus,
   }) async {
+    final uid = _client.auth.currentUser?.id;
     try {
+      if (newStatus == BookingStatus.canceled && uid != null) {
+        final current = await getBookingById(bookingId);
+        final isClient = current.clientId == uid;
+        if (isClient && current.status == BookingStatus.delivered) {
+          AppLogger.w(
+            'Blocked client from canceling delivered booking',
+            tag: 'Booking',
+          );
+          throw StateError(
+            'You cannot cancel after delivery. Use Report Issue to open a dispute.',
+          );
+        }
+      }
+
       final res = await _client
           .from(_bookingsTable)
           .update({'status': _mapStatusToDb(newStatus)})
@@ -164,6 +181,7 @@ class BookingService {
       );
       return BookingModel.fromJson(res as Map<String, dynamic>);
     } catch (e, st) {
+      if (e is StateError) rethrow;
       AppLogger.e(
         'Failed to update booking status for $bookingId',
         error: e,
@@ -359,6 +377,8 @@ class BookingService {
         return 'in_progress';
       case BookingStatus.noShow:
         return 'no_show';
+      case BookingStatus.disputed:
+        return 'disputed';
       case BookingStatus.declined:
         return 'canceled';
       default:

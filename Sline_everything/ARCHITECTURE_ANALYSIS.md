@@ -8,7 +8,7 @@
 
 ## Current Live Architecture Notes (2026-03-07)
 
-- **Hardened Payment Gateway (v2.20)**: Architecture shifted to "Server Authority" for payment lifecycle. Clients no longer initiate sessions directly. `payment_intents` and `payment_events` act as the source of truth, synchronized via Supabase Realtime in the UI layer.
+- **Hardened Payment Gateway (v2.20)**: Architecture shifted to "Server Authority" for payment lifecycle. Clients no longer initiate sessions directly. `payment_intents` and `payment_events` act as the source of truth, synchronized via Supabase Realtime in the UI layer. **Hardened Payment Linking (2026-03-08):** Webhook intent path in `qicard_webhook_handler` audits every gateway event in `payment_events`, validates amount, and stores `payment_intent_id` in `journal_entries.meta` for forensics; app subscribes to `payment_intents(id)` when create returns `intent_id` (booking + direct offer). Plan: `.TODO/PLAN_HardenedPaymentLinking_2026-03-08_PlanCritic.md`.
 - The bottom navigation still uses the legacy enum member `NavView.orders` in `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/core/app_enums.dart`, but the live slot renders `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/dashboard/view/dashboard_screen.dart`.
 
 - The bottom navigation still uses the legacy enum member `NavView.orders` in `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/core/app_enums.dart`, but the live slot renders `/Users/eros/Dev/Eros_Projects/Sline/sline_app/lib/features/dashboard/view/dashboard_screen.dart`.

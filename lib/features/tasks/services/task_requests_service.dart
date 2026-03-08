@@ -24,17 +24,26 @@ class BidReplaceabilityResult {
 
   /// Factory for when there is no existing bid (user can submit new bid).
   factory BidReplaceabilityResult.noExistingBid() {
-    return const BidReplaceabilityResult(isReplaceable: true, existingBid: null);
+    return const BidReplaceabilityResult(
+      isReplaceable: true,
+      existingBid: null,
+    );
   }
 
   /// Factory for when there is a pending bid that can be replaced.
   factory BidReplaceabilityResult.canReplace(TaskRequest existingBid) {
-    return BidReplaceabilityResult(isReplaceable: true, existingBid: existingBid);
+    return BidReplaceabilityResult(
+      isReplaceable: true,
+      existingBid: existingBid,
+    );
   }
 
   /// Factory for when there is a non-pending bid that cannot be replaced.
   factory BidReplaceabilityResult.cannotReplace(TaskRequest existingBid) {
-    return BidReplaceabilityResult(isReplaceable: false, existingBid: existingBid);
+    return BidReplaceabilityResult(
+      isReplaceable: false,
+      existingBid: existingBid,
+    );
   }
 }
 
@@ -102,7 +111,10 @@ class TaskRequestsService {
   Future<DateTime?> getBidExpirationTime(String bidId) async {
     final uid = _client.auth.currentUser?.id;
     if (uid == null) {
-      AppLogger.w('Cannot get expiration time: not authenticated', tag: 'Offers');
+      AppLogger.w(
+        'Cannot get expiration time: not authenticated',
+        tag: 'Offers',
+      );
       return null;
     }
 
@@ -169,11 +181,20 @@ class TaskRequestsService {
   Future<BidReplaceabilityResult> isBidReplaceable(String taskId) async {
     final uid = _client.auth.currentUser?.id;
     if (uid == null) {
-      AppLogger.w('Cannot check bid replaceability: not authenticated', tag: 'Offers');
-      return const BidReplaceabilityResult(isReplaceable: false, existingBid: null);
+      AppLogger.w(
+        'Cannot check bid replaceability: not authenticated',
+        tag: 'Offers',
+      );
+      return const BidReplaceabilityResult(
+        isReplaceable: false,
+        existingBid: null,
+      );
     }
 
-    AppLogger.d('Checking bid replaceability for task $taskId and user $uid', tag: 'Offers');
+    AppLogger.d(
+      'Checking bid replaceability for task $taskId and user $uid',
+      tag: 'Offers',
+    );
 
     try {
       // Fetch all bids by this user on this task
@@ -191,7 +212,9 @@ class TaskRequestsService {
         return BidReplaceabilityResult.noExistingBid();
       }
 
-      final existingBid = TaskRequest.fromMap(rows.first as Map<String, dynamic>);
+      final existingBid = TaskRequest.fromMap(
+        rows.first as Map<String, dynamic>,
+      );
 
       // Only pending bids are replaceable
       if (existingBid.isPending) {
@@ -215,7 +238,10 @@ class TaskRequestsService {
         error: e,
         stackTrace: st,
       );
-      return const BidReplaceabilityResult(isReplaceable: false, existingBid: null);
+      return const BidReplaceabilityResult(
+        isReplaceable: false,
+        existingBid: null,
+      );
     }
   }
 
@@ -507,10 +533,7 @@ class TaskRequestsService {
         );
       }
 
-      return PriceMismatchException(
-        expectedCents: 0,
-        actualCents: 0,
-      );
+      return PriceMismatchException(expectedCents: 0, actualCents: 0);
     }
 
     // Check for already accepted (idempotency hit)
@@ -816,7 +839,8 @@ class OfferAlreadyAcceptedException implements Exception {
   OfferAlreadyAcceptedException();
 
   @override
-  String toString() => 'OfferAlreadyAcceptedException: This offer has already been accepted';
+  String toString() =>
+      'OfferAlreadyAcceptedException: This offer has already been accepted';
 
   /// Returns a user-friendly message.
   String get userMessage => 'This offer has already been accepted.';

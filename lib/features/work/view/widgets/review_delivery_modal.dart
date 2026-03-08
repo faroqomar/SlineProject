@@ -10,8 +10,10 @@ import 'package:sline_app/core/widgets/app_text_field.dart';
 class ReviewDeliveryModal extends StatefulWidget {
   final Future<void> Function() onApprove;
   final Future<void> Function(String reason) onReject;
+
   /// When false, "Request Changes" is disabled and "No revisions left" is shown.
   final bool canRequestRevision;
+
   /// After reject fails, call this to get the user-facing error (e.g. ViewModel.error).
   final String? Function()? getRevisionError;
 
@@ -79,9 +81,9 @@ class _ReviewDeliveryModalState extends State<ReviewDeliveryModal> {
         setState(() => _isLoading = false);
         final msg = widget.getRevisionError?.call();
         if (msg != null && msg.isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(msg)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(msg)));
         }
       }
     }

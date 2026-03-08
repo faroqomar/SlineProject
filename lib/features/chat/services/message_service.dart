@@ -24,7 +24,8 @@ class MessageService {
   Future<bool> _isDirectConversationRpcEnabled() async {
     // Return cached value if still valid
     if (_featureFlagCache != null && _featureFlagCacheTime != null) {
-      if (DateTime.now().difference(_featureFlagCacheTime!) < _featureFlagCacheDuration) {
+      if (DateTime.now().difference(_featureFlagCacheTime!) <
+          _featureFlagCacheDuration) {
         return _featureFlagCache!;
       }
     }
@@ -38,11 +39,11 @@ class MessageService {
 
       // Default to false if flag not found
       final enabled = response?['value'] == 'true';
-      
+
       // Update cache
       _featureFlagCache = enabled;
       _featureFlagCacheTime = DateTime.now();
-      
+
       AppLogger.d('Feature flag enable_direct_conversation_rpc = $enabled');
       return enabled;
     } catch (e) {
@@ -59,7 +60,8 @@ class MessageService {
   Future<bool> isPresenceReceiptsEnabled() async {
     if (_presenceReceiptsFlagCache != null &&
         _presenceReceiptsFlagTime != null &&
-        DateTime.now().difference(_presenceReceiptsFlagTime!) < _featureFlagCacheDuration) {
+        DateTime.now().difference(_presenceReceiptsFlagTime!) <
+            _featureFlagCacheDuration) {
       return _presenceReceiptsFlagCache!;
     }
     try {
@@ -71,10 +73,16 @@ class MessageService {
       final enabled = response?['value'] == 'true';
       _presenceReceiptsFlagCache = enabled;
       _presenceReceiptsFlagTime = DateTime.now();
-      AppLogger.d('[CHAT] feature flag chat_presence_receipts_enabled = $enabled', tag: 'Chat');
+      AppLogger.d(
+        '[CHAT] feature flag chat_presence_receipts_enabled = $enabled',
+        tag: 'Chat',
+      );
       return enabled;
     } catch (e) {
-      AppLogger.w('[CHAT] Failed to check chat_presence_receipts_enabled, default false: $e', tag: 'Chat');
+      AppLogger.w(
+        '[CHAT] Failed to check chat_presence_receipts_enabled, default false: $e',
+        tag: 'Chat',
+      );
       return false;
     }
   }
@@ -83,42 +91,67 @@ class MessageService {
   final Map<String, DateTime> _lastPresenceUpsertByConvo = {};
 
   /// Upsert typing presence. Throttled to at most once per 5s per conversation.
-  Future<void> upsertPresence(String conversationId, String userId, bool isTyping) async {
+  Future<void> upsertPresence(
+    String conversationId,
+    String userId,
+    bool isTyping,
+  ) async {
     final now = DateTime.now().toUtc();
     final last = _lastPresenceUpsertByConvo[conversationId];
     if (last != null && now.difference(last).inSeconds < 5) {
-      AppLogger.d('[CHAT] presence upsert throttled conversationId=$conversationId', tag: 'Chat');
+      AppLogger.d(
+        '[CHAT] presence upsert throttled conversationId=$conversationId',
+        tag: 'Chat',
+      );
       return;
     }
     try {
-      await _client.from('conversation_presence').upsert(
-            {
-              'conversation_id': conversationId,
-              'user_id': userId,
-              'is_typing': isTyping,
-              'updated_at': now.toIso8601String(),
-            },
-            onConflict: 'conversation_id,user_id',
-          );
+      await _client.from('conversation_presence').upsert({
+        'conversation_id': conversationId,
+        'user_id': userId,
+        'is_typing': isTyping,
+        'updated_at': now.toIso8601String(),
+      }, onConflict: 'conversation_id,user_id');
       _lastPresenceUpsertByConvo[conversationId] = now;
-      AppLogger.d('[CHAT] presence_upsert conversationId=$conversationId isTyping=$isTyping', tag: 'Chat');
+      AppLogger.d(
+        '[CHAT] presence_upsert conversationId=$conversationId isTyping=$isTyping',
+        tag: 'Chat',
+      );
     } catch (e, st) {
-      AppLogger.e('[CHAT] presence upsert failed', tag: 'Chat', error: e, stackTrace: st);
+      AppLogger.e(
+        '[CHAT] presence upsert failed',
+        tag: 'Chat',
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
 
   /// Stream presence for a conversation (for typing indicator). Emits list of rows.
-  Stream<List<Map<String, dynamic>>> subscribeToPresence(String conversationId) {
-    AppLogger.d('[CHAT] presence subscription start conversationId=$conversationId', tag: 'Chat');
+  Stream<List<Map<String, dynamic>>> subscribeToPresence(
+    String conversationId,
+  ) {
+    AppLogger.d(
+      '[CHAT] presence subscription start conversationId=$conversationId',
+      tag: 'Chat',
+    );
     return _client
         .from('conversation_presence')
         .stream(primaryKey: ['conversation_id', 'user_id'])
         .eq('conversation_id', conversationId)
         .handleError((e, st) {
-          AppLogger.e('[CHAT] presence stream error', tag: 'Chat', error: e, stackTrace: st);
+          AppLogger.e(
+            '[CHAT] presence stream error',
+            tag: 'Chat',
+            error: e,
+            stackTrace: st,
+          );
         })
-        .map((rows) => rows.map((r) => Map<String, dynamic>.from(r as Map)).toList());
+        .map(
+          (rows) =>
+              rows.map((r) => Map<String, dynamic>.from(r as Map)).toList(),
+        );
   }
 
   /// Create or get conversation (order-insensitive pair). taskId can be null.
@@ -150,7 +183,9 @@ class MessageService {
         );
       } on TimeoutException catch (e) {
         AppLogger.e('❌ RPC start_task_conversation timed out: $e');
-        throw TimeoutException('Connection timeout. Please check your internet and try again.');
+        throw TimeoutException(
+          'Connection timeout. Please check your internet and try again.',
+        );
       } catch (e) {
         AppLogger.e('❌ RPC start_task_conversation failed: $e');
         rethrow;
@@ -172,7 +207,9 @@ class MessageService {
       );
     } else {
       // Use legacy direct INSERT path
-      AppLogger.d('Chat: using legacy direct INSERT path (feature flag disabled)');
+      AppLogger.d(
+        'Chat: using legacy direct INSERT path (feature flag disabled)',
+      );
       return _createDirectConversationViaInsert(
         user1Id: user1Id,
         user2Id: user2Id,
@@ -189,7 +226,10 @@ class MessageService {
   }) async {
     try {
       final response = await _client
-          .rpc('start_direct_conversation_v1', params: {'p_target_id': targetId})
+          .rpc(
+            'start_direct_conversation_v1',
+            params: {'p_target_id': targetId},
+          )
           .select('''
             *,
             user1:profiles!conversations_user1_id_fkey(full_name, avatar_url),
@@ -202,7 +242,9 @@ class MessageService {
       return Conversation.fromJson(Map<String, dynamic>.from(response as Map));
     } on TimeoutException catch (e) {
       AppLogger.e('❌ RPC start_direct_conversation_v1 timed out: $e');
-      throw TimeoutException('Connection timeout. Please check your internet and try again.');
+      throw TimeoutException(
+        'Connection timeout. Please check your internet and try again.',
+      );
     } on PostgrestException catch (e) {
       AppLogger.e('❌ RPC start_direct_conversation_v1 failed: ${e.message}');
       // Let the error propagate for ErrorMapper to handle
@@ -517,7 +559,9 @@ class MessageService {
   /// Drives conversation list updates without subscribing to conversations table
   /// (conversations is not in supabase_realtime publication; no N+1).
   Stream<List<Message>> subscribeToInboxMessages(String userId) {
-    AppLogger.d('[REALTIME] inbox messages subscription start receiver_id=$userId');
+    AppLogger.d(
+      '[REALTIME] inbox messages subscription start receiver_id=$userId',
+    );
     return _client
         .from('messages')
         .stream(primaryKey: ['id'])
@@ -528,15 +572,22 @@ class MessageService {
             '[REALTIME] Inbox messages stream error (timeout/protocol/connection)',
             error: e,
           );
-          AppLogger.d('[REALTIME] Inbox stream error stackTrace', json: st?.toString());
+          AppLogger.d(
+            '[REALTIME] Inbox stream error stackTrace',
+            json: st?.toString(),
+          );
         })
         .map((rows) {
           if (rows.isEmpty) return <Message>[];
           try {
-            final list = rows
-                .map((r) => Message.fromJson(Map<String, dynamic>.from(r as Map)))
-                .toList()
-              ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+            final list =
+                rows
+                    .map(
+                      (r) =>
+                          Message.fromJson(Map<String, dynamic>.from(r as Map)),
+                    )
+                    .toList()
+                  ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
             AppLogger.d('[REALTIME] inbox messages event count=${list.length}');
             return list;
           } catch (e) {

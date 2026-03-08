@@ -14,8 +14,10 @@ class PaymentReturnArgs {
   final String? bookingId;
   final String? correlationId;
   final String? paymentId;
+
   /// Direct offer payment callback.
   final String? offerId;
+
   /// Tender (task_request) payment callback.
   final String? requestId;
   final String? paymentRequestId;

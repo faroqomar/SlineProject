@@ -7,7 +7,7 @@ import '../../../core/models/user_profile.dart';
 
 class AuthRepository {
   AuthRepository({SupabaseClient? client})
-      : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client;
 
   final SupabaseClient _client;
 
@@ -100,7 +100,8 @@ class AuthRepository {
     Duration? retryDelay,
   }) async {
     final retries = maxRetries ?? AuthConfig.profileFetchMaxRetries;
-    final delay = retryDelay ??
+    final delay =
+        retryDelay ??
         const Duration(milliseconds: AuthConfig.profileFetchRetryDelayMs);
 
     if (!AuthConfig.enableProfileFetchRetry) {
@@ -108,10 +109,7 @@ class AuthRepository {
     }
 
     for (int attempt = 1; attempt <= retries; attempt++) {
-      AppLogger.d(
-        'Profile fetch attempt $attempt of $retries',
-        tag: 'Auth',
-      );
+      AppLogger.d('Profile fetch attempt $attempt of $retries', tag: 'Auth');
       try {
         final profile = await _fetchProfileOnce();
         if (profile != null) {
@@ -138,10 +136,7 @@ class AuthRepository {
       }
     }
 
-    AppLogger.w(
-      'Profile fetch failed after $retries attempts',
-      tag: 'Auth',
-    );
+    AppLogger.w('Profile fetch failed after $retries attempts', tag: 'Auth');
     return null;
   }
 

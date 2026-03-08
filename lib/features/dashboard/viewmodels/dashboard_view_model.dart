@@ -57,7 +57,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
     _loadCachedRole();
     _syncRoleFromBackend();
     _loadOverviewData();
-    
+
     // Register with role switch coordinator
     RoleSwitchCoordinator().register(this);
   }
@@ -84,11 +84,11 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
     _inboxOffers = [];
     _pendingRequests = [];
     _pendingPaymentTenders = [];
-    
+
     // Reset lazy-load flags
     _bookingsLoaded = false;
     _inboxLoaded = false;
-    
+
     // Note: Dashboard cache is not cleared here as there's no clearAll method.
     // The cache will naturally be refreshed when new role data is loaded.
     // Individual cache entries are keyed by role, so they're isolated.

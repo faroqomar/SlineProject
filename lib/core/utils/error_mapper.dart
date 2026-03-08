@@ -78,7 +78,9 @@ class ErrorMapper {
     if (message.contains('initiated_by must equal current user')) {
       return 'Session expired. Please log in again.';
     }
-    if (message.contains('task owner cannot start a task-linked conversation')) {
+    if (message.contains(
+      'task owner cannot start a task-linked conversation',
+    )) {
       return 'You cannot start a conversation on this task.';
     }
     // Work contract revision (rpc_request_revision)

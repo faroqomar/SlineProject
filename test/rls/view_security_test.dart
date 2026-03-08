@@ -62,7 +62,10 @@ void main() {
       }
 
       expect(restrictedViews.length, equals(6));
-      AppLogger.i('✓ Test passed: 6 admin views identified for restriction', tag: 'rls_test');
+      AppLogger.i(
+        '✓ Test passed: 6 admin views identified for restriction',
+        tag: 'rls_test',
+      );
     });
   });
 
@@ -76,8 +79,14 @@ void main() {
       // tasks_mvp was SECURITY DEFINER, bypassing RLS
       // After fix: should be recreated with security_invoker
 
-      AppLogger.d('Verify: SELECT * FROM pg_views WHERE viewname = \'tasks_mvp\'', tag: 'rls_test');
-      AppLogger.d('Expected: security_invoker = true in view definition', tag: 'rls_test');
+      AppLogger.d(
+        'Verify: SELECT * FROM pg_views WHERE viewname = \'tasks_mvp\'',
+        tag: 'rls_test',
+      );
+      AppLogger.d(
+        'Expected: security_invoker = true in view definition',
+        tag: 'rls_test',
+      );
 
       // In integration test, query pg_views for security_invoker setting
       expect(true, isTrue); // Placeholder for actual verification
@@ -92,7 +101,10 @@ void main() {
       // user_conversations filters by auth.uid() but if SECURITY DEFINER,
       // the base table RLS is bypassed
 
-      AppLogger.d('Verify: security_invoker on user_conversations', tag: 'rls_test');
+      AppLogger.d(
+        'Verify: security_invoker on user_conversations',
+        tag: 'rls_test',
+      );
       expect(true, isTrue);
     });
 
@@ -105,7 +117,10 @@ void main() {
       // Legacy wallet_balances referenced ledger/views; canonical views are
       // vw_wallet_balances_user and vw_wallet_activity_user (security_invoker).
 
-      AppLogger.d('Verify: wallet_balances either uses security_invoker or is dropped', tag: 'rls_test');
+      AppLogger.d(
+        'Verify: wallet_balances either uses security_invoker or is dropped',
+        tag: 'rls_test',
+      );
       expect(true, isTrue);
     });
   });
@@ -134,13 +149,13 @@ void main() {
     });
 
     test('service_role can access admin views', () {
-      AppLogger.i(
-        'Test: service_role CAN access admin views',
-        tag: 'rls_test',
-      );
+      AppLogger.i('Test: service_role CAN access admin views', tag: 'rls_test');
 
       // service_role should be able to query admin views for reporting
-      AppLogger.d('Verify: GRANT SELECT ON admin views TO service_role', tag: 'rls_test');
+      AppLogger.d(
+        'Verify: GRANT SELECT ON admin views TO service_role',
+        tag: 'rls_test',
+      );
       expect(true, isTrue);
     });
   });

@@ -6,7 +6,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/config/storage_config.dart';
 
 // #region agent log
-void _agentDebugLog(String location, String message, Map<String, dynamic> data, String hypothesisId) {
+void _agentDebugLog(
+  String location,
+  String message,
+  Map<String, dynamic> data,
+  String hypothesisId,
+) {
   try {
     final line = jsonEncode({
       'sessionId': '9844e5',
@@ -16,7 +21,9 @@ void _agentDebugLog(String location, String message, Map<String, dynamic> data, 
       'data': data,
       'hypothesisId': hypothesisId,
     });
-    File('/Users/eros/Dev/Eros_Projects/Sline/sline_app/.cursor/debug-9844e5.log').writeAsStringSync('$line\n', mode: FileMode.append);
+    File(
+      '/Users/eros/Dev/Eros_Projects/Sline/sline_app/.cursor/debug-9844e5.log',
+    ).writeAsStringSync('$line\n', mode: FileMode.append);
   } catch (_) {}
 }
 // #endregion
@@ -47,7 +54,8 @@ class AttachmentService {
           path,
           Uint8List.fromList(bytes),
           fileOptions: FileOptions(
-            cacheControl: SharedStorageConfig.chatAttachmentTtlSeconds.toString(),
+            cacheControl: SharedStorageConfig.chatAttachmentTtlSeconds
+                .toString(),
             upsert: false,
           ),
         );
@@ -59,10 +67,7 @@ class AttachmentService {
   /// Uses [SharedStorageConfig.chatAttachmentTtlSeconds] for consistent TTL.
   /// On 404, retries once with the alternate path shape (convos/convos/... <-> convos/...)
   /// so both legacy and current upload paths can resolve.
-  Future<String> createSignedUrl(
-    String path, {
-    int? expiresInSeconds,
-  }) async {
+  Future<String> createSignedUrl(String path, {int? expiresInSeconds}) async {
     // #region agent log
     _agentDebugLog('attachment_service.dart:createSignedUrl', 'entry', {
       'path': path,
@@ -71,7 +76,8 @@ class AttachmentService {
       'hasSession': _client.auth.currentSession != null,
     }, 'H-A');
     // #endregion
-    final seconds = expiresInSeconds ?? SharedStorageConfig.chatAttachmentTtlSeconds;
+    final seconds =
+        expiresInSeconds ?? SharedStorageConfig.chatAttachmentTtlSeconds;
     const prefixLegacy = 'convos/convos/';
     const prefixNormal = 'convos/';
 
@@ -79,7 +85,9 @@ class AttachmentService {
       if (p.startsWith(prefixLegacy) && p.length > prefixLegacy.length) {
         return prefixNormal + p.substring(prefixLegacy.length);
       }
-      if (p.startsWith(prefixNormal) && !p.startsWith(prefixLegacy) && p.length > prefixNormal.length) {
+      if (p.startsWith(prefixNormal) &&
+          !p.startsWith(prefixLegacy) &&
+          p.length > prefixNormal.length) {
         return prefixLegacy + p.substring(prefixNormal.length);
       }
       return null;
@@ -91,7 +99,10 @@ class AttachmentService {
           .createSignedUrl(path, seconds);
       return res;
     } catch (e) {
-      final is404 = e is StorageException && (e.statusCode == '404' || e.message.toLowerCase().contains('not found'));
+      final is404 =
+          e is StorageException &&
+          (e.statusCode == '404' ||
+              e.message.toLowerCase().contains('not found'));
       final alt = is404 ? alternatePath(path) : null;
       if (alt != null) {
         try {

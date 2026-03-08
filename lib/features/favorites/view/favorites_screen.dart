@@ -136,9 +136,7 @@ class _FavoritesView extends StatelessWidget {
                     if (!context.mounted) return;
                     if (result == FavoritesMutationResult.success) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Removed from favorites'),
-                        ),
+                        const SnackBar(content: Text('Removed from favorites')),
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
