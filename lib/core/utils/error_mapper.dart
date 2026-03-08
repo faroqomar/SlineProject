@@ -81,6 +81,36 @@ class ErrorMapper {
     if (message.contains('task owner cannot start a task-linked conversation')) {
       return 'You cannot start a conversation on this task.';
     }
+    // Work contract revision (rpc_request_revision)
+    if (message.contains('Can only request revision on delivered work')) {
+      return 'You can only request a revision when the work is delivered.';
+    }
+    if (message.contains('No revisions remaining')) {
+      return 'No revisions remaining. You have used all allowed revision requests.';
+    }
+    if (message.contains('Only client can request revision')) {
+      return 'Only the client can request a revision.';
+    }
+    // Frozen guard (submit_delivery, request_revision)
+    if (message.contains('Cannot submit delivery: dispute in progress')) {
+      return 'Cannot submit delivery while a dispute is in progress.';
+    }
+    if (message.contains('Cannot request revision: dispute in progress')) {
+      return 'Cannot request a revision while a dispute is in progress.';
+    }
+    // Dispute submit (rpc_submit_dispute)
+    if (message.contains('Entity not eligible for dispute')) {
+      return 'This item is not in a state that allows raising a dispute.';
+    }
+    if (message.contains('open or active dispute already exists')) {
+      return 'A dispute is already open for this item.';
+    }
+    if (message.contains('Reason is required')) {
+      return 'Please provide a reason for the dispute.';
+    }
+    if (message.contains('Exactly one of task_id or direct_offer_id')) {
+      return 'Invalid dispute request.';
+    }
 
     switch (error.code) {
       case '42501': // RLS denied

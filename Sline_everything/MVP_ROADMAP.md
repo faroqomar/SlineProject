@@ -44,8 +44,8 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | --- | --- | --- |
 | Task creation and editing | ✅ Completed | create/detail/edit flows exist |
 | Task requests / tender offers | ✅ Completed | request services, inbox award flow, task detail actions |
-| Delivery submission and approval | ✅ Completed | RPC-backed delivery flow exists |
-| Tender payment flow | ✅ Completed | `TenderPaymentCoordinator` + `TenderPaymentViewModel`; award → pay from Inbox/Requests; ledger-backed; fail-closed when Demo/QiCard (March 2026); `replace_task_request` in migrations; offer submit no longer mutates `active_role` |
+| Delivery submission and approval | ✅ Completed | RPC-backed delivery flow exists. **Work contract revisions (2025-03-08):** `rpc_request_revision` enforces status=delivered and revisions_used &lt; revisions_total; ErrorMapper + UI disable when no revisions left. Plan: `.TODO/PLAN_WorkContractRevisions_2025-03-08_PlanCritic.md`. |
+| Tender payment flow | ✅ Completed | **Award = reserve only;** assign only after payment (`accept_task_request` and `award_task_offer` do not set freelancer; `pay_awarded_offer` assigns and sets in_progress). `TenderPaymentCoordinator` + `TenderPaymentViewModel`; award → pay from Inbox/Requests (client inbox includes accepted+unpaid offers so Pay Now appears); ledger-backed; fail-closed when Demo/QiCard (March 2026); `replace_task_request` in migrations; offer submit no longer mutates `active_role`. Migrations: 20260308180000, 20260308180100. |
 
 ## 5. Booking and Payment Flows
 
@@ -69,13 +69,13 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | Chat Creation Matrix (v2.19) | ✅ Completed | Atomic RPC `start_direct_conversation_v1` with rate limiting (20/hr), favorites enforcement, role verification. Guard trigger hardens all paths. Feature flag `enable_direct_conversation_rpc`. See `supabase/migrations/20260306000000_chat_creation_matrix.sql` |
 | Notifications | ✅ Completed | server-authority: client read/update only; badge, modal, deep links; auth-aware stream; `.TODO/Archive/NotificationExecution/PLAN_NotificationsFix_2026-03-01.md` |
 | Report flows (task/user/chat) | ✅ Completed | app can submit `reports` rows from task detail, chat menu, and public profile |
-| Booking dispute submission | ✅ Completed | booking details `Report Issue` now submits dispute instead of placeholder |
+| Booking dispute submission | ✅ Completed | booking details `Report Issue` when active or delivered; **Dispute lifecycle (2026-03-08):** escrow guard in rpc_approve_delivery and rpc_finalize_auto_approval; RLS deny on disputes; dispute_status_enum + trg_dispute_guard + trg_dispute_set_resolved_at; SafetyViewModel.hasOpenDisputeForTask/ForBooking/ForDirectOffer; Approve/Review disabled when disputed on booking, work item, direct offer details; vw_unified_work_items disputed check. **Plan 14a (2026-03-08):** Frozen guards in rpc_submit_delivery and rpc_request_revision; partial unique indexes (one open/active dispute per task/direct_offer); rpc_submit_dispute (eligibility + single-active); Report Issue on task and direct_offer (work item + direct offer details); open/active dispute banners. Migration: 20260308160000. Plan: `.TODO/PLAN_DisputeLifecycle_2026-03-08.md`, `.TODO/PLAN_14a_DisputeExtension_2026-03-08.md`. |
 
 ## 7. Workspace, Orders, and Management
 
 | Feature | Status | Notes |
 | --- | --- | --- |
-| Unified dashboard/workspace | ✅ Completed | Single `DashboardScreen`; cache wiring, lazy-load by tab, wallet snapshot on entry; MyServices off dashboard; booking/offer/wallet cards in owning features + `StatusPresenter` |
+| Unified dashboard/workspace | ✅ Completed | Single `DashboardScreen`; cache wiring, lazy-load by tab, wallet snapshot on entry; MyServices off dashboard; booking/offer/wallet cards in owning features + `StatusPresenter`. **Work list and detail (2026-03-08):** Single source `vw_unified_work_items` (4 branches: tasks, bookings, awarded pending, direct_offers); no fallback mappers; Plan 12: `.TODO/PLAN_UnifiedWorkView_2026-03-08_CRITIC.md`, `.TODO/MASTER_REPORT_2026-03-08_UnifiedWorkView.md`. |
 | Booking/task CTA resolution | ✅ Completed | unified CTA resolver is used by work/booking screens |
 | Order management timeline | ✅ Completed | management feature is live for task and booking details |
 | Wallet and ledger views | 🚧 In Progress | Wallet feature and ledger schema exist; ongoing finance hardening. **2026-03-07:** Escrow idempotency (stable key + FOR UPDATE); **rpc_approve_delivery** extended for **direct_offer** (single exit for escrow release); DirectOffersService.completeOffer uses RPC. Dashboard includes dedicated **Wallet tab** (balance, activity, Coming Soon withdraw). See `.TODO/improvement_the_system/Done/21_Wallet_System_Escrow_Available_balances/PLAN_WalletEscrowAvailableBalances_2026-03-07_CRITIC.md`, `.TODO/improvement_the_system/Done/21_Wallet_System_Escrow_Available_balances/EXECUTION_LOG_PLAN_WalletEscrowAvailableBalances_2026-03-07.md`, `Sline_everything/DEVELOPER_GUIDE/Wallet_Feature.md` §4, `.TODO/improvement_the_system/Done/09_ledger-event-flow/CONTRACT_ledger_event_flow.md`. Withdraw = Upcoming. |

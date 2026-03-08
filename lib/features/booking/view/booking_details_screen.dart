@@ -84,6 +84,8 @@ class BookingDetailsScreen extends StatelessWidget {
             ),
             const SizedBox(height: AppDimens.p24),
 
+            _BookingDisputeBanner(bookingId: booking.id),
+
             // Service Card (Task Info)
             _buildSectionHeader(context, 'Service'),
             const SizedBox(height: AppDimens.p12),
@@ -298,9 +300,9 @@ class BookingDetailsScreen extends StatelessWidget {
 
                 if (ctaMeta.allowedActions.contains('release_with_fee')) {
                   dynamicActions.add(
-                    AppButton(
-                      text: 'Approve & Release Funds',
-                      onPressed: () => ctx
+                    _ApproveWithDisputeGuard(
+                      booking: booking,
+                      onRelease: () => ctx
                           .read<BookingViewModel>()
                           .releaseBookingWithFee(booking.id),
                     ),
@@ -368,19 +370,13 @@ class BookingDetailsScreen extends StatelessWidget {
 
             // 2. Client Actions
             if (!isProvider) ...[
-              // Dispute/Cancel (If needed)
-              if (booking.status == BookingStatus.delivered) ...[
+              // Report Issue when active or delivered; hidden when open dispute exists
+              if (booking.status == BookingStatus.active ||
+                  booking.status == BookingStatus.delivered) ...[
                 const SizedBox(height: AppDimens.p12),
-                Center(
-                  child: TextButton(
-                    onPressed: () => _showDisputeDialog(context, booking),
-                    child: Text(
-                      'Report Issue',
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.lightRed,
-                      ),
-                    ),
-                  ),
+                _ReportIssueGuardBooking(
+                  bookingId: booking.id,
+                  onReportIssue: () => _showDisputeDialog(context, booking),
                 ),
               ],
             ],
@@ -620,5 +616,125 @@ class BookingDetailsScreen extends StatelessWidget {
     } finally {
       loader.close();
     }
+  }
+}
+
+/// Shows Report Issue button only when there is no open dispute for the booking.
+class _ReportIssueGuardBooking extends StatelessWidget {
+  const _ReportIssueGuardBooking({
+    required this.bookingId,
+    required this.onReportIssue,
+  });
+
+  final String bookingId;
+  final VoidCallback onReportIssue;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: context.read<SafetyViewModel>().hasOpenDisputeForBooking(bookingId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
+        final hasOpenDispute = snapshot.data ?? true;
+        if (hasOpenDispute) return const SizedBox.shrink();
+        return Center(
+          child: TextButton(
+            onPressed: onReportIssue,
+            child: Text(
+              'Report Issue',
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.lightRed,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Shows "Dispute under review" or "Work frozen — in dispute" when booking has an open/active dispute.
+class _BookingDisputeBanner extends StatelessWidget {
+  const _BookingDisputeBanner({required this.bookingId});
+
+  final String bookingId;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: context.read<SafetyViewModel>().hasOpenDisputeForBooking(bookingId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done || snapshot.data != true) {
+          return const SizedBox.shrink();
+        }
+        return FutureBuilder<String?>(
+          future: context.read<SafetyViewModel>().getDisputeStatusForBooking(bookingId),
+          builder: (context, statusSnapshot) {
+            final status = statusSnapshot.data;
+            final text = status == 'active'
+                ? 'Work frozen — in dispute.'
+                : 'Dispute under review. Approve and release disabled.';
+            return Padding(
+              padding: const EdgeInsets.only(bottom: AppDimens.p24),
+              child: GlassContainer(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppDimens.p12),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 20, color: context.colorScheme.primary),
+                      const SizedBox(width: AppDimens.p8),
+                      Expanded(
+                        child: Text(
+                          text,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: context.colorScheme.text,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+/// Shows Approve & Release button only when there is no open dispute for the booking's task.
+class _ApproveWithDisputeGuard extends StatelessWidget {
+  const _ApproveWithDisputeGuard({
+    required this.booking,
+    required this.onRelease,
+  });
+
+  final BookingModel booking;
+  final VoidCallback onRelease;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: context.read<SafetyViewModel>().hasOpenDisputeForBooking(booking.id),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return AppButton(text: 'Checking…', onPressed: null);
+        }
+        final hasOpenDispute = snapshot.data ?? true;
+        if (hasOpenDispute) {
+          return AppButton(
+            text: 'Approve & Release Funds',
+            onPressed: null,
+          );
+        }
+        return AppButton(
+          text: 'Approve & Release Funds',
+          onPressed: onRelease,
+        );
+      },
+    );
   }
 }

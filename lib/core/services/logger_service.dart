@@ -164,6 +164,7 @@ class AppLogger {
     String? tag,
     dynamic error,
     StackTrace? stackTrace,
+    dynamic json,
   }) {
     _log(
       LogLevel.error,
@@ -171,6 +172,7 @@ class AppLogger {
       tag: tag,
       error: error,
       stackTrace: stackTrace,
+      jsonPayload: json,
     );
 
     // Automatically report errors to crashlytics

@@ -1,6 +1,6 @@
 # SLine App - Folder Structure Guide
 
-**Last Updated:** 2026-03-08 (Direct Chat Offer Flow hardening migrations; 21_Wallet refs → Done)
+**Last Updated:** 2026-03-08 (Work contract revisions hardening ref; Direct Chat Offer Flow hardening; 21_Wallet refs → Done)
 
 This document describes the current repository layout. It replaces older references to `presentation/` and `controllers/`; the live Flutter codebase uses `view/` and `viewmodels/` under `lib/features/`.
 
@@ -86,6 +86,9 @@ Recent migration themes in `supabase/migrations/`:
 - direct_offers table, RLS, triggers, ledger RPC and enum fix (20260303–20260308); 20260308 fixes release_with_fee zero-amount and enum cast
 - **Direct Offers Work Contract (Plan 19, 2026-03-07):** `admin` schema; `admin.vw_direct_offer_money_story`, `admin.vw_direct_offer_stuck_funds`; self-offer guard `trg_direct_offer_guard_insert`; RPC `admin_refund_direct_offer` (migrations `20260307180000_admin_direct_offer_views`, `20260307180100_direct_offer_self_offer_guard`, `20260307180200_admin_refund_direct_offer`)
 - **Direct Chat Offer Flow hardening (Plan DirectChatOfferFlow CRITIC, 2026-03-07/08):** `20260319000000_direct_offer_flow_harden.sql` (currency, payment_*, delivered_at, review_expires_at on direct_offers; direct_offer_id and chk_dispute_entity on disputes); `20260319110000_direct_offer_guard_rls_ledger.sql` (trigger protect price/currency, disputes_insert_own RLS, rpc_approve_delivery fee from direct_offers row); `20260319120000_direct_offer_auto_release_cron.sql` (run_auto_release_expired_direct_offers + pg_cron); `20260319130000_direct_offer_protect_fee_in_trigger.sql` (trigger also protects fee_rate_applied_bps)
+- **Work contract revisions hardening (2025-03-08):** `20260308120000_harden_rpc_request_revision.sql` — state guard (status=delivered) and cap guard (revisions_used &lt; revisions_total) in `rpc_request_revision`. Plan: `.TODO/PLAN_WorkContractRevisions_2025-03-08_PlanCritic.md`.
+- **Unified Work View upgrade (2026-03-08):** `20260308100000_rollback_unified_work_view.sql` (restores 3-branch view); `20260308110000_upgrade_unified_work_view.sql` (4 branches: tasks, bookings, awarded pending, direct_offers; dispute override; conversation_id; security_invoker). Plan: `.TODO/PLAN_UnifiedWorkView_2026-03-08_CRITIC.md`.
+- **Dispute lifecycle (2026-03-08):** `20260308140000_dispute_lifecycle_escrow_guard_rls.sql` (escrow guard in rpc_approve_delivery and rpc_finalize_auto_approval; deny policies on disputes; RLS on dispute_messages and dispute_evidence; indexes on disputes). `20260308150000_dispute_enum_guard_resolved_at.sql` (dispute_status_enum; triggers trg_dispute_guard, trg_dispute_set_resolved_at; vw_unified_work_items recreated with enum-safe disputed check). **14a Dispute Extension:** `20260308160000_14a_dispute_extension_frozen_guards.sql` (Frozen guard in rpc_submit_delivery and rpc_request_revision; partial unique indexes one open/active per task/direct_offer; rpc_submit_dispute). **Post-14a:** `20260308170000_rpc_submit_dispute_booking_eligible.sql` (dispute allowed when task or any booking for task is active/delivered); `20260308180000_tender_assign_only_after_payment.sql` (award = reserve only; assign in pay_awarded_offer); `20260308180100_award_task_offer_drop_old_overload.sql` (drop 2-param award_task_offer); `20260308190000_vw_unified_work_items_dispute_open_active_only.sql` (disputed only when dispute.status IN ('open','active')). Plan: `.TODO/PLAN_DisputeLifecycle_2026-03-08.md`, `.TODO/PLAN_14a_DisputeExtension_2026-03-08.md`.
 
 ## `lib/` - Flutter Application Source
 
@@ -229,6 +232,8 @@ test/
 │   ├── profile/
 │   │   └── role_switch_result_test.dart  # RoleSwitchResult model tests
 │   ├── proposals/
+│   ├── safety/
+│   │   └── dispute_service_test.dart    # DisputeService submitDispute + hasOpen* tests
 │   ├── tasks/
 │   └── tender/               # **NEW (v2.20)** Tender lifecycle unit tests
 │       ├── award_expiration_monitor_test.dart  # Timer and urgency tests

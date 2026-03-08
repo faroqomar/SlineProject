@@ -17,6 +17,7 @@ import 'package:sline_app/features/direct_offers/services/direct_offers_service.
 import 'package:sline_app/core/services/payment_service.dart';
 import 'package:sline_app/features/booking/view/payment_webview_screen.dart';
 import 'package:sline_app/features/booking/models/payment_return_args.dart';
+import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
 
 /// Details screen for a direct offer: view info, Pay (wallet/card), Cancel, Open chat.
 class DirectOfferDetailsScreen extends StatelessWidget {
@@ -222,6 +223,7 @@ class _DirectOfferDetailsContentState
                     ),
                   ),
                 ),
+                _DirectOfferDisputeBanner(offerId: widget.offerId),
                 const SizedBox(height: AppDimens.p24),
                 if (vm.canOpenChat)
                   Padding(
@@ -342,41 +344,42 @@ class _DirectOfferDetailsContentState
                     isLoading: vm.markDeliveredInProgress,
                   ),
                 ],
+                if ((offer.isActive || offer.isDelivered) && (offer.clientId == vm.currentUserId || offer.freelancerId == vm.currentUserId))
+                  _ReportIssueGuardDirectOffer(
+                    offerId: widget.offerId,
+                    defendantId: offer.clientId == vm.currentUserId ? offer.freelancerId : offer.clientId,
+                    onSubmitted: () => vm.loadOffer(),
+                  ),
                 if (vm.canComplete) ...[
                   const SizedBox(height: AppDimens.p12),
-                  AppButton(
-                    onPressed: vm.completeInProgress
-                        ? null
-                        : () async {
-                            final navigator = Navigator.of(context);
-                            final messenger = ScaffoldMessenger.of(context);
-                            try {
-                              await vm.completeOffer();
-                              if (!context.mounted) return;
-                              messenger.showSnackBar(
-                                const SnackBar(
-                                  content: Text('Payment released.'),
-                                ),
-                              );
-                              navigator.pop(true);
-                            } catch (e) {
-                              if (!context.mounted) return;
-                              messenger.showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    e is Exception
-                                        ? e.toString()
-                                        : 'Failed to complete',
-                                  ),
-                                ),
-                              );
-                            }
-                          },
-                    text: vm.completeInProgress
-                        ? 'Releasing…'
-                        : 'Approve & release payment',
-                    isPrimary: true,
-                    isLoading: vm.completeInProgress,
+                  _ApproveWithDisputeGuard(
+                    offerId: widget.offerId,
+                    completeInProgress: vm.completeInProgress,
+                    onApprove: () async {
+                      final navigator = Navigator.of(context);
+                      final messenger = ScaffoldMessenger.of(context);
+                      try {
+                        await vm.completeOffer();
+                        if (!context.mounted) return;
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text('Payment released.'),
+                          ),
+                        );
+                        navigator.pop(true);
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              e is Exception
+                                  ? e.toString()
+                                  : 'Failed to complete',
+                            ),
+                          ),
+                        );
+                      }
+                    },
                   ),
                 ],
               ],
@@ -407,6 +410,182 @@ class _DirectOfferDetailsContentState
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Shows "Dispute under review" or "Work frozen — in dispute" when direct offer has an open/active dispute.
+class _DirectOfferDisputeBanner extends StatelessWidget {
+  const _DirectOfferDisputeBanner({required this.offerId});
+
+  final String offerId;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: context.read<SafetyViewModel>().hasOpenDisputeForDirectOffer(offerId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done || snapshot.data != true) {
+          return const SizedBox.shrink();
+        }
+        return FutureBuilder<String?>(
+          future: context.read<SafetyViewModel>().getDisputeStatusForDirectOffer(offerId),
+          builder: (context, statusSnapshot) {
+            final status = statusSnapshot.data;
+            final text = status == 'active'
+                ? 'Work frozen — in dispute.'
+                : 'Dispute under review. Approve and release disabled.';
+            return Padding(
+              padding: const EdgeInsets.only(top: AppDimens.p24),
+              child: GlassContainer(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppDimens.p12),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 20, color: context.colorScheme.primary),
+                      const SizedBox(width: AppDimens.p8),
+                      Expanded(
+                        child: Text(
+                          text,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: context.colorScheme.text,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+/// Shows Report Issue button when no open dispute; on tap shows reason dialog and submits via SafetyViewModel.
+class _ReportIssueGuardDirectOffer extends StatelessWidget {
+  const _ReportIssueGuardDirectOffer({
+    required this.offerId,
+    required this.defendantId,
+    required this.onSubmitted,
+  });
+
+  final String offerId;
+  final String defendantId;
+  final VoidCallback onSubmitted;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: context.read<SafetyViewModel>().hasOpenDisputeForDirectOffer(offerId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
+        final hasOpenDispute = snapshot.data ?? true;
+        if (hasOpenDispute) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppDimens.p12),
+          child: Center(
+            child: TextButton(
+              onPressed: () => _showDisputeDialog(context),
+              child: Text(
+                'Report Issue',
+                style: AppTypography.bodySmall.copyWith(color: AppColors.lightRed),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showDisputeDialog(BuildContext context) async {
+    String draftReason = '';
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Report Issue'),
+        content: TextField(
+          maxLines: 4,
+          onChanged: (value) => draftReason = value,
+          decoration: const InputDecoration(
+            hintText: 'Describe the problem with this offer',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, draftReason.trim()),
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
+    );
+    if (!context.mounted || reason == null || reason.isEmpty) return;
+    final safetyVm = context.read<SafetyViewModel>();
+    final ok = await safetyVm.submitDispute(
+      directOfferId: offerId,
+      reason: reason,
+      defendantId: defendantId,
+    );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok ? 'Dispute submitted.' : (safetyVm.error ?? 'Dispute failed.'),
+        ),
+      ),
+    );
+    if (ok) onSubmitted();
+  }
+}
+
+/// Disables Approve & release when an open dispute exists for this direct offer.
+class _ApproveWithDisputeGuard extends StatelessWidget {
+  const _ApproveWithDisputeGuard({
+    required this.offerId,
+    required this.completeInProgress,
+    required this.onApprove,
+  });
+
+  final String offerId;
+  final bool completeInProgress;
+  final VoidCallback onApprove;
+
+  @override
+  Widget build(BuildContext context) {
+    if (completeInProgress) {
+      return AppButton(
+        text: 'Releasing…',
+        onPressed: null,
+        isPrimary: true,
+        isLoading: true,
+      );
+    }
+    return FutureBuilder<bool>(
+      future: context.read<SafetyViewModel>().hasOpenDisputeForDirectOffer(offerId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return AppButton(
+            text: 'Checking…',
+            onPressed: null,
+            isPrimary: true,
+          );
+        }
+        final hasOpenDispute = snapshot.data ?? true;
+        return AppButton(
+          text: 'Approve & release payment',
+          onPressed: hasOpenDispute ? null : onApprove,
+          isPrimary: true,
+        );
+      },
     );
   }
 }

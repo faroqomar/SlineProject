@@ -2,10 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/work/models/unified_work_item_model.dart';
-import 'package:sline_app/features/work/models/unified_work_item_fallback_mapper.dart';
 import 'package:sline_app/features/work/models/work_contract_model.dart';
 import 'package:sline_app/features/work/models/change_request_model.dart';
 import 'package:sline_app/features/work/models/extension_request_model.dart';
+import 'package:sline_app/core/utils/error_mapper.dart';
 import 'package:sline_app/features/work/services/work_management_service.dart';
 import 'package:sline_app/features/booking/models/booking_model.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
@@ -72,7 +72,7 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Parallel fetch with partial-failure tolerance: only work item (and booking fallback) is required.
+      // Parallel fetch with partial-failure tolerance: work item (and optional booking for booking-type detail).
       final results = await Future.wait([
         _workService.getUnifiedWorkItem(id, type),
         _workService.getActiveContract(id, type).catchError((_) => null),
@@ -87,16 +87,17 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
       _extensionRequests = results[3] as List<ExtensionRequestModel>;
       _booking = results[4] as BookingModel?;
 
-      // Fallback: If UnifiedWorkItem is missing but we have booking data, use shared mapper
-      if (_workItem == null && _booking != null) {
-        _workItem = UnifiedWorkItemFallbackMapper.fromBooking(_booking!);
-      }
-
       if (_workItem == null) {
         _error = 'Work item not found';
+        AppLogger.d(
+          'Work item detail: view returned no row',
+          tag: 'WorkDetails',
+          json: {'id': id, 'type': type},
+        );
       } else {
         AppLogger.d(
           'Work item details loaded',
+          tag: 'WorkDetails',
           json: {
             'work_item_id': _workItem!.id,
             'source_type': _workItem!.sourceType,
@@ -138,7 +139,7 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
 
       await loadData(_workItem!.id, _workItem!.sourceType);
     } catch (e, stack) {
-      _error = 'Failed to submit delivery';
+      _error = ErrorMapper.map(e);
       AppLogger.e('Submit delivery error', error: e, stackTrace: stack);
     } finally {
       _isLoading = false;
@@ -186,6 +187,7 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
 
   Future<void> requestRevision(String note) async {
     if (_workItem == null) return;
+    _error = null;
     try {
       _isLoading = true;
       notifyListeners();
@@ -198,8 +200,13 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
 
       await loadData(_workItem!.id, _workItem!.sourceType);
     } catch (e, stack) {
-      _error = 'Failed to request revision';
-      AppLogger.e('Request revision error', error: e, stackTrace: stack);
+      _error = ErrorMapper.map(e);
+      AppLogger.e(
+        'Request revision error',
+        tag: 'WorkItemDetails',
+        error: e,
+        stackTrace: stack,
+      );
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -216,8 +223,13 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
 
       await loadData(_workItem!.id, _workItem!.sourceType);
     } catch (e, stack) {
-      _error = 'Failed to accept change request';
-      AppLogger.e('Accept change request error', error: e, stackTrace: stack);
+      _error = ErrorMapper.map(e);
+      AppLogger.e(
+        'Accept change request error',
+        tag: 'WorkItemDetails',
+        error: e,
+        stackTrace: stack,
+      );
     } finally {
       _isLoading = false;
       notifyListeners();

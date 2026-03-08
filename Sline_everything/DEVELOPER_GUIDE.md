@@ -2335,12 +2335,12 @@ UI (WorkItemDetailsScreen)
 
 | Object                       | Type    | Purpose                                                                                                                                                                                                                                                                                       |
 | ---------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `vw_unified_work_items`      | View    | UNION ALL of tasks (in progress + awarded pending payment) and bookings with normalized status; see SUPABASE_SETUP.md §6.4.                                                                                                                                                                   |
+| `vw_unified_work_items`      | View    | UNION ALL of tasks (in progress + awarded pending), bookings, and direct_offers; dispute override; security_invoker; see SUPABASE_SETUP.md §6.4.                                                                                                                                            |
 | `work_contracts`             | Table   | Versioned scope snapshots (price, days, description)                                                                                                                                                                                                                                          |
 | `change_requests`            | Table   | Scope/price/days change proposals                                                                                                                                                                                                                                                             |
 | `extension_requests`         | Table   | Deadline extension proposals                                                                                                                                                                                                                                                                  |
 | `rpc_submit_delivery`        | RPC     | Atomic delivery: status + timestamp; for bookings, `confirmed`/`paid_request_pending` → `active` then `delivered`                                                                                                                                                                             |
-| `rpc_request_revision`       | RPC     | Client revision with limit check                                                                                                                                                                                                                                                              |
+| `rpc_request_revision`       | RPC     | Client revision with limit check (status=delivered, revisions_used < revisions_total). Revision errors (no revisions remaining, not delivered) are mapped via ErrorMapper and shown in the Review Delivery modal.                                                                                                                                                                                                                                                              |
 | `rpc_accept_change_request`  | RPC     | Accept change, create new contract version                                                                                                                                                                                                                                                    |
 | `rpc_approve_delivery`       | RPC     | Client approves delivered work for `entity_type` task, booking, or direct_offer; when `payment_status=held`, calls ledger `release_with_fee` (stable idempotency key + FOR UPDATE) then sets `completed`. See SUPABASE_SETUP §9.5 and [Wallet Feature](DEVELOPER_GUIDE/Wallet_Feature.md) §4. |
 | `rpc_finalize_auto_approval` | RPC     | Auto-approve after review window                                                                                                                                                                                                                                                              |
@@ -2355,7 +2355,7 @@ UI (WorkItemDetailsScreen)
 ## Key Patterns
 
 1. **Parallel Data Fetching**: `loadData()` uses `Future.wait` with 5 concurrent queries
-2. **Fallback Mapper**: Single source in `lib/features/work/models/unified_work_item_fallback_mapper.dart`. When `vw_unified_work_items` has refresh lag, work detail and dashboard use it to build a temporary model from task_requests+tasks or booking; completed bookings map to `UnifiedWorkStatus.completed` (not delivered).
+2. **Single source of truth**: Dashboard and work detail read only from `vw_unified_work_items`. No fallback mappers; when the view returns no row for an id/type, the app shows "Work item not found".
 3. **Review Ownership Contract**:
    - `vw_unified_work_items.needs_review` is a raw delivered-state flag, not an authorization result.
    - Client-facing review UI must combine that flag with role-derived permissions before showing review sections or CTAs.
@@ -2374,6 +2374,7 @@ UI (WorkItemDetailsScreen)
 
 ## Verification
 
+- **Unified Work View (4-branch, direct offers, no fallbacks):** Plan: `.TODO/PLAN_UnifiedWorkView_2026-03-08_CRITIC.md`; Execution: `.TODO/EXECUTION_LOG_PLAN_UnifiedWorkView_2026-03-08_CRITIC.md`; Master report: `.TODO/MASTER_REPORT_2026-03-08_UnifiedWorkView.md`; Contract: `.TODO/contract_vw_unified_work_items.md`.
 - Plan: `.TODO/PLAN_Freelancer_Unified_Flow_2026-02-16.md`
 - Architect Patch: `.TODO/ARCHITECT_PATCH_2026-02-16_Unified_Flow.md`
 - CodeGuard Review: `.TODO/CODEGUARD_REVIEW_2026-02-16_Freelancer_Unified_Flow.md`
@@ -2560,6 +2561,32 @@ This release adds app-side enforcement and trust/safety UI so dashboard actions 
   - Booking dispute submission in `lib/features/booking/view/booking_details_screen.dart`
   - Public profile reporting in `lib/features/profile/view/public_profile_screen.dart`
   - Support/safety shortcut in `lib/features/profile/view/settings_screen.dart`
+- **Dispute guard on Approve:** `SafetyViewModel.hasOpenDisputeForTask`, `hasOpenDisputeForBooking`, `hasOpenDisputeForDirectOffer` gate the Approve/Review button on booking details, work item details, and direct offer details. When an open dispute exists, the button is disabled (fail-closed on check error).
+
+#### Dispute entry points (Plan 14a)
+
+- **Booking:** "Report Issue" on booking details when booking is delivered and no open/active dispute; submits via `SafetyViewModel.submitDispute(taskId: booking.taskId, ...)`.
+- **Task:** "Report Issue" on work item details when source is task, status is in progress or delivered, and no open/active dispute; submits via `SafetyViewModel.submitDispute(taskId: entityId, ...)`.
+- **Direct offer:** "Report Issue" on direct offer details when offer is active or delivered and no open/active dispute; submits via `SafetyViewModel.submitDispute(directOfferId: offerId, ...)`. DisputeService uses `rpc_submit_dispute` for both task and direct_offer (eligibility and single-open/active enforced in DB).
+
+#### Frozen behaviour (Plan 14a)
+
+When a dispute is **open** or **active**, the entity is treated as Frozen for lifecycle actions:
+
+- **rpc_submit_delivery** and **rpc_request_revision** raise `Cannot submit delivery: dispute in progress` / `Cannot request revision: dispute in progress` and do not change state.
+- **rpc_approve_delivery** and **rpc_finalize_auto_approval** already block release when an open/active dispute exists.
+
+ErrorMapper maps these RPC messages to user-friendly text; WorkManagementService / SafetyViewModel surface them in the UI.
+
+#### Dispute lifecycle (escrow guard, single source, UI)
+
+1. **Escrow guard:** RPCs `rpc_approve_delivery` and `rpc_finalize_auto_approval` block release when an open/active dispute exists for the task (or booking’s task, or direct_offer). No funds are released while a dispute is open or active.
+2. **Single source for “has dispute”:**
+   - **Dashboard / CTA:** Disputed state for list and primary action (e.g. Submit Evidence) comes from `vw_unified_work_items.unified_status = 'disputed'` (dashboard repository, permission service).
+   - **Approve/Review button:** Detail screens use **SafetyViewModel** → **DisputeService** for the live check (`hasOpenDisputeForTask`, `hasOpenDisputeForBooking`, `hasOpenDisputeForDirectOffer`) to enable or disable the button.
+3. **UI:** Booking details `_ApproveWithDisputeGuard` and `_BookingDisputeBanner`; work item details `_ReviewWithDisputeGuard`, `_ReportIssueGuard` (task, direct_offer, and **booking** when work item is a booking), and `_DisputeBannerContent`; direct offer details `_ApproveWithDisputeGuard`, `_DirectOfferDisputeBanner`, and `_ReportIssueGuardDirectOffer`. Plan: `.TODO/PLAN_DisputeLifecycle_2026-03-08.md`, `.TODO/PLAN_14a_DisputeExtension_2026-03-08.md`.
+4. **Banner copy:** When a dispute exists, screens show status-specific text: **open** → "Dispute under review. Approve and release disabled."; **active** → "Work frozen — in dispute." (from `SafetyViewModel.getDisputeStatusForTask` / `getDisputeStatusForBooking` / `getDisputeStatusForDirectOffer`).
+5. **Unified view:** `vw_unified_work_items` shows `unified_status = 'disputed'` only when a linked dispute has `status IN ('open', 'active')` (migration `20260308190000_vw_unified_work_items_dispute_open_active_only.sql`). Resolved or canceled disputes do not mark the item as disputed.
 
 ---
 
@@ -2621,13 +2648,16 @@ open → assigned (award) → in_progress (payment) → delivered (submit) → c
 
 ### RPC Functions
 
-**award_task_offer(p_request_id, p_expected_price_cents)**:
+**award_task_offer(p_request_id, p_client_id, p_expected_price_cents)** (3 params; 2-param overload removed in 20260308180100):
 
 - Validates ownership (task owner only)
 - Checks for existing accepted offers (idempotency)
 - Validates price if expected_price_cents provided
+- **Does not assign freelancer:** sets task status to `assigned` and `task_requests.payment_status = 'unpaid'`; freelancer is set only in `pay_awarded_offer` (migration 20260308180000).
 - Creates notifications to both parties
 - Logs to admin_logs
+
+**Inbox Pay Now:** `TaskService.getOffersReceived` includes both pending and accepted+unpaid offers (filter: `status.eq.pending` or `status.eq.accepted` and `payment_status.eq.unpaid`) so the client sees awarded offers in the Inbox with a Pay Now button. See `lib/features/tasks/services/task_service.dart`.
 
 **cleanup_expired_awards()**:
 

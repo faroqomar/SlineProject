@@ -8,8 +8,6 @@ import 'package:sline_app/features/dashboard/services/dashboard_permission_servi
 import 'package:sline_app/features/profile/services/profile_summary_service.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/features/work/models/unified_work_item_model.dart';
-import 'package:sline_app/features/work/models/unified_work_item_fallback_mapper.dart';
-import 'package:sline_app/features/direct_offers/models/direct_offer_model.dart';
 
 class DashboardRepository {
   static const _kTag = 'dashboard.repo';
@@ -65,14 +63,14 @@ class DashboardRepository {
     AppLogger.i('Updated DB role to: $roleDbValue', tag: _kTag);
   }
 
-  /// Fetch all work items using the Unified View
+  /// Fetch all work items using the Unified View (single source of truth).
   Future<List<WorkItem>> fetchWorkItems(UserRole role) async {
     final uid = _client.auth.currentUser?.id;
     if (uid == null) return [];
 
     try {
       AppLogger.d(
-        'Fetching unified work items for role: ${role.name}',
+        'Fetching unified work items from view for role: ${role.name}',
         tag: _kTag,
       );
 
@@ -84,59 +82,29 @@ class DashboardRepository {
         query = query.eq('freelancer_id', uid);
       }
 
-      // v1: Use sort_rank and last_activity_at for ordering
       final response = await query
           .order('sort_rank', ascending: true)
           .order('last_activity_at', ascending: false);
 
       final unifiedItems = (response as List)
-          .map((e) => UnifiedWorkItemModel.fromJson(e))
+          .map((e) => UnifiedWorkItemModel.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
 
-      var items = unifiedItems
+      final items = unifiedItems
           .map((u) => _mapUnifiedToWorkItem(u, role))
           .toList();
 
-      // Fallback: if view has no third branch (awarded pending payment), fetch from task_requests + tasks so Work tab shows them
-      if (role == UserRole.client) {
-        final fallback = await _fetchAwardedPendingPaymentFallback(uid);
-        final fromViewIds = items.map((i) => i.id).toSet();
-        for (final w in fallback) {
-          if (!fromViewIds.contains(w.id)) {
-            items = [...items, w];
-            fromViewIds.add(w.id);
-          }
-        }
-      }
-
-      // Fetch direct offers (active/delivered/completed) and merge
-      final directOffers = await _fetchDirectOffers(uid);
-      final byRole = role == UserRole.client
-          ? directOffers.where((o) => o.clientId == uid).toList()
-          : directOffers.where((o) => o.freelancerId == uid).toList();
-      final directWorkItems = byRole
-          .map((o) => _mapDirectOfferToWorkItem(o, uid, role))
-          .toList();
-      final merged = <WorkItem>[...items, ...directWorkItems]
-        ..sort((a, b) {
-          final rank = (a.sortRank).compareTo(b.sortRank);
-          if (rank != 0) return rank;
-          final aAt = a.lastActivityAt ?? a.lastUpdate;
-          final bAt = b.lastActivityAt ?? b.lastUpdate;
-          return bAt.compareTo(aAt);
-        });
-
-      // Batch-fetch counterparty profiles (single query, no N+1)
-      final enrichedItems = await _enrichWithProfiles(merged);
+      final enrichedItems = await _enrichWithProfiles(items);
 
       AppLogger.i(
-        'Fetched ${enrichedItems.length} unified work items',
+        'Fetched ${enrichedItems.length} work items from vw_unified_work_items',
         tag: _kTag,
+        json: {'count': enrichedItems.length, 'role': role.name},
       );
       return enrichedItems;
     } catch (e, st) {
       AppLogger.e(
-        'Failed to fetch dashboard items',
+        'Failed to fetch dashboard work items',
         error: e,
         stackTrace: st,
         tag: _kTag,
@@ -191,16 +159,18 @@ class DashboardRepository {
 
   WorkItem _mapUnifiedToWorkItem(UnifiedWorkItemModel u, UserRole role) {
     final isClient = role == UserRole.client;
-    final itemType = u.sourceType == 'booking'
+    final WorkItemType itemType = u.sourceType == 'booking'
         ? WorkItemType.booking
-        : WorkItemType.task;
+        : u.sourceType == 'direct_offer'
+            ? WorkItemType.directOffer
+            : WorkItemType.task;
 
     return WorkItem(
       id: u.id,
       type: itemType,
       title: u.title,
       counterpartyId: isClient ? u.freelancerId : u.clientId,
-      counterpartyName: 'Loading...', // Enriched by profile batch fetch
+      counterpartyName: 'Loading...',
       counterpartyAvatar: '',
       counterpartyRole: isClient ? 'Freelancer' : 'Client',
       sourceId: u.id,
@@ -219,7 +189,6 @@ class DashboardRepository {
         type: itemType,
         status: u.unifiedStatus,
       ),
-      // v1 fields
       workItemId: u.workItemId,
       needsReview: u.needsReview,
       sortRank: u.sortRank,
@@ -227,152 +196,7 @@ class DashboardRepository {
       awardedRequestId: u.awardedRequestId,
       paymentDeadline: u.paymentDeadline,
       price: u.price,
-    );
-  }
-
-  /// Fallback when vw_unified_work_items has no third branch: fetch awarded-unpaid task_requests (client only).
-  /// Uses shared [UnifiedWorkItemFallbackMapper] so dashboard and work detail share one contract.
-  Future<List<WorkItem>> _fetchAwardedPendingPaymentFallback(String uid) async {
-    try {
-      final response = await _client
-          .from('task_requests')
-          .select('id, task_id, price, payment_deadline, updated_at, freelancer_id, bidder_id, tasks!task_id(id, title, deadline, owner_id, client_id, status, updated_at)')
-          .eq('status', 'accepted')
-          .eq('payment_status', 'unpaid');
-
-      final list = response as List;
-      final workItems = <WorkItem>[];
-      for (final e in list) {
-        final map = Map<String, dynamic>.from(e as Map);
-        final taskMap = map['tasks'] as Map<String, dynamic>?;
-        if (taskMap == null) continue;
-        final ownerId = taskMap['owner_id'] as String?;
-        if (ownerId != uid) continue;
-        final unified = UnifiedWorkItemFallbackMapper.fromTaskRequestAndTaskMap(map);
-        if (unified != null) {
-          workItems.add(_mapUnifiedToWorkItem(unified, UserRole.client));
-        }
-      }
-      if (workItems.isNotEmpty) {
-        AppLogger.d(
-          'Fallback: fetched ${workItems.length} awarded pending-payment items',
-          tag: _kTag,
-        );
-      }
-      return workItems;
-    } catch (e, st) {
-      AppLogger.e(
-        'Fallback awarded pending-payment fetch failed',
-        error: e,
-        stackTrace: st,
-        tag: _kTag,
-      );
-      return [];
-    }
-  }
-
-  Future<List<DirectOffer>> _fetchDirectOffers(String uid) async {
-    try {
-      final response = await _client
-          .from('direct_offers')
-          .select()
-          .or('client_id.eq.$uid,freelancer_id.eq.$uid')
-          .in_('status', ['accepted', 'active', 'delivered', 'completed']);
-      return (response as List)
-          .map((e) => DirectOffer.fromJson(Map<String, dynamic>.from(e as Map)))
-          .toList();
-    } catch (e, st) {
-      AppLogger.e(
-        'Failed to fetch direct offers',
-        error: e,
-        stackTrace: st,
-        tag: _kTag,
-      );
-      return [];
-    }
-  }
-
-  static UnifiedWorkStatus _directOfferStatusToUnified(
-    String status,
-    String paymentStatus,
-  ) {
-    if (status == 'accepted' && paymentStatus == 'unpaid') {
-      return UnifiedWorkStatus.pendingPayment;
-    }
-    switch (status) {
-      case 'active':
-        return UnifiedWorkStatus.active;
-      case 'delivered':
-        return UnifiedWorkStatus.delivered;
-      case 'completed':
-        return UnifiedWorkStatus.completed;
-      default:
-        return UnifiedWorkStatus.active;
-    }
-  }
-
-  static String _directOfferStatusToBucket(
-    String status,
-    String paymentStatus,
-  ) {
-    if (status == 'accepted' && paymentStatus == 'unpaid') return 'Pending';
-    switch (status) {
-      case 'active':
-        return 'Active';
-      case 'delivered':
-        return 'Active';
-      case 'completed':
-        return 'Done';
-      default:
-        return 'Active';
-    }
-  }
-
-  WorkItem _mapDirectOfferToWorkItem(DirectOffer o, String uid, UserRole role) {
-    final isClient = role == UserRole.client;
-    final counterpartyId = isClient ? o.freelancerId : o.clientId;
-    final unifiedStatus = _directOfferStatusToUnified(
-      o.status,
-      o.paymentStatus,
-    );
-    final sortRank = o.status == 'accepted' && o.paymentStatus == 'unpaid'
-        ? 2
-        : o.status == 'active'
-        ? 4
-        : o.status == 'delivered'
-        ? 5
-        : 6;
-    return WorkItem(
-      id: o.id,
-      type: WorkItemType.directOffer,
-      title: o.title?.isNotEmpty == true ? o.title! : 'Custom Offer',
-      counterpartyId: counterpartyId,
-      counterpartyName: 'Loading...',
-      counterpartyAvatar: '',
-      counterpartyRole: isClient ? 'Freelancer' : 'Client',
-      sourceId: o.id,
-      statusRaw: o.status == 'accepted' && o.paymentStatus == 'unpaid'
-          ? 'accepted'
-          : o.status,
-      statusUiBucket: _directOfferStatusToBucket(o.status, o.paymentStatus),
-      createdAt: o.createdAt,
-      scheduledAt: null,
-      lastUpdate: o.updatedAt,
-      primaryActionType: DashboardPermissionService.getPrimaryAction(
-        userRole: role,
-        type: WorkItemType.directOffer,
-        status: unifiedStatus,
-      ),
-      permissions: DashboardPermissionService.calculatePermissions(
-        userRole: role,
-        type: WorkItemType.directOffer,
-        status: unifiedStatus,
-      ),
-      workItemId: 'direct_offer:${o.id}',
-      needsReview: o.status == 'delivered' && isClient,
-      sortRank: sortRank,
-      lastActivityAt: o.updatedAt,
-      conversationId: o.conversationId,
+      conversationId: u.conversationId,
     );
   }
 

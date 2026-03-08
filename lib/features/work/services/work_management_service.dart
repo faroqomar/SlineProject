@@ -1,7 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/work/models/unified_work_item_model.dart';
-import 'package:sline_app/features/work/models/unified_work_item_fallback_mapper.dart';
 import 'package:sline_app/features/work/models/work_contract_model.dart';
 import 'package:sline_app/features/work/models/change_request_model.dart';
 import 'package:sline_app/features/work/models/extension_request_model.dart';
@@ -21,9 +20,8 @@ class WorkManagementService {
     _profileSummaryService = ProfileSummaryService(_supabase);
   }
 
-  /// Fetches a Unified Work Item by ID and Type.
-  /// For tasks, if the view returns null (e.g. awarded pending-payment row missing),
-  /// falls back to fetching task + accepted/unpaid task_request so details still load.
+  /// Fetches a Unified Work Item by ID and Type from vw_unified_work_items (single source of truth).
+  /// Returns null if the view has no row for this id/type (e.g. not found or RLS).
   Future<UnifiedWorkItemModel?> getUnifiedWorkItem(
     String id,
     String type,
@@ -37,52 +35,30 @@ class WorkManagementService {
           .maybeSingle();
 
       if (response != null) {
-        return UnifiedWorkItemModel.fromJson(response);
+        AppLogger.d(
+          'Unified work item loaded from view',
+          tag: 'WorkManagement',
+          json: {'id': id, 'type': type},
+        );
+        return UnifiedWorkItemModel.fromJson(
+          Map<String, dynamic>.from(response),
+        );
       }
 
-      // Fallback for task: view may not have awarded pending-payment row (RLS or branch not in DB).
-      if (type == 'task') {
-        final fallback = await _getTaskUnifiedWorkItemFallback(id);
-        if (fallback != null) return fallback;
-      }
-
+      AppLogger.d(
+        'Unified work item not found in view',
+        tag: 'WorkManagement',
+        json: {'id': id, 'type': type},
+      );
       return null;
     } catch (e, stack) {
       AppLogger.e(
         'Failed to fetch UnifiedWorkItem: $id ($type)',
+        tag: 'WorkManagement',
         error: e,
         stackTrace: stack,
       );
       rethrow;
-    }
-  }
-
-  /// Fetch task + accepted/unpaid task_request and build UnifiedWorkItemModel (branch 3 shape).
-  /// Uses shared [UnifiedWorkItemFallbackMapper] for consistent semantics with dashboard.
-  Future<UnifiedWorkItemModel?> _getTaskUnifiedWorkItemFallback(String taskId) async {
-    try {
-      final response = await _supabase
-          .from('task_requests')
-          .select(
-            'id, task_id, price, payment_deadline, updated_at, freelancer_id, bidder_id, '
-            'tasks!task_id(id, title, deadline, owner_id, client_id, status, updated_at)',
-          )
-          .eq('task_id', taskId)
-          .eq('status', 'accepted')
-          .eq('payment_status', 'unpaid')
-          .maybeSingle();
-
-      if (response == null) return null;
-      return UnifiedWorkItemFallbackMapper.fromTaskRequestAndTaskMap(
-        Map<String, dynamic>.from(response),
-      );
-    } catch (e, stack) {
-      AppLogger.e(
-        'Task fallback fetch failed: $taskId',
-        error: e,
-        stackTrace: stack,
-      );
-      return null;
     }
   }
 
@@ -108,9 +84,15 @@ class WorkManagementService {
 
       final response = await query.order('deadline', ascending: true);
 
-      return (response as List)
-          .map((e) => UnifiedWorkItemModel.fromJson(e))
+      final list = (response as List)
+          .map((e) => UnifiedWorkItemModel.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
+      AppLogger.d(
+        'Listed unified work items from view',
+        tag: 'WorkManagement',
+        json: {'count': list.length, 'isClient': isClient},
+      );
+      return list;
     } catch (e, stack) {
       AppLogger.e(
         'Failed to list UnifiedWorkItems',
@@ -247,11 +229,19 @@ class WorkManagementService {
       );
       AppLogger.d(
         'Revision requested',
-        json: {'type': entityType, 'note_length': note.length},
+        tag: 'WorkManagement',
+        json: {'entityType': entityType, 'entityId': entityId, 'note_length': note.length},
       );
     } catch (e, stack) {
+      final msg = e.toString();
+      final outcome = msg.contains('No revisions remaining')
+          ? 'limit_reached'
+          : msg.contains('Can only request revision on delivered work')
+              ? 'state_invalid'
+              : 'error';
       AppLogger.e(
-        'Failed to request revision: $entityId ($entityType)',
+        'Request revision failed ($entityType $entityId outcome=$outcome)',
+        tag: 'WorkManagement',
         error: e,
         stackTrace: stack,
       );

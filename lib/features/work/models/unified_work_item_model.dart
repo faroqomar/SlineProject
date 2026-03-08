@@ -25,6 +25,8 @@ class UnifiedWorkItemModel {
   /// Set for awarded pending-payment tasks (branch from vw_unified_work_items).
   final String? awardedRequestId;
   final DateTime? paymentDeadline;
+  /// Set for direct_offer branch only; used for deep link to conversation.
+  final String? conversationId;
 
   const UnifiedWorkItemModel({
     required this.id,
@@ -48,6 +50,7 @@ class UnifiedWorkItemModel {
     this.disputeRequiresUserAction,
     this.awardedRequestId,
     this.paymentDeadline,
+    this.conversationId,
   });
 
   factory UnifiedWorkItemModel.fromJson(Map<String, dynamic> json) {
@@ -83,6 +86,7 @@ class UnifiedWorkItemModel {
       paymentDeadline: json['payment_deadline'] != null
           ? DateTime.parse(json['payment_deadline'] as String)
           : null,
+      conversationId: json['conversation_id'] as String?,
     );
   }
 
@@ -116,4 +120,5 @@ class UnifiedWorkItemModel {
 
   bool get isTask => sourceType == 'task';
   bool get isBooking => sourceType == 'booking';
+  bool get isDirectOffer => sourceType == 'direct_offer';
 }

@@ -10,11 +10,17 @@ import 'package:sline_app/core/widgets/app_text_field.dart';
 class ReviewDeliveryModal extends StatefulWidget {
   final Future<void> Function() onApprove;
   final Future<void> Function(String reason) onReject;
+  /// When false, "Request Changes" is disabled and "No revisions left" is shown.
+  final bool canRequestRevision;
+  /// After reject fails, call this to get the user-facing error (e.g. ViewModel.error).
+  final String? Function()? getRevisionError;
 
   const ReviewDeliveryModal({
     super.key,
     required this.onApprove,
     required this.onReject,
+    this.canRequestRevision = true,
+    this.getRevisionError,
   });
 
   @override
@@ -69,7 +75,15 @@ class _ReviewDeliveryModalState extends State<ReviewDeliveryModal> {
       await widget.onReject(_reasonController.text);
       if (mounted) Navigator.pop(context, true);
     } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+        final msg = widget.getRevisionError?.call();
+        if (msg != null && msg.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(msg)),
+          );
+        }
+      }
     }
   }
 
@@ -123,6 +137,15 @@ class _ReviewDeliveryModalState extends State<ReviewDeliveryModal> {
                 color: context.colorScheme.textSecondary,
               ),
             ),
+            if (!widget.canRequestRevision) ...[
+              const SizedBox(height: AppDimens.p8),
+              Text(
+                'No revisions left.',
+                style: AppTypography.bodySmall.copyWith(
+                  color: context.colorScheme.textSecondary,
+                ),
+              ),
+            ],
             const SizedBox(height: AppDimens.p24),
             Row(
               children: [
@@ -130,8 +153,9 @@ class _ReviewDeliveryModalState extends State<ReviewDeliveryModal> {
                   child: AppButton(
                     text: 'Request Changes',
                     isPrimary: false,
-                    onPressed: () =>
-                        setState(() => _mode = _ReviewMode.rejecting),
+                    onPressed: widget.canRequestRevision
+                        ? () => setState(() => _mode = _ReviewMode.rejecting)
+                        : null,
                   ),
                 ),
                 const SizedBox(width: AppDimens.p16),

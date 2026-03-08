@@ -4,6 +4,132 @@
 
 ---
 
+## 🏷️ Post-14a fixes and tender/docs sync (2026-03-08)
+
+**Workflow:** `.agents/workflows/slinedocs.md`  
+**Docs sync note:** `.TODO/DOCS_SYNC_2026-03-08_SlineDocsUpToDate.md`
+
+### ✅ Implemented
+
+- **DB (Supabase):**
+  - **20260308170000** — `rpc_submit_dispute` task branch allows dispute when task is in_progress/delivered **or** any booking for that task is active/delivered (fixes "Entity not eligible" when reporting from booking).
+  - **20260308180000** — Tender assign only after payment: `accept_task_request` and `award_task_offer` reserve task only (status = assigned, no freelancer_id); `pay_awarded_offer` assigns freelancer and sets in_progress. `task_requests.payment_status = 'unpaid'` set on accept/award.
+  - **20260308180100** — Dropped `award_task_offer(uuid, bigint)` overload; only 3-param version remains (fixes "Could not choose the best candidate function").
+  - **20260308190000** — `vw_unified_work_items` shows `unified_status = 'disputed'` only when linked dispute has `status IN ('open', 'active')` (was NOT IN ('resolved','closed'); enum has `canceled` not `closed`). Per 14a diagram.
+- **App:**
+  - **Inbox Pay Now:** `TaskService.getOffersReceived` now includes accepted+unpaid offers (filter: `.or('status.eq.pending,and(status.eq.accepted,payment_status.eq.unpaid)')`) so client sees awarded offers in Inbox with Pay Now button. `lib/features/tasks/services/task_service.dart`.
+  - **Work item Report Issue for booking:** `work_item_details_screen.dart` — `_canShowReportIssue` allows booking when `vm.booking?.taskId` present; `_ReportIssueGuard` uses `hasOpenDisputeForBooking(entityId)` for booking; `_showDisputeDialog` submits via `submitDispute(taskId: vm.booking!.taskId!, ...)` for booking.
+  - **Work item action row overflow:** Action row wrapped in `SingleChildScrollView` (horizontal) with `Row(mainAxisSize: MainAxisSize.min)` so Extension/Submit Work/Review/Report Issue/Message don’t overflow on narrow screens. `lib/features/work/view/work_item_details_screen.dart`.
+
+### 📊 Impact
+
+- Clients can pay from Inbox after awarding; booking disputes work from work item when opened as booking; disputed state only for open/active disputes; award no longer assigns before payment.
+
+### 🔗 References
+
+- SUPABASE_SETUP §17 changelog (20260308170000, 20260308180000, 20260308180100, 20260308190000)
+- STRUCTURE recent migrations; DEVELOPER_GUIDE dispute and tender sections
+- Diagram: `Sline_everything/AppDigram/All_Diagrams/14a_dispute-entity-freeze-integration.md`
+
+---
+
+## 🏷️ Unified Work View — 4-branch upgrade, direct offers, no fallbacks (2026-03-08)
+
+**Plan:** `.TODO/PLAN_UnifiedWorkView_2026-03-08_CRITIC.md`  
+**Execution:** `.TODO/EXECUTION_LOG_PLAN_UnifiedWorkView_2026-03-08_CRITIC.md`  
+**Master report:** `.TODO/MASTER_REPORT_2026-03-08_UnifiedWorkView.md`  
+**Docs sync:** `.TODO/DOCS_SYNC_2026-03-08_UnifiedWorkView.md`
+
+### ✅ Implemented
+
+- **DB:** Migration `20260308110000_upgrade_unified_work_view.sql` — `vw_unified_work_items` upgraded to 4 branches (tasks in progress, bookings, awarded pending payment, **direct_offers**); dispute override; `conversation_id` for direct offers; `security_invoker = true`. Rollback: `20260308100000_rollback_unified_work_view.sql` restores 3-branch view.
+- **App:** Single source of truth: `WorkManagementService` and `DashboardRepository` read only from the view; removed `UnifiedWorkItemFallbackMapper` and file `unified_work_item_fallback_mapper.dart`; removed dashboard fallbacks `_fetchAwardedPendingPaymentFallback`, `_fetchDirectOffers`, and merge logic. `_mapUnifiedToWorkItem` supports `source_type == 'direct_offer'` → `WorkItemType.directOffer` with `conversationId`. When view returns no row, work detail shows "Work item not found" (no booking fallback). AppLogger with tags `WorkDetails` and `WorkManagement`; type-safe `Map<String, dynamic>.from(e as Map)` in list.
+- **Tests:** Replaced `unified_work_item_fallback_mapper_test.dart` with `unified_work_item_view_contract_test.dart` (fromJson for task, direct_offer, pending_payment, conversation_id).
+- **Docs:** SUPABASE_SETUP §6.4 (four branches, direct_offers, security_invoker); DEVELOPER_GUIDE work section (single source of truth, no fallbacks); Sline_Log system map entry (Unified Work View); contract `.TODO/contract_vw_unified_work_items.md`; checklist `.TODO/CHECKLIST_AND_SUMMARY_UnifiedWorkView.md`.
+
+### 📊 Impact
+
+- Work list and detail come only from `vw_unified_work_items`; direct offers appear in My Work with correct conversation deep link; clear "not found" when view has no row.
+
+### 🔗 References
+
+- Plan (Critic): `.TODO/PLAN_UnifiedWorkView_2026-03-08_CRITIC.md`
+- Execution log: `.TODO/EXECUTION_LOG_PLAN_UnifiedWorkView_2026-03-08_CRITIC.md`
+- Master report: `.TODO/MASTER_REPORT_2026-03-08_UnifiedWorkView.md`
+- Contract: `.TODO/contract_vw_unified_work_items.md`
+- Diagram: `Sline_everything/AppDigram/All_Diagrams/12_unified-work-view.md`
+
+### 🔧 Technical Notes
+
+- View uses alias `doff` for `direct_offers` (PostgreSQL reserves `do`). Dispute JOIN: task_id for tasks/bookings, direct_offer_id for direct_offers; "open" = status IN ('open','active').
+
+---
+
+## 🏷️ 14a Dispute Extension — Frozen guards, unique index, Report Issue (task/direct_offer), banners (2026-03-08)
+
+**Plan:** `.TODO/PLAN_14a_DisputeExtension_2026-03-08.md`  
+**Execution:** `.TODO/EXECUTION_LOG_14a_DisputeExtension_2026-03-08.md`  
+**Master report:** `.TODO/MASTER_REPORT_2026-03-08_14aDisputeExtension.md`
+
+### ✅ Implemented
+
+- **Migration:** `20260308160000_14a_dispute_extension_frozen_guards.sql` — rpc_submit_delivery restored with Frozen guard (task, booking); rpc_request_revision Frozen guard (task, booking); partial unique indexes uq_disputes_one_open_active_per_task, uq_disputes_one_open_active_per_direct_offer; rpc_submit_dispute (eligibility + single open/active per entity). Applied via Supabase MCP.
+- **App:** DisputeService submitDispute(taskId | directOfferId) via rpc_submit_dispute; getDisputeStatusForTask/ForBooking/ForDirectOffer; ErrorMapper for Frozen and dispute-submit errors; work item details Report Issue for task and direct_offer; direct offer details Report Issue; booking/details Report Issue when active or delivered (with dispute guard); open/active dispute banners on all three screens.
+- **Docs:** SUPABASE_SETUP §9.1, §9.2, §9.2a, §17; DEVELOPER_GUIDE dispute entry points and Frozen behaviour; MVP_ROADMAP, STRUCTURE, Sline_Log.
+
+### 🔗 References
+
+- Plan: `.TODO/PLAN_14a_DisputeExtension_2026-03-08.md`
+- Spec: `Sline_everything/AppDigram/All_Diagrams/14a_dispute-entity-freeze-integration.md`
+
+---
+
+## 🏷️ Dispute Lifecycle — escrow guard, RLS, enum, UI (2026-03-08)
+
+**Plan:** `.TODO/PLAN_DisputeLifecycle_2026-03-08.md`  
+**Execution:** `.TODO/EXECUTION_LOG_DisputeLifecycle_2026-03-08.md`  
+**Master report:** `.TODO/MASTER_REPORT_2026-03-08_DisputeLifecycle.md`
+
+### ✅ Implemented
+
+- **Migrations:** `20260308140000_dispute_lifecycle_escrow_guard_rls.sql` (escrow guard in rpc_approve_delivery and rpc_finalize_auto_approval; deny policies on disputes; RLS on dispute_messages and dispute_evidence; indexes). `20260308150000_dispute_enum_guard_resolved_at.sql` (dispute_status_enum; triggers trg_dispute_guard, trg_dispute_set_resolved_at; vw_unified_work_items recreated with enum-safe disputed check).
+- **App:** DisputeService hasOpenDisputeForTask, hasOpenDisputeForBooking, hasOpenDisputeForDirectOffer; SafetyViewModel exposes them; _ApproveWithDisputeGuard on booking details and direct offer details; _ReviewWithDisputeGuard and disputed banner on work item details; booking details uses hasOpenDisputeForBooking(booking.id).
+- **Test:** `test/unit/safety/dispute_service_test.dart` (submitDispute and validation tests).
+- **Docs:** SUPABASE_SETUP §1, §5.24–5.26, §6.4, §17; DEVELOPER_GUIDE §5.3 dispute lifecycle; STRUCTURE test + migrations; MVP_ROADMAP; diagram 14; this Sline_Log entry.
+
+### 🔗 References
+
+- Plan: `.TODO/PLAN_DisputeLifecycle_2026-03-08.md`
+- Execution log: `.TODO/EXECUTION_LOG_DisputeLifecycle_2026-03-08.md`
+- Master report: `.TODO/MASTER_REPORT_2026-03-08_DisputeLifecycle.md`
+- DOCS_REPORT: `.TODO/DOCS_REPORT_2026-03-08_DisputeLifecycle.md`
+- RLS matrix: `.TODO/improvement_the_system/ImplementReady/14_dispute-lifecycle/RLS_CHECK_MATRIX.md`
+
+---
+
+## 🏷️ Work Contract Revisions — RPC hardening (2025-03-08)
+
+**Workflow:** `.agents/workflows/slinedocs.md`  
+**Docs sync note:** `.TODO/DOCS_SYNC_2026-03-08_WorkContractRevisions.md`
+
+**Plan:** `.TODO/PLAN_WorkContractRevisions_2025-03-08_PlanCritic.md`  
+**Execution:** `.TODO/EXECUTION_LOG_WorkContractRevisions_2025-03-08.md`  
+**Review:** `.TODO/MASTER_REPORT_2025-03-08_WorkContractRevisions.md`
+
+### ✅ Implemented
+
+- **Migration:** `supabase/migrations/20260308120000_harden_rpc_request_revision.sql` — `rpc_request_revision` now enforces state guard (status = 'delivered') and cap guard (revisions_used < revisions_total) for task and booking; applied via Supabase MCP.
+- **App:** ErrorMapper branches for "Can only request revision on delivered work", "No revisions remaining", "Only client can request revision"; WorkItemDetailsViewModel uses ErrorMapper in requestRevision and acceptChangeRequest catch; ReviewDeliveryModal shows getRevisionError and disables "Request Changes" when no revisions left; WorkManagementService logs success/error with tag and outcome.
+- **Docs:** SUPABASE_SETUP §9.2 and §1 updated; DEVELOPER_GUIDE work table note for revision error mapping.
+
+### 🔗 References
+
+- Plan (Critic): `.TODO/PLAN_WorkContractRevisions_2025-03-08_PlanCritic.md`
+- Execution log: `.TODO/EXECUTION_LOG_WorkContractRevisions_2025-03-08.md`
+- Master report: `.TODO/MASTER_REPORT_2025-03-08_WorkContractRevisions.md`
+
+---
+
 ## 🏷️ Docs Sync — Realtime Topology (18) reference integrity (2026-03-08)
 
 **Workflow:** `.agents/workflows/slinedocs.md`  
@@ -730,7 +856,7 @@
 
 #### ✅ Implemented
 
-- **UnifiedWorkItemFallbackMapper** (`lib/features/work/models/unified_work_item_fallback_mapper.dart`): Single source for mapping task_requests+tasks or booking to `UnifiedWorkItemModel`; completed → `UnifiedWorkStatus.completed` (not delivered). Used by work service, work detail ViewModel, and dashboard repo for awarded-pending fallback.
+- **Unified Work View (vw_unified_work_items):** Single source of truth for work list and detail. View has 4 branches (tasks in progress, bookings, awarded pending payment, direct_offers) with dispute override and `security_invoker = true`. App reads only from the view; no fallback mappers. See `lib/features/work/`, `lib/features/dashboard/data/dashboard_repository.dart`, SUPABASE_SETUP §6.4.
 - **Booking chat:** Work detail uses taskId only when `item.isTask` (task-linked path); booking uses DM path. MessageService logs path at debug.
 - **WorkItemDetailsViewModel:** Optional `ChatViewModel` and `DashboardViewModel`; `openConversation()`, `refreshDashboard()`, `cancelAward(requestId)`; partial-failure tolerance in `loadData` (optional contract/requests failure does not blank screen).
 - **Work detail screen:** Provider create injects Chat/Dashboard VMs; no direct chat/dashboard orchestration from view.
@@ -1484,7 +1610,7 @@
 #### 🔧 Technical Notes
 
 - `declineBooking` uses `refunded` status (not `declined`) per `fn_booking_guard` transitions
-- ViewModel uses fallback mapper when `vw_unified_work_items` view has refresh lag
+- Work list and detail read only from `vw_unified_work_items` (no fallback mapper); when view returns no row, app shows "Work item not found". See Plan 12 (Unified Work View, 2026-03-08).
 - Provider is screen-scoped (not global) — each instance tied to a specific work item ID
 
 ---

@@ -23,6 +23,7 @@ import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 import 'package:sline_app/features/proposals/models/proposal_payment_summary.dart';
 import 'package:sline_app/features/proposals/routes/proposal_payment_route.dart';
+import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
 
 class WorkItemDetailsScreen extends StatelessWidget {
   final String id;
@@ -152,6 +153,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
               style: AppTypography.h3.copyWith(color: context.colorScheme.text),
             ),
             const SizedBox(height: AppDimens.p24),
+            _buildDisputedBanner(vm),
             _buildBookingSpecifics(vm),
             const SizedBox(height: AppDimens.p24),
             _buildUnifiedStatus(vm),
@@ -171,12 +173,24 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
             style: AppTypography.h3.copyWith(color: context.colorScheme.text),
           ),
           const SizedBox(height: AppDimens.p24),
+          _buildDisputedBanner(vm),
           _buildUnifiedStatus(vm),
           const SizedBox(height: AppDimens.p24),
           _buildPendingPaymentActions(context, vm),
           const SizedBox(height: AppDimens.p24),
           _buildContractInfo(vm),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDisputedBanner(WorkItemDetailsViewModel vm) {
+    if (vm.status != UnifiedWorkStatus.disputed) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppDimens.p24),
+      child: _DisputeBannerContent(
+        sourceType: vm.workItem!.sourceType,
+        entityId: vm.workItem!.id,
       ),
     );
   }
@@ -506,78 +520,86 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     return Container(
       padding: const EdgeInsets.all(AppDimens.p16),
       color: context.colorScheme.cardBackground,
-      child: Row(
-        children: [
-          if (canAccept) ...[
-            Expanded(
-              child: AppButton(
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (canAccept) ...[
+              AppButton(
                 text: 'Decline',
                 isPrimary: false,
                 backgroundColor: AppColors.lightRed,
                 onPressed: () => vm.declineBooking(),
               ),
-            ),
-            const SizedBox(width: AppDimens.p16),
-            Expanded(
-              child: AppButton(
+              const SizedBox(width: AppDimens.p16),
+              AppButton(
                 text: 'Accept',
                 onPressed: () => vm.acceptBooking(),
               ),
-            ),
-          ] else if (canCancel) ...[
-            Expanded(
-              child: AppButton(
+            ] else if (canCancel) ...[
+              AppButton(
                 text: 'Cancel Request',
                 isPrimary: false,
                 backgroundColor: AppColors.lightRed,
                 onPressed: () => vm.cancelBooking(),
               ),
-            ),
-          ] else ...[
-            if (isAwaitingClientReview)
-              Expanded(
-                child: AppButton(
+            ] else ...[
+              if (isAwaitingClientReview)
+                AppButton(
                   text: 'Waiting for Client Review',
                   isPrimary: false,
                   onPressed: null,
                 ),
-              ),
-            if (canRequestExtension)
-              Expanded(
-                child: AppButton(
+              if (canRequestExtension) ...[
+                if (isAwaitingClientReview) const SizedBox(width: AppDimens.p12),
+                AppButton(
                   text: 'Extension',
                   isPrimary: false,
                   onPressed: () => _showExtensionModal(context, vm),
                 ),
-              ),
-            if (canSubmit && canRequestExtension)
-              const SizedBox(width: AppDimens.p16),
-            if (canSubmit)
-              Expanded(
-                child: AppButton(
+              ],
+              if (canSubmit) ...[
+                if (canRequestExtension || isAwaitingClientReview)
+                  const SizedBox(width: AppDimens.p12),
+                AppButton(
                   text: 'Submit Work',
                   onPressed: () => _showDeliveryModal(context, vm),
                 ),
-              ),
-            if (canReview)
-              Expanded(
-                child: AppButton(
-                  text: 'Review',
-                  onPressed: () => _showReviewModal(context, vm),
+              ],
+              if (canReview) ...[
+                const SizedBox(width: AppDimens.p12),
+                SizedBox(
+                  width: 120,
+                  child: _ReviewWithDisputeGuard(
+                    sourceType: vm.workItem!.sourceType,
+                    entityId: vm.workItem!.id,
+                    onReview: () => _showReviewModal(context, vm),
+                  ),
                 ),
-              ),
-            if (vm.status == UnifiedWorkStatus.active) ...[
-              const SizedBox(width: AppDimens.p12),
-              Expanded(
-                child: AppButton(
+              ],
+              if (_canShowReportIssue(vm)) ...[
+                const SizedBox(width: AppDimens.p12),
+                SizedBox(
+                  width: 120,
+                  child: _ReportIssueGuard(
+                    sourceType: vm.workItem!.sourceType,
+                    entityId: vm.workItem!.id,
+                    onReportIssue: () => _showDisputeDialog(context, vm),
+                  ),
+                ),
+              ],
+              if (vm.status == UnifiedWorkStatus.active) ...[
+                const SizedBox(width: AppDimens.p12),
+                AppButton(
                   text: 'Message',
                   isPrimary: false,
                   onPressed: () => _handleMessage(context, vm),
                 ),
-              ),
+              ],
             ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -633,6 +655,9 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
           onReject: (reason) async {
             await vm.requestRevision(reason);
           },
+          canRequestRevision: vm.workItem != null &&
+              (vm.workItem!.revisionsUsed < vm.workItem!.revisionsTotal),
+          getRevisionError: () => vm.error,
         ),
       ),
     );
@@ -642,6 +667,104 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
       if (vm.workItem != null) {
         vm.loadData(vm.workItem!.id, vm.workItem!.sourceType);
       }
+    }
+  }
+
+  bool _canShowReportIssue(WorkItemDetailsViewModel vm) {
+    if (vm.workItem == null) return false;
+    final type = vm.workItem!.sourceType;
+    final allowedStatus =
+        vm.status == UnifiedWorkStatus.active || vm.status == UnifiedWorkStatus.delivered;
+    if (!allowedStatus) return false;
+    if (type == 'booking') return vm.booking?.taskId != null && vm.booking!.taskId!.isNotEmpty;
+    return type == 'task' || type == 'direct_offer';
+  }
+
+  Future<void> _showDisputeDialog(
+    BuildContext context,
+    WorkItemDetailsViewModel vm,
+  ) async {
+    if (vm.workItem == null) return;
+    final sourceType = vm.workItem!.sourceType;
+    final uid = context.read<AuthSessionViewModel>().currentUserId ?? '';
+    final entityId = vm.workItem!.id;
+    final defendantId = uid == vm.workItem!.clientId
+        ? vm.workItem!.freelancerId
+        : vm.workItem!.clientId;
+
+    if (sourceType == 'booking') {
+      final taskId = vm.booking?.taskId;
+      if (taskId == null || taskId.isEmpty) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'This booking cannot be disputed because task data is missing.',
+            ),
+          ),
+        );
+        return;
+      }
+    }
+
+    String draftReason = '';
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Report Issue'),
+        content: TextField(
+          maxLines: 4,
+          onChanged: (value) => draftReason = value,
+          decoration: const InputDecoration(
+            hintText: 'Describe the problem with this work',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, draftReason.trim()),
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
+    );
+    if (!context.mounted || reason == null || reason.isEmpty) return;
+    final safetyVm = context.read<SafetyViewModel>();
+    final bool ok;
+    if (sourceType == 'task') {
+      ok = await safetyVm.submitDispute(
+        taskId: entityId,
+        reason: reason,
+        defendantId: defendantId,
+      );
+    } else if (sourceType == 'direct_offer') {
+      ok = await safetyVm.submitDispute(
+        directOfferId: entityId,
+        reason: reason,
+        defendantId: defendantId,
+      );
+    } else {
+      assert(sourceType == 'booking');
+      ok = await safetyVm.submitDispute(
+        taskId: vm.booking!.taskId!,
+        reason: reason,
+        defendantId: defendantId,
+      );
+    }
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok ? 'Dispute submitted.' : (safetyVm.error ?? 'Dispute failed.'),
+        ),
+      ),
+    );
+    if (ok && vm.workItem != null) {
+      vm.loadData(vm.workItem!.id, vm.workItem!.sourceType);
     }
   }
 
@@ -717,6 +840,141 @@ class _ChangeRequestItem extends StatelessWidget {
         subtitle: Text(req.description ?? 'No description'),
         trailing: Text(req.status),
       ),
+    );
+  }
+}
+
+/// Shows dispute banner text: "Dispute under review" (open) or "Work frozen — in dispute" (active).
+class _DisputeBannerContent extends StatelessWidget {
+  const _DisputeBannerContent({
+    required this.sourceType,
+    required this.entityId,
+  });
+
+  final String sourceType;
+  final String entityId;
+
+  @override
+  Widget build(BuildContext context) {
+    Future<String?> statusFuture;
+    final safetyVm = context.read<SafetyViewModel>();
+    if (sourceType == 'booking') {
+      statusFuture = safetyVm.getDisputeStatusForBooking(entityId);
+    } else if (sourceType == 'direct_offer') {
+      statusFuture = safetyVm.getDisputeStatusForDirectOffer(entityId);
+    } else {
+      statusFuture = safetyVm.getDisputeStatusForTask(entityId);
+    }
+    return FutureBuilder<String?>(
+      future: statusFuture,
+      builder: (context, snapshot) {
+        final status = snapshot.data;
+        final text = status == 'active'
+            ? 'Work frozen — in dispute.'
+            : 'Dispute under review. Approve and release disabled.';
+        return GlassContainer(
+          child: Padding(
+            padding: const EdgeInsets.all(AppDimens.p12),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, size: 20, color: context.colorScheme.primary),
+                const SizedBox(width: AppDimens.p8),
+                Expanded(
+                  child: Text(
+                    text,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: context.colorScheme.text,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Wraps the Report Issue button: hidden when an open dispute exists.
+class _ReportIssueGuard extends StatelessWidget {
+  const _ReportIssueGuard({
+    required this.sourceType,
+    required this.entityId,
+    required this.onReportIssue,
+  });
+
+  final String sourceType;
+  final String entityId;
+  final VoidCallback onReportIssue;
+
+  @override
+  Widget build(BuildContext context) {
+    final safetyVm = context.read<SafetyViewModel>();
+    final Future<bool> hasDisputeFuture;
+    if (sourceType == 'booking') {
+      hasDisputeFuture = safetyVm.hasOpenDisputeForBooking(entityId);
+    } else if (sourceType == 'direct_offer') {
+      hasDisputeFuture = safetyVm.hasOpenDisputeForDirectOffer(entityId);
+    } else {
+      hasDisputeFuture = safetyVm.hasOpenDisputeForTask(entityId);
+    }
+    return FutureBuilder<bool>(
+      future: hasDisputeFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
+        final hasOpenDispute = snapshot.data ?? true;
+        if (hasOpenDispute) return const SizedBox.shrink();
+        return TextButton(
+          onPressed: onReportIssue,
+          child: Text(
+            'Report Issue',
+            style: AppTypography.bodySmall.copyWith(color: AppColors.lightRed),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Wraps the Review button: disabled while an open dispute exists for this work item.
+class _ReviewWithDisputeGuard extends StatelessWidget {
+  const _ReviewWithDisputeGuard({
+    required this.sourceType,
+    required this.entityId,
+    required this.onReview,
+  });
+
+  final String sourceType;
+  final String entityId;
+  final VoidCallback onReview;
+
+  @override
+  Widget build(BuildContext context) {
+    final safetyVm = context.read<SafetyViewModel>();
+    final Future<bool> hasDisputeFuture;
+    if (sourceType == 'booking') {
+      hasDisputeFuture = safetyVm.hasOpenDisputeForBooking(entityId);
+    } else if (sourceType == 'direct_offer') {
+      hasDisputeFuture = safetyVm.hasOpenDisputeForDirectOffer(entityId);
+    } else {
+      hasDisputeFuture = safetyVm.hasOpenDisputeForTask(entityId);
+    }
+
+    return FutureBuilder<bool>(
+      future: hasDisputeFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return AppButton(text: 'Checking…', onPressed: null);
+        }
+        final hasOpenDispute = snapshot.data ?? true;
+        return AppButton(
+          text: 'Review',
+          onPressed: hasOpenDispute ? null : onReview,
+        );
+      },
     );
   }
 }

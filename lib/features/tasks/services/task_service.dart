@@ -514,7 +514,8 @@ class TaskService {
 
   /// Get offers received for a client's tasks.
   ///
-  /// Returns a flat list of pending offers on tasks owned by [userId].
+  /// Returns pending offers (to award/reject) and accepted-but-unpaid offers
+  /// (to show "Pay Now") so the client can complete payment from the inbox.
   /// Bidder name and avatar are loaded via rpc_get_profile_summaries (RLS on
   /// profiles only allows reading own profile, so we avoid JOIN and batch-fetch).
   Future<List<TaskRequest>> getOffersReceived(String userId) async {
@@ -533,12 +534,13 @@ class TaskService {
         return [];
       }
 
+      // Include pending (to award/reject) and accepted+unpaid (to show Pay Now)
       final response = await _client
           .from('task_requests')
           .select(
-            'id, task_id, bidder_id, freelancer_id, price, days, duration_days, note, message, status, payment_status, created_at, deleted_at, tasks(title)',
+            'id, task_id, bidder_id, freelancer_id, price, days, duration_days, note, message, status, payment_status, payment_deadline, awarded_at, awarded_by, created_at, deleted_at, tasks(title)',
           )
-          .eq('status', 'pending')
+          .or('status.eq.pending,and(status.eq.accepted,payment_status.eq.unpaid)')
           .is_('deleted_at', null)
           .in_('task_id', taskIds)
           .order('created_at', ascending: false);

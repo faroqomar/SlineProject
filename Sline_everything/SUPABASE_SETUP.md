@@ -81,6 +81,7 @@ This document is the **single source of truth** for all Supabase backend setup: 
 | `booking_status_enum` | `pending`, `confirmed`, `active`, `delivered`, `completed`, `canceled`, `refunded`, `paid_request_pending`, `expired_unanswered`           |
 | `payment_status_enum` | `unpaid`, `held`, `released`, `refunded`                                                                                                   |
 | `message_type_enum`   | `text`, `system`, `offer`, `offer_update`, `offer_accepted`, `offer_rejected`, `delivery_submitted`, `end_early_request`, `dispute_report` |
+| `dispute_status_enum` | `open`, `active`, `resolved`, `canceled`                                                                                                   |
 
 ### Storage Buckets
 
@@ -107,7 +108,7 @@ This document is the **single source of truth** for all Supabase backend setup: 
 - ✅ Contract fields frozen on active work (`trg_freeze_contract_fields`)
 - ✅ Auto-create contract on booking confirmation (`trg_activate_contract`)
 - ✅ Delivery submission creates contract snapshot (`rpc_submit_delivery`)
-- ✅ Revision requests check limit before resetting status (`rpc_request_revision`)
+- ✅ Revision requests enforce status and limit before resetting (`rpc_request_revision`: status='delivered', revisions_used < revisions_total)
 - ✅ **Double-Entry Ledger Implementation (v2.16)**: All financial events go through `process_payment_event_ledger`.
 - ✅ **Legacy Freeze**: `wallet_transactions` table is now read-only to prevent drift.
 - ✅ **Auth profile provisioning**: Trigger `on_auth_user_created` creates `public.profiles` on `auth.users` INSERT. Function `sweep_orphaned_auth_users()` deletes auth users with no profile older than 15 minutes. Extension `pg_cron` is enabled; cron job `sweep-orphaned-auth-users` runs every 15 minutes (`*/15 * * * *`). View `vw_orphaned_auth_users` for monitoring.
@@ -858,21 +859,22 @@ Audit logs for admin actions.
 
 Formal dispute tickets between clients and freelancers. Exactly one of `task_id` or `direct_offer_id` must be set.
 
-| Column            | Type        | Nullable | Default             | Description              |
-| ----------------- | ----------- | -------- | ------------------- | ------------------------ |
-| `id`              | uuid        | ❌       | `gen_random_uuid()` | Primary key              |
-| `task_id`         | uuid        | ✅       | -                   | FK to tasks              |
-| `direct_offer_id` | uuid        | ✅       | -                   | FK to direct_offers      |
-| `complainant_id`  | uuid        | ✅       | -                   | FK to profiles           |
-| `defendant_id`    | uuid        | ✅       | -                   | FK to profiles           |
-| `reason`          | text        | ✅       | -                   | Dispute reason           |
-| `status`          | text        | ✅       | -                   | 'open', 'resolved', etc. |
-| `resolution`      | text        | ✅       | -                   | Admin decision           |
-| `created_at`      | timestamptz | ✅       | `now()`             | Creation timestamp       |
-| `resolved_at`     | timestamptz | ✅       | -                   | Resolution timestamp     |
+| Column            | Type                    | Nullable | Default             | Description              |
+| ----------------- | ----------------------- | -------- | ------------------- | ------------------------ |
+| `id`              | uuid                    | ❌       | `gen_random_uuid()` | Primary key              |
+| `task_id`         | uuid                    | ✅       | -                   | FK to tasks              |
+| `direct_offer_id` | uuid                    | ✅       | -                   | FK to direct_offers      |
+| `complainant_id`  | uuid                    | ✅       | -                   | FK to profiles           |
+| `defendant_id`    | uuid                    | ✅       | -                   | FK to profiles           |
+| `reason`          | text                    | ✅       | -                   | Dispute reason           |
+| `status`          | `dispute_status_enum`   | ✅       | `'open'`            | open, active, resolved, canceled |
+| `resolution`      | text                    | ✅       | -                   | Admin decision           |
+| `created_at`      | timestamptz             | ✅       | `now()`             | Creation timestamp       |
+| `resolved_at`     | timestamptz             | ✅       | -                   | Resolution timestamp     |
 
 **Constraint:** `chk_dispute_entity` — (task_id IS NOT NULL AND direct_offer_id IS NULL) OR (task_id IS NULL AND direct_offer_id IS NOT NULL).  
-**RLS:** INSERT policy `disputes_insert_own`: complainant_id = auth.uid() and (task_id IS NOT NULL OR (direct_offer_id IS NOT NULL and EXISTS (SELECT 1 FROM direct_offers d WHERE d.id = direct_offer_id AND (d.client_id = auth.uid() OR d.freelancer_id = auth.uid()))). See `20260319110000_direct_offer_guard_rls_ledger.sql`.
+**Status transitions:** Enforced by trigger `trg_dispute_guard` (open→active/canceled, active→resolved only). Trigger `trg_dispute_set_resolved_at` sets `resolved_at` when status becomes `resolved`.  
+**RLS:** INSERT policy `disputes_insert_own` (complainant_id = auth.uid() and entity check). Deny policies `disputes_deny_update`, `disputes_deny_delete` (FOR UPDATE/DELETE TO authenticated USING (false)). See `20260308140000_dispute_lifecycle_escrow_guard_rls.sql`, `20260308150000_dispute_enum_guard_resolved_at.sql`. RLS matrix: `.TODO/improvement_the_system/ImplementReady/14_dispute-lifecycle/RLS_CHECK_MATRIX.md`.
 
 ---
 
@@ -889,6 +891,8 @@ Messages exchanged within a dispute thread.
 | `is_admin`   | boolean     | ✅       | -                   | True if sent by admin |
 | `created_at` | timestamptz | ✅       | `now()`             | Timestamp             |
 
+**RLS:** Enabled. Policies `dispute_messages_select_participant`, `dispute_messages_insert_participant` (participant-only: complainant or defendant of the dispute). Migration: `20260308140000_dispute_lifecycle_escrow_guard_rls.sql`.
+
 ---
 
 ### 5.26 `dispute_evidence`
@@ -904,6 +908,8 @@ Files and evidence attached to a dispute.
 | `file_type`   | text        | ✅       | -                   | MIME type or 'image'/'file' |
 | `description` | text        | ✅       | -                   | Optional context            |
 | `created_at`  | timestamptz | ✅       | `now()`             | Timestamp                   |
+
+**RLS:** Enabled. Policies `dispute_evidence_select_participant`, `dispute_evidence_insert_participant` (participant-only; INSERT also requires `uploader_id = auth.uid()`). Migration: `20260308140000_dispute_lifecycle_escrow_guard_rls.sql`.
 
 ---
 
@@ -1074,19 +1080,20 @@ GROUP BY p.id;
 
 ### 6.4 `vw_unified_work_items`
 
-Maps Tasks and Bookings to a single schema for the 'Work Management' UI. Includes three branches:
+Maps Tasks, Bookings, and Direct Offers to a single schema for the 'Work Management' / 'My Work' UI. **Four branches** (UNION ALL):
 
-1. **Tasks in progress** — `assigned_freelancer_id IS NOT NULL`, status in `('in_progress','delivered','completed')`
-2. **Bookings** — status in `('active','delivered','completed')`
-3. **Awarded pending payment** — tasks with `status = 'assigned'`, no freelancer set yet, and an accepted/unpaid `task_request`; exposes `awarded_request_id` and `payment_deadline` for Pay/Cancel from the Work tab.
+1. **Tasks in progress** — `assigned_freelancer_id IS NOT NULL`, status in `('in_progress','delivered','completed')`. Left join `disputes` on `task_id`; if open dispute, `unified_status` = `'disputed'`.
+2. **Bookings** — status in `('active','delivered','completed')`. Left join `disputes` on `task_id` (booking’s task); open dispute overrides to `'disputed'`.
+3. **Awarded pending payment** — tasks with `status = 'assigned'`, no freelancer set yet, and an accepted/unpaid `task_request`; exposes `awarded_request_id` and `payment_deadline`. Dispute override same as branch 1.
+4. **Direct offers** — `direct_offers` with status in `('accepted','active','delivered','completed')`. Left join `disputes` on `direct_offer_id`. `conversation_id` populated for deep link.
 
-Columns: `id`, `source_type`, `source_status`, `unified_status`, `title`, `price`, `deadline`, `client_id`, `freelancer_id`, `delivered_at`, `review_expires_at`, `revisions_total`, `revisions_used`, `work_item_id`, `last_activity_at`, `needs_review`, `sort_rank`, `awarded_request_id`, `payment_deadline`.
+Columns: `id`, `source_type`, `source_status`, `unified_status`, `title`, `price`, `deadline`, `client_id`, `freelancer_id`, `delivered_at`, `review_expires_at`, `revisions_total`, `revisions_used`, `work_item_id`, `last_activity_at`, `needs_review`, `sort_rank`, `awarded_request_id`, `payment_deadline`, `conversation_id` (non-null for `source_type = 'direct_offer'` only).
 
-The app filters by `client_id` (client role) or `freelancer_id` (freelancer role). For the awarded-pending-payment branch, `client_id` is `COALESCE(t.client_id, t.owner_id)` and `freelancer_id` is from the awarded `task_request`.
+The app filters by `client_id` (client role) or `freelancer_id` (freelancer role). **Single source of truth:** dashboard and work detail read only from this view (no fallback mappers).
 
-**Definition:** See migration `20260315000000_award_to_work_cancel_and_view.sql` for the full `CREATE VIEW` (all three branches).
+**Definition:** Four-branch view introduced in `20260308110000_upgrade_unified_work_view.sql`. View is **recreated** in `20260308150000_dispute_enum_guard_resolved_at.sql` with enum-safe disputed check (`d.status IN ('open','active')`); depends on `disputes.status` type `dispute_status_enum`. Rollback for 20260308150000 is non-trivial (enum revert). Earlier rollback: `20260308100000_rollback_unified_work_view.sql` restores 3-branch view.
 
-**⚠️ Security Warning:** This view uses `SECURITY INVOKER` (default). RLS on base tables (`tasks`, `bookings`, `task_requests`) will apply.
+**⚠️ Security:** View is created with `WITH (security_invoker = true)`. RLS on `tasks`, `bookings`, `task_requests`, `direct_offers` applies to the invoking user.
 
 ### 6.5 `vw_wallet_balances_user` (v2.20)
 
@@ -2248,16 +2255,38 @@ All functions use `SECURITY DEFINER` and include explicit `auth.uid()` checks.
 
 - **Purpose**: Mark work as delivered and start review timer.
 - **Access**: Assigned Freelancer Only.
+- **Frozen guard**: At start, if the entity has an open or active dispute (task: `disputes.task_id`; booking: `disputes.task_id` from booking’s `task_id`), raises `Cannot submit delivery: dispute in progress` and does not update. See Plan 14a.
 - **Logic**:
   - **Tasks**: Sets `status='delivered'`, `delivered_at=now()`, `review_expires_at=now() + 3 days`.
   - **Bookings**: If current status is `confirmed` or `paid_request_pending`, first updates to `active`, then to `delivered` (legacy/pay-first states must pass through `active` before `delivered`). Then sets `delivered_at`, `review_expires_at`, `revision_note`. Only allows submit when status is `active` or (for tasks) equivalent.
-- **Migration**: `supabase/migrations/20260224_fix_rpc_submit_delivery_booking_transition.sql`
+- **Migrations**: `supabase/migrations/Archive/20260224_fix_rpc_submit_delivery_booking_transition.sql` (original); restored and guarded in `20260308160000_14a_dispute_extension_frozen_guards.sql`.
 
 ### 9.2 `rpc_request_revision`
 
 - **Purpose**: Reject delivery and request changes.
 - **Access**: Client Only.
-- **Logic**: Resets `status='active'`, increments `revisions_used`, clears `delivered_at`.
+- **Frozen guard**: At start, if the entity has an open or active dispute (task or booking’s task), raises `Cannot request revision: dispute in progress` and does not update. See Plan 14a.
+- **Logic**: Enforces **state guard** (`status` must be `'delivered'`) and **cap guard** (`revisions_used < revisions_total`). When `revisions_total` is NULL or 0, no revisions allowed. Then resets `status='active'`, increments `revisions_used`, clears `delivered_at`, `review_expires_at`, sets `revision_note`.
+- **Exception messages** (contract for app ErrorMapper):
+  - `Cannot request revision: dispute in progress` — when dispute is open or active (Frozen).
+  - `Can only request revision on delivered work` — when status is not `delivered`.
+  - `No revisions remaining` — when `revisions_used >= revisions_total`.
+  - `Only client can request revision` — when caller is not the client.
+- **Migrations**: `supabase/migrations/20260308120000_harden_rpc_request_revision.sql`; Frozen guard in `20260308160000_14a_dispute_extension_frozen_guards.sql`.
+
+### 9.2a `rpc_submit_dispute` (Plan 14a)
+
+- **Purpose**: Submit a dispute for a task or direct offer with eligibility and single-open/active enforcement.
+- **Parameters**: `p_task_id` (uuid, optional), `p_direct_offer_id` (uuid, optional), `p_reason` (text), `p_defendant_id` (uuid, optional). Exactly one of `p_task_id` or `p_direct_offer_id` must be set.
+- **Eligibility**: Task must be `in_progress` or `delivered`; direct offer must be `active` or `delivered`. Otherwise raises `Entity not eligible for dispute: ...`.
+- **Single open/active**: If a row already exists in `disputes` for the same task_id (or direct_offer_id) with `status IN ('open','active')`, raises `An open or active dispute already exists for this task` (or direct offer). Partial unique indexes `uq_disputes_one_open_active_per_task` and `uq_disputes_one_open_active_per_direct_offer` also enforce this at INSERT.
+- **Returns**: uuid of the inserted dispute row.
+- **Migration**: `20260308160000_14a_dispute_extension_frozen_guards.sql`.
+
+**Partial unique indexes on `disputes` (Plan 14a):**
+
+- `uq_disputes_one_open_active_per_task`: UNIQUE (task_id) WHERE task_id IS NOT NULL AND status IN ('open','active').
+- `uq_disputes_one_open_active_per_direct_offer`: UNIQUE (direct_offer_id) WHERE direct_offer_id IS NOT NULL AND status IN ('open','active').
 
 ### 9.3 `rpc_accept_change_request`
 
@@ -2269,7 +2298,8 @@ All functions use `SECURITY DEFINER` and include explicit `auth.uid()` checks.
 
 - **Purpose**: Auto-complete work if review timer expired.
 - **Access**: Public/System (Lazy guard).
-- **Logic**: Checks `now() > review_expires_at`, sets `status='completed'`, releases payment.
+- **Logic**: If an open/active dispute exists for the task (or for the booking’s task), returns current status without updating. Otherwise checks `now() > review_expires_at`, sets `status='completed'`.
+- **Migration**: `20260308140000_dispute_lifecycle_escrow_guard_rls.sql` (dispute guard).
 
 ### 9.5 `rpc_approve_delivery`
 
@@ -2277,10 +2307,11 @@ All functions use `SECURITY DEFINER` and include explicit `auth.uid()` checks.
 - **Access**: Client (owner) only.
 - **Parameters**: `entity_type` (text): one of `task`, `booking`, `direct_offer`; `entity_id` (uuid): the task, booking, or direct_offer id.
 - **Logic**:
+  - **Dispute guard (all branches)**: If a row in `disputes` exists with `status IN ('open','active')` for the same task (task branch), same booking’s task_id (booking branch), or same direct_offer_id (direct_offer branch), raises `Cannot approve delivery: dispute in progress` and does not release funds.
   - **Tasks**: Sets `status='completed'`, clears `review_expires_at`.
   - **Bookings**: If `payment_status='held'`, locks row with `SELECT ... FROM bookings WHERE id = entity_id FOR UPDATE`, then computes **stable** idempotency key: `encode(extensions.digest(entity_id::text || ':release_with_fee:' || v_status || ':' || v_payment_status, 'sha256'), 'hex')` (no `now()` — same key on retry). Calls `process_payment_event_ledger('release_with_fee', 'booking', entity_id, idempotency_key, ...)`. On success, clears `review_expires_at` (status/payment_status updated inside ledger RPC). If payment is not held, only updates status and review_expires_at.
   - **Direct offers**: If `payment_status='held'` and `status='delivered'`, locks row with `SELECT ... FROM direct_offers WHERE id = entity_id FOR UPDATE`, validates `client_id = auth.uid()`, computes same stable idempotency key pattern, calls `process_payment_event_ledger('release_with_fee', 'direct_offer', entity_id, idempotency_key, ...)`, then updates `direct_offers` to `payment_status='released'`, `status='completed'`.
-- **Migrations**: `20260224_fix_rpc_approve_delivery_digest_schema.sql` (digest schema); `20260307000001_escrow_idempotency_stable_key.sql` (stable key + FOR UPDATE, drop duplicate index `idx_journal_entries_idempotency`); `20260307120000_rpc_approve_delivery_direct_offer.sql` (direct_offer branch); `20260319110000_direct_offer_guard_rls_ledger.sql` (direct_offer branch reads fee_rate_applied_bps from direct_offers row and passes it in p_meta to process_payment_event_ledger).
+- **Migrations**: `20260224_fix_rpc_approve_delivery_digest_schema.sql` (digest schema); `20260307000001_escrow_idempotency_stable_key.sql` (stable key + FOR UPDATE, drop duplicate index `idx_journal_entries_idempotency`); `20260307120000_rpc_approve_delivery_direct_offer.sql` (direct_offer branch); `20260319110000_direct_offer_guard_rls_ledger.sql` (direct_offer branch reads fee_rate_applied_bps from direct_offers row and passes it in p_meta to process_payment_event_ledger); `20260308140000_dispute_lifecycle_escrow_guard_rls.sql` (dispute guard on all three branches).
 
 ### 9.6 Task Request Bid Flow RPCs (v2.18 - March 2026)
 
@@ -2452,6 +2483,14 @@ Returns minimum-field profile summaries for all bidders on a task (for owner vie
 
 ### Version 2.20.1 (March 2026)
 
+- **Unified Work View — 4-branch upgrade (2026-03-08):** Migration `20260308110000_upgrade_unified_work_view.sql`: `vw_unified_work_items` extended to four branches (tasks in progress, bookings, awarded pending payment, **direct_offers**); dispute override; `conversation_id` for direct offers; `security_invoker = true`. Rollback: `20260308100000_rollback_unified_work_view.sql` restores 3-branch view. Plan: `.TODO/PLAN_UnifiedWorkView_2026-03-08_CRITIC.md`. §6.4.
+- **Dispute lifecycle — escrow guard and RLS (2026-03-08):** Migration `20260308140000_dispute_lifecycle_escrow_guard_rls.sql`: `rpc_approve_delivery` and `rpc_finalize_auto_approval` now block when an open/active dispute exists for the task (or booking’s task, or direct_offer). Explicit deny policies on `disputes` (UPDATE/DELETE for authenticated). RLS for `dispute_messages` and `dispute_evidence` (participant-only SELECT/INSERT). Indexes on `disputes(task_id)`, `(direct_offer_id)`, `(status)`. Plan: `.TODO/PLAN_DisputeLifecycle_2026-03-08.md`.
+- **Dispute lifecycle — enum, triggers, view (2026-03-08):** Migration `20260308150000_dispute_enum_guard_resolved_at.sql`: `dispute_status_enum` ('open','active','resolved','canceled'); `disputes.status` altered to enum; triggers `trg_dispute_guard` (transition guard: open→active/canceled, active→resolved), `trg_dispute_set_resolved_at` (sets `resolved_at` when status→resolved); `vw_unified_work_items` recreated with enum-safe disputed check (`d.status IN ('open','active')`).
+- **Plan 14a — Frozen guards, unique indexes, rpc_submit_dispute (2026-03-08):** Migration `20260308160000_14a_dispute_extension_frozen_guards.sql`: `rpc_submit_delivery` restored with Frozen guard (task, booking); `rpc_request_revision` Frozen guard (task, booking); partial unique indexes `uq_disputes_one_open_active_per_task`, `uq_disputes_one_open_active_per_direct_offer`; `rpc_submit_dispute(p_task_id, p_direct_offer_id, p_reason, p_defendant_id)` for eligibility and single-open/active per entity. §9.1, §9.2, and §9.2a refer to the **Functions (RPCs)** section in this document.
+- **rpc_submit_dispute — booking-eligible (2026-03-08):** Migration `20260308170000_rpc_submit_dispute_booking_eligible.sql`: `rpc_submit_dispute` task branch now allows dispute when the task is `in_progress` or `delivered` **or** when any booking for that task has status `active` or `delivered`. Fixes "Entity not eligible for dispute" when reporting from an active/delivered booking whose task row has a different status.
+- **Tender: assign only after payment (2026-03-08):** Migration `20260308180000_tender_assign_only_after_payment.sql`: Award no longer assigns the task to the freelancer. `accept_task_request` and `award_task_offer` now only reserve the task (status = `assigned`, no `freelancer_id`/`assigned_freelancer_id`); `task_requests` set to accepted with `payment_status = 'unpaid'`. Assignment (freelancer_id, in_progress) happens only in `pay_awarded_offer` after payment. Drops `tasks_assigned_requires_freelancer` if present; adds `award_task_offer(p_request_id, p_client_id, p_expected_price_cents)` with same reserve-only behavior.
+- **award_task_offer overload fix (2026-03-08):** Migration `20260308180100_award_task_offer_drop_old_overload.sql`: Drops `award_task_offer(uuid, bigint)` so only the 3-parameter version exists; fixes "Could not choose the best candidate function" when the app calls with `p_request_id` and `p_expected_price_cents`.
+- **vw_unified_work_items — disputed only for open/active (2026-03-08):** Migration `20260308190000_vw_unified_work_items_dispute_open_active_only.sql`: View now shows `unified_status = 'disputed'` only when a linked dispute has `status IN ('open', 'active')`. Previously it used `NOT IN ('resolved', 'closed')` but the enum has `canceled` not `closed`, so canceled disputes still showed as disputed. Aligns with 14a diagram (resolved/canceled = not disputed).
 - **Plan 19 (Direct Offers Work Contract) — §5.14 doc sync:** `direct_offers` table in §5.14 completed with all columns from migrations: fee columns `fee_rate_applied_bps`, `fee_amount`, `net_amount` (`20260307_02_add_fee_columns.sql`); `currency`, payment_*, `delivered_at`, `review_expires_at` (`20260319000000_direct_offer_flow_harden.sql`). Admin objects (admin schema, views, self-offer guard, `admin_refund_direct_offer` RPC) already documented in §5.14. Plan: `.TODO/improvement_the_system/ImplementReady/19_direct-offers-work-contract/PLAN_DirectOffersWorkContract_2026-03-07.md`.
 - **Chat Realtime Sync — docs & migration (2026-03-08):** Documentation fixes: §5.7 `conversation_presence` — removed reference to non-existent `expire_typing_presence` trigger; documented client-only 15s TTL. §5.8 `app_config` — added `chat_presence_receipts_enabled`. §8.7 — removed `trg_expire_presence` row; presence is client-only. §12 Realtime — added `conversation_presence` to publication list (with messages, notifications). Migration `20260307220000_chat_realtime_presence_publication.sql` made idempotent (DO block with IF NOT EXISTS before ADD TABLE). No schema change; docs and migration safety only.
 - **Direct Chat Offer Flow hardening (2026-03-07/08):** direct_offers: currency, payment_*, delivered_at, review_expires_at (migration `20260319000000_direct_offer_flow_harden.sql`); trigger `trg_direct_offer_protect_price_currency` and extension to protect fee_rate_applied_bps (`20260319110000_direct_offer_guard_rls_ledger.sql`, `20260319130000_direct_offer_protect_fee_in_trigger.sql`); disputes: direct_offer_id, chk_dispute_entity, disputes_insert_own RLS (`20260319000000`, `20260319110000`); rpc_approve_delivery direct_offer branch reads fee from row (`20260319110000`); cron `run_auto_release_expired_direct_offers` (`20260319120000_direct_offer_auto_release_cron.sql`). Plan: `.TODO/PLAN_DirectChatOfferFlow_2026-03-07_CRITIC.md`.
