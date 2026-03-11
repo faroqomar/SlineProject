@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../../core/utils/format_price.dart';
 import '../models/work_log_model.dart';
 import '../models/work_log_scope.dart';
 import '../services/work_log_service.dart';
@@ -80,7 +81,7 @@ class OrderManagementViewModel extends ChangeNotifier {
         scope: scope,
         eventType: 'price_change_proposal',
         description:
-            'Proposed price change to \$${newPrice.toStringAsFixed(2)}',
+            'Proposed price change to ${PriceFormatter.formatPrice(newPrice)}',
         additionalMetadata: {'amount': newPrice, 'status': 'pending'},
       );
       await loadLogs(scope);

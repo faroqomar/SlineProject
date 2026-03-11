@@ -238,14 +238,9 @@ class BookingService {
 
   Future<void> approveAndRelease(String bookingId) async {
     try {
-      final booking = await getBookingById(bookingId);
-
-      await LedgerService(_client).submitPaymentEvent(
-        eventType: 'release_with_fee',
-        relatedEntityType: 'booking',
-        relatedEntityId: booking.id,
-        amountGross: booking.price ?? 0,
-        meta: {'fee_rate_bps': 0},
+      await _client.rpc(
+        'rpc_approve_delivery',
+        params: {'entity_type': 'booking', 'entity_id': bookingId},
       );
       AppLogger.i(
         'Approve and release submitted for booking $bookingId',

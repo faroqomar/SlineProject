@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/logger_service.dart';
+import '../../../core/utils/format_price.dart';
 import '../models/task_request_model.dart';
 
 // Re-export exceptions for backward compatibility
@@ -825,9 +826,9 @@ class PriceMismatchException implements Exception {
 
   /// Returns a user-friendly error message.
   String get userMessage {
-    final expectedDollars = (expectedCents / 100).toStringAsFixed(2);
-    final actualDollars = (actualCents / 100).toStringAsFixed(2);
-    return 'The freelancer updated their offer from \$$expectedDollars to \$$actualDollars. Please review the new price before accepting.';
+    final expectedIqd = PriceFormatter.formatPrice(expectedCents / 100);
+    final actualIqd = PriceFormatter.formatPrice(actualCents / 100);
+    return 'The freelancer updated their offer from $expectedIqd to $actualIqd. Please review the new price before accepting.';
   }
 }
 

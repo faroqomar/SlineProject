@@ -4,6 +4,7 @@ import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/widgets/glass_card.dart';
 import 'package:sline_app/features/wallet/viewmodels/wallet_view_model.dart';
 
@@ -32,7 +33,7 @@ class WalletSnapshotCard extends StatelessWidget {
               ),
               const SizedBox(height: AppDimens.p4),
               Text(
-                _formatCurrency(
+                PriceFormatter.formatPrice(
                   (walletVM.balance.availableBalance +
                           walletVM.balance.heldBalance)
                       .toDouble(),
@@ -59,10 +60,6 @@ class WalletSnapshotCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _formatCurrency(double amount) {
-    return '\$${amount.toStringAsFixed(2)}';
   }
 }
 
@@ -91,7 +88,7 @@ class _BalanceItem extends StatelessWidget {
           ),
         ),
         Text(
-          '\$${amount.toStringAsFixed(2)}',
+          PriceFormatter.formatPrice(amount),
           style: AppTypography.bodySmall.copyWith(
             color: color,
             fontWeight: FontWeight.bold,

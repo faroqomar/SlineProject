@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/wallet_repository.dart';
 import '../models/wallet_activity_model.dart';
 import '../models/wallet_balance_model.dart';
+import '../utils/wallet_presentation_helper.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/services/account_guard_service.dart';
 
@@ -20,12 +21,26 @@ class WalletViewModel extends ChangeNotifier {
   String? error;
   final List<WalletActivityModel> activities = [];
   String? _cursor;
+  bool _hasLoadedWallet = false;
   bool hasMore = true;
   WalletBalanceModel balance = WalletBalanceModel.zero();
+
+  bool get hasLoadedWallet => _hasLoadedWallet;
+
+  WalletPresentationSummary get summary =>
+      buildWalletPresentationSummary(balance: balance, activities: activities);
+
+  Future<void> ensureLoaded({bool forceRefresh = false}) async {
+    if (isLoading) return;
+    if (forceRefresh || !_hasLoadedWallet) {
+      await loadWallet();
+    }
+  }
 
   Future<void> loadWallet() async {
     isLoading = true;
     error = null;
+    _hasLoadedWallet = false;
     activities.clear();
     _cursor = null;
     notifyListeners();
@@ -45,6 +60,7 @@ class WalletViewModel extends ChangeNotifier {
         _cursor = txns.last.createdAtUtc.toUtc().toIso8601String();
       }
       hasMore = txns.length == 20;
+      _hasLoadedWallet = true;
     } catch (e) {
       error = e.toString();
       AppLogger.e('Failed to load wallet', error: e);
@@ -95,6 +111,7 @@ class WalletViewModel extends ChangeNotifier {
       await _repo.requestWithdrawal(amount: amount);
       // Refresh balances to reflect the locked funds
       balance = await _repo.getWalletBalance();
+      _hasLoadedWallet = true;
       AppLogger.i('Withdrawal requested: amount=$amount', tag: 'Wallet');
       return true;
     } on FormatException catch (e) {

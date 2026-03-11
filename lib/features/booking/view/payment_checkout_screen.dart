@@ -13,6 +13,7 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_date.dart';
+import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/features/booking/models/payment_return_args.dart';
 import 'package:sline_app/features/booking/view/payment_webview_screen.dart';
 import 'package:sline_app/features/booking/viewmodels/booking_view_model.dart';
@@ -523,7 +524,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
                       style: AppTypography.h3.copyWith(color: cs.text),
                     ),
                     Text(
-                      'IQD ${widget.price.toStringAsFixed(0)}',
+                      PriceFormatter.formatPrice(widget.price),
                       style: AppTypography.h3.copyWith(
                         color: AppColors.teal,
                         fontWeight: FontWeight.bold,
@@ -731,7 +732,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
                       ],
                     )
                   : Text(
-                      'Pay IQD ${widget.price.toStringAsFixed(0)}',
+                      'Pay ${PriceFormatter.formatPrice(widget.price)}',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,

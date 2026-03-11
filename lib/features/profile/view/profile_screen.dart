@@ -485,6 +485,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(height: AppDimens.p8),
                     _buildMenuItem(
                       context,
+                      'Request Withdrawal',
+                      Icons.send_outlined,
+                      AppColors.teal,
+                      badge: 'Coming soon',
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Request withdrawal — coming soon'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: AppDimens.p8),
+                    _buildMenuItem(
+                      context,
                       'Settings',
                       Icons.settings,
                       AppColors.mediumGreyBlue,

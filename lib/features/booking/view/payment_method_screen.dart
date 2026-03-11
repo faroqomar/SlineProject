@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
@@ -101,7 +102,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                   _buildCreditCardForm(context),
                   const SizedBox(height: AppDimens.p32),
                   AppButton(
-                    text: 'Pay \$${widget.amount.toStringAsFixed(2)}',
+                    text: 'Pay ${PriceFormatter.formatPrice(widget.amount)}',
                     isLoading: viewModel.isProcessingPayment,
                     onPressed: _processPayment,
                   ),
@@ -140,7 +141,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
               ),
               const SizedBox(height: AppDimens.p4),
               Text(
-                '\$${widget.amount.toStringAsFixed(2)}',
+                PriceFormatter.formatPrice(widget.amount),
                 style: AppTypography.h1.copyWith(color: AppColors.teal),
               ),
             ],

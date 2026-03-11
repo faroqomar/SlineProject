@@ -133,15 +133,10 @@ class DirectOffersService {
       throw Exception('Offer is not in a state that can be accepted.');
     }
 
-    const defaultFeeBps = 1000;
     const defaultCurrency = 'IQD';
     await _client
         .from('direct_offers')
-        .update({
-          'status': 'accepted',
-          'fee_rate_applied_bps': defaultFeeBps,
-          'currency': defaultCurrency,
-        })
+        .update({'status': 'accepted', 'currency': defaultCurrency})
         .eq('id', offerId);
     await _workLogService.logEvent(
       scope: WorkLogScope(entityId: offerId, entityType: 'direct_offer'),
@@ -149,7 +144,7 @@ class DirectOffersService {
       description: 'Offer accepted, waiting for payment',
     );
     AppLogger.i(
-      '[DirectOffers] acceptOfferWithoutPayment completed offer=$offerId fee_rate_applied_bps=$defaultFeeBps currency=$defaultCurrency',
+      '[DirectOffers] acceptOfferWithoutPayment completed offer=$offerId currency=$defaultCurrency',
     );
   }
 

@@ -147,6 +147,17 @@ class SettingsScreen extends StatelessWidget {
                   },
                 ),
 
+                const SizedBox(height: AppDimens.p24),
+                _buildSectionHeader(context, 'Wallet'),
+                const SizedBox(height: AppDimens.p12),
+
+                _buildComingSoonTile(
+                  context,
+                  icon: Icons.account_balance_wallet,
+                  title: 'Request Withdrawal',
+                  subtitle: 'Withdraw funds to your bank',
+                ),
+
                 const SizedBox(height: AppDimens.p32),
 
                 // Logout
@@ -251,6 +262,83 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
             if (trailing != null) trailing,
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Wallet/withdrawal tile styled as a future feature (coming soon).
+  Widget _buildComingSoonTile(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    final colorScheme = context.colorScheme;
+    return GestureDetector(
+      onTap: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Request withdrawal — coming soon'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      },
+      child: GlassContainer(
+        padding: const EdgeInsets.all(AppDimens.p16),
+        borderRadius: BorderRadius.circular(AppDimens.r16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.teal.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: AppColors.teal, size: 20),
+            ),
+            const SizedBox(width: AppDimens.p16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AppTypography.bodyMedium.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.text,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: AppTypography.micro.copyWith(
+                      color: colorScheme.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimens.p10,
+                vertical: AppDimens.p4,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.teal.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: AppColors.teal.withValues(alpha: 0.5),
+                ),
+              ),
+              child: Text(
+                'Coming soon',
+                style: AppTypography.micro.copyWith(
+                  color: AppColors.teal,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           ],
         ),
       ),

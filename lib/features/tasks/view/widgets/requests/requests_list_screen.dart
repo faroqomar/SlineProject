@@ -594,8 +594,8 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
 
   /// Show price mismatch error dialog with refresh option
   Future<void> _showPriceMismatchDialog(PriceMismatchException e) async {
-    final expectedDollars = (e.expectedCents / 100).toStringAsFixed(2);
-    final actualDollars = (e.actualCents / 100).toStringAsFixed(2);
+    final expectedIqd = PriceFormatter.formatPrice(e.expectedCents / 100);
+    final actualIqd = PriceFormatter.formatPrice(e.actualCents / 100);
 
     await showDialog<void>(
       context: context,
@@ -624,7 +624,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
                     children: [
                       const Text('Old Price:'),
                       Text(
-                        '\$$expectedDollars',
+                        expectedIqd,
                         style: const TextStyle(
                           decoration: TextDecoration.lineThrough,
                         ),
@@ -637,7 +637,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
                     children: [
                       const Text('New Price:'),
                       Text(
-                        '\$$actualDollars',
+                        actualIqd,
                         style: TextStyle(
                           color: Colors.orange.shade700,
                           fontWeight: FontWeight.bold,

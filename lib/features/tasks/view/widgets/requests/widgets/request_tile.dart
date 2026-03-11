@@ -469,7 +469,7 @@ class RequestTile extends StatelessWidget {
       taskId: request.taskId,
       taskTitle: request.taskTitle ?? 'Task',
       freelancerName: request.bidderName ?? 'Freelancer',
-      amount: request.price / 100, // Convert cents to dollars
+      amount: request.price.toDouble(), // DB stores price in IQD
       paymentDeadline: request.paymentDeadline,
     );
 

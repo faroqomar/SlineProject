@@ -18,6 +18,8 @@
 /// ```
 library;
 
+import 'package:sline_app/core/utils/format_price.dart';
+
 /// Thrown when the expected price doesn't match the actual offer price.
 ///
 /// This exception indicates that the freelancer updated their offer price
@@ -42,9 +44,9 @@ class PriceMismatchException implements Exception {
 
   /// Returns a user-friendly error message suitable for display in the UI.
   String get userMessage {
-    final expectedDollars = (expectedCents / 100).toStringAsFixed(2);
-    final actualDollars = (actualCents / 100).toStringAsFixed(2);
-    return 'The freelancer updated their offer from \$$expectedDollars to \$$actualDollars. Please review the new price before accepting.';
+    final expectedIqd = PriceFormatter.formatPrice(expectedCents / 100);
+    final actualIqd = PriceFormatter.formatPrice(actualCents / 100);
+    return 'The freelancer updated their offer from $expectedIqd to $actualIqd. Please review the new price before accepting.';
   }
 }
 

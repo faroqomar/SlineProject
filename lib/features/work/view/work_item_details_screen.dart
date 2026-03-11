@@ -19,6 +19,7 @@ import 'package:sline_app/features/work/models/extension_request_model.dart';
 import 'package:sline_app/features/chat/view/chat_screen.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 import 'package:sline_app/core/utils/format_date.dart';
+import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 import 'package:sline_app/features/proposals/models/proposal_payment_summary.dart';
@@ -392,7 +393,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
             ),
             const SizedBox(height: AppDimens.p8),
             Text(
-              'Price: \$${vm.workItem?.price}',
+              'Price: ${PriceFormatter.formatPrice(vm.workItem?.price ?? 0)}',
               style: AppTypography.bodyMedium,
             ),
             if (vm.workItem?.deadline != null)

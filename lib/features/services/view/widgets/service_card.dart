@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
@@ -64,7 +65,7 @@ class ServiceCard extends StatelessWidget {
                       color: colorScheme.textSecondary,
                     ),
                     Text(
-                      service.price!.toStringAsFixed(2),
+                      PriceFormatter.formatPrice(service.price!),
                       style: AppTypography.bodySmall.copyWith(
                         color: colorScheme.text,
                         fontWeight: FontWeight.w600,

@@ -1,21 +1,28 @@
 /// What: Helpers to format prices (and simple dates) for consistent UI display.
-/// Why: Centralizes currency/range formatting rules (e.g., IQD without decimals).
-/// Utility functions for price and date formatting
+/// Why: Centralizes IQD display rules: K-abbreviation for large amounts, full value for small, currency at end.
+/// Single source of truth for all money display across wallet, tasks, booking, work, services, management.
 class PriceFormatter {
-  /// Format price for IQD by default with no decimals (common local display)
-  static String formatPrice(double price, {String currency = 'IQD '}) {
-    // IQD usually shown without fractional part
-    final rounded = price.round();
-    return '$currency$rounded';
+  /// Format amount in IQD for display.
+  /// - Small (< 1,000): full value, e.g. "950 IQD"
+  /// - Large (>= 1,000): abbreviated with K, no decimal K, e.g. "75K IQD", "12K IQD"
+  static String formatPrice(double amountIqd, {String suffix = 'IQD'}) {
+    final abs = amountIqd.abs();
+    final rounded = amountIqd.round();
+    if (abs < 1000) {
+      return '$rounded $suffix';
+    }
+    final valueK = (rounded.abs() / 1000).truncate();
+    final prefix = amountIqd < 0 ? '-' : '';
+    return '$prefix${valueK}K $suffix';
   }
 
-  /// Format price range (min - max)
+  /// Format price range (min - max) using same IQD rules.
   static String formatPriceRange(
     double minPrice,
     double maxPrice, {
-    String currency = 'IQD ',
+    String suffix = 'IQD',
   }) {
-    return '${formatPrice(minPrice, currency: currency)} - ${formatPrice(maxPrice, currency: currency)}';
+    return '${formatPrice(minPrice, suffix: suffix)} - ${formatPrice(maxPrice, suffix: suffix)}';
   }
 }
 

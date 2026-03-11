@@ -6,6 +6,7 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_date.dart';
+import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/utils/status_presenter.dart';
 import 'package:sline_app/core/utils/unified_cta_resolver.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
@@ -142,7 +143,7 @@ class DashboardOfferCard extends StatelessWidget {
                         children: [
                           _InfoChip(
                             icon: Icons.attach_money,
-                            label: '\$${offer.price}',
+                            label: PriceFormatter.formatPrice(offer.price.toDouble()),
                             colorScheme: colorScheme,
                           ),
                           const SizedBox(width: AppDimens.p8),

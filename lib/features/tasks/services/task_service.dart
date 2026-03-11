@@ -675,19 +675,18 @@ class TaskService {
     try {
       final res = await _client
           .from('task_requests')
-          .select('price')
+          .select('price, fee_rate_applied_bps')
           .eq('id', offerId)
           .single();
       final price = res['price'] as num? ?? 0;
+      final feeRateBps = res['fee_rate_applied_bps'] as int?;
 
       await LedgerService(_client).submitPaymentEvent(
         eventType: 'release_with_fee',
         relatedEntityType: 'task_request',
         relatedEntityId: offerId,
         amountGross: price,
-        meta: {
-          'fee_rate_bps': 0, // MVP zero fee
-        },
+        meta: {if (feeRateBps != null) 'fee_rate_bps': feeRateBps},
       );
     } catch (e) {
       AppLogger.e('Failed to release offer funds', error: e);
