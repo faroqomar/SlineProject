@@ -1,7 +1,7 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.20.1 (Task Request Bid Flow: two-step award with price validation and auto-expiry)
-**Last Updated**: 2026-03-08
+**Version**: 2.20.2 (replace_task_request update-in-place; get_public_system_config; ledger/app fixes)
+**Last Updated**: 2026-03-22
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
 
@@ -161,6 +161,9 @@ try {
 | Storage | 413                                        | "File is too large. Please choose a smaller file." |
 | Network | `SocketException`                          | "Cannot reach the server. Check your connection."  |
 | Chat    | Trigger payload checks                     | "Offer requires price and days."                   |
+
+- **Generic user-facing messages**: The mapper returns user-friendly text only; technical phrases (e.g. "apply migrations") are not shown. Wrapped exceptions are handled via internal heuristics (e.g. `_looksLikeTechnicalMessage`) so technical leaks are avoided.
+- **Replace offer**: `no_pending_offer_to_replace` and RPC/function ambiguity messages are mapped to user-friendly strings in `TaskRequestsService._mapReplaceOfferError` (`lib/features/tasks/services/task_requests_service.dart`).
 
 **Reference**: See `.cursor/rules/error-handling.mdc` for complete error mapping conventions.
 
@@ -1712,7 +1715,7 @@ The standalone `orders` dashboard module was removed on 2026-03-01.
 
 - **Cache**: `DashboardCacheService` is provided in `main.dart` and injected into `DashboardViewModel`; overview data can be served from cache when appropriate.
 - **Lazy-load by tab**: Overview data loads first; Bookings and Inbox data load on first visit to those tabs. Full refresh still loads all datasets.
-- **Wallet snapshot**: On first entry to the dashboard, `OverviewTab` triggers `WalletViewModel.loadWallet()` so the balance snapshot is visible without a separate wallet visit.
+- **Wallet snapshot**: On first entry to the dashboard, `OverviewTab` triggers `WalletViewModel.loadWallet()` so the balance snapshot is visible without a separate wallet visit. After withdrawal, the ViewModel refreshes both balance and activities. `ensureLoaded()` uses a shared `_loadingFuture` so concurrent callers await the same load.
 - **My Services**: `MyServicesScreen` (profile) uses `MyServicesViewModel` and `ServicesRepository.fetchMyServices()`; it no longer depends on dashboard state.
 - **Tender payment**: All payment entry points (Inbox, Work, Next Actions, Work Details, Requests list after award) use `openProposalPayment(context, summary)` from `lib/features/proposals/routes/proposal_payment_route.dart`; see [Proposals Feature](DEVELOPER_GUIDE/Proposals_Feature.md). That route builds `TenderPaymentScreen` with `TenderPaymentCoordinator` and `TenderPaymentViewModel`; the screen uses only the ViewModel (no direct service calls in the widget). Awarding an offer moves the task to the Work tab as "Waiting payment"; the client can Pay or Cancel from there (Cancel reverts the award so the task reappears in Inbox). `TaskService` is provided in `main.dart`. **QiCard (March 2026):** When the app uses `QiCardPaymentService`, the Pay button is enabled: the coordinator calls the edge function `qicard_payment_create_tender` to get a `form_url`, the screen opens `PaymentWebViewScreen` for the user to pay; on return the app calls `recoverTenderPaymentAfterCallback` (edge function `qicard_payment_recovery_tender`), which runs `process_payment_event_ledger(gateway_escrow, task_request)` and assigns the task (freelancer, in_progress). **Demo:** When using `DemoPaymentService`, the Pay button is disabled (fail-closed); tender state never advances.
 - **Offer submission:** Task offer submit no longer mutates `profiles.active_role`. RLS does not require the user to be in the freelancer role. If insert is denied (e.g., trying to bid on your own task or a closed task), the app shows: "You cannot submit an offer. The task might be closed or you are the task owner."
@@ -2957,7 +2960,7 @@ lib/features/tasks/
 │                         FLUTTER APP                              │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────────────────┐  │
 │  │  SubmitOffer │───▶│   Service   │───▶│  replace_task_request│ │
-│  │    Sheet    │    │   (RPC)     │    │  (withdraw + insert) │  │
+│  │    Sheet    │    │   (RPC)     │    │  (update in place)   │  │
 │  └─────────────┘    └─────────────┘    └─────────────────────┘  │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────────────────┐  │
 │  │  AwardFlow  │───▶│   Service   │───▶│  accept_task_request │  │
@@ -3078,18 +3081,18 @@ CREATE OR REPLACE FUNCTION replace_task_request(
 RETURNS VOID
 ```
 
-**Purpose**: Withdraws current pending offer and inserts replacement
+**Purpose**: Updates the caller's existing pending offer **in place** (price, days, note, updated_at). No second row is created; avoids unique constraint `uq_task_requests_one_active_per_freelancer`. Final behavior from migration `20260322000005_replace_task_request_update_in_place.sql`.
 
 **Authorization**:
 
-- Caller must match p_freelancer_id (auth.uid())
-- Caller must have active_role='freelancer'
-- Task must be 'open' and not owned by caller
+- Caller must be the offer owner (p_freelancer_id = auth.uid()). No active_role gate.
+- Task must be 'open' and not owned by caller.
 
 **Side Effects**:
 
-- Updates existing pending offer to status='withdrawn'
-- Inserts new offer with status='pending'
+- UPDATE on the single pending task_requests row for this task and caller; no new row inserted.
+
+**Errors** (for app error mapper): `unauthenticated`; `only the offer owner can replace their offer`; `task_not_found_or_not_open_or_own_task`; `no_pending_offer_to_replace`.
 
 ### 4.4 cleanup_expired_awards (Cron)
 
@@ -3452,7 +3455,7 @@ String _mapSubmitOfferError(PostgrestException error) {
 | `20260306_tender_guardrails.sql`                               | Indexes, accept_task_request, cleanup_expired_awards          |
 | `20260308000000_accept_task_request_reject_remaining_bids.sql` | Reject remaining bids when accepting one (Single Winner Rule) |
 | `20260305*.sql`                                                | reject_task_request with conversation creation                |
-| `20260311*.sql`                                                | replace_task_request RPC                                      |
+| `20260322000002`–`20260322000005` (replace_task_request sequence) | replace_task_request RPC (single overload, update-in-place)   |
 
 ---
 

@@ -127,6 +127,8 @@ Columns:
 | `lib/features/dashboard/data/dashboard_repository.dart` | Data | Includes ledger-based financial metrics |
 | `lib/features/dashboard/models/financial_metrics_model.dart` | Model | Platform financial metrics |
 
+**WalletViewModel behavior**: After a withdrawal request, the ViewModel refreshes both balance and activities so the UI stays in sync. `ensureLoaded()` uses a shared `_loadingFuture` so concurrent callers await the same load instead of triggering duplicate requests.
+
 ## 4. Approve delivery (single exit point for escrow release)
 
 For **bookings** and **direct offers**, the app releases escrow via a single RPC: `rpc_approve_delivery(entity_type, entity_id)`. The client calls it with `entity_type` = `'booking'` or `'direct_offer'`; the RPC validates ownership, then calls `process_payment_event_ledger('release_with_fee', ...)` with a deterministic idempotency key. Booking flow: `WorkManagementService.approveDelivery()`. Direct offer flow: `DirectOffersService.completeOffer()` → `rpc_approve_delivery(entity_type: 'direct_offer', entity_id)`.

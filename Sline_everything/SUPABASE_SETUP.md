@@ -1,7 +1,7 @@
 # Supabase Setup for SLine — Complete Database Reference
 
-**Last Updated**: 2026-03-08 (Hardened Payment Linking: §5.23–5.25 payment_intents/payment_events/orphan_payments, journal meta payment_intent_id; Direct Chat Offer Flow: §5.14, §5.24, §9.5, §17)
-**Version**: 2.20.1
+**Last Updated**: 2026-03-22 (replace_task_request update-in-place §9.6; get_public_system_config §9; ledger parameter 40 fix; migrations 20260322*)
+**Version**: 2.20.2
 **Database Version**: PostgreSQL 17.4.1
 **Project ID**: `isddrknbjsgaantjojhm`
 **Region**: `eu-north-1` (Stockholm)
@@ -1912,9 +1912,10 @@ Legacy compatibility wrapper. It resolves `task_id`, delegates to the canonical 
 
 **`replace_task_request(...)` → VOID**:
 
-- Allows freelancer to update their pending offer (price, days, note)
-- Cannot modify offers that are already accepted or rejected
-- Creates new offer if existing one has responses (soft-delete pattern)
+- **Update in place**: Updates the existing pending `task_requests` row (price, days, note, updated_at). No withdraw + insert; no second row, so `uq_task_requests_one_active_per_freelancer` is never violated.
+- **No active_role gate**: Caller must be the offer owner (`p_freelancer_id = auth.uid()`). Single overload: `(p_task_id, p_freelancer_id, p_message, p_price NUMERIC, p_days)`.
+- **Errors**: `unauthenticated`; `only the offer owner can replace their offer`; `task_not_found_or_not_open_or_own_task`; `no_pending_offer_to_replace` (when no pending row to update).
+- **Migrations**: Final behavior in `20260322000005_replace_task_request_update_in_place.sql`; preceding sequence: `20260322000002` (single overload), `20260322000003` (no role gate), `20260322000004` (deleted_at fix), then `20260322000005` (update-in-place). See §9.6 and §17.
 
 #### Work revision and change RPCs (2026-03-05)
 
@@ -1925,12 +1926,13 @@ Legacy compatibility wrapper. It resolves `task_id`, delegates to the canonical 
 
 #### `replace_task_request(...) → void`
 
-Archive the previous offer and create a replacement offer.
+Updates the caller's existing pending offer **in place** (no withdraw + insert). Same row is updated: `price`, `days`, `note`, `updated_at`. No second row is created.
 
 Frontend contract:
 
-- The function does not return the replacement row.
+- The function returns VOID.
 - Clients must re-fetch the caller's active `task_requests` row after the RPC succeeds.
+- **Errors** (for app error mapper): `unauthenticated`; `only the offer owner can replace their offer`; `task_not_found_or_not_open_or_own_task`; `no_pending_offer_to_replace`.
 
 #### Notification write contract (2026-03-01)
 
@@ -1945,9 +1947,9 @@ Frontend contract:
 **Parameters:**
 
 - `p_task_id uuid` - Task ID
-- `p_freelancer_id uuid` - Freelancer ID (must = auth.uid())
-- `p_message text` - Message
-- `p_price integer` - Price
+- `p_freelancer_id uuid` - Freelancer ID (must = auth.uid(); no active_role check)
+- `p_message text` - Note/message
+- `p_price numeric` - Price
 - `p_days integer` - Duration
 
 #### `mark_conversation_seen(p_conversation_id uuid) → void`
@@ -2426,19 +2428,18 @@ Rejects a pending task request/offer and creates a task-linked conversation for 
 
 #### `replace_task_request(p_task_id UUID, p_freelancer_id UUID, p_message TEXT, p_price NUMERIC, p_days INTEGER)`
 
-Withdraws the freelancer's current pending offer and inserts a replacement with updated terms.
+Updates the caller's existing pending offer **in place** (same row: price, days, note, updated_at). No withdraw + insert; no second row, so `uq_task_requests_one_active_per_freelancer` is never violated.
 
 - **Security**: SECURITY DEFINER
-- **Authorization**: Caller must match `p_freelancer_id` (auth.uid()) and have `active_role='freelancer'`
+- **Authorization**: Caller must be the offer owner (`p_freelancer_id = auth.uid()`). No `active_role` gate.
 - **Returns**: VOID
-- **Side Effects**:
-  - Updates existing pending `task_requests` to `withdrawn` status for this task/freelancer
-  - Inserts new `task_requests` row with `pending` status
+- **Side Effects**: UPDATE on the single pending `task_requests` row for this task and caller (freelancer_id or bidder_id); no new row inserted.
 - **Errors**:
   - `unauthenticated`
   - `only the offer owner can replace their offer`
-  - `only freelancers can replace offers`
   - `task_not_found_or_not_open_or_own_task`
+  - `no_pending_offer_to_replace` (when no pending row exists to update)
+- **Migrations**: `20260322000002` (single numeric overload), `20260322000003` (no role gate), `20260322000004` (deleted_at on withdraw — superseded), `20260322000005` (update-in-place — current).
 
 #### `award_task_offer(p_request_id UUID, p_client_id UUID DEFAULT NULL)`
 
@@ -2546,6 +2547,12 @@ Returns minimum-field profile summaries for all bidders on a task (for owner vie
 
 ## 17. Changelog
 
+### Version 2.20.2 (March 2026)
+
+- **replace_task_request — update-in-place (2026-03-22):** Final behavior in migration `20260322000005_replace_task_request_update_in_place.sql`. The RPC **updates** the existing pending `task_requests` row (price, days, note, updated_at); no withdraw + insert, so no second row and `uq_task_requests_one_active_per_freelancer` is never violated. No `active_role` gate; single overload `(p_task_id, p_freelancer_id, p_message, p_price NUMERIC, p_days)`. Errors: `unauthenticated`, `only the offer owner can replace their offer`, `task_not_found_or_not_open_or_own_task`, `no_pending_offer_to_replace`. Preceding migrations in order: `20260322000002_fix_replace_task_request_single_overload.sql`, `20260322000003_replace_task_request_no_role_gate.sql`, `20260322000004_replace_task_request_set_deleted_at.sql`, `20260322000005_replace_task_request_update_in_place.sql`. Documented in §9, §15, and RPC list.
+- **get_public_system_config — ensure (2026-03-22):** Migration `20260322000000_ensure_get_public_system_config.sql` ensures `system_config` table and `get_public_system_config()` RPC exist; seeds keys `maintenance_mode`, `app_banner`, `disable_signups`, `min_app_version`; GRANT EXECUTE to anon, authenticated.
+- **Ledger parameter 40 — text cast (2026-03-22):** Migration `20260322000001_ledger_parameter_40_text_cast.sql` patches `process_payment_event_ledger` so booking/direct_offer release UPDATEs use `::text::enum` casts for status/payment_status, fixing "parameter 40" type mismatch when the prepared plan expected text.
+
 ### Version 2.20.1 (March 2026)
 
 - **Booking Lifecycle hardening (2026-03-08):** Migrations `20260308210000_booking_lifecycle_enum.sql` (add `disputed`, `no_show` to `booking_status_enum`), `20260308210100_booking_lifecycle_guard.sql` (replace `fn_booking_guard`: client cannot delivered→canceled; client can delivered→disputed; admin only disputed→completed/refunded; provider/admin active→no_show), `20260308210200_rpc_finalize_auto_approval_booking_ledger.sql` (booking branch calls `process_payment_event_ledger('release_with_fee', ...)` when payment held), `20260308210300_admin_resolve_booking_dispute.sql` (admin-only RPC to resolve disputed booking to completed or refunded), `20260308210400_ledger_allow_disputed_booking_admin.sql` (patch `process_payment_event_ledger` to allow release_with_fee/refund when booking status=disputed and actor is admin), `20260308210500_ledger_release_enum_cast_parameter_40.sql` (patch same function: explicit enum casts on release_with_fee UPDATE for bookings and direct_offers to fix "parameter 40 (text) does not match booking_status_enum" on direct-offer complete). Plan: `.TODO/PLAN_BookingLifecycle_2026-03-08_PlanCritic.md`. §4.2, §9.
@@ -2565,13 +2572,19 @@ Returns minimum-field profile summaries for all bidders on a task (for owner vie
 - **Escrow idempotency — stable key + FOR UPDATE:** Migration `20260307000001_escrow_idempotency_stable_key.sql` updates `rpc_approve_delivery` (booking branch): idempotency key is now `entity_id || ':release_with_fee:' || v_status || ':' || v_payment_status` (no `now()`), and the booking row is locked with `SELECT ... FOR UPDATE` before key generation and ledger call. Drops duplicate index `idx_journal_entries_idempotency`. Approve delivery is safe to retry without double release. Documented in §9.5 and diagram 16.
 - **vw_wallet_activity_user — include spent (gateway_escrow):** Migration `20260307160000_wallet_activity_include_spent.sql` replaces the view so Wallet UI shows both received and **spent** transactions. Includes lines from `user_available` and (for DEBIT only) `user_pending_withdrawal`, so QiCard/gateway payments appear as client “spent”. View uses `security_invoker = on`; output columns include `amount_gross`, `amount_net`, `fee_amount`, `counterparty_user_id`. Documented in §6.6.
 
+### Version 2.20.2 (March 2026)
+
+- **replace_task_request — update-in-place:** Migrations `20260322000002`–`20260322000005`: Single overload `(p_task_id, p_freelancer_id, p_message, p_price NUMERIC, p_days)`; removed `active_role` gate so replace works regardless of dashboard role; final behavior in `20260322000005` updates the existing pending row in place (price, days, note, updated_at) so no second row is created and `uq_task_requests_one_active_per_freelancer` is never violated. Errors include `no_pending_offer_to_replace`. See §9.6.
+- **get_public_system_config:** Migration `20260322000000_ensure_get_public_system_config.sql` ensures `system_config` table and `get_public_system_config()` RPC exist; grants to anon/authenticated. Fixes "Failed to fetch" when app shell or account guard call the RPC.
+- **Ledger parameter 40 (booking_status_enum):** Migration `20260322000001_ledger_parameter_40_text_cast.sql` patches `process_payment_event_ledger` so enum parameters use explicit text-then-enum cast, fixing "type of parameter 40 (booking_status_enum) does not match that when preparing the plan (text)" on approve delivery.
+
 ### Version 2.17.3 (March 2026)
 
 - **Reject-offer conversation guard:** Migration `20260305071000_conversations_guard_allow_owner_reject.sql` fixes reject-from-Inbox (and task Offers list) which previously failed with "task owner cannot start a task-linked conversation" and "initiated_by must equal current user". The guard `conversations_before_insert_guard()` now allows the task owner to create a task-linked conversation when `app.allow_owner_task_conversation = 'true'` (set only by `reject_task_request` for that transaction). The RPC creates the conversation with `initiated_by = v_owner` so both guard rules are satisfied. Documented in §5.5, §8.3, and RPC `reject_task_request`. App verification: `.TODO/Archive/ProposalesExecution/CHECKLIST_Proposals_App_Verification_2026-03-05.md`.
 
 ### Version 2.18.1 (March 2026)
 
-- **Tasks Tender Fix:** Migration `20260311000000_replace_task_request.sql` adds RPC `replace_task_request(p_task_id, p_freelancer_id, p_message, p_price, p_days)` RETURNS VOID. Withdraws caller's pending offer and inserts a replacement; enforces caller = p_freelancer_id, task open/not own, and `profiles.active_role = 'freelancer'`. GRANT EXECUTE TO authenticated. Documented in §15 and RPC list.
+- **Tasks Tender Fix (superseded by 2026-03-22):** Original RPC added in `20260311000000_replace_task_request.sql`. **Current behavior** (update-in-place, no role gate, single overload, errors including `no_pending_offer_to_replace`) is from migrations `20260322000002`–`20260322000005`. See §9.6, §15, and Version 2.20.2 above.
 
 ### Version 2.18 (March 2026)
 

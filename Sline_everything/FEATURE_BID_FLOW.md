@@ -336,7 +336,7 @@ Before modifying bid flow code:
 |------|---------|
 | `supabase/migrations/20260306_tender_guardrails.sql` | Indexes, accept_task_request, cleanup_expired_awards |
 | `20260305*_reject_task_request_conversation_initiator.sql` | reject_task_request with conversation creation |
-| `20260311*_replace_task_request.sql` | replace_task_request RPC |
+| `20260322000002`–`20260322000005` (replace_task_request sequence) | replace_task_request: single overload, no role gate, **update-in-place** (final: `20260322000005_replace_task_request_update_in_place.sql`) |
 
 ---
 

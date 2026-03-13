@@ -167,8 +167,7 @@ stateDiagram-v2
 stateDiagram-v2
     [*] --> pending: Freelancer submits bid
 
-    pending --> pending: Freelancer replaces (replace_task_request)
-    pending --> withdrawn: Freelancer replaces (old row)
+    pending --> pending: Freelancer replaces (replace_task_request; update in place)
 
     pending --> accepted: Client awards (accept_task_request / award_task_offer)
     pending --> rejected: Client rejects (reject_task_request)

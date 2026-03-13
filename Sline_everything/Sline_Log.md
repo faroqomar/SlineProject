@@ -1,6 +1,26 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2026-03-08
+**Last Updated:** 2026-03-22
+
+---
+
+## 🏷️ replace_task_request, system config, ledger & app fixes (2026-03-22)
+
+### ✅ Implemented
+
+- **DB — replace_task_request:** Migrations `20260322000002`–`20260322000005`: Single overload `(p_task_id, p_freelancer_id, p_message, p_price NUMERIC, p_days)`; removed `active_role` gate so replace works regardless of dashboard role; final behavior in `20260322000005_replace_task_request_update_in_place.sql` **updates the existing pending row in place** (price, days, note, updated_at) so no second row is created and `uq_task_requests_one_active_per_freelancer` is never violated. Errors include `no_pending_offer_to_replace`. See SUPABASE_SETUP §9.6, DEVELOPER_GUIDE §4.3.
+- **DB — get_public_system_config:** Migration `20260322000000_ensure_get_public_system_config.sql` ensures `system_config` table and `get_public_system_config()` RPC exist; grants to anon/authenticated. Fixes "Failed to fetch" when app shell or account guard call the RPC.
+- **DB — Ledger parameter 40:** Migration `20260322000001_ledger_parameter_40_text_cast.sql` patches `process_payment_event_ledger` so enum parameters use explicit text-then-enum cast, fixing "type of parameter 40 (booking_status_enum) does not match that when preparing the plan (text)" on approve delivery.
+- **App — Wallet:** `WalletViewModel`: after withdrawal, refresh both balance and activities (`Future.wait`); `ensureLoaded()` uses `_loadingFuture` so concurrent callers await the same load.
+- **App — Error mapper:** Generic user-facing messages (no "apply migrations"); wrapped-exception handling with `_looksLikeTechnicalMessage`; replace-offer ambiguity and technical leaks addressed; `no_pending_offer_to_replace` mapped in `TaskRequestsService._mapReplaceOfferError`.
+
+### 📊 Impact
+
+- Replace bid works from any dashboard role and no longer hits duplicate key; app shell and account guard no longer fail on missing system config; approve delivery no longer fails on ledger parameter type; wallet UI stays consistent after withdrawal; users see friendly errors instead of technical ones.
+
+### 🔗 References
+
+- SUPABASE_SETUP §9.6, §17 Version 2.20.2; DEVELOPER_GUIDE §4.3; FEATURE_BID_FLOW.md; migrations `supabase/migrations/20260322*`.
 
 ---
 
@@ -1025,7 +1045,7 @@
 #### ✅ Implemented
 
 - **Tender payment fail-closed:** `TenderPaymentCoordinator` throws before ledger/pay when `PaymentService` is `DemoPaymentService` or `QiCardPaymentService` (processPayment delegates to demo). Prevents tender state advancing on demo success; server-backed tender flow required for real payment.
-- **replace_task_request RPC:** Migration `20260311000000_replace_task_request.sql` defines `replace_task_request(p_task_id, p_freelancer_id, p_message, p_price, p_days)` RETURNS VOID. Withdraws caller's pending offer, inserts replacement; enforces caller = p_freelancer_id, task open/not own, and `profiles.active_role = 'freelancer'`. GRANT EXECUTE TO authenticated.
+- **replace_task_request RPC:** Migration `20260311000000_replace_task_request.sql` originally added the RPC (withdraw + insert, active_role). **Current behavior (2026-03-22):** Migrations `20260322000002`–`20260322000005` — update-in-place, no role gate, single overload, errors including `no_pending_offer_to_replace`. See top Sline_Log entry and SUPABASE_SETUP §9.6, §17.
 - **Offer submit (no active_role mutation):** `TaskRequestsService.submitOffer()` no longer updates `profiles.active_role`; RLS (`is_freelancer(auth.uid())`) controls insert. On RLS denial (e.g. 42501), app shows: "You must be in freelancer mode to submit an offer. Switch your role in profile settings."
 - **Tests:** `test/unit/tasks/tender_payment_coordinator_test.dart` — fail-closed tests for Demo and QiCard payment services; payAwardedOffer never called when payment is demo.
 
@@ -3516,7 +3536,7 @@ Flutter + Supabase freelance marketplace with real-time chat, tasks, and profile
 
 - `20260306_tender_guardrails.sql`: Indexes, accept_task_request, cleanup_expired_awards
 - `20260305*_reject_task_request_conversation_initiator.sql`: Reject with conversation
-- `20260311*_replace_task_request.sql`: Replace offer RPC
+- `20260322000002`–`20260322000005`: replace_task_request (single overload, update-in-place; final: `20260322000005_replace_task_request_update_in_place.sql`)
 
 #### 📚 Documentation
 
