@@ -69,6 +69,9 @@ Future<void> _pumpChatScreen(
   when(() => vm.currentUserId).thenReturn('user-1');
   when(() => vm.currentMessages).thenReturn(messages);
   when(() => vm.isSending).thenReturn(false);
+  when(() => vm.otherUserTyping).thenReturn(false);
+  when(() => vm.isPresenceReceiptsEnabled).thenReturn(false);
+  when(() => vm.setTyping(any())).thenAnswer((_) async {});
   when(() => vm.sendMessage(any())).thenAnswer((_) async {});
 
   await pumpApp(
@@ -111,6 +114,7 @@ void main() {
       final vm = _MockChatViewModel();
 
       await _pumpChatScreen(tester, vm, messages: [_offerMessageFixture()]);
+      await tester.pumpAndSettle();
 
       expect(find.byType(OfferMessageBubble), findsOneWidget);
       expect(find.text('Logo package'), findsOneWidget);
@@ -132,7 +136,7 @@ void main() {
         },
       );
 
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.byType(AttachmentMessageTile), findsOneWidget);
       expect(find.text('Reference image'), findsOneWidget);

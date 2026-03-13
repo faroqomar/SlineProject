@@ -24,6 +24,7 @@ class WalletViewModel extends ChangeNotifier {
   bool _hasLoadedWallet = false;
   bool hasMore = true;
   WalletBalanceModel balance = WalletBalanceModel.zero();
+  Future<void>? _loadingFuture;
 
   bool get hasLoadedWallet => _hasLoadedWallet;
 
@@ -31,9 +32,16 @@ class WalletViewModel extends ChangeNotifier {
       buildWalletPresentationSummary(balance: balance, activities: activities);
 
   Future<void> ensureLoaded({bool forceRefresh = false}) async {
-    if (isLoading) return;
+    if (_loadingFuture != null) {
+      return _loadingFuture;
+    }
     if (forceRefresh || !_hasLoadedWallet) {
-      await loadWallet();
+      _loadingFuture = loadWallet();
+      try {
+        await _loadingFuture;
+      } finally {
+        _loadingFuture = null;
+      }
     }
   }
 
@@ -109,8 +117,19 @@ class WalletViewModel extends ChangeNotifier {
         return false;
       }
       await _repo.requestWithdrawal(amount: amount);
-      // Refresh balances to reflect the locked funds
-      balance = await _repo.getWalletBalance();
+      // Refresh balance and activities so summary stays consistent (e.g. new pending withdrawal)
+      final results = await Future.wait([
+        _repo.getWalletBalance(),
+        _repo.getActivity(limit: 20),
+      ]);
+      balance = results[0] as WalletBalanceModel;
+      final txns = results[1] as List<WalletActivityModel>;
+      activities.clear();
+      activities.addAll(txns);
+      if (txns.isNotEmpty) {
+        _cursor = txns.last.createdAtUtc.toUtc().toIso8601String();
+      }
+      hasMore = txns.length == 20;
       _hasLoadedWallet = true;
       AppLogger.i('Withdrawal requested: amount=$amount', tag: 'Wallet');
       return true;

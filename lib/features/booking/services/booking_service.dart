@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/utils/error_mapper.dart';
 import 'package:sline_app/features/booking/models/booking_model.dart';
 import 'package:sline_app/features/wallet/services/ledger_service.dart';
 
@@ -246,14 +247,26 @@ class BookingService {
         'Approve and release submitted for booking $bookingId',
         tag: 'Booking',
       );
-    } catch (e, st) {
+    } on PostgrestException catch (e, st) {
+      final friendly = ErrorMapper.map(e);
       AppLogger.e(
         'Failed to release booking $bookingId',
         error: e,
         stackTrace: st,
         tag: 'Booking',
+        json: {'mappedMessage': friendly},
       );
-      rethrow;
+      throw Exception(friendly);
+    } catch (e, st) {
+      final friendly = ErrorMapper.map(e);
+      AppLogger.e(
+        'Failed to release booking $bookingId',
+        error: e,
+        stackTrace: st,
+        tag: 'Booking',
+        json: {'mappedMessage': friendly},
+      );
+      throw Exception(friendly);
     }
   }
 

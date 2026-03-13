@@ -42,12 +42,25 @@ class ErrorMapper {
       return 'Network error occurred. Please try again.';
     }
 
-    // Check for wrapped exceptions
+    // Check for wrapped exceptions (only surface unwrapped text if it looks user-friendly)
     if (error is Exception) {
-      final message = error.toString().toLowerCase();
+      final raw = error.toString();
+      String unwrapped = raw;
+      if (raw.startsWith('Exception: ') && raw.length > 'Exception: '.length) {
+        unwrapped = raw.substring('Exception: '.length);
+      } else if (raw.startsWith('Bad state: ') &&
+          raw.length > 'Bad state: '.length) {
+        unwrapped = raw.substring('Bad state: '.length);
+      }
+
+      final message = unwrapped.toLowerCase();
       if (message.contains('not authenticated') ||
           message.contains('sign in')) {
         return 'Please sign in to continue.';
+      }
+      // Only return unwrapped content if it does not look like technical leakage
+      if (unwrapped != raw && !_looksLikeTechnicalMessage(unwrapped)) {
+        return unwrapped;
       }
     }
 
@@ -58,6 +71,16 @@ class ErrorMapper {
   /// Maps PostgrestException to user-friendly message.
   static String _mapPostgrestError(PostgrestException error) {
     final message = error.message;
+
+    if (message.contains('Could not find the function public.rpc_approve_delivery') &&
+        message.contains('schema cache')) {
+      return 'This feature is temporarily unavailable. Please try again later or contact support.';
+    }
+    if (message.contains(
+      'release_with_fee only allowed for booking, task_request, or direct_offer entities',
+    )) {
+      return 'This feature is temporarily unavailable. Please try again later or contact support.';
+    }
 
     // Chat Creation Matrix specific errors (P0001 user-defined exceptions)
     if (message.contains('Freelancers cannot start direct conversations')) {
@@ -184,6 +207,27 @@ class ErrorMapper {
     }
 
     return 'Upload failed. Please try again.';
+  }
+
+  /// Returns true if the message looks like internal/technical content (SQL, paths, codes).
+  static bool _looksLikeTechnicalMessage(String message) {
+    final lower = message.toLowerCase();
+    return lower.contains('sql') ||
+        lower.contains('select ') ||
+        lower.contains('insert ') ||
+        lower.contains('update ') ||
+        lower.contains('column ') ||
+        lower.contains('table ') ||
+        lower.contains('schema') ||
+        lower.contains('migration') ||
+        lower.contains('rpc_') ||
+        lower.contains('public.') ||
+        lower.contains('.dart') ||
+        lower.contains(' at ') ||
+        lower.contains('line ') ||
+        lower.contains('stack') ||
+        lower.contains('null') ||
+        RegExp(r'\b[0-9]{5}\b').hasMatch(message); // e.g. Postgres error codes
   }
 
   /// Check if error indicates session expired (for redirect to login).

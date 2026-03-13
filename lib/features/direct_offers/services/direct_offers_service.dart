@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sline_app/core/utils/error_mapper.dart';
 import '../../../core/services/logger_service.dart';
 import '../../chat/services/message_service.dart';
 import '../../management/models/work_log_scope.dart';
@@ -416,14 +417,26 @@ class DirectOffersService {
         'rpc_approve_delivery',
         params: {'entity_type': 'direct_offer', 'entity_id': offerId},
       );
-    } catch (e, st) {
+    } on PostgrestException catch (e, st) {
+      final friendly = ErrorMapper.map(e);
       AppLogger.e(
         'completeOffer failed offerId=$offerId',
         tag: 'DirectOffers',
         error: e,
         stackTrace: st,
+        json: {'mappedMessage': friendly},
       );
-      rethrow;
+      throw Exception(friendly);
+    } catch (e, st) {
+      final friendly = ErrorMapper.map(e);
+      AppLogger.e(
+        'completeOffer failed offerId=$offerId',
+        tag: 'DirectOffers',
+        error: e,
+        stackTrace: st,
+        json: {'mappedMessage': friendly},
+      );
+      throw Exception(friendly);
     }
 
     await _workLogService.logEvent(

@@ -8,6 +8,7 @@ import 'package:sline_app/features/profile/services/profile_summary_service.dart
 import 'package:sline_app/features/booking/models/booking_model.dart';
 import 'package:sline_app/features/booking/services/booking_service.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/utils/error_mapper.dart';
 
 /// Service for managing Unified Work Items (Tasks & Bookings).
 /// Wraps RPC calls and table queries for the Work Management flow.
@@ -288,14 +289,36 @@ class WorkManagementService {
           if (correlationId != null) 'correlationId': correlationId,
         },
       );
-    } catch (e, stack) {
+    } on PostgrestException catch (e, stack) {
+      final friendly = ErrorMapper.map(e);
       AppLogger.e(
         'Failed to approve delivery: $entityId ($entityType)',
         tag: 'WorkManagement',
         error: e,
         stackTrace: stack,
+        json: {
+          'entityType': entityType,
+          'entityId': entityId,
+          if (correlationId != null) 'correlationId': correlationId,
+          'mappedMessage': friendly,
+        },
       );
-      rethrow;
+      throw Exception(friendly);
+    } catch (e, stack) {
+      final friendly = ErrorMapper.map(e);
+      AppLogger.e(
+        'Failed to approve delivery: $entityId ($entityType)',
+        tag: 'WorkManagement',
+        error: e,
+        stackTrace: stack,
+        json: {
+          'entityType': entityType,
+          'entityId': entityId,
+          if (correlationId != null) 'correlationId': correlationId,
+          'mappedMessage': friendly,
+        },
+      );
+      throw Exception(friendly);
     }
   }
 

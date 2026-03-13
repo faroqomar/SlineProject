@@ -176,7 +176,7 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
 
       await loadData(_workItem!.id, _workItem!.sourceType);
     } catch (e, stack) {
-      _error = 'Failed to approve delivery';
+      _error = ErrorMapper.map(e);
       AppLogger.e(
         'Approve delivery error',
         tag: 'WorkItemDetails',

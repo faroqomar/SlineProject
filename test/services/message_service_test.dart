@@ -179,7 +179,7 @@ void main() {
           user2Id: testFreelancerAId,
         );
 
-        expect(result.id, equals('existing-direct-id'));
+        expect(result.id, equals(existingDirectConversation['id']));
         verifyNever(
           () => mockClient.rpc(
             'start_direct_conversation_v1',

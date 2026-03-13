@@ -216,8 +216,9 @@ void main() {
           expectedCents: 45000,
           actualCents: 50000,
         );
-        expect(exception.userMessage, contains('450.00'));
-        expect(exception.userMessage, contains('500.00'));
+        expect(exception.userMessage, contains('450'));
+        expect(exception.userMessage, contains('500'));
+        expect(exception.userMessage, contains('IQD'));
       });
 
       test('OfferAlreadyAcceptedException has correct message', () {

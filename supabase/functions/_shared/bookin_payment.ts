@@ -291,10 +291,8 @@ export async function submitGatewayEscrowHold(
   };
   if (paymentIntentId) meta.payment_intent_id = paymentIntentId;
 
-  const { data, error } = await adminClient.rpc("process_payment_event_ledger", {
-    p_event_type: "gateway_escrow",
-    p_related_entity_type: "booking",
-    p_related_entity_id: bookingId,
+  const { data, error } = await adminClient.rpc("process_gateway_escrow_booking", {
+    p_booking_id: bookingId,
     p_idempotency_key: idempotencyKey,
     p_amount_gross: amount,
     p_currency: currency,
@@ -320,7 +318,7 @@ export async function submitGatewayEscrowHold(
   await promoteBookingAfterHold(adminClient, bookingId);
 
   return {
-    replayed: false,
+    replayed: data?.replayed == true,
     journalEntryId: data?.journal_entry_id ?? null,
   };
 }

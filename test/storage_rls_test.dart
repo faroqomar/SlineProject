@@ -8,27 +8,38 @@
 /// - T53: Admin can access all private storage
 ///
 /// Run with: flutter test test/storage_rls_test.dart
+/// With real Supabase: flutter test test/storage_rls_test.dart --dart-define=SUPABASE_INTEGRATION=1
 library;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'rls/storage_rls_test_harness.dart';
+
 import 'rls/fixtures/rls_test_users.dart';
+import 'rls/storage_rls_test_harness.dart';
+import 'supabase_test_helper.dart';
+
+const _skipReason = String.fromEnvironment(
+  'SUPABASE_INTEGRATION',
+  defaultValue: '',
+) != '1'
+    ? 'Requires Supabase; run with --dart-define=SUPABASE_INTEGRATION=1'
+    : null;
 
 void main() {
-  group('Storage RLS Security Tests (T50-T53)', () {
+  group('Storage RLS Security Tests (T50-T53)', skip: _skipReason, () {
     late StorageRlsTestHarness harness;
 
     setUpAll(() async {
-      // Initialize Supabase with dummy values for tests
-      // This prevents 'You must initialize the supabase instance' errors
       try {
         Supabase.instance;
       } catch (_) {
+        ensureSupabaseTestEnvironment();
         await Supabase.initialize(
           url: 'https://test.supabase.co',
           anonKey: 'dummy-key',
           debug: false,
+          localStorage: supabaseTestLocalStorage,
+          pkceAsyncStorage: supabaseTestPkceStorage,
         );
       }
     });

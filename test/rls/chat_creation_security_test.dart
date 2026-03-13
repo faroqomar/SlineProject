@@ -14,22 +14,32 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../fixtures/chat_fixtures.dart';
+import '../supabase_test_helper.dart';
 
 /// Security test suite for Chat Creation Matrix
 ///
 /// To run these tests:
 /// 1. Ensure Supabase local is running: `supabase start`
 /// 2. Seed test fixtures
-/// 3. Run: `flutter test test/rls/chat_creation_security_test.dart`
+/// 3. Run: `flutter test test/rls/chat_creation_security_test.dart --dart-define=SUPABASE_INTEGRATION=1`
+const _skipReason = String.fromEnvironment(
+  'SUPABASE_INTEGRATION',
+  defaultValue: '',
+) != '1'
+    ? 'Requires Supabase; run with --dart-define=SUPABASE_INTEGRATION=1'
+    : null;
+
 void main() {
-  group('Chat Creation Matrix Security Tests', () {
+  group('Chat Creation Matrix Security Tests', skip: _skipReason, () {
     late SupabaseClient client;
 
     setUpAll(() async {
-      // Initialize with local Supabase
+      ensureSupabaseTestEnvironment();
       await Supabase.initialize(
         url: 'http://localhost:54321',
         anonKey: 'test-anon-key',
+        localStorage: supabaseTestLocalStorage,
+        pkceAsyncStorage: supabaseTestPkceStorage,
       );
       client = Supabase.instance.client;
     });

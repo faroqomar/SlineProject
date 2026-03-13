@@ -94,23 +94,28 @@ class AppButton extends StatelessWidget {
                       strokeWidth: 2,
                     ),
                   )
-                : Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        text,
-                        style:
-                            textStyle ??
-                            textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: effectiveForegroundColor,
-                            ),
-                      ),
-                      if (icon != null) ...[
-                        const SizedBox(width: 8),
-                        Icon(icon, color: effectiveForegroundColor, size: 20),
+                : Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimens.p24,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          text,
+                          style:
+                              textStyle ??
+                              textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: effectiveForegroundColor,
+                              ),
+                        ),
+                        if (icon != null) ...[
+                          const SizedBox(width: 8),
+                          Icon(icon, color: effectiveForegroundColor, size: 20),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
           ),
         ),

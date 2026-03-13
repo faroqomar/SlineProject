@@ -34,14 +34,15 @@ void main() {
     // ============================================================================
 
     group('PriceMismatchException', () {
-      test('formats user message correctly with dollars', () {
+      test('formats user message correctly with IQD', () {
         final exception = PriceMismatchException(
           expectedCents: 45000,
           actualCents: 50000,
         );
         final message = exception.userMessage;
-        expect(message, contains('\$450.00'));
-        expect(message, contains('\$500.00'));
+        expect(message, contains('450'));
+        expect(message, contains('500'));
+        expect(message, contains('IQD'));
         expect(message, contains('freelancer updated their offer'));
       });
 
@@ -50,7 +51,8 @@ void main() {
           expectedCents: 0,
           actualCents: 0,
         );
-        expect(exception.userMessage, contains('\$0.00'));
+        expect(exception.userMessage, contains('0'));
+        expect(exception.userMessage, contains('IQD'));
       });
 
       test('toString includes cents values', () {
@@ -160,8 +162,9 @@ void main() {
         );
         final message = service.mapErrorToUserMessage(exception);
         expect(message, contains('updated their offer'));
-        expect(message, contains('\$450.00'));
-        expect(message, contains('\$500.00'));
+        expect(message, contains('450'));
+        expect(message, contains('500'));
+        expect(message, contains('IQD'));
       });
 
       test('maps OfferAlreadyAcceptedException correctly', () {

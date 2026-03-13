@@ -114,8 +114,8 @@ This document is the **single source of truth** for all Supabase backend setup: 
 - ✅ Auto-create contract on booking confirmation (`trg_activate_contract`)
 - ✅ Delivery submission creates contract snapshot (`rpc_submit_delivery`)
 - ✅ Revision requests enforce status and limit before resetting (`rpc_request_revision`: status='delivered', revisions_used < revisions_total)
-- ✅ **Double-Entry Ledger Implementation (v2.16)**: All financial events go through `process_payment_event_ledger`.
-- ✅ **Hardened Payment Linking (v2.20)**: `payment_intents` (signature, currency, paid_at), `payment_events` (append-only RLS + trigger), `orphan_payments` (investigated). Webhook intent path inserts payment_events, validates amount, calls ledger with `payment_intent_id` in `p_meta`; RPCs store it in `journal_entries.meta`. Migrations: `20260308200000_hardened_payment_linking_schema.sql`, `20260308200100_hardened_payment_ledger_meta_payment_intent_id.sql`.
+- ✅ **Double-Entry Ledger Implementation (v2.16)**: Financial events post `journal_entries` and `ledger_lines` via server RPCs, primarily `process_payment_event_ledger`, with dedicated gateway-escrow RPCs for booking/direct-offer QiCard flows.
+- ✅ **Hardened Payment Linking (v2.20)**: `payment_intents` (signature, currency, paid_at), `payment_events` (append-only RLS + trigger), `orphan_payments` (investigated). Webhook intent path inserts payment_events, validates amount, and calls the appropriate escrow/release RPC with `payment_intent_id` in `p_meta`; those RPCs store it in `journal_entries.meta`. Migrations: `20260308200000_hardened_payment_linking_schema.sql`, `20260308200100_hardened_payment_ledger_meta_payment_intent_id.sql`, `20260321000006_fix_booking_gateway_escrow_rpc.sql`.
 - ✅ **Legacy Freeze**: `wallet_transactions` table is now read-only to prevent drift.
 - ✅ **Auth profile provisioning**: Trigger `on_auth_user_created` creates `public.profiles` on `auth.users` INSERT. Function `sweep_orphaned_auth_users()` deletes auth users with no profile older than 15 minutes. Extension `pg_cron` is enabled; cron job `sweep-orphaned-auth-users` runs every 15 minutes (`*/15 * * * *`). View `vw_orphaned_auth_users` for monitoring.
 - ✅ **Role switching (v2.18)**: RPC `switch_active_role` provides atomic role switching with `expected_old_role` guard, rate limiting (3/minute), and audit logging. Trigger `trg_sync_role_to_jwt` syncs role to JWT claims. RLS policies use `auth.jwt()->'app_metadata'->>'active_role'` for performant role enforcement.
@@ -663,7 +663,7 @@ Atomic Debit/Credit entries. Must sum to zero per journal entry.
 | `amount`           | numeric | Absolute amount (must be > 0) |
 | `currency`         | text    | Default 'IQD'                 |
 
-**Hardened Payment Linking (v2.20):** For gateway flows, Edge may pass `payment_intent_id` in `p_meta` when calling `process_payment_event_ledger` or `process_gateway_escrow_direct_offer`. Both RPCs merge it into `journal_entries.meta` for audit (migrations `20260308200100_hardened_payment_ledger_meta_payment_intent_id.sql`).
+**Hardened Payment Linking (v2.20):** For gateway flows, Edge may pass `payment_intent_id` in `p_meta` when calling `process_payment_event_ledger`, `process_gateway_escrow_booking`, or `process_gateway_escrow_direct_offer`. All three RPCs merge it into `journal_entries.meta` for audit. Booking gateway escrow was split into its own RPC in `20260321000006_fix_booking_gateway_escrow_rpc.sql` so booking recovery/webhook no longer depend on the generic `gateway_escrow` branch that also serves other entity types.
 
 ---
 
@@ -1848,6 +1848,8 @@ The core orchestration function for the double-entry system.
   - Validates slot/task/provider consistency, derives canonical `bookings.price` on the server, and allows multiple slotless direct bookings for the same client/task pair.
 - `rpc_finalize_booking_refund(...) -> bookings`
   - Finalizes terminal refunded booking state after a successful server-side refund.
+- `process_gateway_escrow_booking(p_booking_id, ...) -> jsonb`
+  - Server-only RPC used by `qicard_payment_recovery` and `qicard_webhook_handler` after QiCard success. It posts the booking escrow hold directly, updates `bookings.payment_status` to `held`, and leaves the later `paid_request_pending` promotion to the Edge helper. Added in `20260321000006_fix_booking_gateway_escrow_rpc.sql` to avoid enum drift in the shared `process_payment_event_ledger` gateway branch.
 - Edge functions:
   - `qicard_payment_create`
   - `qicard_payment_recovery`
@@ -2368,12 +2370,13 @@ All functions use `SECURITY DEFINER` and include explicit `auth.uid()` checks.
 - **Purpose**: Client approves delivered work; completes the order and releases funds when payment is held. Idempotent under retry (stable key + FOR UPDATE).
 - **Access**: Client (owner) only.
 - **Parameters**: `entity_type` (text): one of `task`, `booking`, `direct_offer`; `entity_id` (uuid): the task, booking, or direct_offer id.
+- **Compatibility**: Canonical signature is `public.rpc_approve_delivery(text, uuid)`. Migration `20260321000007_add_rpc_approve_delivery_compat_wrapper.sql` adds `public.rpc_approve_delivery(uuid, text)` as a forwarding wrapper with the same `jsonb` return type as the canonical function for PostgREST schema-cache mismatches; migration `20260321000008_approve_delivery_grants_and_schema_reload.sql` recreates that wrapper defensively, grants both signatures to `authenticated` and `service_role`, revokes `anon`, and issues `NOTIFY pgrst, 'reload schema'`.
 - **Logic**:
   - **Dispute guard (all branches)**: If a row in `disputes` exists with `status IN ('open','active')` for the same task (task branch), same booking’s task_id (booking branch), or same direct_offer_id (direct_offer branch), raises `Cannot approve delivery: dispute in progress` and does not release funds.
-  - **Tasks**: Sets `status='completed'`, clears `review_expires_at`.
+  - **Tasks**: Validates owner and delivered state, sets `tasks.status='completed'`, clears `review_expires_at`, and when the accepted `task_requests` row is `payment_status='held'` it releases escrow against `task_request` and updates that row to `payment_status='released'`.
   - **Bookings**: If `payment_status='held'`, locks row with `SELECT ... FROM bookings WHERE id = entity_id FOR UPDATE`, then computes **stable** idempotency key: `encode(extensions.digest(entity_id::text || ':release_with_fee:' || v_status || ':' || v_payment_status, 'sha256'), 'hex')` (no `now()` — same key on retry). Calls `process_payment_event_ledger('release_with_fee', 'booking', entity_id, idempotency_key, ...)`. On success, clears `review_expires_at` (status/payment_status updated inside ledger RPC). If payment is not held, only updates status and review_expires_at.
   - **Direct offers**: If `payment_status='held'` and `status='delivered'`, locks row with `SELECT ... FROM direct_offers WHERE id = entity_id FOR UPDATE`, validates `client_id = auth.uid()`, computes same stable idempotency key pattern, calls `process_payment_event_ledger('release_with_fee', 'direct_offer', entity_id, idempotency_key, ...)`, then updates `direct_offers` to `payment_status='released'`, `status='completed'`.
-- **Migrations**: `20260224_fix_rpc_approve_delivery_digest_schema.sql` (digest schema); `20260307000001_escrow_idempotency_stable_key.sql` (stable key + FOR UPDATE, drop duplicate index `idx_journal_entries_idempotency`); `20260307120000_rpc_approve_delivery_direct_offer.sql` (direct_offer branch); `20260319110000_direct_offer_guard_rls_ledger.sql` (direct_offer branch reads fee_rate_applied_bps from direct_offers row and passes it in p_meta to process_payment_event_ledger); `20260308140000_dispute_lifecycle_escrow_guard_rls.sql` (dispute guard on all three branches).
+- **Migrations**: `20260224_fix_rpc_approve_delivery_digest_schema.sql` (digest schema); `20260307000001_escrow_idempotency_stable_key.sql` (stable key + FOR UPDATE, drop duplicate index `idx_journal_entries_idempotency`); `20260307120000_rpc_approve_delivery_direct_offer.sql` (direct_offer branch); `20260319110000_direct_offer_guard_rls_ledger.sql` (direct_offer branch reads fee_rate_applied_bps from direct_offers row and passes it in p_meta to process_payment_event_ledger); `20260308140000_dispute_lifecycle_escrow_guard_rls.sql` (dispute guard on all three branches); `20260321000003_fix_rpc_approve_delivery_task_escrow.sql` (task-request escrow release); `20260321000007_add_rpc_approve_delivery_compat_wrapper.sql` (compatibility wrapper); `20260321000008_approve_delivery_grants_and_schema_reload.sql` (grants + PostgREST reload).
 
 ### 9.6 Task Request Bid Flow RPCs (v2.18 - March 2026)
 

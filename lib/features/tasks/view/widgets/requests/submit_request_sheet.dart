@@ -436,8 +436,9 @@ Future<void> showSubmitRequestSheet(
                                       ),
                                       validator: (v) {
                                         final n = double.tryParse(v ?? '');
-                                        if (n == null || n < 0)
+                                        if (n == null || n < 0) {
                                           return 'Invalid';
+                                        }
                                         return null;
                                       },
                                     ),
@@ -462,8 +463,9 @@ Future<void> showSubmitRequestSheet(
                                       keyboardType: TextInputType.number,
                                       validator: (v) {
                                         final n = int.tryParse(v ?? '');
-                                        if (n == null || n <= 0)
+                                        if (n == null || n <= 0) {
                                           return 'Invalid';
+                                        }
                                         return null;
                                       },
                                     ),

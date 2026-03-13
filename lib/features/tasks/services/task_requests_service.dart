@@ -667,15 +667,21 @@ class TaskRequestsService {
     final message = error.message.toLowerCase();
     final code = error.code;
 
+    // Function overload ambiguity (p_price integer vs numeric) — not a user role error
+    if (message.contains('could not choose the best candidate function') ||
+        message.contains('ambiguous')) {
+      return 'Unable to update your offer right now. Please try again later.';
+    }
+
     // Offer ownership check
     if (message.contains('only the offer owner can replace') ||
         message.contains('offer owner')) {
       return 'You can only replace your own offers.';
     }
 
-    // Freelancer role requirement
+    // Freelancer role requirement (explicit exception text; avoid matching param names like p_freelancer_id)
     if (message.contains('only freelancers can replace offers') ||
-        message.contains('freelancer')) {
+        message.contains('you need freelancer access')) {
       return 'You need freelancer access to update offers.';
     }
 
@@ -686,8 +692,10 @@ class TaskRequestsService {
       return 'This task is no longer open for offers or you cannot bid on your own task.';
     }
 
-    // No existing offer to replace
-    if (message.contains('no pending offer') || message.contains('not found')) {
+    // No existing offer to replace (RPC raises no_pending_offer_to_replace when UPDATE matches 0 rows)
+    if (message.contains('no_pending_offer_to_replace') ||
+        message.contains('no pending offer') ||
+        message.contains('not found')) {
       return 'You don\'t have an active offer to update on this task.';
     }
 

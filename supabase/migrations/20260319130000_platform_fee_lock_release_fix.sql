@@ -15,6 +15,8 @@ DECLARE
   v_has_fee_columns boolean;
   v_default_bps int;
   v_max_bps int;
+  c_default_fallback CONSTANT int := 1000;
+  c_max_fallback CONSTANT int := 2000;
 BEGIN
   SELECT EXISTS (
     SELECT 1
@@ -33,20 +35,20 @@ BEGIN
     WHERE key = 'default'
     LIMIT 1;
 
-    RETURN COALESCE(LEAST(COALESCE(v_default_bps, 1000), COALESCE(v_max_bps, 2000)), 1000);
+    RETURN LEAST(COALESCE(v_default_bps, c_default_fallback), COALESCE(v_max_bps, c_max_fallback));
   END IF;
 
   BEGIN
     SELECT
-      COALESCE((SELECT (value->>'value')::int FROM public.platform_settings WHERE key = 'fee_rate_default_bps' LIMIT 1), 1000),
-      COALESCE((SELECT (value->>'value')::int FROM public.platform_settings WHERE key = 'max_fee_rate_bps' LIMIT 1), 3000)
+      COALESCE((SELECT (value->>'value')::int FROM public.platform_settings WHERE key = 'fee_rate_default_bps' LIMIT 1), c_default_fallback),
+      COALESCE((SELECT (value->>'value')::int FROM public.platform_settings WHERE key = 'max_fee_rate_bps' LIMIT 1), c_max_fallback)
     INTO v_default_bps, v_max_bps;
   EXCEPTION WHEN OTHERS THEN
-    v_default_bps := 1000;
-    v_max_bps := 2000;
+    v_default_bps := c_default_fallback;
+    v_max_bps := c_max_fallback;
   END;
 
-  RETURN LEAST(COALESCE(v_default_bps, 1000), COALESCE(v_max_bps, 2000));
+  RETURN LEAST(COALESCE(v_default_bps, c_default_fallback), COALESCE(v_max_bps, c_max_fallback));
 END;
 $$;
 
@@ -123,6 +125,8 @@ CREATE TRIGGER trg_lock_direct_offer_fee_on_accept
 BEFORE INSERT OR UPDATE ON public.direct_offers
 FOR EACH ROW EXECUTE FUNCTION public.fn_lock_direct_offer_fee_on_accept();
 
+-- task_requests.price is in main currency units (e.g. IQD whole); * 100 converts to cents for fee math.
+-- bookings and direct_offers use price in the same unit as the ledger (no conversion).
 CREATE OR REPLACE FUNCTION public.fn_lock_task_request_fee_on_award()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -220,7 +224,7 @@ BEGIN
       END IF;
 
       UPDATE bookings
-      SET review_expires_at = NULL
+      SET status = 'completed', payment_status = 'released', review_expires_at = NULL
       WHERE id = entity_id;
     ELSE
       UPDATE bookings SET status = 'completed', review_expires_at = NULL
@@ -287,6 +291,7 @@ DECLARE
   _task_id uuid;
   v_payment_status text;
   v_fee_rate_bps int;
+  v_price numeric;
   v_idempotency_key text;
   v_result json;
 BEGIN
@@ -313,8 +318,8 @@ BEGIN
       RETURN _status;
     END IF;
 
-    SELECT status::text, review_expires_at, payment_status, fee_rate_applied_bps
-    INTO _status, _review_expires, v_payment_status, v_fee_rate_bps
+    SELECT status::text, review_expires_at, payment_status, fee_rate_applied_bps, price
+    INTO _status, _review_expires, v_payment_status, v_fee_rate_bps, v_price
     FROM public.bookings
     WHERE id = entity_id
     FOR UPDATE;
@@ -333,7 +338,7 @@ BEGIN
           p_related_entity_type := 'booking',
           p_related_entity_id := entity_id,
           p_idempotency_key := v_idempotency_key,
-          p_amount_gross := (SELECT COALESCE(price, 0) FROM public.bookings WHERE id = entity_id),
+          p_amount_gross := COALESCE(v_price, 0),
           p_meta := jsonb_build_object(
             'fee_rate_bps', COALESCE(v_fee_rate_bps, public.fn_get_default_fee_rate_bps())
           )
@@ -341,7 +346,7 @@ BEGIN
         IF (v_result->>'ok')::boolean IS DISTINCT FROM true THEN
           RAISE EXCEPTION 'Ledger release failed: %', v_result->'error'->>'message';
         END IF;
-        UPDATE public.bookings SET review_expires_at = NULL WHERE id = entity_id;
+        UPDATE public.bookings SET status = 'completed', payment_status = 'released', review_expires_at = NULL WHERE id = entity_id;
       ELSE
         UPDATE public.bookings SET status = 'completed', review_expires_at = NULL WHERE id = entity_id;
       END IF;
@@ -370,7 +375,7 @@ AS $$
 DECLARE
   v_admin_id uuid := auth.uid();
   v_booking RECORD;
-  v_idempotency_key text;
+  v_idempotency_key text := p_idempotency_key;
   v_result jsonb;
 BEGIN
   IF v_admin_id IS NULL OR NOT public.is_admin(v_admin_id) THEN
@@ -399,13 +404,15 @@ BEGIN
     IF v_booking.payment_status != 'held' THEN
       RAISE EXCEPTION 'Cannot complete: payment not held';
     END IF;
-    v_idempotency_key := encode(
-      extensions.digest(
-        p_booking_id::text || ':release_with_fee:disputed:' || v_booking.payment_status,
-        'sha256'
-      ),
-      'hex'
-    );
+    IF v_idempotency_key IS NULL OR trim(v_idempotency_key) = '' THEN
+      v_idempotency_key := encode(
+        extensions.digest(
+          p_booking_id::text || ':release_with_fee:disputed:' || v_booking.payment_status,
+          'sha256'
+        ),
+        'hex'
+      );
+    END IF;
     v_result := process_payment_event_ledger(
       p_event_type := 'release_with_fee',
       p_related_entity_type := 'booking',
@@ -420,18 +427,20 @@ BEGIN
     IF (v_result->>'ok')::boolean IS DISTINCT FROM true THEN
       RAISE EXCEPTION 'Ledger release failed: %', v_result->'error'->>'message';
     END IF;
-    UPDATE public.bookings SET review_expires_at = NULL WHERE id = p_booking_id;
+    UPDATE public.bookings SET status = 'completed', payment_status = 'released', review_expires_at = NULL WHERE id = p_booking_id;
   ELSIF p_resolution = 'refunded' THEN
     IF v_booking.payment_status != 'held' THEN
       RAISE EXCEPTION 'Cannot refund: payment not held';
     END IF;
-    v_idempotency_key := encode(
-      extensions.digest(
-        p_booking_id::text || ':refund:disputed:' || v_booking.payment_status,
-        'sha256'
-      ),
-      'hex'
-    );
+    IF v_idempotency_key IS NULL OR trim(v_idempotency_key) = '' THEN
+      v_idempotency_key := encode(
+        extensions.digest(
+          p_booking_id::text || ':refund:disputed:' || v_booking.payment_status,
+          'sha256'
+        ),
+        'hex'
+      );
+    END IF;
     v_result := process_payment_event_ledger(
       p_event_type := 'refund',
       p_related_entity_type := 'booking',

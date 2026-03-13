@@ -189,7 +189,7 @@ class _DashboardContentState extends State<_DashboardContent>
       _tabController.animateTo(vm.currentTab.index);
     }
 
-    return Scaffold(
+    var scaffold = Scaffold(
       appBar: AppBar(
         title: Text(
           "Dashboard",
@@ -213,6 +213,7 @@ class _DashboardContentState extends State<_DashboardContent>
           child: TabBar(
             controller: _tabController,
             isScrollable: true,
+            tabAlignment: TabAlignment.center,
             labelColor: colorScheme.primary,
             unselectedLabelColor: colorScheme.textSecondary,
             indicatorColor: colorScheme.primary,
@@ -249,6 +250,7 @@ class _DashboardContentState extends State<_DashboardContent>
         ),
       ),
     );
+    return scaffold;
   }
 }
 

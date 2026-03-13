@@ -149,24 +149,22 @@ class _ReviewDeliveryModalState extends State<ReviewDeliveryModal> {
               ),
             ],
             const SizedBox(height: AppDimens.p24),
-            Row(
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: AppButton(
-                    text: 'Request Changes',
-                    isPrimary: false,
-                    onPressed: widget.canRequestRevision
-                        ? () => setState(() => _mode = _ReviewMode.rejecting)
-                        : null,
-                  ),
+                AppButton(
+                  text: 'Request Changes',
+                  isPrimary: false,
+                  onPressed: widget.canRequestRevision
+                      ? () => setState(() => _mode = _ReviewMode.rejecting)
+                      : null,
                 ),
-                const SizedBox(width: AppDimens.p16),
-                Expanded(
-                  child: AppButton(
-                    text: 'Approve',
-                    isLoading: _isLoading,
-                    onPressed: _handleApprove,
-                  ),
+                const SizedBox(height: AppDimens.p12),
+                AppButton(
+                  text: 'Approve',
+                  isLoading: _isLoading,
+                  onPressed: _handleApprove,
                 ),
               ],
             ),

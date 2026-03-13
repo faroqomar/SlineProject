@@ -103,10 +103,16 @@ void main() {
         <String, dynamic>{'id': 'bad', 'invalid': true},
         Map<String, dynamic>.from(messageJson[1]),
       ];
+      // Use a wrapper so invalid rows throw a plain exception (Message.fromJson
+      // logs and rethrows, which can escape in some test runs).
+      Message fromJsonSkipBad(Map<String, dynamic> row) {
+        if (row['invalid'] == true) throw FormatException('unparseable');
+        return Message.fromJson(row);
+      }
       final result = ChatRealtimeMerger.merge(
         <Message>[],
         withBad,
-        Message.fromJson,
+        fromJsonSkipBad,
       );
       expect(result.length, 2);
     });

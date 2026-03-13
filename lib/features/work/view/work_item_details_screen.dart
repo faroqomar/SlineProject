@@ -529,85 +529,186 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
       return null;
     }
 
+    Widget? primaryActionBlock;
+    final List<Widget> secondaryActionButtons = [];
+
+    bool promotedMessageToPrimary = false;
+
+    if (canAccept) {
+      primaryActionBlock = Row(
+        children: [
+          Expanded(
+            child: AppButton(
+              text: 'Decline',
+              isPrimary: false,
+              backgroundColor: AppColors.lightRed,
+              onPressed: () => vm.declineBooking(),
+            ),
+          ),
+          const SizedBox(width: AppDimens.p12),
+          Expanded(
+            child: AppButton(
+              text: 'Accept',
+              onPressed: () => vm.acceptBooking(),
+            ),
+          ),
+        ],
+      );
+    } else if (canCancel) {
+      primaryActionBlock = AppButton(
+        text: 'Cancel Request',
+        isPrimary: false,
+        backgroundColor: AppColors.lightRed,
+        onPressed: () => vm.cancelBooking(),
+      );
+    } else {
+      if (canSubmit) {
+        primaryActionBlock = AppButton(
+          text: 'Submit Work',
+          onPressed: () => _showDeliveryModal(context, vm),
+        );
+      } else if (canReview) {
+        primaryActionBlock = _ReviewWithDisputeGuard(
+          sourceType: vm.workItem!.sourceType,
+          entityId: vm.workItem!.id,
+          onReview: () => _showReviewModal(context, vm),
+        );
+      } else if (isAwaitingClientReview) {
+        primaryActionBlock = const AppButton(
+          text: 'Waiting for Client Review',
+          isPrimary: false,
+          onPressed: null,
+        );
+      } else if (vm.status == UnifiedWorkStatus.active ||
+          vm.status == UnifiedWorkStatus.delivered) {
+        promotedMessageToPrimary = true;
+        primaryActionBlock = AppButton(
+          text: 'Message',
+          isPrimary: false,
+          icon: Icons.chat_bubble_outline,
+          onPressed: () => _handleMessage(context, vm),
+        );
+      }
+
+      if (canRequestExtension) {
+        secondaryActionButtons.add(
+          _buildVerticalIconAction(
+            context: context,
+            icon: Icons.timer_outlined,
+            label: 'Extend',
+            onPressed: () => _showExtensionModal(context, vm),
+          ),
+        );
+      }
+
+      if (!promotedMessageToPrimary &&
+          (vm.status == UnifiedWorkStatus.active ||
+              vm.status == UnifiedWorkStatus.delivered)) {
+        secondaryActionButtons.add(
+          _buildVerticalIconAction(
+            context: context,
+            icon: Icons.chat_bubble_outline,
+            label: 'Message',
+            onPressed: () => _handleMessage(context, vm),
+          ),
+        );
+      }
+
+      if (_canShowReportIssue(vm)) {
+        secondaryActionButtons.add(
+          _ReportIssueGuard(
+            sourceType: vm.workItem!.sourceType,
+            entityId: vm.workItem!.id,
+            onReportIssue: () => _showDisputeDialog(context, vm),
+            builder: (ctx, onPressed) => _buildVerticalIconAction(
+              context: ctx,
+              icon: Icons.warning_amber_rounded,
+              label: 'Report',
+              color: AppColors.lightRed,
+              onPressed: onPressed,
+            ),
+          ),
+        );
+      }
+    }
+
+    if (primaryActionBlock == null && secondaryActionButtons.isEmpty) {
+      return null;
+    }
+
     return Container(
-      padding: const EdgeInsets.all(AppDimens.p16),
-      color: context.colorScheme.cardBackground,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (canAccept) ...[
-              AppButton(
-                text: 'Decline',
-                isPrimary: false,
-                backgroundColor: AppColors.lightRed,
-                onPressed: () => vm.declineBooking(),
-              ),
-              const SizedBox(width: AppDimens.p16),
-              AppButton(text: 'Accept', onPressed: () => vm.acceptBooking()),
-            ] else if (canCancel) ...[
-              AppButton(
-                text: 'Cancel Request',
-                isPrimary: false,
-                backgroundColor: AppColors.lightRed,
-                onPressed: () => vm.cancelBooking(),
-              ),
-            ] else ...[
-              if (isAwaitingClientReview)
-                AppButton(
-                  text: 'Waiting for Client Review',
-                  isPrimary: false,
-                  onPressed: null,
-                ),
-              if (canRequestExtension) ...[
-                if (isAwaitingClientReview)
-                  const SizedBox(width: AppDimens.p12),
-                AppButton(
-                  text: 'Extension',
-                  isPrimary: false,
-                  onPressed: () => _showExtensionModal(context, vm),
-                ),
-              ],
-              if (canSubmit) ...[
-                if (canRequestExtension || isAwaitingClientReview)
-                  const SizedBox(width: AppDimens.p12),
-                AppButton(
-                  text: 'Submit Work',
-                  onPressed: () => _showDeliveryModal(context, vm),
-                ),
-              ],
-              if (canReview) ...[
-                const SizedBox(width: AppDimens.p12),
-                SizedBox(
-                  width: 120,
-                  child: _ReviewWithDisputeGuard(
-                    sourceType: vm.workItem!.sourceType,
-                    entityId: vm.workItem!.id,
-                    onReview: () => _showReviewModal(context, vm),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: context.colorScheme.cardBackground,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            offset: const Offset(0, -4),
+            blurRadius: AppDimens.p16,
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimens.p16,
+            vertical: AppDimens.p12,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (secondaryActionButtons.isNotEmpty) ...[
+                ...secondaryActionButtons.map(
+                  (btn) => Padding(
+                    padding: const EdgeInsets.only(right: AppDimens.p12),
+                    child: btn,
                   ),
                 ),
               ],
-              if (_canShowReportIssue(vm)) ...[
-                const SizedBox(width: AppDimens.p12),
-                SizedBox(
-                  width: 120,
-                  child: _ReportIssueGuard(
-                    sourceType: vm.workItem!.sourceType,
-                    entityId: vm.workItem!.id,
-                    onReportIssue: () => _showDisputeDialog(context, vm),
-                  ),
-                ),
-              ],
-              if (vm.status == UnifiedWorkStatus.active) ...[
-                const SizedBox(width: AppDimens.p12),
-                AppButton(
-                  text: 'Message',
-                  isPrimary: false,
-                  onPressed: () => _handleMessage(context, vm),
-                ),
-              ],
+              if (primaryActionBlock != null)
+                Expanded(child: primaryActionBlock)
+              else
+                const Spacer(),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVerticalIconAction({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+    Color? color,
+  }) {
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(AppDimens.r8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimens.p4,
+          vertical: AppDimens.p4,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 22,
+              color: color ?? context.colorScheme.textSecondary,
+            ),
+            const SizedBox(height: AppDimens.p2),
+            Text(
+              label,
+              style: AppTypography.bodySmall.copyWith(
+                fontSize: 10,
+                color: color ?? context.colorScheme.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ),
@@ -657,7 +758,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     final result = await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: context.colorScheme.cardBackground,
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: ReviewDeliveryModal(
@@ -688,8 +789,9 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
         vm.status == UnifiedWorkStatus.active ||
         vm.status == UnifiedWorkStatus.delivered;
     if (!allowedStatus) return false;
-    if (type == 'booking')
+    if (type == 'booking') {
       return vm.booking?.taskId != null && vm.booking!.taskId!.isNotEmpty;
+    }
     return type == 'task' || type == 'direct_offer';
   }
 
@@ -919,11 +1021,13 @@ class _ReportIssueGuard extends StatelessWidget {
     required this.sourceType,
     required this.entityId,
     required this.onReportIssue,
+    required this.builder,
   });
 
   final String sourceType;
   final String entityId;
   final VoidCallback onReportIssue;
+  final Widget Function(BuildContext, VoidCallback) builder;
 
   @override
   Widget build(BuildContext context) {
@@ -944,13 +1048,7 @@ class _ReportIssueGuard extends StatelessWidget {
         }
         final hasOpenDispute = snapshot.data ?? true;
         if (hasOpenDispute) return const SizedBox.shrink();
-        return TextButton(
-          onPressed: onReportIssue,
-          child: Text(
-            'Report Issue',
-            style: AppTypography.bodySmall.copyWith(color: AppColors.lightRed),
-          ),
-        );
+        return builder(context, onReportIssue);
       },
     );
   }

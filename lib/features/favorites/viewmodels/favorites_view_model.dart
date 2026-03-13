@@ -36,7 +36,9 @@ class FavoritesViewModel extends ChangeNotifier {
       );
       return;
     }
-    if (_loading) return;
+    if (_loading) {
+      return;
+    }
     AppLogger.d('ensureLoaded: loading', tag: 'FavoritesViewModel');
     await load();
   }
@@ -182,8 +184,9 @@ class FavoritesViewModel extends ChangeNotifier {
     final s = e.toString();
     if (s.contains('23505')) return 'Already in favorites.';
     if (s.toLowerCase().contains('rls')) return 'Not allowed for your role.';
-    if (s.toLowerCase().contains('authenticated'))
+    if (s.toLowerCase().contains('authenticated')) {
       return 'Please sign in to use favorites.';
+    }
     return 'Something went wrong. Please try again.';
   }
 }

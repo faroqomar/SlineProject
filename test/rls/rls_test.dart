@@ -23,3 +23,6 @@ export 'fixtures/rls_test_users.dart';
 // - critical_blockers_test.dart
 // - view_security_test.dart
 // - role_switch_jwt_test.dart
+
+/// Empty main so this barrel file is not run as a test suite (it has no tests).
+void main() {}
