@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
@@ -9,6 +11,7 @@ import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/features/tasks/services/task_requests_service.dart';
+import 'package:sline_app/features/tasks/services/task_service.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_requests_view_model.dart';
 import 'package:sline_app/core/utils/format_price.dart' as price_utils;
 
@@ -26,6 +29,64 @@ Future<void> showSubmitRequestSheet(
   required String budget,
   OnBidReplacedCallback? onReplaced,
 }) async {
+  // Guard: don't show sheet if task is not open or user is the task owner.
+  try {
+    final taskService = context.read<TaskService>();
+    final task = await taskService.getTaskById(taskId);
+    final uid = Supabase.instance.client.auth.currentUser?.id;
+    if (task == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Task not found.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+    if (task.status != TaskStatus.open) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'This task is no longer accepting offers.',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+    if (uid != null && task.userId == uid) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('You cannot bid on your own task.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+  } catch (e, st) {
+    AppLogger.e(
+      'Failed to check task before opening submit sheet',
+      tag: 'SubmitRequestSheet',
+      error: e,
+      stackTrace: st,
+    );
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to load task. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+    return;
+  }
+
   final priceCtrl = TextEditingController();
   final daysCtrl = TextEditingController();
   final noteCtrl = TextEditingController();
@@ -68,7 +129,12 @@ Future<void> showSubmitRequestSheet(
     // Continue in new bid mode if check fails
   }
 
-  final bool isReplaceMode = existingBid != null;
+  // Only show replace flow when there is a pending bid that can be replaced.
+  // If the latest bid is non-pending (rejected/accepted/withdrawn), existingBid
+  // can be non-null but isReplaceable is false; the RPC would then return
+  // no_pending_offer_to_replace.
+  final bool isReplaceMode =
+      replaceabilityResult?.isReplaceable == true && existingBid != null;
 
   // Check if the original context is still valid before showing the sheet
   if (!context.mounted) {
@@ -640,17 +706,84 @@ Future<void> showSubmitRequestSheet(
                             stackTrace: st,
                           );
                           if (!ctx.mounted) return;
+                          final msg = e.toString();
+                          final taskClosed = msg.contains('no longer open') ||
+                              msg.contains('cannot bid on your own task');
+                          if (taskClosed) {
+                            await controller.loadForTask(taskId);
+                            if (!ctx.mounted) return;
+                          }
                           messenger.showSnackBar(
                             SnackBar(
                               content: Text(
-                                'Failed to replace bid: ${e.toString()}',
+                                taskClosed
+                                    ? 'This task is no longer accepting offers. The list has been refreshed.'
+                                    : 'Failed to replace bid: $msg',
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      } else if (existingBid != null) {
+                        // Existing non-pending bid (e.g. rejected): resubmit via replace RPC
+                        // so we update the same row to pending instead of inserting (unique constraint).
+                        AppLogger.i(
+                          'Resubmitting bid for task $taskId (existing non-pending)',
+                          tag: 'SubmitRequestSheet',
+                          json: {'price': priceCents, 'days': days},
+                        );
+                        try {
+                          final replaced = await tasksService.replaceOffer(
+                            taskId: taskId,
+                            price: priceDouble,
+                            days: days,
+                            note: note,
+                          );
+                          if (!ctx.mounted) return;
+                          messenger.showSnackBar(
+                            const SnackBar(
+                              content: Row(
+                                children: [
+                                  Icon(Icons.check_circle, color: Colors.white),
+                                  SizedBox(width: 8),
+                                  Text('Bid submitted successfully'),
+                                ],
+                              ),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                          await controller.loadForTask(taskId);
+                          if (onReplaced != null) onReplaced(replaced);
+                          if (!ctx.mounted) return;
+                          navigator.pop(replaced);
+                        } catch (e, st) {
+                          AppLogger.e(
+                            'Failed to resubmit bid for task $taskId',
+                            tag: 'SubmitRequestSheet',
+                            error: e,
+                            stackTrace: st,
+                          );
+                          if (!ctx.mounted) return;
+                          final msg = e.toString();
+                          final taskClosed = msg.contains('no longer open') ||
+                              msg.contains('cannot bid on your own task');
+                          if (taskClosed) {
+                            await controller.loadForTask(taskId);
+                            if (!ctx.mounted) return;
+                          }
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                taskClosed
+                                    ? 'This task is no longer accepting offers. The list has been refreshed.'
+                                    : 'Failed to submit bid: $msg',
                               ),
                               backgroundColor: Colors.red,
                             ),
                           );
                         }
                       } else {
-                        // First time submit
+                        // First time submit (no existing bid)
                         AppLogger.i(
                           'Submitting new bid for task $taskId',
                           tag: 'SubmitRequestSheet',
