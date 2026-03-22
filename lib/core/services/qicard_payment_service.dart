@@ -132,7 +132,7 @@ class QiCardPaymentService implements PaymentService {
   }) async {
     try {
       AppLogger.i(
-        'Creating hardned payment intent for $entityType $entityId',
+        'Creating hardened payment intent for $entityType $entityId',
         tag: 'Payment',
         json: {
           'entity_type': entityType,

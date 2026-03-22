@@ -140,6 +140,11 @@ class BookingViewModel extends ChangeNotifier {
         msg.contains('booking_slot_in_past')) {
       return 'This slot is no longer available.';
     }
+    if (msg.contains('qicard request failed with status 5') ||
+        msg.contains('service unavailable') ||
+        msg.contains('temporarily unavailable')) {
+      return 'QiCard is temporarily unavailable. Please try again in a moment.';
+    }
     return error;
   }
 

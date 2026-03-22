@@ -297,6 +297,10 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
             'request_correlation_id': createResult.requestCorrelationId,
           },
         );
+        if (createResult.bookingId != null) {
+          await _cancelDraftIfPossible(createResult.bookingId!);
+        }
+        if (!mounted) return;
         setState(() {
           _error =
               createResult.error ??

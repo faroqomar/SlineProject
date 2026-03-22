@@ -34,9 +34,9 @@ void ensureSupabaseTestEnvironment() {
 
   const channel = MethodChannel('com.llfbandit.app_links/messages');
   const eventsChannel = MethodChannel('com.llfbandit.app_links/events');
-  TestDefaultBinaryMessengerBinding.instance!.defaultBinaryMessenger
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
       .setMockMethodCallHandler(channel, (MethodCall call) async => null);
-  TestDefaultBinaryMessengerBinding.instance!.defaultBinaryMessenger
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
       .setMockMethodCallHandler(eventsChannel, (MethodCall call) async => null);
 }
 

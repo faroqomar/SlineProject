@@ -213,6 +213,47 @@ void main() {
     );
 
     test(
+      'createPaymentForBooking maps QiCard 503 to temporary outage copy',
+      () async {
+        when(
+          () => bookingRepo.createBookingDraft(
+            taskId: any(named: 'taskId'),
+            note: any(named: 'note'),
+            packageId: any(named: 'packageId'),
+            requirements: any(named: 'requirements'),
+          ),
+        ).thenAnswer(
+          (_) async =>
+              _booking(id: 'draft-1', createdAtUtc: DateTime.now().toUtc()),
+        );
+
+        when(
+          () => paymentService.createPaymentIntent(
+            entityType: any(named: 'entityType'),
+            entityId: any(named: 'entityId'),
+            successUrl: any(named: 'successUrl'),
+            cancelUrl: any(named: 'cancelUrl'),
+          ),
+        ).thenAnswer(
+          (_) async => const PaymentIntentResult(
+            error: 'QiCard request failed with status 503',
+            errorCode: 'INTENT_REJECTED',
+          ),
+        );
+
+        await viewModel.createPaymentForBooking(
+          taskId: 'task-1',
+          packageId: 'Premium',
+        );
+
+        expect(
+          viewModel.bookingsError,
+          'QiCard is temporarily unavailable. Please try again in a moment.',
+        );
+      },
+    );
+
+    test(
       'processPayment failure sets bookingsError and clears processing flag',
       () async {
         when(
