@@ -19,6 +19,9 @@ description: Technical Lead & System Designer - Logic, MVVM, Refactoring. Invoca
 5. **Stability**: No breaking changes to Auth, RLS, Booking lifecycle, Wallet/payments.
 6. **Proof-Based**: Every change must be verifiable and testable.
 7. **Stay Current (Web Required When Uncertain)**: If a pattern/library/API usage might be outdated, you MUST confirm via web documentation first.
+8. **Respect Planning Traceability**: Follow the detailed plan as written, and ensure meaningful architectural work is reflected in the session log and any required diagram artifact.
+9. **Error Handling Discipline**: Raw `PostgrestException`, `AuthException`, `StorageException`, or Edge Function error payloads must not leak directly into UI behavior. Use the approved project mapping path.
+10. **Storage Path Discipline**: Durable models store storage paths or identifiers, not temporary signed URLs.
 
 ---
 
@@ -102,6 +105,27 @@ If anything mismatches:
 
 - If project uses repositories: service = low-level, repo = orchestration/caching
 
+### 3.2 Contract and Error-Handling Discipline
+
+- Models must map DB fields explicitly
+- Services / repositories must define what they return on success and failure
+- Error handling must follow approved project patterns such as `ErrorMapper` or typed domain wrappers
+- No raw backend internals should leak to the view layer
+
+### 3.3 Storage and Media Boundary Rules
+
+- Services own storage upload / delete / signed URL generation logic
+- Views may render through approved widgets like `SignedImage` or `SignedAvatar`, but must not become storage orchestration layers
+- Durable DB models keep storage paths or IDs
+- Template, booking, chat, task-image, and avatar flows must preserve this boundary
+
+### 3.4 ViewModel State Discipline
+
+- Every mutation-capable ViewModel must expose clear loading and failure states
+- `notifyListeners()` should reflect meaningful state changes, not noisy internal churn
+- Navigation decisions should be explicit and minimal, not hidden inside lower layers
+- Role, account restriction, and runtime-config assumptions must be surfaced clearly to the UI contract
+
 ---
 
 ## 4) Query Design Rules (Performance + Correctness)
@@ -122,6 +146,12 @@ If anything mismatches:
 
 - Always assume row limits exist. Use cursor pagination (`created_at`, `id`) and `range()` appropriately.
 
+### 4.4 Signed URL and Media Efficiency
+
+- Never generate temporary signed URLs repeatedly in hot loops without caching or an approved helper
+- Prefer shared services and widgets for signed media behavior
+- Avoid mixing durable path semantics and display-URL semantics in the same model field
+
 ---
 
 ## 5) Change Protocol (How You Implement)
@@ -139,10 +169,12 @@ For every feature/bug you implement, you MUST follow this order:
 3. **Services**
    - Implement Supabase calls + error mapping
    - No UI logic here
+   - Keep actor / ownership assumptions explicit
 
 4. **ViewModels**
    - Implement state machine + UI state + orchestration
    - Expose minimal, predictable public API to View
+   - Do not absorb raw backend internals
 
 5. **UI Integration**
    - Only after ViewModel API is stable
@@ -150,6 +182,7 @@ For every feature/bug you implement, you MUST follow this order:
 
 6. **Wiring**
    - Provider registration / DI as per project conventions
+   - Confirm route and deep-link compatibility if affected
 
 ---
 
@@ -158,8 +191,11 @@ For every feature/bug you implement, you MUST follow this order:
 ### 6.1 Self-Checks Before Requesting Review
 
 - No direct Supabase usage in View
+- No direct Supabase usage in ChangeNotifier ViewModels
 - No duplicate queries for same domain concept
 - No N+1 patterns
+- Error mapping is explicit and consistent
+- Storage paths remain durable and signed URLs remain temporary
 - Loading/error states handled
 - Disposal and lifecycle handled correctly
 
@@ -188,6 +224,8 @@ It MUST include:
 - Risks
 - Verification notes
 - References (docs + code paths)
+- Session log path if the work was executed through `@Executor`
+- Diagram path if schema, order flow, or backend process work required `Doc/DIGRAM/<FeatureName>.md`
 
 ### 7.2 If Refactor Is Large
 

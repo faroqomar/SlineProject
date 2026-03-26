@@ -2,43 +2,60 @@
 
 All agents and workflows live under **`.cursor/`**. Always prefer these over `.agent/` when invoking or following workflows.
 
-## Quick reference
+## Quick Reference
 
 | Invoke | File | Use for |
 |--------|------|--------|
-| @Architect | [Agents/Architect.md](Agents/Architect.md) | Logic, MVVM, refactoring |
-| @Pixel | [Agents/Pixel.md](Agents/Pixel.md) | UI, theme, glassmorphism |
-| @Supabase_Ops | [Agents/Supabase_Ops.md](Agents/Supabase_Ops.md) | Schema, RLS, SQL, storage |
-| @Sentinel | [Agents/Sentinel.md](Agents/Sentinel.md) | QA, security, release gate |
-| @SlineDocs | [Agents/Sline_Docs.md](Agents/Sline_Docs.md) | Docs, changelog, Sline_everything |
-| @SlinePlanner | [Agents/Sline_Planner.md](Agents/Sline_Planner.md) | Implementation plans |
-| @CodeGuard | [Agents/CodeGuard.md](Agents/CodeGuard.md) | Code review, performance, security |
-| @Executor | [Agents/Executor.md](Agents/Executor.md) | Execute plans from .TODO/ |
-| @PlanCritic | [Agents/Plan_Critic.md](Agents/Plan_Critic.md) | Audit and harden plans |
-| @Observability | [Agents/Observability.md](Agents/Observability.md) | Logging, metrics, telemetry |
-| @APIContract | [Agents/APIContract.md](Agents/APIContract.md) | Contracts, DTOs, API shapes |
-| @DataMigration | [Agents/DataMigration.md](Agents/DataMigration.md) | Schema migration, compatibility |
-| @ThreatModeler | [Agents/ThreatModeler.md](Agents/ThreatModeler.md) | Security design, abuse cases |
+| `@Architect` | [Agents/Architect.md](Agents/Architect.md) | Logic, MVVM, refactoring |
+| `@Pixel` | [Agents/Pixel.md](Agents/Pixel.md) | UI, theme, interaction, motion |
+| `@Supabase_Ops` | [Agents/Supabase_Ops.md](Agents/Supabase_Ops.md) | Schema, RLS, SQL, RPC, storage |
+| `@Sentinel` | [Agents/Sentinel.md](Agents/Sentinel.md) | QA, security, release gate |
+| `@SlineDocs` | [Agents/Sline_Docs.md](Agents/Sline_Docs.md) | Docs, changelog, Sline_everything sync |
+| `@SlinePlanner` | [Agents/Sline_Planner.md](Agents/Sline_Planner.md) | Implementation plans |
+| `@CodeGuard` | [Agents/CodeGuard.md](Agents/CodeGuard.md) | Code review, performance, security |
+| `@Executor` | [Agents/Executor.md](Agents/Executor.md) | Execute plans from `.TODO/` |
+| `@PlanCritic` | [Agents/Plan_Critic.md](Agents/Plan_Critic.md) | Audit and harden plans |
+| `@Observability` | [Agents/Observability.md](Agents/Observability.md) | Logging, metrics, telemetry |
+| `@APIContract` | [Agents/APIContract.md](Agents/APIContract.md) | Contracts, DTOs, API shapes |
+| `@DataMigration` | [Agents/DataMigration.md](Agents/DataMigration.md) | Schema migration, compatibility |
+| `@ThreatModeler` | [Agents/ThreatModeler.md](Agents/ThreatModeler.md) | Security design, abuse cases |
+| `@TemplateOwner` | [Agents/TemplateOwner.md](Agents/TemplateOwner.md) | Task templates and reusable blueprint ownership |
+| `@Orchestrator` | [Agents/orchestrator.md](Agents/orchestrator.md) | Multi-agent review pipeline |
+| `@SystemEvolution` | [Agents/SystemEvolution.md](Agents/SystemEvolution.md) | Session-log analysis and agent-system improvement |
 
-## Rules and context
+## Rules And Context
 
 - **Rules**: `.cursor/rules/*.mdc` — project and file-specific rules (MVVM, code quality, error handling, theme, Supabase, etc.).
 - **Context**: [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) — architecture, conventions, doc links.
 - **Prompt**: [prompt.md](prompt.md) — how to use workflows and agents for new features.
+- **Session Logs**: `docs/LOG/SESSION_<PLAN_NAME>_<YYYY-MM-DD>.md` — append-only execution history for every plan.
+- **Feature Diagrams**: `Doc/DIGRAM/<FeatureName>.md` — Mermaid diagrams plus explanations for schema, order flow, and backend process flow.
 
-## Skills (project-local)
+## Skills (Project-Local)
 
-Skills live under `.cursor/skills/` and reference `.cursor/rules/` and `.cursor/Agents/`:
+Skills live under `.cursor/skills/` and reference `.cursor/rules/` and `.cursor/Agents/`.
 
 - `architecture-guard` — MVVM boundaries
 - `asset-manager` — assets and pubspec
-- `code-reviewer` — structured code review
-- `crud-generator` — List/Detail/Form screens
-- `docs-sync` — keep docs aligned with code
-- `feature-scaffolder` — new feature layout
 - `bug-fixer` — triage and fix workflow
+- `code-reviewer` — structured code review
 - `commit-helper` — conventional commits
-- `supabase-migration` — migrations and RLS
-- `evidence-first-reading` — prove every code claim with file, symbol, and snippet
+- `crud-generator` — list/detail/form screens
+- `docs-sync` — keep docs aligned with code
+- `evidence-first-reading` — prove code claims with file, symbol, and snippet
+- `feature-scaffolder` — new feature layout
+- `frontend-design` — design context, anti-patterns, context gathering
+- UI execution skills: `adapt`, `animate`, `arrange`, `audit`, `bolder`, `clarify`, `colorize`, `critique`, `delight`, `distill`, `extract`, `harden`, `normalize`, `onboard`, `optimize`, `overdrive`, `polish`, `quieter`, `teach-impeccable`, `typeset`
+- `supabase-migration` — migrations, RLS, rollout safety
 
-When working on SLine, **always reference @.cursor** (rules, agents, PROJECT_CONTEXT, prompt).
+When working on SLine, always reference `@.cursor` first.
+
+## Planning And Execution Standards
+
+- Plans must be written in painstaking detail.
+- Plans must prefer more phases, more sub-phases, and smaller atomic steps.
+- Every phase, sub-phase, and step must name its owning agent.
+- Meaningful UI steps must include skill tags from `.cursor/skills/`.
+- Meaningful Supabase schema, RLS, RPC, storage, or migration steps must include `Skill: supabase-migration`.
+- Every executed plan must have an append-only session log under `docs/LOG/`.
+- Every schema, order flow, or backend process feature must produce or update a per-feature diagram under `Doc/DIGRAM/`.

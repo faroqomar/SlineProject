@@ -1,4 +1,0 @@
-interface:
-  display_name: "Evidence-First Reading"
-  short_description: "Ground code analysis in direct evidence"
-  default_prompt: "Use $evidence-first-reading to analyze these files without unsupported claims."

@@ -722,8 +722,9 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
   bool get otherUserTyping {
     if (!_otherUserTyping) return false;
     if (_presenceUpdatedAt == null) return false;
-    if (DateTime.now().difference(_presenceUpdatedAt!).inSeconds > 15)
+    if (DateTime.now().difference(_presenceUpdatedAt!).inSeconds > 15) {
       return false;
+    }
     return true;
   }
 
