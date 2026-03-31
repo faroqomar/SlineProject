@@ -53,7 +53,7 @@ class NextActionsList extends StatelessWidget {
     }
 
     if (items.isEmpty) {
-      return const Center(child: Text("No actions pending."));
+      return const Center(child: Text('No actions pending.'));
     }
 
     // Show top 3 items for "Next Actions" section

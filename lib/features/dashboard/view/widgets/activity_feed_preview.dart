@@ -30,7 +30,7 @@ class ActivityFeedPreview extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.all(AppDimens.p16),
         child: Text(
-          "No recent activity.",
+          'No recent activity.',
           style: AppTypography.caption.copyWith(
             color: context.colorScheme.textSecondary,
           ),
@@ -129,8 +129,8 @@ class _ActivityRow extends StatelessWidget {
 
   _ActivityInfo _mapActivityToInfo(ActivityLog log) {
     // Map event type to UI text and icon
-    String title = "Notification";
-    String description = "New activity";
+    String title = 'Notification';
+    String description = 'New activity';
     IconData icon = Icons.notifications_none;
 
     final type = log.eventType;
@@ -139,12 +139,12 @@ class _ActivityRow extends StatelessWidget {
     if (entity == 'booking') {
       icon = Icons.calendar_today;
       if (type == 'created') {
-        title = "New Booking Request";
-        description = "You have a new booking request.";
+        title = 'New Booking Request';
+        description = 'You have a new booking request.';
       } else if (type == 'status_change') {
         final newStatus = log.metadata['new_status'];
-        title = "Booking $newStatus"; // e.g. Booking confirmed
-        description = "Booking status changed to $newStatus.";
+        title = 'Booking $newStatus'; // e.g. Booking confirmed
+        description = 'Booking status changed to $newStatus.';
         if (newStatus == 'confirmed') icon = Icons.check_circle_outline;
         if (newStatus == 'canceled') icon = Icons.cancel_outlined;
       }
@@ -152,8 +152,8 @@ class _ActivityRow extends StatelessWidget {
       icon = Icons.assignment;
       if (type == 'status_change') {
         final newStatus = log.metadata['new_status'];
-        description = "Task status updated to $newStatus.";
-        title = "Task Update";
+        description = 'Task status updated to $newStatus.';
+        title = 'Task Update';
       }
     }
 

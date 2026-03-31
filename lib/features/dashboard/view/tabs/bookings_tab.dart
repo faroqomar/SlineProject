@@ -39,7 +39,7 @@ class BookingsTab extends StatelessWidget {
                       ),
                       const SizedBox(height: AppDimens.p16),
                       Text(
-                        "No bookings yet",
+                        'No bookings yet',
                         style: AppTypography.bodyMedium.copyWith(
                           color: context.colorScheme.textSecondary,
                         ),
@@ -75,7 +75,7 @@ class BookingsTab extends StatelessWidget {
             padding: const EdgeInsets.all(AppDimens.p16),
             children: [
               if (upcoming.isNotEmpty) ...[
-                _SectionHeader(title: "Upcoming"),
+                _SectionHeader(title: 'Upcoming'),
                 ...upcoming.map(
                   (b) => DashboardBookingCard(
                     booking: b,
@@ -100,7 +100,7 @@ class BookingsTab extends StatelessWidget {
               ],
 
               if (past.isNotEmpty) ...[
-                _SectionHeader(title: "Past"),
+                _SectionHeader(title: 'Past'),
                 ...past.map(
                   (b) => DashboardBookingCard(
                     booking: b,

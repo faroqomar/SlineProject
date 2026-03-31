@@ -158,12 +158,12 @@ class _DashboardContentState extends State<_DashboardContent>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Dashboard Settings"),
+        title: const Text('Dashboard Settings'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("User Role"),
+            const Text('User Role'),
             const SizedBox(height: 12),
             // Reusing the Role Switcher here
             ChangeNotifierProvider.value(value: vm, child: const _RoleSwitch()),
@@ -172,7 +172,7 @@ class _DashboardContentState extends State<_DashboardContent>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Close"),
+            child: const Text('Close'),
           ),
         ],
       ),
@@ -192,7 +192,7 @@ class _DashboardContentState extends State<_DashboardContent>
     var scaffold = Scaffold(
       appBar: AppBar(
         title: Text(
-          "Dashboard",
+          'Dashboard',
           style: AppTypography.h4.copyWith(color: colorScheme.text),
         ),
         backgroundColor: colorScheme.background,
@@ -219,14 +219,14 @@ class _DashboardContentState extends State<_DashboardContent>
             indicatorColor: colorScheme.primary,
             onTap: (index) => vm.setTab(index),
             tabs: const [
-              Tab(icon: Icon(Icons.dashboard_outlined), text: "Overview"),
-              Tab(icon: Icon(Icons.calendar_month_outlined), text: "Bookings"),
-              Tab(icon: Icon(Icons.work_history_outlined), text: "Work"),
+              Tab(icon: Icon(Icons.dashboard_outlined), text: 'Overview'),
+              Tab(icon: Icon(Icons.calendar_month_outlined), text: 'Bookings'),
+              Tab(icon: Icon(Icons.work_history_outlined), text: 'Work'),
               Tab(
                 icon: Icon(Icons.account_balance_wallet_outlined),
-                text: "Wallet",
+                text: 'Wallet',
               ),
-              Tab(icon: Icon(Icons.inbox_outlined), text: "Inbox"),
+              Tab(icon: Icon(Icons.inbox_outlined), text: 'Inbox'),
             ],
           ),
         ),
@@ -274,13 +274,13 @@ class _RoleSwitch extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _RoleButton(
-            label: "Freelancer",
+            label: 'Freelancer',
             isActive: isFreelancer,
             buttonKey: DashboardScreen.freelancerRoleButtonKey,
             onTap: () => vm.setRole(UserRole.freelancer),
           ),
           _RoleButton(
-            label: "Client",
+            label: 'Client',
             isActive: !isFreelancer,
             buttonKey: DashboardScreen.clientRoleButtonKey,
             onTap: () => vm.setRole(UserRole.client),

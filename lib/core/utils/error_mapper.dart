@@ -72,7 +72,9 @@ class ErrorMapper {
   static String _mapPostgrestError(PostgrestException error) {
     final message = error.message;
 
-    if (message.contains('Could not find the function public.rpc_approve_delivery') &&
+    if (message.contains(
+          'Could not find the function public.rpc_approve_delivery',
+        ) &&
         message.contains('schema cache')) {
       return 'This feature is temporarily unavailable. Please try again later or contact support.';
     }

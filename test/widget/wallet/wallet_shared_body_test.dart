@@ -198,9 +198,10 @@ void main() {
       expect(find.text('Fees'), findsOneWidget);
       expect(find.text('Coming Soon'), findsOneWidget);
 
-      await tester.drag(
-        find.byKey(const ValueKey<String>('wallet_shared_list')),
-        const Offset(0, -900),
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey<String>('wallet_timeline_card')),
+        200,
+        scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
 

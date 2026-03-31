@@ -49,9 +49,7 @@ Future<void> showSubmitRequestSheet(
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'This task is no longer accepting offers.',
-            ),
+            content: Text('This task is no longer accepting offers.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -707,7 +705,8 @@ Future<void> showSubmitRequestSheet(
                           );
                           if (!ctx.mounted) return;
                           final msg = e.toString();
-                          final taskClosed = msg.contains('no longer open') ||
+                          final taskClosed =
+                              msg.contains('no longer open') ||
                               msg.contains('cannot bid on your own task');
                           if (taskClosed) {
                             await controller.loadForTask(taskId);
@@ -765,7 +764,8 @@ Future<void> showSubmitRequestSheet(
                           );
                           if (!ctx.mounted) return;
                           final msg = e.toString();
-                          final taskClosed = msg.contains('no longer open') ||
+                          final taskClosed =
+                              msg.contains('no longer open') ||
                               msg.contains('cannot bid on your own task');
                           if (taskClosed) {
                             await controller.loadForTask(taskId);

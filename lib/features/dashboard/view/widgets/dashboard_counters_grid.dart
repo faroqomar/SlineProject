@@ -21,28 +21,28 @@ class DashboardCountersGrid extends StatelessWidget {
     final List<_CounterData> items = isFreelancer
         ? [
             _CounterData(
-              "Pending Requests",
+              'Pending Requests',
               counters.pendingRequests.toString(),
               AppColors.gold,
               Icons.pending_actions,
               () => vm.setTab(DashboardTab.activeWork.index),
             ),
             _CounterData(
-              "Active Work",
+              'Active Work',
               counters.activeWork.toString(),
               AppColors.teal,
               Icons.work,
               () => vm.setTab(DashboardTab.activeWork.index),
             ),
             _CounterData(
-              "Messages",
+              'Messages',
               counters.newMessages.toString(),
               AppColors.lightTeal,
               Icons.chat,
               () => vm.setTab(DashboardTab.inbox.index),
             ),
             _CounterData(
-              "New Offers",
+              'New Offers',
               counters.newOffers.toString(),
               AppColors.mediumGrey,
               Icons.local_offer,
@@ -51,28 +51,28 @@ class DashboardCountersGrid extends StatelessWidget {
           ]
         : [
             _CounterData(
-              "Active Work",
+              'Active Work',
               counters.activeWork.toString(),
               AppColors.teal,
               Icons.work_outline,
               () => vm.setTab(DashboardTab.activeWork.index),
             ),
             _CounterData(
-              "Needs Review",
+              'Needs Review',
               counters.needsReview.toString(),
               AppColors.lightRed,
               Icons.rate_review_outlined,
               () => vm.setTab(DashboardTab.activeWork.index),
             ),
             _CounterData(
-              "Pending Payment",
+              'Pending Payment',
               counters.pendingPayment.toString(),
               AppColors.gold,
               Icons.payment_outlined,
               () => vm.setTab(DashboardTab.bookings.index),
             ),
             _CounterData(
-              "Completed",
+              'Completed',
               counters.completed.toString(),
               AppColors.lightTeal,
               Icons.check_circle_outline,

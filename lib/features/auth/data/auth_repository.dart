@@ -31,7 +31,7 @@ class AuthRepository {
     }
 
     final userId = _client.auth.currentUser?.id;
-    if (userId == null) throw Exception("User not authenticated");
+    if (userId == null) throw Exception('User not authenticated');
 
     // Info: User registration completed successfully
     AppLogger.i('User registration completed for: ${_maskEmail(email)}');

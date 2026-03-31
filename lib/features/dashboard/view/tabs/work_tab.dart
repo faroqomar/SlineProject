@@ -74,12 +74,12 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "My Work",
+                'My Work',
                 style: AppTypography.h3.copyWith(color: colorScheme.text),
               ),
               const SizedBox(height: AppDimens.p8),
               Text(
-                "Track all your jobs and bookings.",
+                'Track all your jobs and bookings.',
                 style: AppTypography.bodyMedium.copyWith(
                   color: colorScheme.textSecondary,
                 ),
@@ -105,9 +105,9 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
                   indicatorSize: TabBarIndicatorSize.tab,
                   dividerColor: Colors.transparent,
                   tabs: [
-                    Tab(text: "Active (${active.length})"),
-                    Tab(text: "Done (${completed.length})"),
-                    Tab(text: "Cancelled"),
+                    Tab(text: 'Active (${active.length})'),
+                    Tab(text: 'Done (${completed.length})'),
+                    Tab(text: 'Cancelled'),
                   ],
                 ),
               ),
@@ -132,7 +132,7 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
               _buildWorkList(
                 context: context,
                 items: completed,
-                emptyMessage: "No completed work yet.",
+                emptyMessage: 'No completed work yet.',
                 isDimmed: true,
               ),
 
@@ -140,7 +140,7 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
               _buildWorkList(
                 context: context,
                 items: cancelled,
-                emptyMessage: "No cancelled work.",
+                emptyMessage: 'No cancelled work.',
                 isDimmed: true,
               ),
             ],
@@ -176,7 +176,7 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
                   ),
                   const SizedBox(height: AppDimens.p16),
                   Text(
-                    "No active work.",
+                    'No active work.',
                     style: AppTypography.bodyMedium.copyWith(
                       color: context.colorScheme.textSecondary,
                     ),

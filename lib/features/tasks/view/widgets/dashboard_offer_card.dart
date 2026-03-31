@@ -143,7 +143,9 @@ class DashboardOfferCard extends StatelessWidget {
                         children: [
                           _InfoChip(
                             icon: Icons.attach_money,
-                            label: PriceFormatter.formatPrice(offer.price.toDouble()),
+                            label: PriceFormatter.formatPrice(
+                              offer.price.toDouble(),
+                            ),
                             colorScheme: colorScheme,
                           ),
                           const SizedBox(width: AppDimens.p8),

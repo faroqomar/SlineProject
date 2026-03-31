@@ -109,6 +109,7 @@ void main() {
         if (row['invalid'] == true) throw FormatException('unparseable');
         return Message.fromJson(row);
       }
+
       final result = ChatRealtimeMerger.merge(
         <Message>[],
         withBad,

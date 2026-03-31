@@ -266,7 +266,7 @@ class MessageService {
 
     // Filter by pair regardless of order
     final pairFilter =
-        "and(user1_id.eq.$user1Id,user2_id.eq.$user2Id),and(user1_id.eq.$user2Id,user2_id.eq.$user1Id)";
+        'and(user1_id.eq.$user1Id,user2_id.eq.$user2Id),and(user1_id.eq.$user2Id,user2_id.eq.$user1Id)';
 
     // Only look for DMs (task_id IS NULL)
     final query = base.is_('task_id', null).or(pairFilter).limit(1);

@@ -43,12 +43,12 @@ class _OverviewTabState extends State<OverviewTab> {
         padding: const EdgeInsets.all(AppDimens.p16),
         children: [
           Text(
-            "Hello, ${vm.userName}!",
+            'Hello, ${vm.userName}!',
             style: AppTypography.h3.copyWith(color: colorScheme.text),
           ),
           Text(
             vm.currentRole == UserRole.freelancer
-                ? "Ready to pick up some work?"
+                ? 'Ready to pick up some work?'
                 : "Let's get your projects moving.",
             style: AppTypography.bodyMedium.copyWith(
               color: colorScheme.textSecondary,
@@ -59,18 +59,18 @@ class _OverviewTabState extends State<OverviewTab> {
           const SizedBox(height: AppDimens.p20),
           DashboardCountersGrid(),
           const SizedBox(height: AppDimens.p24),
-          _SectionHeader(title: "Next Actions"),
+          _SectionHeader(title: 'Next Actions'),
           const NextActionsList(),
           const SizedBox(height: AppDimens.p24),
           _SectionHeader(
-            title: "Recent Activity",
+            title: 'Recent Activity',
             action: TextButton(
               onPressed: () {
                 setState(() {
                   _showAllActivity = !_showAllActivity;
                 });
               },
-              child: Text(_showAllActivity ? "Show Less" : "See All"),
+              child: Text(_showAllActivity ? 'Show Less' : 'See All'),
             ),
           ),
           ActivityFeedPreview(limit: _showAllActivity ? null : 3),

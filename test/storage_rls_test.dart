@@ -18,10 +18,8 @@ import 'rls/fixtures/rls_test_users.dart';
 import 'rls/storage_rls_test_harness.dart';
 import 'supabase_test_helper.dart';
 
-const _skipReason = String.fromEnvironment(
-  'SUPABASE_INTEGRATION',
-  defaultValue: '',
-) != '1'
+const _skipReason =
+    String.fromEnvironment('SUPABASE_INTEGRATION', defaultValue: '') != '1'
     ? 'Requires Supabase; run with --dart-define=SUPABASE_INTEGRATION=1'
     : null;
 

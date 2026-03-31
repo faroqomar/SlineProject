@@ -79,10 +79,7 @@ void main() {
       // Act: Client rejects the bid (this creates conversation via GUC exception)
       final result = await client.rpc(
         'reject_task_request',
-        params: {
-          'p_task_id': testTaskId,
-          'p_request_id': requestId,
-        },
+        params: {'p_task_id': testTaskId, 'p_request_id': requestId},
       );
 
       // Assert
@@ -99,11 +96,13 @@ void main() {
           'start_direct_conversation_v1',
           params: {'p_target_id': testClientId},
         ),
-        throwsA(isA<PostgrestException>().having(
-          (e) => e.message,
-          'message',
-          contains('Freelancers cannot start'),
-        )),
+        throwsA(
+          isA<PostgrestException>().having(
+            (e) => e.message,
+            'message',
+            contains('Freelancers cannot start'),
+          ),
+        ),
       );
     });
 
@@ -121,11 +120,13 @@ void main() {
           'start_direct_conversation_v1',
           params: {'p_target_id': testFreelancerBId},
         ),
-        throwsA(isA<PostgrestException>().having(
-          (e) => e.message,
-          'message',
-          contains('favorites list'),
-        )),
+        throwsA(
+          isA<PostgrestException>().having(
+            (e) => e.message,
+            'message',
+            contains('favorites list'),
+          ),
+        ),
       );
     });
 
@@ -133,14 +134,14 @@ void main() {
       // Arrange: Create 20 conversations first
       for (var i = 0; i < 20; i++) {
         final freelancerId = 'freelancer-$i-uuid';
-        
+
         // Add to favorites
         await client.from('favorites').upsert({
           'id': 'fav-$i',
           'client_id': testClientId,
           'freelancer_id': freelancerId,
         });
-        
+
         // Add profile
         await client.from('profiles').upsert({
           'id': freelancerId,
@@ -161,11 +162,13 @@ void main() {
           'start_direct_conversation_v1',
           params: {'p_target_id': 'another-freelancer'},
         ),
-        throwsA(isA<PostgrestException>().having(
-          (e) => e.message,
-          'message',
-          contains('Rate limit exceeded'),
-        )),
+        throwsA(
+          isA<PostgrestException>().having(
+            (e) => e.message,
+            'message',
+            contains('Rate limit exceeded'),
+          ),
+        ),
       );
     });
 
@@ -209,7 +212,7 @@ Future<void> _seedTestData(SupabaseClient client) async {
 Future<void> _cleanupTestData(SupabaseClient client) async {
   // Clean up conversations created by tests
   final oneHourAgo = DateTime.now().subtract(const Duration(hours: 1));
-  
+
   await client
       .from('conversations')
       .delete()
