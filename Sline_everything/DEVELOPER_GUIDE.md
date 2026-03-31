@@ -184,6 +184,35 @@ try {
 - **Integration**: happy‑paths against staging Supabase (auth, RLS, flows).
 - **Checklists**: each feature doc ends with a testing checklist; follow it before merging.
 
+### 10.1 CI/CD Pipeline
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on every push/PR to `main`:
+
+| Job | What It Does | Blocks Merge? |
+|-----|-------------|---------------|
+| **Lint & Analyze** | `dart format --set-exit-if-changed .` + `flutter analyze --no-fatal-infos` | Yes (warnings/errors fail) |
+| **Architecture Guard** | 6 grep-based MVVM boundary checks (Supabase in views, controllers in VMs, Navigator in VMs, repo imports in views, view imports in VMs, Supabase in VMs) | No (warning-only during Phase A; graduates to hard failure in Phase B) |
+| **Unit & Widget Tests** | `flutter test --coverage` with coverage % reported to PR summary | Yes |
+| **Build** | APK (debug) + Web (release) compilation | Yes |
+
+Flutter version pinned: **3.38.9** across all jobs.
+
+### 10.2 Pre-commit Hook
+
+`.githooks/pre-commit` runs `dart format` + `flutter analyze` locally before every commit.
+
+**First-time setup:** `git config core.hooksPath .githooks`
+
+### 10.3 Lint Rules
+
+`analysis_options.yaml` enforces 34 rules in 3 categories:
+
+- **Core (18):** type safety, const correctness, naming, async safety (`unawaited_futures`, `use_build_context_synchronously`)
+- **Safety (7):** resource cleanup (`cancel_subscriptions`, `close_sinks`), dead-code prevention (`throw_in_finally`, `unnecessary_statements`)
+- **Code Quality (9):** immutability (`prefer_final_locals`), null safety (`prefer_null_aware_operators`), dependency hygiene (`depend_on_referenced_packages`)
+
+Strong mode: `implicit-casts: false`, `implicit-dynamic: false`.
+
 ## 11. Observability (Crash & Error Tracking)
 
 - **Crash Reporting**: `CrashReportingService` (lib/core/services/crash_reporting_service.dart) abstracts the backend (Sentry/Firebase).

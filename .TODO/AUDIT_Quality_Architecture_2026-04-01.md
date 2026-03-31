@@ -68,10 +68,12 @@ Lock down the codebase so no new damage gets in.
 
 | # | Task | Effort | Details |
 |---|------|--------|---------|
-| A1 | Add CI pipeline (`.github/workflows/ci.yml`) | 2h | analyze + test + build gates. See [Section 5](#5-cicd-pipeline-design). |
-| A2 | Add architecture guard in CI | 1h | Grep-based checks for MVVM violations. Blocks PRs that add new violations. |
-| A3 | Add pre-commit hook | 30m | `dart format` + `flutter analyze` locally before push. |
-| A4 | Enable coverage generation (no enforcement yet) | 30m | `flutter test --coverage` in CI. See the number. Don't gate on it yet. |
+| A1 | ~~Add CI pipeline~~ | ~~2h~~ | **DONE (2026-04-01)** — `.github/workflows/ci.yml` created. 4 jobs: analyze (`--no-fatal-infos`), architecture-guard (warning-only), test (with coverage), build (APK debug + web release). Flutter 3.38.9 pinned. Triggers on `main` only. |
+| A2 | ~~Add architecture guard in CI~~ | ~~1h~~ | **DONE (2026-04-01)** — Part of ci.yml. Detects Supabase in views, material.dart in viewmodels, view imports in viewmodels. Warning-only, graduates to failure after Phase B. |
+| A3 | ~~Add pre-commit hook~~ | ~~30m~~ | **DONE (2026-04-01)** — `.githooks/pre-commit` created. Runs `dart format --set-exit-if-changed` + `flutter analyze --fatal-warnings`. Enable: `git config core.hooksPath .githooks`. CLAUDE.md updated. |
+| A4 | ~~Enable coverage generation~~ | ~~30m~~ | **DONE (2026-04-01)** — `flutter test --coverage` in CI test job. Parses lcov.info and reports % to GitHub step summary. `coverage/` added to `.gitignore`. No threshold enforcement yet. |
+
+**Prerequisite fix (2026-04-01):** Fixed timezone-sensitive widget test in `wallet_shared_body_test.dart` — used local noon instead of UTC-relative timestamps for stable "Today" bucket. Also fixed scroll to use `scrollUntilVisible` instead of fixed pixel offset. All tests pass: 400 passed, 30 skipped, 0 failures.
 
 ### Phase B: Bug Exposure (Week 2)
 
@@ -132,17 +134,21 @@ Now that gates are up and critical paths are covered:
 
 ## 4. Detailed Findings
 
-### 4.1 CI/CD (Missing)
+### ~~4.1 CI/CD (Missing)~~ DONE (2026-04-01)
 
-**Status:** No CI pipeline exists. Zero automation.
+**Status:** ~~No CI pipeline exists.~~ **CI pipeline implemented.**
 
-- No `.github/workflows/`
-- No Codemagic, Bitrise, Fastlane
-- Only a bare `netlify.toml` for web deploys (no test/lint steps)
+- `.github/workflows/ci.yml` — 4-job pipeline (analyze, architecture-guard, test+coverage, build)
+- `.githooks/pre-commit` — local quality gate (format + analyze)
+- `CLAUDE.md` updated with setup instructions
+- `coverage/` added to `.gitignore`
 
-**Risk:** Every push to main can ship broken code. With booking, wallet, payments, roles, and admin — one unchecked merge can cascade.
-
-**Fix:** See [Section 5](#5-cicd-pipeline-design) for full pipeline design.
+**Decisions made:**
+- `--no-fatal-infos` (not `--fatal-infos`) — upgrade after Phase B clears 456 info issues
+- Architecture guard is warning-only — graduate to hard failure after Phase B
+- Flutter 3.38.9 pinned (matches dev environment)
+- APK built in debug mode (no release signing configured)
+- Triggers on `main` only (no `develop` branch exists)
 
 ---
 

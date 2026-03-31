@@ -1,6 +1,6 @@
 # SLine App - Folder Structure Guide
 
-**Last Updated:** 2026-03-08 (Hardened Payment Linking migrations + refs; Work contract revisions; Direct Chat Offer Flow; 21_Wallet → Done)
+**Last Updated:** 2026-04-01 (Phase A: CI/CD pipeline, pre-commit hooks, lint rule upgrades, architecture guard; previous: 2026-03-08 Hardened Payment Linking + Work + Wallet)
 
 This document describes the current repository layout. It replaces older references to `presentation/` and `controllers/`; the live Flutter codebase uses `view/` and `viewmodels/` under `lib/features/`.
 
@@ -10,6 +10,8 @@ This document describes the current repository layout. It replaces older referen
 sline_app/
 ├── .agents/              # Local skills and workflows used by the coding agents
 ├── .cursor/              # Cursor agent definitions and project rules
+├── .github/workflows/    # CI pipeline (lint, test, build, architecture guard)
+├── .githooks/            # Pre-commit hook (format + analyze)
 ├── .TODO/                # Audits, plans, execution logs, QA notes, docs-sync notes
 ├── Sline_everything/     # Source-of-truth project documentation
 ├── assets/               # Bundled app assets
@@ -20,6 +22,7 @@ sline_app/
 ├── android/ ios/ web/    # Platform runners
 ├── linux/ macos/ windows/# Desktop runners
 ├── pubspec.yaml          # Flutter package manifest
+├── analysis_options.yaml # Lint rules (34 rules: core + safety + code quality)
 └── README.md             # Repository overview
 ```
 

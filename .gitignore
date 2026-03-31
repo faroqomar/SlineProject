@@ -70,3 +70,16 @@ ios/Podfile.lock
 .DS_Store
 # Local Netlify folder
 .netlify
+
+# Test coverage
+coverage/
+
+# Secrets and environment
+.env
+.env.local
+.env.*.local
+*.pem
+*.p12
+*.jks
+secrets.json
+credentials.json

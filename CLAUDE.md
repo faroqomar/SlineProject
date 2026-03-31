@@ -23,6 +23,20 @@ flutter build web                    # Web release
 flutter clean && flutter pub get     # Clean rebuild
 ```
 
+## Setup (First Time)
+
+```bash
+git config core.hooksPath .githooks  # Enable pre-commit hooks (format + analyze)
+```
+
+## CI/CD
+
+GitHub Actions pipeline (`.github/workflows/ci.yml`) runs on push/PR to `main`:
+- **Lint & Analyze**: `dart format --set-exit-if-changed .` + `flutter analyze --no-fatal-infos`
+- **Architecture Guard**: Checks MVVM boundary violations (warning-only, graduating to hard failure)
+- **Tests**: `flutter test --coverage` with coverage reporting
+- **Build**: APK (debug) + Web (release) compilation check
+
 ## Architecture
 
 **Strict MVVM** with feature-based modules and Provider state management.

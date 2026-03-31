@@ -152,7 +152,15 @@ void main() {
     testWidgets('renders populated state with insights and timeline groups', (
       tester,
     ) async {
-      final now = DateTime.now().toUtc();
+      // Use local "now" to build test timestamps so that the "Today"
+      // bucket is stable regardless of the host timezone offset.
+      final localNow = DateTime.now();
+      final todayNoon = DateTime(
+        localNow.year,
+        localNow.month,
+        localNow.day,
+        12,
+      ).toUtc();
       final vm = _TestWalletViewModel(
         loaded: true,
         walletBalance: const WalletBalanceModel(
@@ -163,7 +171,7 @@ void main() {
         walletActivities: [
           _activity(
             id: 'txn-today',
-            createdAtUtc: now.subtract(const Duration(hours: 2)),
+            createdAtUtc: todayNoon,
             eventType: 'release_with_fee',
             amountGross: 1200,
             amountNet: 1100,
@@ -172,14 +180,14 @@ void main() {
           ),
           _activity(
             id: 'txn-week',
-            createdAtUtc: now.subtract(const Duration(days: 2)),
+            createdAtUtc: todayNoon.subtract(const Duration(days: 2)),
             eventType: 'gateway_escrow',
             amountGross: 400,
             relatedEntityType: 'task_request',
           ),
           _activity(
             id: 'txn-earlier',
-            createdAtUtc: now.subtract(const Duration(days: 12)),
+            createdAtUtc: todayNoon.subtract(const Duration(days: 12)),
             eventType: 'withdrawal_request',
             amountGross: 250,
           ),

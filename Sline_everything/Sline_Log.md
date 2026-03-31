@@ -1,6 +1,38 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2026-03-22
+**Last Updated:** 2026-04-01
+
+---
+
+## 🏷️ Quality Audit Phase A — CI/CD, Lint Rules, Architecture Guard (2026-04-01)
+
+### ✅ Implemented
+
+- **CI/CD — GitHub Actions:** Created `.github/workflows/ci.yml` with 4 jobs: Lint & Analyze (`dart format --set-exit-if-changed` + `flutter analyze --no-fatal-infos`), Architecture Guard (6 MVVM boundary checks, warning-only), Unit & Widget Tests (`flutter test --coverage` with lcov parsing to GitHub step summary), Build (APK debug + Web release matrix). Flutter 3.38.9 pinned. Triggers on `main` push/PR. Concurrency group with cancel-in-progress. Workflow-level `permissions: contents: read` for least-privilege.
+- **CI/CD — Architecture Guard:** 6 grep-based checks detect: (1) `Supabase.instance` in view layer, (2) view imports in viewmodels, (3) `Supabase.instance` in viewmodels, (4) `TextEditingController`/`GlobalKey<FormState>` in viewmodels, (5) `Navigator` calls in viewmodels, (6) repository imports in view layer. All violations output as `::warning::` annotations. Currently warning-only (`exit 0`); graduates to hard failure after Phase B.
+- **Pre-commit Hook:** Created `.githooks/pre-commit` with explicit failure messaging. Runs `dart format --set-exit-if-changed .` and `flutter analyze --no-fatal-infos`. Enable: `git config core.hooksPath .githooks`. Documented in `CLAUDE.md` under "Setup (First Time)".
+- **Lint Rules:** Upgraded `analysis_options.yaml` from 18 to 34 rules. Added 7 safety rules (`cancel_subscriptions`, `close_sinks`, `no_duplicate_case_values`, `throw_in_finally`, `unnecessary_statements`, `literal_only_boolean_expressions`, `no_adjacent_strings_in_list`) and 9 code quality rules (`prefer_final_locals`, `avoid_void_async`, `prefer_if_null_operators`, `prefer_null_aware_operators`, `prefer_collection_literals`, `unnecessary_await_in_return`, `use_super_parameters`, `depend_on_referenced_packages`, `sort_child_properties_last`). Impact: +12 new issues only. Safety rules caught zero new violations.
+- **Test Fix:** Fixed timezone-sensitive widget test `test/widget/wallet/wallet_shared_body_test.dart`. Root cause: test used UTC-relative timestamps (`now.subtract(Duration(hours: 2))`) which fell on "yesterday" in local time when UTC offset crossed midnight. Fix: use local noon (`DateTime(year, month, day, 12).toUtc()`) for stable "Today" bucket. Also replaced fixed-pixel scroll with `tester.scrollUntilVisible`. All tests pass: 400 pass / 30 skip / 0 fail.
+- **Gitignore:** Added `coverage/` and secret file patterns (`.env*`, `*.pem`, `*.p12`, `*.jks`, `secrets.json`, `credentials.json`).
+
+### 📊 Impact
+
+- Every push/PR to `main` is now gated by format, analysis, tests, and build checks.
+- MVVM violations are visible in CI as warnings (6 documented violations currently detected).
+- Pre-commit hook blocks developers from committing unformatted or warning-level code locally.
+- 34 lint rules enforce type safety, resource cleanup, immutability, and dependency hygiene.
+- Test suite baseline established: 400 pass, ~27% line coverage.
+
+### 🔗 References
+
+- Audit: `.TODO/AUDIT_Quality_Architecture_2026-04-01.md` (Sections 3, 5, 6)
+- CI: `.github/workflows/ci.yml`
+- Hook: `.githooks/pre-commit`
+- Lint: `analysis_options.yaml`
+- CLAUDE.md: updated with "Setup (First Time)" and "CI/CD" sections
+- DEVELOPER_GUIDE.md: updated §10 (Testing & Quality) with §10.1–10.3
+- MVP_ROADMAP.md: updated §8 (Quality and Operations) with CI/CD, lint, guard rows
+- STRUCTURE.md: updated top-level overview to include `.github/`, `.githooks/`, `analysis_options.yaml`
 
 ---
 

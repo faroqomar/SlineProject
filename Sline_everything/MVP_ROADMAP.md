@@ -86,7 +86,11 @@ This roadmap tracks the current code-state of the repository. Status values are 
 
 | Area | Status | Notes |
 | --- | --- | --- |
-| Unit and widget test coverage | 🚧 In Progress | targeted coverage exists under `test/unit` and `test/widget`; ✅ RLS test infrastructure complete (26 tests in `test/rls/`) |
+| CI/CD pipeline | ✅ Completed | GitHub Actions: lint + test + build + architecture guard. `.github/workflows/ci.yml`. Added 2026-04-01. |
+| Pre-commit hook | ✅ Completed | `.githooks/pre-commit` runs format + analyze locally. Enable: `git config core.hooksPath .githooks`. Added 2026-04-01. |
+| Lint rules (34 rules) | ✅ Completed | `analysis_options.yaml`: 18 core + 7 safety + 9 code quality. Strong mode enabled. Updated 2026-04-01. |
+| Architecture guard | 🚧 In Progress | 6 MVVM boundary checks in CI (warning-only). Graduates to hard failure after Phase B fixes existing violations. Added 2026-04-01. |
+| Unit and widget test coverage | 🚧 In Progress | targeted coverage exists under `test/unit` and `test/widget`; ✅ RLS test infrastructure complete (26 tests in `test/rls/`); 400 pass / 30 skip / 0 fail as of 2026-04-01. Coverage: ~27%. |
 | Supabase migrations | ✅ Completed | repo contains live migration history under `supabase/migrations/` |
 | Edge functions | ✅ Completed | booking/payment functions are checked into `supabase/functions/` |
 | Docs sync discipline | ✅ Completed | docs now reflect current `view/viewmodels/data/services` layout and payment/runtime helpers |
