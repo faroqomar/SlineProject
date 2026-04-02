@@ -91,11 +91,13 @@ class Conversation {
     void parseMsg(Map<String, dynamic> m) {
       lastMessage = m['content'] as String?;
       if (m['created_at'] != null) {
-        lastMessageTime = DateTime.tryParse(m['created_at'] as String);
+        lastMessageTime =
+            DateTime.tryParse(m['created_at'] as String)?.toUtc();
       }
       lastMessageSenderId = m['sender_id'] as String?;
       if (m['seen_at'] != null) {
-        lastMessageSeenAt = DateTime.tryParse(m['seen_at'] as String);
+        lastMessageSeenAt =
+            DateTime.tryParse(m['seen_at'] as String)?.toUtc();
       }
     }
 
@@ -112,7 +114,7 @@ class Conversation {
       taskId: json['task_id'] as String?,
       user1Id: json['user1_id'] as String,
       user2Id: json['user2_id'] as String,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: DateTime.parse(json['created_at'] as String).toUtc(),
       taskTitle: json['task_title'] ?? json['tasks']?['title'] as String?,
       taskType: json['tasks']?['task_type'] as String?, // Parse task_type
       user1Name: json['user1_name'] as String?,
@@ -125,7 +127,7 @@ class Conversation {
       otherUserAvatar: json['other_user_avatar'] as String?,
       otherUserTyping: json['other_user_typing'] as bool? ?? false,
       presenceUpdatedAt: json['presence_updated_at'] != null
-          ? DateTime.tryParse(json['presence_updated_at'] as String)
+          ? DateTime.tryParse(json['presence_updated_at'] as String)?.toUtc()
           : null,
     );
   }
@@ -143,6 +145,8 @@ class Conversation {
       'user2_name': user2Name,
       'last_message': lastMessage,
       'last_message_time': lastMessageTime?.toIso8601String(),
+      'last_message_sender_id': lastMessageSenderId,
+      'last_message_seen_at': lastMessageSeenAt?.toIso8601String(),
       'other_user_name': otherUserName,
       'other_user_avatar': otherUserAvatar,
       'other_user_typing': otherUserTyping,

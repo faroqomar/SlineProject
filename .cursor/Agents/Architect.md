@@ -188,7 +188,16 @@ Evidence: SESSION_PhaseB emulator — `showSubmitRequestSheet` called 9+ times i
 - Prefer shared services and widgets for signed media behavior
 - Avoid mixing durable path semantics and display-URL semantics in the same model field
 
-### 4.5 Supabase Query Builder Pattern
+### 4.5 Constructor Refactoring: Preserve Field Immutability
+
+When refactoring a constructor to add optional DI parameters:
+- If fields were `late final` (assigned in constructor body), prefer restructuring to use an initializer list with `final` fields and ternary/`??` expressions.
+- Do NOT downgrade `late final` to `late` just to make conditional assignment work — this removes a compile-time immutability guarantee.
+- Pattern: `final X _field;` with `: _field = param ?? DefaultX()` in the initializer list.
+
+Evidence: Phase C — ChatVM fields were changed from `late final` to `late` to support conditional assignment, then reverted to `final` via initializer list restructuring after the Orchestrator audit flagged the mutability risk.
+
+### 4.6 Supabase Query Builder Pattern
 
 Supabase's Dart client uses a builder pattern where methods like `.eq()`, `.lt()`, `.gt()`, `.order()` return a `PostgrestFilterBuilder` that also implements `Future`. These are NOT fire-and-forget futures — they are builder chain methods.
 

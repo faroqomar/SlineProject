@@ -7,7 +7,40 @@
 
 > Historical review note: this document records review findings and fixes from earlier passes. Treat references to removed files or older structure as historical context; the current live structure is documented in `Sline_everything/STRUCTURE.md` and `Sline_everything/DEVELOPER_GUIDE.md`.
 
-## Current Guardrail Notes (2026-03-01)
+## Current Guardrail Notes (2026-04-02)
+
+### Constructor DI Testability (Phase C, 2026-04-02)
+
+**Pattern**: ViewModels that create services internally from `SupabaseClient` are untestable — mock services cannot be injected.
+
+**Rule**: All ViewModels MUST accept optional service parameters in their constructors with production defaults:
+```dart
+// Correct: services injectable, defaults to production
+WalletViewModel({WalletRepository? repo, AccountGuardService? accountGuardService, SupabaseClient? client})
+
+// Wrong: services created internally, no way to inject mocks
+WalletViewModel({SupabaseClient? client})
+```
+
+**When refactoring**: Use initializer list with `final` fields and `??` defaults. Do NOT use `late` (non-final) — it removes compile-time immutability guarantees.
+
+### Singleton Cleanup in Tests (Phase C, 2026-04-02)
+
+**Pattern**: VMs that register with `RoleSwitchCoordinator()` (singleton) in constructors will pollute subsequent tests if not cleaned up.
+
+**Rule**: Every test group for a VM that uses singletons MUST include:
+```dart
+tearDown(() {
+  viewModel.dispose();
+  RoleSwitchCoordinator().clearForTesting();
+});
+```
+
+### Auto-Loading Constructor Mock Pre-Configuration (Phase C, 2026-04-02)
+
+**Pattern**: VMs that call load/fetch/init methods in their constructor require ALL mock stubs to be configured BEFORE construction.
+
+**Rule**: If a VM auto-loads in constructor (like DashboardVM), setUp must configure every repo/service stub before calling the constructor. Missing any stub = `MissingStubError`.
 
 ### Navigation Consolidation Must Remove Orphaned Runtime Surfaces
 

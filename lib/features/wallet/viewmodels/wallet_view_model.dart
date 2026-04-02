@@ -8,11 +8,14 @@ import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/services/account_guard_service.dart';
 
 class WalletViewModel extends ChangeNotifier {
-  WalletViewModel({SupabaseClient? client})
-    : _repo = WalletRepository(client ?? Supabase.instance.client),
-      _accountGuardService = AccountGuardService(
-        client: client ?? Supabase.instance.client,
-      );
+  WalletViewModel({
+    WalletRepository? repo,
+    AccountGuardService? accountGuardService,
+    SupabaseClient? client,
+  }) : _repo = repo ?? WalletRepository(client ?? Supabase.instance.client),
+       _accountGuardService =
+           accountGuardService ??
+           AccountGuardService(client: client ?? Supabase.instance.client);
 
   final WalletRepository _repo;
   final AccountGuardService _accountGuardService;

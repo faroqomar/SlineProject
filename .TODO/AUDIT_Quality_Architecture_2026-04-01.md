@@ -93,18 +93,22 @@ Fix the patterns that hide real bugs.
 
 **Results:** `flutter analyze` dropped from 456 (initial Phase A baseline) → 0 issues. The intermediate count of 421 was after `prefer_single_quotes` auto-fixes had already been applied before Phase B started. All 400 tests pass. Architecture guard clean.
 
-### Phase C: Critical Tests (Week 3-4)
+### ~~Phase C: Critical Tests (Week 3-4)~~ DONE (2026-04-02)
 
 Cover the dangerous zones. Not chasing percentage — covering risk.
 
-| # | What to Test | Why It's Critical | Effort |
-|---|-------------|-------------------|--------|
-| C1 | `AuthSessionViewModel` | Controls login/logout/session. Broken = entire app inaccessible. | 1 day |
-| C2 | `WalletViewModel` | Financial data. Wrong balance = user trust destroyed. | 1 day |
-| C3 | Payment / booking integration (un-skip `booking_request_flow_test.dart`) | Payment flow is currently untested end-to-end. | 1 day |
-| C4 | `ChatViewModel` | Core communication. Highest daily usage feature. | 1-2 days |
-| C5 | `DashboardViewModel` — core slices only | 1149 lines. Don't test everything. Test: role switch, refresh, work items loading, error states. | 2 days |
-| C6 | DTO parsing / model mapping tests (see [4.9](#49-dto--mapper-contract-checks-missing)) | Data layer bugs are invisible from UI but cause cascading failures. | 2 days |
+| # | What to Test | Why It's Critical | Effort | Details |
+|---|-------------|-------------------|--------|---------|
+| C1 | ~~`AuthSessionViewModel`~~ | ~~Controls login/logout/session.~~ | ~~1 day~~ | **DONE (2026-04-02)** — 32 tests: construction, auth stream events, profile loading, logout, session expiry, dispose safety. |
+| C2 | ~~`WalletViewModel`~~ | ~~Financial data.~~ | ~~1 day~~ | **DONE (2026-04-02)** — 36 tests: balance loading, dedup, pagination, withdrawal+guard, errors. Constructor refactored for DI. |
+| C3 | ~~Payment / booking~~ | ~~Payment flow untested.~~ | ~~1 day~~ | **DONE (2026-04-02)** — 53 tests via TenderPaymentViewModel: submit, WebView redirect, recovery, error mapping, edge cases. |
+| C4 | ~~`ChatViewModel`~~ | ~~Core communication.~~ | ~~1-2 days~~ | **DONE (2026-04-02)** — 21 tests: conversation CRUD, messages, offers, realtime lifecycle, role switch teardown, dispose. Constructor refactored for DI. |
+| C5 | ~~`DashboardViewModel`~~ | ~~Main screen.~~ | ~~2 days~~ | **DONE (2026-04-02)** — 20 tests: construction+role loading, role switch, data refresh, tab lazy-loading, dispose safety. |
+| C6 | ~~DTO parsing / model mapping~~ | ~~Data layer bugs invisible.~~ | ~~2 days~~ | **DONE (2026-04-02)** — 7 new model test files (UserProfile, ProfileModel, Conversation, ChatOfferPayload, WalletBalanceModel, WalletActivityModel, DirectOffer) + 4 existing test extensions (BookingModel, Message, Task, TaskRequest). 144 DTO tests total. |
+
+**Infrastructure changes (2026-04-02):** WalletVM and ChatVM constructors refactored to accept optional service parameters (additive, backwards-compatible). Shared mock file created at `test/helpers/mock_services.dart` (8 mock classes). RoleSwitchCoordinator.clearForTesting() used in all Chat/Dashboard test tearDowns.
+
+**Results:** Test count: 400 → 706 (+306 new tests). All pass. flutter analyze: 0 issues. 14 of 26 ViewModels now tested (54%, up from 35%).
 
 ### Phase D: Harden (Month 2)
 
@@ -401,13 +405,13 @@ Each feature module should be thought of as having its own health profile:
 
 | Feature | Tests | Architecture | Lint | Critical Logic | Overall |
 |---------|-------|-------------|------|---------------|---------|
-| **auth** | Minimal (1 repo test, no VM test) | Clean | OK | Session management untested | **RED** |
-| **wallet** | Partial (service test, no VM test) | Clean | OK | Financial operations untested | **RED** |
+| **auth** | Good (repo + VM: 32 tests) | Clean | OK | Session lifecycle covered | **GREEN** |
+| **wallet** | Good (service + VM: 36 tests) | Clean | OK | Balance, pagination, withdrawal covered | **GREEN** |
 | **booking** | Good (VM + widget + model tests) | Clean | OK | Integration test skipped | **YELLOW** |
-| **payment** | Partial (demo service, config tests) | Clean | OK | Production flow gaps | **YELLOW** |
-| **tasks** | Good (VM + service + model + integration) | View has Supabase access (A1) | OK | Bid lifecycle well tested | **YELLOW** |
-| **chat** | Partial (service + widget, no VM test) | Clean | OK | Core feature untested | **YELLOW** |
-| **dashboard** | Widget tests only, no VM test | Clean | OK | 1149-line VM untested | **RED** |
+| **payment** | Good (TenderPaymentVM: 53 tests) | Clean | OK | Coordinator-driven flow covered | **GREEN** |
+| **tasks** | Good (VM + service + model + integration) | Clean | OK | Bid lifecycle + payment well tested | **GREEN** |
+| **chat** | Good (service + widget + VM: 21 tests) | Clean | OK | Core CRUD + realtime + offers covered | **GREEN** |
+| **dashboard** | Good (widget + VM: 20 tests) | Clean | OK | Role switch, refresh, lazy-load covered | **GREEN** |
 | **profile** | Good (VM + widget tests) | VM has controllers (A2) | OK | Architecture violation | **YELLOW** |
 | **work** | Contract test only | Clean | OK | Delivery state machine untested | **YELLOW** |
 | **notifications** | VM test exists | VM accesses Supabase directly (A6) | OK | — | **GREEN** |

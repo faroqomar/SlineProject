@@ -179,10 +179,33 @@ try {
 
 ## 10. Testing & Quality
 
-- **Unit**: services (mock Supabase), viewmodels state transitions.
+**Current state (Phase C, 2026-04-02):** 706 tests pass, 30 skipped, 0 failures. 14 of 26 ViewModels tested (54%). 14 model test files.
+
+- **Unit**: services (mock Supabase), viewmodels state transitions, model DTO parsing.
 - **Widget**: screen interactions (form validation, loading states, snackbars).
 - **Integration**: happy‑paths against staging Supabase (auth, RLS, flows).
+- **RLS**: 8 security test files validating policy enforcement.
 - **Checklists**: each feature doc ends with a testing checklist; follow it before merging.
+
+### 10.0 ViewModel Test Pattern (Constructor DI)
+
+All ViewModels use optional constructor parameters for dependency injection:
+
+```dart
+// Production: uses defaults
+WalletViewModel()
+
+// Test: inject mocks
+WalletViewModel(repo: mockRepo, accountGuardService: mockGuard)
+```
+
+Shared mock classes live in `test/helpers/mock_services.dart` (8 classes). Import via `test/helpers/helpers.dart` barrel.
+
+**Key patterns:**
+- Use `registerFallbackValue()` in `setUpAll` for types passed to `any(named:)`
+- Pre-configure ALL stubs BEFORE constructing VMs that auto-load in constructor (e.g., DashboardVM)
+- Add `RoleSwitchCoordinator().clearForTesting()` in `tearDown` for VMs that register with the singleton (ChatVM, DashboardVM)
+- Use `thenAnswer((_) async => throw Exception(...))` for async error mocking with `Future.wait`, NOT `thenThrow()`
 
 ### 10.1 CI/CD Pipeline
 

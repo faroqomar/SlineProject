@@ -19,3 +19,6 @@ export 'role_switch_helpers.dart';
 
 // Ledger RPC invoker for fee locking tests
 export 'ledger_rpc_invoker.dart';
+
+// Shared mock service classes for ViewModel tests
+export 'mock_services.dart';

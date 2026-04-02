@@ -364,6 +364,16 @@ When any agent adds, removes, or changes a public method on a ViewModel:
 
 Evidence: SESSION_PhaseB — B7 agent added `loadCategories()` to TaskViewModel but did not update the mock in `create_task_screen_test.dart`, causing test failure.
 
+### Step 3.3 — File Integrity Check (After Parallel Agent Execution)
+
+After background agents complete in parallel:
+1. Verify EVERY file they were supposed to create or modify by reading the first line.
+2. If any file starts with unexpected content (not valid Dart: `import`, `//`, `library`), flag it immediately as corrupted.
+3. Regenerate the corrupted file before proceeding to the next step.
+4. Log the corruption as `PROBLEM ENCOUNTERED` in the session log.
+
+Evidence: Phase C — a background agent corrupted `wallet_view_model_test.dart` (overwrote with non-Dart text). Detected only at full QA phase via `flutter analyze` returning 1903 errors.
+
 ### Step 4 — Integrate
 
 - Ensure pieces fit across MVVM layers

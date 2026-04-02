@@ -119,4 +119,10 @@ class ChatRepository {
     if (uid == null) throw Exception('User not logged in');
     return _service.deleteConversation(conversationId, uid);
   }
+
+  /// Remove all Supabase realtime channels. Used during role switch teardown
+  /// to disconnect from Supabase realtime (not just cancel Dart streams).
+  Future<void> removeAllChannels() async {
+    await _client.removeAllChannels();
+  }
 }

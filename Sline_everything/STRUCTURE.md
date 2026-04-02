@@ -220,8 +220,12 @@ test/
 ├── fixtures/           # Test data fixtures
 │   └── profiles.dart   # Role switching fixtures, JWT payloads, error responses
 ├── helpers/            # Test utilities and mocks
-│   ├── mock_supabase.dart      # Mock Supabase client for unit testing
-│   └── role_switch_helpers.dart # Role switch coordinator mock, simulator
+│   ├── helpers.dart             # Barrel file — re-exports all helpers
+│   ├── mock_supabase.dart       # Mock Supabase client for unit testing
+│   ├── mock_supabase_rpc.dart   # Mock RPC helper with chainable query support
+│   ├── mock_services.dart       # Shared mock classes (8): MockWalletRepository, MockAccountGuardService, MockChatRepository, MockDirectOffersService, MockDashboardRepository, MockDashboardCacheService, MockBookingService, MockTaskService
+│   ├── role_switch_helpers.dart # Role switch coordinator mock, simulator
+│   └── ledger_rpc_invoker.dart  # Ledger RPC helpers for fee locking tests
 ├── rls/                # RLS policy security tests
 │   ├── rls_test_helper.dart    # RLS assertion library (8 methods)
 │   ├── fixtures/
@@ -231,22 +235,37 @@ test/
 │   └── role_switch_jwt_test.dart  # JWT policy tests (7 tests)
 ├── unit/
 │   ├── auth/
+│   │   ├── auth_repository_test.dart
+│   │   └── auth_session_view_model_test.dart  # Phase C: 32 tests (session lifecycle, auth stream, profile, logout, dispose)
 │   ├── booking/
+│   ├── chat/
+│   │   └── chat_view_model_test.dart          # Phase C: 21 tests (CRUD, messages, offers, realtime, role switch, dispose)
 │   ├── core/
 │   ├── dashboard/
+│   │   ├── dashboard_permission_service_test.dart
+│   │   └── dashboard_view_model_test.dart     # Phase C: 20 tests (role loading, role switch, refresh, lazy-loading, dispose)
 │   ├── home/
 │   ├── management/
-│   ├── models/
+│   ├── models/                                # 14 test files (7 original + 7 new in Phase C)
 │   ├── profile/
-│   │   └── role_switch_result_test.dart  # RoleSwitchResult model tests
+│   │   └── role_switch_result_test.dart
 │   ├── proposals/
 │   ├── safety/
-│   │   └── dispute_service_test.dart    # DisputeService submitDispute + hasOpen* tests
+│   │   └── dispute_service_test.dart
 │   ├── tasks/
-│   └── tender/               # **NEW (v2.20)** Tender lifecycle unit tests
-│       ├── award_expiration_monitor_test.dart  # Timer and urgency tests
-│       ├── task_requests_service_test.dart      # Exception handling tests
-│       └── task_requests_view_model_test.dart   # Flow logic tests
+│   │   ├── task_view_model_test.dart
+│   │   ├── task_filter_view_model_test.dart
+│   │   ├── tender_payment_coordinator_test.dart
+│   │   └── tender_payment_view_model_test.dart  # Phase C: 53 tests (submit, WebView, recovery, error mapping, edge cases)
+│   ├── tender/               # Tender lifecycle unit tests
+│   │   ├── award_expiration_monitor_test.dart
+│   │   ├── task_requests_service_test.dart
+│   │   └── task_requests_view_model_test.dart
+│   └── wallet/
+│       ├── ledger_service_test.dart
+│       ├── wallet_presentation_helper_test.dart
+│       ├── wallet_service_test.dart
+│       └── wallet_view_model_test.dart          # Phase C: 36 tests (balance, dedup, pagination, withdrawal, errors)
 └── widget/
     ├── app/
     ├── auth/

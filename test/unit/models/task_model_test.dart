@@ -127,4 +127,117 @@ void main() {
       },
     );
   });
+
+  group('Task model extended coverage', () {
+    test('Minimal JSON (only required fields) — no crash', () {
+      final json = <String, dynamic>{
+        'id': 'task-min',
+        'title': 'Minimal',
+        'description': 'Desc',
+        'budget': 50,
+        'user_id': 'u-1',
+        'status': 'open',
+        'created_at': '2026-04-01T00:00:00Z',
+      };
+      final task = Task.fromJson(json);
+
+      expect(task.id, 'task-min');
+      expect(task.title, 'Minimal');
+      expect(task.budget, 50.0);
+      expect(task.userId, 'u-1');
+      expect(task.status, TaskStatus.open);
+      expect(task.taskType, TaskType.tender); // default
+      expect(task.skills, isEmpty);
+      expect(task.categoryId, isNull);
+      expect(task.category, isNull);
+      expect(task.categoryName, isNull);
+      expect(task.userName, isNull);
+      expect(task.userAvatar, isNull);
+      expect(task.authorSellerLevel, isNull);
+      expect(task.assignedFreelancerId, isNull);
+      expect(task.imagePaths, isEmpty);
+      expect(task.packages, isNull);
+      expect(task.offers, 0);
+      expect(task.deadline, isNull);
+    });
+
+    test('Each TaskStatus round-trips through serialization', () {
+      // Expected DB strings for each TaskStatus
+      final expectedDbStrings = <TaskStatus, String>{
+        TaskStatus.open: 'open',
+        TaskStatus.assigned: 'assigned',
+        TaskStatus.inProgress: 'in_progress',
+        TaskStatus.completed: 'completed',
+        TaskStatus.closed: 'closed',
+        TaskStatus.canceled: 'canceled',
+        TaskStatus.draft: 'draft',
+      };
+
+      for (final entry in expectedDbStrings.entries) {
+        final task = Task(
+          id: 'rt-${entry.key.name}',
+          title: 'RT',
+          description: 'Round trip',
+          budget: 10,
+          userId: 'u-1',
+          status: entry.key,
+          createdAt: DateTime.utc(2026, 4, 1),
+        );
+
+        final json = task.toJson(includeSystemFields: true);
+        expect(
+          json['status'],
+          entry.value,
+          reason: '${entry.key} should serialize to ${entry.value}',
+        );
+
+        final restored = Task.fromJson(json);
+        expect(
+          restored.status,
+          entry.key,
+          reason: '${entry.key} should round-trip',
+        );
+      }
+    });
+
+    test(
+      "Both 'in_progress' and 'inProgress' map to TaskStatus.inProgress",
+      () {
+        final fromSnake = Task.fromJson(
+          _taskJson(overrides: {'status': 'in_progress'}),
+        );
+        expect(fromSnake.status, TaskStatus.inProgress);
+
+        final fromCamel = Task.fromJson(
+          _taskJson(overrides: {'status': 'inProgress'}),
+        );
+        expect(fromCamel.status, TaskStatus.inProgress);
+      },
+    );
+
+    test('owner_id vs user_id fallback (prefers owner_id)', () {
+      // Case 1: owner_id present — wins over user_id
+      final withOwner = Task.fromJson(
+        _taskJson(
+          overrides: {'owner_id': 'owner-wins', 'user_id': 'user-loses'},
+        ),
+      );
+      expect(withOwner.userId, 'owner-wins');
+
+      // Case 2: owner_id absent, client_id absent — falls back to user_id
+      final withoutOwner = Task.fromJson(
+        _taskJson(overrides: {'user_id': 'user-fallback'}),
+      );
+      expect(withoutOwner.userId, 'user-fallback');
+
+      // Case 3: owner_id absent, client_id present — uses client_id before user_id
+      final withClient = Task.fromJson(<String, dynamic>{
+        ..._taskJson(),
+        'owner_id': null,
+        'client_id': 'client-middle',
+        'user_id': 'user-last',
+      });
+      expect(withClient.userId, 'client-middle');
+    });
+  });
 }

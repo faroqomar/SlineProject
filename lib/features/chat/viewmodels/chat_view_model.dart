@@ -31,21 +31,23 @@ import '../../direct_offers/services/direct_offers_service.dart';
 /// - Active conversation subscription runs only when viewing a specific chat
 /// - This prevents unnecessary updates and conserves resources
 class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
-  ChatViewModel({SupabaseClient? client}) {
-    _repo = ChatRepository(client ?? Supabase.instance.client);
-    _accountGuardService = AccountGuardService(
-      client: client ?? Supabase.instance.client,
-    );
-    _directOffersService = DirectOffersService(
-      client ?? Supabase.instance.client,
-    );
+  ChatViewModel({
+    ChatRepository? repo,
+    AccountGuardService? accountGuardService,
+    DirectOffersService? directOffersService,
+    SupabaseClient? client,
+  }) : _repo = repo ?? ChatRepository(client ?? Supabase.instance.client),
+       _accountGuardService = accountGuardService ??
+           AccountGuardService(client: client ?? Supabase.instance.client),
+       _directOffersService = directOffersService ??
+           DirectOffersService(client ?? Supabase.instance.client) {
     // Register with coordinator for role switch teardown
     RoleSwitchCoordinator().register(this);
   }
 
-  late final ChatRepository _repo;
-  late final AccountGuardService _accountGuardService;
-  late final DirectOffersService _directOffersService;
+  final ChatRepository _repo;
+  final AccountGuardService _accountGuardService;
+  final DirectOffersService _directOffersService;
 
   final List<Conversation> conversations = [];
   final List<Message> currentMessages = [];
@@ -115,14 +117,10 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
 
     // Also remove Supabase realtime channels (not just Dart streams)
     try {
-      final client = Supabase.instance.client;
-      await client.removeAllChannels();
+      await _repo.removeAllChannels();
       AppLogger.d('chat_removed_all_supabase_channels', tag: 'ChatVM');
     } on Exception catch (e) {
       AppLogger.w('chat_remove_channels_warning: $e', tag: 'ChatVM');
-    } on Error catch (e) {
-      // Supabase not initialized (e.g., in tests)
-      AppLogger.w('chat_remove_channels_error: $e', tag: 'ChatVM');
     }
 
     // Clear all cached data
@@ -274,7 +272,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
                 _notify();
               }
             })
-            .catchError((e) {
+            .onError<Exception>((e, st) {
               _fetchingConversationIds.remove(message.conversationId);
               AppLogger.w(
                 'getConversationById failed for ${message.conversationId}',

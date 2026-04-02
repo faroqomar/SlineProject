@@ -24,6 +24,17 @@ description: Implementation Architect & Strategy Lead with Session Log Initializ
 - If a plan could be written as 3 phases, prefer breaking it into more phases and smaller sub-phases so each task is easier for the execution agent to focus on.
 - Every phase, every sub-phase, and every step must explicitly mention which agent owns it.
 
+### 0.1 Test Plan Self-Verification (Required Before Finalizing Test-Heavy Plans)
+
+Before finalizing any plan that includes unit tests, the Planner MUST self-verify:
+1. Can every target class be constructed with mock dependencies? (See §2.2.1)
+2. Are singleton cleanup methods documented? (See §2.2.2)
+3. Are auto-loading constructors flagged with mock pre-configuration? (See §2.2.3)
+
+If ANY check fails, add an infrastructure phase BEFORE the first test phase.
+
+Evidence: Phase B and Phase C both required @PlanCritic to catch infrastructure gaps that @SlinePlanner missed. This is a 2-session systemic pattern.
+
 ---
 
 ## 1) Identity
@@ -77,6 +88,38 @@ Scan the relevant layers in the Flutter and backend project:
 - `supabase/migrations/` — schema history and rollout patterns
 - `supabase/functions/` — edge functions and shared helpers
 - Related admin / dashboard code if privileged flows exist
+
+### 2.2.1 Constructor DI Verification (Required When Planning Tests)
+
+When the plan includes unit tests for ViewModels, Services, or Repositories:
+1. Read EVERY target class's constructor.
+2. Verify that ALL dependencies (services, repositories, clients) can be injected via optional constructor parameters.
+3. If a target class creates dependencies internally (e.g., `_repo = WalletRepository(client ?? Supabase.instance.client)` in the constructor body), the plan MUST include a constructor refactoring sub-phase BEFORE the test-writing phases.
+4. Document the DI pattern used by each target class: "fully injectable" (like DashboardVM/BookingVM), "client-injectable" (like WalletVM pre-refactor), or "not injectable" (hard-coded dependencies).
+5. Note whether `Supabase.instance` appears in any fallback — these classes need special test environment handling or refactoring.
+
+Evidence: Phase C — WalletVM and ChatVM required constructor refactoring (Phase 1) that was not in the original plan. @PlanCritic caught this as a FAIL on the Test Infrastructure Gate.
+
+### 2.2.2 Singleton & Static State Detection (Required When Planning Tests)
+
+When the plan includes unit tests for classes that interact with singletons or static state:
+1. Grep for singleton patterns in target classes: `static final`, `factory Constructor() => _instance`, `register(this)`, `Coordinator()`.
+2. For EACH singleton found, verify whether a `clearForTesting()`, `reset()`, or equivalent method exists.
+3. If it exists: the plan MUST include `tearDown` cleanup instructions.
+4. If it doesn't exist: the plan MUST include a step to ADD a testing reset method to the singleton.
+5. Document all singletons in the plan's Evidence section.
+
+Evidence: Phase C — ChatVM and DashboardVM register with RoleSwitchCoordinator (singleton). Omitting `clearForTesting()` in tearDown would cause cross-test pollution and random CI failures.
+
+### 2.2.3 Auto-Loading Constructor Detection (Required When Planning Tests)
+
+When the plan includes unit tests for classes with DI constructors:
+1. Check if the constructor body or initializer calls any methods (load, fetch, init, sync, subscribe).
+2. If yes: the plan MUST specify that ALL mock stubs must be configured BEFORE VM construction in setUp.
+3. Include an explicit "Default Mock Configuration" step listing every method that needs a stub.
+4. Note the required await/microtask delay pattern for async constructor init.
+
+Evidence: Phase C — DashboardVM calls 3 load methods in constructor. Missing any mock stub = MissingStubError.
 
 ### 2.3 Supabase Reality Scan (ALWAYS REQUIRED)
 

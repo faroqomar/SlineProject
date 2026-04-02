@@ -4,6 +4,63 @@
 
 ---
 
+## 🏷️ Quality Audit Phase C — Critical Tests (2026-04-02)
+
+### ✅ Implemented
+
+**5 ViewModel Test Suites (162 tests):**
+- `AuthSessionViewModel` (32 tests): session lifecycle, auth stream events (signedIn/signedOut/tokenRefreshed/passwordRecovery/userUpdated), profile loading with retry, logout, session expiry flag consumption, dispose safety
+- `WalletViewModel` (36 tests): balance + activity parallel fetch, `ensureLoaded` deduplication, cursor-based pagination, withdrawal with AccountGuard check, FormatException vs generic error distinction
+- `TenderPaymentViewModel` (53 tests): submit happy path, WebView redirect flow, payment recovery, error mapping for 5 specific error codes (INVALID_STATE, PAYMENT_NOT_SUCCESS, PAYMENT_DEADLINE_EXPIRED, FORBIDDEN, TASK_REQUEST_NOT_FOUND), edge cases (expired deadline, already processing)
+- `ChatViewModel` (21 tests): conversation CRUD, message send/fetch, direct offer actions, realtime subscription lifecycle, role switch teardown, dispose with `_mounted` guard
+- `DashboardViewModel` (20 tests): construction with role loading, role switch with data refresh, lazy-loaded tab data (overview on init, bookings/inbox on demand), dispose safety with `_safeNotify` and `_abortIfDisposed`
+
+**7 New Model/DTO Test Files (129 tests):**
+- `UserProfile` (10): fromMap/toMap, all-nullable fields, UTC enforcement on forceLogoutAfterUtc
+- `ProfileModel` (22): defaults (activeRole='client', accountStatus='active', skills=[]), copyWith, UTC on createdAt/forceLogoutAfterUtc
+- `Conversation` (22): last_message as Map/List/emptyList/null (4 branches), taskTitle flat vs nested fallback, otherUserTyping default, presenceUpdatedAt, copyWith preserving presence
+- `ChatOfferPayload` (25): price type coercion (int/num/String), days vs legacy delivery fallback, toMap writes 'days' not 'delivery'
+- `WalletBalanceModel` (8): all fields default to 0, zero() factory
+- `WalletActivityModel` (11): numeric defaults, currency='IQD' default, UTC on createdAtUtc
+- `DirectOffer` (31): 22-field parsing, type coercion on price/days/feeRateAppliedBps, 8 nullable DateTimes, 6 computed getters
+
+**4 Existing Model Test Extensions (18 tests):**
+- `BookingModel` (+6): minimal JSON defaults, unknown status fallback, British 'cancelled' spelling, dueAtUtc fallback chain, round-trip for all BookingStatus values
+- `Message` (+5): null attachments, toJson excludes nulls, attachmentSize coercion, round-trip, MessageType enum round-trip
+- `Task` (+4): minimal JSON, TaskStatus round-trips, 'in_progress' vs 'inProgress' mapping, owner_id vs user_id fallback
+- `TaskRequest` (+3): all-optional defaults, OfferStatus round-trips, unknown status to OfferStatus.unknown
+
+**Infrastructure:**
+- Refactored `WalletViewModel` constructor: added optional `repo`, `accountGuardService` params (additive, backwards-compatible)
+- Refactored `ChatViewModel` constructor: added optional `repo`, `accountGuardService`, `directOffersService` params. Fields use `final` via initializer list.
+- Created `test/helpers/mock_services.dart`: 8 shared mock classes (MockWalletRepository, MockAccountGuardService, MockChatRepository, MockDirectOffersService, MockDashboardRepository, MockDashboardCacheService, MockBookingService, MockTaskService)
+- Updated `test/helpers/helpers.dart` barrel to export mock_services.dart
+
+**Production Code Fixes (pre-existing issues exposed by audit):**
+- `ChatViewModel.teardownForRoleSwitch()`: moved `removeAllChannels()` from `Supabase.instance.client` to `_repo.removeAllChannels()` (MVVM violation fix)
+- `ChatViewModel`: replaced `.catchError((e) {` with `.onError<Exception>()` (project convention fix)
+- `DirectOffer.fromJson`: added `.toUtc()` to all 6 DateTime fields
+- `Conversation.fromJson`: added `.toUtc()` to `createdAt`, `lastMessageTime`, `lastMessageSeenAt`, `presenceUpdatedAt`
+- `Conversation.toJson`: added missing `last_message_sender_id` and `last_message_seen_at` fields
+- `ChatRepository`: added `removeAllChannels()` method delegating to `_client.removeAllChannels()`
+
+#### 📊 Results
+
+- Tests: 400 → 706 (+306), 30 skipped, 0 failures
+- VMs tested: 9/26 (35%) → 14/26 (54%)
+- flutter analyze: 0 issues
+- Architecture guard: all 6 checks pass
+
+#### 📋 References
+
+- Plan: `.TODO/PLAN_CriticalTests_2026-04-02.md`
+- Session log: `docs/LOG/SESSION_PLAN_CriticalTests_2026-04-02.md`
+- Master report: `.TODO/MASTER_REPORT_2026-04-02_PhaseC.md`
+- System evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-02_v2.md`
+- Audit: `.TODO/AUDIT_Quality_Architecture_2026-04-01.md` (Phase C section updated)
+
+---
+
 ## 🏷️ Quality Audit Phase B — Bug Exposure (2026-04-01)
 
 ### ✅ Implemented

@@ -344,4 +344,71 @@ void main() {
       expect(refunded.isActive, isFalse);
     });
   });
+
+  group('TaskRequest extended coverage', () {
+    test('All optional fields missing — no crash, uses defaults', () {
+      final map = <String, dynamic>{
+        'id': 'req-min',
+        'task_id': 'task-min',
+        'freelancer_id': 'fl-1',
+        'price': 100,
+        'status': 'pending',
+        'created_at': '2026-04-01T12:00:00Z',
+      };
+      final request = TaskRequest.fromMap(map);
+
+      expect(request.id, 'req-min');
+      expect(request.taskId, 'task-min');
+      expect(request.bidderId, 'fl-1');
+      expect(request.price, 100);
+      expect(request.days, 0); // default when days and duration_days both null
+      expect(request.note, isNull);
+      expect(request.status, OfferStatus.pending);
+      expect(request.paymentStatus, PaymentStatus.unpaid);
+      expect(request.bidderName, isNull);
+      expect(request.bidderAvatar, isNull);
+      expect(request.taskTitle, isNull);
+      expect(request.paymentDeadline, isNull);
+    });
+
+    test('Each OfferStatus round-trips correctly', () {
+      for (final status in OfferStatus.values) {
+        final request = TaskRequest(
+          id: 'rt-${status.name}',
+          taskId: 'task-rt',
+          bidderId: 'bidder-rt',
+          price: 200,
+          days: 3,
+          status: status,
+          createdAt: DateTime.utc(2026, 4, 1),
+        );
+
+        final map = request.toMap();
+        expect(
+          map['status'],
+          status.name,
+          reason: '${status.name} should serialize to its .name',
+        );
+
+        final restored = TaskRequest.fromMap(map);
+        expect(
+          restored.status,
+          status,
+          reason: '${status.name} should round-trip',
+        );
+      }
+    });
+
+    test('Unknown/unrecognized status string maps to OfferStatus.unknown', () {
+      final request = TaskRequest.fromMap(
+        _taskRequestMap(overrides: {'status': 'super_custom_status'}),
+      );
+      expect(request.status, OfferStatus.unknown);
+
+      final requestNull = TaskRequest.fromMap(
+        _taskRequestMap(overrides: {'status': null}),
+      );
+      expect(requestNull.status, OfferStatus.unknown);
+    });
+  });
 }

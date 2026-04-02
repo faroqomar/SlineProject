@@ -91,13 +91,14 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | Lint rules (34 rules) | ✅ Completed | `analysis_options.yaml`: 18 core + 7 safety + 9 code quality. Strong mode enabled. Updated 2026-04-01. |
 | Architecture guard | ✅ Completed | 6 MVVM boundary checks in CI (hard failure). Graduated 2026-04-01 after Phase B fixed all violations. |
 | Phase B: Bug Exposure | ✅ Completed | 48 unawaited_futures → 0, 258 bare catches → 0, 6 MVVM violations → 0. `flutter analyze` = 0 issues. Completed 2026-04-01. |
-| Unit and widget test coverage | 🚧 In Progress | 400 pass / 30 skip / 0 fail. Coverage: ~27%. `flutter analyze`: 0 issues. Phase C (critical tests) next. |
+| Phase C: Critical Tests | ✅ Completed | 706 pass / 30 skip / 0 fail (+306 tests). 14/26 VMs tested (54%). 14 model test files. WalletVM + ChatVM refactored for DI. Shared mock file created. Completed 2026-04-02. |
 | Supabase migrations | ✅ Completed | repo contains live migration history under `supabase/migrations/` |
 | Edge functions | ✅ Completed | booking/payment functions are checked into `supabase/functions/` |
 | Docs sync discipline | ✅ Completed | docs now reflect current `view/viewmodels/data/services` layout and payment/runtime helpers |
 
 ## 9. Current Focus
 
-1. Optional: HMAC in create edge and webhook signature verification (PAYMENT_HMAC_SECRET) for Hardened Payment Linking; Admin Orphan Queue and Payment Trace.
-2. Expand automated coverage around moderation/report/dispute edge cases.
+1. **Phase D: Harden** — Sentry/Crashlytics, god-file decomposition (DashboardVM 1149L, SubmitRequestSheet 919L, RequestsListScreen 1164L), pgTAP tests, coverage enforcement (70% target).
+2. Optional: HMAC in create edge and webhook signature verification (PAYMENT_HMAC_SECRET) for Hardened Payment Linking; Admin Orphan Queue and Payment Trace.
+3. Expand automated coverage around moderation/report/dispute edge cases.
 3. Keep `Sline_everything/` aligned with code and Supabase migrations after every flow change.
