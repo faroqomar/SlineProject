@@ -139,7 +139,7 @@ class _SignedAvatarState extends State<SignedAvatar> {
         _resolvedUrl = signed;
         _loading = false;
       });
-    } catch (_) {
+    } on Exception catch (_) {
       if (!mounted) return;
       setState(() => _loading = false);
     }

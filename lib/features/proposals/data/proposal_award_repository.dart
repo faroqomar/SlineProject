@@ -26,7 +26,7 @@ class ProposalAwardRepository {
         );
       }
       return result;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Proposals: awardOffer failed',
         tag: 'Proposals',
@@ -62,7 +62,7 @@ class ProposalAwardRepository {
         );
       }
       return result;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Proposals: finalizePayment failed',
         tag: 'Proposals',
@@ -87,7 +87,7 @@ class ProposalAwardRepository {
               )
               as Map<String, dynamic>;
       return result;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Proposals: payAwardedOffer failed',
         tag: 'Proposals',
@@ -118,7 +118,7 @@ class ProposalAwardRepository {
         );
       }
       return result;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Proposals: cancelAwardedOffer failed',
         tag: 'Proposals',
@@ -145,7 +145,7 @@ class ProposalAwardRepository {
             ),
           )
           .toList();
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Proposals: getClientAwardedUnpaid failed',
         tag: 'Proposals',
@@ -172,7 +172,7 @@ class ProposalAwardRepository {
             ),
           )
           .toList();
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Proposals: getFreelancerAwardedUnpaid failed',
         tag: 'Proposals',

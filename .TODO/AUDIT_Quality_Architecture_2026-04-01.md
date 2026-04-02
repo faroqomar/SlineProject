@@ -75,19 +75,23 @@ Lock down the codebase so no new damage gets in.
 
 **Prerequisite fix (2026-04-01):** Fixed timezone-sensitive widget test in `wallet_shared_body_test.dart` — used local noon instead of UTC-relative timestamps for stable "Today" bucket. Also fixed scroll to use `scrollUntilVisible` instead of fixed pixel offset. All tests pass: 400 passed, 30 skipped, 0 failures.
 
-### Phase B: Bug Exposure (Week 2)
+### ~~Phase B: Bug Exposure (Week 2)~~ DONE (2026-04-01)
 
 Fix the patterns that hide real bugs.
 
 | # | Task | Effort | Details |
 |---|------|--------|---------|
-| B1 | Fix 48 `unawaited_futures` | 4h | Review each. Add `await`, or wrap in `unawaited()` from `dart:async` for intentional fire-and-forget. |
-| B2 | Fix bare `catch` in critical paths first | 1 day | Change `catch (e)` to `on Exception catch (e)` in: wallet, payment, booking, auth ViewModels/services. Let `Error` subclasses propagate. |
-| B3 | Fix remaining bare `catch` blocks | 1 day | Same pattern across all other ViewModels and services. |
-| B4 | Remove `Supabase.instance` from `submit_request_sheet.dart` | 30m | Pass `userId` from ViewModel or inject via Provider. |
-| B5 | Move TextEditingControllers out of `ProfileViewModel` | 2h | ViewModel exposes `updateProfile(String name, String email, String bio)`. View owns controllers. |
-| B6 | Remove ChatScreen import + Navigator.push from `user_profile_view_model.dart` | 1h | Use callback or navigation service. |
-| B7 | Remove Repository imports from 3 view files | 1h | `create_task_screen.dart:11`, `public_profile_screen.dart:11`, `requests_list_screen.dart:12` — route through ViewModel. |
+| B1 | ~~Fix 48 `unawaited_futures`~~ | ~~4h~~ | **DONE (2026-04-01)** — All 48 wrapped in `unawaited()`. Added `import 'dart:async'` to 20 files. All were fire-and-forget (Navigator, StreamSubscription.cancel, ViewModel refresh). Zero remain. |
+| B2 | ~~Fix bare `catch` in critical paths~~ | ~~1 day~~ | **DONE (2026-04-01)** — Changed `catch (e)` to `on Exception catch (e)` in wallet, payment, booking, auth ViewModels/services. |
+| B3 | ~~Fix remaining bare `catch` blocks~~ | ~~1 day~~ | **DONE (2026-04-01)** — All 258 violations fixed across 85 files. RLS tests use `on PostgrestException catch` for precision. Two places (`auth_form_view_model`, `notification_view_model`) needed `on Error catch` fallback for Supabase.instance initialization in tests. Zero remain. |
+| B4 | ~~Remove `Supabase.instance` from view~~ | ~~30m~~ | **DONE (2026-04-01)** — `submit_request_sheet.dart:36` now reads `context.read<AuthSessionViewModel>().currentUserId`. Moved read before await to fix `use_build_context_synchronously`. |
+| B5 | ~~Move TextEditingControllers from ProfileVM~~ | ~~2h~~ | **DONE (2026-04-01)** — `TextEditingController` instances (`nameController`, `emailController`, `bioController`) and `GlobalKey<FormState>` moved from `ProfileViewModel` to `EditProfileScreen` (view layer). ViewModel now exposes `loadedName`/`loadedEmail`/`loadedBio` getters; view seeds controllers in `didChangeDependencies`. `updateProfile()` takes `name`/`bio` as parameters. `signOut()` no longer takes `BuildContext` or calls `Navigator` — returns `bool`. `pickAndUploadPortfolioImage()` and `pickAndUploadAvatar()` no longer take `BuildContext` — use error state fields (`portfolioUploadError`, `avatarUploadError`). `material.dart` replaced with `foundation.dart`. |
+| B6 | ~~Remove ChatScreen import + Navigator~~ | ~~1h~~ | **DONE (2026-04-01)** — `user_profile_view_model.dart` no longer imports ChatScreen or calls Navigator.push. |
+| B7 | ~~Remove Repository imports from views~~ | ~~1h~~ | **DONE (2026-04-01)** — 3 views fixed: `create_task_screen.dart` uses `TaskViewModel.loadCategories()`, `public_profile_screen.dart` uses self-constructing `PublicProfileViewModel()`, `requests_list_screen.dart` uses self-constructing `TaskRequestsViewModel()`. |
+
+**Architecture guard graduated (2026-04-01):** Changed from `exit 0` (warning-only) to `exit 1` (hard failure). CI runs 6 checks: (1) Supabase.instance in views, (2) view imports in viewmodels, (3) Supabase.instance in viewmodel methods (excluding DI constructor defaults like `client ?? Supabase.instance.client`), (4) TextEditingController/GlobalKey in viewmodels, (5) Navigator calls in viewmodels, (6) repository imports in views. All 6 pass clean.
+
+**Results:** `flutter analyze` dropped from 456 (initial Phase A baseline) → 0 issues. The intermediate count of 421 was after `prefer_single_quotes` auto-fixes had already been applied before Phase B started. All 400 tests pass. Architecture guard clean.
 
 ### Phase C: Critical Tests (Week 3-4)
 

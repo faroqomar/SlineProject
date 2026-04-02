@@ -52,7 +52,7 @@ class WorkManagementService {
         json: {'id': id, 'type': type},
       );
       return null;
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       AppLogger.e(
         'Failed to fetch UnifiedWorkItem: $id ($type)',
         tag: 'WorkManagement',
@@ -98,7 +98,7 @@ class WorkManagementService {
         json: {'count': list.length, 'isClient': isClient},
       );
       return list;
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       AppLogger.e(
         'Failed to list UnifiedWorkItems',
         error: e,
@@ -126,7 +126,7 @@ class WorkManagementService {
 
       if (response == null) return null;
       return WorkContractModel.fromJson(response);
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       AppLogger.e(
         'Failed to fetch WorkContract: $entityId ($entityType)',
         error: e,
@@ -152,7 +152,7 @@ class WorkManagementService {
       return (response as List)
           .map((e) => ChangeRequestModel.fromJson(e))
           .toList();
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       AppLogger.e(
         'Failed to fetch ChangeRequests: $entityId ($entityType)',
         error: e,
@@ -178,7 +178,7 @@ class WorkManagementService {
       return (response as List)
           .map((e) => ExtensionRequestModel.fromJson(e))
           .toList();
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       AppLogger.e(
         'Failed to fetch ExtensionRequests: $entityId ($entityType)',
         error: e,
@@ -207,7 +207,7 @@ class WorkManagementService {
         'Work delivered',
         json: {'type': entityType, 'note_length': note.length},
       );
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       AppLogger.e(
         'Failed to submit delivery: $entityId ($entityType)',
         error: e,
@@ -241,7 +241,7 @@ class WorkManagementService {
           'note_length': note.length,
         },
       );
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       final msg = e.toString();
       final outcome = msg.contains('No revisions remaining')
           ? 'limit_reached'
@@ -304,7 +304,7 @@ class WorkManagementService {
         },
       );
       throw Exception(friendly);
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       final friendly = ErrorMapper.map(e);
       AppLogger.e(
         'Failed to approve delivery: $entityId ($entityType)',
@@ -341,7 +341,7 @@ class WorkManagementService {
         params: {'request_id': requestId},
       );
       AppLogger.d('Change request accepted');
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       AppLogger.e(
         'Failed to accept change request',
         error: e,
@@ -368,7 +368,7 @@ class WorkManagementService {
         'requester_id': requesterId,
       });
       AppLogger.d('Extension requested');
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       AppLogger.e('Failed to request extension', error: e, stackTrace: stack);
       rethrow;
     }
@@ -379,7 +379,7 @@ class WorkManagementService {
     try {
       await BookingService(_supabase).acceptBooking(bookingId);
       AppLogger.d('Booking accepted');
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       AppLogger.e('Failed to accept booking', error: e, stackTrace: stack);
       rethrow;
     }
@@ -390,7 +390,7 @@ class WorkManagementService {
     try {
       await BookingService(_supabase).declineBooking(bookingId);
       AppLogger.d('Booking declined (refunded)');
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       AppLogger.e('Failed to decline booking', error: e, stackTrace: stack);
       rethrow;
     }
@@ -404,7 +404,7 @@ class WorkManagementService {
         newStatus: BookingStatus.canceled,
       );
       AppLogger.d('Booking canceled');
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       AppLogger.e('Failed to cancel booking', error: e, stackTrace: stack);
       rethrow;
     }
@@ -420,7 +420,7 @@ class WorkManagementService {
 
       if (response == null) return null;
       return BookingModel.fromJson(response);
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to fetch booking: $id', error: e);
       return null; // Return null effectively "not found"
     }
@@ -434,7 +434,7 @@ class WorkManagementService {
         'full_name': response['full_name'],
         'avatar_url': response['avatar_url'],
       };
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to fetch profile: $userId', error: e);
       return null;
     }

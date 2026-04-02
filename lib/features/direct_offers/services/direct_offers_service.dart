@@ -427,7 +427,7 @@ class DirectOffersService {
         json: {'mappedMessage': friendly},
       );
       throw Exception(friendly);
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       final friendly = ErrorMapper.map(e);
       AppLogger.e(
         'completeOffer failed offerId=$offerId',

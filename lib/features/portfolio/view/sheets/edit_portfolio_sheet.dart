@@ -96,7 +96,7 @@ class _EditPortfolioSheetState extends State<EditPortfolioSheet> {
           ),
         );
       }
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Error saving portfolio item',
         tag: 'EditPortfolioSheet',

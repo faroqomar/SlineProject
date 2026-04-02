@@ -21,7 +21,7 @@ class SystemConfigViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       _config = await _service.fetchPublicConfig();
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'System config load failed',
         tag: 'SystemConfigVM',

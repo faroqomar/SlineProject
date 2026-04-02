@@ -1,3 +1,4 @@
+import '../../../core/services/logger_service.dart';
 import '../models/message_model.dart';
 
 /// Merges realtime message snapshots with existing list: dedupe by id, sort by created_at.
@@ -17,8 +18,18 @@ class ChatRealtimeMerger {
       try {
         final msg = fromJson(row);
         byId[msg.id] = msg;
-      } catch (_) {
-        // Skip unparseable row; do not log raw content
+      } on FormatException catch (e) {
+        AppLogger.w(
+          'Skipped unparseable message row (FormatException)',
+          tag: 'ChatMerger',
+          error: e,
+        );
+      } on TypeError catch (e) {
+        AppLogger.w(
+          'Skipped malformed message row (TypeError)',
+          tag: 'ChatMerger',
+          error: e,
+        );
       }
     }
     final list = byId.values.toList();

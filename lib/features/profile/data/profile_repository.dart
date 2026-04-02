@@ -67,7 +67,7 @@ class ProfileRepository {
         json: {'user_id': userId},
       );
       return profile;
-    } catch (error, stackTrace) {
+    } on Exception catch (error, stackTrace) {
       AppLogger.e(
         'profile_summary_fetch_failed',
         tag: 'ProfileRepo',
@@ -314,7 +314,7 @@ class ProfileRepository {
           .from('portfolio')
           .createSignedUrl(pathOrUrl, 7200); // 2 hours
       return signed;
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.w(
         'Failed to resolve portfolio image URL',
         tag: 'ProfileRepo',
@@ -339,7 +339,7 @@ class ProfileRepository {
     // 3. Mock Reviews (for now, as table doesn't exist)
     // TODO: Implement reviews table and fetching
     final reviews = [
-      ReviewItem(
+      const ReviewItem(
         client: 'Previous Client',
         rating: 5.0,
         comment: 'Great to work with! Delivered on time.',

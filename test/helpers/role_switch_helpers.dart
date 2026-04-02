@@ -138,7 +138,7 @@ class RoleSwitchCoordinatorMock {
       try {
         await vm.teardownForRoleSwitch();
         AppLogger.d('Teardown succeeded for ${vm.runtimeType}', tag: _logTag);
-      } catch (e) {
+      } on Exception catch (e) {
         final errorMsg = '${vm.runtimeType}: $e';
         errors.add(errorMsg);
         _teardownErrors.add(errorMsg);
@@ -317,7 +317,7 @@ class RoleSwitchSimulator {
         tag: _logTag,
       );
       return true;
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Role switch simulation failed', tag: _logTag, error: e);
       return false;
     }

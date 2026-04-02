@@ -55,7 +55,7 @@ class AccountGuardService {
     try {
       final guard = await evaluateCurrentUser();
       return guard.isAuthenticated && !guard.isRevoked && !guard.isRestricted;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Account guard action check failed',
         tag: 'AccountGuard',
@@ -92,7 +92,7 @@ class AccountGuardService {
         );
       }
       return null;
-    } catch (_) {
+    } on Exception catch (_) {
       return null;
     }
   }

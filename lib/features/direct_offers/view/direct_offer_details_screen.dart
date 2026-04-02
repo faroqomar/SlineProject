@@ -124,7 +124,7 @@ class _DirectOfferDetailsContentState
       if (paymentRequestId != null && paymentRequestId.isNotEmpty) {
         try {
           await vmAfter.recoverPaymentAfterCallback(paymentRequestId);
-        } catch (e) {
+        } on Exception catch (_) {
           await vmAfter.loadOffer();
         }
       } else {
@@ -279,14 +279,12 @@ class _DirectOfferDetailsContentState
                                 await vm.cancelOffer();
                                 if (!mounted) return;
                                 navigator.pop(true);
-                              } catch (e) {
+                              } on Exception catch (_) {
                                 if (!mounted) return;
                                 messenger.showSnackBar(
-                                  SnackBar(
+                                  const SnackBar(
                                     content: Text(
-                                      e is Exception
-                                          ? e.toString()
-                                          : 'Failed to cancel',
+                                      'Something went wrong. Please try again.',
                                     ),
                                   ),
                                 );
@@ -328,16 +326,10 @@ class _DirectOfferDetailsContentState
                                 ),
                               );
                               navigator.pop(true);
-                            } catch (e) {
+                            } on Exception catch (e) {
                               if (!context.mounted) return;
                               messenger.showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    e is Exception
-                                        ? e.toString()
-                                        : 'Failed to submit work',
-                                  ),
-                                ),
+                                SnackBar(content: Text(e.toString())),
                               );
                             }
                           },
@@ -373,16 +365,10 @@ class _DirectOfferDetailsContentState
                           const SnackBar(content: Text('Payment released.')),
                         );
                         navigator.pop(true);
-                      } catch (e) {
+                      } on Exception catch (e) {
                         if (!context.mounted) return;
                         messenger.showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              e is Exception
-                                  ? e.toString()
-                                  : 'Failed to complete',
-                            ),
-                          ),
+                          SnackBar(content: Text(e.toString())),
                         );
                       }
                     },
@@ -581,7 +567,7 @@ class _ApproveWithDisputeGuard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (completeInProgress) {
-      return AppButton(
+      return const AppButton(
         text: 'Releasing…',
         onPressed: null,
         isPrimary: true,
@@ -594,7 +580,11 @@ class _ApproveWithDisputeGuard extends StatelessWidget {
       ),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return AppButton(text: 'Checking…', onPressed: null, isPrimary: true);
+          return const AppButton(
+            text: 'Checking…',
+            onPressed: null,
+            isPrimary: true,
+          );
         }
         final hasOpenDispute = snapshot.data ?? true;
         return AppButton(

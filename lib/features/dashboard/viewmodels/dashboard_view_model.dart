@@ -309,7 +309,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
       if (_abortIfDisposed()) return;
 
       AppLogger.i('Role switched to: ${role.name}', tag: _kTag);
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to persist role', error: e, tag: _kTag);
 
       // Revert to PREVIOUS role (not flip)
@@ -356,7 +356,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
         _safeNotify();
         AppLogger.i('Synced role from DB: ${dbRole.name}', tag: _kTag);
       }
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to sync role from DB', error: e, tag: _kTag);
       // Keep cached role
     }
@@ -451,7 +451,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
         '✅ Overview refreshed in ${sw.elapsedMilliseconds}ms',
         tag: _kTag,
       );
-    } catch (e) {
+    } on Exception catch (e) {
       sw.stop();
       AppLogger.e('Overview load error', error: e, tag: _kTag);
     }
@@ -466,7 +466,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
       _bookingsLoaded = true;
       AppLogger.d('Bookings tab data loaded', tag: _kTag);
       _safeNotify();
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to load bookings', error: e, tag: _kTag);
       _safeNotify();
     }
@@ -489,7 +489,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
       );
       AppLogger.d('Inbox tab data loaded', tag: _kTag);
       _safeNotify();
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to load inbox', error: e, tag: _kTag);
       _safeNotify();
     }
@@ -594,7 +594,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
         '${_bookings.length} bookings)',
         tag: _kTag,
       );
-    } catch (e) {
+    } on Exception catch (e) {
       sw.stop();
       AppLogger.e(
         'Dashboard load error after ${sw.elapsedMilliseconds}ms',
@@ -619,7 +619,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
         return {'tasks': tasks};
       }
       return {'tasks': <Task>[]};
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to load management data', error: e, tag: _kTag);
       return {'tasks': <Task>[]};
     }
@@ -633,7 +633,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
       } else {
         return await _bookingService.listBookingsAsClient(limit: 50);
       }
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to fetch bookings', error: e, tag: _kTag);
       return [];
     }
@@ -649,7 +649,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
       } else {
         return await _taskService.getOffersSubmitted(uid);
       }
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to fetch inbox offers', error: e, tag: _kTag);
       return [];
     }
@@ -668,7 +668,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
         tenders = await _taskService.getPendingPaymentTenders();
       }
       return {'requests': requests, 'tenders': tenders};
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to fetch pending items', error: e, tag: _kTag);
       return {'requests': <BookingModel>[], 'tenders': <Task>[]};
     }
@@ -686,7 +686,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
         tag: '$_kTag.inbox',
       );
       _safeNotify();
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e(
         'Failed to withdraw offer=$offerId [trace:$tid]',
         error: e,
@@ -719,7 +719,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
       );
 
       return result;
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e(
         'Failed to award offer=${offer.id} task=${offer.taskId} [trace:$tid]',
         error: e,
@@ -756,7 +756,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
         'Paid for awarded offer=${offer.id} task=${offer.taskId} [trace:$tid]',
         tag: '$_kTag.inbox',
       );
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e(
         'Failed to pay for awarded offer=${offer.id} task=${offer.taskId} [trace:$tid]',
         error: e,
@@ -794,7 +794,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
         'Accepted offer=${offer.id} task=${offer.taskId} [trace:$tid]',
         tag: '$_kTag.inbox',
       );
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e(
         'Failed to accept offer=${offer.id} task=${offer.taskId} [trace:$tid]',
         error: e,
@@ -822,7 +822,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
         await _cacheService.cacheWorkItems(_workItems, _currentRole);
         await _cacheService.cacheCounters(_counters.toMap());
       }
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to fetch work items', error: e, tag: _kTag);
     }
   }
@@ -838,7 +838,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
         'Released funds for offer=$offerId [trace:$tid]',
         tag: '$_kTag.ledger',
       );
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e(
         'Failed to release funds for offer=$offerId [trace:$tid]',
         error: e,
@@ -857,7 +857,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
       await _fetchWorkItems();
       _safeNotify();
       AppLogger.i('Refunded offer=$offerId [trace:$tid]', tag: '$_kTag.ledger');
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e(
         'Failed to refund offer=$offerId [trace:$tid]',
         error: e,
@@ -881,7 +881,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
         'Rejected offer=${offer.id} [trace:$tid]',
         tag: '$_kTag.inbox',
       );
-    } catch (e) {
+    } on Exception catch (e) {
       if (e.toString().contains('Need reject_task_request RPC')) {
         AppLogger.w(
           'Reject needs RPC implementation [trace:$tid]',
@@ -920,7 +920,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
         AppLogger.i('Updated booking=$bookingId to ${status.name}', tag: _kTag);
         _safeNotify();
       }
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to update booking=$bookingId', error: e, tag: _kTag);
       rethrow; // Let UI handle error toast
     }
@@ -931,7 +931,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
       await _bookingService.acceptBooking(bookingId);
       AppLogger.i('Accepted booking=$bookingId', tag: _kTag);
       await refresh();
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to accept booking=$bookingId', error: e, tag: _kTag);
       rethrow;
     }
@@ -942,7 +942,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
       await _bookingService.declineBooking(bookingId);
       AppLogger.i('Declined booking=$bookingId', tag: _kTag);
       await refresh();
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to decline booking=$bookingId', error: e, tag: _kTag);
       rethrow;
     }
@@ -956,7 +956,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
       );
       AppLogger.i('Canceled booking=$bookingId', tag: _kTag);
       await refresh();
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to cancel booking=$bookingId', error: e, tag: _kTag);
       rethrow;
     }
@@ -973,7 +973,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
         'Cancelled awarded offer=$requestId [trace:$tid]',
         tag: '$_kTag.inbox',
       );
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e(
         'Failed to cancel awarded offer=$requestId [trace:$tid]',
         error: e,
@@ -1055,7 +1055,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
 
       // Refresh to reflect changes
       await _loadData();
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e(
         'Failed primary action=${item.primaryActionType.name} item=${item.id}',
         error: e,

@@ -47,7 +47,7 @@ class AppLogger {
         if (json.trim().startsWith('{') || json.trim().startsWith('[')) {
           try {
             data = jsonDecode(json);
-          } catch (_) {
+          } on Exception catch (_) {
             return json; // Return raw string if not valid JSON
           }
         } else {
@@ -74,7 +74,10 @@ class AppLogger {
       );
 
       return pretty;
-    } catch (e) {
+    } on Exception catch (_) {
+      return json.toString();
+    } on Error catch (_) {
+      // JsonUnsupportedObjectError and other encoding errors
       return json.toString();
     }
   }

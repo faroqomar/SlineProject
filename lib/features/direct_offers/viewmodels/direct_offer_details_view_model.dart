@@ -83,9 +83,9 @@ class DirectOfferDetailsViewModel extends ChangeNotifier {
     try {
       _offer = await _directOffersService.getOffer(offerId);
       _error = _offer == null ? 'Offer not found.' : null;
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to load offer=$offerId', error: e, tag: _kTag);
-      _error = e is Exception ? e.toString() : 'Failed to load offer.';
+      _error = e.toString();
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -101,7 +101,7 @@ class DirectOfferDetailsViewModel extends ChangeNotifier {
     try {
       await _directOffersService.payNow(offerId);
       await loadOffer();
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('payNow failed offer=$offerId', error: e, tag: _kTag);
       rethrow;
     } finally {
@@ -119,7 +119,7 @@ class DirectOfferDetailsViewModel extends ChangeNotifier {
     try {
       await _directOffersService.cancelAcceptedOffer(offerId);
       await loadOffer();
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('cancelOffer failed offer=$offerId', error: e, tag: _kTag);
       rethrow;
     } finally {
@@ -146,7 +146,7 @@ class DirectOfferDetailsViewModel extends ChangeNotifier {
     try {
       await _directOffersService.markDelivered(offerId);
       await loadOffer();
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('markDelivered failed offer=$offerId', error: e, tag: _kTag);
       rethrow;
     } finally {
@@ -164,7 +164,7 @@ class DirectOfferDetailsViewModel extends ChangeNotifier {
     try {
       await _directOffersService.completeOffer(offerId);
       await loadOffer();
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('completeOffer failed offer=$offerId', error: e, tag: _kTag);
       rethrow;
     } finally {

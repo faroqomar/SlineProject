@@ -69,7 +69,7 @@ class WalletViewModel extends ChangeNotifier {
       }
       hasMore = txns.length == 20;
       _hasLoadedWallet = true;
-    } catch (e) {
+    } on Exception catch (e) {
       error = e.toString();
       AppLogger.e('Failed to load wallet', error: e);
     } finally {
@@ -93,7 +93,7 @@ class WalletViewModel extends ChangeNotifier {
         _cursor = txns.last.createdAtUtc.toUtc().toIso8601String();
       }
       hasMore = txns.length == 20;
-    } catch (e) {
+    } on Exception catch (e) {
       error = e.toString();
       AppLogger.e('Failed to load more activities', error: e);
     } finally {
@@ -137,7 +137,7 @@ class WalletViewModel extends ChangeNotifier {
       error = e.message;
       AppLogger.w('Withdrawal failed: ${e.message}', tag: 'Wallet');
       return false;
-    } catch (e) {
+    } on Exception catch (e) {
       error = 'Failed to request withdrawal. Please try again.';
       AppLogger.e('Withdrawal request failed', error: e, tag: 'Wallet');
       return false;

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:sline_app/features/profile/view/widgets/profile_preview_modal.dart';
 import 'package:intl/intl.dart';
@@ -89,7 +91,7 @@ class WorkItemCard extends StatelessWidget {
           conversationId: item.conversationId,
         );
         if (result == true && context.mounted) {
-          context.read<DashboardViewModel>().refresh();
+          unawaited(context.read<DashboardViewModel>().refresh());
         }
       },
       margin: const EdgeInsets.only(bottom: AppDimens.p16),

@@ -34,7 +34,7 @@ class SafetyViewModel extends ChangeNotifier {
         category: category,
       );
       return true;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       error = _mapError(e);
       AppLogger.e(
         'Submit report failed',
@@ -96,7 +96,7 @@ class SafetyViewModel extends ChangeNotifier {
         defendantId: defendantId,
       );
       return true;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       error = _mapError(e);
       AppLogger.e(
         'Submit dispute failed',

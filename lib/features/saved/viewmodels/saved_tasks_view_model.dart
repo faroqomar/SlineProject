@@ -43,7 +43,7 @@ class SavedTasksViewModel extends ChangeNotifier {
       _savedTaskIds
         ..clear()
         ..addAll(list.map((e) => e.id));
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to load saved tasks',
         tag: 'Saved',
@@ -71,11 +71,11 @@ class SavedTasksViewModel extends ChangeNotifier {
       // Also reload full tasks list
       try {
         _savedTasks = await service.listMineWithDetails();
-      } catch (_) {
+      } on Exception catch (_) {
         // ignore errors here
       }
       return nowSaved;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to toggle saved task',
         tag: 'Saved',

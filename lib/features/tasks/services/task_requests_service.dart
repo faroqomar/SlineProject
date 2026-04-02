@@ -93,7 +93,7 @@ class TaskRequestsService {
           .limit(1);
       if (rows.isEmpty) return null;
       return TaskRequest.fromMap(rows.first as Map<String, dynamic>);
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to load existing active offer for task $taskId',
         tag: 'Offers',
@@ -145,7 +145,7 @@ class TaskRequestsService {
         stackTrace: st,
       );
       return null;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Unexpected error fetching bid expiration time for $bidId',
         tag: 'Offers',
@@ -232,7 +232,7 @@ class TaskRequestsService {
         tag: 'Offers',
       );
       return BidReplaceabilityResult.cannotReplace(existingBid);
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to check bid replaceability for task $taskId',
         tag: 'Offers',
@@ -283,14 +283,14 @@ class TaskRequestsService {
 
     try {
       // Select * from task_requests and join profiles using explicit FK
-      final query = _client
+      var query = _client
           .from('task_requests')
           .select(_selectWithProfile)
           .eq('task_id', taskId)
           .is_('deleted_at', null);
 
       if (before != null) {
-        query.lt('created_at', before.toUtc().toIso8601String());
+        query = query.lt('created_at', before.toUtc().toIso8601String());
       }
 
       final data = await query
@@ -303,7 +303,7 @@ class TaskRequestsService {
 
       AppLogger.i('Loaded ${result.length} offers', tag: 'Offers');
       return result;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to list offers',
         tag: 'Offers',
@@ -378,7 +378,7 @@ class TaskRequestsService {
         stackTrace: st,
       );
       throw Exception(userMessage);
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to submit offer',
         tag: 'Offers',
@@ -449,7 +449,7 @@ class TaskRequestsService {
         stackTrace: st,
       );
       throw Exception(userMessage);
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to replace offer',
         tag: 'Offers',
@@ -496,7 +496,7 @@ class TaskRequestsService {
         stackTrace: st,
       );
       throw _mapAcceptError(e);
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to accept offer',
         tag: 'Offers',
@@ -568,7 +568,7 @@ class TaskRequestsService {
         stackTrace: st,
       );
       throw Exception(userMessage);
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to reject offer',
         tag: 'Offers',

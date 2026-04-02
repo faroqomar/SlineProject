@@ -73,7 +73,7 @@ class SearchService {
 
         return Task.fromJson(taskJson);
       }).toList();
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e('Search tasks failed', error: e, stackTrace: st);
       // Return empty list on search error? Or rethrow?
       // Rethrowing allows VM to show error state.
@@ -95,7 +95,7 @@ class SearchService {
         limit: limit,
         offset: offset,
       );
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e('Search profiles failed', error: e, stackTrace: st);
       throw Exception(ErrorMapper.map(e));
     }
@@ -108,7 +108,7 @@ class SearchService {
     if (userIds.isEmpty) return {};
     try {
       return await _profileSummaryService.fetchByIds(userIds);
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.w('Failed to enrich search results with profiles: $e');
       return {};
     }
@@ -130,7 +130,7 @@ class SearchService {
         map[row['id'] as String] = row as Map<String, dynamic>;
       }
       return map;
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.w('Failed to enrich search results with categories: $e');
       return {};
     }

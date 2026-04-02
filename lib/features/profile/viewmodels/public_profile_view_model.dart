@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/profile/data/profile_repository.dart';
 import 'package:sline_app/features/profile/models/freelancer_profile.dart';
@@ -10,7 +11,17 @@ class PublicProfileViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
-  PublicProfileViewModel(this._repository);
+  PublicProfileViewModel({
+    ProfileRepository? repository,
+    SupabaseClient? client,
+  }) : _repository =
+           repository ?? ProfileRepository(client ?? Supabase.instance.client) {
+    AppLogger.d(
+      'PublicProfileViewModel created'
+      '${repository == null ? " (self-constructed ProfileRepository)" : ""}',
+      tag: 'PublicProfileViewModel',
+    );
+  }
 
   FreelancerProfile? get profile => _profile;
   bool get isLoading => _isLoading;
@@ -23,7 +34,7 @@ class PublicProfileViewModel extends ChangeNotifier {
 
     try {
       _profile = await _repository.getPublicProfile(userId);
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       _error = 'Failed to load profile';
       AppLogger.e(
         'Error loading public profile',

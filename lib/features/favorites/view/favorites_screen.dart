@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -110,12 +112,14 @@ class _FavoritesView extends StatelessWidget {
                       // Handle double-tap or error (conversation is null)
                       if (convo == null) return;
                       if (!context.mounted) return;
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => ChatScreen(conversation: convo),
+                      unawaited(
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => ChatScreen(conversation: convo),
+                          ),
                         ),
                       );
-                    } catch (e) {
+                    } on Object catch (e) {
                       AppLogger.e(
                         'Chat start failed',
                         tag: 'Favorites',

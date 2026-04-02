@@ -105,7 +105,7 @@ class RoleSwitchCoordinator {
             'durationMs': vmDuration.inMilliseconds,
           },
         );
-      } catch (e, stackTrace) {
+      } on Exception catch (e, stackTrace) {
         final errorMsg = '${vm.runtimeType}: $e';
         errors.add(errorMsg);
         AppLogger.e(

@@ -35,7 +35,7 @@ class MyServicesViewModel extends ChangeNotifier {
     try {
       _services = await _repository.fetchMyServices();
       AppLogger.i('Loaded ${_services.length} services', tag: _kTag);
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to load services',
         error: e,
@@ -71,7 +71,7 @@ class MyServicesViewModel extends ChangeNotifier {
       );
       _services = [service, ..._services];
       AppLogger.i('Service created: ${service.id}', tag: _kTag);
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to create service',
         error: e,
@@ -101,7 +101,7 @@ class MyServicesViewModel extends ChangeNotifier {
         'Status updated: service=$serviceId → ${status.name}',
         tag: _kTag,
       );
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to update status',
         error: e,
@@ -139,7 +139,7 @@ class MyServicesViewModel extends ChangeNotifier {
         return s;
       }).toList();
       AppLogger.i('Service updated: $serviceId', tag: _kTag);
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to update service',
         error: e,

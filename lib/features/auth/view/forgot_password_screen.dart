@@ -42,7 +42,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Password reset link sent! Check your email.'),
+          content: const Text('Password reset link sent! Check your email.'),
           backgroundColor: AppColors.teal,
         ),
       );

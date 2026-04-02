@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -105,7 +107,7 @@ class _DashboardContentState extends State<_DashboardContent>
           tag: 'Dashboard',
           json: <String, dynamic>{'offer_id': offerId},
         );
-      } catch (e) {
+      } on Exception catch (e) {
         AppLogger.e(
           'Web direct-offer recovery failed offer_id=$offerId',
           tag: 'Dashboard',
@@ -135,7 +137,7 @@ class _DashboardContentState extends State<_DashboardContent>
             },
           );
         }
-      } catch (e) {
+      } on Exception catch (e) {
         AppLogger.e(
           'Web tender recovery failed request_id=$requestId',
           tag: 'Dashboard',
@@ -145,7 +147,7 @@ class _DashboardContentState extends State<_DashboardContent>
     }
 
     web_url_utils.clearPaymentReturnParamsFromUrl();
-    if (mounted) vm.refresh();
+    if (mounted) unawaited(vm.refresh());
   }
 
   @override
@@ -189,7 +191,7 @@ class _DashboardContentState extends State<_DashboardContent>
       _tabController.animateTo(vm.currentTab.index);
     }
 
-    var scaffold = Scaffold(
+    final scaffold = Scaffold(
       appBar: AppBar(
         title: Text(
           'Dashboard',

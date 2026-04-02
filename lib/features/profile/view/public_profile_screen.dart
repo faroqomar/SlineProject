@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
@@ -8,7 +10,6 @@ import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
 import 'package:sline_app/core/widgets/sliver_tab_bar_delegate.dart';
 import 'package:sline_app/features/profile/viewmodels/public_profile_view_model.dart';
-import 'package:sline_app/features/profile/data/profile_repository.dart';
 import 'widgets/public_profile/public_profile_header.dart';
 import 'widgets/public_profile/public_profile_stats.dart';
 import 'widgets/public_profile/public_profile_portfolio.dart';
@@ -83,9 +84,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
     final AppColorScheme colorScheme = context.colorScheme;
 
     return ChangeNotifierProvider(
-      create: (ctx) =>
-          PublicProfileViewModel(ctx.read<ProfileRepository>())
-            ..loadProfile(widget.userId),
+      create: (_) => PublicProfileViewModel()..loadProfile(widget.userId),
       child: Scaffold(
         backgroundColor: colorScheme.phoneBackground,
         body: Consumer<PublicProfileViewModel>(
@@ -468,13 +467,15 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
       }
       if (!context.mounted) return;
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ChatScreen(conversation: conversation),
+      unawaited(
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChatScreen(conversation: conversation),
+          ),
         ),
       );
-    } catch (e) {
+    } on Exception catch (e) {
       if (!context.mounted) return;
 
       ScaffoldMessenger.of(

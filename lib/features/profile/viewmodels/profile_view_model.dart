@@ -1,7 +1,6 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/logger_service.dart';
@@ -32,12 +31,6 @@ class ProfileViewModel extends ChangeNotifier {
   String? _profileError;
   String? get profileError => _profileError;
 
-  // Form controllers and keys
-  final nameController = TextEditingController();
-  final emailController = TextEditingController();
-  final bioController = TextEditingController();
-  final formKey = GlobalKey<FormState>();
-
   // Skills state
   final List<String> _skills = [];
   List<String> get skills => List.unmodifiable(_skills);
@@ -54,8 +47,10 @@ class ProfileViewModel extends ChangeNotifier {
 
   // Getters for UI convenience
   String? get avatarUrl => avatarSignedUrl;
-  String? get fullName =>
-      nameController.text.isEmpty ? null : nameController.text;
+  String? get fullName => _profile?.fullName;
+  String? get loadedName => _profile?.fullName;
+  String? get loadedBio => _profile?.bio;
+  String? get loadedEmail => _repo.currentUser?.email;
 
   // Tasks state
   final List<Task> myTasks = [];
@@ -80,10 +75,6 @@ class ProfileViewModel extends ChangeNotifier {
       );
       _profile = await _repo.fetchProfileSummary(user.id);
 
-      nameController.text = _profile?.fullName ?? '';
-      emailController.text = user.email ?? '';
-      bioController.text = _profile?.bio ?? '';
-
       _skills
         ..clear()
         ..addAll(_profile?.skills ?? const []);
@@ -97,7 +88,7 @@ class ProfileViewModel extends ChangeNotifier {
           'has_avatar': avatarSignedUrl != null && avatarSignedUrl!.isNotEmpty,
         },
       );
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Error loading profile header: $e');
       _profileError = 'Failed to load profile. Please try again.';
     } finally {
@@ -118,10 +109,6 @@ class ProfileViewModel extends ChangeNotifier {
     try {
       _profile = await _repo.fetchProfile(user.id);
 
-      nameController.text = _profile?.fullName ?? '';
-      emailController.text = user.email ?? '';
-      bioController.text = _profile?.bio ?? '';
-
       _skills.clear();
       if (_profile?.skills != null) {
         _skills.addAll(_profile!.skills);
@@ -129,7 +116,7 @@ class ProfileViewModel extends ChangeNotifier {
 
       await Future.wait([refreshAvatarSignedUrl(), fetchPortfolio()]);
       // await fetchMyTasks(); // Optional: load tasks here if needed immediately
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Error loading profile: $e');
       _profileError = 'Failed to load profile. Please try again.';
     } finally {
@@ -139,32 +126,35 @@ class ProfileViewModel extends ChangeNotifier {
   }
 
   // Update profile with form data
-  Future<void> updateProfile() async {
+  Future<void> updateProfile({
+    required String name,
+    required String bio,
+  }) async {
+    AppLogger.d('Profile update requested', tag: 'ProfileVM');
+
     final user = _repo.currentUser;
     if (user == null) return;
 
-    if (formKey.currentState?.validate() ?? false) {
-      _isLoadingUpdate = true;
+    _isLoadingUpdate = true;
+    notifyListeners();
+
+    try {
+      await _repo.updateProfileFields(
+        userId: user.id,
+        fullName: name,
+        bio: bio,
+      );
+      // await _repo.updateUserEmail(email); // TODO: Handle email change separately (re-auth required)
+      await _repo.updateProfileSkills(userId: user.id, skills: _skills);
+
+      await loadUserData(); // Refresh local state
+      AppLogger.i('Profile updated successfully');
+    } on Exception catch (e) {
+      AppLogger.e('Error updating profile: $e');
+      _profileError = 'Failed to update profile. Please try again.';
+    } finally {
+      _isLoadingUpdate = false;
       notifyListeners();
-
-      try {
-        await _repo.updateProfileFields(
-          userId: user.id,
-          fullName: nameController.text.trim(),
-          bio: bioController.text.trim(),
-        );
-        // await _repo.updateUserEmail(emailController.text.trim()); // TODO: Handle email change separately (re-auth required)
-        await _repo.updateProfileSkills(userId: user.id, skills: _skills);
-
-        await loadUserData(); // Refresh local state
-        AppLogger.i('Profile updated successfully');
-      } catch (e) {
-        AppLogger.e('Error updating profile: $e');
-        _profileError = 'Failed to update profile. Please try again.';
-      } finally {
-        _isLoadingUpdate = false;
-        notifyListeners();
-      }
     }
   }
 
@@ -230,7 +220,7 @@ class ProfileViewModel extends ChangeNotifier {
         tag: 'ProfileVM',
         json: {'count': items.length},
       );
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Error loading portfolio',
         tag: 'ProfileVM',
@@ -249,13 +239,18 @@ class ProfileViewModel extends ChangeNotifier {
 
   /// Picks and uploads a portfolio image.
   /// Returns the storage path for use in addPortfolioItem.
-  Future<String?> pickAndUploadPortfolioImage(BuildContext context) async {
+  /// Returns null on cancel or error. Check [portfolioUploadError] for error details.
+  String? _portfolioUploadError;
+  String? get portfolioUploadError => _portfolioUploadError;
+
+  Future<String?> pickAndUploadPortfolioImage() async {
     final user = _repo.currentUser;
     if (user == null) {
       AppLogger.w('Cannot upload image - not authenticated', tag: 'ProfileVM');
       return null;
     }
 
+    _portfolioUploadError = null;
     isUploadingPortfolioImage = true;
     notifyListeners();
 
@@ -308,7 +303,7 @@ class ProfileViewModel extends ChangeNotifier {
             'compressedSize': compressedBytes.length,
           },
         );
-      } catch (e) {
+      } on Exception catch (e) {
         AppLogger.w('Compression failed, using original: $e', tag: 'ProfileVM');
         compressedBytes = bytes;
       }
@@ -332,20 +327,15 @@ class ProfileViewModel extends ChangeNotifier {
         json: {'path': path},
       );
       return path;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Error uploading portfolio image',
         tag: 'ProfileVM',
         error: e,
         stackTrace: st,
       );
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to upload image. Please try again.'),
-          ),
-        );
-      }
+      _portfolioUploadError = 'Failed to upload image. Please try again.';
+      notifyListeners();
       return null;
     } finally {
       isUploadingPortfolioImage = false;
@@ -384,7 +374,7 @@ class ProfileViewModel extends ChangeNotifier {
       );
       await fetchPortfolio();
       AppLogger.i('Portfolio item added successfully', tag: 'ProfileVM');
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Error adding portfolio item',
         tag: 'ProfileVM',
@@ -415,7 +405,7 @@ class ProfileViewModel extends ChangeNotifier {
       );
       await fetchPortfolio();
       AppLogger.i('Portfolio item updated successfully', tag: 'ProfileVM');
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Error updating portfolio item',
         tag: 'ProfileVM',
@@ -438,7 +428,7 @@ class ProfileViewModel extends ChangeNotifier {
       await _repo.deletePortfolioItem(itemId);
       await fetchPortfolio();
       AppLogger.i('Portfolio item deleted successfully', tag: 'ProfileVM');
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Error deleting portfolio item',
         tag: 'ProfileVM',
@@ -462,7 +452,7 @@ class ProfileViewModel extends ChangeNotifier {
       myTasks
         ..clear()
         ..addAll(tasks);
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Error fetching user tasks: $e');
     } finally {
       isLoadingMyTasks = false;
@@ -476,7 +466,7 @@ class ProfileViewModel extends ChangeNotifier {
       await _repo.deleteTask(taskId);
       myTasks.removeWhere((task) => task.id == taskId);
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Error deleting task: $e');
     }
   }
@@ -486,16 +476,26 @@ class ProfileViewModel extends ChangeNotifier {
     try {
       await _repo.updateTask(taskId, updates);
       await fetchMyTasks();
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Error updating task: $e');
     }
   }
 
-  // Sign out the current user
-  Future<void> signOut(BuildContext context) async {
-    await _repo.signOut();
-    if (context.mounted) {
-      Navigator.of(context).pushReplacementNamed('/login');
+  // Sign out the current user. Returns true on success.
+  // The caller (View) is responsible for navigating to /login after signOut.
+  Future<bool> signOut() async {
+    try {
+      await _repo.signOut();
+      AppLogger.i('User signed out', tag: 'ProfileVM');
+      return true;
+    } on Exception catch (e, st) {
+      AppLogger.e(
+        'Sign out failed',
+        tag: 'ProfileVM',
+        error: e,
+        stackTrace: st,
+      );
+      return false;
     }
   }
 
@@ -595,7 +595,7 @@ class ProfileViewModel extends ChangeNotifier {
       try {
         await RoleSwitchCoordinator().teardownAll();
         AppLogger.i('role_switch_teardown_complete', tag: 'ProfileVM');
-      } catch (e) {
+      } on Exception catch (e) {
         AppLogger.e('role_switch_teardown_failed: $e', tag: 'ProfileVM');
         // Continue even if teardown has errors - better to proceed with warnings
       }
@@ -610,7 +610,7 @@ class ProfileViewModel extends ChangeNotifier {
       _isLoadingUpdate = false;
       notifyListeners();
       return true;
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       AppLogger.e(
         'role_switch_exception',
         tag: 'ProfileVM',
@@ -642,7 +642,12 @@ class ProfileViewModel extends ChangeNotifier {
     await _repo.resetPasswordForEmail(user.email!);
   }
 
-  Future<void> pickAndUploadAvatar(BuildContext context) async {
+  /// Picks and uploads an avatar image.
+  /// Check [avatarUploadError] for error details after completion.
+  String? _avatarUploadError;
+  String? get avatarUploadError => _avatarUploadError;
+
+  Future<void> pickAndUploadAvatar() async {
     final user = _repo.currentUser;
     if (user == null) return;
 
@@ -652,6 +657,7 @@ class ProfileViewModel extends ChangeNotifier {
       allowMultiple: false,
       withData: true,
     );
+    _avatarUploadError = null;
     if (result == null || result.files.isEmpty) return;
 
     avatarUploading = true;
@@ -679,7 +685,7 @@ class ProfileViewModel extends ChangeNotifier {
           minHeight: 512,
           quality: 85,
         );
-      } catch (e) {
+      } on Exception catch (e) {
         AppLogger.w('Avatar compression failed, using original: $e');
         compressedBytes = bytes;
       }
@@ -700,13 +706,9 @@ class ProfileViewModel extends ChangeNotifier {
 
       avatarSignedUrl = await _repo.createSignedAvatarUrl(storagePath);
       AppLogger.i('Avatar uploaded and profile updated');
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Error uploading avatar: $e');
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to upload avatar: $e')));
-      }
+      _avatarUploadError = 'Failed to upload avatar. Please try again.';
     } finally {
       avatarUploading = false;
       notifyListeners();
@@ -736,7 +738,7 @@ class ProfileViewModel extends ChangeNotifier {
       } else {
         AppLogger.e('Failed to refresh avatar signed url: $e');
       }
-    } catch (e) {
+    } on Exception catch (e) {
       avatarSignedUrl = null;
       notifyListeners();
       AppLogger.e('Failed to refresh avatar signed url: $e');

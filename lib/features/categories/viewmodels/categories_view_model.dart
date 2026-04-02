@@ -39,7 +39,7 @@ class CategoriesViewModel extends ChangeNotifier {
         ..addAll(data);
       _error = null;
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = 'Failed to load categories';
       AppLogger.e('CategoriesViewModel.load error: $e');
       notifyListeners();

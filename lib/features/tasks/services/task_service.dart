@@ -63,7 +63,7 @@ class TaskService {
         map[entry.key] = entry.value;
       }
       return map;
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.w('Failed to fetch profiles batch: $e');
       return {};
     }
@@ -122,7 +122,7 @@ class TaskService {
         stackTrace: st,
       );
       throw Exception(ErrorMapper.map(e));
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to get tasks',
         tag: 'Tasks',
@@ -170,7 +170,7 @@ class TaskService {
         stackTrace: st,
       );
       throw Exception(ErrorMapper.map(e));
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to create task',
         tag: 'Tasks',
@@ -200,7 +200,7 @@ class TaskService {
         stackTrace: st,
       );
       throw Exception(ErrorMapper.map(e));
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to update task status',
         tag: 'Tasks',
@@ -226,7 +226,7 @@ class TaskService {
         stackTrace: st,
       );
       throw Exception(ErrorMapper.map(e));
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to update task',
         tag: 'Tasks',
@@ -297,7 +297,7 @@ class TaskService {
         stackTrace: st,
       );
       throw Exception(ErrorMapper.map(e));
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to get tasks by owner',
         tag: 'Tasks',
@@ -340,7 +340,7 @@ class TaskService {
         stackTrace: st,
       );
       throw Exception(ErrorMapper.map(e));
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to get tasks by status',
         tag: 'Tasks',
@@ -365,7 +365,7 @@ class TaskService {
         stackTrace: st,
       );
       throw Exception(ErrorMapper.map(e));
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to delete task',
         tag: 'Tasks',
@@ -447,7 +447,7 @@ class TaskService {
         stackTrace: st,
       );
       throw Exception(ErrorMapper.map(e));
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to get open tasks for home',
         tag: 'Tasks',
@@ -490,7 +490,7 @@ class TaskService {
         stackTrace: st,
       );
       throw Exception(ErrorMapper.map(e));
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to get task by ID',
         tag: 'Tasks',
@@ -580,7 +580,7 @@ class TaskService {
     } on PostgrestException catch (e, st) {
       AppLogger.e('Failed to get offers received', error: e, stackTrace: st);
       return [];
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to get offers received', error: e);
       return [];
     }
@@ -601,7 +601,7 @@ class TaskService {
     } on PostgrestException catch (e, st) {
       AppLogger.e('Failed to get offers submitted', error: e, stackTrace: st);
       return [];
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to get offers submitted', error: e);
       return [];
     }
@@ -616,7 +616,7 @@ class TaskService {
     } on PostgrestException catch (e, st) {
       AppLogger.e('Failed to withdraw offer', error: e, stackTrace: st);
       throw Exception(ErrorMapper.map(e));
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to withdraw offer', error: e);
       rethrow;
     }
@@ -627,7 +627,7 @@ class TaskService {
     try {
       await _taskRequestsService.accept(offerId);
       AppLogger.i('Offer accepted via RPC: $offerId');
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e('Failed to accept offer', error: e, stackTrace: st);
       rethrow;
     }
@@ -638,7 +638,7 @@ class TaskService {
     try {
       await _taskRequestsService.reject(offerId);
       AppLogger.i('Offer rejected: $offerId');
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e('Failed to reject offer', error: e, stackTrace: st);
       rethrow;
     }
@@ -664,7 +664,7 @@ class TaskService {
 
       // Once escrow is held successfully, accept the offer
       await acceptOffer(offerId);
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to process escrow hold for offer', error: e);
       rethrow;
     }
@@ -688,7 +688,7 @@ class TaskService {
         amountGross: price,
         meta: {if (feeRateBps != null) 'fee_rate_bps': feeRateBps},
       );
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to release offer funds', error: e);
       rethrow;
     }
@@ -719,7 +719,7 @@ class TaskService {
         amountGross: price,
         meta: {},
       );
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to refund offer', error: e);
       rethrow;
     }
@@ -874,7 +874,7 @@ class TaskService {
     try {
       final result = await _client.rpc('get_client_awarded_unpaid_offers');
       return (result as List).cast<Map<String, dynamic>>();
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to get awarded unpaid offers',
         error: e,
@@ -889,7 +889,7 @@ class TaskService {
     try {
       final result = await _client.rpc('get_freelancer_awarded_unpaid_offers');
       return (result as List).cast<Map<String, dynamic>>();
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to get freelancer awarded offers',
         error: e,
@@ -948,7 +948,7 @@ class TaskService {
 
       final profilesMap = await _fetchProfilesByIds(userIds);
       return _parseTasksWithProfiles(rows, profilesMap);
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to get pending payment tenders',
         error: e,

@@ -24,7 +24,7 @@ class TaskRequestsViewModel extends ChangeNotifier {
   final bool isOwner;
   final TaskRequestsService _service;
   final TaskService _taskService;
-  final ProposalRepository? _proposalRepo;
+  ProposalRepository? _proposalRepo;
 
   // Debounce configuration for rate limiting
   static const Duration _submitDebounceDuration = Duration(seconds: 2);
@@ -37,7 +37,15 @@ class TaskRequestsViewModel extends ChangeNotifier {
     ProposalRepository? proposalRepo,
   }) : _service = service ?? TaskRequestsService(),
        _taskService = taskService ?? TaskService(),
-       _proposalRepo = proposalRepo;
+       _proposalRepo = proposalRepo {
+    if (_proposalRepo == null && isOwner) {
+      _proposalRepo = ProposalRepository(taskRequestsService: _service);
+      AppLogger.d(
+        'TaskRequestsViewModel self-constructed ProposalRepository for owner',
+        tag: 'TaskRequestsViewModel',
+      );
+    }
+  }
 
   // ==========================================================================
   // PAGING STATE
@@ -126,7 +134,7 @@ class TaskRequestsViewModel extends ChangeNotifier {
     try {
       _cursorBefore = null;
       if (isOwner && _proposalRepo != null) {
-        final proposals = await _proposalRepo.listByTask(
+        final proposals = await _proposalRepo!.listByTask(
           taskId: taskId,
           limit: _pageSize,
           before: null,
@@ -154,7 +162,7 @@ class TaskRequestsViewModel extends ChangeNotifier {
         'Loaded \${_items.length} initial items',
         tag: 'TaskRequests',
       );
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       _errorMessage = _friendlyError(e);
       AppLogger.e(
         'Failed to load initial task requests',
@@ -180,7 +188,7 @@ class TaskRequestsViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       if (isOwner && _proposalRepo != null) {
-        final proposals = await _proposalRepo.listByTask(
+        final proposals = await _proposalRepo!.listByTask(
           taskId: taskId,
           limit: _pageSize,
           before: _cursorBefore,
@@ -204,7 +212,7 @@ class TaskRequestsViewModel extends ChangeNotifier {
         'Loaded more items, total: \${_items.length}',
         tag: 'TaskRequests',
       );
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       _errorMessage = _friendlyError(e);
       AppLogger.e(
         'Failed to load more task requests',
@@ -246,7 +254,7 @@ class TaskRequestsViewModel extends ChangeNotifier {
         tag: 'TaskRequests',
       );
       return result;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to check bid replaceability for task $taskId',
         tag: 'TaskRequests',
@@ -319,7 +327,7 @@ class TaskRequestsViewModel extends ChangeNotifier {
         tag: 'TaskRequests',
       );
       rethrow;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       _errorMessage = _friendlyError(e);
       AppLogger.e(
         'Failed to award offer \$requestId',
@@ -374,7 +382,7 @@ class TaskRequestsViewModel extends ChangeNotifier {
 
       await _refreshListAfterMutation();
       return result;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       _errorMessage = _friendlyError(e);
       AppLogger.e(
         'Failed to pay for awarded offer \$requestId',
@@ -462,7 +470,7 @@ class TaskRequestsViewModel extends ChangeNotifier {
       // Refresh and return success since it's already accepted
       await _refreshListAfterMutation();
       return true;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       _errorMessage = _friendlyError(e);
       AppLogger.e(
         'Failed to accept offer \${request.id}',
@@ -524,7 +532,7 @@ class TaskRequestsViewModel extends ChangeNotifier {
         notifyListeners();
         return false;
       }
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       _errorMessage = _friendlyError(e);
       AppLogger.e(
         'Failed to cancel awarded offer $requestId',
@@ -577,7 +585,7 @@ class TaskRequestsViewModel extends ChangeNotifier {
     try {
       await _taskService.escrowHoldOffer(requestId);
       await _refreshListAfterMutation();
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       _errorMessage = _friendlyError(e);
       AppLogger.e(
         'Failed to accept offer \$requestId',
@@ -622,7 +630,7 @@ class TaskRequestsViewModel extends ChangeNotifier {
       );
 
       _replace(updated);
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       _errorMessage = _friendlyError(e);
       AppLogger.e(
         'Failed to reject offer \$requestId',
@@ -707,7 +715,7 @@ class TaskRequestsViewModel extends ChangeNotifier {
         'Optimistic offer added to UI: \${optimisticOffer.id}',
         tag: 'TaskRequests',
       );
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to create optimistic offer',
         error: e,
@@ -752,7 +760,7 @@ class TaskRequestsViewModel extends ChangeNotifier {
 
       notifyListeners();
       return true;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       // 7. Rollback optimistic update on error
       if (optimisticOffer != null) {
         _items.removeWhere((o) => o.id == optimisticOffer!.id);
@@ -799,7 +807,7 @@ class TaskRequestsViewModel extends ChangeNotifier {
 
   Future<void> _refreshListAfterMutation() async {
     if (isOwner && _proposalRepo != null) {
-      final proposals = await _proposalRepo.listByTask(
+      final proposals = await _proposalRepo!.listByTask(
         taskId: taskId,
         limit: 100,
         before: null,

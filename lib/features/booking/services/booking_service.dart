@@ -28,13 +28,13 @@ class BookingService {
     if (uid == null) return [];
 
     try {
-      final query = _client
+      var query = _client
           .from(_bookingsTable)
           .select(_bookingSelect)
           .eq('client_id', uid);
 
       if (cursorCreatedAtIso != null) {
-        query.lt('created_at', cursorCreatedAtIso);
+        query = query.lt('created_at', cursorCreatedAtIso);
       }
 
       final data = await query
@@ -43,7 +43,7 @@ class BookingService {
       return (data as List<dynamic>)
           .map((e) => BookingModel.fromJson(e as Map<String, dynamic>))
           .toList();
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to list client bookings',
         error: e,
@@ -62,13 +62,13 @@ class BookingService {
     if (uid == null) return [];
 
     try {
-      final query = _client
+      var query = _client
           .from(_bookingsTable)
           .select(_bookingSelect)
           .eq('provider_id', uid);
 
       if (cursorCreatedAtIso != null) {
-        query.lt('created_at', cursorCreatedAtIso);
+        query = query.lt('created_at', cursorCreatedAtIso);
       }
 
       final data = await query
@@ -77,7 +77,7 @@ class BookingService {
       return (data as List<dynamic>)
           .map((e) => BookingModel.fromJson(e as Map<String, dynamic>))
           .toList();
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to list provider bookings',
         error: e,
@@ -104,7 +104,7 @@ class BookingService {
       return (data as List<dynamic>)
           .map((e) => BookingModel.fromJson(e as Map<String, dynamic>))
           .toList();
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to get pending requests',
         error: e,
@@ -136,7 +136,7 @@ class BookingService {
         },
       );
       return BookingModel.fromJson(res as Map<String, dynamic>);
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to create booking draft for task $taskId',
         error: e,
@@ -181,7 +181,7 @@ class BookingService {
         tag: 'Booking',
       );
       return BookingModel.fromJson(res as Map<String, dynamic>);
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       if (e is StateError) rethrow;
       AppLogger.e(
         'Failed to update booking status for $bookingId',
@@ -201,7 +201,7 @@ class BookingService {
           .eq('id', bookingId)
           .single();
       return BookingModel.fromJson(res);
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to get booking by id $bookingId',
         error: e,
@@ -226,7 +226,7 @@ class BookingService {
         'Escrow hold submitted for booking $bookingId',
         tag: 'Booking',
       );
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to hold escrow for booking $bookingId',
         error: e,
@@ -257,7 +257,7 @@ class BookingService {
         json: {'mappedMessage': friendly},
       );
       throw Exception(friendly);
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       final friendly = ErrorMapper.map(e);
       AppLogger.e(
         'Failed to release booking $bookingId',
@@ -292,7 +292,7 @@ class BookingService {
         'Decline and refund submitted for booking $bookingId',
         tag: 'Booking',
       );
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to decline booking $bookingId',
         error: e,
@@ -310,7 +310,7 @@ class BookingService {
         newStatus: BookingStatus.delivered,
       );
       AppLogger.i('Marked booking $bookingId as delivered', tag: 'Booking');
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to mark booking $bookingId as delivered',
         error: e,
@@ -358,7 +358,7 @@ class BookingService {
         throw StateError('Client payment is still pending.');
       }
       AppLogger.i('Accepted booking $bookingId', tag: 'Booking');
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to accept booking $bookingId',
         error: e,

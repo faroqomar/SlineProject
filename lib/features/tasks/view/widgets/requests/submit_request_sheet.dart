@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
@@ -32,8 +32,8 @@ Future<void> showSubmitRequestSheet(
   // Guard: don't show sheet if task is not open or user is the task owner.
   try {
     final taskService = context.read<TaskService>();
+    final uid = context.read<AuthSessionViewModel>().currentUserId;
     final task = await taskService.getTaskById(taskId);
-    final uid = Supabase.instance.client.auth.currentUser?.id;
     if (task == null) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -67,7 +67,7 @@ Future<void> showSubmitRequestSheet(
       }
       return;
     }
-  } catch (e, st) {
+  } on Exception catch (e, st) {
     AppLogger.e(
       'Failed to check task before opening submit sheet',
       tag: 'SubmitRequestSheet',
@@ -117,7 +117,7 @@ Future<void> showSubmitRequestSheet(
         tag: 'SubmitRequestSheet',
       );
     }
-  } catch (e, st) {
+  } on Exception catch (e, st) {
     AppLogger.e(
       'Failed to check bid replaceability',
       tag: 'SubmitRequestSheet',
@@ -667,15 +667,12 @@ Future<void> showSubmitRequestSheet(
 
                           // Show success message
                           messenger.showSnackBar(
-                            SnackBar(
+                            const SnackBar(
                               content: Row(
                                 children: [
-                                  const Icon(
-                                    Icons.check_circle,
-                                    color: Colors.white,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  const Text('Bid replaced successfully'),
+                                  Icon(Icons.check_circle, color: Colors.white),
+                                  SizedBox(width: 8),
+                                  Text('Bid replaced successfully'),
                                 ],
                               ),
                               backgroundColor: Colors.green,
@@ -696,7 +693,7 @@ Future<void> showSubmitRequestSheet(
 
                           if (!ctx.mounted) return;
                           navigator.pop(replaced);
-                        } catch (e, st) {
+                        } on Exception catch (e, st) {
                           AppLogger.e(
                             'Failed to replace bid for task $taskId',
                             tag: 'SubmitRequestSheet',
@@ -755,7 +752,7 @@ Future<void> showSubmitRequestSheet(
                           if (onReplaced != null) onReplaced(replaced);
                           if (!ctx.mounted) return;
                           navigator.pop(replaced);
-                        } catch (e, st) {
+                        } on Exception catch (e, st) {
                           AppLogger.e(
                             'Failed to resubmit bid for task $taskId',
                             tag: 'SubmitRequestSheet',

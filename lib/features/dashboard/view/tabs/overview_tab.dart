@@ -57,9 +57,9 @@ class _OverviewTabState extends State<OverviewTab> {
           const SizedBox(height: AppDimens.p20),
           const WalletSnapshotCard(),
           const SizedBox(height: AppDimens.p20),
-          DashboardCountersGrid(),
+          const DashboardCountersGrid(),
           const SizedBox(height: AppDimens.p24),
-          _SectionHeader(title: 'Next Actions'),
+          const _SectionHeader(title: 'Next Actions'),
           const NextActionsList(),
           const SizedBox(height: AppDimens.p24),
           _SectionHeader(

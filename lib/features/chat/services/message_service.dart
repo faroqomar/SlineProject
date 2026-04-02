@@ -46,7 +46,7 @@ class MessageService {
 
       AppLogger.d('Feature flag enable_direct_conversation_rpc = $enabled');
       return enabled;
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.w('Failed to check feature flag, defaulting to false: $e');
       return false;
     }
@@ -78,7 +78,7 @@ class MessageService {
         tag: 'Chat',
       );
       return enabled;
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.w(
         '[CHAT] Failed to check chat_presence_receipts_enabled, default false: $e',
         tag: 'Chat',
@@ -117,7 +117,7 @@ class MessageService {
         '[CHAT] presence_upsert conversationId=$conversationId isTyping=$isTyping',
         tag: 'Chat',
       );
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         '[CHAT] presence upsert failed',
         tag: 'Chat',
@@ -186,7 +186,7 @@ class MessageService {
         throw TimeoutException(
           'Connection timeout. Please check your internet and try again.',
         );
-      } catch (e) {
+      } on Exception catch (e) {
         AppLogger.e('❌ RPC start_task_conversation failed: $e');
         rethrow;
       }
@@ -249,7 +249,7 @@ class MessageService {
       AppLogger.e('❌ RPC start_direct_conversation_v1 failed: ${e.message}');
       // Let the error propagate for ErrorMapper to handle
       rethrow;
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('❌ RPC start_direct_conversation_v1 failed: $e');
       rethrow;
     }
@@ -300,7 +300,7 @@ class MessageService {
     try {
       final id = (response as Map)['id'];
       AppLogger.i('🆕 Created DM conversation: $id');
-    } catch (_) {}
+    } on Exception catch (_) {}
 
     return Conversation.fromJson(Map<String, dynamic>.from(response as Map));
   }
@@ -314,7 +314,7 @@ class MessageService {
         params: {'p_conversation_id': conversationId},
       );
       AppLogger.i('[ARCHIVE] success conversationId=$conversationId');
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('[ARCHIVE] failed conversationId=$conversationId', error: e);
       rethrow;
     }
@@ -424,7 +424,7 @@ class MessageService {
         AppLogger.w('⚠️ Unexpected response type: $response');
         return [];
       }
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('❌ Error fetching conversations: $e');
       return [];
     }
@@ -489,7 +489,7 @@ class MessageService {
       );
       AppLogger.i('Sent message=${message.id} conversation=$conversationId');
       return message;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to send message to conversation=$conversationId',
         error: e,
@@ -548,7 +548,7 @@ class MessageService {
                     .toList()
                   ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
             return list;
-          } catch (e) {
+          } on Exception catch (e) {
             AppLogger.e('Realtime message parse error', error: e);
             return <Message>[];
           }
@@ -590,7 +590,7 @@ class MessageService {
                   ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
             AppLogger.d('[REALTIME] inbox messages event count=${list.length}');
             return list;
-          } catch (e) {
+          } on Exception catch (e) {
             AppLogger.e('Realtime inbox message parse error', error: e);
             return <Message>[];
           }

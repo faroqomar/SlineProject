@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/app_enums.dart';
 import '../../features/notifications/models/notification_model.dart';
@@ -182,11 +184,13 @@ class DeepLinkService {
         case 'direct_offer':
         case 'directoffer':
           if (!context.mounted) return;
-          Navigator.push(
-            context,
-            MaterialPageRoute<void>(
-              builder: (_) =>
-                  DirectOfferDetailsScreen(offerId: id, conversationId: null),
+          unawaited(
+            Navigator.push(
+              context,
+              MaterialPageRoute<void>(
+                builder: (_) =>
+                    DirectOfferDetailsScreen(offerId: id, conversationId: null),
+              ),
             ),
           );
           AppLogger.i(
@@ -195,14 +199,14 @@ class DeepLinkService {
           );
           break;
         case 'profile':
-          _navigateToProfile(context);
+          unawaited(_navigateToProfile(context));
           AppLogger.i(
             'deep_link_routed entityType=$type id=$id',
             tag: 'DeepLink',
           );
           break;
         case 'user':
-          _navigateToUserProfile(context, id);
+          unawaited(_navigateToUserProfile(context, id));
           AppLogger.i(
             'deep_link_routed entityType=$type id=$id',
             tag: 'DeepLink',
@@ -218,7 +222,7 @@ class DeepLinkService {
             SnackBar(content: Text('Cannot open this item type: $type')),
           );
       }
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Deep link navigation failed', error: e, tag: 'DeepLink');
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -238,14 +242,16 @@ class DeepLinkService {
       _hideLoading(context);
 
       if (task != null && context.mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => TaskDetailsScreen(task: task)),
+        unawaited(
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => TaskDetailsScreen(task: task)),
+          ),
         );
       } else if (context.mounted) {
         _showError(context, 'Task not found');
       }
-    } catch (e) {
+    } on Exception catch (_) {
       if (!context.mounted) return;
       _hideLoading(context);
       rethrow;
@@ -265,14 +271,16 @@ class DeepLinkService {
       _hideLoading(context);
 
       if (context.mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => BookingDetailsScreen(booking: booking),
+        unawaited(
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => BookingDetailsScreen(booking: booking),
+            ),
           ),
         );
       }
-    } catch (e) {
+    } on Exception catch (_) {
       if (!context.mounted) return;
       _hideLoading(context);
       rethrow;
@@ -295,14 +303,16 @@ class DeepLinkService {
       _hideLoading(context);
 
       if (context.mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ChatScreen(conversation: conversation),
+        unawaited(
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ChatScreen(conversation: conversation),
+            ),
           ),
         );
       }
-    } catch (e) {
+    } on Exception catch (_) {
       if (!context.mounted) return;
       _hideLoading(context);
       rethrow;
@@ -346,11 +356,16 @@ class DeepLinkService {
     }
   }
 
-  void _navigateToUserProfile(BuildContext context, String userId) {
+  Future<void> _navigateToUserProfile(
+    BuildContext context,
+    String userId,
+  ) async {
     if (!context.mounted) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => PublicProfileScreen(userId: userId)),
+    unawaited(
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => PublicProfileScreen(userId: userId)),
+      ),
     );
   }
 }

@@ -45,6 +45,25 @@ Future<void> _pumpCreateTaskScreen(
     ],
   );
   when(() => taskVm.currentUserId).thenReturn('user-1');
+  when(() => taskVm.loadCategories()).thenAnswer(
+    (_) async => <CategoryModel>[
+      CategoryModel(
+        id: 'cat-design',
+        name: 'Design',
+        iconUrl: null,
+        createdAt: DateTime.utc(2026, 2, 24),
+      ),
+    ],
+  );
+  when(() => taskVm.categories).thenReturn(<CategoryModel>[
+    CategoryModel(
+      id: 'cat-design',
+      name: 'Design',
+      iconUrl: null,
+      createdAt: DateTime.utc(2026, 2, 24),
+    ),
+  ]);
+  when(() => taskVm.categoriesLoading).thenReturn(false);
   when(() => taskVm.createTask(any())).thenAnswer((_) async => _fallbackTask());
   when(() => taskVm.updateTask(any(), any())).thenAnswer((_) async {});
 
@@ -190,6 +209,25 @@ void main() {
         ],
       );
       when(() => taskVm.currentUserId).thenReturn('user-1');
+      when(() => taskVm.loadCategories()).thenAnswer(
+        (_) async => <CategoryModel>[
+          CategoryModel(
+            id: 'cat-design',
+            name: 'Design',
+            iconUrl: null,
+            createdAt: DateTime.utc(2026, 2, 24),
+          ),
+        ],
+      );
+      when(() => taskVm.categories).thenReturn(<CategoryModel>[
+        CategoryModel(
+          id: 'cat-design',
+          name: 'Design',
+          iconUrl: null,
+          createdAt: DateTime.utc(2026, 2, 24),
+        ),
+      ]);
+      when(() => taskVm.categoriesLoading).thenReturn(false);
       when(
         () => taskVm.createTask(any()),
       ).thenAnswer((_) async => _fallbackTask());

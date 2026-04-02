@@ -38,7 +38,7 @@ class DashboardRepository {
         return UserRole.client;
       }
       return UserRole.freelancer;
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.w(
         'Failed to fetch user role, defaulting to freelancer',
         error: e,
@@ -106,7 +106,7 @@ class DashboardRepository {
         json: {'count': enrichedItems.length, 'role': role.name},
       );
       return enrichedItems;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to fetch dashboard work items',
         error: e,
@@ -150,7 +150,7 @@ class DashboardRepository {
         tag: _kTag,
       );
       return result;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Profile enrichment failed',
         error: e,
@@ -243,7 +243,7 @@ class DashboardRepository {
         tag: _kTag,
       );
       return activities;
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to fetch activity feed', error: e, tag: _kTag);
       return [];
     }
@@ -257,7 +257,7 @@ class DashboardRepository {
     int active = 0;
     int pending = 0;
     int offers = 0;
-    int unreadMessages = 0;
+    final int unreadMessages = 0;
     int needsReview = 0;
     int pendingPayment = 0;
     int completed = 0;
@@ -354,7 +354,7 @@ class DashboardRepository {
       );
 
       return balances;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to fetch wallet balances',
         error: e,
@@ -379,7 +379,7 @@ class DashboardRepository {
         tag: _kTag,
       );
       return items.cast<Map<String, dynamic>>();
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to fetch client awarded unpaid offers',
         error: e,
@@ -401,7 +401,7 @@ class DashboardRepository {
         tag: _kTag,
       );
       return items.cast<Map<String, dynamic>>();
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to fetch freelancer awarded unpaid offers',
         error: e,

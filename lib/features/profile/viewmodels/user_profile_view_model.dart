@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/profile/data/profile_repository.dart';
 import 'package:sline_app/features/profile/models/public_profile.dart';
 import 'package:sline_app/features/portfolio/models/portfolio_item.dart';
+import 'package:sline_app/features/chat/models/conversation_model.dart';
 import 'package:sline_app/features/chat/services/message_service.dart';
-import 'package:sline_app/features/chat/view/chat_screen.dart';
 
 class UserProfileViewModel extends ChangeNotifier {
   final ProfileRepository _profileRepo;
@@ -43,12 +43,12 @@ class UserProfileViewModel extends ChangeNotifier {
       // We catch per-request errors to avoid breaking the whole screen.
       try {
         _portfolio = await _profileRepo.getPortfolioItems(userId);
-      } catch (e) {
+      } on Exception catch (e) {
         AppLogger.w('Failed to load portfolio for user $userId: $e');
         // Non-critical: just show empty portfolio
         _portfolio = [];
       }
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to load user profile $userId: $e');
       _error = 'Failed to load profile. Please try again.';
     } finally {
@@ -57,50 +57,30 @@ class UserProfileViewModel extends ChangeNotifier {
     }
   }
 
-  /// Starts a direct conversation with this user
-  Future<void> startChat(BuildContext context) async {
+  /// Returns the current user ID, or null if not authenticated.
+  String? get currentUserId => _profileRepo.currentUser?.id;
+
+  /// Creates or retrieves an existing conversation with this user.
+  ///
+  /// Returns the [Conversation] on success, or null if the current user is not
+  /// authenticated or is the same as the target user. Throws on service errors
+  /// so the calling View can display appropriate feedback.
+  Future<Conversation?> getOrCreateConversation() async {
+    AppLogger.d(
+      'Creating conversation for user profile $userId',
+      tag: 'UserProfileVM',
+    );
+
     final currentUser = _profileRepo.currentUser;
-    if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('You must be logged in to send messages.'),
-        ),
-      );
-      return;
+    if (currentUser == null || currentUser.id == userId) {
+      return null;
     }
 
-    if (currentUser.id == userId) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You cannot message yourself.')),
-      );
-      return;
-    }
-
-    try {
-      // Create or get existing conversation
-      final conversation = await _messageService.createOrGetConversation(
-        user1Id: currentUser.id,
-        user2Id: userId,
-      );
-
-      if (context.mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ChatScreen(conversation: conversation),
-          ),
-        );
-      }
-    } catch (e) {
-      AppLogger.e('Failed to start chat with $userId: $e');
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to start chat. Please try again.'),
-          ),
-        );
-      }
-    }
+    final conversation = await _messageService.createOrGetConversation(
+      user1Id: currentUser.id,
+      user2Id: userId,
+    );
+    return conversation;
   }
 
   void retry() {

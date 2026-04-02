@@ -93,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           tag: 'HomeUI',
                           json: {'surface': 'home'},
                         );
-                      } catch (error, stackTrace) {
+                      } on Exception catch (error, stackTrace) {
                         AppLogger.e(
                           'home_refresh_failed',
                           tag: 'HomeUI',

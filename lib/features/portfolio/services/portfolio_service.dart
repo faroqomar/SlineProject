@@ -60,7 +60,7 @@ class PortfolioService {
 
       AppLogger.i('Listed ${items.length} portfolio items', tag: _tag);
       return items;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to list portfolio items',
         tag: _tag,
@@ -159,7 +159,7 @@ class PortfolioService {
       final item = PortfolioItem.fromJson(row as Map<String, dynamic>);
       AppLogger.i('Portfolio item created', tag: _tag, json: {'id': item.id});
       return item;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to create portfolio item',
         tag: _tag,
@@ -219,7 +219,7 @@ class PortfolioService {
             tag: _tag,
             json: {'path': storagePath},
           );
-        } catch (e) {
+        } on Exception catch (e) {
           // Log but don't fail UX if storage cleanup fails
           AppLogger.w(
             'Failed to delete storage object (non-critical)',

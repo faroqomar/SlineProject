@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:sline_app/features/profile/view/widgets/profile_preview_modal.dart';
 import 'package:provider/provider.dart';
@@ -241,9 +243,11 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
               );
               if (context.mounted) {
                 context.read<WorkItemDetailsViewModel>().refreshDashboard();
-                context.read<WorkItemDetailsViewModel>().loadData(
-                  taskId,
-                  'task',
+                unawaited(
+                  context.read<WorkItemDetailsViewModel>().loadData(
+                    taskId,
+                    'task',
+                  ),
                 );
               }
             },
@@ -269,13 +273,11 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
                   );
                   Navigator.of(context).pop();
                 }
-              } catch (e) {
+              } on Exception catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(
-                        e is Exception ? e.toString() : 'Failed to cancel',
-                      ),
+                      content: Text(e.toString()),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -777,7 +779,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     if (result == true && context.mounted) {
       _shouldRefresh = true;
       if (vm.workItem != null) {
-        vm.loadData(vm.workItem!.id, vm.workItem!.sourceType);
+        unawaited(vm.loadData(vm.workItem!.id, vm.workItem!.sourceType));
       }
     }
   }
@@ -879,7 +881,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
       ),
     );
     if (ok && vm.workItem != null) {
-      vm.loadData(vm.workItem!.id, vm.workItem!.sourceType);
+      unawaited(vm.loadData(vm.workItem!.id, vm.workItem!.sourceType));
     }
   }
 
@@ -900,11 +902,13 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
         );
         return;
       }
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => ChatScreen(conversation: convo)),
+      unawaited(
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => ChatScreen(conversation: convo)),
+        ),
       );
-    } catch (e) {
+    } on Exception catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1082,7 +1086,7 @@ class _ReviewWithDisputeGuard extends StatelessWidget {
       future: hasDisputeFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return AppButton(text: 'Checking…', onPressed: null);
+          return const AppButton(text: 'Checking…', onPressed: null);
         }
         final hasOpenDispute = snapshot.data ?? true;
         return AppButton(

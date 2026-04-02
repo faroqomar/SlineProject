@@ -118,7 +118,7 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
           _otherPartyProfile = await _workService.getProfile(otherUserId);
         }
       }
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       _error = 'Failed to load work details';
       AppLogger.e('WorkItemDetails load error', error: e, stackTrace: stack);
     } finally {
@@ -142,7 +142,7 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
       );
 
       await loadData(_workItem!.id, _workItem!.sourceType);
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       _error = ErrorMapper.map(e);
       AppLogger.e('Submit delivery error', error: e, stackTrace: stack);
     } finally {
@@ -175,7 +175,7 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
       );
 
       await loadData(_workItem!.id, _workItem!.sourceType);
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       _error = ErrorMapper.map(e);
       AppLogger.e(
         'Approve delivery error',
@@ -203,7 +203,7 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
       );
 
       await loadData(_workItem!.id, _workItem!.sourceType);
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       _error = ErrorMapper.map(e);
       AppLogger.e(
         'Request revision error',
@@ -226,7 +226,7 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
       await _workService.acceptChangeRequest(requestId);
 
       await loadData(_workItem!.id, _workItem!.sourceType);
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       _error = ErrorMapper.map(e);
       AppLogger.e(
         'Accept change request error',
@@ -258,7 +258,7 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
       );
 
       await loadData(_workItem!.id, _workItem!.sourceType);
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       _error = 'Failed to request extension';
       AppLogger.e('Request extension error', error: e, stackTrace: stack);
     } finally {
@@ -276,7 +276,7 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
       await _workService.acceptBooking(_workItem!.id);
 
       await loadData(_workItem!.id, _workItem!.sourceType);
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       _error = 'Failed to accept booking';
       AppLogger.e('Accept booking error', error: e, stackTrace: stack);
     } finally {
@@ -294,7 +294,7 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
       await _workService.declineBooking(_workItem!.id);
 
       await loadData(_workItem!.id, _workItem!.sourceType);
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       _error = 'Failed to decline booking';
       AppLogger.e('Decline booking error', error: e, stackTrace: stack);
     } finally {
@@ -312,7 +312,7 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
       await _workService.cancelBooking(_workItem!.id);
 
       await loadData(_workItem!.id, _workItem!.sourceType);
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       _error = 'Failed to cancel booking';
       AppLogger.e('Cancel booking error', error: e, stackTrace: stack);
     } finally {

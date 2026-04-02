@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:provider/provider.dart';
@@ -135,7 +137,7 @@ class BookingDetailsScreen extends StatelessWidget {
               padding: const EdgeInsets.all(AppDimens.p16),
               child: Row(
                 children: [
-                  SignedAvatar(
+                  const SignedAvatar(
                     // Ideally we fetch profiles, but for now we might only have IDs.
                     storagePathOrUrl: null,
                     radius: 24,
@@ -260,7 +262,7 @@ class BookingDetailsScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: AppDimens.p16),
-                  Expanded(
+                  const Expanded(
                     child: AppButton(text: 'Awaiting Payment', onPressed: null),
                   ),
                 ],
@@ -284,7 +286,7 @@ class BookingDetailsScreen extends StatelessWidget {
                   entityType: 'booking',
                 );
 
-                List<Widget> dynamicActions = [];
+                final List<Widget> dynamicActions = [];
 
                 if (ctaMeta.allowedActions.contains('escrow_hold')) {
                   dynamicActions.add(
@@ -580,9 +582,11 @@ class BookingDetailsScreen extends StatelessWidget {
       if (!context.mounted) return;
 
       if (convo != null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => ChatScreen(conversation: convo)),
+        unawaited(
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => ChatScreen(conversation: convo)),
+          ),
         );
       }
     } finally {
@@ -738,11 +742,14 @@ class _ApproveWithDisputeGuard extends StatelessWidget {
       ),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return AppButton(text: 'Checking…', onPressed: null);
+          return const AppButton(text: 'Checking…', onPressed: null);
         }
         final hasOpenDispute = snapshot.data ?? true;
         if (hasOpenDispute) {
-          return AppButton(text: 'Approve & Release Funds', onPressed: null);
+          return const AppButton(
+            text: 'Approve & Release Funds',
+            onPressed: null,
+          );
         }
         return AppButton(text: 'Approve & Release Funds', onPressed: onRelease);
       },

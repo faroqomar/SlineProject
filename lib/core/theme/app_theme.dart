@@ -126,7 +126,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimens.r14),
           ),
-          padding: EdgeInsets.symmetric(
+          padding: const EdgeInsets.symmetric(
             horizontal: AppDimens.p24,
             vertical: AppDimens.p16,
           ),
@@ -149,7 +149,7 @@ class AppTheme {
           color: appColorScheme.text,
         ),
         floatingLabelBehavior: FloatingLabelBehavior.never,
-        contentPadding: EdgeInsets.symmetric(
+        contentPadding: const EdgeInsets.symmetric(
           horizontal: AppDimens.p16,
           vertical: AppDimens.p14,
         ),

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 extension HexColor on Color {
   static Color fromHex(String hexString, {double opacity = 1.0}) {
     // Remove # if present
-    String cleanHex = hexString.replaceFirst('#', '');
+    final String cleanHex = hexString.replaceFirst('#', '');
 
     // Handle transparent colors like `bg-[#f4f3f1]/10`
     // Opacity will be passed directly in Flutter Color constructor rather than calculating from hex.

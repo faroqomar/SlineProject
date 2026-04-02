@@ -432,9 +432,11 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener>
         await context.read<AuthSessionViewModel>().logout();
         if (!mounted) return;
         _restrictedScreenShown = false;
-        _navigatorKey.currentState?.pushNamedAndRemoveUntil(
-          '/login',
-          (route) => false,
+        unawaited(
+          _navigatorKey.currentState?.pushNamedAndRemoveUntil(
+            '/login',
+            (route) => false,
+          ),
         );
         return;
       }
@@ -442,20 +444,22 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener>
       if (guard.isRestricted) {
         if (_restrictedScreenShown) return;
         _restrictedScreenShown = true;
-        _navigatorKey.currentState?.pushAndRemoveUntil(
-          MaterialPageRoute<void>(
-            builder: (_) => AccountRestrictedScreen(
-              status: guard.accountStatus,
-              reason: guard.moderationReason,
+        unawaited(
+          _navigatorKey.currentState?.pushAndRemoveUntil(
+            MaterialPageRoute<void>(
+              builder: (_) => AccountRestrictedScreen(
+                status: guard.accountStatus,
+                reason: guard.moderationReason,
+              ),
             ),
+            (route) => false,
           ),
-          (route) => false,
         );
         return;
       }
 
       _restrictedScreenShown = false;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Account guard evaluation failed',
         tag: 'Auth',

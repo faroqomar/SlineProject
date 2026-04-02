@@ -399,7 +399,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
         await _controller!.goBack();
         return;
       }
-    } catch (e) {
+    } on Exception catch (_) {
       // Controller might be disposed, fall through to pop
     }
 
@@ -488,7 +488,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
           return;
         }
       }
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.w(
         'Failed to inspect payment webview URL during back navigation',
         tag: 'Payment',

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
@@ -179,8 +181,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     ],
                                   ),
                                   Text(
-                                    vm.bioController.text.isNotEmpty
-                                        ? vm.bioController.text
+                                    (vm.loadedBio ?? '').isNotEmpty
+                                        ? vm.loadedBio!
                                         : 'No bio yet',
                                     style: AppTypography.bodySmall.copyWith(
                                       color: colorScheme.textSecondary,
@@ -526,10 +528,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         await authVM.logout();
                         if (!context.mounted) return;
 
-                        Navigator.pushNamedAndRemoveUntil(
-                          context,
-                          '/login',
-                          (route) => false,
+                        unawaited(
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            '/login',
+                            (route) => false,
+                          ),
                         );
                       },
                       child: Container(

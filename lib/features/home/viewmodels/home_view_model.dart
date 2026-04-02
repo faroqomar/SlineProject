@@ -125,7 +125,7 @@ class HomeViewModel extends ChangeNotifier
         durationMs: stopwatch.elapsedMilliseconds,
         hasMore: _hasMore,
       );
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('home_feed_load_failed', tag: 'HomeFeed', error: e);
       AppLogger.w(
         'home_feed_load_failed',
@@ -211,7 +211,7 @@ class HomeViewModel extends ChangeNotifier
         durationMs: stopwatch.elapsedMilliseconds,
         hasMore: _hasMore,
       );
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('home_feed_load_failed', tag: 'HomeFeed', error: e);
       AppLogger.w(
         'home_feed_load_failed',

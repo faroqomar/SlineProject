@@ -84,7 +84,7 @@ class NotificationViewModel extends ChangeNotifier {
   }
 
   Future<void> _connect() async {
-    _subscription?.cancel();
+    unawaited(_subscription?.cancel());
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -104,7 +104,7 @@ class NotificationViewModel extends ChangeNotifier {
         );
         notifyListeners();
       }
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.w(
         'NotificationViewModel: initial unread fetch failed',
         error: e,
@@ -149,7 +149,10 @@ class NotificationViewModel extends ChangeNotifier {
       } else {
         notifyListeners();
       }
-    } catch (_) {
+    } on Exception catch (_) {
+      notifyListeners();
+    } on Error catch (_) {
+      // Supabase not initialized (e.g., in tests)
       notifyListeners();
     }
   }
@@ -165,7 +168,7 @@ class NotificationViewModel extends ChangeNotifier {
     try {
       await _service.markAsRead(id);
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e(
         'Failed to update notification',
         error: e,
@@ -180,7 +183,7 @@ class NotificationViewModel extends ChangeNotifier {
     try {
       await _service.markAllAsRead();
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to mark all as read', error: e, tag: 'Notifications');
       _error = 'Failed to mark all as read';
       notifyListeners();

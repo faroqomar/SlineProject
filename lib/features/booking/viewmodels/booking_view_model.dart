@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/booking_model.dart';
 import 'package:sline_app/core/app_enums.dart';
@@ -116,7 +116,7 @@ class BookingViewModel extends ChangeNotifier {
       }
 
       return e.toString();
-    } catch (_) {
+    } on Exception catch (_) {
       return e.toString();
     }
   }
@@ -165,7 +165,7 @@ class BookingViewModel extends ChangeNotifier {
     try {
       final data = await _repo.getBookingById(bookingId);
       return data;
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to get booking $bookingId', tag: 'Booking', error: e);
       return null;
     }
@@ -219,7 +219,7 @@ class BookingViewModel extends ChangeNotifier {
         'Canceled orphan unpaid booking draft: $bookingId',
         tag: 'Booking',
       );
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.w(
         'Failed to cancel unpaid draft booking=$bookingId',
         tag: 'Booking',
@@ -235,7 +235,7 @@ class BookingViewModel extends ChangeNotifier {
       // ✅ Refresh the booking to get updated payment_status
       await _refreshBookingInLists(bookingId);
       notifyListeners();
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       bookingsError = _mapError(e);
       AppLogger.e(
         'Failed to hold escrow for booking $bookingId',
@@ -265,7 +265,7 @@ class BookingViewModel extends ChangeNotifier {
       if (providerIdx != -1) {
         bookingsAsProvider[providerIdx] = updated;
       }
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.w(
         'Failed to refresh booking $bookingId',
         tag: 'Booking',
@@ -296,7 +296,7 @@ class BookingViewModel extends ChangeNotifier {
       await _repo.releaseBookingWithFee(bookingId);
       // Optimistic update - refresh to get accurate state
       await _refreshBookingInLists(bookingId);
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       bookingsError = _mapError(e);
       AppLogger.e(
         'Failed to release funds for booking $bookingId',
@@ -314,7 +314,7 @@ class BookingViewModel extends ChangeNotifier {
       await _repo.acceptBooking(bookingId);
       await _refreshBookingInLists(bookingId);
       notifyListeners();
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       bookingsError = _mapError(e);
       AppLogger.e(
         'Failed to accept booking $bookingId',
@@ -342,7 +342,7 @@ class BookingViewModel extends ChangeNotifier {
       // Refresh the booking state to reflect the refund
       await _refreshBookingInLists(bookingId);
       notifyListeners();
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       bookingsError = _mapError(e);
       AppLogger.e(
         'Failed to decline booking $bookingId',
@@ -360,7 +360,7 @@ class BookingViewModel extends ChangeNotifier {
       await _repo.markDelivered(bookingId);
       await _refreshBookingInLists(bookingId);
       notifyListeners();
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       bookingsError = _mapError(e);
       AppLogger.e(
         'Failed to mark booking $bookingId as delivered',
@@ -392,7 +392,7 @@ class BookingViewModel extends ChangeNotifier {
         description: description,
       );
       return txnId;
-    } catch (e) {
+    } on Exception catch (e) {
       bookingsError = _mapError(e);
       AppLogger.e('Payment failed', tag: 'Booking', error: e);
       notifyListeners();
@@ -518,7 +518,7 @@ class BookingViewModel extends ChangeNotifier {
         providerId: draft.providerId,
         requestCorrelationId: requestCorrelationId,
       );
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'createPaymentForBooking failed',
         error: e,
@@ -615,7 +615,7 @@ class BookingViewModel extends ChangeNotifier {
         bookingsClientCursor = data.last.createdAtUtc.toUtc().toIso8601String();
       }
       bookingsClientHasMore = data.length == _pageSize;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       final message = _mapError(e);
       bookingsError = message;
       clientBookingsError = message;
@@ -650,7 +650,7 @@ class BookingViewModel extends ChangeNotifier {
         bookingsClientCursor = data.last.createdAtUtc.toUtc().toIso8601String();
       }
       bookingsClientHasMore = data.length == _pageSize;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       final message = _mapError(e);
       bookingsError = message;
       clientBookingsError = message;
@@ -683,7 +683,7 @@ class BookingViewModel extends ChangeNotifier {
             .toIso8601String();
       }
       bookingsProviderHasMore = data.length == _pageSize;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       final message = _mapError(e);
       bookingsError = message;
       providerBookingsError = message;
@@ -720,7 +720,7 @@ class BookingViewModel extends ChangeNotifier {
             .toIso8601String();
       }
       bookingsProviderHasMore = data.length == _pageSize;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       final message = _mapError(e);
       bookingsError = message;
       providerBookingsError = message;
@@ -752,7 +752,7 @@ class BookingViewModel extends ChangeNotifier {
       if (idx != -1) bookingsAsProvider[idx] = updated;
       notifyListeners();
       return true;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       bookingsError = _mapError(e);
       // Guard block (client cancel after delivery) is expected; do not report as crash
       if (e is StateError) {
@@ -802,7 +802,7 @@ class BookingViewModel extends ChangeNotifier {
       );
 
       return conversation;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       bookingsError = _mapError(e);
       AppLogger.e(
         'Failed to contact provider for booking ${booking.id}',

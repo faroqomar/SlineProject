@@ -95,7 +95,7 @@ class PortfolioViewModel extends ChangeNotifier {
         tag: _tag,
         json: {'totalItems': _items.length, 'hasMore': _hasMore},
       );
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       _setError(e);
       AppLogger.e(
         'Failed to load portfolio',
@@ -151,7 +151,7 @@ class PortfolioViewModel extends ChangeNotifier {
         tag: _tag,
         json: {'totalItems': _items.length, 'hasMore': _hasMore},
       );
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       _setError(e);
       AppLogger.e(
         'Failed to load more portfolio items',
@@ -204,7 +204,7 @@ class PortfolioViewModel extends ChangeNotifier {
       AppLogger.i('Added portfolio item: ${created.id}', tag: _tag);
       _notify();
       return true;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       _setError(e);
       AppLogger.e(
         'Failed to add portfolio item',
@@ -233,7 +233,7 @@ class PortfolioViewModel extends ChangeNotifier {
       }
       _notify();
       return true;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       _setError(e);
       AppLogger.e(
         'Failed to delete item $id',
@@ -270,7 +270,7 @@ class PortfolioViewModel extends ChangeNotifier {
       }
       _notify();
       return true;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       _setError(e);
       AppLogger.e(
         'Failed to update item $id',

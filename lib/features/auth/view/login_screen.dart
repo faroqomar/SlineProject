@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/app/main_navigation_screen.dart';
@@ -54,8 +56,10 @@ class _LoginScreenState extends State<LoginScreen> {
           ).showSnackBar(SnackBar(content: Text(sessionError)));
           sessionVm.clearError();
         }
-      } catch (_) {
+      } on Exception catch (_) {
         // AuthSessionViewModel not provided (e.g. in tests)
+      } on Error catch (_) {
+        // ProviderNotFoundException extends Error
       }
     });
   }
@@ -82,12 +86,14 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Login successful')));
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder:
-              widget.mainNavigationBuilder ??
-              (_) => const MainNavigationScreen(),
+      unawaited(
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder:
+                widget.mainNavigationBuilder ??
+                (_) => const MainNavigationScreen(),
+          ),
         ),
       );
     } else {

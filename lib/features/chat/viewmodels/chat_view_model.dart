@@ -106,20 +106,23 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
     AppLogger.i('chat_teardown_role_switch', tag: 'ChatVM');
 
     // Cancel realtime subscriptions first
-    _msgSub?.cancel();
+    unawaited(_msgSub?.cancel());
     _msgSub = null;
-    _inboxMsgSub?.cancel();
+    unawaited(_inboxMsgSub?.cancel());
     _inboxMsgSub = null;
-    _presenceSub?.cancel();
+    unawaited(_presenceSub?.cancel());
     _presenceSub = null;
 
     // Also remove Supabase realtime channels (not just Dart streams)
     try {
       final client = Supabase.instance.client;
-      client.removeAllChannels();
+      await client.removeAllChannels();
       AppLogger.d('chat_removed_all_supabase_channels', tag: 'ChatVM');
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.w('chat_remove_channels_warning: $e', tag: 'ChatVM');
+    } on Error catch (e) {
+      // Supabase not initialized (e.g., in tests)
+      AppLogger.w('chat_remove_channels_error: $e', tag: 'ChatVM');
     }
 
     // Clear all cached data
@@ -162,7 +165,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
     try {
       if (delivered) await _repo.markDelivered(activeConversation!.id);
       if (seen) await _repo.markSeen(activeConversation!.id);
-    } catch (e) {
+    } on Exception catch (e) {
       final op = [if (delivered) 'delivered', if (seen) 'seen'].join('+');
       AppLogger.e(
         'Error marking receipts conversation_id=${activeConversation!.id} operation=$op',
@@ -184,7 +187,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
         ..clear()
         ..addAll(list);
       AppLogger.i('✅ Conversations fetched: ${conversations.length}');
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Error fetching conversations: $e');
     } finally {
       isLoadingConversations = false;
@@ -219,7 +222,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
                 '[REALTIME] Inbox merged: ${conversations.length} conversations',
               );
               _notify();
-            } catch (e) {
+            } on Exception catch (e) {
               AppLogger.e('Error merging inbox messages', error: e);
             }
           },
@@ -316,7 +319,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
       );
       AppLogger.i('✅ Conversation created/fetched: ${conversation.id}');
       return conversation;
-    } catch (e) {
+    } on Exception catch (e) {
       final errorMessage = _mapConversationError(e);
       conversationCreationError = errorMessage;
       AppLogger.e('❌ Error creating conversation: $errorMessage');
@@ -383,7 +386,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
         throw Exception('Could not create conversation. Please try again.');
       }
       return conversation;
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Error getting task conversation for task ${task.id}: $e');
       rethrow;
     }
@@ -395,7 +398,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
       conversations.removeWhere((c) => c.id == conversationId);
       _notify(); // Update UI immediately
       AppLogger.i('Deleted conversation: $conversationId');
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Error deleting conversation: $e');
       rethrow;
     }
@@ -413,7 +416,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
         ..addAll(msgs);
       final idx = conversations.indexWhere((c) => c.id == conversationId);
       if (idx != -1) activeConversation = conversations[idx];
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Error fetching messages: $e');
     } finally {
       isLoadingMessages = false;
@@ -455,7 +458,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
       );
       currentMessages.add(message);
       _notify();
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Error sending message', error: e);
       rethrow;
     } finally {
@@ -494,7 +497,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
         price: price,
         days: days,
       );
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Error creating direct offer', error: e);
       rethrow;
     } finally {
@@ -513,7 +516,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
         // Do not send 'offer_accepted' message for direct offers: conversation may be
         // task-linked and backend can treat that message as task acceptance. Acceptance
         // is recorded in work_log; payment happens from dashboard.
-      } catch (e) {
+      } on Exception catch (e) {
         AppLogger.e('Error accepting offer', error: e);
         rethrow;
       }
@@ -531,7 +534,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
     if (offerId != null) {
       try {
         await _directOffersService.rejectOffer(offerId);
-      } catch (e) {
+      } on Exception catch (e) {
         AppLogger.e('Error rejecting offer', error: e);
         rethrow;
       }
@@ -588,15 +591,15 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
         _offerStatusCache[entry.key] = key;
       }
       _notify();
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.w('Failed to refresh offer statuses: $e', tag: 'ChatVM');
     }
   }
 
   Future<void> subscribeToActiveConversation() async {
     if (activeConversation == null) return;
-    _msgSub?.cancel();
-    _presenceSub?.cancel();
+    unawaited(_msgSub?.cancel());
+    unawaited(_presenceSub?.cancel());
     _offerRefreshDebounce?.cancel();
     _offerRefreshDebounce = null;
     final cid = activeConversation!.id;
@@ -735,7 +738,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
     if (uid == null) return;
     try {
       await _repo.upsertPresence(activeConversation!.id, uid, isTyping);
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.w('[CHAT] setTyping failed: $e', tag: 'ChatVM');
     }
   }

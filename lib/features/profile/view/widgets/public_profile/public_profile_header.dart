@@ -30,7 +30,7 @@ class PublicProfileHeader extends StatelessWidget {
             ),
           ),
           // Back Button
-          Positioned(
+          const Positioned(
             top: 40,
             left: 16,
             child: CircleAvatar(

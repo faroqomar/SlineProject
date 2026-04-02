@@ -9,7 +9,7 @@ class UnifiedCtaResolver {
     required String actorRole,
     required String entityType,
   }) {
-    List<String> allowedActions = [];
+    final List<String> allowedActions = [];
     String? badgeText;
     Color? badgeColor;
 
@@ -31,7 +31,7 @@ class UnifiedCtaResolver {
       }
     } else if (actorRole == 'provider' || actorRole == 'system') {
       // Typically providers or systems have refund action
-      bool allowedToRefund = [
+      final bool allowedToRefund = [
         'declined',
         'canceled',
         'expired',

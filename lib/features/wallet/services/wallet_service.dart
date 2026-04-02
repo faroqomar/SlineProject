@@ -40,7 +40,7 @@ class WalletService {
 
       if (data == null) return WalletBalanceModel.zero();
       return WalletBalanceModel.fromJson(data);
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.w(
         'getWalletBalance failed, returning zero',
         tag: 'Wallet',
@@ -102,7 +102,7 @@ class WalletService {
       AppLogger.i('Funds locked for withdrawal: $withdrawalId', tag: 'Wallet');
 
       return withdrawalId;
-    } catch (e) {
+    } on Exception catch (e) {
       // If ledger call failed but we created the withdrawal request, clean it up
       if (withdrawalId != null) {
         AppLogger.w(
@@ -115,7 +115,7 @@ class WalletService {
               .from('withdrawal_requests')
               .update({'status': 'failed'})
               .eq('id', withdrawalId);
-        } catch (cleanupError) {
+        } on Exception catch (cleanupError) {
           AppLogger.e(
             'Failed to cleanup withdrawal request $withdrawalId',
             tag: 'Wallet',

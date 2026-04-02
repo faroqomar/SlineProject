@@ -36,7 +36,7 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
             try {
               final dashboardVm = context.read<DashboardViewModel>();
               await dashboardVm.refresh();
-            } catch (_) {}
+            } on Exception catch (_) {}
             messenger.showSnackBar(
               const SnackBar(
                 content: Text('Payment successful! Work is now active.'),
@@ -219,7 +219,7 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
             children: [
               Icon(Icons.credit_card, color: colorScheme.primary),
               const SizedBox(width: AppDimens.p12),
-              Expanded(
+              const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

@@ -64,9 +64,8 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                             });
 
                             try {
-                              final path = await vm.pickAndUploadPortfolioImage(
-                                context,
-                              );
+                              final path = await vm
+                                  .pickAndUploadPortfolioImage();
 
                               // Critical: Add delay to let iOS picker fully cleanup
                               // This prevents race condition crash on iPhone
@@ -75,6 +74,13 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                               );
 
                               if (context.mounted) {
+                                if (vm.portfolioUploadError != null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(vm.portfolioUploadError!),
+                                    ),
+                                  );
+                                }
                                 setState(() {
                                   if (path != null) {
                                     localImagePath = path;
@@ -85,7 +91,7 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                                   isUploading = false;
                                 });
                               }
-                            } catch (e) {
+                            } on Exception catch (_) {
                               // Also delay on error path
                               await Future.delayed(
                                 const Duration(milliseconds: 300),

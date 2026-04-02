@@ -64,7 +64,7 @@ class FavoritesViewModel extends ChangeNotifier {
         'Load favorites success: ${list.length} items',
         tag: 'FavoritesViewModel',
       );
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to load favorites',
         tag: 'FavoritesViewModel',
@@ -101,7 +101,7 @@ class FavoritesViewModel extends ChangeNotifier {
         tag: 'FavoritesViewModel',
       );
       return FavoritesMutationResult.success;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       _pendingIds.remove(freelancerId);
       notifyListeners();
       AppLogger.e(
@@ -140,7 +140,7 @@ class FavoritesViewModel extends ChangeNotifier {
         tag: 'FavoritesViewModel',
       );
       return FavoritesMutationResult.success;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       _pendingIds.remove(freelancerId);
       notifyListeners();
       AppLogger.e(

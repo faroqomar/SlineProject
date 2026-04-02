@@ -90,7 +90,7 @@ class SearchViewModel extends ChangeNotifier {
         final results = await _service.searchProfiles(query: query);
         _profiles = results;
       }
-    } catch (e) {
+    } on Exception catch (e) {
       _error = 'Failed to search. Please try again.';
       AppLogger.e('Search error', error: e);
     } finally {

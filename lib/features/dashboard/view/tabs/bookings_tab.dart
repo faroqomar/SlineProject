@@ -75,7 +75,7 @@ class BookingsTab extends StatelessWidget {
             padding: const EdgeInsets.all(AppDimens.p16),
             children: [
               if (upcoming.isNotEmpty) ...[
-                _SectionHeader(title: 'Upcoming'),
+                const _SectionHeader(title: 'Upcoming'),
                 ...upcoming.map(
                   (b) => DashboardBookingCard(
                     booking: b,
@@ -100,7 +100,7 @@ class BookingsTab extends StatelessWidget {
               ],
 
               if (past.isNotEmpty) ...[
-                _SectionHeader(title: 'Past'),
+                const _SectionHeader(title: 'Past'),
                 ...past.map(
                   (b) => DashboardBookingCard(
                     booking: b,

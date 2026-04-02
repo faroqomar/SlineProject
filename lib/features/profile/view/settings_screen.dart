@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:sline_app/features/profile/view/manage_portfolio_screen.dart';
 import 'package:provider/provider.dart';
@@ -167,10 +169,12 @@ class SettingsScreen extends StatelessWidget {
                     await authVM.logout();
                     if (!context.mounted) return;
 
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/login',
-                      (route) => false,
+                    unawaited(
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        '/login',
+                        (route) => false,
+                      ),
                     );
                   },
                   child: Container(
@@ -279,8 +283,8 @@ class SettingsScreen extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Request withdrawal — coming soon'),
+          const SnackBar(
+            content: Text('Request withdrawal — coming soon'),
             behavior: SnackBarBehavior.floating,
           ),
         );

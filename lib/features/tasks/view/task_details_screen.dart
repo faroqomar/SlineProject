@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
@@ -416,13 +418,15 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
       if (conversation == null) return;
       if (!context.mounted) return;
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ChatScreen(conversation: conversation),
+      unawaited(
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChatScreen(conversation: conversation),
+          ),
         ),
       );
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e(
         'Failed to start chat for task=$taskId owner=$ownerId',
         tag: 'Task',
@@ -653,31 +657,35 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
           'delivery_days': _selectedDeliveryDays(),
         },
       );
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => PaymentCheckoutScreen(
-            providerId: widget.task.userId,
-            taskId: widget.task.id,
-            taskTitle: widget.task.title,
-            price: _selectedBookingPrice(),
-            packageTier: _selectedPackageId(),
-            packageData: _selectedPackageData(),
-            deliveryDays: _selectedDeliveryDays(),
-            taskDeadline: widget.task.deadline,
+      unawaited(
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => PaymentCheckoutScreen(
+              providerId: widget.task.userId,
+              taskId: widget.task.id,
+              taskTitle: widget.task.title,
+              price: _selectedBookingPrice(),
+              packageTier: _selectedPackageId(),
+              packageData: _selectedPackageData(),
+              deliveryDays: _selectedDeliveryDays(),
+              taskDeadline: widget.task.deadline,
+            ),
           ),
         ),
       );
     } else {
       // Tender -> Open Proposal Sheet
       // For now, just push the RequestsListScreen with autoOpen (or we can implement the modal later)
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => RequestsListScreen(
-            taskId: widget.task.id,
-            autoOpenSubmitSheet: true,
-            isTender: true,
-            isOwner: false,
-            budget: widget.task.budget.toString(),
+      unawaited(
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => RequestsListScreen(
+              taskId: widget.task.id,
+              autoOpenSubmitSheet: true,
+              isTender: true,
+              isOwner: false,
+              budget: widget.task.budget.toString(),
+            ),
           ),
         ),
       );

@@ -119,7 +119,7 @@ class AuthRepository {
           );
           return profile;
         }
-      } catch (e) {
+      } on Exception catch (e) {
         AppLogger.w(
           'Profile fetch attempt $attempt failed',
           tag: 'Auth',

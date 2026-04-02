@@ -22,7 +22,7 @@ void main() {
     });
 
     test('paymentDeadline can be null', () {
-      final s = ProposalPaymentSummary(
+      final s = const ProposalPaymentSummary(
         requestId: 'req-2',
         taskId: 'task-2',
         taskTitle: 'Task',

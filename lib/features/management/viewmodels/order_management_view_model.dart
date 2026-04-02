@@ -33,7 +33,7 @@ class OrderManagementViewModel extends ChangeNotifier {
 
     try {
       _logs = await _service.getLogs(scope);
-    } catch (e) {
+    } on Exception catch (e) {
       _loadError = _normalizeError(e);
     } finally {
       _isLoading = false;
@@ -62,7 +62,7 @@ class OrderManagementViewModel extends ChangeNotifier {
       );
       await loadLogs(scope);
       return true;
-    } catch (e) {
+    } on Exception catch (e) {
       _actionError = _normalizeError(e);
       return false;
     } finally {
@@ -86,7 +86,7 @@ class OrderManagementViewModel extends ChangeNotifier {
       );
       await loadLogs(scope);
       return true;
-    } catch (e) {
+    } on Exception catch (e) {
       _actionError = _normalizeError(e);
       return false;
     } finally {
@@ -109,7 +109,7 @@ class OrderManagementViewModel extends ChangeNotifier {
       );
       await loadLogs(scope);
       return true;
-    } catch (e) {
+    } on Exception catch (e) {
       _actionError = _normalizeError(e);
       return false;
     } finally {

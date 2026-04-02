@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
@@ -32,16 +34,18 @@ class ChatContextWidget extends StatelessWidget {
       if (!context.mounted) return;
 
       if (task != null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => TaskDetailsScreen(task: task)),
+        unawaited(
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => TaskDetailsScreen(task: task)),
+          ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Could not load task details.')),
         );
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (context.mounted) {
         AppLogger.e('Error loading task for context nav', error: e);
         ScaffoldMessenger.of(context).showSnackBar(

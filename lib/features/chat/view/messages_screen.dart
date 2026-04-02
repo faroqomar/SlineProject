@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
@@ -53,7 +55,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
               .length;
 
           return RefreshIndicator(
-            onRefresh: () async => await controller.fetchConversations(),
+            onRefresh: () async => controller.fetchConversations(),
             child: CustomScrollView(
               slivers: [
                 // --- Header ---
@@ -173,7 +175,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                             ),
                           ),
                           confirmDismiss: (direction) async {
-                            return await showDialog(
+                            return showDialog(
                               context: context,
                               builder: (context) => AlertDialog(
                                 backgroundColor: colorScheme.cardBackground,
@@ -261,9 +263,11 @@ class _MessagesScreenState extends State<MessagesScreen> {
     controller.activeConversation = convo;
     await controller.fetchMessages(convo.id);
     if (context.mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => ChatScreen(conversation: convo)),
+      unawaited(
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => ChatScreen(conversation: convo)),
+        ),
       );
     }
   }

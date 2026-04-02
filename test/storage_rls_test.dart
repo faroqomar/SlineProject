@@ -30,7 +30,7 @@ void main() {
     setUpAll(() async {
       try {
         Supabase.instance;
-      } catch (_) {
+      } on Object catch (_) {
         ensureSupabaseTestEnvironment();
         await Supabase.initialize(
           url: 'https://test.supabase.co',
@@ -48,8 +48,8 @@ void main() {
       SupabaseClient? client;
       try {
         client = Supabase.instance.client;
-      } catch (_) {
-        // Fallback for environments where initialization might be different
+      } on Object catch (_) {
+        // Supabase not initialized — use mock mode
       }
       harness = StorageRlsTestHarness(client: client);
     });
@@ -57,7 +57,11 @@ void main() {
     tearDown(() {
       try {
         harness.logSummary();
-      } catch (_) {}
+      } on Exception catch (e) {
+        // Log but don't fail tearDown — prevents noise from masking real failures
+        // ignore: avoid_print
+        print('tearDown: harness.logSummary() failed: $e');
+      }
     });
 
     // Test data - matches fixtures/storage_rls_test_data.sql

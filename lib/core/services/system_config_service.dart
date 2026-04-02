@@ -34,7 +34,7 @@ class SystemConfigService {
         bannerText: banner['text']?.toString() ?? '',
         bannerType: banner['type']?.toString() ?? 'info',
       );
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.w(
         'Failed to fetch public system config, using defaults.',
         tag: 'SystemConfig',

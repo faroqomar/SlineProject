@@ -26,7 +26,10 @@ class AuthFormViewModel extends ChangeNotifier {
   static AccountGuardService? _buildDefaultGuardService() {
     try {
       return AccountGuardService(client: Supabase.instance.client);
-    } catch (_) {
+    } on Exception catch (_) {
+      return null;
+    } on Error catch (_) {
+      // Supabase not initialized (e.g., in tests) — guard is optional
       return null;
     }
   }
@@ -70,7 +73,7 @@ class AuthFormViewModel extends ChangeNotifier {
         }
       }
       return true;
-    } catch (e) {
+    } on Exception catch (e) {
       _setError(ErrorMapper.map(e));
       AppLogger.e('Login failed', tag: 'Auth', error: e);
       return false;
@@ -105,7 +108,7 @@ class AuthFormViewModel extends ChangeNotifier {
         return false;
       }
       return true;
-    } catch (e) {
+    } on Exception catch (e) {
       _setError(ErrorMapper.map(e));
       AppLogger.e('Registration failed', tag: 'Auth', error: e);
       return false;
@@ -122,7 +125,7 @@ class AuthFormViewModel extends ChangeNotifier {
     try {
       await _authRepo.sendPasswordResetEmail(email);
       return true;
-    } catch (e) {
+    } on Exception catch (e) {
       _setError(ErrorMapper.map(e));
       AppLogger.e('Password reset failed', tag: 'Auth', error: e);
       return false;
@@ -139,7 +142,7 @@ class AuthFormViewModel extends ChangeNotifier {
     try {
       await _authRepo.updatePassword(newPassword);
       return true;
-    } catch (e) {
+    } on Exception catch (e) {
       _setError(ErrorMapper.map(e));
       AppLogger.e('Password update failed', tag: 'Auth', error: e);
       return false;

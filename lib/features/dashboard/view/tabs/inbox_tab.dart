@@ -52,7 +52,7 @@ class _InboxTabState extends State<InboxTab> {
           ),
         );
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (!mounted) return;
       setState(() => _isAwarding = false);
       messenger.showSnackBar(

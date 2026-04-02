@@ -103,7 +103,7 @@ class _SignedImageState extends State<SignedImage> {
                 v,
                 SharedStorageConfig.ttlForBucket(widget.bucket!),
               );
-        } catch (e) {
+        } on Exception catch (_) {
           // If signed URL fails (e.g., public bucket), fall back to public URL
           resolved = Supabase.instance.client.storage
               .from(widget.bucket!)
@@ -126,7 +126,7 @@ class _SignedImageState extends State<SignedImage> {
         _resolvedUrl = resolved;
         _loading = false;
       });
-    } catch (e) {
+    } on Exception catch (e) {
       if (!mounted) return;
       AppLogger.w(
         'Failed to resolve signed image URL',

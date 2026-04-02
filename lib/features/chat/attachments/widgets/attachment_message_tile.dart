@@ -26,7 +26,7 @@ void _agentDebugLog(
     File(
       '/Users/eros/Dev/Eros_Projects/Sline/sline_app/.cursor/debug-9844e5.log',
     ).writeAsStringSync('$line\n', mode: FileMode.append);
-  } catch (_) {}
+  } on Exception catch (_) {}
 }
 // #endregion
 
@@ -150,7 +150,7 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
           _loading = false;
         });
       }
-    } catch (e) {
+    } on Exception catch (e) {
       // #region agent log
       _agentDebugLog(
         'attachment_message_tile.dart:_loadSignedUrl',

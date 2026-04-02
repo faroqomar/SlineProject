@@ -60,7 +60,7 @@ class RoleSwitchRepository {
       }
 
       return result;
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       AppLogger.e(
         'role_switch_rpc_exception',
         tag: 'RoleSwitchRepo',
@@ -87,7 +87,7 @@ class RoleSwitchRepository {
         await _client.auth.refreshSession();
         AppLogger.i('session_refresh_success', tag: 'RoleSwitchRepo');
         return true;
-      } catch (e) {
+      } on Exception catch (e) {
         AppLogger.w(
           'session_refresh_attempt_${i + 1}_failed',
           tag: 'RoleSwitchRepo',
@@ -147,7 +147,7 @@ class RoleSwitchRepository {
       );
 
       return matches;
-    } catch (e, stackTrace) {
+    } on Exception catch (e, stackTrace) {
       AppLogger.e(
         'verify_jwt_exception',
         tag: 'RoleSwitchRepo',
@@ -173,7 +173,7 @@ class RoleSwitchRepository {
       );
 
       return allowed;
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('rate_limit_check_failed', tag: 'RoleSwitchRepo', error: e);
       // Fail open (allow) if rate limit check fails
       return true;

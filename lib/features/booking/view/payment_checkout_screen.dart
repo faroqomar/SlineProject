@@ -107,7 +107,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
   Future<void> _cancelDraftIfPossible(String bookingId) async {
     _orphanDraftTimer?.cancel();
     _orphanDraftTimer = null;
-    _intentSubscription?.cancel();
+    unawaited(_intentSubscription?.cancel());
     AppLogger.i(
       'Attempting to cancel unpaid booking draft booking=$bookingId',
       tag: 'Payment',
@@ -321,7 +321,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
 
       if (createResult.formUrl != null) {
         if (createResult.intentId != null) {
-          _intentSubscription?.cancel();
+          unawaited(_intentSubscription?.cancel());
           _intentSubscription = vm
               .streamPaymentIntentStatus(createResult.intentId!)
               .listen((status) {
@@ -418,7 +418,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
         _processing = false;
         _paymentFlowInProgress = false;
       });
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Payment flow failed', error: e, tag: 'Payment');
       if (!mounted) return;
       setState(() {

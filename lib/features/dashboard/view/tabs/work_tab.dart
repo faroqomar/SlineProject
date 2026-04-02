@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
@@ -107,7 +109,7 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
                   tabs: [
                     Tab(text: 'Active (${active.length})'),
                     Tab(text: 'Done (${completed.length})'),
-                    Tab(text: 'Cancelled'),
+                    const Tab(text: 'Cancelled'),
                   ],
                 ),
               ),
@@ -306,13 +308,13 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
         summary: summary,
         launcherSource: 'work_tab',
       );
-      if (context.mounted) vm.refresh();
+      if (context.mounted) unawaited(vm.refresh());
       return;
     }
 
     try {
       await vm.performPrimaryAction(item);
-      if (context.mounted) vm.refresh();
+      if (context.mounted) unawaited(vm.refresh());
     } on FormatException catch (e) {
       if (!context.mounted) return;
       if (e.message.contains('Insufficient')) {
@@ -322,13 +324,11 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
           context,
         ).showSnackBar(SnackBar(content: Text(e.message)));
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e is Exception ? e.toString() : 'Something went wrong'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
@@ -352,13 +352,10 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
           ),
         );
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e is Exception ? e.toString() : 'Failed to cancel'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
         );
       }
     }

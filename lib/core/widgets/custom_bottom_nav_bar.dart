@@ -34,35 +34,35 @@ class CustomBottomNavBar extends StatelessWidget {
 
     // Navigation items configuration
     final List<_NavItem> navItems = [
-      _NavItem(
+      const _NavItem(
         NavView.home,
         Icons.home_outlined,
         Icons.home,
         'Home',
         key: homeNavKey,
       ),
-      _NavItem(
+      const _NavItem(
         NavView.tender,
         Icons.assignment_outlined,
         Icons.assignment,
         'Tenders',
         key: tendersNavKey,
       ),
-      _NavItem(
+      const _NavItem(
         NavView.booking,
         Icons.calendar_today_outlined,
         Icons.calendar_today,
         'Bookings',
         key: bookingsNavKey,
       ),
-      _NavItem(
+      const _NavItem(
         NavView.orders,
         Icons.dashboard_outlined,
         Icons.dashboard,
         'Dashboard',
         key: dashboardNavKey,
       ),
-      _NavItem(
+      const _NavItem(
         NavView.messages,
         Icons.message_outlined,
         Icons.message,
@@ -70,7 +70,7 @@ class CustomBottomNavBar extends StatelessWidget {
         hasNotification: true,
         key: messagesNavKey,
       ),
-      _NavItem(
+      const _NavItem(
         NavView.profile,
         Icons.person_outline,
         Icons.person,

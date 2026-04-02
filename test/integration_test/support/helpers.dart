@@ -26,7 +26,7 @@ Future<void> _ensureSupabaseInitialized(String tag) async {
   try {
     await SupabaseConfig.init();
     _supabaseInitialized = true;
-  } catch (e) {
+  } on Exception catch (e) {
     final msg = e.toString().toLowerCase();
     final alreadyInitialized =
         msg.contains('already') && msg.contains('initializ');
@@ -40,7 +40,7 @@ Future<void> resetAuthSessionForIntegration({required String tag}) async {
   try {
     await Supabase.instance.client.auth.signOut();
     T61T70Preflight.log(tag, 'Signed out existing session for clean launch');
-  } catch (e) {
+  } on Exception catch (e) {
     T61T70Preflight.log(tag, 'Sign-out reset skipped: $e');
   }
 }

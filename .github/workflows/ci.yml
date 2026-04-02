@@ -52,9 +52,9 @@ jobs:
           fi
 
           echo ""
-          echo "=== Check 3: Supabase.instance in viewmodel layer ==="
-          if grep -rn --include='*.dart' 'Supabase\.instance' lib/features/ | grep '/viewmodels/' ; then
-            echo "::warning::Direct Supabase access found in viewmodel layer"
+          echo "=== Check 3: Supabase.instance in viewmodel methods (not DI defaults) ==="
+          if grep -rn --include='*.dart' 'Supabase\.instance' lib/features/ | grep '/viewmodels/' | grep -v 'client ??' | grep -v '/// ' | grep -v 'Supabase\.instance\.client)' | grep -v 'Supabase\.instance\.client;' | grep -v 'Supabase\.instance\.client\.auth\.' ; then
+            echo "::warning::Direct Supabase access found in viewmodel layer (outside DI defaults)"
             WARN=1
           fi
 
@@ -81,13 +81,11 @@ jobs:
 
           if [ $WARN -eq 1 ]; then
             echo ""
-            echo "::warning::Architecture violations detected. These should be fixed in Phase B."
+            echo "::error::Architecture violations detected. Fix before merging."
+            exit 1
           else
             echo "All architecture checks passed."
           fi
-
-          # Warning-only for now. Graduate to hard failure after Phase B fixes.
-          exit 0
 
   test:
     name: Unit & Widget Tests

@@ -127,7 +127,7 @@ class AuthSessionViewModel extends ChangeNotifier {
         await logout();
         _error = AuthMessages.profileProvisioningFailed;
       }
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to load profile',
         tag: 'Auth',
@@ -149,7 +149,7 @@ class AuthSessionViewModel extends ChangeNotifier {
     try {
       await _authRepo.signOut();
       _currentUserProfile = null;
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Logout failed', tag: 'Auth', error: e);
     } finally {
       _isLoading = false;

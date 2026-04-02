@@ -83,7 +83,7 @@ class LedgerService {
         tag: 'LedgerService',
       );
       throw FormatException(_mapLedgerError(e));
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e(
         'Unexpected Ledger Error${requestId != null ? ' request_id:$requestId' : ''}',
         error: e,

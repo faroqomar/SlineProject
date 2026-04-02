@@ -8,7 +8,6 @@ import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
-import 'package:sline_app/features/categories/data/categories_repository.dart';
 import 'package:sline_app/features/categories/models/category_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
@@ -157,20 +156,22 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     super.didChangeDependencies();
     if (!_categoriesLoadScheduled) {
       _categoriesLoadScheduled = true;
-      _loadCategories();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _loadCategories();
+      });
     }
   }
 
   Future<void> _loadCategories() async {
     setState(() => _categoriesLoading = true);
     try {
-      final repo = context.read<CategoriesRepository>();
-      final cats = await repo.getAll();
+      final vm = context.read<TaskViewModel>();
+      final cats = await vm.loadCategories();
       if (!mounted) return;
       setState(() {
         _categories = cats;
       });
-    } catch (e) {
+    } on Exception catch (_) {
       if (!mounted) return;
       setState(() {
         _categories = [];
@@ -288,7 +289,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
       if (!mounted) return;
       Navigator.pop(context);
-    } catch (e) {
+    } on Exception catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,

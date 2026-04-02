@@ -9,7 +9,6 @@ import 'package:sline_app/features/favorites/viewmodels/favorites_view_model.dar
 import 'package:sline_app/features/tasks/viewmodels/task_requests_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/core/utils/format_price.dart';
-import 'package:sline_app/features/proposals/data/proposal_repository.dart';
 import 'package:sline_app/features/proposals/models/proposal_payment_summary.dart';
 import 'package:sline_app/features/proposals/routes/proposal_payment_route.dart';
 import 'package:sline_app/core/services/logger_service.dart';
@@ -71,6 +70,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
   BuildContext? _providerCtx;
   late final ScrollController _scroll;
   bool _isAwarding = false;
+  bool _isShowingBidSheet = false;
 
   // Filter state for expired bids
   ExpiredBidFilter _filter = ExpiredBidFilter.hideExpired;
@@ -692,14 +692,10 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
       );
     }
     return ChangeNotifierProvider<TaskRequestsViewModel>(
-      create: (ctx) {
-        final proposalRepo = widget.isOwner
-            ? ctx.read<ProposalRepository>()
-            : null;
+      create: (_) {
         final c = TaskRequestsViewModel(
           taskId: widget.taskId,
           isOwner: widget.isOwner,
-          proposalRepo: proposalRepo,
         );
         c.loadInitial();
         return c;
@@ -803,14 +799,20 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
               floatingActionButton: widget.isOwner
                   ? null
                   : FloatingActionButton.extended(
-                      onPressed: () {
-                        final prov = _providerCtx ?? context;
-                        showSubmitRequestSheet(
-                          prov,
-                          taskId: widget.taskId,
-                          controller: c,
-                          budget: widget.budget ?? '0',
-                        );
+                      onPressed: () async {
+                        if (_isShowingBidSheet) return;
+                        _isShowingBidSheet = true;
+                        try {
+                          final prov = _providerCtx ?? context;
+                          await showSubmitRequestSheet(
+                            prov,
+                            taskId: widget.taskId,
+                            controller: c,
+                            budget: widget.budget ?? '0',
+                          );
+                        } finally {
+                          _isShowingBidSheet = false;
+                        }
                       },
                       icon: const Icon(Icons.add),
                       label: const Text('New Offer'),
@@ -1037,19 +1039,25 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
                   else
                     // Freelancer CTA: Submit bid
                     FilledButton.icon(
-                      onPressed: () {
-                        AppLogger.d(
-                          'Freelancer tapped submit bid CTA',
-                          tag: 'TaskRequests',
-                        );
-                        final prov = _providerCtx ?? context;
-                        final vm = context.read<TaskRequestsViewModel>();
-                        showSubmitRequestSheet(
-                          prov,
-                          taskId: widget.taskId,
-                          controller: vm,
-                          budget: widget.budget ?? '0',
-                        );
+                      onPressed: () async {
+                        if (_isShowingBidSheet) return;
+                        _isShowingBidSheet = true;
+                        try {
+                          AppLogger.d(
+                            'Freelancer tapped submit bid CTA',
+                            tag: 'TaskRequests',
+                          );
+                          final prov = _providerCtx ?? context;
+                          final vm = context.read<TaskRequestsViewModel>();
+                          await showSubmitRequestSheet(
+                            prov,
+                            taskId: widget.taskId,
+                            controller: vm,
+                            budget: widget.budget ?? '0',
+                          );
+                        } finally {
+                          _isShowingBidSheet = false;
+                        }
                       },
                       icon: const Icon(Icons.add),
                       label: const Text('Submit a Bid'),

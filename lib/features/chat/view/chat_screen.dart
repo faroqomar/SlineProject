@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -54,7 +55,7 @@ class _ChatScreenState extends State<ChatScreen> {
       _chatCtrl.activeConversation = widget.conversation;
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         AppLogger.i('[CHAT] opened: convo=${widget.conversation.id}');
-        _chatCtrl.subscribeToActiveConversation();
+        unawaited(_chatCtrl.subscribeToActiveConversation());
         if (!mounted) return;
         await _chatCtrl.markReceiptsForActive(delivered: true, seen: true);
       });
@@ -77,7 +78,7 @@ class _ChatScreenState extends State<ChatScreen> {
       AppLogger.i(
         '[CHAT] image sent via usecase for convo=${widget.conversation.id}',
       );
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('sendImageAttachment failed: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -107,7 +108,7 @@ class _ChatScreenState extends State<ChatScreen> {
             price: price,
             days: days,
           );
-        } catch (e) {
+        } on Exception catch (e) {
           if (!mounted) return;
           ScaffoldMessenger.of(
             context,
@@ -131,7 +132,7 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Consumer<ChatViewModel>(
               builder: (context, controller, child) {
                 return ListView.builder(
-                  padding: EdgeInsets.fromLTRB(
+                  padding: const EdgeInsets.fromLTRB(
                     AppDimens.p16,
                     AppDimens.p100,
                     AppDimens.p16,
@@ -159,7 +160,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       } else {
                         try {
                           offerData = jsonDecode(msg.content);
-                        } catch (_) {}
+                        } on Exception catch (_) {}
                       }
 
                       if (offerData.isNotEmpty) {
@@ -381,7 +382,7 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Container(
               width: AppDimens.p40,
               height: AppDimens.p40,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.transparent,
                 shape: BoxShape.circle,
               ),
@@ -435,7 +436,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         try {
                           await _chatCtrl.sendMessage(text);
                           if (context.mounted) _messageController.clear();
-                        } catch (_) {
+                        } on Exception catch (_) {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -486,13 +487,12 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ),
       );
-    } catch (e) {
+    } on Exception catch (e) {
+      AppLogger.e('Accept offer failed', error: e);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            e is Exception ? e.toString() : 'Failed to accept offer',
-          ),
+        const SnackBar(
+          content: Text('Could not accept offer. Please try again.'),
         ),
       );
     }

@@ -272,12 +272,18 @@ void main() {
             params: {'p_target_id': testFreelancerBId}, // Not in favorites
           );
           fail('Should have thrown');
-        } catch (e) {
-          if (e is PostgrestException) {
-            // Verify error message doesn't contain UUID format
-            expect(e.message, isNot(contains(testFreelancerBId)));
-            expect(e.message, isNot(contains(RegExp(r'[0-9a-f]{8}-'))));
-          }
+        } on PostgrestException catch (e) {
+          // Verify error message doesn't contain UUID format
+          expect(e.message, isNot(contains(testFreelancerBId)));
+          expect(
+            e.message,
+            isNot(
+              predicate<String>(
+                (m) => RegExp(r'[0-9a-f]{8}-').hasMatch(m),
+                'contains UUID pattern',
+              ),
+            ),
+          );
         }
       });
     });

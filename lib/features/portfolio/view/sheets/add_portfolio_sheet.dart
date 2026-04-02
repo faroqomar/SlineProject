@@ -57,7 +57,7 @@ class _AddPortfolioSheetState extends State<AddPortfolioSheet> {
         _imageBytes = bytes;
         _imageFilename = picked.name;
       });
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Image pick failed',
         tag: 'AddPortfolioSheet',

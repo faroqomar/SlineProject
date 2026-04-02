@@ -106,7 +106,7 @@ void main() {
       // Use a wrapper so invalid rows throw a plain exception (Message.fromJson
       // logs and rethrows, which can escape in some test runs).
       Message fromJsonSkipBad(Map<String, dynamic> row) {
-        if (row['invalid'] == true) throw FormatException('unparseable');
+        if (row['invalid'] == true) throw const FormatException('unparseable');
         return Message.fromJson(row);
       }
 

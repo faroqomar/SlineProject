@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/dashboard_view_model.dart';
@@ -73,7 +75,7 @@ class NextActionsList extends StatelessWidget {
                     action == PrimaryActionType.payEscrow) {
                   try {
                     await vm.performPrimaryAction(item);
-                    if (context.mounted) vm.refresh();
+                    if (context.mounted) unawaited(vm.refresh());
                   } on FormatException catch (e) {
                     if (!context.mounted) return;
                     if (e.message.contains('Insufficient')) {
@@ -83,17 +85,11 @@ class NextActionsList extends StatelessWidget {
                         context,
                       ).showSnackBar(SnackBar(content: Text(e.message)));
                     }
-                  } catch (e) {
+                  } on Exception catch (e) {
                     if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          e is Exception
-                              ? e.toString()
-                              : 'Something went wrong',
-                        ),
-                      ),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(e.toString())));
                   }
                   return;
                 }
@@ -118,7 +114,7 @@ class NextActionsList extends StatelessWidget {
                     summary: summary,
                     launcherSource: 'next_actions_list',
                   );
-                  if (context.mounted) vm.refresh();
+                  if (context.mounted) unawaited(vm.refresh());
                   return;
                 }
                 // Navigate for review/pay/view (booking/task pay goes to details)
@@ -135,12 +131,12 @@ class NextActionsList extends StatelessWidget {
                         conversationId: item.conversationId,
                       );
                   if (result == true && context.mounted) {
-                    vm.refresh();
+                    unawaited(vm.refresh());
                   }
                 } else {
                   try {
                     await vm.performPrimaryAction(item);
-                    if (context.mounted) vm.refresh();
+                    if (context.mounted) unawaited(vm.refresh());
                   } on FormatException catch (e) {
                     if (!context.mounted) return;
                     if (e.message.contains('Insufficient')) {
@@ -150,17 +146,11 @@ class NextActionsList extends StatelessWidget {
                         context,
                       ).showSnackBar(SnackBar(content: Text(e.message)));
                     }
-                  } catch (e) {
+                  } on Exception catch (e) {
                     if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          e is Exception
-                              ? e.toString()
-                              : 'Something went wrong',
-                        ),
-                      ),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(e.toString())));
                   }
                 }
               },
@@ -181,15 +171,11 @@ class NextActionsList extends StatelessWidget {
                             ),
                           );
                         }
-                      } catch (e) {
+                      } on Exception catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(
-                                e is Exception
-                                    ? e.toString()
-                                    : 'Failed to cancel',
-                              ),
+                              content: Text(e.toString()),
                               backgroundColor: Colors.red,
                             ),
                           );

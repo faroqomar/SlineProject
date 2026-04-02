@@ -65,10 +65,11 @@ class ProposalRepository {
                 (s['id'] as String? ?? ''): s as Map<String, dynamic>,
             };
           }
-        } catch (e) {
+        } on Object catch (e, _) {
           AppLogger.w(
             'Proposals: get_proposal_bidder_summaries failed, list without names',
             tag: 'Proposals',
+            error: e,
           );
         }
       }
@@ -105,7 +106,7 @@ class ProposalRepository {
         tag: 'Proposals',
       );
       return list;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Proposals: listByTask failed',
         tag: 'Proposals',

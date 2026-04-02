@@ -171,7 +171,7 @@ class QiCardPaymentService implements PaymentService {
       }
 
       return PaymentIntentResult(intentId: intentId, checkoutUrl: checkoutUrl);
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'createPaymentIntent failed',
         tag: 'Payment',
@@ -305,7 +305,7 @@ class QiCardPaymentService implements PaymentService {
         tag: 'Payment',
       );
       return result;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'createPaymentForBooking failed',
         tag: 'Payment',
@@ -354,7 +354,7 @@ class QiCardPaymentService implements PaymentService {
           'Booking recovery returned no payload for booking=$bookingId',
           tag: 'Payment',
         );
-        return QiCardRecoveryResult(
+        return const QiCardRecoveryResult(
           error: 'Booking recovery failed.',
           errorCode: 'BOOKING_PAYMENT_RECOVERY_FAILED',
         );
@@ -385,7 +385,7 @@ class QiCardPaymentService implements PaymentService {
         tag: 'Payment',
       );
       return result;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'recoverBookingPayment failed',
         tag: 'Payment',
@@ -434,7 +434,7 @@ class QiCardPaymentService implements PaymentService {
           'Booking refund returned no payload for booking=$bookingId',
           tag: 'Payment',
         );
-        return BookingRefundResult(
+        return const BookingRefundResult(
           error: 'Booking refund failed.',
           errorCode: 'BOOKING_REFUND_FAILED',
         );
@@ -465,7 +465,7 @@ class QiCardPaymentService implements PaymentService {
         tag: 'Payment',
       );
       return result;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'declineAndRefundBooking failed',
         tag: 'Payment',
@@ -573,7 +573,7 @@ class QiCardPaymentService implements PaymentService {
         tag: 'Payment',
       );
       return result;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'createPaymentForDirectOffer failed',
         tag: 'Payment',
@@ -673,7 +673,7 @@ class QiCardPaymentService implements PaymentService {
         tag: 'Payment',
       );
       return result;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'createPaymentForTenderOffer failed',
         tag: 'Payment',
@@ -723,7 +723,7 @@ class QiCardPaymentService implements PaymentService {
       }
 
       if (data == null) {
-        return QiCardTenderRecoveryResult(
+        return const QiCardTenderRecoveryResult(
           error: 'Recovery failed.',
           errorCode: 'TENDER_RECOVERY_FAILED',
         );
@@ -736,7 +736,7 @@ class QiCardPaymentService implements PaymentService {
         recovered: recovered,
         message: data['message'] as String?,
       );
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'recoverTenderPaymentAfterCallback failed',
         tag: 'Payment',

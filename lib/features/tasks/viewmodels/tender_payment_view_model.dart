@@ -97,7 +97,7 @@ class TenderPaymentViewModel extends ChangeNotifier {
           tag: 'TenderPaymentViewModel',
         );
       }
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Tender payment failed',
         tag: 'TenderPaymentViewModel',
@@ -176,7 +176,7 @@ class TenderPaymentViewModel extends ChangeNotifier {
         _pendingRequestId = null;
         _pendingPaymentRequestId = null;
       }
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Tender recovery failed requestId=$requestId',
         tag: 'TenderPaymentViewModel',
