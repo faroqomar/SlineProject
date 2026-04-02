@@ -91,13 +91,11 @@ class Conversation {
     void parseMsg(Map<String, dynamic> m) {
       lastMessage = m['content'] as String?;
       if (m['created_at'] != null) {
-        lastMessageTime =
-            DateTime.tryParse(m['created_at'] as String)?.toUtc();
+        lastMessageTime = DateTime.tryParse(m['created_at'] as String)?.toUtc();
       }
       lastMessageSenderId = m['sender_id'] as String?;
       if (m['seen_at'] != null) {
-        lastMessageSeenAt =
-            DateTime.tryParse(m['seen_at'] as String)?.toUtc();
+        lastMessageSeenAt = DateTime.tryParse(m['seen_at'] as String)?.toUtc();
       }
     }
 

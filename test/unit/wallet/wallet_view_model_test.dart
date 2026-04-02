@@ -140,8 +140,7 @@ void main() {
   // =========================================================================
   group('Balance Loading', () {
     test('loadWallet fetches balance and activities in parallel', () async {
-      final expectedBalance =
-          _balance(available: 7500, pending: 200, held: 0);
+      final expectedBalance = _balance(available: 7500, pending: 200, held: 0);
       final expectedActivities = _activityList(5);
       _stubLoadWalletSuccess(
         repo,
@@ -308,9 +307,7 @@ void main() {
         when(
           () => repo.getActivity(limit: 20),
         ).thenAnswer((_) async => throw Exception('fail'));
-        when(
-          () => repo.getWalletBalance(),
-        ).thenAnswer((_) async => _balance());
+        when(() => repo.getWalletBalance()).thenAnswer((_) async => _balance());
 
         await vm.ensureLoaded();
 
@@ -469,9 +466,7 @@ void main() {
 
       expect(result, isFalse);
       expect(vm.error, 'Your account is restricted. Please contact support.');
-      verifyNever(
-        () => repo.requestWithdrawal(amount: any(named: 'amount')),
-      );
+      verifyNever(() => repo.requestWithdrawal(amount: any(named: 'amount')));
     });
 
     test(
@@ -539,7 +534,8 @@ void main() {
       when(
         () => repo.requestWithdrawal(amount: any(named: 'amount')),
       ).thenAnswer(
-        (_) async => throw const FormatException('Minimum withdrawal is 5000 IQD'),
+        (_) async =>
+            throw const FormatException('Minimum withdrawal is 5000 IQD'),
       );
 
       final result = await vm.requestWithdrawal(amount: 100);
@@ -590,9 +586,7 @@ void main() {
       when(
         () => repo.getActivity(limit: 20),
       ).thenAnswer((_) async => throw Exception('timeout'));
-      when(
-        () => repo.getWalletBalance(),
-      ).thenAnswer((_) async => _balance());
+      when(() => repo.getWalletBalance()).thenAnswer((_) async => _balance());
 
       await vm.loadWallet();
 
@@ -606,9 +600,7 @@ void main() {
       when(
         () => repo.getActivity(limit: 20),
       ).thenAnswer((_) async => throw Exception('some error'));
-      when(
-        () => repo.getWalletBalance(),
-      ).thenAnswer((_) async => _balance());
+      when(() => repo.getWalletBalance()).thenAnswer((_) async => _balance());
       await vm.loadWallet();
       expect(vm.error, isNotNull);
 
@@ -676,9 +668,7 @@ void main() {
       when(
         () => repo.getActivity(limit: 20),
       ).thenAnswer((_) async => throw Exception('failure'));
-      when(
-        () => repo.getWalletBalance(),
-      ).thenAnswer((_) async => _balance());
+      when(() => repo.getWalletBalance()).thenAnswer((_) async => _balance());
 
       await vm.loadWallet();
 
@@ -694,9 +684,7 @@ void main() {
       when(
         () => repo.getActivity(limit: 20),
       ).thenAnswer((_) async => throw Exception('network error'));
-      when(
-        () => repo.getWalletBalance(),
-      ).thenAnswer((_) async => _balance());
+      when(() => repo.getWalletBalance()).thenAnswer((_) async => _balance());
 
       await vm.loadWallet();
 

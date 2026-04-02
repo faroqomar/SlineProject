@@ -37,9 +37,11 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
     DirectOffersService? directOffersService,
     SupabaseClient? client,
   }) : _repo = repo ?? ChatRepository(client ?? Supabase.instance.client),
-       _accountGuardService = accountGuardService ??
+       _accountGuardService =
+           accountGuardService ??
            AccountGuardService(client: client ?? Supabase.instance.client),
-       _directOffersService = directOffersService ??
+       _directOffersService =
+           directOffersService ??
            DirectOffersService(client ?? Supabase.instance.client) {
     // Register with coordinator for role switch teardown
     RoleSwitchCoordinator().register(this);
