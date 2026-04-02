@@ -112,6 +112,21 @@ If anything mismatches:
 - Error handling must follow approved project patterns such as `ErrorMapper` or typed domain wrappers
 - No raw backend internals should leak to the view layer
 
+### 3.2.1 Error vs Exception Handling (Dart-Specific)
+
+In Dart, `Error` and `Exception` are separate hierarchies under `Object`:
+- `Exception` = recoverable runtime errors (network, auth, validation, Supabase queries)
+- `Error` = programming bugs or environment failures (TypeError, AssertionError, StackOverflowError)
+
+Rules:
+1. ViewModel and service catch blocks should use `on Exception catch (e)` by default.
+2. Code that accesses `Supabase.instance` in a "try or fallback to null" pattern MUST also catch `Error` (it throws `AssertionError` when not initialized).
+3. Code that accesses `context.read<T>()` outside a guaranteed Provider scope MUST catch `Error` (throws `ProviderNotFoundException`).
+4. JSON parsing of external data (realtime, webhooks) should catch `FormatException` and `TypeError` explicitly — never `on Object catch`.
+5. Global error boundaries (`runZonedGuarded`, `FlutterError.onError`) are the only places that should catch everything.
+
+Evidence: SESSION_PhaseB_BugExposure — `AssertionError` from `Supabase.instance` broke 4 tests after `catch (e)` → `on Exception catch (e)` migration.
+
 ### 3.3 Storage and Media Boundary Rules
 
 - Services own storage upload / delete / signed URL generation logic
@@ -125,6 +140,27 @@ If anything mismatches:
 - `notifyListeners()` should reflect meaningful state changes, not noisy internal churn
 - Navigation decisions should be explicit and minimal, not hidden inside lower layers
 - Role, account restriction, and runtime-config assumptions must be surfaced clearly to the UI contract
+
+### 3.4.1 notifyListeners() Timing
+
+- NEVER call `notifyListeners()` synchronously inside a method that may be invoked during `build()`, `initState()`, or `didChangeDependencies()`.
+- If a ViewModel method is called during widget initialization and needs to set loading state, either:
+  (a) Skip the initial `notifyListeners()` — the view manages its own loading state via `setState()`.
+  (b) Defer via `WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners())`.
+- The `finally` block after an `await` is always safe — the build frame has completed by then.
+- Views calling ViewModel methods during initialization should use `addPostFrameCallback` as defense-in-depth.
+
+Evidence: SESSION_PhaseB emulator — `TaskViewModel.loadCategories()` called `notifyListeners()` during build, causing "setState during build" error.
+
+### 3.4.2 Async Callback Guards
+
+Any `onPressed` or `onTap` callback that calls an async function (especially one that shows a modal, sheet, or dialog) MUST have a guard flag to prevent rapid-fire invocation:
+- Add a `bool _isShowingX = false` state field.
+- Check and set the flag at the start of the callback.
+- Clear the flag in a `finally` block.
+- This prevents double-tap, rapid-fire, and race condition issues with bottom sheets and modals.
+
+Evidence: SESSION_PhaseB emulator — `showSubmitRequestSheet` called 9+ times in <1 second without debounce.
 
 ---
 
@@ -151,6 +187,19 @@ If anything mismatches:
 - Never generate temporary signed URLs repeatedly in hot loops without caching or an approved helper
 - Prefer shared services and widgets for signed media behavior
 - Avoid mixing durable path semantics and display-URL semantics in the same model field
+
+### 4.5 Supabase Query Builder Pattern
+
+Supabase's Dart client uses a builder pattern where methods like `.eq()`, `.lt()`, `.gt()`, `.order()` return a `PostgrestFilterBuilder` that also implements `Future`. These are NOT fire-and-forget futures — they are builder chain methods.
+
+Rules:
+- NEVER wrap query builder methods (`.lt()`, `.gt()`, `.eq()`, etc.) in `unawaited()`.
+- NEVER ignore their return value — the filter is only applied when the return value is used.
+- Use `query = query.lt(...)` (reassignment) when conditionally applying filters.
+- The `unawaited_futures` lint is a FALSE POSITIVE for query builder methods. Use `// ignore: unawaited_futures` only as a last resort, and add a comment explaining why.
+- Prefer reassignment over `// ignore:` for clarity.
+
+Evidence: Phase B wrapped `query.lt()` in `unawaited()`, silently breaking cursor-based pagination in 3 files (booking_service.dart x2, task_requests_service.dart x1).
 
 ---
 

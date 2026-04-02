@@ -191,7 +191,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every push/PR to `main`:
 | Job | What It Does | Blocks Merge? |
 |-----|-------------|---------------|
 | **Lint & Analyze** | `dart format --set-exit-if-changed .` + `flutter analyze --no-fatal-infos` | Yes (warnings/errors fail) |
-| **Architecture Guard** | 6 grep-based MVVM boundary checks (Supabase in views, controllers in VMs, Navigator in VMs, repo imports in views, view imports in VMs, Supabase in VMs) | No (warning-only during Phase A; graduates to hard failure in Phase B) |
+| **Architecture Guard** | 6 grep-based MVVM boundary checks (Supabase in views, controllers in VMs, Navigator in VMs, repo imports in views, view imports in VMs, Supabase in VMs) | Yes (hard failure since Phase B, 2026-04-01) |
 | **Unit & Widget Tests** | `flutter test --coverage` with coverage % reported to PR summary | Yes |
 | **Build** | APK (debug) + Web (release) compilation | Yes |
 
@@ -212,6 +212,34 @@ Flutter version pinned: **3.38.9** across all jobs.
 - **Code Quality (9):** immutability (`prefer_final_locals`), null safety (`prefer_null_aware_operators`), dependency hygiene (`depend_on_referenced_packages`)
 
 Strong mode: `implicit-casts: false`, `implicit-dynamic: false`.
+
+### 10.4 Error vs Exception Handling (Dart-Specific)
+
+In Dart, `Error` and `Exception` are separate hierarchies under `Object`:
+- `Exception` = recoverable runtime errors (network, auth, validation, Supabase queries)
+- `Error` = programming bugs or environment failures (TypeError, AssertionError, StackOverflowError)
+
+Rules:
+1. ViewModel and service catch blocks use `on Exception catch (e)` by default.
+2. Code that accesses `Supabase.instance` in a "try or fallback to null" pattern MUST also catch `Error` (throws `AssertionError` when not initialized).
+3. Code that accesses `context.read<T>()` outside a guaranteed Provider scope MUST catch `Error` (throws `ProviderNotFoundException`).
+4. JSON parsing of external data (realtime, webhooks) should catch `FormatException` and `TypeError` explicitly.
+5. Global error boundaries (`runZonedGuarded`, `FlutterError.onError`) are the only places that should catch everything.
+
+### 10.5 ViewModel notifyListeners() Timing
+
+- NEVER call `notifyListeners()` synchronously inside a method invoked during `build()`, `initState()`, or `didChangeDependencies()`.
+- If a ViewModel method needs to set loading state at the start, either skip the initial `notifyListeners()` (view manages its own loading via `setState`) or defer via `addPostFrameCallback`.
+- The `finally` block after an `await` is always safe.
+- Views calling ViewModel methods during initialization should use `addPostFrameCallback`.
+
+### 10.6 Supabase Query Builder Pattern
+
+Supabase's Dart client uses a builder pattern where `.eq()`, `.lt()`, `.gt()`, `.order()` return a `PostgrestFilterBuilder` that implements `Future`. These are NOT fire-and-forget futures — they are builder chain methods.
+
+- NEVER wrap query builder methods in `unawaited()`.
+- Use `query = query.lt(...)` (reassignment) when conditionally applying filters.
+- The `unawaited_futures` lint is a false positive for these methods.
 
 ## 11. Observability (Crash & Error Tracking)
 

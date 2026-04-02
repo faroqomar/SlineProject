@@ -1,6 +1,35 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2026-04-01
+**Last Updated:** 2026-04-02
+
+---
+
+## 🏷️ Quality Audit Phase B — Bug Exposure (2026-04-01)
+
+### ✅ Implemented
+
+- **Unawaited Futures (48 → 0):** All 48 `unawaited_futures` violations resolved across 24 files. Navigator.push, StreamSubscription.cancel, and ViewModel refresh calls wrapped in `unawaited()`. Supabase query builder `.lt()` calls fixed with reassignment pattern (NOT `unawaited()`).
+- **Bare Catch Blocks (258 → 0):** All 258 `avoid_catches_without_on_clauses` violations fixed across 85 files. Changed `catch (e)` to `on Exception catch (e)`. RLS tests use `on PostgrestException catch` for precision. Two places needed `on Error catch` fallback for `Supabase.instance` initialization in tests (`auth_form_view_model.dart`, `notification_view_model.dart`).
+- **MVVM Violations (6 → 0):** (B4) Removed `Supabase.instance` from `submit_request_sheet.dart` — uses `context.read<AuthSessionViewModel>()`. (B5) Moved `TextEditingController`s from `ProfileViewModel` to `EditProfileScreen`. `signOut()` returns bool, no `BuildContext`. `pickAndUploadPortfolioImage()` and `pickAndUploadAvatar()` use error state fields. `material.dart` replaced with `foundation.dart`. (B6) `UserProfileViewModel` no longer imports `ChatScreen` or calls `Navigator.push`. (B7) 3 views no longer import repositories — `TaskViewModel.loadCategories()`, `PublicProfileViewModel()` self-constructs, `TaskRequestsViewModel` defaults `ProposalRepository`.
+- **Architecture Guard Graduated:** Changed from `exit 0` (warning-only) to `exit 1` (hard failure). All 6 checks pass clean. Check 3 refined to exclude DI constructor defaults.
+- **Additional Fixes:** Fixed `notifyListeners()` during build (deferred via `addPostFrameCallback`). Fixed bid sheet rapid-fire spam (added `_isShowingBidSheet` guard). Fixed query builder pagination (`.lt()` reassignment instead of `unawaited()`). Fixed `unnecessary_type_check` (11) and `unused_catch_clause` (10) warnings.
+- **System Evolution:** Produced `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-02.md`. Added 7 new rules to agent system: Error vs Exception (Architect §3.2.1), notifyListeners timing (§3.4.1), async callback guards (§3.4.2), query builder pattern (§4.5), test mock audit (Executor Step 3.2), sub-phase test gate (Step 3.1), runtime smoke test (Orchestrator Stage 11.5).
+
+### 📊 Impact
+
+- `flutter analyze` dropped from 456 (Phase A baseline) → 0 issues.
+- All 400 tests pass, 30 skipped, 0 failures.
+- Architecture guard now hard-blocks PRs with MVVM violations.
+- Agent system upgraded with 7 evidence-based rules from session analysis.
+
+### 🔗 References
+
+- Audit: `.TODO/AUDIT_Quality_Architecture_2026-04-01.md` (Phase B marked DONE)
+- Session Log: `docs/LOG/SESSION_PhaseB_BugExposure_2026-04-01.md`
+- Master Report: `.TODO/MASTER_REPORT_2026-04-01_PhaseAB.md`
+- System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-02.md`
+- DEVELOPER_GUIDE.md: updated §10.1 (guard status), added §10.4-10.6 (error handling, timing, query builder)
+- MVP_ROADMAP.md: updated §8 (architecture guard completed, Phase B completed)
 
 ---
 

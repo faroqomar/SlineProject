@@ -33,7 +33,7 @@ git config core.hooksPath .githooks  # Enable pre-commit hooks (format + analyze
 
 GitHub Actions pipeline (`.github/workflows/ci.yml`) runs on push/PR to `main`:
 - **Lint & Analyze**: `dart format --set-exit-if-changed .` + `flutter analyze --no-fatal-infos`
-- **Architecture Guard**: Checks MVVM boundary violations (warning-only, graduating to hard failure)
+- **Architecture Guard**: 6 MVVM boundary checks (hard failure). Blocks PRs with Supabase in views, controllers/Navigator in VMs, view imports in VMs, repo imports in views.
 - **Tests**: `flutter test --coverage` with coverage reporting
 - **Build**: APK (debug) + Web (release) compilation check
 

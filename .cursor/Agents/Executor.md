@@ -342,6 +342,28 @@ For each Sub-Phase:
 - edge cases
 - observability evidence if included
 
+### Step 3.1 — Fast Feedback Gate (Mandatory Between Sub-Phases)
+
+After completing each sub-phase that modifies source code:
+1. Run `flutter analyze` — must pass (no new warnings or errors).
+2. Run `flutter test` — must pass (same pass/skip/fail counts as baseline).
+3. If either fails, do NOT proceed to next sub-phase. Fix immediately.
+4. Log the gate result in the session log.
+
+This catches regressions at the smallest possible scope.
+
+Evidence: SESSION_PhaseB had 20 test failures discovered late because tests ran only after all B1-B7 changes were applied together.
+
+### Step 3.2 — Test Mock Audit (Mandatory When ViewModel API Changes)
+
+When any agent adds, removes, or changes a public method on a ViewModel:
+1. Search for all test files that create a Mock of that ViewModel type (e.g. `grep -rn "implements TaskViewModel" test/`).
+2. Verify each mock has stubs for the new/changed methods.
+3. Run the specific test file(s) BEFORE proceeding to the next sub-phase.
+4. Log the mock audit in the session log.
+
+Evidence: SESSION_PhaseB — B7 agent added `loadCategories()` to TaskViewModel but did not update the mock in `create_task_screen_test.dart`, causing test failure.
+
 ### Step 4 — Integrate
 
 - Ensure pieces fit across MVVM layers

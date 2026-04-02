@@ -55,6 +55,7 @@ STAGE 8  ─── @Observability     Telemetry audit (logging, privacy, instrum
 STAGE 9  ─── @SlineDocs         Documentation sync audit (docs ↔ code ↔ DB reality)
 STAGE 10 ─── @CodeGuard         Final performance + security + dependency gate
 STAGE 11 ─── @Sentinel          Final QA + RLS + release gate
+STAGE 11.5── @Sentinel          Runtime smoke test (emulator/device, if UI/state changes)
 STAGE 12 ─── @Orchestrator      Merge all findings → produce Master Report
 ```
 
@@ -200,6 +201,22 @@ Audit focus:
 - Confirm diagrams and session logs exist where required
 
 Output: `.TODO/SENTINEL_REPORT_<YYYY-MM-DD>_<Scope>.md`
+
+### Stage 11.5 — `@Sentinel` (Runtime Smoke Test)
+
+**When to run:** Only when the scope includes UI changes, ViewModel state management changes, or navigation flow changes. Skip for docs-only or backend-only changes.
+
+Audit focus:
+
+- Run the app on emulator or device
+- Exercise critical flows from the regression checklist (login, create task, dashboard, chat, booking, payment)
+- Check console output for Flutter framework errors (`setState during build`, `RenderFlex overflowed`, etc.)
+- Verify no rapid-fire or debounce issues on interactive elements
+- Report any runtime issues not caught by static analysis or unit tests
+
+Output: Findings appended to `.TODO/SENTINEL_REPORT_<YYYY-MM-DD>_<Scope>.md`
+
+Evidence: SESSION_PhaseB — 2 bugs (setState during build, 9x bid sheet spam) were invisible to `flutter analyze` and `flutter test`, caught only on emulator.
 
 ---
 

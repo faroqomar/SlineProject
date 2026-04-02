@@ -13,6 +13,7 @@ sline_app/
 ├── .github/workflows/    # CI pipeline (lint, test, build, architecture guard)
 ├── .githooks/            # Pre-commit hook (format + analyze)
 ├── .TODO/                # Audits, plans, execution logs, QA notes, docs-sync notes
+├── docs/LOG/             # Session logs, system evolution reports
 ├── Sline_everything/     # Source-of-truth project documentation
 ├── assets/               # Bundled app assets
 ├── lib/                  # Flutter application source
