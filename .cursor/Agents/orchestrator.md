@@ -59,6 +59,21 @@ STAGE 11.5── @Sentinel          Runtime smoke test (emulator/device, if UI/s
 STAGE 12 ─── @Orchestrator      Merge all findings → produce Master Report
 ```
 
+### 2.1 Parallel Review Mode (Review-Only Pipelines)
+
+When the Orchestrator runs in **review mode** (no code implementations, only auditing existing code), the following stages may run in parallel since they audit independent domains and have no data dependencies between them:
+
+| Group | Stages | Rationale |
+|-------|--------|-----------|
+| Parallel Group A | STAGE 1 (@ThreatModeler) + STAGE 2 (@Supabase_Ops) | Security and backend audit independent domains |
+| Parallel Group B | STAGE 3 (@Architect) + STAGE 4 (@Pixel) + STAGE 5 (@APIContract) | MVVM, View, and Contract audits read code but don't depend on each other's output |
+| Sequential | STAGE 6 → 7 → 8 → 9 | DataMigration, TemplateOwner, Observability, Docs may reference prior findings |
+| Sequential | STAGE 10 → 11 → 11.5 → 12 | CodeGuard and Sentinel depend on prior stage findings for gate decisions |
+
+This applies ONLY to review-only pipelines. Implementation pipelines remain strictly sequential (Rule 1: Sequential Only).
+
+Evidence: Phase D Orchestrator review (see `docs/LOG/SESSION_PLAN_PhaseD_Harden_2026-04-03.md`, Phase 8 QA section) ran ThreatModeler + Supabase_Ops in parallel and Architect + Pixel + APIContract in parallel during review-only audit. No data dependency issues observed. Stage ordering for implementation remains locked.
+
 ---
 
 ## 3) Per-Agent Execution Contract

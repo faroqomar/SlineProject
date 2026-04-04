@@ -374,6 +374,37 @@ After background agents complete in parallel:
 
 Evidence: Phase C — a background agent corrupted `wallet_view_model_test.dart` (overwrote with non-Dart text). Detected only at full QA phase via `flutter analyze` returning 1903 errors.
 
+### 3.4 Native Dependency Build Gate (Mandatory After Adding Native Packages)
+
+After adding ANY dependency that includes native code (`sentry_flutter`, `firebase_*`, `image_picker`, `webview_flutter`, `google_maps_flutter`, etc.) to `pubspec.yaml`:
+
+1. Run `flutter pub get`.
+2. Run `flutter build apk --debug` — catches Kotlin/Gradle version mismatches.
+3. Run `flutter build ios --no-codesign` (if CocoaPods is available) — catches Swift/Xcode version mismatches.
+4. If either build fails, fix the build config (e.g., Kotlin version in `android/build.gradle.kts`, `pod install` for iOS) **in the same phase**.
+
+Do NOT defer platform builds to the QA phase. Native SDK version mismatches (Kotlin, Swift, Gradle, CocoaPods) are invisible to `flutter analyze` and `flutter test` — they only surface during platform compilation.
+
+Evidence: Phase D — `sentry_flutter` added in Phase 1, APK build failure discovered only at Phase 8 QA. Root cause: `sentry_flutter 8.x` declares `languageVersion = 1.6` which Kotlin 2.x rejects (minimum is 1.8). Fix required adding a Kotlin language override in `android/build.gradle.kts`.
+
+### 3.5 Per-Sub-Phase Test Gate for Multi-File Refactors
+
+When a phase involves creating 3+ new files that refactor an existing file (e.g., delegate decomposition, widget extraction), run `flutter test <affected_test_dir>` after EACH new file is created and wired — not just at the end of the phase. This catches wiring errors immediately instead of accumulating them into a cascade of failures.
+
+Evidence: Phase C post-mortem identified file corruption during parallel agent execution. Phase D applied this rule proactively for DashboardVM decomposition (3 delegates), running tests after each delegate was created — caught a setter visibility issue immediately.
+
+### 3.6 Review CI Guard Exclusions After Architecture Fixes
+
+After fixing architecture violations that were previously excluded from CI guards (e.g., `grep -v` patterns in `.github/workflows/ci.yml`), review ALL guard exclusion patterns and tighten them. Exclusions that were necessary before the fix become regression risks after the fix.
+
+Steps:
+1. Identify which CI guard check(s) had exclusions allowing the now-fixed pattern.
+2. Remove or narrow the exclusion.
+3. Verify the tightened guard still passes on the current codebase.
+4. Verify it would CATCH the old violation if reintroduced.
+
+Evidence: Phase D — Architecture guard Check 3 excluded `Supabase.instance.client.auth.` patterns, which allowed the exact A6 violations the guard was supposed to catch. After the A6 fix, the exclusion was removed.
+
 ### Step 4 — Integrate
 
 - Ensure pieces fit across MVVM layers

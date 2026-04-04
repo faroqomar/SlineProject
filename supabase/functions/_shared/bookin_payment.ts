@@ -22,8 +22,20 @@ export const BOOKING_PAYMENT_EXPIRY_MINUTES = Number(
   Deno.env.get("BOOKING_PAYMENT_EXPIRY_MINUTES") || "30",
 );
 
+/**
+ * Allowed CORS origin. Defaults to production domain.
+ * Override via ALLOWED_ORIGIN env var for staging/local:
+ *   ALLOWED_ORIGIN=http://localhost:54321
+ *
+ * Webhooks (QiCard → Edge Function) are server-to-server and
+ * don't require CORS. Browser-initiated requests (app → Edge Function)
+ * go through the Supabase client which sends the correct Origin.
+ */
+const ALLOWED_ORIGIN =
+  Deno.env.get("ALLOWED_ORIGIN") || "https://sline.app";
+
 export const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-signature",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
@@ -107,7 +119,7 @@ export function normalizeQiCardFinishUrl(baseUrl: string) {
 }
 
 function isTrustedFinishUrl(url: URL) {
-  if (url.protocol === "https:") {
+  if (url.protocol === "https:" && url.hostname === "sline.app") {
     return true;
   }
 

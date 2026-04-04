@@ -110,21 +110,23 @@ Cover the dangerous zones. Not chasing percentage — covering risk.
 
 **Results:** Test count: 400 → 706 (+306 new tests). All pass. flutter analyze: 0 issues. 14 of 26 ViewModels now tested (54%, up from 35%).
 
-### Phase D: Harden (Month 2)
+### ~~Phase D: Harden (Month 2)~~ DONE (2026-04-04)
 
-Now that gates are up and critical paths are covered:
+| # | Task | Effort | Details |
+|---|------|--------|---------|
+| D1 | ~~Implement Sentry crash reporting~~ | ~~1 day~~ | **DONE (2026-04-03)** — `SentryCrashReportingService` created. Wired into main.dart error boundaries. Auth user ID attached. 10 tests. |
+| D2 | ~~Decompose `dashboard_view_model.dart`~~ | ~~2 days~~ | **DONE (2026-04-03)** — 1149→537 lines. 3 delegates: Work (362L), Inbox (297L), Booking (172L). 29 new tests. |
+| D3 | ~~Decompose `submit_request_sheet.dart`~~ | ~~1 day~~ | **DONE (2026-04-03)** — 916→737 lines. SubmitRequestViewModel (261L) with scoped provider. 15 new tests. |
+| D4 | ~~Decompose `requests_list_screen.dart`~~ | ~~1 day~~ | **DONE (2026-04-03)** — 1172→604 lines. RequestsFilterViewModel (87L) + award dialog extracted (416L). 15 new tests. |
+| D5 | ~~Add pgTAP tests for critical RPCs~~ | ~~2 days~~ | **DONE (2026-04-03)** — 3 SQL test files (15 test cases): accept_task_request, escrow idempotency, role switch. |
+| D6 | ~~Add migration review checklist~~ | ~~1h~~ | **DONE (2026-04-03)** — `MIGRATION_REVIEW_CHECKLIST.md` with 7 sections. Referenced in CLAUDE.md. |
+| D7 | ~~Tighten CORS on Edge Functions~~ | ~~15m~~ | **DONE (2026-04-03)** — `"*"` replaced with `ALLOWED_ORIGIN` env var (defaults to `https://sline.app`). All 12 functions affected. |
+| D8 | ~~Add `paymentId` regex validation~~ | ~~30m~~ | **DONE (2026-04-03)** — `/^[a-zA-Z0-9\-_]{1,128}$/` for intentId + paymentId in webhook handler. |
+| D9 | ~~Set up coverage enforcement~~ | ~~1h~~ | **DONE (2026-04-03)** — 28% regression floor in CI (measured 30.6% baseline). |
+| D10 | ~~Fix A6 architecture violations~~ | — | **DONE (2026-04-03)** — NotificationVM + SavedTasksVM refactored for full DI. |
+| D11 | ~~Tighten architecture guard Check 3~~ | — | **DONE (2026-04-03)** — Removed auth exclusion from grep. |
 
-| # | Task | Effort |
-|---|------|--------|
-| D1 | Implement Sentry or Firebase Crashlytics (replace NoOp) | 1 day |
-| D2 | Decompose `dashboard_view_model.dart` (1149 lines) | 2 days |
-| D3 | Decompose `submit_request_sheet.dart` (919 lines) | 1 day |
-| D4 | Decompose `requests_list_screen.dart` (1164 lines) | 1 day |
-| D5 | Add pgTAP tests for critical RPCs | 2 days |
-| D6 | Add migration review checklist (see [4.8](#48-migration-review-discipline-missing)) | 1h |
-| D7 | Tighten CORS on Edge Functions | 15m |
-| D8 | Add `paymentId` regex validation in webhook handler | 30m |
-| D9 | Set up coverage enforcement (70% threshold) | 1h |
+**Results:** Test count: 706 → 774 (+68 new tests). All pass. flutter analyze: 0 issues. Architecture guard: 6 checks pass (tightened). Coverage floor enforced.
 
 ### Phase E: Polish (Month 3+)
 

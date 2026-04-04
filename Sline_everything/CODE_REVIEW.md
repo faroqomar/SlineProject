@@ -7,7 +7,51 @@
 
 > Historical review note: this document records review findings and fixes from earlier passes. Treat references to removed files or older structure as historical context; the current live structure is documented in `Sline_everything/STRUCTURE.md` and `Sline_everything/DEVELOPER_GUIDE.md`.
 
-## Current Guardrail Notes (2026-04-02)
+## Current Guardrail Notes (2026-04-04)
+
+### Lazy Supabase Client Resolution (Phase D, 2026-04-04)
+
+**Pattern**: Adding a `SupabaseClient` DI parameter with `Supabase.instance.client` as eager default crashes tests where Supabase is not initialized (throws `AssertionError`, which is `Error` not `Exception`).
+
+**Rule**: Always use a lazy getter:
+```dart
+final SupabaseClient? _injectedClient;
+SupabaseClient get _client => _injectedClient ?? Supabase.instance.client;
+```
+Never `_client = client ?? Supabase.instance.client` in the initializer list.
+
+**Evidence**: Same root cause across 3 sessions (Phase B, C, D). Systemic.
+
+### Delegate Dispose Safety (Phase D, 2026-04-04)
+
+**Pattern**: Delegates with async methods can complete after the parent VM disposes, calling `notifyListeners()` on a disposed `ChangeNotifier`.
+
+**Rule**: Every delegate MUST receive `bool Function() isDisposed` from the parent VM. Every async method MUST check `if (_isDisposed()) return;` before calling `_onChanged()`. The parent passes `() => _isDisposed` as the callback.
+
+### God-File Decomposition Checklist (Phase D, 2026-04-04)
+
+When decomposing a file >800 lines:
+1. Map every method to an extraction target (delegate class or extracted widget).
+2. Identify methods that MUST stay (orchestration, lifecycle, caching coordination).
+3. Set target: `current_lines - extractable_lines + 10% buffer`. Not arbitrary round numbers.
+4. Preserve all public getters/methods with identical signatures (proxy to delegates).
+5. Run tests after EACH delegate is created, not just at the end.
+6. Add tests for each delegate independently.
+
+### Defensive Collection Patterns (Phase D, 2026-04-04)
+
+**Rule**: Delegate/ViewModel getters exposing internal lists MUST return `UnmodifiableListView`. Setters accepting external lists MUST store a defensive copy (`.toList()`).
+
+```dart
+List<BookingModel> get bookings => UnmodifiableListView(_bookings);
+void setBookings(List<BookingModel> bookings) {
+  _bookings = bookings.toList(); // defensive copy
+}
+```
+
+---
+
+## Guardrail Notes (2026-04-02)
 
 ### Constructor DI Testability (Phase C, 2026-04-02)
 

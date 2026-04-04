@@ -210,6 +210,27 @@ Rules:
 
 Evidence: Phase B wrapped `query.lt()` in `unawaited()`, silently breaking cursor-based pagination in 3 files (booking_service.dart x2, task_requests_service.dart x1).
 
+### 4.7 Lazy Supabase Client Resolution
+
+When adding a `SupabaseClient` DI parameter with a `Supabase.instance.client` fallback, ALWAYS use a **lazy getter** pattern:
+
+```dart
+// GOOD — resolves lazily, safe in tests where Supabase is not initialized
+final SupabaseClient? _injectedClient;
+SupabaseClient get _client => _injectedClient ?? Supabase.instance.client;
+```
+
+NEVER assign eagerly in the initializer list:
+
+```dart
+// BAD — crashes in tests when Supabase.instance is not initialized
+: _client = client ?? Supabase.instance.client
+```
+
+`Supabase.instance` throws `AssertionError` (which is `Error`, not `Exception`) when not initialized. Eager assignment in the initializer list runs during construction, before any test can provide a mock. The lazy getter defers resolution to the first actual access, which only happens in production code paths.
+
+Evidence: Phase B — `AssertionError` from `Supabase.instance` not caught by `on Exception catch`. Phase C — `ChatVM.teardownForRoleSwitch()` calls `Supabase.instance` directly. Phase D — `NotificationVM` eager client initialization crashed 6 tests. Same root cause across 3 sessions = systemic.
+
 ---
 
 ## 5) Change Protocol (How You Implement)

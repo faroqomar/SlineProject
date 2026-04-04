@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sline_app/core/config/payment_runtime_config.dart';
 import 'package:sline_app/core/services/payment_pending_store.dart';
@@ -41,6 +42,8 @@ import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/providers/theme_mode_provider.dart';
 import 'features/notifications/viewmodels/notification_view_model.dart';
 import 'features/wallet/viewmodels/wallet_view_model.dart';
+import 'core/services/crash_reporting_service.dart';
+import 'core/services/sentry_crash_reporting_service.dart';
 import 'core/services/deep_link_service.dart';
 import 'core/services/dashboard_cache_service.dart';
 import 'core/services/account_guard_service.dart';
@@ -78,73 +81,127 @@ PaymentService createPaymentService() {
   return DemoPaymentService();
 }
 
-/// App entry point with global error handling.
+/// Sentry DSN from compile-time --dart-define. Empty = Sentry disabled.
+const String _sentryDsn = String.fromEnvironment('SENTRY_DSN');
+
+/// Sentry environment from compile-time --dart-define. Defaults to development.
+const String _sentryEnv = String.fromEnvironment(
+  'SENTRY_ENV',
+  defaultValue: 'development',
+);
+
+/// App entry point with global error handling and Sentry crash reporting.
 ///
-/// Why error boundary: Catches uncaught exceptions and logs them centrally,
-/// preventing silent failures and enabling future crash reporting integration.
+/// Error boundary chain (outermost → innermost):
+///   1. SentryFlutter.init — captures unhandled exceptions to Sentry
+///   2. runZonedGuarded — catches async exceptions outside Flutter framework
+///   3. FlutterError.onError — catches widget build/layout errors
+///   4. PlatformDispatcher.onError — catches native/isolate errors
 void main() async {
-  // Wrap entire app in error zone to catch async exceptions
-  await runZonedGuarded(
-    () async {
-      WidgetsFlutterBinding.ensureInitialized();
-
-      // Global Flutter framework error handler (widget build errors, etc.)
-      FlutterError.onError = (FlutterErrorDetails details) {
-        if (isIgnoredFlutterWebEngineDisposeError(details.exception) ||
-            isIgnoredRealtimeEncodeError(details.exception) ||
-            isIgnoredRealtimePayloadError(details.exception)) {
-          return;
-        }
-        AppLogger.e(
-          'Flutter Error: ${details.summary}',
-          tag: 'System',
-          error: details.exception,
-          stackTrace: details.stack,
-        );
-      };
-
-      // Global platform error handler (native crashes, isolate errors)
-      PlatformDispatcher.instance.onError = (error, stack) {
-        if (isIgnoredFlutterWebEngineDisposeError(error) ||
-            isIgnoredRealtimeEncodeError(error) ||
-            isIgnoredRealtimePayloadError(error)) {
-          return true;
-        }
-        AppLogger.e(
-          'Platform Error',
-          tag: 'System',
-          error: error,
-          stackTrace: stack,
-        );
-        return true; // Prevent app termination
-      };
-
-      await SupabaseConfig.init();
-
-      // Web: register WebView platform so in-app payment WebView works
-      webview_platform.initWebViewPlatform();
-
-      // Set logger level (info = clean logs, debug = verbose logs)
-      AppLogger.currentLevel = LogLevel.info;
-
-      // Initialize SharedPreferences for caching
-      final prefs = await SharedPreferences.getInstance();
-      AppLogger.i('✅ Cache service ready');
-
-      runApp(SLineApp(prefs: prefs));
+  // Sentry wraps the entire app. When DSN is empty, Sentry silently disables.
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = _sentryDsn;
+      options.environment = _sentryEnv;
+      options.tracesSampleRate = 0.2;
+      options.sendDefaultPii = false;
     },
-    (error, stack) {
-      if (isIgnoredFlutterWebEngineDisposeError(error) ||
-          isIgnoredRealtimeEncodeError(error) ||
-          isIgnoredRealtimePayloadError(error)) {
-        return;
+    appRunner: () async {
+      // Wire Sentry as the crash reporting implementation
+      if (_sentryDsn.isNotEmpty) {
+        CrashReportingService.instance = SentryCrashReportingService();
+        AppLogger.i(
+          'Sentry crash reporting enabled (env: $_sentryEnv)',
+          tag: 'System',
+        );
       }
-      // Catches any uncaught async exceptions outside the Flutter framework
-      AppLogger.e(
-        'Uncaught Zone Error',
-        tag: 'System',
-        error: error,
-        stackTrace: stack,
+
+      // Inner error zone catches async exceptions
+      await runZonedGuarded(
+        () async {
+          WidgetsFlutterBinding.ensureInitialized();
+
+          // Global Flutter framework error handler (widget build errors, etc.)
+          FlutterError.onError = (FlutterErrorDetails details) {
+            if (isIgnoredFlutterWebEngineDisposeError(details.exception) ||
+                isIgnoredRealtimeEncodeError(details.exception) ||
+                isIgnoredRealtimePayloadError(details.exception)) {
+              return;
+            }
+            AppLogger.e(
+              'Flutter Error: ${details.summary}',
+              tag: 'System',
+              error: details.exception,
+              stackTrace: details.stack,
+            );
+            unawaited(
+              CrashReportingService.instance.recordError(
+                details.exception,
+                details.stack,
+                reason: details.summary.toString(),
+                fatal: true,
+              ),
+            );
+          };
+
+          // Global platform error handler (native crashes, isolate errors)
+          PlatformDispatcher.instance.onError = (error, stack) {
+            if (isIgnoredFlutterWebEngineDisposeError(error) ||
+                isIgnoredRealtimeEncodeError(error) ||
+                isIgnoredRealtimePayloadError(error)) {
+              return true;
+            }
+            AppLogger.e(
+              'Platform Error',
+              tag: 'System',
+              error: error,
+              stackTrace: stack,
+            );
+            unawaited(
+              CrashReportingService.instance.recordError(
+                error,
+                stack,
+                fatal: true,
+              ),
+            );
+            return true; // Prevent app termination
+          };
+
+          await SupabaseConfig.init();
+
+          // Web: register WebView platform so in-app payment WebView works
+          webview_platform.initWebViewPlatform();
+
+          // Set logger level (info = clean logs, debug = verbose logs)
+          AppLogger.currentLevel = LogLevel.info;
+
+          // Initialize SharedPreferences for caching
+          final prefs = await SharedPreferences.getInstance();
+          AppLogger.i('✅ Cache service ready');
+
+          runApp(SLineApp(prefs: prefs));
+        },
+        (error, stack) {
+          if (isIgnoredFlutterWebEngineDisposeError(error) ||
+              isIgnoredRealtimeEncodeError(error) ||
+              isIgnoredRealtimePayloadError(error)) {
+            return;
+          }
+          // Catches any uncaught async exceptions outside the Flutter framework
+          AppLogger.e(
+            'Uncaught Zone Error',
+            tag: 'System',
+            error: error,
+            stackTrace: stack,
+          );
+          unawaited(
+            CrashReportingService.instance.recordError(
+              error,
+              stack,
+              fatal: false,
+            ),
+          );
+        },
       );
     },
   );

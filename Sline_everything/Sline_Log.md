@@ -1,6 +1,86 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2026-04-02
+**Last Updated:** 2026-04-04
+
+---
+
+## 🏷️ Quality Audit Phase D — Harden (2026-04-04)
+
+### ✅ Implemented
+
+**D1 — Sentry Crash Reporting:**
+- `lib/core/services/sentry_crash_reporting_service.dart` — implements `CrashReportingService` interface with `Sentry.captureException`, breadcrumbs, user identity, custom tags
+- `lib/main.dart` — `SentryFlutter.init()` wraps `runZonedGuarded` as outermost error boundary. DSN from `--dart-define=SENTRY_DSN`. Empty DSN = disabled.
+- `lib/features/auth/viewmodels/auth_session_view_model.dart` — attaches anonymized user UUID on login, clears on logout. No PII sent.
+- PII sanitizer on breadcrumbs: strips emails and phone numbers before sending to Sentry.
+- 15 tests (`test/unit/core/sentry_crash_reporting_service_test.dart`): construction, interface, safe methods, singleton swap, PII sanitizer (email, phone, UUID preservation).
+
+**D2 — DashboardViewModel Decomposition (1149 → 537 lines):**
+- `lib/features/dashboard/viewmodels/dashboard_work_delegate.dart` (362L) — work items, cached computed lists, performPrimaryAction, withdrawOffer, releaseOfferWithFee, refundOffer, cancelAwardedOffer
+- `lib/features/dashboard/viewmodels/dashboard_inbox_delegate.dart` (297L) — inbox offers, pending items, myTasks, inboxGroupedByTask, awardOffer, payAwardedOffer, acceptOffer, rejectOffer
+- `lib/features/dashboard/viewmodels/dashboard_booking_delegate.dart` (172L) — bookings, booking filter, acceptBooking, declineBooking, cancelBooking, updateBookingStatus
+- Parent VM composes delegates via proxy getters/methods. Public API unchanged. All 20 existing tests pass unchanged.
+- Dispose safety: each delegate receives `bool Function() isDisposed` callback. Checked before every `onChanged()`.
+- 29 new delegate tests across 3 files.
+
+**D3 — submit_request_sheet Decomposition (916 → 737 lines):**
+- `lib/features/tasks/viewmodels/submit_request_view_model.dart` (261L) — validateTask, checkReplaceability, submitNewBid, replaceBid, computeComparison, error mapping
+- Scoped `ChangeNotifierProvider.value` inside `showModalBottomSheet` builder (function-based sheet, not widget class)
+- 3 extracted private widgets: `_ExistingBidInfo`, `_ComparisonRow`, `_WarningBanner`
+- 15 new tests (`test/unit/viewmodels/submit_request_view_model_test.dart`)
+
+**D4 — requests_list_screen Decomposition (1172 → 604 lines):**
+- `lib/features/tasks/viewmodels/requests_filter_view_model.dart` (87L) — filter state, applyFilter, getCountString, isAwarding, pagination delegation. Subscribes to underlying TaskRequestsViewModel for reactive updates.
+- `lib/features/tasks/models/expired_bid_filter.dart` (28L) — extracted enum + extension
+- `lib/features/tasks/view/widgets/requests/request_award_dialog.dart` (416L) — showAwardDialog, _executeAward, showPriceMismatchDialog, _StepRow widget
+- `didUpdateWidget` handles taskId changes (disposes stale filterVm)
+- 15 new tests (`test/unit/viewmodels/requests_filter_view_model_test.dart`)
+
+**D5 — pgTAP / SQL Assertion Tests:**
+- `supabase/tests/accept_task_request_test.sql` — 4 tests: accept, auto-reject siblings, double-accept idempotent, task status
+- `supabase/tests/escrow_idempotency_test.sql` — 5 tests: hold succeeds, replay idempotent, no duplicates, missing key, wrong currency
+- `supabase/tests/role_switch_rate_limit_test.sql` — 6 tests: switch, switch back, no-op, stale state, invalid role, audit log
+- All use `BEGIN`/`ROLLBACK` for zero side effects
+
+**D6 — Migration Review Checklist:**
+- `MIGRATION_REVIEW_CHECKLIST.md` — 7 sections: Naming, Rollback, Data Safety, RLS Impact, RPC Contract, Idempotency, Performance
+- Referenced in `CLAUDE.md` Supabase Backend section
+
+**D7 — Edge Function CORS Hardening:**
+- `supabase/functions/_shared/bookin_payment.ts` — `"*"` replaced with `ALLOWED_ORIGIN` env var (defaults to `https://sline.app`)
+- `isTrustedFinishUrl()` narrowed: HTTPS trusted only for `sline.app` (was all HTTPS domains)
+- All 12 Edge Functions affected automatically (all import `corsHeaders` from shared file)
+
+**D8 — paymentId Regex Validation:**
+- `supabase/functions/qicard_webhook_handler/index.ts` — `/^[a-zA-Z0-9\-_]{1,128}$/` for both `intentId` and `paymentId` before `.or()` query
+- Invalid IDs return 400. Logs truncated to 8 chars to prevent PII leakage.
+
+**D9 — CI Coverage Floor:**
+- `.github/workflows/ci.yml` — 28% regression floor. Blocks merges below threshold. Reports to `GITHUB_STEP_SUMMARY`.
+
+**D10 — A6 Architecture Violations Fixed:**
+- `lib/features/notifications/viewmodels/notification_view_model.dart` — lazy `SupabaseClient` getter via `_injectedClient` pattern
+- `lib/features/saved/viewmodels/saved_tasks_view_model.dart` — `SupabaseClient? client` constructor parameter with `Supabase.instance.client` default
+
+**D11 — Architecture Guard Check 3 Tightened:**
+- `.github/workflows/ci.yml` — removed `grep -v 'Supabase\.instance\.client\.auth\.'` exclusion. Widened DI default pattern to `?? Supabase\.instance`.
+
+### Bug Fixes Applied During Phase D
+- `payEscrow` case in `DashboardWorkDelegate.performPrimaryAction()` changed from `return` to `break` — direct offer payment was unreachable
+- `BookingDelegate`: defensive copy in `setBookings`, `UnmodifiableListView` on getter, `loadBookingsData` retry on failure, local list update in accept/decline/cancel
+- `RequestsFilterViewModel`: subscribes to underlying TaskRequestsViewModel changes
+- `SubmitRequestVM`: separate error messages for ownership vs task-closed errors
+
+### Metrics
+- Tests: 706 → 780 (+74 new). All pass. 0 analyze issues.
+- Coverage: 30.6% baseline, 28% floor enforced in CI.
+- Architecture guard: 6 checks pass (Check 3 tightened).
+
+### References
+- Plan: `.TODO/PLAN_PhaseD_Harden_2026-04-03.md`
+- Session Log: `docs/LOG/SESSION_PLAN_PhaseD_Harden_2026-04-03.md`
+- Docs Sync: `.TODO/DOCS_SYNC_2026-04-04_PhaseD.md`
+- System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-04.md`
 
 ---
 

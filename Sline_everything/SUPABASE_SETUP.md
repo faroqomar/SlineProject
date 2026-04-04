@@ -1856,6 +1856,30 @@ The core orchestration function for the double-entry system.
   - `booking_decline_refund`
 - Booking webhook:
   - `qicard_webhook_handler` must reject unsigned payloads unless explicit local-dev override is enabled.
+  - `qicard_webhook_handler` validates `intentId` and `paymentId` with regex `/^[a-zA-Z0-9\-_]{1,128}$/` before `.or()` query (Phase D, 2026-04-04). Invalid IDs return 400.
+
+#### Edge Function CORS Configuration (Phase D, 2026-04-04)
+
+All 12 Edge Functions share CORS headers from `supabase/functions/_shared/bookin_payment.ts`:
+
+- **Origin**: `ALLOWED_ORIGIN` env var, defaults to `https://sline.app`. No wildcard `*`.
+- **Headers**: `authorization, x-client-info, apikey, content-type, x-signature`
+- **Methods**: `POST, OPTIONS`
+- **Finish URL trust**: Only `https://sline.app` for HTTPS, `http://localhost` and `http://127.0.0.1` for HTTP (dev).
+- For local dev, set `ALLOWED_ORIGIN=http://localhost:54321` in Supabase function env.
+- Webhooks (QiCard to Edge Function) are server-to-server — CORS is informational, not enforced.
+
+#### SQL Assertion Tests (Phase D, 2026-04-04)
+
+Location: `supabase/tests/`. Run with: `psql $DATABASE_URL -f supabase/tests/<file>.sql`
+
+| File | RPC Tested | Tests |
+|------|-----------|-------|
+| `accept_task_request_test.sql` | `accept_task_request` | Accept, auto-reject siblings, double-accept idempotent, task status |
+| `escrow_idempotency_test.sql` | `process_gateway_escrow_booking` | Hold, replay, no duplicates, missing key, wrong currency |
+| `role_switch_rate_limit_test.sql` | `switch_active_role` | Switch, switch back, no-op, stale state, invalid role, audit log |
+
+All tests use `BEGIN`/`ROLLBACK` for zero side effects.
 
 #### `fn_wallet_transactions_freeze()` (v2.16)
 

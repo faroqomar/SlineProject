@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/constants/auth_messages.dart';
+import 'package:sline_app/core/services/crash_reporting_service.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/auth/data/auth_repository.dart';
 import 'package:sline_app/core/models/user_profile.dart';
@@ -119,6 +120,12 @@ class AuthSessionViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       _currentUserProfile = await _authRepo.getCurrentUserProfileWithRetry();
+      // Attach anonymized user ID to crash reports (no PII — ID only)
+      if (_currentUserProfile != null && currentUserId != null) {
+        unawaited(
+          CrashReportingService.instance.setUserIdentifier(currentUserId!),
+        );
+      }
       if (_currentUserProfile == null && isAuthenticated) {
         AppLogger.w(
           'Profile not found after retries - signing out',
@@ -149,6 +156,8 @@ class AuthSessionViewModel extends ChangeNotifier {
     try {
       await _authRepo.signOut();
       _currentUserProfile = null;
+      // Clear user identity from crash reports on logout
+      unawaited(CrashReportingService.instance.setUserIdentifier(''));
     } on Exception catch (e) {
       AppLogger.e('Logout failed', tag: 'Auth', error: e);
     } finally {

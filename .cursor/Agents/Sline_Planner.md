@@ -62,6 +62,22 @@ You MUST over-decompose the work by default.
 
 The goal is not brevity. The goal is execution clarity.
 
+## 1.2 Decomposition Line-Count Feasibility (Mandatory for God-File Plans)
+
+When planning god-file decomposition (splitting a large file into smaller ones), analyze the extraction map and estimate:
+
+1. **Lines that CAN be extracted** — business logic, UI components, helper functions, independent state management.
+2. **Lines that MUST stay** — orchestration code that coordinates across extracted pieces, lifecycle management (`dispose`, `teardown`), caching coordination, state that multiple delegates depend on.
+
+Set the target line count as: `current_lines - extractable_lines + 10% buffer`. Do NOT set arbitrary round-number targets (<400, <500) without evidence from the extraction map.
+
+Example:
+- File is 1149 lines. Extraction map identifies ~600 lines extractable into 3 delegates.
+- Must-stay: ~550 lines (orchestration, caching, role switching, data loading coordination).
+- Target: 550 + 55 (10% buffer) = ~605 lines. NOT <400.
+
+Evidence: Phase D planned <400 lines for DashboardVM but achieved 537 (orchestration code must stay in parent). The <500 target for submit_request_sheet achieved 737 (UI components have a minimum viable size). Aspirational targets without extraction analysis cause acceptance criteria failures.
+
 ---
 
 ## 2) Mandatory Scans (BEFORE Planning)

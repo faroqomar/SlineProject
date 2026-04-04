@@ -21,6 +21,8 @@ flutter build apk                    # Android release
 flutter build ios                    # iOS release
 flutter build web                    # Web release
 flutter clean && flutter pub get     # Clean rebuild
+flutter run --dart-define=SENTRY_DSN=<dsn>  # Enable Sentry crash reporting
+flutter run --dart-define=SENTRY_ENV=production  # Set Sentry environment
 ```
 
 ## Setup (First Time)
@@ -34,8 +36,9 @@ git config core.hooksPath .githooks  # Enable pre-commit hooks (format + analyze
 GitHub Actions pipeline (`.github/workflows/ci.yml`) runs on push/PR to `main`:
 - **Lint & Analyze**: `dart format --set-exit-if-changed .` + `flutter analyze --no-fatal-infos`
 - **Architecture Guard**: 6 MVVM boundary checks (hard failure). Blocks PRs with Supabase in views, controllers/Navigator in VMs, view imports in VMs, repo imports in views.
-- **Tests**: `flutter test --coverage` with coverage reporting
+- **Tests**: `flutter test --coverage` with coverage reporting + **28% coverage floor** (regression prevention, raises incrementally)
 - **Build**: APK (debug) + Web (release) compilation check
+- **Note**: Architecture guard Check 3 tightened in Phase D — catches `Supabase.instance.client.auth.*` in VM method bodies (only `?? Supabase.instance` DI defaults are allowed)
 
 ## Architecture
 
@@ -112,6 +115,8 @@ ViewModel pattern: `_isLoading` + `_error` fields, `try/catch` with `_mapError()
 - **Edge functions**: Located in `supabase/functions/` (payment, push notifications).
 - **Key RPCs**: `accept_task_request`, `reject_task_request`, `replace_task_request`, `pay_awarded_offer`, `rpc_approve_delivery`, `cleanup_expired_awards`.
 - **Schema reference**: `Sline_everything/SUPABASE_SETUP.md` is the single source of truth for tables, RLS policies, triggers, and indexes.
+- **Migration review**: Reference `MIGRATION_REVIEW_CHECKLIST.md` for every PR with `supabase/migrations/` files.
+- **SQL tests**: `supabase/tests/` contains SQL assertion tests for critical RPCs (accept_task_request, escrow idempotency, role switch).
 
 ## Documentation
 

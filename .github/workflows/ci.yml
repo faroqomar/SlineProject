@@ -53,7 +53,7 @@ jobs:
 
           echo ""
           echo "=== Check 3: Supabase.instance in viewmodel methods (not DI defaults) ==="
-          if grep -rn --include='*.dart' 'Supabase\.instance' lib/features/ | grep '/viewmodels/' | grep -v 'client ??' | grep -v '/// ' | grep -v 'Supabase\.instance\.client)' | grep -v 'Supabase\.instance\.client;' | grep -v 'Supabase\.instance\.client\.auth\.' ; then
+          if grep -rn --include='*.dart' 'Supabase\.instance' lib/features/ | grep '/viewmodels/' | grep -v '?? Supabase\.instance' | grep -v '/// ' | grep -v 'Supabase\.instance\.client)' | grep -v 'Supabase\.instance\.client;' ; then
             echo "::warning::Direct Supabase access found in viewmodel layer (outside DI defaults)"
             WARN=1
           fi
@@ -115,6 +115,25 @@ jobs:
             fi
           else
             echo "coverage/lcov.info not generated."
+          fi
+      - name: Enforce coverage floor
+        if: always()
+        run: |
+          THRESHOLD=28
+          if [ -f coverage/lcov.info ]; then
+            TOTAL=$(grep -c '^DA:' coverage/lcov.info || echo 0)
+            HIT=$(grep '^DA:' coverage/lcov.info | grep -cv ',0$' || echo 0)
+            if [ "$TOTAL" -gt 0 ]; then
+              PERCENT=$(awk "BEGIN { printf \"%.1f\", ($HIT / $TOTAL) * 100 }")
+              PASS=$(awk "BEGIN { print ($PERCENT >= $THRESHOLD) ? 1 : 0 }")
+              if [ "$PASS" -eq 0 ]; then
+                echo "### Coverage FAILED: ${PERCENT}% < ${THRESHOLD}% floor" >> $GITHUB_STEP_SUMMARY
+                echo "::error::Coverage ${PERCENT}% is below required ${THRESHOLD}%"
+                exit 1
+              fi
+              echo "### Coverage OK: ${PERCENT}% (floor: ${THRESHOLD}%)" >> $GITHUB_STEP_SUMMARY
+              echo "Coverage ${PERCENT}% meets floor of ${THRESHOLD}%"
+            fi
           fi
 
   build:

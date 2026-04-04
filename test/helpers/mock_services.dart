@@ -14,6 +14,7 @@ import 'package:sline_app/features/dashboard/data/dashboard_repository.dart';
 import 'package:sline_app/core/services/dashboard_cache_service.dart';
 import 'package:sline_app/features/booking/services/booking_service.dart';
 import 'package:sline_app/features/tasks/services/task_service.dart';
+import 'package:sline_app/features/tasks/services/task_requests_service.dart';
 
 class MockWalletRepository extends Mock implements WalletRepository {}
 
@@ -30,3 +31,5 @@ class MockDashboardCacheService extends Mock implements DashboardCacheService {}
 class MockBookingService extends Mock implements BookingService {}
 
 class MockTaskService extends Mock implements TaskService {}
+
+class MockTaskRequestsService extends Mock implements TaskRequestsService {}

@@ -14,8 +14,10 @@ import '../data/saved_tasks_service.dart';
 
 class SavedTasksViewModel extends ChangeNotifier {
   final SavedTasksService service;
+  final SupabaseClient _client;
 
-  SavedTasksViewModel({required this.service}) {
+  SavedTasksViewModel({required this.service, SupabaseClient? client})
+    : _client = client ?? Supabase.instance.client {
     _initAuthListener();
   }
 
@@ -105,13 +107,11 @@ class SavedTasksViewModel extends ChangeNotifier {
 
   void _initAuthListener() {
     // Initial load if already logged in
-    if (Supabase.instance.client.auth.currentUser != null) {
+    if (_client.auth.currentUser != null) {
       load();
     }
 
-    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((
-      data,
-    ) {
+    _authSubscription = _client.auth.onAuthStateChange.listen((data) {
       final event = data.event;
       if (event == AuthChangeEvent.signedIn) {
         load();

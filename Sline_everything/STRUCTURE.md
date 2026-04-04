@@ -1,6 +1,6 @@
 # SLine App - Folder Structure Guide
 
-**Last Updated:** 2026-04-01 (Phase A: CI/CD pipeline, pre-commit hooks, lint rule upgrades, architecture guard; previous: 2026-03-08 Hardened Payment Linking + Work + Wallet)
+**Last Updated:** 2026-04-04 (Phase D: Sentry crash reporting, DashboardVM delegate decomposition, submit_request_sheet + requests_list_screen decomposition, Edge Function CORS hardening, pgTAP SQL tests, CI coverage floor, migration review checklist, A6 VM fixes, architecture guard tightening; previous: 2026-04-01 Phase A)
 
 This document describes the current repository layout. It replaces older references to `presentation/` and `controllers/`; the live Flutter codebase uses `view/` and `viewmodels/` under `lib/features/`.
 
@@ -24,6 +24,7 @@ sline_app/
 ├── linux/ macos/ windows/# Desktop runners
 ├── pubspec.yaml          # Flutter package manifest
 ├── analysis_options.yaml # Lint rules (34 rules: core + safety + code quality)
+├── MIGRATION_REVIEW_CHECKLIST.md  # Phase D: 7-point checklist for migration PRs
 └── README.md             # Repository overview
 ```
 
@@ -78,6 +79,10 @@ supabase/
 │   ├── qicard_webhook_handler/     # QiCard webhook verification and ledger entry
 │   ├── push-notify/                # Single push payload (optional PUSH_NOTIFY_SECRET); notification routing (13)
 │   └── process-push-queue/         # Batch drain notification_push_queue → FCM (requires CRON_SECRET)
+├── tests/                          # Phase D: SQL assertion tests for critical RPCs
+│   ├── accept_task_request_test.sql          # 4 tests: accept, auto-reject, double-accept, task status
+│   ├── escrow_idempotency_test.sql           # 5 tests: hold, replay, no duplicates, missing key, wrong currency
+│   └── role_switch_rate_limit_test.sql       # 6 tests: switch, switch back, no-op, stale state, invalid role, audit
 └── migrations/                     # SQL migrations applied to Supabase
 ```
 
@@ -149,6 +154,8 @@ Current subfolders:
 Important current core files:
 
 - `lib/core/services/supabase_config.dart`
+- `lib/core/services/crash_reporting_service.dart` — Abstract interface + NoOp stub for crash reporting
+- `lib/core/services/sentry_crash_reporting_service.dart` — Phase D: Sentry implementation of CrashReportingService
 - `lib/core/services/payment_service.dart`
 - `lib/core/services/qicard_payment_service.dart`
 - `lib/core/services/payment_pending_store.dart`
@@ -208,7 +215,11 @@ Not every feature uses every subfolder, but the standard live convention is:
 - `lib/features/proposals/`: proposal models, data (repositories), routes (payment); view re-exports from tasks for list/submit/tile/payment screens
 - `lib/features/tasks/`: task creation, details, requests/offers, tender payment, delivery flows
   - `exceptions/offer_exceptions.dart` — **NEW (v2.20)** Custom exceptions: `PriceMismatchException`, `OfferAlreadyAcceptedException`
+  - `models/expired_bid_filter.dart` — **Phase D** Extracted `ExpiredBidFilter` enum + extension for bid list filtering
   - `viewmodels/award_expiration_monitor.dart` — **NEW (v2.20)** Countdown timer for unpaid awards with urgency levels
+  - `viewmodels/submit_request_view_model.dart` — **Phase D** Business logic for bid submission/replacement (validateTask, checkReplaceability, submitNewBid, replaceBid)
+  - `viewmodels/requests_filter_view_model.dart` — **Phase D** Filter/sort/award state for requests list (subscribes to TaskRequestsViewModel)
+  - `view/widgets/requests/request_award_dialog.dart` — **Phase D** Extracted award confirmation dialog + payment flow + price mismatch dialog
 - `lib/features/wallet/`: wallet state and ledger-backed balance views; `utils/transaction_label_helper.dart` — human-readable transaction source/destination labels
 - `lib/features/work/`: unified work item details and CTA resolution
 
@@ -241,9 +252,13 @@ test/
 │   ├── chat/
 │   │   └── chat_view_model_test.dart          # Phase C: 21 tests (CRUD, messages, offers, realtime, role switch, dispose)
 │   ├── core/
+│   │   └── sentry_crash_reporting_service_test.dart  # Phase D: 10 tests (construction, interface, safe methods, singleton)
 │   ├── dashboard/
 │   │   ├── dashboard_permission_service_test.dart
-│   │   └── dashboard_view_model_test.dart     # Phase C: 20 tests (role loading, role switch, refresh, lazy-loading, dispose)
+│   │   ├── dashboard_view_model_test.dart     # Phase C: 20 tests (role loading, role switch, refresh, lazy-loading, dispose)
+│   │   ├── dashboard_work_delegate_test.dart  # Phase D: 10 tests (work items, caches, actions, dispose safety)
+│   │   ├── dashboard_inbox_delegate_test.dart # Phase D: 8 tests (inbox state, grouping, reject, dispose safety)
+│   │   └── dashboard_booking_delegate_test.dart # Phase D: 11 tests (bookings, filter, accept/decline/cancel)
 │   ├── home/
 │   ├── management/
 │   ├── models/                                # 14 test files (7 original + 7 new in Phase C)
@@ -257,6 +272,9 @@ test/
 │   │   ├── task_filter_view_model_test.dart
 │   │   ├── tender_payment_coordinator_test.dart
 │   │   └── tender_payment_view_model_test.dart  # Phase C: 53 tests (submit, WebView, recovery, error mapping, edge cases)
+│   ├── viewmodels/           # Phase D: extracted ViewModel tests
+│   │   ├── submit_request_view_model_test.dart    # Phase D: 15 tests (validate, replaceability, submit, replace, comparison)
+│   │   └── requests_filter_view_model_test.dart   # Phase D: 15 tests (filter, count, awarding state, pagination)
 │   ├── tender/               # Tender lifecycle unit tests
 │   │   ├── award_expiration_monitor_test.dart
 │   │   ├── task_requests_service_test.dart

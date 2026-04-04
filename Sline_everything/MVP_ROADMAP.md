@@ -96,9 +96,28 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | Edge functions | ✅ Completed | booking/payment functions are checked into `supabase/functions/` |
 | Docs sync discipline | ✅ Completed | docs now reflect current `view/viewmodels/data/services` layout and payment/runtime helpers |
 
-## 9. Current Focus
+## 9. Completed Phases
 
-1. **Phase D: Harden** — Sentry/Crashlytics, god-file decomposition (DashboardVM 1149L, SubmitRequestSheet 919L, RequestsListScreen 1164L), pgTAP tests, coverage enforcement (70% target).
-2. Optional: HMAC in create edge and webhook signature verification (PAYMENT_HMAC_SECRET) for Hardened Payment Linking; Admin Orphan Queue and Payment Trace.
+### ✅ Phase D: Harden (2026-04-04)
+
+All 11 items (D1–D11) completed:
+- Sentry crash reporting (replaces NoOp)
+- DashboardVM decomposition (1149→537L, 3 delegates)
+- submit_request_sheet decomposition (916→737L, SubmitRequestViewModel)
+- requests_list_screen decomposition (1172→604L, RequestsFilterViewModel + award dialog)
+- pgTAP SQL tests (3 files, 15 test cases)
+- Migration review checklist (7 sections)
+- Edge Function CORS hardening (wildcard `*` → `sline.app` allowlist)
+- paymentId regex validation in webhook handler
+- CI coverage floor (28% regression prevention)
+- A6 architecture violations fixed (NotificationVM, SavedTasksVM)
+- Architecture guard Check 3 tightened
+
+Tests: 706 → 780 (+74). Coverage floor: 28%. All 6 architecture guard checks pass.
+
+## 10. Current Focus
+
+1. **Phase E: Polish** — `very_good_analysis` migration, `dart fix --apply`, sealed state classes, localization (Arabic/Kurdish `.arb` files), DeepLinkService route registry refactor, remaining god-file decomposition, 85% coverage target.
+2. Optional: HMAC in create edge and webhook signature verification (PAYMENT_HMAC_SECRET); Admin Orphan Queue and Payment Trace.
 3. Expand automated coverage around moderation/report/dispute edge cases.
-3. Keep `Sline_everything/` aligned with code and Supabase migrations after every flow change.
+4. Keep `Sline_everything/` aligned with code and Supabase migrations after every flow change.

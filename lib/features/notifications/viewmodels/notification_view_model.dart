@@ -8,6 +8,7 @@ import '../services/notification_service.dart';
 /// ViewModel for notification list and read state. Context-free; navigation is view-layer responsibility.
 class NotificationViewModel extends ChangeNotifier {
   final NotificationService _service;
+  final SupabaseClient? _injectedClient;
   StreamSubscription<List<NotificationItem>>? _subscription;
   StreamSubscription<AuthState>? _authSubscription;
 
@@ -15,11 +16,18 @@ class NotificationViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
-  /// [authStateChanges] optional for tests; if null uses Supabase.instance.client.auth.onAuthStateChange.
+  /// Lazily resolves the Supabase client. Uses injected client if provided,
+  /// otherwise falls back to Supabase.instance.client at call time.
+  SupabaseClient get _client => _injectedClient ?? Supabase.instance.client;
+
+  /// [authStateChanges] optional for tests; if null uses [client].auth.onAuthStateChange.
+  /// [client] optional for tests; if null uses Supabase.instance.client lazily.
   NotificationViewModel({
     NotificationService? service,
     Stream<AuthState>? authStateChanges,
-  }) : _service = service ?? NotificationService() {
+    SupabaseClient? client,
+  }) : _service = service ?? NotificationService(),
+       _injectedClient = client {
     _init(authStateChanges);
   }
 
@@ -52,8 +60,8 @@ class NotificationViewModel extends ChangeNotifier {
       });
       return;
     }
-    final stream = Supabase.instance.client.auth.onAuthStateChange;
-    final user = Supabase.instance.client.auth.currentUser;
+    final stream = _client.auth.onAuthStateChange;
+    final user = _client.auth.currentUser;
     if (user != null) {
       _connect();
     } else {
@@ -144,7 +152,7 @@ class NotificationViewModel extends ChangeNotifier {
   void retry() {
     _error = null;
     try {
-      if (Supabase.instance.client.auth.currentUser != null) {
+      if (_client.auth.currentUser != null) {
         _connect();
       } else {
         notifyListeners();

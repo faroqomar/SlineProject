@@ -266,15 +266,55 @@ Supabase's Dart client uses a builder pattern where `.eq()`, `.lt()`, `.gt()`, `
 
 ## 11. Observability (Crash & Error Tracking)
 
-- **Crash Reporting**: `CrashReportingService` (lib/core/services/crash_reporting_service.dart) abstracts the backend (Sentry/Firebase).
-- **Zoned Errors**: `main.dart` uses `runZonedGuarded` to catch concurrent async errors.
-- **Flutter Errors**: `FlutterError.onError` is hooked to report UI crashes.
+- **Crash Reporting**: `CrashReportingService` (lib/core/services/crash_reporting_service.dart) abstracts the backend.
+  - **Production implementation**: `SentryCrashReportingService` (lib/core/services/sentry_crash_reporting_service.dart) — sends to Sentry.
+  - **Development fallback**: `NoOpCrashReportingService` — silent when no DSN configured.
+  - Enable via: `flutter run --dart-define=SENTRY_DSN=<your_dsn> --dart-define=SENTRY_ENV=production`
+  - PII sanitizer strips emails and phone numbers from breadcrumbs before sending to Sentry.
+  - User identity: only anonymized UUID attached (set on login, cleared on logout in `AuthSessionViewModel`).
+- **Error Boundary Chain** (outermost → innermost):
+  1. `SentryFlutter.init()` — captures all unhandled exceptions to Sentry dashboard
+  2. `runZonedGuarded` — catches async exceptions outside Flutter framework
+  3. `FlutterError.onError` — catches widget build/layout errors
+  4. `PlatformDispatcher.onError` — catches native/isolate errors
 - **Logging**:
   - Use `AppLogger.e(message, error, stackTrace)` for handled exceptions.
   - Use `AppLogger.i/d/w` for standard logs.
   - **Avoid `print()`**: CI/CodeGuard will flag direct print usage.
+  - AppLogger and Sentry are complementary: AppLogger writes to dev console, Sentry reports to cloud.
 
-## 11. Quick Links (Deep Dives)
+## 11.1 Delegate Decomposition Pattern (Phase D)
+
+Large ViewModels (>800 lines) should be decomposed into delegate classes:
+
+- **When to use**: VM has 3+ distinct responsibility groups (e.g., work items + inbox + bookings).
+- **Pattern**: Extract state + methods into `*Delegate` classes. Parent VM composes delegates and proxies all public getters/methods with identical signatures.
+- **Dispose safety**: Every delegate receives `bool Function() isDisposed` callback from parent. Checked before every `onChanged()` call.
+- **Notification**: Delegates call `VoidCallback onChanged` (which maps to parent's `_safeNotify`) after state mutations.
+- **DI**: Delegates receive services from parent constructor, NOT from Provider tree. Parent creates services once and passes to delegates.
+- **Example**: `DashboardViewModel` (537L) composes `DashboardWorkDelegate` (362L), `DashboardInboxDelegate` (297L), `DashboardBookingDelegate` (172L).
+- **Testing**: Delegates are independently testable with mock services. Parent VM tests unchanged (public API preserved).
+
+## 11.2 Lazy Supabase Client Pattern (Phase D)
+
+When adding a `SupabaseClient` DI parameter with `Supabase.instance.client` fallback:
+
+```dart
+// CORRECT: lazy getter — safe in tests
+final SupabaseClient? _injectedClient;
+SupabaseClient get _client => _injectedClient ?? Supabase.instance.client;
+
+// WRONG: eager — crashes in tests
+: _client = client ?? Supabase.instance.client  // AssertionError if not initialized
+```
+
+## 11.3 Coverage & CI Gates (Phase D)
+
+- **Coverage floor**: 28% regression prevention (blocks merges below threshold). Raise incrementally.
+- **Architecture guard**: 6 MVVM boundary checks in CI. Check 3 tightened in Phase D — catches `Supabase.instance.client.auth.*` in VM method bodies (only `?? Supabase.instance` DI defaults allowed).
+- **Migration review**: Reference `MIGRATION_REVIEW_CHECKLIST.md` for every PR with `supabase/migrations/` files.
+
+## 12. Quick Links (Deep Dives)
 
 - Core: `DEVELOPER_GUIDE/Core Module.md`
 - Auth: `DEVELOPER_GUIDE/Auth Feature.md`
@@ -290,7 +330,7 @@ Supabase's Dart client uses a builder pattern where `.eq()`, `.lt()`, `.gt()`, `
 - Order Management: `DEVELOPER_GUIDE/Order_Management_Feature.md`
 - Proposals: `DEVELOPER_GUIDE/Proposals_Feature.md`
 
-## 12. Gotchas & Tips
+## 13. Gotchas & Tips
 
 - **Offer flow**: only for `task_type='tender'`; unique pending per (task,bidder).
 - **DMs**: client‑only; requires freelancer in **favorites**; enforced by triggers.
