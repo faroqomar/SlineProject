@@ -92,7 +92,10 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
       _filterVm?.filter ?? ExpiredBidFilter.hideExpired;
   bool get _isAwarding => _filterVm?.isAwarding ?? false;
   set _isAwarding(bool v) {
-    assert(_filterVm != null, '_filterVm must be initialized before setting _isAwarding');
+    assert(
+      _filterVm != null,
+      '_filterVm must be initialized before setting _isAwarding',
+    );
     _filterVm!.isAwarding = v;
   }
 

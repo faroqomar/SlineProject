@@ -19,9 +19,9 @@ class DashboardBookingDelegate {
     required BookingService bookingService,
     required VoidCallback onChanged,
     required bool Function() isDisposed,
-  })  : _bookingService = bookingService,
-        _onChanged = onChanged,
-        _isDisposed = isDisposed;
+  }) : _bookingService = bookingService,
+       _onChanged = onChanged,
+       _isDisposed = isDisposed;
 
   // ---------------------------------------------------------------------------
   // State
@@ -94,18 +94,11 @@ class DashboardBookingDelegate {
       final index = _bookings.indexWhere((b) => b.id == bookingId);
       if (index != -1) {
         _bookings[index] = updated;
-        AppLogger.i(
-          'Updated booking=$bookingId to ${status.name}',
-          tag: _kTag,
-        );
+        AppLogger.i('Updated booking=$bookingId to ${status.name}', tag: _kTag);
         if (!_isDisposed()) _onChanged();
       }
     } on Exception catch (e) {
-      AppLogger.e(
-        'Failed to update booking=$bookingId',
-        error: e,
-        tag: _kTag,
-      );
+      AppLogger.e('Failed to update booking=$bookingId', error: e, tag: _kTag);
       rethrow;
     }
   }
@@ -117,11 +110,7 @@ class DashboardBookingDelegate {
       AppLogger.i('Accepted booking=$bookingId', tag: _kTag);
       if (!_isDisposed()) _onChanged();
     } on Exception catch (e) {
-      AppLogger.e(
-        'Failed to accept booking=$bookingId',
-        error: e,
-        tag: _kTag,
-      );
+      AppLogger.e('Failed to accept booking=$bookingId', error: e, tag: _kTag);
       rethrow;
     }
   }
@@ -133,11 +122,7 @@ class DashboardBookingDelegate {
       AppLogger.i('Declined booking=$bookingId', tag: _kTag);
       if (!_isDisposed()) _onChanged();
     } on Exception catch (e) {
-      AppLogger.e(
-        'Failed to decline booking=$bookingId',
-        error: e,
-        tag: _kTag,
-      );
+      AppLogger.e('Failed to decline booking=$bookingId', error: e, tag: _kTag);
       rethrow;
     }
   }
@@ -152,11 +137,7 @@ class DashboardBookingDelegate {
       AppLogger.i('Canceled booking=$bookingId', tag: _kTag);
       if (!_isDisposed()) _onChanged();
     } on Exception catch (e) {
-      AppLogger.e(
-        'Failed to cancel booking=$bookingId',
-        error: e,
-        tag: _kTag,
-      );
+      AppLogger.e('Failed to cancel booking=$bookingId', error: e, tag: _kTag);
       rethrow;
     }
   }
@@ -173,9 +154,7 @@ class DashboardBookingDelegate {
   // Internal fetcher
   // ---------------------------------------------------------------------------
 
-  Future<List<BookingModel>> _fetchBookingsInternal(
-    UserRole currentRole,
-  ) {
+  Future<List<BookingModel>> _fetchBookingsInternal(UserRole currentRole) {
     if (currentRole == UserRole.freelancer) {
       return _bookingService.listBookingsAsProvider(limit: 50);
     } else {

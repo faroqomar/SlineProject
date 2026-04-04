@@ -121,31 +121,35 @@ void main() {
       verify(() => mockTaskService.releaseOfferWithFee('offer-1')).called(1);
     });
 
-    test('performPrimaryAction payEscrow on directOffer calls payNow', () async {
-      final delegate = buildDelegate();
-      when(() => mockDirectOffersService.payNow('do-1'))
-          .thenAnswer((_) async {});
+    test(
+      'performPrimaryAction payEscrow on directOffer calls payNow',
+      () async {
+        final delegate = buildDelegate();
+        when(
+          () => mockDirectOffersService.payNow('do-1'),
+        ).thenAnswer((_) async {});
 
-      final now = DateTime.now();
-      final item = WorkItem(
-        id: 'do-1',
-        type: WorkItemType.directOffer,
-        title: 'Direct Offer',
-        counterpartyId: 'cp-1',
-        counterpartyName: 'Test',
-        counterpartyAvatar: '',
-        counterpartyRole: 'Client',
-        statusRaw: 'pending_payment',
-        statusUiBucket: 'Active',
-        createdAt: now,
-        lastUpdate: now,
-        primaryActionType: PrimaryActionType.payEscrow,
-        permissions: WorkItemPermissions(canPayEscrow: true),
-      );
+        final now = DateTime.now();
+        final item = WorkItem(
+          id: 'do-1',
+          type: WorkItemType.directOffer,
+          title: 'Direct Offer',
+          counterpartyId: 'cp-1',
+          counterpartyName: 'Test',
+          counterpartyAvatar: '',
+          counterpartyRole: 'Client',
+          statusRaw: 'pending_payment',
+          statusUiBucket: 'Active',
+          createdAt: now,
+          lastUpdate: now,
+          primaryActionType: PrimaryActionType.payEscrow,
+          permissions: WorkItemPermissions(canPayEscrow: true),
+        );
 
-      await delegate.performPrimaryAction(item);
-      verify(() => mockDirectOffersService.payNow('do-1')).called(1);
-    });
+        await delegate.performPrimaryAction(item);
+        verify(() => mockDirectOffersService.payNow('do-1')).called(1);
+      },
+    );
 
     test(
       'cancelAwardedOffer does not rethrow when disposed mid-call',

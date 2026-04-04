@@ -33,9 +33,12 @@ class SentryCrashReportingService implements CrashReportingService {
     }
   }
 
-  static final _emailPattern =
-      RegExp(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}');
-  static final _phonePattern = RegExp(r'(?<![0-9a-fA-F-])\+[0-9]{10,15}(?![0-9a-fA-F-])');
+  static final _emailPattern = RegExp(
+    r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}',
+  );
+  static final _phonePattern = RegExp(
+    r'(?<![0-9a-fA-F-])\+[0-9]{10,15}(?![0-9a-fA-F-])',
+  );
 
   /// Strips common PII patterns from log messages before sending to Sentry.
   static String sanitizePii(String message) {

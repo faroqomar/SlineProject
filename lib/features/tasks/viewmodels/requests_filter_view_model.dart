@@ -18,7 +18,7 @@ class RequestsFilterViewModel extends ChangeNotifier {
   final TaskRequestsViewModel _requestsVm;
 
   RequestsFilterViewModel({required TaskRequestsViewModel requestsVm})
-      : _requestsVm = requestsVm {
+    : _requestsVm = requestsVm {
     _requestsVm.addListener(_onRequestsVmChanged);
   }
 
