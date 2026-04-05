@@ -83,7 +83,7 @@ void main() {
       final draftInput = _task(id: 'draft', title: 'Draft Input');
       final created = _task(id: 'created-1', title: 'Created Task');
 
-      when(() => repo.getTasks()).thenAnswer((_) async => existing);
+      when(repo.getTasks).thenAnswer((_) async => existing);
       when(() => repo.createTask(draftInput)).thenAnswer((_) async => created);
 
       await viewModel.loadTasks();
@@ -96,7 +96,7 @@ void main() {
         'existing-1',
         'existing-2',
       ]);
-      verify(() => repo.getTasks()).called(1);
+      verify(repo.getTasks).called(1);
       verify(() => repo.createTask(draftInput)).called(1);
       viewModel.dispose();
     });
@@ -114,7 +114,7 @@ void main() {
           _task(id: 'task-b', title: 'Task B', status: TaskStatus.assigned),
         ];
 
-        when(() => repo.getTasks()).thenAnswer((_) async => seededTasks);
+        when(repo.getTasks).thenAnswer((_) async => seededTasks);
         when(
           () => repo.updateTaskStatus('task-a', TaskStatus.completed),
         ).thenAnswer((_) async {});

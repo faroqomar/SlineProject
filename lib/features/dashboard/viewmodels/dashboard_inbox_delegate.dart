@@ -1,13 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import '../data/dashboard_repository.dart';
-import '../models/inbox_task_group.dart';
-import '../../tasks/models/task_model.dart';
-import '../../tasks/models/task_request_model.dart';
-import '../../tasks/services/task_service.dart';
-import '../../booking/models/booking_model.dart';
-import '../../booking/services/booking_service.dart';
+import 'package:sline_app/features/booking/models/booking_model.dart';
+import 'package:sline_app/features/booking/services/booking_service.dart';
+import 'package:sline_app/features/dashboard/data/dashboard_repository.dart';
+import 'package:sline_app/features/dashboard/models/inbox_task_group.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
+import 'package:sline_app/features/tasks/models/task_request_model.dart';
+import 'package:sline_app/features/tasks/services/task_service.dart';
 
 /// Generates a short trace ID for correlating multi-step operations.
 String _traceId() {
@@ -51,8 +51,7 @@ class DashboardInboxDelegate {
   List<Task> _pendingPaymentTenders = [];
   List<Task> get pendingPaymentTenders => _pendingPaymentTenders;
 
-  List<Task> _myTasks = [];
-  List<Task> get myTasks => _myTasks;
+  List<Task> myTasks = [];
 
   bool _inboxLoaded = false;
   bool get inboxLoaded => _inboxLoaded;
@@ -60,12 +59,12 @@ class DashboardInboxDelegate {
   /// Groups inbox offers by task (stable ordering)
   List<InboxTaskGroup> get inboxGroupedByTask {
     final map = <String, List<TaskRequest>>{};
-    for (var offer in _inboxOffers) {
+    for (final offer in _inboxOffers) {
       map.putIfAbsent(offer.taskId, () => []).add(offer);
     }
 
     final groups = <InboxTaskGroup>[];
-    for (var entry in map.entries) {
+    for (final entry in map.entries) {
       final offers = entry.value;
       offers.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       groups.add(
@@ -88,7 +87,7 @@ class DashboardInboxDelegate {
     _inboxOffers = [];
     _pendingRequests = [];
     _pendingPaymentTenders = [];
-    _myTasks = [];
+    myTasks = [];
     _inboxLoaded = false;
   }
 
@@ -102,7 +101,7 @@ class DashboardInboxDelegate {
     _inboxOffers = offers;
     _pendingRequests = pendingRequests;
     _pendingPaymentTenders = pendingPaymentTenders;
-    _myTasks = myTasks;
+    this.myTasks = myTasks;
     _inboxLoaded = true;
   }
 
@@ -249,10 +248,6 @@ class DashboardInboxDelegate {
     _inboxOffers.removeWhere((o) => o.id == offerId);
   }
 
-  /// Update myTasks from an external fetch (parent VM post-payment refresh).
-  void setMyTasks(List<Task> tasks) {
-    _myTasks = tasks;
-  }
 
   // ---------------------------------------------------------------------------
   // Internal fetchers (for Future.wait)
@@ -282,7 +277,7 @@ class DashboardInboxDelegate {
     }
     try {
       final requests = await _bookingService.getPendingRequests();
-      List<Task> tenders = [];
+      var tenders = <Task>[];
       if (currentRole == UserRole.freelancer) {
         tenders = await _taskService.getPendingPaymentTenders();
       }

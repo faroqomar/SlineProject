@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-import '../../../core/services/logger_service.dart';
-import '../viewmodels/portfolio_view_model.dart';
-import '../models/portfolio_item.dart';
-import 'sheets/add_portfolio_sheet.dart';
-import 'widgets/portfolio_tile.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/features/portfolio/view/sheets/add_portfolio_sheet.dart';
+import 'package:sline_app/features/portfolio/view/widgets/portfolio_tile.dart';
+import 'package:sline_app/features/portfolio/viewmodels/portfolio_view_model.dart';
 
 /// PortfolioScreen
 /// Hosts the controller/provider scope, grid, refresh, infinite scroll,
@@ -200,7 +198,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
               if (index >= items.length) {
                 return const _LoadingTile();
               }
-              final PortfolioItem item = items[index];
+              final item = items[index];
               return PortfolioTile(
                 item: item,
                 controller: ctrl,
@@ -230,7 +228,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                       ],
                     ),
                   );
-                  if (ok == true) {
+                  if (ok ?? false) {
                     AppLogger.i(
                       'User confirmed delete',
                       tag: 'PortfolioScreen',

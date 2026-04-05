@@ -20,14 +20,13 @@
 // preventing the app from loading all tasks at once.
 
 import 'package:flutter/foundation.dart';
-
-import '../../../core/services/logger_service.dart';
-import '../../../core/mixins/role_switch_aware.dart';
-import '../../../core/services/role_switch_coordinator.dart';
-import '../../tasks/models/task_model.dart';
-import '../../tasks/services/task_service.dart';
-import '../../tasks/viewmodels/discovery_feed_view_model_contract.dart';
-import '../../tasks/viewmodels/task_filter_view_model.dart';
+import 'package:sline_app/core/mixins/role_switch_aware.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/services/role_switch_coordinator.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
+import 'package:sline_app/features/tasks/services/task_service.dart';
+import 'package:sline_app/features/tasks/viewmodels/discovery_feed_view_model_contract.dart';
+import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
 
 class HomeViewModel extends ChangeNotifier
     with RoleSwitchAware

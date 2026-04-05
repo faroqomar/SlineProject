@@ -1,11 +1,11 @@
 // Proposal data access: list, submit, replace, reject.
 // Uses get_proposal_bidder_summaries for owner list (RLS-safe); no direct profiles join.
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/proposals/models/proposal_model.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/features/tasks/services/task_requests_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Proposal repository: typed proposal list and mutations.
 /// Delegates submit/replace/reject to [TaskRequestsService] for compatibility;

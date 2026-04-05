@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:sline_app/core/app_enums.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
-import 'package:sline_app/features/booking/view/widgets/booking_card.dart';
+import 'package:sline_app/features/booking/models/booking_model.dart';
 import 'package:sline_app/features/booking/view/booking_details_screen.dart';
-import '../viewmodels/booking_view_model.dart';
-import '../models/booking_model.dart';
+import 'package:sline_app/features/booking/view/widgets/booking_card.dart';
+import 'package:sline_app/features/booking/viewmodels/booking_view_model.dart';
 
 class BookingsListScreen extends StatefulWidget {
   const BookingsListScreen({super.key});

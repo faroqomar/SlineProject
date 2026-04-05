@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import '../../../core/services/logger_service.dart';
-import '../models/task_model.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
 
 /// TaskFilterViewModel — MVVM state holder for filtering/searching tasks
 class TaskFilterViewModel extends ChangeNotifier {

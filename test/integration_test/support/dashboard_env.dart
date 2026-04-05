@@ -1,4 +1,3 @@
-library;
 
 /// Integration environment contract for dashboard remediation tests.
 ///

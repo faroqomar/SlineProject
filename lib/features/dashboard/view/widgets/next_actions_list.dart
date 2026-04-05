@@ -2,15 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../viewmodels/dashboard_view_model.dart';
-import 'work_item_card.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/deep_link_service.dart'
     as sline_deep_link;
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/utils/error_mapper.dart';
+import 'package:sline_app/features/dashboard/view/widgets/work_item_card.dart';
+import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 import 'package:sline_app/features/proposals/models/proposal_payment_summary.dart';
 import 'package:sline_app/features/proposals/routes/proposal_payment_route.dart';
 import 'package:sline_app/features/wallet/view/wallet_screen.dart';
-import 'package:sline_app/core/services/logger_service.dart';
 
 void _showInsufficientFundsDialog(BuildContext context) {
   showDialog<void>(
@@ -83,13 +84,13 @@ class NextActionsList extends StatelessWidget {
                     } else {
                       ScaffoldMessenger.of(
                         context,
-                      ).showSnackBar(SnackBar(content: Text(e.message)));
+                      ).showSnackBar(SnackBar(content: Text(ErrorMapper.map(e))));
                     }
                   } on Exception catch (e) {
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(
                       context,
-                    ).showSnackBar(SnackBar(content: Text(e.toString())));
+                    ).showSnackBar(SnackBar(content: Text(ErrorMapper.map(e))));
                   }
                   return;
                 }
@@ -144,13 +145,13 @@ class NextActionsList extends StatelessWidget {
                     } else {
                       ScaffoldMessenger.of(
                         context,
-                      ).showSnackBar(SnackBar(content: Text(e.message)));
+                      ).showSnackBar(SnackBar(content: Text(ErrorMapper.map(e))));
                     }
                   } on Exception catch (e) {
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(
                       context,
-                    ).showSnackBar(SnackBar(content: Text(e.toString())));
+                    ).showSnackBar(SnackBar(content: Text(ErrorMapper.map(e))));
                   }
                 }
               },
@@ -175,7 +176,7 @@ class NextActionsList extends StatelessWidget {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(e.toString()),
+                              content: Text(ErrorMapper.map(e)),
                               backgroundColor: Colors.red,
                             ),
                           );

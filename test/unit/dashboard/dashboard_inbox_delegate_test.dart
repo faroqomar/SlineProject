@@ -2,8 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_inbox_delegate.dart';
-import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
+import 'package:sline_app/features/tasks/models/task_request_model.dart';
+
 import '../../helpers/mock_services.dart';
 
 void main() {
@@ -138,7 +139,7 @@ void main() {
     test('setMyTasks updates the task list', () {
       final delegate = buildDelegate();
       expect(delegate.myTasks, isEmpty);
-      delegate.setMyTasks([
+      delegate.myTasks = [
         Task.fromJson({
           'id': 't1',
           'user_id': 'u1',
@@ -149,7 +150,7 @@ void main() {
           'type': 'tender',
           'created_at': DateTime.now().toIso8601String(),
         }),
-      ]);
+      ];
       expect(delegate.myTasks, hasLength(1));
     });
   });

@@ -198,7 +198,7 @@ void main() {
     ) async {
       final taskVm = _MockTaskViewModel();
       final categoriesRepo = _MockCategoriesRepository();
-      when(() => categoriesRepo.getAll()).thenAnswer(
+      when(categoriesRepo.getAll).thenAnswer(
         (_) async => <CategoryModel>[
           CategoryModel(
             id: 'cat-design',
@@ -209,7 +209,7 @@ void main() {
         ],
       );
       when(() => taskVm.currentUserId).thenReturn('user-1');
-      when(() => taskVm.loadCategories()).thenAnswer(
+      when(taskVm.loadCategories).thenAnswer(
         (_) async => <CategoryModel>[
           CategoryModel(
             id: 'cat-design',

@@ -1,11 +1,12 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/constants/auth_messages.dart';
+import 'package:sline_app/core/models/user_profile.dart';
 import 'package:sline_app/core/services/crash_reporting_service.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/auth/data/auth_repository.dart';
-import 'package:sline_app/core/models/user_profile.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthSessionViewModel extends ChangeNotifier {
   final AuthRepository _authRepo;
@@ -76,15 +77,12 @@ class AuthSessionViewModel extends ChangeNotifier {
         switch (state.event) {
           case AuthChangeEvent.signedIn:
             await _loadInitialProfile();
-            break;
           case AuthChangeEvent.signedOut:
             AppLogger.i('User signed out', tag: 'Auth');
             _currentUserProfile = null;
             notifyListeners();
-            break;
           case AuthChangeEvent.tokenRefreshed:
             AppLogger.d('Token refreshed successfully', tag: 'Auth');
-            break;
           case AuthChangeEvent.passwordRecovery:
             AppLogger.i('Password recovery session established', tag: 'Auth');
             if (_onPasswordRecovery != null) {
@@ -92,11 +90,9 @@ class AuthSessionViewModel extends ChangeNotifier {
             } else {
               _pendingPasswordRecovery = true;
             }
-            break;
           case AuthChangeEvent.userUpdated:
             AppLogger.i('User profile updated', tag: 'Auth');
             await _loadInitialProfile();
-            break;
           default:
             break;
         }

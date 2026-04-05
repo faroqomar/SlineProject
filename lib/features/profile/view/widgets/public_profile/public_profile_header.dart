@@ -13,7 +13,7 @@ class PublicProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
 
     return SliverToBoxAdapter(
       child: Stack(
@@ -59,7 +59,7 @@ class PublicProfileHeader extends StatelessWidget {
                   storagePathOrUrl: profile.avatarUrl,
                   size: 80,
                   borderRadius: BorderRadius.circular(AppDimens.r20 - 4),
-                  placeholder: Container(
+                  placeholder: ColoredBox(
                     color: AppColors.gold,
                     child: Center(
                       child: Text(

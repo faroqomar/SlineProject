@@ -182,15 +182,15 @@ class DashboardOfferCard extends StatelessWidget {
                 actorRole: isClientView ? 'client' : 'provider',
                 entityType: 'task_request',
               );
-              final bool showAward = ctaMeta.allowedActions.contains('award');
-              final bool showPay = ctaMeta.allowedActions.contains('pay');
-              final bool showEscrow = ctaMeta.allowedActions.contains(
+              final showAward = ctaMeta.allowedActions.contains('award');
+              final showPay = ctaMeta.allowedActions.contains('pay');
+              final showEscrow = ctaMeta.allowedActions.contains(
                 'escrow_hold',
               );
-              final bool showRelease = ctaMeta.allowedActions.contains(
+              final showRelease = ctaMeta.allowedActions.contains(
                 'release_with_fee',
               );
-              final bool showRefund = ctaMeta.allowedActions.contains('refund');
+              final showRefund = ctaMeta.allowedActions.contains('refund');
 
               if (!isPending && !showRelease && !showRefund && !showPay) {
                 return const SizedBox.shrink();

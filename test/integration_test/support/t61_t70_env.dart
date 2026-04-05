@@ -1,4 +1,3 @@
-library;
 
 /// Integration environment contract for T61-T70 staging-backed tests.
 ///

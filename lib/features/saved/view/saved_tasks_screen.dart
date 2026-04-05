@@ -45,7 +45,7 @@ class _SavedTasksView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<SavedTasksViewModel>();
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(

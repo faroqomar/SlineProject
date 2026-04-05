@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:sline_app/features/profile/view/manage_portfolio_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/providers/theme_mode_provider.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
@@ -10,6 +9,7 @@ import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
+import 'package:sline_app/features/profile/view/manage_portfolio_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});

@@ -1,26 +1,25 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
-
-import '../viewmodels/chat_view_model.dart';
-import '../../chat/models/conversation_model.dart';
-import 'widgets/chat_context_widget.dart'; // Added
-import '../../chat/models/message_model.dart';
-import '../../chat/models/chat_offer_payload.dart';
-import '../../../core/utils/format_date.dart';
-import '../../../core/services/logger_service.dart';
-import '../../safety/viewmodels/safety_view_model.dart';
-
-import 'widgets/message_bubble.dart';
-import 'widgets/offer_message_bubble.dart';
-import 'widgets/create_offer_sheet.dart';
-import '../attachments/widgets/attachment_message_tile.dart';
+import 'package:sline_app/features/chat/attachments/widgets/attachment_message_tile.dart';
+import 'package:sline_app/features/chat/models/chat_offer_payload.dart';
+import 'package:sline_app/features/chat/models/conversation_model.dart';
+import 'package:sline_app/features/chat/models/message_model.dart';
+import 'package:sline_app/features/chat/view/widgets/chat_context_widget.dart'; // Added
+import 'package:sline_app/features/chat/view/widgets/create_offer_sheet.dart';
+import 'package:sline_app/features/chat/view/widgets/message_bubble.dart';
+import 'package:sline_app/features/chat/view/widgets/offer_message_bubble.dart';
+import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
+import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
 
 /// Chat screen with Glassmorphism design matching the new design system.
 class ChatScreen extends StatefulWidget {
@@ -121,7 +120,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final me = context.watch<ChatViewModel>().currentUserId;
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
 
     return Scaffold(
       backgroundColor: colorScheme.phoneBackground,
@@ -140,7 +139,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   itemCount: controller.currentMessages.length,
                   itemBuilder: (context, index) {
-                    final Message msg = controller.currentMessages[index];
+                    final msg = controller.currentMessages[index];
                     final isMine = (me != null) && msg.senderId == me;
                     final status =
                         controller.isPresenceReceiptsEnabled && isMine
@@ -154,7 +153,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     // Check for Offer (Structured or Legacy JSON)
                     if (msg.messageType == MessageType.offer ||
                         msg.content.trim().startsWith('{"type":"offer"')) {
-                      Map<String, dynamic> offerData = {};
+                      var offerData = <String, dynamic>{};
                       if (msg.messageType == MessageType.offer) {
                         offerData = msg.payload;
                       } else {
@@ -570,7 +569,7 @@ class _ChatScreenState extends State<ChatScreen> {
     BuildContext context, {
     required String title,
   }) async {
-    String draftReason = '';
+    var draftReason = '';
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(

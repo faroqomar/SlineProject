@@ -1,9 +1,9 @@
 import 'dart:async';
 
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/features/chat/models/conversation_model.dart';
+import 'package:sline_app/features/chat/models/message_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/services/logger_service.dart';
-import '../models/conversation_model.dart';
-import '../models/message_model.dart';
 
 /// Why this service exists: encapsulates Supabase queries/streams so UI/controllers remain clean
 /// and to centralize schema changes (attachments, receipts, typing) in one place.
@@ -372,7 +372,7 @@ class MessageService {
 
       if (response is List) {
         AppLogger.d('📦 Conversations response count: ${response.length}');
-        final List<Conversation> validConversations = [];
+        final validConversations = <Conversation>[];
 
         for (final raw in response) {
           final json = Map<String, dynamic>.from(raw as Map);

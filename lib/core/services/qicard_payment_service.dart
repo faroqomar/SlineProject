@@ -1,8 +1,9 @@
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/demo_payment_service.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/services/payment_response_helpers.dart';
 import 'package:sline_app/core/services/payment_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Booking remediation version of the QiCard service.
 ///
@@ -152,8 +153,8 @@ class QiCardPaymentService implements PaymentService {
         },
       );
 
-      final data = _asMap(response.data);
-      final error = _extractError(data) ?? _extractErrorFromPayload(data);
+      final data = asResponseMap(response.data);
+      final error = extractError(data) ?? extractErrorFromPayload(data);
 
       if (error != null) {
         AppLogger.w('Intent creation rejected', tag: 'Payment', error: error);
@@ -236,8 +237,8 @@ class QiCardPaymentService implements PaymentService {
         },
       );
 
-      final data = _asMap(response.data);
-      final serviceError = _extractError(data);
+      final data = asResponseMap(response.data);
+      final serviceError = extractError(data);
       final responseRequestCorrelationId =
           data?['request_correlation_id'] as String? ?? requestCorrelationId;
       if (serviceError != null) {
@@ -245,7 +246,7 @@ class QiCardPaymentService implements PaymentService {
           'Booking payment create was rejected by the server for task=$taskId',
           tag: 'Payment',
           error: serviceError,
-          json: _safePayloadSummary(data),
+          json: safePayloadSummary(data),
         );
         return QiCardCreatePaymentResult(
           requestCorrelationId: responseRequestCorrelationId,
@@ -274,7 +275,7 @@ class QiCardPaymentService implements PaymentService {
         formUrl: data['form_url'] as String?,
         amount: (data['amount'] as num?)?.toDouble(),
         providerId: data['provider_id'] as String?,
-        expiresAt: _parseDate(data['expires_at']),
+        expiresAt: parseDateOrNull(data['expires_at']),
         correlationId: data['correlation_id'] as String?,
         requestCorrelationId: responseRequestCorrelationId,
       );
@@ -291,7 +292,7 @@ class QiCardPaymentService implements PaymentService {
         AppLogger.w(
           'Booking payment create returned an incomplete payload for task=$taskId',
           tag: 'Payment',
-          json: _safePayloadSummary(data),
+          json: safePayloadSummary(data),
         );
         return QiCardCreatePaymentResult(
           requestCorrelationId: responseRequestCorrelationId,
@@ -334,14 +335,14 @@ class QiCardPaymentService implements PaymentService {
         body: <String, dynamic>{'booking_id': bookingId},
       );
 
-      final data = _asMap(response.data);
-      final serviceError = _extractError(data);
+      final data = asResponseMap(response.data);
+      final serviceError = extractError(data);
       if (serviceError != null) {
         AppLogger.w(
           'Booking recovery was rejected for booking=$bookingId',
           tag: 'Payment',
           error: serviceError,
-          json: _safePayloadSummary(data),
+          json: safePayloadSummary(data),
         );
         return QiCardRecoveryResult(
           error: serviceError,
@@ -372,7 +373,7 @@ class QiCardPaymentService implements PaymentService {
         AppLogger.w(
           'Booking recovery returned an incomplete payload for booking=$bookingId',
           tag: 'Payment',
-          json: _safePayloadSummary(data),
+          json: safePayloadSummary(data),
         );
         return const QiCardRecoveryResult(
           error: 'Booking recovery failed.',
@@ -414,14 +415,14 @@ class QiCardPaymentService implements PaymentService {
         body: <String, dynamic>{'booking_id': bookingId, 'reason': reason},
       );
 
-      final data = _asMap(response.data);
-      final serviceError = _extractError(data);
+      final data = asResponseMap(response.data);
+      final serviceError = extractError(data);
       if (serviceError != null) {
         AppLogger.w(
           'Booking refund was rejected for booking=$bookingId',
           tag: 'Payment',
           error: serviceError,
-          json: _safePayloadSummary(data),
+          json: safePayloadSummary(data),
         );
         return BookingRefundResult(
           error: serviceError,
@@ -452,7 +453,7 @@ class QiCardPaymentService implements PaymentService {
         AppLogger.w(
           'Booking refund returned an incomplete payload for booking=$bookingId',
           tag: 'Payment',
-          json: _safePayloadSummary(data),
+          json: safePayloadSummary(data),
         );
         return const BookingRefundResult(
           error: 'Booking refund failed.',
@@ -501,15 +502,15 @@ class QiCardPaymentService implements PaymentService {
         },
       );
 
-      final data = _asMap(response.data);
+      final data = asResponseMap(response.data);
       final serviceError =
-          _extractError(data) ?? _extractErrorFromPayload(data);
+          extractError(data) ?? extractErrorFromPayload(data);
       if (serviceError != null) {
         AppLogger.w(
           'Direct offer payment create rejected for offer=$offerId',
           tag: 'Payment',
           error: serviceError,
-          json: _safePayloadSummary(data),
+          json: safePayloadSummary(data),
         );
         return QiCardDirectOfferPaymentResult(
           offerId: offerId,
@@ -530,7 +531,7 @@ class QiCardPaymentService implements PaymentService {
         );
       }
 
-      final payloadError = _extractErrorFromPayload(data);
+      final payloadError = extractErrorFromPayload(data);
       final directIntentId = data['intent_id'] as String?;
       final result = QiCardDirectOfferPaymentResult(
         offerId: data['offer_id'] as String? ?? offerId,
@@ -558,7 +559,7 @@ class QiCardPaymentService implements PaymentService {
         AppLogger.w(
           'Direct offer payment create returned incomplete or error payload for offer=$offerId',
           tag: 'Payment',
-          json: _safePayloadSummary(data),
+          json: safePayloadSummary(data),
         );
         return QiCardDirectOfferPaymentResult(
           offerId: offerId,
@@ -614,15 +615,15 @@ class QiCardPaymentService implements PaymentService {
         },
       );
 
-      final data = _asMap(response.data);
+      final data = asResponseMap(response.data);
       final serviceError =
-          _extractError(data) ?? _extractErrorFromPayload(data);
+          extractError(data) ?? extractErrorFromPayload(data);
       if (serviceError != null) {
         AppLogger.w(
           'Tender payment create rejected for request=$requestId',
           tag: 'Payment',
           error: serviceError,
-          json: _safePayloadSummary(data),
+          json: safePayloadSummary(data),
         );
         return QiCardTenderPaymentResult(
           requestId: requestId,
@@ -643,7 +644,7 @@ class QiCardPaymentService implements PaymentService {
         );
       }
 
-      final payloadError = _extractErrorFromPayload(data);
+      final payloadError = extractErrorFromPayload(data);
       final result = QiCardTenderPaymentResult(
         requestId: data['request_id'] as String? ?? requestId,
         formUrl: data['form_url'] as String?,
@@ -658,7 +659,7 @@ class QiCardPaymentService implements PaymentService {
         AppLogger.w(
           'Tender payment create returned incomplete or error payload for request=$requestId',
           tag: 'Payment',
-          json: _safePayloadSummary(data),
+          json: safePayloadSummary(data),
         );
         return QiCardTenderPaymentResult(
           requestId: requestId,
@@ -706,15 +707,15 @@ class QiCardPaymentService implements PaymentService {
         },
       );
 
-      final data = _asMap(response.data);
+      final data = asResponseMap(response.data);
       final serviceError =
-          _extractError(data) ?? _extractErrorFromPayload(data);
+          extractError(data) ?? extractErrorFromPayload(data);
       if (serviceError != null) {
         AppLogger.w(
           'Tender recovery rejected for request=$requestId',
           tag: 'Payment',
           error: serviceError,
-          json: _safePayloadSummary(data),
+          json: safePayloadSummary(data),
         );
         return QiCardTenderRecoveryResult(
           error: serviceError,
@@ -743,69 +744,12 @@ class QiCardPaymentService implements PaymentService {
         error: e,
         stackTrace: st,
       );
-      final baseMessage = 'Cannot recover payment right now.';
-      final detail = kDebugMode ? ' (${e.toString()})' : '';
+      const baseMessage = 'Cannot recover payment right now.';
+      final detail = kDebugMode ? ' ($e)' : '';
       return QiCardTenderRecoveryResult(
         error: '$baseMessage$detail',
         errorCode: 'TENDER_RECOVERY_FAILED',
       );
     }
-  }
-
-  Map<String, dynamic>? _asMap(dynamic data) {
-    if (data is Map<String, dynamic>) return data;
-    if (data is Map) {
-      return data.map((key, value) => MapEntry(key.toString(), value));
-    }
-    return null;
-  }
-
-  Map<String, dynamic> _safePayloadSummary(Map<String, dynamic>? data) {
-    final normalizedError = _normalizeErrorValue(data?['error']);
-    return <String, dynamic>{
-      'keys': data?.keys.toList() ?? const <String>[],
-      'booking_id': data?['booking_id'],
-      'correlation_id': data?['correlation_id'],
-      'request_correlation_id': data?['request_correlation_id'],
-      'payment_status': data?['payment_status'],
-      'recovery_result': data?['recovery_result'],
-      'refund_result': data?['refund_result'],
-      'error': normalizedError,
-    };
-  }
-
-  String? _extractError(Map<String, dynamic>? data) {
-    return _normalizeErrorValue(data?['error']);
-  }
-
-  /// Top-level code/message (e.g. edge function error response).
-  String? _extractErrorFromPayload(Map<String, dynamic>? data) {
-    if (data == null) return null;
-    final msg = data['message'];
-    final code = data['code'];
-    if (msg is String && msg.isNotEmpty) {
-      return code is String && code.isNotEmpty ? '$code: $msg' : msg;
-    }
-    if (code is String && code.isNotEmpty) return code;
-    return null;
-  }
-
-  String? _normalizeErrorValue(dynamic error) {
-    if (error is String && error.isNotEmpty) return error;
-    if (error is Map) {
-      final message = error['message'];
-      final code = error['code'];
-      if (code is String && message is String && code.isNotEmpty) {
-        return '$code: $message';
-      }
-      if (message is String && message.isNotEmpty) return message;
-      if (code is String && code.isNotEmpty) return code;
-    }
-    return null;
-  }
-
-  DateTime? _parseDate(dynamic value) {
-    if (value is! String || value.isEmpty) return null;
-    return DateTime.tryParse(value);
   }
 }

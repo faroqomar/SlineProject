@@ -1,8 +1,9 @@
 import 'dart:typed_data';
+
 import 'package:mime/mime.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import '../models/portfolio_item.dart';
+import 'package:sline_app/features/portfolio/models/portfolio_item.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// PortfolioService
 ///
@@ -94,7 +95,7 @@ class PortfolioService {
     final contentType = lookupMimeType(filename) ?? 'application/octet-stream';
 
     final safeName =
-        '${DateTime.now().millisecondsSinceEpoch}_${filename.replaceAll(RegExp(r"[^A-Za-z0-9._-]"), "_")}';
+        '${DateTime.now().millisecondsSinceEpoch}_${filename.replaceAll(RegExp("[^A-Za-z0-9._-]"), "_")}';
     final path = '$ownerId/$safeName';
 
     // Upload (no upsert so we don't overwrite existing files)
@@ -236,7 +237,7 @@ class PortfolioService {
   /// Extracts storage path from a public URL.
   /// URL pattern: ".../object/public/portfolio/{ownerId}/{filename}"
   String? _extractPathFromUrl(String url) {
-    final marker = '/object/public/$_bucket/';
+    const marker = '/object/public/$_bucket/';
     final idx = url.indexOf(marker);
     if (idx != -1) {
       return url.substring(idx + marker.length);

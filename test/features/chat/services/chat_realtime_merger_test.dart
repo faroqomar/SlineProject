@@ -85,7 +85,7 @@ void main() {
 
     test('merge keeps order by created_at', () {
       final reversed = messageJson.reversed
-          .map((e) => Map<String, dynamic>.from(e))
+          .map(Map<String, dynamic>.from)
           .toList();
       final result = ChatRealtimeMerger.merge(
         <Message>[],

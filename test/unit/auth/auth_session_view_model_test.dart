@@ -2,12 +2,11 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 import 'package:sline_app/core/constants/auth_messages.dart';
 import 'package:sline_app/core/models/user_profile.dart';
 import 'package:sline_app/features/auth/data/auth_repository.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // ---------------------------------------------------------------------------
 // Mocks

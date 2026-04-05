@@ -179,7 +179,7 @@ void main() {
           await _authenticateAsClient(client);
 
           // Create a task where user has NOT bid
-          final spoofedTaskId = 'spoofed-task-id';
+          const spoofedTaskId = 'spoofed-task-id';
           await _createTaskWithoutBid(client, spoofedTaskId);
 
           expect(
@@ -279,7 +279,7 @@ void main() {
             e.message,
             isNot(
               predicate<String>(
-                (m) => RegExp(r'[0-9a-f]{8}-').hasMatch(m),
+                (m) => RegExp('[0-9a-f]{8}-').hasMatch(m),
                 'contains UUID pattern',
               ),
             ),

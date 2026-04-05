@@ -1,7 +1,7 @@
 // FavoritesService - CRUD for Supabase `favorites` table.
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import '../models/favorite_with_profile_model.dart';
+import 'package:sline_app/features/favorites/models/favorite_with_profile_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FavoritesService {
   final SupabaseClient _client;

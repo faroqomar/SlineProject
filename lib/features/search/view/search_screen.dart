@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
+// Removed unused GlassContainer import
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
 import 'package:sline_app/core/widgets/glass_card.dart';
-// Removed unused GlassContainer import
-import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/features/search/view/widgets/search_result_profile_card.dart';
+import 'package:sline_app/features/search/viewmodels/search_view_model.dart';
 // Removed missing dashboard_background import
 import 'package:sline_app/features/tasks/view/widgets/task_card.dart';
-import '../viewmodels/search_view_model.dart';
-import 'widgets/search_result_profile_card.dart';
 
 class SearchScreen extends StatelessWidget {
   const SearchScreen({super.key});

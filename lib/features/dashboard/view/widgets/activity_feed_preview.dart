@@ -5,8 +5,8 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_date.dart';
-import '../../viewmodels/dashboard_view_model.dart';
-import '../../models/activity_log.dart';
+import 'package:sline_app/features/dashboard/models/activity_log.dart';
+import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 
 class ActivityFeedPreview extends StatelessWidget {
   final int? limit;
@@ -65,7 +65,11 @@ class _ActivityRow extends StatelessWidget {
     final deepLinkService = context.read<DeepLinkService>();
 
     return InkWell(
-      onTap: () => deepLinkService.handleActivity(context, item),
+      onTap: () => deepLinkService.handleActivity(
+        context,
+        entityType: item.entityType,
+        entityId: item.entityId,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -129,9 +133,9 @@ class _ActivityRow extends StatelessWidget {
 
   _ActivityInfo _mapActivityToInfo(ActivityLog log) {
     // Map event type to UI text and icon
-    String title = 'Notification';
-    String description = 'New activity';
-    IconData icon = Icons.notifications_none;
+    var title = 'Notification';
+    var description = 'New activity';
+    var icon = Icons.notifications_none;
 
     final type = log.eventType;
     final entity = log.entityType;

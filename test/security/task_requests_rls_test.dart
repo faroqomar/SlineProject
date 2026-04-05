@@ -756,7 +756,7 @@ void main() {
         when(() => mockUser.appMetadata).thenReturn({'active_role': 'client'});
 
         // Conversation ID returned on reject
-        final conversationId = 'conv-550e8400-e29b-41d4-a716-446655440000';
+        const conversationId = 'conv-550e8400-e29b-41d4-a716-446655440000';
 
         // Setup mock for successful RPC call
         when(
@@ -803,7 +803,7 @@ class MockQueryBuilder {
 
   Future<List<dynamic>> delete() async => result;
 
-  MockQueryBuilder eq(String column, dynamic value) => this;
+  void eq(String column, dynamic value) {}
 
-  MockQueryBuilder order(String column) => this;
+  void order(String column) {}
 }

@@ -1,9 +1,9 @@
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/utils/error_mapper.dart';
+import 'package:sline_app/features/profile/models/profile_model.dart';
+import 'package:sline_app/features/profile/services/profile_summary_service.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../../core/services/logger_service.dart';
-import '../../../../core/utils/error_mapper.dart';
-import '../../profile/services/profile_summary_service.dart';
-import '../../tasks/models/task_model.dart';
-import '../../profile/models/profile_model.dart';
 
 /// SearchService
 ///

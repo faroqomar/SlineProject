@@ -1,13 +1,14 @@
 import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/services/role_switch_coordinator.dart';
+import 'package:sline_app/features/profile/data/profile_repository.dart';
+import 'package:sline_app/features/profile/models/profile_model.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/services/logger_service.dart';
-import '../../../core/services/role_switch_coordinator.dart';
-import '../../tasks/models/task_model.dart';
-import '../data/profile_repository.dart';
-import '../models/profile_model.dart';
 
 /// ProfileViewModel — MVVM state holder for Profile feature.
 class ProfileViewModel extends ChangeNotifier {
@@ -268,7 +269,7 @@ class ProfileViewModel extends ChangeNotifier {
       }
 
       final file = result.files.first;
-      Uint8List? bytes = file.bytes;
+      var bytes = file.bytes;
 
       // If bytes not available, read from path (shouldn't happen with withData: true)
       if (bytes == null && file.path != null) {
@@ -665,7 +666,7 @@ class ProfileViewModel extends ChangeNotifier {
 
     try {
       final file = result.files.first;
-      Uint8List? bytes = file.bytes;
+      var bytes = file.bytes;
 
       if (bytes == null && file.path != null) {
         bytes = await File(file.path!).readAsBytes();

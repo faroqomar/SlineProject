@@ -103,7 +103,7 @@ void main() {
   // Construction & role loading
   // ---------------------------------------------------------------------------
   group('Construction & role loading', () {
-    setUp(() => stubDefaults());
+    setUp(stubDefaults);
 
     test('VM constructs without error', () async {
       viewModel = await buildVm();
@@ -150,7 +150,7 @@ void main() {
   // Role switch
   // ---------------------------------------------------------------------------
   group('Role switch', () {
-    setUp(() => stubDefaults());
+    setUp(stubDefaults);
 
     test('setRole calls repository.updateUserRole', () async {
       viewModel = await buildVm();
@@ -216,7 +216,7 @@ void main() {
   // Data loading & refresh
   // ---------------------------------------------------------------------------
   group('Data loading & refresh', () {
-    setUp(() => stubDefaults());
+    setUp(stubDefaults);
 
     test('refresh calls repo fetch methods', () async {
       viewModel = await buildVm();
@@ -277,7 +277,7 @@ void main() {
         primaryActionType: PrimaryActionType.viewDetails,
         permissions: WorkItemPermissions(),
       );
-      final testCounters = const DashboardCounters(activeWork: 1);
+      const testCounters = DashboardCounters(activeWork: 1);
 
       when(
         () => mockRepo.fetchWorkItems(any()),
@@ -298,7 +298,7 @@ void main() {
   // Tab lazy-loading
   // ---------------------------------------------------------------------------
   group('Tab lazy-loading', () {
-    setUp(() => stubDefaults());
+    setUp(stubDefaults);
 
     test('overview tab loads on init', () async {
       viewModel = await buildVm();
@@ -315,7 +315,7 @@ void main() {
 
     test('bookings tab NOT loaded until setTab called', () async {
       // Track whether the booking service was called during init
-      int bookingCallCount = 0;
+      var bookingCallCount = 0;
       when(
         () => mockBookingService.listBookingsAsProvider(
           limit: any(named: 'limit'),
@@ -389,12 +389,12 @@ void main() {
   // Dispose safety
   // ---------------------------------------------------------------------------
   group('Dispose safety', () {
-    setUp(() => stubDefaults());
+    setUp(stubDefaults);
 
     test('dispose prevents post-dispose notifyListeners crash', () async {
       viewModel = await buildVm();
 
-      int listenerCallCount = 0;
+      var listenerCallCount = 0;
       viewModel.addListener(() => listenerCallCount++);
 
       viewModel.dispose();

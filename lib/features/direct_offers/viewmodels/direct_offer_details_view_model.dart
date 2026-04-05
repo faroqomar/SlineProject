@@ -1,9 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:sline_app/core/config/payment_runtime_config.dart';
+import 'package:sline_app/core/models/app_failure.dart';
+import 'package:sline_app/core/models/view_state.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/services/payment_service.dart';
-import '../models/direct_offer_model.dart';
-import '../services/direct_offers_service.dart';
+import 'package:sline_app/core/utils/error_mapper.dart';
+import 'package:sline_app/features/direct_offers/models/direct_offer_model.dart';
+import 'package:sline_app/features/direct_offers/services/direct_offers_service.dart';
 
 /// ViewModel for the direct offer details screen (client: view, pay, cancel, complete; freelancer: mark delivered; open chat).
 class DirectOfferDetailsViewModel extends ChangeNotifier {
@@ -24,20 +27,31 @@ class DirectOfferDetailsViewModel extends ChangeNotifier {
   final DirectOffersService _directOffersService;
   final PaymentService _paymentService;
 
-  static const _kTag = 'DirectOfferDetails';
+  static const _kTag = 'DirectOfferDetailsVM';
 
-  DirectOffer? _offer;
-  bool _isLoading = true;
-  String? _error;
+  // ── Primary state ──────────────────────────────────────────────────
+  ViewState<DirectOffer> _state = const ViewLoading();
+  ViewState<DirectOffer> get state => _state;
+
+  // ── Action-specific progress flags ─────────────────────────────────
   bool _payInProgress = false;
   bool _cancelInProgress = false;
   bool _cardPaymentInProgress = false;
   bool _markDeliveredInProgress = false;
   bool _completeInProgress = false;
 
-  DirectOffer? get offer => _offer;
-  bool get isLoading => _isLoading;
-  String? get error => _error;
+  // ── Backward-compatible convenience getters (used by view) ─────────
+  bool get isLoading =>
+      _state is ViewLoading<DirectOffer> || _state is ViewInitial<DirectOffer>;
+  String? get error => switch (_state) {
+    ViewFailed(:final failure) => failure.userMessage,
+    _ => null,
+  };
+  DirectOffer? get offer => switch (_state) {
+    ViewLoaded(:final data) => data,
+    _ => null,
+  };
+
   bool get payInProgress => _payInProgress;
   bool get cancelInProgress => _cancelInProgress;
   bool get cardPaymentInProgress => _cardPaymentInProgress;
@@ -46,48 +60,60 @@ class DirectOfferDetailsViewModel extends ChangeNotifier {
 
   bool get canPay =>
       currentUserId != null &&
-      _offer != null &&
-      _offer!.clientId == currentUserId &&
-      _offer!.isAcceptedPendingPayment;
+      offer != null &&
+      offer!.clientId == currentUserId &&
+      offer!.isAcceptedPendingPayment;
   bool get canCancel =>
       currentUserId != null &&
-      _offer != null &&
-      _offer!.clientId == currentUserId &&
-      _offer!.isAcceptedPendingPayment;
+      offer != null &&
+      offer!.clientId == currentUserId &&
+      offer!.isAcceptedPendingPayment;
 
   /// Freelancer can mark work as delivered when offer is active.
   bool get canMarkDelivered =>
       currentUserId != null &&
-      _offer != null &&
-      _offer!.freelancerId == currentUserId &&
-      _offer!.isActive;
+      offer != null &&
+      offer!.freelancerId == currentUserId &&
+      offer!.isActive;
 
   /// Client can approve delivery and release payment when offer is delivered and payment is held.
   bool get canComplete =>
       currentUserId != null &&
-      _offer != null &&
-      _offer!.clientId == currentUserId &&
-      _offer!.isDelivered &&
-      _offer!.paymentStatus == 'held';
+      offer != null &&
+      offer!.clientId == currentUserId &&
+      offer!.isDelivered &&
+      offer!.paymentStatus == 'held';
 
   /// Conversation ID from constructor or from loaded offer (e.g. when opened via activity deep link).
   String? get effectiveConversationId =>
-      conversationId ?? _offer?.conversationId;
+      conversationId ?? offer?.conversationId;
   bool get canOpenChat => effectiveConversationId != null;
 
   Future<void> loadOffer() async {
-    _isLoading = true;
-    _error = null;
+    _state = const ViewLoading();
+    AppLogger.d('State: $_state', tag: _kTag);
     notifyListeners();
 
     try {
-      _offer = await _directOffersService.getOffer(offerId);
-      _error = _offer == null ? 'Offer not found.' : null;
+      final loaded = await _directOffersService.getOffer(offerId);
+      if (loaded == null) {
+        _state = const ViewFailed(
+          BusinessFailure('Offer not found.', code: 'OFFER_NOT_FOUND'),
+        );
+      } else {
+        _state = ViewLoaded(loaded);
+      }
     } on Exception catch (e) {
       AppLogger.e('Failed to load offer=$offerId', error: e, tag: _kTag);
-      _error = e.toString();
+      _state = ViewFailed(
+        BusinessFailure(
+          ErrorMapper.map(e),
+          code: 'LOAD_FAILED',
+          debugMessage: '$e',
+        ),
+      );
     } finally {
-      _isLoading = false;
+      AppLogger.d('State: $_state', tag: _kTag);
       notifyListeners();
     }
   }
@@ -175,7 +201,8 @@ class DirectOfferDetailsViewModel extends ChangeNotifier {
 
   /// Create QiCard payment for this offer. Returns result with [formUrl] when successful.
   Future<QiCardDirectOfferPaymentResult> createPaymentForCard() async {
-    if (_offer == null || !canPay || _cardPaymentInProgress) {
+    final currentOffer = offer;
+    if (currentOffer == null || !canPay || _cardPaymentInProgress) {
       return QiCardDirectOfferPaymentResult(
         offerId: offerId,
         error: 'Offer not ready for payment.',
@@ -189,7 +216,7 @@ class DirectOfferDetailsViewModel extends ChangeNotifier {
       final finishUrl = buildQiCardFinishUrlForRuntime();
       final result = await _paymentService.createPaymentForDirectOffer(
         offerId: offerId,
-        amount: _offer!.price.toDouble(),
+        amount: currentOffer.price.toDouble(),
         finishUrl: finishUrl,
       );
       return result;

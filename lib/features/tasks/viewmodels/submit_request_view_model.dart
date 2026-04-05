@@ -1,11 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/utils/error_mapper.dart';
+import 'package:sline_app/core/utils/format_price.dart' as price_utils;
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/features/tasks/services/task_requests_service.dart';
 import 'package:sline_app/features/tasks/services/task_service.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_requests_view_model.dart';
-import 'package:sline_app/core/utils/format_price.dart' as price_utils;
 
 /// ViewModel for bid submission / replacement logic.
 ///
@@ -105,7 +106,7 @@ class SubmitRequestViewModel extends ChangeNotifier {
           'Found existing bid ${_existingBid!.id} for task $taskId - replace mode',
           tag: _kTag,
         );
-        _isReplaceMode = _replaceabilityResult?.isReplaceable == true;
+        _isReplaceMode = _replaceabilityResult?.isReplaceable ?? false;
         return (
           price: (_existingBid!.price / 100).toStringAsFixed(0),
           days: _existingBid!.days.toString(),
@@ -156,9 +157,9 @@ class SubmitRequestViewModel extends ChangeNotifier {
 
     return (
       priceDiff: priceDiffText,
-      priceDiffSign: priceDiffVal.sign.toInt(),
+      priceDiffSign: priceDiffVal.sign,
       daysDiff: daysDiffText,
-      daysDiffSign: daysDiffVal.sign.toInt(),
+      daysDiffSign: daysDiffVal.sign,
     );
   }
 
@@ -205,7 +206,7 @@ class SubmitRequestViewModel extends ChangeNotifier {
       return ok;
     } on Exception catch (e, st) {
       AppLogger.e('Failed to submit bid', tag: _kTag, error: e, stackTrace: st);
-      _submitError = e.toString();
+      _submitError = ErrorMapper.map(e);
       return false;
     } finally {
       _isSubmitting = false;
@@ -269,7 +270,7 @@ class SubmitRequestViewModel extends ChangeNotifier {
     if (msg.contains('no longer open')) {
       return 'This task is no longer accepting offers.';
     }
-    return 'Failed to submit bid: $msg';
+    return 'Failed to submit bid. Please try again.';
   }
 
   /// Whether the error indicates the task was closed (triggers list refresh).

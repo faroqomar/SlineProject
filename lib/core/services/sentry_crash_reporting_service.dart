@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
-import 'crash_reporting_service.dart';
+import 'package:sline_app/core/services/crash_reporting_service.dart';
 
 /// Sentry-backed implementation of [CrashReportingService].
 ///
@@ -17,12 +17,17 @@ class SentryCrashReportingService implements CrashReportingService {
     bool fatal = false,
   }) async {
     try {
-      await Sentry.captureException(
-        exception,
+      final sanitizedMessage = sanitizePii(exception.toString());
+      await Sentry.captureEvent(
+        SentryEvent(
+          throwable: exception,
+          message: SentryMessage(sanitizedMessage),
+          level: fatal ? SentryLevel.fatal : SentryLevel.error,
+        ),
         stackTrace: stack,
         hint: Hint.withMap({
           'fatal': fatal.toString(),
-          if (reason != null) 'reason': reason.toString(),
+          if (reason != null) 'reason': sanitizePii(reason.toString()),
         }),
       );
     } on Exception catch (e) {
@@ -39,12 +44,14 @@ class SentryCrashReportingService implements CrashReportingService {
   static final _phonePattern = RegExp(
     r'(?<![0-9a-fA-F-])\+[0-9]{10,15}(?![0-9a-fA-F-])',
   );
+  static final _localIraqiPhonePattern = RegExp(r'\b0\d{10}\b');
 
   /// Strips common PII patterns from log messages before sending to Sentry.
   static String sanitizePii(String message) {
     return message
         .replaceAll(_emailPattern, '[EMAIL]')
-        .replaceAll(_phonePattern, '[PHONE]');
+        .replaceAll(_phonePattern, '[PHONE]')
+        .replaceAll(_localIraqiPhonePattern, '[PHONE]');
   }
 
   @override

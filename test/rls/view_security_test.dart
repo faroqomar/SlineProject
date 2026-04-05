@@ -80,7 +80,7 @@ void main() {
       // After fix: should be recreated with security_invoker
 
       AppLogger.d(
-        'Verify: SELECT * FROM pg_views WHERE viewname = \'tasks_mvp\'',
+        "Verify: SELECT * FROM pg_views WHERE viewname = 'tasks_mvp'",
         tag: 'rls_test',
       );
       AppLogger.d(

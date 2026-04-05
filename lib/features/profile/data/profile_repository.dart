@@ -1,16 +1,16 @@
 import 'dart:typed_data';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/services/logger_service.dart';
-import '../services/avatar_service.dart';
-import '../services/profile_summary_service.dart';
 
-import '../../tasks/services/task_service.dart';
-import '../../tasks/models/task_model.dart';
-import '../../portfolio/data/portfolio_repository.dart';
-import '../../portfolio/models/portfolio_item.dart';
-import '../models/profile_model.dart';
-import '../models/freelancer_profile.dart';
-import 'role_switch_repository.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/features/portfolio/data/portfolio_repository.dart';
+import 'package:sline_app/features/portfolio/models/portfolio_item.dart';
+import 'package:sline_app/features/profile/data/role_switch_repository.dart';
+import 'package:sline_app/features/profile/models/freelancer_profile.dart';
+import 'package:sline_app/features/profile/models/profile_model.dart';
+import 'package:sline_app/features/profile/services/avatar_service.dart';
+import 'package:sline_app/features/profile/services/profile_summary_service.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
+import 'package:sline_app/features/tasks/services/task_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Repository layer for Profile feature.
 /// Encapsulates all Supabase and storage calls.

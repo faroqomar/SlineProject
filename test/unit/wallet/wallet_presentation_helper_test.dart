@@ -5,7 +5,7 @@ import 'package:sline_app/features/wallet/utils/wallet_presentation_helper.dart'
 
 void main() {
   group('buildWalletPresentationSummary', () {
-    final balance = const WalletBalanceModel(
+    const balance = WalletBalanceModel(
       availableBalance: 500,
       pendingWithdrawalBalance: 200,
       heldBalance: 300,

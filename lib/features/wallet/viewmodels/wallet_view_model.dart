@@ -1,11 +1,12 @@
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../data/wallet_repository.dart';
-import '../models/wallet_activity_model.dart';
-import '../models/wallet_balance_model.dart';
-import '../utils/wallet_presentation_helper.dart';
-import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/services/account_guard_service.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/utils/error_mapper.dart';
+import 'package:sline_app/features/wallet/data/wallet_repository.dart';
+import 'package:sline_app/features/wallet/models/wallet_activity_model.dart';
+import 'package:sline_app/features/wallet/models/wallet_balance_model.dart';
+import 'package:sline_app/features/wallet/utils/wallet_presentation_helper.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class WalletViewModel extends ChangeNotifier {
   WalletViewModel({
@@ -73,7 +74,7 @@ class WalletViewModel extends ChangeNotifier {
       hasMore = txns.length == 20;
       _hasLoadedWallet = true;
     } on Exception catch (e) {
-      error = e.toString();
+      error = ErrorMapper.map(e);
       AppLogger.e('Failed to load wallet', error: e);
     } finally {
       isLoading = false;
@@ -97,7 +98,7 @@ class WalletViewModel extends ChangeNotifier {
       }
       hasMore = txns.length == 20;
     } on Exception catch (e) {
-      error = e.toString();
+      error = ErrorMapper.map(e);
       AppLogger.e('Failed to load more activities', error: e);
     } finally {
       isLoading = false;
@@ -137,7 +138,7 @@ class WalletViewModel extends ChangeNotifier {
       AppLogger.i('Withdrawal requested: amount=$amount', tag: 'Wallet');
       return true;
     } on FormatException catch (e) {
-      error = e.message;
+      error = 'Invalid withdrawal amount. Please check and try again.';
       AppLogger.w('Withdrawal failed: ${e.message}', tag: 'Wallet');
       return false;
     } on Exception catch (e) {

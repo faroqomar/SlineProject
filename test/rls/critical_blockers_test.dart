@@ -17,8 +17,8 @@ library;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 
-import 'rls_test_helper.dart';
 import 'fixtures/rls_test_users.dart';
+import 'rls_test_helper.dart';
 
 void main() {
   late RlsTestHelper rlsHelper;
@@ -33,7 +33,7 @@ void main() {
   });
 
   group('CRITICAL BLOCKER 1: Messages Cross-User Read', () {
-    const String testDescription =
+    const testDescription =
         'Other user cannot SELECT messages from private conversation';
 
     test(
@@ -112,7 +112,7 @@ void main() {
   });
 
   group('CRITICAL BLOCKER 2: Messages Cross-User Insert', () {
-    const String testDescription =
+    const testDescription =
         'Other user cannot INSERT messages into private conversation';
 
     test(
@@ -190,7 +190,7 @@ void main() {
   });
 
   group('CRITICAL BLOCKER 3: Admin Logs Service Role Only', () {
-    const String testDescription =
+    const testDescription =
         'Only service_role can INSERT into admin_logs';
 
     test('authenticated user cannot insert into admin_logs', () async {
@@ -279,7 +279,7 @@ void main() {
   });
 
   group('CRITICAL BLOCKER 4: Bookings Status-Only Update', () {
-    const String testDescription =
+    const testDescription =
         'Users cannot UPDATE non-status columns on bookings';
 
     test('client cannot update price on their own booking', () async {

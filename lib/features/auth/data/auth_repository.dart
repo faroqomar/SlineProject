@@ -1,9 +1,9 @@
 // What: Repository that wraps Supabase auth/profile calls used by auth flows.
 // Why: Keeps data access isolated from UI/controllers to follow repository pattern.
+import 'package:sline_app/core/config/auth_config.dart';
+import 'package:sline_app/core/models/user_profile.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/config/auth_config.dart';
-import '../../../core/services/logger_service.dart';
-import '../../../core/models/user_profile.dart';
 
 class AuthRepository {
   AuthRepository({SupabaseClient? client})
@@ -108,7 +108,7 @@ class AuthRepository {
       return _fetchProfileOnce();
     }
 
-    for (int attempt = 1; attempt <= retries; attempt++) {
+    for (var attempt = 1; attempt <= retries; attempt++) {
       AppLogger.d('Profile fetch attempt $attempt of $retries', tag: 'Auth');
       try {
         final profile = await _fetchProfileOnce();

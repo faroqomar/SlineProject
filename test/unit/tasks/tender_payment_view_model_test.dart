@@ -43,7 +43,7 @@ void main() {
   // ---------------------------------------------------------------------------
   group('Construction & Getters', () {
     test('constructs with required params without throwing', () {
-      expect(() => buildVm(), returnsNormally);
+      expect(buildVm, returnsNormally);
     });
 
     test('initial state has isProcessing false', () {

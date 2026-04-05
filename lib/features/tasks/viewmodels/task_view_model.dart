@@ -1,16 +1,15 @@
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/mixins/role_switch_aware.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/services/role_switch_coordinator.dart';
+import 'package:sline_app/features/categories/data/categories_repository.dart';
+import 'package:sline_app/features/categories/models/category_model.dart';
+import 'package:sline_app/features/tasks/data/task_repository.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
+import 'package:sline_app/features/tasks/services/task_image_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../data/task_repository.dart';
-import '../models/task_model.dart';
-import '../services/task_image_service.dart';
-
-import '../../../core/services/logger_service.dart';
-import '../../../core/app_enums.dart';
-import '../../../core/mixins/role_switch_aware.dart';
-import '../../../core/services/role_switch_coordinator.dart';
-import '../../categories/data/categories_repository.dart';
-import '../../categories/models/category_model.dart';
 
 /// TaskViewModel — MVVM state holder for Tasks feature.
 ///
@@ -75,8 +74,7 @@ class TaskViewModel extends ChangeNotifier with RoleSwitchAware {
         error: e,
         stackTrace: stackTrace,
       );
-      _categories = [];
-      return _categories;
+      return _categories = [];
     } finally {
       _categoriesLoading = false;
       notifyListeners();
@@ -85,7 +83,7 @@ class TaskViewModel extends ChangeNotifier with RoleSwitchAware {
 
   // ----- Images helpers (migrated from TaskController) -----
   Future<void> pickTaskImages() async {
-    final ImagePicker picker = ImagePicker();
+    final picker = ImagePicker();
     final images = await picker.pickMultiImage();
     final limited = images.take(5).toList();
     _pickedImages
@@ -122,7 +120,7 @@ class TaskViewModel extends ChangeNotifier with RoleSwitchAware {
     _uploadingImages = true;
     notifyListeners();
 
-    final List<String> uploadedPaths = [];
+    final uploadedPaths = <String>[];
     try {
       for (final img in _pickedImages) {
         final bytes = await img.readAsBytes();

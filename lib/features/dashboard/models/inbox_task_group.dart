@@ -1,4 +1,4 @@
-import '../../tasks/models/task_request_model.dart';
+import 'package:sline_app/features/tasks/models/task_request_model.dart';
 
 /// Groups offers by task for inbox display
 class InboxTaskGroup {

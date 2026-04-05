@@ -2,8 +2,8 @@
 // Represents a freelancer's offer on a task, including price,
 // estimated days, an optional note, status, and timestamps.
 import 'package:flutter/foundation.dart';
-import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/proposals/models/proposal_model.dart';
 
 @immutable
@@ -85,12 +85,12 @@ class TaskRequest {
 
       // Extract profile data from nested 'profiles' object if it exists (from JOIN)
       final profileData = map['profiles'] as Map<String, dynamic>?;
-      final String? parsedBidderName = profileData?['full_name'] as String?;
-      final String? parsedBidderAvatar = profileData?['avatar_url'] as String?;
+      final parsedBidderName = profileData?['full_name'] as String?;
+      final parsedBidderAvatar = profileData?['avatar_url'] as String?;
 
       // Extract task title from nested 'tasks' object if it exists (from JOIN)
       final taskData = map['tasks'] as Map<String, dynamic>?;
-      final String? parsedTaskTitle = taskData?['title'] as String?;
+      final parsedTaskTitle = taskData?['title'] as String?;
 
       return TaskRequest(
         id: map['id'] as String,

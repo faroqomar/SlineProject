@@ -1,7 +1,7 @@
 import 'dart:ui'; // For ImageFilter
 
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'; // For kIsWeb
+import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';

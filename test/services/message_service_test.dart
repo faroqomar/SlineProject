@@ -1,8 +1,10 @@
 import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/features/chat/services/message_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../fixtures/chat_fixtures.dart';
 
 // --- Mocks & Fakes ---

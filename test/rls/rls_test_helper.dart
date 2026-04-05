@@ -23,8 +23,8 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Log tag for RLS test operations
 const String _logTag = 'rls_test';
@@ -92,9 +92,7 @@ class RlsTestHelper {
       if (_client != null) {
         // Integration test path - actual Supabase query
         final query = _client.from(table).select();
-        filters.forEach((column, value) {
-          query.eq(column, value);
-        });
+        filters.forEach(query.eq);
 
         await query;
         // Query success means SELECT was allowed
@@ -130,9 +128,7 @@ class RlsTestHelper {
     try {
       if (_client != null) {
         final query = _client.from(table).select();
-        filters.forEach((column, value) {
-          query.eq(column, value);
-        });
+        filters.forEach(query.eq);
 
         await query;
         // If we get here without exception, the RLS policy allowed access
@@ -245,9 +241,7 @@ class RlsTestHelper {
     try {
       if (_client != null) {
         final query = _client.from(table).update(data);
-        filters.forEach((column, value) {
-          query.eq(column, value);
-        });
+        filters.forEach(query.eq);
 
         await query;
       }
@@ -275,9 +269,7 @@ class RlsTestHelper {
     try {
       if (_client != null) {
         final query = _client.from(table).update(data);
-        filters.forEach((column, value) {
-          query.eq(column, value);
-        });
+        filters.forEach(query.eq);
 
         await query;
         AppLogger.e(
@@ -312,9 +304,7 @@ class RlsTestHelper {
     try {
       if (_client != null) {
         final query = _client.from(table).delete();
-        filters.forEach((column, value) {
-          query.eq(column, value);
-        });
+        filters.forEach(query.eq);
 
         await query;
       }
@@ -341,9 +331,7 @@ class RlsTestHelper {
     try {
       if (_client != null) {
         final query = _client.from(table).delete();
-        filters.forEach((column, value) {
-          query.eq(column, value);
-        });
+        filters.forEach(query.eq);
 
         await query;
       }

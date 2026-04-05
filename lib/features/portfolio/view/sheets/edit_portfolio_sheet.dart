@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-
-import '../../../../core/services/logger_service.dart';
-import '../../viewmodels/portfolio_view_model.dart';
-import '../../models/portfolio_item.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/features/portfolio/models/portfolio_item.dart';
+import 'package:sline_app/features/portfolio/viewmodels/portfolio_view_model.dart';
 
 /// Bottom sheet for editing an existing portfolio item (title/description only).
 class EditPortfolioSheet extends StatefulWidget {

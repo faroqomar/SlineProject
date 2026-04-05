@@ -30,7 +30,7 @@ void main() {
 
     test('setFilter changes filter and notifies', () {
       final vm = buildVm();
-      int notifyCount = 0;
+      var notifyCount = 0;
       vm.addListener(() => notifyCount++);
 
       vm.setFilter(ExpiredBidFilter.showAll);
@@ -40,7 +40,7 @@ void main() {
 
     test('setFilter with same value does not notify', () {
       final vm = buildVm();
-      int notifyCount = 0;
+      var notifyCount = 0;
       vm.addListener(() => notifyCount++);
 
       vm.setFilter(ExpiredBidFilter.hideExpired); // same as default
@@ -112,7 +112,7 @@ void main() {
 
     test('isAwarding setter notifies listeners', () {
       final vm = buildVm();
-      int notifyCount = 0;
+      var notifyCount = 0;
       vm.addListener(() => notifyCount++);
 
       vm.isAwarding = true;
@@ -126,7 +126,7 @@ void main() {
 
     test('isAwarding setter with same value does not notify', () {
       final vm = buildVm();
-      int notifyCount = 0;
+      var notifyCount = 0;
       vm.addListener(() => notifyCount++);
 
       vm.isAwarding = false; // same as default

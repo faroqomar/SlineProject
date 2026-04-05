@@ -1,5 +1,5 @@
+import 'package:sline_app/features/categories/models/category_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/category_model.dart';
 
 /// CategoriesService
 ///

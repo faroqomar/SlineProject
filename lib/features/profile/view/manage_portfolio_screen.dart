@@ -41,7 +41,7 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
         builder: (context, setState) {
           final colorScheme = Theme.of(context).colorScheme;
           // Local state for the dialog
-          bool isUploading = localImagePath == 'loading';
+          var isUploading = localImagePath == 'loading';
 
           return AlertDialog(
             backgroundColor: colorScheme.surface,

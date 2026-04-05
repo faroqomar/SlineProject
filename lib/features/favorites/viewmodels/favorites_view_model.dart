@@ -3,11 +3,11 @@
 
 import 'package:flutter/foundation.dart';
 
-import '../../../core/services/logger_service.dart';
-import '../data/favorites_service.dart';
-import '../models/favorite_model.dart';
-import '../models/favorite_with_profile_model.dart';
-import '../models/favorites_mutation_result.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/features/favorites/data/favorites_service.dart';
+import 'package:sline_app/features/favorites/models/favorite_model.dart';
+import 'package:sline_app/features/favorites/models/favorite_with_profile_model.dart';
+import 'package:sline_app/features/favorites/models/favorites_mutation_result.dart';
 
 class FavoritesViewModel extends ChangeNotifier {
   final FavoritesService service;

@@ -36,7 +36,7 @@ class SystemConfigViewModel extends ChangeNotifier {
   }
 
   bool isUpdateRequired() {
-    final current = const String.fromEnvironment(
+    const current = String.fromEnvironment(
       'APP_VERSION',
       defaultValue: '1.0.0',
     );

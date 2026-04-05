@@ -1,14 +1,14 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/features/work/models/unified_work_item_model.dart';
-import 'package:sline_app/features/work/models/work_contract_model.dart';
-import 'package:sline_app/features/work/models/change_request_model.dart';
-import 'package:sline_app/features/work/models/extension_request_model.dart';
-import 'package:sline_app/features/profile/services/profile_summary_service.dart';
+import 'package:sline_app/core/utils/error_mapper.dart';
 import 'package:sline_app/features/booking/models/booking_model.dart';
 import 'package:sline_app/features/booking/services/booking_service.dart';
-import 'package:sline_app/core/app_enums.dart';
-import 'package:sline_app/core/utils/error_mapper.dart';
+import 'package:sline_app/features/profile/services/profile_summary_service.dart';
+import 'package:sline_app/features/work/models/change_request_model.dart';
+import 'package:sline_app/features/work/models/extension_request_model.dart';
+import 'package:sline_app/features/work/models/unified_work_item_model.dart';
+import 'package:sline_app/features/work/models/work_contract_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Service for managing Unified Work Items (Tasks & Bookings).
 /// Wraps RPC calls and table queries for the Work Management flow.

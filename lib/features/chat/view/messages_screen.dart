@@ -2,16 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
-import '../viewmodels/chat_view_model.dart';
-import '../../chat/models/conversation_model.dart';
-import '../view/chat_screen.dart';
-import 'widgets/conversation_list_tile.dart';
+import 'package:sline_app/features/chat/models/conversation_model.dart';
+import 'package:sline_app/features/chat/view/chat_screen.dart';
+import 'package:sline_app/features/chat/view/widgets/conversation_list_tile.dart';
+import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 
 class MessagesScreen extends StatefulWidget {
   const MessagesScreen({super.key});
@@ -42,7 +42,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
@@ -51,7 +51,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
         builder: (context, controller, child) {
           // Calculate unread count
           final unreadCount = controller.conversations
-              .where((c) => _isUnread(c))
+              .where(_isUnread)
               .length;
 
           return RefreshIndicator(
@@ -149,7 +149,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     ),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate((context, index) {
-                        final Conversation convo =
+                        final convo =
                             controller.conversations[index];
                         return Dismissible(
                           key: ValueKey(convo.id),

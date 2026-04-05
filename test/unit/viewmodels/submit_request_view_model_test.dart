@@ -185,7 +185,7 @@ void main() {
       });
 
       test('isSubmitting is true during async operation', () async {
-        bool wasSubmitting = false;
+        var wasSubmitting = false;
         when(
           () => mockController.submitOfferUI(
             taskId: any(named: 'taskId'),

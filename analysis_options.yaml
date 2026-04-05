@@ -1,4 +1,4 @@
-include: package:flutter_lints/flutter.yaml
+include: package:very_good_analysis/analysis_options.yaml
 
 analyzer:
   errors:
@@ -6,48 +6,40 @@ analyzer:
     dead_code: warning
     unused_import: warning
     unused_local_variable: warning
-  strong-mode:
-    implicit-casts: false
-    implicit-dynamic: false
+  language:
+    strict-casts: false
+    strict-inference: false
+    strict-raw-types: false
+  exclude:
+    - '**.g.dart'
+    - '**.freezed.dart'
 
 linter:
   rules:
-    # --- Core (existing) ---
-    - always_declare_return_types
-    - prefer_const_constructors
-    - avoid_print
-    - prefer_final_fields
-    - unnecessary_this
-    - prefer_single_quotes
-    - prefer_const_literals_to_create_immutables
-    - prefer_const_constructors_in_immutables
-    - unawaited_futures
-    - use_build_context_synchronously
-    - avoid_catches_without_on_clauses
-    - avoid_empty_else
-    - avoid_init_to_null
-    - avoid_relative_lib_imports
-    - avoid_returning_null_for_future
-    - avoid_unnecessary_containers
-    - camel_case_types
-    - file_names
+    # --- SLine-specific additions (not in very_good_analysis) ---
+    avoid_catches_without_on_clauses: true
+    unawaited_futures: true
+    use_build_context_synchronously: true
+    no_adjacent_strings_in_list: true
+    literal_only_boolean_expressions: true
 
-    # --- Safety (prevent silent bugs) ---
-    - cancel_subscriptions
-    - close_sinks
-    - no_duplicate_case_values
-    - throw_in_finally
-    - unnecessary_statements
-    - literal_only_boolean_expressions
-    - no_adjacent_strings_in_list
+    # --- Disabled: conflict with project conventions ---
+    public_member_api_docs: false
+    lines_longer_than_80_chars: false
+    flutter_style_todos: false
+    one_member_abstracts: false
+    sort_pub_dependencies: false
 
-    # --- Code quality ---
-    - prefer_final_locals
-    - avoid_void_async
-    - prefer_if_null_operators
-    - prefer_null_aware_operators
-    - prefer_collection_literals
-    - unnecessary_await_in_return
-    - use_super_parameters
-    - depend_on_referenced_packages
-    - sort_child_properties_last
+    # --- Disabled: cosmetic/noisy, tracked for Phase F adoption ---
+    sort_constructors_first: false
+    always_put_required_named_parameters_first: false
+    cascade_invocations: false
+    avoid_redundant_argument_values: false
+    prefer_int_literals: false
+    comment_references: false
+    document_ignores: false
+    no_default_cases: false
+    avoid_positional_boolean_parameters: false
+    avoid_equals_and_hash_code_on_mutable_classes: false
+    avoid_dynamic_calls: false
+    avoid_catching_errors: false

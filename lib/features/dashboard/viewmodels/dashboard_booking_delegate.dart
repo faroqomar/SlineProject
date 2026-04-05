@@ -3,8 +3,8 @@ import 'dart:collection';
 import 'package:flutter/foundation.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import '../../booking/models/booking_model.dart';
-import '../../booking/services/booking_service.dart';
+import 'package:sline_app/features/booking/models/booking_model.dart';
+import 'package:sline_app/features/booking/services/booking_service.dart';
 
 /// Delegate that owns booking state and booking-related actions
 /// for [DashboardViewModel].

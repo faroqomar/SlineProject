@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/services/data/services_repository.dart';
 import 'package:sline_app/features/services/models/service_model.dart';
 import 'package:sline_app/features/services/models/service_status.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Owns "My Services" list state for the profile/settings flow.
 /// Single source of truth for service data — replaces any global
@@ -172,7 +172,7 @@ class MyServicesViewModel extends ChangeNotifier {
       }
     }
     if (e is StateError) {
-      return e.message;
+      return 'An error occurred. Please try again.';
     }
     return 'An error occurred. Please try again.';
   }

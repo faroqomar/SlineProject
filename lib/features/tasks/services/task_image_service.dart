@@ -1,7 +1,8 @@
 import 'dart:typed_data';
+
+import 'package:sline_app/core/config/storage_config.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/config/storage_config.dart';
-import '../../../core/services/logger_service.dart';
 
 /// Service for handling task image operations with Supabase Storage.
 ///

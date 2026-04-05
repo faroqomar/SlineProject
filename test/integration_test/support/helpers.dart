@@ -3,14 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
-
 import 'package:sline_app/app/main_navigation_screen.dart';
 import 'package:sline_app/core/services/supabase_config.dart';
 import 'package:sline_app/features/auth/view/login_screen.dart';
 import 'package:sline_app/features/home/viewmodels/home_view_model.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
 import 'package:sline_app/main.dart' as app;
+import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
 
 import 'preflight.dart';
 

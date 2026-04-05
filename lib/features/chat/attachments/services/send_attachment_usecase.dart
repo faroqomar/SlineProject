@@ -1,10 +1,10 @@
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/features/chat/attachments/errors/attachment_exceptions.dart';
+import 'package:sline_app/features/chat/attachments/services/compress_service.dart';
+import 'package:sline_app/features/chat/attachments/services/pick_image_service.dart';
+import 'package:sline_app/features/chat/attachments/services/upload_service.dart';
+import 'package:sline_app/features/chat/services/message_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../../core/services/logger_service.dart';
-import '../../services/message_service.dart';
-import '../errors/attachment_exceptions.dart';
-import '../services/pick_image_service.dart';
-import '../services/compress_service.dart';
-import '../services/upload_service.dart';
 
 /// High-level use-case to send an image attachment.
 /// Orchestrates: pick -> validate -> compress -> upload -> create message.
@@ -24,7 +24,7 @@ Future<void> sendImageAttachment({
     final payload = await PickImageService().pickFromGallery();
 
     // 2) Validate basic size (optional threshold: 20MB)
-    const int maxBytes = 20 * 1024 * 1024;
+    const maxBytes = 20 * 1024 * 1024;
     if (payload.size <= 0 || payload.size > maxBytes) {
       throw AttachmentValidationError('Image size invalid (max 20MB)');
     }
@@ -68,7 +68,7 @@ Future<void> sendImageAttachment({
     AppLogger.e(e.toString());
     rethrow;
   } catch (e) {
-    AppLogger.e('Unhandled attachment error: ${e.toString()}');
+    AppLogger.e('Unhandled attachment error: $e');
     rethrow;
   }
 }

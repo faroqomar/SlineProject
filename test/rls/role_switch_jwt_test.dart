@@ -11,8 +11,8 @@ library;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 
-import 'rls_test_helper.dart';
 import 'fixtures/rls_test_users.dart';
+import 'rls_test_helper.dart';
 
 void main() {
   late RlsTestHelper rlsHelper;

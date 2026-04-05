@@ -1,5 +1,5 @@
 import 'package:sline_app/core/app_enums.dart';
-import '../models/work_item.dart';
+import 'package:sline_app/features/dashboard/models/work_item.dart';
 
 /// Service to determine what actions a user can perform on a dashboard item.
 class DashboardPermissionService {

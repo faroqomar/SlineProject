@@ -1,5 +1,5 @@
-import '../../../core/services/logger_service.dart';
-import '../models/message_model.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/features/chat/models/message_model.dart';
 
 /// Merges realtime message snapshots with existing list: dedupe by id, sort by created_at.
 /// Prevents loss of messages when stream emits full snapshot instead of single row.

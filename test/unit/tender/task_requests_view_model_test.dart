@@ -201,7 +201,7 @@ void main() {
       test(
         'should calculate price in cents when expectedPriceCents not provided',
         () {
-          final priceCents = (testRequest.price * 100).round();
+          final priceCents = testRequest.price * 100;
           expect(priceCents, 50000);
         },
       );
@@ -212,7 +212,7 @@ void main() {
       });
 
       test('PriceMismatchException has correct properties', () {
-        final exception = PriceMismatchException(
+        const exception = PriceMismatchException(
           expectedCents: 45000,
           actualCents: 50000,
         );
@@ -222,7 +222,7 @@ void main() {
       });
 
       test('OfferAlreadyAcceptedException has correct message', () {
-        final exception = OfferAlreadyAcceptedException();
+        const exception = OfferAlreadyAcceptedException();
         expect(exception.userMessage, 'This offer has already been accepted.');
       });
 
@@ -441,7 +441,7 @@ void main() {
             expectedPriceCents: any(named: 'expectedPriceCents'),
           ),
         ).thenThrow(
-          PriceMismatchException(expectedCents: 10000, actualCents: 15000),
+          const PriceMismatchException(expectedCents: 10000, actualCents: 15000),
         );
 
         expect(

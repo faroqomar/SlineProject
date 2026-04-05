@@ -1,16 +1,56 @@
 import 'package:flutter/foundation.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/models/app_failure.dart';
+import 'package:sline_app/core/models/view_state.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/features/work/models/unified_work_item_model.dart';
-import 'package:sline_app/features/work/models/work_contract_model.dart';
+import 'package:sline_app/core/utils/error_mapper.dart';
+import 'package:sline_app/features/booking/models/booking_model.dart';
+import 'package:sline_app/features/chat/models/conversation_model.dart';
+import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
+import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 import 'package:sline_app/features/work/models/change_request_model.dart';
 import 'package:sline_app/features/work/models/extension_request_model.dart';
-import 'package:sline_app/core/utils/error_mapper.dart';
+import 'package:sline_app/features/work/models/unified_work_item_model.dart';
+import 'package:sline_app/features/work/models/work_contract_model.dart';
 import 'package:sline_app/features/work/services/work_management_service.dart';
-import 'package:sline_app/features/booking/models/booking_model.dart';
-import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
-import 'package:sline_app/features/chat/models/conversation_model.dart';
-import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
+
+/// Composite data class bundling all fields loaded together for work item details.
+class WorkItemData {
+  final UnifiedWorkItemModel workItem;
+  final WorkContractModel? activeContract;
+  final List<ChangeRequestModel> changeRequests;
+  final List<ExtensionRequestModel> extensionRequests;
+  final BookingModel? booking;
+  final Map<String, dynamic>? otherPartyProfile;
+
+  const WorkItemData({
+    required this.workItem,
+    this.activeContract,
+    this.changeRequests = const [],
+    this.extensionRequests = const [],
+    this.booking,
+    this.otherPartyProfile,
+  });
+
+  /// Returns a copy with selectively replaced fields.
+  WorkItemData copyWith({
+    UnifiedWorkItemModel? workItem,
+    WorkContractModel? activeContract,
+    List<ChangeRequestModel>? changeRequests,
+    List<ExtensionRequestModel>? extensionRequests,
+    BookingModel? booking,
+    Map<String, dynamic>? otherPartyProfile,
+  }) {
+    return WorkItemData(
+      workItem: workItem ?? this.workItem,
+      activeContract: activeContract ?? this.activeContract,
+      changeRequests: changeRequests ?? this.changeRequests,
+      extensionRequests: extensionRequests ?? this.extensionRequests,
+      booking: booking ?? this.booking,
+      otherPartyProfile: otherPartyProfile ?? this.otherPartyProfile,
+    );
+  }
+}
 
 class WorkItemDetailsViewModel extends ChangeNotifier {
   final WorkManagementService _workService;
@@ -32,44 +72,78 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
     }
   }
 
-  bool _isLoading = false;
-  bool get isLoading => _isLoading;
+  // ---------------------------------------------------------------------------
+  // Primary sealed state
+  // ---------------------------------------------------------------------------
 
-  String? _error;
-  String? get error => _error;
+  ViewState<WorkItemData> _state = const ViewInitial<WorkItemData>();
+  ViewState<WorkItemData> get state => _state;
 
-  // Unified Data
-  UnifiedWorkItemModel? _workItem;
-  UnifiedWorkItemModel? get workItem => _workItem;
+  // ---------------------------------------------------------------------------
+  // Backward-compatible convenience getters (view keeps working unchanged)
+  // ---------------------------------------------------------------------------
 
-  WorkContractModel? _activeContract;
-  WorkContractModel? get activeContract => _activeContract;
+  bool get isLoading =>
+      _state is ViewLoading<WorkItemData> ||
+      _state is ViewInitial<WorkItemData> ||
+      _actionInProgress;
 
-  List<ChangeRequestModel> _changeRequests = [];
-  List<ChangeRequestModel> get changeRequests => _changeRequests;
+  // ---------------------------------------------------------------------------
+  // Action-level loading flag (preserves ViewLoaded data during mutations)
+  // ---------------------------------------------------------------------------
 
-  List<ExtensionRequestModel> _extensionRequests = [];
-  List<ExtensionRequestModel> get extensionRequests => _extensionRequests;
+  bool _actionInProgress = false;
+  bool get actionInProgress => _actionInProgress;
+
+  String? get error {
+    final s = _state;
+    if (s is ViewFailed<WorkItemData>) return s.failure.userMessage;
+    return null;
+  }
+
+  WorkItemData? get _data {
+    final s = _state;
+    if (s is ViewLoaded<WorkItemData>) return s.data;
+    return null;
+  }
+
+  UnifiedWorkItemModel? get workItem => _data?.workItem;
+  WorkContractModel? get activeContract => _data?.activeContract;
+  List<ChangeRequestModel> get changeRequests =>
+      _data?.changeRequests ?? const [];
+  List<ExtensionRequestModel> get extensionRequests =>
+      _data?.extensionRequests ?? const [];
+  BookingModel? get booking => _data?.booking;
+  Map<String, dynamic>? get otherPartyProfile => _data?.otherPartyProfile;
 
   // Resolved Accessors
-  String get title => _workItem?.title ?? '';
+  String get title => workItem?.title ?? '';
   UnifiedWorkStatus get status =>
-      _workItem?.unifiedStatus ?? UnifiedWorkStatus.unknown;
-  bool get isFreelancer => _workItem?.freelancerId == currentUserId;
-  bool get isClient => _workItem?.clientId == currentUserId;
+      workItem?.unifiedStatus ?? UnifiedWorkStatus.unknown;
+  bool get isFreelancer => workItem?.freelancerId == currentUserId;
+  bool get isClient => workItem?.clientId == currentUserId;
   bool get canReview => isClient && status == UnifiedWorkStatus.delivered;
 
-  // Booking Specifics
-  BookingModel? _booking;
-  BookingModel? get booking => _booking;
+  // ---------------------------------------------------------------------------
+  // State transition helper
+  // ---------------------------------------------------------------------------
 
-  Map<String, dynamic>? _otherPartyProfile;
-  Map<String, dynamic>? get otherPartyProfile => _otherPartyProfile;
+  void _setState(ViewState<WorkItemData> newState) {
+    final previous = _state.runtimeType;
+    _state = newState;
+    AppLogger.d(
+      'WorkItemDetails state: $previous -> ${newState.runtimeType}',
+      tag: 'WorkDetails',
+    );
+    notifyListeners();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Load
+  // ---------------------------------------------------------------------------
 
   Future<void> loadData(String id, String type) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+    _setState(const ViewLoading<WorkItemData>());
 
     try {
       // Parallel fetch with partial-failure tolerance: work item (and optional booking for booking-type detail).
@@ -82,248 +156,384 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
         _workService
             .getPendingExtensionRequests(id, type)
             .catchError((_) => <ExtensionRequestModel>[]),
-        type == 'booking' ? _workService.getBooking(id) : Future.value(null),
+        if (type == 'booking')
+          _workService.getBooking(id)
+        else
+          Future.value(null),
       ]);
 
-      _workItem = results[0] as UnifiedWorkItemModel?;
-      _activeContract = results[1] as WorkContractModel?;
-      _changeRequests = results[2] as List<ChangeRequestModel>;
-      _extensionRequests = results[3] as List<ExtensionRequestModel>;
-      _booking = results[4] as BookingModel?;
+      final loadedWorkItem = results[0] as UnifiedWorkItemModel?;
+      final loadedContract = results[1] as WorkContractModel?;
+      final loadedChangeRequests = results[2]! as List<ChangeRequestModel>;
+      final loadedExtensionRequests =
+          results[3]! as List<ExtensionRequestModel>;
+      final loadedBooking = results[4] as BookingModel?;
 
-      if (_workItem == null) {
-        _error = 'Work item not found';
+      if (loadedWorkItem == null) {
         AppLogger.d(
           'Work item detail: view returned no row',
           tag: 'WorkDetails',
           json: {'id': id, 'type': type},
         );
-      } else {
-        AppLogger.d(
-          'Work item details loaded',
-          tag: 'WorkDetails',
-          json: {
-            'work_item_id': _workItem!.id,
-            'source_type': _workItem!.sourceType,
-            'unified_status': _workItem!.unifiedStatus.name,
-            'needs_review': _workItem!.needsReview,
-            'can_review': canReview,
-          },
+        _setState(
+          ViewFailed<WorkItemData>(
+            BusinessFailure(
+              'Work item not found',
+              code: 'WORK_ITEM_NOT_FOUND',
+              debugMessage: 'getUnifiedWorkItem returned null for $id ($type)',
+            ),
+          ),
         );
-        // Fetch User Profile
-        final otherUserId = isFreelancer
-            ? _workItem!.clientId
-            : _workItem!.freelancerId;
-        if (otherUserId.isNotEmpty) {
-          _otherPartyProfile = await _workService.getProfile(otherUserId);
-        }
+        return;
       }
+
+      AppLogger.d(
+        'Work item details loaded',
+        tag: 'WorkDetails',
+        json: {
+          'work_item_id': loadedWorkItem.id,
+          'source_type': loadedWorkItem.sourceType,
+          'unified_status': loadedWorkItem.unifiedStatus.name,
+          'needs_review': loadedWorkItem.needsReview,
+        },
+      );
+
+      // Fetch other party profile after primary data is available.
+      final isCurrentUserFreelancer =
+          loadedWorkItem.freelancerId == currentUserId;
+      final otherUserId = isCurrentUserFreelancer
+          ? loadedWorkItem.clientId
+          : loadedWorkItem.freelancerId;
+
+      Map<String, dynamic>? profile;
+      if (otherUserId.isNotEmpty) {
+        profile = await _workService.getProfile(otherUserId);
+      }
+
+      _setState(
+        ViewLoaded<WorkItemData>(
+          WorkItemData(
+            workItem: loadedWorkItem,
+            activeContract: loadedContract,
+            changeRequests: loadedChangeRequests,
+            extensionRequests: loadedExtensionRequests,
+            booking: loadedBooking,
+            otherPartyProfile: profile,
+          ),
+        ),
+      );
     } on Exception catch (e, stack) {
-      _error = 'Failed to load work details';
       AppLogger.e('WorkItemDetails load error', error: e, stackTrace: stack);
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      _setState(
+        ViewFailed<WorkItemData>(
+          BusinessFailure(
+            'Failed to load work details',
+            code: 'LOAD_FAILED',
+            debugMessage: e.toString(),
+          ),
+        ),
+      );
     }
   }
 
   // --- Actions ---
 
-  Future<void> submitDelivery(String note) async {
-    if (_workItem == null) return;
-    try {
-      _isLoading = true;
-      notifyListeners();
+  /// Helper: reads the current workItem from loaded state, or returns null.
+  UnifiedWorkItemModel? get _currentWorkItem => workItem;
 
+  Future<void> submitDelivery(String note) async {
+    final item = _currentWorkItem;
+    if (item == null) return;
+    AppLogger.i(
+      'submitDelivery started',
+      tag: 'WorkItemDetails',
+      json: {'entityId': item.id, 'sourceType': item.sourceType},
+    );
+    _actionInProgress = true;
+    notifyListeners();
+    try {
       await _workService.submitDelivery(
-        entityId: _workItem!.id,
-        entityType: _workItem!.sourceType,
+        entityId: item.id,
+        entityType: item.sourceType,
         note: note,
       );
 
-      await loadData(_workItem!.id, _workItem!.sourceType);
+      AppLogger.i('submitDelivery completed', tag: 'WorkItemDetails');
+      await loadData(item.id, item.sourceType);
     } on Exception catch (e, stack) {
-      _error = ErrorMapper.map(e);
       AppLogger.e('Submit delivery error', error: e, stackTrace: stack);
+      _setState(
+        ViewFailed<WorkItemData>(
+          BusinessFailure(
+            ErrorMapper.map(e),
+            code: 'SUBMIT_DELIVERY_FAILED',
+            debugMessage: e.toString(),
+          ),
+        ),
+      );
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      _actionInProgress = false;
     }
   }
 
   Future<void> approveDelivery() async {
-    if (_workItem == null) return;
+    final item = _currentWorkItem;
+    if (item == null) return;
     final correlationId =
-        'apv_${_workItem!.id}_${DateTime.now().millisecondsSinceEpoch}';
+        'apv_${item.id}_${DateTime.now().millisecondsSinceEpoch}';
     AppLogger.i(
       'approveDelivery called',
       tag: 'WorkItemDetails',
       json: {
-        'entityId': _workItem!.id,
-        'sourceType': _workItem!.sourceType,
+        'entityId': item.id,
+        'sourceType': item.sourceType,
         'correlationId': correlationId,
       },
     );
+    _actionInProgress = true;
+    notifyListeners();
     try {
-      _isLoading = true;
-      notifyListeners();
-
       await _workService.approveDelivery(
-        entityId: _workItem!.id,
-        entityType: _workItem!.sourceType,
+        entityId: item.id,
+        entityType: item.sourceType,
         correlationId: correlationId,
       );
 
-      await loadData(_workItem!.id, _workItem!.sourceType);
+      AppLogger.i('approveDelivery completed', tag: 'WorkItemDetails');
+      await loadData(item.id, item.sourceType);
     } on Exception catch (e, stack) {
-      _error = ErrorMapper.map(e);
       AppLogger.e(
         'Approve delivery error',
         tag: 'WorkItemDetails',
         error: e,
         stackTrace: stack,
       );
+      _setState(
+        ViewFailed<WorkItemData>(
+          BusinessFailure(
+            ErrorMapper.map(e),
+            code: 'APPROVE_DELIVERY_FAILED',
+            debugMessage: e.toString(),
+          ),
+        ),
+      );
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      _actionInProgress = false;
     }
   }
 
   Future<void> requestRevision(String note) async {
-    if (_workItem == null) return;
-    _error = null;
+    final item = _currentWorkItem;
+    if (item == null) return;
+    AppLogger.i(
+      'requestRevision started',
+      tag: 'WorkItemDetails',
+      json: {'entityId': item.id, 'sourceType': item.sourceType},
+    );
+    _actionInProgress = true;
+    notifyListeners();
     try {
-      _isLoading = true;
-      notifyListeners();
-
       await _workService.requestRevision(
-        entityId: _workItem!.id,
-        entityType: _workItem!.sourceType,
+        entityId: item.id,
+        entityType: item.sourceType,
         note: note,
       );
 
-      await loadData(_workItem!.id, _workItem!.sourceType);
+      AppLogger.i('requestRevision completed', tag: 'WorkItemDetails');
+      await loadData(item.id, item.sourceType);
     } on Exception catch (e, stack) {
-      _error = ErrorMapper.map(e);
       AppLogger.e(
         'Request revision error',
         tag: 'WorkItemDetails',
         error: e,
         stackTrace: stack,
       );
+      _setState(
+        ViewFailed<WorkItemData>(
+          BusinessFailure(
+            ErrorMapper.map(e),
+            code: 'REQUEST_REVISION_FAILED',
+            debugMessage: e.toString(),
+          ),
+        ),
+      );
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      _actionInProgress = false;
     }
   }
 
   Future<void> acceptChangeRequest(String requestId) async {
-    if (_workItem == null) return;
+    final item = _currentWorkItem;
+    if (item == null) return;
+    AppLogger.i(
+      'acceptChangeRequest started',
+      tag: 'WorkItemDetails',
+      json: {'requestId': requestId, 'entityId': item.id},
+    );
+    _actionInProgress = true;
+    notifyListeners();
     try {
-      _isLoading = true;
-      notifyListeners();
-
       await _workService.acceptChangeRequest(requestId);
 
-      await loadData(_workItem!.id, _workItem!.sourceType);
+      AppLogger.i('acceptChangeRequest completed', tag: 'WorkItemDetails');
+      await loadData(item.id, item.sourceType);
     } on Exception catch (e, stack) {
-      _error = ErrorMapper.map(e);
       AppLogger.e(
         'Accept change request error',
         tag: 'WorkItemDetails',
         error: e,
         stackTrace: stack,
       );
+      _setState(
+        ViewFailed<WorkItemData>(
+          BusinessFailure(
+            ErrorMapper.map(e),
+            code: 'ACCEPT_CHANGE_REQUEST_FAILED',
+            debugMessage: e.toString(),
+          ),
+        ),
+      );
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      _actionInProgress = false;
     }
   }
 
   Future<void> requestExtension(String note, int days) async {
-    if (_workItem == null) return;
+    final item = _currentWorkItem;
+    if (item == null) return;
+    AppLogger.i(
+      'requestExtension started',
+      tag: 'WorkItemDetails',
+      json: {'entityId': item.id, 'days': days},
+    );
+    _actionInProgress = true;
+    notifyListeners();
     try {
-      _isLoading = true;
-      notifyListeners();
-
-      final currentDeadline = _workItem!.deadline ?? DateTime.now();
+      final currentDeadline = item.deadline ?? DateTime.now();
       final newDeadline = currentDeadline.add(Duration(days: days));
 
       await _workService.requestExtension(
-        entityId: _workItem!.id,
-        entityType: _workItem!.sourceType,
+        entityId: item.id,
+        entityType: item.sourceType,
         newDeadline: newDeadline,
         reason: note,
         requesterId: currentUserId,
       );
 
-      await loadData(_workItem!.id, _workItem!.sourceType);
+      AppLogger.i('requestExtension completed', tag: 'WorkItemDetails');
+      await loadData(item.id, item.sourceType);
     } on Exception catch (e, stack) {
-      _error = 'Failed to request extension';
       AppLogger.e('Request extension error', error: e, stackTrace: stack);
+      _setState(
+        ViewFailed<WorkItemData>(
+          BusinessFailure(
+            'Failed to request extension',
+            code: 'REQUEST_EXTENSION_FAILED',
+            debugMessage: e.toString(),
+          ),
+        ),
+      );
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      _actionInProgress = false;
     }
   }
 
   Future<void> acceptBooking() async {
-    if (_workItem == null) return;
+    final item = _currentWorkItem;
+    if (item == null) return;
+    AppLogger.i(
+      'acceptBooking started',
+      tag: 'WorkItemDetails',
+      json: {'entityId': item.id},
+    );
+    _actionInProgress = true;
+    notifyListeners();
     try {
-      _isLoading = true;
-      notifyListeners();
+      await _workService.acceptBooking(item.id);
 
-      await _workService.acceptBooking(_workItem!.id);
-
-      await loadData(_workItem!.id, _workItem!.sourceType);
+      AppLogger.i('acceptBooking completed', tag: 'WorkItemDetails');
+      await loadData(item.id, item.sourceType);
     } on Exception catch (e, stack) {
-      _error = 'Failed to accept booking';
       AppLogger.e('Accept booking error', error: e, stackTrace: stack);
+      _setState(
+        ViewFailed<WorkItemData>(
+          BusinessFailure(
+            'Failed to accept booking',
+            code: 'ACCEPT_BOOKING_FAILED',
+            debugMessage: e.toString(),
+          ),
+        ),
+      );
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      _actionInProgress = false;
     }
   }
 
   Future<void> declineBooking() async {
-    if (_workItem == null) return;
+    final item = _currentWorkItem;
+    if (item == null) return;
+    AppLogger.i(
+      'declineBooking started',
+      tag: 'WorkItemDetails',
+      json: {'entityId': item.id},
+    );
+    _actionInProgress = true;
+    notifyListeners();
     try {
-      _isLoading = true;
-      notifyListeners();
+      await _workService.declineBooking(item.id);
 
-      await _workService.declineBooking(_workItem!.id);
-
-      await loadData(_workItem!.id, _workItem!.sourceType);
+      AppLogger.i('declineBooking completed', tag: 'WorkItemDetails');
+      await loadData(item.id, item.sourceType);
     } on Exception catch (e, stack) {
-      _error = 'Failed to decline booking';
       AppLogger.e('Decline booking error', error: e, stackTrace: stack);
+      _setState(
+        ViewFailed<WorkItemData>(
+          BusinessFailure(
+            'Failed to decline booking',
+            code: 'DECLINE_BOOKING_FAILED',
+            debugMessage: e.toString(),
+          ),
+        ),
+      );
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      _actionInProgress = false;
     }
   }
 
   Future<void> cancelBooking() async {
-    if (_workItem == null) return;
+    final item = _currentWorkItem;
+    if (item == null) return;
+    AppLogger.i(
+      'cancelBooking started',
+      tag: 'WorkItemDetails',
+      json: {'entityId': item.id},
+    );
+    _actionInProgress = true;
+    notifyListeners();
     try {
-      _isLoading = true;
-      notifyListeners();
+      await _workService.cancelBooking(item.id);
 
-      await _workService.cancelBooking(_workItem!.id);
-
-      await loadData(_workItem!.id, _workItem!.sourceType);
+      AppLogger.i('cancelBooking completed', tag: 'WorkItemDetails');
+      await loadData(item.id, item.sourceType);
     } on Exception catch (e, stack) {
-      _error = 'Failed to cancel booking';
       AppLogger.e('Cancel booking error', error: e, stackTrace: stack);
+      _setState(
+        ViewFailed<WorkItemData>(
+          BusinessFailure(
+            'Failed to cancel booking',
+            code: 'CANCEL_BOOKING_FAILED',
+            debugMessage: e.toString(),
+          ),
+        ),
+      );
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      _actionInProgress = false;
     }
   }
 
   /// Opens conversation for current work item (task-linked or DM for booking). Returns null if unavailable.
   Future<Conversation?> openConversation() async {
-    final item = _workItem;
+    final item = _currentWorkItem;
     if (item == null || _chatViewModel == null) return null;
     return _chatViewModel.createOrGetConversation(
       taskId: item.isTask ? item.id : null,

@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
 import 'package:sline_app/features/favorites/viewmodels/favorites_view_model.dart';
-import 'package:sline_app/features/tasks/viewmodels/task_requests_view_model.dart';
-import 'package:sline_app/features/tasks/models/task_request_model.dart';
-import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/tasks/models/expired_bid_filter.dart';
+import 'package:sline_app/features/tasks/models/task_request_model.dart';
+import 'package:sline_app/features/tasks/view/widgets/requests/request_award_dialog.dart';
+import 'package:sline_app/features/tasks/view/widgets/requests/submit_request_sheet.dart';
+import 'package:sline_app/features/tasks/view/widgets/requests/widgets/request_tile.dart';
 import 'package:sline_app/features/tasks/viewmodels/requests_filter_view_model.dart';
-import 'widgets/request_tile.dart';
-import 'submit_request_sheet.dart';
-import 'request_award_dialog.dart';
+import 'package:sline_app/features/tasks/viewmodels/task_requests_view_model.dart';
 
 /// Displays paginated offers (task requests) for a given task.
 class RequestsListScreen extends StatefulWidget {
@@ -318,7 +318,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
             child: SkeletonOfferCard(),
           );
         }
-        final TaskRequest req = filteredItems[index];
+        final req = filteredItems[index];
         final favoritesVM = context.read<FavoritesViewModel>();
         final viewerUserId = context.read<AuthSessionViewModel>().currentUserId;
 
@@ -421,11 +421,11 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
     final isOwner = widget.isOwner;
 
     // Determine message and CTA based on user role
-    final String title = isOwner ? 'No offers yet' : 'No bids on this task';
-    final String subtitle = isOwner
+    final title = isOwner ? 'No offers yet' : 'No bids on this task';
+    final subtitle = isOwner
         ? 'Share your task to attract more freelancers'
         : 'Be the first to submit a bid and start the conversation';
-    final IconData icon = isOwner
+    final icon = isOwner
         ? Icons.inbox_outlined
         : Icons.local_offer_outlined;
 

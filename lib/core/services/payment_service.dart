@@ -374,5 +374,5 @@ class QiCardTenderRecoveryResult {
   final String? error;
   final String? errorCode;
 
-  bool get isSuccess => ok == true && error == null;
+  bool get isSuccess => (ok ?? false) && error == null;
 }

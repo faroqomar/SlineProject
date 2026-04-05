@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/widgets/glass_card.dart';
-import '../../viewmodels/dashboard_view_model.dart';
+import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 
 class DashboardCountersGrid extends StatelessWidget {
   const DashboardCountersGrid({super.key});
@@ -18,7 +18,7 @@ class DashboardCountersGrid extends StatelessWidget {
     final counters = vm.counters;
 
     // Map counters to UI cards
-    final List<_CounterData> items = isFreelancer
+    final items = isFreelancer
         ? [
             _CounterData(
               'Pending Requests',

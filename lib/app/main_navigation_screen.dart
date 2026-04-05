@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/providers/navigation_provider.dart';
+import 'package:sline_app/core/providers/system_config_view_model.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/providers/system_config_view_model.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/utils/app_animations.dart';
+import 'package:sline_app/core/widgets/custom_bottom_nav_bar.dart';
 import 'package:sline_app/features/booking/view/bookings_discovery_screen.dart';
 import 'package:sline_app/features/chat/view/messages_screen.dart';
 import 'package:sline_app/features/dashboard/view/dashboard_screen.dart';
@@ -15,8 +17,6 @@ import 'package:sline_app/features/profile/view/profile_screen.dart';
 import 'package:sline_app/features/tasks/view/create_task_screen.dart';
 import 'package:sline_app/features/tasks/view/tenders_screen.dart';
 import 'package:sline_app/features/wallet/view/wallet_dashboard_screen.dart';
-import '../core/providers/navigation_provider.dart';
-import '../core/widgets/custom_bottom_nav_bar.dart';
 
 /// Main navigation screen that manages bottom navigation and screen switching
 class MainNavigationScreen extends StatelessWidget {
@@ -33,13 +33,13 @@ class MainNavigationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
-    final WidgetBuilder createTaskBuilder =
+    final colorScheme = context.colorScheme;
+    final createTaskBuilder =
         createTaskScreenBuilder ?? ((_) => const CreateTaskScreen());
 
     // Screens match NavView enum order. The legacy `orders` slot now hosts the
     // unified dashboard instead of the removed standalone orders module.
-    final List<Widget> screens =
+    final screens =
         this.screens ??
         const [
           HomeScreen(),
@@ -99,7 +99,7 @@ class MainNavigationScreen extends StatelessWidget {
                 ),
               ),
 
-              if (runtimeConfig?.bannerEnabled == true &&
+              if ((runtimeConfig?.bannerEnabled ?? false) &&
                   runtimeConfig!.bannerText.trim().isNotEmpty)
                 Positioned(
                   top: MediaQuery.of(context).padding.top + AppDimens.p8,

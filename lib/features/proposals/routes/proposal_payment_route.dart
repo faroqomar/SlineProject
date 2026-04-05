@@ -3,10 +3,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/services/payment_service.dart';
 import 'package:sline_app/features/proposals/models/proposal_payment_summary.dart';
 import 'package:sline_app/features/tasks/services/task_service.dart';
 import 'package:sline_app/features/tasks/services/tender_payment_coordinator.dart';
-import 'package:sline_app/core/services/payment_service.dart';
 import 'package:sline_app/features/tasks/view/tender_payment_screen.dart';
 import 'package:sline_app/features/tasks/viewmodels/tender_payment_view_model.dart';
 

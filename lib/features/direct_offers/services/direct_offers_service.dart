@@ -1,11 +1,11 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/utils/error_mapper.dart';
-import '../../../core/services/logger_service.dart';
-import '../../chat/services/message_service.dart';
-import '../../management/models/work_log_scope.dart';
-import '../../management/services/work_log_service.dart';
-import '../../wallet/services/ledger_service.dart';
-import '../models/direct_offer_model.dart';
+import 'package:sline_app/features/chat/services/message_service.dart';
+import 'package:sline_app/features/direct_offers/models/direct_offer_model.dart';
+import 'package:sline_app/features/management/models/work_log_scope.dart';
+import 'package:sline_app/features/management/services/work_log_service.dart';
+import 'package:sline_app/features/wallet/services/ledger_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Service for direct offers (chat-to-work). Handles create, accept+pay, reject, deliver, complete.
 class DirectOffersService {
@@ -81,7 +81,7 @@ class DirectOffersService {
       conversationId: conversationId,
       senderId: senderId,
       receiverId: receiverId,
-      content: title?.isNotEmpty == true ? 'Offer: $title' : 'Offer',
+      content: title?.isNotEmpty ?? false ? 'Offer: $title' : 'Offer',
       messageType: 'offer',
       payload: payload,
     );

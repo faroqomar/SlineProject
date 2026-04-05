@@ -3,17 +3,18 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
-import 'package:sline_app/features/dashboard/view/widgets/work_item_card.dart';
+import 'package:sline_app/core/utils/error_mapper.dart';
 import 'package:sline_app/features/dashboard/models/work_item.dart';
+import 'package:sline_app/features/dashboard/view/widgets/work_item_card.dart';
+import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 import 'package:sline_app/features/proposals/models/proposal_payment_summary.dart';
 import 'package:sline_app/features/proposals/routes/proposal_payment_route.dart';
 import 'package:sline_app/features/wallet/view/wallet_screen.dart';
-import 'package:sline_app/core/services/logger_service.dart';
 
 class WorkTab extends StatefulWidget {
   const WorkTab({super.key});
@@ -160,7 +161,7 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
     final vm = context.read<DashboardViewModel>();
     if (active.isEmpty && delivered.isEmpty) {
       return RefreshIndicator(
-        onRefresh: () => vm.refresh(),
+        onRefresh: vm.refresh,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: SizedBox(
@@ -198,7 +199,7 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
     final otherActive = active.where((i) => !i.actionableNeedsReview).toList();
 
     return RefreshIndicator(
-      onRefresh: () => vm.refresh(),
+      onRefresh: vm.refresh,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(
           AppDimens.p16,
@@ -322,13 +323,13 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
       } else {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.message)));
+        ).showSnackBar(SnackBar(content: Text(ErrorMapper.map(e))));
       }
     } on Exception catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      ).showSnackBar(SnackBar(content: Text(ErrorMapper.map(e))));
     }
   }
 
@@ -355,7 +356,7 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
     } on Exception catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+          SnackBar(content: Text(ErrorMapper.map(e)), backgroundColor: Colors.red),
         );
       }
     }
@@ -398,7 +399,7 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
     final vm = context.read<DashboardViewModel>();
     if (items.isEmpty) {
       return RefreshIndicator(
-        onRefresh: () => vm.refresh(),
+        onRefresh: vm.refresh,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: SizedBox(
@@ -430,7 +431,7 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
     }
 
     return RefreshIndicator(
-      onRefresh: () => vm.refresh(),
+      onRefresh: vm.refresh,
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(
           AppDimens.p16,

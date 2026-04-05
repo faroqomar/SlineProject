@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/utils/format_price.dart' as price_utils;
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
+import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/features/tasks/services/task_requests_service.dart';
 import 'package:sline_app/features/tasks/services/task_service.dart';
-import 'package:sline_app/features/tasks/viewmodels/task_requests_view_model.dart';
 import 'package:sline_app/features/tasks/viewmodels/submit_request_view_model.dart';
-import 'package:sline_app/core/utils/format_price.dart' as price_utils;
+import 'package:sline_app/features/tasks/viewmodels/task_requests_view_model.dart';
 
 /// Callback type for when a bid is successfully replaced.
 typedef OnBidReplacedCallback = void Function(TaskRequest newBid);

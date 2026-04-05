@@ -1,4 +1,4 @@
-import '../../services/attachment_service.dart';
+import 'package:sline_app/features/chat/services/attachment_service.dart';
 
 /// Thin wrapper to keep the attachments module self-contained.
 class SupabaseAttachmentUploader {

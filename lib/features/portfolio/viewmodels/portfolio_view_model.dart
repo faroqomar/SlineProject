@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import '../data/portfolio_repository.dart';
-import '../models/portfolio_item.dart';
+import 'package:sline_app/features/portfolio/data/portfolio_repository.dart';
+import 'package:sline_app/features/portfolio/models/portfolio_item.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// PortfolioViewModel — MVVM state holder for Portfolio feature.
 ///
@@ -11,13 +11,17 @@ import '../models/portfolio_item.dart';
 class PortfolioViewModel extends ChangeNotifier {
   /// Creates with explicit repository (preferred for testing/dependency injection).
   PortfolioViewModel({PortfolioRepository? repository, SupabaseClient? client})
-    : _repo =
-          repository ?? PortfolioRepository(client ?? Supabase.instance.client),
+    : _explicitRepo = repository,
+      _explicitClient = client,
       _tag = 'PortfolioVM' {
     AppLogger.d('PortfolioViewModel created', tag: _tag);
   }
 
-  final PortfolioRepository _repo;
+  final PortfolioRepository? _explicitRepo;
+  final SupabaseClient? _explicitClient;
+
+  late final PortfolioRepository _repo =
+      _explicitRepo ?? PortfolioRepository(_explicitClient ?? Supabase.instance.client);
   final String _tag;
 
   String? _ownerId;

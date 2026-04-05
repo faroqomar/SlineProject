@@ -61,15 +61,15 @@ class AppLogger {
         return object;
       });
 
-      String pretty = encoder.convert(data);
+      var pretty = encoder.convert(data);
 
       // Manual masking for known keys in the string output
       pretty = pretty.replaceAll(
-        RegExp(r'"access_token": "[^"]+"'),
+        RegExp('"access_token": "[^"]+"'),
         '"access_token": "***MASKED***"',
       );
       pretty = pretty.replaceAll(
-        RegExp(r'"refresh_token": "[^"]+"'),
+        RegExp('"refresh_token": "[^"]+"'),
         '"refresh_token": "***MASKED***"',
       );
 
@@ -133,7 +133,7 @@ class AppLogger {
       var errorStr = error.toString();
       if (errorStr.contains('PostgrestException')) {
         // Extract basic message to reduce noise
-        final match = RegExp(r'message: (.*?), code:').firstMatch(errorStr);
+        final match = RegExp('message: (.*?), code:').firstMatch(errorStr);
         if (match != null) {
           errorStr = 'DB Error: ${match.group(1)} (Full trace below)';
         }

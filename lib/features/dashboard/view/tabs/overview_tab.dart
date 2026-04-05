@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/app_enums.dart';
-import 'package:sline_app/features/wallet/viewmodels/wallet_view_model.dart';
-import '../../viewmodels/dashboard_view_model.dart';
-import '../widgets/activity_feed_preview.dart';
-import '../widgets/dashboard_counters_grid.dart';
-import '../widgets/next_actions_list.dart';
+import 'package:sline_app/features/dashboard/view/widgets/activity_feed_preview.dart';
+import 'package:sline_app/features/dashboard/view/widgets/dashboard_counters_grid.dart';
+import 'package:sline_app/features/dashboard/view/widgets/next_actions_list.dart';
+import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 import 'package:sline_app/features/wallet/view/widgets/wallet_snapshot_card.dart';
+import 'package:sline_app/features/wallet/viewmodels/wallet_view_model.dart';
 
 class OverviewTab extends StatefulWidget {
   const OverviewTab({super.key});
@@ -38,7 +38,7 @@ class _OverviewTabState extends State<OverviewTab> {
     final colorScheme = context.colorScheme;
 
     return RefreshIndicator(
-      onRefresh: () => vm.refresh(),
+      onRefresh: vm.refresh,
       child: ListView(
         padding: const EdgeInsets.all(AppDimens.p16),
         children: [

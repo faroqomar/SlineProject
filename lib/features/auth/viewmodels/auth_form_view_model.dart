@@ -1,14 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:sline_app/core/constants/auth_messages.dart';
+import 'package:sline_app/core/services/account_guard_service.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/utils/error_mapper.dart';
 import 'package:sline_app/features/auth/data/auth_repository.dart';
-import 'package:sline_app/core/services/account_guard_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthFormViewModel extends ChangeNotifier {
   final AuthRepository _authRepo;
-  final AccountGuardService? _accountGuardService;
 
   bool _isLoading = false;
   String? _error;
@@ -19,16 +18,25 @@ class AuthFormViewModel extends ChangeNotifier {
   AuthFormViewModel({
     AuthRepository? authRepo,
     AccountGuardService? accountGuardService,
+    SupabaseClient? client,
   }) : _authRepo = authRepo ?? AuthRepository(),
-       _accountGuardService =
-           accountGuardService ?? _buildDefaultGuardService();
+       _explicitGuardService = accountGuardService,
+       _explicitClient = client;
 
-  static AccountGuardService? _buildDefaultGuardService() {
+  final AccountGuardService? _explicitGuardService;
+  final SupabaseClient? _explicitClient;
+
+  late final AccountGuardService? _accountGuardService =
+      _explicitGuardService ?? _buildDefaultGuardService();
+
+  AccountGuardService? _buildDefaultGuardService() {
     try {
-      return AccountGuardService(client: Supabase.instance.client);
+      return AccountGuardService(
+        client: _explicitClient ?? Supabase.instance.client,
+      );
     } on Exception catch (_) {
       return null;
-    } on Error catch (_) {
+    } on StateError catch (_) {
       // Supabase not initialized (e.g., in tests) — guard is optional
       return null;
     }

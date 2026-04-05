@@ -21,6 +21,7 @@ flutter build apk                    # Android release
 flutter build ios                    # iOS release
 flutter build web                    # Web release
 flutter clean && flutter pub get     # Clean rebuild
+flutter gen-l10n                     # Regenerate localization files (after editing .arb)
 flutter run --dart-define=SENTRY_DSN=<dsn>  # Enable Sentry crash reporting
 flutter run --dart-define=SENTRY_ENV=production  # Set Sentry environment
 ```
@@ -35,8 +36,8 @@ git config core.hooksPath .githooks  # Enable pre-commit hooks (format + analyze
 
 GitHub Actions pipeline (`.github/workflows/ci.yml`) runs on push/PR to `main`:
 - **Lint & Analyze**: `dart format --set-exit-if-changed .` + `flutter analyze --no-fatal-infos`
-- **Architecture Guard**: 6 MVVM boundary checks (hard failure). Blocks PRs with Supabase in views, controllers/Navigator in VMs, view imports in VMs, repo imports in views.
-- **Tests**: `flutter test --coverage` with coverage reporting + **28% coverage floor** (regression prevention, raises incrementally)
+- **Architecture Guard**: 7 MVVM boundary checks (hard failure). Blocks PRs with Supabase in views, controllers/Navigator in VMs, view imports in VMs, repo imports in views. Check 7 blocks `core/` importing from `features/` (max 5 threshold).
+- **Tests**: `flutter test --coverage` with coverage reporting + **33% coverage floor** (regression prevention, raises incrementally). 982 tests across 27 VM test files.
 - **Build**: APK (debug) + Web (release) compilation check
 - **Note**: Architecture guard Check 3 tightened in Phase D — catches `Supabase.instance.client.auth.*` in VM method bodies (only `?? Supabase.instance` DI defaults are allowed)
 
@@ -78,11 +79,14 @@ lib/
 - **Provider registration** lives in `lib/main.dart` (40+ providers).
 - **No code generation** (no build_runner/freezed) -- models use manual `fromJson`/`toJson`/`copyWith`.
 - **Navigation**: Provider-based tab switching via `NavigationProvider` + `AnimatedSwitcher` in `MainNavigationScreen`. Named routes for auth screens.
+- **Sealed ViewState pattern**: `ViewState<T>` (`loading | loaded(T) | error(AppFailure)`) in `lib/core/models/view_state.dart`. Used in DirectOfferDetailsVM, BookingVM, WorkItemDetailsVM. Preferred for new VMs over raw `_isLoading`/`_error` fields.
+- **DeepLinkRegistry**: `DeepLinkService` has zero feature imports. Each feature registers its own handler via `DeepLinkRegistry` pattern (6 handler files in feature directories).
 
 ## Conventions
 
 ### Strict rules
 
+- **Linting**: `very_good_analysis` with ~70+ rules active (27 rules disabled with tracking in `.TODO/LINT_DEBT_PhaseE.md`). Run `flutter analyze` -- must pass clean.
 - **Logging**: Use `AppLogger.i/d/w/e()` from `lib/core/services/logger_service.dart`. Never `print()` or `debugPrint()`.
 - **Colors**: Use `AppColors.*` or `context.colorScheme.*`. Never hardcode `Color(0xFF...)`.
 - **Timestamps**: Store UTC in DB, convert to local in UI via `formatUtcToLocal()` from `lib/core/utils/format_date.dart`.
@@ -100,7 +104,7 @@ Map technical errors to user-friendly messages in ViewModels. Key Postgres codes
 - `23503` = foreign key violation
 - `23514` = check constraint
 
-ViewModel pattern: `_isLoading` + `_error` fields, `try/catch` with `_mapError()`, `notifyListeners()` in `finally`.
+ViewModel pattern: `_isLoading` + `_error` fields, `try/catch` with `_mapError()`, `notifyListeners()` in `finally`. For new VMs, prefer sealed `ViewState<T>` + `AppFailure` from `lib/core/models/`.
 
 ### Payment system
 

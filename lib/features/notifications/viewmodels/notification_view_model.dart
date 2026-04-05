@@ -1,9 +1,10 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import '../models/notification_model.dart';
-import '../services/notification_service.dart';
+import 'package:sline_app/features/notifications/models/notification_model.dart';
+import 'package:sline_app/features/notifications/services/notification_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// ViewModel for notification list and read state. Context-free; navigation is view-layer responsibility.
 class NotificationViewModel extends ChangeNotifier {

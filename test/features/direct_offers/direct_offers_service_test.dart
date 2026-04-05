@@ -8,9 +8,10 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/direct_offers/services/direct_offers_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../helpers/mock_supabase.dart';
 
 const String _logTag = 'direct_offers_service_test';

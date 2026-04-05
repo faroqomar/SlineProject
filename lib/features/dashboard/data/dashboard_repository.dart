@@ -1,13 +1,13 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/features/dashboard/models/work_item.dart';
 import 'package:sline_app/features/dashboard/models/activity_log.dart';
 import 'package:sline_app/features/dashboard/models/dashboard_counters.dart';
+import 'package:sline_app/features/dashboard/models/work_item.dart';
 import 'package:sline_app/features/dashboard/services/dashboard_permission_service.dart';
 import 'package:sline_app/features/profile/services/profile_summary_service.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/features/work/models/unified_work_item_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DashboardRepository {
   static const _kTag = 'dashboard.repo';
@@ -133,7 +133,7 @@ class DashboardRepository {
     try {
       final profileMap = await _profileSummaryService.fetchByIds(ids);
 
-      int enriched = 0;
+      var enriched = 0;
       final result = items.map((item) {
         final profile = profileMap[item.counterpartyId];
         if (profile == null) return item;
@@ -163,7 +163,7 @@ class DashboardRepository {
 
   WorkItem _mapUnifiedToWorkItem(UnifiedWorkItemModel u, UserRole role) {
     final isClient = role == UserRole.client;
-    final WorkItemType itemType = u.sourceType == 'booking'
+    final itemType = u.sourceType == 'booking'
         ? WorkItemType.booking
         : u.sourceType == 'direct_offer'
         ? WorkItemType.directOffer
@@ -254,13 +254,13 @@ class DashboardRepository {
     List<WorkItem> currentItems,
     List<TaskRequest> inboxOffers,
   ) async {
-    int active = 0;
-    int pending = 0;
-    int offers = 0;
-    final int unreadMessages = 0;
-    int needsReview = 0;
-    int pendingPayment = 0;
-    int completed = 0;
+    var active = 0;
+    var pending = 0;
+    var offers = 0;
+    const unreadMessages = 0;
+    var needsReview = 0;
+    var pendingPayment = 0;
+    var completed = 0;
 
     active = currentItems.where((i) {
       return i.statusUiBucket == 'Active';

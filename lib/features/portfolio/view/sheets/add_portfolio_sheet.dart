@@ -2,8 +2,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../../core/services/logger_service.dart';
-import '../../viewmodels/portfolio_view_model.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/features/portfolio/viewmodels/portfolio_view_model.dart';
 
 /// Bottom sheet for adding a portfolio item (supports optional image).
 class AddPortfolioSheet extends StatefulWidget {
@@ -34,7 +34,7 @@ class _AddPortfolioSheetState extends State<AddPortfolioSheet> {
   Future<void> _pickImage() async {
     AppLogger.i('Picking portfolio image', tag: 'AddPortfolioSheet');
     try {
-      final XFile? picked = await _picker.pickImage(
+      final picked = await _picker.pickImage(
         source: ImageSource.gallery,
         maxWidth: 1920,
         maxHeight: 1920,

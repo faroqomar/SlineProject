@@ -5,8 +5,8 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
-import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 import 'package:sline_app/features/profile/view/widgets/profile_avatar_widget.dart';
+import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});

@@ -5,9 +5,10 @@
 library;
 
 import 'dart:convert';
+
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/features/profile/models/role_switch_result.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/services/logger_service.dart';
-import '../models/role_switch_result.dart';
 
 /// Repository for role switching operations.
 class RoleSwitchRepository {
@@ -128,9 +129,11 @@ class RoleSwitchRepository {
       // Normalize and decode base64url
       var payload = parts[1];
       // Add padding if needed
-      while (payload.length % 4 != 0) {
-        payload += '=';
+      final buffer = StringBuffer(payload);
+      while (buffer.length % 4 != 0) {
+        buffer.write('=');
       }
+      payload = buffer.toString();
       // Convert base64url to base64
       payload = payload.replaceAll('-', '+').replaceAll('_', '/');
 
@@ -175,8 +178,8 @@ class RoleSwitchRepository {
       return allowed;
     } on Exception catch (e) {
       AppLogger.e('rate_limit_check_failed', tag: 'RoleSwitchRepo', error: e);
-      // Fail open (allow) if rate limit check fails
-      return true;
+      // Fail closed (deny) — do not allow role switch if rate limit cannot be verified
+      return false;
     }
   }
 }

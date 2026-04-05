@@ -1,14 +1,17 @@
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/booking_model.dart';
 import 'package:sline_app/core/app_enums.dart';
-import '../../chat/data/chat_repository.dart';
-import '../../chat/models/conversation_model.dart'; // Added
-import '../data/booking_repository.dart';
+import 'package:sline_app/core/models/app_failure.dart';
+import 'package:sline_app/core/models/view_state.dart';
+import 'package:sline_app/core/services/demo_payment_service.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/services/payment_service.dart';
-import 'package:sline_app/core/services/demo_payment_service.dart';
-import 'package:uuid/uuid.dart';
+import 'package:sline_app/core/utils/error_mapper.dart';
+import 'package:sline_app/features/booking/data/booking_repository.dart';
+import 'package:sline_app/features/booking/models/booking_model.dart';
+import 'package:sline_app/features/booking/viewmodels/booking_payment_delegate.dart';
+import 'package:sline_app/features/chat/data/chat_repository.dart';
+import 'package:sline_app/features/chat/models/conversation_model.dart'; // Added
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// BookingViewModel — MVVM state holder for Booking/Scheduling feature.
 ///
@@ -38,13 +41,18 @@ class BookingViewModel extends ChangeNotifier {
     PaymentService? paymentService,
   }) : _repo = repo,
        _chatRepository = chatRepository,
-       _paymentService = paymentService ?? DemoPaymentService();
+       _paymentService = paymentService ?? DemoPaymentService(),
+       _paymentDelegate = BookingPaymentDelegate(
+         repo: repo,
+         paymentService: paymentService ?? DemoPaymentService(),
+       );
 
   final BookingRepository _repo;
   final ChatRepository _chatRepository;
   final PaymentService _paymentService;
-  final Uuid _uuid = const Uuid();
-  String get paymentServiceType => _paymentService.runtimeType.toString();
+  final BookingPaymentDelegate _paymentDelegate;
+  /// Whether the active payment service is the demo (non-production) implementation.
+  bool get isDemoPaymentMode => _paymentService is DemoPaymentService;
 
   static const int _pageSize = 50;
 
@@ -60,7 +68,7 @@ class BookingViewModel extends ChangeNotifier {
     try {
       if (e is PostgrestException) {
         final code = e.code ?? '';
-        final msg = (e.message).toLowerCase();
+        final msg = e.message.toLowerCase();
 
         // Unique violation (e.g., double-booking the same slot)
         if (code == '23505') {
@@ -99,13 +107,6 @@ class BookingViewModel extends ChangeNotifier {
         if (msg.contains('booking_package_invalid')) {
           return 'The selected package is no longer available.';
         }
-
-        // Generic postgrest message
-        return e.message;
-      }
-
-      if (e is AuthException) {
-        return e.message;
       }
 
       final genericMessage = e.toString();
@@ -115,48 +116,78 @@ class BookingViewModel extends ChangeNotifier {
         return 'Client payment is still pending.';
       }
 
-      return e.toString();
+      // Delegate to ErrorMapper for all remaining cases (PostgrestException
+      // generic fallback, AuthException, and unknown exceptions).
+      return ErrorMapper.map(e);
     } on Exception catch (_) {
-      return e.toString();
+      return 'Something went wrong. Please try again.';
     }
   }
 
-  String? _mapServiceError(String? error) {
-    if (error == null || error.isEmpty) return error;
-    final msg = error.toLowerCase();
-    if (msg.contains('booking_task_not_bookable')) {
-      return 'This booking is not currently available.';
-    }
-    if (msg.contains('booking_self_booking_forbidden')) {
-      return 'You cannot book your own service.';
-    }
-    if (msg.contains('booking_already_exists_for_client')) {
-      return 'This booking request could not be created. Please refresh and try again.';
-    }
-    if (msg.contains('booking_package_invalid')) {
-      return 'The selected package is no longer available.';
-    }
-    if (msg.contains('booking_slot_unavailable') ||
-        msg.contains('booking_slot_in_past')) {
-      return 'This slot is no longer available.';
-    }
-    if (msg.contains('qicard request failed with status 5') ||
-        msg.contains('service unavailable') ||
-        msg.contains('temporarily unavailable')) {
-      return 'QiCard is temporarily unavailable. Please try again in a moment.';
-    }
-    return error;
-  }
+  // ── Primary list states (ViewState pattern) ───────────────────────
+  ViewState<List<BookingModel>> _clientListState = const ViewInitial();
+  ViewState<List<BookingModel>> _providerListState = const ViewInitial();
 
-  // Bookings state
-  bool bookingsLoading = false;
+  ViewState<List<BookingModel>> get clientListState => _clientListState;
+  ViewState<List<BookingModel>> get providerListState => _providerListState;
+
+  // ── Shared action error (accept, decline, payment, etc.) ─────────
+  /// Per-action error used by operations that mutate a single booking.
+  /// NOT migrated to ViewState because many independent operations share it.
   String? bookingsError;
-  bool clientBookingsLoading = false;
-  bool providerBookingsLoading = false;
-  String? clientBookingsError;
-  String? providerBookingsError;
-  final List<BookingModel> bookingsAsClient = [];
-  final List<BookingModel> bookingsAsProvider = [];
+
+  // ── Backward-compatible convenience getters (keep view working) ──
+  bool get bookingsLoading =>
+      _clientListState is ViewLoading<List<BookingModel>> ||
+      _providerListState is ViewLoading<List<BookingModel>>;
+
+  bool get clientBookingsLoading =>
+      _clientListState is ViewLoading<List<BookingModel>>;
+
+  bool get providerBookingsLoading =>
+      _providerListState is ViewLoading<List<BookingModel>>;
+
+  String? get clientBookingsError => switch (_clientListState) {
+    ViewFailed(:final failure) => failure.userMessage,
+    _ => null,
+  };
+
+  String? get providerBookingsError => switch (_providerListState) {
+    ViewFailed(:final failure) => failure.userMessage,
+    _ => null,
+  };
+
+  List<BookingModel> get bookingsAsClient => switch (_clientListState) {
+    ViewLoaded(:final data) => data,
+    _ => _clientListMutable,
+  };
+
+  List<BookingModel> get bookingsAsProvider => switch (_providerListState) {
+    ViewLoaded(:final data) => data,
+    _ => _providerListMutable,
+  };
+
+  // Mutable backing lists used during loading/pagination to accumulate data.
+  final List<BookingModel> _clientListMutable = [];
+  final List<BookingModel> _providerListMutable = [];
+
+  /// Seed the provider list for testing. Emits [ViewLoaded] with the given items.
+  @visibleForTesting
+  void seedProviderList(List<BookingModel> items) {
+    _providerListMutable
+      ..clear()
+      ..addAll(items);
+    _providerListState = ViewLoaded(List<BookingModel>.of(items));
+  }
+
+  /// Seed the client list for testing. Emits [ViewLoaded] with the given items.
+  @visibleForTesting
+  void seedClientList(List<BookingModel> items) {
+    _clientListMutable
+      ..clear()
+      ..addAll(items);
+    _clientListState = ViewLoaded(List<BookingModel>.of(items));
+  }
   String? bookingsClientCursor; // ISO string of last created_at
   String? bookingsProviderCursor; // ISO string of last created_at
 
@@ -252,18 +283,26 @@ class BookingViewModel extends ChangeNotifier {
     try {
       final updated = await _repo.getBookingById(bookingId);
 
-      // Update in client list
-      final clientIdx = bookingsAsClient.indexWhere((b) => b.id == bookingId);
+      // Update in client mutable list and re-emit ViewLoaded
+      final clientIdx = _clientListMutable.indexWhere(
+        (b) => b.id == bookingId,
+      );
       if (clientIdx != -1) {
-        bookingsAsClient[clientIdx] = updated;
+        _clientListMutable[clientIdx] = updated;
+        _clientListState = ViewLoaded(
+          List<BookingModel>.of(_clientListMutable),
+        );
       }
 
-      // Update in provider list
-      final providerIdx = bookingsAsProvider.indexWhere(
+      // Update in provider mutable list and re-emit ViewLoaded
+      final providerIdx = _providerListMutable.indexWhere(
         (b) => b.id == bookingId,
       );
       if (providerIdx != -1) {
-        bookingsAsProvider[providerIdx] = updated;
+        _providerListMutable[providerIdx] = updated;
+        _providerListState = ViewLoaded(
+          List<BookingModel>.of(_providerListMutable),
+        );
       }
     } on Exception catch (e) {
       AppLogger.w(
@@ -331,15 +370,13 @@ class BookingViewModel extends ChangeNotifier {
   /// This operation is atomic at the database level via RPC to avoid race conditions.
   Future<void> declineBooking(String bookingId) async {
     try {
-      final result = await _paymentService.declineAndRefundBooking(
+      final result = await _paymentDelegate.declineAndRefundBooking(
         bookingId: bookingId,
         reason: 'Booking declined',
       );
       if (!result.isSuccess) {
         throw Exception(result.error ?? 'Booking decline/refund failed');
       }
-
-      // Refresh the booking state to reflect the refund
       await _refreshBookingInLists(bookingId);
       notifyListeners();
     } on Exception catch (e, st) {
@@ -386,12 +423,11 @@ class BookingViewModel extends ChangeNotifier {
     bookingsError = null;
     notifyListeners();
     try {
-      final txnId = await _paymentService.processPayment(
+      return await _paymentDelegate.processPayment(
         amount: amount,
         currency: currency,
         description: description,
       );
-      return txnId;
     } on Exception catch (e) {
       bookingsError = _mapError(e);
       AppLogger.e('Payment failed', tag: 'Booking', error: e);
@@ -408,26 +444,15 @@ class BookingViewModel extends ChangeNotifier {
     required String bookingId,
     String? description,
   }) async {
-    final clientId = currentUserId;
-    if (clientId == null) {
-      return const PaymentInitResult(
-        error: 'Session expired. Please log in again.',
-      );
-    }
-
-    final result = await _paymentService.initiatePayment(
+    final result = await _paymentDelegate.initiateQiCardPayment(
       amount: amount,
-      currency: 'IQD',
       bookingId: bookingId,
-      clientId: clientId,
       description: description,
     );
-
     if (result.error != null) {
       bookingsError = result.error;
       notifyListeners();
     }
-
     return result;
   }
 
@@ -436,18 +461,13 @@ class BookingViewModel extends ChangeNotifier {
     required String paymentId,
     required String requestId,
     required double amount,
-  }) async {
-    final clientId = currentUserId;
-    if (clientId == null) return false;
-    return _paymentService.triggerPaymentSuccessRecovery(
-      bookingId: bookingId,
-      paymentId: paymentId,
-      requestId: requestId,
-      amount: amount,
-      currency: 'IQD',
-      clientId: clientId,
-    );
-  }
+  }) =>
+      _paymentDelegate.triggerQiCardSuccessRecovery(
+        bookingId: bookingId,
+        paymentId: paymentId,
+        requestId: requestId,
+        amount: amount,
+      );
 
   Future<QiCardCreatePaymentResult> createPaymentForBooking({
     required String taskId,
@@ -456,68 +476,19 @@ class BookingViewModel extends ChangeNotifier {
     Map<String, dynamic>? requirements,
     String? finishUrl,
   }) async {
-    final requestCorrelationId = 'booking_create:${_uuid.v4()}';
-    AppLogger.i(
-      'Requesting server-backed booking payment intent task=$taskId package=${packageId ?? 'none'}',
-      tag: 'Booking',
-      json: <String, dynamic>{
-        'task_id': taskId,
-        'package_id': packageId,
-        'has_note': note != null && note.trim().isNotEmpty,
-        'finish_url': finishUrl,
-        'request_correlation_id': requestCorrelationId,
-      },
-    );
-
     try {
-      // 1. Create booking draft via Postgres RPC
-      final draft = await _repo.createBookingDraft(
+      final result = await _paymentDelegate.createPaymentForBooking(
         taskId: taskId,
         note: note,
         packageId: packageId,
         requirements: requirements,
+        finishUrl: finishUrl,
       );
-
-      // 2. Create the payment intent using the edge function
-      final intentResult = await _paymentService.createPaymentIntent(
-        entityType: 'booking',
-        entityId: draft.id,
-        successUrl: finishUrl ?? 'https://sline.app/?payment_return=1',
-        cancelUrl: 'https://sline.app/?payment_return=0',
-      );
-
-      if (!intentResult.isSuccess) {
-        bookingsError = _mapServiceError(intentResult.error);
-        AppLogger.w(
-          'Booking payment intent request failed for task=$taskId',
-          tag: 'Booking',
-          error:
-              bookingsError ??
-              intentResult.error ??
-              'BOOKING_PAYMENT_CREATE_FAILED',
-        );
+      if (result.error != null) {
+        bookingsError = BookingPaymentDelegate.mapServiceError(result.error);
         notifyListeners();
-        return QiCardCreatePaymentResult(
-          bookingId: draft.id,
-          error: intentResult.error,
-          errorCode: intentResult.errorCode,
-          requestCorrelationId: requestCorrelationId,
-        );
       }
-
-      AppLogger.i(
-        'Booking payment intent created booking=${draft.id} intent=${intentResult.intentId}',
-        tag: 'Booking',
-      );
-
-      return QiCardCreatePaymentResult(
-        bookingId: draft.id,
-        intentId: intentResult.intentId,
-        formUrl: intentResult.checkoutUrl,
-        amount: draft.price?.toDouble(),
-        providerId: draft.providerId,
-        requestCorrelationId: requestCorrelationId,
-      );
+      return result;
     } on Exception catch (e, st) {
       AppLogger.e(
         'createPaymentForBooking failed',
@@ -530,34 +501,26 @@ class BookingViewModel extends ChangeNotifier {
       return QiCardCreatePaymentResult(
         error: bookingsError,
         errorCode: 'BOOKING_PAYMENT_CREATE_FAILED',
-        requestCorrelationId: requestCorrelationId,
       );
     }
   }
 
-  /// Streams the status of a payment intent directly from the database
-  Stream<String> streamPaymentIntentStatus(String intentId) {
-    return _paymentService.streamPaymentIntentStatus(intentId);
-  }
+  /// Streams the status of a payment intent directly from the database.
+  Stream<String> streamPaymentIntentStatus(String intentId) =>
+      _paymentDelegate.streamPaymentIntentStatus(intentId);
 
   Future<QiCardRecoveryResult> recoverBookingPayment({
     required String bookingId,
   }) async {
-    AppLogger.i(
-      'Recovering booking payment booking=$bookingId',
-      tag: 'Booking',
-    );
-    final result = await _paymentService.recoverBookingPayment(
+    final result = await _paymentDelegate.recoverBookingPayment(
       bookingId: bookingId,
     );
-
     if (result.isSuccess) {
       await _refreshBookingInLists(bookingId);
       AppLogger.i(
         'Booking payment recovered booking=$bookingId status=${result.paymentStatus} outcome=${result.recoveryResult}',
         tag: 'Booking',
       );
-      notifyListeners();
     } else {
       bookingsError = result.error;
       AppLogger.w(
@@ -565,12 +528,13 @@ class BookingViewModel extends ChangeNotifier {
         tag: 'Booking',
         error: result.error ?? 'BOOKING_PAYMENT_RECOVERY_FAILED',
       );
-      notifyListeners();
     }
-
+    notifyListeners();
     return result;
   }
 
+  /// Retries recovery up to [maxAttempts] when the server returns `no_action`.
+  /// Each attempt refreshes lists and notifies listeners via [recoverBookingPayment].
   Future<QiCardRecoveryResult> recoverBookingPaymentWithRetries({
     required String bookingId,
     int maxAttempts = 3,
@@ -578,47 +542,37 @@ class BookingViewModel extends ChangeNotifier {
   }) async {
     var attempt = 1;
     var result = await recoverBookingPayment(bookingId: bookingId);
-
     while (result.isSuccess &&
         result.paymentStatus != 'held' &&
         result.recoveryResult == 'no_action' &&
         attempt < maxAttempts) {
-      AppLogger.w(
-        'Booking recovery returned no_action for booking=$bookingId; retrying',
-        tag: 'Booking',
-        json: <String, dynamic>{
-          'attempt': attempt + 1,
-          'payment_status': result.paymentStatus,
-          'recovery_result': result.recoveryResult,
-        },
-      );
       await Future.delayed(delay);
       result = await recoverBookingPayment(bookingId: bookingId);
       attempt += 1;
     }
-
     return result;
   }
 
   Future<void> loadBookingsAsClient() async {
-    bookingsLoading = true;
+    _clientListState = const ViewLoading();
     bookingsError = null;
-    clientBookingsLoading = true;
-    clientBookingsError = null;
-    bookingsAsClient.clear();
+    _clientListMutable.clear();
     bookingsClientCursor = null;
     notifyListeners();
     try {
       final data = await _repo.listBookingsAsClient(limit: _pageSize);
-      bookingsAsClient.addAll(data);
+      _clientListMutable.addAll(data);
       if (data.isNotEmpty) {
         bookingsClientCursor = data.last.createdAtUtc.toUtc().toIso8601String();
       }
       bookingsClientHasMore = data.length == _pageSize;
+      _clientListState = ViewLoaded(List<BookingModel>.of(_clientListMutable));
     } on Exception catch (e, st) {
       final message = _mapError(e);
       bookingsError = message;
-      clientBookingsError = message;
+      _clientListState = ViewFailed(
+        BusinessFailure(message, code: 'CLIENT_BOOKINGS_LOAD_FAILED'),
+      );
       AppLogger.e(
         'Failed to load bookings as client',
         error: e,
@@ -626,8 +580,6 @@ class BookingViewModel extends ChangeNotifier {
         tag: 'Booking',
       );
     } finally {
-      bookingsLoading = false;
-      clientBookingsLoading = false;
       notifyListeners();
     }
   }
@@ -638,22 +590,23 @@ class BookingViewModel extends ChangeNotifier {
         !bookingsClientHasMore) {
       return;
     }
-    clientBookingsLoading = true;
+    // Keep existing data visible while loading more (no state transition to Loading).
     notifyListeners();
     try {
       final data = await _repo.listBookingsAsClient(
         cursorCreatedAtIso: bookingsClientCursor,
         limit: _pageSize,
       );
-      bookingsAsClient.addAll(data);
+      _clientListMutable.addAll(data);
       if (data.isNotEmpty) {
         bookingsClientCursor = data.last.createdAtUtc.toUtc().toIso8601String();
       }
       bookingsClientHasMore = data.length == _pageSize;
+      _clientListState = ViewLoaded(List<BookingModel>.of(_clientListMutable));
     } on Exception catch (e, st) {
       final message = _mapError(e);
       bookingsError = message;
-      clientBookingsError = message;
+      // Keep existing data; do not transition to ViewFailed for pagination.
       AppLogger.e(
         'Failed to load more bookings as client',
         error: e,
@@ -661,32 +614,34 @@ class BookingViewModel extends ChangeNotifier {
         tag: 'Booking',
       );
     } finally {
-      clientBookingsLoading = false;
       notifyListeners();
     }
   }
 
   Future<void> loadBookingsAsProvider() async {
-    bookingsLoading = true;
+    _providerListState = const ViewLoading();
     bookingsError = null;
-    providerBookingsLoading = true;
-    providerBookingsError = null;
-    bookingsAsProvider.clear();
+    _providerListMutable.clear();
     bookingsProviderCursor = null;
     notifyListeners();
     try {
       final data = await _repo.listBookingsAsProvider(limit: _pageSize);
-      bookingsAsProvider.addAll(data);
+      _providerListMutable.addAll(data);
       if (data.isNotEmpty) {
         bookingsProviderCursor = data.last.createdAtUtc
             .toUtc()
             .toIso8601String();
       }
       bookingsProviderHasMore = data.length == _pageSize;
+      _providerListState = ViewLoaded(
+        List<BookingModel>.of(_providerListMutable),
+      );
     } on Exception catch (e, st) {
       final message = _mapError(e);
       bookingsError = message;
-      providerBookingsError = message;
+      _providerListState = ViewFailed(
+        BusinessFailure(message, code: 'PROVIDER_BOOKINGS_LOAD_FAILED'),
+      );
       AppLogger.e(
         'Failed to load bookings as provider',
         error: e,
@@ -694,8 +649,6 @@ class BookingViewModel extends ChangeNotifier {
         tag: 'Booking',
       );
     } finally {
-      bookingsLoading = false;
-      providerBookingsLoading = false;
       notifyListeners();
     }
   }
@@ -706,24 +659,27 @@ class BookingViewModel extends ChangeNotifier {
         !bookingsProviderHasMore) {
       return;
     }
-    providerBookingsLoading = true;
+    // Keep existing data visible while loading more (no state transition to Loading).
     notifyListeners();
     try {
       final data = await _repo.listBookingsAsProvider(
         cursorCreatedAtIso: bookingsProviderCursor,
         limit: _pageSize,
       );
-      bookingsAsProvider.addAll(data);
+      _providerListMutable.addAll(data);
       if (data.isNotEmpty) {
         bookingsProviderCursor = data.last.createdAtUtc
             .toUtc()
             .toIso8601String();
       }
       bookingsProviderHasMore = data.length == _pageSize;
+      _providerListState = ViewLoaded(
+        List<BookingModel>.of(_providerListMutable),
+      );
     } on Exception catch (e, st) {
       final message = _mapError(e);
       bookingsError = message;
-      providerBookingsError = message;
+      // Keep existing data; do not transition to ViewFailed for pagination.
       AppLogger.e(
         'Failed to load more bookings as provider',
         error: e,
@@ -731,7 +687,6 @@ class BookingViewModel extends ChangeNotifier {
         tag: 'Booking',
       );
     } finally {
-      providerBookingsLoading = false;
       notifyListeners();
     }
   }
@@ -745,11 +700,21 @@ class BookingViewModel extends ChangeNotifier {
         bookingId: bookingId,
         newStatus: newStatus,
       );
-      // Update in-memory lists if present
-      int idx = bookingsAsClient.indexWhere((e) => e.id == bookingId);
-      if (idx != -1) bookingsAsClient[idx] = updated;
-      idx = bookingsAsProvider.indexWhere((e) => e.id == bookingId);
-      if (idx != -1) bookingsAsProvider[idx] = updated;
+      // Update in mutable backing lists and re-emit ViewLoaded
+      var idx = _clientListMutable.indexWhere((e) => e.id == bookingId);
+      if (idx != -1) {
+        _clientListMutable[idx] = updated;
+        _clientListState = ViewLoaded(
+          List<BookingModel>.of(_clientListMutable),
+        );
+      }
+      idx = _providerListMutable.indexWhere((e) => e.id == bookingId);
+      if (idx != -1) {
+        _providerListMutable[idx] = updated;
+        _providerListState = ViewLoaded(
+          List<BookingModel>.of(_providerListMutable),
+        );
+      }
       notifyListeners();
       return true;
     } on Exception catch (e, st) {
@@ -792,8 +757,8 @@ class BookingViewModel extends ChangeNotifier {
       // If current user is Provider, then 'clientId' is the other guy.
       // If current user is Client, then 'clientId' is ME.
 
-      final String realClientId = booking.clientId;
-      final String realProviderId = booking.providerId;
+      final realClientId = booking.clientId;
+      final realProviderId = booking.providerId;
 
       final conversation = await _chatRepository.startConversationByClient(
         taskId: booking.taskId,

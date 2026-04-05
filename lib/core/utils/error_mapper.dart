@@ -1,5 +1,6 @@
-import 'dart:io';
 import 'dart:async';
+import 'dart:io';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Maps technical exceptions to user-friendly error messages.
@@ -45,7 +46,7 @@ class ErrorMapper {
     // Check for wrapped exceptions (only surface unwrapped text if it looks user-friendly)
     if (error is Exception) {
       final raw = error.toString();
-      String unwrapped = raw;
+      var unwrapped = raw;
       if (raw.startsWith('Exception: ') && raw.length > 'Exception: '.length) {
         unwrapped = raw.substring('Exception: '.length);
       } else if (raw.startsWith('Bad state: ') &&

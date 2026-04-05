@@ -37,7 +37,7 @@ class AccountRestrictedScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppDimens.p12),
                 Text(
-                  reason?.isNotEmpty == true
+                  reason?.isNotEmpty ?? false
                       ? reason!
                       : 'Your account is currently restricted. Please contact support for details.',
                   style: AppTypography.bodyMedium.copyWith(

@@ -1,7 +1,7 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/services/models/service_model.dart';
 import 'package:sline_app/features/services/models/service_status.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Centralized data-access layer for `public.services`.
 ///

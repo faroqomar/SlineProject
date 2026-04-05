@@ -27,8 +27,8 @@
 library;
 
 import 'package:mocktail/mocktail.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 const String _logTag = 'mock_supabase_rpc';
 
@@ -240,7 +240,7 @@ MockPostgrestFilterBuilder mockInsert({
   when(() => client.from(table)).thenReturn(mockQueryBuilder);
 
   // Setup select() to return the same builder for chaining
-  when(() => mockFilterBuilder.select()).thenReturn(mockFilterBuilder);
+  when(mockFilterBuilder.select).thenReturn(mockFilterBuilder);
 
   // Setup filter chaining for subsequent operations
   setupFilterChaining(mockFilterBuilder);
@@ -279,7 +279,7 @@ MockPostgrestFilterBuilder mockUpsert({
   when(() => client.from(table)).thenReturn(mockQueryBuilder);
 
   // Setup select() and filter chaining
-  when(() => mockFilterBuilder.select()).thenReturn(mockFilterBuilder);
+  when(mockFilterBuilder.select).thenReturn(mockFilterBuilder);
   setupFilterChaining(mockFilterBuilder);
 
   return mockFilterBuilder;
@@ -312,7 +312,7 @@ MockPostgrestFilterBuilder mockUpdate({
   when(() => client.from(table)).thenReturn(mockQueryBuilder);
 
   // Setup select() and filter chaining
-  when(() => mockFilterBuilder.select()).thenReturn(mockFilterBuilder);
+  when(mockFilterBuilder.select).thenReturn(mockFilterBuilder);
   setupFilterChaining(mockFilterBuilder);
 
   return mockFilterBuilder;
@@ -347,7 +347,7 @@ MockPostgrestFilterBuilder mockUpdateWithFilters({
   });
 
   // Setup select() and filter chaining
-  when(() => mockFilterBuilder.select()).thenReturn(mockFilterBuilder);
+  when(mockFilterBuilder.select).thenReturn(mockFilterBuilder);
   setupFilterChaining(mockFilterBuilder);
 
   return mockFilterBuilder;
@@ -371,12 +371,12 @@ MockPostgrestFilterBuilder mockDelete({
   final mockFilterBuilder = MockPostgrestFilterBuilder();
 
   // Setup delete to return the filter builder
-  when(() => mockQueryBuilder.delete()).thenReturn(mockFilterBuilder);
+  when(mockQueryBuilder.delete).thenReturn(mockFilterBuilder);
   when(() => client.from(table)).thenReturn(mockQueryBuilder);
 
   // Setup eq for filtering and select()
   setupFilterChaining(mockFilterBuilder);
-  when(() => mockFilterBuilder.select()).thenReturn(mockFilterBuilder);
+  when(mockFilterBuilder.select).thenReturn(mockFilterBuilder);
 
   return mockFilterBuilder;
 }
@@ -397,7 +397,7 @@ MockPostgrestFilterBuilder mockDeleteWithFilters({
   final mockFilterBuilder = MockPostgrestFilterBuilder();
 
   // Setup delete to return the filter builder
-  when(() => mockQueryBuilder.delete()).thenReturn(mockFilterBuilder);
+  when(mockQueryBuilder.delete).thenReturn(mockFilterBuilder);
   when(() => client.from(table)).thenReturn(mockQueryBuilder);
 
   // Setup eq filters
@@ -409,7 +409,7 @@ MockPostgrestFilterBuilder mockDeleteWithFilters({
 
   // Setup other filter chaining and select()
   setupFilterChaining(mockFilterBuilder);
-  when(() => mockFilterBuilder.select()).thenReturn(mockFilterBuilder);
+  when(mockFilterBuilder.select).thenReturn(mockFilterBuilder);
 
   return mockFilterBuilder;
 }

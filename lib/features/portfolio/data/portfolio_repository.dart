@@ -1,8 +1,9 @@
 import 'dart:typed_data';
-import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'package:sline_app/core/services/logger_service.dart';
-import '../models/portfolio_item.dart';
-import '../services/portfolio_service.dart';
+import 'package:sline_app/features/portfolio/models/portfolio_item.dart';
+import 'package:sline_app/features/portfolio/services/portfolio_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Repository layer for Portfolio feature.
 /// Encapsulates Supabase data/storage through PortfolioService.

@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
-
+import 'package:provider/provider.dart';
+import 'package:sline_app/core/app_enums.dart'; // Added for TaskStatus
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/utils/format_price.dart';
-import 'package:provider/provider.dart';
 import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
-import 'package:sline_app/core/app_enums.dart'; // Added for TaskStatus
 import 'package:sline_app/features/tasks/models/task_model.dart';
 
 class TenderTaskCard extends StatelessWidget {
@@ -25,7 +24,7 @@ class TenderTaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimens.p12),

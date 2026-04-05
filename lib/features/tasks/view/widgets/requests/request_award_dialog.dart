@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/utils/format_price.dart';
-import 'package:sline_app/features/tasks/models/task_request_model.dart';
-import 'package:sline_app/features/tasks/viewmodels/task_requests_view_model.dart';
 import 'package:sline_app/features/proposals/models/proposal_payment_summary.dart';
 import 'package:sline_app/features/proposals/routes/proposal_payment_route.dart';
-import 'package:intl/intl.dart';
+import 'package:sline_app/features/tasks/models/task_request_model.dart';
+import 'package:sline_app/features/tasks/viewmodels/task_requests_view_model.dart';
 
 /// Shows the award confirmation dialog and handles the award + payment flow.
 Future<void> showAwardDialog({
@@ -318,7 +318,7 @@ Future<void> showAwardDialog({
     ),
   );
 
-  if (confirmed == true && context.mounted) {
+  if ((confirmed ?? false) && context.mounted) {
     AppLogger.i(
       'Award attempt started',
       tag: 'TaskRequests',

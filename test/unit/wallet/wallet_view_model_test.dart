@@ -541,7 +541,7 @@ void main() {
       final result = await vm.requestWithdrawal(amount: 100);
 
       expect(result, isFalse);
-      expect(vm.error, 'Minimum withdrawal is 5000 IQD');
+      expect(vm.error, 'Invalid withdrawal amount. Please check and try again.');
       expect(vm.isWithdrawing, isFalse);
     });
 

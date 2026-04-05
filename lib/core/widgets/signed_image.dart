@@ -180,10 +180,10 @@ class _SignedImageState extends State<SignedImage> {
     // Use CachedNetworkImage for disk/memory caching with memory optimization
     // We determine cache size based on render size to avoid OOM on large images
     final pixelRatio = MediaQuery.of(context).devicePixelRatio;
-    final int? cacheWidth = widget.width.isFinite
+    final cacheWidth = widget.width.isFinite
         ? (widget.width * pixelRatio).toInt()
         : null;
-    final int? cacheHeight = widget.height.isFinite
+    final cacheHeight = widget.height.isFinite
         ? (widget.height * pixelRatio).toInt()
         : null;
 

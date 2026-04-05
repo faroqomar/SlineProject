@@ -10,8 +10,9 @@
 library;
 
 import 'dart:async';
-import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Manages Supabase realtime subscriptions for bid and task request updates.
 ///
@@ -30,11 +31,6 @@ class SupabaseRealtimeService {
   /// Active stream controllers mapped by channel name
   final Map<String, StreamController<Map<String, dynamic>>> _controllers = {};
 
-  /// Private constructor
-  SupabaseRealtimeService._internal(this._client) {
-    AppLogger.i('SupabaseRealtimeService initialized', tag: _logTag);
-  }
-
   /// Factory constructor for singleton access
   ///
   /// [client] is optional - if not provided, uses Supabase.instance.client
@@ -42,6 +38,11 @@ class SupabaseRealtimeService {
     final supabaseClient = client ?? Supabase.instance.client;
     _instance ??= SupabaseRealtimeService._internal(supabaseClient);
     return _instance!;
+  }
+
+  /// Private constructor
+  SupabaseRealtimeService._internal(this._client) {
+    AppLogger.i('SupabaseRealtimeService initialized', tag: _logTag);
   }
 
   /// Reset the singleton instance (useful for testing)

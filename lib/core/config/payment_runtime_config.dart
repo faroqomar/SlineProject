@@ -111,7 +111,7 @@ PaymentReturnArgs? parsePaymentReturnArgs(
 
   final path = uri.path.toLowerCase();
   final explicitStatus = uri.queryParameters['status']?.trim();
-  final inferredStatus = explicitStatus?.isNotEmpty == true
+  final inferredStatus = explicitStatus?.isNotEmpty ?? false
       ? explicitStatus!
       : path.contains('/success')
       ? 'SUCCESS'

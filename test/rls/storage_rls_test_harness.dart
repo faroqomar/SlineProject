@@ -25,8 +25,8 @@ library;
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Log tag for storage RLS test operations
 const String _logTag = 'storage_rls_test';

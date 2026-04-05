@@ -24,9 +24,7 @@ void main() {
       SupabaseRealtimeService.reset();
     });
 
-    tearDown(() {
-      SupabaseRealtimeService.reset();
-    });
+    tearDown(SupabaseRealtimeService.reset);
 
     group('T50 Service initialization', () {
       test('T50a singleton factory returns same instance with same client', () {
@@ -131,7 +129,7 @@ void main() {
       test('T58a cleanup does not throw', () {
         final service = SupabaseRealtimeService(client: mockClient);
 
-        expect(() => service.unsubscribeAll(), returnsNormally);
+        expect(service.unsubscribeAll, returnsNormally);
       });
 
       test('T58b service continues after errors', () {

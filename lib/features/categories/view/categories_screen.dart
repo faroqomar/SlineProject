@@ -61,7 +61,7 @@ class _CategoriesView extends StatelessWidget {
                 labelText: 'Search categories',
                 prefixIcon: Icon(Icons.search),
               ),
-              onChanged: (q) => vm.setSearchQuery(q),
+              onChanged: vm.setSearchQuery,
             ),
             const SizedBox(height: 16),
 

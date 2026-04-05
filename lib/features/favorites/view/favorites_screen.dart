@@ -2,13 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-import '../../../core/services/logger_service.dart';
-import '../viewmodels/favorites_view_model.dart';
-import '../models/favorites_mutation_result.dart';
-import 'widgets/favorite_card.dart';
-import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/chat/view/chat_screen.dart';
+import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
+import 'package:sline_app/features/favorites/models/favorites_mutation_result.dart';
+import 'package:sline_app/features/favorites/view/widgets/favorite_card.dart';
+import 'package:sline_app/features/favorites/viewmodels/favorites_view_model.dart';
 
 /// FavoritesScreen (MVVM)
 /// Uses app-level FavoritesViewModel only; no local service/VM.

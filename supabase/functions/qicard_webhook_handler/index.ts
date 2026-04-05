@@ -51,6 +51,11 @@ const QICARD_RSA_PUBLIC_KEY_PEM =
   Deno.env.get("QICARD_RSA_PUBLIC_KEY_PEM") || "";
 const QICARD_ALLOW_UNSIGNED_LOCAL_DEV =
   Deno.env.get("QICARD_ALLOW_UNSIGNED_LOCAL_DEV") === "true";
+
+if (QICARD_ALLOW_UNSIGNED_LOCAL_DEV && Deno.env.get("ENVIRONMENT") === "production") {
+  throw new Error("QICARD_ALLOW_UNSIGNED_LOCAL_DEV must not be enabled in production");
+}
+
 const supabase = createAdminClient();
 
 interface MappedEvent {

@@ -2,13 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 import 'package:sline_app/core/config/payment_runtime_config.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/booking/models/payment_return_args.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 class PaymentWebViewScreen extends StatefulWidget {
   const PaymentWebViewScreen({
@@ -554,7 +554,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
             ),
             const SizedBox(height: AppDimens.p8),
             Text(
-              'You\'ll leave this page to pay securely. After payment you\'ll be brought back here and your payment will be completed automatically.',
+              "You'll leave this page to pay securely. After payment you'll be brought back here and your payment will be completed automatically.",
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -600,11 +600,11 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
                 );
               },
               icon: const Icon(Icons.check_circle_outline),
-              label: const Text('I\'ve completed payment'),
+              label: const Text("I've completed payment"),
             ),
             const SizedBox(height: AppDimens.p8),
             TextButton(
-              onPressed: () => _handleBackNavigation(),
+              onPressed: _handleBackNavigation,
               child: const Text('Cancel'),
             ),
           ],

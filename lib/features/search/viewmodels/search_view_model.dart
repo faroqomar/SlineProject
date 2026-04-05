@@ -1,10 +1,11 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
-import '../../../../core/app_enums.dart';
-import '../../../../core/services/logger_service.dart';
-import '../services/search_service.dart';
-import '../../tasks/models/task_model.dart';
-import '../../profile/models/profile_model.dart';
+import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/features/profile/models/profile_model.dart';
+import 'package:sline_app/features/search/services/search_service.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
 
 class SearchViewModel extends ChangeNotifier {
   final SearchService _service;

@@ -14,7 +14,7 @@ class SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
     bool overlapsContent,
   ) {
     final colorScheme = context.colorScheme;
-    return Container(
+    return ColoredBox(
       color: backgroundColor ?? colorScheme.background,
       child: tabBar,
     );

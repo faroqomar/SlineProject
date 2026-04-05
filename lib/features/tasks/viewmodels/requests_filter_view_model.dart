@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/features/tasks/models/expired_bid_filter.dart';
+import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_requests_view_model.dart';
 
 /// ViewModel for filter/sort/award logic extracted from `RequestsListScreen`.

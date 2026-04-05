@@ -14,15 +14,14 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/proposals/models/proposal_model.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/features/tasks/services/task_requests_service.dart';
 
-import '../../fixtures/task_request_factory.dart';
 import '../../fixtures/profiles.dart';
+import '../../fixtures/task_request_factory.dart';
 
 void main() {
   // Test constants
@@ -330,7 +329,7 @@ void main() {
       AppLogger.i('[R04] Testing TaskStatus enum preservation', tag: logTag);
 
       // Verify all expected TaskStatus values exist
-      final statuses = TaskStatus.values;
+      const statuses = TaskStatus.values;
       expect(statuses.contains(TaskStatus.open), isTrue);
       expect(statuses.contains(TaskStatus.assigned), isTrue);
       expect(statuses.contains(TaskStatus.inProgress), isTrue);
@@ -435,7 +434,7 @@ void main() {
     test('PaymentStatus enum covers all required states', () {
       AppLogger.i('[R05] Testing PaymentStatus enum coverage', tag: logTag);
 
-      final paymentStatuses = PaymentStatus.values;
+      const paymentStatuses = PaymentStatus.values;
 
       // Verify all expected payment states exist
       expect(paymentStatuses.contains(PaymentStatus.unpaid), isTrue);

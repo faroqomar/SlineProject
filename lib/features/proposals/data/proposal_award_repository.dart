@@ -1,7 +1,7 @@
 // Award and payment operations for proposals. Uses secure RPCs (auth.uid() bound).
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/proposals/models/proposal_payment_summary.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProposalAwardRepository {
   ProposalAwardRepository({SupabaseClient? client})

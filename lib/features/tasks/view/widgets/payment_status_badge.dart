@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../core/app_enums.dart';
-import '../../../../core/theme/app_colors.dart';
+import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/theme/app_colors.dart';
 
 /// Compact badge showing payment status with icon and color coding.
 ///

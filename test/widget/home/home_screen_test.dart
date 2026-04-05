@@ -60,12 +60,12 @@ _HomeBundle _buildHomeBundle() {
 
   when(() => profileVm.avatarUrl).thenReturn(null);
   when(() => profileVm.fullName).thenReturn('Test User');
-  when(() => profileVm.loadHeaderProfile()).thenAnswer((_) async {});
+  when(profileVm.loadHeaderProfile).thenAnswer((_) async {});
 
   when(() => notificationVm.unreadCount).thenReturn(0);
 
-  when(() => savedVm.load()).thenAnswer((_) async {});
-  when(() => savedVm.refresh()).thenAnswer((_) async {});
+  when(savedVm.load).thenAnswer((_) async {});
+  when(savedVm.refresh).thenAnswer((_) async {});
 
   return (
     homeVm: homeVm,
@@ -147,8 +147,8 @@ void main() {
           surface: 'home',
         ),
       ).called(1);
-      verify(() => bundle.profileVm.loadHeaderProfile()).called(1);
-      verify(() => bundle.savedVm.refresh()).called(1);
+      verify(bundle.profileVm.loadHeaderProfile).called(1);
+      verify(bundle.savedVm.refresh).called(1);
     });
   });
 }

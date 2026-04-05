@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import '../data/dashboard_repository.dart';
-import '../models/work_item.dart';
-import '../../tasks/services/task_service.dart';
-import '../../booking/services/booking_service.dart';
-import '../../direct_offers/services/direct_offers_service.dart';
+import 'package:sline_app/features/booking/services/booking_service.dart';
+import 'package:sline_app/features/dashboard/data/dashboard_repository.dart';
+import 'package:sline_app/features/dashboard/models/work_item.dart';
+import 'package:sline_app/features/direct_offers/services/direct_offers_service.dart';
+import 'package:sline_app/features/tasks/services/task_service.dart';
 
 /// Generates a short trace ID for correlating multi-step operations.
 String _traceId() {
@@ -157,7 +157,7 @@ class DashboardWorkDelegate {
         return;
       case PrimaryActionType.payEscrow:
         AppLogger.i('Action: payEscrow item=${item.id}', tag: _kTag);
-        break; // Don't return — direct offer payEscrow path is below the switch
+// Don't return — direct offer payEscrow path is below the switch
       case PrimaryActionType.submitEvidence:
         AppLogger.i('Action: submitEvidence item=${item.id}', tag: _kTag);
         return;

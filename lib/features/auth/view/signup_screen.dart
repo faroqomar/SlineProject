@@ -3,13 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/app/main_navigation_screen.dart';
+import 'package:sline_app/core/providers/system_config_view_model.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
-import 'package:sline_app/core/providers/system_config_view_model.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_form_view_model.dart';
 
 /// Signup screen (MVVM) with Glassmorphism design.
@@ -104,8 +104,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
-    final bool signupsDisabled =
+    final colorScheme = context.colorScheme;
+    final signupsDisabled =
         context.watch<SystemConfigViewModel?>()?.config.disableSignups ?? false;
 
     return ChangeNotifierProvider(

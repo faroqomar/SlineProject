@@ -1,23 +1,23 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:sline_app/core/app_enums.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/utils/format_date.dart';
+import 'package:sline_app/core/utils/loading_utils.dart';
+import 'package:sline_app/core/utils/unified_cta_resolver.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/features/booking/models/booking_model.dart';
 import 'package:sline_app/features/booking/viewmodels/booking_view_model.dart';
 import 'package:sline_app/features/chat/view/chat_screen.dart';
-import 'package:sline_app/core/utils/loading_utils.dart';
-import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/features/management/models/work_log_scope.dart';
 import 'package:sline_app/features/management/view/widgets/order_management_section.dart';
-import 'package:sline_app/core/utils/unified_cta_resolver.dart';
 import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
 
 class BookingDetailsScreen extends StatelessWidget {
@@ -286,7 +286,7 @@ class BookingDetailsScreen extends StatelessWidget {
                   entityType: 'booking',
                 );
 
-                final List<Widget> dynamicActions = [];
+                final dynamicActions = <Widget>[];
 
                 if (ctaMeta.allowedActions.contains('escrow_hold')) {
                   dynamicActions.add(
@@ -436,7 +436,7 @@ class BookingDetailsScreen extends StatelessWidget {
       return;
     }
 
-    String draftReason = '';
+    var draftReason = '';
     final reason = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -471,7 +471,7 @@ class BookingDetailsScreen extends StatelessWidget {
 
     final vm = context.read<SafetyViewModel>();
     final ok = await vm.submitDispute(
-      taskId: booking.taskId!,
+      taskId: booking.taskId,
       reason: reason,
       defendantId: defendantId,
     );
@@ -493,55 +493,42 @@ class BookingDetailsScreen extends StatelessWidget {
       case BookingStatus.pending:
         color = AppColors.gold;
         text = 'Pending Confirmation';
-        break;
       case BookingStatus.confirmed:
         color = AppColors.teal;
         text = 'Confirmed';
-        break;
       case BookingStatus.completed:
         color = AppColors.mediumGrey;
         text = 'Completed';
-        break;
       case BookingStatus.canceled:
         color = AppColors.lightRed;
         text = 'Canceled';
-        break;
       case BookingStatus.noShow:
         color = AppColors.lightRed;
         text = 'No Show';
-        break;
       case BookingStatus.inProgress:
         color = AppColors.teal;
         text = 'In Progress';
-        break;
       case BookingStatus.declined:
         color = AppColors.lightRed;
         text = 'Declined';
-        break;
       case BookingStatus.active:
         color = AppColors.teal;
         text = 'Active';
-        break;
       case BookingStatus.paidRequestPending:
         color = AppColors.gold;
         text = 'Request Pending';
-        break;
       case BookingStatus.delivered:
         color = AppColors.teal;
         text = 'Delivered (Review)';
-        break;
       case BookingStatus.refunded:
         color = AppColors.mediumGrey;
         text = 'Refunded';
-        break;
       case BookingStatus.expiredUnanswered:
         color = AppColors.mediumGrey;
         text = 'Expired';
-        break;
       case BookingStatus.disputed:
         color = AppColors.gold;
         text = 'Disputed (Under Review)';
-        break;
     }
 
     return Container(

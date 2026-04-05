@@ -4,22 +4,24 @@
 // Provides optimistic updates (local cache updated immediately)
 // and toggle functionality for save/unsave operations.
 
-import 'package:flutter/foundation.dart';
-
-import '../../../core/services/logger_service.dart';
 import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/features/saved/data/saved_tasks_service.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../tasks/models/task_model.dart';
-import '../data/saved_tasks_service.dart';
 
 class SavedTasksViewModel extends ChangeNotifier {
   final SavedTasksService service;
-  final SupabaseClient _client;
+  final SupabaseClient? _explicitClient;
 
   SavedTasksViewModel({required this.service, SupabaseClient? client})
-    : _client = client ?? Supabase.instance.client {
+    : _explicitClient = client {
     _initAuthListener();
   }
+
+  SupabaseClient get _client => _explicitClient ?? Supabase.instance.client;
 
   final Set<String> _savedTaskIds = <String>{};
   bool _loading = false;

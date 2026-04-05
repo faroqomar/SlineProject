@@ -6,8 +6,8 @@
 /// All operations are logged via AppLogger for traceability.
 library;
 
-import 'package:uuid/uuid.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:uuid/uuid.dart';
 
 const String _logTag = 'test_fixture';
 

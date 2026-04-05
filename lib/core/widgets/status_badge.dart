@@ -32,7 +32,7 @@ class StatusBadge extends StatelessWidget {
     WorkItemType type, {
     bool isSmall = false,
   }) {
-    String statusStr = '';
+    var statusStr = '';
     if (status is BookingStatus) {
       statusStr = status.name;
     } else if (status is TaskStatus) {

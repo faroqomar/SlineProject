@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/payment_service.dart';
+import 'package:sline_app/features/proposals/view/proposal_payment_screen.dart';
 import 'package:sline_app/features/tasks/services/task_service.dart';
 import 'package:sline_app/features/tasks/services/tender_payment_coordinator.dart';
-import 'package:sline_app/features/proposals/view/proposal_payment_screen.dart';
 import 'package:sline_app/features/tasks/viewmodels/tender_payment_view_model.dart';
 
 void main() {

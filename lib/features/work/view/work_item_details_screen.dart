@@ -1,32 +1,31 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:sline_app/features/profile/view/widgets/profile_preview_modal.dart';
 import 'package:provider/provider.dart';
-import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/widgets/app_button.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
-import 'package:sline_app/core/widgets/signed_avatar.dart';
-import 'package:sline_app/features/work/viewmodels/work_item_details_view_model.dart';
-import 'package:sline_app/features/work/view/widgets/submit_delivery_modal.dart';
-import 'package:sline_app/features/work/view/widgets/request_extension_modal.dart';
-import 'package:sline_app/features/work/view/widgets/review_delivery_modal.dart';
-import 'package:sline_app/features/work/models/change_request_model.dart';
-import 'package:sline_app/features/work/models/extension_request_model.dart';
-import 'package:sline_app/features/chat/view/chat_screen.dart';
-import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
-import 'package:sline_app/core/utils/format_date.dart';
+import 'package:sline_app/core/utils/error_mapper.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
+import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
+import 'package:sline_app/features/chat/view/chat_screen.dart';
+import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
+import 'package:sline_app/features/profile/view/widgets/profile_preview_modal.dart';
 import 'package:sline_app/features/proposals/models/proposal_payment_summary.dart';
 import 'package:sline_app/features/proposals/routes/proposal_payment_route.dart';
 import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
+import 'package:sline_app/features/work/view/widgets/request_extension_modal.dart';
+import 'package:sline_app/features/work/view/widgets/review_delivery_modal.dart';
+import 'package:sline_app/features/work/view/widgets/submit_delivery_modal.dart';
+import 'package:sline_app/features/work/view/widgets/work_item_booking_details.dart';
+import 'package:sline_app/features/work/view/widgets/work_item_bottom_actions.dart';
+import 'package:sline_app/features/work/view/widgets/work_item_guard_widgets.dart';
+import 'package:sline_app/features/work/viewmodels/work_item_details_view_model.dart';
 
 class WorkItemDetailsScreen extends StatelessWidget {
   final String id;
@@ -144,6 +143,10 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Tabs
+  // ---------------------------------------------------------------------------
+
   Widget _buildOverviewTab(WorkItemDetailsViewModel vm, String title) {
     if (vm.booking != null) {
       return SingleChildScrollView(
@@ -187,18 +190,167 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     );
   }
 
-  Widget _buildDisputedBanner(WorkItemDetailsViewModel vm) {
-    if (vm.status != UnifiedWorkStatus.disputed) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppDimens.p24),
-      child: _DisputeBannerContent(
-        sourceType: vm.workItem!.sourceType,
-        entityId: vm.workItem!.id,
+  Widget _buildExtensionsTab(WorkItemDetailsViewModel vm) {
+    if (vm.extensionRequests.isEmpty && vm.changeRequests.isEmpty) {
+      return const Center(child: Text('No requests history'));
+    }
+
+    final allRequests = <Widget>[
+      ...vm.extensionRequests.map(ExtensionRequestItem.new),
+      ...vm.changeRequests.map(ChangeRequestItem.new),
+    ];
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(AppDimens.p16),
+      itemCount: allRequests.length,
+      itemBuilder: (context, index) => allRequests[index],
+    );
+  }
+
+  Widget _buildContractTab(WorkItemDetailsViewModel vm) {
+    final contract = vm.activeContract;
+    if (contract == null) {
+      return const Center(child: Text('No active contract'));
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppDimens.p24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Contract Info', style: AppTypography.h3),
+          const SizedBox(height: AppDimens.p16),
+          _infoRow('Version', contract.version.toString()),
+          _infoRow(
+            'Effective Date',
+            contract.createdAt.toString().split(' ')[0],
+          ),
+          const SizedBox(height: AppDimens.p16),
+          Text('Snapshot Data', style: AppTypography.bodyLarge),
+          const SizedBox(height: AppDimens.p8),
+          ...contract.snapshot.entries.map(
+            (e) => _infoRow(e.key, e.value.toString()),
+          ),
+        ],
       ),
     );
   }
 
-  /// Pay & Confirm and Cancel payment on Overview when task is awarded and unpaid.
+  // ---------------------------------------------------------------------------
+  // Small helper widgets kept in parent
+  // ---------------------------------------------------------------------------
+
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: AppTypography.bodySmall),
+          Text(value, style: AppTypography.bodyMedium),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDisputedBanner(WorkItemDetailsViewModel vm) {
+    if (vm.status != UnifiedWorkStatus.disputed) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppDimens.p24),
+      child: DisputeBannerContent(
+        sourceType: vm.workItem!.sourceType,
+        entityId: vm.workItem!.id,
+        safetyViewModel: context.read<SafetyViewModel>(),
+      ),
+    );
+  }
+
+  Widget _buildUnifiedStatus(WorkItemDetailsViewModel vm) {
+    return GlassContainer(
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimens.p16),
+        child: Row(
+          children: [
+            Text(
+              'Status:',
+              style: AppTypography.bodyLarge.copyWith(
+                color: context.colorScheme.text,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(width: AppDimens.p8),
+            Text(
+              vm.status.name.toUpperCase(),
+              style: AppTypography.bodyMedium.copyWith(
+                color: context.colorScheme.primary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContractInfo(WorkItemDetailsViewModel vm) {
+    if (vm.activeContract == null) return const SizedBox.shrink();
+    return GlassContainer(
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimens.p16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Contract Info',
+              style: AppTypography.bodyLarge.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: AppDimens.p8),
+            Text(
+              'Price: ${PriceFormatter.formatPrice(vm.workItem?.price ?? 0)}',
+              style: AppTypography.bodyMedium,
+            ),
+            if (vm.workItem?.deadline != null)
+              Text(
+                'Deadline: ${vm.workItem!.deadline}',
+                style: AppTypography.bodyMedium,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Booking specifics -- delegates to extracted widget
+  // ---------------------------------------------------------------------------
+
+  Widget _buildBookingSpecifics(WorkItemDetailsViewModel vm) {
+    final booking = vm.booking!;
+    final profile = vm.otherPartyProfile;
+    final otherName = profile?['full_name'] ?? 'Unknown User';
+    final otherAvatar = profile?['avatar_url'] as String?;
+
+    return WorkItemBookingDetails(
+      booking: booking,
+      isFreelancer: vm.isFreelancer,
+      otherPartyName: otherName,
+      otherPartyAvatar: otherAvatar,
+      onTapProfile: () {
+        final targetId = vm.isFreelancer
+            ? vm.workItem?.clientId
+            : vm.workItem?.freelancerId;
+        if (targetId != null && context.mounted) {
+          showProfilePreview(context, targetId);
+        }
+      },
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Pending payment actions (task-only, client-only)
+  // ---------------------------------------------------------------------------
+
   Widget _buildPendingPaymentActions(
     BuildContext context,
     WorkItemDetailsViewModel vm,
@@ -277,7 +429,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(e.toString()),
+                      content: Text(ErrorMapper.map(e)),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -291,431 +443,40 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     );
   }
 
-  Widget _buildExtensionsTab(WorkItemDetailsViewModel vm) {
-    if (vm.extensionRequests.isEmpty && vm.changeRequests.isEmpty) {
-      return const Center(child: Text('No requests history'));
-    }
-
-    final allRequests = [
-      ...vm.extensionRequests.map((e) => _ExtensionRequestItem(e)),
-      ...vm.changeRequests.map((c) => _ChangeRequestItem(c)),
-    ];
-    // Sort by createdAt desc?
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(AppDimens.p16),
-      itemCount: allRequests.length,
-      itemBuilder: (context, index) {
-        return allRequests[index];
-      },
-    );
-  }
-
-  Widget _buildContractTab(WorkItemDetailsViewModel vm) {
-    final contract = vm.activeContract;
-    if (contract == null) {
-      return const Center(child: Text('No active contract'));
-    }
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimens.p24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Contract Info', style: AppTypography.h3),
-          const SizedBox(height: AppDimens.p16),
-          _infoRow('Version', contract.version.toString()),
-          _infoRow(
-            'Effective Date',
-            contract.createdAt.toString().split(' ')[0],
-          ),
-          const SizedBox(height: AppDimens.p16),
-          Text('Snapshot Data', style: AppTypography.bodyLarge),
-          const SizedBox(height: AppDimens.p8),
-          ...contract.snapshot.entries.map(
-            (e) => _infoRow(e.key, e.value.toString()),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _infoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: AppTypography.bodySmall),
-          Text(value, style: AppTypography.bodyMedium),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUnifiedStatus(WorkItemDetailsViewModel vm) {
-    return GlassContainer(
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimens.p16),
-        child: Row(
-          children: [
-            Text(
-              'Status:',
-              style: AppTypography.bodyLarge.copyWith(
-                color: context.colorScheme.text,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(width: AppDimens.p8),
-            Text(
-              vm.status.name.toUpperCase(),
-              style: AppTypography.bodyMedium.copyWith(
-                color: context.colorScheme.primary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContractInfo(WorkItemDetailsViewModel vm) {
-    if (vm.activeContract == null) return const SizedBox.shrink();
-    return GlassContainer(
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimens.p16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Contract Info',
-              style: AppTypography.bodyLarge.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: AppDimens.p8),
-            Text(
-              'Price: ${PriceFormatter.formatPrice(vm.workItem?.price ?? 0)}',
-              style: AppTypography.bodyMedium,
-            ),
-            if (vm.workItem?.deadline != null)
-              Text(
-                'Deadline: ${vm.workItem!.deadline}',
-                style: AppTypography.bodyMedium,
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBookingSpecifics(WorkItemDetailsViewModel vm) {
-    final booking = vm.booking!;
-    final profile = vm.otherPartyProfile;
-    final otherName = profile?['full_name'] ?? 'Unknown User';
-    final otherAvatar = profile?['avatar_url'];
-
-    return GlassContainer(
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimens.p16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Booking Details',
-              style: AppTypography.h4.copyWith(color: context.colorScheme.text),
-            ),
-            const SizedBox(height: AppDimens.p16),
-            // Who
-            GestureDetector(
-              onTap: () {
-                final targetId = vm.isFreelancer
-                    ? vm.workItem?.clientId
-                    : vm.workItem?.freelancerId;
-                if (targetId != null && context.mounted) {
-                  showProfilePreview(context, targetId);
-                }
-              },
-              child: Row(
-                children: [
-                  SignedAvatar(
-                    storagePathOrUrl: otherAvatar,
-                    radius: 20,
-                    placeholder: CircleAvatar(
-                      radius: 20,
-                      backgroundColor: context.colorScheme.primary,
-                      child: Text(
-                        otherName.isNotEmpty ? otherName[0].toUpperCase() : '?',
-                        style: AppTypography.bodyLarge.copyWith(
-                          color: AppColors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppDimens.p12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        vm.isFreelancer ? 'Booked by' : 'Provider',
-                        style: AppTypography.bodySmall,
-                      ),
-                      Text(
-                        otherName,
-                        style: AppTypography.bodyLarge.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppDimens.p16),
-            // When
-            _infoRow(
-              'Due',
-              booking.dueAtUtc != null
-                  ? formatUtcToLocal(booking.dueAtUtc!)
-                  : (booking.scheduledAt != null
-                        ? formatUtcToLocal(booking.scheduledAt!)
-                        : 'No deadline'),
-            ),
-            if (booking.deliveryDays != null)
-              _infoRow('Delivery', '${booking.deliveryDays} days'),
-            // Payment
-            _infoRow('Payment', booking.paymentStatus.name.toUpperCase()),
-            // Note
-            if (booking.note != null && booking.note!.isNotEmpty) ...[
-              const SizedBox(height: AppDimens.p16),
-              Text('Note', style: AppTypography.bodySmall),
-              const SizedBox(height: AppDimens.p4),
-              Text(
-                booking.note!,
-                style: AppTypography.bodyMedium.copyWith(
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
+  // ---------------------------------------------------------------------------
+  // Bottom actions -- delegates to extracted widget
+  // ---------------------------------------------------------------------------
 
   Widget? _buildBottomActions(
     WorkItemDetailsViewModel vm,
     BuildContext context,
   ) {
-    // Determine actions based on role and status
-    final canSubmit = vm.isFreelancer && vm.status == UnifiedWorkStatus.active;
-    final canRequestExtension = vm.status == UnifiedWorkStatus.active;
+    if (vm.workItem == null) return null;
 
-    // Booking Acceptance logic
-    final isPendingBooking =
-        vm.workItem?.isBooking == true &&
-        (vm.status == UnifiedWorkStatus.pending ||
-            vm.status == UnifiedWorkStatus.requestPending);
-    final canAccept = vm.isFreelancer && isPendingBooking;
-    final canCancel = vm.isClient && isPendingBooking;
-    final canReview = vm.canReview;
-    final isAwaitingClientReview =
-        vm.isFreelancer && vm.status == UnifiedWorkStatus.delivered;
-
-    if (!canSubmit &&
-        !canRequestExtension &&
-        !canAccept &&
-        !canReview &&
-        !canCancel &&
-        !isAwaitingClientReview) {
-      return null;
-    }
-
-    Widget? primaryActionBlock;
-    final List<Widget> secondaryActionButtons = [];
-
-    bool promotedMessageToPrimary = false;
-
-    if (canAccept) {
-      primaryActionBlock = Row(
-        children: [
-          Expanded(
-            child: AppButton(
-              text: 'Decline',
-              isPrimary: false,
-              backgroundColor: AppColors.lightRed,
-              onPressed: () => vm.declineBooking(),
-            ),
-          ),
-          const SizedBox(width: AppDimens.p12),
-          Expanded(
-            child: AppButton(
-              text: 'Accept',
-              onPressed: () => vm.acceptBooking(),
-            ),
-          ),
-        ],
-      );
-    } else if (canCancel) {
-      primaryActionBlock = AppButton(
-        text: 'Cancel Request',
-        isPrimary: false,
-        backgroundColor: AppColors.lightRed,
-        onPressed: () => vm.cancelBooking(),
-      );
-    } else {
-      if (canSubmit) {
-        primaryActionBlock = AppButton(
-          text: 'Submit Work',
-          onPressed: () => _showDeliveryModal(context, vm),
-        );
-      } else if (canReview) {
-        primaryActionBlock = _ReviewWithDisputeGuard(
-          sourceType: vm.workItem!.sourceType,
-          entityId: vm.workItem!.id,
-          onReview: () => _showReviewModal(context, vm),
-        );
-      } else if (isAwaitingClientReview) {
-        primaryActionBlock = const AppButton(
-          text: 'Waiting for Client Review',
-          isPrimary: false,
-          onPressed: null,
-        );
-      } else if (vm.status == UnifiedWorkStatus.active ||
-          vm.status == UnifiedWorkStatus.delivered) {
-        promotedMessageToPrimary = true;
-        primaryActionBlock = AppButton(
-          text: 'Message',
-          isPrimary: false,
-          icon: Icons.chat_bubble_outline,
-          onPressed: () => _handleMessage(context, vm),
-        );
-      }
-
-      if (canRequestExtension) {
-        secondaryActionButtons.add(
-          _buildVerticalIconAction(
-            context: context,
-            icon: Icons.timer_outlined,
-            label: 'Extend',
-            onPressed: () => _showExtensionModal(context, vm),
-          ),
-        );
-      }
-
-      if (!promotedMessageToPrimary &&
-          (vm.status == UnifiedWorkStatus.active ||
-              vm.status == UnifiedWorkStatus.delivered)) {
-        secondaryActionButtons.add(
-          _buildVerticalIconAction(
-            context: context,
-            icon: Icons.chat_bubble_outline,
-            label: 'Message',
-            onPressed: () => _handleMessage(context, vm),
-          ),
-        );
-      }
-
-      if (_canShowReportIssue(vm)) {
-        secondaryActionButtons.add(
-          _ReportIssueGuard(
-            sourceType: vm.workItem!.sourceType,
-            entityId: vm.workItem!.id,
-            onReportIssue: () => _showDisputeDialog(context, vm),
-            builder: (ctx, onPressed) => _buildVerticalIconAction(
-              context: ctx,
-              icon: Icons.warning_amber_rounded,
-              label: 'Report',
-              color: AppColors.lightRed,
-              onPressed: onPressed,
-            ),
-          ),
-        );
-      }
-    }
-
-    if (primaryActionBlock == null && secondaryActionButtons.isEmpty) {
-      return null;
-    }
-
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: context.colorScheme.cardBackground,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            offset: const Offset(0, -4),
-            blurRadius: AppDimens.p16,
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimens.p16,
-            vertical: AppDimens.p12,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              if (secondaryActionButtons.isNotEmpty) ...[
-                ...secondaryActionButtons.map(
-                  (btn) => Padding(
-                    padding: const EdgeInsets.only(right: AppDimens.p12),
-                    child: btn,
-                  ),
-                ),
-              ],
-              if (primaryActionBlock != null)
-                Expanded(child: primaryActionBlock)
-              else
-                const Spacer(),
-            ],
-          ),
-        ),
-      ),
+    return WorkItemBottomActions(
+      status: vm.status,
+      isFreelancer: vm.isFreelancer,
+      isClient: vm.isClient,
+      isBooking: vm.workItem?.isBooking ?? false,
+      canReview: vm.canReview,
+      sourceType: vm.workItem!.sourceType,
+      entityId: vm.workItem!.id,
+      canShowReportIssue: _canShowReportIssue(vm),
+      safetyViewModel: context.read<SafetyViewModel>(),
+      onSubmitWork: () => _showDeliveryModal(context, vm),
+      onReview: () => _showReviewModal(context, vm),
+      onRequestExtension: () => _showExtensionModal(context, vm),
+      onMessage: () => _handleMessage(context, vm),
+      onReportIssue: () => _showDisputeDialog(context, vm),
+      onAcceptBooking: () => vm.acceptBooking(),
+      onDeclineBooking: () => vm.declineBooking(),
+      onCancelBooking: () => vm.cancelBooking(),
     );
   }
 
-  Widget _buildVerticalIconAction({
-    required BuildContext context,
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-    Color? color,
-  }) {
-    return InkWell(
-      onTap: onPressed,
-      borderRadius: BorderRadius.circular(AppDimens.r8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimens.p4,
-          vertical: AppDimens.p4,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 22,
-              color: color ?? context.colorScheme.textSecondary,
-            ),
-            const SizedBox(height: AppDimens.p2),
-            Text(
-              label,
-              style: AppTypography.bodySmall.copyWith(
-                fontSize: 10,
-                color: color ?? context.colorScheme.textSecondary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // ---------------------------------------------------------------------------
+  // Modal / dialog launchers
+  // ---------------------------------------------------------------------------
 
   void _showDeliveryModal(BuildContext context, WorkItemDetailsViewModel vm) {
     showModalBottomSheet(
@@ -824,7 +585,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
       }
     }
 
-    String draftReason = '';
+    var draftReason = '';
     final reason = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -865,9 +626,9 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
         defendantId: defendantId,
       );
     } else {
-      assert(sourceType == 'booking');
+      assert(sourceType == 'booking', 'Expected sourceType to be booking');
       ok = await safetyVm.submitDispute(
-        taskId: vm.booking!.taskId!,
+        taskId: vm.booking!.taskId,
         reason: reason,
         defendantId: defendantId,
       );
@@ -908,192 +669,17 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
           MaterialPageRoute(builder: (_) => ChatScreen(conversation: convo)),
         ),
       );
-    } on Exception catch (e) {
+    } on Exception catch (_) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
-            'Failed to open chat: ${e.toString().replaceAll('Exception: ', '')}',
+            'Failed to open chat. Please try again.',
           ),
         ),
       );
     } finally {
       loader.close();
     }
-  }
-}
-
-class _ExtensionRequestItem extends StatelessWidget {
-  final ExtensionRequestModel req;
-  const _ExtensionRequestItem(this.req);
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: const Icon(Icons.schedule),
-        title: const Text('Extension Request'),
-        subtitle: Text(
-          '${req.reason} (+${_calculateDays(req.newDeadline)} days)',
-        ),
-        trailing: Text(req.status),
-      ),
-    );
-  }
-
-  int _calculateDays(DateTime newDeadline) {
-    return newDeadline.difference(DateTime.now()).inDays; // Rough estimate
-  }
-}
-
-class _ChangeRequestItem extends StatelessWidget {
-  final ChangeRequestModel req;
-  const _ChangeRequestItem(this.req);
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: const Icon(Icons.edit_note),
-        title: const Text('Change Request'),
-        subtitle: Text(req.description ?? 'No description'),
-        trailing: Text(req.status),
-      ),
-    );
-  }
-}
-
-/// Shows dispute banner text: "Dispute under review" (open) or "Work frozen — in dispute" (active).
-class _DisputeBannerContent extends StatelessWidget {
-  const _DisputeBannerContent({
-    required this.sourceType,
-    required this.entityId,
-  });
-
-  final String sourceType;
-  final String entityId;
-
-  @override
-  Widget build(BuildContext context) {
-    Future<String?> statusFuture;
-    final safetyVm = context.read<SafetyViewModel>();
-    if (sourceType == 'booking') {
-      statusFuture = safetyVm.getDisputeStatusForBooking(entityId);
-    } else if (sourceType == 'direct_offer') {
-      statusFuture = safetyVm.getDisputeStatusForDirectOffer(entityId);
-    } else {
-      statusFuture = safetyVm.getDisputeStatusForTask(entityId);
-    }
-    return FutureBuilder<String?>(
-      future: statusFuture,
-      builder: (context, snapshot) {
-        final status = snapshot.data;
-        final text = status == 'active'
-            ? 'Work frozen — in dispute.'
-            : 'Dispute under review. Approve and release disabled.';
-        return GlassContainer(
-          child: Padding(
-            padding: const EdgeInsets.all(AppDimens.p12),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.info_outline,
-                  size: 20,
-                  color: context.colorScheme.primary,
-                ),
-                const SizedBox(width: AppDimens.p8),
-                Expanded(
-                  child: Text(
-                    text,
-                    style: AppTypography.bodySmall.copyWith(
-                      color: context.colorScheme.text,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-/// Wraps the Report Issue button: hidden when an open dispute exists.
-class _ReportIssueGuard extends StatelessWidget {
-  const _ReportIssueGuard({
-    required this.sourceType,
-    required this.entityId,
-    required this.onReportIssue,
-    required this.builder,
-  });
-
-  final String sourceType;
-  final String entityId;
-  final VoidCallback onReportIssue;
-  final Widget Function(BuildContext, VoidCallback) builder;
-
-  @override
-  Widget build(BuildContext context) {
-    final safetyVm = context.read<SafetyViewModel>();
-    final Future<bool> hasDisputeFuture;
-    if (sourceType == 'booking') {
-      hasDisputeFuture = safetyVm.hasOpenDisputeForBooking(entityId);
-    } else if (sourceType == 'direct_offer') {
-      hasDisputeFuture = safetyVm.hasOpenDisputeForDirectOffer(entityId);
-    } else {
-      hasDisputeFuture = safetyVm.hasOpenDisputeForTask(entityId);
-    }
-    return FutureBuilder<bool>(
-      future: hasDisputeFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox.shrink();
-        }
-        final hasOpenDispute = snapshot.data ?? true;
-        if (hasOpenDispute) return const SizedBox.shrink();
-        return builder(context, onReportIssue);
-      },
-    );
-  }
-}
-
-/// Wraps the Review button: disabled while an open dispute exists for this work item.
-class _ReviewWithDisputeGuard extends StatelessWidget {
-  const _ReviewWithDisputeGuard({
-    required this.sourceType,
-    required this.entityId,
-    required this.onReview,
-  });
-
-  final String sourceType;
-  final String entityId;
-  final VoidCallback onReview;
-
-  @override
-  Widget build(BuildContext context) {
-    final safetyVm = context.read<SafetyViewModel>();
-    final Future<bool> hasDisputeFuture;
-    if (sourceType == 'booking') {
-      hasDisputeFuture = safetyVm.hasOpenDisputeForBooking(entityId);
-    } else if (sourceType == 'direct_offer') {
-      hasDisputeFuture = safetyVm.hasOpenDisputeForDirectOffer(entityId);
-    } else {
-      hasDisputeFuture = safetyVm.hasOpenDisputeForTask(entityId);
-    }
-
-    return FutureBuilder<bool>(
-      future: hasDisputeFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const AppButton(text: 'Checking…', onPressed: null);
-        }
-        final hasOpenDispute = snapshot.data ?? true;
-        return AppButton(
-          text: 'Review',
-          onPressed: hasOpenDispute ? null : onReview,
-        );
-      },
-    );
   }
 }

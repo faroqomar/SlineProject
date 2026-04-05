@@ -123,8 +123,13 @@ function isTrustedFinishUrl(url: URL) {
     return true;
   }
 
-  return url.protocol === "http:" &&
-    (url.hostname === "localhost" || url.hostname === "127.0.0.1");
+  const isLocal = Deno.env.get("ENVIRONMENT") !== "production";
+  if (isLocal) {
+    return url.protocol === "http:" &&
+      (url.hostname === "localhost" || url.hostname === "127.0.0.1");
+  }
+
+  return false;
 }
 
 function safeParseUrl(value: string | null | undefined) {

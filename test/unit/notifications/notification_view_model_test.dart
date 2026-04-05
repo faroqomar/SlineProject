@@ -2,10 +2,9 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 import 'package:sline_app/features/notifications/services/notification_service.dart';
 import 'package:sline_app/features/notifications/viewmodels/notification_view_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _MockNotificationService extends Mock implements NotificationService {}
 
@@ -79,7 +78,7 @@ void main() {
         authStateChanges: authController.stream,
       );
       addTearDown(vm.dispose);
-      expect(() => vm.retry(), returnsNormally);
+      expect(vm.retry, returnsNormally);
     });
   });
 }

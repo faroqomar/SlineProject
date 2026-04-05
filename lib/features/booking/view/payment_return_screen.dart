@@ -7,6 +7,9 @@ import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/utils/web_url_utils_stub.dart'
+    if (dart.library.html) 'package:sline_app/core/utils/web_url_utils_web.dart'
+    as web_url_utils;
 import 'package:sline_app/features/booking/models/payment_return_args.dart';
 import 'package:sline_app/features/booking/viewmodels/booking_view_model.dart';
 
@@ -36,6 +39,11 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
   Future<void> _resolvePaymentReturn() async {
     final paymentReturn =
         widget.initialArgs ?? parsePaymentReturnArgs(Uri.base);
+
+    // Clear payment params from the browser URL immediately so they are not
+    // re-detected on subsequent navigations or hot-restarts.
+    web_url_utils.clearPaymentReturnParamsFromUrl();
+
     final pendingStore = context.read<PaymentPendingStore>();
     final pendingContext = pendingStore.load();
 

@@ -1,6 +1,7 @@
 import 'dart:typed_data';
+
+import 'package:sline_app/core/config/storage_config.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/config/storage_config.dart';
 
 /// Service responsible for uploading user avatar images to Supabase Storage
 /// and generating short-lived signed URLs for private display.

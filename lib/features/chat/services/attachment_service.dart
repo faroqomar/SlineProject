@@ -1,32 +1,8 @@
-import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/config/storage_config.dart';
 
-// #region agent log
-void _agentDebugLog(
-  String location,
-  String message,
-  Map<String, dynamic> data,
-  String hypothesisId,
-) {
-  try {
-    final line = jsonEncode({
-      'sessionId': '9844e5',
-      'timestamp': DateTime.now().millisecondsSinceEpoch,
-      'location': location,
-      'message': message,
-      'data': data,
-      'hypothesisId': hypothesisId,
-    });
-    File(
-      '/Users/eros/Dev/Eros_Projects/Sline/sline_app/.cursor/debug-9844e5.log',
-    ).writeAsStringSync('$line\n', mode: FileMode.append);
-  } on Exception catch (_) {}
-}
-// #endregion
+import 'package:sline_app/core/config/storage_config.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Handles uploads to the private bucket 'chat-attachments'.
 ///
@@ -68,14 +44,6 @@ class AttachmentService {
   /// On 404, retries once with the alternate path shape (convos/convos/... <-> convos/...)
   /// so both legacy and current upload paths can resolve.
   Future<String> createSignedUrl(String path, {int? expiresInSeconds}) async {
-    // #region agent log
-    _agentDebugLog('attachment_service.dart:createSignedUrl', 'entry', {
-      'path': path,
-      'bucket': _bucket,
-      'authUid': _client.auth.currentUser?.id,
-      'hasSession': _client.auth.currentSession != null,
-    }, 'H-A');
-    // #endregion
     final seconds =
         expiresInSeconds ?? SharedStorageConfig.chatAttachmentTtlSeconds;
     const prefixLegacy = 'convos/convos/';
@@ -111,35 +79,16 @@ class AttachmentService {
               .createSignedUrl(alt, seconds);
           return res;
         } on Exception catch (_) {
-          // #region agent log
-          _agentDebugLog('attachment_service.dart:createSignedUrl', 'throw', {
-            'path': path,
-            'alternateTried': alt,
-            'errorType': e.runtimeType.toString(),
-            'errorToString': e.toString(),
-            if (e is StorageException) 'statusCode': e.statusCode,
-            if (e is StorageException) 'message': e.message,
-          }, 'H-A');
-          // #endregion
           rethrow;
         }
       }
-      // #region agent log
-      _agentDebugLog('attachment_service.dart:createSignedUrl', 'throw', {
-        'path': path,
-        'errorType': e.runtimeType.toString(),
-        'errorToString': e.toString(),
-        if (e is StorageException) 'statusCode': e.statusCode,
-        if (e is StorageException) 'message': e.message,
-      }, 'H-A');
-      // #endregion
       rethrow;
     }
   }
 
   // --- helpers ---
   String _sanitize(String name) {
-    return name.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+    return name.replaceAll(RegExp('[^A-Za-z0-9._-]'), '_');
   }
 
   String _randomId(int length) {

@@ -36,20 +36,15 @@ abstract class RoleSwitchAware {
 /// Mock implementation of [RoleSwitchAware] for testing
 class MockRoleSwitchAware implements RoleSwitchAware {
   bool _wasTeardownCalled = false;
-  Exception? _teardownError;
+  Exception? teardownError;
 
   /// Whether teardownForRoleSwitch was called
   bool get wasTeardownCalled => _wasTeardownCalled;
 
-  /// Set an error to throw when teardown is called
-  set teardownError(Exception? error) {
-    _teardownError = error;
-  }
-
   /// Reset the mock state for reuse across tests
   void reset() {
     _wasTeardownCalled = false;
-    _teardownError = null;
+    teardownError = null;
   }
 
   @override
@@ -59,8 +54,8 @@ class MockRoleSwitchAware implements RoleSwitchAware {
       'MockRoleSwitchAware.teardownForRoleSwitch called',
       tag: _logTag,
     );
-    if (_teardownError != null) {
-      throw _teardownError!;
+    if (teardownError != null) {
+      throw teardownError!;
     }
   }
 }

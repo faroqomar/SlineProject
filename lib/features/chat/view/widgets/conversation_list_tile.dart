@@ -4,10 +4,10 @@ import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/utils/format_date.dart' as date_utils;
 import 'package:sline_app/core/widgets/signed_avatar.dart';
-import '../../../../core/utils/format_date.dart' as date_utils;
-import '../../models/conversation_model.dart';
-import '../../viewmodels/chat_view_model.dart';
+import 'package:sline_app/features/chat/models/conversation_model.dart';
+import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 
 /// Individual message tile widget matching the new design.
 class ConversationListTile extends StatelessWidget {
@@ -39,13 +39,13 @@ class ConversationListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
     final vm = context.read<ChatViewModel>();
     final myId = vm.currentUserId;
-    final bool isUnread = _isUnread(myId);
+    final isUnread = _isUnread(myId);
 
-    final bool isActiveConvo = vm.activeConversation?.id == conversation.id;
-    final bool isOnline = isActiveConvo
+    final isActiveConvo = vm.activeConversation?.id == conversation.id;
+    final isOnline = isActiveConvo
         ? vm.otherUserTyping
         : _isTypingWithin15s(
             conversation.presenceUpdatedAt,

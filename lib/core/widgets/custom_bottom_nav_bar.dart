@@ -1,13 +1,14 @@
 import 'dart:ui';
-import 'package:flutter/material.dart';
+
 import 'package:flutter/foundation.dart'; // For kIsWeb
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/providers/navigation_provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/providers/navigation_provider.dart';
 
 /// Custom bottom navigation bar with iOS 26-inspired liquid glass effect.
 ///
@@ -30,10 +31,10 @@ class CustomBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
 
     // Navigation items configuration
-    final List<_NavItem> navItems = [
+    final navItems = <_NavItem>[
       const _NavItem(
         NavView.home,
         Icons.home_outlined,
@@ -81,7 +82,7 @@ class CustomBottomNavBar extends StatelessWidget {
 
     return Consumer<NavigationProvider>(
       builder: (context, navigationProvider, child) {
-        final int currentIndex = navigationProvider.currentIndex.clamp(
+        final currentIndex = navigationProvider.currentIndex.clamp(
           0,
           navItems.length - 1,
         );
@@ -105,9 +106,9 @@ class CustomBottomNavBar extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: navItems.asMap().entries.map((entry) {
-                        final int index = entry.key;
-                        final _NavItem item = entry.value;
-                        final bool isActive = currentIndex == index;
+                        final index = entry.key;
+                        final item = entry.value;
+                        final isActive = currentIndex == index;
 
                         return _LiquidGlassNavItem(
                           item: item,
@@ -133,9 +134,9 @@ class CustomBottomNavBar extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: navItems.asMap().entries.map((entry) {
-                          final int index = entry.key;
-                          final _NavItem item = entry.value;
-                          final bool isActive = currentIndex == index;
+                          final index = entry.key;
+                          final item = entry.value;
+                          final isActive = currentIndex == index;
 
                           return _LiquidGlassNavItem(
                             item: item,

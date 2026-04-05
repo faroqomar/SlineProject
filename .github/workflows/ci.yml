@@ -79,12 +79,24 @@ jobs:
             WARN=1
           fi
 
+          echo ""
+          echo "=== Check 7: Core services importing feature layer (warning-only, max 5 allowed) ==="
+          CORE_FEATURE_IMPORTS=$(grep -rn --include='*.dart' 'import.*features/' lib/core/ 2>/dev/null | wc -l | tr -d ' ')
+          if [ "$CORE_FEATURE_IMPORTS" -gt 5 ]; then
+            echo "::error::$CORE_FEATURE_IMPORTS core->features imports found (max 5 allowed — DeepLinkService refactored, remaining are shared widgets/cache)"
+            grep -rn --include='*.dart' 'import.*features/' lib/core/ 2>/dev/null || true
+            WARN=1
+          elif [ "$CORE_FEATURE_IMPORTS" -gt 0 ]; then
+            echo "::notice::$CORE_FEATURE_IMPORTS core->features imports (within allowed threshold of 5)"
+          fi
+          # Known remaining: dashboard_cache_service (2), status_badge (1), signed_image (1), signed_avatar (1)
+
           if [ $WARN -eq 1 ]; then
             echo ""
             echo "::error::Architecture violations detected. Fix before merging."
             exit 1
           else
-            echo "All architecture checks passed."
+            echo "All architecture checks passed (Check 7 warning-only)."
           fi
 
   test:
@@ -119,7 +131,7 @@ jobs:
       - name: Enforce coverage floor
         if: always()
         run: |
-          THRESHOLD=28
+          THRESHOLD=33
           if [ -f coverage/lcov.info ]; then
             TOTAL=$(grep -c '^DA:' coverage/lcov.info || echo 0)
             HIT=$(grep '^DA:' coverage/lcov.info | grep -cv ',0$' || echo 0)

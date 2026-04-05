@@ -1,8 +1,8 @@
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/utils/error_mapper.dart';
+import 'package:sline_app/features/management/models/work_log_model.dart';
+import 'package:sline_app/features/management/models/work_log_scope.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/services/logger_service.dart';
-import '../../../core/utils/error_mapper.dart';
-import '../models/work_log_model.dart';
-import '../models/work_log_scope.dart';
 
 class WorkLogService {
   final SupabaseClient _client;

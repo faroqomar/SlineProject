@@ -3,13 +3,9 @@ import 'package:sline_app/core/utils/signed_url_cache.dart';
 
 void main() {
   group('SignedUrlCache T40-T41', () {
-    setUp(() {
-      SignedUrlCache.clear();
-    });
+    setUp(SignedUrlCache.clear);
 
-    tearDown(() {
-      SignedUrlCache.clear();
-    });
+    tearDown(SignedUrlCache.clear);
 
     test('T40 SignedUrlCache set/get hit path', () {
       const path = 'task-images/user-1/task-1/image.jpg';

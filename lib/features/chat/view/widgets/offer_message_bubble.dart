@@ -50,7 +50,7 @@ class OfferMessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
     final maxWidth = MediaQuery.of(context).size.width * 0.85;
 
     return Align(

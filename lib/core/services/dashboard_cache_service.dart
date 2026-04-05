@@ -1,9 +1,10 @@
 import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/features/dashboard/models/work_item.dart';
 import 'package:sline_app/features/dashboard/models/activity_log.dart';
+import 'package:sline_app/features/dashboard/models/work_item.dart';
 
 /// Service for caching dashboard data to enable instant loading
 ///

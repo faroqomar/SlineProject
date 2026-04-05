@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-import '../../../../../../core/utils/format_price.dart';
-import '../../../../../../core/app_enums.dart';
-import '../../../../../../core/services/logger_service.dart';
-import '../../../../../../core/theme/app_colors.dart';
-import '../../../../../favorites/viewmodels/favorites_view_model.dart';
-import '../../../../../favorites/models/favorites_mutation_result.dart';
-import '../../../../../proposals/models/proposal_payment_summary.dart';
-import '../../../../../proposals/routes/proposal_payment_route.dart';
-import '../../../../models/task_request_model.dart';
-import '../../../../viewmodels/task_requests_view_model.dart';
-import '../../payment_status_badge.dart';
-import '../../expiration_countdown.dart';
+import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/utils/format_price.dart';
+import 'package:sline_app/features/favorites/models/favorites_mutation_result.dart';
+import 'package:sline_app/features/favorites/viewmodels/favorites_view_model.dart';
+import 'package:sline_app/features/proposals/models/proposal_payment_summary.dart';
+import 'package:sline_app/features/proposals/routes/proposal_payment_route.dart';
+import 'package:sline_app/features/tasks/models/task_request_model.dart';
+import 'package:sline_app/features/tasks/view/widgets/expiration_countdown.dart';
+import 'package:sline_app/features/tasks/view/widgets/payment_status_badge.dart';
+import 'package:sline_app/features/tasks/viewmodels/task_requests_view_model.dart';
 
 /// One row/tile for a TaskRequest in the offers list.
 /// Add-to-favorites uses FavoritesViewModel only (MVVM; no direct service).
@@ -511,7 +510,7 @@ class RequestTile extends StatelessWidget {
       ),
     );
 
-    if (confirmed == true && context.mounted) {
+    if ((confirmed ?? false) && context.mounted) {
       AppLogger.i(
         'User confirmed cancel award for request ${request.id}',
         tag: 'RequestTile',
@@ -519,7 +518,7 @@ class RequestTile extends StatelessWidget {
 
       final success = await viewModel?.cancelAwardedOffer(request.id);
 
-      if (context.mounted && success == true) {
+      if (context.mounted && (success ?? false)) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Award cancelled successfully'),
@@ -546,12 +545,10 @@ class RequestTile extends StatelessWidget {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Added to favorites')));
-        break;
       case FavoritesMutationResult.duplicate:
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Already in favorites')));
-        break;
       case FavoritesMutationResult.skipped:
         // Already in progress; no snackbar (button is disabled via Consumer).
         break;
@@ -563,7 +560,6 @@ class RequestTile extends StatelessWidget {
             content: Text(vm.error ?? 'Could not add. Please try again.'),
           ),
         );
-        break;
     }
   }
 }

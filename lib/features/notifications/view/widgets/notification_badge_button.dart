@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/services/deep_link_service.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
-import 'package:sline_app/core/services/deep_link_service.dart';
-import 'package:sline_app/features/notifications/viewmodels/notification_view_model.dart';
 import 'package:sline_app/features/notifications/view/notifications_modal.dart';
+import 'package:sline_app/features/notifications/viewmodels/notification_view_model.dart';
 
 class NotificationBadgeButton extends StatelessWidget {
   const NotificationBadgeButton({super.key});
@@ -36,7 +36,9 @@ class NotificationBadgeButton extends StatelessWidget {
               );
               await context.read<DeepLinkService>().handleNotification(
                 context,
-                selected,
+                entityType: selected.relatedEntityType,
+                entityId: selected.relatedEntityId,
+                metadata: selected.metadata,
               );
             }
           },

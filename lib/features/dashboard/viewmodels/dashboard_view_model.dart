@@ -1,26 +1,24 @@
 import 'package:flutter/foundation.dart';
 import 'package:sline_app/core/app_enums.dart';
-import 'package:sline_app/core/services/logger_service.dart';
-import '../../../core/mixins/role_switch_aware.dart';
-import '../../../core/services/role_switch_coordinator.dart';
-import '../data/dashboard_repository.dart';
-import '../models/work_item.dart';
-import '../models/activity_log.dart';
-import '../models/dashboard_counters.dart';
-import '../models/inbox_task_group.dart';
+import 'package:sline_app/core/mixins/role_switch_aware.dart';
 import 'package:sline_app/core/services/dashboard_cache_service.dart';
-
-import '../../tasks/models/task_model.dart';
-import '../../tasks/services/task_service.dart';
-import '../../booking/models/booking_model.dart';
-import '../../booking/services/booking_service.dart';
-import '../../direct_offers/services/direct_offers_service.dart';
-import '../../tasks/models/task_request_model.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/services/role_switch_coordinator.dart';
+import 'package:sline_app/features/booking/models/booking_model.dart';
+import 'package:sline_app/features/booking/services/booking_service.dart';
+import 'package:sline_app/features/dashboard/data/dashboard_repository.dart';
+import 'package:sline_app/features/dashboard/models/activity_log.dart';
+import 'package:sline_app/features/dashboard/models/dashboard_counters.dart';
+import 'package:sline_app/features/dashboard/models/inbox_task_group.dart';
+import 'package:sline_app/features/dashboard/models/work_item.dart';
+import 'package:sline_app/features/dashboard/viewmodels/dashboard_booking_delegate.dart';
+import 'package:sline_app/features/dashboard/viewmodels/dashboard_inbox_delegate.dart';
+import 'package:sline_app/features/dashboard/viewmodels/dashboard_work_delegate.dart';
+import 'package:sline_app/features/direct_offers/services/direct_offers_service.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
+import 'package:sline_app/features/tasks/models/task_request_model.dart';
+import 'package:sline_app/features/tasks/services/task_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import 'dashboard_work_delegate.dart';
-import 'dashboard_inbox_delegate.dart';
-import 'dashboard_booking_delegate.dart';
 
 class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
   static const _kTag = 'dashboard';
@@ -209,7 +207,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
     if (_abortIfDisposed()) return;
     await _fetchWorkItems();
     final mgmt = await _inboxDelegate.loadManagementDataInternal(_currentRole);
-    _inboxDelegate.setMyTasks(mgmt['tasks'] as List<Task>);
+    _inboxDelegate.myTasks = mgmt['tasks'] as List<Task>;
     if (_abortIfDisposed()) return;
     _safeNotify();
   }
@@ -223,7 +221,7 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
     if (_abortIfDisposed()) return;
     await _fetchWorkItems();
     final mgmt = await _inboxDelegate.loadManagementDataInternal(_currentRole);
-    _inboxDelegate.setMyTasks(mgmt['tasks'] as List<Task>);
+    _inboxDelegate.myTasks = mgmt['tasks'] as List<Task>;
     if (_abortIfDisposed()) return;
     _safeNotify();
   }

@@ -1,18 +1,18 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:sline_app/core/mixins/role_switch_aware.dart';
+import 'package:sline_app/core/services/account_guard_service.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/services/role_switch_coordinator.dart';
+import 'package:sline_app/features/chat/attachments/services/send_attachment_usecase.dart';
+import 'package:sline_app/features/chat/data/chat_repository.dart';
+import 'package:sline_app/features/chat/models/conversation_model.dart';
+import 'package:sline_app/features/chat/models/message_model.dart';
+import 'package:sline_app/features/chat/services/chat_realtime_merger.dart';
+import 'package:sline_app/features/direct_offers/services/direct_offers_service.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../data/chat_repository.dart';
-import '../models/conversation_model.dart';
-import '../models/message_model.dart';
-import '../../../core/services/logger_service.dart';
-import '../../../core/services/account_guard_service.dart';
-import '../../../core/mixins/role_switch_aware.dart';
-import '../../../core/services/role_switch_coordinator.dart';
-import '../attachments/services/send_attachment_usecase.dart';
-import '../services/chat_realtime_merger.dart';
-import '../../tasks/models/task_model.dart';
-import '../../direct_offers/services/direct_offers_service.dart';
 
 /// ChatViewModel — MVVM state holder for Chat feature.
 ///
@@ -633,7 +633,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
             currentMessages
               ..clear()
               ..addAll(merged);
-            if (_presenceReceiptsEnabled == true && hasNewFromOther) {
+            if ((_presenceReceiptsEnabled ?? false) && hasNewFromOther) {
               unawaited(markReceiptsForActive(delivered: true, seen: false));
             }
             _offerRefreshDebounce?.cancel();
@@ -663,7 +663,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
           },
         );
 
-    if (_presenceReceiptsEnabled == true) {
+    if (_presenceReceiptsEnabled ?? false) {
       unawaited(markReceiptsForActive(delivered: true, seen: false));
       final otherId = activeConversation!.user1Id == currentUserId
           ? activeConversation!.user2Id
@@ -719,7 +719,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
   }
 
   /// Whether presence and receipt UI is enabled (from feature flag).
-  bool get isPresenceReceiptsEnabled => _presenceReceiptsEnabled == true;
+  bool get isPresenceReceiptsEnabled => _presenceReceiptsEnabled ?? false;
 
   /// Whether the other participant is typing (false if presence older than 15s).
   bool get otherUserTyping {

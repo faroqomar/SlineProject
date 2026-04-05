@@ -1,7 +1,6 @@
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/features/profile/models/profile_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import '../../../core/services/logger_service.dart';
-import '../models/profile_model.dart';
 
 /// Reads safe cross-user profile summary data through a server-side RPC.
 class ProfileSummaryService {
