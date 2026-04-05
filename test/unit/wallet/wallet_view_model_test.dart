@@ -541,7 +541,10 @@ void main() {
       final result = await vm.requestWithdrawal(amount: 100);
 
       expect(result, isFalse);
-      expect(vm.error, 'Invalid withdrawal amount. Please check and try again.');
+      expect(
+        vm.error,
+        'Invalid withdrawal amount. Please check and try again.',
+      );
       expect(vm.isWithdrawing, isFalse);
     });
 

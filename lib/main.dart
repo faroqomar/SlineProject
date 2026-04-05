@@ -131,7 +131,6 @@ void main() async {
       // Inner error zone catches async exceptions
       await runZonedGuarded(
         () async {
-
           // Global Flutter framework error handler (widget build errors, etc.)
           FlutterError.onError = (FlutterErrorDetails details) {
             if (isIgnoredFlutterWebEngineDisposeError(details.exception) ||
@@ -283,16 +282,18 @@ class SLineApp extends StatelessWidget {
           create: (_) => FavoritesViewModel(service: FavoritesService()),
         ),
         // Deep Link Registry + Service (Stateless)
-        Provider(create: (_) {
-          final registry = DeepLinkRegistry();
-          registerTaskDeepLinks(registry);
-          registerBookingDeepLinks(registry);
-          registerChatDeepLinks(registry);
-          registerDirectOfferDeepLinks(registry);
-          registerWorkDeepLinks(registry);
-          registerProfileDeepLinks(registry);
-          return DeepLinkService(registry: registry);
-        }),
+        Provider(
+          create: (_) {
+            final registry = DeepLinkRegistry();
+            registerTaskDeepLinks(registry);
+            registerBookingDeepLinks(registry);
+            registerChatDeepLinks(registry);
+            registerDirectOfferDeepLinks(registry);
+            registerWorkDeepLinks(registry);
+            registerProfileDeepLinks(registry);
+            return DeepLinkService(registry: registry);
+          },
+        ),
         Provider(create: (_) => AccountGuardService()),
         // Payment & direct offers (for details screen / QiCard direct-offer flow)
         Provider<PaymentService>(create: (_) => createPaymentService()),

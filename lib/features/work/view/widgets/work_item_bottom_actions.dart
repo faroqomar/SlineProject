@@ -93,10 +93,7 @@ class WorkItemBottomActions extends StatelessWidget {
           ),
           const SizedBox(width: AppDimens.p12),
           Expanded(
-            child: AppButton(
-              text: 'Accept',
-              onPressed: onAcceptBooking,
-            ),
+            child: AppButton(text: 'Accept', onPressed: onAcceptBooking),
           ),
         ],
       );

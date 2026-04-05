@@ -356,7 +356,10 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
     } on Exception catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ErrorMapper.map(e)), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(ErrorMapper.map(e)),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }

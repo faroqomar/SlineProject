@@ -22,6 +22,15 @@ description: Multi-Agent Coordinator & Report Synthesizer. Runs all agents seque
 
 ---
 
+## 0.5) When to Use This Agent
+
+- **@Orchestrator**: When code is ALREADY WRITTEN and needs comprehensive review/audit. The Orchestrator runs all agents in sequence for a holistic review.
+- **@Executor**: When there is a plan to IMPLEMENT (code changes, migrations, tests). The Executor owns the implementation pipeline.
+
+These two agents are never used simultaneously on the same work. The Orchestrator reviews code; the Executor produces it.
+
+---
+
 ## 1) Required Inputs (Start Conditions)
 
 Before starting the pipeline, confirm:

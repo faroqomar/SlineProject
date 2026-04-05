@@ -82,9 +82,9 @@ class NextActionsList extends StatelessWidget {
                     if (e.message.contains('Insufficient')) {
                       _showInsufficientFundsDialog(context);
                     } else {
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(SnackBar(content: Text(ErrorMapper.map(e))));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(ErrorMapper.map(e))),
+                      );
                     }
                   } on Exception catch (e) {
                     if (!context.mounted) return;
@@ -143,9 +143,9 @@ class NextActionsList extends StatelessWidget {
                     if (e.message.contains('Insufficient')) {
                       _showInsufficientFundsDialog(context);
                     } else {
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(SnackBar(content: Text(ErrorMapper.map(e))));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(ErrorMapper.map(e))),
+                      );
                     }
                   } on Exception catch (e) {
                     if (!context.mounted) return;

@@ -1,6 +1,6 @@
 # SLine App - Folder Structure Guide
 
-**Last Updated:** 2026-04-04 (Phase D: Sentry crash reporting, DashboardVM delegate decomposition, submit_request_sheet + requests_list_screen decomposition, Edge Function CORS hardening, pgTAP SQL tests, CI coverage floor, migration review checklist, A6 VM fixes, architecture guard tightening; previous: 2026-04-01 Phase A)
+**Last Updated:** 2026-04-05 (Phase E: sealed ViewState/AppFailure models, DeepLinkRegistry pattern, deep link handlers in 6 features, TaskOfferService/TaskRequestErrorMapper extraction, BookingPaymentDelegate, TaskRequestsAwardDelegate, extracted view widgets, l10n setup, 14 new VM test files, 982→1200+ tests; previous: 2026-04-04 Phase D)
 
 This document describes the current repository layout. It replaces older references to `presentation/` and `controllers/`; the live Flutter codebase uses `view/` and `viewmodels/` under `lib/features/`.
 
@@ -14,6 +14,7 @@ sline_app/
 ├── .githooks/            # Pre-commit hook (format + analyze)
 ├── .TODO/                # Audits, plans, execution logs, QA notes, docs-sync notes
 ├── docs/LOG/             # Session logs, system evolution reports
+├── docs/diagrams/        # Feature diagrams (Mermaid + explanations)
 ├── Sline_everything/     # Source-of-truth project documentation
 ├── assets/               # Bundled app assets
 ├── lib/                  # Flutter application source
@@ -116,6 +117,7 @@ lib/
 │   ├── theme/
 │   ├── utils/
 │   └── widgets/
+├── l10n/          # Localization: ARB files, generated AppLocalizations
 ├── features/
 │   └── <feature>/
 │       ├── data/        # Repository / data-access layer when needed
@@ -144,8 +146,12 @@ Current subfolders:
 
 - `config/`: runtime configuration (e.g. `auth_config.dart`, `payment_runtime_config.dart`); user-facing auth strings in `lib/core/constants/auth_messages.dart`
 - `models/`: global models such as `user_profile.dart` and shared `payment_return_args.dart`
+  - `view_state.dart` — **Phase E** Sealed ViewState<T> (ViewInitial, ViewLoading, ViewLoaded, ViewFailed)
+  - `app_failure.dart` — **Phase E** Sealed AppFailure (NetworkFailure, AuthFailure, ValidationFailure, BusinessFailure)
 - `providers/`: app-wide providers such as navigation and theme mode
 - `services/`: Supabase bootstrap, payment services, cache, deep links, crash reporting, logging, **role switch coordinator**
+  - `deep_link_registry.dart` — **Phase E** DeepLinkRegistry with feature-side handler registration
+  - `payment_response_helpers.dart` — **Phase E** Pure helper functions for payment response parsing
 - `theme/`: color, spacing, typography, decorations, theme assembly, theme dashboard
 - `utils/`: error mapping, formatting, loading overlays, URL cache, route transitions, web error filters, **ledger forensics** (p_meta session_id/request_id for ledger event flow)
 - `widgets/`: shared UI widgets such as signed media, buttons, badges, loaders, bottom nav
@@ -202,13 +208,19 @@ Not every feature uses every subfolder, but the standard live convention is:
 
 - `lib/features/auth/`: login, signup, forgot password, auth session handling
 - `lib/features/booking/`: direct booking checkout, booking lists/details, payment return/webview screens
+  - `viewmodels/booking_payment_delegate.dart` — **Phase E** Payment coordination delegate
+  - `services/booking_deep_link_handler.dart` — **Phase E** Deep link handler for booking routes
+  - `view/widgets/payment_order_summary_card.dart` — **Phase E** Extracted payment order summary widget
 - `lib/features/profile/`: profile editing, avatar upload, **role switching (v2.18)**, portfolio management
   - `data/profile_repository.dart` — Main profile repository (legacy `changeRole()` deprecated)
   - `data/role_switch_repository.dart` — **NEW (v2.18)** Atomic role switching with RPC, session refresh, JWT verification
   - `models/role_switch_result.dart` — **NEW (v2.18)** RPC response model with error taxonomy
+  - `services/profile_deep_link_handler.dart` — **Phase E** Deep link handler for profile routes
 - `lib/features/chat/`: conversations, messages, attachments, realtime updates
+  - `services/chat_deep_link_handler.dart` — **Phase E** Deep link handler for chat routes
 - `lib/features/dashboard/`: unified dashboard tabs (Overview, Bookings, Work, Wallet, Inbox) and role-based work summaries, including the live bottom-nav dashboard slot. Tab cards (booking, offer, wallet snapshot) live in owning features: `booking/view/widgets/dashboard_booking_card.dart`, `tasks/view/widgets/dashboard_offer_card.dart`, `wallet/view/widgets/wallet_snapshot_card.dart`; dedicated Wallet tab in `view/tabs/wallet_tab.dart`; shared status helpers in `core/utils/status_presenter.dart`
 - `lib/features/direct_offers/`: direct chat offers (create, accept, pay, deliver, complete) and payment recovery
+  - `services/direct_offer_deep_link_handler.dart` — **Phase E** Deep link handler for direct offer routes
 - `lib/features/notifications/`: in-app notification list (server-authority; foreground sync then stream), badge/modal/deep links; `PushDeviceService` registers FCM tokens in `user_devices`; push delivery via `notification_push_queue` + Edge (`push-notify`, `process-push-queue`). Diagram: `Sline_everything/AppDigram/All_Diagrams/13_notification-routing.md`. Plan: `.TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md`.
 - `lib/features/management/`: order timeline / note management for tasks and bookings
 - `lib/features/orders/`: decommissioned placeholder folder with `README.md` only; standalone orders runtime was removed on 2026-03-01
@@ -220,8 +232,20 @@ Not every feature uses every subfolder, but the standard live convention is:
   - `viewmodels/submit_request_view_model.dart` — **Phase D** Business logic for bid submission/replacement (validateTask, checkReplaceability, submitNewBid, replaceBid)
   - `viewmodels/requests_filter_view_model.dart` — **Phase D** Filter/sort/award state for requests list (subscribes to TaskRequestsViewModel)
   - `view/widgets/requests/request_award_dialog.dart` — **Phase D** Extracted award confirmation dialog + payment flow + price mismatch dialog
+  - `services/task_offer_service.dart` — **Phase E** 13 offer/payment methods extracted from TaskService
+  - `services/task_request_error_mapper.dart` — **Phase E** 6 error mapping methods for task requests
+  - `viewmodels/task_requests_award_delegate.dart` — **Phase E** Award/payment/accept/cancel flows delegate
+  - `services/task_deep_link_handler.dart` — **Phase E** Deep link handler for task routes
+  - `view/widgets/task_concept_section.dart` — **Phase E** Extracted task concept section widget
+  - `view/widgets/booking_logistics_section.dart` — **Phase E** Extracted booking logistics section widget
 - `lib/features/wallet/`: wallet state and ledger-backed balance views; `utils/transaction_label_helper.dart` — human-readable transaction source/destination labels
+  - `view/widgets/wallet_hero_card.dart` — **Phase E** Extracted wallet hero/balance card
+  - `view/widgets/wallet_timeline_card.dart` — **Phase E** Extracted wallet transaction timeline card
 - `lib/features/work/`: unified work item details and CTA resolution
+  - `services/work_deep_link_handler.dart` — **Phase E** Deep link handler for work routes
+  - `view/widgets/work_item_bottom_actions.dart` — **Phase E** Extracted work item bottom action bar
+  - `view/widgets/work_item_booking_details.dart` — **Phase E** Extracted work item booking details section
+  - `view/widgets/work_item_guard_widgets.dart` — **Phase E** Extracted work item guard/state widgets
 
 ## `test/` - Automated Test Layout
 
@@ -247,26 +271,46 @@ test/
 ├── unit/
 │   ├── auth/
 │   │   ├── auth_repository_test.dart
-│   │   └── auth_session_view_model_test.dart  # Phase C: 32 tests (session lifecycle, auth stream, profile, logout, dispose)
+│   │   ├── auth_session_view_model_test.dart  # Phase C: 32 tests (session lifecycle, auth stream, profile, logout, dispose)
+│   │   └── auth_form_view_model_test.dart     # Phase E: auth form validation and submission tests
 │   ├── booking/
 │   ├── chat/
 │   │   └── chat_view_model_test.dart          # Phase C: 21 tests (CRUD, messages, offers, realtime, role switch, dispose)
+│   ├── categories/
+│   │   └── categories_view_model_test.dart    # Phase E: categories loading, filtering, error handling
 │   ├── core/
-│   │   └── sentry_crash_reporting_service_test.dart  # Phase D: 10 tests (construction, interface, safe methods, singleton)
+│   │   ├── sentry_crash_reporting_service_test.dart  # Phase D: 10 tests (construction, interface, safe methods, singleton)
+│   │   ├── deep_link_registry_test.dart       # Phase E: registry, handler registration, route matching
+│   │   └── models/
+│   │       ├── view_state_test.dart            # Phase E: ViewState sealed class tests
+│   │       └── app_failure_test.dart           # Phase E: AppFailure sealed class tests
 │   ├── dashboard/
 │   │   ├── dashboard_permission_service_test.dart
 │   │   ├── dashboard_view_model_test.dart     # Phase C: 20 tests (role loading, role switch, refresh, lazy-loading, dispose)
 │   │   ├── dashboard_work_delegate_test.dart  # Phase D: 10 tests (work items, caches, actions, dispose safety)
 │   │   ├── dashboard_inbox_delegate_test.dart # Phase D: 8 tests (inbox state, grouping, reject, dispose safety)
 │   │   └── dashboard_booking_delegate_test.dart # Phase D: 11 tests (bookings, filter, accept/decline/cancel)
+│   ├── direct_offers/
+│   │   └── direct_offer_details_view_model_test.dart  # Phase E: direct offer details, accept, pay, deliver
 │   ├── home/
 │   ├── management/
 │   ├── models/                                # 14 test files (7 original + 7 new in Phase C)
+│   ├── portfolio/
+│   │   └── portfolio_view_model_test.dart     # Phase E: portfolio CRUD, reorder, error handling
 │   ├── profile/
-│   │   └── role_switch_result_test.dart
+│   │   ├── role_switch_result_test.dart
+│   │   ├── public_profile_view_model_test.dart  # Phase E: public profile loading, reviews, stats
+│   │   └── user_profile_view_model_test.dart    # Phase E: user profile editing, avatar, settings
 │   ├── proposals/
+│   ├── saved/
+│   │   └── saved_tasks_view_model_test.dart   # Phase E: saved tasks toggle, list, error handling
 │   ├── safety/
-│   │   └── dispute_service_test.dart
+│   │   ├── dispute_service_test.dart
+│   │   └── safety_view_model_test.dart        # Phase E: safety/dispute view model tests
+│   ├── search/
+│   │   └── search_view_model_test.dart        # Phase E: search query, results, pagination
+│   ├── services/
+│   │   └── my_services_view_model_test.dart   # Phase E: my services CRUD, publish, error handling
 │   ├── tasks/
 │   │   ├── task_view_model_test.dart
 │   │   ├── task_filter_view_model_test.dart
@@ -279,6 +323,8 @@ test/
 │   │   ├── award_expiration_monitor_test.dart
 │   │   ├── task_requests_service_test.dart
 │   │   └── task_requests_view_model_test.dart
+│   ├── work/
+│   │   └── work_item_details_view_model_test.dart  # Phase E: work item details, CTA, state transitions
 │   └── wallet/
 │       ├── ledger_service_test.dart
 │       ├── wallet_presentation_helper_test.dart

@@ -81,7 +81,9 @@ void main() {
       ),
     ).thenAnswer((_) async {});
 
-    when(() => repo.getImageUrl(any())).thenReturn('https://example.com/img.jpg');
+    when(
+      () => repo.getImageUrl(any()),
+    ).thenReturn('https://example.com/img.jpg');
   });
 
   PortfolioViewModel buildVM() {

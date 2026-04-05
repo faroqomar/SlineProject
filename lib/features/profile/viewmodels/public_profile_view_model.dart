@@ -25,7 +25,8 @@ class PublicProfileViewModel extends ChangeNotifier {
   }
 
   late final ProfileRepository _repository =
-      _explicitRepository ?? ProfileRepository(_explicitClient ?? Supabase.instance.client);
+      _explicitRepository ??
+      ProfileRepository(_explicitClient ?? Supabase.instance.client);
 
   FreelancerProfile? get profile => _profile;
   bool get isLoading => _isLoading;

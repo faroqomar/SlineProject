@@ -168,10 +168,7 @@ class BookingPaymentDelegate {
   Future<QiCardRecoveryResult> recoverBookingPayment({
     required String bookingId,
   }) async {
-    AppLogger.i(
-      'Recovering booking payment booking=$bookingId',
-      tag: _kTag,
-    );
+    AppLogger.i('Recovering booking payment booking=$bookingId', tag: _kTag);
     return _paymentService.recoverBookingPayment(bookingId: bookingId);
   }
 

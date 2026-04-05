@@ -97,9 +97,7 @@ void _stubLoadDefaults(
     () => mockService.getPendingExtensionRequests(any(), any()),
   ).thenAnswer((_) async => extensionRequests ?? <ExtensionRequestModel>[]);
 
-  when(
-    () => mockService.getBooking(any()),
-  ).thenAnswer((_) async => booking);
+  when(() => mockService.getBooking(any())).thenAnswer((_) async => booking);
 
   when(
     () => mockService.getProfile(any()),
@@ -112,10 +110,7 @@ void main() {
 
   setUp(() {
     mockService = MockWorkManagementService();
-    vm = WorkItemDetailsViewModel(
-      workService: mockService,
-      uid: _kUserId,
-    );
+    vm = WorkItemDetailsViewModel(workService: mockService, uid: _kUserId);
   });
 
   // ── Construction ──────────────────────────────────────────
@@ -141,8 +136,7 @@ void main() {
   // ── loadData() ────────────────────────────────────────────
 
   group('loadData', () {
-    test('happy path: ViewLoading then ViewLoaded with WorkItemData',
-        () async {
+    test('happy path: ViewLoading then ViewLoaded with WorkItemData', () async {
       final stateLog = <Type>[];
       vm.addListener(() => stateLog.add(vm.state.runtimeType));
 
@@ -159,18 +153,20 @@ void main() {
       expect(data.otherPartyProfile, isNotNull);
     });
 
-    test('exposes workItem, booking, contract via convenience getters',
-        () async {
-      _stubLoadDefaults(mockService, contract: _contract());
+    test(
+      'exposes workItem, booking, contract via convenience getters',
+      () async {
+        _stubLoadDefaults(mockService, contract: _contract());
 
-      await vm.loadData(_kWorkItemId, _kWorkItemType);
+        await vm.loadData(_kWorkItemId, _kWorkItemType);
 
-      expect(vm.workItem, isNotNull);
-      expect(vm.workItem!.id, _kWorkItemId);
-      expect(vm.activeContract, isNotNull);
-      expect(vm.title, 'Test Work Item');
-      expect(vm.status, UnifiedWorkStatus.active);
-    });
+        expect(vm.workItem, isNotNull);
+        expect(vm.workItem!.id, _kWorkItemId);
+        expect(vm.activeContract, isNotNull);
+        expect(vm.title, 'Test Work Item');
+        expect(vm.status, UnifiedWorkStatus.active);
+      },
+    );
 
     test('sets ViewFailed when work item not found (null)', () async {
       _stubLoadDefaults(mockService);
@@ -284,10 +280,7 @@ void main() {
   group('requestExtension', () {
     test('happy path: calls service with computed deadline', () async {
       final deadline = DateTime.utc(2026, 6, 1);
-      _stubLoadDefaults(
-        mockService,
-        workItem: _workItem(deadline: deadline),
-      );
+      _stubLoadDefaults(mockService, workItem: _workItem(deadline: deadline));
       await vm.loadData(_kWorkItemId, _kWorkItemType);
 
       when(
@@ -344,9 +337,7 @@ void main() {
       _stubLoadDefaults(mockService);
       await vm.loadData(_kWorkItemId, _kWorkItemType);
 
-      when(
-        () => mockService.acceptBooking(any()),
-      ).thenAnswer((_) async {});
+      when(() => mockService.acceptBooking(any())).thenAnswer((_) async {});
       _stubLoadDefaults(mockService);
 
       await vm.acceptBooking();
@@ -375,9 +366,7 @@ void main() {
       _stubLoadDefaults(mockService);
       await vm.loadData(_kWorkItemId, _kWorkItemType);
 
-      when(
-        () => mockService.declineBooking(any()),
-      ).thenAnswer((_) async {});
+      when(() => mockService.declineBooking(any())).thenAnswer((_) async {});
       _stubLoadDefaults(mockService);
 
       await vm.declineBooking();
@@ -406,9 +395,7 @@ void main() {
       _stubLoadDefaults(mockService);
       await vm.loadData(_kWorkItemId, _kWorkItemType);
 
-      when(
-        () => mockService.cancelBooking(any()),
-      ).thenAnswer((_) async {});
+      when(() => mockService.cancelBooking(any())).thenAnswer((_) async {});
       _stubLoadDefaults(mockService);
 
       await vm.cancelBooking();

@@ -41,11 +41,7 @@ class TaskConceptSection extends StatelessWidget {
         'name': 'Design',
         'color': AppColors.lightRed,
       },
-      {
-        'icon': Icons.code,
-        'name': 'Development',
-        'color': AppColors.lightTeal,
-      },
+      {'icon': Icons.code, 'name': 'Development', 'color': AppColors.lightTeal},
       {'icon': Icons.edit_note, 'name': 'Writing', 'color': AppColors.sand},
       {'icon': Icons.phone_iphone, 'name': 'Mobile', 'color': AppColors.gold},
       {
@@ -53,11 +49,7 @@ class TaskConceptSection extends StatelessWidget {
         'name': 'Marketing',
         'color': AppColors.mediumGreyBlue,
       },
-      {
-        'icon': Icons.movie_outlined,
-        'name': 'Video',
-        'color': AppColors.teal,
-      },
+      {'icon': Icons.movie_outlined, 'name': 'Video', 'color': AppColors.teal},
     ];
 
     return Column(

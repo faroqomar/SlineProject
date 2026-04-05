@@ -179,7 +179,7 @@ try {
 
 ## 10. Testing & Quality
 
-**Current state (Phase C, 2026-04-02):** 706 tests pass, 30 skipped, 0 failures. 14 of 26 ViewModels tested (54%). 14 model test files.
+**Current state (Phase E, 2026-04-05):** 982 tests pass, 30 skipped, 0 failures. 27/27 VMs tested (100%). 14 model test files. Coverage floor: 33%.
 
 - **Unit**: services (mock Supabase), viewmodels state transitions, model DTO parsing.
 - **Widget**: screen interactions (form validation, loading states, snackbars).
@@ -214,7 +214,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every push/PR to `main`:
 | Job | What It Does | Blocks Merge? |
 |-----|-------------|---------------|
 | **Lint & Analyze** | `dart format --set-exit-if-changed .` + `flutter analyze --no-fatal-infos` | Yes (warnings/errors fail) |
-| **Architecture Guard** | 6 grep-based MVVM boundary checks (Supabase in views, controllers in VMs, Navigator in VMs, repo imports in views, view imports in VMs, Supabase in VMs) | Yes (hard failure since Phase B, 2026-04-01) |
+| **Architecture Guard** | 7 grep-based MVVM boundary checks (Supabase in views, controllers in VMs, Navigator in VMs, repo imports in views, view imports in VMs, Supabase in VMs, core-to-features boundary). Check 7 (Phase E): blocks `core/` importing from `features/` (max 5 threshold). | Yes (hard failure since Phase B, 2026-04-01) |
 | **Unit & Widget Tests** | `flutter test --coverage` with coverage % reported to PR summary | Yes |
 | **Build** | APK (debug) + Web (release) compilation | Yes |
 
@@ -228,11 +228,13 @@ Flutter version pinned: **3.38.9** across all jobs.
 
 ### 10.3 Lint Rules
 
-`analysis_options.yaml` enforces 34 rules in 3 categories:
+**Base package**: `very_good_analysis` (migrated from `flutter_lints` in Phase E). Provides ~70+ rules active out of the box.
 
-- **Core (18):** type safety, const correctness, naming, async safety (`unawaited_futures`, `use_build_context_synchronously`)
-- **Safety (7):** resource cleanup (`cancel_subscriptions`, `close_sinks`), dead-code prevention (`throw_in_finally`, `unnecessary_statements`)
-- **Code Quality (9):** immutability (`prefer_final_locals`), null safety (`prefer_null_aware_operators`), dependency hygiene (`depend_on_referenced_packages`)
+27 rules are explicitly disabled with justification, tracked in `.TODO/LINT_DEBT_PhaseE.md`. Key disabled rules:
+- `avoid_dynamic_calls` -- Supabase query results return `dynamic`; would require casts on every field access.
+- `strict-inference`, `strict-casts` -- incompatible with Supabase's dynamic return types.
+- `public_member_api_docs` -- not enforced yet; planned for Phase F.
+- `lines_longer_than_80_chars` -- relaxed for readability in query builder chains and long string literals.
 
 Strong mode: `implicit-casts: false`, `implicit-dynamic: false`.
 
@@ -263,6 +265,45 @@ Supabase's Dart client uses a builder pattern where `.eq()`, `.lt()`, `.gt()`, `
 - NEVER wrap query builder methods in `unawaited()`.
 - Use `query = query.lt(...)` (reassignment) when conditionally applying filters.
 - The `unawaited_futures` lint is a false positive for these methods.
+
+### 10.7 Sealed ViewState Pattern (Phase E)
+
+New ViewModels should prefer the sealed `ViewState<T>` class over raw `_isLoading`/`_error` fields.
+
+**Files:**
+- `lib/core/models/view_state.dart` -- sealed class `ViewState<T>` with four variants:
+  - `ViewInitial<T>` -- no operation initiated yet.
+  - `ViewLoading<T>` -- an operation is in progress.
+  - `ViewLoaded<T>` -- data successfully loaded (holds `final T data`).
+  - `ViewFailed<T>` -- operation failed (holds `final AppFailure failure`).
+- `lib/core/models/app_failure.dart` -- sealed class `AppFailure` with four subtypes:
+  - `NetworkFailure` -- timeout, DNS, connectivity (has `bool isTimeout`).
+  - `AuthFailure` -- session expired or unauthorized (has `bool sessionExpired`).
+  - `ValidationFailure` -- input errors (has `Map<String, String> fieldErrors`).
+  - `BusinessFailure` -- domain rule violation (has `String code`, e.g. `BOOKING_ALREADY_EXISTS`).
+
+**Currently used in:** `DirectOfferDetailsViewModel`, `BookingViewModel`, `WorkItemDetailsViewModel`.
+
+**Usage in ViewModel:**
+```dart
+ViewState<MyData> _state = const ViewInitial();
+ViewState<MyData> get state => _state;
+```
+
+**Usage in View (exhaustive pattern match):**
+```dart
+switch (vm.state) {
+  case ViewInitial():    return SizedBox.shrink();
+  case ViewLoading():    return CircularProgressIndicator();
+  case ViewLoaded(:final data): return MyWidget(data);
+  case ViewFailed(:final failure): return ErrorWidget(failure);
+}
+```
+
+**Key rules:**
+- Action methods (accept, reject, pay) MUST NOT overwrite `ViewLoaded` with `ViewLoading`. Use a separate `_actionInProgress` boolean flag and `notifyListeners()` instead, so the loaded data stays visible during actions.
+- `ViewLoaded` and `ViewFailed` have `==` / `hashCode` overrides for equality comparisons and testing assertions.
+- All `AppFailure` subtypes carry `String userMessage` (user-facing) and optional `String? debugMessage` (for `AppLogger`).
 
 ## 11. Observability (Crash & Error Tracking)
 
@@ -308,11 +349,47 @@ SupabaseClient get _client => _injectedClient ?? Supabase.instance.client;
 : _client = client ?? Supabase.instance.client  // AssertionError if not initialized
 ```
 
-## 11.3 Coverage & CI Gates (Phase D)
+## 11.3 DeepLinkRegistry Pattern (Phase E)
 
-- **Coverage floor**: 28% regression prevention (blocks merges below threshold). Raise incrementally.
-- **Architecture guard**: 6 MVVM boundary checks in CI. Check 3 tightened in Phase D — catches `Supabase.instance.client.auth.*` in VM method bodies (only `?? Supabase.instance` DI defaults allowed).
+`DeepLinkService` was refactored to **zero feature-layer imports**. All navigation dispatch goes through `DeepLinkRegistry`.
+
+**Core files:**
+- `lib/core/services/deep_link_registry.dart` -- `DeepLinkRegistry` class with `register(entityType, handler)`, `handle(context, entityType, entityId)`, and `canHandle(entityType)`. Entity type keys are case-insensitive (lowercased). Throws `StateError` on duplicate registration to prevent accidental overwrites.
+- `lib/core/services/deep_link_service.dart` -- Refactored to depend only on `DeepLinkRegistry`. UUID validation via `_uuidRegex` before routing. Shows a generic SnackBar for unknown entity types.
+
+**Feature handler files (6):**
+- `lib/features/tasks/services/task_deep_link_handler.dart`
+- `lib/features/booking/services/booking_deep_link_handler.dart`
+- `lib/features/chat/services/chat_deep_link_handler.dart`
+- `lib/features/direct_offers/services/direct_offer_deep_link_handler.dart`
+- `lib/features/work/services/work_deep_link_handler.dart`
+- `lib/features/profile/services/profile_deep_link_handler.dart`
+
+**Registration:** Each feature registers its handlers in the `main.dart` Provider block on the shared `DeepLinkRegistry` instance. This keeps `core/` free of `features/` imports while allowing feature modules to self-register their deep link navigation.
+
+## 11.4 Coverage & CI Gates (Phase D/E)
+
+- **Coverage floor**: 33% regression prevention (blocks merges below threshold, measured at 34.9%). Raise incrementally.
+- **Architecture guard**: 7 MVVM boundary checks in CI (was 6 in Phase D). Check 3 tightened in Phase D -- catches `Supabase.instance.client.auth.*` in VM method bodies (only `?? Supabase.instance` DI defaults allowed). Check 7 (Phase E): `core/` importing from `features/` boundary guard (max 5 threshold).
 - **Migration review**: Reference `MIGRATION_REVIEW_CHECKLIST.md` for every PR with `supabase/migrations/` files.
+
+## 11.5 Localization Infrastructure (Phase E)
+
+Flutter's built-in `gen-l10n` pipeline is wired up and ready for translation.
+
+**Configuration:**
+- `l10n.yaml` at project root: sets `arb-dir: lib/l10n`, `template-arb-file: app_en.arb`, output class `AppLocalizations`.
+- `pubspec.yaml`: `generate: true` enables codegen.
+- `MaterialApp` is wired with `localizationsDelegates` and `supportedLocales` from the generated `AppLocalizations` class.
+
+**Current state:**
+- `lib/l10n/app_en.arb` contains 22 key stubs covering navigation labels, common actions, state messages, error strings, and settings labels.
+- Only English is populated. Phase F target: Arabic (`app_ar.arb`) and Kurdish (`app_ku.arb`) translations.
+
+**Workflow for adding/updating strings:**
+1. Add or edit keys in `lib/l10n/app_en.arb`.
+2. Run `flutter gen-l10n` to regenerate `AppLocalizations`.
+3. Use in widgets: `AppLocalizations.of(context)!.keyName`.
 
 ## 12. Quick Links (Deep Dives)
 
@@ -1586,7 +1663,8 @@ Core also owns two browser-specific stability helpers:
 | `lib/core/services/demo_payment_service.dart`    | service   | Local/demo payment implementation and legacy fallback path.                             |
 | `lib/core/services/qicard_payment_service.dart`  | service   | Server-backed QiCard create/recover/refund orchestration.                               |
 | `lib/core/services/payment_pending_store.dart`   | service   | Persists pending payment context across same-tab web redirects.                         |
-| `lib/core/services/deep_link_service.dart`       | service   | Shared deep-link plumbing used by app navigation flows.                                 |
+| `lib/core/services/deep_link_service.dart`       | service   | Shared deep-link plumbing used by app navigation flows. Zero feature imports (Phase E). |
+| `lib/core/services/deep_link_registry.dart`      | service   | Registry mapping entity types to navigation handlers. Features self-register at startup.|
 | `lib/core/config/payment_runtime_config.dart`    | config    | Compile-time finish URL, callback host rules, payment callback parsing.                 |
 | `lib/core/utils/loading_utils.dart`              | utility   | Root overlay loading helper that returns an idempotent `LoadingHandle`.                 |
 | `lib/core/utils/flutter_error_filters.dart`      | utility   | Filters the known web engine disposal assertion.                                        |

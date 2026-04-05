@@ -210,6 +210,21 @@ flutter pub outdated
 flutter pub upgrade --dry-run
 ```
 
+**Automated Grep Checks (must pass):**
+
+```bash
+# Raw string interpolation bug check — any match is a bug
+grep -rn "r'" lib/ | grep '\$' | grep -v '// ignore-raw-string'
+
+# Error message sanitization — matches need investigation
+# User-facing error messages MUST use ErrorMapper.map(e), never raw exceptions
+grep -rn 'e\.toString()' lib/features/*/view/ lib/features/*/viewmodels/
+grep -rn 'e\.message' lib/features/*/view/
+grep -rn 'error\.toString()' lib/features/*/view/
+```
+
+Evidence: Phase E BLOCKER — 14 raw strings suppressed log interpolation in payment flows. Phase E HIGH — 6 locations leaked raw exception text to user-facing UI.
+
 **Supabase-side evidence (must exist):**
 
 - reviewed migration SQL

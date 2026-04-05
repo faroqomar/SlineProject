@@ -184,9 +184,7 @@ class DashboardOfferCard extends StatelessWidget {
               );
               final showAward = ctaMeta.allowedActions.contains('award');
               final showPay = ctaMeta.allowedActions.contains('pay');
-              final showEscrow = ctaMeta.allowedActions.contains(
-                'escrow_hold',
-              );
+              final showEscrow = ctaMeta.allowedActions.contains('escrow_hold');
               final showRelease = ctaMeta.allowedActions.contains(
                 'release_with_fee',
               );

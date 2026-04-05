@@ -112,6 +112,17 @@ If anything mismatches:
 - Error handling must follow approved project patterns such as `ErrorMapper` or typed domain wrappers
 - No raw backend internals should leak to the view layer
 
+### 3.2.2 Error Message Sanitization (Explicit Rule)
+
+NEVER pass `e.toString()`, `e.message`, or `error.toString()` to SnackBars, dialogs, or any user-visible UI. ALWAYS use `ErrorMapper.map(e)` from `lib/core/utils/error_mapper.dart`. This applies in:
+- ViewModel catch blocks setting `_error` fields
+- View catch blocks showing SnackBars
+- Delegate catch blocks returning error messages
+
+The ONLY exception is logging via `AppLogger` (which is developer-facing, not user-facing).
+
+Evidence: Phase E — 6 raw exception text leaks found across ViewModels and views (`DirectOfferDetailsVM`, `BookingVM`, `work_tab.dart`, `next_actions_list.dart`, `work_item_details_screen.dart`). Each exposed SQL table names or raw Supabase error text to users.
+
 ### 3.2.1 Error vs Exception Handling (Dart-Specific)
 
 In Dart, `Error` and `Exception` are separate hierarchies under `Object`:
@@ -140,6 +151,18 @@ Evidence: SESSION_PhaseB_BugExposure — `AssertionError` from `Supabase.instanc
 - `notifyListeners()` should reflect meaningful state changes, not noisy internal churn
 - Navigation decisions should be explicit and minimal, not hidden inside lower layers
 - Role, account restriction, and runtime-config assumptions must be surfaced clearly to the UI contract
+
+### 3.4.3 ViewState Mutation Pattern (No Data Wipe)
+
+When a ViewModel uses sealed `ViewState<T>`, action methods (approve, reject, submit, cancel) MUST NOT overwrite `ViewLoaded` → `ViewLoading`. This wipes the loaded data from the UI and causes "No data found" flash during mutations.
+
+Use an `_actionInProgress` boolean flag instead:
+- Set `_actionInProgress = true` + `notifyListeners()` before the operation
+- `isLoading` getter: `state is ViewInitial || state is ViewLoading || _actionInProgress`
+- On completion: `_actionInProgress = false`, reload data, `notifyListeners()`
+- This preserves the loaded data in the UI during mutations
+
+Evidence: Phase E — 8 action methods in `WorkItemDetailsVM` wiped `ViewLoaded` state to `ViewLoading`, causing UI to flash "No details found".
 
 ### 3.4.1 notifyListeners() Timing
 
@@ -209,6 +232,34 @@ Rules:
 - Prefer reassignment over `// ignore:` for clarity.
 
 Evidence: Phase B wrapped `query.lt()` in `unawaited()`, silently breaking cursor-based pagination in 3 files (booking_service.dart x2, task_requests_service.dart x1).
+
+### 4.6.1 Raw String Guard
+
+Never use raw string literals (`r'...'`) in `AppLogger` calls or any string that contains `$variable` interpolation. Raw strings suppress interpolation entirely — `$requestId` prints as the literal text `$requestId` instead of the actual value.
+
+Use normal single-quoted strings: `'text $variable text'`.
+
+Evidence: Phase E BLOCKER — 14 raw string literals (`r'...$var...'`) in `task_requests_award_delegate.dart` and `task_requests_view_model.dart` produced blind spots in financial flow traceability. Logs showed literal `$requestId` instead of actual payment/award IDs.
+
+### 4.6.2 Zone Initialization Order
+
+`WidgetsFlutterBinding.ensureInitialized()` MUST be called BEFORE `runZonedGuarded()` (but inside Sentry's `appRunner` if using Sentry). Calling it inside a guarded zone creates a zone mismatch with `runApp()` because Sentry wraps the `appRunner` callback in its own zone.
+
+Evidence: Phase E — Zone mismatch error on every app startup (web + iOS) because `ensureInitialized()` was inside `runZonedGuarded()` while Sentry's zone was the outer boundary.
+
+### 4.6.3 Web URL Cleanup After Payment Callbacks
+
+Every code path that processes web payment return URLs MUST call `clearPaymentReturnParamsFromUrl()` immediately after parsing params, BEFORE any async processing. This prevents `Uri.base` from re-detecting stale `?payment_return=1` query params on subsequent navigations.
+
+Both `PaymentReturnScreen` and `DashboardScreen` (and any future payment return handlers) must clear.
+
+Evidence: Phase E — `PaymentReturnScreen` missed URL cleanup, causing 20+ duplicate "Detected explicit web payment callback at app start" log entries per session. Every navigation re-triggered payment detection.
+
+### 4.6.4 Web Platform Awareness
+
+When implementing features that differ between web and mobile (payment redirects, URL handling, WebView vs browser tab, file downloads), ensure the web code path is explicitly tested. Web-specific cleanup (URL params, browser history state) must not be forgotten.
+
+Evidence: Phase E — Web payment redirect persisted URL params in browser history, invisible to mobile-only testing. Required `window.history.replaceState()` cleanup via `package:web`.
 
 ### 4.7 Lazy Supabase Client Resolution
 
@@ -304,7 +355,7 @@ It MUST include:
 - Verification notes
 - References (docs + code paths)
 - Session log path if the work was executed through `@Executor`
-- Diagram path if schema, order flow, or backend process work required `Doc/DIGRAM/<FeatureName>.md`
+- Diagram path if schema, order flow, or backend process work required `docs/diagrams/<FeatureName>.md`
 
 ### 7.2 If Refactor Is Large
 

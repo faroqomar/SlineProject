@@ -39,36 +39,38 @@ void main() {
     // submitReport
     // ---------------------------------------------------------------
 
-    test('submitReport happy path calls ReportService and returns true',
-        () async {
-      when(
-        () => mockReportService.submitReport(
-          entityType: any(named: 'entityType'),
-          entityId: any(named: 'entityId'),
-          reason: any(named: 'reason'),
-          category: any(named: 'category'),
-        ),
-      ).thenAnswer((_) async {});
+    test(
+      'submitReport happy path calls ReportService and returns true',
+      () async {
+        when(
+          () => mockReportService.submitReport(
+            entityType: any(named: 'entityType'),
+            entityId: any(named: 'entityId'),
+            reason: any(named: 'reason'),
+            category: any(named: 'category'),
+          ),
+        ).thenAnswer((_) async {});
 
-      final vm = buildVm();
-      final result = await vm.submitReport(
-        entityType: 'task',
-        entityId: 'task-1',
-        reason: 'Spam content',
-      );
-
-      expect(result, isTrue);
-      expect(vm.error, isNull);
-      expect(vm.isSubmitting, isFalse);
-      verify(
-        () => mockReportService.submitReport(
+        final vm = buildVm();
+        final result = await vm.submitReport(
           entityType: 'task',
           entityId: 'task-1',
           reason: 'Spam content',
-          category: null,
-        ),
-      ).called(1);
-    });
+        );
+
+        expect(result, isTrue);
+        expect(vm.error, isNull);
+        expect(vm.isSubmitting, isFalse);
+        verify(
+          () => mockReportService.submitReport(
+            entityType: 'task',
+            entityId: 'task-1',
+            reason: 'Spam content',
+            category: null,
+          ),
+        ).called(1);
+      },
+    );
 
     test('submitReport error returns false and sets error', () async {
       when(
@@ -122,34 +124,36 @@ void main() {
     // submitDispute
     // ---------------------------------------------------------------
 
-    test('submitDispute happy path calls DisputeService and returns true',
-        () async {
-      when(
-        () => mockDisputeService.submitDispute(
-          taskId: any(named: 'taskId'),
-          directOfferId: any(named: 'directOfferId'),
-          reason: any(named: 'reason'),
-          defendantId: any(named: 'defendantId'),
-        ),
-      ).thenAnswer((_) async {});
+    test(
+      'submitDispute happy path calls DisputeService and returns true',
+      () async {
+        when(
+          () => mockDisputeService.submitDispute(
+            taskId: any(named: 'taskId'),
+            directOfferId: any(named: 'directOfferId'),
+            reason: any(named: 'reason'),
+            defendantId: any(named: 'defendantId'),
+          ),
+        ).thenAnswer((_) async {});
 
-      final vm = buildVm();
-      final result = await vm.submitDispute(
-        taskId: 'task-42',
-        reason: 'Work not delivered',
-      );
-
-      expect(result, isTrue);
-      expect(vm.error, isNull);
-      verify(
-        () => mockDisputeService.submitDispute(
+        final vm = buildVm();
+        final result = await vm.submitDispute(
           taskId: 'task-42',
-          directOfferId: null,
           reason: 'Work not delivered',
-          defendantId: null,
-        ),
-      ).called(1);
-    });
+        );
+
+        expect(result, isTrue);
+        expect(vm.error, isNull);
+        verify(
+          () => mockDisputeService.submitDispute(
+            taskId: 'task-42',
+            directOfferId: null,
+            reason: 'Work not delivered',
+            defendantId: null,
+          ),
+        ).called(1);
+      },
+    );
 
     test('submitDispute error returns false and sets error', () async {
       when(
@@ -184,8 +188,9 @@ void main() {
       final result = await vm.hasOpenDisputeForTask('task-1');
 
       expect(result, isTrue);
-      verify(() => mockDisputeService.hasOpenDisputeForTask('task-1'))
-          .called(1);
+      verify(
+        () => mockDisputeService.hasOpenDisputeForTask('task-1'),
+      ).called(1);
     });
 
     test('hasOpenDisputeForTask returns false when no dispute', () async {

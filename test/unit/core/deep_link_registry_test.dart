@@ -63,10 +63,11 @@ void main() {
         registry.register('Booking', (_, __, {metadata}) async {});
         registry.register('conversation', (_, __, {metadata}) async {});
 
-        expect(
-          registry.registeredTypes.toSet(),
-          {'task', 'booking', 'conversation'},
-        );
+        expect(registry.registeredTypes.toSet(), {
+          'task',
+          'booking',
+          'conversation',
+        });
       });
     });
 
@@ -113,11 +114,7 @@ void main() {
             home: Builder(
               builder: (context) {
                 WidgetsBinding.instance.addPostFrameCallback((_) async {
-                  result = await registry.handle(
-                    context,
-                    'task',
-                    'task-123',
-                  );
+                  result = await registry.handle(context, 'task', 'task-123');
                 });
                 return const SizedBox();
               },

@@ -92,9 +92,9 @@ void main() {
     });
 
     test('maps PostgrestException 42501 to session expired message', () async {
-      when(() => mockRepo.fetchMyServices()).thenThrow(
-        const PostgrestException(message: 'RLS', code: '42501'),
-      );
+      when(
+        () => mockRepo.fetchMyServices(),
+      ).thenThrow(const PostgrestException(message: 'RLS', code: '42501'));
 
       await vm.load();
 
@@ -112,15 +112,13 @@ void main() {
     });
 
     test('clears previous error on new load call', () async {
-      when(
-        () => mockRepo.fetchMyServices(),
-      ).thenThrow(Exception('fail first'));
+      when(() => mockRepo.fetchMyServices()).thenThrow(Exception('fail first'));
       await vm.load();
       expect(vm.error, isNotNull);
 
-      when(() => mockRepo.fetchMyServices()).thenAnswer(
-        (_) async => [_service()],
-      );
+      when(
+        () => mockRepo.fetchMyServices(),
+      ).thenAnswer((_) async => [_service()]);
       await vm.load();
       expect(vm.error, isNull);
       expect(vm.services, hasLength(1));
@@ -138,9 +136,7 @@ void main() {
           price: any(named: 'price'),
           deliveryDays: any(named: 'deliveryDays'),
         ),
-      ).thenAnswer(
-        (_) async => _service(id: 'svc-new', title: 'New Service'),
-      );
+      ).thenAnswer((_) async => _service(id: 'svc-new', title: 'New Service'));
 
       // Pre-populate with one service
       when(
@@ -261,9 +257,7 @@ void main() {
 
   group('clearError', () {
     test('clears error and notifies listeners', () async {
-      when(
-        () => mockRepo.fetchMyServices(),
-      ).thenThrow(Exception('fail'));
+      when(() => mockRepo.fetchMyServices()).thenThrow(Exception('fail'));
       await vm.load();
       expect(vm.error, isNotNull);
 

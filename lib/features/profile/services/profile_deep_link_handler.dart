@@ -25,10 +25,7 @@ Future<void> _handleProfile(
   if (!context.mounted) return;
   Navigator.popUntil(context, (route) => route.isFirst);
   if (context.mounted) {
-    final navProvider = Provider.of<NavigationProvider>(
-      context,
-      listen: false,
-    );
+    final navProvider = Provider.of<NavigationProvider>(context, listen: false);
     navProvider.setCurrentIndex(5);
   }
 }

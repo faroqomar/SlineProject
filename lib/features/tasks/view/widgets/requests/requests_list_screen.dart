@@ -425,9 +425,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
     final subtitle = isOwner
         ? 'Share your task to attract more freelancers'
         : 'Be the first to submit a bid and start the conversation';
-    final icon = isOwner
-        ? Icons.inbox_outlined
-        : Icons.local_offer_outlined;
+    final icon = isOwner ? Icons.inbox_outlined : Icons.local_offer_outlined;
 
     AppLogger.d(
       'Empty state rendered: isOwner=$isOwner, hasOffers=$hasOffers',

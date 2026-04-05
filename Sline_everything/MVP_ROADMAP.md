@@ -1,6 +1,6 @@
 # SLine MVP Roadmap
 
-**Last Updated:** 2026-03-08
+**Last Updated:** 2026-04-05
 
 This roadmap tracks the current code-state of the repository. Status values are intentionally simple:
 - `✅ Completed`
@@ -115,9 +115,29 @@ All 11 items (D1–D11) completed:
 
 Tests: 706 → 780 (+74). Coverage floor: 28%. All 6 architecture guard checks pass.
 
+### Phase E: Polish (2026-04-05) ✅
+- **E1** — APK build self-resolved (Kotlin version mismatch fixed by SDK update)
+- **E2** — CI Check 7 added: `core/` → `features/` boundary guard (max 5 threshold)
+- **E3** — Lint migration to `very_good_analysis` (862 auto-fixes, 27 rules disabled with tracking in `.TODO/LINT_DEBT_PhaseE.md`)
+- **E4** — 5 ViewModels DI-normalized with lazy getter pattern (SavedTasks, Categories, Portfolio, PublicProfile, AuthForm)
+- **E5** — Sealed `ViewState<T>` and `AppFailure` classes created; 3 VMs migrated (DirectOfferDetails, Booking, WorkItemDetails)
+- **E6** — 9 god files decomposed below 800 lines (13 new delegate/widget files, 29% average line reduction)
+- **E7** — 171 new VM tests (27/27 VMs now have test coverage); 982 total tests
+- **E8** — Coverage floor raised from 28% to 33% (measured: 34.9%)
+- **E9** — DeepLinkService refactored to registry pattern (0 feature imports, 6 feature handler files)
+- **E10** — Localization infrastructure scaffolded (l10n.yaml, app_en.arb with 22 key stubs)
+- **E11** — Orchestrator review: 20 findings (1 BLOCKER + 4 HIGH + 8 MED + 7 LOW) — all fixed
+- **E12** — Security review: 8 findings (2 HIGH + 3 MED + 3 LOW) — all fixed
+- **E13** — System Evolution Report v4: 16 recommendations applied to all 16 agent files
+
+**References:**
+- Plan: `.TODO/PLAN_PhaseE_Polish_2026-04-04.md`
+- Session Log: `docs/LOG/SESSION_PLAN_PhaseE_Polish_2026-04-04.md`
+- Master Report: `.TODO/MASTER_REPORT_2026-04-05_PhaseE.md`
+- System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-05.md`
+- Lint Debt: `.TODO/LINT_DEBT_PhaseE.md`
+
 ## 10. Current Focus
 
-1. **Phase E: Polish** — `very_good_analysis` migration, `dart fix --apply`, sealed state classes, localization (Arabic/Kurdish `.arb` files), DeepLinkService route registry refactor, remaining god-file decomposition, 85% coverage target.
-2. Optional: HMAC in create edge and webhook signature verification (PAYMENT_HMAC_SECRET); Admin Orphan Queue and Payment Trace.
-3. Expand automated coverage around moderation/report/dispute edge cases.
-4. Keep `Sline_everything/` aligned with code and Supabase migrations after every flow change.
+### Current Focus
+1. **Phase F: Ship Preparation** (planned) — Arabic/Kurdish translations, widget tests for critical views, remaining lint debt adoption, GitHub repo safeguards (branch protection, CODEOWNERS, PR templates), non-atomic payment RPC consolidation

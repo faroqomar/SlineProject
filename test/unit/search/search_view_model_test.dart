@@ -130,49 +130,51 @@ void main() {
   // -----------------------------------------------------------------------
   // 4. setTab changes active tab and triggers new search
   // -----------------------------------------------------------------------
-  test('setTab changes active tab and triggers new search if query exists',
-      () async {
-    when(
-      () => service.searchTasks(
-        query: any(named: 'query'),
-        limit: any(named: 'limit'),
-        offset: any(named: 'offset'),
-      ),
-    ).thenAnswer((_) async => [_task(id: 't1')]);
-    when(
-      () => service.searchProfiles(
-        query: any(named: 'query'),
-        roleFilter: any(named: 'roleFilter'),
-        limit: any(named: 'limit'),
-        offset: any(named: 'offset'),
-      ),
-    ).thenAnswer((_) async => [_profile(id: 'p1')]);
+  test(
+    'setTab changes active tab and triggers new search if query exists',
+    () async {
+      when(
+        () => service.searchTasks(
+          query: any(named: 'query'),
+          limit: any(named: 'limit'),
+          offset: any(named: 'offset'),
+        ),
+      ).thenAnswer((_) async => [_task(id: 't1')]);
+      when(
+        () => service.searchProfiles(
+          query: any(named: 'query'),
+          roleFilter: any(named: 'roleFilter'),
+          limit: any(named: 'limit'),
+          offset: any(named: 'offset'),
+        ),
+      ).thenAnswer((_) async => [_profile(id: 'p1')]);
 
-    final vm = buildVm();
+      final vm = buildVm();
 
-    // Search on tasks tab first
-    vm.onSearchChanged('test');
-    await Future<void>.delayed(const Duration(milliseconds: 600));
-    expect(vm.activeTab, SearchTab.findWork);
-    expect(vm.tasks.length, 1);
+      // Search on tasks tab first
+      vm.onSearchChanged('test');
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+      expect(vm.activeTab, SearchTab.findWork);
+      expect(vm.tasks.length, 1);
 
-    // Switch tab to findTalent -- should trigger searchProfiles
-    vm.setTab(SearchTab.findTalent);
-    await Future<void>.delayed(const Duration(milliseconds: 100));
-    expect(vm.activeTab, SearchTab.findTalent);
-    expect(vm.isTasksTab, isFalse);
+      // Switch tab to findTalent -- should trigger searchProfiles
+      vm.setTab(SearchTab.findTalent);
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      expect(vm.activeTab, SearchTab.findTalent);
+      expect(vm.isTasksTab, isFalse);
 
-    verify(
-      () => service.searchProfiles(
-        query: 'test',
-        roleFilter: any(named: 'roleFilter'),
-        limit: any(named: 'limit'),
-        offset: any(named: 'offset'),
-      ),
-    ).called(1);
+      verify(
+        () => service.searchProfiles(
+          query: 'test',
+          roleFilter: any(named: 'roleFilter'),
+          limit: any(named: 'limit'),
+          offset: any(named: 'offset'),
+        ),
+      ).called(1);
 
-    vm.dispose();
-  });
+      vm.dispose();
+    },
+  );
 
   // -----------------------------------------------------------------------
   // 5. setTab with empty query clears results without search
@@ -249,8 +251,7 @@ void main() {
   // -----------------------------------------------------------------------
   // 8. Search happy path: returns profile results
   // -----------------------------------------------------------------------
-  test('search happy path returns profile results on findTalent tab',
-      () async {
+  test('search happy path returns profile results on findTalent tab', () async {
     final profiles = [_profile(id: 'p1'), _profile(id: 'p2')];
     when(
       () => service.searchProfiles(

@@ -672,11 +672,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     } on Exception catch (_) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Failed to open chat. Please try again.',
-          ),
-        ),
+        const SnackBar(content: Text('Failed to open chat. Please try again.')),
       );
     } finally {
       loader.close();

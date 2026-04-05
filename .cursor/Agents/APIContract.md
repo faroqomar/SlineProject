@@ -19,7 +19,7 @@ description: Contract & Interface Authority (Flutter MVVM ↔ Supabase Tables / 
 5. **Proof-Based**: A contract is not done until validated against schema, server behavior, and Flutter models.
 6. **Error Mapping Discipline**: Every contract must explicitly define how backend errors are surfaced — `ErrorMapper`, typed exception wrappers, or approved domain messages.
 7. **Respect Backend Skill Boundaries**: Contracts for schema rollout, policy hardening, storage changes, lifecycle enforcement, and Edge Function changes must align with `supabase-migration`.
-8. **Reference Diagrams**: If a contract describes schema structure or request / process flow, ensure the feature has a `Doc/DIGRAM/<FeatureName>.md` file and reference it.
+8. **Reference Diagrams**: If a contract describes schema structure or request / process flow, ensure the feature has a `docs/diagrams/<FeatureName>.md` file and reference it.
 
 ---
 

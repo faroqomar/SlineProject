@@ -42,8 +42,9 @@ Future<void> _handleWorkItem(
     return;
   }
 
-  final workItemType =
-      type == 'booking' ? WorkItemType.booking : WorkItemType.task;
+  final workItemType = type == 'booking'
+      ? WorkItemType.booking
+      : WorkItemType.task;
 
   unawaited(
     Navigator.push(

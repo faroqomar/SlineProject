@@ -83,6 +83,21 @@ For sensitive flows:
 - minimal safe context
 - grouped failure fingerprints
 
+### 2.4.1 Sentry Integration Rules
+
+The project uses `sentry_flutter` for crash reporting via `SentryCrashReportingService`.
+
+- Sentry DSN is passed via `--dart-define=SENTRY_DSN=<dsn>`, never hardcoded in source.
+- Sentry environment must match deployment: `--dart-define=SENTRY_ENV=production|staging`.
+- `sanitizePii()` MUST be applied to both `CrashReportingService.recordError()` payloads AND breadcrumb messages. Iraqi phone regex: `r'07[3-9]\d{8}'`.
+- Never log auth tokens, refresh tokens, or full user identifiers (email, phone) to Sentry.
+- Traces sample rate: `0.2` (configurable via options).
+- `sendDefaultPii` must remain `false`.
+- When Sentry DSN is empty, Sentry silently disables — this is the expected behavior for local development.
+- Reference: `lib/core/services/sentry_crash_reporting_service.dart`, `lib/main.dart` (Sentry init block).
+
+Evidence: Phase D added Sentry. Phase E security review found unmasked PII in breadcrumbs and `recordError` payloads — added `sanitizePii()` with Iraqi local phone regex to both code paths.
+
 ### 2.5 Performance Monitoring
 
 - slow queries

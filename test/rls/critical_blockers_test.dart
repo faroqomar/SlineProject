@@ -190,8 +190,7 @@ void main() {
   });
 
   group('CRITICAL BLOCKER 3: Admin Logs Service Role Only', () {
-    const testDescription =
-        'Only service_role can INSERT into admin_logs';
+    const testDescription = 'Only service_role can INSERT into admin_logs';
 
     test('authenticated user cannot insert into admin_logs', () async {
       AppLogger.i(

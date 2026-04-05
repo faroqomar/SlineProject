@@ -326,7 +326,7 @@ Include:
 - Performance notes (`Selector`, `context.select`, caching, controller disposal)
 - Verification checklist for manual QA
 - Session log path if executed through `@Executor`
-- Diagram path if the feature also required `Doc/DIGRAM/<FeatureName>.md`
+- Diagram path if the feature also required `docs/diagrams/<FeatureName>.md`
 
 ---
 

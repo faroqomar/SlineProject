@@ -1,6 +1,111 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2026-04-04
+**Last Updated:** 2026-04-05
+
+---
+
+## 🔧 Quality Audit Phase E — Polish (2026-04-05)
+
+### ✅ Implemented
+
+**E1 — APK Build Resolution:**
+- Kotlin version mismatch from Phase D self-resolved via Flutter SDK / sentry_flutter plugin update
+- Both APK (debug) and Web (release) builds pass
+
+**E2 — CI Check 7 (Core→Features Boundary):**
+- Added architecture guard Check 7: `core/` must not import from `features/` (max 5 threshold, hard failure above)
+- File: `.github/workflows/ci.yml`
+
+**E3 — Lint Migration (very_good_analysis):**
+- Migrated from `flutter_lints` to `very_good_analysis` (~70+ rules active)
+- 862 auto-fixes via `dart fix --apply`, 12 manual fixes
+- 27 noisy/incompatible rules disabled with justification
+- Tracking: `.TODO/LINT_DEBT_PhaseE.md`
+- File: `analysis_options.yaml`
+
+**E4 — DI Normalization (5 ViewModels):**
+- `SavedTasksViewModel` — lazy `SupabaseClient` getter
+- `CategoriesViewModel` — lazy `CategoriesRepository`
+- `PortfolioViewModel` — lazy repo + client
+- `PublicProfileViewModel` — lazy repo
+- `AuthFormViewModel` — lazy `AccountGuardService`
+- Pattern: `late final _repo = _explicitRepo ?? Repository(Supabase.instance.client);`
+
+**E5 — Sealed ViewState & AppFailure:**
+- `lib/core/models/view_state.dart` — `ViewState<T>` → ViewInitial, ViewLoading, ViewLoaded, ViewFailed
+- `lib/core/models/app_failure.dart` — `AppFailure` → NetworkFailure, AuthFailure, ValidationFailure, BusinessFailure
+- Migrated: DirectOfferDetailsVM, BookingVM, WorkItemDetailsVM
+- `_actionInProgress` pattern for mutation operations preserving loaded data
+
+**E6 — God File Decomposition (9 files → 13 delegates/widgets):**
+- `task_offer_service.dart` (454L) — 13 offer/payment methods from TaskService
+- `task_request_error_mapper.dart` (270L) — 6 error mapping methods
+- `task_requests_award_delegate.dart` (413L) — award/payment flows
+- `booking_payment_delegate.dart` (253L) — payment coordination
+- `payment_response_helpers.dart` (71L) — pure helper functions
+- `work_item_bottom_actions.dart` (260L), `work_item_booking_details.dart` (126L), `work_item_guard_widgets.dart` (200L)
+- `wallet_hero_card.dart` (294L), `wallet_timeline_card.dart` (238L)
+- `task_concept_section.dart` (287L), `booking_logistics_section.dart` (152L)
+- `payment_order_summary_card.dart` (101L)
+
+**E7 — VM Tests (171 new, 27/27 VMs covered):**
+- 11 new test files: DirectOfferDetailsVM (28), SearchVM (14), SavedTasksVM (14), AuthFormVM (14), CategoriesVM (10), PortfolioVM (12), PublicProfileVM (9), UserProfileVM (11), SafetyVM (12), MyServicesVM (15), WorkItemDetailsVM (32)
+- Shared mock file expanded: 9 → 21 mock classes (`test/helpers/mock_services.dart`)
+
+**E8 — Coverage Floor Raised:**
+- CI threshold: 28% → 33%
+- Measured coverage: 34.9%
+- File: `.github/workflows/ci.yml`
+
+**E9 — DeepLinkService Registry Refactor:**
+- `lib/core/services/deep_link_registry.dart` — `DeepLinkRegistry` (register, handle, canHandle)
+- `lib/core/services/deep_link_service.dart` — 0 feature imports (was 16), uses registry dispatch
+- 6 feature handler files: task, booking, chat, direct_offers, work, profile
+- UUID validation before routing, generic SnackBar for unknown entities
+
+**E10 — Localization Infrastructure:**
+- `l10n.yaml` config, `lib/l10n/app_en.arb` with 22 key stubs
+- `generate: true` in `pubspec.yaml`
+- MaterialApp wired with delegates and supported locales
+
+**E11 — Orchestrator Review (20 findings, all fixed):**
+- BLOCKER: 13 raw string literals (r'...$var...') broke log interpolation — removed r prefix
+- HIGH: e.toString() leaks, _mapError fallthrough, ViewState data wipe — all fixed with ErrorMapper.map(e) and _actionInProgress
+- MED/LOW: UUID validation, AppLogger in handlers, UTC fix, hardcoded colors, accessibility — all fixed
+
+**E12 — Security Review (8 findings, all fixed):**
+- Fail-closed rate limiting (return false on RPC failure)
+- Removed debug log artifacts (_agentDebugLog functions)
+- Production guard for QICARD_ALLOW_UNSIGNED_LOCAL_DEV
+- Sentry PII sanitization (sanitizePii with Iraqi phone regex)
+- localhost gated behind ENVIRONMENT !== "production"
+- All e.toString()/e.message in SnackBars replaced with ErrorMapper.map(e)
+
+**E13 — System Evolution Report v4:**
+- 16 recommendations applied across all 16 agent files
+- 7 new rules added (raw string guard, error sanitization, ViewState mutation, zone init, web URL cleanup, web awareness, native build gate)
+- Doc/DIGRAM/ → docs/diagrams/ typo fixed across 13 files
+- `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-05.md`
+
+### Metrics
+- Tests: 780 → 982 (+202)
+- Analyze issues: 0
+- Coverage floor: 28% → 33% (measured 34.9%)
+- Architecture checks: 6 → 7
+- VM test coverage: 16/27 → 27/27 (100%)
+- God files >800 lines: 0
+
+### Bug Fixes Applied During Phase E
+- Zone mismatch: moved `WidgetsFlutterBinding.ensureInitialized()` before `runZonedGuarded()`
+- Raw string in `task_requests_view_model.dart:496` — removed `r` prefix
+- Web payment URL re-detection: added `clearPaymentReturnParamsFromUrl()` to `PaymentReturnScreen`
+
+### References
+- Plan: `.TODO/PLAN_PhaseE_Polish_2026-04-04.md`
+- Session Log: `docs/LOG/SESSION_PLAN_PhaseE_Polish_2026-04-04.md`
+- Master Report: `.TODO/MASTER_REPORT_2026-04-05_PhaseE.md`
+- System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-05.md`
+- Lint Debt: `.TODO/LINT_DEBT_PhaseE.md`
 
 ---
 

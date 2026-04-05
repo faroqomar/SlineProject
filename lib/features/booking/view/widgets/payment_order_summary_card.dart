@@ -59,10 +59,7 @@ class PaymentOrderSummaryCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Total',
-                style: AppTypography.h3.copyWith(color: cs.text),
-              ),
+              Text('Total', style: AppTypography.h3.copyWith(color: cs.text)),
               Text(
                 PriceFormatter.formatPrice(price),
                 style: AppTypography.h3.copyWith(

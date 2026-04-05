@@ -13,7 +13,9 @@ import 'package:sline_app/features/profile/view/public_profile_screen.dart';
 class ProposalDetailsModal extends StatelessWidget {
   final Map<String, dynamic>? proposal; // Pass mock proposal or real one later
 
-  @Deprecated('Use proposals list and tile; see DEPRECATION_Proposals_2026-03-04')
+  @Deprecated(
+    'Use proposals list and tile; see DEPRECATION_Proposals_2026-03-04',
+  )
   const ProposalDetailsModal({super.key, this.proposal});
 
   @override

@@ -157,7 +157,7 @@ class DashboardWorkDelegate {
         return;
       case PrimaryActionType.payEscrow:
         AppLogger.i('Action: payEscrow item=${item.id}', tag: _kTag);
-// Don't return — direct offer payEscrow path is below the switch
+      // Don't return — direct offer payEscrow path is below the switch
       case PrimaryActionType.submitEvidence:
         AppLogger.i('Action: submitEvidence item=${item.id}', tag: _kTag);
         return;

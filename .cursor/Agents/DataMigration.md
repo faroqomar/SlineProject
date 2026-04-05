@@ -19,7 +19,7 @@ description: Migration Engineer & Backward-Compatibility Owner for Supabase sche
 5. **Nullable / Additive First**: New columns on existing tables must begin in a compatibility-safe form unless the table is guaranteed empty.
 6. **Idempotent**: Migration and backfill steps must be safe to re-run or clearly guarded against duplicate side effects.
 7. **Use the Migration Skill**: Migration design and execution must follow `.cursor/skills/supabase-migration/SKILL.md` for meaningful rollout work.
-8. **Diagram the Migration**: Any migration that changes schema shape or data flow must create or update a per-feature file under `Doc/DIGRAM/`.
+8. **Diagram the Migration**: Any migration that changes schema shape or data flow must create or update a per-feature file under `docs/diagrams/`.
 
 ---
 
@@ -225,7 +225,7 @@ For every migration:
 
 If schema or process flow changed, also require:
 
-- `Doc/DIGRAM/<FeatureName>.md`
+- `docs/diagrams/<FeatureName>.md`
 
 ---
 

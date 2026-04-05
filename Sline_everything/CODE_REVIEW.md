@@ -3,11 +3,41 @@
 **Date**: December 14, 2025 (Updated)
 **Reviewed By**: CodeGuard + Architect + Sentinel Agents
 **Previous Score**: 9/10
-**Current Score**: 9.5/10
+**Current Score**: 9.7/10
 
 > Historical review note: this document records review findings and fixes from earlier passes. Treat references to removed files or older structure as historical context; the current live structure is documented in `Sline_everything/STRUCTURE.md` and `Sline_everything/DEVELOPER_GUIDE.md`.
 
-## Current Guardrail Notes (2026-04-04)
+## Current Guardrail Notes (2026-04-05)
+
+### Raw String Interpolation Guard (Phase E, 2026-04-05)
+
+**Pattern**: Never use raw string literals (`r'...'`) in `AppLogger` calls or any string containing `$variable` interpolation. Raw strings make `$` literal. Use normal single-quoted strings.
+
+**Evidence**: Phase E BLOCKER — 14 `r'...$var...'` instances in `task_requests_award_delegate.dart` and `task_requests_view_model.dart` silently broke financial flow logging.
+
+### Error Message Sanitization (Phase E, 2026-04-05)
+
+**Rule**: NEVER pass `e.toString()`, `e.message`, or `error.toString()` to SnackBars, dialogs, or any user-visible UI. ALWAYS use `ErrorMapper.map(e)`. This applies in ViewModel catch blocks, View catch blocks, and Delegate catch blocks.
+
+**Evidence**: Phase E — 6 raw exception leaks found across ViewModels and views.
+
+### ViewState Mutation Preservation (Phase E, 2026-04-05)
+
+**Pattern**: When using sealed `ViewState<T>`, action methods must NOT overwrite `ViewLoaded` → `ViewLoading`. Use `_actionInProgress` flag to preserve loaded data during mutations.
+
+**Evidence**: Phase E — 8 action methods in WorkItemDetailsVM wiped loaded state.
+
+### Web Payment URL Cleanup (Phase E, 2026-04-05)
+
+**Rule**: Every code path processing web payment return URLs must call `clearPaymentReturnParamsFromUrl()` immediately after parsing. Both PaymentReturnScreen and DashboardScreen must clear.
+
+**Evidence**: Phase E — Missing cleanup caused 20+ duplicate payment detection logs per session.
+
+### Zone Initialization Order (Phase E, 2026-04-05)
+
+**Rule**: `WidgetsFlutterBinding.ensureInitialized()` must be called BEFORE `runZonedGuarded()` (but inside Sentry's appRunner).
+
+**Evidence**: Phase E — Zone mismatch error on every app startup.
 
 ### Lazy Supabase Client Resolution (Phase D, 2026-04-04)
 

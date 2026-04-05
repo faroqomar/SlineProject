@@ -6,11 +6,12 @@ import 'package:sline_app/core/services/logger_service.dart';
 /// [context] is the current BuildContext for navigation.
 /// [entityId] is the ID of the entity to navigate to.
 /// [metadata] is optional extra data (e.g. conversationId for work items).
-typedef DeepLinkHandler = Future<void> Function(
-  BuildContext context,
-  String entityId, {
-  Map<String, dynamic>? metadata,
-});
+typedef DeepLinkHandler =
+    Future<void> Function(
+      BuildContext context,
+      String entityId, {
+      Map<String, dynamic>? metadata,
+    });
 
 /// Registry that maps entity type strings to navigation handlers.
 ///

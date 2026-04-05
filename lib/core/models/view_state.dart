@@ -42,8 +42,7 @@ class ViewLoaded<T> extends ViewState<T> {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ViewLoaded<T> && other.data == data;
+      identical(this, other) || other is ViewLoaded<T> && other.data == data;
 
   @override
   int get hashCode => data.hashCode;

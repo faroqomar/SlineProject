@@ -119,22 +119,24 @@ void main() {
       expect(vm.profile, isNull);
     });
 
-    test('load: portfolio failure is non-critical (profile still loads)',
-        () async {
-      when(
-        () => mockProfileRepo.fetchProfile('target-user'),
-      ).thenAnswer((_) async => testProfileModel);
-      when(
-        () => mockProfileRepo.getPortfolioItems('target-user'),
-      ).thenThrow(Exception('RLS denied'));
+    test(
+      'load: portfolio failure is non-critical (profile still loads)',
+      () async {
+        when(
+          () => mockProfileRepo.fetchProfile('target-user'),
+        ).thenAnswer((_) async => testProfileModel);
+        when(
+          () => mockProfileRepo.getPortfolioItems('target-user'),
+        ).thenThrow(Exception('RLS denied'));
 
-      final vm = buildVm();
-      await vm.load();
+        final vm = buildVm();
+        await vm.load();
 
-      expect(vm.profile, isNotNull);
-      expect(vm.portfolio, isEmpty);
-      expect(vm.error, isNull);
-    });
+        expect(vm.profile, isNotNull);
+        expect(vm.portfolio, isEmpty);
+        expect(vm.error, isNull);
+      },
+    );
 
     test('getOrCreateConversation happy path', () async {
       when(() => mockUser.id).thenReturn('current-user');
@@ -159,21 +161,23 @@ void main() {
       ).called(1);
     });
 
-    test('getOrCreateConversation returns null when not authenticated',
-        () async {
-      when(() => mockProfileRepo.currentUser).thenReturn(null);
+    test(
+      'getOrCreateConversation returns null when not authenticated',
+      () async {
+        when(() => mockProfileRepo.currentUser).thenReturn(null);
 
-      final vm = buildVm();
-      final result = await vm.getOrCreateConversation();
+        final vm = buildVm();
+        final result = await vm.getOrCreateConversation();
 
-      expect(result, isNull);
-      verifyNever(
-        () => mockMessageService.createOrGetConversation(
-          user1Id: any(named: 'user1Id'),
-          user2Id: any(named: 'user2Id'),
-        ),
-      );
-    });
+        expect(result, isNull);
+        verifyNever(
+          () => mockMessageService.createOrGetConversation(
+            user1Id: any(named: 'user1Id'),
+            user2Id: any(named: 'user2Id'),
+          ),
+        );
+      },
+    );
 
     test('getOrCreateConversation returns null for same user', () async {
       when(() => mockUser.id).thenReturn('target-user');

@@ -21,7 +21,7 @@ class BookingLogisticsSection extends StatelessWidget {
 
   /// Helper shared with the parent to render a label above any input.
   final Widget Function(String label, Widget input, AppColorScheme colorScheme)
-      buildLabeledInput;
+  buildLabeledInput;
 
   const BookingLogisticsSection({
     super.key,
@@ -49,8 +49,9 @@ class BookingLogisticsSection extends StatelessWidget {
             border: Border.all(color: colorScheme.inputBorder),
           ),
           child: Row(
-            children:
-                ['Basic', 'Standard', 'Premium'].asMap().entries.map((entry) {
+            children: ['Basic', 'Standard', 'Premium'].asMap().entries.map((
+              entry,
+            ) {
               final index = entry.key;
               final label = entry.value;
               final isSelected = selectedPackageTier == index;

@@ -30,8 +30,7 @@ Task _task({required String id, String title = 'Task'}) {
 ///
 /// The auth stream controller is returned so tests can push auth events.
 /// [currentUser] controls whether the VM triggers an initial load.
-({SavedTasksViewModel vm, StreamController<AuthState> authCtrl})
-_buildVm({
+({SavedTasksViewModel vm, StreamController<AuthState> authCtrl}) _buildVm({
   required MockSavedTasksService service,
   User? currentUser,
 }) {
@@ -257,10 +256,7 @@ void main() {
 
     await vm.load();
 
-    expect(
-      () => (vm.savedTaskIds as List).add('hack'),
-      throwsA(isA<Error>()),
-    );
+    expect(() => (vm.savedTaskIds as List).add('hack'), throwsA(isA<Error>()));
 
     vm.dispose();
     await result.authCtrl.close();
@@ -290,8 +286,9 @@ void main() {
   // 12. Auth stream signedIn triggers load
   // -----------------------------------------------------------------------
   test('auth stream signedIn event triggers load', () async {
-    when(() => service.listMineWithDetails())
-        .thenAnswer((_) async => [_task(id: 'from-auth')]);
+    when(
+      () => service.listMineWithDetails(),
+    ).thenAnswer((_) async => [_task(id: 'from-auth')]);
 
     final result = _buildVm(service: service, currentUser: null);
     final vm = result.vm;

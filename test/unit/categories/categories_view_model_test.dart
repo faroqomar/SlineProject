@@ -32,11 +32,15 @@ void main() {
 
     // Default stubs
     when(
-      () => repo.getAll(search: any(named: 'search'), limit: any(named: 'limit')),
+      () => repo.getAll(
+        search: any(named: 'search'),
+        limit: any(named: 'limit'),
+      ),
     ).thenAnswer((_) async => _sampleCategories);
 
-    when(() => repo.getAll(search: any(named: 'search')))
-        .thenAnswer((_) async => _sampleCategories);
+    when(
+      () => repo.getAll(search: any(named: 'search')),
+    ).thenAnswer((_) async => _sampleCategories);
 
     when(() => repo.clearCache()).thenReturn(null);
   });
@@ -72,10 +76,14 @@ void main() {
     // ----- 3. load error sets error state -----
     test('load error sets error state', () async {
       when(
-        () => repo.getAll(search: any(named: 'search'), limit: any(named: 'limit')),
+        () => repo.getAll(
+          search: any(named: 'search'),
+          limit: any(named: 'limit'),
+        ),
       ).thenThrow(Exception('Network failure'));
-      when(() => repo.getAll(search: any(named: 'search')))
-          .thenThrow(Exception('Network failure'));
+      when(
+        () => repo.getAll(search: any(named: 'search')),
+      ).thenThrow(Exception('Network failure'));
 
       final vm = buildVM();
       addTearDown(vm.dispose);
@@ -129,10 +137,14 @@ void main() {
     // ----- 7. load with empty result: empty list, no error -----
     test('load with empty result sets empty list and no error', () async {
       when(
-        () => repo.getAll(search: any(named: 'search'), limit: any(named: 'limit')),
+        () => repo.getAll(
+          search: any(named: 'search'),
+          limit: any(named: 'limit'),
+        ),
       ).thenAnswer((_) async => []);
-      when(() => repo.getAll(search: any(named: 'search')))
-          .thenAnswer((_) async => []);
+      when(
+        () => repo.getAll(search: any(named: 'search')),
+      ).thenAnswer((_) async => []);
 
       final vm = buildVM();
       addTearDown(vm.dispose);
@@ -154,10 +166,14 @@ void main() {
       // Second load with different data
       final newData = [_cat(id: 'c4', name: 'Writing')];
       when(
-        () => repo.getAll(search: any(named: 'search'), limit: any(named: 'limit')),
+        () => repo.getAll(
+          search: any(named: 'search'),
+          limit: any(named: 'limit'),
+        ),
       ).thenAnswer((_) async => newData);
-      when(() => repo.getAll(search: any(named: 'search')))
-          .thenAnswer((_) async => newData);
+      when(
+        () => repo.getAll(search: any(named: 'search')),
+      ).thenAnswer((_) async => newData);
 
       await vm.load();
 

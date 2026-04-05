@@ -332,33 +332,36 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
                       ),
 
                       // --- History Tab ---
-                      if (profile.history.isEmpty) Center(
-                              child: Text(
-                                'No completed work yet.',
-                                style: AppTypography.bodyMedium.copyWith(
-                                  color: colorScheme.textSecondary,
-                                ),
-                              ),
-                            ) else ListView.separated(
-                              controller: _historyScrollController,
-                              padding: const EdgeInsets.fromLTRB(
-                                AppDimens.p24,
-                                AppDimens.p24,
-                                AppDimens.p24,
-                                100,
-                              ),
-                              itemCount: profile.history.length,
-                              separatorBuilder: (_, __) =>
-                                  const SizedBox(height: AppDimens.p12),
-                              itemBuilder: (context, index) {
-                                return TaskCard(
-                                  task: profile.history[index],
-                                  onTap: () {
-                                    // Navigate to task details
-                                  },
-                                );
-                              },
+                      if (profile.history.isEmpty)
+                        Center(
+                          child: Text(
+                            'No completed work yet.',
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: colorScheme.textSecondary,
                             ),
+                          ),
+                        )
+                      else
+                        ListView.separated(
+                          controller: _historyScrollController,
+                          padding: const EdgeInsets.fromLTRB(
+                            AppDimens.p24,
+                            AppDimens.p24,
+                            AppDimens.p24,
+                            100,
+                          ),
+                          itemCount: profile.history.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: AppDimens.p12),
+                          itemBuilder: (context, index) {
+                            return TaskCard(
+                              task: profile.history[index],
+                              onTap: () {
+                                // Navigate to task details
+                              },
+                            );
+                          },
+                        ),
 
                       // --- Reviews Tab ---
                       SingleChildScrollView(

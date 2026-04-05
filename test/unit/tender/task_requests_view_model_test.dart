@@ -441,7 +441,10 @@ void main() {
             expectedPriceCents: any(named: 'expectedPriceCents'),
           ),
         ).thenThrow(
-          const PriceMismatchException(expectedCents: 10000, actualCents: 15000),
+          const PriceMismatchException(
+            expectedCents: 10000,
+            actualCents: 15000,
+          ),
         );
 
         expect(

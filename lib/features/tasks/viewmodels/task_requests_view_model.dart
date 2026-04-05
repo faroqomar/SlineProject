@@ -301,8 +301,7 @@ class TaskRequestsViewModel extends ChangeNotifier {
   Future<Map<String, dynamic>?> award(
     String requestId, {
     int? expectedPriceCents,
-  }) =>
-      _awardDelegate.award(requestId, expectedPriceCents: expectedPriceCents);
+  }) => _awardDelegate.award(requestId, expectedPriceCents: expectedPriceCents);
 
   /// Step 2: Pay for the awarded offer.
   /// See [TaskRequestsAwardDelegate.payForAwardedOffer].
@@ -311,10 +310,7 @@ class TaskRequestsViewModel extends ChangeNotifier {
 
   /// Accepts an offer with optimistic concurrency control.
   /// See [TaskRequestsAwardDelegate.acceptOffer].
-  Future<bool> acceptOffer(
-    TaskRequest request, {
-    int? expectedPriceCents,
-  }) =>
+  Future<bool> acceptOffer(TaskRequest request, {int? expectedPriceCents}) =>
       _awardDelegate.acceptOffer(
         request,
         expectedPriceCents: expectedPriceCents,

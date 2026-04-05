@@ -22,7 +22,7 @@ class TaskOfferService {
   late final LedgerService _ledgerService;
 
   TaskOfferService({SupabaseClient? client})
-      : _client = client ?? Supabase.instance.client {
+    : _client = client ?? Supabase.instance.client {
     _profileSummaryService = ProfileSummaryService(_client);
     _taskRequestsService = TaskRequestsService(client: _client);
     _ledgerService = LedgerService(_client);

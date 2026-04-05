@@ -503,8 +503,7 @@ class QiCardPaymentService implements PaymentService {
       );
 
       final data = asResponseMap(response.data);
-      final serviceError =
-          extractError(data) ?? extractErrorFromPayload(data);
+      final serviceError = extractError(data) ?? extractErrorFromPayload(data);
       if (serviceError != null) {
         AppLogger.w(
           'Direct offer payment create rejected for offer=$offerId',
@@ -616,8 +615,7 @@ class QiCardPaymentService implements PaymentService {
       );
 
       final data = asResponseMap(response.data);
-      final serviceError =
-          extractError(data) ?? extractErrorFromPayload(data);
+      final serviceError = extractError(data) ?? extractErrorFromPayload(data);
       if (serviceError != null) {
         AppLogger.w(
           'Tender payment create rejected for request=$requestId',
@@ -708,8 +706,7 @@ class QiCardPaymentService implements PaymentService {
       );
 
       final data = asResponseMap(response.data);
-      final serviceError =
-          extractError(data) ?? extractErrorFromPayload(data);
+      final serviceError = extractError(data) ?? extractErrorFromPayload(data);
       if (serviceError != null) {
         AppLogger.w(
           'Tender recovery rejected for request=$requestId',

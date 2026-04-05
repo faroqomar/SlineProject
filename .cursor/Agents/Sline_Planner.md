@@ -156,7 +156,17 @@ Use the available Supabase dashboard, SQL editor, CLI, MCP tools, or current mig
 **Rule:** Treat docs as intent and live Supabase state as reality.  
 If drift exists (docs ≠ live), record it in plan risks and plan a safe reconcile path. Do not plan destructive cleanup simply to "match docs."
 
-### 2.4 Evidence Section (Required In Plan)
+### 2.4 Native Dependency Build Gate (Required When Planning Native Packages)
+
+When a plan adds a dependency that includes native code (`sentry_flutter`, `firebase_*`, `image_picker`, `webview_flutter`, `google_maps_flutter`, etc.), the FIRST phase after dependency addition MUST include:
+- `flutter build apk --debug` — catches Kotlin/Gradle version mismatches
+- `flutter build ios --no-codesign` (if applicable) — catches Swift/Xcode version mismatches
+
+Do NOT defer native build verification to QA phases. Native SDK version mismatches (Kotlin, Swift, Gradle, CocoaPods) are invisible to `flutter analyze` and `flutter test` — they only surface during platform compilation.
+
+Evidence: Phase D — `sentry_flutter` added in Phase 1, APK build failure discovered only at Phase 8 QA.
+
+### 2.5 Evidence Section (Required In Plan)
 
 Include `## Evidence & Findings (From Scan)`:
 
@@ -225,7 +235,7 @@ Capture:
 - Every sub-phase header must name its primary agent or agents.
 - If a step changes UI / UX / theme / layout / motion / responsiveness / copy, that step MUST also include `Skill: <skill-name>` from `.cursor/skills/`.
 - If a step changes schema / RLS / RPC / trigger / storage / rollout / performance hot paths, that step MUST also include `Skill: supabase-migration`.
-- If a feature includes schema design, order flow, or backend process flow, the plan MUST include a dedicated diagram artifact under `Doc/DIGRAM/`.
+- If a feature includes schema design, order flow, or backend process flow, the plan MUST include a dedicated diagram artifact under `docs/diagrams/`.
 - **Mandatory triggers:**
   - Any feature touching wallet, escrow, payments, admin finance, disputes, or sensitive user data → `@ThreatModeler` + `@Observability`
   - Any schema change (new table, new column, changed type, new view, new trigger, new index) → `@DataMigration`
@@ -313,7 +323,7 @@ If a Supabase step that clearly fits this category has no skill tag, the plan is
 
 When the feature includes schema design, order flow, or any flow-chart-worthy backend workflow, the plan MUST add a documentation step for:
 
-`Doc/DIGRAM/<FeatureName>.md`
+`docs/diagrams/<FeatureName>.md`
 
 Rules:
 
@@ -436,7 +446,7 @@ Write only the header section at plan creation time:
 
 - Every Supabase phase and sub-phase MUST name `@Supabase_Ops` as primary or secondary owner.
 - Every substantial DB / RLS / RPC / storage / migration step MUST include `Skill: supabase-migration`.
-- Any schema or flow change MUST include a `Doc/DIGRAM/<FeatureName>.md` step.
+- Any schema or flow change MUST include a `docs/diagrams/<FeatureName>.md` step.
 
 ### Session Log Rules
 
@@ -618,7 +628,7 @@ Write only the header section at plan creation time:
 **Primary Agent(s):** `@SlineDocs`
 
 - [ ] (`@SlineDocs`) Update `Sline_everything/` docs affected by schema, flow, architecture, or structure changes.
-- [ ] (`@SlineDocs`) Ensure `docs/LOG/SESSION_*.md` and `Doc/DIGRAM/<FeatureName>.md` are cross-linked where relevant.
+- [ ] (`@SlineDocs`) Ensure `docs/LOG/SESSION_*.md` and `docs/diagrams/<FeatureName>.md` are cross-linked where relevant.
 - [ ] (`@SlineDocs`) Write `.TODO/DOCS_SYNC_<YYYY-MM-DD>_<ShortTitle>.md`.
 - **GATE CHECK:** docs, session logs, and diagrams are aligned with the plan and implementation.
 

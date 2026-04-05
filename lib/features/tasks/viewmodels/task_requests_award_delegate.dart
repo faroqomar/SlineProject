@@ -82,10 +82,7 @@ class TaskRequestsAwardDelegate {
     _errorMessage = null;
     _onChanged();
 
-    AppLogger.i(
-      'Starting award flow for request $requestId',
-      tag: _kTag,
-    );
+    AppLogger.i('Starting award flow for request $requestId', tag: _kTag);
 
     try {
       final result = await _taskService.awardOffer(
@@ -125,10 +122,7 @@ class TaskRequestsAwardDelegate {
     } finally {
       _isAwarding = false;
       _onChanged();
-      AppLogger.d(
-        'Award operation completed, flag cleared',
-        tag: _kTag,
-      );
+      AppLogger.d('Award operation completed, flag cleared', tag: _kTag);
     }
   }
 
@@ -152,10 +146,7 @@ class TaskRequestsAwardDelegate {
     _errorMessage = null;
     _onChanged();
 
-    AppLogger.i(
-      'Starting payment flow for request $requestId',
-      tag: _kTag,
-    );
+    AppLogger.i('Starting payment flow for request $requestId', tag: _kTag);
 
     try {
       final result = await _taskService.payAwardedOffer(requestId);
@@ -207,10 +198,7 @@ class TaskRequestsAwardDelegate {
     _errorMessage = null;
     _onChanged();
 
-    AppLogger.i(
-      'Starting accept flow for request ${request.id}',
-      tag: _kTag,
-    );
+    AppLogger.i('Starting accept flow for request ${request.id}', tag: _kTag);
 
     try {
       // DB stores task_requests.price in IQD; RPC expects
@@ -228,10 +216,7 @@ class TaskRequestsAwardDelegate {
         expectedPriceCents: priceCents,
       );
 
-      AppLogger.i(
-        'Offer ${request.id} accepted successfully',
-        tag: _kTag,
-      );
+      AppLogger.i('Offer ${request.id} accepted successfully', tag: _kTag);
 
       // Success - refresh the list
       await _refreshList();
@@ -249,10 +234,7 @@ class TaskRequestsAwardDelegate {
       // Re-throw so UI can show error dialog
       rethrow;
     } on OfferAlreadyAcceptedException catch (_) {
-      AppLogger.w(
-        'Offer already accepted (idempotency hit)',
-        tag: _kTag,
-      );
+      AppLogger.w('Offer already accepted (idempotency hit)', tag: _kTag);
 
       // Refresh and return success since it's already accepted
       await _refreshList();
@@ -270,10 +252,7 @@ class TaskRequestsAwardDelegate {
     } finally {
       _isAwarding = false;
       _onChanged();
-      AppLogger.d(
-        'Accept operation completed, flag cleared',
-        tag: _kTag,
-      );
+      AppLogger.d('Accept operation completed, flag cleared', tag: _kTag);
     }
   }
 
@@ -282,10 +261,7 @@ class TaskRequestsAwardDelegate {
   Future<bool> cancelAwardedOffer(String requestId) async {
     // Prevent concurrent operations
     if (_isAwarding) {
-      AppLogger.w(
-        'Blocked cancel attempt during active operation',
-        tag: _kTag,
-      );
+      AppLogger.w('Blocked cancel attempt during active operation', tag: _kTag);
       _errorMessage = 'Please wait for the current operation to complete.';
       _onChanged();
       return false;
@@ -312,10 +288,7 @@ class TaskRequestsAwardDelegate {
         return true;
       } else {
         _errorMessage = result['message'] ?? 'Failed to cancel offer';
-        AppLogger.w(
-          'Cancel failed for $requestId: $_errorMessage',
-          tag: _kTag,
-        );
+        AppLogger.w('Cancel failed for $requestId: $_errorMessage', tag: _kTag);
         _onChanged();
         return false;
       }
@@ -332,10 +305,7 @@ class TaskRequestsAwardDelegate {
     } finally {
       _isAwarding = false;
       _onChanged();
-      AppLogger.d(
-        'Cancel operation completed, flag cleared',
-        tag: _kTag,
-      );
+      AppLogger.d('Cancel operation completed, flag cleared', tag: _kTag);
     }
   }
 
@@ -356,10 +326,7 @@ class TaskRequestsAwardDelegate {
   @Deprecated('Use award() and payForAwardedOffer() instead.')
   Future<void> acceptLegacy(String requestId) async {
     if (_isAwarding) {
-      AppLogger.w(
-        'Blocked concurrent legacy accept attempt',
-        tag: _kTag,
-      );
+      AppLogger.w('Blocked concurrent legacy accept attempt', tag: _kTag);
       _errorMessage = 'An operation is already in progress.';
       _onChanged();
       return;

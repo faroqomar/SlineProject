@@ -51,6 +51,7 @@ class BookingViewModel extends ChangeNotifier {
   final ChatRepository _chatRepository;
   final PaymentService _paymentService;
   final BookingPaymentDelegate _paymentDelegate;
+
   /// Whether the active payment service is the demo (non-production) implementation.
   bool get isDemoPaymentMode => _paymentService is DemoPaymentService;
 
@@ -188,6 +189,7 @@ class BookingViewModel extends ChangeNotifier {
       ..addAll(items);
     _clientListState = ViewLoaded(List<BookingModel>.of(items));
   }
+
   String? bookingsClientCursor; // ISO string of last created_at
   String? bookingsProviderCursor; // ISO string of last created_at
 
@@ -284,9 +286,7 @@ class BookingViewModel extends ChangeNotifier {
       final updated = await _repo.getBookingById(bookingId);
 
       // Update in client mutable list and re-emit ViewLoaded
-      final clientIdx = _clientListMutable.indexWhere(
-        (b) => b.id == bookingId,
-      );
+      final clientIdx = _clientListMutable.indexWhere((b) => b.id == bookingId);
       if (clientIdx != -1) {
         _clientListMutable[clientIdx] = updated;
         _clientListState = ViewLoaded(
@@ -461,13 +461,12 @@ class BookingViewModel extends ChangeNotifier {
     required String paymentId,
     required String requestId,
     required double amount,
-  }) =>
-      _paymentDelegate.triggerQiCardSuccessRecovery(
-        bookingId: bookingId,
-        paymentId: paymentId,
-        requestId: requestId,
-        amount: amount,
-      );
+  }) => _paymentDelegate.triggerQiCardSuccessRecovery(
+    bookingId: bookingId,
+    paymentId: paymentId,
+    requestId: requestId,
+    amount: amount,
+  );
 
   Future<QiCardCreatePaymentResult> createPaymentForBooking({
     required String taskId,

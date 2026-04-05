@@ -21,7 +21,8 @@ class PortfolioViewModel extends ChangeNotifier {
   final SupabaseClient? _explicitClient;
 
   late final PortfolioRepository _repo =
-      _explicitRepo ?? PortfolioRepository(_explicitClient ?? Supabase.instance.client);
+      _explicitRepo ??
+      PortfolioRepository(_explicitClient ?? Supabase.instance.client);
   final String _tag;
 
   String? _ownerId;

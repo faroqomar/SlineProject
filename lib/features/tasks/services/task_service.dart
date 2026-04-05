@@ -556,10 +556,7 @@ class TaskService {
     String offerId, {
     int? expectedPriceCents,
   }) =>
-      _offerService.awardOffer(
-        offerId,
-        expectedPriceCents: expectedPriceCents,
-      );
+      _offerService.awardOffer(offerId, expectedPriceCents: expectedPriceCents);
 
   /// Pay for an awarded offer (Step 2: Complete payment).
   Future<Map<String, dynamic>> payAwardedOffer(String offerId) =>

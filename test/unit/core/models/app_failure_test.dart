@@ -19,10 +19,7 @@ void main() {
     });
 
     test('AuthFailure stores sessionExpired flag', () {
-      const failure = AuthFailure(
-        'Session expired',
-        sessionExpired: true,
-      );
+      const failure = AuthFailure('Session expired', sessionExpired: true);
       expect(failure.userMessage, 'Session expired');
       expect(failure.sessionExpired, true);
     });

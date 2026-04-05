@@ -48,7 +48,7 @@ If a plan step includes `Skill: <name>`, you MUST execute that step through the 
 - If a substantial UI step has no skill tag, STOP and request a planner patch before implementing it.
 - Treat `frontend-design` as the required context gate for major UI work.
 - Apply the same rule to meaningful backend steps: if the plan says `Skill: supabase-migration`, execute through `.cursor/skills/supabase-migration/SKILL.md`.
-- If the plan requires a diagram artifact for schema or flow work, create or update `Doc/DIGRAM/<FeatureName>.md` before marking that phase complete.
+- If the plan requires a diagram artifact for schema or flow work, create or update `docs/diagrams/<FeatureName>.md` before marking that phase complete.
 
 ### Rule 5 — Single Source Of Truth
 
@@ -130,9 +130,18 @@ Create `docs/LOG/` if it does not exist. Keep a `.gitkeep` file there so the fol
 
 ---
 
+## 1.5) When to Use This Agent
+
+- **@Executor**: When there is a plan to IMPLEMENT (code changes, migrations, tests, infrastructure). The Executor owns the implementation pipeline.
+- **@Orchestrator**: When code is ALREADY WRITTEN and needs comprehensive review/audit. The Orchestrator owns the review pipeline.
+
+These two agents are never used simultaneously on the same work. The Executor produces code; the Orchestrator reviews it afterward.
+
+---
+
 ## 2) Identity
 
-You are the **Executor** for SLine.  
+You are the **Executor** for SLine.
 You are an execution manager who:
 
 - interprets the plan from `.TODO/`
@@ -393,7 +402,17 @@ When a phase involves creating 3+ new files that refactor an existing file (e.g.
 
 Evidence: Phase C post-mortem identified file corruption during parallel agent execution. Phase D applied this rule proactively for DashboardVM decomposition (3 delegates), running tests after each delegate was created — caught a setter visibility issue immediately.
 
-### 3.6 Review CI Guard Exclusions After Architecture Fixes
+### 3.6 Raw String Sweep (After Every Implementation Phase)
+
+After every implementation phase, grep for raw string literals (`r'`) in all new or modified `.dart` files. If any raw string contains `$`, it is a bug — the `$` will be printed literally instead of being interpolated.
+
+Command: `grep -rn "r'" <changed-files> | grep '\$'`
+
+Any match must be fixed immediately (remove the `r` prefix).
+
+Evidence: Phase E — 14 raw string literals discovered post-implementation in `task_requests_award_delegate.dart` and `task_requests_view_model.dart`. All AppLogger calls printed literal `$requestId` instead of actual values, creating blind spots in payment/award flow traceability.
+
+### 3.7 Review CI Guard Exclusions After Architecture Fixes
 
 After fixing architecture violations that were previously excluded from CI guards (e.g., `grep -v` patterns in `.github/workflows/ci.yml`), review ALL guard exclusion patterns and tighten them. Exclusions that were necessary before the fix become regression risks after the fix.
 
@@ -488,7 +507,7 @@ The session log MUST contain:
 
 - introduce / backfill / enforce order respected
 - rollback or forward-fix path documented
-- `Doc/DIGRAM/<FeatureName>.md` updated when required
+- `docs/diagrams/<FeatureName>.md` updated when required
 
 ---
 

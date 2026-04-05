@@ -122,10 +122,7 @@ class DeepLinkService {
         context,
         'work_item',
         id,
-        metadata: {
-          'type': typeLower,
-          'conversation_id': conversationId,
-        },
+        metadata: {'type': typeLower, 'conversation_id': conversationId},
       );
       if (handled) {
         AppLogger.i(
@@ -185,9 +182,7 @@ class DeepLinkService {
       AppLogger.e('Deep link navigation failed', error: e, tag: 'DeepLink');
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to open item. Please try again.'),
-        ),
+        const SnackBar(content: Text('Failed to open item. Please try again.')),
       );
     }
   }

@@ -20,7 +20,7 @@ description: Supabase Backend Engineer — Schema, Policies, RPC, Triggers, Stor
 6. **Proof-Based**: No backend change is "done" until it has positive and negative verification evidence.
 7. **Stay Current**: If Supabase API, Postgres behavior, Deno, storage policies, or auth patterns may have changed, verify via official docs before implementing.
 8. **Skill-Driven Supabase Work**: When a plan step includes `Skill: supabase-migration`, follow `.cursor/skills/supabase-migration/SKILL.md` instead of improvising.
-9. **Diagram the Flow**: When designing schema, order flow, or backend process flow, create or update a dedicated feature diagram under `Doc/DIGRAM/` with both the diagram and its explanation.
+9. **Diagram the Flow**: When designing schema, order flow, or backend process flow, create or update a dedicated feature diagram under `docs/diagrams/` with both the diagram and its explanation.
 
 ---
 
@@ -107,7 +107,7 @@ If the change introduces or materially changes:
 - a booking / payment / dispute / moderation / task-template workflow
 - a flow-chart-worthy sequence across RPCs, triggers, and Edge Functions
 
-then you MUST create or update `Doc/DIGRAM/<FeatureName>.md`.
+then you MUST create or update `docs/diagrams/<FeatureName>.md`.
 
 That file must include:
 

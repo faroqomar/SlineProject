@@ -60,7 +60,10 @@ void main() {
 
     // Default stubs
     when(
-      () => authRepo.signIn(email: any(named: 'email'), password: any(named: 'password')),
+      () => authRepo.signIn(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+      ),
     ).thenAnswer((_) async => _FakeAuthResponse());
 
     when(() => authRepo.signOut()).thenAnswer((_) async {});
@@ -80,16 +83,17 @@ void main() {
       ),
     ).thenAnswer((_) async => _testProfile());
 
-    when(() => authRepo.getCurrentUserProfileWithRetry())
-        .thenAnswer((_) async => _testProfile());
+    when(
+      () => authRepo.getCurrentUserProfileWithRetry(),
+    ).thenAnswer((_) async => _testProfile());
 
-    when(() => authRepo.sendPasswordResetEmail(any()))
-        .thenAnswer((_) async {});
+    when(() => authRepo.sendPasswordResetEmail(any())).thenAnswer((_) async {});
 
     when(() => authRepo.updatePassword(any())).thenAnswer((_) async {});
 
-    when(() => guardService.evaluateCurrentUser())
-        .thenAnswer((_) async => _activeGuard);
+    when(
+      () => guardService.evaluateCurrentUser(),
+    ).thenAnswer((_) async => _activeGuard);
   });
 
   AuthFormViewModel buildVM() {
@@ -126,7 +130,10 @@ void main() {
     // ----- 3. signIn error sets error state -----
     test('login error sets mapped error message', () async {
       when(
-        () => authRepo.signIn(email: any(named: 'email'), password: any(named: 'password')),
+        () => authRepo.signIn(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
       ).thenThrow(const AuthException('Invalid login credentials'));
 
       final vm = buildVM();
@@ -201,8 +208,9 @@ void main() {
 
     // ----- 7. signIn with restricted (banned) account -----
     test('login with banned account signs out and sets banned error', () async {
-      when(() => guardService.evaluateCurrentUser())
-          .thenAnswer((_) async => _bannedGuard);
+      when(
+        () => guardService.evaluateCurrentUser(),
+      ).thenAnswer((_) async => _bannedGuard);
 
       final vm = buildVM();
       addTearDown(vm.dispose);
@@ -215,25 +223,31 @@ void main() {
     });
 
     // ----- 8. signIn with suspended account -----
-    test('login with suspended account signs out and sets suspended error',
-        () async {
-      when(() => guardService.evaluateCurrentUser())
-          .thenAnswer((_) async => _suspendedGuard);
+    test(
+      'login with suspended account signs out and sets suspended error',
+      () async {
+        when(
+          () => guardService.evaluateCurrentUser(),
+        ).thenAnswer((_) async => _suspendedGuard);
 
-      final vm = buildVM();
-      addTearDown(vm.dispose);
+        final vm = buildVM();
+        addTearDown(vm.dispose);
 
-      final result = await vm.login(email: 'a@b.com', password: '123456');
+        final result = await vm.login(email: 'a@b.com', password: '123456');
 
-      expect(result, isFalse);
-      expect(vm.error, AuthMessages.accountSuspended);
-      verify(() => authRepo.signOut()).called(1);
-    });
+        expect(result, isFalse);
+        expect(vm.error, AuthMessages.accountSuspended);
+        verify(() => authRepo.signOut()).called(1);
+      },
+    );
 
     // ----- 9. clearError resets error -----
     test('clearError resets error to null', () async {
       when(
-        () => authRepo.signIn(email: any(named: 'email'), password: any(named: 'password')),
+        () => authRepo.signIn(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
       ).thenThrow(const AuthException('Invalid login credentials'));
 
       final vm = buildVM();
@@ -247,25 +261,29 @@ void main() {
     });
 
     // ----- 10. Account guard revoked check on sign in -----
-    test('login with revoked session signs out and sets session invalid error',
-        () async {
-      when(() => guardService.evaluateCurrentUser())
-          .thenAnswer((_) async => _revokedGuard);
+    test(
+      'login with revoked session signs out and sets session invalid error',
+      () async {
+        when(
+          () => guardService.evaluateCurrentUser(),
+        ).thenAnswer((_) async => _revokedGuard);
 
-      final vm = buildVM();
-      addTearDown(vm.dispose);
+        final vm = buildVM();
+        addTearDown(vm.dispose);
 
-      final result = await vm.login(email: 'a@b.com', password: '123456');
+        final result = await vm.login(email: 'a@b.com', password: '123456');
 
-      expect(result, isFalse);
-      expect(vm.error, AuthMessages.sessionInvalid);
-      verify(() => authRepo.signOut()).called(1);
-    });
+        expect(result, isFalse);
+        expect(vm.error, AuthMessages.sessionInvalid);
+        verify(() => authRepo.signOut()).called(1);
+      },
+    );
 
     // ----- 11. register with null profile triggers sign out -----
     test('register with null profile returns false and sets error', () async {
-      when(() => authRepo.getCurrentUserProfileWithRetry())
-          .thenAnswer((_) async => null);
+      when(
+        () => authRepo.getCurrentUserProfileWithRetry(),
+      ).thenAnswer((_) async => null);
 
       final vm = buildVM();
       addTearDown(vm.dispose);
@@ -295,8 +313,9 @@ void main() {
 
     // ----- 13. resetPassword error -----
     test('resetPassword error sets error message', () async {
-      when(() => authRepo.sendPasswordResetEmail(any()))
-          .thenThrow(Exception('Network error'));
+      when(
+        () => authRepo.sendPasswordResetEmail(any()),
+      ).thenThrow(Exception('Network error'));
 
       final vm = buildVM();
       addTearDown(vm.dispose);
@@ -310,7 +329,10 @@ void main() {
     // ----- 14. login clears previous error before starting -----
     test('login clears previous error before starting', () async {
       when(
-        () => authRepo.signIn(email: any(named: 'email'), password: any(named: 'password')),
+        () => authRepo.signIn(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
       ).thenThrow(const AuthException('Invalid login credentials'));
 
       final vm = buildVM();
@@ -322,7 +344,10 @@ void main() {
 
       // Reset stub to succeed
       when(
-        () => authRepo.signIn(email: any(named: 'email'), password: any(named: 'password')),
+        () => authRepo.signIn(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
       ).thenAnswer((_) async => _FakeAuthResponse());
 
       await vm.login(email: 'a@b.com', password: 'right');

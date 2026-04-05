@@ -168,7 +168,7 @@ Rewrite the full plan:
 - schema, RLS, RPC, trigger, storage, or migration work exists without a dedicated Supabase phase
 - explicit `Skill: supabase-migration` tags are missing where applicable
 - migration work lacks introduce / backfill / enforce sequencing
-- schema, order flow, or backend process work lacks a diagram artifact step under `Doc/DIGRAM/`
+- schema, order flow, or backend process work lacks a diagram artifact step under `docs/diagrams/`
 - session log initialization for `docs/LOG/SESSION_<PLAN_NAME>_<YYYY-MM-DD>.md` is missing
 
 ### Any Gate — FAIL If:
@@ -288,6 +288,28 @@ For each invariant:
 - Review checklist?
 - Definition of done per phase?
 - Documentation update step included?
+
+---
+
+## 5.5) Output Artifact (Persisted Critique)
+
+After completing the plan audit, write findings to:
+
+`.TODO/PLAN_CRITIQUE_<YYYY-MM-DD>_<PlanTitle>.md`
+
+This file MUST include:
+- All critical gaps found (Section C)
+- Corrected plan reference (Section H)
+- Risk register (Section E)
+- Gate status table (Section B)
+- Change report summary (Section I)
+
+This file is consumed by:
+- **@Executor** — for execution awareness of known risks and gaps
+- **@Sentinel** — for verification that critical gaps were addressed during implementation
+- **@SystemEvolution** — for durable evidence of planning issues across sessions
+
+Evidence: All prior sessions — PlanCritic's findings were inline in conversation only, not persisted. This broke traceability: @Executor could not reference PlanCritic's risk register during execution, @Sentinel could not verify gaps were addressed, and @SystemEvolution had to manually extract findings from session logs.
 
 ---
 

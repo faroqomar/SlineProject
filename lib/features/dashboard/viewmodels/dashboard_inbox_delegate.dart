@@ -248,7 +248,6 @@ class DashboardInboxDelegate {
     _inboxOffers.removeWhere((o) => o.id == offerId);
   }
 
-
   // ---------------------------------------------------------------------------
   // Internal fetchers (for Future.wait)
   // ---------------------------------------------------------------------------

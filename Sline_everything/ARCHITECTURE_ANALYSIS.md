@@ -416,6 +416,42 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
 
 ---
 
+### Decision 7: Sealed ViewState Pattern (Phase E, 2026-04-05)
+
+**Assessment:** Preferred pattern for new ViewModel state management
+
+`ViewState<T>` is a sealed class hierarchy (`ViewInitial`, `ViewLoading`, `ViewLoaded<T>`, `ViewFailed<T>`) paired with `AppFailure` (`NetworkFailure`, `AuthFailure`, `ValidationFailure`, `BusinessFailure`). Replaces the raw `_isLoading`/`_error` pattern for new VMs.
+
+**Key rule:** Action methods must NOT transition `ViewLoaded` → `ViewLoading` (wipes data). Use `_actionInProgress` boolean flag to overlay loading state while preserving loaded data.
+
+**Currently used in:** DirectOfferDetailsVM, BookingVM, WorkItemDetailsVM
+
+**Files:** `lib/core/models/view_state.dart`, `lib/core/models/app_failure.dart`
+
+### Decision 8: DeepLinkRegistry Pattern (Phase E, 2026-04-05)
+
+**Assessment:** Clean inversion-of-control for deep link routing
+
+`DeepLinkService` has zero feature imports. Each feature module registers its own handler via `DeepLinkRegistry.register()` during Provider initialization in `main.dart`. The registry dispatches to handlers by entity type. Throws `StateError` on duplicate registration.
+
+**Benefit:** Core service (`deep_link_service.dart`) no longer needs to know about individual features. Adding a new deep link type requires only: (1) create a handler file in the feature, (2) register it in `main.dart`.
+
+**Files:** `lib/core/services/deep_link_registry.dart`, `lib/core/services/deep_link_service.dart`, 6 feature handler files
+
+### Decision 9: Delegate Decomposition for God Files (Phase D/E, 2026-04-05)
+
+**Assessment:** Scalable pattern for managing ViewModel complexity
+
+ViewModels exceeding 800 lines are decomposed into stateless delegate classes. The parent VM creates delegates in its constructor, proxies public methods, and provides `VoidCallback onChanged` (mapped to `notifyListeners`) and `bool Function() isDisposed` for lifecycle safety.
+
+**Guidelines:**
+- Extract when: 3+ responsibility groups, total >800 lines
+- Delegates own business logic methods but NOT state fields (state stays in parent)
+- Testing: delegates can be unit-tested independently with mocked callbacks
+- Examples: DashboardVM (3 delegates), TaskRequestsVM (1 award delegate), BookingVM (1 payment delegate)
+
+---
+
 ## Scalability Assessment
 
 ### Current Load Capacity

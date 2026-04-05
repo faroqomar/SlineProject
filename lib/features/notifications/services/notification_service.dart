@@ -104,9 +104,7 @@ class NotificationService {
         .order('created_at', ascending: false)
         .limit(50)
         .map((response) {
-          final list = response
-              .map(NotificationItem.fromJson)
-              .toList();
+          final list = response.map(NotificationItem.fromJson).toList();
           AppLogger.d(
             'streamNotifications: received ${list.length}',
             tag: 'Notifications',

@@ -71,10 +71,7 @@ void main() {
 
   group('construction', () {
     test('initial state is ViewLoading', () {
-      final vm = _buildVm(
-        service: mockService,
-        paymentService: mockPayment,
-      );
+      final vm = _buildVm(service: mockService, paymentService: mockPayment);
       // The default field value in the VM is `ViewLoading`.
       expect(vm.state, isA<ViewLoading<DirectOffer>>());
       expect(vm.isLoading, true);
@@ -87,77 +84,80 @@ void main() {
   // ── loadOffer ────────────────────────────────────────────────────────
 
   group('loadOffer', () {
-    test('happy path transitions Loading -> Loaded with correct data', () async {
-      final expected = _offer(status: 'active', paymentStatus: 'held');
-      when(() => mockService.getOffer(_kOfferId))
-          .thenAnswer((_) async => expected);
+    test(
+      'happy path transitions Loading -> Loaded with correct data',
+      () async {
+        final expected = _offer(status: 'active', paymentStatus: 'held');
+        when(
+          () => mockService.getOffer(_kOfferId),
+        ).thenAnswer((_) async => expected);
 
-      final vm = _buildVm(
-        service: mockService,
-        paymentService: mockPayment,
-        currentUserId: _kClientId,
-      );
+        final vm = _buildVm(
+          service: mockService,
+          paymentService: mockPayment,
+          currentUserId: _kClientId,
+        );
 
-      await vm.loadOffer();
+        await vm.loadOffer();
 
-      expect(vm.state, isA<ViewLoaded<DirectOffer>>());
-      final loaded = vm.state as ViewLoaded<DirectOffer>;
-      expect(loaded.data.id, _kOfferId);
-      expect(loaded.data.status, 'active');
-      expect(vm.offer, isNotNull);
-      expect(vm.offer!.id, _kOfferId);
-      expect(vm.isLoading, false);
-      expect(vm.error, isNull);
-      vm.dispose();
-    });
+        expect(vm.state, isA<ViewLoaded<DirectOffer>>());
+        final loaded = vm.state as ViewLoaded<DirectOffer>;
+        expect(loaded.data.id, _kOfferId);
+        expect(loaded.data.status, 'active');
+        expect(vm.offer, isNotNull);
+        expect(vm.offer!.id, _kOfferId);
+        expect(vm.isLoading, false);
+        expect(vm.error, isNull);
+        vm.dispose();
+      },
+    );
 
-    test('null response transitions to ViewFailed with OFFER_NOT_FOUND', () async {
-      when(() => mockService.getOffer(_kOfferId))
-          .thenAnswer((_) async => null);
+    test(
+      'null response transitions to ViewFailed with OFFER_NOT_FOUND',
+      () async {
+        when(
+          () => mockService.getOffer(_kOfferId),
+        ).thenAnswer((_) async => null);
 
-      final vm = _buildVm(
-        service: mockService,
-        paymentService: mockPayment,
-      );
+        final vm = _buildVm(service: mockService, paymentService: mockPayment);
 
-      await vm.loadOffer();
+        await vm.loadOffer();
 
-      expect(vm.state, isA<ViewFailed<DirectOffer>>());
-      final failed = vm.state as ViewFailed<DirectOffer>;
-      expect(failed.failure, isA<BusinessFailure>());
-      expect((failed.failure as BusinessFailure).code, 'OFFER_NOT_FOUND');
-      expect(vm.error, isNotNull);
-      vm.dispose();
-    });
+        expect(vm.state, isA<ViewFailed<DirectOffer>>());
+        final failed = vm.state as ViewFailed<DirectOffer>;
+        expect(failed.failure, isA<BusinessFailure>());
+        expect((failed.failure as BusinessFailure).code, 'OFFER_NOT_FOUND');
+        expect(vm.error, isNotNull);
+        vm.dispose();
+      },
+    );
 
-    test('service exception transitions to ViewFailed with LOAD_FAILED', () async {
-      when(() => mockService.getOffer(_kOfferId))
-          .thenThrow(Exception('DB unavailable'));
+    test(
+      'service exception transitions to ViewFailed with LOAD_FAILED',
+      () async {
+        when(
+          () => mockService.getOffer(_kOfferId),
+        ).thenThrow(Exception('DB unavailable'));
 
-      final vm = _buildVm(
-        service: mockService,
-        paymentService: mockPayment,
-      );
+        final vm = _buildVm(service: mockService, paymentService: mockPayment);
 
-      await vm.loadOffer();
+        await vm.loadOffer();
 
-      expect(vm.state, isA<ViewFailed<DirectOffer>>());
-      final failed = vm.state as ViewFailed<DirectOffer>;
-      expect(failed.failure, isA<BusinessFailure>());
-      expect((failed.failure as BusinessFailure).code, 'LOAD_FAILED');
-      expect(vm.error, contains('DB unavailable'));
-      vm.dispose();
-    });
+        expect(vm.state, isA<ViewFailed<DirectOffer>>());
+        final failed = vm.state as ViewFailed<DirectOffer>;
+        expect(failed.failure, isA<BusinessFailure>());
+        expect((failed.failure as BusinessFailure).code, 'LOAD_FAILED');
+        expect(vm.error, contains('DB unavailable'));
+        vm.dispose();
+      },
+    );
 
     test('network error results in ViewFailed', () async {
-      when(() => mockService.getOffer(_kOfferId)).thenThrow(
-        Exception('SocketException: Connection refused'),
-      );
+      when(
+        () => mockService.getOffer(_kOfferId),
+      ).thenThrow(Exception('SocketException: Connection refused'));
 
-      final vm = _buildVm(
-        service: mockService,
-        paymentService: mockPayment,
-      );
+      final vm = _buildVm(service: mockService, paymentService: mockPayment);
 
       await vm.loadOffer();
 
@@ -316,8 +316,9 @@ void main() {
       when(() => mockService.getOffer(_kOfferId)).thenAnswer(
         (_) async => _offer(status: 'accepted', paymentStatus: 'unpaid'),
       );
-      when(() => mockService.cancelAcceptedOffer(_kOfferId))
-          .thenAnswer((_) async {});
+      when(
+        () => mockService.cancelAcceptedOffer(_kOfferId),
+      ).thenAnswer((_) async {});
 
       final vm = _buildVm(
         service: mockService,
@@ -345,8 +346,9 @@ void main() {
       when(() => mockService.getOffer(_kOfferId)).thenAnswer(
         (_) async => _offer(status: 'accepted', paymentStatus: 'unpaid'),
       );
-      when(() => mockService.cancelAcceptedOffer(_kOfferId))
-          .thenThrow(Exception('Server error'));
+      when(
+        () => mockService.cancelAcceptedOffer(_kOfferId),
+      ).thenThrow(Exception('Server error'));
 
       final vm = _buildVm(
         service: mockService,
@@ -368,8 +370,7 @@ void main() {
       when(() => mockService.getOffer(_kOfferId)).thenAnswer(
         (_) async => _offer(status: 'active', paymentStatus: 'held'),
       );
-      when(() => mockService.markDelivered(_kOfferId))
-          .thenAnswer((_) async {});
+      when(() => mockService.markDelivered(_kOfferId)).thenAnswer((_) async {});
 
       final vm = _buildVm(
         service: mockService,
@@ -395,8 +396,9 @@ void main() {
       when(() => mockService.getOffer(_kOfferId)).thenAnswer(
         (_) async => _offer(status: 'active', paymentStatus: 'held'),
       );
-      when(() => mockService.markDelivered(_kOfferId))
-          .thenThrow(Exception('Delivery failed'));
+      when(
+        () => mockService.markDelivered(_kOfferId),
+      ).thenThrow(Exception('Delivery failed'));
 
       final vm = _buildVm(
         service: mockService,
@@ -418,8 +420,7 @@ void main() {
       when(() => mockService.getOffer(_kOfferId)).thenAnswer(
         (_) async => _offer(status: 'delivered', paymentStatus: 'held'),
       );
-      when(() => mockService.completeOffer(_kOfferId))
-          .thenAnswer((_) async {});
+      when(() => mockService.completeOffer(_kOfferId)).thenAnswer((_) async {});
 
       final vm = _buildVm(
         service: mockService,
@@ -445,8 +446,9 @@ void main() {
       when(() => mockService.getOffer(_kOfferId)).thenAnswer(
         (_) async => _offer(status: 'delivered', paymentStatus: 'held'),
       );
-      when(() => mockService.completeOffer(_kOfferId))
-          .thenThrow(Exception('Complete failed'));
+      when(
+        () => mockService.completeOffer(_kOfferId),
+      ).thenThrow(Exception('Complete failed'));
 
       final vm = _buildVm(
         service: mockService,
@@ -464,50 +466,52 @@ void main() {
   // ── payForOffer (createPaymentForCard) ───────────────────────────────
 
   group('createPaymentForCard', () {
-    test('calls payment service with correct args and returns result', () async {
-      when(() => mockService.getOffer(_kOfferId)).thenAnswer(
-        (_) async => _offer(status: 'accepted', paymentStatus: 'unpaid'),
-      );
-      when(
-        () => mockPayment.createPaymentForDirectOffer(
-          offerId: any(named: 'offerId'),
-          amount: any(named: 'amount'),
-          finishUrl: any(named: 'finishUrl'),
-        ),
-      ).thenAnswer(
-        (_) async => const QiCardDirectOfferPaymentResult(
-          offerId: _kOfferId,
-          formUrl: 'https://pay.qicard.com/form',
-          paymentRequestId: 'req-1',
-          amount: 5000,
-        ),
-      );
+    test(
+      'calls payment service with correct args and returns result',
+      () async {
+        when(() => mockService.getOffer(_kOfferId)).thenAnswer(
+          (_) async => _offer(status: 'accepted', paymentStatus: 'unpaid'),
+        );
+        when(
+          () => mockPayment.createPaymentForDirectOffer(
+            offerId: any(named: 'offerId'),
+            amount: any(named: 'amount'),
+            finishUrl: any(named: 'finishUrl'),
+          ),
+        ).thenAnswer(
+          (_) async => const QiCardDirectOfferPaymentResult(
+            offerId: _kOfferId,
+            formUrl: 'https://pay.qicard.com/form',
+            paymentRequestId: 'req-1',
+            amount: 5000,
+          ),
+        );
 
-      final vm = _buildVm(
-        service: mockService,
-        paymentService: mockPayment,
-        currentUserId: _kClientId,
-      );
-      await vm.loadOffer();
+        final vm = _buildVm(
+          service: mockService,
+          paymentService: mockPayment,
+          currentUserId: _kClientId,
+        );
+        await vm.loadOffer();
 
-      final result = await vm.createPaymentForCard();
+        final result = await vm.createPaymentForCard();
 
-      expect(result.isSuccess, true);
-      expect(result.formUrl, 'https://pay.qicard.com/form');
-      verify(
-        () => mockPayment.createPaymentForDirectOffer(
-          offerId: _kOfferId,
-          amount: 5000.0,
-          finishUrl: any(named: 'finishUrl'),
-        ),
-      ).called(1);
-      expect(vm.cardPaymentInProgress, false);
-      vm.dispose();
-    });
+        expect(result.isSuccess, true);
+        expect(result.formUrl, 'https://pay.qicard.com/form');
+        verify(
+          () => mockPayment.createPaymentForDirectOffer(
+            offerId: _kOfferId,
+            amount: 5000.0,
+            finishUrl: any(named: 'finishUrl'),
+          ),
+        ).called(1);
+        expect(vm.cardPaymentInProgress, false);
+        vm.dispose();
+      },
+    );
 
     test('returns error result when offer is null', () async {
-      when(() => mockService.getOffer(_kOfferId))
-          .thenAnswer((_) async => null);
+      when(() => mockService.getOffer(_kOfferId)).thenAnswer((_) async => null);
 
       final vm = _buildVm(
         service: mockService,
@@ -534,21 +538,24 @@ void main() {
   // ── canComplete getter ───────────────────────────────────────────────
 
   group('canComplete', () {
-    test('returns true when client and offer delivered with held payment', () async {
-      when(() => mockService.getOffer(_kOfferId)).thenAnswer(
-        (_) async => _offer(status: 'delivered', paymentStatus: 'held'),
-      );
+    test(
+      'returns true when client and offer delivered with held payment',
+      () async {
+        when(() => mockService.getOffer(_kOfferId)).thenAnswer(
+          (_) async => _offer(status: 'delivered', paymentStatus: 'held'),
+        );
 
-      final vm = _buildVm(
-        service: mockService,
-        paymentService: mockPayment,
-        currentUserId: _kClientId,
-      );
-      await vm.loadOffer();
+        final vm = _buildVm(
+          service: mockService,
+          paymentService: mockPayment,
+          currentUserId: _kClientId,
+        );
+        await vm.loadOffer();
 
-      expect(vm.canComplete, true);
-      vm.dispose();
-    });
+        expect(vm.canComplete, true);
+        vm.dispose();
+      },
+    );
 
     test('returns false when payment is not held', () async {
       when(() => mockService.getOffer(_kOfferId)).thenAnswer(
@@ -582,14 +589,11 @@ void main() {
     });
 
     test('falls back to offer conversationId after load', () async {
-      when(() => mockService.getOffer(_kOfferId)).thenAnswer(
-        (_) async => _offer(conversationId: 'from-offer'),
-      );
+      when(
+        () => mockService.getOffer(_kOfferId),
+      ).thenAnswer((_) async => _offer(conversationId: 'from-offer'));
 
-      final vm = _buildVm(
-        service: mockService,
-        paymentService: mockPayment,
-      );
+      final vm = _buildVm(service: mockService, paymentService: mockPayment);
       await vm.loadOffer();
 
       expect(vm.effectiveConversationId, 'from-offer');

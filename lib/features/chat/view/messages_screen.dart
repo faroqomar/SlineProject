@@ -50,9 +50,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
       body: Consumer<ChatViewModel>(
         builder: (context, controller, child) {
           // Calculate unread count
-          final unreadCount = controller.conversations
-              .where(_isUnread)
-              .length;
+          final unreadCount = controller.conversations.where(_isUnread).length;
 
           return RefreshIndicator(
             onRefresh: () async => controller.fetchConversations(),
@@ -149,8 +147,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     ),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate((context, index) {
-                        final convo =
-                            controller.conversations[index];
+                        final convo = controller.conversations[index];
                         return Dismissible(
                           key: ValueKey(convo.id),
                           direction: DismissDirection.endToStart,
