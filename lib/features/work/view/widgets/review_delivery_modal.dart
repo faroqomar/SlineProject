@@ -57,7 +57,7 @@ class _ReviewDeliveryModalState extends State<ReviewDeliveryModal> {
         AppLogger.d('Approve delivery success', tag: 'ReviewDelivery');
         Navigator.pop(context, true);
       }
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       _hasApproved = false;
       AppLogger.e(
         'Approve delivery failed',
@@ -76,7 +76,7 @@ class _ReviewDeliveryModalState extends State<ReviewDeliveryModal> {
     try {
       await widget.onReject(_reasonController.text);
       if (mounted) Navigator.pop(context, true);
-    } catch (_) {
+    } on Exception catch (_) {
       if (mounted) {
         setState(() => _isLoading = false);
         final msg = widget.getRevisionError?.call();

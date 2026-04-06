@@ -51,6 +51,11 @@ const QICARD_RSA_PUBLIC_KEY_PEM =
   Deno.env.get("QICARD_RSA_PUBLIC_KEY_PEM") || "";
 const QICARD_ALLOW_UNSIGNED_LOCAL_DEV =
   Deno.env.get("QICARD_ALLOW_UNSIGNED_LOCAL_DEV") === "true";
+
+if (QICARD_ALLOW_UNSIGNED_LOCAL_DEV && Deno.env.get("ENVIRONMENT") === "production") {
+  throw new Error("QICARD_ALLOW_UNSIGNED_LOCAL_DEV must not be enabled in production");
+}
+
 const supabase = createAdminClient();
 
 interface MappedEvent {
@@ -237,6 +242,19 @@ async function handleIntentBasedPayment(
   additionalInfo: Record<string, unknown>,
   intentId: string,
 ): Promise<Response | null> {
+  // Defense-in-depth: validate IDs before using in query filter.
+  // QiCard payment IDs observed format: alphanumeric + hyphens (UUID-like).
+  // If QiCard changes format (e.g. adds dots/colons), update this regex.
+  const PAYMENT_ID_REGEX = /^[a-zA-Z0-9\-_]{1,128}$/;
+  if (!PAYMENT_ID_REGEX.test(intentId)) {
+    console.warn(`[webhook] Invalid intentId format: ${intentId.substring(0, 8)}...`);
+    return jsonResponse({ error: "Invalid intent ID format" }, 400);
+  }
+  if (!PAYMENT_ID_REGEX.test(paymentId)) {
+    console.warn(`[webhook] Invalid paymentId format: ${paymentId.substring(0, 8)}...`);
+    return jsonResponse({ error: "Invalid payment ID format" }, 400);
+  }
+
   const { data: intent, error: intentError } = await supabase
     .from("payment_intents")
     .select("id, entity_type, entity_id, status, gross_amount, currency")

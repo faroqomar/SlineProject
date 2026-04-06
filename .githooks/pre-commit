@@ -1,0 +1,25 @@
+#!/bin/sh
+
+
+echo "Running format check..."
+if ! dart format --set-exit-if-changed . ; then
+  echo ""
+  echo "FAILED: Formatting issues found."
+  echo "Fix:    dart format ."
+  exit 1
+fi
+echo ""
+
+# =============================================================
+# Check 4: Analyze (existing — preserved unchanged)
+# =============================================================
+echo "Running analyze..."
+if ! flutter analyze --no-fatal-infos ; then
+  echo ""
+  echo "FAILED: Analysis found warnings or errors."
+  echo "Fix:    Review the issues above and fix them before committing."
+  exit 1
+fi
+echo ""
+
+echo "Pre-commit checks passed."

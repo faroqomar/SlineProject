@@ -1,23 +1,25 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/services/payment_service.dart';
+import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/web_url_utils_stub.dart'
     if (dart.library.html) 'package:sline_app/core/utils/web_url_utils_web.dart'
     as web_url_utils;
-import 'package:sline_app/features/direct_offers/services/direct_offers_service.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/app_enums.dart';
-import '../viewmodels/dashboard_view_model.dart';
-import 'tabs/overview_tab.dart';
 // import 'tabs/manage_tab.dart'; // Removed
-import 'tabs/bookings_tab.dart';
-import 'tabs/work_tab.dart';
-import 'tabs/wallet_tab.dart';
-import 'tabs/inbox_tab.dart';
+import 'package:sline_app/features/dashboard/view/tabs/bookings_tab.dart';
+import 'package:sline_app/features/dashboard/view/tabs/inbox_tab.dart';
+import 'package:sline_app/features/dashboard/view/tabs/overview_tab.dart';
+import 'package:sline_app/features/dashboard/view/tabs/wallet_tab.dart';
+import 'package:sline_app/features/dashboard/view/tabs/work_tab.dart';
+import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
+import 'package:sline_app/features/direct_offers/services/direct_offers_service.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key, this.tabViews});
@@ -105,7 +107,7 @@ class _DashboardContentState extends State<_DashboardContent>
           tag: 'Dashboard',
           json: <String, dynamic>{'offer_id': offerId},
         );
-      } catch (e) {
+      } on Exception catch (e) {
         AppLogger.e(
           'Web direct-offer recovery failed offer_id=$offerId',
           tag: 'Dashboard',
@@ -135,7 +137,7 @@ class _DashboardContentState extends State<_DashboardContent>
             },
           );
         }
-      } catch (e) {
+      } on Exception catch (e) {
         AppLogger.e(
           'Web tender recovery failed request_id=$requestId',
           tag: 'Dashboard',
@@ -145,7 +147,7 @@ class _DashboardContentState extends State<_DashboardContent>
     }
 
     web_url_utils.clearPaymentReturnParamsFromUrl();
-    if (mounted) vm.refresh();
+    if (mounted) unawaited(vm.refresh());
   }
 
   @override
@@ -189,7 +191,7 @@ class _DashboardContentState extends State<_DashboardContent>
       _tabController.animateTo(vm.currentTab.index);
     }
 
-    var scaffold = Scaffold(
+    final scaffold = Scaffold(
       appBar: AppBar(
         title: Text(
           'Dashboard',
@@ -217,7 +219,7 @@ class _DashboardContentState extends State<_DashboardContent>
             labelColor: colorScheme.primary,
             unselectedLabelColor: colorScheme.textSecondary,
             indicatorColor: colorScheme.primary,
-            onTap: (index) => vm.setTab(index),
+            onTap: vm.setTab,
             tabs: const [
               Tab(icon: Icon(Icons.dashboard_outlined), text: 'Overview'),
               Tab(icon: Icon(Icons.calendar_month_outlined), text: 'Bookings'),

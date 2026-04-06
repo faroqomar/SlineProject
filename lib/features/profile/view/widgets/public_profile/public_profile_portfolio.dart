@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/widgets/signed_image.dart';
-// Import both for the extension methods on PortfolioItem
-import 'package:sline_app/features/profile/models/freelancer_profile.dart';
 // Canonical PortfolioItem from portfolio feature
 import 'package:sline_app/features/portfolio/models/portfolio_item.dart'
     show PortfolioItem;
+// Import both for the extension methods on PortfolioItem
+import 'package:sline_app/features/profile/models/freelancer_profile.dart';
 
 /// Portfolio grid widget with masonry-style layout matching the new design.
 class PublicProfilePortfolio extends StatelessWidget {
@@ -18,7 +18,7 @@ class PublicProfilePortfolio extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
 
     if (portfolio.isEmpty) {
       return const SizedBox.shrink();
@@ -56,7 +56,7 @@ class PublicProfilePortfolio extends StatelessWidget {
                 children: portfolio
                     .asMap()
                     .entries
-                    .where((e) => e.key % 2 == 0)
+                    .where((e) => e.key.isEven)
                     .map(
                       (e) => _PortfolioCard(
                         item: e.value,
@@ -73,7 +73,7 @@ class PublicProfilePortfolio extends StatelessWidget {
                 children: portfolio
                     .asMap()
                     .entries
-                    .where((e) => e.key % 2 == 1)
+                    .where((e) => e.key.isOdd)
                     .map(
                       (e) => _PortfolioCard(
                         item: e.value,

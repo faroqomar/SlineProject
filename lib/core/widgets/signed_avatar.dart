@@ -1,10 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/config/storage_config.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/utils/signed_url_cache.dart';
 import 'package:sline_app/features/profile/services/avatar_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Renders a user avatar from either a public URL or a private Supabase Storage path.
 ///
@@ -139,7 +139,7 @@ class _SignedAvatarState extends State<SignedAvatar> {
         _resolvedUrl = signed;
         _loading = false;
       });
-    } catch (_) {
+    } on Exception catch (_) {
       if (!mounted) return;
       setState(() => _loading = false);
     }

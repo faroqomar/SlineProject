@@ -66,8 +66,8 @@ class DirectOffer {
           : int.tryParse(json['days']?.toString() ?? '0') ?? 0,
       status: json['status'] as String? ?? 'sent',
       paymentStatus: json['payment_status'] as String? ?? 'unpaid',
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      createdAt: DateTime.parse(json['created_at'] as String).toUtc(),
+      updatedAt: DateTime.parse(json['updated_at'] as String).toUtc(),
       currency: json['currency'] as String?,
       feeRateAppliedBps: json['fee_rate_applied_bps'] is int
           ? json['fee_rate_applied_bps'] as int
@@ -76,16 +76,16 @@ class DirectOffer {
       paymentGatewayId: json['payment_gateway_id'] as String?,
       paymentCorrelationId: json['payment_correlation_id'] as String?,
       paymentExpiresAt: json['payment_expires_at'] != null
-          ? DateTime.parse(json['payment_expires_at'] as String)
+          ? DateTime.parse(json['payment_expires_at'] as String).toUtc()
           : null,
       paymentRecoveredAt: json['payment_recovered_at'] != null
-          ? DateTime.parse(json['payment_recovered_at'] as String)
+          ? DateTime.parse(json['payment_recovered_at'] as String).toUtc()
           : null,
       deliveredAt: json['delivered_at'] != null
-          ? DateTime.parse(json['delivered_at'] as String)
+          ? DateTime.parse(json['delivered_at'] as String).toUtc()
           : null,
       reviewExpiresAt: json['review_expires_at'] != null
-          ? DateTime.parse(json['review_expires_at'] as String)
+          ? DateTime.parse(json['review_expires_at'] as String).toUtc()
           : null,
     );
   }

@@ -168,7 +168,7 @@ Rewrite the full plan:
 - schema, RLS, RPC, trigger, storage, or migration work exists without a dedicated Supabase phase
 - explicit `Skill: supabase-migration` tags are missing where applicable
 - migration work lacks introduce / backfill / enforce sequencing
-- schema, order flow, or backend process work lacks a diagram artifact step under `Doc/DIGRAM/`
+- schema, order flow, or backend process work lacks a diagram artifact step under `docs/diagrams/`
 - session log initialization for `docs/LOG/SESSION_<PLAN_NAME>_<YYYY-MM-DD>.md` is missing
 
 ### Any Gate — FAIL If:
@@ -261,6 +261,26 @@ For each invariant:
 - Offline / timeout / retry behavior?
 - Responsive, accessibility, and overflow hardening phase present?
 
+### 5.7.1 Coverage Target Verification (for test-heavy plans)
+
+If the plan sets a coverage percentage target:
+1. Verify the arithmetic: total lines × target% = required hit lines.
+2. Check whether the scope of files being tested can produce enough hit lines.
+3. If the plan does not include a "Coverage Projection" section with lcov.info data, add a CRITICAL GAP: "Coverage target not verified against lcov.info."
+
+### 5.7.2 Coverage Verification Skill
+
+When auditing a plan with coverage targets:
+1. If `coverage/lcov.info` exists, parse it to extract:
+   - Total instrumented lines
+   - Total hit lines
+   - Current coverage percentage
+   - Per-file line counts for target files
+2. Verify the plan's coverage arithmetic against these numbers.
+3. If lcov.info does not exist, flag as CRITICAL GAP: "No baseline coverage data."
+
+Evidence: Widget Tests session — @PlanCritic caught coverage arithmetic error (assumed 6 screens = 45%, actual = 39.7%) but only AFTER SlinePlanner published v1. These checks make the catch proactive.
+
 ### 5.8 Testing & QA
 
 - Smoke tests for critical path?
@@ -288,6 +308,28 @@ For each invariant:
 - Review checklist?
 - Definition of done per phase?
 - Documentation update step included?
+
+---
+
+## 5.5) Output Artifact (Persisted Critique)
+
+After completing the plan audit, write findings to:
+
+`.TODO/PLAN_CRITIQUE_<YYYY-MM-DD>_<PlanTitle>.md`
+
+This file MUST include:
+- All critical gaps found (Section C)
+- Corrected plan reference (Section H)
+- Risk register (Section E)
+- Gate status table (Section B)
+- Change report summary (Section I)
+
+This file is consumed by:
+- **@Executor** — for execution awareness of known risks and gaps
+- **@Sentinel** — for verification that critical gaps were addressed during implementation
+- **@SystemEvolution** — for durable evidence of planning issues across sessions
+
+Evidence: All prior sessions — PlanCritic's findings were inline in conversation only, not persisted. This broke traceability: @Executor could not reference PlanCritic's risk register during execution, @Sentinel could not verify gaps were addressed, and @SystemEvolution had to manually extract findings from session logs.
 
 ---
 

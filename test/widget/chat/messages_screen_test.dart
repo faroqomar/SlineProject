@@ -18,10 +18,10 @@ void main() {
       when(() => vm.conversations).thenReturn([]);
       when(() => vm.isLoadingConversations).thenReturn(false);
       when(() => vm.currentUserId).thenReturn('user-1');
-      when(() => vm.fetchConversations()).thenAnswer((_) async {});
-      when(() => vm.subscribeToUserConversations()).thenReturn(null);
-      when(() => vm.unsubscribeFromUserConversations()).thenReturn(null);
-      when(() => vm.unsubscribeFromConversation()).thenReturn(null);
+      when(vm.fetchConversations).thenAnswer((_) async {});
+      when(vm.subscribeToUserConversations).thenReturn(null);
+      when(vm.unsubscribeFromUserConversations).thenReturn(null);
+      when(vm.unsubscribeFromConversation).thenReturn(null);
 
       await pumpApp(
         tester,
@@ -43,10 +43,10 @@ void main() {
       when(() => vm.conversations).thenReturn([]);
       when(() => vm.isLoadingConversations).thenReturn(true);
       when(() => vm.currentUserId).thenReturn('user-1');
-      when(() => vm.fetchConversations()).thenAnswer((_) async {});
-      when(() => vm.subscribeToUserConversations()).thenReturn(null);
-      when(() => vm.unsubscribeFromUserConversations()).thenReturn(null);
-      when(() => vm.unsubscribeFromConversation()).thenReturn(null);
+      when(vm.fetchConversations).thenAnswer((_) async {});
+      when(vm.subscribeToUserConversations).thenReturn(null);
+      when(vm.unsubscribeFromUserConversations).thenReturn(null);
+      when(vm.unsubscribeFromConversation).thenReturn(null);
 
       await pumpApp(
         tester,

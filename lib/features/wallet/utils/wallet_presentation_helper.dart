@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 
-import '../models/wallet_activity_model.dart';
-import '../models/wallet_balance_model.dart';
-import 'transaction_label_helper.dart';
+import 'package:sline_app/features/wallet/models/wallet_activity_model.dart';
+import 'package:sline_app/features/wallet/models/wallet_balance_model.dart';
+import 'package:sline_app/features/wallet/utils/transaction_label_helper.dart';
 
 enum WalletInsightKind { received, spent, fees }
 
@@ -223,7 +223,7 @@ double _displayAmount(WalletActivityModel activity) {
 }
 
 double _clampAmount(num value) {
-  return value.toDouble().clamp(0.0, double.infinity).toDouble();
+  return value.toDouble().clamp(0.0, double.infinity);
 }
 
 String _humanizeEventType(String eventType) {

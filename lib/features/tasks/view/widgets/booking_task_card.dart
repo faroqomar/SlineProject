@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:sline_app/core/app_enums.dart'; // Added for TaskStatus
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
@@ -6,11 +8,9 @@ import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/core/widgets/signed_image.dart';
-import 'package:provider/provider.dart';
+import 'package:sline_app/features/profile/view/widgets/profile_preview_modal.dart';
 import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
-import 'package:sline_app/core/app_enums.dart'; // Added for TaskStatus
-import 'package:sline_app/features/profile/view/widgets/profile_preview_modal.dart';
 
 class BookingTaskCard extends StatelessWidget {
   final Task task;
@@ -26,9 +26,9 @@ class BookingTaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
-    final String authorName = task.userName ?? 'Provider';
-    final String initials = _getInitials(authorName);
+    final colorScheme = context.colorScheme;
+    final authorName = task.userName ?? 'Provider';
+    final initials = _getInitials(authorName);
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimens.p12),
@@ -231,7 +231,7 @@ class BookingTaskCard extends StatelessWidget {
                                         12,
                                       ), // Inner radius
                                       child: SignedAvatar(
-                                        storagePathOrUrl: task.userAvatar!,
+                                        storagePathOrUrl: task.userAvatar,
                                         size: 48, // 56 - border
                                         borderRadius: BorderRadius.circular(12),
                                       ),

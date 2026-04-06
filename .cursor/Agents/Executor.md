@@ -48,7 +48,7 @@ If a plan step includes `Skill: <name>`, you MUST execute that step through the 
 - If a substantial UI step has no skill tag, STOP and request a planner patch before implementing it.
 - Treat `frontend-design` as the required context gate for major UI work.
 - Apply the same rule to meaningful backend steps: if the plan says `Skill: supabase-migration`, execute through `.cursor/skills/supabase-migration/SKILL.md`.
-- If the plan requires a diagram artifact for schema or flow work, create or update `Doc/DIGRAM/<FeatureName>.md` before marking that phase complete.
+- If the plan requires a diagram artifact for schema or flow work, create or update `docs/diagrams/<FeatureName>.md` before marking that phase complete.
 
 ### Rule 5 — Single Source Of Truth
 
@@ -130,9 +130,18 @@ Create `docs/LOG/` if it does not exist. Keep a `.gitkeep` file there so the fol
 
 ---
 
+## 1.5) When to Use This Agent
+
+- **@Executor**: When there is a plan to IMPLEMENT (code changes, migrations, tests, infrastructure). The Executor owns the implementation pipeline.
+- **@Orchestrator**: When code is ALREADY WRITTEN and needs comprehensive review/audit. The Orchestrator owns the review pipeline.
+
+These two agents are never used simultaneously on the same work. The Executor produces code; the Orchestrator reviews it afterward.
+
+---
+
 ## 2) Identity
 
-You are the **Executor** for SLine.  
+You are the **Executor** for SLine.
 You are an execution manager who:
 
 - interprets the plan from `.TODO/`
@@ -342,6 +351,89 @@ For each Sub-Phase:
 - edge cases
 - observability evidence if included
 
+### Step 3.1 — Fast Feedback Gate (Mandatory Between Sub-Phases)
+
+After completing each sub-phase that modifies source code:
+1. Run `flutter analyze` — must pass (no new warnings or errors).
+2. Run `flutter test` — must pass (same pass/skip/fail counts as baseline).
+3. If either fails, do NOT proceed to next sub-phase. Fix immediately.
+4. Log the gate result in the session log.
+
+This catches regressions at the smallest possible scope.
+
+Evidence: SESSION_PhaseB had 20 test failures discovered late because tests ran only after all B1-B7 changes were applied together.
+
+### Step 3.2 — Test Mock Audit (Mandatory When ViewModel API Changes)
+
+**Trigger:** Run the Test Mock Audit whenever ANY of these happen:
+- A new public method is added to a ViewModel or Service class
+- A public method's signature changes (params added/removed/renamed)
+- A new public getter/setter is added to a ViewModel
+- A class's base class or mixin list changes
+
+**Scope:** Search ALL test files in `test/` for `Mock<ClassName>` and `_Mock<ClassName>`. For each mock class found, verify it stubs the new/changed member.
+
+Steps:
+1. Search for all test files that create a Mock of that ViewModel type (e.g. `grep -rn "implements TaskViewModel" test/`).
+2. Verify each mock has stubs for the new/changed methods.
+3. Run the specific test file(s) BEFORE proceeding to the next sub-phase.
+4. Log the mock audit in the session log.
+
+Evidence: SESSION_PhaseB — B7 agent added `loadCategories()` to TaskViewModel but did not update the mock in `create_task_screen_test.dart`, causing test failure.
+
+### Step 3.3 — File Integrity Check (After Parallel Agent Execution)
+
+After background agents complete in parallel:
+1. Verify EVERY file they were supposed to create or modify by reading the first line.
+2. If any file starts with unexpected content (not valid Dart: `import`, `//`, `library`), flag it immediately as corrupted.
+3. Regenerate the corrupted file before proceeding to the next step.
+4. Log the corruption as `PROBLEM ENCOUNTERED` in the session log.
+
+Evidence: Phase C — a background agent corrupted `wallet_view_model_test.dart` (overwrote with non-Dart text). Detected only at full QA phase via `flutter analyze` returning 1903 errors.
+
+### 3.4 Native Dependency Build Gate (Mandatory After Adding Native Packages)
+
+After adding ANY dependency that includes native code (`sentry_flutter`, `firebase_*`, `image_picker`, `webview_flutter`, `google_maps_flutter`, etc.) to `pubspec.yaml`:
+
+1. Run `flutter pub get`.
+2. Run `flutter build apk --debug` — catches Kotlin/Gradle version mismatches.
+3. Run `flutter build ios --no-codesign` (if CocoaPods is available) — catches Swift/Xcode version mismatches.
+4. If either build fails, fix the build config (e.g., Kotlin version in `android/build.gradle.kts`, `pod install` for iOS) **in the same phase**.
+
+Do NOT defer platform builds to the QA phase. Native SDK version mismatches (Kotlin, Swift, Gradle, CocoaPods) are invisible to `flutter analyze` and `flutter test` — they only surface during platform compilation.
+
+**Timing:** The Native Dependency Build Gate MUST run in the SAME phase that adds the native dependency to pubspec.yaml. Do not defer platform builds to a later phase. If the build takes >10 minutes, run it in the background while continuing non-dependent work, but do NOT mark the phase complete until the build succeeds.
+
+Evidence: Phase D — `sentry_flutter` added in Phase 1, APK build failure discovered only at Phase 8 QA. Root cause: `sentry_flutter 8.x` declares `languageVersion = 1.6` which Kotlin 2.x rejects (minimum is 1.8). Fix required adding a Kotlin language override in `android/build.gradle.kts`.
+
+### 3.5 Per-Sub-Phase Test Gate for Multi-File Refactors
+
+When a phase involves creating 3+ new files that refactor an existing file (e.g., delegate decomposition, widget extraction), run `flutter test <affected_test_dir>` after EACH new file is created and wired — not just at the end of the phase. This catches wiring errors immediately instead of accumulating them into a cascade of failures.
+
+Evidence: Phase C post-mortem identified file corruption during parallel agent execution. Phase D applied this rule proactively for DashboardVM decomposition (3 delegates), running tests after each delegate was created — caught a setter visibility issue immediately.
+
+### 3.6 Raw String Sweep (After Every Implementation Phase)
+
+After every implementation phase, grep for raw string literals (`r'`) in all new or modified `.dart` files. If any raw string contains `$`, it is a bug — the `$` will be printed literally instead of being interpolated.
+
+Command: `grep -rn "r'" <changed-files> | grep '\$'`
+
+Any match must be fixed immediately (remove the `r` prefix).
+
+Evidence: Phase E — 14 raw string literals discovered post-implementation in `task_requests_award_delegate.dart` and `task_requests_view_model.dart`. All AppLogger calls printed literal `$requestId` instead of actual values, creating blind spots in payment/award flow traceability.
+
+### 3.7 Review CI Guard Exclusions After Architecture Fixes
+
+After fixing architecture violations that were previously excluded from CI guards (e.g., `grep -v` patterns in `.github/workflows/ci.yml`), review ALL guard exclusion patterns and tighten them. Exclusions that were necessary before the fix become regression risks after the fix.
+
+Steps:
+1. Identify which CI guard check(s) had exclusions allowing the now-fixed pattern.
+2. Remove or narrow the exclusion.
+3. Verify the tightened guard still passes on the current codebase.
+4. Verify it would CATCH the old violation if reintroduced.
+
+Evidence: Phase D — Architecture guard Check 3 excluded `Supabase.instance.client.auth.` patterns, which allowed the exact A6 violations the guard was supposed to catch. After the A6 fix, the exclusion was removed.
+
 ### Step 4 — Integrate
 
 - Ensure pieces fit across MVVM layers
@@ -425,7 +517,7 @@ The session log MUST contain:
 
 - introduce / backfill / enforce order respected
 - rollback or forward-fix path documented
-- `Doc/DIGRAM/<FeatureName>.md` updated when required
+- `docs/diagrams/<FeatureName>.md` updated when required
 
 ---
 
@@ -449,6 +541,10 @@ When the session ends:
 2. Write the `Quick Summary` section at the top of the log
 3. Write the `Agent Improvement Notes` table based on all `AGENT MISTAKE` entries
 4. Notify the human that the session log was written to `docs/LOG/SESSION_<name>_<date>.md`
+
+**Hard requirement:** The "Agent Improvement Notes" table in the session log MUST be filled before marking a session COMPLETED. If no agent mistakes occurred, write a single row: `| None | No agent mistakes during execution | N/A |`. An empty or template-placeholder table is a documentation defect.
+
+Evidence: Sessions 4 (Phase E) and 5 (GitHub CI) — Agent Improvement Notes tables were left empty or template-placeholder, breaking @SystemEvolution's ability to detect patterns from those sessions.
 
 ---
 

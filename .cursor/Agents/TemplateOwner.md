@@ -300,4 +300,4 @@ When the user says `add template`, `update template`, `task template`, `save as 
 - `lib/features/tasks/`
 - `supabase/migrations/`
 - `.TODO/TEMPLATE_*.md`
-- `Doc/DIGRAM/<FeatureName>.md`
+- `docs/diagrams/<FeatureName>.md`

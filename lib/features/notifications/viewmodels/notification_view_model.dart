@@ -1,13 +1,15 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import '../models/notification_model.dart';
-import '../services/notification_service.dart';
+import 'package:sline_app/features/notifications/models/notification_model.dart';
+import 'package:sline_app/features/notifications/services/notification_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// ViewModel for notification list and read state. Context-free; navigation is view-layer responsibility.
 class NotificationViewModel extends ChangeNotifier {
   final NotificationService _service;
+  final SupabaseClient? _injectedClient;
   StreamSubscription<List<NotificationItem>>? _subscription;
   StreamSubscription<AuthState>? _authSubscription;
 
@@ -15,11 +17,18 @@ class NotificationViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
-  /// [authStateChanges] optional for tests; if null uses Supabase.instance.client.auth.onAuthStateChange.
+  /// Lazily resolves the Supabase client. Uses injected client if provided,
+  /// otherwise falls back to Supabase.instance.client at call time.
+  SupabaseClient get _client => _injectedClient ?? Supabase.instance.client;
+
+  /// [authStateChanges] optional for tests; if null uses [client].auth.onAuthStateChange.
+  /// [client] optional for tests; if null uses Supabase.instance.client lazily.
   NotificationViewModel({
     NotificationService? service,
     Stream<AuthState>? authStateChanges,
-  }) : _service = service ?? NotificationService() {
+    SupabaseClient? client,
+  }) : _service = service ?? NotificationService(),
+       _injectedClient = client {
     _init(authStateChanges);
   }
 
@@ -52,8 +61,8 @@ class NotificationViewModel extends ChangeNotifier {
       });
       return;
     }
-    final stream = Supabase.instance.client.auth.onAuthStateChange;
-    final user = Supabase.instance.client.auth.currentUser;
+    final stream = _client.auth.onAuthStateChange;
+    final user = _client.auth.currentUser;
     if (user != null) {
       _connect();
     } else {
@@ -84,7 +93,7 @@ class NotificationViewModel extends ChangeNotifier {
   }
 
   Future<void> _connect() async {
-    _subscription?.cancel();
+    unawaited(_subscription?.cancel());
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -104,7 +113,7 @@ class NotificationViewModel extends ChangeNotifier {
         );
         notifyListeners();
       }
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.w(
         'NotificationViewModel: initial unread fetch failed',
         error: e,
@@ -144,12 +153,15 @@ class NotificationViewModel extends ChangeNotifier {
   void retry() {
     _error = null;
     try {
-      if (Supabase.instance.client.auth.currentUser != null) {
+      if (_client.auth.currentUser != null) {
         _connect();
       } else {
         notifyListeners();
       }
-    } catch (_) {
+    } on Exception catch (_) {
+      notifyListeners();
+    } on Error catch (_) {
+      // Supabase not initialized (e.g., in tests)
       notifyListeners();
     }
   }
@@ -165,7 +177,7 @@ class NotificationViewModel extends ChangeNotifier {
     try {
       await _service.markAsRead(id);
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e(
         'Failed to update notification',
         error: e,
@@ -180,7 +192,7 @@ class NotificationViewModel extends ChangeNotifier {
     try {
       await _service.markAllAsRead();
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to mark all as read', error: e, tag: 'Notifications');
       _error = 'Failed to mark all as read';
       notifyListeners();

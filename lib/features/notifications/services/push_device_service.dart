@@ -1,5 +1,5 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Registers FCM/APNs device token in user_devices for push delivery.
 /// Plan: .TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md

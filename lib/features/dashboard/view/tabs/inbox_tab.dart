@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 import 'package:sline_app/features/proposals/models/proposal_payment_summary.dart';
 import 'package:sline_app/features/proposals/routes/proposal_payment_route.dart';
 import 'package:sline_app/features/tasks/view/widgets/dashboard_offer_card.dart';
-import '../../viewmodels/dashboard_view_model.dart';
-import 'package:sline_app/core/services/logger_service.dart';
 
 class InboxTab extends StatefulWidget {
   const InboxTab({super.key});
@@ -52,7 +52,7 @@ class _InboxTabState extends State<InboxTab> {
           ),
         );
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (!mounted) return;
       setState(() => _isAwarding = false);
       messenger.showSnackBar(

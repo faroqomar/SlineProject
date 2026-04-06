@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 extension HexColor on Color {
   static Color fromHex(String hexString, {double opacity = 1.0}) {
     // Remove # if present
-    String cleanHex = hexString.replaceFirst('#', '');
+    final cleanHex = hexString.replaceFirst('#', '');
 
     // Handle transparent colors like `bg-[#f4f3f1]/10`
     // Opacity will be passed directly in Flutter Color constructor rather than calculating from hex.
@@ -231,9 +231,9 @@ class AppColorScheme {
   final Color info;
   final bool isDark;
 
-  static AppColorScheme lerp(AppColorScheme? a, AppColorScheme? b, double t) {
+  factory AppColorScheme.lerp(AppColorScheme? a, AppColorScheme? b, double t) {
     if (a == null && b == null) {
-      return AppColorScheme.light(); // Default to light if both are null
+      return AppColorScheme.light();
     }
     if (a == null) return b!;
     if (b == null) return a;

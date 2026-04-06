@@ -18,7 +18,7 @@ class NotificationTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // theme variable unused, removed
-    final bool isRead = notification.isRead;
+    final isRead = notification.isRead;
 
     return InkWell(
       onTap: onTap,
@@ -90,31 +90,24 @@ class NotificationTile extends StatelessWidget {
       case NotificationType.offer:
         icon = Icons.local_offer_outlined;
         color = AppColors.gold;
-        break;
       case NotificationType.message:
         icon = Icons.chat_bubble_outline;
         color = AppColors.teal;
-        break;
       case NotificationType.booking:
         icon = Icons.calendar_today_outlined;
         color = AppColors.teal;
-        break;
       case NotificationType.payment:
         icon = Icons.payment_outlined;
         color = AppColors.gold;
-        break;
       case NotificationType.review:
         icon = Icons.star_outline;
         color = AppColors.gold;
-        break;
       case NotificationType.task:
         icon = Icons.assignment_outlined;
         color = AppColors.teal;
-        break;
       case NotificationType.system:
         icon = Icons.notifications_none;
         color = AppColors.mediumGrey;
-        break;
     }
 
     return Container(

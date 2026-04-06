@@ -6,8 +6,8 @@ import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/widgets/signed_image.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
-import 'package:sline_app/features/tasks/view/widgets/tender_task_card.dart';
 import 'package:sline_app/features/tasks/view/widgets/booking_task_card.dart';
+import 'package:sline_app/features/tasks/view/widgets/tender_task_card.dart';
 
 /// A card widget to display task info matching the new design system.
 /// Delegates to [TenderTaskCard] or [BookingTaskCard] based on task type.
@@ -43,11 +43,11 @@ class TaskCard extends StatelessWidget {
     }
 
     // Legacy layout below
-    final AppColorScheme colorScheme = context.colorScheme;
-    final bool isTender = task.isTender;
+    final colorScheme = context.colorScheme;
+    final isTender = task.isTender;
 
     // Card header background color based on task type or category
-    final Color headerBgColor = _getHeaderColor();
+    final headerBgColor = _getHeaderColor();
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimens.p16),
@@ -87,7 +87,7 @@ class TaskCard extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context, Color bgColor, bool isTender) {
-    final bool hasImage = task.imagePaths.isNotEmpty;
+    final hasImage = task.imagePaths.isNotEmpty;
 
     return ClipRRect(
       borderRadius: const BorderRadius.only(

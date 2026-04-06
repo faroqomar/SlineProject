@@ -25,8 +25,8 @@ library;
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Log tag for storage RLS test operations
 const String _logTag = 'storage_rls_test';
@@ -102,7 +102,7 @@ class StorageRlsTestHarness {
       }
 
       AppLogger.i('✓ assertCanAccessStorage passed: $desc', tag: _logTag);
-    } catch (e) {
+    } on PostgrestException catch (e) {
       AppLogger.e(
         '✗ assertCanAccessStorage failed: $desc',
         tag: _logTag,
@@ -165,7 +165,7 @@ class StorageRlsTestHarness {
           tag: _logTag,
         );
       }
-    } catch (e) {
+    } on PostgrestException catch (e) {
       // Other errors might also indicate RLS blocking
       AppLogger.i(
         '✓ assertCannotAccessStorage passed: $desc (blocked with error: $e)',
@@ -200,7 +200,7 @@ class StorageRlsTestHarness {
             .uploadBinary(path, Uint8List.fromList(data));
       }
       AppLogger.i('✓ assertCanUpload passed: $desc', tag: _logTag);
-    } catch (e) {
+    } on PostgrestException catch (e) {
       AppLogger.e('✗ assertCanUpload failed: $desc', tag: _logTag, error: e);
       fail('Expected upload to be allowed but was blocked: $desc\nError: $e');
     }
@@ -241,7 +241,7 @@ class StorageRlsTestHarness {
         '✓ assertCannotUpload passed: $desc (blocked with ${e.statusCode})',
         tag: _logTag,
       );
-    } catch (e) {
+    } on PostgrestException catch (e) {
       AppLogger.i(
         '✓ assertCannotUpload passed: $desc (blocked with error: $e)',
         tag: _logTag,
@@ -266,7 +266,7 @@ class StorageRlsTestHarness {
         await _client.storage.from(bucket).remove([path]);
       }
       AppLogger.i('✓ assertCanDelete passed: $desc', tag: _logTag);
-    } catch (e) {
+    } on PostgrestException catch (e) {
       AppLogger.e('✗ assertCanDelete failed: $desc', tag: _logTag, error: e);
       fail('Expected delete to be allowed but was blocked: $desc\nError: $e');
     }
@@ -298,7 +298,7 @@ class StorageRlsTestHarness {
         '✓ assertCannotDelete passed: $desc (blocked with ${e.statusCode})',
         tag: _logTag,
       );
-    } catch (e) {
+    } on PostgrestException catch (e) {
       AppLogger.i(
         '✓ assertCannotDelete passed: $desc (blocked with error: $e)',
         tag: _logTag,

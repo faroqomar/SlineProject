@@ -1,23 +1,24 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
+import 'package:sline_app/core/config/payment_runtime_config.dart';
+import 'package:sline_app/core/services/deep_link_service.dart';
+import 'package:sline_app/core/services/payment_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/utils/error_mapper.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
-import 'package:sline_app/core/config/payment_runtime_config.dart';
-import 'package:sline_app/core/services/deep_link_service.dart';
-import 'package:sline_app/features/direct_offers/viewmodels/direct_offer_details_view_model.dart';
-import 'package:sline_app/features/direct_offers/services/direct_offers_service.dart';
-import 'package:sline_app/core/services/payment_service.dart';
-import 'package:sline_app/features/booking/view/payment_webview_screen.dart';
+import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
 import 'package:sline_app/features/booking/models/payment_return_args.dart';
+import 'package:sline_app/features/booking/view/payment_webview_screen.dart';
+import 'package:sline_app/features/direct_offers/services/direct_offers_service.dart';
+import 'package:sline_app/features/direct_offers/viewmodels/direct_offer_details_view_model.dart';
 import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Details screen for a direct offer: view info, Pay (wallet/card), Cancel, Open chat.
 class DirectOfferDetailsScreen extends StatelessWidget {
@@ -124,7 +125,7 @@ class _DirectOfferDetailsContentState
       if (paymentRequestId != null && paymentRequestId.isNotEmpty) {
         try {
           await vmAfter.recoverPaymentAfterCallback(paymentRequestId);
-        } catch (e) {
+        } on Exception catch (_) {
           await vmAfter.loadOffer();
         }
       } else {
@@ -170,7 +171,7 @@ class _DirectOfferDetailsContentState
         }
 
         final offer = vm.offer!;
-        final title = offer.title?.trim().isNotEmpty == true
+        final title = offer.title?.trim().isNotEmpty ?? false
             ? offer.title!
             : 'Custom offer';
 
@@ -202,7 +203,7 @@ class _DirectOfferDetailsContentState
                             color: context.colorScheme.text,
                           ),
                         ),
-                        if (offer.description?.trim().isNotEmpty == true) ...[
+                        if (offer.description?.trim().isNotEmpty ?? false) ...[
                           const SizedBox(height: AppDimens.p12),
                           Text(
                             offer.description!,
@@ -274,19 +275,17 @@ class _DirectOfferDetailsContentState
                                 ],
                               ),
                             );
-                            if (confirm == true && mounted) {
+                            if ((confirm ?? false) && mounted) {
                               try {
                                 await vm.cancelOffer();
                                 if (!mounted) return;
                                 navigator.pop(true);
-                              } catch (e) {
+                              } on Exception catch (_) {
                                 if (!mounted) return;
                                 messenger.showSnackBar(
-                                  SnackBar(
+                                  const SnackBar(
                                     content: Text(
-                                      e is Exception
-                                          ? e.toString()
-                                          : 'Failed to cancel',
+                                      'Something went wrong. Please try again.',
                                     ),
                                   ),
                                 );
@@ -328,16 +327,10 @@ class _DirectOfferDetailsContentState
                                 ),
                               );
                               navigator.pop(true);
-                            } catch (e) {
+                            } on Exception catch (e) {
                               if (!context.mounted) return;
                               messenger.showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    e is Exception
-                                        ? e.toString()
-                                        : 'Failed to submit work',
-                                  ),
-                                ),
+                                SnackBar(content: Text(ErrorMapper.map(e))),
                               );
                             }
                           },
@@ -373,16 +366,10 @@ class _DirectOfferDetailsContentState
                           const SnackBar(content: Text('Payment released.')),
                         );
                         navigator.pop(true);
-                      } catch (e) {
+                      } on Exception catch (e) {
                         if (!context.mounted) return;
                         messenger.showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              e is Exception
-                                  ? e.toString()
-                                  : 'Failed to complete',
-                            ),
-                          ),
+                          SnackBar(content: Text(ErrorMapper.map(e))),
                         );
                       }
                     },
@@ -522,7 +509,7 @@ class _ReportIssueGuardDirectOffer extends StatelessWidget {
   }
 
   Future<void> _showDisputeDialog(BuildContext context) async {
-    String draftReason = '';
+    var draftReason = '';
     final reason = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -581,7 +568,7 @@ class _ApproveWithDisputeGuard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (completeInProgress) {
-      return AppButton(
+      return const AppButton(
         text: 'Releasing…',
         onPressed: null,
         isPrimary: true,
@@ -594,7 +581,11 @@ class _ApproveWithDisputeGuard extends StatelessWidget {
       ),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return AppButton(text: 'Checking…', onPressed: null, isPrimary: true);
+          return const AppButton(
+            text: 'Checking…',
+            onPressed: null,
+            isPrimary: true,
+          );
         }
         final hasOpenDispute = snapshot.data ?? true;
         return AppButton(

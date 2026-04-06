@@ -23,8 +23,8 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Log tag for RLS test operations
 const String _logTag = 'rls_test';
@@ -92,9 +92,7 @@ class RlsTestHelper {
       if (_client != null) {
         // Integration test path - actual Supabase query
         final query = _client.from(table).select();
-        filters.forEach((column, value) {
-          query.eq(column, value);
-        });
+        filters.forEach(query.eq);
 
         await query;
         // Query success means SELECT was allowed
@@ -102,7 +100,7 @@ class RlsTestHelper {
 
       // Mark test as passed
       AppLogger.i('✓ assertCanSelect passed: $desc', tag: _logTag);
-    } catch (e) {
+    } on PostgrestException catch (e) {
       AppLogger.e('✗ assertCanSelect failed: $desc', tag: _logTag, error: e);
       fail('Expected SELECT to be allowed but was blocked: $desc\nError: $e');
     }
@@ -130,9 +128,7 @@ class RlsTestHelper {
     try {
       if (_client != null) {
         final query = _client.from(table).select();
-        filters.forEach((column, value) {
-          query.eq(column, value);
-        });
+        filters.forEach(query.eq);
 
         await query;
         // If we get here without exception, the RLS policy allowed access
@@ -153,12 +149,6 @@ class RlsTestHelper {
       }
       AppLogger.i(
         '✓ assertCannotSelect passed: $desc (blocked as expected)',
-        tag: _logTag,
-      );
-    } catch (e) {
-      // Other errors might also indicate RLS blocking
-      AppLogger.i(
-        '✓ assertCannotSelect passed: $desc (blocked with error: $e)',
         tag: _logTag,
       );
     }
@@ -186,7 +176,7 @@ class RlsTestHelper {
         await _client.from(table).insert(data);
       }
       AppLogger.i('✓ assertCanInsert passed: $desc', tag: _logTag);
-    } catch (e) {
+    } on PostgrestException catch (e) {
       AppLogger.e('✗ assertCanInsert failed: $desc', tag: _logTag, error: e);
       fail('Expected INSERT to be allowed but was blocked: $desc\nError: $e');
     }
@@ -232,11 +222,6 @@ class RlsTestHelper {
         '✓ assertCannotInsert passed: $desc (blocked as expected)',
         tag: _logTag,
       );
-    } catch (e) {
-      AppLogger.i(
-        '✓ assertCannotInsert passed: $desc (blocked with error: $e)',
-        tag: _logTag,
-      );
     }
   }
 
@@ -256,14 +241,12 @@ class RlsTestHelper {
     try {
       if (_client != null) {
         final query = _client.from(table).update(data);
-        filters.forEach((column, value) {
-          query.eq(column, value);
-        });
+        filters.forEach(query.eq);
 
         await query;
       }
       AppLogger.i('✓ assertCanUpdate passed: $desc', tag: _logTag);
-    } catch (e) {
+    } on PostgrestException catch (e) {
       AppLogger.e('✗ assertCanUpdate failed: $desc', tag: _logTag, error: e);
       fail('Expected UPDATE to be allowed but was blocked: $desc\nError: $e');
     }
@@ -286,9 +269,7 @@ class RlsTestHelper {
     try {
       if (_client != null) {
         final query = _client.from(table).update(data);
-        filters.forEach((column, value) {
-          query.eq(column, value);
-        });
+        filters.forEach(query.eq);
 
         await query;
         AppLogger.e(
@@ -303,11 +284,6 @@ class RlsTestHelper {
       }
       AppLogger.i(
         '✓ assertCannotUpdate passed: $desc (blocked as expected)',
-        tag: _logTag,
-      );
-    } catch (e) {
-      AppLogger.i(
-        '✓ assertCannotUpdate passed: $desc (blocked with error: $e)',
         tag: _logTag,
       );
     }
@@ -328,14 +304,12 @@ class RlsTestHelper {
     try {
       if (_client != null) {
         final query = _client.from(table).delete();
-        filters.forEach((column, value) {
-          query.eq(column, value);
-        });
+        filters.forEach(query.eq);
 
         await query;
       }
       AppLogger.i('✓ assertCanDelete passed: $desc', tag: _logTag);
-    } catch (e) {
+    } on PostgrestException catch (e) {
       AppLogger.e('✗ assertCanDelete failed: $desc', tag: _logTag, error: e);
       fail('Expected DELETE to be allowed but was blocked: $desc\nError: $e');
     }
@@ -357,9 +331,7 @@ class RlsTestHelper {
     try {
       if (_client != null) {
         final query = _client.from(table).delete();
-        filters.forEach((column, value) {
-          query.eq(column, value);
-        });
+        filters.forEach(query.eq);
 
         await query;
       }
@@ -370,11 +342,6 @@ class RlsTestHelper {
       }
       AppLogger.i(
         '✓ assertCannotDelete passed: $desc (blocked as expected)',
-        tag: _logTag,
-      );
-    } catch (e) {
-      AppLogger.i(
-        '✓ assertCannotDelete passed: $desc (blocked with error: $e)',
         tag: _logTag,
       );
     }

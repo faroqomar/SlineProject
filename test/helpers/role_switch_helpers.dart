@@ -36,20 +36,15 @@ abstract class RoleSwitchAware {
 /// Mock implementation of [RoleSwitchAware] for testing
 class MockRoleSwitchAware implements RoleSwitchAware {
   bool _wasTeardownCalled = false;
-  Exception? _teardownError;
+  Exception? teardownError;
 
   /// Whether teardownForRoleSwitch was called
   bool get wasTeardownCalled => _wasTeardownCalled;
 
-  /// Set an error to throw when teardown is called
-  set teardownError(Exception? error) {
-    _teardownError = error;
-  }
-
   /// Reset the mock state for reuse across tests
   void reset() {
     _wasTeardownCalled = false;
-    _teardownError = null;
+    teardownError = null;
   }
 
   @override
@@ -59,8 +54,8 @@ class MockRoleSwitchAware implements RoleSwitchAware {
       'MockRoleSwitchAware.teardownForRoleSwitch called',
       tag: _logTag,
     );
-    if (_teardownError != null) {
-      throw _teardownError!;
+    if (teardownError != null) {
+      throw teardownError!;
     }
   }
 }
@@ -138,7 +133,7 @@ class RoleSwitchCoordinatorMock {
       try {
         await vm.teardownForRoleSwitch();
         AppLogger.d('Teardown succeeded for ${vm.runtimeType}', tag: _logTag);
-      } catch (e) {
+      } on Exception catch (e) {
         final errorMsg = '${vm.runtimeType}: $e';
         errors.add(errorMsg);
         _teardownErrors.add(errorMsg);
@@ -317,7 +312,7 @@ class RoleSwitchSimulator {
         tag: _logTag,
       );
       return true;
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Role switch simulation failed', tag: _logTag, error: e);
       return false;
     }

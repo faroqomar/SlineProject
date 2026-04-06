@@ -1,0 +1,183 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Lint & Analyze
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.9'
+          cache: true
+      - run: flutter pub get
+      - name: Check formatting
+        run: dart format --set-exit-if-changed .
+      - name: Analyze (infos allowed, warnings/errors fatal)
+        run: flutter analyze --no-fatal-infos
+
+  architecture-guard:
+    name: Architecture Guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check MVVM boundaries
+        run: |
+          WARN=0
+
+          echo "=== Check 1: Supabase.instance in view layer ==="
+          if grep -rn --include='*.dart' 'Supabase\.instance' lib/features/ | grep '/view/' ; then
+            echo "::warning::Direct Supabase access found in view layer"
+            WARN=1
+          fi
+
+          echo ""
+          echo "=== Check 2: View imports in viewmodel layer ==="
+          if grep -rn --include='*.dart' "import.*\/view\/" lib/features/ | grep '/viewmodels/' ; then
+            echo "::warning::View layer imported in viewmodel"
+            WARN=1
+          fi
+
+          echo ""
+          echo "=== Check 3: Supabase.instance in viewmodel methods (not DI defaults) ==="
+          if grep -rn --include='*.dart' 'Supabase\.instance' lib/features/ | grep '/viewmodels/' | grep -v '?? Supabase\.instance' | grep -v '/// ' | grep -v 'Supabase\.instance\.client)' | grep -v 'Supabase\.instance\.client;' ; then
+            echo "::warning::Direct Supabase access found in viewmodel layer (outside DI defaults)"
+            WARN=1
+          fi
+
+          echo ""
+          echo "=== Check 4: TextEditingController in viewmodel layer ==="
+          if grep -rn --include='*.dart' 'TextEditingController\|GlobalKey<FormState>' lib/features/ | grep '/viewmodels/' ; then
+            echo "::warning::UI controllers found in viewmodel layer"
+            WARN=1
+          fi
+
+          echo ""
+          echo "=== Check 5: Navigator calls in viewmodel layer ==="
+          if grep -rn --include='*.dart' 'Navigator\.' lib/features/ | grep '/viewmodels/' ; then
+            echo "::warning::Navigator calls found in viewmodel layer"
+            WARN=1
+          fi
+
+          echo ""
+          echo "=== Check 6: Repository imports in view layer ==="
+          if grep -rn --include='*.dart' 'import.*repository' lib/features/ | grep '/view/' ; then
+            echo "::warning::Repository imported directly in view layer"
+            WARN=1
+          fi
+
+          echo ""
+          echo "=== Check 7: Core services importing feature layer (warning-only, max 5 allowed) ==="
+          CORE_FEATURE_IMPORTS=$(grep -rn --include='*.dart' 'import.*features/' lib/core/ 2>/dev/null | wc -l | tr -d ' ')
+          if [ "$CORE_FEATURE_IMPORTS" -gt 5 ]; then
+            echo "::error::$CORE_FEATURE_IMPORTS core->features imports found (max 5 allowed — DeepLinkService refactored, remaining are shared widgets/cache)"
+            grep -rn --include='*.dart' 'import.*features/' lib/core/ 2>/dev/null || true
+            WARN=1
+          elif [ "$CORE_FEATURE_IMPORTS" -gt 0 ]; then
+            echo "::notice::$CORE_FEATURE_IMPORTS core->features imports (within allowed threshold of 5)"
+          fi
+          # Known remaining: dashboard_cache_service (2), status_badge (1), signed_image (1), signed_avatar (1)
+
+          if [ $WARN -eq 1 ]; then
+            echo ""
+            echo "::error::Architecture violations detected. Fix before merging."
+            exit 1
+          else
+            echo "All architecture checks passed (Check 7 warning-only)."
+          fi
+
+  test:
+    name: Unit & Widget Tests
+    runs-on: ubuntu-latest
+    needs: analyze
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.9'
+          cache: true
+      - run: flutter pub get
+      - name: Run tests with coverage
+        run: flutter test --coverage
+      - name: Report coverage
+        if: always()
+        run: |
+          if [ -f coverage/lcov.info ]; then
+            TOTAL_LINES=$(grep -c '^DA:' coverage/lcov.info || echo 0)
+            HIT_LINES=$(grep '^DA:' coverage/lcov.info | grep -cv ',0$' || echo 0)
+            if [ "$TOTAL_LINES" -gt 0 ]; then
+              PERCENT=$(awk "BEGIN { printf \"%.1f\", ($HIT_LINES / $TOTAL_LINES) * 100 }")
+              echo "### Coverage: ${PERCENT}% ($HIT_LINES / $TOTAL_LINES lines)" >> $GITHUB_STEP_SUMMARY
+              echo "Coverage: ${PERCENT}% ($HIT_LINES / $TOTAL_LINES lines)"
+            else
+              echo "No coverage data found."
+            fi
+          else
+            echo "coverage/lcov.info not generated."
+          fi
+      - name: Enforce coverage floor
+        if: always()
+        run: |
+          THRESHOLD=40
+          if [ -f coverage/lcov.info ]; then
+            TOTAL=$(grep -c '^DA:' coverage/lcov.info || echo 0)
+            HIT=$(grep '^DA:' coverage/lcov.info | grep -cv ',0$' || echo 0)
+            if [ "$TOTAL" -gt 0 ]; then
+              PERCENT=$(awk "BEGIN { printf \"%.1f\", ($HIT / $TOTAL) * 100 }")
+              PASS=$(awk "BEGIN { print ($PERCENT >= $THRESHOLD) ? 1 : 0 }")
+              if [ "$PASS" -eq 0 ]; then
+                echo "### Coverage FAILED: ${PERCENT}% < ${THRESHOLD}% floor" >> $GITHUB_STEP_SUMMARY
+                echo "::error::Coverage ${PERCENT}% is below required ${THRESHOLD}%"
+                exit 1
+              fi
+              echo "### Coverage OK: ${PERCENT}% (floor: ${THRESHOLD}%)" >> $GITHUB_STEP_SUMMARY
+              echo "Coverage ${PERCENT}% meets floor of ${THRESHOLD}%"
+            fi
+          fi
+
+  build:
+    name: Build (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    needs: [analyze, test]
+    strategy:
+      matrix:
+        include:
+          - target: apk
+            command: flutter build apk --debug
+          - target: web
+            command: flutter build web --release
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        if: matrix.target == 'apk'
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.9'
+          cache: true
+      - run: flutter pub get
+      - name: Build ${{ matrix.target }}
+        run: ${{ matrix.command }}
+      - name: Upload build artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}-build
+          path: ${{ matrix.target == 'apk' && 'build/app/outputs/flutter-apk/' || 'build/web/' }}
+          retention-days: 7

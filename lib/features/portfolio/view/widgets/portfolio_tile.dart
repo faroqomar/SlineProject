@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../../core/services/logger_service.dart';
-import '../sheets/portfolio_details_sheet.dart';
-import '../../viewmodels/portfolio_view_model.dart';
-import '../../models/portfolio_item.dart';
-import 'image_placeholder.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/features/portfolio/models/portfolio_item.dart';
+import 'package:sline_app/features/portfolio/view/sheets/portfolio_details_sheet.dart';
+import 'package:sline_app/features/portfolio/view/widgets/image_placeholder.dart';
+import 'package:sline_app/features/portfolio/viewmodels/portfolio_view_model.dart';
 
 /// Grid tile for a single portfolio item.
 /// Uses effectiveImageRef for rendering (handles both canonical imagePath and legacy imageUrl).

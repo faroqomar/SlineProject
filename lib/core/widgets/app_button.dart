@@ -42,18 +42,18 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
-    final TextTheme textTheme = context.appTextTheme;
+    final colorScheme = context.colorScheme;
+    final textTheme = context.appTextTheme;
 
     // Determine colors based on primary/secondary and theme
-    final Color effectiveBackgroundColor =
+    final effectiveBackgroundColor =
         backgroundColor ??
         (isPrimary ? colorScheme.primary : colorScheme.cardBackground);
-    final Color effectiveForegroundColor =
+    final effectiveForegroundColor =
         foregroundColor ?? (isPrimary ? AppColors.offWhite : colorScheme.text);
 
     // Default boxShadow mimicking shadow-xl from Tailwind, but adapted
-    final List<BoxShadow> effectiveBoxShadow =
+    final effectiveBoxShadow =
         boxShadow ??
         (isPrimary
             ? [
@@ -65,7 +65,7 @@ class AppButton extends StatelessWidget {
               ]
             : []);
 
-    final BorderRadius effectiveBorderRadius =
+    final effectiveBorderRadius =
         borderRadius ?? BorderRadius.circular(AppDimens.r14);
 
     return Container(

@@ -1,27 +1,29 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/services/account_guard_service.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/core/widgets/signed_image.dart';
-import 'package:sline_app/features/profile/view/widgets/profile_preview_modal.dart';
-import 'package:sline_app/features/tasks/models/task_model.dart';
-import 'package:sline_app/features/proposals/view/proposals_list_screen.dart';
-import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
-import 'package:sline_app/features/chat/view/chat_screen.dart'; // Added
 import 'package:sline_app/features/booking/view/payment_checkout_screen.dart';
-import 'package:sline_app/core/utils/loading_utils.dart';
+import 'package:sline_app/features/chat/view/chat_screen.dart'; // Added
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 import 'package:sline_app/features/management/models/work_log_scope.dart';
 import 'package:sline_app/features/management/view/widgets/order_management_section.dart';
-import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/services/account_guard_service.dart';
+import 'package:sline_app/features/profile/view/widgets/profile_preview_modal.dart';
+import 'package:sline_app/features/proposals/view/proposals_list_screen.dart';
 import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
+import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
 
 /// Shows details of a task with Glassmorphism design.
 class TaskDetailsScreen extends StatefulWidget {
@@ -67,13 +69,13 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
-    final Task task = widget.task;
-    final bool isTender = task.isTender;
-    final bool isBooking = task.isBooking;
+    final colorScheme = context.colorScheme;
+    final task = widget.task;
+    final isTender = task.isTender;
+    final isBooking = task.isBooking;
 
-    final String? currentUserId = context.read<TaskViewModel>().currentUserId;
-    final bool isOwner = currentUserId != null && currentUserId == task.userId;
+    final currentUserId = context.read<TaskViewModel>().currentUserId;
+    final isOwner = currentUserId != null && currentUserId == task.userId;
 
     return Scaffold(
       backgroundColor: colorScheme.phoneBackground,
@@ -333,7 +335,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     BuildContext context,
     String taskId,
   ) async {
-    String draftReason = '';
+    var draftReason = '';
     final reason = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -416,13 +418,15 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
       if (conversation == null) return;
       if (!context.mounted) return;
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ChatScreen(conversation: conversation),
+      unawaited(
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChatScreen(conversation: conversation),
+          ),
         ),
       );
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e(
         'Failed to start chat for task=$taskId owner=$ownerId',
         tag: 'Task',
@@ -440,7 +444,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
   // --- Mock UI Helpers ---
 
   Widget _buildPackageSelector(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
     const tiers = ['Basic', 'Standard', 'Premium'];
 
     return Container(
@@ -491,12 +495,12 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
   }
 
   Widget _buildPackageDetails(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
     // Real Data from Task
-    String price = 'N/A';
-    String delivery = 'N/A';
-    String revisions = 'N/A';
-    String desc = 'No description provided.';
+    var price = 'N/A';
+    var delivery = 'N/A';
+    var revisions = 'N/A';
+    var desc = 'No description provided.';
 
     if (widget.task.packages != null &&
         widget.task.packages!.containsKey(_selectedPackageTier)) {
@@ -504,7 +508,8 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
       if (pkg != null) {
         price = '\$${pkg['price'] ?? '0'}';
         delivery = '${pkg['delivery'] ?? '0'} Days';
-        revisions = '${pkg['revisions'] ?? '0'} Revisions';
+        final revCount = pkg['revisions'] ?? 0;
+        revisions = '$revCount ${revCount == 1 ? 'Revision' : 'Revisions'}';
         desc = pkg['description'] ?? '';
       }
     }
@@ -653,31 +658,35 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
           'delivery_days': _selectedDeliveryDays(),
         },
       );
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => PaymentCheckoutScreen(
-            providerId: widget.task.userId,
-            taskId: widget.task.id,
-            taskTitle: widget.task.title,
-            price: _selectedBookingPrice(),
-            packageTier: _selectedPackageId(),
-            packageData: _selectedPackageData(),
-            deliveryDays: _selectedDeliveryDays(),
-            taskDeadline: widget.task.deadline,
+      unawaited(
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => PaymentCheckoutScreen(
+              providerId: widget.task.userId,
+              taskId: widget.task.id,
+              taskTitle: widget.task.title,
+              price: _selectedBookingPrice(),
+              packageTier: _selectedPackageId(),
+              packageData: _selectedPackageData(),
+              deliveryDays: _selectedDeliveryDays(),
+              taskDeadline: widget.task.deadline,
+            ),
           ),
         ),
       );
     } else {
       // Tender -> Open Proposal Sheet
       // For now, just push the RequestsListScreen with autoOpen (or we can implement the modal later)
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => RequestsListScreen(
-            taskId: widget.task.id,
-            autoOpenSubmitSheet: true,
-            isTender: true,
-            isOwner: false,
-            budget: widget.task.budget.toString(),
+      unawaited(
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => RequestsListScreen(
+              taskId: widget.task.id,
+              autoOpenSubmitSheet: true,
+              isTender: true,
+              isOwner: false,
+              budget: widget.task.budget.toString(),
+            ),
           ),
         ),
       );

@@ -1,12 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-import '../../../core/services/logger_service.dart';
-import '../viewmodels/favorites_view_model.dart';
-import '../models/favorites_mutation_result.dart';
-import 'widgets/favorite_card.dart';
-import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/chat/view/chat_screen.dart';
+import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
+import 'package:sline_app/features/favorites/models/favorites_mutation_result.dart';
+import 'package:sline_app/features/favorites/view/widgets/favorite_card.dart';
+import 'package:sline_app/features/favorites/viewmodels/favorites_view_model.dart';
 
 /// FavoritesScreen (MVVM)
 /// Uses app-level FavoritesViewModel only; no local service/VM.
@@ -110,12 +111,14 @@ class _FavoritesView extends StatelessWidget {
                       // Handle double-tap or error (conversation is null)
                       if (convo == null) return;
                       if (!context.mounted) return;
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => ChatScreen(conversation: convo),
+                      unawaited(
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => ChatScreen(conversation: convo),
+                          ),
                         ),
                       );
-                    } catch (e) {
+                    } on Object catch (e) {
                       AppLogger.e(
                         'Chat start failed',
                         tag: 'Favorites',

@@ -213,9 +213,9 @@ void main() {
         ),
       );
 
-      var container = find.byType(Container);
-      var containerWidget = tester.widget<Container>(container);
-      var decoration = containerWidget.decoration as BoxDecoration?;
+      final container = find.byType(Container);
+      final containerWidget = tester.widget<Container>(container);
+      final decoration = containerWidget.decoration as BoxDecoration?;
       expect(decoration?.color, equals(Colors.green.withValues(alpha: 0.1)));
     });
   });

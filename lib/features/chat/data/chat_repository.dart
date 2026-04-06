@@ -1,7 +1,7 @@
+import 'package:sline_app/features/chat/models/conversation_model.dart';
+import 'package:sline_app/features/chat/models/message_model.dart';
+import 'package:sline_app/features/chat/services/message_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/conversation_model.dart';
-import '../models/message_model.dart';
-import '../services/message_service.dart';
 
 /// Repository layer for Chat feature.
 /// Encapsulates data access via MessageService and exposes a stable API
@@ -118,5 +118,11 @@ class ChatRepository {
     final uid = currentUser?.id;
     if (uid == null) throw Exception('User not logged in');
     return _service.deleteConversation(conversationId, uid);
+  }
+
+  /// Remove all Supabase realtime channels. Used during role switch teardown
+  /// to disconnect from Supabase realtime (not just cancel Dart streams).
+  Future<void> removeAllChannels() async {
+    await _client.removeAllChannels();
   }
 }

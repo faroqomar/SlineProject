@@ -1,17 +1,19 @@
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import '../data/categories_repository.dart';
-import '../models/category_model.dart';
+import 'package:sline_app/features/categories/data/categories_repository.dart';
+import 'package:sline_app/features/categories/models/category_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// CategoriesViewModel
 /// MVVM state holder for listing and searching categories.
 class CategoriesViewModel extends ChangeNotifier {
   CategoriesViewModel({CategoriesRepository? repository})
-    : _repository =
-          repository ?? CategoriesRepository(Supabase.instance.client);
+    : _explicitRepository = repository;
 
-  final CategoriesRepository _repository;
+  final CategoriesRepository? _explicitRepository;
+
+  late final CategoriesRepository _repository =
+      _explicitRepository ?? CategoriesRepository(Supabase.instance.client);
 
   final List<CategoryModel> _items = [];
   bool _isLoading = false;
@@ -39,7 +41,7 @@ class CategoriesViewModel extends ChangeNotifier {
         ..addAll(data);
       _error = null;
       notifyListeners();
-    } catch (e) {
+    } on Exception catch (e) {
       _error = 'Failed to load categories';
       AppLogger.e('CategoriesViewModel.load error: $e');
       notifyListeners();

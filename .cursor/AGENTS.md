@@ -29,7 +29,7 @@ All agents and workflows live under **`.cursor/`**. Always prefer these over `.a
 - **Context**: [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) — architecture, conventions, doc links.
 - **Prompt**: [prompt.md](prompt.md) — how to use workflows and agents for new features.
 - **Session Logs**: `docs/LOG/SESSION_<PLAN_NAME>_<YYYY-MM-DD>.md` — append-only execution history for every plan.
-- **Feature Diagrams**: `Doc/DIGRAM/<FeatureName>.md` — Mermaid diagrams plus explanations for schema, order flow, and backend process flow.
+- **Feature Diagrams**: `docs/diagrams/<FeatureName>.md` — Mermaid diagrams plus explanations for schema, order flow, and backend process flow.
 
 ## Skills (Project-Local)
 
@@ -58,4 +58,4 @@ When working on SLine, always reference `@.cursor` first.
 - Meaningful UI steps must include skill tags from `.cursor/skills/`.
 - Meaningful Supabase schema, RLS, RPC, storage, or migration steps must include `Skill: supabase-migration`.
 - Every executed plan must have an append-only session log under `docs/LOG/`.
-- Every schema, order flow, or backend process feature must produce or update a per-feature diagram under `Doc/DIGRAM/`.
+- Every schema, order flow, or backend process feature must produce or update a per-feature diagram under `docs/diagrams/`.

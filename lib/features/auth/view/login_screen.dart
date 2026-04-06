@@ -1,16 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/app/main_navigation_screen.dart';
+import 'package:sline_app/core/providers/system_config_view_model.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
-import 'package:sline_app/core/providers/system_config_view_model.dart';
+import 'package:sline_app/features/auth/view/forgot_password_screen.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_form_view_model.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
-import 'package:sline_app/features/auth/view/forgot_password_screen.dart';
 
 /// Login screen for user authentication (MVVM) with Glassmorphism design.
 ///
@@ -54,8 +56,10 @@ class _LoginScreenState extends State<LoginScreen> {
           ).showSnackBar(SnackBar(content: Text(sessionError)));
           sessionVm.clearError();
         }
-      } catch (_) {
+      } on Exception catch (_) {
         // AuthSessionViewModel not provided (e.g. in tests)
+      } on Error catch (_) {
+        // ProviderNotFoundException extends Error
       }
     });
   }
@@ -82,12 +86,14 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Login successful')));
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder:
-              widget.mainNavigationBuilder ??
-              (_) => const MainNavigationScreen(),
+      unawaited(
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder:
+                widget.mainNavigationBuilder ??
+                (_) => const MainNavigationScreen(),
+          ),
         ),
       );
     } else {
@@ -100,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
     final signupsDisabled =
         context.watch<SystemConfigViewModel?>()?.config.disableSignups ?? false;
 

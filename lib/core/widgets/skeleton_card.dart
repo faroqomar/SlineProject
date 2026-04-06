@@ -57,7 +57,7 @@ class SkeletonTaskCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Header: Date + Heart
-                        Row(
+                        const Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             SkeletonLoader(
@@ -71,7 +71,7 @@ class SkeletonTaskCard extends StatelessWidget {
                         const SizedBox(height: 12),
 
                         // Title
-                        SkeletonLoader(
+                        const SkeletonLoader(
                           width: 180,
                           height: 18,
                           borderRadius: AppDimens.r4,
@@ -92,7 +92,7 @@ class SkeletonTaskCard extends StatelessWidget {
                               top: BorderSide(color: colorScheme.divider),
                             ),
                           ),
-                          child: Row(
+                          child: const Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               // Left: Time + Bids
@@ -103,7 +103,7 @@ class SkeletonTaskCard extends StatelessWidget {
                                     height: 12,
                                     borderRadius: AppDimens.r4,
                                   ),
-                                  const SizedBox(width: 16),
+                                  SizedBox(width: 16),
                                   SkeletonLoader(
                                     width: 50,
                                     height: 12,
@@ -128,7 +128,7 @@ class SkeletonTaskCard extends StatelessWidget {
             ),
 
             // Heart icon placeholder (top right)
-            Positioned(
+            const Positioned(
               top: 8,
               right: 8,
               child: SkeletonLoader(width: 36, height: 36, borderRadius: 18),
@@ -192,7 +192,7 @@ class SkeletonBookingCard extends StatelessWidget {
                 ),
               ),
               // Bookmark placeholder (top right)
-              Positioned(
+              const Positioned(
                 top: 12,
                 right: 12,
                 child: SkeletonLoader(width: 34, height: 34, borderRadius: 17),
@@ -232,7 +232,7 @@ class SkeletonBookingCard extends StatelessWidget {
                         ),
                       ),
                       // Rating Pill placeholder
-                      SkeletonLoader(
+                      const SkeletonLoader(
                         width: 50,
                         height: 20,
                         borderRadius: AppDimens.r8,
@@ -242,7 +242,7 @@ class SkeletonBookingCard extends StatelessWidget {
                 ),
 
                 // Title
-                SkeletonLoader(
+                const SkeletonLoader(
                   width: 200,
                   height: 18,
                   borderRadius: AppDimens.r4,
@@ -251,7 +251,7 @@ class SkeletonBookingCard extends StatelessWidget {
                 const SizedBox(height: 8),
 
                 // Author Name
-                SkeletonLoader(
+                const SkeletonLoader(
                   width: 100,
                   height: 12,
                   borderRadius: AppDimens.r4,
@@ -260,12 +260,12 @@ class SkeletonBookingCard extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 // Tags
-                Row(
+                const Row(
                   children: [
                     SkeletonLoader(width: 50, height: 22, borderRadius: 6),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     SkeletonLoader(width: 60, height: 22, borderRadius: 6),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     SkeletonLoader(width: 45, height: 22, borderRadius: 6),
                   ],
                 ),
@@ -278,7 +278,7 @@ class SkeletonBookingCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     border: Border(top: BorderSide(color: colorScheme.divider)),
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
@@ -291,7 +291,7 @@ class SkeletonBookingCard extends StatelessWidget {
                             height: 10,
                             borderRadius: AppDimens.r4,
                           ),
-                          const SizedBox(height: 4),
+                          SizedBox(height: 4),
                           SkeletonLoader(
                             width: 70,
                             height: 20,
@@ -328,10 +328,10 @@ class SkeletonOfferCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppDimens.r16),
         border: Border.all(color: colorScheme.cardBorder),
       ),
-      child: Row(
+      child: const Row(
         children: [
-          const SkeletonAvatar(size: 48),
-          const SizedBox(width: AppDimens.p12),
+          SkeletonAvatar(size: 48),
+          SizedBox(width: AppDimens.p12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -341,7 +341,7 @@ class SkeletonOfferCard extends StatelessWidget {
                   height: 14,
                   borderRadius: AppDimens.r4,
                 ),
-                const SizedBox(height: AppDimens.p8),
+                SizedBox(height: AppDimens.p8),
                 SkeletonLoader(
                   width: 150,
                   height: 12,
@@ -415,10 +415,10 @@ class SkeletonConversationTile extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: colorScheme.divider)),
       ),
-      child: Row(
+      child: const Row(
         children: [
-          const SkeletonAvatar(size: 52),
-          const SizedBox(width: AppDimens.p12),
+          SkeletonAvatar(size: 52),
+          SizedBox(width: AppDimens.p12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -428,12 +428,12 @@ class SkeletonConversationTile extends StatelessWidget {
                   height: 16,
                   borderRadius: AppDimens.r4,
                 ),
-                const SizedBox(height: AppDimens.p8),
+                SizedBox(height: AppDimens.p8),
                 SkeletonLoader(height: 12, borderRadius: AppDimens.r4),
               ],
             ),
           ),
-          const SizedBox(width: AppDimens.p12),
+          SizedBox(width: AppDimens.p12),
           SkeletonLoader(width: 40, height: 12, borderRadius: AppDimens.r4),
         ],
       ),
@@ -453,28 +453,36 @@ class SkeletonDetailsScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header image placeholder
-          SkeletonLoader(height: 200, borderRadius: AppDimens.r20),
+          const SkeletonLoader(height: 200, borderRadius: AppDimens.r20),
           const SizedBox(height: AppDimens.p20),
           // Title
-          SkeletonLoader(width: 250, height: 24, borderRadius: AppDimens.r8),
+          const SkeletonLoader(
+            width: 250,
+            height: 24,
+            borderRadius: AppDimens.r8,
+          ),
           const SizedBox(height: AppDimens.p12),
           // Subtitle/meta
-          Row(
+          const Row(
             children: [
-              const SkeletonAvatar(size: 32),
-              const SizedBox(width: AppDimens.p8),
+              SkeletonAvatar(size: 32),
+              SizedBox(width: AppDimens.p8),
               SkeletonLoader(
                 width: 100,
                 height: 14,
                 borderRadius: AppDimens.r4,
               ),
-              const Spacer(),
+              Spacer(),
               SkeletonLoader(width: 80, height: 14, borderRadius: AppDimens.r4),
             ],
           ),
           const SizedBox(height: AppDimens.p24),
           // Description section
-          SkeletonLoader(width: 100, height: 18, borderRadius: AppDimens.r4),
+          const SkeletonLoader(
+            width: 100,
+            height: 18,
+            borderRadius: AppDimens.r4,
+          ),
           const SizedBox(height: AppDimens.p12),
           const SkeletonText(lines: 4),
           const SizedBox(height: AppDimens.p24),
@@ -482,7 +490,7 @@ class SkeletonDetailsScreen extends StatelessWidget {
           GlassContainer(
             padding: const EdgeInsets.all(AppDimens.p16),
             borderRadius: BorderRadius.circular(AppDimens.r16),
-            child: Row(
+            child: const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 SkeletonLoader(
@@ -500,7 +508,7 @@ class SkeletonDetailsScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppDimens.p20),
           // Action button
-          SkeletonLoader(height: 50, borderRadius: AppDimens.r12),
+          const SkeletonLoader(height: 50, borderRadius: AppDimens.r12),
         ],
       ),
     );

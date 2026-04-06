@@ -13,7 +13,7 @@ class PublicProfileReviews extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
 
     if (reviews.isEmpty) {
       return const SizedBox.shrink();
@@ -55,8 +55,8 @@ class _ReviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
-    final String initials = _getInitials(review.client);
+    final colorScheme = context.colorScheme;
+    final initials = _getInitials(review.client);
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimens.p12),
@@ -112,7 +112,7 @@ class _ReviewCard extends StatelessWidget {
                       // Star rating
                       Row(
                         children: List.generate(5, (index) {
-                          final bool isFilled = index < review.rating;
+                          final isFilled = index < review.rating;
                           return Padding(
                             padding: const EdgeInsets.only(right: 2),
                             child: Icon(

@@ -1,7 +1,7 @@
+import 'package:sline_app/features/wallet/models/wallet_activity_model.dart';
+import 'package:sline_app/features/wallet/models/wallet_balance_model.dart';
+import 'package:sline_app/features/wallet/services/wallet_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/wallet_activity_model.dart';
-import '../models/wallet_balance_model.dart';
-import '../services/wallet_service.dart';
 
 class WalletRepository {
   WalletRepository(SupabaseClient client) : _service = WalletService(client);

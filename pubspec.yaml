@@ -55,6 +55,7 @@ dependencies:
   webview_flutter: ^4.13.1
   webview_flutter_web: ^0.2.3+4
   web: ^1.1.1
+  sentry_flutter: ^8.0.0
 
 dev_dependencies:
   flutter_test:
@@ -64,12 +65,7 @@ dev_dependencies:
   mocktail: ^1.0.4
   postgrest: ^1.5.2
 
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  very_good_analysis: ^7.0.0
 
 dependency_overrides:
   sign_in_with_apple: ^7.0.1
@@ -85,6 +81,7 @@ flutter:
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
+  generate: true
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:

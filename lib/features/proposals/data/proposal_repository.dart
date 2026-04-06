@@ -1,11 +1,11 @@
 // Proposal data access: list, submit, replace, reject.
 // Uses get_proposal_bidder_summaries for owner list (RLS-safe); no direct profiles join.
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/proposals/models/proposal_model.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/features/tasks/services/task_requests_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Proposal repository: typed proposal list and mutations.
 /// Delegates submit/replace/reject to [TaskRequestsService] for compatibility;
@@ -65,10 +65,11 @@ class ProposalRepository {
                 (s['id'] as String? ?? ''): s as Map<String, dynamic>,
             };
           }
-        } catch (e) {
+        } on Object catch (e, _) {
           AppLogger.w(
             'Proposals: get_proposal_bidder_summaries failed, list without names',
             tag: 'Proposals',
+            error: e,
           );
         }
       }
@@ -105,7 +106,7 @@ class ProposalRepository {
         tag: 'Proposals',
       );
       return list;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Proposals: listByTask failed',
         tag: 'Proposals',

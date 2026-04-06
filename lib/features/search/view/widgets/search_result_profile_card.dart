@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/widgets/glass_card.dart';
+import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
+import 'package:sline_app/core/widgets/glass_card.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/features/profile/models/profile_model.dart';
 

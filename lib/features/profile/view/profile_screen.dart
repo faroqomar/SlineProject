@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/providers/theme_mode_provider.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
@@ -13,9 +16,8 @@ import 'package:sline_app/features/profile/view/my_services_screen.dart';
 import 'package:sline_app/features/profile/view/public_profile_screen.dart'; // Added
 import 'package:sline_app/features/profile/view/settings_screen.dart';
 import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
-import 'package:sline_app/core/providers/theme_mode_provider.dart';
-import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
 import 'package:sline_app/features/saved/view/saved_tasks_screen.dart';
+import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
 import 'package:sline_app/features/wallet/view/wallet_screen.dart';
 
 /// Profile screen - user profile management and settings with Glassmorphism design.
@@ -38,7 +40,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
@@ -179,8 +181,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     ],
                                   ),
                                   Text(
-                                    vm.bioController.text.isNotEmpty
-                                        ? vm.bioController.text
+                                    (vm.loadedBio ?? '').isNotEmpty
+                                        ? vm.loadedBio!
                                         : 'No bio yet',
                                     style: AppTypography.bodySmall.copyWith(
                                       color: colorScheme.textSecondary,
@@ -234,7 +236,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               child: _buildStatItem(
                                 context,
                                 'Earned',
-                                '\$12.5k',
+                                r'$12.5k',
                                 AppColors.lightTeal,
                               ),
                             ),
@@ -526,10 +528,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         await authVM.logout();
                         if (!context.mounted) return;
 
-                        Navigator.pushNamedAndRemoveUntil(
-                          context,
-                          '/login',
-                          (route) => false,
+                        unawaited(
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            '/login',
+                            (route) => false,
+                          ),
                         );
                       },
                       child: Container(
@@ -681,7 +685,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final isDark = themeProvider.themeMode == ThemeMode.dark;
 
     return GestureDetector(
-      onTap: () => themeProvider.toggleThemeMode(),
+      onTap: themeProvider.toggleThemeMode,
       child: GlassContainer(
         padding: const EdgeInsets.all(AppDimens.p16),
         borderRadius: BorderRadius.circular(AppDimens.r16),

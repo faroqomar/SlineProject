@@ -318,7 +318,7 @@ void main() {
         final activeBooking = pendingBooking.copyWith(
           status: BookingStatus.active,
         );
-        viewModel.bookingsAsProvider.add(pendingBooking);
+        viewModel.seedProviderList([pendingBooking]);
 
         when(
           () => bookingRepo.acceptBooking('booking-accept'),

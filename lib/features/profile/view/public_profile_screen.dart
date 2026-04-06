@@ -1,25 +1,26 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
+import 'package:sline_app/core/widgets/circle_icon_button.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
 import 'package:sline_app/core/widgets/sliver_tab_bar_delegate.dart';
-import 'package:sline_app/features/profile/viewmodels/public_profile_view_model.dart';
-import 'package:sline_app/features/profile/data/profile_repository.dart';
-import 'widgets/public_profile/public_profile_header.dart';
-import 'widgets/public_profile/public_profile_stats.dart';
-import 'widgets/public_profile/public_profile_portfolio.dart';
-import 'widgets/public_profile/public_profile_reviews.dart';
-import 'package:sline_app/core/widgets/circle_icon_button.dart';
 import 'package:sline_app/features/chat/view/chat_screen.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
-import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/features/favorites/viewmodels/favorites_view_model.dart';
-import 'package:sline_app/features/tasks/view/widgets/task_card.dart';
+import 'package:sline_app/features/profile/view/widgets/public_profile/public_profile_header.dart';
+import 'package:sline_app/features/profile/view/widgets/public_profile/public_profile_portfolio.dart';
+import 'package:sline_app/features/profile/view/widgets/public_profile/public_profile_reviews.dart';
+import 'package:sline_app/features/profile/view/widgets/public_profile/public_profile_stats.dart';
+import 'package:sline_app/features/profile/viewmodels/public_profile_view_model.dart';
 import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
+import 'package:sline_app/features/tasks/view/widgets/task_card.dart';
 
 class PublicProfileScreen extends StatefulWidget {
   final String userId;
@@ -80,12 +81,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
 
     return ChangeNotifierProvider(
-      create: (ctx) =>
-          PublicProfileViewModel(ctx.read<ProfileRepository>())
-            ..loadProfile(widget.userId),
+      create: (_) => PublicProfileViewModel()..loadProfile(widget.userId),
       child: Scaffold(
         backgroundColor: colorScheme.phoneBackground,
         body: Consumer<PublicProfileViewModel>(
@@ -333,35 +332,36 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
                       ),
 
                       // --- History Tab ---
-                      profile.history.isEmpty
-                          ? Center(
-                              child: Text(
-                                'No completed work yet.',
-                                style: AppTypography.bodyMedium.copyWith(
-                                  color: colorScheme.textSecondary,
-                                ),
-                              ),
-                            )
-                          : ListView.separated(
-                              controller: _historyScrollController,
-                              padding: const EdgeInsets.fromLTRB(
-                                AppDimens.p24,
-                                AppDimens.p24,
-                                AppDimens.p24,
-                                100,
-                              ),
-                              itemCount: profile.history.length,
-                              separatorBuilder: (_, __) =>
-                                  const SizedBox(height: AppDimens.p12),
-                              itemBuilder: (context, index) {
-                                return TaskCard(
-                                  task: profile.history[index],
-                                  onTap: () {
-                                    // Navigate to task details
-                                  },
-                                );
-                              },
+                      if (profile.history.isEmpty)
+                        Center(
+                          child: Text(
+                            'No completed work yet.',
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: colorScheme.textSecondary,
                             ),
+                          ),
+                        )
+                      else
+                        ListView.separated(
+                          controller: _historyScrollController,
+                          padding: const EdgeInsets.fromLTRB(
+                            AppDimens.p24,
+                            AppDimens.p24,
+                            AppDimens.p24,
+                            100,
+                          ),
+                          itemCount: profile.history.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: AppDimens.p12),
+                          itemBuilder: (context, index) {
+                            return TaskCard(
+                              task: profile.history[index],
+                              onTap: () {
+                                // Navigate to task details
+                              },
+                            );
+                          },
+                        ),
 
                       // --- Reviews Tab ---
                       SingleChildScrollView(
@@ -468,13 +468,15 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
       }
       if (!context.mounted) return;
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ChatScreen(conversation: conversation),
+      unawaited(
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChatScreen(conversation: conversation),
+          ),
         ),
       );
-    } catch (e) {
+    } on Exception catch (e) {
       if (!context.mounted) return;
 
       ScaffoldMessenger.of(
@@ -489,7 +491,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
     BuildContext context,
     String targetUserId,
   ) async {
-    String draftReason = '';
+    var draftReason = '';
     final reason = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(

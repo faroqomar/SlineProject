@@ -1,67 +1,79 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sline_app/core/config/payment_runtime_config.dart';
-import 'package:sline_app/core/services/payment_pending_store.dart';
-import 'package:sline_app/features/auth/view/signup_screen.dart';
-import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
-import 'package:sline_app/features/auth/view/reset_password_update_screen.dart';
-import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
-import 'package:sline_app/features/chat/data/chat_repository.dart';
-import 'package:sline_app/features/booking/data/booking_repository.dart';
-import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
-import 'package:sline_app/features/home/viewmodels/home_view_model.dart';
-import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
-import 'package:sline_app/features/tasks/viewmodels/discovery_feed_view_model_contract.dart';
-import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
-import 'package:sline_app/features/tasks/services/task_service.dart';
-import 'package:sline_app/features/services/viewmodels/my_services_view_model.dart';
-import 'features/saved/viewmodels/saved_tasks_view_model.dart';
-import 'features/saved/data/saved_tasks_service.dart';
-import 'features/tasks/services/task_requests_service.dart';
-import 'package:sline_app/features/proposals/data/proposal_repository.dart';
-import 'package:sline_app/features/proposals/data/proposal_award_repository.dart';
-import 'core/services/supabase_config.dart';
-import 'core/services/logger_service.dart';
-import 'features/auth/view/login_screen.dart';
-import 'features/home/view/home_screen.dart';
-import 'features/favorites/routes/favorites_routes.dart';
-import 'features/favorites/view/favorites_screen.dart';
-import 'features/favorites/viewmodels/favorites_view_model.dart';
-import 'features/favorites/data/favorites_service.dart';
-import 'features/categories/view/categories_screen.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
-import 'app/main_navigation_screen.dart';
-import 'core/providers/navigation_provider.dart';
 import 'package:provider/provider.dart';
-import 'core/providers/system_config_view_model.dart';
-import 'features/booking/viewmodels/booking_view_model.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sline_app/app/main_navigation_screen.dart';
+import 'package:sline_app/core/config/payment_runtime_config.dart';
+import 'package:sline_app/core/providers/navigation_provider.dart';
+import 'package:sline_app/core/providers/system_config_view_model.dart';
 import 'package:sline_app/core/providers/theme_mode_provider.dart';
-import 'features/notifications/viewmodels/notification_view_model.dart';
-import 'features/wallet/viewmodels/wallet_view_model.dart';
-import 'core/services/deep_link_service.dart';
-import 'core/services/dashboard_cache_service.dart';
-import 'core/services/account_guard_service.dart';
-import 'features/dashboard/view/dashboard_screen.dart';
-import 'features/dashboard/viewmodels/dashboard_view_model.dart';
-import 'core/services/payment_service.dart';
-import 'core/services/demo_payment_service.dart';
-import 'core/services/qicard_payment_service.dart';
-import 'features/direct_offers/services/direct_offers_service.dart';
+import 'package:sline_app/core/services/account_guard_service.dart';
+import 'package:sline_app/core/services/crash_reporting_service.dart';
+import 'package:sline_app/core/services/dashboard_cache_service.dart';
+import 'package:sline_app/core/services/deep_link_registry.dart';
+import 'package:sline_app/core/services/deep_link_service.dart';
+import 'package:sline_app/core/services/demo_payment_service.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/services/payment_pending_store.dart';
+import 'package:sline_app/core/services/payment_service.dart';
+import 'package:sline_app/core/services/qicard_payment_service.dart';
+import 'package:sline_app/core/services/sentry_crash_reporting_service.dart';
+import 'package:sline_app/core/services/supabase_config.dart';
+import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/utils/flutter_error_filters.dart';
 import 'package:sline_app/core/webview_platform_init_stub.dart'
     if (dart.library.html) 'package:sline_app/core/webview_platform_init_web.dart'
     as webview_platform;
-import 'package:sline_app/features/profile/data/profile_repository.dart';
-import 'package:sline_app/features/categories/data/categories_repository.dart';
-import 'package:sline_app/features/booking/models/payment_return_args.dart';
-import 'package:sline_app/features/booking/view/payment_return_screen.dart';
 import 'package:sline_app/features/auth/view/account_restricted_screen.dart';
+import 'package:sline_app/features/auth/view/login_screen.dart';
 import 'package:sline_app/features/auth/view/maintenance_screen.dart';
+import 'package:sline_app/features/auth/view/reset_password_update_screen.dart';
+import 'package:sline_app/features/auth/view/signup_screen.dart';
 import 'package:sline_app/features/auth/view/update_required_screen.dart';
+import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
+import 'package:sline_app/features/booking/data/booking_repository.dart';
+import 'package:sline_app/features/booking/models/payment_return_args.dart';
+import 'package:sline_app/features/booking/services/booking_deep_link_handler.dart';
+import 'package:sline_app/features/booking/view/payment_return_screen.dart';
+import 'package:sline_app/features/booking/viewmodels/booking_view_model.dart';
+import 'package:sline_app/features/categories/data/categories_repository.dart';
+import 'package:sline_app/features/categories/view/categories_screen.dart';
+import 'package:sline_app/features/chat/data/chat_repository.dart';
+import 'package:sline_app/features/chat/services/chat_deep_link_handler.dart';
+import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
+import 'package:sline_app/features/dashboard/view/dashboard_screen.dart';
+import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
+import 'package:sline_app/features/direct_offers/services/direct_offer_deep_link_handler.dart';
+import 'package:sline_app/features/direct_offers/services/direct_offers_service.dart';
+import 'package:sline_app/features/favorites/data/favorites_service.dart';
+import 'package:sline_app/features/favorites/routes/favorites_routes.dart';
+import 'package:sline_app/features/favorites/view/favorites_screen.dart';
+import 'package:sline_app/features/favorites/viewmodels/favorites_view_model.dart';
+import 'package:sline_app/features/home/view/home_screen.dart';
+import 'package:sline_app/features/home/viewmodels/home_view_model.dart';
+import 'package:sline_app/features/notifications/viewmodels/notification_view_model.dart';
+import 'package:sline_app/features/profile/data/profile_repository.dart';
+import 'package:sline_app/features/profile/services/profile_deep_link_handler.dart';
+import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
+import 'package:sline_app/features/proposals/data/proposal_award_repository.dart';
+import 'package:sline_app/features/proposals/data/proposal_repository.dart';
 import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
+import 'package:sline_app/features/saved/data/saved_tasks_service.dart';
+import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
+import 'package:sline_app/features/services/viewmodels/my_services_view_model.dart';
+import 'package:sline_app/features/tasks/services/task_deep_link_handler.dart';
+import 'package:sline_app/features/tasks/services/task_requests_service.dart';
+import 'package:sline_app/features/tasks/services/task_service.dart';
+import 'package:sline_app/features/tasks/viewmodels/discovery_feed_view_model_contract.dart';
+import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
+import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
+import 'package:sline_app/features/wallet/viewmodels/wallet_view_model.dart';
+import 'package:sline_app/features/work/services/work_deep_link_handler.dart';
+import 'package:sline_app/l10n/app_localizations.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
 
 const bool kUseQiCardPayment = bool.fromEnvironment(
   'USE_QICARD_PAYMENT',
@@ -78,73 +90,128 @@ PaymentService createPaymentService() {
   return DemoPaymentService();
 }
 
-/// App entry point with global error handling.
+/// Sentry DSN from compile-time --dart-define. Empty = Sentry disabled.
+const String _sentryDsn = String.fromEnvironment('SENTRY_DSN');
+
+/// Sentry environment from compile-time --dart-define. Defaults to development.
+const String _sentryEnv = String.fromEnvironment(
+  'SENTRY_ENV',
+  defaultValue: 'development',
+);
+
+/// App entry point with global error handling and Sentry crash reporting.
 ///
-/// Why error boundary: Catches uncaught exceptions and logs them centrally,
-/// preventing silent failures and enabling future crash reporting integration.
+/// Error boundary chain (outermost → innermost):
+///   1. SentryFlutter.init — captures unhandled exceptions to Sentry
+///   2. runZonedGuarded — catches async exceptions outside Flutter framework
+///   3. FlutterError.onError — catches widget build/layout errors
+///   4. PlatformDispatcher.onError — catches native/isolate errors
 void main() async {
-  // Wrap entire app in error zone to catch async exceptions
-  await runZonedGuarded(
-    () async {
+  // Sentry wraps the entire app. When DSN is empty, Sentry silently disables.
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = _sentryDsn;
+      options.environment = _sentryEnv;
+      options.tracesSampleRate = 0.2;
+      options.sendDefaultPii = false;
+    },
+    appRunner: () async {
+      // Wire Sentry as the crash reporting implementation
+      if (_sentryDsn.isNotEmpty) {
+        CrashReportingService.instance = SentryCrashReportingService();
+        AppLogger.i(
+          'Sentry crash reporting enabled (env: $_sentryEnv)',
+          tag: 'System',
+        );
+      }
+
+      // Ensure bindings BEFORE the zone guard so runApp() is in the same zone.
       WidgetsFlutterBinding.ensureInitialized();
 
-      // Global Flutter framework error handler (widget build errors, etc.)
-      FlutterError.onError = (FlutterErrorDetails details) {
-        if (isIgnoredFlutterWebEngineDisposeError(details.exception) ||
-            isIgnoredRealtimeEncodeError(details.exception) ||
-            isIgnoredRealtimePayloadError(details.exception)) {
-          return;
-        }
-        AppLogger.e(
-          'Flutter Error: ${details.summary}',
-          tag: 'System',
-          error: details.exception,
-          stackTrace: details.stack,
-        );
-      };
+      // Inner error zone catches async exceptions
+      await runZonedGuarded(
+        () async {
+          // Global Flutter framework error handler (widget build errors, etc.)
+          FlutterError.onError = (FlutterErrorDetails details) {
+            if (isIgnoredFlutterWebEngineDisposeError(details.exception) ||
+                isIgnoredRealtimeEncodeError(details.exception) ||
+                isIgnoredRealtimePayloadError(details.exception)) {
+              return;
+            }
+            AppLogger.e(
+              'Flutter Error: ${details.summary}',
+              tag: 'System',
+              error: details.exception,
+              stackTrace: details.stack,
+            );
+            unawaited(
+              CrashReportingService.instance.recordError(
+                details.exception,
+                details.stack,
+                reason: details.summary.toString(),
+                fatal: true,
+              ),
+            );
+          };
 
-      // Global platform error handler (native crashes, isolate errors)
-      PlatformDispatcher.instance.onError = (error, stack) {
-        if (isIgnoredFlutterWebEngineDisposeError(error) ||
-            isIgnoredRealtimeEncodeError(error) ||
-            isIgnoredRealtimePayloadError(error)) {
-          return true;
-        }
-        AppLogger.e(
-          'Platform Error',
-          tag: 'System',
-          error: error,
-          stackTrace: stack,
-        );
-        return true; // Prevent app termination
-      };
+          // Global platform error handler (native crashes, isolate errors)
+          PlatformDispatcher.instance.onError = (error, stack) {
+            if (isIgnoredFlutterWebEngineDisposeError(error) ||
+                isIgnoredRealtimeEncodeError(error) ||
+                isIgnoredRealtimePayloadError(error)) {
+              return true;
+            }
+            AppLogger.e(
+              'Platform Error',
+              tag: 'System',
+              error: error,
+              stackTrace: stack,
+            );
+            unawaited(
+              CrashReportingService.instance.recordError(
+                error,
+                stack,
+                fatal: true,
+              ),
+            );
+            return true; // Prevent app termination
+          };
 
-      await SupabaseConfig.init();
+          await SupabaseConfig.init();
 
-      // Web: register WebView platform so in-app payment WebView works
-      webview_platform.initWebViewPlatform();
+          // Web: register WebView platform so in-app payment WebView works
+          webview_platform.initWebViewPlatform();
 
-      // Set logger level (info = clean logs, debug = verbose logs)
-      AppLogger.currentLevel = LogLevel.info;
+          // Set logger level (info = clean logs, debug = verbose logs)
+          AppLogger.currentLevel = LogLevel.info;
 
-      // Initialize SharedPreferences for caching
-      final prefs = await SharedPreferences.getInstance();
-      AppLogger.i('✅ Cache service ready');
+          // Initialize SharedPreferences for caching
+          final prefs = await SharedPreferences.getInstance();
+          AppLogger.i('✅ Cache service ready');
 
-      runApp(SLineApp(prefs: prefs));
-    },
-    (error, stack) {
-      if (isIgnoredFlutterWebEngineDisposeError(error) ||
-          isIgnoredRealtimeEncodeError(error) ||
-          isIgnoredRealtimePayloadError(error)) {
-        return;
-      }
-      // Catches any uncaught async exceptions outside the Flutter framework
-      AppLogger.e(
-        'Uncaught Zone Error',
-        tag: 'System',
-        error: error,
-        stackTrace: stack,
+          runApp(SLineApp(prefs: prefs));
+        },
+        (error, stack) {
+          if (isIgnoredFlutterWebEngineDisposeError(error) ||
+              isIgnoredRealtimeEncodeError(error) ||
+              isIgnoredRealtimePayloadError(error)) {
+            return;
+          }
+          // Catches any uncaught async exceptions outside the Flutter framework
+          AppLogger.e(
+            'Uncaught Zone Error',
+            tag: 'System',
+            error: error,
+            stackTrace: stack,
+          );
+          unawaited(
+            CrashReportingService.instance.recordError(
+              error,
+              stack,
+              fatal: false,
+            ),
+          );
+        },
       );
     },
   );
@@ -214,8 +281,19 @@ class SLineApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => FavoritesViewModel(service: FavoritesService()),
         ),
-        // Deep Link Service (Stateless)
-        Provider(create: (_) => DeepLinkService()),
+        // Deep Link Registry + Service (Stateless)
+        Provider(
+          create: (_) {
+            final registry = DeepLinkRegistry();
+            registerTaskDeepLinks(registry);
+            registerBookingDeepLinks(registry);
+            registerChatDeepLinks(registry);
+            registerDirectOfferDeepLinks(registry);
+            registerWorkDeepLinks(registry);
+            registerProfileDeepLinks(registry);
+            return DeepLinkService(registry: registry);
+          },
+        ),
         Provider(create: (_) => AccountGuardService()),
         // Payment & direct offers (for details screen / QiCard direct-offer flow)
         Provider<PaymentService>(create: (_) => createPaymentService()),
@@ -432,9 +510,11 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener>
         await context.read<AuthSessionViewModel>().logout();
         if (!mounted) return;
         _restrictedScreenShown = false;
-        _navigatorKey.currentState?.pushNamedAndRemoveUntil(
-          '/login',
-          (route) => false,
+        unawaited(
+          _navigatorKey.currentState?.pushNamedAndRemoveUntil(
+            '/login',
+            (route) => false,
+          ),
         );
         return;
       }
@@ -442,20 +522,22 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener>
       if (guard.isRestricted) {
         if (_restrictedScreenShown) return;
         _restrictedScreenShown = true;
-        _navigatorKey.currentState?.pushAndRemoveUntil(
-          MaterialPageRoute<void>(
-            builder: (_) => AccountRestrictedScreen(
-              status: guard.accountStatus,
-              reason: guard.moderationReason,
+        unawaited(
+          _navigatorKey.currentState?.pushAndRemoveUntil(
+            MaterialPageRoute<void>(
+              builder: (_) => AccountRestrictedScreen(
+                status: guard.accountStatus,
+                reason: guard.moderationReason,
+              ),
             ),
+            (route) => false,
           ),
-          (route) => false,
         );
         return;
       }
 
       _restrictedScreenShown = false;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Account guard evaluation failed',
         tag: 'Auth',
@@ -471,7 +553,7 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener>
   Widget build(BuildContext context) {
     return Consumer<ThemeModeProvider>(
       builder: (context, themeModeProvider, child) {
-        final Map<String, WidgetBuilder> routes = <String, WidgetBuilder>{
+        final routes = <String, WidgetBuilder>{
           '/login': (BuildContext _) => const LoginScreen(),
           '/main': (BuildContext _) => const MainNavigationScreen(),
           '/signup': (BuildContext _) => const SignupScreen(),
@@ -491,6 +573,9 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener>
           theme: AppTheme.light(),
           darkTheme: AppTheme.dark(),
           themeMode: themeModeProvider.themeMode,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
           home: _buildHome(context.watch<SystemConfigViewModel>()),
           routes: routes,
         );

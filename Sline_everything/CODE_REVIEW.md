@@ -3,11 +3,180 @@
 **Date**: December 14, 2025 (Updated)
 **Reviewed By**: CodeGuard + Architect + Sentinel Agents
 **Previous Score**: 9/10
-**Current Score**: 9.5/10
+**Current Score**: 9.7/10
 
 > Historical review note: this document records review findings and fixes from earlier passes. Treat references to removed files or older structure as historical context; the current live structure is documented in `Sline_everything/STRUCTURE.md` and `Sline_everything/DEVELOPER_GUIDE.md`.
 
-## Current Guardrail Notes (2026-03-01)
+## Current Guardrail Notes (2026-04-05)
+
+### Widget Test Type A/B Classification (Phase F, 2026-04-05)
+
+**Pattern**: Screens fall into two categories for widget testing:
+- **Type A** — VM provided by Provider ancestor. Test mocks the VM directly via `ChangeNotifierProvider.value(value: mockVm)`.
+- **Type B** — VM created internally in `build()` / `initState()`. Test mocks the services the VM consumes.
+
+**Rule**: Before writing any widget test, classify the screen. Wrong classification causes either `ProviderNotFoundException` (Type A treated as B) or untestable constructor paths (Type B treated as A).
+
+**Additional checks**:
+- Verify the base class of every mock target: `ChangeNotifier` → `ChangeNotifierProvider.value`, plain class → `Provider<T>.value`.
+- For Type B screens, trace every `context.read<T>()` / `context.watch<T>()` in the screen AND the VM it creates — all must have Provider ancestors in the test.
+
+**Evidence**: Phase F — `PaymentPendingStore` wrongly typed as `ChangeNotifier` (it's a plain class). Type B screens required service-level mocking, not VM mocking.
+
+### Navigator Interception Pattern for Widget Tests (Phase F, 2026-04-05)
+
+**Pattern**: When testing screens that launch a WebView or push a second route (e.g., payment checkout → webview), use a `NavigatorObserver` with a push counter to intercept the correct route.
+
+**Rule**: The observer must skip the first `didPush` (which is the home/test route) and intercept subsequent pushes. Pop with the expected result (e.g., `PaymentReturnArgs(status: 'SUCCESS')`).
+
+**Evidence**: Phase F — First attempt intercepted the wrong push (home route), destroying the screen before it rendered.
+
+### Timer Management in Widget Tests (Phase F, 2026-04-05)
+
+**Pattern**: When production code uses `Future.delayed` (e.g., auto-pop after 1200ms), tests must manage timing carefully.
+
+**Rule**:
+1. Assert BEFORE the timer fires (use short pumps: `for (var i = 0; i < N; i++) { await tester.pump(Duration(milliseconds: 50)); }`).
+2. After assertions, drain the timer with `await tester.pumpAndSettle(Duration(seconds: 2))` to avoid `timersPending` failures.
+
+**Evidence**: Phase F — `pumpAndSettle(Duration(seconds: 3))` pumped past the 1200ms auto-pop timer, removing the screen before assertions.
+
+### Pluralization in UI Strings (Phase F, 2026-04-05)
+
+**Rule**: UI strings displaying counts must handle singular vs plural correctly. Never hardcode the plural form.
+
+```dart
+// Correct
+'$count ${count == 1 ? 'Revision' : 'Revisions'}'
+
+// Wrong
+'$count Revisions'  // shows "1 Revisions"
+```
+
+**Evidence**: Phase F — `task_details_screen.dart` showed "1 Revisions" for package revision count.
+
+### T-Number Uniqueness in Test Files (Phase F, 2026-04-05)
+
+**Rule**: Every `T###` test identifier must be unique across ALL test files. After writing tests, verify with:
+```bash
+grep -rn 'T[0-9]\{3\}' test/ | sed 's/:.*//' | sort | uniq -d
+```
+Any T-number appearing in more than one file is a collision that must be renumbered.
+
+**Evidence**: Phase F — T160-T168 collision in `requests_list_screen_test.dart` and `work_item_details_screen_test.dart`.
+
+### Agent System Evolution (Phase F, 2026-04-05)
+
+**Process**: After multi-session work, run `@SystemEvolution` to scan all session logs, agent files, and core docs. It produces an evidence-based report identifying rule gaps, clarity gaps, propagation gaps, and coordination improvements. Apply recommendations to `.cursor/Agents/` files to prevent repeat failures.
+
+**Evidence**: Phase F — First SystemEvolution report identified 13 priority actions across 7 agent files, all applied. Most common failure type: planning gaps (wrong assumptions about codebase reality).
+
+### Raw String Interpolation Guard (Phase E, 2026-04-05)
+
+**Pattern**: Never use raw string literals (`r'...'`) in `AppLogger` calls or any string containing `$variable` interpolation. Raw strings make `$` literal. Use normal single-quoted strings.
+
+**Evidence**: Phase E BLOCKER — 14 `r'...$var...'` instances in `task_requests_award_delegate.dart` and `task_requests_view_model.dart` silently broke financial flow logging.
+
+### Error Message Sanitization (Phase E, 2026-04-05)
+
+**Rule**: NEVER pass `e.toString()`, `e.message`, or `error.toString()` to SnackBars, dialogs, or any user-visible UI. ALWAYS use `ErrorMapper.map(e)`. This applies in ViewModel catch blocks, View catch blocks, and Delegate catch blocks.
+
+**Evidence**: Phase E — 6 raw exception leaks found across ViewModels and views.
+
+### ViewState Mutation Preservation (Phase E, 2026-04-05)
+
+**Pattern**: When using sealed `ViewState<T>`, action methods must NOT overwrite `ViewLoaded` → `ViewLoading`. Use `_actionInProgress` flag to preserve loaded data during mutations.
+
+**Evidence**: Phase E — 8 action methods in WorkItemDetailsVM wiped loaded state.
+
+### Web Payment URL Cleanup (Phase E, 2026-04-05)
+
+**Rule**: Every code path processing web payment return URLs must call `clearPaymentReturnParamsFromUrl()` immediately after parsing. Both PaymentReturnScreen and DashboardScreen must clear.
+
+**Evidence**: Phase E — Missing cleanup caused 20+ duplicate payment detection logs per session.
+
+### Zone Initialization Order (Phase E, 2026-04-05)
+
+**Rule**: `WidgetsFlutterBinding.ensureInitialized()` must be called BEFORE `runZonedGuarded()` (but inside Sentry's appRunner).
+
+**Evidence**: Phase E — Zone mismatch error on every app startup.
+
+### Lazy Supabase Client Resolution (Phase D, 2026-04-04)
+
+**Pattern**: Adding a `SupabaseClient` DI parameter with `Supabase.instance.client` as eager default crashes tests where Supabase is not initialized (throws `AssertionError`, which is `Error` not `Exception`).
+
+**Rule**: Always use a lazy getter:
+```dart
+final SupabaseClient? _injectedClient;
+SupabaseClient get _client => _injectedClient ?? Supabase.instance.client;
+```
+Never `_client = client ?? Supabase.instance.client` in the initializer list.
+
+**Evidence**: Same root cause across 3 sessions (Phase B, C, D). Systemic.
+
+### Delegate Dispose Safety (Phase D, 2026-04-04)
+
+**Pattern**: Delegates with async methods can complete after the parent VM disposes, calling `notifyListeners()` on a disposed `ChangeNotifier`.
+
+**Rule**: Every delegate MUST receive `bool Function() isDisposed` from the parent VM. Every async method MUST check `if (_isDisposed()) return;` before calling `_onChanged()`. The parent passes `() => _isDisposed` as the callback.
+
+### God-File Decomposition Checklist (Phase D, 2026-04-04)
+
+When decomposing a file >800 lines:
+1. Map every method to an extraction target (delegate class or extracted widget).
+2. Identify methods that MUST stay (orchestration, lifecycle, caching coordination).
+3. Set target: `current_lines - extractable_lines + 10% buffer`. Not arbitrary round numbers.
+4. Preserve all public getters/methods with identical signatures (proxy to delegates).
+5. Run tests after EACH delegate is created, not just at the end.
+6. Add tests for each delegate independently.
+
+### Defensive Collection Patterns (Phase D, 2026-04-04)
+
+**Rule**: Delegate/ViewModel getters exposing internal lists MUST return `UnmodifiableListView`. Setters accepting external lists MUST store a defensive copy (`.toList()`).
+
+```dart
+List<BookingModel> get bookings => UnmodifiableListView(_bookings);
+void setBookings(List<BookingModel> bookings) {
+  _bookings = bookings.toList(); // defensive copy
+}
+```
+
+---
+
+## Guardrail Notes (2026-04-02)
+
+### Constructor DI Testability (Phase C, 2026-04-02)
+
+**Pattern**: ViewModels that create services internally from `SupabaseClient` are untestable — mock services cannot be injected.
+
+**Rule**: All ViewModels MUST accept optional service parameters in their constructors with production defaults:
+```dart
+// Correct: services injectable, defaults to production
+WalletViewModel({WalletRepository? repo, AccountGuardService? accountGuardService, SupabaseClient? client})
+
+// Wrong: services created internally, no way to inject mocks
+WalletViewModel({SupabaseClient? client})
+```
+
+**When refactoring**: Use initializer list with `final` fields and `??` defaults. Do NOT use `late` (non-final) — it removes compile-time immutability guarantees.
+
+### Singleton Cleanup in Tests (Phase C, 2026-04-02)
+
+**Pattern**: VMs that register with `RoleSwitchCoordinator()` (singleton) in constructors will pollute subsequent tests if not cleaned up.
+
+**Rule**: Every test group for a VM that uses singletons MUST include:
+```dart
+tearDown(() {
+  viewModel.dispose();
+  RoleSwitchCoordinator().clearForTesting();
+});
+```
+
+### Auto-Loading Constructor Mock Pre-Configuration (Phase C, 2026-04-02)
+
+**Pattern**: VMs that call load/fetch/init methods in their constructor require ALL mock stubs to be configured BEFORE construction.
+
+**Rule**: If a VM auto-loads in constructor (like DashboardVM), setUp must configure every repo/service stub before calling the constructor. Missing any stub = `MissingStubError`.
 
 ### Navigation Consolidation Must Remove Orphaned Runtime Surfaces
 

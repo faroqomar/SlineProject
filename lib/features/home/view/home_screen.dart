@@ -57,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -93,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           tag: 'HomeUI',
                           json: {'surface': 'home'},
                         );
-                      } catch (error, stackTrace) {
+                      } on Exception catch (error, stackTrace) {
                         AppLogger.e(
                           'home_refresh_failed',
                           tag: 'HomeUI',
@@ -235,7 +235,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                             .filterByCategory(''),
                                       ),
                                       ...taskCategories.map((category) {
-                                        String label = category;
+                                        var label = category;
                                         if (category == 'Design') {
                                           label = 'Design';
                                         } else if (category == 'Development') {
@@ -314,7 +314,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
     return Padding(
       padding: const EdgeInsets.only(right: AppDimens.p8),
       child: GestureDetector(

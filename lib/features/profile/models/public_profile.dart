@@ -1,4 +1,4 @@
-import '../models/profile_model.dart';
+import 'package:sline_app/features/profile/models/profile_model.dart';
 
 /// DTO for displaying a user's public profile.
 /// Explicitly excludes private fields like email, phone, metadata, settings.

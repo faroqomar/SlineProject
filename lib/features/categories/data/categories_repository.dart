@@ -1,6 +1,6 @@
+import 'package:sline_app/features/categories/models/category_model.dart';
+import 'package:sline_app/features/categories/services/categories_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/category_model.dart';
-import '../services/categories_service.dart';
 
 /// Repository layer for Categories feature.
 /// Wraps the underlying CategoriesService and exposes a stable API

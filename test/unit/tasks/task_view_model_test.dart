@@ -2,11 +2,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/features/categories/data/categories_repository.dart';
 import 'package:sline_app/features/tasks/data/task_repository.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
 
 class _MockTaskRepository extends Mock implements TaskRepository {}
+
+class _MockCategoriesRepository extends Mock implements CategoriesRepository {}
 
 Task _task({
   required String id,
@@ -27,7 +30,10 @@ Task _task({
 void main() {
   group('TaskViewModel T10-T13', () {
     test('T10 setPickedImages enforces max 5 images', () {
-      final viewModel = TaskViewModel(repo: _MockTaskRepository());
+      final viewModel = TaskViewModel(
+        repo: _MockTaskRepository(),
+        categoriesRepo: _MockCategoriesRepository(),
+      );
       final images = List<XFile>.generate(
         7,
         (index) => XFile('/tmp/task_image_${index + 1}.jpg'),
@@ -45,7 +51,10 @@ void main() {
     });
 
     test('T11 removePickedImageAt ignores out-of-range index safely', () {
-      final viewModel = TaskViewModel(repo: _MockTaskRepository());
+      final viewModel = TaskViewModel(
+        repo: _MockTaskRepository(),
+        categoriesRepo: _MockCategoriesRepository(),
+      );
       final images = <XFile>[
         XFile('/tmp/task_image_1.jpg'),
         XFile('/tmp/task_image_2.jpg'),
@@ -63,7 +72,10 @@ void main() {
 
     test('T12 createTask prepends created task and resets loading', () async {
       final repo = _MockTaskRepository();
-      final viewModel = TaskViewModel(repo: repo);
+      final viewModel = TaskViewModel(
+        repo: repo,
+        categoriesRepo: _MockCategoriesRepository(),
+      );
       final existing = <Task>[
         _task(id: 'existing-1', title: 'Existing 1'),
         _task(id: 'existing-2', title: 'Existing 2'),
@@ -71,7 +83,7 @@ void main() {
       final draftInput = _task(id: 'draft', title: 'Draft Input');
       final created = _task(id: 'created-1', title: 'Created Task');
 
-      when(() => repo.getTasks()).thenAnswer((_) async => existing);
+      when(repo.getTasks).thenAnswer((_) async => existing);
       when(() => repo.createTask(draftInput)).thenAnswer((_) async => created);
 
       await viewModel.loadTasks();
@@ -84,7 +96,7 @@ void main() {
         'existing-1',
         'existing-2',
       ]);
-      verify(() => repo.getTasks()).called(1);
+      verify(repo.getTasks).called(1);
       verify(() => repo.createTask(draftInput)).called(1);
       viewModel.dispose();
     });
@@ -93,13 +105,16 @@ void main() {
       'T13 updateTaskStatus updates local task status optimistically',
       () async {
         final repo = _MockTaskRepository();
-        final viewModel = TaskViewModel(repo: repo);
+        final viewModel = TaskViewModel(
+          repo: repo,
+          categoriesRepo: _MockCategoriesRepository(),
+        );
         final seededTasks = <Task>[
           _task(id: 'task-a', title: 'Task A', status: TaskStatus.open),
           _task(id: 'task-b', title: 'Task B', status: TaskStatus.assigned),
         ];
 
-        when(() => repo.getTasks()).thenAnswer((_) async => seededTasks);
+        when(repo.getTasks).thenAnswer((_) async => seededTasks);
         when(
           () => repo.updateTaskStatus('task-a', TaskStatus.completed),
         ).thenAnswer((_) async {});

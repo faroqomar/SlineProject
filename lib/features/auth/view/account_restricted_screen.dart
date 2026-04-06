@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
@@ -35,7 +37,7 @@ class AccountRestrictedScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppDimens.p12),
                 Text(
-                  reason?.isNotEmpty == true
+                  reason?.isNotEmpty ?? false
                       ? reason!
                       : 'Your account is currently restricted. Please contact support for details.',
                   style: AppTypography.bodyMedium.copyWith(
@@ -57,9 +59,11 @@ class AccountRestrictedScreen extends StatelessWidget {
                       final authVm = context.read<AuthSessionViewModel>();
                       await authVm.logout();
                       if (!context.mounted) return;
-                      Navigator.of(
-                        context,
-                      ).pushNamedAndRemoveUntil('/login', (route) => false);
+                      unawaited(
+                        Navigator.of(
+                          context,
+                        ).pushNamedAndRemoveUntil('/login', (route) => false),
+                      );
                     },
                     child: const Text('Log Out'),
                   ),

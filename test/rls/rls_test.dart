@@ -12,11 +12,10 @@
 /// ```
 library;
 
-// Test helper for RLS policy assertions
-export 'rls_test_helper.dart';
-
 // Test fixtures for RLS testing
 export 'fixtures/rls_test_users.dart';
+// Test helper for RLS policy assertions
+export 'rls_test_helper.dart';
 
 // NOTE: Test files with main() are NOT exported from this barrel.
 // Run them individually:

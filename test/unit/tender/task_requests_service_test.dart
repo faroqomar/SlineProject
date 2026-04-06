@@ -7,8 +7,9 @@ library;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:sline_app/features/tasks/services/task_requests_service.dart';
-import '../../helpers/mock_supabase.dart';
+
 import '../../fixtures/task_request_factory.dart' as fixtures;
+import '../../helpers/mock_supabase.dart';
 
 void main() {
   group('TaskRequestsService', () {
@@ -35,7 +36,7 @@ void main() {
 
     group('PriceMismatchException', () {
       test('formats user message correctly with IQD', () {
-        final exception = PriceMismatchException(
+        const exception = PriceMismatchException(
           expectedCents: 45000,
           actualCents: 50000,
         );
@@ -47,7 +48,7 @@ void main() {
       });
 
       test('formats user message with zero cents correctly', () {
-        final exception = PriceMismatchException(
+        const exception = PriceMismatchException(
           expectedCents: 0,
           actualCents: 0,
         );
@@ -56,7 +57,7 @@ void main() {
       });
 
       test('toString includes cents values', () {
-        final exception = PriceMismatchException(
+        const exception = PriceMismatchException(
           expectedCents: 12345,
           actualCents: 67890,
         );
@@ -67,12 +68,12 @@ void main() {
 
     group('OfferAlreadyAcceptedException', () {
       test('has correct user message', () {
-        final exception = OfferAlreadyAcceptedException();
+        const exception = OfferAlreadyAcceptedException();
         expect(exception.userMessage, 'This offer has already been accepted.');
       });
 
       test('toString includes already accepted', () {
-        final exception = OfferAlreadyAcceptedException();
+        const exception = OfferAlreadyAcceptedException();
         expect(exception.toString(), contains('already been accepted'));
       });
     });
@@ -156,7 +157,7 @@ void main() {
 
     group('mapErrorToUserMessage', () {
       test('maps PriceMismatchException correctly', () {
-        final exception = PriceMismatchException(
+        const exception = PriceMismatchException(
           expectedCents: 45000,
           actualCents: 50000,
         );
@@ -168,7 +169,7 @@ void main() {
       });
 
       test('maps OfferAlreadyAcceptedException correctly', () {
-        final exception = OfferAlreadyAcceptedException();
+        const exception = OfferAlreadyAcceptedException();
         final message = service.mapErrorToUserMessage(exception);
         expect(message, contains('already been accepted'));
       });
@@ -185,7 +186,7 @@ void main() {
 
     group('Exception properties', () {
       test('PriceMismatchException stores correct values', () {
-        final exception = PriceMismatchException(
+        const exception = PriceMismatchException(
           expectedCents: 10000,
           actualCents: 15000,
         );
@@ -194,7 +195,7 @@ void main() {
       });
 
       test('OfferAlreadyAcceptedException is an Exception', () {
-        final exception = OfferAlreadyAcceptedException();
+        const exception = OfferAlreadyAcceptedException();
         expect(exception, isA<Exception>());
         expect(exception.userMessage, isNotEmpty);
       });

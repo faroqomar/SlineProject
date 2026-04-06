@@ -19,8 +19,8 @@
 /// ```
 library;
 
-import 'logger_service.dart';
-import '../mixins/role_switch_aware.dart';
+import 'package:sline_app/core/mixins/role_switch_aware.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 
 /// Singleton coordinator for role switch operations.
 ///
@@ -105,7 +105,7 @@ class RoleSwitchCoordinator {
             'durationMs': vmDuration.inMilliseconds,
           },
         );
-      } catch (e, stackTrace) {
+      } on Exception catch (e, stackTrace) {
         final errorMsg = '${vm.runtimeType}: $e';
         errors.add(errorMsg);
         AppLogger.e(

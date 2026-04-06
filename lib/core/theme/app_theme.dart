@@ -40,19 +40,19 @@ class AppTheme {
 
   /// Returns the light [ThemeData] for the application.
   static ThemeData light() {
-    final AppColorScheme lightColorScheme = AppColorScheme.light();
+    final lightColorScheme = AppColorScheme.light();
     return _buildTheme(lightColorScheme);
   }
 
   /// Returns the dark [ThemeData] for the application.
   static ThemeData dark() {
-    final AppColorScheme darkColorScheme = AppColorScheme.dark();
+    final darkColorScheme = AppColorScheme.dark();
     return _buildTheme(darkColorScheme);
   }
 
   /// Builds a [ThemeData] instance based on the provided [AppColorScheme].
   static ThemeData _buildTheme(AppColorScheme appColorScheme) {
-    final bool isDark = appColorScheme.isDark;
+    final isDark = appColorScheme.isDark;
 
     return ThemeData(
       // Core Material 3 ColorScheme, derived from a seed color for harmony
@@ -126,7 +126,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimens.r14),
           ),
-          padding: EdgeInsets.symmetric(
+          padding: const EdgeInsets.symmetric(
             horizontal: AppDimens.p24,
             vertical: AppDimens.p16,
           ),
@@ -149,7 +149,7 @@ class AppTheme {
           color: appColorScheme.text,
         ),
         floatingLabelBehavior: FloatingLabelBehavior.never,
-        contentPadding: EdgeInsets.symmetric(
+        contentPadding: const EdgeInsets.symmetric(
           horizontal: AppDimens.p16,
           vertical: AppDimens.p14,
         ),

@@ -112,6 +112,32 @@ If anything mismatches:
 - Error handling must follow approved project patterns such as `ErrorMapper` or typed domain wrappers
 - No raw backend internals should leak to the view layer
 
+### 3.2.2 Error Message Sanitization (Explicit Rule)
+
+NEVER pass `e.toString()`, `e.message`, or `error.toString()` to SnackBars, dialogs, or any user-visible UI. ALWAYS use `ErrorMapper.map(e)` from `lib/core/utils/error_mapper.dart`. This applies in:
+- ViewModel catch blocks setting `_error` fields
+- View catch blocks showing SnackBars
+- Delegate catch blocks returning error messages
+
+The ONLY exception is logging via `AppLogger` (which is developer-facing, not user-facing).
+
+Evidence: Phase E — 6 raw exception text leaks found across ViewModels and views (`DirectOfferDetailsVM`, `BookingVM`, `work_tab.dart`, `next_actions_list.dart`, `work_item_details_screen.dart`). Each exposed SQL table names or raw Supabase error text to users.
+
+### 3.2.1 Error vs Exception Handling (Dart-Specific)
+
+In Dart, `Error` and `Exception` are separate hierarchies under `Object`:
+- `Exception` = recoverable runtime errors (network, auth, validation, Supabase queries)
+- `Error` = programming bugs or environment failures (TypeError, AssertionError, StackOverflowError)
+
+Rules:
+1. ViewModel and service catch blocks should use `on Exception catch (e)` by default.
+2. Code that accesses `Supabase.instance` in a "try or fallback to null" pattern MUST also catch `Error` (it throws `AssertionError` when not initialized).
+3. Code that accesses `context.read<T>()` outside a guaranteed Provider scope MUST catch `Error` (throws `ProviderNotFoundException`).
+4. JSON parsing of external data (realtime, webhooks) should catch `FormatException` and `TypeError` explicitly — never `on Object catch`.
+5. Global error boundaries (`runZonedGuarded`, `FlutterError.onError`) are the only places that should catch everything.
+
+Evidence: SESSION_PhaseB_BugExposure — `AssertionError` from `Supabase.instance` broke 4 tests after `catch (e)` → `on Exception catch (e)` migration.
+
 ### 3.3 Storage and Media Boundary Rules
 
 - Services own storage upload / delete / signed URL generation logic
@@ -125,6 +151,39 @@ If anything mismatches:
 - `notifyListeners()` should reflect meaningful state changes, not noisy internal churn
 - Navigation decisions should be explicit and minimal, not hidden inside lower layers
 - Role, account restriction, and runtime-config assumptions must be surfaced clearly to the UI contract
+
+### 3.4.3 ViewState Mutation Pattern (No Data Wipe)
+
+When a ViewModel uses sealed `ViewState<T>`, action methods (approve, reject, submit, cancel) MUST NOT overwrite `ViewLoaded` → `ViewLoading`. This wipes the loaded data from the UI and causes "No data found" flash during mutations.
+
+Use an `_actionInProgress` boolean flag instead:
+- Set `_actionInProgress = true` + `notifyListeners()` before the operation
+- `isLoading` getter: `state is ViewInitial || state is ViewLoading || _actionInProgress`
+- On completion: `_actionInProgress = false`, reload data, `notifyListeners()`
+- This preserves the loaded data in the UI during mutations
+
+Evidence: Phase E — 8 action methods in `WorkItemDetailsVM` wiped `ViewLoaded` state to `ViewLoading`, causing UI to flash "No details found".
+
+### 3.4.1 notifyListeners() Timing
+
+- NEVER call `notifyListeners()` synchronously inside a method that may be invoked during `build()`, `initState()`, or `didChangeDependencies()`.
+- If a ViewModel method is called during widget initialization and needs to set loading state, either:
+  (a) Skip the initial `notifyListeners()` — the view manages its own loading state via `setState()`.
+  (b) Defer via `WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners())`.
+- The `finally` block after an `await` is always safe — the build frame has completed by then.
+- Views calling ViewModel methods during initialization should use `addPostFrameCallback` as defense-in-depth.
+
+Evidence: SESSION_PhaseB emulator — `TaskViewModel.loadCategories()` called `notifyListeners()` during build, causing "setState during build" error.
+
+### 3.4.2 Async Callback Guards
+
+Any `onPressed` or `onTap` callback that calls an async function (especially one that shows a modal, sheet, or dialog) MUST have a guard flag to prevent rapid-fire invocation:
+- Add a `bool _isShowingX = false` state field.
+- Check and set the flag at the start of the callback.
+- Clear the flag in a `finally` block.
+- This prevents double-tap, rapid-fire, and race condition issues with bottom sheets and modals.
+
+Evidence: SESSION_PhaseB emulator — `showSubmitRequestSheet` called 9+ times in <1 second without debounce.
 
 ---
 
@@ -151,6 +210,77 @@ If anything mismatches:
 - Never generate temporary signed URLs repeatedly in hot loops without caching or an approved helper
 - Prefer shared services and widgets for signed media behavior
 - Avoid mixing durable path semantics and display-URL semantics in the same model field
+
+### 4.5 Constructor Refactoring: Preserve Field Immutability
+
+When refactoring a constructor to add optional DI parameters:
+- If fields were `late final` (assigned in constructor body), prefer restructuring to use an initializer list with `final` fields and ternary/`??` expressions.
+- Do NOT downgrade `late final` to `late` just to make conditional assignment work — this removes a compile-time immutability guarantee.
+- Pattern: `final X _field;` with `: _field = param ?? DefaultX()` in the initializer list.
+
+Evidence: Phase C — ChatVM fields were changed from `late final` to `late` to support conditional assignment, then reverted to `final` via initializer list restructuring after the Orchestrator audit flagged the mutability risk.
+
+### 4.6 Supabase Query Builder Pattern
+
+Supabase's Dart client uses a builder pattern where methods like `.eq()`, `.lt()`, `.gt()`, `.order()` return a `PostgrestFilterBuilder` that also implements `Future`. These are NOT fire-and-forget futures — they are builder chain methods.
+
+Rules:
+- NEVER wrap query builder methods (`.lt()`, `.gt()`, `.eq()`, etc.) in `unawaited()`.
+- NEVER ignore their return value — the filter is only applied when the return value is used.
+- Use `query = query.lt(...)` (reassignment) when conditionally applying filters.
+- The `unawaited_futures` lint is a FALSE POSITIVE for query builder methods. Use `// ignore: unawaited_futures` only as a last resort, and add a comment explaining why.
+- Prefer reassignment over `// ignore:` for clarity.
+
+Evidence: Phase B wrapped `query.lt()` in `unawaited()`, silently breaking cursor-based pagination in 3 files (booking_service.dart x2, task_requests_service.dart x1).
+
+### 4.6.1 Raw String Guard
+
+Never use raw string literals (`r'...'`) in `AppLogger` calls or any string that contains `$variable` interpolation. Raw strings suppress interpolation entirely — `$requestId` prints as the literal text `$requestId` instead of the actual value.
+
+Use normal single-quoted strings: `'text $variable text'`.
+
+Evidence: Phase E BLOCKER — 14 raw string literals (`r'...$var...'`) in `task_requests_award_delegate.dart` and `task_requests_view_model.dart` produced blind spots in financial flow traceability. Logs showed literal `$requestId` instead of actual payment/award IDs.
+
+### 4.6.2 Zone Initialization Order
+
+`WidgetsFlutterBinding.ensureInitialized()` MUST be called BEFORE `runZonedGuarded()` (but inside Sentry's `appRunner` if using Sentry). Calling it inside a guarded zone creates a zone mismatch with `runApp()` because Sentry wraps the `appRunner` callback in its own zone.
+
+Evidence: Phase E — Zone mismatch error on every app startup (web + iOS) because `ensureInitialized()` was inside `runZonedGuarded()` while Sentry's zone was the outer boundary.
+
+### 4.6.3 Web URL Cleanup After Payment Callbacks
+
+Every code path that processes web payment return URLs MUST call `clearPaymentReturnParamsFromUrl()` immediately after parsing params, BEFORE any async processing. This prevents `Uri.base` from re-detecting stale `?payment_return=1` query params on subsequent navigations.
+
+Both `PaymentReturnScreen` and `DashboardScreen` (and any future payment return handlers) must clear.
+
+Evidence: Phase E — `PaymentReturnScreen` missed URL cleanup, causing 20+ duplicate "Detected explicit web payment callback at app start" log entries per session. Every navigation re-triggered payment detection.
+
+### 4.6.4 Web Platform Awareness
+
+When implementing features that differ between web and mobile (payment redirects, URL handling, WebView vs browser tab, file downloads), ensure the web code path is explicitly tested. Web-specific cleanup (URL params, browser history state) must not be forgotten.
+
+Evidence: Phase E — Web payment redirect persisted URL params in browser history, invisible to mobile-only testing. Required `window.history.replaceState()` cleanup via `package:web`.
+
+### 4.7 Lazy Supabase Client Resolution
+
+When adding a `SupabaseClient` DI parameter with a `Supabase.instance.client` fallback, ALWAYS use a **lazy getter** pattern:
+
+```dart
+// GOOD — resolves lazily, safe in tests where Supabase is not initialized
+final SupabaseClient? _injectedClient;
+SupabaseClient get _client => _injectedClient ?? Supabase.instance.client;
+```
+
+NEVER assign eagerly in the initializer list:
+
+```dart
+// BAD — crashes in tests when Supabase.instance is not initialized
+: _client = client ?? Supabase.instance.client
+```
+
+`Supabase.instance` throws `AssertionError` (which is `Error`, not `Exception`) when not initialized. Eager assignment in the initializer list runs during construction, before any test can provide a mock. The lazy getter defers resolution to the first actual access, which only happens in production code paths.
+
+Evidence: Phase B — `AssertionError` from `Supabase.instance` not caught by `on Exception catch`. Phase C — `ChatVM.teardownForRoleSwitch()` calls `Supabase.instance` directly. Phase D — `NotificationVM` eager client initialization crashed 6 tests. Same root cause across 3 sessions = systemic.
 
 ---
 
@@ -192,6 +322,7 @@ For every feature/bug you implement, you MUST follow this order:
 
 - No direct Supabase usage in View
 - No direct Supabase usage in ChangeNotifier ViewModels
+- **Never assign `Supabase.instance.client` in a constructor initializer list or as a field default.** Always use a lazy getter (see §4.7). Eager initialization crashes tests with `AssertionError` (Error, not Exception) when Supabase is not initialized.
 - No duplicate queries for same domain concept
 - No N+1 patterns
 - Error mapping is explicit and consistent
@@ -225,7 +356,7 @@ It MUST include:
 - Verification notes
 - References (docs + code paths)
 - Session log path if the work was executed through `@Executor`
-- Diagram path if schema, order flow, or backend process work required `Doc/DIGRAM/<FeatureName>.md`
+- Diagram path if schema, order flow, or backend process work required `docs/diagrams/<FeatureName>.md`
 
 ### 7.2 If Refactor Is Large
 

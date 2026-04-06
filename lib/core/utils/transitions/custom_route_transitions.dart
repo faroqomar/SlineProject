@@ -17,7 +17,7 @@ class SlideUpRoute<T> extends PageRouteBuilder<T> {
            const end = Offset.zero;
            const curve = Curves.easeOutCubic; // Smooth cubic ease
 
-           var tween = Tween(
+           final tween = Tween(
              begin: begin,
              end: end,
            ).chain(CurveTween(curve: curve));

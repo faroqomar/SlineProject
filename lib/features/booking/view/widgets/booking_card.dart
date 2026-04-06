@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:sline_app/core/app_enums.dart'; // Added
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/widgets/signed_image.dart';
-import 'package:sline_app/core/app_enums.dart'; // Added
-import 'package:sline_app/features/booking/models/booking_model.dart';
 import 'package:sline_app/core/utils/format_date.dart';
+import 'package:sline_app/core/widgets/signed_image.dart';
+import 'package:sline_app/features/booking/models/booking_model.dart';
 
 class BookingCard extends StatelessWidget {
   final BookingModel booking;
@@ -71,7 +71,7 @@ class BookingCard extends StatelessWidget {
                             height: 70,
                             fit: BoxFit.cover,
                           )
-                        : Container(
+                        : ColoredBox(
                             color: colorScheme
                                 .cardBorder, // Fixed surface -> cardBorder
                             child: Icon(
@@ -165,55 +165,42 @@ class BookingCard extends StatelessWidget {
       case BookingStatus.pending:
         color = AppColors.gold;
         text = 'PENDING';
-        break;
       case BookingStatus.confirmed:
         color = AppColors.teal;
         text = 'CONFIRMED';
-        break;
       case BookingStatus.completed:
         color = AppColors.mediumGrey;
         text = 'COMPLETED';
-        break;
       case BookingStatus.canceled:
         color = AppColors.lightRed;
         text = 'CANCELED';
-        break;
       case BookingStatus.noShow:
         color = AppColors.lightRed;
         text = 'NO SHOW';
-        break;
       case BookingStatus.inProgress:
         color = AppColors.teal;
         text = 'IN PROGRESS';
-        break;
       case BookingStatus.declined:
         color = AppColors.lightRed;
         text = 'DECLINED';
-        break;
       case BookingStatus.active:
         color = AppColors.teal;
         text = 'ACTIVE';
-        break;
       case BookingStatus.paidRequestPending:
         color = AppColors.gold;
         text = 'NEW REQUEST';
-        break;
       case BookingStatus.delivered:
         color = AppColors.teal;
         text = 'DELIVERED';
-        break;
       case BookingStatus.refunded:
         color = AppColors.mediumGrey;
         text = 'REFUNDED';
-        break;
       case BookingStatus.expiredUnanswered:
         color = AppColors.mediumGrey;
         text = 'EXPIRED';
-        break;
       case BookingStatus.disputed:
         color = AppColors.gold;
         text = 'DISPUTED';
-        break;
     }
 
     return Container(

@@ -1,4 +1,4 @@
-import '../models/wallet_activity_model.dart';
+import 'package:sline_app/features/wallet/models/wallet_activity_model.dart';
 
 /// Returns human-readable source (for received) or destination (for spent) from activity.
 String getTransactionSourceOrDestination(WalletActivityModel a) {

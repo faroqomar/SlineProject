@@ -38,7 +38,7 @@ Read:
 - `Sline_everything/Sline_Log.md`
 - `.TODO/` — plans, patch notes, QA reports, review reports, contract files, migration plans
 - `docs/LOG/SESSION_*.md`
-- `Doc/DIGRAM/*.md` where relevant
+- `docs/diagrams/*.md` where relevant
 
 ### 1.2 Reference Validation (Critical)
 
@@ -127,7 +127,7 @@ Update when:
 6. **Any plan executed** → ensure `docs/LOG/SESSION_*.md` exists and is referenced where appropriate.
 7. **Any substantial UI plan executed** → record the UI phase breakdown and `.cursor/skills/` used for each major step.
 8. **Any substantial Supabase plan executed** → record the backend phase breakdown and `supabase-migration` usage.
-9. **Any schema / order flow / process flow feature executed** → ensure `Doc/DIGRAM/<FeatureName>.md` exists, is updated, and is referenced.
+9. **Any schema / order flow / process flow feature executed** → ensure `docs/diagrams/<FeatureName>.md` exists, is updated, and is referenced.
 
 ---
 
@@ -153,7 +153,7 @@ Also gather:
 - list of changed Supabase objects
 - UI skill trail used
 - backend skill trail used
-- diagram file path under `Doc/DIGRAM/`
+- diagram file path under `docs/diagrams/`
 
 ### Step 2: Determine Which Docs Must Change
 
@@ -168,7 +168,7 @@ Use this mapping:
 | phase completion / sequencing change | `MVP_ROADMAP.md` |
 | template / blueprint / future feature intent | `FEATURE_ENHANCEMENTS.md` |
 | major implemented work history | `Sline_Log.md` |
-| schema / order flow / process diagram | `Doc/DIGRAM/<FeatureName>.md` plus references |
+| schema / order flow / process diagram | `docs/diagrams/<FeatureName>.md` plus references |
 
 ### Step 3: Write Updates (Detail-Oriented)
 

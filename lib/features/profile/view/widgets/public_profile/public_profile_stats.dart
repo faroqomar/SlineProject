@@ -12,7 +12,7 @@ class PublicProfileStats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
 
     return Container(
       padding: const EdgeInsets.all(AppDimens.p12),

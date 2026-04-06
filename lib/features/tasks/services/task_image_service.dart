@@ -1,7 +1,8 @@
 import 'dart:typed_data';
+
+import 'package:sline_app/core/config/storage_config.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/config/storage_config.dart';
-import '../../../core/services/logger_service.dart';
 
 /// Service for handling task image operations with Supabase Storage.
 ///
@@ -91,7 +92,7 @@ class TaskImageService {
       }
 
       throw Exception('Failed to upload image. Please try again.');
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Unexpected error uploading image',
         tag: 'TaskImages',
@@ -126,7 +127,7 @@ class TaskImageService {
         error: e,
       );
       return null;
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.w(
         'Unexpected error creating signed URL',
         tag: 'TaskImages',
@@ -149,7 +150,7 @@ class TaskImageService {
       await _supabase.storage.from(bucket).remove([path]);
       AppLogger.i('Task image deleted: $path', tag: 'TaskImages');
       return true;
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.w(
         'Failed to delete task image: $path',
         tag: 'TaskImages',

@@ -1,6 +1,6 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import '../models/notification_model.dart';
+import 'package:sline_app/features/notifications/models/notification_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Read/update-only notification service. All notification creation is server-side.
 class NotificationService {
@@ -104,9 +104,7 @@ class NotificationService {
         .order('created_at', ascending: false)
         .limit(50)
         .map((response) {
-          final list = response
-              .map((e) => NotificationItem.fromJson(e))
-              .toList();
+          final list = response.map(NotificationItem.fromJson).toList();
           AppLogger.d(
             'streamNotifications: received ${list.length}',
             tag: 'Notifications',

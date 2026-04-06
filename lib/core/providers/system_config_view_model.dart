@@ -21,7 +21,7 @@ class SystemConfigViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       _config = await _service.fetchPublicConfig();
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'System config load failed',
         tag: 'SystemConfigVM',
@@ -36,7 +36,7 @@ class SystemConfigViewModel extends ChangeNotifier {
   }
 
   bool isUpdateRequired() {
-    final current = const String.fromEnvironment(
+    const current = String.fromEnvironment(
       'APP_VERSION',
       defaultValue: '1.0.0',
     );

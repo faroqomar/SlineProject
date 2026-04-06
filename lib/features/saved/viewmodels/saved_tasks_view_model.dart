@@ -4,20 +4,24 @@
 // Provides optimistic updates (local cache updated immediately)
 // and toggle functionality for save/unsave operations.
 
-import 'package:flutter/foundation.dart';
-
-import '../../../core/services/logger_service.dart';
 import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/features/saved/data/saved_tasks_service.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../tasks/models/task_model.dart';
-import '../data/saved_tasks_service.dart';
 
 class SavedTasksViewModel extends ChangeNotifier {
   final SavedTasksService service;
+  final SupabaseClient? _explicitClient;
 
-  SavedTasksViewModel({required this.service}) {
+  SavedTasksViewModel({required this.service, SupabaseClient? client})
+    : _explicitClient = client {
     _initAuthListener();
   }
+
+  SupabaseClient get _client => _explicitClient ?? Supabase.instance.client;
 
   final Set<String> _savedTaskIds = <String>{};
   bool _loading = false;
@@ -43,7 +47,7 @@ class SavedTasksViewModel extends ChangeNotifier {
       _savedTaskIds
         ..clear()
         ..addAll(list.map((e) => e.id));
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to load saved tasks',
         tag: 'Saved',
@@ -71,11 +75,11 @@ class SavedTasksViewModel extends ChangeNotifier {
       // Also reload full tasks list
       try {
         _savedTasks = await service.listMineWithDetails();
-      } catch (_) {
+      } on Exception catch (_) {
         // ignore errors here
       }
       return nowSaved;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to toggle saved task',
         tag: 'Saved',
@@ -105,13 +109,11 @@ class SavedTasksViewModel extends ChangeNotifier {
 
   void _initAuthListener() {
     // Initial load if already logged in
-    if (Supabase.instance.client.auth.currentUser != null) {
+    if (_client.auth.currentUser != null) {
       load();
     }
 
-    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((
-      data,
-    ) {
+    _authSubscription = _client.auth.onAuthStateChange.listen((data) {
       final event = data.event;
       if (event == AuthChangeEvent.signedIn) {
         load();

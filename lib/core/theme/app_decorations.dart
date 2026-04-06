@@ -65,7 +65,7 @@ class AppDecorations {
     required AppColorScheme colorScheme,
   }) {
     // Liquid glass gradient colors from new design
-    final List<Color> gradientColors = colorScheme.isDark
+    final gradientColors = colorScheme.isDark
         ? [
             // Dark mode: rgba(20, 96, 104, 0.2) to rgba(0, 0, 0, 0.4)
             AppColors.teal.withValues(alpha: 0.2),
@@ -78,7 +78,7 @@ class AppDecorations {
           ];
 
     // Border color from new design
-    final Color borderColor = colorScheme.isDark
+    final borderColor = colorScheme.isDark
         ? AppColors.white.withValues(alpha: 0.08) // rgba(255,255,255,0.08)
         : AppColors.white.withValues(alpha: 0.6); // rgba(255,255,255,0.6)
 

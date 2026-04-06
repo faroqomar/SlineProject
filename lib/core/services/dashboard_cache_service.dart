@@ -1,9 +1,10 @@
 import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/features/dashboard/models/work_item.dart';
 import 'package:sline_app/features/dashboard/models/activity_log.dart';
+import 'package:sline_app/features/dashboard/models/work_item.dart';
 
 /// Service for caching dashboard data to enable instant loading
 ///
@@ -39,7 +40,7 @@ class DashboardCacheService {
       await _updateTimestamp();
 
       AppLogger.d('Cached ${items.length} work items for role: ${role.name}');
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to cache work items', error: e);
     }
   }
@@ -67,7 +68,7 @@ class DashboardCacheService {
 
       AppLogger.d('Retrieved ${items.length} cached work items');
       return items;
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to retrieve cached work items', error: e);
       return null;
     }
@@ -83,7 +84,7 @@ class DashboardCacheService {
       await _updateTimestamp();
 
       AppLogger.d('Cached ${feed.length} activity log items');
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to cache activity feed', error: e);
     }
   }
@@ -107,7 +108,7 @@ class DashboardCacheService {
 
       AppLogger.d('Retrieved ${feed.length} cached activity items');
       return feed;
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to retrieve cached activity feed', error: e);
       return null;
     }
@@ -121,7 +122,7 @@ class DashboardCacheService {
       await _updateTimestamp();
 
       AppLogger.d('Cached counters: $counters');
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to cache counters', error: e);
     }
   }
@@ -143,7 +144,7 @@ class DashboardCacheService {
 
       AppLogger.d('Retrieved cached counters');
       return counters;
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to retrieve cached counters', error: e);
       return null;
     }
@@ -181,7 +182,7 @@ class DashboardCacheService {
       await _prefs.remove(_timestampKey);
 
       AppLogger.i('Dashboard cache cleared');
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to clear cache', error: e);
     }
   }
@@ -209,7 +210,7 @@ class DashboardCacheService {
       final roleStr = role == UserRole.client ? 'client' : 'freelancer';
       await _prefs.setString('user_role', roleStr);
       AppLogger.d('Cached role: $roleStr');
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to cache role', error: e);
     }
   }
@@ -221,7 +222,7 @@ class DashboardCacheService {
       if (roleStr == 'client') return UserRole.client;
       if (roleStr == 'freelancer') return UserRole.freelancer;
       return null; // Not cached
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Failed to retrieve cached role', error: e);
       return null;
     }

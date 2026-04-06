@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
 import 'package:sline_app/features/services/models/service_model.dart';
 import 'package:sline_app/features/services/models/service_status.dart';

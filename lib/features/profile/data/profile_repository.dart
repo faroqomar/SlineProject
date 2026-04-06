@@ -1,16 +1,16 @@
 import 'dart:typed_data';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/services/logger_service.dart';
-import '../services/avatar_service.dart';
-import '../services/profile_summary_service.dart';
 
-import '../../tasks/services/task_service.dart';
-import '../../tasks/models/task_model.dart';
-import '../../portfolio/data/portfolio_repository.dart';
-import '../../portfolio/models/portfolio_item.dart';
-import '../models/profile_model.dart';
-import '../models/freelancer_profile.dart';
-import 'role_switch_repository.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/features/portfolio/data/portfolio_repository.dart';
+import 'package:sline_app/features/portfolio/models/portfolio_item.dart';
+import 'package:sline_app/features/profile/data/role_switch_repository.dart';
+import 'package:sline_app/features/profile/models/freelancer_profile.dart';
+import 'package:sline_app/features/profile/models/profile_model.dart';
+import 'package:sline_app/features/profile/services/avatar_service.dart';
+import 'package:sline_app/features/profile/services/profile_summary_service.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
+import 'package:sline_app/features/tasks/services/task_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Repository layer for Profile feature.
 /// Encapsulates all Supabase and storage calls.
@@ -67,7 +67,7 @@ class ProfileRepository {
         json: {'user_id': userId},
       );
       return profile;
-    } catch (error, stackTrace) {
+    } on Exception catch (error, stackTrace) {
       AppLogger.e(
         'profile_summary_fetch_failed',
         tag: 'ProfileRepo',
@@ -314,7 +314,7 @@ class ProfileRepository {
           .from('portfolio')
           .createSignedUrl(pathOrUrl, 7200); // 2 hours
       return signed;
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.w(
         'Failed to resolve portfolio image URL',
         tag: 'ProfileRepo',
@@ -339,7 +339,7 @@ class ProfileRepository {
     // 3. Mock Reviews (for now, as table doesn't exist)
     // TODO: Implement reviews table and fetching
     final reviews = [
-      ReviewItem(
+      const ReviewItem(
         client: 'Previous Client',
         rating: 5.0,
         comment: 'Great to work with! Delivered on time.',

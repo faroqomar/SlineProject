@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sline_app/core/theme/app_colors.dart';
 
 class UnifiedCtaResolver {
   /// Result of resolving allowed actions based on state and actor
@@ -9,7 +10,7 @@ class UnifiedCtaResolver {
     required String actorRole,
     required String entityType,
   }) {
-    List<String> allowedActions = [];
+    final allowedActions = <String>[];
     String? badgeText;
     Color? badgeColor;
 
@@ -18,20 +19,20 @@ class UnifiedCtaResolver {
         // Two-step flow: Award first, then Pay
         allowedActions.add('award');
         badgeText = 'Needs Award';
-        badgeColor = const Color(0xFFF3BB19); // AppColors.gold
+        badgeColor = AppColors.gold;
       } else if (status == 'accepted' && paymentStatus == 'unpaid') {
         // Awarded but not paid yet - show Pay action
         allowedActions.add('pay');
         badgeText = 'Needs Payment';
-        badgeColor = const Color(0xFFFF9800); // Orange
+        badgeColor = Colors.orange;
       } else if (status == 'delivered' && paymentStatus == 'held') {
         allowedActions.add('release_with_fee');
         badgeText = 'Review Work';
-        badgeColor = const Color(0xFF146068); // AppColors.teal
+        badgeColor = AppColors.teal;
       }
     } else if (actorRole == 'provider' || actorRole == 'system') {
       // Typically providers or systems have refund action
-      bool allowedToRefund = [
+      final allowedToRefund = [
         'declined',
         'canceled',
         'expired',
@@ -40,7 +41,7 @@ class UnifiedCtaResolver {
       if (paymentStatus == 'held' && allowedToRefund) {
         allowedActions.add('refund');
         badgeText = 'Needs Refund';
-        badgeColor = const Color(0xFFF49D9D); // AppColors.lightRed
+        badgeColor = AppColors.lightRed;
       }
     }
 

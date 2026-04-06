@@ -73,7 +73,7 @@ class DisputeService {
         );
       }
       return hasOpen;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to check open dispute for task',
         tag: 'Safety',
@@ -105,7 +105,7 @@ class DisputeService {
         );
       }
       return hasOpen;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to check open dispute for direct offer',
         tag: 'Safety',
@@ -129,7 +129,7 @@ class DisputeService {
           .limit(1)
           .maybeSingle();
       return res?['status'] as String?;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to get dispute status for task',
         tag: 'Safety',
@@ -153,7 +153,7 @@ class DisputeService {
           .limit(1)
           .maybeSingle();
       return res?['status'] as String?;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to get dispute status for direct offer',
         tag: 'Safety',
@@ -177,7 +177,7 @@ class DisputeService {
       final taskId = row?['task_id'] as String?;
       if (taskId == null || taskId.isEmpty) return null;
       return getDisputeStatusForTask(taskId);
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to get dispute status for booking',
         tag: 'Safety',
@@ -201,7 +201,7 @@ class DisputeService {
       final taskId = row?['task_id'] as String?;
       if (taskId == null || taskId.isEmpty) return false;
       return hasOpenDisputeForTask(taskId);
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to check open dispute for booking',
         tag: 'Safety',

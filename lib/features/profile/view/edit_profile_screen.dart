@@ -5,8 +5,8 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
-import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 import 'package:sline_app/features/profile/view/widgets/profile_avatar_widget.dart';
+import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -17,10 +17,30 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _skillController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _bioController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  bool _seeded = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_seeded) {
+      final vm = context.read<ProfileViewModel>();
+      _nameController.text = vm.loadedName ?? '';
+      _emailController.text = vm.loadedEmail ?? '';
+      _bioController.text = vm.loadedBio ?? '';
+      _seeded = true;
+    }
+  }
 
   @override
   void dispose() {
     _skillController.dispose();
+    _nameController.dispose();
+    _emailController.dispose();
+    _bioController.dispose();
     super.dispose();
   }
 
@@ -78,13 +98,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     horizontal: AppDimens.p24,
                   ),
                   child: Form(
-                    key: vm.formKey,
+                    key: _formKey,
                     child: Column(
                       children: [
                         // Avatar
-                        Center(
+                        const Center(
                           // ProfileAvatarWidget handles tap and edit icon internally now
-                          child: const ProfileAvatarWidget(
+                          child: ProfileAvatarWidget(
                             radius: 50,
                             enableEdit: true,
                           ),
@@ -106,7 +126,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               ),
                               const SizedBox(height: AppDimens.p16),
                               _buildTextField(
-                                controller: vm.nameController,
+                                controller: _nameController,
                                 label: 'Full Name',
                                 icon: Icons.person_outline,
                                 colorScheme: colorScheme,
@@ -115,7 +135,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               ),
                               const SizedBox(height: AppDimens.p16),
                               _buildTextField(
-                                controller: vm.bioController,
+                                controller: _bioController,
                                 label: 'Bio',
                                 icon: Icons.info_outline,
                                 colorScheme: colorScheme,
@@ -123,11 +143,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               ),
                               const SizedBox(height: AppDimens.p16),
                               _buildTextField(
-                                controller: vm.emailController,
+                                controller: _emailController,
                                 label: 'Email',
                                 icon: Icons.email_outlined,
                                 colorScheme: colorScheme,
                                 keyboardType: TextInputType.emailAddress,
+                                readOnly: true,
                               ),
                             ],
                           ),
@@ -207,9 +228,30 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             onPressed: vm.isLoadingUpdate
                                 ? null
                                 : () async {
-                                    await vm.updateProfile();
-                                    if (context.mounted) {
-                                      Navigator.pop(context);
+                                    if (!(_formKey.currentState?.validate() ??
+                                        false)) {
+                                      return;
+                                    }
+                                    try {
+                                      await vm.updateProfile(
+                                        name: _nameController.text.trim(),
+                                        bio: _bioController.text.trim(),
+                                      );
+                                      if (context.mounted) {
+                                        Navigator.pop(context);
+                                      }
+                                    } on Exception catch (_) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Failed to save profile. Please try again.',
+                                            ),
+                                          ),
+                                        );
+                                      }
                                     }
                                   },
                             child: vm.isLoadingUpdate
@@ -251,12 +293,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     int maxLines = 1,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
+    bool readOnly = false,
   }) {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
       validator: validator,
+      readOnly: readOnly,
       style: AppTypography.bodyMedium.copyWith(color: colorScheme.text),
       decoration: InputDecoration(
         labelText: label,

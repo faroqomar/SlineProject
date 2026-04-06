@@ -1,6 +1,6 @@
 # SLine MVP Roadmap
 
-**Last Updated:** 2026-03-08
+**Last Updated:** 2026-04-05
 
 This roadmap tracks the current code-state of the repository. Status values are intentionally simple:
 - `✅ Completed`
@@ -86,13 +86,58 @@ This roadmap tracks the current code-state of the repository. Status values are 
 
 | Area | Status | Notes |
 | --- | --- | --- |
-| Unit and widget test coverage | 🚧 In Progress | targeted coverage exists under `test/unit` and `test/widget`; ✅ RLS test infrastructure complete (26 tests in `test/rls/`) |
+| CI/CD pipeline | ✅ Completed | GitHub Actions: lint + test + build + architecture guard. `.github/workflows/ci.yml`. Added 2026-04-01. |
+| Pre-commit hook | ✅ Completed | `.githooks/pre-commit` runs format + analyze locally. Enable: `git config core.hooksPath .githooks`. Added 2026-04-01. |
+| Lint rules (34 rules) | ✅ Completed | `analysis_options.yaml`: 18 core + 7 safety + 9 code quality. Strong mode enabled. Updated 2026-04-01. |
+| Architecture guard | ✅ Completed | 7 MVVM boundary checks in CI (hard failure). Graduated 2026-04-01 after Phase B fixed all violations. |
+| Phase B: Bug Exposure | ✅ Completed | 48 unawaited_futures → 0, 258 bare catches → 0, 6 MVVM violations → 0. `flutter analyze` = 0 issues. Completed 2026-04-01. |
+| Phase C: Critical Tests | ✅ Completed | 706 pass / 30 skip / 0 fail (+306 tests). 14/26 VMs tested (54%). 14 model test files. WalletVM + ChatVM refactored for DI. Shared mock file created. Completed 2026-04-02. |
 | Supabase migrations | ✅ Completed | repo contains live migration history under `supabase/migrations/` |
 | Edge functions | ✅ Completed | booking/payment functions are checked into `supabase/functions/` |
 | Docs sync discipline | ✅ Completed | docs now reflect current `view/viewmodels/data/services` layout and payment/runtime helpers |
 
-## 9. Current Focus
+## 9. Completed Phases
 
-1. Optional: HMAC in create edge and webhook signature verification (PAYMENT_HMAC_SECRET) for Hardened Payment Linking; Admin Orphan Queue and Payment Trace.
-2. Expand automated coverage around moderation/report/dispute edge cases.
-3. Keep `Sline_everything/` aligned with code and Supabase migrations after every flow change.
+### ✅ Phase D: Harden (2026-04-04)
+
+All 11 items (D1–D11) completed:
+- Sentry crash reporting (replaces NoOp)
+- DashboardVM decomposition (1149→537L, 3 delegates)
+- submit_request_sheet decomposition (916→737L, SubmitRequestViewModel)
+- requests_list_screen decomposition (1172→604L, RequestsFilterViewModel + award dialog)
+- pgTAP SQL tests (3 files, 15 test cases)
+- Migration review checklist (7 sections)
+- Edge Function CORS hardening (wildcard `*` → `sline.app` allowlist)
+- paymentId regex validation in webhook handler
+- CI coverage floor (28% regression prevention)
+- A6 architecture violations fixed (NotificationVM, SavedTasksVM)
+- Architecture guard Check 3 tightened
+
+Tests: 706 → 780 (+74). Coverage floor: 40%. All 6 architecture guard checks pass.
+
+### Phase E: Polish (2026-04-05) ✅
+- **E1** — APK build self-resolved (Kotlin version mismatch fixed by SDK update)
+- **E2** — CI Check 7 added: `core/` → `features/` boundary guard (max 5 threshold)
+- **E3** — Lint migration to `very_good_analysis` (862 auto-fixes, 27 rules disabled with tracking in `.TODO/LINT_DEBT_PhaseE.md`)
+- **E4** — 5 ViewModels DI-normalized with lazy getter pattern (SavedTasks, Categories, Portfolio, PublicProfile, AuthForm)
+- **E5** — Sealed `ViewState<T>` and `AppFailure` classes created; 3 VMs migrated (DirectOfferDetails, Booking, WorkItemDetails)
+- **E6** — 9 god files decomposed below 800 lines (13 new delegate/widget files, 29% average line reduction)
+- **E7** — 171 new VM tests (27/27 VMs now have test coverage); 982 total tests
+- **E8** — Coverage floor raised from 28% to 33% (measured: 34.9%)
+- **E9** — DeepLinkService refactored to registry pattern (0 feature imports, 6 feature handler files)
+- **E10** — Localization infrastructure scaffolded (l10n.yaml, app_en.arb with 22 key stubs)
+- **E11** — Orchestrator review: 20 findings (1 BLOCKER + 4 HIGH + 8 MED + 7 LOW) — all fixed
+- **E12** — Security review: 8 findings (2 HIGH + 3 MED + 3 LOW) — all fixed
+- **E13** — System Evolution Report v4: 16 recommendations applied to all 16 agent files
+
+**References:**
+- Plan: `.TODO/PLAN_PhaseE_Polish_2026-04-04.md`
+- Session Log: `docs/LOG/SESSION_PLAN_PhaseE_Polish_2026-04-04.md`
+- Master Report: `.TODO/MASTER_REPORT_2026-04-05_PhaseE.md`
+- System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-05.md`
+- Lint Debt: `.TODO/LINT_DEBT_PhaseE.md`
+
+## 10. Current Focus
+
+### Current Focus
+1. **Phase F: Ship Preparation** (planned) — Arabic/Kurdish translations, widget tests for critical views, remaining lint debt adoption, GitHub repo safeguards (branch protection, CODEOWNERS, PR templates), non-atomic payment RPC consolidation

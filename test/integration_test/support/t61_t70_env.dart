@@ -1,5 +1,3 @@
-library;
-
 /// Integration environment contract for T61-T70 staging-backed tests.
 ///
 /// These values are intentionally read from `--dart-define` so the tests fail

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
@@ -57,7 +59,9 @@ class _ResetPasswordUpdateScreenState extends State<ResetPasswordUpdateScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Password updated successfully')),
       );
-      Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false);
+      unawaited(
+        Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false),
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(authVM.error ?? 'Failed to update password')),

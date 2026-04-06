@@ -4,8 +4,8 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
 import 'package:sline_app/features/notifications/models/notification_model.dart';
-import 'package:sline_app/features/notifications/viewmodels/notification_view_model.dart';
 import 'package:sline_app/features/notifications/view/widgets/notification_tile.dart';
+import 'package:sline_app/features/notifications/viewmodels/notification_view_model.dart';
 
 /// Stable keys for tests (see .TODO/TEST_notifications_2026-03-01.md).
 class NotificationsModalKeys {

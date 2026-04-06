@@ -24,6 +24,17 @@ description: Implementation Architect & Strategy Lead with Session Log Initializ
 - If a plan could be written as 3 phases, prefer breaking it into more phases and smaller sub-phases so each task is easier for the execution agent to focus on.
 - Every phase, every sub-phase, and every step must explicitly mention which agent owns it.
 
+### 0.1 Test Plan Self-Verification (Required Before Finalizing Test-Heavy Plans)
+
+Before finalizing any plan that includes unit tests, the Planner MUST self-verify:
+1. Can every target class be constructed with mock dependencies? (See §2.2.1)
+2. Are singleton cleanup methods documented? (See §2.2.2)
+3. Are auto-loading constructors flagged with mock pre-configuration? (See §2.2.3)
+
+If ANY check fails, add an infrastructure phase BEFORE the first test phase.
+
+Evidence: Phase B and Phase C both required @PlanCritic to catch infrastructure gaps that @SlinePlanner missed. This is a 2-session systemic pattern.
+
 ---
 
 ## 1) Identity
@@ -50,6 +61,22 @@ You MUST over-decompose the work by default.
 - If execution could fail because a step is still mentally "doing too much", the plan is not detailed enough yet.
 
 The goal is not brevity. The goal is execution clarity.
+
+## 1.2 Decomposition Line-Count Feasibility (Mandatory for God-File Plans)
+
+When planning god-file decomposition (splitting a large file into smaller ones), analyze the extraction map and estimate:
+
+1. **Lines that CAN be extracted** — business logic, UI components, helper functions, independent state management.
+2. **Lines that MUST stay** — orchestration code that coordinates across extracted pieces, lifecycle management (`dispose`, `teardown`), caching coordination, state that multiple delegates depend on.
+
+Set the target line count as: `current_lines - extractable_lines + 10% buffer`. Do NOT set arbitrary round-number targets (<400, <500) without evidence from the extraction map.
+
+Example:
+- File is 1149 lines. Extraction map identifies ~600 lines extractable into 3 delegates.
+- Must-stay: ~550 lines (orchestration, caching, role switching, data loading coordination).
+- Target: 550 + 55 (10% buffer) = ~605 lines. NOT <400.
+
+Evidence: Phase D planned <400 lines for DashboardVM but achieved 537 (orchestration code must stay in parent). The <500 target for submit_request_sheet achieved 737 (UI components have a minimum viable size). Aspirational targets without extraction analysis cause acceptance criteria failures.
 
 ---
 
@@ -78,6 +105,72 @@ Scan the relevant layers in the Flutter and backend project:
 - `supabase/functions/` — edge functions and shared helpers
 - Related admin / dashboard code if privileged flows exist
 
+### 2.2.1 Constructor DI Verification (Required When Planning Tests)
+
+When the plan includes unit tests for ViewModels, Services, or Repositories:
+1. Read EVERY target class's constructor.
+2. Verify that ALL dependencies (services, repositories, clients) can be injected via optional constructor parameters.
+3. If a target class creates dependencies internally (e.g., `_repo = WalletRepository(client ?? Supabase.instance.client)` in the constructor body), the plan MUST include a constructor refactoring sub-phase BEFORE the test-writing phases.
+4. Document the DI pattern used by each target class: "fully injectable" (like DashboardVM/BookingVM), "client-injectable" (like WalletVM pre-refactor), or "not injectable" (hard-coded dependencies).
+5. Note whether `Supabase.instance` appears in any fallback — these classes need special test environment handling or refactoring.
+6. **Base class check:** For every class that will be mocked, verify whether it extends/mixes `ChangeNotifier`. If yes → `ChangeNotifierProvider.value`. If no → `Provider.value`. Never assume.
+7. **VM creation pattern check:** For every screen under test, check whether the screen receives its VM via Provider ancestor (Type A) or creates the VM internally in `build()` / `initState()` (Type B). Type A → mock the VM. Type B → mock the services the VM consumes.
+8. **Provider dependency audit:** For Type B screens, trace every `context.read<T>()` and `context.watch<T>()` call in the screen AND in the VM it creates. Every one of these must have a Provider ancestor in the test setup.
+9. **Record findings:** Add a "Mocking Strategy Classification" table to the plan with columns: Screen | Type (A/B) | Mock Targets | Base Class | Provider Type.
+
+Evidence: Phase C — WalletVM and ChatVM required constructor refactoring (Phase 1) that was not in the original plan. @PlanCritic caught this as a FAIL on the Test Infrastructure Gate.
+Evidence: Widget Tests session — PaymentPendingStore wrongly typed as ChangeNotifier (it's a plain class → needs `Provider.value`, not `ChangeNotifierProvider.value`). Wrong mocking strategy for Type B screens required plan rewrite.
+
+### 2.2.2 Singleton & Static State Detection (Required When Planning Tests)
+
+When the plan includes unit tests for classes that interact with singletons or static state:
+1. Grep for singleton patterns in target classes: `static final`, `factory Constructor() => _instance`, `register(this)`, `Coordinator()`.
+2. For EACH singleton found, verify whether a `clearForTesting()`, `reset()`, or equivalent method exists.
+3. If it exists: the plan MUST include `tearDown` cleanup instructions.
+4. If it doesn't exist: the plan MUST include a step to ADD a testing reset method to the singleton.
+5. Document all singletons in the plan's Evidence section.
+
+Evidence: Phase C — ChatVM and DashboardVM register with RoleSwitchCoordinator (singleton). Omitting `clearForTesting()` in tearDown would cause cross-test pollution and random CI failures.
+
+### 2.2.3 Auto-Loading Constructor Detection (Required When Planning Tests)
+
+When the plan includes unit tests for classes with DI constructors:
+1. Check if the constructor body or initializer calls any methods (load, fetch, init, sync, subscribe).
+2. If yes: the plan MUST specify that ALL mock stubs must be configured BEFORE VM construction in setUp.
+3. Include an explicit "Default Mock Configuration" step listing every method that needs a stub.
+4. Note the required await/microtask delay pattern for async constructor init.
+
+Evidence: Phase C — DashboardVM calls 3 load methods in constructor. Missing any mock stub = MissingStubError.
+
+### 2.2.4 Coverage Arithmetic Verification (Required When Planning Coverage Targets)
+
+When the plan sets a coverage percentage target:
+
+1. Run `flutter test --coverage` and parse `coverage/lcov.info`.
+2. Count total lines and currently-hit lines.
+3. For each target file, count its uncovered lines.
+4. Calculate the MAXIMUM achievable coverage if every target file reaches 100%.
+5. Set the target at 80% of the theoretical maximum (accounting for unreachable branches, platform-specific code, and harness-pattern screens).
+6. Include the arithmetic in the plan under a "Coverage Projection" section.
+
+Evidence: Widget Tests session — SlinePlanner assumed 6 screens = 45% coverage, actual was 39.7%. @PlanCritic caught the arithmetic error reactively; this scan prevents it proactively.
+
+### 2.2.5 Screen Mocking Classification Workflow (Required When Planning Widget Tests)
+
+For each screen targeted for widget testing:
+
+1. Open the screen's `build()` method.
+2. Search for `context.read<*ViewModel>` or `Consumer<*ViewModel>`:
+   - If found → **Type A** (VM provided by ancestor). Mock the VM.
+3. Search for `*ViewModel(` constructor calls inside `build()` or `initState()`:
+   - If found → **Type B** (VM created internally). Mock the services.
+4. For Type B screens, check if the VM constructor calls `Supabase.instance`:
+   - If yes → harness/wrapper pattern required (cannot import production screen).
+   - If no → mock services via Provider ancestors, import production screen.
+5. Record classification in a table within the plan.
+
+Evidence: Widget Tests session — @SlinePlanner wrote mocking strategies without classifying screens into Type A vs Type B, requiring plan rewrite for 3 screens.
+
 ### 2.3 Supabase Reality Scan (ALWAYS REQUIRED)
 
 You MUST scan live or current Supabase reality before planning. Confirm:
@@ -97,7 +190,17 @@ Use the available Supabase dashboard, SQL editor, CLI, MCP tools, or current mig
 **Rule:** Treat docs as intent and live Supabase state as reality.  
 If drift exists (docs ≠ live), record it in plan risks and plan a safe reconcile path. Do not plan destructive cleanup simply to "match docs."
 
-### 2.4 Evidence Section (Required In Plan)
+### 2.4 Native Dependency Build Gate (Required When Planning Native Packages)
+
+When a plan adds a dependency that includes native code (`sentry_flutter`, `firebase_*`, `image_picker`, `webview_flutter`, `google_maps_flutter`, etc.), the FIRST phase after dependency addition MUST include:
+- `flutter build apk --debug` — catches Kotlin/Gradle version mismatches
+- `flutter build ios --no-codesign` (if applicable) — catches Swift/Xcode version mismatches
+
+Do NOT defer native build verification to QA phases. Native SDK version mismatches (Kotlin, Swift, Gradle, CocoaPods) are invisible to `flutter analyze` and `flutter test` — they only surface during platform compilation.
+
+Evidence: Phase D — `sentry_flutter` added in Phase 1, APK build failure discovered only at Phase 8 QA.
+
+### 2.5 Evidence Section (Required In Plan)
 
 Include `## Evidence & Findings (From Scan)`:
 
@@ -166,7 +269,7 @@ Capture:
 - Every sub-phase header must name its primary agent or agents.
 - If a step changes UI / UX / theme / layout / motion / responsiveness / copy, that step MUST also include `Skill: <skill-name>` from `.cursor/skills/`.
 - If a step changes schema / RLS / RPC / trigger / storage / rollout / performance hot paths, that step MUST also include `Skill: supabase-migration`.
-- If a feature includes schema design, order flow, or backend process flow, the plan MUST include a dedicated diagram artifact under `Doc/DIGRAM/`.
+- If a feature includes schema design, order flow, or backend process flow, the plan MUST include a dedicated diagram artifact under `docs/diagrams/`.
 - **Mandatory triggers:**
   - Any feature touching wallet, escrow, payments, admin finance, disputes, or sensitive user data → `@ThreatModeler` + `@Observability`
   - Any schema change (new table, new column, changed type, new view, new trigger, new index) → `@DataMigration`
@@ -254,7 +357,7 @@ If a Supabase step that clearly fits this category has no skill tag, the plan is
 
 When the feature includes schema design, order flow, or any flow-chart-worthy backend workflow, the plan MUST add a documentation step for:
 
-`Doc/DIGRAM/<FeatureName>.md`
+`docs/diagrams/<FeatureName>.md`
 
 Rules:
 
@@ -377,7 +480,7 @@ Write only the header section at plan creation time:
 
 - Every Supabase phase and sub-phase MUST name `@Supabase_Ops` as primary or secondary owner.
 - Every substantial DB / RLS / RPC / storage / migration step MUST include `Skill: supabase-migration`.
-- Any schema or flow change MUST include a `Doc/DIGRAM/<FeatureName>.md` step.
+- Any schema or flow change MUST include a `docs/diagrams/<FeatureName>.md` step.
 
 ### Session Log Rules
 
@@ -559,7 +662,7 @@ Write only the header section at plan creation time:
 **Primary Agent(s):** `@SlineDocs`
 
 - [ ] (`@SlineDocs`) Update `Sline_everything/` docs affected by schema, flow, architecture, or structure changes.
-- [ ] (`@SlineDocs`) Ensure `docs/LOG/SESSION_*.md` and `Doc/DIGRAM/<FeatureName>.md` are cross-linked where relevant.
+- [ ] (`@SlineDocs`) Ensure `docs/LOG/SESSION_*.md` and `docs/diagrams/<FeatureName>.md` are cross-linked where relevant.
 - [ ] (`@SlineDocs`) Write `.TODO/DOCS_SYNC_<YYYY-MM-DD>_<ShortTitle>.md`.
 - **GATE CHECK:** docs, session logs, and diagrams are aligned with the plan and implementation.
 
@@ -593,5 +696,18 @@ List:
 - database objects confirmed
 - migrations / functions / buckets / views inspected
 - related `.TODO/` artifacts
+
+## 10) Plan Appendix: Scan Evidence (Mandatory)
+
+Every plan MUST end with an appendix titled "## Scan Evidence" containing:
+- **Constructor Signatures:** For each class to be mocked/refactored, list its constructor parameters, base class, and mixins.
+- **Line Counts:** For each file targeted for modification, list its current line count.
+- **Coverage Baseline:** If the plan has coverage targets, include total lines, hit lines, and current percentage from lcov.info.
+- **Provider Dependencies:** For each screen under test, list all `context.read<T>()` / `context.watch<T>()` calls and their sources.
+- **Singleton/Static State:** List all singletons and static state that tests must clean up.
+
+This appendix is consumed by @PlanCritic for verification and by @Executor for execution awareness.
+
+Evidence: Sessions 2, 3, 6 — @PlanCritic consistently found 5-8 critical gaps in @SlinePlanner's v1 plans because scan output was not structured or attached. This appendix lets @PlanCritic verify faster and catch factual errors earlier.
 
 END.

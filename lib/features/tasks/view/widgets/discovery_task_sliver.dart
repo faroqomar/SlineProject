@@ -7,7 +7,7 @@ import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
 
-import '../../models/task_model.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
 
 class DiscoveryTaskSliver extends StatelessWidget {
   const DiscoveryTaskSliver({

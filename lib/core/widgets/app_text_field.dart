@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-
 import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/theme/app_colors.dart'; // NEW import
 
 /// A customizable text input field with a style consistent with the application's design.
 ///
@@ -38,8 +36,8 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
-    final TextTheme textTheme = context.appTextTheme;
+    final colorScheme = context.colorScheme;
+    final textTheme = context.appTextTheme;
 
     // The InputDecorationTheme is set in app_theme.dart, but we can override
     // or extend it here for specific AppTextField needs.

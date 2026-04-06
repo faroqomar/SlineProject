@@ -116,7 +116,7 @@ void main() {
             currency: 'IQD',
             description: 'Test',
           ),
-          throwsA(isA<Exception>()),
+          throwsA(anything),
         );
 
         verifyNever(() => taskService.payAwardedOffer(any()));

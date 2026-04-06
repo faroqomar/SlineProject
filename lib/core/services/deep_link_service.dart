@@ -1,63 +1,40 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:sline_app/core/app_enums.dart';
-import '../../features/notifications/models/notification_model.dart';
-import '../../features/dashboard/models/activity_log.dart';
-import '../../core/services/logger_service.dart';
-import '../../features/tasks/services/task_service.dart';
-import '../../features/booking/services/booking_service.dart';
-import '../../features/chat/services/message_service.dart';
-import '../../features/tasks/view/task_details_screen.dart';
-import '../../features/booking/view/booking_details_screen.dart';
-import '../../features/chat/view/chat_screen.dart';
-import '../../features/direct_offers/view/direct_offer_details_screen.dart';
-import '../../features/work/view/work_item_details_screen.dart';
-import '../../features/profile/view/public_profile_screen.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
-import 'package:provider/provider.dart';
-import '../providers/navigation_provider.dart';
+import 'package:sline_app/core/services/deep_link_registry.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 
 /// Service to handle deep linking and routing from notifications/activity feed.
-/// Supported entity types (task_request is handled in [handleNotification] via metadata).
+///
+/// Navigation logic is delegated to [DeepLinkRegistry] handlers registered by
+/// each feature module at app startup. This keeps core free of feature imports.
 class DeepLinkService {
-  static const List<String> supportedEntityTypes = [
-    'task',
-    'offer',
-    'booking',
-    'conversation',
-    'message',
-    'direct_offer',
-    'directoffer',
-    'profile',
-    'user',
-  ];
+  final DeepLinkRegistry _registry;
 
-  final TaskService _taskService;
-  final BookingService _bookingService;
-  final MessageService _messageService;
+  DeepLinkService({required DeepLinkRegistry registry}) : _registry = registry;
 
-  DeepLinkService({
-    TaskService? taskService,
-    BookingService? bookingService,
-    MessageService? messageService,
-  }) : _taskService = taskService ?? TaskService(),
-       _bookingService =
-           bookingService ?? BookingService(Supabase.instance.client),
-       _messageService = messageService ?? MessageService();
+  /// All entity types the registry can currently handle.
+  List<String> get supportedEntityTypes =>
+      _registry.registeredTypes.toList(growable: false);
 
   /// Handle tap on a notification item.
+  ///
   /// For task_request, routes using metadata: conversation_id first, else task_id.
+  /// Callers extract primitives from the notification model before calling this.
   Future<void> handleNotification(
-    BuildContext context,
-    NotificationItem item,
-  ) async {
+    BuildContext context, {
+    required String? entityType,
+    required String? entityId,
+    Map<String, dynamic> metadata = const {},
+  }) async {
     AppLogger.i(
-      'handleNotification: entityType=${item.relatedEntityType} id=${item.relatedEntityId}',
+      'handleNotification: entityType=$entityType id=$entityId',
       tag: 'DeepLink',
     );
-    final type = item.relatedEntityType?.toLowerCase();
+    final type = entityType?.toLowerCase();
     if (type == 'task_request') {
-      final convId = item.metadata['conversation_id']?.toString();
-      final taskId = item.metadata['task_id']?.toString();
+      final convId = metadata['conversation_id']?.toString();
+      final taskId = metadata['task_id']?.toString();
       if (convId != null && convId.isNotEmpty) {
         AppLogger.d(
           'task_request: routing to conversation $convId',
@@ -79,23 +56,23 @@ class DeepLinkService {
       }
       return;
     }
-    await navigateToEntity(
-      context,
-      item.relatedEntityType,
-      item.relatedEntityId,
-    );
+    await navigateToEntity(context, entityType, entityId);
   }
 
   /// Handle tap on an activity log item.
+  ///
+  /// Callers extract entityType and entityId from the activity model before
+  /// calling this.
   Future<void> handleActivity(
-    BuildContext context,
-    ActivityLog activity,
-  ) async {
+    BuildContext context, {
+    required String? entityType,
+    required String? entityId,
+  }) async {
     AppLogger.i(
-      'Handling activity tap: ${activity.entityType} - ${activity.entityId}',
+      'Handling activity tap: $entityType - $entityId',
       tag: 'DeepLink',
     );
-    await navigateToEntity(context, activity.entityType, activity.entityId);
+    await navigateToEntity(context, entityType, entityId);
   }
 
   /// Open the chat screen for a conversation (e.g. from direct offer details).
@@ -103,12 +80,13 @@ class DeepLinkService {
     BuildContext context,
     String conversationId,
   ) async {
-    return _navigateToConversation(context, conversationId);
+    await navigateToEntity(context, 'conversation', conversationId);
   }
 
   /// Handle tap on a dashboard work item.
+  ///
   /// Uses [type] as string ("task", "booking", or "directOffer") and [id].
-  /// For direct offers, opens [DirectOfferDetailsScreen]; [conversationId] is passed for "Open chat".
+  /// For direct offers, passes [conversationId] via metadata.
   Future<dynamic> handleWorkItem(
     BuildContext context,
     String type,
@@ -119,31 +97,55 @@ class DeepLinkService {
     if (!context.mounted) return;
 
     final typeLower = type.toLowerCase();
+
+    // Direct offers and work items route through the registry with metadata.
     if (typeLower == 'directoffer') {
-      return Navigator.push(
+      final handled = await _registry.handle(
         context,
-        MaterialPageRoute<void>(
-          builder: (_) => DirectOfferDetailsScreen(
-            offerId: id,
-            conversationId: conversationId,
-          ),
-        ),
+        'directoffer',
+        id,
+        metadata: {'conversation_id': conversationId},
       );
+      if (handled) {
+        AppLogger.i(
+          'deep_link_routed entityType=$type id=$id',
+          tag: 'DeepLink',
+        );
+      }
+      return;
     }
 
-    final workItemType = typeLower == 'booking'
-        ? WorkItemType.booking
-        : WorkItemType.task;
+    // Booking/task work items route through the work_item handler via
+    // the registry, or fall back to the entity-type handler directly.
+    if (_registry.canHandle('work_item')) {
+      final handled = await _registry.handle(
+        context,
+        'work_item',
+        id,
+        metadata: {'type': typeLower, 'conversation_id': conversationId},
+      );
+      if (handled) {
+        AppLogger.i(
+          'deep_link_routed entityType=work_item($type) id=$id',
+          tag: 'DeepLink',
+        );
+        return;
+      }
+    }
 
-    return Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => WorkItemDetailsScreen(id: id, type: workItemType),
-      ),
-    );
+    // Fallback: route as plain entity type.
+    if (!context.mounted) return;
+    await navigateToEntity(context, typeLower, id);
   }
 
+  static final _uuidRegex = RegExp(
+    r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+    caseSensitive: false,
+  );
+
   /// Centralized navigation logic based on entity type and ID.
+  ///
+  /// Delegates to the [DeepLinkRegistry] for all entity types.
   Future<void> navigateToEntity(
     BuildContext context,
     String? type,
@@ -154,203 +156,34 @@ class DeepLinkService {
       return;
     }
 
+    if (!_uuidRegex.hasMatch(id)) {
+      AppLogger.w('Invalid entity ID format: $id', tag: 'DeepLink');
+      return;
+    }
+
     try {
-      switch (type.toLowerCase()) {
-        case 'task':
-        case 'offer': // Offers usually link to the task details or inbox
-          await _navigateToTask(context, id);
-          AppLogger.i(
-            'deep_link_routed entityType=$type id=$id',
-            tag: 'DeepLink',
-          );
-          break;
-        case 'booking':
-          await _navigateToBooking(context, id);
-          AppLogger.i(
-            'deep_link_routed entityType=$type id=$id',
-            tag: 'DeepLink',
-          );
-          break;
-        case 'conversation':
-        case 'message':
-          await _navigateToConversation(context, id);
-          AppLogger.i(
-            'deep_link_routed entityType=$type id=$id',
-            tag: 'DeepLink',
-          );
-          break;
-        case 'direct_offer':
-        case 'directoffer':
-          if (!context.mounted) return;
-          Navigator.push(
-            context,
-            MaterialPageRoute<void>(
-              builder: (_) =>
-                  DirectOfferDetailsScreen(offerId: id, conversationId: null),
-            ),
-          );
-          AppLogger.i(
-            'deep_link_routed entityType=$type id=$id',
-            tag: 'DeepLink',
-          );
-          break;
-        case 'profile':
-          _navigateToProfile(context);
-          AppLogger.i(
-            'deep_link_routed entityType=$type id=$id',
-            tag: 'DeepLink',
-          );
-          break;
-        case 'user':
-          _navigateToUserProfile(context, id);
-          AppLogger.i(
-            'deep_link_routed entityType=$type id=$id',
-            tag: 'DeepLink',
-          );
-          break;
-        default:
-          AppLogger.w(
-            'Notification route not supported: entityType=$type',
-            tag: 'DeepLink',
-          );
-          if (!context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Cannot open this item type: $type')),
-          );
+      final handled = await _registry.handle(context, type, id);
+      if (handled) {
+        AppLogger.i(
+          'deep_link_routed entityType=$type id=$id',
+          tag: 'DeepLink',
+        );
+      } else {
+        AppLogger.w(
+          'Notification route not supported: entityType=$type',
+          tag: 'DeepLink',
+        );
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('This item type is not supported.')),
+        );
       }
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Deep link navigation failed', error: e, tag: 'DeepLink');
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to open item. Please try again.')),
       );
     }
-  }
-
-  Future<void> _navigateToTask(BuildContext context, String taskId) async {
-    // Show loading indicator
-    if (!context.mounted) return;
-    _showLoading(context);
-
-    try {
-      final task = await _taskService.getTaskById(taskId);
-      if (!context.mounted) return;
-      _hideLoading(context);
-
-      if (task != null && context.mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => TaskDetailsScreen(task: task)),
-        );
-      } else if (context.mounted) {
-        _showError(context, 'Task not found');
-      }
-    } catch (e) {
-      if (!context.mounted) return;
-      _hideLoading(context);
-      rethrow;
-    }
-  }
-
-  Future<void> _navigateToBooking(
-    BuildContext context,
-    String bookingId,
-  ) async {
-    if (!context.mounted) return;
-    _showLoading(context);
-
-    try {
-      final booking = await _bookingService.getBookingById(bookingId);
-      if (!context.mounted) return;
-      _hideLoading(context);
-
-      if (context.mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => BookingDetailsScreen(booking: booking),
-          ),
-        );
-      }
-    } catch (e) {
-      if (!context.mounted) return;
-      _hideLoading(context);
-      rethrow;
-    }
-  }
-
-  Future<void> _navigateToConversation(
-    BuildContext context,
-    String conversationId,
-  ) async {
-    if (!context.mounted) return;
-    _showLoading(context);
-
-    try {
-      // MessageService has getConversationById
-      final conversation = await _messageService.getConversationById(
-        conversationId,
-      );
-      if (!context.mounted) return;
-      _hideLoading(context);
-
-      if (context.mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ChatScreen(conversation: conversation),
-          ),
-        );
-      }
-    } catch (e) {
-      if (!context.mounted) return;
-      _hideLoading(context);
-      rethrow;
-    }
-  }
-
-  void _showLoading(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
-    );
-  }
-
-  void _hideLoading(BuildContext context) {
-    if (context.mounted) {
-      Navigator.of(
-        context,
-        rootNavigator: true,
-      ).pop(); // Perform pop on root navigator to close dialog
-    }
-  }
-
-  void _showError(BuildContext context, String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
-  }
-
-  Future<void> _navigateToProfile(BuildContext context) async {
-    // 1. Clear stack to main
-    Navigator.popUntil(context, (route) => route.isFirst);
-
-    // 2. Switch to Profile tab (Index 5)
-    if (context.mounted) {
-      final navProvider = Provider.of<NavigationProvider>(
-        context,
-        listen: false,
-      );
-      navProvider.setCurrentIndex(5);
-    }
-  }
-
-  void _navigateToUserProfile(BuildContext context, String userId) {
-    if (!context.mounted) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => PublicProfileScreen(userId: userId)),
-    );
   }
 }

@@ -25,8 +25,8 @@
 library;
 
 import 'package:mocktail/mocktail.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Log tag for mock operations
 const String _logTag = 'test_fixture';

@@ -1,18 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:sline_app/features/profile/view/widgets/profile_preview_modal.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/services/deep_link_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_date.dart';
-import 'package:sline_app/core/widgets/signed_avatar.dart';
-import 'package:sline_app/core/services/deep_link_service.dart';
-import 'package:provider/provider.dart';
 import 'package:sline_app/core/widgets/glass_card.dart';
+import 'package:sline_app/core/widgets/signed_avatar.dart';
+import 'package:sline_app/features/dashboard/models/work_item.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
-import '../../models/work_item.dart';
+import 'package:sline_app/features/profile/view/widgets/profile_preview_modal.dart';
 
 class WorkItemCard extends StatelessWidget {
   final WorkItem item;
@@ -56,26 +58,21 @@ class WorkItemCard extends StatelessWidget {
       case 'paid_request_pending':
       case 'accepted': // direct offer pending payment
         statusColor = AppColors.gold;
-        break;
       case 'assigned':
       case 'confirmed':
       case 'inProgress':
       case 'in_progress':
       case 'active':
         statusColor = AppColors.teal;
-        break;
       case 'delivered':
         statusColor = AppColors.lightRed;
-        break;
       case 'completed':
       case 'closed':
         statusColor = AppColors.lightTeal;
-        break;
       case 'canceled':
       case 'declined':
       case 'refunded':
         statusColor = AppColors.lightRed;
-        break;
       default:
         statusColor = AppColors.mediumGrey;
     }
@@ -89,7 +86,7 @@ class WorkItemCard extends StatelessWidget {
           conversationId: item.conversationId,
         );
         if (result == true && context.mounted) {
-          context.read<DashboardViewModel>().refresh();
+          unawaited(context.read<DashboardViewModel>().refresh());
         }
       },
       margin: const EdgeInsets.only(bottom: AppDimens.p16),

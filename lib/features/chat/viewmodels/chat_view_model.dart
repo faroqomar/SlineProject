@@ -1,18 +1,18 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:sline_app/core/mixins/role_switch_aware.dart';
+import 'package:sline_app/core/services/account_guard_service.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/services/role_switch_coordinator.dart';
+import 'package:sline_app/features/chat/attachments/services/send_attachment_usecase.dart';
+import 'package:sline_app/features/chat/data/chat_repository.dart';
+import 'package:sline_app/features/chat/models/conversation_model.dart';
+import 'package:sline_app/features/chat/models/message_model.dart';
+import 'package:sline_app/features/chat/services/chat_realtime_merger.dart';
+import 'package:sline_app/features/direct_offers/services/direct_offers_service.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../data/chat_repository.dart';
-import '../models/conversation_model.dart';
-import '../models/message_model.dart';
-import '../../../core/services/logger_service.dart';
-import '../../../core/services/account_guard_service.dart';
-import '../../../core/mixins/role_switch_aware.dart';
-import '../../../core/services/role_switch_coordinator.dart';
-import '../attachments/services/send_attachment_usecase.dart';
-import '../services/chat_realtime_merger.dart';
-import '../../tasks/models/task_model.dart';
-import '../../direct_offers/services/direct_offers_service.dart';
 
 /// ChatViewModel — MVVM state holder for Chat feature.
 ///
@@ -31,21 +31,25 @@ import '../../direct_offers/services/direct_offers_service.dart';
 /// - Active conversation subscription runs only when viewing a specific chat
 /// - This prevents unnecessary updates and conserves resources
 class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
-  ChatViewModel({SupabaseClient? client}) {
-    _repo = ChatRepository(client ?? Supabase.instance.client);
-    _accountGuardService = AccountGuardService(
-      client: client ?? Supabase.instance.client,
-    );
-    _directOffersService = DirectOffersService(
-      client ?? Supabase.instance.client,
-    );
+  ChatViewModel({
+    ChatRepository? repo,
+    AccountGuardService? accountGuardService,
+    DirectOffersService? directOffersService,
+    SupabaseClient? client,
+  }) : _repo = repo ?? ChatRepository(client ?? Supabase.instance.client),
+       _accountGuardService =
+           accountGuardService ??
+           AccountGuardService(client: client ?? Supabase.instance.client),
+       _directOffersService =
+           directOffersService ??
+           DirectOffersService(client ?? Supabase.instance.client) {
     // Register with coordinator for role switch teardown
     RoleSwitchCoordinator().register(this);
   }
 
-  late final ChatRepository _repo;
-  late final AccountGuardService _accountGuardService;
-  late final DirectOffersService _directOffersService;
+  final ChatRepository _repo;
+  final AccountGuardService _accountGuardService;
+  final DirectOffersService _directOffersService;
 
   final List<Conversation> conversations = [];
   final List<Message> currentMessages = [];
@@ -106,19 +110,18 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
     AppLogger.i('chat_teardown_role_switch', tag: 'ChatVM');
 
     // Cancel realtime subscriptions first
-    _msgSub?.cancel();
+    unawaited(_msgSub?.cancel());
     _msgSub = null;
-    _inboxMsgSub?.cancel();
+    unawaited(_inboxMsgSub?.cancel());
     _inboxMsgSub = null;
-    _presenceSub?.cancel();
+    unawaited(_presenceSub?.cancel());
     _presenceSub = null;
 
     // Also remove Supabase realtime channels (not just Dart streams)
     try {
-      final client = Supabase.instance.client;
-      client.removeAllChannels();
+      await _repo.removeAllChannels();
       AppLogger.d('chat_removed_all_supabase_channels', tag: 'ChatVM');
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.w('chat_remove_channels_warning: $e', tag: 'ChatVM');
     }
 
@@ -162,7 +165,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
     try {
       if (delivered) await _repo.markDelivered(activeConversation!.id);
       if (seen) await _repo.markSeen(activeConversation!.id);
-    } catch (e) {
+    } on Exception catch (e) {
       final op = [if (delivered) 'delivered', if (seen) 'seen'].join('+');
       AppLogger.e(
         'Error marking receipts conversation_id=${activeConversation!.id} operation=$op',
@@ -184,7 +187,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
         ..clear()
         ..addAll(list);
       AppLogger.i('✅ Conversations fetched: ${conversations.length}');
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Error fetching conversations: $e');
     } finally {
       isLoadingConversations = false;
@@ -219,7 +222,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
                 '[REALTIME] Inbox merged: ${conversations.length} conversations',
               );
               _notify();
-            } catch (e) {
+            } on Exception catch (e) {
               AppLogger.e('Error merging inbox messages', error: e);
             }
           },
@@ -271,7 +274,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
                 _notify();
               }
             })
-            .catchError((e) {
+            .onError<Exception>((e, st) {
               _fetchingConversationIds.remove(message.conversationId);
               AppLogger.w(
                 'getConversationById failed for ${message.conversationId}',
@@ -316,7 +319,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
       );
       AppLogger.i('✅ Conversation created/fetched: ${conversation.id}');
       return conversation;
-    } catch (e) {
+    } on Exception catch (e) {
       final errorMessage = _mapConversationError(e);
       conversationCreationError = errorMessage;
       AppLogger.e('❌ Error creating conversation: $errorMessage');
@@ -383,7 +386,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
         throw Exception('Could not create conversation. Please try again.');
       }
       return conversation;
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Error getting task conversation for task ${task.id}: $e');
       rethrow;
     }
@@ -395,7 +398,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
       conversations.removeWhere((c) => c.id == conversationId);
       _notify(); // Update UI immediately
       AppLogger.i('Deleted conversation: $conversationId');
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Error deleting conversation: $e');
       rethrow;
     }
@@ -413,7 +416,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
         ..addAll(msgs);
       final idx = conversations.indexWhere((c) => c.id == conversationId);
       if (idx != -1) activeConversation = conversations[idx];
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Error fetching messages: $e');
     } finally {
       isLoadingMessages = false;
@@ -455,7 +458,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
       );
       currentMessages.add(message);
       _notify();
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Error sending message', error: e);
       rethrow;
     } finally {
@@ -494,7 +497,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
         price: price,
         days: days,
       );
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Error creating direct offer', error: e);
       rethrow;
     } finally {
@@ -513,7 +516,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
         // Do not send 'offer_accepted' message for direct offers: conversation may be
         // task-linked and backend can treat that message as task acceptance. Acceptance
         // is recorded in work_log; payment happens from dashboard.
-      } catch (e) {
+      } on Exception catch (e) {
         AppLogger.e('Error accepting offer', error: e);
         rethrow;
       }
@@ -531,7 +534,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
     if (offerId != null) {
       try {
         await _directOffersService.rejectOffer(offerId);
-      } catch (e) {
+      } on Exception catch (e) {
         AppLogger.e('Error rejecting offer', error: e);
         rethrow;
       }
@@ -588,15 +591,15 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
         _offerStatusCache[entry.key] = key;
       }
       _notify();
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.w('Failed to refresh offer statuses: $e', tag: 'ChatVM');
     }
   }
 
   Future<void> subscribeToActiveConversation() async {
     if (activeConversation == null) return;
-    _msgSub?.cancel();
-    _presenceSub?.cancel();
+    unawaited(_msgSub?.cancel());
+    unawaited(_presenceSub?.cancel());
     _offerRefreshDebounce?.cancel();
     _offerRefreshDebounce = null;
     final cid = activeConversation!.id;
@@ -630,7 +633,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
             currentMessages
               ..clear()
               ..addAll(merged);
-            if (_presenceReceiptsEnabled == true && hasNewFromOther) {
+            if ((_presenceReceiptsEnabled ?? false) && hasNewFromOther) {
               unawaited(markReceiptsForActive(delivered: true, seen: false));
             }
             _offerRefreshDebounce?.cancel();
@@ -660,7 +663,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
           },
         );
 
-    if (_presenceReceiptsEnabled == true) {
+    if (_presenceReceiptsEnabled ?? false) {
       unawaited(markReceiptsForActive(delivered: true, seen: false));
       final otherId = activeConversation!.user1Id == currentUserId
           ? activeConversation!.user2Id
@@ -716,7 +719,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
   }
 
   /// Whether presence and receipt UI is enabled (from feature flag).
-  bool get isPresenceReceiptsEnabled => _presenceReceiptsEnabled == true;
+  bool get isPresenceReceiptsEnabled => _presenceReceiptsEnabled ?? false;
 
   /// Whether the other participant is typing (false if presence older than 15s).
   bool get otherUserTyping {
@@ -735,7 +738,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
     if (uid == null) return;
     try {
       await _repo.upsertPresence(activeConversation!.id, uid, isTyping);
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.w('[CHAT] setTyping failed: $e', tag: 'ChatVM');
     }
   }

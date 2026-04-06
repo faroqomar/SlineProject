@@ -57,7 +57,7 @@ class _CreateOfferSheetState extends State<CreateOfferSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
     return Container(
@@ -138,7 +138,7 @@ class _CreateOfferSheetState extends State<CreateOfferSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildLabel('Price (\$)', colorScheme),
+                      _buildLabel(r'Price ($)', colorScheme),
                       const SizedBox(height: AppDimens.p8),
                       AppTextField(
                         controller: _priceController,

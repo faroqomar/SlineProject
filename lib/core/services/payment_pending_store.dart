@@ -74,7 +74,7 @@ class PaymentPendingStore {
         return null;
       }
       return PendingPaymentContext.fromJson(decoded);
-    } catch (_) {
+    } on Exception catch (_) {
       return null;
     }
   }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../view/saved_tasks_screen.dart';
+import 'package:sline_app/features/saved/view/saved_tasks_screen.dart';
 
 class SavedRoutes {
   static const routeName = '/saved';

@@ -1,7 +1,7 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/app_enums.dart';
-import '../models/task_model.dart';
-import '../services/task_service.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
+import 'package:sline_app/features/tasks/services/task_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Repository layer for Tasks feature.
 /// Encapsulates TaskService and exposes a stable API to ViewModels/UI.

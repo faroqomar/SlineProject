@@ -63,7 +63,17 @@ class ProfileAvatarWidget extends StatelessWidget {
                         color: Colors.white,
                         size: 20,
                       ),
-                      onPressed: () => controller.pickAndUploadAvatar(context),
+                      onPressed: () async {
+                        await controller.pickAndUploadAvatar();
+                        if (controller.avatarUploadError != null &&
+                            context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(controller.avatarUploadError!),
+                            ),
+                          );
+                        }
+                      },
                     ),
                   ),
                 ),

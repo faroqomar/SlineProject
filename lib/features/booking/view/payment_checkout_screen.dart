@@ -12,10 +12,10 @@ import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/features/booking/models/payment_return_args.dart';
 import 'package:sline_app/features/booking/view/payment_webview_screen.dart';
+import 'package:sline_app/features/booking/view/widgets/payment_order_summary_card.dart';
 import 'package:sline_app/features/booking/viewmodels/booking_view_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -107,7 +107,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
   Future<void> _cancelDraftIfPossible(String bookingId) async {
     _orphanDraftTimer?.cancel();
     _orphanDraftTimer = null;
-    _intentSubscription?.cancel();
+    unawaited(_intentSubscription?.cancel());
     AppLogger.i(
       'Attempting to cancel unpaid booking draft booking=$bookingId',
       tag: 'Payment',
@@ -321,7 +321,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
 
       if (createResult.formUrl != null) {
         if (createResult.intentId != null) {
-          _intentSubscription?.cancel();
+          unawaited(_intentSubscription?.cancel());
           _intentSubscription = vm
               .streamPaymentIntentStatus(createResult.intentId!)
               .listen((status) {
@@ -418,7 +418,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
         _processing = false;
         _paymentFlowInProgress = false;
       });
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Payment flow failed', error: e, tag: 'Payment');
       if (!mounted) return;
       setState(() {
@@ -483,7 +483,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
 
   Widget _buildForm(AppColorScheme cs) {
     final vm = context.read<BookingViewModel>();
-    final isDemoMode = vm.paymentServiceType == 'DemoPaymentService';
+    final isDemoMode = vm.isDemoPaymentMode;
     final estimatedDueAt = _estimatedDueAt;
 
     return SingleChildScrollView(
@@ -491,53 +491,13 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(AppDimens.p16),
-            decoration: BoxDecoration(
-              color: cs.cardBackground,
-              borderRadius: BorderRadius.circular(AppDimens.r16),
-              border: Border.all(color: cs.text.withValues(alpha: 0.08)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Order Summary',
-                  style: AppTypography.h4.copyWith(color: cs.text),
-                ),
-                const SizedBox(height: AppDimens.p12),
-                _summaryRow('Service', widget.taskTitle, cs),
-                if (widget.packageTier != null) ...[
-                  const SizedBox(height: AppDimens.p8),
-                  _summaryRow('Package', widget.packageTier!, cs),
-                ],
-                if (widget.deliveryDays != null) ...[
-                  const SizedBox(height: AppDimens.p8),
-                  _summaryRow('Delivery', '${widget.deliveryDays} days', cs),
-                ],
-                if (estimatedDueAt != null) ...[
-                  const SizedBox(height: AppDimens.p8),
-                  _summaryRow('Due', formatUtcToLocal(estimatedDueAt), cs),
-                ],
-                const Divider(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Total',
-                      style: AppTypography.h3.copyWith(color: cs.text),
-                    ),
-                    Text(
-                      PriceFormatter.formatPrice(widget.price),
-                      style: AppTypography.h3.copyWith(
-                        color: AppColors.teal,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+          PaymentOrderSummaryCard(
+            taskTitle: widget.taskTitle,
+            price: widget.price,
+            cs: cs,
+            packageTier: widget.packageTier,
+            deliveryDays: widget.deliveryDays,
+            estimatedDueAt: estimatedDueAt,
           ),
 
           const SizedBox(height: AppDimens.p20),
@@ -763,28 +723,6 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _summaryRow(String label, String value, AppColorScheme cs) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: AppTypography.bodyMedium.copyWith(color: cs.textSecondary),
-        ),
-        Flexible(
-          child: Text(
-            value,
-            style: AppTypography.bodyMedium.copyWith(
-              color: cs.text,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.right,
-          ),
-        ),
-      ],
     );
   }
 

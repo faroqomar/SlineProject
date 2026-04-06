@@ -20,7 +20,7 @@ class CompressService {
       // If compression saved less than ~5%, keep original to avoid quality loss
       if (out.length > input.length * 0.95) return input;
       return Uint8List.fromList(out);
-    } catch (_) {
+    } on Exception catch (_) {
       return input;
     }
   }

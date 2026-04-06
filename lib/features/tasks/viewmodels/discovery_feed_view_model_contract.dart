@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
-import '../models/task_model.dart';
-import 'task_filter_view_model.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
+import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
 
 /// Shared discovery feed contract for Home, Tenders, and Booking discovery.
 abstract class DiscoveryFeedViewModelContract implements Listenable {

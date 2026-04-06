@@ -47,7 +47,7 @@ class AppLogger {
         if (json.trim().startsWith('{') || json.trim().startsWith('[')) {
           try {
             data = jsonDecode(json);
-          } catch (_) {
+          } on Exception catch (_) {
             return json; // Return raw string if not valid JSON
           }
         } else {
@@ -61,20 +61,23 @@ class AppLogger {
         return object;
       });
 
-      String pretty = encoder.convert(data);
+      var pretty = encoder.convert(data);
 
       // Manual masking for known keys in the string output
       pretty = pretty.replaceAll(
-        RegExp(r'"access_token": "[^"]+"'),
+        RegExp('"access_token": "[^"]+"'),
         '"access_token": "***MASKED***"',
       );
       pretty = pretty.replaceAll(
-        RegExp(r'"refresh_token": "[^"]+"'),
+        RegExp('"refresh_token": "[^"]+"'),
         '"refresh_token": "***MASKED***"',
       );
 
       return pretty;
-    } catch (e) {
+    } on Exception catch (_) {
+      return json.toString();
+    } on Error catch (_) {
+      // JsonUnsupportedObjectError and other encoding errors
       return json.toString();
     }
   }
@@ -130,7 +133,7 @@ class AppLogger {
       var errorStr = error.toString();
       if (errorStr.contains('PostgrestException')) {
         // Extract basic message to reduce noise
-        final match = RegExp(r'message: (.*?), code:').firstMatch(errorStr);
+        final match = RegExp('message: (.*?), code:').firstMatch(errorStr);
         if (match != null) {
           errorStr = 'DB Error: ${match.group(1)} (Full trace below)';
         }

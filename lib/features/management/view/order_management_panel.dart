@@ -5,10 +5,9 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
-
-import '../models/work_log_scope.dart';
-import '../viewmodels/order_management_view_model.dart';
-import 'widgets/work_log_tile.dart';
+import 'package:sline_app/features/management/models/work_log_scope.dart';
+import 'package:sline_app/features/management/view/widgets/work_log_tile.dart';
+import 'package:sline_app/features/management/viewmodels/order_management_view_model.dart';
 
 class OrderManagementPanel extends StatefulWidget {
   static const noteFieldKey = ValueKey('order_management_note_field');

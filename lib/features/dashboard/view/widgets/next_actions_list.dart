@@ -1,14 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../viewmodels/dashboard_view_model.dart';
-import 'work_item_card.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/deep_link_service.dart'
     as sline_deep_link;
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/utils/error_mapper.dart';
+import 'package:sline_app/features/dashboard/view/widgets/work_item_card.dart';
+import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 import 'package:sline_app/features/proposals/models/proposal_payment_summary.dart';
 import 'package:sline_app/features/proposals/routes/proposal_payment_route.dart';
 import 'package:sline_app/features/wallet/view/wallet_screen.dart';
-import 'package:sline_app/core/services/logger_service.dart';
 
 void _showInsufficientFundsDialog(BuildContext context) {
   showDialog<void>(
@@ -73,27 +76,21 @@ class NextActionsList extends StatelessWidget {
                     action == PrimaryActionType.payEscrow) {
                   try {
                     await vm.performPrimaryAction(item);
-                    if (context.mounted) vm.refresh();
+                    if (context.mounted) unawaited(vm.refresh());
                   } on FormatException catch (e) {
                     if (!context.mounted) return;
                     if (e.message.contains('Insufficient')) {
                       _showInsufficientFundsDialog(context);
                     } else {
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(SnackBar(content: Text(e.message)));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(ErrorMapper.map(e))),
+                      );
                     }
-                  } catch (e) {
+                  } on Exception catch (e) {
                     if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          e is Exception
-                              ? e.toString()
-                              : 'Something went wrong',
-                        ),
-                      ),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(ErrorMapper.map(e))));
                   }
                   return;
                 }
@@ -118,7 +115,7 @@ class NextActionsList extends StatelessWidget {
                     summary: summary,
                     launcherSource: 'next_actions_list',
                   );
-                  if (context.mounted) vm.refresh();
+                  if (context.mounted) unawaited(vm.refresh());
                   return;
                 }
                 // Navigate for review/pay/view (booking/task pay goes to details)
@@ -135,32 +132,26 @@ class NextActionsList extends StatelessWidget {
                         conversationId: item.conversationId,
                       );
                   if (result == true && context.mounted) {
-                    vm.refresh();
+                    unawaited(vm.refresh());
                   }
                 } else {
                   try {
                     await vm.performPrimaryAction(item);
-                    if (context.mounted) vm.refresh();
+                    if (context.mounted) unawaited(vm.refresh());
                   } on FormatException catch (e) {
                     if (!context.mounted) return;
                     if (e.message.contains('Insufficient')) {
                       _showInsufficientFundsDialog(context);
                     } else {
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(SnackBar(content: Text(e.message)));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(ErrorMapper.map(e))),
+                      );
                     }
-                  } catch (e) {
+                  } on Exception catch (e) {
                     if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          e is Exception
-                              ? e.toString()
-                              : 'Something went wrong',
-                        ),
-                      ),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(ErrorMapper.map(e))));
                   }
                 }
               },
@@ -181,15 +172,11 @@ class NextActionsList extends StatelessWidget {
                             ),
                           );
                         }
-                      } catch (e) {
+                      } on Exception catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(
-                                e is Exception
-                                    ? e.toString()
-                                    : 'Failed to cancel',
-                              ),
+                              content: Text(ErrorMapper.map(e)),
                               backgroundColor: Colors.red,
                             ),
                           );

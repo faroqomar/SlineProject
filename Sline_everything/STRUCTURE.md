@@ -1,6 +1,6 @@
 # SLine App - Folder Structure Guide
 
-**Last Updated:** 2026-03-08 (Hardened Payment Linking migrations + refs; Work contract revisions; Direct Chat Offer Flow; 21_Wallet → Done)
+**Last Updated:** 2026-04-05 (Phase F: widget tests, coverage 40.8%, full agent inventory in .cursor/Agents/ including SystemEvolution meta-agent; previous: Phase E sealed ViewState/AppFailure, DeepLinkRegistry, 14 VM test files, 1200+ tests)
 
 This document describes the current repository layout. It replaces older references to `presentation/` and `controllers/`; the live Flutter codebase uses `view/` and `viewmodels/` under `lib/features/`.
 
@@ -10,7 +10,11 @@ This document describes the current repository layout. It replaces older referen
 sline_app/
 ├── .agents/              # Local skills and workflows used by the coding agents
 ├── .cursor/              # Cursor agent definitions and project rules
+├── .github/workflows/    # CI pipeline (lint, test, build, architecture guard)
+├── .githooks/            # Pre-commit hook (format + analyze)
 ├── .TODO/                # Audits, plans, execution logs, QA notes, docs-sync notes
+├── docs/LOG/             # Session logs, system evolution reports
+├── docs/diagrams/        # Feature diagrams (Mermaid + explanations)
 ├── Sline_everything/     # Source-of-truth project documentation
 ├── assets/               # Bundled app assets
 ├── lib/                  # Flutter application source
@@ -20,6 +24,8 @@ sline_app/
 ├── android/ ios/ web/    # Platform runners
 ├── linux/ macos/ windows/# Desktop runners
 ├── pubspec.yaml          # Flutter package manifest
+├── analysis_options.yaml # Lint rules (34 rules: core + safety + code quality)
+├── MIGRATION_REVIEW_CHECKLIST.md  # Phase D: 7-point checklist for migration PRs
 └── README.md             # Repository overview
 ```
 
@@ -32,8 +38,13 @@ sline_app/
 
 ### `.cursor/`
 
-- `Agents/`: role definitions such as `Architect`, `CodeGuard`, `Sline_Docs`, and `Supabase_Ops`
-- project-specific agent guidance and rules used by Cursor tooling
+- `Agents/`: role definitions for the multi-agent system (16 agents)
+  - **Core agents**: `Architect.md` (MVVM logic), `Pixel.md` (UI/UX), `Supabase_Ops.md` (backend), `Sline_Docs.md` (documentation), `Sentinel.md` (QA/verification)
+  - **Planning & execution**: `Sline_Planner.md` (implementation architect), `Executor.md` (task orchestrator), `Plan_Critic.md` (plan auditor), `orchestrator.md` (multi-agent coordinator)
+  - **Specialized**: `CodeGuard.md` (performance/security audit), `ThreatModeler.md` (security design), `APIContract.md` (contract alignment), `DataMigration.md` (schema safety), `Observability.md` (telemetry), `TemplateOwner.md` (task templates)
+  - **Meta**: `SystemEvolution.md` (cross-session agent improvement — scans logs and agent files, produces upgrade reports)
+- `rules/`: project-specific rules used by Cursor tooling (`flutter-mvvm.mdc`, `error-handling.mdc`)
+- `skills/`: skill definitions referenced by agents for specialized work
 
 ### `.TODO/`
 
@@ -74,6 +85,10 @@ supabase/
 │   ├── qicard_webhook_handler/     # QiCard webhook verification and ledger entry
 │   ├── push-notify/                # Single push payload (optional PUSH_NOTIFY_SECRET); notification routing (13)
 │   └── process-push-queue/         # Batch drain notification_push_queue → FCM (requires CRON_SECRET)
+├── tests/                          # Phase D: SQL assertion tests for critical RPCs
+│   ├── accept_task_request_test.sql          # 4 tests: accept, auto-reject, double-accept, task status
+│   ├── escrow_idempotency_test.sql           # 5 tests: hold, replay, no duplicates, missing key, wrong currency
+│   └── role_switch_rate_limit_test.sql       # 6 tests: switch, switch back, no-op, stale state, invalid role, audit
 └── migrations/                     # SQL migrations applied to Supabase
 ```
 
@@ -107,6 +122,7 @@ lib/
 │   ├── theme/
 │   ├── utils/
 │   └── widgets/
+├── l10n/          # Localization: ARB files, generated AppLocalizations
 ├── features/
 │   └── <feature>/
 │       ├── data/        # Repository / data-access layer when needed
@@ -135,8 +151,12 @@ Current subfolders:
 
 - `config/`: runtime configuration (e.g. `auth_config.dart`, `payment_runtime_config.dart`); user-facing auth strings in `lib/core/constants/auth_messages.dart`
 - `models/`: global models such as `user_profile.dart` and shared `payment_return_args.dart`
+  - `view_state.dart` — **Phase E** Sealed ViewState<T> (ViewInitial, ViewLoading, ViewLoaded, ViewFailed)
+  - `app_failure.dart` — **Phase E** Sealed AppFailure (NetworkFailure, AuthFailure, ValidationFailure, BusinessFailure)
 - `providers/`: app-wide providers such as navigation and theme mode
 - `services/`: Supabase bootstrap, payment services, cache, deep links, crash reporting, logging, **role switch coordinator**
+  - `deep_link_registry.dart` — **Phase E** DeepLinkRegistry with feature-side handler registration
+  - `payment_response_helpers.dart` — **Phase E** Pure helper functions for payment response parsing
 - `theme/`: color, spacing, typography, decorations, theme assembly, theme dashboard
 - `utils/`: error mapping, formatting, loading overlays, URL cache, route transitions, web error filters, **ledger forensics** (p_meta session_id/request_id for ledger event flow)
 - `widgets/`: shared UI widgets such as signed media, buttons, badges, loaders, bottom nav
@@ -145,6 +165,8 @@ Current subfolders:
 Important current core files:
 
 - `lib/core/services/supabase_config.dart`
+- `lib/core/services/crash_reporting_service.dart` — Abstract interface + NoOp stub for crash reporting
+- `lib/core/services/sentry_crash_reporting_service.dart` — Phase D: Sentry implementation of CrashReportingService
 - `lib/core/services/payment_service.dart`
 - `lib/core/services/qicard_payment_service.dart`
 - `lib/core/services/payment_pending_store.dart`
@@ -191,22 +213,44 @@ Not every feature uses every subfolder, but the standard live convention is:
 
 - `lib/features/auth/`: login, signup, forgot password, auth session handling
 - `lib/features/booking/`: direct booking checkout, booking lists/details, payment return/webview screens
+  - `viewmodels/booking_payment_delegate.dart` — **Phase E** Payment coordination delegate
+  - `services/booking_deep_link_handler.dart` — **Phase E** Deep link handler for booking routes
+  - `view/widgets/payment_order_summary_card.dart` — **Phase E** Extracted payment order summary widget
 - `lib/features/profile/`: profile editing, avatar upload, **role switching (v2.18)**, portfolio management
   - `data/profile_repository.dart` — Main profile repository (legacy `changeRole()` deprecated)
   - `data/role_switch_repository.dart` — **NEW (v2.18)** Atomic role switching with RPC, session refresh, JWT verification
   - `models/role_switch_result.dart` — **NEW (v2.18)** RPC response model with error taxonomy
+  - `services/profile_deep_link_handler.dart` — **Phase E** Deep link handler for profile routes
 - `lib/features/chat/`: conversations, messages, attachments, realtime updates
+  - `services/chat_deep_link_handler.dart` — **Phase E** Deep link handler for chat routes
 - `lib/features/dashboard/`: unified dashboard tabs (Overview, Bookings, Work, Wallet, Inbox) and role-based work summaries, including the live bottom-nav dashboard slot. Tab cards (booking, offer, wallet snapshot) live in owning features: `booking/view/widgets/dashboard_booking_card.dart`, `tasks/view/widgets/dashboard_offer_card.dart`, `wallet/view/widgets/wallet_snapshot_card.dart`; dedicated Wallet tab in `view/tabs/wallet_tab.dart`; shared status helpers in `core/utils/status_presenter.dart`
 - `lib/features/direct_offers/`: direct chat offers (create, accept, pay, deliver, complete) and payment recovery
+  - `services/direct_offer_deep_link_handler.dart` — **Phase E** Deep link handler for direct offer routes
 - `lib/features/notifications/`: in-app notification list (server-authority; foreground sync then stream), badge/modal/deep links; `PushDeviceService` registers FCM tokens in `user_devices`; push delivery via `notification_push_queue` + Edge (`push-notify`, `process-push-queue`). Diagram: `Sline_everything/AppDigram/All_Diagrams/13_notification-routing.md`. Plan: `.TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md`.
 - `lib/features/management/`: order timeline / note management for tasks and bookings
 - `lib/features/orders/`: decommissioned placeholder folder with `README.md` only; standalone orders runtime was removed on 2026-03-01
 - `lib/features/proposals/`: proposal models, data (repositories), routes (payment); view re-exports from tasks for list/submit/tile/payment screens
 - `lib/features/tasks/`: task creation, details, requests/offers, tender payment, delivery flows
   - `exceptions/offer_exceptions.dart` — **NEW (v2.20)** Custom exceptions: `PriceMismatchException`, `OfferAlreadyAcceptedException`
+  - `models/expired_bid_filter.dart` — **Phase D** Extracted `ExpiredBidFilter` enum + extension for bid list filtering
   - `viewmodels/award_expiration_monitor.dart` — **NEW (v2.20)** Countdown timer for unpaid awards with urgency levels
+  - `viewmodels/submit_request_view_model.dart` — **Phase D** Business logic for bid submission/replacement (validateTask, checkReplaceability, submitNewBid, replaceBid)
+  - `viewmodels/requests_filter_view_model.dart` — **Phase D** Filter/sort/award state for requests list (subscribes to TaskRequestsViewModel)
+  - `view/widgets/requests/request_award_dialog.dart` — **Phase D** Extracted award confirmation dialog + payment flow + price mismatch dialog
+  - `services/task_offer_service.dart` — **Phase E** 13 offer/payment methods extracted from TaskService
+  - `services/task_request_error_mapper.dart` — **Phase E** 6 error mapping methods for task requests
+  - `viewmodels/task_requests_award_delegate.dart` — **Phase E** Award/payment/accept/cancel flows delegate
+  - `services/task_deep_link_handler.dart` — **Phase E** Deep link handler for task routes
+  - `view/widgets/task_concept_section.dart` — **Phase E** Extracted task concept section widget
+  - `view/widgets/booking_logistics_section.dart` — **Phase E** Extracted booking logistics section widget
 - `lib/features/wallet/`: wallet state and ledger-backed balance views; `utils/transaction_label_helper.dart` — human-readable transaction source/destination labels
+  - `view/widgets/wallet_hero_card.dart` — **Phase E** Extracted wallet hero/balance card
+  - `view/widgets/wallet_timeline_card.dart` — **Phase E** Extracted wallet transaction timeline card
 - `lib/features/work/`: unified work item details and CTA resolution
+  - `services/work_deep_link_handler.dart` — **Phase E** Deep link handler for work routes
+  - `view/widgets/work_item_bottom_actions.dart` — **Phase E** Extracted work item bottom action bar
+  - `view/widgets/work_item_booking_details.dart` — **Phase E** Extracted work item booking details section
+  - `view/widgets/work_item_guard_widgets.dart` — **Phase E** Extracted work item guard/state widgets
 
 ## `test/` - Automated Test Layout
 
@@ -216,8 +260,12 @@ test/
 ├── fixtures/           # Test data fixtures
 │   └── profiles.dart   # Role switching fixtures, JWT payloads, error responses
 ├── helpers/            # Test utilities and mocks
-│   ├── mock_supabase.dart      # Mock Supabase client for unit testing
-│   └── role_switch_helpers.dart # Role switch coordinator mock, simulator
+│   ├── helpers.dart             # Barrel file — re-exports all helpers
+│   ├── mock_supabase.dart       # Mock Supabase client for unit testing
+│   ├── mock_supabase_rpc.dart   # Mock RPC helper with chainable query support
+│   ├── mock_services.dart       # Shared mock classes (8): MockWalletRepository, MockAccountGuardService, MockChatRepository, MockDirectOffersService, MockDashboardRepository, MockDashboardCacheService, MockBookingService, MockTaskService
+│   ├── role_switch_helpers.dart # Role switch coordinator mock, simulator
+│   └── ledger_rpc_invoker.dart  # Ledger RPC helpers for fee locking tests
 ├── rls/                # RLS policy security tests
 │   ├── rls_test_helper.dart    # RLS assertion library (8 methods)
 │   ├── fixtures/
@@ -227,22 +275,66 @@ test/
 │   └── role_switch_jwt_test.dart  # JWT policy tests (7 tests)
 ├── unit/
 │   ├── auth/
+│   │   ├── auth_repository_test.dart
+│   │   ├── auth_session_view_model_test.dart  # Phase C: 32 tests (session lifecycle, auth stream, profile, logout, dispose)
+│   │   └── auth_form_view_model_test.dart     # Phase E: auth form validation and submission tests
 │   ├── booking/
+│   ├── chat/
+│   │   └── chat_view_model_test.dart          # Phase C: 21 tests (CRUD, messages, offers, realtime, role switch, dispose)
+│   ├── categories/
+│   │   └── categories_view_model_test.dart    # Phase E: categories loading, filtering, error handling
 │   ├── core/
+│   │   ├── sentry_crash_reporting_service_test.dart  # Phase D: 10 tests (construction, interface, safe methods, singleton)
+│   │   ├── deep_link_registry_test.dart       # Phase E: registry, handler registration, route matching
+│   │   └── models/
+│   │       ├── view_state_test.dart            # Phase E: ViewState sealed class tests
+│   │       └── app_failure_test.dart           # Phase E: AppFailure sealed class tests
 │   ├── dashboard/
+│   │   ├── dashboard_permission_service_test.dart
+│   │   ├── dashboard_view_model_test.dart     # Phase C: 20 tests (role loading, role switch, refresh, lazy-loading, dispose)
+│   │   ├── dashboard_work_delegate_test.dart  # Phase D: 10 tests (work items, caches, actions, dispose safety)
+│   │   ├── dashboard_inbox_delegate_test.dart # Phase D: 8 tests (inbox state, grouping, reject, dispose safety)
+│   │   └── dashboard_booking_delegate_test.dart # Phase D: 11 tests (bookings, filter, accept/decline/cancel)
+│   ├── direct_offers/
+│   │   └── direct_offer_details_view_model_test.dart  # Phase E: direct offer details, accept, pay, deliver
 │   ├── home/
 │   ├── management/
-│   ├── models/
+│   ├── models/                                # 14 test files (7 original + 7 new in Phase C)
+│   ├── portfolio/
+│   │   └── portfolio_view_model_test.dart     # Phase E: portfolio CRUD, reorder, error handling
 │   ├── profile/
-│   │   └── role_switch_result_test.dart  # RoleSwitchResult model tests
+│   │   ├── role_switch_result_test.dart
+│   │   ├── public_profile_view_model_test.dart  # Phase E: public profile loading, reviews, stats
+│   │   └── user_profile_view_model_test.dart    # Phase E: user profile editing, avatar, settings
 │   ├── proposals/
+│   ├── saved/
+│   │   └── saved_tasks_view_model_test.dart   # Phase E: saved tasks toggle, list, error handling
 │   ├── safety/
-│   │   └── dispute_service_test.dart    # DisputeService submitDispute + hasOpen* tests
+│   │   ├── dispute_service_test.dart
+│   │   └── safety_view_model_test.dart        # Phase E: safety/dispute view model tests
+│   ├── search/
+│   │   └── search_view_model_test.dart        # Phase E: search query, results, pagination
+│   ├── services/
+│   │   └── my_services_view_model_test.dart   # Phase E: my services CRUD, publish, error handling
 │   ├── tasks/
-│   └── tender/               # **NEW (v2.20)** Tender lifecycle unit tests
-│       ├── award_expiration_monitor_test.dart  # Timer and urgency tests
-│       ├── task_requests_service_test.dart      # Exception handling tests
-│       └── task_requests_view_model_test.dart   # Flow logic tests
+│   │   ├── task_view_model_test.dart
+│   │   ├── task_filter_view_model_test.dart
+│   │   ├── tender_payment_coordinator_test.dart
+│   │   └── tender_payment_view_model_test.dart  # Phase C: 53 tests (submit, WebView, recovery, error mapping, edge cases)
+│   ├── viewmodels/           # Phase D: extracted ViewModel tests
+│   │   ├── submit_request_view_model_test.dart    # Phase D: 15 tests (validate, replaceability, submit, replace, comparison)
+│   │   └── requests_filter_view_model_test.dart   # Phase D: 15 tests (filter, count, awarding state, pagination)
+│   ├── tender/               # Tender lifecycle unit tests
+│   │   ├── award_expiration_monitor_test.dart
+│   │   ├── task_requests_service_test.dart
+│   │   └── task_requests_view_model_test.dart
+│   ├── work/
+│   │   └── work_item_details_view_model_test.dart  # Phase E: work item details, CTA, state transitions
+│   └── wallet/
+│       ├── ledger_service_test.dart
+│       ├── wallet_presentation_helper_test.dart
+│       ├── wallet_service_test.dart
+│       └── wallet_view_model_test.dart          # Phase C: 36 tests (balance, dedup, pagination, withdrawal, errors)
 └── widget/
     ├── app/
     ├── auth/

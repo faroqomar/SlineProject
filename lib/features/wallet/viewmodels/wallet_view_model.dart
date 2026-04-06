@@ -1,18 +1,22 @@
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../data/wallet_repository.dart';
-import '../models/wallet_activity_model.dart';
-import '../models/wallet_balance_model.dart';
-import '../utils/wallet_presentation_helper.dart';
-import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/services/account_guard_service.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/utils/error_mapper.dart';
+import 'package:sline_app/features/wallet/data/wallet_repository.dart';
+import 'package:sline_app/features/wallet/models/wallet_activity_model.dart';
+import 'package:sline_app/features/wallet/models/wallet_balance_model.dart';
+import 'package:sline_app/features/wallet/utils/wallet_presentation_helper.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class WalletViewModel extends ChangeNotifier {
-  WalletViewModel({SupabaseClient? client})
-    : _repo = WalletRepository(client ?? Supabase.instance.client),
-      _accountGuardService = AccountGuardService(
-        client: client ?? Supabase.instance.client,
-      );
+  WalletViewModel({
+    WalletRepository? repo,
+    AccountGuardService? accountGuardService,
+    SupabaseClient? client,
+  }) : _repo = repo ?? WalletRepository(client ?? Supabase.instance.client),
+       _accountGuardService =
+           accountGuardService ??
+           AccountGuardService(client: client ?? Supabase.instance.client);
 
   final WalletRepository _repo;
   final AccountGuardService _accountGuardService;
@@ -69,8 +73,8 @@ class WalletViewModel extends ChangeNotifier {
       }
       hasMore = txns.length == 20;
       _hasLoadedWallet = true;
-    } catch (e) {
-      error = e.toString();
+    } on Exception catch (e) {
+      error = ErrorMapper.map(e);
       AppLogger.e('Failed to load wallet', error: e);
     } finally {
       isLoading = false;
@@ -93,8 +97,8 @@ class WalletViewModel extends ChangeNotifier {
         _cursor = txns.last.createdAtUtc.toUtc().toIso8601String();
       }
       hasMore = txns.length == 20;
-    } catch (e) {
-      error = e.toString();
+    } on Exception catch (e) {
+      error = ErrorMapper.map(e);
       AppLogger.e('Failed to load more activities', error: e);
     } finally {
       isLoading = false;
@@ -134,10 +138,10 @@ class WalletViewModel extends ChangeNotifier {
       AppLogger.i('Withdrawal requested: amount=$amount', tag: 'Wallet');
       return true;
     } on FormatException catch (e) {
-      error = e.message;
+      error = 'Invalid withdrawal amount. Please check and try again.';
       AppLogger.w('Withdrawal failed: ${e.message}', tag: 'Wallet');
       return false;
-    } catch (e) {
+    } on Exception catch (e) {
       error = 'Failed to request withdrawal. Please try again.';
       AppLogger.e('Withdrawal request failed', error: e, tag: 'Wallet');
       return false;

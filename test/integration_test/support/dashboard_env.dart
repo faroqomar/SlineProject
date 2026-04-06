@@ -1,5 +1,3 @@
-library;
-
 /// Integration environment contract for dashboard remediation tests.
 ///
 /// Values are read from `--dart-define` so tests fail fast (skip) when

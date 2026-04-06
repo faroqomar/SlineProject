@@ -49,7 +49,7 @@ class _FiltersModalState extends State<FiltersModal> {
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,

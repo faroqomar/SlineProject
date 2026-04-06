@@ -13,11 +13,14 @@ import 'package:sline_app/features/profile/view/public_profile_screen.dart';
 class ProposalDetailsModal extends StatelessWidget {
   final Map<String, dynamic>? proposal; // Pass mock proposal or real one later
 
+  @Deprecated(
+    'Use proposals list and tile; see DEPRECATION_Proposals_2026-03-04',
+  )
   const ProposalDetailsModal({super.key, this.proposal});
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
 
     // Mock Data if null
     final data =
@@ -32,10 +35,10 @@ class ProposalDetailsModal extends StatelessWidget {
             'verified': true,
             'online': true,
           },
-          'bidAmount': '\$700',
+          'bidAmount': r'$700',
           'deliveryTime': '4 Days',
           'coverLetter':
-              'Hi, I have 5 years of experience in logo design and branding for tech startups. I utilize Adobe Illustrator and can provide vector files. I\'ve worked with AI companies before and understand the aesthetic you\'re looking for.',
+              "Hi, I have 5 years of experience in logo design and branding for tech startups. I utilize Adobe Illustrator and can provide vector files. I've worked with AI companies before and understand the aesthetic you're looking for.",
           'attachments': ['portfolio_v1.pdf', 'concept_sketch.jpg'],
         };
 

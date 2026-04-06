@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-
-import '../../../../core/services/logger_service.dart';
-import '../../viewmodels/portfolio_view_model.dart';
-import '../../models/portfolio_item.dart';
-import '../widgets/image_placeholder.dart';
-import 'edit_portfolio_sheet.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/features/portfolio/models/portfolio_item.dart';
+import 'package:sline_app/features/portfolio/view/sheets/edit_portfolio_sheet.dart';
+import 'package:sline_app/features/portfolio/view/widgets/image_placeholder.dart';
+import 'package:sline_app/features/portfolio/viewmodels/portfolio_view_model.dart';
 
 /// Bottom sheet that shows portfolio item details and actions.
 /// Uses effectiveImageRef for rendering portfolio images.
@@ -121,7 +120,7 @@ class PortfolioDetailsSheet extends StatelessWidget {
                         item,
                         controller,
                       );
-                      if (updated == true && context.mounted) {
+                      if ((updated ?? false) && context.mounted) {
                         Navigator.of(context).pop();
                       }
                     },
@@ -161,7 +160,7 @@ class PortfolioDetailsSheet extends StatelessWidget {
                         ),
                       );
                       if (!context.mounted) return;
-                      if (ok == true) {
+                      if (ok ?? false) {
                         AppLogger.i(
                           'User confirmed delete',
                           tag: 'PortfolioDetailsSheet',

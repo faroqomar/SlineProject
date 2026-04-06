@@ -1,7 +1,7 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/features/booking/models/booking_model.dart';
 import 'package:sline_app/features/booking/services/booking_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Repository layer for Booking feature.
 class BookingRepository {

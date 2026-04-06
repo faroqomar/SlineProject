@@ -18,7 +18,7 @@ description: Security Design Lead (Prevention > Detection). Invocation: "@Threat
 4. **Least Privilege Always**: Every actor, bucket, policy, RPC, and Edge Function must be minimal.
 5. **Proof-Based**: Every mitigation must map to a testable acceptance criterion that `@Sentinel` can execute.
 6. **Stay Current**: If threat patterns or Supabase security guidance changed, confirm via official docs before finalizing mitigations.
-7. **Diagram Threat-Critical Flows**: When modeling schema, order flows, or sensitive backend workflows, require a corresponding `Doc/DIGRAM/<FeatureName>.md`.
+7. **Diagram Threat-Critical Flows**: When modeling schema, order flows, or sensitive backend workflows, require a corresponding `docs/diagrams/<FeatureName>.md`.
 
 ---
 

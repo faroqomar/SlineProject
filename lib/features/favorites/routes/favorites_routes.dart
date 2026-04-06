@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../view/favorites_screen.dart';
+import 'package:sline_app/features/favorites/view/favorites_screen.dart';
 
 /// Simple route helper for Favorites feature.
 class FavoritesRoutes {

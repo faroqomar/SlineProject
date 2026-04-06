@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
-import '../../../core/utils/format_price.dart';
-import '../models/work_log_model.dart';
-import '../models/work_log_scope.dart';
-import '../services/work_log_service.dart';
+import 'package:sline_app/core/utils/format_price.dart';
+import 'package:sline_app/features/management/models/work_log_model.dart';
+import 'package:sline_app/features/management/models/work_log_scope.dart';
+import 'package:sline_app/features/management/services/work_log_service.dart';
 
 class OrderManagementViewModel extends ChangeNotifier {
   final WorkLogService _service;
@@ -33,7 +33,7 @@ class OrderManagementViewModel extends ChangeNotifier {
 
     try {
       _logs = await _service.getLogs(scope);
-    } catch (e) {
+    } on Exception catch (e) {
       _loadError = _normalizeError(e);
     } finally {
       _isLoading = false;
@@ -62,7 +62,7 @@ class OrderManagementViewModel extends ChangeNotifier {
       );
       await loadLogs(scope);
       return true;
-    } catch (e) {
+    } on Exception catch (e) {
       _actionError = _normalizeError(e);
       return false;
     } finally {
@@ -86,7 +86,7 @@ class OrderManagementViewModel extends ChangeNotifier {
       );
       await loadLogs(scope);
       return true;
-    } catch (e) {
+    } on Exception catch (e) {
       _actionError = _normalizeError(e);
       return false;
     } finally {
@@ -109,7 +109,7 @@ class OrderManagementViewModel extends ChangeNotifier {
       );
       await loadLogs(scope);
       return true;
-    } catch (e) {
+    } on Exception catch (e) {
       _actionError = _normalizeError(e);
       return false;
     } finally {

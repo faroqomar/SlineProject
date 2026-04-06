@@ -154,7 +154,7 @@ If the plan included Supabase migration steps, also require:
 
 If the feature changed schema, order flow, or backend process flow, also require:
 
-- `Doc/DIGRAM/<FeatureName>.md` exists
+- `docs/diagrams/<FeatureName>.md` exists
 - the file contains both a diagram and an explanation
 - the diagram matches the implemented files, tables, policies, and flow
 

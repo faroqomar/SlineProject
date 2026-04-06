@@ -40,7 +40,7 @@ class DashboardBookingCard extends StatelessWidget {
     final taskTitle = booking.taskData?['title'] ?? 'Task';
     final bookingDue = booking.dueAtUtc ?? booking.scheduledAt;
 
-    String? displayNote = booking.note;
+    var displayNote = booking.note;
     if (displayNote != null && displayNote.contains('---')) {
       final parts = displayNote.split('---');
       if (parts.length > 1) {
@@ -72,7 +72,7 @@ class DashboardBookingCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: AppDimens.p16),
       onTap: () async {
         final result = await onTapDetails(booking);
-        if (result == true && context.mounted && onRefresh != null) {
+        if ((result ?? false) && context.mounted && onRefresh != null) {
           onRefresh!();
         }
       },

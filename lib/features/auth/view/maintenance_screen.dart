@@ -28,7 +28,7 @@ class MaintenanceScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppDimens.p12),
                 Text(
-                  message?.isNotEmpty == true
+                  message?.isNotEmpty ?? false
                       ? message!
                       : 'We are improving SLine right now. Please try again shortly.',
                   style: AppTypography.bodyMedium.copyWith(

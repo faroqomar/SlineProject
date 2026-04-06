@@ -116,7 +116,6 @@ void main() {
                 find.text('Booking Details').evaluate().isNotEmpty,
             isTrue,
           );
-          break;
         case 'booking':
           await pumpUntilFound(
             tester,
@@ -126,7 +125,6 @@ void main() {
             reason: 'Deep link did not open BookingDetailsScreen.',
           );
           expect(find.text('Booking Details'), findsOneWidget);
-          break;
         case 'conversation':
         case 'message':
           await pumpUntilFound(
@@ -137,7 +135,6 @@ void main() {
             reason: 'Deep link did not open ChatScreen.',
           );
           expect(find.byKey(ChatScreen.messageInputKey), findsOneWidget);
-          break;
         default:
           throw TestFailure('[$tag] Unsupported candidate type: $entityType');
       }

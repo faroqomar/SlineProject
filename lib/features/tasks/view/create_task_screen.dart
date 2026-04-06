@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
 import 'package:sline_app/core/widgets/glass_container.dart';
-import 'package:sline_app/features/categories/data/categories_repository.dart';
 import 'package:sline_app/features/categories/models/category_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
+import 'package:sline_app/features/tasks/view/widgets/booking_logistics_section.dart';
+import 'package:sline_app/features/tasks/view/widgets/task_concept_section.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
 
 class CreateTaskScreen extends StatefulWidget {
@@ -157,20 +158,22 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     super.didChangeDependencies();
     if (!_categoriesLoadScheduled) {
       _categoriesLoadScheduled = true;
-      _loadCategories();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _loadCategories();
+      });
     }
   }
 
   Future<void> _loadCategories() async {
     setState(() => _categoriesLoading = true);
     try {
-      final repo = context.read<CategoriesRepository>();
-      final cats = await repo.getAll();
+      final vm = context.read<TaskViewModel>();
+      final cats = await vm.loadCategories();
       if (!mounted) return;
       setState(() {
         _categories = cats;
       });
-    } catch (e) {
+    } on Exception catch (_) {
       if (!mounted) return;
       setState(() {
         _categories = [];
@@ -227,7 +230,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
     try {
       // Use package price if booking, else budget
-      double budget = double.tryParse(_budgetController.text) ?? 0;
+      var budget = double.tryParse(_budgetController.text) ?? 0;
 
       Map<String, dynamic>? packages;
       if (_selectedTaskType == TaskType.booking) {
@@ -240,7 +243,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
         // Use lowest package price as "starting at" budget
         double? minPrice;
-        for (var tierInfo in _packagesData.values) {
+        for (final tierInfo in _packagesData.values) {
           final p = double.tryParse(tierInfo['price'] ?? '');
           if (p != null) {
             if (minPrice == null || p < minPrice) minPrice = p;
@@ -288,7 +291,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
       if (!mounted) return;
       Navigator.pop(context);
-    } catch (e) {
+    } on Exception catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
@@ -302,7 +305,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final AppColorScheme colorScheme = context.colorScheme;
+    final colorScheme = context.colorScheme;
 
     return Scaffold(
       backgroundColor: colorScheme.phoneBackground,
@@ -422,254 +425,18 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
   // --- Step 1: Concept ---
   Widget _buildStep1(AppColorScheme colorScheme) {
-    final popularCategories = [
-      {
-        'icon': Icons.palette_outlined,
-        'name': 'Design',
-        'color': AppColors.lightRed,
-      },
-      {'icon': Icons.code, 'name': 'Development', 'color': AppColors.lightTeal},
-      {'icon': Icons.edit_note, 'name': 'Writing', 'color': AppColors.sand},
-      {'icon': Icons.phone_iphone, 'name': 'Mobile', 'color': AppColors.gold},
-      {
-        'icon': Icons.campaign_outlined,
-        'name': 'Marketing',
-        'color': AppColors.mediumGreyBlue,
-      },
-      {'icon': Icons.movie_outlined, 'name': 'Video', 'color': AppColors.teal},
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Select Task Type',
-          style: AppTypography.h5.copyWith(color: colorScheme.text),
-        ),
-        const SizedBox(height: AppDimens.p12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildTypeCard(
-                cardKey: CreateTaskScreen.tenderTypeCardKey,
-                icon: Icons.assignment_outlined,
-                label: 'Tender',
-                subLabel: 'Open proposals',
-                type: TaskType.tender,
-                colorScheme: colorScheme,
-                color: AppColors.lightRed,
-              ),
-            ),
-            const SizedBox(width: AppDimens.p12),
-            Expanded(
-              child: _buildTypeCard(
-                cardKey: CreateTaskScreen.bookingTypeCardKey,
-                icon: Icons.calendar_today_outlined,
-                label: 'Booking',
-                subLabel: 'Direct hire',
-                type: TaskType.booking,
-                colorScheme: colorScheme,
-                color: AppColors.teal,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppDimens.p24),
-        Text(
-          'Choose Category',
-          style: AppTypography.h5.copyWith(color: colorScheme.text),
-        ),
-        const SizedBox(height: AppDimens.p12),
-        _categoriesLoading
-            ? const Center(child: CircularProgressIndicator())
-            : GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: AppDimens.p10,
-                  mainAxisSpacing: AppDimens.p10,
-                  childAspectRatio: 1.0,
-                ),
-                itemCount: _categories.isNotEmpty
-                    ? _categories.length
-                    : popularCategories.length,
-                itemBuilder: (context, index) {
-                  // Use actual categories if available, otherwise fallback
-                  if (_categories.isNotEmpty) {
-                    final cat = _categories[index];
-                    final isSelected = _selectedCategoryId == cat.id;
-                    final icon = _getCategoryIcon(cat.name);
-                    final catColor = _getCategoryColor(cat.name);
-
-                    return _buildCategoryCard(
-                      icon: icon,
-                      name: cat.name,
-                      isSelected: isSelected,
-                      color: catColor,
-                      colorScheme: colorScheme,
-                      onTap: () => setState(() {
-                        _selectedCategoryId = cat.id;
-                        _selectedCategoryName = cat.name;
-                      }),
-                    );
-                  } else {
-                    final cat = popularCategories[index];
-                    final catName = cat['name'] as String;
-                    final isSelected =
-                        _selectedCategoryName ==
-                        catName; // Check name for fallback
-
-                    return _buildCategoryCard(
-                      icon: cat['icon'] as IconData,
-                      name: catName,
-                      isSelected: isSelected,
-                      color: cat['color'] as Color,
-                      colorScheme: colorScheme,
-                      onTap: () => setState(() {
-                        _selectedCategoryId =
-                            null; // Clear UUID as we don't have one
-                        _selectedCategoryName = catName;
-                      }),
-                    );
-                  }
-                },
-              ),
-      ],
-    );
-  }
-
-  Widget _buildCategoryCard({
-    required IconData icon,
-    required String name,
-    required bool isSelected,
-    required Color color,
-    required AppColorScheme colorScheme,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? color.withValues(alpha: 0.2)
-              : colorScheme.cardBackground,
-          borderRadius: BorderRadius.circular(AppDimens.r16),
-          border: Border.all(
-            color: isSelected ? color : Colors.transparent,
-            width: 2,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 24, color: isSelected ? color : colorScheme.text),
-            const SizedBox(height: 6),
-            Text(
-              name,
-              style: AppTypography.captionBold.copyWith(
-                color: colorScheme.text,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  IconData _getCategoryIcon(String name) {
-    final lowerName = name.toLowerCase();
-    if (lowerName.contains('design')) return Icons.palette_outlined;
-    if (lowerName.contains('dev') || lowerName.contains('code')) {
-      return Icons.code;
-    }
-    if (lowerName.contains('writ') || lowerName.contains('content')) {
-      return Icons.edit_note;
-    }
-    if (lowerName.contains('mobile') || lowerName.contains('app')) {
-      return Icons.phone_iphone;
-    }
-    if (lowerName.contains('market') || lowerName.contains('seo')) {
-      return Icons.campaign_outlined;
-    }
-    if (lowerName.contains('video') || lowerName.contains('media')) {
-      return Icons.movie_outlined;
-    }
-    return Icons.folder_outlined;
-  }
-
-  Color _getCategoryColor(String name) {
-    final lowerName = name.toLowerCase();
-    if (lowerName.contains('design')) return AppColors.lightRed;
-    if (lowerName.contains('dev') || lowerName.contains('code')) {
-      return AppColors.lightTeal;
-    }
-    if (lowerName.contains('writ') || lowerName.contains('content')) {
-      return AppColors.sand;
-    }
-    if (lowerName.contains('mobile') || lowerName.contains('app')) {
-      return AppColors.gold;
-    }
-    if (lowerName.contains('market') || lowerName.contains('seo')) {
-      return AppColors.mediumGreyBlue;
-    }
-    if (lowerName.contains('video') || lowerName.contains('media')) {
-      return AppColors.teal;
-    }
-    return AppColors.teal;
-  }
-
-  Widget _buildTypeCard({
-    Key? cardKey,
-    required IconData icon,
-    required String label,
-    required String subLabel,
-    required TaskType type,
-    required AppColorScheme colorScheme,
-    required Color color,
-  }) {
-    final isSelected = _selectedTaskType == type;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedTaskType = type),
-      child: AnimatedContainer(
-        key: cardKey,
-        duration: const Duration(milliseconds: 200),
-        height: 100,
-        decoration: BoxDecoration(
-          color: isSelected
-              ? color.withValues(alpha: 0.2)
-              : colorScheme.cardBackground,
-          borderRadius: BorderRadius.circular(AppDimens.r18),
-          border: Border.all(
-            color: isSelected ? color : Colors.transparent,
-            width: 2,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 28, color: isSelected ? color : colorScheme.text),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: AppTypography.bodySmall.copyWith(
-                fontWeight: FontWeight.bold,
-                color: isSelected ? color : colorScheme.text,
-              ),
-            ),
-            Text(
-              subLabel,
-              style: AppTypography.micro.copyWith(
-                color: colorScheme.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return TaskConceptSection(
+      selectedTaskType: _selectedTaskType,
+      selectedCategoryId: _selectedCategoryId,
+      selectedCategoryName: _selectedCategoryName,
+      categories: _categories,
+      categoriesLoading: _categoriesLoading,
+      onTaskTypeChanged: (TaskType type) =>
+          setState(() => _selectedTaskType = type),
+      onCategorySelected: (id, name) => setState(() {
+        _selectedCategoryId = id;
+        _selectedCategoryName = name;
+      }),
     );
   }
 
@@ -783,122 +550,17 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   }
 
   Widget _buildBookingLogistics(AppColorScheme colorScheme) {
-    // Tab selector for packages
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: colorScheme.inputBackground,
-            borderRadius: BorderRadius.circular(AppDimens.r14),
-            border: Border.all(color: colorScheme.inputBorder),
-          ),
-          child: Row(
-            children: ['Basic', 'Standard', 'Premium'].asMap().entries.map((
-              entry,
-            ) {
-              final index = entry.key;
-              final label = entry.value;
-              final isSelected = _selectedPackageTier == index;
-              final Key tierKey = switch (index) {
-                0 => CreateTaskScreen.packageTierBasicKey,
-                1 => CreateTaskScreen.packageTierStandardKey,
-                _ => CreateTaskScreen.packageTierPremiumKey,
-              };
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() => _selectedPackageTier = index);
-                    _updateControllersFromState(index);
-                  },
-                  child: AnimatedContainer(
-                    key: tierKey,
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppDimens.p10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected ? AppColors.teal : Colors.transparent,
-                      borderRadius: BorderRadius.circular(AppDimens.r10),
-                      boxShadow: isSelected
-                          ? [
-                              BoxShadow(
-                                color: AppColors.teal.withValues(alpha: 0.3),
-                                blurRadius: 8,
-                              ),
-                            ]
-                          : [],
-                    ),
-                    child: Text(
-                      label,
-                      textAlign: TextAlign.center,
-                      style: AppTypography.captionBold.copyWith(
-                        color: isSelected
-                            ? Colors.white
-                            : colorScheme.textSecondary,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-        const SizedBox(height: AppDimens.p16),
-        // Package Fields
-        Row(
-          children: [
-            Expanded(
-              child: _buildLabeledInput(
-                'Price (\$)',
-                AppTextField(
-                  hintText: '0',
-                  fieldKey: CreateTaskScreen.packagePriceFieldKey,
-                  controller:
-                      _packagePriceController, // Note: Shared controller for now (simplified)
-                  keyboardType: TextInputType.number,
-                ),
-                colorScheme,
-              ),
-            ),
-            const SizedBox(width: AppDimens.p12),
-            Expanded(
-              child: _buildLabeledInput(
-                'Delivery (Days)',
-                AppTextField(
-                  hintText: '1',
-                  controller: _packageDeliveryController,
-                  keyboardType: TextInputType.number,
-                ),
-                colorScheme,
-              ),
-            ),
-            const SizedBox(width: AppDimens.p12),
-            Expanded(
-              child: _buildLabeledInput(
-                'Revisions',
-                AppTextField(
-                  hintText: '1',
-                  controller: _packageRevisionsController,
-                ),
-                colorScheme,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppDimens.p16),
-        _buildLabeledInput(
-          'Package Description',
-          AppTextField(
-            hintText: 'What is included?',
-            fieldKey: CreateTaskScreen.packageDescriptionFieldKey,
-            controller: _packageDescriptionController,
-            maxLines: 3,
-          ),
-          colorScheme,
-        ),
-      ],
+    return BookingLogisticsSection(
+      selectedPackageTier: _selectedPackageTier,
+      packagePriceController: _packagePriceController,
+      packageDeliveryController: _packageDeliveryController,
+      packageRevisionsController: _packageRevisionsController,
+      packageDescriptionController: _packageDescriptionController,
+      onTierChanged: (index) {
+        setState(() => _selectedPackageTier = index);
+        _updateControllersFromState(index);
+      },
+      buildLabeledInput: _buildLabeledInput,
     );
   }
 

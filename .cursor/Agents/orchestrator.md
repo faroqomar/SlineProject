@@ -22,6 +22,15 @@ description: Multi-Agent Coordinator & Report Synthesizer. Runs all agents seque
 
 ---
 
+## 0.5) When to Use This Agent
+
+- **@Orchestrator**: When code is ALREADY WRITTEN and needs comprehensive review/audit. The Orchestrator runs all agents in sequence for a holistic review.
+- **@Executor**: When there is a plan to IMPLEMENT (code changes, migrations, tests). The Executor owns the implementation pipeline.
+
+These two agents are never used simultaneously on the same work. The Orchestrator reviews code; the Executor produces it.
+
+---
+
 ## 1) Required Inputs (Start Conditions)
 
 Before starting the pipeline, confirm:
@@ -55,8 +64,37 @@ STAGE 8  ─── @Observability     Telemetry audit (logging, privacy, instrum
 STAGE 9  ─── @SlineDocs         Documentation sync audit (docs ↔ code ↔ DB reality)
 STAGE 10 ─── @CodeGuard         Final performance + security + dependency gate
 STAGE 11 ─── @Sentinel          Final QA + RLS + release gate
+STAGE 11.5── @Sentinel          Runtime smoke test (emulator/device, if UI/state changes)
 STAGE 12 ─── @Orchestrator      Merge all findings → produce Master Report
+STAGE 13 ─── @Orchestrator      Fix Verification (Conditional — see §2.2)
 ```
+
+### 2.2 Stage 13: Fix Verification (Conditional)
+
+If the Master Report contains BLOCKER or HIGH findings:
+1. Executor applies fixes per the Fix Plan (Section C of the report).
+2. Re-run the affected pipeline stages (per the re-run policy in §8).
+3. Update the Master Report with a "Fix Verification" section confirming each fix was applied and re-verified.
+4. If new findings emerge from re-run, repeat until clean.
+
+This stage only runs when the human approves fixes from Stage 12's Master Report. It is not automatic.
+
+Evidence: Phase E (Session 4) — Orchestrator review found 20 issues (1 BLOCKER, 4 HIGH, 8 MED, 7 LOW) after execution. Fixes were applied in a follow-up, but the "review → fix → re-verify" handoff was not formally defined, leading to ad-hoc process.
+
+### 2.1 Parallel Review Mode (Review-Only Pipelines)
+
+When the Orchestrator runs in **review mode** (no code implementations, only auditing existing code), the following stages may run in parallel since they audit independent domains and have no data dependencies between them:
+
+| Group | Stages | Rationale |
+|-------|--------|-----------|
+| Parallel Group A | STAGE 1 (@ThreatModeler) + STAGE 2 (@Supabase_Ops) | Security and backend audit independent domains |
+| Parallel Group B | STAGE 3 (@Architect) + STAGE 4 (@Pixel) + STAGE 5 (@APIContract) | MVVM, View, and Contract audits read code but don't depend on each other's output |
+| Sequential | STAGE 6 → 7 → 8 → 9 | DataMigration, TemplateOwner, Observability, Docs may reference prior findings |
+| Sequential | STAGE 10 → 11 → 11.5 → 12 | CodeGuard and Sentinel depend on prior stage findings for gate decisions |
+
+This applies ONLY to review-only pipelines. Implementation pipelines remain strictly sequential (Rule 1: Sequential Only).
+
+Evidence: Phase D Orchestrator review (see `docs/LOG/SESSION_PLAN_PhaseD_Harden_2026-04-03.md`, Phase 8 QA section) ran ThreatModeler + Supabase_Ops in parallel and Architect + Pixel + APIContract in parallel during review-only audit. No data dependency issues observed. Stage ordering for implementation remains locked.
 
 ---
 
@@ -200,6 +238,22 @@ Audit focus:
 - Confirm diagrams and session logs exist where required
 
 Output: `.TODO/SENTINEL_REPORT_<YYYY-MM-DD>_<Scope>.md`
+
+### Stage 11.5 — `@Sentinel` (Runtime Smoke Test)
+
+**When to run:** Only when the scope includes UI changes, ViewModel state management changes, or navigation flow changes. Skip for docs-only or backend-only changes.
+
+Audit focus:
+
+- Run the app on emulator or device
+- Exercise critical flows from the regression checklist (login, create task, dashboard, chat, booking, payment)
+- Check console output for Flutter framework errors (`setState during build`, `RenderFlex overflowed`, etc.)
+- Verify no rapid-fire or debounce issues on interactive elements
+- Report any runtime issues not caught by static analysis or unit tests
+
+Output: Findings appended to `.TODO/SENTINEL_REPORT_<YYYY-MM-DD>_<Scope>.md`
+
+Evidence: SESSION_PhaseB — 2 bugs (setState during build, 9x bid sheet spam) were invisible to `flutter analyze` and `flutter test`, caught only on emulator.
 
 ---
 

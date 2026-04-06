@@ -1,6 +1,309 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2026-03-22
+**Last Updated:** 2026-04-05
+
+---
+
+## 🔧 Quality Audit Phase E — Polish (2026-04-05)
+
+### ✅ Implemented
+
+**E1 — APK Build Resolution:**
+- Kotlin version mismatch from Phase D self-resolved via Flutter SDK / sentry_flutter plugin update
+- Both APK (debug) and Web (release) builds pass
+
+**E2 — CI Check 7 (Core→Features Boundary):**
+- Added architecture guard Check 7: `core/` must not import from `features/` (max 5 threshold, hard failure above)
+- File: `.github/workflows/ci.yml`
+
+**E3 — Lint Migration (very_good_analysis):**
+- Migrated from `flutter_lints` to `very_good_analysis` (~70+ rules active)
+- 862 auto-fixes via `dart fix --apply`, 12 manual fixes
+- 27 noisy/incompatible rules disabled with justification
+- Tracking: `.TODO/LINT_DEBT_PhaseE.md`
+- File: `analysis_options.yaml`
+
+**E4 — DI Normalization (5 ViewModels):**
+- `SavedTasksViewModel` — lazy `SupabaseClient` getter
+- `CategoriesViewModel` — lazy `CategoriesRepository`
+- `PortfolioViewModel` — lazy repo + client
+- `PublicProfileViewModel` — lazy repo
+- `AuthFormViewModel` — lazy `AccountGuardService`
+- Pattern: `late final _repo = _explicitRepo ?? Repository(Supabase.instance.client);`
+
+**E5 — Sealed ViewState & AppFailure:**
+- `lib/core/models/view_state.dart` — `ViewState<T>` → ViewInitial, ViewLoading, ViewLoaded, ViewFailed
+- `lib/core/models/app_failure.dart` — `AppFailure` → NetworkFailure, AuthFailure, ValidationFailure, BusinessFailure
+- Migrated: DirectOfferDetailsVM, BookingVM, WorkItemDetailsVM
+- `_actionInProgress` pattern for mutation operations preserving loaded data
+
+**E6 — God File Decomposition (9 files → 13 delegates/widgets):**
+- `task_offer_service.dart` (454L) — 13 offer/payment methods from TaskService
+- `task_request_error_mapper.dart` (270L) — 6 error mapping methods
+- `task_requests_award_delegate.dart` (413L) — award/payment flows
+- `booking_payment_delegate.dart` (253L) — payment coordination
+- `payment_response_helpers.dart` (71L) — pure helper functions
+- `work_item_bottom_actions.dart` (260L), `work_item_booking_details.dart` (126L), `work_item_guard_widgets.dart` (200L)
+- `wallet_hero_card.dart` (294L), `wallet_timeline_card.dart` (238L)
+- `task_concept_section.dart` (287L), `booking_logistics_section.dart` (152L)
+- `payment_order_summary_card.dart` (101L)
+
+**E7 — VM Tests (171 new, 27/27 VMs covered):**
+- 11 new test files: DirectOfferDetailsVM (28), SearchVM (14), SavedTasksVM (14), AuthFormVM (14), CategoriesVM (10), PortfolioVM (12), PublicProfileVM (9), UserProfileVM (11), SafetyVM (12), MyServicesVM (15), WorkItemDetailsVM (32)
+- Shared mock file expanded: 9 → 21 mock classes (`test/helpers/mock_services.dart`)
+
+**E8 — Coverage Floor Raised:**
+- CI threshold: 28% → 33%
+- Measured coverage: 34.9%
+- File: `.github/workflows/ci.yml`
+
+**E9 — DeepLinkService Registry Refactor:**
+- `lib/core/services/deep_link_registry.dart` — `DeepLinkRegistry` (register, handle, canHandle)
+- `lib/core/services/deep_link_service.dart` — 0 feature imports (was 16), uses registry dispatch
+- 6 feature handler files: task, booking, chat, direct_offers, work, profile
+- UUID validation before routing, generic SnackBar for unknown entities
+
+**E10 — Localization Infrastructure:**
+- `l10n.yaml` config, `lib/l10n/app_en.arb` with 22 key stubs
+- `generate: true` in `pubspec.yaml`
+- MaterialApp wired with delegates and supported locales
+
+**E11 — Orchestrator Review (20 findings, all fixed):**
+- BLOCKER: 13 raw string literals (r'...$var...') broke log interpolation — removed r prefix
+- HIGH: e.toString() leaks, _mapError fallthrough, ViewState data wipe — all fixed with ErrorMapper.map(e) and _actionInProgress
+- MED/LOW: UUID validation, AppLogger in handlers, UTC fix, hardcoded colors, accessibility — all fixed
+
+**E12 — Security Review (8 findings, all fixed):**
+- Fail-closed rate limiting (return false on RPC failure)
+- Removed debug log artifacts (_agentDebugLog functions)
+- Production guard for QICARD_ALLOW_UNSIGNED_LOCAL_DEV
+- Sentry PII sanitization (sanitizePii with Iraqi phone regex)
+- localhost gated behind ENVIRONMENT !== "production"
+- All e.toString()/e.message in SnackBars replaced with ErrorMapper.map(e)
+
+**E13 — System Evolution Report v4:**
+- 16 recommendations applied across all 16 agent files
+- 7 new rules added (raw string guard, error sanitization, ViewState mutation, zone init, web URL cleanup, web awareness, native build gate)
+- Doc/DIGRAM/ → docs/diagrams/ typo fixed across 13 files
+- `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-05.md`
+
+### Metrics
+- Tests: 780 → 982 (+202)
+- Analyze issues: 0
+- Coverage floor: 28% → 33% (measured 34.9%)
+- Architecture checks: 6 → 7
+- VM test coverage: 16/27 → 27/27 (100%)
+- God files >800 lines: 0
+
+### Bug Fixes Applied During Phase E
+- Zone mismatch: moved `WidgetsFlutterBinding.ensureInitialized()` before `runZonedGuarded()`
+- Raw string in `task_requests_view_model.dart:496` — removed `r` prefix
+- Web payment URL re-detection: added `clearPaymentReturnParamsFromUrl()` to `PaymentReturnScreen`
+
+### References
+- Plan: `.TODO/PLAN_PhaseE_Polish_2026-04-04.md`
+- Session Log: `docs/LOG/SESSION_PLAN_PhaseE_Polish_2026-04-04.md`
+- Master Report: `.TODO/MASTER_REPORT_2026-04-05_PhaseE.md`
+- System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-05.md`
+- Lint Debt: `.TODO/LINT_DEBT_PhaseE.md`
+
+---
+
+## 🏷️ Quality Audit Phase D — Harden (2026-04-04)
+
+### ✅ Implemented
+
+**D1 — Sentry Crash Reporting:**
+- `lib/core/services/sentry_crash_reporting_service.dart` — implements `CrashReportingService` interface with `Sentry.captureException`, breadcrumbs, user identity, custom tags
+- `lib/main.dart` — `SentryFlutter.init()` wraps `runZonedGuarded` as outermost error boundary. DSN from `--dart-define=SENTRY_DSN`. Empty DSN = disabled.
+- `lib/features/auth/viewmodels/auth_session_view_model.dart` — attaches anonymized user UUID on login, clears on logout. No PII sent.
+- PII sanitizer on breadcrumbs: strips emails and phone numbers before sending to Sentry.
+- 15 tests (`test/unit/core/sentry_crash_reporting_service_test.dart`): construction, interface, safe methods, singleton swap, PII sanitizer (email, phone, UUID preservation).
+
+**D2 — DashboardViewModel Decomposition (1149 → 537 lines):**
+- `lib/features/dashboard/viewmodels/dashboard_work_delegate.dart` (362L) — work items, cached computed lists, performPrimaryAction, withdrawOffer, releaseOfferWithFee, refundOffer, cancelAwardedOffer
+- `lib/features/dashboard/viewmodels/dashboard_inbox_delegate.dart` (297L) — inbox offers, pending items, myTasks, inboxGroupedByTask, awardOffer, payAwardedOffer, acceptOffer, rejectOffer
+- `lib/features/dashboard/viewmodels/dashboard_booking_delegate.dart` (172L) — bookings, booking filter, acceptBooking, declineBooking, cancelBooking, updateBookingStatus
+- Parent VM composes delegates via proxy getters/methods. Public API unchanged. All 20 existing tests pass unchanged.
+- Dispose safety: each delegate receives `bool Function() isDisposed` callback. Checked before every `onChanged()`.
+- 29 new delegate tests across 3 files.
+
+**D3 — submit_request_sheet Decomposition (916 → 737 lines):**
+- `lib/features/tasks/viewmodels/submit_request_view_model.dart` (261L) — validateTask, checkReplaceability, submitNewBid, replaceBid, computeComparison, error mapping
+- Scoped `ChangeNotifierProvider.value` inside `showModalBottomSheet` builder (function-based sheet, not widget class)
+- 3 extracted private widgets: `_ExistingBidInfo`, `_ComparisonRow`, `_WarningBanner`
+- 15 new tests (`test/unit/viewmodels/submit_request_view_model_test.dart`)
+
+**D4 — requests_list_screen Decomposition (1172 → 604 lines):**
+- `lib/features/tasks/viewmodels/requests_filter_view_model.dart` (87L) — filter state, applyFilter, getCountString, isAwarding, pagination delegation. Subscribes to underlying TaskRequestsViewModel for reactive updates.
+- `lib/features/tasks/models/expired_bid_filter.dart` (28L) — extracted enum + extension
+- `lib/features/tasks/view/widgets/requests/request_award_dialog.dart` (416L) — showAwardDialog, _executeAward, showPriceMismatchDialog, _StepRow widget
+- `didUpdateWidget` handles taskId changes (disposes stale filterVm)
+- 15 new tests (`test/unit/viewmodels/requests_filter_view_model_test.dart`)
+
+**D5 — pgTAP / SQL Assertion Tests:**
+- `supabase/tests/accept_task_request_test.sql` — 4 tests: accept, auto-reject siblings, double-accept idempotent, task status
+- `supabase/tests/escrow_idempotency_test.sql` — 5 tests: hold succeeds, replay idempotent, no duplicates, missing key, wrong currency
+- `supabase/tests/role_switch_rate_limit_test.sql` — 6 tests: switch, switch back, no-op, stale state, invalid role, audit log
+- All use `BEGIN`/`ROLLBACK` for zero side effects
+
+**D6 — Migration Review Checklist:**
+- `MIGRATION_REVIEW_CHECKLIST.md` — 7 sections: Naming, Rollback, Data Safety, RLS Impact, RPC Contract, Idempotency, Performance
+- Referenced in `CLAUDE.md` Supabase Backend section
+
+**D7 — Edge Function CORS Hardening:**
+- `supabase/functions/_shared/bookin_payment.ts` — `"*"` replaced with `ALLOWED_ORIGIN` env var (defaults to `https://sline.app`)
+- `isTrustedFinishUrl()` narrowed: HTTPS trusted only for `sline.app` (was all HTTPS domains)
+- All 12 Edge Functions affected automatically (all import `corsHeaders` from shared file)
+
+**D8 — paymentId Regex Validation:**
+- `supabase/functions/qicard_webhook_handler/index.ts` — `/^[a-zA-Z0-9\-_]{1,128}$/` for both `intentId` and `paymentId` before `.or()` query
+- Invalid IDs return 400. Logs truncated to 8 chars to prevent PII leakage.
+
+**D9 — CI Coverage Floor:**
+- `.github/workflows/ci.yml` — 28% regression floor. Blocks merges below threshold. Reports to `GITHUB_STEP_SUMMARY`.
+
+**D10 — A6 Architecture Violations Fixed:**
+- `lib/features/notifications/viewmodels/notification_view_model.dart` — lazy `SupabaseClient` getter via `_injectedClient` pattern
+- `lib/features/saved/viewmodels/saved_tasks_view_model.dart` — `SupabaseClient? client` constructor parameter with `Supabase.instance.client` default
+
+**D11 — Architecture Guard Check 3 Tightened:**
+- `.github/workflows/ci.yml` — removed `grep -v 'Supabase\.instance\.client\.auth\.'` exclusion. Widened DI default pattern to `?? Supabase\.instance`.
+
+### Bug Fixes Applied During Phase D
+- `payEscrow` case in `DashboardWorkDelegate.performPrimaryAction()` changed from `return` to `break` — direct offer payment was unreachable
+- `BookingDelegate`: defensive copy in `setBookings`, `UnmodifiableListView` on getter, `loadBookingsData` retry on failure, local list update in accept/decline/cancel
+- `RequestsFilterViewModel`: subscribes to underlying TaskRequestsViewModel changes
+- `SubmitRequestVM`: separate error messages for ownership vs task-closed errors
+
+### Metrics
+- Tests: 706 → 780 (+74 new). All pass. 0 analyze issues.
+- Coverage: 30.6% baseline, 28% floor enforced in CI.
+- Architecture guard: 6 checks pass (Check 3 tightened).
+
+### References
+- Plan: `.TODO/PLAN_PhaseD_Harden_2026-04-03.md`
+- Session Log: `docs/LOG/SESSION_PLAN_PhaseD_Harden_2026-04-03.md`
+- Docs Sync: `.TODO/DOCS_SYNC_2026-04-04_PhaseD.md`
+- System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-04.md`
+
+---
+
+## 🏷️ Quality Audit Phase C — Critical Tests (2026-04-02)
+
+### ✅ Implemented
+
+**5 ViewModel Test Suites (162 tests):**
+- `AuthSessionViewModel` (32 tests): session lifecycle, auth stream events (signedIn/signedOut/tokenRefreshed/passwordRecovery/userUpdated), profile loading with retry, logout, session expiry flag consumption, dispose safety
+- `WalletViewModel` (36 tests): balance + activity parallel fetch, `ensureLoaded` deduplication, cursor-based pagination, withdrawal with AccountGuard check, FormatException vs generic error distinction
+- `TenderPaymentViewModel` (53 tests): submit happy path, WebView redirect flow, payment recovery, error mapping for 5 specific error codes (INVALID_STATE, PAYMENT_NOT_SUCCESS, PAYMENT_DEADLINE_EXPIRED, FORBIDDEN, TASK_REQUEST_NOT_FOUND), edge cases (expired deadline, already processing)
+- `ChatViewModel` (21 tests): conversation CRUD, message send/fetch, direct offer actions, realtime subscription lifecycle, role switch teardown, dispose with `_mounted` guard
+- `DashboardViewModel` (20 tests): construction with role loading, role switch with data refresh, lazy-loaded tab data (overview on init, bookings/inbox on demand), dispose safety with `_safeNotify` and `_abortIfDisposed`
+
+**7 New Model/DTO Test Files (129 tests):**
+- `UserProfile` (10): fromMap/toMap, all-nullable fields, UTC enforcement on forceLogoutAfterUtc
+- `ProfileModel` (22): defaults (activeRole='client', accountStatus='active', skills=[]), copyWith, UTC on createdAt/forceLogoutAfterUtc
+- `Conversation` (22): last_message as Map/List/emptyList/null (4 branches), taskTitle flat vs nested fallback, otherUserTyping default, presenceUpdatedAt, copyWith preserving presence
+- `ChatOfferPayload` (25): price type coercion (int/num/String), days vs legacy delivery fallback, toMap writes 'days' not 'delivery'
+- `WalletBalanceModel` (8): all fields default to 0, zero() factory
+- `WalletActivityModel` (11): numeric defaults, currency='IQD' default, UTC on createdAtUtc
+- `DirectOffer` (31): 22-field parsing, type coercion on price/days/feeRateAppliedBps, 8 nullable DateTimes, 6 computed getters
+
+**4 Existing Model Test Extensions (18 tests):**
+- `BookingModel` (+6): minimal JSON defaults, unknown status fallback, British 'cancelled' spelling, dueAtUtc fallback chain, round-trip for all BookingStatus values
+- `Message` (+5): null attachments, toJson excludes nulls, attachmentSize coercion, round-trip, MessageType enum round-trip
+- `Task` (+4): minimal JSON, TaskStatus round-trips, 'in_progress' vs 'inProgress' mapping, owner_id vs user_id fallback
+- `TaskRequest` (+3): all-optional defaults, OfferStatus round-trips, unknown status to OfferStatus.unknown
+
+**Infrastructure:**
+- Refactored `WalletViewModel` constructor: added optional `repo`, `accountGuardService` params (additive, backwards-compatible)
+- Refactored `ChatViewModel` constructor: added optional `repo`, `accountGuardService`, `directOffersService` params. Fields use `final` via initializer list.
+- Created `test/helpers/mock_services.dart`: 8 shared mock classes (MockWalletRepository, MockAccountGuardService, MockChatRepository, MockDirectOffersService, MockDashboardRepository, MockDashboardCacheService, MockBookingService, MockTaskService)
+- Updated `test/helpers/helpers.dart` barrel to export mock_services.dart
+
+**Production Code Fixes (pre-existing issues exposed by audit):**
+- `ChatViewModel.teardownForRoleSwitch()`: moved `removeAllChannels()` from `Supabase.instance.client` to `_repo.removeAllChannels()` (MVVM violation fix)
+- `ChatViewModel`: replaced `.catchError((e) {` with `.onError<Exception>()` (project convention fix)
+- `DirectOffer.fromJson`: added `.toUtc()` to all 6 DateTime fields
+- `Conversation.fromJson`: added `.toUtc()` to `createdAt`, `lastMessageTime`, `lastMessageSeenAt`, `presenceUpdatedAt`
+- `Conversation.toJson`: added missing `last_message_sender_id` and `last_message_seen_at` fields
+- `ChatRepository`: added `removeAllChannels()` method delegating to `_client.removeAllChannels()`
+
+#### 📊 Results
+
+- Tests: 400 → 706 (+306), 30 skipped, 0 failures
+- VMs tested: 9/26 (35%) → 14/26 (54%)
+- flutter analyze: 0 issues
+- Architecture guard: all 6 checks pass
+
+#### 📋 References
+
+- Plan: `.TODO/PLAN_CriticalTests_2026-04-02.md`
+- Session log: `docs/LOG/SESSION_PLAN_CriticalTests_2026-04-02.md`
+- Master report: `.TODO/MASTER_REPORT_2026-04-02_PhaseC.md`
+- System evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-02_v2.md`
+- Audit: `.TODO/AUDIT_Quality_Architecture_2026-04-01.md` (Phase C section updated)
+
+---
+
+## 🏷️ Quality Audit Phase B — Bug Exposure (2026-04-01)
+
+### ✅ Implemented
+
+- **Unawaited Futures (48 → 0):** All 48 `unawaited_futures` violations resolved across 24 files. Navigator.push, StreamSubscription.cancel, and ViewModel refresh calls wrapped in `unawaited()`. Supabase query builder `.lt()` calls fixed with reassignment pattern (NOT `unawaited()`).
+- **Bare Catch Blocks (258 → 0):** All 258 `avoid_catches_without_on_clauses` violations fixed across 85 files. Changed `catch (e)` to `on Exception catch (e)`. RLS tests use `on PostgrestException catch` for precision. Two places needed `on Error catch` fallback for `Supabase.instance` initialization in tests (`auth_form_view_model.dart`, `notification_view_model.dart`).
+- **MVVM Violations (6 → 0):** (B4) Removed `Supabase.instance` from `submit_request_sheet.dart` — uses `context.read<AuthSessionViewModel>()`. (B5) Moved `TextEditingController`s from `ProfileViewModel` to `EditProfileScreen`. `signOut()` returns bool, no `BuildContext`. `pickAndUploadPortfolioImage()` and `pickAndUploadAvatar()` use error state fields. `material.dart` replaced with `foundation.dart`. (B6) `UserProfileViewModel` no longer imports `ChatScreen` or calls `Navigator.push`. (B7) 3 views no longer import repositories — `TaskViewModel.loadCategories()`, `PublicProfileViewModel()` self-constructs, `TaskRequestsViewModel` defaults `ProposalRepository`.
+- **Architecture Guard Graduated:** Changed from `exit 0` (warning-only) to `exit 1` (hard failure). All 6 checks pass clean. Check 3 refined to exclude DI constructor defaults.
+- **Additional Fixes:** Fixed `notifyListeners()` during build (deferred via `addPostFrameCallback`). Fixed bid sheet rapid-fire spam (added `_isShowingBidSheet` guard). Fixed query builder pagination (`.lt()` reassignment instead of `unawaited()`). Fixed `unnecessary_type_check` (11) and `unused_catch_clause` (10) warnings.
+- **System Evolution:** Produced `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-02.md`. Added 7 new rules to agent system: Error vs Exception (Architect §3.2.1), notifyListeners timing (§3.4.1), async callback guards (§3.4.2), query builder pattern (§4.5), test mock audit (Executor Step 3.2), sub-phase test gate (Step 3.1), runtime smoke test (Orchestrator Stage 11.5).
+
+### 📊 Impact
+
+- `flutter analyze` dropped from 456 (Phase A baseline) → 0 issues.
+- All 400 tests pass, 30 skipped, 0 failures.
+- Architecture guard now hard-blocks PRs with MVVM violations.
+- Agent system upgraded with 7 evidence-based rules from session analysis.
+
+### 🔗 References
+
+- Audit: `.TODO/AUDIT_Quality_Architecture_2026-04-01.md` (Phase B marked DONE)
+- Session Log: `docs/LOG/SESSION_PhaseB_BugExposure_2026-04-01.md`
+- Master Report: `.TODO/MASTER_REPORT_2026-04-01_PhaseAB.md`
+- System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-02.md`
+- DEVELOPER_GUIDE.md: updated §10.1 (guard status), added §10.4-10.6 (error handling, timing, query builder)
+- MVP_ROADMAP.md: updated §8 (architecture guard completed, Phase B completed)
+
+---
+
+## 🏷️ Quality Audit Phase A — CI/CD, Lint Rules, Architecture Guard (2026-04-01)
+
+### ✅ Implemented
+
+- **CI/CD — GitHub Actions:** Created `.github/workflows/ci.yml` with 4 jobs: Lint & Analyze (`dart format --set-exit-if-changed` + `flutter analyze --no-fatal-infos`), Architecture Guard (6 MVVM boundary checks, warning-only), Unit & Widget Tests (`flutter test --coverage` with lcov parsing to GitHub step summary), Build (APK debug + Web release matrix). Flutter 3.38.9 pinned. Triggers on `main` push/PR. Concurrency group with cancel-in-progress. Workflow-level `permissions: contents: read` for least-privilege.
+- **CI/CD — Architecture Guard:** 6 grep-based checks detect: (1) `Supabase.instance` in view layer, (2) view imports in viewmodels, (3) `Supabase.instance` in viewmodels, (4) `TextEditingController`/`GlobalKey<FormState>` in viewmodels, (5) `Navigator` calls in viewmodels, (6) repository imports in view layer. All violations output as `::warning::` annotations. Currently warning-only (`exit 0`); graduates to hard failure after Phase B.
+- **Pre-commit Hook:** Created `.githooks/pre-commit` with explicit failure messaging. Runs `dart format --set-exit-if-changed .` and `flutter analyze --no-fatal-infos`. Enable: `git config core.hooksPath .githooks`. Documented in `CLAUDE.md` under "Setup (First Time)".
+- **Lint Rules:** Upgraded `analysis_options.yaml` from 18 to 34 rules. Added 7 safety rules (`cancel_subscriptions`, `close_sinks`, `no_duplicate_case_values`, `throw_in_finally`, `unnecessary_statements`, `literal_only_boolean_expressions`, `no_adjacent_strings_in_list`) and 9 code quality rules (`prefer_final_locals`, `avoid_void_async`, `prefer_if_null_operators`, `prefer_null_aware_operators`, `prefer_collection_literals`, `unnecessary_await_in_return`, `use_super_parameters`, `depend_on_referenced_packages`, `sort_child_properties_last`). Impact: +12 new issues only. Safety rules caught zero new violations.
+- **Test Fix:** Fixed timezone-sensitive widget test `test/widget/wallet/wallet_shared_body_test.dart`. Root cause: test used UTC-relative timestamps (`now.subtract(Duration(hours: 2))`) which fell on "yesterday" in local time when UTC offset crossed midnight. Fix: use local noon (`DateTime(year, month, day, 12).toUtc()`) for stable "Today" bucket. Also replaced fixed-pixel scroll with `tester.scrollUntilVisible`. All tests pass: 400 pass / 30 skip / 0 fail.
+- **Gitignore:** Added `coverage/` and secret file patterns (`.env*`, `*.pem`, `*.p12`, `*.jks`, `secrets.json`, `credentials.json`).
+
+### 📊 Impact
+
+- Every push/PR to `main` is now gated by format, analysis, tests, and build checks.
+- MVVM violations are visible in CI as warnings (6 documented violations currently detected).
+- Pre-commit hook blocks developers from committing unformatted or warning-level code locally.
+- 34 lint rules enforce type safety, resource cleanup, immutability, and dependency hygiene.
+- Test suite baseline established: 400 pass, ~27% line coverage.
+
+### 🔗 References
+
+- Audit: `.TODO/AUDIT_Quality_Architecture_2026-04-01.md` (Sections 3, 5, 6)
+- CI: `.github/workflows/ci.yml`
+- Hook: `.githooks/pre-commit`
+- Lint: `analysis_options.yaml`
+- CLAUDE.md: updated with "Setup (First Time)" and "CI/CD" sections
+- DEVELOPER_GUIDE.md: updated §10 (Testing & Quality) with §10.1–10.3
+- MVP_ROADMAP.md: updated §8 (Quality and Operations) with CI/CD, lint, guard rows
+- STRUCTURE.md: updated top-level overview to include `.github/`, `.githooks/`, `analysis_options.yaml`
 
 ---
 

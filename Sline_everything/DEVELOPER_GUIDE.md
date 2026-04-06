@@ -1,7 +1,7 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.20.2 (replace_task_request update-in-place; get_public_system_config; ledger/app fixes)
-**Last Updated**: 2026-03-22
+**Version**: 2.21.0 (Phase F: widget tests, coverage 40.8%, agent system evolution)
+**Last Updated**: 2026-04-05
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
 
@@ -179,22 +179,219 @@ try {
 
 ## 10. Testing & Quality
 
-- **Unit**: services (mock Supabase), viewmodels state transitions.
+**Current state (Phase E, 2026-04-05):** 982 tests pass, 30 skipped, 0 failures. 27/27 VMs tested (100%). 14 model test files. Coverage floor: 33%.
+
+- **Unit**: services (mock Supabase), viewmodels state transitions, model DTO parsing.
 - **Widget**: screen interactions (form validation, loading states, snackbars).
 - **Integration**: happy‑paths against staging Supabase (auth, RLS, flows).
+- **RLS**: 8 security test files validating policy enforcement.
 - **Checklists**: each feature doc ends with a testing checklist; follow it before merging.
+
+### 10.0 ViewModel Test Pattern (Constructor DI)
+
+All ViewModels use optional constructor parameters for dependency injection:
+
+```dart
+// Production: uses defaults
+WalletViewModel()
+
+// Test: inject mocks
+WalletViewModel(repo: mockRepo, accountGuardService: mockGuard)
+```
+
+Shared mock classes live in `test/helpers/mock_services.dart` (8 classes). Import via `test/helpers/helpers.dart` barrel.
+
+**Key patterns:**
+- Use `registerFallbackValue()` in `setUpAll` for types passed to `any(named:)`
+- Pre-configure ALL stubs BEFORE constructing VMs that auto-load in constructor (e.g., DashboardVM)
+- Add `RoleSwitchCoordinator().clearForTesting()` in `tearDown` for VMs that register with the singleton (ChatVM, DashboardVM)
+- Use `thenAnswer((_) async => throw Exception(...))` for async error mocking with `Future.wait`, NOT `thenThrow()`
+
+### 10.1 CI/CD Pipeline
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on every push/PR to `main`:
+
+| Job | What It Does | Blocks Merge? |
+|-----|-------------|---------------|
+| **Lint & Analyze** | `dart format --set-exit-if-changed .` + `flutter analyze --no-fatal-infos` | Yes (warnings/errors fail) |
+| **Architecture Guard** | 7 grep-based MVVM boundary checks (Supabase in views, controllers in VMs, Navigator in VMs, repo imports in views, view imports in VMs, Supabase in VMs, core-to-features boundary). Check 7 (Phase E): blocks `core/` importing from `features/` (max 5 threshold). | Yes (hard failure since Phase B, 2026-04-01) |
+| **Unit & Widget Tests** | `flutter test --coverage` with coverage % reported to PR summary | Yes |
+| **Build** | APK (debug) + Web (release) compilation | Yes |
+
+Flutter version pinned: **3.38.9** across all jobs.
+
+### 10.2 Pre-commit Hook
+
+`.githooks/pre-commit` runs `dart format` + `flutter analyze` locally before every commit.
+
+**First-time setup:** `git config core.hooksPath .githooks`
+
+### 10.3 Lint Rules
+
+**Base package**: `very_good_analysis` (migrated from `flutter_lints` in Phase E). Provides ~70+ rules active out of the box.
+
+27 rules are explicitly disabled with justification, tracked in `.TODO/LINT_DEBT_PhaseE.md`. Key disabled rules:
+- `avoid_dynamic_calls` -- Supabase query results return `dynamic`; would require casts on every field access.
+- `strict-inference`, `strict-casts` -- incompatible with Supabase's dynamic return types.
+- `public_member_api_docs` -- not enforced yet; planned for Phase F.
+- `lines_longer_than_80_chars` -- relaxed for readability in query builder chains and long string literals.
+
+Strong mode: `implicit-casts: false`, `implicit-dynamic: false`.
+
+### 10.4 Error vs Exception Handling (Dart-Specific)
+
+In Dart, `Error` and `Exception` are separate hierarchies under `Object`:
+- `Exception` = recoverable runtime errors (network, auth, validation, Supabase queries)
+- `Error` = programming bugs or environment failures (TypeError, AssertionError, StackOverflowError)
+
+Rules:
+1. ViewModel and service catch blocks use `on Exception catch (e)` by default.
+2. Code that accesses `Supabase.instance` in a "try or fallback to null" pattern MUST also catch `Error` (throws `AssertionError` when not initialized).
+3. Code that accesses `context.read<T>()` outside a guaranteed Provider scope MUST catch `Error` (throws `ProviderNotFoundException`).
+4. JSON parsing of external data (realtime, webhooks) should catch `FormatException` and `TypeError` explicitly.
+5. Global error boundaries (`runZonedGuarded`, `FlutterError.onError`) are the only places that should catch everything.
+
+### 10.5 ViewModel notifyListeners() Timing
+
+- NEVER call `notifyListeners()` synchronously inside a method invoked during `build()`, `initState()`, or `didChangeDependencies()`.
+- If a ViewModel method needs to set loading state at the start, either skip the initial `notifyListeners()` (view manages its own loading via `setState`) or defer via `addPostFrameCallback`.
+- The `finally` block after an `await` is always safe.
+- Views calling ViewModel methods during initialization should use `addPostFrameCallback`.
+
+### 10.6 Supabase Query Builder Pattern
+
+Supabase's Dart client uses a builder pattern where `.eq()`, `.lt()`, `.gt()`, `.order()` return a `PostgrestFilterBuilder` that implements `Future`. These are NOT fire-and-forget futures — they are builder chain methods.
+
+- NEVER wrap query builder methods in `unawaited()`.
+- Use `query = query.lt(...)` (reassignment) when conditionally applying filters.
+- The `unawaited_futures` lint is a false positive for these methods.
+
+### 10.7 Sealed ViewState Pattern (Phase E)
+
+New ViewModels should prefer the sealed `ViewState<T>` class over raw `_isLoading`/`_error` fields.
+
+**Files:**
+- `lib/core/models/view_state.dart` -- sealed class `ViewState<T>` with four variants:
+  - `ViewInitial<T>` -- no operation initiated yet.
+  - `ViewLoading<T>` -- an operation is in progress.
+  - `ViewLoaded<T>` -- data successfully loaded (holds `final T data`).
+  - `ViewFailed<T>` -- operation failed (holds `final AppFailure failure`).
+- `lib/core/models/app_failure.dart` -- sealed class `AppFailure` with four subtypes:
+  - `NetworkFailure` -- timeout, DNS, connectivity (has `bool isTimeout`).
+  - `AuthFailure` -- session expired or unauthorized (has `bool sessionExpired`).
+  - `ValidationFailure` -- input errors (has `Map<String, String> fieldErrors`).
+  - `BusinessFailure` -- domain rule violation (has `String code`, e.g. `BOOKING_ALREADY_EXISTS`).
+
+**Currently used in:** `DirectOfferDetailsViewModel`, `BookingViewModel`, `WorkItemDetailsViewModel`.
+
+**Usage in ViewModel:**
+```dart
+ViewState<MyData> _state = const ViewInitial();
+ViewState<MyData> get state => _state;
+```
+
+**Usage in View (exhaustive pattern match):**
+```dart
+switch (vm.state) {
+  case ViewInitial():    return SizedBox.shrink();
+  case ViewLoading():    return CircularProgressIndicator();
+  case ViewLoaded(:final data): return MyWidget(data);
+  case ViewFailed(:final failure): return ErrorWidget(failure);
+}
+```
+
+**Key rules:**
+- Action methods (accept, reject, pay) MUST NOT overwrite `ViewLoaded` with `ViewLoading`. Use a separate `_actionInProgress` boolean flag and `notifyListeners()` instead, so the loaded data stays visible during actions.
+- `ViewLoaded` and `ViewFailed` have `==` / `hashCode` overrides for equality comparisons and testing assertions.
+- All `AppFailure` subtypes carry `String userMessage` (user-facing) and optional `String? debugMessage` (for `AppLogger`).
 
 ## 11. Observability (Crash & Error Tracking)
 
-- **Crash Reporting**: `CrashReportingService` (lib/core/services/crash_reporting_service.dart) abstracts the backend (Sentry/Firebase).
-- **Zoned Errors**: `main.dart` uses `runZonedGuarded` to catch concurrent async errors.
-- **Flutter Errors**: `FlutterError.onError` is hooked to report UI crashes.
+- **Crash Reporting**: `CrashReportingService` (lib/core/services/crash_reporting_service.dart) abstracts the backend.
+  - **Production implementation**: `SentryCrashReportingService` (lib/core/services/sentry_crash_reporting_service.dart) — sends to Sentry.
+  - **Development fallback**: `NoOpCrashReportingService` — silent when no DSN configured.
+  - Enable via: `flutter run --dart-define=SENTRY_DSN=<your_dsn> --dart-define=SENTRY_ENV=production`
+  - PII sanitizer strips emails and phone numbers from breadcrumbs before sending to Sentry.
+  - User identity: only anonymized UUID attached (set on login, cleared on logout in `AuthSessionViewModel`).
+- **Error Boundary Chain** (outermost → innermost):
+  1. `SentryFlutter.init()` — captures all unhandled exceptions to Sentry dashboard
+  2. `runZonedGuarded` — catches async exceptions outside Flutter framework
+  3. `FlutterError.onError` — catches widget build/layout errors
+  4. `PlatformDispatcher.onError` — catches native/isolate errors
 - **Logging**:
   - Use `AppLogger.e(message, error, stackTrace)` for handled exceptions.
   - Use `AppLogger.i/d/w` for standard logs.
   - **Avoid `print()`**: CI/CodeGuard will flag direct print usage.
+  - AppLogger and Sentry are complementary: AppLogger writes to dev console, Sentry reports to cloud.
 
-## 11. Quick Links (Deep Dives)
+## 11.1 Delegate Decomposition Pattern (Phase D)
+
+Large ViewModels (>800 lines) should be decomposed into delegate classes:
+
+- **When to use**: VM has 3+ distinct responsibility groups (e.g., work items + inbox + bookings).
+- **Pattern**: Extract state + methods into `*Delegate` classes. Parent VM composes delegates and proxies all public getters/methods with identical signatures.
+- **Dispose safety**: Every delegate receives `bool Function() isDisposed` callback from parent. Checked before every `onChanged()` call.
+- **Notification**: Delegates call `VoidCallback onChanged` (which maps to parent's `_safeNotify`) after state mutations.
+- **DI**: Delegates receive services from parent constructor, NOT from Provider tree. Parent creates services once and passes to delegates.
+- **Example**: `DashboardViewModel` (537L) composes `DashboardWorkDelegate` (362L), `DashboardInboxDelegate` (297L), `DashboardBookingDelegate` (172L).
+- **Testing**: Delegates are independently testable with mock services. Parent VM tests unchanged (public API preserved).
+
+## 11.2 Lazy Supabase Client Pattern (Phase D)
+
+When adding a `SupabaseClient` DI parameter with `Supabase.instance.client` fallback:
+
+```dart
+// CORRECT: lazy getter — safe in tests
+final SupabaseClient? _injectedClient;
+SupabaseClient get _client => _injectedClient ?? Supabase.instance.client;
+
+// WRONG: eager — crashes in tests
+: _client = client ?? Supabase.instance.client  // AssertionError if not initialized
+```
+
+## 11.3 DeepLinkRegistry Pattern (Phase E)
+
+`DeepLinkService` was refactored to **zero feature-layer imports**. All navigation dispatch goes through `DeepLinkRegistry`.
+
+**Core files:**
+- `lib/core/services/deep_link_registry.dart` -- `DeepLinkRegistry` class with `register(entityType, handler)`, `handle(context, entityType, entityId)`, and `canHandle(entityType)`. Entity type keys are case-insensitive (lowercased). Throws `StateError` on duplicate registration to prevent accidental overwrites.
+- `lib/core/services/deep_link_service.dart` -- Refactored to depend only on `DeepLinkRegistry`. UUID validation via `_uuidRegex` before routing. Shows a generic SnackBar for unknown entity types.
+
+**Feature handler files (6):**
+- `lib/features/tasks/services/task_deep_link_handler.dart`
+- `lib/features/booking/services/booking_deep_link_handler.dart`
+- `lib/features/chat/services/chat_deep_link_handler.dart`
+- `lib/features/direct_offers/services/direct_offer_deep_link_handler.dart`
+- `lib/features/work/services/work_deep_link_handler.dart`
+- `lib/features/profile/services/profile_deep_link_handler.dart`
+
+**Registration:** Each feature registers its handlers in the `main.dart` Provider block on the shared `DeepLinkRegistry` instance. This keeps `core/` free of `features/` imports while allowing feature modules to self-register their deep link navigation.
+
+## 11.4 Coverage & CI Gates (Phase D/E)
+
+- **Coverage floor**: 33% regression prevention (blocks merges below threshold, measured at 34.9%). Raise incrementally.
+- **Architecture guard**: 7 MVVM boundary checks in CI (was 6 in Phase D). Check 3 tightened in Phase D -- catches `Supabase.instance.client.auth.*` in VM method bodies (only `?? Supabase.instance` DI defaults allowed). Check 7 (Phase E): `core/` importing from `features/` boundary guard (max 5 threshold).
+- **Migration review**: Reference `MIGRATION_REVIEW_CHECKLIST.md` for every PR with `supabase/migrations/` files.
+
+## 11.5 Localization Infrastructure (Phase E)
+
+Flutter's built-in `gen-l10n` pipeline is wired up and ready for translation.
+
+**Configuration:**
+- `l10n.yaml` at project root: sets `arb-dir: lib/l10n`, `template-arb-file: app_en.arb`, output class `AppLocalizations`.
+- `pubspec.yaml`: `generate: true` enables codegen.
+- `MaterialApp` is wired with `localizationsDelegates` and `supportedLocales` from the generated `AppLocalizations` class.
+
+**Current state:**
+- `lib/l10n/app_en.arb` contains 22 key stubs covering navigation labels, common actions, state messages, error strings, and settings labels.
+- Only English is populated. Phase F target: Arabic (`app_ar.arb`) and Kurdish (`app_ku.arb`) translations.
+
+**Workflow for adding/updating strings:**
+1. Add or edit keys in `lib/l10n/app_en.arb`.
+2. Run `flutter gen-l10n` to regenerate `AppLocalizations`.
+3. Use in widgets: `AppLocalizations.of(context)!.keyName`.
+
+## 12. Quick Links (Deep Dives)
 
 - Core: `DEVELOPER_GUIDE/Core Module.md`
 - Auth: `DEVELOPER_GUIDE/Auth Feature.md`
@@ -210,7 +407,7 @@ try {
 - Order Management: `DEVELOPER_GUIDE/Order_Management_Feature.md`
 - Proposals: `DEVELOPER_GUIDE/Proposals_Feature.md`
 
-## 12. Gotchas & Tips
+## 13. Gotchas & Tips
 
 - **Offer flow**: only for `task_type='tender'`; unique pending per (task,bidder).
 - **DMs**: client‑only; requires freelancer in **favorites**; enforced by triggers.
@@ -1466,7 +1663,8 @@ Core also owns two browser-specific stability helpers:
 | `lib/core/services/demo_payment_service.dart`    | service   | Local/demo payment implementation and legacy fallback path.                             |
 | `lib/core/services/qicard_payment_service.dart`  | service   | Server-backed QiCard create/recover/refund orchestration.                               |
 | `lib/core/services/payment_pending_store.dart`   | service   | Persists pending payment context across same-tab web redirects.                         |
-| `lib/core/services/deep_link_service.dart`       | service   | Shared deep-link plumbing used by app navigation flows.                                 |
+| `lib/core/services/deep_link_service.dart`       | service   | Shared deep-link plumbing used by app navigation flows. Zero feature imports (Phase E). |
+| `lib/core/services/deep_link_registry.dart`      | service   | Registry mapping entity types to navigation handlers. Features self-register at startup.|
 | `lib/core/config/payment_runtime_config.dart`    | config    | Compile-time finish URL, callback host rules, payment callback parsing.                 |
 | `lib/core/utils/loading_utils.dart`              | utility   | Root overlay loading helper that returns an idempotent `LoadingHandle`.                 |
 | `lib/core/utils/flutter_error_filters.dart`      | utility   | Filters the known web engine disposal assertion.                                        |

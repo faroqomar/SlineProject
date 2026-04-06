@@ -30,6 +30,13 @@ class ProposalModel {
   final String? taskTitle;
   final DateTime? paymentDeadline;
 
+  @Deprecated(
+    'Use TaskRequest instead. '
+    'ProposalModel is being consolidated into TaskRequest for a unified domain model. '
+    'Migration: Replace ProposalModel with TaskRequest in your code. '
+    'See MODEL_CONSOLIDATION_PLAN.md for details. '
+    'Scheduled removal: Sprint N+2 (2 weeks from now).',
+  )
   const ProposalModel({
     required this.id,
     required this.taskId,

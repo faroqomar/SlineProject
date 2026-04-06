@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
-import '../../models/work_log_model.dart';
+import 'package:sline_app/features/management/models/work_log_model.dart';
 
 class WorkLogTile extends StatelessWidget {
   final WorkLog log;

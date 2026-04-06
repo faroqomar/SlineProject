@@ -1,33 +1,48 @@
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/mixins/role_switch_aware.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/services/role_switch_coordinator.dart';
+import 'package:sline_app/features/categories/data/categories_repository.dart';
+import 'package:sline_app/features/categories/models/category_model.dart';
+import 'package:sline_app/features/tasks/data/task_repository.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
+import 'package:sline_app/features/tasks/services/task_image_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../data/task_repository.dart';
-import '../models/task_model.dart';
-import '../services/task_image_service.dart';
-
-import '../../../core/services/logger_service.dart';
-import '../../../core/app_enums.dart';
-import '../../../core/mixins/role_switch_aware.dart';
-import '../../../core/services/role_switch_coordinator.dart';
 
 /// TaskViewModel — MVVM state holder for Tasks feature.
 ///
 /// Performance: Optimized to minimize redundant notifyListeners() calls.
 /// Each state-changing method calls notifyListeners() only once at the end.
 class TaskViewModel extends ChangeNotifier with RoleSwitchAware {
-  TaskViewModel({TaskRepository? repo, SupabaseClient? client})
-    : _repo = repo ?? TaskRepository(client ?? Supabase.instance.client) {
+  TaskViewModel({
+    TaskRepository? repo,
+    SupabaseClient? client,
+    CategoriesRepository? categoriesRepo,
+  }) : _repo = repo ?? TaskRepository(client ?? Supabase.instance.client),
+       _categoriesRepo =
+           categoriesRepo ??
+           CategoriesRepository(client ?? Supabase.instance.client) {
     // Register with role switch coordinator
     RoleSwitchCoordinator().register(this);
   }
 
   final TaskRepository _repo;
+  final CategoriesRepository _categoriesRepo;
 
   final List<Task> _tasks = [];
   bool _isLoading = false;
 
   final List<XFile> _pickedImages = [];
   bool _uploadingImages = false;
+
+  // ----- Categories state -----
+  List<CategoryModel> _categories = [];
+  bool _categoriesLoading = false;
+
+  List<CategoryModel> get categories => List.unmodifiable(_categories);
+  bool get categoriesLoading => _categoriesLoading;
 
   List<Task> get tasks => List.unmodifiable(_tasks);
   bool get isLoading => _isLoading;
@@ -37,9 +52,38 @@ class TaskViewModel extends ChangeNotifier with RoleSwitchAware {
 
   String? get currentUserId => _repo.currentUser?.id;
 
+  // ----- Categories helpers -----
+  /// Loads all categories from the repository.
+  /// Called by CreateTaskScreen to populate the category picker.
+  Future<List<CategoryModel>> loadCategories() async {
+    _categoriesLoading = true;
+    // Do not call notifyListeners() synchronously here — this method may be
+    // invoked during didChangeDependencies which runs inside the build phase.
+    // The finally block notifies after the async gap completes.
+    try {
+      _categories = await _categoriesRepo.getAll();
+      AppLogger.d(
+        'Loaded ${_categories.length} categories',
+        tag: 'TaskViewModel',
+      );
+      return _categories;
+    } on Exception catch (e, stackTrace) {
+      AppLogger.e(
+        'Failed to load categories',
+        tag: 'TaskViewModel',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return _categories = [];
+    } finally {
+      _categoriesLoading = false;
+      notifyListeners();
+    }
+  }
+
   // ----- Images helpers (migrated from TaskController) -----
   Future<void> pickTaskImages() async {
-    final ImagePicker picker = ImagePicker();
+    final picker = ImagePicker();
     final images = await picker.pickMultiImage();
     final limited = images.take(5).toList();
     _pickedImages
@@ -76,7 +120,7 @@ class TaskViewModel extends ChangeNotifier with RoleSwitchAware {
     _uploadingImages = true;
     notifyListeners();
 
-    final List<String> uploadedPaths = [];
+    final uploadedPaths = <String>[];
     try {
       for (final img in _pickedImages) {
         final bytes = await img.readAsBytes();
@@ -89,7 +133,7 @@ class TaskViewModel extends ChangeNotifier with RoleSwitchAware {
         );
         uploadedPaths.add(path);
       }
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Error uploading task images: $e');
     } finally {
       _uploadingImages = false;
@@ -127,7 +171,7 @@ class TaskViewModel extends ChangeNotifier with RoleSwitchAware {
       _tasks
         ..clear()
         ..addAll(list);
-    } catch (e) {
+    } on Exception catch (e) {
       AppLogger.e('Error loading tasks: $e');
     } finally {
       _isLoading = false;

@@ -1,10 +1,12 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/constants/auth_messages.dart';
+import 'package:sline_app/core/models/user_profile.dart';
+import 'package:sline_app/core/services/crash_reporting_service.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/auth/data/auth_repository.dart';
-import 'package:sline_app/core/models/user_profile.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthSessionViewModel extends ChangeNotifier {
   final AuthRepository _authRepo;
@@ -75,15 +77,12 @@ class AuthSessionViewModel extends ChangeNotifier {
         switch (state.event) {
           case AuthChangeEvent.signedIn:
             await _loadInitialProfile();
-            break;
           case AuthChangeEvent.signedOut:
             AppLogger.i('User signed out', tag: 'Auth');
             _currentUserProfile = null;
             notifyListeners();
-            break;
           case AuthChangeEvent.tokenRefreshed:
             AppLogger.d('Token refreshed successfully', tag: 'Auth');
-            break;
           case AuthChangeEvent.passwordRecovery:
             AppLogger.i('Password recovery session established', tag: 'Auth');
             if (_onPasswordRecovery != null) {
@@ -91,11 +90,9 @@ class AuthSessionViewModel extends ChangeNotifier {
             } else {
               _pendingPasswordRecovery = true;
             }
-            break;
           case AuthChangeEvent.userUpdated:
             AppLogger.i('User profile updated', tag: 'Auth');
             await _loadInitialProfile();
-            break;
           default:
             break;
         }
@@ -119,6 +116,12 @@ class AuthSessionViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       _currentUserProfile = await _authRepo.getCurrentUserProfileWithRetry();
+      // Attach anonymized user ID to crash reports (no PII — ID only)
+      if (_currentUserProfile != null && currentUserId != null) {
+        unawaited(
+          CrashReportingService.instance.setUserIdentifier(currentUserId!),
+        );
+      }
       if (_currentUserProfile == null && isAuthenticated) {
         AppLogger.w(
           'Profile not found after retries - signing out',
@@ -127,7 +130,7 @@ class AuthSessionViewModel extends ChangeNotifier {
         await logout();
         _error = AuthMessages.profileProvisioningFailed;
       }
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to load profile',
         tag: 'Auth',
@@ -149,7 +152,9 @@ class AuthSessionViewModel extends ChangeNotifier {
     try {
       await _authRepo.signOut();
       _currentUserProfile = null;
-    } catch (e) {
+      // Clear user identity from crash reports on logout
+      unawaited(CrashReportingService.instance.setUserIdentifier(''));
+    } on Exception catch (e) {
       AppLogger.e('Logout failed', tag: 'Auth', error: e);
     } finally {
       _isLoading = false;

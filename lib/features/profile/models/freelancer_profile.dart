@@ -1,11 +1,12 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
-import 'package:sline_app/features/profile/models/profile_model.dart';
-import 'package:sline_app/features/tasks/models/task_model.dart';
 // Canonical PortfolioItem from portfolio feature
 import 'package:sline_app/features/portfolio/models/portfolio_item.dart'
     show PortfolioItem;
-import 'dart:math';
+import 'package:sline_app/features/profile/models/profile_model.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
 
 /// FreelancerProfile model for public profile display.
 /// Uses canonical PortfolioItem from portfolio feature.
@@ -53,7 +54,7 @@ class FreelancerProfile {
     List<Task> history = const [], // Added
   }) {
     // Extract initials
-    String initials = '';
+    var initials = '';
     if (profile.fullName != null && profile.fullName!.isNotEmpty) {
       final parts = profile.fullName!.split(' ');
       if (parts.length >= 2) {
@@ -64,7 +65,7 @@ class FreelancerProfile {
     }
 
     // Determine title based on role or skills (mock logic for now as title isn't in DB)
-    String displayTitle = profile.activeRole == 'freelancer'
+    var displayTitle = profile.activeRole == 'freelancer'
         ? 'Freelancer'
         : 'Client';
     if (profile.skills.isNotEmpty) {

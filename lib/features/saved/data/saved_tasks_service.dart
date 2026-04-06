@@ -1,9 +1,9 @@
 // SavedTasksService - CRUD for the `saved_tasks` table (bookmarking tasks).
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/profile/services/profile_summary_service.dart';
+import 'package:sline_app/features/saved/models/saved_task_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
-import '../models/saved_task_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SavedTasksService {
   final SupabaseClient _client;
@@ -96,7 +96,7 @@ class SavedTasksService {
         .eq('user_id', uid)
         .order('created_at', ascending: false);
 
-    final List<dynamic> rows = res as List<dynamic>;
+    final rows = res as List<dynamic>;
     if (rows.isEmpty) return [];
 
     // 2. Extract distinct user IDs from tasks to fetch profiles

@@ -113,8 +113,8 @@ class Task {
   factory Task.fromJson(Map<String, dynamic> json) {
     try {
       // Map database string to TaskType enum; default to tender for backward compatibility
-      final String? typeStr = json['task_type'] as String?;
-      final TaskType parsedTaskType = (typeStr == 'booking')
+      final typeStr = json['task_type'] as String?;
+      final parsedTaskType = (typeStr == 'booking')
           ? TaskType.booking
           : TaskType.tender;
 
@@ -127,16 +127,16 @@ class Task {
       // Extract profile data from JOIN (nested under 'profiles' key)
       // or from flat fields (for backward compatibility with existing code)
       final profileData = json['profiles'] as Map<String, dynamic>?;
-      final String? parsedUserName =
+      final parsedUserName =
           profileData?['full_name'] as String? ?? json['user_name'] as String?;
-      final String? parsedUserAvatar =
+      final parsedUserAvatar =
           profileData?['avatar_url'] as String? ??
           json['user_avatar'] as String?;
-      final String? parsedAuthorSellerLevel =
+      final parsedAuthorSellerLevel =
           profileData?['seller_level'] as String? ??
           json['author_seller_level'] as String?;
 
-      final String parsedOwnerId =
+      final parsedOwnerId =
           (json['owner_id'] as String?) ??
           (json['client_id'] as String?) ??
           (json['user_id'] as String?) ??

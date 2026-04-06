@@ -1,34 +1,9 @@
-import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sline_app/core/config/storage_config.dart';
 import 'package:sline_app/core/utils/error_mapper.dart';
 import 'package:sline_app/core/utils/signed_url_cache.dart';
-import '../services/upload_service.dart';
-
-// #region agent log
-void _agentDebugLog(
-  String location,
-  String message,
-  Map<String, dynamic> data,
-  String hypothesisId,
-) {
-  try {
-    final line = jsonEncode({
-      'sessionId': '9844e5',
-      'timestamp': DateTime.now().millisecondsSinceEpoch,
-      'location': location,
-      'message': message,
-      'data': data,
-      'hypothesisId': hypothesisId,
-    });
-    File(
-      '/Users/eros/Dev/Eros_Projects/Sline/sline_app/.cursor/debug-9844e5.log',
-    ).writeAsStringSync('$line\n', mode: FileMode.append);
-  } catch (_) {}
-}
-// #endregion
+import 'package:sline_app/features/chat/attachments/services/upload_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 typedef AttachmentSignedUrlResolver =
     Future<String> Function(String storagePath);
@@ -85,24 +60,8 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
   ///
   /// Checks error cache first, then success cache, then calls API
   Future<void> _loadSignedUrl() async {
-    // #region agent log
-    _agentDebugLog(
-      'attachment_message_tile.dart:_loadSignedUrl',
-      'load_start',
-      {'storagePath': widget.storagePath},
-      'H-B',
-    );
-    // #endregion
     // Check error cache first to prevent retry storms
     if (SignedUrlCache.hasError(widget.storagePath)) {
-      // #region agent log
-      _agentDebugLog(
-        'attachment_message_tile.dart:_loadSignedUrl',
-        'error_cache_hit',
-        {'storagePath': widget.storagePath},
-        'H-C',
-      );
-      // #endregion
       if (mounted) {
         setState(() {
           _error = 'Access denied';
@@ -126,14 +85,6 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
 
     // Generate new signed URL
     try {
-      // #region agent log
-      _agentDebugLog(
-        'attachment_message_tile.dart:_loadSignedUrl',
-        'create_signed_url_before',
-        {'storagePath': widget.storagePath},
-        'H-A',
-      );
-      // #endregion
       final url =
           await (widget.signedUrlResolver?.call(widget.storagePath) ??
               SupabaseAttachmentUploader().createSignedUrl(
@@ -150,20 +101,7 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
           _loading = false;
         });
       }
-    } catch (e) {
-      // #region agent log
-      _agentDebugLog(
-        'attachment_message_tile.dart:_loadSignedUrl',
-        'create_signed_url_catch',
-        {
-          'storagePath': widget.storagePath,
-          'errorType': e.runtimeType.toString(),
-          'errorToString': e.toString(),
-          'mappedMessage': ErrorMapper.map(e),
-        },
-        'H-A',
-      );
-      // #endregion
+    } on Exception catch (e) {
       // Cache only auth/permission failures so transient errors (network, timeout) can retry
       final isAuthFailure =
           e is StorageException &&
