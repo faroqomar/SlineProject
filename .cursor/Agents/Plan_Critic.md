@@ -261,6 +261,26 @@ For each invariant:
 - Offline / timeout / retry behavior?
 - Responsive, accessibility, and overflow hardening phase present?
 
+### 5.7.1 Coverage Target Verification (for test-heavy plans)
+
+If the plan sets a coverage percentage target:
+1. Verify the arithmetic: total lines × target% = required hit lines.
+2. Check whether the scope of files being tested can produce enough hit lines.
+3. If the plan does not include a "Coverage Projection" section with lcov.info data, add a CRITICAL GAP: "Coverage target not verified against lcov.info."
+
+### 5.7.2 Coverage Verification Skill
+
+When auditing a plan with coverage targets:
+1. If `coverage/lcov.info` exists, parse it to extract:
+   - Total instrumented lines
+   - Total hit lines
+   - Current coverage percentage
+   - Per-file line counts for target files
+2. Verify the plan's coverage arithmetic against these numbers.
+3. If lcov.info does not exist, flag as CRITICAL GAP: "No baseline coverage data."
+
+Evidence: Widget Tests session — @PlanCritic caught coverage arithmetic error (assumed 6 screens = 45%, actual = 39.7%) but only AFTER SlinePlanner published v1. These checks make the catch proactive.
+
 ### 5.8 Testing & QA
 
 - Smoke tests for critical path?

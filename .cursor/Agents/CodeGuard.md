@@ -313,7 +313,19 @@ For every review, generate a report:
 
 ---
 
-## 8) Coordination With Other Agents
+## 8.1) T-Number Uniqueness Check (for test-heavy reviews)
+
+After all test files are written, run:
+```bash
+grep -rn 'T[0-9]\{3\}' test/ | sed 's/:.*//' | sort | uniq -d
+```
+Any T-number appearing in more than one file is a collision that must be renumbered.
+
+Evidence: Widget Tests session — T160-T168 collision found in both `requests_list_screen_test.dart` and `work_item_details_screen_test.dart`. Caught by @Architect as a MED finding during manual review; this check automates detection.
+
+---
+
+## 9) Coordination With Other Agents
 
 - MVVM layer violation → ping `@Architect`
 - Supabase schema / RLS / storage issues → ping `@Supabase_Ops`

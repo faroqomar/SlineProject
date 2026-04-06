@@ -131,7 +131,7 @@ jobs:
       - name: Enforce coverage floor
         if: always()
         run: |
-          THRESHOLD=33
+          THRESHOLD=40
           if [ -f coverage/lcov.info ]; then
             TOTAL=$(grep -c '^DA:' coverage/lcov.info || echo 0)
             HIT=$(grep '^DA:' coverage/lcov.info | grep -cv ',0$' || echo 0)

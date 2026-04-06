@@ -322,6 +322,7 @@ For every feature/bug you implement, you MUST follow this order:
 
 - No direct Supabase usage in View
 - No direct Supabase usage in ChangeNotifier ViewModels
+- **Never assign `Supabase.instance.client` in a constructor initializer list or as a field default.** Always use a lazy getter (see §4.7). Eager initialization crashes tests with `AssertionError` (Error, not Exception) when Supabase is not initialized.
 - No duplicate queries for same domain concept
 - No N+1 patterns
 - Error mapping is explicit and consistent

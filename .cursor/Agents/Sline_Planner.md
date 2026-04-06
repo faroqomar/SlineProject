@@ -113,8 +113,13 @@ When the plan includes unit tests for ViewModels, Services, or Repositories:
 3. If a target class creates dependencies internally (e.g., `_repo = WalletRepository(client ?? Supabase.instance.client)` in the constructor body), the plan MUST include a constructor refactoring sub-phase BEFORE the test-writing phases.
 4. Document the DI pattern used by each target class: "fully injectable" (like DashboardVM/BookingVM), "client-injectable" (like WalletVM pre-refactor), or "not injectable" (hard-coded dependencies).
 5. Note whether `Supabase.instance` appears in any fallback — these classes need special test environment handling or refactoring.
+6. **Base class check:** For every class that will be mocked, verify whether it extends/mixes `ChangeNotifier`. If yes → `ChangeNotifierProvider.value`. If no → `Provider.value`. Never assume.
+7. **VM creation pattern check:** For every screen under test, check whether the screen receives its VM via Provider ancestor (Type A) or creates the VM internally in `build()` / `initState()` (Type B). Type A → mock the VM. Type B → mock the services the VM consumes.
+8. **Provider dependency audit:** For Type B screens, trace every `context.read<T>()` and `context.watch<T>()` call in the screen AND in the VM it creates. Every one of these must have a Provider ancestor in the test setup.
+9. **Record findings:** Add a "Mocking Strategy Classification" table to the plan with columns: Screen | Type (A/B) | Mock Targets | Base Class | Provider Type.
 
 Evidence: Phase C — WalletVM and ChatVM required constructor refactoring (Phase 1) that was not in the original plan. @PlanCritic caught this as a FAIL on the Test Infrastructure Gate.
+Evidence: Widget Tests session — PaymentPendingStore wrongly typed as ChangeNotifier (it's a plain class → needs `Provider.value`, not `ChangeNotifierProvider.value`). Wrong mocking strategy for Type B screens required plan rewrite.
 
 ### 2.2.2 Singleton & Static State Detection (Required When Planning Tests)
 
@@ -136,6 +141,35 @@ When the plan includes unit tests for classes with DI constructors:
 4. Note the required await/microtask delay pattern for async constructor init.
 
 Evidence: Phase C — DashboardVM calls 3 load methods in constructor. Missing any mock stub = MissingStubError.
+
+### 2.2.4 Coverage Arithmetic Verification (Required When Planning Coverage Targets)
+
+When the plan sets a coverage percentage target:
+
+1. Run `flutter test --coverage` and parse `coverage/lcov.info`.
+2. Count total lines and currently-hit lines.
+3. For each target file, count its uncovered lines.
+4. Calculate the MAXIMUM achievable coverage if every target file reaches 100%.
+5. Set the target at 80% of the theoretical maximum (accounting for unreachable branches, platform-specific code, and harness-pattern screens).
+6. Include the arithmetic in the plan under a "Coverage Projection" section.
+
+Evidence: Widget Tests session — SlinePlanner assumed 6 screens = 45% coverage, actual was 39.7%. @PlanCritic caught the arithmetic error reactively; this scan prevents it proactively.
+
+### 2.2.5 Screen Mocking Classification Workflow (Required When Planning Widget Tests)
+
+For each screen targeted for widget testing:
+
+1. Open the screen's `build()` method.
+2. Search for `context.read<*ViewModel>` or `Consumer<*ViewModel>`:
+   - If found → **Type A** (VM provided by ancestor). Mock the VM.
+3. Search for `*ViewModel(` constructor calls inside `build()` or `initState()`:
+   - If found → **Type B** (VM created internally). Mock the services.
+4. For Type B screens, check if the VM constructor calls `Supabase.instance`:
+   - If yes → harness/wrapper pattern required (cannot import production screen).
+   - If no → mock services via Provider ancestors, import production screen.
+5. Record classification in a table within the plan.
+
+Evidence: Widget Tests session — @SlinePlanner wrote mocking strategies without classifying screens into Type A vs Type B, requiring plan rewrite for 3 screens.
 
 ### 2.3 Supabase Reality Scan (ALWAYS REQUIRED)
 
@@ -662,5 +696,18 @@ List:
 - database objects confirmed
 - migrations / functions / buckets / views inspected
 - related `.TODO/` artifacts
+
+## 10) Plan Appendix: Scan Evidence (Mandatory)
+
+Every plan MUST end with an appendix titled "## Scan Evidence" containing:
+- **Constructor Signatures:** For each class to be mocked/refactored, list its constructor parameters, base class, and mixins.
+- **Line Counts:** For each file targeted for modification, list its current line count.
+- **Coverage Baseline:** If the plan has coverage targets, include total lines, hit lines, and current percentage from lcov.info.
+- **Provider Dependencies:** For each screen under test, list all `context.read<T>()` / `context.watch<T>()` calls and their sources.
+- **Singleton/Static State:** List all singletons and static state that tests must clean up.
+
+This appendix is consumed by @PlanCritic for verification and by @Executor for execution awareness.
+
+Evidence: Sessions 2, 3, 6 — @PlanCritic consistently found 5-8 critical gaps in @SlinePlanner's v1 plans because scan output was not structured or attached. This appendix lets @PlanCritic verify faster and catch factual errors earlier.
 
 END.

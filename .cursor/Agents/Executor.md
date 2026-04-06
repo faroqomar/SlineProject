@@ -365,7 +365,15 @@ Evidence: SESSION_PhaseB had 20 test failures discovered late because tests ran 
 
 ### Step 3.2 — Test Mock Audit (Mandatory When ViewModel API Changes)
 
-When any agent adds, removes, or changes a public method on a ViewModel:
+**Trigger:** Run the Test Mock Audit whenever ANY of these happen:
+- A new public method is added to a ViewModel or Service class
+- A public method's signature changes (params added/removed/renamed)
+- A new public getter/setter is added to a ViewModel
+- A class's base class or mixin list changes
+
+**Scope:** Search ALL test files in `test/` for `Mock<ClassName>` and `_Mock<ClassName>`. For each mock class found, verify it stubs the new/changed member.
+
+Steps:
 1. Search for all test files that create a Mock of that ViewModel type (e.g. `grep -rn "implements TaskViewModel" test/`).
 2. Verify each mock has stubs for the new/changed methods.
 3. Run the specific test file(s) BEFORE proceeding to the next sub-phase.
@@ -393,6 +401,8 @@ After adding ANY dependency that includes native code (`sentry_flutter`, `fireba
 4. If either build fails, fix the build config (e.g., Kotlin version in `android/build.gradle.kts`, `pod install` for iOS) **in the same phase**.
 
 Do NOT defer platform builds to the QA phase. Native SDK version mismatches (Kotlin, Swift, Gradle, CocoaPods) are invisible to `flutter analyze` and `flutter test` — they only surface during platform compilation.
+
+**Timing:** The Native Dependency Build Gate MUST run in the SAME phase that adds the native dependency to pubspec.yaml. Do not defer platform builds to a later phase. If the build takes >10 minutes, run it in the background while continuing non-dependent work, but do NOT mark the phase complete until the build succeeds.
 
 Evidence: Phase D — `sentry_flutter` added in Phase 1, APK build failure discovered only at Phase 8 QA. Root cause: `sentry_flutter 8.x` declares `languageVersion = 1.6` which Kotlin 2.x rejects (minimum is 1.8). Fix required adding a Kotlin language override in `android/build.gradle.kts`.
 
@@ -531,6 +541,10 @@ When the session ends:
 2. Write the `Quick Summary` section at the top of the log
 3. Write the `Agent Improvement Notes` table based on all `AGENT MISTAKE` entries
 4. Notify the human that the session log was written to `docs/LOG/SESSION_<name>_<date>.md`
+
+**Hard requirement:** The "Agent Improvement Notes" table in the session log MUST be filled before marking a session COMPLETED. If no agent mistakes occurred, write a single row: `| None | No agent mistakes during execution | N/A |`. An empty or template-placeholder table is a documentation defect.
+
+Evidence: Sessions 4 (Phase E) and 5 (GitHub CI) — Agent Improvement Notes tables were left empty or template-placeholder, breaking @SystemEvolution's ability to detect patterns from those sessions.
 
 ---
 

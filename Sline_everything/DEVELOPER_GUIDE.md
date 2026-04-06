@@ -1,7 +1,7 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.20.2 (replace_task_request update-in-place; get_public_system_config; ledger/app fixes)
-**Last Updated**: 2026-03-22
+**Version**: 2.21.0 (Phase F: widget tests, coverage 40.8%, agent system evolution)
+**Last Updated**: 2026-04-05
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
 

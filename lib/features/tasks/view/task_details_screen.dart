@@ -508,7 +508,8 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
       if (pkg != null) {
         price = '\$${pkg['price'] ?? '0'}';
         delivery = '${pkg['delivery'] ?? '0'} Days';
-        revisions = '${pkg['revisions'] ?? '0'} Revisions';
+        final revCount = pkg['revisions'] ?? 0;
+        revisions = '$revCount ${revCount == 1 ? 'Revision' : 'Revisions'}';
         desc = pkg['description'] ?? '';
       }
     }

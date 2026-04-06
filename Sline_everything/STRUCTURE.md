@@ -1,6 +1,6 @@
 # SLine App - Folder Structure Guide
 
-**Last Updated:** 2026-04-05 (Phase E: sealed ViewState/AppFailure models, DeepLinkRegistry pattern, deep link handlers in 6 features, TaskOfferService/TaskRequestErrorMapper extraction, BookingPaymentDelegate, TaskRequestsAwardDelegate, extracted view widgets, l10n setup, 14 new VM test files, 982→1200+ tests; previous: 2026-04-04 Phase D)
+**Last Updated:** 2026-04-05 (Phase F: widget tests, coverage 40.8%, full agent inventory in .cursor/Agents/ including SystemEvolution meta-agent; previous: Phase E sealed ViewState/AppFailure, DeepLinkRegistry, 14 VM test files, 1200+ tests)
 
 This document describes the current repository layout. It replaces older references to `presentation/` and `controllers/`; the live Flutter codebase uses `view/` and `viewmodels/` under `lib/features/`.
 
@@ -38,8 +38,13 @@ sline_app/
 
 ### `.cursor/`
 
-- `Agents/`: role definitions such as `Architect`, `CodeGuard`, `Sline_Docs`, and `Supabase_Ops`
-- project-specific agent guidance and rules used by Cursor tooling
+- `Agents/`: role definitions for the multi-agent system (16 agents)
+  - **Core agents**: `Architect.md` (MVVM logic), `Pixel.md` (UI/UX), `Supabase_Ops.md` (backend), `Sline_Docs.md` (documentation), `Sentinel.md` (QA/verification)
+  - **Planning & execution**: `Sline_Planner.md` (implementation architect), `Executor.md` (task orchestrator), `Plan_Critic.md` (plan auditor), `orchestrator.md` (multi-agent coordinator)
+  - **Specialized**: `CodeGuard.md` (performance/security audit), `ThreatModeler.md` (security design), `APIContract.md` (contract alignment), `DataMigration.md` (schema safety), `Observability.md` (telemetry), `TemplateOwner.md` (task templates)
+  - **Meta**: `SystemEvolution.md` (cross-session agent improvement — scans logs and agent files, produces upgrade reports)
+- `rules/`: project-specific rules used by Cursor tooling (`flutter-mvvm.mdc`, `error-handling.mdc`)
+- `skills/`: skill definitions referenced by agents for specialized work
 
 ### `.TODO/`
 

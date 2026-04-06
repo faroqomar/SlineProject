@@ -239,6 +239,14 @@ Do not hardcode assumptions about who should see a screen or button.
 
 ---
 
+## 4.7) Error Message Rendering (Explicit Forbid)
+
+- **Never render raw exception text in the UI.** Error messages shown to users must come from the ViewModel's mapped error string (via `ErrorMapper.map(e)`). Never call `.toString()` or `.message` on exceptions in view code. If a ViewModel exposes an error field, display it verbatim — it has already been sanitized by the ViewModel.
+
+Evidence: Phase E — 6 locations leaked raw exception text (`e.toString()`, `error.message`) to user-facing UI across ViewModels and views, exposing SQL table names and raw Supabase error text.
+
+---
+
 ## 5) Navigation Rules
 
 - Follow the actual SLINE navigation style: route registration in `lib/main.dart`, plus `Navigator.push`, `Navigator.pushReplacement`, and named routes where the app already uses them

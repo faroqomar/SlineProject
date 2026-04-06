@@ -16,5 +16,7 @@ export 'mock_services.dart';
 export 'mock_supabase.dart';
 // Mock Supabase RPC helper with chainable query support
 export 'mock_supabase_rpc.dart';
+// Shared mock ViewModel classes for widget tests
+export 'mock_view_models.dart';
 // Role switch testing helpers
 export 'role_switch_helpers.dart';

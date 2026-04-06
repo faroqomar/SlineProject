@@ -9,6 +9,68 @@
 
 ## Current Guardrail Notes (2026-04-05)
 
+### Widget Test Type A/B Classification (Phase F, 2026-04-05)
+
+**Pattern**: Screens fall into two categories for widget testing:
+- **Type A** — VM provided by Provider ancestor. Test mocks the VM directly via `ChangeNotifierProvider.value(value: mockVm)`.
+- **Type B** — VM created internally in `build()` / `initState()`. Test mocks the services the VM consumes.
+
+**Rule**: Before writing any widget test, classify the screen. Wrong classification causes either `ProviderNotFoundException` (Type A treated as B) or untestable constructor paths (Type B treated as A).
+
+**Additional checks**:
+- Verify the base class of every mock target: `ChangeNotifier` → `ChangeNotifierProvider.value`, plain class → `Provider<T>.value`.
+- For Type B screens, trace every `context.read<T>()` / `context.watch<T>()` in the screen AND the VM it creates — all must have Provider ancestors in the test.
+
+**Evidence**: Phase F — `PaymentPendingStore` wrongly typed as `ChangeNotifier` (it's a plain class). Type B screens required service-level mocking, not VM mocking.
+
+### Navigator Interception Pattern for Widget Tests (Phase F, 2026-04-05)
+
+**Pattern**: When testing screens that launch a WebView or push a second route (e.g., payment checkout → webview), use a `NavigatorObserver` with a push counter to intercept the correct route.
+
+**Rule**: The observer must skip the first `didPush` (which is the home/test route) and intercept subsequent pushes. Pop with the expected result (e.g., `PaymentReturnArgs(status: 'SUCCESS')`).
+
+**Evidence**: Phase F — First attempt intercepted the wrong push (home route), destroying the screen before it rendered.
+
+### Timer Management in Widget Tests (Phase F, 2026-04-05)
+
+**Pattern**: When production code uses `Future.delayed` (e.g., auto-pop after 1200ms), tests must manage timing carefully.
+
+**Rule**:
+1. Assert BEFORE the timer fires (use short pumps: `for (var i = 0; i < N; i++) { await tester.pump(Duration(milliseconds: 50)); }`).
+2. After assertions, drain the timer with `await tester.pumpAndSettle(Duration(seconds: 2))` to avoid `timersPending` failures.
+
+**Evidence**: Phase F — `pumpAndSettle(Duration(seconds: 3))` pumped past the 1200ms auto-pop timer, removing the screen before assertions.
+
+### Pluralization in UI Strings (Phase F, 2026-04-05)
+
+**Rule**: UI strings displaying counts must handle singular vs plural correctly. Never hardcode the plural form.
+
+```dart
+// Correct
+'$count ${count == 1 ? 'Revision' : 'Revisions'}'
+
+// Wrong
+'$count Revisions'  // shows "1 Revisions"
+```
+
+**Evidence**: Phase F — `task_details_screen.dart` showed "1 Revisions" for package revision count.
+
+### T-Number Uniqueness in Test Files (Phase F, 2026-04-05)
+
+**Rule**: Every `T###` test identifier must be unique across ALL test files. After writing tests, verify with:
+```bash
+grep -rn 'T[0-9]\{3\}' test/ | sed 's/:.*//' | sort | uniq -d
+```
+Any T-number appearing in more than one file is a collision that must be renumbered.
+
+**Evidence**: Phase F — T160-T168 collision in `requests_list_screen_test.dart` and `work_item_details_screen_test.dart`.
+
+### Agent System Evolution (Phase F, 2026-04-05)
+
+**Process**: After multi-session work, run `@SystemEvolution` to scan all session logs, agent files, and core docs. It produces an evidence-based report identifying rule gaps, clarity gaps, propagation gaps, and coordination improvements. Apply recommendations to `.cursor/Agents/` files to prevent repeat failures.
+
+**Evidence**: Phase F — First SystemEvolution report identified 13 priority actions across 7 agent files, all applied. Most common failure type: planning gaps (wrong assumptions about codebase reality).
+
 ### Raw String Interpolation Guard (Phase E, 2026-04-05)
 
 **Pattern**: Never use raw string literals (`r'...'`) in `AppLogger` calls or any string containing `$variable` interpolation. Raw strings make `$` literal. Use normal single-quoted strings.

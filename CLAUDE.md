@@ -37,7 +37,7 @@ git config core.hooksPath .githooks  # Enable pre-commit hooks (format + analyze
 GitHub Actions pipeline (`.github/workflows/ci.yml`) runs on push/PR to `main`:
 - **Lint & Analyze**: `dart format --set-exit-if-changed .` + `flutter analyze --no-fatal-infos`
 - **Architecture Guard**: 7 MVVM boundary checks (hard failure). Blocks PRs with Supabase in views, controllers/Navigator in VMs, view imports in VMs, repo imports in views. Check 7 blocks `core/` importing from `features/` (max 5 threshold).
-- **Tests**: `flutter test --coverage` with coverage reporting + **33% coverage floor** (regression prevention, raises incrementally). 982 tests across 27 VM test files.
+- **Tests**: `flutter test --coverage` with coverage reporting + **40% coverage floor** (regression prevention, raises incrementally). 1196 tests across 27 VM test files + 28 widget test files.
 - **Build**: APK (debug) + Web (release) compilation check
 - **Note**: Architecture guard Check 3 tightened in Phase D — catches `Supabase.instance.client.auth.*` in VM method bodies (only `?? Supabase.instance` DI defaults are allowed)
 

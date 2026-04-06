@@ -66,7 +66,20 @@ STAGE 10 ─── @CodeGuard         Final performance + security + dependency 
 STAGE 11 ─── @Sentinel          Final QA + RLS + release gate
 STAGE 11.5── @Sentinel          Runtime smoke test (emulator/device, if UI/state changes)
 STAGE 12 ─── @Orchestrator      Merge all findings → produce Master Report
+STAGE 13 ─── @Orchestrator      Fix Verification (Conditional — see §2.2)
 ```
+
+### 2.2 Stage 13: Fix Verification (Conditional)
+
+If the Master Report contains BLOCKER or HIGH findings:
+1. Executor applies fixes per the Fix Plan (Section C of the report).
+2. Re-run the affected pipeline stages (per the re-run policy in §8).
+3. Update the Master Report with a "Fix Verification" section confirming each fix was applied and re-verified.
+4. If new findings emerge from re-run, repeat until clean.
+
+This stage only runs when the human approves fixes from Stage 12's Master Report. It is not automatic.
+
+Evidence: Phase E (Session 4) — Orchestrator review found 20 issues (1 BLOCKER, 4 HIGH, 8 MED, 7 LOW) after execution. Fixes were applied in a follow-up, but the "review → fix → re-verify" handoff was not formally defined, leading to ad-hoc process.
 
 ### 2.1 Parallel Review Mode (Review-Only Pipelines)
 
