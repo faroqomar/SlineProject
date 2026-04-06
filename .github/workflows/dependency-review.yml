@@ -1,0 +1,27 @@
+# NOTE: dependency-review-action does not scan pub/Dart dependencies.
+# Pub dep vulnerabilities are covered by Dependabot alerts (GitHub Settings > Code Security).
+# This workflow scans GitHub Actions dependencies and license compliance.
+
+name: Dependency Review
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dep-review-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: Dependency Vulnerability Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          allow-licenses: MIT, BSD-2-Clause, BSD-3-Clause, Apache-2.0, ISC, Zlib

@@ -1,5 +1,47 @@
 #!/bin/sh
 
+# =============================================================
+# Check 1: Block .env and secrets files from being committed
+# =============================================================
+echo "Checking for env/secret files..."
+ENV_FILES=$(git diff --cached --name-only | grep -E '(^|/)\.env$|(^|/)\.env\..+$|(^|/)secrets\.json$|(^|/)credentials\.json$' | grep -v '\.env\.example' || true)
+if [ -n "$ENV_FILES" ]; then
+  echo ""
+  echo "FAILED: Sensitive files staged for commit:"
+  echo "$ENV_FILES"
+  echo ""
+  echo "Fix: git reset HEAD <file> to unstage these files."
+  echo "     Never commit .env, secrets.json, or credentials.json."
+  exit 1
+fi
+echo ""
+
+# =============================================================
+# Check 2: Scan staged changes for secret patterns
+# =============================================================
+echo "Scanning for secrets in staged changes..."
+SECRET_SCAN_TMP=$(mktemp)
+trap 'rm -f "$SECRET_SCAN_TMP"' EXIT
+STAGED_DIFF=$(git diff --cached --diff-filter=ACM -U0 -- '*.dart' '*.ts' '*.js' '*.yaml' '*.yml' '*.json' '*.sh' '*.txt' 2>/dev/null || true)
+if [ -n "$STAGED_DIFF" ]; then
+ if echo "$STAGED_DIFF" | bash scripts/check-secrets.sh 2>"$SECRET_SCAN_TMP"; then
+    : # clean
+  else
+    echo ""
+    echo "FAILED: Secret patterns found in staged changes:"
+    cat "$SECRET_SCAN_TMP"
+    echo ""
+    echo "Fix: Remove the secrets from your code before committing."
+    rm -f /tmp/secret-scan-result
+    exit 1
+  fi
+  rm -f /tmp/secret-scan-result
+fi
+echo ""
+
+# =============================================================
+# Check 3: Format check (existing — preserved unchanged)
+# =============================================================
 echo "Running format check..."
 if ! dart format --set-exit-if-changed . ; then
   echo ""
@@ -9,6 +51,9 @@ if ! dart format --set-exit-if-changed . ; then
 fi
 echo ""
 
+# =============================================================
+# Check 4: Analyze (existing — preserved unchanged)
+# =============================================================
 echo "Running analyze..."
 if ! flutter analyze --no-fatal-infos ; then
   echo ""

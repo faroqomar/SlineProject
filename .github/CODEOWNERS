@@ -1,0 +1,20 @@
+# SLine Code Owners
+# Each line maps a file pattern to a GitHub user who owns that area.
+# When a PR touches these paths, the owner is auto-requested for review.
+# Requires branch protection "Require review from Code Owners" to be enabled.
+
+# Default owner for everything
+* @faroqomar
+
+# Critical paths — payment, booking, and financial flows
+lib/features/wallet/ @faroqomar
+lib/features/booking/ @faroqomar
+
+# Backend — Supabase schema, migrations, Edge Functions
+supabase/ @faroqomar
+
+# CI/CD infrastructure
+.github/ @faroqomar
+
+# Core infrastructure — shared services, config, theme
+lib/core/ @faroqomar

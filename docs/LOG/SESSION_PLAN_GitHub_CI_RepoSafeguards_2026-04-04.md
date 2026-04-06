@@ -50,6 +50,6 @@
 - Manual steps B1 (branch protection) and B2 (secret scanning) should be done by the developer immediately after the agent pushes the new workflow files
 - The pre-commit hook update (Phase 3.4) should be tested locally before committing
 - The CORS fix is already done (ALLOWED_ORIGIN env var) — do NOT re-fix it
-- The coverage floor (28%) is already live in CI — do NOT re-implement it
+- The coverage floor (40%) is already live in CI — do NOT re-implement it
 - The migration review checklist already exists at root — do NOT duplicate in PR template, reference it
 - APK build stays as --debug because release requires signing keys not in CI

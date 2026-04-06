@@ -57,11 +57,11 @@
 
 | Asset | Status | Notes |
 |-------|--------|-------|
-| `.github/workflows/ci.yml` | Active, 4 jobs | lint + arch guard + test (28% floor) + build |
+| `.github/workflows/ci.yml` | Active, 4 jobs | lint + arch guard (7 checks) + test (40% floor) + build |
 | `.githooks/pre-commit` | Active | format + analyze |
 | `analysis_options.yaml` | 36 rules, strong-mode | Comprehensive |
-| Architecture guard | 6 hard-fail checks | Zero current violations |
-| Coverage floor | 28% threshold | Live in CI, `if: always()` |
+| Architecture guard | 7 hard-fail checks | Zero current violations |
+| Coverage floor | 40% threshold | Live in CI, `if: always()` |
 | CORS headers | Fixed | `ALLOWED_ORIGIN` env var, defaults to `https://sline.app` |
 | Secret management | Clean | No hardcoded secrets in Edge Functions |
 | Supabase config | Hardcoded URL + anon key | Safe (public by design, RLS-protected) |
@@ -97,7 +97,7 @@
 
 | Conflict | Source A | Source B | Resolution |
 |----------|---------|---------|------------|
-| Coverage target | MVP_ROADMAP.md says "70%" | PLAN_PhaseD says "28% floor" | Plan wins. Update roadmap. |
+| Coverage target | MVP_ROADMAP.md says "70%" | CI currently enforces 40% floor | CI wins. Update roadmap. |
 | ARCHITECTURE_ANALYSIS date | Header says "March 7, 2024" | Content is from 2026 | Typo. Fix to 2026. |
 | APK build mode | CI builds `--debug` | Production needs `--release` | Change to release in Phase 2 |
 | Check 3 exclusions | Current grep-v chain | Known A6 pattern passes | Tighten after A6 fixes land (Phase D item D11) |
@@ -150,8 +150,8 @@
 - [ ] (@SlinePlanner) Non-regression list:
   - `flutter test` must still pass (706+ tests)
   - `flutter analyze` must still pass (0 issues)
-  - Architecture guard (6 checks) must still pass
-  - Coverage floor (28%) must still be enforced
+  - Architecture guard (7 checks) must still pass
+  - Coverage floor (40%) must still be enforced
   - Pre-commit hook (format + analyze) must still work
 - **GATE CHECK:** Scope, acceptance, and non-regression defined.
 
@@ -359,7 +359,7 @@
 **File:** `Sline_everything/MVP_ROADMAP.md` (UPDATE)
 
 - [ ] (@SlineDocs) Update Section 9 "Current Focus":
-  - Change "coverage enforcement (70% target)" to "coverage enforcement (28% regression floor, DN-1)"
+  - Change "coverage enforcement (70% target)" to "coverage enforcement (40% regression floor)"
   - Add Phase D progress notes (D1-D3 complete, D4-D11 queued)
 - [ ] (@Sentinel) Verify no other sections need updates
 
