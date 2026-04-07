@@ -225,6 +225,26 @@ grep -rn 'error\.toString()' lib/features/*/view/
 
 Evidence: Phase E BLOCKER — 14 raw strings suppressed log interpolation in payment flows. Phase E HIGH — 6 locations leaked raw exception text to user-facing UI.
 
+**Dead Code & Leftover Detection (must pass after refactors):**
+
+```bash
+# Unused imports (flutter analyze catches most, but check manually after renames)
+grep -rn "import.*glass" lib/  # Should return 0 after NO GLASS POLICY
+grep -rn "import.*features/" lib/core/  # Core must not import features
+
+# Deprecated code that should have been removed
+grep -rn "@Deprecated" lib/core/ | grep -v "test/"  # Review each — is the deprecated item still referenced?
+
+# Orphaned function definitions (defined but never called)
+# After major refactors, grep for function names in their definition file
+# and verify they appear in at least one other file
+
+# Stale transparent color tokens from old glass design
+grep -rn "BackdropFilter\|ImageFilter.blur\|dart:ui" lib/core/widgets/  # Must return 0
+```
+
+Evidence: Phase 1 Session — `glassBoxDecoration()`, `bottomNavBarDecoration()`, `glassCardGradient` remained as dead code after glass removal. Detected only by @SystemEvolution post-session analysis, not by any agent during execution. 3 functions (~120 lines) + 1 property sat unused until manual cleanup.
+
 **Supabase-side evidence (must exist):**
 
 - reviewed migration SQL

@@ -71,6 +71,24 @@ Any T-number appearing in more than one file is a collision that must be renumbe
 
 **Evidence**: Phase F — First SystemEvolution report identified 13 priority actions across 7 agent files, all applied. Most common failure type: planning gaps (wrong assumptions about codebase reality).
 
+### NO GLASS POLICY (Phase 1 Core Widget Redesign, 2026-04-07)
+
+**Pattern**: NEVER use `BackdropFilter`, `ImageFilter.blur`, or any glassmorphism/frosted effect. All surfaces must be solid: `colorScheme.cardBackground` + `colorScheme.cardBorder` + `AppDecorations.elevation()`. Glass files (`glass_container.dart`, `glass_card.dart`, `glass_button.dart`) have been deleted. Use `AppCardContainer`, `AppCard`, `AppStyledButton` instead.
+
+**Evidence**: Phase 1 — Removed all BackdropFilter from 3 core widgets + bottom nav bar. Replaced 28 dark mode transparent color tokens with solid opaque equivalents. Removed `glassBoxDecoration()`, `bottomNavBarDecoration()`, `glassCardGradient` dead code (~143 lines).
+
+### Zone Initialization Guard (Phase 1, 2026-04-07)
+
+**Pattern**: `WidgetsFlutterBinding.ensureInitialized()` and `runApp()` MUST be in the SAME zone. When using `SentryFlutter.init(appRunner: ...)`, do NOT wrap `runApp` in `runZonedGuarded` — Sentry already provides zone-based error catching. `runZonedGuarded` creates a different zone, causing Flutter's "Zone mismatch" warning.
+
+**Evidence**: Phase 1 — Zone mismatch error on every app start. `ensureInitialized` was called by Sentry in its zone, but `runApp` was inside `runZonedGuarded` (a different zone). Fixed by removing `runZonedGuarded` — Sentry + `FlutterError.onError` + `PlatformDispatcher.onError` already cover all error boundaries.
+
+### Dead Code Detection After Refactors (Phase 1, 2026-04-07)
+
+**Pattern**: After any major refactor (rename, remove, replace), run @CodeGuard dead code grep patterns to verify no orphaned functions, unused imports, or stale definitions remain. Check specifically: deprecated functions still defined but never called, old file names in imports, and transparent color tokens from glass era.
+
+**Evidence**: Phase 1 — `glassBoxDecoration()`, `bottomNavBarDecoration()`, `glassCardGradient` survived the glass removal for an entire review cycle. Detected only by @SystemEvolution post-session analysis, not by any agent during execution.
+
 ### Raw String Interpolation Guard (Phase E, 2026-04-05)
 
 **Pattern**: Never use raw string literals (`r'...'`) in `AppLogger` calls or any string containing `$variable` interpolation. Raw strings make `$` literal. Use normal single-quoted strings.

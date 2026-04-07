@@ -328,7 +328,7 @@ class _HomeScreenState extends State<HomeScreen> {
           decoration: BoxDecoration(
             color: isSelected
                 ? AppColors.teal
-                : colorScheme.inputBackground, // Glass-like
+                : colorScheme.inputBackground, 
             borderRadius: BorderRadius.circular(AppDimens.r12),
             border: Border.all(
               color: isSelected ? AppColors.teal : colorScheme.inputBorder,

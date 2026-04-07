@@ -254,20 +254,21 @@ Color get disabledText    // grey at 40%
 
 ---
 
-## 1.3 GlassContainer — Performance + Purpose
+## 1.3 GlassContainer → Solid Surface Migration (NO GLASS)
 
-**BEFORE:** BackdropFilter with blur=20 everywhere. No RepaintBoundary. Web just skips blur entirely (falls back to solid color). Used for every card, every container — glassmorphism overuse.
+**BEFORE:** BackdropFilter with blur=20 everywhere. Performance-heavy. Used for every card and container. Glassmorphism is dated in 2026.
 
-**AFTER:**
-- Add `RepaintBoundary` around BackdropFilter to prevent repaint cascading
-- Reduce default blur from 20 → 12 (less expensive, still effective)
-- Add `intensity` parameter: `subtle` (blur=6, nearly transparent), `medium` (blur=12, default), `strong` (blur=20, modals/nav)
-- Web fallback: instead of no blur, use a semi-transparent card with subtle border (looks intentional, not broken)
-- Add `GlassContainer.elevated` factory for modal-level glass (blur=20 + stronger gradient)
-- USAGE RULE: Only use glass for navigation, modals, and hero elements. Regular cards should use solid `cardBackground`.
+**AFTER — NO GLASS POLICY (see .impeccable.md):**
+- **Remove ALL BackdropFilter** from GlassContainer. Replace with solid surface.
+- Background: solid `colorScheme.cardBackground`
+- Border: `colorScheme.cardBorder` (1px, subtle)
+- Depth: `AppDecorations.elevation(level)` parameter for shadow
+- Web and mobile render identically (no platform branching needed)
+- Keep widget name `GlassContainer` for backward compat but internal implementation is solid
+- **Every screen using GlassContainer (21 files) gets cleaner, faster, more readable surfaces**
 
 **FILES:** `lib/core/widgets/glass_container.dart`
-**SKILLS:** `optimize` (performance), `normalize` (usage reduction across app)
+**SKILLS:** `distill` (remove glass complexity), `normalize` (solid surfaces everywhere)
 
 ---
 
@@ -1300,7 +1301,7 @@ Step 13: flutter analyze + flutter test       — must pass clean
 # ANTI-PATTERNS TO NEVER USE
 
 1. **NO** bounce/elastic easing — use ease-out curves only
-2. **NO** glassmorphism on every card — reserve for nav, modals, hero elements
+2. **NO** glassmorphism / frosted glass / BackdropFilter blur — ANYWHERE. Use solid surfaces (`cardBackground` + `cardBorder` + `elevation()` shadow). See `.impeccable.md` NO GLASS POLICY.
 3. **NO** gradient text — ever
 4. **NO** purple-to-blue gradients — stick to teal brand
 5. **NO** hardcoded Color(0xFF...) — use AppColors.* or context.colorScheme.*

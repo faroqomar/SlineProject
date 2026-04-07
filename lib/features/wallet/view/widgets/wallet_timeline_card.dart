@@ -4,7 +4,7 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_price.dart';
-import 'package:sline_app/core/widgets/glass_card.dart';
+import 'package:sline_app/core/widgets/app_card.dart';
 import 'package:sline_app/features/wallet/utils/wallet_presentation_helper.dart';
 
 class WalletTimelineCard extends StatelessWidget {
@@ -14,7 +14,7 @@ class WalletTimelineCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
+    return AppCard(
       key: const ValueKey<String>('wallet_timeline_card'),
       padding: const EdgeInsets.all(AppDimens.p20),
       child: Column(

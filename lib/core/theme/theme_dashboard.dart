@@ -206,18 +206,26 @@ class ThemeDashboard {
   // DECORATIONS
   // ============================================================================
 
-  /// **Glassmorphism Effects** (from `AppDecorations`)
+  /// **NO GLASS POLICY — Mandatory**
   ///
-  /// Use `AppDecorations.glassBoxDecoration()` for glassmorphism cards:
-  /// - Gradient background with transparency
-  /// - Subtle border
-  /// - Multi-layered shadow
-  /// - Backdrop blur effect
+  /// Glass effects (BackdropFilter, frosted blur, semi-transparent gradients)
+  /// are BANNED from the SLine design system. They are performance-heavy,
+  /// dated in 2026, and harm readability. See `.impeccable.md` for full rationale.
+  ///
+  /// **Use instead:**
+  /// - Solid `colorScheme.cardBackground` for surfaces
+  /// - `colorScheme.cardBorder` for subtle borders
+  /// - `AppDecorations.elevation(level)` for depth/shadow
+  ///
+  /// **Legacy glass widgets** (`GlassContainer`, `GlassCard`, `GlassButton`,
+  /// `glassBoxDecoration`, `bottomNavBarDecoration`) exist in the codebase
+  /// and will be migrated to solid-surface equivalents in Phase 1.
 
   /// **Common Decorations:**
   ///
-  /// - `AppDecorations.glassBoxDecoration()` - General glassmorphism
-  /// - `AppDecorations.bottomNavBarDecoration()` - Bottom navigation
+  /// - `AppDecorations.elevation(1)` - Resting card shadow (blur=4, offset=1)
+  /// - `AppDecorations.elevation(2)` - Raised/hovered card shadow (blur=8, offset=2)
+  /// - `AppDecorations.elevation(3)` - Floating modal/FAB shadow (blur=16, offset=4)
   /// - `AppDecorations.inputFieldDecoration()` - Input fields
   /// - `AppDecorations.hotBadgeDecoration()` - Hot badges
   /// - `AppDecorations.authorInitialsDecoration()` - Avatar circles

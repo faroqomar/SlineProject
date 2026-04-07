@@ -11,7 +11,7 @@ import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/error_mapper.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
 import 'package:sline_app/features/booking/models/payment_return_args.dart';
 import 'package:sline_app/features/booking/view/payment_webview_screen.dart';
@@ -191,7 +191,7 @@ class _DirectOfferDetailsContentState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                GlassContainer(
+                AppCardContainer(
                   child: Padding(
                     padding: const EdgeInsets.all(AppDimens.p16),
                     child: Column(
@@ -435,7 +435,7 @@ class _DirectOfferDisputeBanner extends StatelessWidget {
                 : 'Dispute under review. Approve and release disabled.';
             return Padding(
               padding: const EdgeInsets.only(top: AppDimens.p24),
-              child: GlassContainer(
+              child: AppCardContainer(
                 child: Padding(
                   padding: const EdgeInsets.all(AppDimens.p12),
                   child: Row(

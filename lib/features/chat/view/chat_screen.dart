@@ -9,7 +9,7 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_date.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/chat/attachments/widgets/attachment_message_tile.dart';
 import 'package:sline_app/features/chat/models/chat_offer_payload.dart';
 import 'package:sline_app/features/chat/models/conversation_model.dart';
@@ -247,7 +247,7 @@ class _ChatScreenState extends State<ChatScreen> {
     return Column(
       children: [
         ClipRect(
-          child: GlassContainer(
+          child: AppCardContainer(
             borderRadius: BorderRadius.zero,
             padding: EdgeInsets.fromLTRB(
               AppDimens.p8,
@@ -363,7 +363,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildInputArea(BuildContext context, AppColorScheme colorScheme) {
-    return GlassContainer(
+    return AppCardContainer(
       borderRadius: const BorderRadius.vertical(
         top: Radius.circular(AppDimens.r24),
       ),

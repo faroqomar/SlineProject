@@ -10,7 +10,7 @@ import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/error_mapper.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
 import 'package:sline_app/features/chat/view/chat_screen.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
@@ -266,7 +266,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
   }
 
   Widget _buildUnifiedStatus(WorkItemDetailsViewModel vm) {
-    return GlassContainer(
+    return AppCardContainer(
       child: Padding(
         padding: const EdgeInsets.all(AppDimens.p16),
         child: Row(
@@ -293,7 +293,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
 
   Widget _buildContractInfo(WorkItemDetailsViewModel vm) {
     if (vm.activeContract == null) return const SizedBox.shrink();
-    return GlassContainer(
+    return AppCardContainer(
       child: Padding(
         padding: const EdgeInsets.all(AppDimens.p16),
         child: Column(

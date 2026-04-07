@@ -5,7 +5,7 @@ import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/widgets/glass_card.dart';
+import 'package:sline_app/core/widgets/app_card.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 
 class DashboardCountersGrid extends StatelessWidget {
@@ -116,7 +116,7 @@ class _CounterCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
 
-    return GlassCard(
+    return AppCard(
       onTap: data.onTap,
       padding: const EdgeInsets.all(AppDimens.p16),
       child: Column(

@@ -163,7 +163,7 @@ class ProfileRepository {
     return row?['avatar_url'] as String?;
   }
 
-  Future<String> createSignedAvatarUrl(String storagePath) async {
+  Future<String?> createSignedAvatarUrl(String storagePath) async {
     return _avatarService.createSignedUrl(storagePath);
   }
 

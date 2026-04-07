@@ -6,7 +6,7 @@ import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/utils/status_presenter.dart';
-import 'package:sline_app/core/widgets/glass_card.dart';
+import 'package:sline_app/core/widgets/app_card.dart';
 import 'package:sline_app/core/widgets/status_badge.dart';
 import 'package:sline_app/features/booking/models/booking_model.dart';
 
@@ -67,7 +67,7 @@ class DashboardBookingCard extends StatelessWidget {
         booking.status == BookingStatus.pending &&
         booking.paymentStatus != PaymentStatus.held;
 
-    return GlassCard(
+    return AppCard(
       padding: const EdgeInsets.all(AppDimens.p16),
       margin: const EdgeInsets.only(bottom: AppDimens.p16),
       onTap: () async {

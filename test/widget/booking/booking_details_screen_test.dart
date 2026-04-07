@@ -21,7 +21,7 @@ import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/utils/unified_cta_resolver.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/booking/models/booking_model.dart';
 import 'package:sline_app/features/booking/viewmodels/booking_view_model.dart';
 import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
@@ -187,7 +187,7 @@ class _TestBookingDetailsContent extends StatelessWidget {
             // Service Card (Task Info)
             _buildSectionHeader(context, 'Service'),
             const SizedBox(height: AppDimens.p12),
-            GlassContainer(
+            AppCardContainer(
               padding: const EdgeInsets.all(AppDimens.p16),
               child: Row(
                 children: [
@@ -229,7 +229,7 @@ class _TestBookingDetailsContent extends StatelessWidget {
             // Counterparty Info -- uses placeholder instead of SignedAvatar
             _buildSectionHeader(context, isProvider ? 'Client' : 'Provider'),
             const SizedBox(height: AppDimens.p12),
-            GlassContainer(
+            AppCardContainer(
               padding: const EdgeInsets.all(AppDimens.p16),
               child: Row(
                 children: [
@@ -274,7 +274,7 @@ class _TestBookingDetailsContent extends StatelessWidget {
             if (booking.note != null && booking.note!.isNotEmpty) ...[
               _buildSectionHeader(context, 'Note'),
               const SizedBox(height: AppDimens.p12),
-              GlassContainer(
+              AppCardContainer(
                 padding: const EdgeInsets.all(AppDimens.p16),
                 child: Text(
                   booking.note!,
@@ -290,7 +290,7 @@ class _TestBookingDetailsContent extends StatelessWidget {
             if (booking.price != null) ...[
               _buildSectionHeader(context, 'Price'),
               const SizedBox(height: AppDimens.p12),
-              GlassContainer(
+              AppCardContainer(
                 padding: const EdgeInsets.all(AppDimens.p16),
                 child: Text(
                   '${booking.price} IQD',
@@ -306,7 +306,7 @@ class _TestBookingDetailsContent extends StatelessWidget {
             // Timeline
             _buildSectionHeader(context, 'Timeline'),
             const SizedBox(height: AppDimens.p12),
-            GlassContainer(
+            AppCardContainer(
               padding: const EdgeInsets.all(AppDimens.p16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -604,7 +604,7 @@ class _TestBookingDisputeBanner extends StatelessWidget {
                 : 'Dispute under review. Approve and release disabled.';
             return Padding(
               padding: const EdgeInsets.only(bottom: AppDimens.p24),
-              child: GlassContainer(
+              child: AppCardContainer(
                 child: Padding(
                   padding: const EdgeInsets.all(AppDimens.p12),
                   child: Row(
@@ -1134,8 +1134,8 @@ void main() {
       expect(find.text('Delivered (Review)'), findsOneWidget);
     });
 
-    // T232: GlassContainer is used for content sections
-    testWidgets('T232 GlassContainer wraps content sections', (tester) async {
+    // T232: AppCardContainer is used for content sections
+    testWidgets('T232 AppCardContainer wraps content sections', (tester) async {
       await _pumpScreen(
         tester,
         booking: _booking(price: 100, note: 'Test'),
@@ -1144,8 +1144,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Service card, counterparty, note, price, and timeline use GlassContainer
-      expect(find.byType(GlassContainer), findsAtLeastNWidgets(4));
+      // Service card, counterparty, note, price, and timeline use AppCardContainer
+      expect(find.byType(AppCardContainer), findsAtLeastNWidgets(4));
     });
 
     // T233: task ID shows N/A when taskId is null

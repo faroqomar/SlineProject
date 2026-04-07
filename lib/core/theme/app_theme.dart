@@ -257,6 +257,37 @@ class AppTheme {
         unselectedLabelStyle: AppTypography.caption,
       ),
 
+      // TextButton Theme (Phase 1 — deferred from Phase 0 LOW-2)
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: appColorScheme.primary,
+          textStyle: AppTypography.bodyMedium,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimens.r14),
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimens.p16,
+            vertical: AppDimens.p12,
+          ),
+        ),
+      ),
+
+      // OutlinedButton Theme (Phase 1 — deferred from Phase 0 LOW-2)
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: appColorScheme.primary,
+          side: BorderSide(color: appColorScheme.primary, width: 1),
+          textStyle: AppTypography.bodyMedium,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimens.r14),
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimens.p16,
+            vertical: AppDimens.p12,
+          ),
+        ),
+      ),
+
       // Extensions
       extensions: <ThemeExtension<dynamic>>[
         AppThemeExtension(colors: appColorScheme),

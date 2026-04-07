@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
-// Removed unused GlassContainer import
+// Removed unused AppCardContainer import
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/widgets/app_card.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
-import 'package:sline_app/core/widgets/glass_card.dart';
 import 'package:sline_app/features/search/view/widgets/search_result_profile_card.dart';
 import 'package:sline_app/features/search/viewmodels/search_view_model.dart';
 // Removed missing dashboard_background import
@@ -77,8 +77,8 @@ class _SearchScreenContentState extends State<_SearchScreenContent> {
                   child: Column(
                     children: [
                       const SizedBox(height: AppDimens.p16),
-                      // Search Bar wrapped in Glass
-                      GlassCard(
+                      
+                      AppCard(
                         padding: EdgeInsets.zero,
                         child: AppTextField(
                           controller: _searchController,

@@ -5,7 +5,7 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_price.dart';
-import 'package:sline_app/core/widgets/glass_card.dart';
+import 'package:sline_app/core/widgets/app_card.dart';
 import 'package:sline_app/features/wallet/utils/wallet_presentation_helper.dart';
 import 'package:sline_app/features/wallet/view/widgets/wallet_hero_card.dart';
 import 'package:sline_app/features/wallet/view/widgets/wallet_timeline_card.dart';
@@ -95,7 +95,7 @@ class _WalletLoadingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
+    return AppCard(
       key: const ValueKey<String>('wallet_shared_loading'),
       padding: const EdgeInsets.all(AppDimens.p24),
       child: Column(
@@ -129,7 +129,7 @@ class _WalletErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
+    return AppCard(
       key: const ValueKey<String>('wallet_shared_error'),
       padding: const EdgeInsets.all(AppDimens.p24),
       child: Column(
@@ -189,7 +189,7 @@ class _WalletInsightsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
+    return AppCard(
       key: const ValueKey<String>('wallet_insights_card'),
       padding: const EdgeInsets.all(AppDimens.p20),
       child: Column(
@@ -248,7 +248,7 @@ class _WalletActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
 
-    return GlassCard(
+    return AppCard(
       key: const ValueKey<String>('wallet_action_card'),
       padding: const EdgeInsets.all(AppDimens.p20),
       child: Column(

@@ -4,7 +4,7 @@ import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/core/widgets/signed_image.dart';
 import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 
@@ -355,7 +355,7 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                           _confirmDelete(context, vm, item['id']);
                           return false; // Handled by dialog
                         },
-                        child: GlassContainer(
+                        child: AppCardContainer(
                           padding: const EdgeInsets.all(12),
                           borderRadius: BorderRadius.circular(20),
                           child: Row(

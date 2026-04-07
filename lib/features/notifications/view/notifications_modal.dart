@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/notifications/models/notification_model.dart';
 import 'package:sline_app/features/notifications/view/widgets/notification_tile.dart';
 import 'package:sline_app/features/notifications/viewmodels/notification_view_model.dart';
@@ -38,7 +38,7 @@ class NotificationsModal extends StatelessWidget {
       minChildSize: 0.5,
       maxChildSize: 0.95,
       builder: (context, scrollController) {
-        return GlassContainer(
+        return AppCardContainer(
           borderRadius: const BorderRadius.vertical(
             top: Radius.circular(AppDimens.r20),
           ),

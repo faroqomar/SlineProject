@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/core/widgets/skeleton_loader.dart';
 
 /// Pre-built skeleton card that mimics a TenderTaskCard loading state.
@@ -487,7 +487,7 @@ class SkeletonDetailsScreen extends StatelessWidget {
           const SkeletonText(lines: 4),
           const SizedBox(height: AppDimens.p24),
           // Price card
-          GlassContainer(
+          AppCardContainer(
             padding: const EdgeInsets.all(AppDimens.p16),
             borderRadius: BorderRadius.circular(AppDimens.r16),
             child: const Row(

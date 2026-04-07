@@ -7,7 +7,7 @@ import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/core/widgets/signed_image.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
@@ -140,7 +140,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppDimens.p24,
                   ),
-                  child: GlassContainer(
+                  child: AppCardContainer(
                     padding: const EdgeInsets.all(AppDimens.p16),
                     borderRadius: BorderRadius.circular(AppDimens.r20),
                     child: Column(
@@ -624,7 +624,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final colorScheme = context.colorScheme;
     return GestureDetector(
       onTap: onTap,
-      child: GlassContainer(
+      child: AppCardContainer(
         padding: const EdgeInsets.all(AppDimens.p16),
         borderRadius: BorderRadius.circular(AppDimens.r16),
         child: Row(
@@ -686,7 +686,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return GestureDetector(
       onTap: themeProvider.toggleThemeMode,
-      child: GlassContainer(
+      child: AppCardContainer(
         padding: const EdgeInsets.all(AppDimens.p16),
         borderRadius: BorderRadius.circular(AppDimens.r16),
         child: Row(

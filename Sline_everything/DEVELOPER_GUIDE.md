@@ -1,6 +1,6 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.22.0 (Phase 0 UI Redesign: Design System Foundation — motion tokens, interaction states, elevation scale, semantic colors, component themes, typography line-heights)
+**Version**: 2.23.0 (Phase 1 Core Widget Redesign: 14 widgets redesigned, NO GLASS POLICY, 8-state interaction model, haptics, Semantics, 87 component tests, zone mismatch fix, solid dark mode colors)
 **Last Updated**: 2026-04-07
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.

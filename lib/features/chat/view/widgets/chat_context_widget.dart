@@ -8,7 +8,7 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/chat/models/conversation_model.dart';
 import 'package:sline_app/features/tasks/view/task_details_screen.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
@@ -74,7 +74,7 @@ class ChatContextWidget extends StatelessWidget {
 
     return GestureDetector(
       onTap: () => _handleTap(context),
-      child: GlassContainer(
+      child: AppCardContainer(
         margin: const EdgeInsets.symmetric(
           horizontal: AppDimens.p12,
           vertical: 8,

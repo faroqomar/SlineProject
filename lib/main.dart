@@ -125,94 +125,69 @@ void main() async {
         );
       }
 
-      // Ensure bindings BEFORE the zone guard so runApp() is in the same zone.
-      WidgetsFlutterBinding.ensureInitialized();
+      // Global Flutter framework error handler (widget build errors, etc.)
+      FlutterError.onError = (FlutterErrorDetails details) {
+        if (isIgnoredFlutterWebEngineDisposeError(details.exception) ||
+            isIgnoredRealtimeEncodeError(details.exception) ||
+            isIgnoredRealtimePayloadError(details.exception)) {
+          return;
+        }
+        AppLogger.e(
+          'Flutter Error: ${details.summary}',
+          tag: 'System',
+          error: details.exception,
+          stackTrace: details.stack,
+        );
+        unawaited(
+          CrashReportingService.instance.recordError(
+            details.exception,
+            details.stack,
+            reason: details.summary.toString(),
+            fatal: true,
+          ),
+        );
+      };
 
-      // Inner error zone catches async exceptions
-      await runZonedGuarded(
-        () async {
-          // Global Flutter framework error handler (widget build errors, etc.)
-          FlutterError.onError = (FlutterErrorDetails details) {
-            if (isIgnoredFlutterWebEngineDisposeError(details.exception) ||
-                isIgnoredRealtimeEncodeError(details.exception) ||
-                isIgnoredRealtimePayloadError(details.exception)) {
-              return;
-            }
-            AppLogger.e(
-              'Flutter Error: ${details.summary}',
-              tag: 'System',
-              error: details.exception,
-              stackTrace: details.stack,
-            );
-            unawaited(
-              CrashReportingService.instance.recordError(
-                details.exception,
-                details.stack,
-                reason: details.summary.toString(),
-                fatal: true,
-              ),
-            );
-          };
+      // Global platform error handler (native crashes, isolate errors)
+      PlatformDispatcher.instance.onError = (error, stack) {
+        if (isIgnoredFlutterWebEngineDisposeError(error) ||
+            isIgnoredRealtimeEncodeError(error) ||
+            isIgnoredRealtimePayloadError(error)) {
+          return true;
+        }
+        AppLogger.e(
+          'Platform Error',
+          tag: 'System',
+          error: error,
+          stackTrace: stack,
+        );
+        unawaited(
+          CrashReportingService.instance.recordError(
+            error,
+            stack,
+            fatal: true,
+          ),
+        );
+        return true; // Prevent app termination
+      };
 
-          // Global platform error handler (native crashes, isolate errors)
-          PlatformDispatcher.instance.onError = (error, stack) {
-            if (isIgnoredFlutterWebEngineDisposeError(error) ||
-                isIgnoredRealtimeEncodeError(error) ||
-                isIgnoredRealtimePayloadError(error)) {
-              return true;
-            }
-            AppLogger.e(
-              'Platform Error',
-              tag: 'System',
-              error: error,
-              stackTrace: stack,
-            );
-            unawaited(
-              CrashReportingService.instance.recordError(
-                error,
-                stack,
-                fatal: true,
-              ),
-            );
-            return true; // Prevent app termination
-          };
+      await SupabaseConfig.init();
 
-          await SupabaseConfig.init();
+      // Web: register WebView platform so in-app payment WebView works
+      webview_platform.initWebViewPlatform();
 
-          // Web: register WebView platform so in-app payment WebView works
-          webview_platform.initWebViewPlatform();
+      // Set logger level (info = clean logs, debug = verbose logs)
+      AppLogger.currentLevel = LogLevel.info;
 
-          // Set logger level (info = clean logs, debug = verbose logs)
-          AppLogger.currentLevel = LogLevel.info;
+      // Initialize SharedPreferences for caching
+      final prefs = await SharedPreferences.getInstance();
+      AppLogger.i('✅ Cache service ready');
 
-          // Initialize SharedPreferences for caching
-          final prefs = await SharedPreferences.getInstance();
-          AppLogger.i('✅ Cache service ready');
-
-          runApp(SLineApp(prefs: prefs));
-        },
-        (error, stack) {
-          if (isIgnoredFlutterWebEngineDisposeError(error) ||
-              isIgnoredRealtimeEncodeError(error) ||
-              isIgnoredRealtimePayloadError(error)) {
-            return;
-          }
-          // Catches any uncaught async exceptions outside the Flutter framework
-          AppLogger.e(
-            'Uncaught Zone Error',
-            tag: 'System',
-            error: error,
-            stackTrace: stack,
-          );
-          unawaited(
-            CrashReportingService.instance.recordError(
-              error,
-              stack,
-              fatal: false,
-            ),
-          );
-        },
-      );
+      // runApp in the SAME zone as the binding (Sentry's appRunner zone).
+      // Previously wrapped in runZonedGuarded which created a different zone,
+      // causing "Zone mismatch" warning. Sentry already provides zone-based
+      // error catching, so the extra runZonedGuarded is unnecessary.
+      runApp(SLineApp(prefs: prefs));
     },
   );
 }

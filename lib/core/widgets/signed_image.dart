@@ -1,9 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+
 import 'package:sline_app/core/config/storage_config.dart';
+import 'package:sline_app/core/services/default_signed_url_generator.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/services/signed_url_generator.dart';
+import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/utils/signed_url_cache.dart';
-import 'package:sline_app/features/tasks/services/task_image_service.dart';
+import 'package:sline_app/core/widgets/skeleton_loader.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Renders an image from either a public URL or a private Supabase Storage path.
@@ -34,6 +38,10 @@ class SignedImage extends StatefulWidget {
 
   final String? bucket;
 
+  /// Optional [SignedUrlGenerator] for resolving storage paths to signed URLs.
+  /// If not provided, a default generator for 'task-images' bucket is used.
+  final SignedUrlGenerator? urlGenerator;
+
   const SignedImage({
     super.key,
     required this.storagePathOrUrl,
@@ -43,6 +51,7 @@ class SignedImage extends StatefulWidget {
     this.fit = BoxFit.cover,
     this.placeholder,
     this.bucket,
+    this.urlGenerator,
   });
 
   @override
@@ -52,6 +61,7 @@ class SignedImage extends StatefulWidget {
 class _SignedImageState extends State<SignedImage> {
   String? _resolvedUrl;
   bool _loading = true;
+  bool _hasError = false;
 
   @override
   void initState() {
@@ -110,8 +120,10 @@ class _SignedImageState extends State<SignedImage> {
               .getPublicUrl(v);
         }
       } else {
-        // Default to TaskImageService (legacy behavior for task-images)
-        final signer = TaskImageService();
+        // Use injected generator or default to task-images bucket
+        final signer =
+            widget.urlGenerator ??
+            DefaultSignedUrlGenerator(bucket: 'task-images');
         resolved = await signer.createSignedUrl(
           v,
           expire: SharedStorageConfig.ttlDurationForBucket('task-images'),
@@ -133,85 +145,107 @@ class _SignedImageState extends State<SignedImage> {
         tag: 'SignedImage',
         json: {'path': widget.storagePathOrUrl, 'error': e.toString()},
       );
-      setState(() => _loading = false);
+      setState(() {
+        _loading = false;
+        _hasError = true;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final defaultPlaceholder =
-        widget.placeholder ??
-        Container(
-          width: widget.width,
-          height: widget.height,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(widget.borderRadius),
-            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.3),
-            border: Border.all(
-              color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
-            ),
-          ),
-          child: const Icon(Icons.image_outlined, size: 22),
-        );
-
-    // Loading state while resolving signed URL
+    // Shimmer loading state (replaces CircularProgressIndicator)
     if (_loading) {
-      return Container(
+      return SkeletonLoader(
         width: widget.width,
         height: widget.height,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(widget.borderRadius),
-          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.3),
-        ),
-        child: const SizedBox(
-          width: 16,
-          height: 16,
-          child: CircularProgressIndicator(strokeWidth: 2),
+        borderRadius: widget.borderRadius,
+      );
+    }
+
+    // Error state with retry
+    if (_hasError || _resolvedUrl == null || _resolvedUrl!.isEmpty) {
+      return Semantics(
+        image: true,
+        label: 'Image failed to load',
+        child: GestureDetector(
+          onTap: () {
+            setState(() {
+              _loading = true;
+              _hasError = false;
+              _resolvedUrl = null;
+            });
+            _resolve();
+          },
+          child: widget.placeholder ??
+              Container(
+                width: widget.width,
+                height: widget.height,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(widget.borderRadius),
+                  color: Theme.of(context).colorScheme.surface.withValues(
+                    alpha: 0.3,
+                  ),
+                  border: Border.all(
+                    color: Theme.of(context).dividerColor.withValues(
+                      alpha: 0.2,
+                    ),
+                  ),
+                ),
+                child: const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.image_not_supported_outlined, size: 22),
+                    SizedBox(height: 4),
+                    Text('Tap to retry', style: TextStyle(fontSize: 10)),
+                  ],
+                ),
+              ),
         ),
       );
     }
 
-    // No URL resolved - show placeholder
-    if (_resolvedUrl == null || _resolvedUrl!.isEmpty) {
-      return defaultPlaceholder;
-    }
-
-    // Use CachedNetworkImage for disk/memory caching with memory optimization
-    // We determine cache size based on render size to avoid OOM on large images
+    // Loaded — use CachedNetworkImage with memory optimization
     final pixelRatio = MediaQuery.of(context).devicePixelRatio;
-    final cacheWidth = widget.width.isFinite
-        ? (widget.width * pixelRatio).toInt()
-        : null;
-    final cacheHeight = widget.height.isFinite
-        ? (widget.height * pixelRatio).toInt()
-        : null;
+    final cacheWidth =
+        widget.width.isFinite ? (widget.width * pixelRatio).toInt() : null;
+    final cacheHeight =
+        widget.height.isFinite ? (widget.height * pixelRatio).toInt() : null;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(widget.borderRadius),
-      child: CachedNetworkImage(
-        imageUrl: _resolvedUrl!,
-        width: widget.width,
-        height: widget.height,
-        fit: widget.fit,
-        // CRITICAL: Optimize memory usage by decoding only to display size
-        memCacheWidth: cacheWidth,
-        memCacheHeight: cacheHeight,
-        placeholder: (context, url) => Container(
-          width: widget.width,
-          height: widget.height,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(widget.borderRadius),
-            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.3),
-          ),
-          child: const SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(strokeWidth: 2),
+    return Semantics(
+      image: true,
+      label: 'Image',
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(widget.borderRadius),
+        child: AnimatedOpacity(
+          opacity: 1.0,
+          duration: AppMotion.standard,
+          curve: AppMotion.curveDecel,
+          child: CachedNetworkImage(
+            imageUrl: _resolvedUrl!,
+            width: widget.width,
+            height: widget.height,
+            fit: widget.fit,
+            memCacheWidth: cacheWidth,
+            memCacheHeight: cacheHeight,
+            placeholder: (context, url) => SkeletonLoader(
+              width: widget.width,
+              height: widget.height,
+              borderRadius: widget.borderRadius,
+            ),
+            errorWidget: (context, url, error) => Container(
+              width: widget.width,
+              height: widget.height,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(widget.borderRadius),
+                color: Theme.of(context).colorScheme.surface.withValues(
+                  alpha: 0.3,
+                ),
+              ),
+              child: const Icon(Icons.image_not_supported_outlined, size: 22),
+            ),
           ),
         ),
-        errorWidget: (context, url, error) => defaultPlaceholder,
       ),
     );
   }

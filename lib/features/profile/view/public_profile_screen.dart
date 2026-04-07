@@ -8,8 +8,8 @@ import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/core/widgets/circle_icon_button.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
 import 'package:sline_app/core/widgets/sliver_tab_bar_delegate.dart';
 import 'package:sline_app/features/chat/view/chat_screen.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
@@ -383,7 +383,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
                   bottom: AppDimens.p24,
                   left: AppDimens.p24,
                   right: AppDimens.p24,
-                  child: GlassContainer(
+                  child: AppCardContainer(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppDimens.p8,
                       vertical: AppDimens.p8,

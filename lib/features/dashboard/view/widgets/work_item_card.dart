@@ -10,7 +10,7 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_date.dart';
-import 'package:sline_app/core/widgets/glass_card.dart';
+import 'package:sline_app/core/widgets/app_card.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/features/dashboard/models/work_item.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
@@ -77,7 +77,7 @@ class WorkItemCard extends StatelessWidget {
         statusColor = AppColors.mediumGrey;
     }
 
-    return GlassCard(
+    return AppCard(
       onTap: () async {
         final result = await deepLinkService.handleWorkItem(
           context,

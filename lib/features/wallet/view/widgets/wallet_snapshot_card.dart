@@ -5,7 +5,7 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_price.dart';
-import 'package:sline_app/core/widgets/glass_card.dart';
+import 'package:sline_app/core/widgets/app_card.dart';
 import 'package:sline_app/features/wallet/viewmodels/wallet_view_model.dart';
 
 /// Compact wallet balance snapshot for dashboard overview.
@@ -17,7 +17,7 @@ class WalletSnapshotCard extends StatelessWidget {
     final walletVM = context.watch<WalletViewModel>();
     final colorScheme = context.colorScheme;
 
-    return GlassCard(
+    return AppCard(
       padding: const EdgeInsets.all(AppDimens.p20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
