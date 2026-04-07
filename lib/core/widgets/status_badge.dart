@@ -29,10 +29,7 @@ class StatusBadge extends StatefulWidget {
   });
 
   factory StatusBadge.fromWorkItem(WorkItem item, {bool isSmall = false}) {
-    return StatusBadge(
-      text: _formatStatus(item.statusRaw),
-      isSmall: isSmall,
-    );
+    return StatusBadge(text: _formatStatus(item.statusRaw), isSmall: isSmall);
   }
 
   factory StatusBadge.fromStatus(
@@ -50,10 +47,7 @@ class StatusBadge extends StatefulWidget {
       statusStr = status.toString();
     }
 
-    return StatusBadge(
-      text: _formatStatus(statusStr),
-      isSmall: isSmall,
-    );
+    return StatusBadge(text: _formatStatus(statusStr), isSmall: isSmall);
   }
 
   static String _formatStatus(String status) {
@@ -110,7 +104,10 @@ class _StatusBadgeState extends State<StatusBadge>
       duration: AppMotion.dramatic,
     );
     _pulseAnimation ??= Tween<double>(begin: 0.7, end: 1.0).animate(
-      CurvedAnimation(parent: _pulseController!, curve: AppMotion.curveSymmetric),
+      CurvedAnimation(
+        parent: _pulseController!,
+        curve: AppMotion.curveSymmetric,
+      ),
     );
     _pulseController!.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
@@ -120,7 +117,8 @@ class _StatusBadgeState extends State<StatusBadge>
         } else {
           _pulseController!.stop();
         }
-      } else if (status == AnimationStatus.dismissed && _pulseCount < _maxPulseCount) {
+      } else if (status == AnimationStatus.dismissed &&
+          _pulseCount < _maxPulseCount) {
         _pulseController!.forward();
       }
     });
@@ -137,7 +135,10 @@ class _StatusBadgeState extends State<StatusBadge>
     // Completed / delivered → success
     if (t == 'completed' || t == 'delivered') return colorScheme.success;
     // Canceled / declined / rejected → danger
-    if (t == 'canceled' || t == 'cancelled' || t == 'declined' || t == 'rejected') {
+    if (t == 'canceled' ||
+        t == 'cancelled' ||
+        t == 'declined' ||
+        t == 'rejected') {
       return colorScheme.danger;
     }
     // Pending / draft / payment pending → warning
@@ -145,8 +146,12 @@ class _StatusBadgeState extends State<StatusBadge>
       return colorScheme.warning;
     }
     // Active / confirmed / in progress / assigned / open → info
-    if (t == 'active' || t == 'confirmed' || t == 'in progress' ||
-        t == 'assigned' || t == 'open' || t == 'offers review') {
+    if (t == 'active' ||
+        t == 'confirmed' ||
+        t == 'in progress' ||
+        t == 'assigned' ||
+        t == 'open' ||
+        t == 'offers review') {
       return colorScheme.info;
     }
 
@@ -157,7 +162,10 @@ class _StatusBadgeState extends State<StatusBadge>
   IconData _resolveIcon() {
     final t = widget.text.toLowerCase();
     if (t == 'completed' || t == 'delivered') return Icons.check_circle;
-    if (t == 'canceled' || t == 'cancelled' || t == 'declined' || t == 'rejected') {
+    if (t == 'canceled' ||
+        t == 'cancelled' ||
+        t == 'declined' ||
+        t == 'rejected') {
       return Icons.cancel;
     }
     if (t == 'pending' || t == 'draft' || t == 'payment pending') {
@@ -174,7 +182,10 @@ class _StatusBadgeState extends State<StatusBadge>
     final effectiveColor = _resolveColor(context);
     final iconData = _resolveIcon();
     final iconSize = widget.isSmall ? 10.0 : 14.0;
-    final effectiveDuration = AppMotion.respectMotion(context, AppMotion.dramatic);
+    final effectiveDuration = AppMotion.respectMotion(
+      context,
+      AppMotion.dramatic,
+    );
 
     Widget badge = Container(
       padding: EdgeInsets.symmetric(
@@ -218,9 +229,6 @@ class _StatusBadgeState extends State<StatusBadge>
       );
     }
 
-    return Semantics(
-      label: 'Status: ${widget.text}',
-      child: badge,
-    );
+    return Semantics(label: 'Status: ${widget.text}', child: badge);
   }
 }

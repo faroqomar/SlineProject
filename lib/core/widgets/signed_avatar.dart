@@ -99,8 +99,7 @@ class _SignedAvatarState extends State<SignedAvatar> {
 
   SignedUrlGenerator _ensureUrlGenerator() {
     return _urlGenerator ??=
-        widget.urlGenerator ??
-        DefaultSignedUrlGenerator(bucket: 'avatars');
+        widget.urlGenerator ?? DefaultSignedUrlGenerator(bucket: 'avatars');
   }
 
   @override
@@ -189,7 +188,8 @@ class _SignedAvatarState extends State<SignedAvatar> {
       avatar = SkeletonLoader(
         width: avatarSize,
         height: avatarSize,
-        borderRadius: widget.borderRadius?.resolve(TextDirection.ltr).topLeft.x ?? 12,
+        borderRadius:
+            widget.borderRadius?.resolve(TextDirection.ltr).topLeft.x ?? 12,
       );
     } else if (_resolvedUrl == null) {
       avatar =
@@ -279,7 +279,8 @@ class _SignedAvatarState extends State<SignedAvatar> {
       avatar = SkeletonAvatar(size: avatarSize);
     } else if (_resolvedUrl == null) {
       // Initials fallback or placeholder
-      avatar = widget.placeholder ?? _buildInitialsFallback(bgColor, avatarSize);
+      avatar =
+          widget.placeholder ?? _buildInitialsFallback(bgColor, avatarSize);
     } else {
       // Loaded — fade in
       avatar = AnimatedOpacity(
@@ -317,11 +318,7 @@ class _SignedAvatarState extends State<SignedAvatar> {
       );
     }
 
-    return Semantics(
-      image: true,
-      label: 'User avatar',
-      child: avatar,
-    );
+    return Semantics(image: true, label: 'User avatar', child: avatar);
   }
 
   /// Builds initials fallback when image fails to load.
@@ -343,11 +340,7 @@ class _SignedAvatarState extends State<SignedAvatar> {
     return CircleAvatar(
       radius: size / 2,
       backgroundColor: bgColor,
-      child: Icon(
-        Icons.person,
-        color: AppColors.offWhite,
-        size: size * 0.5,
-      ),
+      child: Icon(Icons.person, color: AppColors.offWhite, size: size * 0.5),
     );
   }
 }

@@ -8,10 +8,7 @@ import 'package:sline_app/core/theme/app_theme.dart';
 /// Use this for isolated core widget component tests where you don't need
 /// full app routing or provider trees. For full-screen tests, use
 /// `test_support/pump_app.dart` instead.
-Future<void> pumpCoreWidget(
-  WidgetTester tester,
-  Widget child,
-) async {
+Future<void> pumpCoreWidget(WidgetTester tester, Widget child) async {
   await tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.light(),
@@ -24,10 +21,7 @@ Future<void> pumpCoreWidget(
 /// Pumps a single widget in a minimal MaterialApp with SLine dark theme.
 ///
 /// Use this to verify dark mode rendering of core widgets.
-Future<void> pumpCoreWidgetDark(
-  WidgetTester tester,
-  Widget child,
-) async {
+Future<void> pumpCoreWidgetDark(WidgetTester tester, Widget child) async {
   await tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.dark(),

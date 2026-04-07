@@ -10,24 +10,19 @@ void main() {
     testWidgets('T-CW020 contains ScaleTransition widget', (tester) async {
       await pumpCoreWidget(
         tester,
-        ScaleButton(
-          onPressed: () {},
-          child: const Text('Press'),
-        ),
+        ScaleButton(onPressed: () {}, child: const Text('Press')),
       );
 
       // ScaleButton uses ScaleTransition for animation
       expect(find.byType(ScaleTransition), findsWidgets);
     });
 
-    testWidgets('T-CW021 returns to normal after tap completes',
-        (tester) async {
+    testWidgets('T-CW021 returns to normal after tap completes', (
+      tester,
+    ) async {
       await pumpCoreWidget(
         tester,
-        ScaleButton(
-          onPressed: () {},
-          child: const Text('Press'),
-        ),
+        ScaleButton(onPressed: () {}, child: const Text('Press')),
       );
 
       await tester.tap(find.text('Press'));
@@ -42,10 +37,7 @@ void main() {
       var fired = false;
       await pumpCoreWidget(
         tester,
-        ScaleButton(
-          onPressed: () => fired = true,
-          child: const Text('Press'),
-        ),
+        ScaleButton(onPressed: () => fired = true, child: const Text('Press')),
       );
 
       await tester.tap(find.text('Press'));
@@ -84,32 +76,30 @@ void main() {
 
       expect(find.byType(Opacity), findsOneWidget);
       final opacity = tester.widget<Opacity>(find.byType(Opacity));
-      expect(opacity.opacity, equals(0.38)); // AppInteractionStates.disabledOpacity
+      expect(
+        opacity.opacity,
+        equals(0.38),
+      ); // AppInteractionStates.disabledOpacity
     });
 
     testWidgets('T-CW025 has Semantics button=true', (tester) async {
       final handle = tester.ensureSemantics();
       await pumpCoreWidget(
         tester,
-        ScaleButton(
-          onPressed: () {},
-          child: const Text('Action'),
-        ),
+        ScaleButton(onPressed: () {}, child: const Text('Action')),
       );
 
       expect(find.byType(Semantics), findsWidgets);
       handle.dispose();
     });
 
-    testWidgets('T-CW026 does not fire callback when onPressed is null',
-        (tester) async {
+    testWidgets('T-CW026 does not fire callback when onPressed is null', (
+      tester,
+    ) async {
       // onPressed=null means the button is inert — no callback, no animation
       await pumpCoreWidget(
         tester,
-        const ScaleButton(
-          onPressed: null,
-          child: Text('Inert'),
-        ),
+        const ScaleButton(onPressed: null, child: Text('Inert')),
       );
 
       // Tapping should not throw and widget should remain
@@ -119,8 +109,7 @@ void main() {
       expect(find.text('Inert'), findsOneWidget);
     });
 
-    testWidgets('T-CW027 callbackDelay=zero fires immediately',
-        (tester) async {
+    testWidgets('T-CW027 callbackDelay=zero fires immediately', (tester) async {
       var fired = false;
       await pumpCoreWidget(
         tester,

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -28,10 +27,7 @@ void main() {
     });
 
     testWidgets('T-CW032 uses solid cardBackground color', (tester) async {
-      await pumpCoreWidget(
-        tester,
-        const AppCardContainer(child: Text('Card')),
-      );
+      await pumpCoreWidget(tester, const AppCardContainer(child: Text('Card')));
 
       // Find the Container with BoxDecoration that has a solid color
       final containers = tester.widgetList<Container>(find.byType(Container));
@@ -42,14 +38,12 @@ void main() {
       expect(hasColoredContainer, isTrue);
     });
 
-    testWidgets('T-CW033 applies elevation shadow at given level',
-        (tester) async {
+    testWidgets('T-CW033 applies elevation shadow at given level', (
+      tester,
+    ) async {
       await pumpCoreWidget(
         tester,
-        const AppCardContainer(
-          elevation: 3,
-          child: Text('Elevated'),
-        ),
+        const AppCardContainer(elevation: 3, child: Text('Elevated')),
       );
 
       // Level 3 shadow should have blur=16
@@ -85,10 +79,7 @@ void main() {
     testWidgets('T-CW035 elevation 0 has no shadow', (tester) async {
       await pumpCoreWidget(
         tester,
-        const AppCardContainer(
-          elevation: 0,
-          child: Text('Flat'),
-        ),
+        const AppCardContainer(elevation: 0, child: Text('Flat')),
       );
 
       final containers = tester.widgetList<Container>(find.byType(Container));
@@ -109,7 +100,8 @@ void main() {
         ),
       );
 
-      final container = tester.widgetList<Container>(find.byType(Container))
+      final container = tester
+          .widgetList<Container>(find.byType(Container))
           .where((c) => c.padding == const EdgeInsets.all(24));
       expect(container, isNotEmpty);
     });

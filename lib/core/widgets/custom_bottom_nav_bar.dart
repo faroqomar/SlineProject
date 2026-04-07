@@ -44,23 +44,49 @@ class CustomBottomNavBar extends StatelessWidget {
     final colorScheme = context.colorScheme;
 
     final navItems = <_NavItem>[
-      const _NavItem(NavView.home, Icons.home_outlined, Icons.home, 'Home',
-          key: homeNavKey),
-      const _NavItem(NavView.tender, Icons.assignment_outlined,
-          Icons.assignment, 'Tenders',
-          key: tendersNavKey),
-      const _NavItem(NavView.booking, Icons.calendar_today_outlined,
-          Icons.calendar_today, 'Bookings',
-          key: bookingsNavKey),
-      const _NavItem(NavView.orders, Icons.dashboard_outlined, Icons.dashboard,
-          'Dashboard',
-          key: dashboardNavKey),
       const _NavItem(
-          NavView.messages, Icons.message_outlined, Icons.message, 'Messages',
-          hasNotification: true, key: messagesNavKey),
+        NavView.home,
+        Icons.home_outlined,
+        Icons.home,
+        'Home',
+        key: homeNavKey,
+      ),
       const _NavItem(
-          NavView.profile, Icons.person_outline, Icons.person, 'Profile',
-          key: profileNavKey),
+        NavView.tender,
+        Icons.assignment_outlined,
+        Icons.assignment,
+        'Tenders',
+        key: tendersNavKey,
+      ),
+      const _NavItem(
+        NavView.booking,
+        Icons.calendar_today_outlined,
+        Icons.calendar_today,
+        'Bookings',
+        key: bookingsNavKey,
+      ),
+      const _NavItem(
+        NavView.orders,
+        Icons.dashboard_outlined,
+        Icons.dashboard,
+        'Dashboard',
+        key: dashboardNavKey,
+      ),
+      const _NavItem(
+        NavView.messages,
+        Icons.message_outlined,
+        Icons.message,
+        'Messages',
+        hasNotification: true,
+        key: messagesNavKey,
+      ),
+      const _NavItem(
+        NavView.profile,
+        Icons.person_outline,
+        Icons.person,
+        'Profile',
+        key: profileNavKey,
+      ),
     ];
 
     return Consumer<NavigationProvider>(
@@ -151,16 +177,11 @@ class _SolidNavItemState extends State<_SolidNavItem>
       duration: AppMotion.standard,
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: AppMotion.badgeEntrance,
-    ).animate(
-      CurvedAnimation(parent: _controller, curve: AppMotion.curveSpring),
-    );
-    _pillAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(
+    _scaleAnimation = Tween<double>(begin: 1.0, end: AppMotion.badgeEntrance)
+        .animate(
+          CurvedAnimation(parent: _controller, curve: AppMotion.curveSpring),
+        );
+    _pillAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: AppMotion.curveStandard),
     );
 
@@ -288,8 +309,9 @@ class _SolidNavItemState extends State<_SolidNavItem>
                         color: widget.isActive
                             ? AppColors.teal
                             : widget.colorScheme.textSecondary,
-                        fontWeight:
-                            widget.isActive ? FontWeight.bold : FontWeight.normal,
+                        fontWeight: widget.isActive
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                       ),
                     ),
                   ),

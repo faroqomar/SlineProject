@@ -144,7 +144,11 @@ class _AppTextFieldState extends State<AppTextField> {
     }
 
     if (icons.isEmpty) return null;
-    if (icons.length == 1) return Padding(padding: const EdgeInsets.only(right: 12), child: icons.first);
+    if (icons.length == 1)
+      return Padding(
+        padding: const EdgeInsets.only(right: 12),
+        child: icons.first,
+      );
 
     // Compose both icons in a Row when both are active
     return Padding(
@@ -177,7 +181,12 @@ class _AppTextFieldState extends State<AppTextField> {
       maxLines: widget.maxLines,
       maxLength: widget.maxLength,
       buildCounter: widget.maxLength != null
-          ? (context, {required currentLength, required isFocused, required maxLength}) {
+          ? (
+              context, {
+              required currentLength,
+              required isFocused,
+              required maxLength,
+            }) {
               return Text(
                 '$currentLength/$maxLength',
                 style: AppTypography.caption.copyWith(

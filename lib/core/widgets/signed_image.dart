@@ -177,19 +177,20 @@ class _SignedImageState extends State<SignedImage> {
             });
             _resolve();
           },
-          child: widget.placeholder ??
+          child:
+              widget.placeholder ??
               Container(
                 width: widget.width,
                 height: widget.height,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(widget.borderRadius),
-                  color: Theme.of(context).colorScheme.surface.withValues(
-                    alpha: 0.3,
-                  ),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.surface.withValues(alpha: 0.3),
                   border: Border.all(
-                    color: Theme.of(context).dividerColor.withValues(
-                      alpha: 0.2,
-                    ),
+                    color: Theme.of(
+                      context,
+                    ).dividerColor.withValues(alpha: 0.2),
                   ),
                 ),
                 child: const Column(
@@ -207,10 +208,12 @@ class _SignedImageState extends State<SignedImage> {
 
     // Loaded — use CachedNetworkImage with memory optimization
     final pixelRatio = MediaQuery.of(context).devicePixelRatio;
-    final cacheWidth =
-        widget.width.isFinite ? (widget.width * pixelRatio).toInt() : null;
-    final cacheHeight =
-        widget.height.isFinite ? (widget.height * pixelRatio).toInt() : null;
+    final cacheWidth = widget.width.isFinite
+        ? (widget.width * pixelRatio).toInt()
+        : null;
+    final cacheHeight = widget.height.isFinite
+        ? (widget.height * pixelRatio).toInt()
+        : null;
 
     return Semantics(
       image: true,
@@ -238,9 +241,9 @@ class _SignedImageState extends State<SignedImage> {
               height: widget.height,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(widget.borderRadius),
-                color: Theme.of(context).colorScheme.surface.withValues(
-                  alpha: 0.3,
-                ),
+                color: Theme.of(
+                  context,
+                ).colorScheme.surface.withValues(alpha: 0.3),
               ),
               child: const Icon(Icons.image_not_supported_outlined, size: 22),
             ),

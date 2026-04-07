@@ -30,9 +30,7 @@ class SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
       decoration: BoxDecoration(
         color: backgroundColor ?? colorScheme.cardBackground,
         border: isPinned
-            ? Border(
-                bottom: BorderSide(color: colorScheme.divider, width: 1),
-              )
+            ? Border(bottom: BorderSide(color: colorScheme.divider, width: 1))
             : null,
       ),
       child: tabBar,

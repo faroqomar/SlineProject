@@ -51,14 +51,15 @@ class AppStyledButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     final isInactive = onPressed == null || disabled || isLoading;
-    final opacity =
-        isInactive ? AppInteractionStates.disabledOpacity : 1.0;
+    final opacity = isInactive ? AppInteractionStates.disabledOpacity : 1.0;
 
-    final effectiveBg =
-        isPrimary ? colorScheme.primary : colorScheme.cardBackground;
+    final effectiveBg = isPrimary
+        ? colorScheme.primary
+        : colorScheme.cardBackground;
     final effectiveFg = isPrimary ? AppColors.white : colorScheme.text;
-    final effectiveBorder =
-        isPrimary ? colorScheme.primary : colorScheme.cardBorder;
+    final effectiveBorder = isPrimary
+        ? colorScheme.primary
+        : colorScheme.cardBorder;
 
     Widget content;
     if (isLoading) {

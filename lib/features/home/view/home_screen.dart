@@ -326,9 +326,7 @@ class _HomeScreenState extends State<HomeScreen> {
             vertical: AppDimens.p10,
           ),
           decoration: BoxDecoration(
-            color: isSelected
-                ? AppColors.teal
-                : colorScheme.inputBackground, 
+            color: isSelected ? AppColors.teal : colorScheme.inputBackground,
             borderRadius: BorderRadius.circular(AppDimens.r12),
             border: Border.all(
               color: isSelected ? AppColors.teal : colorScheme.inputBorder,

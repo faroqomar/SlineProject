@@ -8,10 +8,7 @@ import 'widget_test_helpers.dart';
 void main() {
   group('AppTextField', () {
     testWidgets('T-CW060 renders with hintText', (tester) async {
-      await pumpCoreWidget(
-        tester,
-        const AppTextField(hintText: 'Enter name'),
-      );
+      await pumpCoreWidget(tester, const AppTextField(hintText: 'Enter name'));
       expect(find.text('Enter name'), findsOneWidget);
     });
 
@@ -19,10 +16,7 @@ void main() {
       String? changedValue;
       await pumpCoreWidget(
         tester,
-        AppTextField(
-          hintText: 'Type',
-          onChanged: (v) => changedValue = v,
-        ),
+        AppTextField(hintText: 'Type', onChanged: (v) => changedValue = v),
       );
       await tester.enterText(find.byType(TextFormField), 'hello');
       expect(changedValue, equals('hello'));
@@ -66,8 +60,9 @@ void main() {
       expect(find.byIcon(Icons.visibility), findsOneWidget);
     });
 
-    testWidgets('T-CW064 clear button appears when text entered',
-        (tester) async {
+    testWidgets('T-CW064 clear button appears when text entered', (
+      tester,
+    ) async {
       final controller = TextEditingController();
       await pumpCoreWidget(
         tester,
@@ -98,17 +93,15 @@ void main() {
 
     testWidgets('T-CW065 has Semantics wrapper', (tester) async {
       final handle = tester.ensureSemantics();
-      await pumpCoreWidget(
-        tester,
-        const AppTextField(hintText: 'Accessible'),
-      );
+      await pumpCoreWidget(tester, const AppTextField(hintText: 'Accessible'));
       // TextFormField has built-in semantics + our wrapper adds textField label
       expect(find.byType(Semantics), findsWidgets);
       handle.dispose();
     });
 
-    testWidgets('T-CW066 user suffixIcon takes priority over toggle/clear',
-        (tester) async {
+    testWidgets('T-CW066 user suffixIcon takes priority over toggle/clear', (
+      tester,
+    ) async {
       await pumpCoreWidget(
         tester,
         const AppTextField(

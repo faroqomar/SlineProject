@@ -116,7 +116,6 @@ class AppColors {
     opacity: 0.40,
   ); // New: taskGradient from in light mode
 
-
   // --- Semantic Colors for Task Types (Tender vs Booking) ---
   // These methods maintain the signature expected by existing code.
 

@@ -8,42 +8,27 @@ import 'widget_test_helpers.dart';
 void main() {
   group('StatusBadge', () {
     testWidgets('T-CW100 renders text', (tester) async {
-      await pumpCoreWidget(
-        tester,
-        const StatusBadge(text: 'Completed'),
-      );
+      await pumpCoreWidget(tester, const StatusBadge(text: 'Completed'));
       expect(find.text('Completed'), findsOneWidget);
     });
 
     testWidgets('T-CW101 shows icon for completed status', (tester) async {
-      await pumpCoreWidget(
-        tester,
-        const StatusBadge(text: 'Completed'),
-      );
+      await pumpCoreWidget(tester, const StatusBadge(text: 'Completed'));
       expect(find.byIcon(Icons.check_circle), findsOneWidget);
     });
 
     testWidgets('T-CW102 shows icon for pending status', (tester) async {
-      await pumpCoreWidget(
-        tester,
-        const StatusBadge(text: 'Pending'),
-      );
+      await pumpCoreWidget(tester, const StatusBadge(text: 'Pending'));
       expect(find.byIcon(Icons.schedule), findsOneWidget);
     });
 
     testWidgets('T-CW103 shows icon for canceled status', (tester) async {
-      await pumpCoreWidget(
-        tester,
-        const StatusBadge(text: 'Canceled'),
-      );
+      await pumpCoreWidget(tester, const StatusBadge(text: 'Canceled'));
       expect(find.byIcon(Icons.cancel), findsOneWidget);
     });
 
     testWidgets('T-CW104 uses pill shape (StadiumBorder)', (tester) async {
-      await pumpCoreWidget(
-        tester,
-        const StatusBadge(text: 'Active'),
-      );
+      await pumpCoreWidget(tester, const StatusBadge(text: 'Active'));
       // Find Container with ShapeDecoration using StadiumBorder
       final containers = tester.widgetList<Container>(find.byType(Container));
       final hasPill = containers.any((c) {
@@ -55,10 +40,7 @@ void main() {
 
     testWidgets('T-CW105 has Semantics with status text', (tester) async {
       final handle = tester.ensureSemantics();
-      await pumpCoreWidget(
-        tester,
-        const StatusBadge(text: 'Delivered'),
-      );
+      await pumpCoreWidget(tester, const StatusBadge(text: 'Delivered'));
       // Semantics label set to "Status: Delivered"
       expect(find.bySemanticsLabel(RegExp('Status.*Delivered')), findsWidgets);
       handle.dispose();
@@ -73,8 +55,9 @@ void main() {
       expect(find.text('Done'), findsOneWidget);
     });
 
-    testWidgets('T-CW107 custom color overrides semantic color',
-        (tester) async {
+    testWidgets('T-CW107 custom color overrides semantic color', (
+      tester,
+    ) async {
       await pumpCoreWidget(
         tester,
         const StatusBadge(text: 'Custom', color: Colors.purple),

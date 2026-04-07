@@ -77,7 +77,7 @@ class _SearchScreenContentState extends State<_SearchScreenContent> {
                   child: Column(
                     children: [
                       const SizedBox(height: AppDimens.p16),
-                      
+
                       AppCard(
                         padding: EdgeInsets.zero,
                         child: AppTextField(

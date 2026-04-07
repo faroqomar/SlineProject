@@ -6,8 +6,9 @@ import 'package:sline_app/core/widgets/sliver_tab_bar_delegate.dart';
 
 void main() {
   group('SliverTabBarDelegate', () {
-    testWidgets('T-CW001 renders TabBar child inside CustomScrollView',
-        (tester) async {
+    testWidgets('T-CW001 renders TabBar child inside CustomScrollView', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.light(),
@@ -20,7 +21,10 @@ void main() {
                     pinned: true,
                     delegate: SliverTabBarDelegate(
                       TabBar(
-                        tabs: [Tab(text: 'Tab A'), Tab(text: 'Tab B')],
+                        tabs: [
+                          Tab(text: 'Tab A'),
+                          Tab(text: 'Tab B'),
+                        ],
                       ),
                     ),
                   ),
@@ -39,7 +43,10 @@ void main() {
 
     test('T-CW002 maxExtent and minExtent return TabBar preferred size', () {
       const tabBar = TabBar(
-        tabs: [Tab(text: 'X'), Tab(text: 'Y')],
+        tabs: [
+          Tab(text: 'X'),
+          Tab(text: 'Y'),
+        ],
       );
       const delegate = SliverTabBarDelegate(tabBar);
 
@@ -49,7 +56,10 @@ void main() {
 
     test('T-CW003 shouldRebuild returns false for same tabBar', () {
       const tabBar = TabBar(
-        tabs: [Tab(text: 'A'), Tab(text: 'B')],
+        tabs: [
+          Tab(text: 'A'),
+          Tab(text: 'B'),
+        ],
       );
       const delegate1 = SliverTabBarDelegate(tabBar);
       const delegate2 = SliverTabBarDelegate(tabBar);
@@ -70,7 +80,10 @@ void main() {
                     pinned: true,
                     delegate: SliverTabBarDelegate(
                       TabBar(
-                        tabs: [Tab(text: 'A'), Tab(text: 'B')],
+                        tabs: [
+                          Tab(text: 'A'),
+                          Tab(text: 'B'),
+                        ],
                       ),
                       backgroundColor: Colors.red,
                     ),

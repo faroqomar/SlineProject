@@ -7,34 +7,35 @@ import 'widget_test_helpers.dart';
 
 void main() {
   group('SignedAvatar', () {
-    testWidgets('T-CW080 shows shimmer while loading (null path)',
-        (tester) async {
-      await pumpCoreWidget(
-        tester,
-        const SignedAvatar(storagePathOrUrl: null),
-      );
+    testWidgets('T-CW080 shows shimmer while loading (null path)', (
+      tester,
+    ) async {
+      await pumpCoreWidget(tester, const SignedAvatar(storagePathOrUrl: null));
       // null path → loading=false immediately → shows placeholder
       // but with empty path, it shows initials/person icon fallback
       expect(find.byType(SignedAvatar), findsOneWidget);
     });
 
-    testWidgets('T-CW081 shows initials fallback when no URL and initials provided',
-        (tester) async {
-      await pumpCoreWidget(
-        tester,
-        const SignedAvatar(
-          storagePathOrUrl: null,
-          initials: 'JD',
-          radius: 24,
-        ),
-      );
-      await tester.pump();
-      // Should show initials text
-      expect(find.text('JD'), findsOneWidget);
-    });
+    testWidgets(
+      'T-CW081 shows initials fallback when no URL and initials provided',
+      (tester) async {
+        await pumpCoreWidget(
+          tester,
+          const SignedAvatar(
+            storagePathOrUrl: null,
+            initials: 'JD',
+            radius: 24,
+          ),
+        );
+        await tester.pump();
+        // Should show initials text
+        expect(find.text('JD'), findsOneWidget);
+      },
+    );
 
-    testWidgets('T-CW082 shows person icon when no URL and no initials',
-        (tester) async {
+    testWidgets('T-CW082 shows person icon when no URL and no initials', (
+      tester,
+    ) async {
       await pumpCoreWidget(
         tester,
         const SignedAvatar(storagePathOrUrl: null, radius: 24),
@@ -43,8 +44,7 @@ void main() {
       expect(find.byIcon(Icons.person), findsOneWidget);
     });
 
-    testWidgets('T-CW083 renders with public URL directly',
-        (tester) async {
+    testWidgets('T-CW083 renders with public URL directly', (tester) async {
       await pumpCoreWidget(
         tester,
         const SignedAvatar(
@@ -57,8 +57,9 @@ void main() {
       expect(find.byType(CircleAvatar), findsOneWidget);
     });
 
-    testWidgets('T-CW084 online indicator visible when enabled',
-        (tester) async {
+    testWidgets('T-CW084 online indicator visible when enabled', (
+      tester,
+    ) async {
       await pumpCoreWidget(
         tester,
         const SignedAvatar(

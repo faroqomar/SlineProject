@@ -19,11 +19,9 @@ class DefaultSignedUrlGenerator implements SignedUrlGenerator {
   /// Creates a generator for the given storage [bucket].
   ///
   /// [client] defaults to `Supabase.instance.client` for production use.
-  DefaultSignedUrlGenerator({
-    required String bucket,
-    SupabaseClient? client,
-  })  : _bucket = bucket,
-        _client = client ?? Supabase.instance.client;
+  DefaultSignedUrlGenerator({required String bucket, SupabaseClient? client})
+    : _bucket = bucket,
+      _client = client ?? Supabase.instance.client;
 
   @override
   Future<String?> createSignedUrl(

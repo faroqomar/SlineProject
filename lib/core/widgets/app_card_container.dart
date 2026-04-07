@@ -41,8 +41,7 @@ class AppCardContainer extends StatelessWidget {
     this.margin,
     this.borderRadius,
     this.elevation = 1,
-    @Deprecated('Glass blur removed. Use elevation instead.')
-    this.blurRadius,
+    @Deprecated('Glass blur removed. Use elevation instead.') this.blurRadius,
   });
 
   @override

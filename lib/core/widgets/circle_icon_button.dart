@@ -66,11 +66,7 @@ class CircleIconButton extends StatelessWidget {
 
     // Enforce minimum 48px touch target per WCAG
     if (size < 48) {
-      button = SizedBox(
-        width: 48,
-        height: 48,
-        child: Center(child: button),
-      );
+      button = SizedBox(width: 48, height: 48, child: Center(child: button));
     }
 
     // Tooltip
@@ -79,10 +75,6 @@ class CircleIconButton extends StatelessWidget {
     }
 
     // Semantics
-    return Semantics(
-      button: true,
-      label: tooltip ?? '',
-      child: button,
-    );
+    return Semantics(button: true, label: tooltip ?? '', child: button);
   }
 }

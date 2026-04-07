@@ -53,11 +53,7 @@ class AppCard extends StatelessWidget {
     var result = _buildContainer();
 
     if (onTap != null) {
-      result = ScaleButton(
-        onPressed: onTap,
-        disabled: disabled,
-        child: result,
-      );
+      result = ScaleButton(onPressed: onTap, disabled: disabled, child: result);
     }
 
     return Semantics(container: true, child: result);

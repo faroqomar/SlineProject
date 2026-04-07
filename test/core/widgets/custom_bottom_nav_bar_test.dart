@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -14,9 +13,7 @@ void main() {
         create: (_) => NavigationProvider()..setCurrentIndex(initialIndex),
         child: MaterialApp(
           theme: AppTheme.light(),
-          home: const Scaffold(
-            body: Stack(children: [CustomBottomNavBar()]),
-          ),
+          home: const Scaffold(body: Stack(children: [CustomBottomNavBar()])),
         ),
       );
     }
@@ -42,8 +39,9 @@ void main() {
       expect(find.byType(BackdropFilter), findsNothing);
     });
 
-    testWidgets('T-CW112 active item shows label with full opacity',
-        (tester) async {
+    testWidgets('T-CW112 active item shows label with full opacity', (
+      tester,
+    ) async {
       await tester.pumpWidget(buildTestApp(initialIndex: 0));
       await tester.pump();
 

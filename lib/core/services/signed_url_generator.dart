@@ -24,8 +24,5 @@ abstract class SignedUrlGenerator {
   ///
   /// [expire] optionally overrides the default TTL for the signed URL.
   /// If not provided, the service implementation determines the default.
-  Future<String?> createSignedUrl(
-    String storagePath, {
-    Duration? expire,
-  });
+  Future<String?> createSignedUrl(String storagePath, {Duration? expire});
 }

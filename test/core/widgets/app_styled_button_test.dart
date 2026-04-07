@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -49,8 +48,7 @@ void main() {
       expect(hasReducedOpacity, isTrue);
     });
 
-    testWidgets('T-CW074 primary vs secondary styling differs',
-        (tester) async {
+    testWidgets('T-CW074 primary vs secondary styling differs', (tester) async {
       // Primary
       await pumpCoreWidget(
         tester,

@@ -162,11 +162,7 @@ void main() async {
           stackTrace: stack,
         );
         unawaited(
-          CrashReportingService.instance.recordError(
-            error,
-            stack,
-            fatal: true,
-          ),
+          CrashReportingService.instance.recordError(error, stack, fatal: true),
         );
         return true; // Prevent app termination
       };

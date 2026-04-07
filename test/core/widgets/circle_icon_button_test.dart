@@ -10,10 +10,7 @@ void main() {
     testWidgets('T-CW010 renders with correct icon', (tester) async {
       await pumpCoreWidget(
         tester,
-        CircleIconButton(
-          icon: Icons.favorite,
-          onTap: () {},
-        ),
+        CircleIconButton(icon: Icons.favorite, onTap: () {}),
       );
 
       expect(find.byIcon(Icons.favorite), findsOneWidget);
@@ -23,10 +20,7 @@ void main() {
       var tapped = false;
       await pumpCoreWidget(
         tester,
-        CircleIconButton(
-          icon: Icons.share,
-          onTap: () => tapped = true,
-        ),
+        CircleIconButton(icon: Icons.share, onTap: () => tapped = true),
       );
 
       await tester.tap(find.byType(CircleIconButton));
@@ -68,7 +62,9 @@ void main() {
               decoration.shape == BoxShape.circle &&
               decoration.color == Colors.blue;
         },
-        orElse: () => throw StateError('No circular container with blue background found'),
+        orElse: () => throw StateError(
+          'No circular container with blue background found',
+        ),
       );
       expect(circleContainer, isNotNull);
     });
@@ -76,10 +72,7 @@ void main() {
     testWidgets('T-CW014 uses default size of 40', (tester) async {
       await pumpCoreWidget(
         tester,
-        CircleIconButton(
-          icon: Icons.edit,
-          onTap: () {},
-        ),
+        CircleIconButton(icon: Icons.edit, onTap: () {}),
       );
 
       // Default size=40 means the container should be 40x40
@@ -94,11 +87,7 @@ void main() {
     testWidgets('T-CW015 uses custom icon size', (tester) async {
       await pumpCoreWidget(
         tester,
-        CircleIconButton(
-          icon: Icons.star,
-          onTap: () {},
-          iconSize: 30,
-        ),
+        CircleIconButton(icon: Icons.star, onTap: () {}, iconSize: 30),
       );
 
       final icon = tester.widget<Icon>(find.byType(Icon));

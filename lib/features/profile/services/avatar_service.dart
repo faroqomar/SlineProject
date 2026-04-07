@@ -58,7 +58,10 @@ class AvatarService implements SignedUrlGenerator {
   /// Uses [SharedStorageConfig.avatarTtlSeconds] for consistent TTL.
   /// Returns a temporary public URL suitable for display in the UI.
   @override
-  Future<String?> createSignedUrl(String storagePath, {Duration? expire}) async {
+  Future<String?> createSignedUrl(
+    String storagePath, {
+    Duration? expire,
+  }) async {
     final seconds = expire?.inSeconds ?? SharedStorageConfig.avatarTtlSeconds;
     final url = await _supabase.storage
         .from(bucket)

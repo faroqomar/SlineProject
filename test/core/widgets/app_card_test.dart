@@ -10,10 +10,7 @@ import 'widget_test_helpers.dart';
 void main() {
   group('AppCard (Solid Card — NO GLASS)', () {
     testWidgets('T-CW040 renders child with solid container', (tester) async {
-      await pumpCoreWidget(
-        tester,
-        const AppCard(child: Text('Content')),
-      );
+      await pumpCoreWidget(tester, const AppCard(child: Text('Content')));
 
       expect(find.text('Content'), findsOneWidget);
       expect(find.byType(AppCardContainer), findsOneWidget);
@@ -21,24 +18,19 @@ void main() {
       expect(find.byType(BackdropFilter), findsNothing);
     });
 
-    testWidgets('T-CW041 wraps in ScaleButton when onTap provided',
-        (tester) async {
+    testWidgets('T-CW041 wraps in ScaleButton when onTap provided', (
+      tester,
+    ) async {
       await pumpCoreWidget(
         tester,
-        AppCard(
-          onTap: () {},
-          child: const Text('Tappable'),
-        ),
+        AppCard(onTap: () {}, child: const Text('Tappable')),
       );
 
       expect(find.byType(ScaleButton), findsOneWidget);
     });
 
     testWidgets('T-CW042 no ScaleButton when onTap is null', (tester) async {
-      await pumpCoreWidget(
-        tester,
-        const AppCard(child: Text('Static')),
-      );
+      await pumpCoreWidget(tester, const AppCard(child: Text('Static')));
 
       expect(find.byType(ScaleButton), findsNothing);
     });
@@ -47,10 +39,7 @@ void main() {
       var tapped = false;
       await pumpCoreWidget(
         tester,
-        AppCard(
-          onTap: () => tapped = true,
-          child: const Text('Tap Me'),
-        ),
+        AppCard(onTap: () => tapped = true, child: const Text('Tap Me')),
       );
 
       await tester.tap(find.text('Tap Me'));
@@ -78,14 +67,10 @@ void main() {
 
     testWidgets('T-CW045 has Semantics container=true', (tester) async {
       final handle = tester.ensureSemantics();
-      await pumpCoreWidget(
-        tester,
-        const AppCard(child: Text('Semantic')),
-      );
+      await pumpCoreWidget(tester, const AppCard(child: Text('Semantic')));
 
       final semantics = tester.widgetList<Semantics>(find.byType(Semantics));
-      final hasContainer =
-          semantics.any((s) => s.container == true);
+      final hasContainer = semantics.any((s) => s.container == true);
       expect(hasContainer, isTrue);
       handle.dispose();
     });
@@ -93,10 +78,7 @@ void main() {
     testWidgets('T-CW046 passes elevation to AppCardContainer', (tester) async {
       await pumpCoreWidget(
         tester,
-        const AppCard(
-          elevation: 3,
-          child: Text('Elevated'),
-        ),
+        const AppCard(elevation: 3, child: Text('Elevated')),
       );
 
       final container = tester.widget<AppCardContainer>(

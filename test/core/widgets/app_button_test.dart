@@ -9,10 +9,7 @@ import 'widget_test_helpers.dart';
 void main() {
   group('AppButton', () {
     testWidgets('T-CW050 renders text', (tester) async {
-      await pumpCoreWidget(
-        tester,
-        AppButton(text: 'Submit', onPressed: () {}),
-      );
+      await pumpCoreWidget(tester, AppButton(text: 'Submit', onPressed: () {}));
       expect(find.text('Submit'), findsOneWidget);
     });
 
@@ -27,8 +24,9 @@ void main() {
       expect(fired, isTrue);
     });
 
-    testWidgets('T-CW052 shows loading indicator when isLoading=true',
-        (tester) async {
+    testWidgets('T-CW052 shows loading indicator when isLoading=true', (
+      tester,
+    ) async {
       await pumpCoreWidget(
         tester,
         const AppButton(text: 'Load', onPressed: null, isLoading: true),
@@ -53,21 +51,16 @@ void main() {
     });
 
     testWidgets('T-CW054 contains Material widget for ripple', (tester) async {
-      await pumpCoreWidget(
-        tester,
-        AppButton(text: 'Ripple', onPressed: () {}),
-      );
+      await pumpCoreWidget(tester, AppButton(text: 'Ripple', onPressed: () {}));
       // AppButton uses ScaleButton > Material > InkWell tree
       expect(find.byType(Material), findsWidgets);
       expect(find.byType(InkWell), findsWidgets);
     });
 
-    testWidgets('T-CW055 contains ScaleButton for press feedback',
-        (tester) async {
-      await pumpCoreWidget(
-        tester,
-        AppButton(text: 'Scale', onPressed: () {}),
-      );
+    testWidgets('T-CW055 contains ScaleButton for press feedback', (
+      tester,
+    ) async {
+      await pumpCoreWidget(tester, AppButton(text: 'Scale', onPressed: () {}));
       expect(find.byType(ScaleButton), findsWidgets);
     });
 

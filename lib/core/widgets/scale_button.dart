@@ -61,12 +61,10 @@ class _ScaleButtonState extends State<ScaleButton>
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: widget.duration);
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: widget.scaleAmount,
-    ).animate(
-      CurvedAnimation(parent: _controller, curve: AppMotion.curveSpring),
-    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: widget.scaleAmount)
+        .animate(
+          CurvedAnimation(parent: _controller, curve: AppMotion.curveSpring),
+        );
   }
 
   @override
@@ -75,8 +73,7 @@ class _ScaleButtonState extends State<ScaleButton>
     super.dispose();
   }
 
-  bool get _isInteractive =>
-      widget.onPressed != null && !widget.disabled;
+  bool get _isInteractive => widget.onPressed != null && !widget.disabled;
 
   void _onTapDown(TapDownDetails details) {
     if (!_isInteractive) return;

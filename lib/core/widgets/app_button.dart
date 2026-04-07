@@ -95,12 +95,16 @@ class _AppButtonState extends State<AppButton>
       vsync: this,
       duration: AppMotion.standard,
     );
-    _flashAnimation = Tween<double>(
-      begin: 0,
-      end: AppInteractionStates.flashOverlayOpacity,
-    ).animate(
-      CurvedAnimation(parent: _flashController, curve: AppMotion.curveStandard),
-    );
+    _flashAnimation =
+        Tween<double>(
+          begin: 0,
+          end: AppInteractionStates.flashOverlayOpacity,
+        ).animate(
+          CurvedAnimation(
+            parent: _flashController,
+            curve: AppMotion.curveStandard,
+          ),
+        );
   }
 
   @override
@@ -220,10 +224,9 @@ class _AppButtonState extends State<AppButton>
     final buttonBody = AnimatedBuilder(
       animation: _flashAnimation,
       builder: (context, child) {
-        final flashColor =
-            _isInSuccessState
-                ? colorScheme.success
-                : colorScheme.danger;
+        final flashColor = _isInSuccessState
+            ? colorScheme.success
+            : colorScheme.danger;
         return Stack(
           alignment: Alignment.center,
           children: [
