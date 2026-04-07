@@ -1,7 +1,7 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.21.0 (Phase F: widget tests, coverage 40.8%, agent system evolution)
-**Last Updated**: 2026-04-05
+**Version**: 2.22.0 (Phase 0 UI Redesign: Design System Foundation — motion tokens, interaction states, elevation scale, semantic colors, component themes, typography line-heights)
+**Last Updated**: 2026-04-07
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
 
@@ -1677,10 +1677,14 @@ Core also owns two browser-specific stability helpers:
 | `lib/core/providers/theme_mode_provider.dart`    | provider  | Light/dark theme mode state.                                                            |
 | `lib/core/models/user_profile.dart`              | model     | Shared typed profile model.                                                             |
 | `lib/core/models/payment_return_args.dart`       | model     | Shared typed browser payment callback payload.                                          |
-| `lib/core/theme/app_colors.dart`                 | theme     | Central palette definitions.                                                            |
+| `lib/core/theme/app_colors.dart`                 | theme     | Central palette + semantic status colors (success/warning/info/danger) + interactive state colors. |
 | `lib/core/theme/app_dimens.dart`                 | theme     | Spacing, radius, sizing tokens.                                                         |
-| `lib/core/theme/app_typography.dart`             | theme     | Shared typography and fallback font configuration.                                      |
-| `lib/core/theme/app_theme.dart`                  | theme     | Builds the app `ThemeData` and `AppThemeExtension`.                                     |
+| `lib/core/theme/app_typography.dart`             | theme     | Typography with per-style line heights (1.0-1.5) and letter spacing.                    |
+| `lib/core/theme/app_theme.dart`                  | theme     | Builds `ThemeData` + `AppThemeExtension` + 7 component themes (Card, Dialog, BottomSheet, Chip, Divider, SnackBar, TabBar). |
+| `lib/core/theme/app_motion.dart`                 | theme     | Animation tokens: durations (100-1500ms), curves (ease-out family), scales, stagger delays, reduced-motion helper. |
+| `lib/core/theme/app_states.dart`                 | theme     | Interaction state definitions: 8-state model (default→error), focus ring, shake, haptic mapping. |
+| `lib/core/theme/app_decorations.dart`            | theme     | Glass effects + 5-level elevation shadow scale with dark mode support.                  |
+| `lib/core/theme/theme_dashboard.dart`            | theme     | Documentation-only reference for all design tokens. **Read this first for token overview.** |
 | `lib/core/widgets/custom_bottom_nav_bar.dart`    | widget    | Shared app shell bottom nav.                                                            |
 | `lib/core/widgets/signed_avatar.dart`            | widget    | Renders private avatar paths through signed URLs.                                       |
 | `lib/core/widgets/signed_image.dart`             | widget    | Renders private image paths through signed URLs.                                        |

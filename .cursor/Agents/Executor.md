@@ -248,6 +248,23 @@ After scans, publish a short section in chat:
 - **Risks**: what can break
 - **MVVM layer impact**: which layers are touched and in what order
 
+### 4.6 Plan Critique Review (Mandatory Before Execution)
+
+Before starting execution of any plan, check if a matching critique file exists:
+
+`.TODO/PLAN_CRITIQUE_<YYYY-MM-DD>_<PlanTitle>.md`
+
+If it exists:
+
+1. Read it fully before writing any code.
+2. Log all CRITICAL GAPS found by @PlanCritic in the session log under the `[SESSION STARTED]` entry.
+3. Apply all fixes marked as "must-fix" during the relevant execution phase.
+4. If a critique fix contradicts the original plan, follow the critique (it contains more recent evidence and analysis).
+
+If it does NOT exist: proceed with the plan as-is, but note in the session log that no critique was available.
+
+Evidence: Phase 0 Session — @PlanCritic found that `AppColorScheme` already had `success`, `warning`, `info` as optional parameters with `Colors.*` defaults. The original plan would have added them again as required parameters, causing a compile error from duplicate named params. The critique's GAP 1 fix (convert optionals instead of adding duplicates) prevented this. Without reading the critique, @Executor would have broken the build.
+
 ---
 
 ## 5) Execution Strategy (Mandatory Before Any Changes)
@@ -433,6 +450,17 @@ Steps:
 4. Verify it would CATCH the old violation if reintroduced.
 
 Evidence: Phase D — Architecture guard Check 3 excluded `Supabase.instance.client.auth.` patterns, which allowed the exact A6 violations the guard was supposed to catch. After the A6 fix, the exclusion was removed.
+
+### 3.8 Token Value Intentionality Check (When Creating Design Tokens)
+
+When creating new design token files (e.g., `app_motion.dart`) that supersede or replace existing constants (e.g., `AppAnimations`):
+
+1. Compare EVERY new token value against its deprecated predecessor.
+2. If ANY value differs (even slightly — e.g., `0.95` → `0.96`, or curve `1.275` → `1.075`), add a `/// **Design decision (Phase N):**` doc comment explaining WHY the value changed.
+3. Log the comparison table in the session log under the creation step.
+4. Do NOT leave value changes undocumented — @CodeGuard WILL flag them during Orchestrator review.
+
+Evidence: Phase 0 Session — `curveSpring` Y2 changed from 1.275 to 1.075 (reduced overshoot) and `pressScale` changed from 0.95 to 0.96 (subtler press) without documented rationale. Caught by @CodeGuard during Orchestrator review, requiring post-hoc documentation. Would have been cleaner to document during creation.
 
 ### Step 4 — Integrate
 

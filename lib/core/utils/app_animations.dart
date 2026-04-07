@@ -1,157 +1,61 @@
 import 'package:flutter/material.dart';
 
-/// Defines animation curves and durations consistent with the design system.
-///
-/// This class provides reusable animation configurations that match the
-/// React design system (slideUp, fadeIn, spring animations).
-class AppAnimations {
-  AppAnimations._(); // Private constructor to prevent instantiation
+import 'package:sline_app/core/theme/app_motion.dart';
 
-  // --- Durations ---
+/// Legacy animation constants.
+///
+/// **DEPRECATED:** Use [AppMotion] for all new code.
+/// This class is retained only for its utility widgets
+/// ([SpringButton], [AnimatedRotationButton]) which are used in production.
+///
+/// Constants below are deprecated and will be removed in a future release.
+class AppAnimations {
+  AppAnimations._();
+
+  // --- Durations (DEPRECATED — use AppMotion) ---
+
+  @Deprecated('Use AppMotion.fast instead')
   static const Duration fast = Duration(milliseconds: 200);
+
+  @Deprecated('Use AppMotion.standard instead')
   static const Duration normal = Duration(milliseconds: 300);
+
+  @Deprecated('Use AppMotion.slow instead')
   static const Duration slow = Duration(milliseconds: 400);
+
+  @Deprecated('Use AppMotion.emphasis instead')
   static const Duration slower = Duration(milliseconds: 500);
 
-  // --- Custom Curves ---
-  /// Curve for slide up animations (modals, sheets)
-  /// Mimics: cubic-bezier(0.2, 0.8, 0.2, 1)
+  // --- Custom Curves (DEPRECATED — use AppMotion) ---
+
+  @Deprecated('Use AppMotion.curveSlideUp instead')
   static const Curve slideUpCurve = Cubic(0.2, 0.8, 0.2, 1);
 
-  /// Standard ease out curve for most transitions
+  @Deprecated('Use AppMotion.curveStandard instead')
   static const Curve easeOut = Curves.easeOut;
 
-  /// Curve for spring-like animations (button feedback)
-  /// Mimics: cubic-bezier(0.175, 0.885, 0.32, 1.275)
+  @Deprecated('Use AppMotion.curveSpring instead')
   static const Curve springCurve = Cubic(0.175, 0.885, 0.32, 1.275);
 
-  /// Standard fade in curve
+  @Deprecated('Use AppMotion.curveStandard instead')
   static const Curve fadeInCurve = Curves.easeOut;
 
-  // --- Scale Values ---
+  // --- Scale Values (DEPRECATED — use AppMotion) ---
+
+  @Deprecated('Use AppMotion.pressScale instead')
   static const double scalePressed = 0.95;
+
+  @Deprecated('Use AppMotion.hoverScale instead')
   static const double scaleHover = 1.02;
+
+  @Deprecated('Use AppMotion.emphasize instead')
   static const double scaleActive = 1.1;
 }
 
-/// A widget that animates its child with a fade-in effect on first build.
-class FadeInWidget extends StatefulWidget {
-  final Widget child;
-  final Duration duration;
-  final Duration delay;
-  final Curve curve;
-
-  const FadeInWidget({
-    super.key,
-    required this.child,
-    this.duration = AppAnimations.normal,
-    this.delay = Duration.zero,
-    this.curve = AppAnimations.fadeInCurve,
-  });
-
-  @override
-  State<FadeInWidget> createState() => _FadeInWidgetState();
-}
-
-class _FadeInWidgetState extends State<FadeInWidget>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(duration: widget.duration, vsync: this);
-    _animation = CurvedAnimation(parent: _controller, curve: widget.curve);
-
-    if (widget.delay == Duration.zero) {
-      _controller.forward();
-    } else {
-      Future.delayed(widget.delay, () {
-        if (mounted) _controller.forward();
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(opacity: _animation, child: widget.child);
-  }
-}
-
-/// A widget that animates its child with a slide-up effect on first build.
-class SlideUpWidget extends StatefulWidget {
-  final Widget child;
-  final Duration duration;
-  final Duration delay;
-  final Curve curve;
-  final double offsetY;
-
-  const SlideUpWidget({
-    super.key,
-    required this.child,
-    this.duration = AppAnimations.slow,
-    this.delay = Duration.zero,
-    this.curve = AppAnimations.slideUpCurve,
-    this.offsetY = 1.0, // Full height offset by default
-  });
-
-  @override
-  State<SlideUpWidget> createState() => _SlideUpWidgetState();
-}
-
-class _SlideUpWidgetState extends State<SlideUpWidget>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<Offset> _slideAnimation;
-  late Animation<double> _fadeAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(duration: widget.duration, vsync: this);
-
-    _slideAnimation = Tween<Offset>(
-      begin: Offset(0, widget.offsetY),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _controller, curve: widget.curve));
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.5,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: widget.curve));
-
-    if (widget.delay == Duration.zero) {
-      _controller.forward();
-    } else {
-      Future.delayed(widget.delay, () {
-        if (mounted) _controller.forward();
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SlideTransition(
-      position: _slideAnimation,
-      child: FadeTransition(opacity: _fadeAnimation, child: widget.child),
-    );
-  }
-}
-
 /// A widget that provides spring-like tap feedback.
+///
+/// Used in [MainNavigationScreen] for the FAB button.
+/// Migrated to use [AppMotion] tokens.
 class SpringButton extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
@@ -164,8 +68,8 @@ class SpringButton extends StatefulWidget {
     required this.child,
     this.onTap,
     this.onLongPress,
-    this.scaleDown = AppAnimations.scalePressed,
-    this.duration = AppAnimations.fast,
+    this.scaleDown = AppMotion.pressScale,
+    this.duration = AppMotion.fast,
   });
 
   @override
@@ -182,7 +86,7 @@ class _SpringButtonState extends State<SpringButton>
     super.initState();
     _controller = AnimationController(duration: widget.duration, vsync: this);
     _scaleAnimation = Tween<double>(begin: 1.0, end: widget.scaleDown).animate(
-      CurvedAnimation(parent: _controller, curve: AppAnimations.springCurve),
+      CurvedAnimation(parent: _controller, curve: AppMotion.curveSpring),
     );
   }
 
@@ -225,50 +129,10 @@ class _SpringButtonState extends State<SpringButton>
   }
 }
 
-/// A widget that provides hover scale effect (useful for cards).
-class HoverScaleWidget extends StatefulWidget {
-  final Widget child;
-  final VoidCallback? onTap;
-  final double hoverScale;
-  final double pressedScale;
-  final Duration duration;
-
-  const HoverScaleWidget({
-    super.key,
-    required this.child,
-    this.onTap,
-    this.hoverScale = AppAnimations.scaleHover,
-    this.pressedScale = AppAnimations.scalePressed,
-    this.duration = AppAnimations.normal,
-  });
-
-  @override
-  State<HoverScaleWidget> createState() => _HoverScaleWidgetState();
-}
-
-class _HoverScaleWidgetState extends State<HoverScaleWidget> {
-  double _scale = 1.0;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _scale = widget.pressedScale),
-      onTapUp: (_) {
-        setState(() => _scale = 1.0);
-        widget.onTap?.call();
-      },
-      onTapCancel: () => setState(() => _scale = 1.0),
-      child: AnimatedScale(
-        scale: _scale,
-        duration: widget.duration,
-        curve: AppAnimations.springCurve,
-        child: widget.child,
-      ),
-    );
-  }
-}
-
 /// A widget that provides animated rotation (for FAB, etc.).
+///
+/// Used in [MainNavigationScreen] for the Create Task FAB.
+/// Migrated to use [AppMotion] tokens.
 class AnimatedRotationButton extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
@@ -280,7 +144,7 @@ class AnimatedRotationButton extends StatefulWidget {
     required this.child,
     this.onTap,
     this.rotationAngle = 0.25, // 90 degrees
-    this.duration = AppAnimations.slow,
+    this.duration = AppMotion.slow,
   });
 
   @override
@@ -297,7 +161,7 @@ class _AnimatedRotationButtonState extends State<AnimatedRotationButton> {
       onTapDown: (_) {
         setState(() {
           _rotation = widget.rotationAngle;
-          _scale = AppAnimations.scaleActive;
+          _scale = AppMotion.emphasize;
         });
       },
       onTapUp: (_) {
@@ -316,11 +180,11 @@ class _AnimatedRotationButtonState extends State<AnimatedRotationButton> {
       child: AnimatedRotation(
         turns: _rotation,
         duration: widget.duration,
-        curve: AppAnimations.springCurve,
+        curve: AppMotion.curveSpring,
         child: AnimatedScale(
           scale: _scale,
           duration: widget.duration,
-          curve: AppAnimations.springCurve,
+          curve: AppMotion.curveSpring,
           child: widget.child,
         ),
       ),

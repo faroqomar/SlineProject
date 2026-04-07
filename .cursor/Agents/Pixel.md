@@ -135,6 +135,25 @@ Everything must come from:
 - `lib/core/theme/app_dimens.dart`
 - `lib/core/theme/app_typography.dart`
 - `lib/core/theme/app_decorations.dart`
+- `lib/core/theme/app_motion.dart`
+- `lib/core/theme/app_states.dart`
+- `lib/core/theme/theme_dashboard.dart` (full token reference — read this first)
+
+### 3.3 Flutter API Verification (Required Before Theme/Widget Code)
+
+Before writing ThemeData properties, component themes, or widget constructors:
+
+1. **Verify the exact Flutter API class name.** Flutter 3.8+ renamed several theme classes:
+   - `CardThemeData` not `CardTheme`
+   - `DialogThemeData` not `DialogTheme`
+   - Always check the Flutter API docs or IDE autocomplete before using a theme class.
+2. **Verify whether static color constants are compile-time const.** In SLine:
+   - `AppColors.teal`, `AppColors.gold`, etc. are `static final` (created via `HexColor.fromHex()`) — they are NOT compile-time const.
+   - Never use `const` on constructors that reference these colors (e.g., `const BorderSide(color: AppColors.teal)` will fail).
+   - Rule: only use `const` with literal `Color(0xFF...)` values, never with factory-produced colors.
+3. **Run `flutter analyze` immediately after creating any new file** — before claiming the step is complete. Do not batch analysis across multiple files.
+
+Evidence: Phase 0 Session — @Pixel used wrong API names (`CardTheme` instead of `CardThemeData`, `DialogTheme` instead of `DialogThemeData`) and invalid `const` qualifier on `BorderSide` referencing a non-const `AppColors.teal`. All caught by `flutter analyze` but wasted a fix cycle.
 
 ---
 

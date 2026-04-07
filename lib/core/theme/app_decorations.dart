@@ -180,4 +180,85 @@ class AppDecorations {
       ),
     );
   }
+
+  // ── Elevation Scale ──────────────────────────────────────────
+
+  /// Returns a list of [BoxShadow]s for the given elevation [level].
+  ///
+  /// Use this instead of inline [BoxShadow] definitions in widgets.
+  /// The scale provides 5 levels of visual depth:
+  ///
+  /// | Level | Name     | Use Case                                |
+  /// |-------|----------|-----------------------------------------|
+  /// | 0     | Flat     | Items at rest in a scrolling list        |
+  /// | 1     | Resting  | Default cards, tiles                     |
+  /// | 2     | Raised   | Hovered/focused cards, active states     |
+  /// | 3     | Floating | Modals, FAB, dragged items               |
+  /// | 4     | Dramatic | Popovers, dropdowns, elevated dialogs    |
+  ///
+  /// Set [isDark] to `true` for dark mode — shadows use reduced alpha
+  /// since dark backgrounds make strong shadows look unnatural.
+  ///
+  /// Example:
+  /// ```dart
+  /// Container(
+  ///   decoration: BoxDecoration(
+  ///     boxShadow: AppDecorations.elevation(1, isDark: colorScheme.isDark),
+  ///   ),
+  /// )
+  /// ```
+  static List<BoxShadow> elevation(int level, {bool isDark = false}) {
+    // Dark mode shadows are less visible — reduce alpha to 30% of light mode.
+    final multiplier = isDark ? 0.3 : 1.0;
+
+    switch (level) {
+      case 0:
+        // Flat: no shadow at all.
+        return const [];
+
+      case 1:
+        // Resting: subtle depth for cards at rest.
+        return [
+          BoxShadow(
+            color: Color.fromRGBO(0, 0, 0, 0.06 * multiplier),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ];
+
+      case 2:
+        // Raised: hovered or focused cards.
+        return [
+          BoxShadow(
+            color: Color.fromRGBO(0, 0, 0, 0.08 * multiplier),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ];
+
+      case 3:
+        // Floating: modals, FABs, dragged items.
+        return [
+          BoxShadow(
+            color: Color.fromRGBO(0, 0, 0, 0.12 * multiplier),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ];
+
+      case 4:
+        // Dramatic: popovers, dropdowns, prominent UI.
+        return [
+          BoxShadow(
+            color: Color.fromRGBO(0, 0, 0, 0.16 * multiplier),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ];
+
+      default:
+        // Fallback to resting level.
+        return elevation(1, isDark: isDark);
+    }
+  }
 }

@@ -188,9 +188,20 @@ class AppColorScheme {
     required this.glassCardGradient, // ADD THIS LINE
     required this.error,
     required this.isDark,
-    this.success = Colors.green, // Default for now
-    this.warning = Colors.orange, // Default for now
-    this.info = Colors.blue, // Default for now
+    // Semantic status colors (converted from optional defaults to required tokens)
+    required this.success,
+    required this.successMuted,
+    required this.warning,
+    required this.warningMuted,
+    required this.info,
+    required this.infoMuted,
+    required this.danger,
+    required this.dangerMuted,
+    // Interactive state colors
+    required this.hoverOverlay,
+    required this.pressedOverlay,
+    required this.focusRing,
+    required this.disabledFill,
   });
 
   final Color primary;
@@ -227,8 +238,17 @@ class AppColorScheme {
   final List<Color> glassCardGradient; // ADD THIS LINE
   final Color error;
   final Color success;
+  final Color successMuted;
   final Color warning;
+  final Color warningMuted;
   final Color info;
+  final Color infoMuted;
+  final Color danger;
+  final Color dangerMuted;
+  final Color hoverOverlay;
+  final Color pressedOverlay;
+  final Color focusRing;
+  final Color disabledFill;
   final bool isDark;
 
   factory AppColorScheme.lerp(AppColorScheme? a, AppColorScheme? b, double t) {
@@ -311,8 +331,17 @@ class AppColorScheme {
       ),
       error: Color.lerp(a.error, b.error, t)!,
       success: Color.lerp(a.success, b.success, t)!,
+      successMuted: Color.lerp(a.successMuted, b.successMuted, t)!,
       warning: Color.lerp(a.warning, b.warning, t)!,
+      warningMuted: Color.lerp(a.warningMuted, b.warningMuted, t)!,
       info: Color.lerp(a.info, b.info, t)!,
+      infoMuted: Color.lerp(a.infoMuted, b.infoMuted, t)!,
+      danger: Color.lerp(a.danger, b.danger, t)!,
+      dangerMuted: Color.lerp(a.dangerMuted, b.dangerMuted, t)!,
+      hoverOverlay: Color.lerp(a.hoverOverlay, b.hoverOverlay, t)!,
+      pressedOverlay: Color.lerp(a.pressedOverlay, b.pressedOverlay, t)!,
+      focusRing: Color.lerp(a.focusRing, b.focusRing, t)!,
+      disabledFill: Color.lerp(a.disabledFill, b.disabledFill, t)!,
       isDark: t < 0.5
           ? (a.isDark)
           : (b.isDark), // Boolean lerp is not meaningful, pick based on interpolation factor
@@ -358,6 +387,20 @@ class AppColorScheme {
       taskGradientFrom: AppColors.almostBlackTransparent40,
       glassCardGradient: AppColors.glassCardGradientLight,
       error: AppColors.lightRed,
+      // Semantic status colors — light mode
+      success: const Color(0xFF2E7D32), // Material green-700
+      successMuted: const Color(0xFFE8F5E9), // Material green-50
+      warning: const Color(0xFFF57F17), // Material amber-900
+      warningMuted: const Color(0xFFFFF8E1), // Material amber-50
+      info: const Color(0xFF1565C0), // Material blue-800
+      infoMuted: const Color(0xFFE3F2FD), // Material blue-50
+      danger: const Color(0xFFC62828), // Material red-800
+      dangerMuted: const Color(0xFFFFEBEE), // Material red-50
+      // Interactive state colors — light mode
+      hoverOverlay: AppColors.teal.withValues(alpha: 0.04),
+      pressedOverlay: AppColors.teal.withValues(alpha: 0.08),
+      focusRing: AppColors.teal,
+      disabledFill: const Color(0x14000000), // black at 8%
       isDark: false,
     );
   }
@@ -404,6 +447,20 @@ class AppColorScheme {
       taskGradientFrom: AppColors.almostBlackTransparent60,
       glassCardGradient: AppColors.glassCardGradientDark,
       error: AppColors.lightRed,
+      // Semantic status colors — dark mode
+      success: const Color(0xFF66BB6A), // Material green-400
+      successMuted: const Color(0xFF1B3D1F), // Custom dark green
+      warning: const Color(0xFFFFB300), // Material amber-600
+      warningMuted: const Color(0xFF3D2E00), // Custom dark amber
+      info: const Color(0xFF42A5F5), // Material blue-400
+      infoMuted: const Color(0xFF0D2137), // Custom dark blue
+      danger: const Color(0xFFEF5350), // Material red-400
+      dangerMuted: const Color(0xFF3D1111), // Custom dark red
+      // Interactive state colors — dark mode
+      hoverOverlay: AppColors.lightTeal.withValues(alpha: 0.06),
+      pressedOverlay: AppColors.lightTeal.withValues(alpha: 0.10),
+      focusRing: AppColors.lightTeal,
+      disabledFill: const Color(0x14FFFFFF), // white at 8%
       isDark: true,
     );
   }

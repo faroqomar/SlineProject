@@ -1,6 +1,6 @@
 # SLine App - Folder Structure Guide
 
-**Last Updated:** 2026-04-05 (Phase F: widget tests, coverage 40.8%, full agent inventory in .cursor/Agents/ including SystemEvolution meta-agent; previous: Phase E sealed ViewState/AppFailure, DeepLinkRegistry, 14 VM test files, 1200+ tests)
+**Last Updated:** 2026-04-07 (Phase 0 UI Redesign: Design System Foundation — added app_motion.dart, app_states.dart, elevation scale, semantic colors, component themes, typography line-heights. See lib/core/theme/theme_dashboard.dart for full token reference. Previous: Phase F widget tests, 40.8% coverage)
 
 This document describes the current repository layout. It replaces older references to `presentation/` and `controllers/`; the live Flutter codebase uses `view/` and `viewmodels/` under `lib/features/`.
 
