@@ -1678,16 +1678,40 @@ Core also owns two browser-specific stability helpers:
 | `lib/core/models/user_profile.dart`              | model     | Shared typed profile model.                                                             |
 | `lib/core/models/payment_return_args.dart`       | model     | Shared typed browser payment callback payload.                                          |
 | `lib/core/theme/app_colors.dart`                 | theme     | Central palette + semantic status colors (success/warning/info/danger) + interactive state colors. |
-| `lib/core/theme/app_dimens.dart`                 | theme     | Spacing, radius, sizing tokens.                                                         |
+| `lib/core/theme/app_dimens.dart`                 | theme     | Raw spacing primitives (p0-p100), border radii (r4-r50), icon sizes (Layer 2 primitives). |
+| `lib/core/theme/app_layout.dart`                 | theme     | **Phase 0.7** Semantic layout tokens: card, avatar, button, spacing, icon, thumbnail, nav, border (Layer 2 semantic). |
 | `lib/core/theme/app_typography.dart`             | theme     | Typography with per-style line heights (1.0-1.5) and letter spacing.                    |
 | `lib/core/theme/app_theme.dart`                  | theme     | Builds `ThemeData` + `AppThemeExtension` + 7 component themes (Card, Dialog, BottomSheet, Chip, Divider, SnackBar, TabBar). |
 | `lib/core/theme/app_motion.dart`                 | theme     | Animation tokens: durations (100-1500ms), curves (ease-out family), scales, stagger delays, reduced-motion helper. |
 | `lib/core/theme/app_states.dart`                 | theme     | Interaction state definitions: 8-state model (default→error), focus ring, shake, haptic mapping. |
-| `lib/core/theme/app_decorations.dart`            | theme     | Glass effects + 5-level elevation shadow scale with dark mode support.                  |
+| `lib/core/theme/app_decorations.dart`            | theme     | 5-level elevation shadow scale + input/badge/avatar decoration methods. NO GLASS (Phase 1). |
 | `lib/core/theme/theme_dashboard.dart`            | theme     | Documentation-only reference for all design tokens. **Read this first for token overview.** |
 | `lib/core/widgets/custom_bottom_nav_bar.dart`    | widget    | Shared app shell bottom nav.                                                            |
 | `lib/core/widgets/signed_avatar.dart`            | widget    | Renders private avatar paths through signed URLs.                                       |
 | `lib/core/widgets/signed_image.dart`             | widget    | Renders private image paths through signed URLs.                                        |
+
+### 3.2 Three-Layer Design System Architecture (Phase 0 + 0.7)
+
+The design system separates DESIGN (structure) from THEME (visual identity) so either can change independently:
+
+```
+Layer 1 — THEME (colors, typography, motion, elevation, interaction states)
+  AppColors, AppTypography, AppMotion, AppDecorations, AppStates, AppTheme
+
+Layer 2 — LAYOUT (spacing, sizes, structure, proportions)
+  AppLayout (semantic tokens: cardPadding, avatarMedium, buttonHeight, spacingSection)
+  AppDimens  (raw primitives: p0-p100, r4-r50, iconSizeSmall/Medium/Large)
+
+Layer 3 — COMPONENTS (widgets that CONSUME Layer 1 + Layer 2)
+  All widgets in lib/core/widgets/ and lib/features/*/view/
+```
+
+**Rules:**
+- Components NEVER hardcode colors, font sizes, durations, padding, avatar sizes, card heights, or spacing.
+- To retheme: change Layer 1 files (AppColors, AppTypography, AppMotion).
+- To redesign layout: change Layer 2 files (AppLayout, AppDimens).
+- `AppDimens` = raw scale (p16 = 16px). `AppLayout` = semantic meaning (cardPadding = 16px for card context).
+- No overlapping icon sizes: AppDimens has 16/24/32, AppLayout has 12/20/48.
 
 ## 4. Runtime Patterns
 

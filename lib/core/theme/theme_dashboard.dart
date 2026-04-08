@@ -8,13 +8,14 @@
 /// **Usage:** This is a reference/documentation file. Use the actual theme classes
 /// (`AppColors`, `AppTypography`, `AppDimens`, `AppDecorations`) in your code.
 ///
-/// **Last Updated:** 2026-04-07 (Phase 0 — Design System Foundation)
+/// **Last Updated:** 2026-04-08 (Phase 0.7 — Layout Tokens)
 
 // ignore_for_file: unused_import
 
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 
 /// Theme Dashboard - Comprehensive Reference
@@ -217,9 +218,9 @@ class ThemeDashboard {
   /// - `colorScheme.cardBorder` for subtle borders
   /// - `AppDecorations.elevation(level)` for depth/shadow
   ///
-  /// **Legacy glass widgets** (`GlassContainer`, `GlassCard`, `GlassButton`,
-  /// `glassBoxDecoration`, `bottomNavBarDecoration`) exist in the codebase
-  /// and will be migrated to solid-surface equivalents in Phase 1.
+  /// **Legacy glass widgets** have been migrated to solid-surface equivalents
+  /// in Phase 1: `GlassContainer` → `AppCardContainer`, `GlassCard` → `AppCard`,
+  /// `GlassButton` → `AppStyledButton`. All `BackdropFilter` usage removed.
 
   /// **Common Decorations:**
   ///
@@ -254,14 +255,11 @@ class ThemeDashboard {
 
   /// **Common Patterns:**
   ///
-  /// **Card:**
+  /// **Card (solid surface — NO GLASS per .impeccable.md):**
   /// ```dart
-  /// Container(
-  ///   padding: EdgeInsets.all(AppDimens.p16),
-  ///   decoration: AppDecorations.glassBoxDecoration(
-  ///     colorScheme: context.colorScheme,
-  ///     borderRadius: BorderRadius.circular(AppDimens.r20),
-  ///   ),
+  /// AppCardContainer(
+  ///   padding: EdgeInsets.all(AppLayout.cardPadding),
+  ///   elevation: 1,
   ///   child: Text('Content', style: AppTypography.bodyMedium),
   /// )
   /// ```
@@ -364,9 +362,12 @@ class ThemeDashboard {
   ///
   /// - `lib/core/theme/app_colors.dart` - Color palette and color schemes
   /// - `lib/core/theme/app_typography.dart` - Typography styles
-  /// - `lib/core/theme/app_dimens.dart` - Spacing and dimensions
-  /// - `lib/core/theme/app_decorations.dart` - Box decorations
-  /// - `lib/core/theme/app_theme.dart` - Material 3 theme data
+  /// - `lib/core/theme/app_dimens.dart` - Spacing and dimensions (raw primitives)
+  /// - `lib/core/theme/app_layout.dart` - Layout tokens (semantic structure) [Phase 0.7]
+  /// - `lib/core/theme/app_decorations.dart` - Box decorations and elevation scale
+  /// - `lib/core/theme/app_motion.dart` - Animation durations, curves, scales [Phase 0]
+  /// - `lib/core/theme/app_states.dart` - Interaction state constants [Phase 0]
+  /// - `lib/core/theme/app_theme.dart` - Material 3 theme data + component themes
   /// - `lib/core/theme/theme_dashboard.dart` - This file (reference)
 
   /// **Design Reference:**
@@ -543,4 +544,55 @@ class ThemeDashboard {
   /// | captionBold | 12px | w700   | 1.3    | 0.2            | Utility      |
   /// | overline    | 11px | w600   | 1.3    | 1.5            | Utility      |
   /// | micro       | 10px | w500   | 1.2    | 0.3            | Utility      |
+
+  // ============================================================================
+  // LAYOUT TOKENS (Phase 0.7 — AppLayout)
+  // ============================================================================
+
+  /// ## Three-Layer Architecture
+  ///
+  /// ```
+  /// Layer 1 — THEME: AppColors, AppTypography, AppMotion, AppDecorations, AppStates
+  /// Layer 2 — LAYOUT: AppLayout (semantic structure) + AppDimens (raw primitives)
+  /// Layer 3 — COMPONENTS: Widgets consume Layer 1 + Layer 2, own neither
+  /// ```
+  ///
+  /// ## AppDimens vs AppLayout
+  ///
+  /// - `AppDimens` = raw spacing/radius primitives (p0–p100, r4–r50, iconSize*)
+  /// - `AppLayout` = semantic structural tokens with named intent
+  /// - Both are Layer 2. No value overlap for icon sizes.
+  ///
+  /// ## Token Categories
+  ///
+  /// **Card Dimensions:**
+  /// - cardPadding: 16.0 — standard card content padding
+  /// - cardPaddingCompact: 12.0 — dense list padding
+  /// - cardSectionSpacing: 8.0 — inner card section gap
+  /// - cardHeaderHeight: 60.0 — card gradient/image header
+  /// - cardBorderWidth: 1.0 — solid surface border width
+  ///
+  /// **Avatar Sizes (diameter):**
+  /// - avatarTiny: 24.0, avatarSmall: 36.0, avatarDefault: 40.0
+  /// - avatarMedium: 44.0, avatarLarge: 64.0, avatarHero: 80.0
+  ///
+  /// **Button Heights:**
+  /// - buttonHeight: 54.0 (AppButton default)
+  /// - buttonHeightCompact: 48.0 (AppStyledButton default)
+  /// - buttonHeightSmall: 36.0, fabSize: 56.0
+  /// - circleButtonVisualSize: 40.0, minTouchTarget: 48.0 (WCAG)
+  ///
+  /// **Spacing Rhythm (semantic, for raw use AppDimens):**
+  /// - spacingTight: 4.0, spacingStandard: 8.0, spacingSection: 16.0
+  /// - spacingScreen: 24.0, spacingLarge: 32.0, screenHorizontalMargin: 24.0
+  ///
+  /// **Icon Sizes (NO overlap with AppDimens.iconSize*):**
+  /// - iconTiny: 12.0, iconStandard: 20.0, iconFeature: 48.0
+  /// - For 16/24/32 use AppDimens.iconSizeSmall/Medium/Large
+  ///
+  /// **Navigation:**
+  /// - bottomNavHeight: 70.0, fabBottomOffset: 100.0, statusIndicatorHeight: 40.0
+  ///
+  /// **Border Widths:**
+  /// - borderStandard: 1.0, borderThick: 1.5, borderAvatar: 2.0
 }

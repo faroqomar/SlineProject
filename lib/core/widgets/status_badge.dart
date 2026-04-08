@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/models/work_item.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
@@ -202,7 +203,7 @@ class _StatusBadgeState extends State<StatusBadge>
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(iconData, size: iconSize, color: effectiveColor),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppLayout.spacingTight),
           Text(
             widget.text,
             style: widget.isSmall

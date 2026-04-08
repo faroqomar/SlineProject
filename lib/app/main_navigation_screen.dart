@@ -7,6 +7,7 @@ import 'package:sline_app/core/providers/system_config_view_model.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/utils/app_animations.dart';
@@ -262,7 +263,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
 
                 // 6. FAB (Create Task) with spring entrance + scroll-aware
                 Positioned(
-                  bottom: 100,
+                  bottom: AppLayout.fabBottomOffset,
                   right: AppDimens.p24,
                   child: ScaleTransition(
                     scale: _fabScale,
@@ -281,11 +282,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
                       },
                       child: Container(
                         key: MainNavigationScreen.createTaskFabKey,
-                        width: 56,
-                        height: 56,
+                        width: AppLayout.fabSize,
+                        height: AppLayout.fabSize,
                         decoration: BoxDecoration(
                           color: AppColors.teal,
                           borderRadius: BorderRadius.circular(AppDimens.r18),
+                          // FAB uses custom teal-tinted shadow for brand emphasis,
+                          // not the generic AppDecorations.elevation() scale.
                           boxShadow: [
                             BoxShadow(
                               color: AppColors.teal.withValues(alpha: 0.4),
@@ -297,6 +300,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
                         child: Icon(
                           Icons.add,
                           color: AppColors.white,
+                          // 30px — FAB-specific icon size, between iconMedium (24)
+                          // and iconLarge (32). Intentionally unique for visual weight.
                           size: 30,
                         ),
                       ),

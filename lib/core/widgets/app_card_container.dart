@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 
 /// A reusable container with solid background, subtle border, and elevation shadow.
@@ -56,7 +57,10 @@ class AppCardContainer extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.cardBackground,
         borderRadius: effectiveRadius,
-        border: Border.all(color: colorScheme.cardBorder, width: 1),
+        border: Border.all(
+          color: colorScheme.cardBorder,
+          width: AppLayout.cardBorderWidth,
+        ),
         boxShadow: AppDecorations.elevation(
           elevation,
           isDark: colorScheme.isDark,

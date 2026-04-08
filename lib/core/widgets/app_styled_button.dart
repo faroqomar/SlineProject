@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_states.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
@@ -43,7 +44,7 @@ class AppStyledButton extends StatelessWidget {
     this.isPrimary = true,
     this.isLoading = false,
     this.width,
-    this.height = 48,
+    this.height = AppLayout.buttonHeightCompact,
     this.disabled = false,
   });
 
@@ -77,6 +78,8 @@ class AppStyledButton extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (icon != null) ...[
+            // 18px icon — intentionally between iconSizeSmall (16) and
+            // iconStandard (20) for compact styled buttons.
             Icon(icon, size: 18, color: effectiveFg),
             const SizedBox(width: AppDimens.p8),
           ],
@@ -100,7 +103,10 @@ class AppStyledButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: effectiveBg,
           borderRadius: BorderRadius.circular(AppDimens.r12),
-          border: Border.all(color: effectiveBorder, width: 1),
+          border: Border.all(
+            color: effectiveBorder,
+            width: AppLayout.borderStandard,
+          ),
           boxShadow: isInactive
               ? AppDecorations.elevation(0)
               : AppDecorations.elevation(1, isDark: colorScheme.isDark),

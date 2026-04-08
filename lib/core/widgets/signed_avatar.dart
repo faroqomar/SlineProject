@@ -5,7 +5,9 @@ import 'package:sline_app/core/config/storage_config.dart';
 import 'package:sline_app/core/services/default_signed_url_generator.dart';
 import 'package:sline_app/core/services/signed_url_generator.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
+import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/utils/signed_url_cache.dart';
 import 'package:sline_app/core/widgets/skeleton_loader.dart';
 
@@ -70,11 +72,11 @@ class SignedAvatar extends StatefulWidget {
   const SignedAvatar({
     super.key,
     required this.storagePathOrUrl,
-    this.radius = 20,
+    this.radius = AppLayout.avatarDefault / 2,
     this.size,
     this.borderRadius,
     this.borderColor,
-    this.borderWidth = 2,
+    this.borderWidth = AppLayout.borderAvatar,
     this.placeholder,
     this.backgroundColor,
     this.urlGenerator,
@@ -224,10 +226,12 @@ class _SignedAvatarState extends State<SignedAvatar> {
             ),
             child: Center(
               child: SizedBox(
+                // Loading spinner dimensions — intentionally hardcoded,
+                // these are indicator-specific sizes, not layout tokens.
                 width: 14,
                 height: 14,
                 child: CircularProgressIndicator(
-                  strokeWidth: 2,
+                  strokeWidth: AppLayout.borderAvatar,
                   color: AppColors.offWhite,
                 ),
               ),
@@ -296,8 +300,9 @@ class _SignedAvatarState extends State<SignedAvatar> {
       );
     }
 
-    // Online indicator overlay
+    // Online indicator overlay — green dot at bottom-right
     if (widget.showOnlineIndicator) {
+      final colorScheme = context.colorScheme;
       avatar = Stack(
         children: [
           avatar,
@@ -305,12 +310,15 @@ class _SignedAvatarState extends State<SignedAvatar> {
             bottom: 0,
             right: 0,
             child: Container(
-              width: 12,
-              height: 12,
+              width: AppLayout.iconTiny,
+              height: AppLayout.iconTiny,
               decoration: BoxDecoration(
-                color: Colors.green,
+                color: colorScheme.success,
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
+                border: Border.all(
+                  color: colorScheme.phoneBackground,
+                  width: AppLayout.borderAvatar,
+                ),
               ),
             ),
           ),

@@ -8,6 +8,7 @@ import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
@@ -107,11 +108,14 @@ class CustomBottomNavBar extends StatelessWidget {
           left: AppDimens.p16,
           right: AppDimens.p16,
           child: Container(
-            height: 70,
+            height: AppLayout.bottomNavHeight,
             decoration: BoxDecoration(
               color: colorScheme.cardBackground,
               borderRadius: BorderRadius.circular(AppDimens.r30),
-              border: Border.all(color: colorScheme.cardBorder, width: 1),
+              border: Border.all(
+                color: colorScheme.cardBorder,
+                width: AppLayout.borderStandard,
+              ),
               boxShadow: AppDecorations.elevation(
                 3,
                 isDark: colorScheme.isDark,
@@ -222,7 +226,7 @@ class _SolidNavItemState extends State<_SolidNavItem>
           animation: _controller,
           builder: (context, child) {
             return SizedBox(
-              width: 56,
+              width: AppLayout.fabSize,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -249,14 +253,16 @@ class _SolidNavItemState extends State<_SolidNavItem>
                         ),
                       // Icon
                       Padding(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(
+                          AppLayout.spacingStandard,
+                        ),
                         child: Transform.scale(
                           scale: _scaleAnimation.value,
                           child: Icon(
                             widget.isActive
                                 ? widget.item.activeIcon
                                 : widget.item.icon,
-                            size: 24,
+                            size: AppDimens.iconSizeMedium,
                             color: widget.isActive
                                 ? AppColors.teal
                                 : widget.colorScheme.textSecondary,
@@ -273,18 +279,22 @@ class _SolidNavItemState extends State<_SolidNavItem>
                               horizontal: 4,
                               vertical: 1,
                             ),
-                            constraints: const BoxConstraints(minWidth: 16),
+                            constraints: const BoxConstraints(
+                              minWidth: AppDimens.iconSizeSmall,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.lightRed,
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(AppDimens.r8),
                               border: Border.all(
                                 color: widget.colorScheme.cardBackground,
-                                width: 1.5,
+                                width: AppLayout.borderThick,
                               ),
                             ),
                             child: Text(
                               '', // Badge count injected by parent if needed
                               textAlign: TextAlign.center,
+                              // Badge count text — intentionally smaller than
+                              // micro (10px) for compact notification pill.
                               style: AppTypography.micro.copyWith(
                                 color: AppColors.white,
                                 fontWeight: FontWeight.bold,
@@ -304,6 +314,8 @@ class _SolidNavItemState extends State<_SolidNavItem>
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
+                      // Nav label — intentionally 9px, smaller than micro (10px)
+                      // for compact bottom navigation bar layout.
                       style: TextStyle(
                         fontSize: 9,
                         color: widget.isActive

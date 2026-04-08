@@ -13,7 +13,8 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | --- | --- | --- |
 | Flutter app shell and navigation | ✅ Completed | `main.dart` + `lib/app/main_navigation_screen.dart` |
 | Supabase bootstrap and app providers | ✅ Completed | shared client/bootstrap in `lib/core/services/supabase_config.dart` and root providers in `main.dart` |
-| Theme system | ✅ Completed | centralized in `lib/core/theme/` |
+| Theme system (Layer 1) | ✅ Completed | Phase 0: `app_colors.dart`, `app_typography.dart`, `app_motion.dart`, `app_states.dart`, `app_decorations.dart`, `app_theme.dart` |
+| Layout tokens (Layer 2) | ✅ Completed | Phase 0.7: `app_layout.dart` (41 semantic tokens), `app_dimens.dart` (raw primitives). Three-layer architecture complete. |
 | Logging and crash boundaries | ✅ Completed | `AppLogger`, `CrashReportingService`, zoned/global handlers |
 | Documentation hub | ✅ Completed | maintained under `Sline_everything/` |
 

@@ -157,7 +157,16 @@ Current subfolders:
 - `services/`: Supabase bootstrap, payment services, cache, deep links, crash reporting, logging, **role switch coordinator**
   - `deep_link_registry.dart` — **Phase E** DeepLinkRegistry with feature-side handler registration
   - `payment_response_helpers.dart` — **Phase E** Pure helper functions for payment response parsing
-- `theme/`: color, spacing, typography, decorations, theme assembly, theme dashboard
+- `theme/`: Three-layer design system (Theme → Layout → Components)
+  - `app_colors.dart` — color palette + 44-property AppColorScheme (semantic status + interactive colors)
+  - `app_typography.dart` — 14 text styles with per-style line heights (1.0–1.5)
+  - `app_dimens.dart` — raw spacing primitives (p0–p100), border radii (r4–r50), icon sizes
+  - `app_layout.dart` — **Phase 0.7** semantic layout tokens (card, avatar, button, spacing, icon, nav, border)
+  - `app_motion.dart` — **Phase 0** animation tokens (7 durations, 7 curves, 4 scales, 3 staggers)
+  - `app_states.dart` — **Phase 0** interaction state constants (8-state model, haptic mapping)
+  - `app_decorations.dart` — 5-level elevation shadow scale + decoration methods
+  - `app_theme.dart` — Material 3 ThemeData assembly + 13 component themes
+  - `theme_dashboard.dart` — documentation-only reference for all design tokens
 - `utils/`: error mapping, formatting, loading overlays, URL cache, route transitions, web error filters, **ledger forensics** (p_meta session_id/request_id for ledger event flow)
 - `widgets/`: shared UI widgets such as signed media, buttons, badges, loaders, bottom nav
 - `mixins/`: shared behavior mixins such as `role_switch_aware.dart`

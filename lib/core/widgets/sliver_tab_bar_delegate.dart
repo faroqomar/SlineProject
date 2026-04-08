@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 
 /// A [SliverPersistentHeaderDelegate] that renders a [TabBar] with a
@@ -30,7 +31,12 @@ class SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
       decoration: BoxDecoration(
         color: backgroundColor ?? colorScheme.cardBackground,
         border: isPinned
-            ? Border(bottom: BorderSide(color: colorScheme.divider, width: 1))
+            ? Border(
+                bottom: BorderSide(
+                  color: colorScheme.divider,
+                  width: AppLayout.borderStandard,
+                ),
+              )
             : null,
       ),
       child: tabBar,

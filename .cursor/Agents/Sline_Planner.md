@@ -171,6 +171,17 @@ For each screen targeted for widget testing:
 
 Evidence: Widget Tests session — @SlinePlanner wrote mocking strategies without classifying screens into Type A vs Type B, requiring plan rewrite for 3 screens.
 
+### 2.2.6 Token Value Extraction (Required When Planning Token Files)
+
+When the plan creates a new token or constant file (e.g., `app_layout.dart`, `app_motion.dart`):
+1. For EVERY proposed token value, read the actual source file and extract the real value with file:line citation.
+2. Do NOT use values from the Master Plan, aspirational docs, or memory — codebase changes between planning and execution.
+3. Record a Value Extraction Table in the plan appendix: Token | Planned Value | Actual Value | Source File:Line | Decision.
+4. If actual differs from planned, use the ACTUAL value (zero visual change rule).
+5. If the plan creates icon/size/spacing tokens, grep `AppDimens` for overlap. Remove any token that duplicates an existing `AppDimens` value with a similar name.
+
+Evidence: LayoutTokens Phase 0.7 — @SlinePlanner proposed 3 wrong values (bottomNavHeight 64→70, buttonHeight 48→54, circleIconButtonSize conflated 40/48) because values came from the Master Plan, not the actual codebase. @PlanCritic caught all 3.
+
 ### 2.3 Supabase Reality Scan (ALWAYS REQUIRED)
 
 You MUST scan live or current Supabase reality before planning. Confirm:

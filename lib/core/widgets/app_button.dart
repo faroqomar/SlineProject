@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_states.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
@@ -195,7 +196,11 @@ class _AppButtonState extends State<AppButton>
         ),
       );
     } else if (_isInSuccessState) {
-      content = Icon(Icons.check, color: effectiveFg, size: 24);
+      content = Icon(
+        Icons.check,
+        color: effectiveFg,
+        size: AppDimens.iconSizeMedium,
+      );
     } else {
       content = Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppDimens.p24),
@@ -212,8 +217,12 @@ class _AppButtonState extends State<AppButton>
                   ),
             ),
             if (widget.icon != null) ...[
-              const SizedBox(width: 8),
-              Icon(widget.icon, color: effectiveFg, size: 20),
+              const SizedBox(width: AppLayout.spacingStandard),
+              Icon(
+                widget.icon,
+                color: effectiveFg,
+                size: AppLayout.iconStandard,
+              ),
             ],
           ],
         ),
@@ -245,7 +254,7 @@ class _AppButtonState extends State<AppButton>
       },
       child: Container(
         width: widget.width,
-        height: widget.height ?? AppDimens.p54,
+        height: widget.height ?? AppLayout.buttonHeight,
         decoration: BoxDecoration(
           borderRadius: effectiveRadius,
           boxShadow: effectiveShadow,

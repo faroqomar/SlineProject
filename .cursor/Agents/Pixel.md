@@ -159,6 +159,17 @@ Evidence: Phase 0 Session — @Pixel used wrong API names (`CardTheme` instead o
 
 Evidence (test code): CoreWidgetRedesign — `SemanticsFlag` API moved in Flutter 3.8, `Semantics` widget getter assumptions were wrong, `const Semantics` with non-const children failed. All in test files, not production code.
 
+### 3.4 Intentional Hardcoded Exception Documentation (Required During Token Migration)
+
+When migrating widgets to use design tokens (`AppLayout`, `AppDimens`, `AppMotion`, `AppColors`):
+1. If a hardcoded value CANNOT be replaced because no matching token exists, or because the value is component-specific (e.g., badge-internal padding, skeleton placeholder dimensions, nav-bar-specific font size), add an inline comment:
+   `// Intentional hardcoded: <reason> — no matching layout token`
+2. If the value is CLOSE to a token but intentionally different (e.g., icon size 18 between `AppDimens.iconSizeSmall` = 16 and `AppLayout.iconStandard` = 20), add:
+   `// 18px — intentionally between iconSizeSmall (16) and iconStandard (20) for compact styled buttons.`
+3. Never leave a hardcoded value in a migrated file without explanation — it will be flagged by @CodeGuard in every future Orchestrator review.
+
+Evidence: LayoutTokens Phase 0.7 — Orchestrator flagged 6 MED findings for undocumented hardcoded values (`fontSize: 9` in nav bar, `size: 18` in styled button, `size: 30` in FAB icon). All were intentional but required post-execution cleanup to add comments.
+
 ---
 
 ## 4) Standard Screen Patterns (Always Follow These)

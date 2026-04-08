@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
@@ -119,7 +121,7 @@ class _AppTextFieldState extends State<AppTextField> {
             label: _obscureText ? 'Show password' : 'Hide password',
             child: Icon(
               _obscureText ? Icons.visibility_off : Icons.visibility,
-              size: 20,
+              size: AppLayout.iconStandard,
             ),
           ),
         ),
@@ -136,7 +138,7 @@ class _AppTextFieldState extends State<AppTextField> {
             onTap: _clearField,
             child: Semantics(
               label: 'Clear text',
-              child: const Icon(Icons.close, size: 20),
+              child: const Icon(Icons.close, size: AppLayout.iconStandard),
             ),
           ),
         ),
@@ -146,19 +148,19 @@ class _AppTextFieldState extends State<AppTextField> {
     if (icons.isEmpty) return null;
     if (icons.length == 1) {
       return Padding(
-        padding: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.only(right: AppDimens.p12),
         child: icons.first,
       );
     }
 
     // Compose both icons in a Row when both are active
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.only(right: AppDimens.p8),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           for (var i = 0; i < icons.length; i++) ...[
-            if (i > 0) const SizedBox(width: 4),
+            if (i > 0) const SizedBox(width: AppLayout.spacingTight),
             icons[i],
           ],
         ],

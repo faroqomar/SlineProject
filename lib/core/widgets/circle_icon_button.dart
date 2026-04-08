@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_states.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/widgets/scale_button.dart';
@@ -30,8 +31,8 @@ class CircleIconButton extends StatelessWidget {
     this.iconColor,
     this.backgroundColor,
     this.borderColor,
-    this.size = 40,
-    this.iconSize = 20,
+    this.size = AppLayout.circleButtonVisualSize,
+    this.iconSize = AppLayout.iconStandard,
     this.tooltip,
   });
 
@@ -64,9 +65,13 @@ class CircleIconButton extends StatelessWidget {
       child: button,
     );
 
-    // Enforce minimum 48px touch target per WCAG
-    if (size < 48) {
-      button = SizedBox(width: 48, height: 48, child: Center(child: button));
+    // Enforce minimum touch target per WCAG (48dp)
+    if (size < AppLayout.minTouchTarget) {
+      button = SizedBox(
+        width: AppLayout.minTouchTarget,
+        height: AppLayout.minTouchTarget,
+        child: Center(child: button),
+      );
     }
 
     // Tooltip
