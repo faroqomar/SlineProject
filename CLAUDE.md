@@ -89,6 +89,8 @@ lib/
   - **Layer 2 — Layout** (spacing, sizes, structure, proportions): `app_layout.dart`, `app_dimens.dart`
   - **Layer 3 — Components** (widgets that CONSUME Layer 1 + Layer 2): All widgets in `lib/core/widgets/` and `lib/features/*/view/`
   - **Rule:** Components NEVER hardcode colors, font sizes, durations, padding, avatar sizes, card heights, or spacing. They ALWAYS reference Layer 1 or Layer 2 tokens. Redesign = change token files, not 134 widget files.
+- **MVVM for UI Redesign**: UI redesign work touches the View layer ONLY. Views consume ViewModel state via `Consumer`/`context.watch`/`context.read`. Views NEVER import Supabase, NEVER contain business logic, NEVER decide what data to fetch. If a redesign needs data the ViewModel doesn't expose, document it as a gap and use placeholder UI — do NOT add Supabase calls to the View.
+- **Codebase Discovery Scan**: Before implementing any UI phase, search the codebase (`grep` for feature name, widget class names, imports of target files) to find ALL related files the plan may have missed. Report discovered files before writing code. This ensures 100% coverage.
 
 ## Conventions
 
