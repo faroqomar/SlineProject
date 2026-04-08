@@ -65,7 +65,10 @@ lib/
 │   ├── models/             # Global shared models
 │   ├── providers/          # NavigationProvider, ThemeModeProvider, SystemConfigViewModel
 │   ├── services/           # SupabaseConfig, AppLogger, AccountGuardService, PaymentService, DeepLinkService
-│   ├── theme/              # AppColors, AppTypography, AppDimens, AppDecorations, AppTheme (single source of truth)
+│   ├── theme/              # THREE-LAYER DESIGN SYSTEM (see Architecture Principle below)
+│   │   ├── Layer 1 THEME:  # AppColors, AppTypography, AppMotion, AppDecorations, AppStates, AppTheme
+│   │   ├── Layer 2 LAYOUT: # AppLayout (card sizes, avatar sizes, spacing rhythm, button heights)
+│   │   └── Layer 2b:       # AppDimens (spacing + border radius tokens)
 │   ├── utils/              # format_date, format_price, error_mapper, transitions
 │   └── widgets/            # Shared: GlassContainer, SignedAvatar, SignedImage, AppButton, AppTextField, CustomBottomNavBar
 └── features/<name>/        # Each feature has: view/, viewmodels/, services/, models/, (optional: data/, exceptions/)
@@ -81,6 +84,11 @@ lib/
 - **Navigation**: Provider-based tab switching via `NavigationProvider` + `AnimatedSwitcher` in `MainNavigationScreen`. Named routes for auth screens.
 - **Sealed ViewState pattern**: `ViewState<T>` (`loading | loaded(T) | error(AppFailure)`) in `lib/core/models/view_state.dart`. Used in DirectOfferDetailsVM, BookingVM, WorkItemDetailsVM. Preferred for new VMs over raw `_isLoading`/`_error` fields.
 - **DeepLinkRegistry**: `DeepLinkService` has zero feature imports. Each feature registers its own handler via `DeepLinkRegistry` pattern (6 handler files in feature directories).
+- **Design/Theme Separation (Three-Layer Architecture)**:
+  - **Layer 1 — Theme** (colors, typography, motion, elevation): `app_colors.dart`, `app_typography.dart`, `app_motion.dart`, `app_decorations.dart`, `app_states.dart`, `app_theme.dart`
+  - **Layer 2 — Layout** (spacing, sizes, structure, proportions): `app_layout.dart`, `app_dimens.dart`
+  - **Layer 3 — Components** (widgets that CONSUME Layer 1 + Layer 2): All widgets in `lib/core/widgets/` and `lib/features/*/view/`
+  - **Rule:** Components NEVER hardcode colors, font sizes, durations, padding, avatar sizes, card heights, or spacing. They ALWAYS reference Layer 1 or Layer 2 tokens. Redesign = change token files, not 134 widget files.
 
 ## Conventions
 
