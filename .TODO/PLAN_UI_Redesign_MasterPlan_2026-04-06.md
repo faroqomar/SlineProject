@@ -45,6 +45,59 @@ A **premium, fluid, responsive** marketplace app that feels like it was designed
 3. **Use Cursor agents**: `@Pixel` for UI, `@Architect` for logic, `@Sentinel` for QA.
 4. **Run `teach-impeccable` first** to populate `.impeccable.md` design context.
 5. **Verify after each section**: `flutter analyze` clean + visual check on device.
+6. **Screenshot-first workflow (MANDATORY for Phases 4+):** Before implementing any screen redesign, the user provides screenshots of the current UI. The agent reads the plan for that phase, requests specific screenshots, and implements with full visual context. This produces dramatically better results than text-only implementation.
+
+### Screenshot Workflow (Per Phase)
+
+```
+Step 1: Agent reads the plan for Phase N.
+Step 2: Agent lists what screenshots are needed (e.g., "HomeScreen default state",
+        "HomeScreen empty state", "HomeScreen dark mode").
+Step 3: User provides screenshots from device/emulator.
+Step 4: Agent implements with visual context — knows exact current spacing,
+        colors, visual weight, and hierarchy.
+Step 5: Agent runs flutter analyze + tests.
+Step 6: User tests on device and provides feedback screenshots.
+Step 7: Agent adjusts based on real visual feedback.
+```
+
+**Why this matters:** Text descriptions of UI are imprecise. "120px header" doesn't tell you
+how cramped the card looks on a small phone. A screenshot does. Agents that implemented Phase 2
+without screenshots made layout choices that looked reasonable in code but may not match the
+actual visual intent. Screenshots close that gap.
+
+---
+
+## ARCHITECTURE PRINCIPLE: DESIGN SEPARATED FROM THEME
+
+> The design (layouts, spacing, visual structure) MUST be kept separate from the theme
+> (colors, typography, motion) so that either can be changed independently.
+
+### Why This Matters
+
+If you want to redesign the app in 6 months — new card layouts, different spacing rhythm,
+different avatar sizes — you should change **one file** (`app_layout.dart`), not 134 widget files.
+Similarly, if you want a new color palette or font, you change `app_colors.dart` / `app_typography.dart`
+without touching any layouts.
+
+### The Three Layers
+
+```
+Layer 1: THEME (colors, typography, motion, elevation)
+  └── app_colors.dart, app_typography.dart, app_motion.dart,
+      app_decorations.dart, app_states.dart, app_theme.dart
+
+Layer 2: LAYOUT (spacing, sizes, structure, proportions)
+  └── app_layout.dart (NEW — see Phase 0.5)
+      app_dimens.dart (spacing + border radius tokens)
+
+Layer 3: COMPONENTS (widgets that CONSUME Layer 1 + Layer 2)
+  └── All widgets in lib/core/widgets/ and lib/features/*/view/
+```
+
+**Rule:** Components NEVER hardcode colors, font sizes, durations, padding, avatar sizes,
+card heights, or spacing. They ALWAYS reference Layer 1 or Layer 2 tokens. This means
+a redesign = changing Layer 1 and/or Layer 2 files only.
 
 ---
 
@@ -206,6 +259,119 @@ Color get disabledText    // grey at 40%
 
 **FILES:** `lib/core/theme/app_theme.dart`
 **SKILL:** `normalize`
+
+---
+
+## 0.7 Layout Tokens — Design/Theme Separation (NEW FILE)
+
+**BEFORE:** Layout constants (card padding, avatar sizes, header heights, section spacing, stagger intervals, button heights) are hardcoded inside each widget file. Changing the "design" requires modifying 134 files. The "theme" (colors, fonts, motion) is centralized but the "design" (structure, proportions, spacing rhythm) is scattered everywhere.
+
+**AFTER:** Create `lib/core/theme/app_layout.dart` — a single file that centralizes ALL layout decisions:
+
+```dart
+/// Centralized layout tokens for the SLine app.
+///
+/// WHAT: Every structural measurement in the app — padding, sizes,
+/// heights, spacing rhythms, avatar dimensions, card proportions.
+///
+/// WHY: Separates DESIGN (structure/proportions) from THEME (colors/fonts/motion).
+/// To redesign the app's layout, change THIS file. To retheme, change app_colors/
+/// app_typography/app_motion. Components consume both but own neither.
+class AppLayout {
+  AppLayout._();
+
+  // ── Card Dimensions ──────────────────────────────────────
+  /// Standard card content padding (all sides).
+  static const double cardPadding = 16.0;
+  /// Compact card content padding (dense lists).
+  static const double cardPaddingCompact = 12.0;
+  /// Card inner section spacing (between title and meta row, etc).
+  static const double cardSectionSpacing = 8.0;
+
+  // ── Avatar Sizes ─────────────────────────────────────────
+  /// Tiny avatar for inline mentions, comment threads (24px diameter).
+  static const double avatarTiny = 24.0;
+  /// Small avatar for list tiles, cards (36px diameter).
+  static const double avatarSmall = 36.0;
+  /// Medium avatar for conversation tiles, card headers (44px diameter).
+  static const double avatarMedium = 44.0;
+  /// Large avatar for profile headers, detail screens (64px diameter).
+  static const double avatarLarge = 64.0;
+  /// Hero avatar for profile screen top section (80px diameter).
+  static const double avatarHero = 80.0;
+
+  // ── Button Heights ───────────────────────────────────────
+  /// Standard button height (primary actions).
+  static const double buttonHeight = 48.0;
+  /// Compact button height (secondary, inline actions).
+  static const double buttonHeightCompact = 36.0;
+  /// FAB size.
+  static const double fabSize = 56.0;
+
+  // ── Header Heights ───────────────────────────────────────
+  /// Card gradient/image header (when present).
+  static const double cardHeaderHeight = 60.0;
+  /// Status bar/indicator height.
+  static const double statusBarHeight = 40.0;
+
+  // ── Spacing Rhythm ───────────────────────────────────────
+  /// Tight spacing within a single component (icon-to-text, badge gap).
+  static const double spacingTight = 4.0;
+  /// Standard spacing between related elements.
+  static const double spacingStandard = 8.0;
+  /// Section spacing between distinct groups.
+  static const double spacingSection = 16.0;
+  /// Screen-level vertical spacing between major sections.
+  static const double spacingScreen = 24.0;
+  /// Large gap for visual breathing room.
+  static const double spacingLarge = 32.0;
+
+  // ── Content Widths ───────────────────────────────────────
+  /// Max width for form content (login, signup, settings).
+  static const double formMaxWidth = 400.0;
+  /// Max width for a card in grid view.
+  static const double cardMaxWidth = 600.0;
+
+  // ── Icon Sizes ───────────────────────────────────────────
+  /// Status/inline icon (inside badges, chips).
+  static const double iconTiny = 12.0;
+  /// Standard icon (buttons, list tiles).
+  static const double iconStandard = 20.0;
+  /// Feature icon (empty states, auth screens).
+  static const double iconFeature = 48.0;
+
+  // ── Thumbnail Sizes ──────────────────────────────────────
+  /// Task card thumbnail (compact inline).
+  static const double thumbnailSmall = 60.0;
+  /// Booking card thumbnail.
+  static const double thumbnailMedium = 80.0;
+
+  // ── Bottom Navigation ────────────────────────────────────
+  /// FAB bottom offset above nav bar.
+  static const double fabBottomOffset = 100.0;
+
+  // ── Stagger Intervals ────────────────────────────────────
+  /// Number of stagger elements for auth screens.
+  static const int authStaggerCount = 5;
+  /// Number of stagger elements for signup (more fields).
+  static const int signupStaggerCount = 6;
+}
+```
+
+**WHY THIS IS CRITICAL:**
+- Today: changing avatar size from 36px to 44px means grepping the entire codebase and editing every file.
+- After: change `AppLayout.avatarSmall = 44.0` and every card, tile, and list across the app updates.
+- Same for card padding, button heights, spacing rhythm — one file controls the entire app's proportions.
+- This is what makes future redesigns trivial instead of terrifying.
+
+**FILES:** Create `lib/core/theme/app_layout.dart`
+**SKILL:** `normalize` (extract all existing hardcoded values into tokens)
+**DEPENDS ON:** 0.3 (AppDimens already has some tokens — AppLayout is the design-structural superset)
+
+**Migration strategy:**
+1. Create the file with values matching the CURRENT codebase (so nothing changes visually).
+2. In Phases 1-16, each widget modification replaces hardcoded values with `AppLayout.*` references.
+3. After all phases complete, changing the design = editing `app_layout.dart` only.
 
 ---
 
@@ -1159,7 +1325,7 @@ Add `HapticFeedback` calls to:
 
 ---
 
-# MASTER FILE INDEX (134 files)
+# MASTER FILE INDEX (135 files)
 
 | Priority | File | Phase | Key Change |
 |----------|------|-------|------------|
@@ -1169,6 +1335,7 @@ Add `HapticFeedback` calls to:
 | **P0** | `lib/core/theme/app_typography.dart` | 0.4 | Line heights + letter spacing |
 | **P0** | `lib/core/theme/app_colors.dart` | 0.5 | Semantic color tokens |
 | **P0** | `lib/core/theme/app_theme.dart` | 0.6 | Component themes |
+| **P0** | `lib/core/theme/app_layout.dart` | 0.7 | NEW — layout tokens (design/theme separation) |
 | **P0** | `lib/core/widgets/app_button.dart` | 1.1 | 8 states + haptics |
 | **P0** | `lib/core/widgets/app_text_field.dart` | 1.2 | Error shake + clear + toggle |
 | **P0** | `lib/core/widgets/glass_container.dart` | 1.7 | Performance + intensity levels |

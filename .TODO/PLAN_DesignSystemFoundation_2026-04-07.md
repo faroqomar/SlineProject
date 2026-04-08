@@ -1,9 +1,10 @@
 # Plan: Design System Foundation (Phase 0 of UI Redesign)
 
 ## 1) Goal
-- **Goal:** Establish a complete, token-based design system foundation that all 134 UI files will inherit.
-- **Why:** The current theme layer is structurally sound (1,348 lines across 6 files) but lacks motion tokens, interaction state definitions, a shadow elevation scale, proper typography line-heights, semantic status colors, and Material component themes. Without this foundation, every screen redesign will re-invent tokens ad hoc.
-- **Result:** 2 new theme files (`app_motion.dart`, `app_states.dart`), 4 updated theme files, `.impeccable.md` design context, and a matching Figma token library. All downstream phases (1-16) can reference centralized tokens with zero hardcoded values.
+- **Goal:** Establish a complete, token-based design system foundation that all 135 UI files will inherit. Separate DESIGN (layout/structure) from THEME (colors/fonts/motion) so either can be changed independently.
+- **Why:** The current theme layer is structurally sound (1,348 lines across 6 files) but lacks motion tokens, interaction state definitions, a shadow elevation scale, proper typography line-heights, semantic status colors, Material component themes, and crucially — a centralized layout token file. Without this foundation, every screen redesign will re-invent tokens ad hoc, and future redesigns require modifying 134+ files instead of one.
+- **Result:** 3 new theme files (`app_motion.dart`, `app_states.dart`, `app_layout.dart`), 4 updated theme files, `.impeccable.md` design context. All downstream phases (1-16) can reference centralized tokens with zero hardcoded values. Design and theme are independent layers — changing the "look" means editing theme files, changing the "structure" means editing `app_layout.dart`.
+- **Architecture:** See Master Plan "ARCHITECTURE PRINCIPLE: DESIGN SEPARATED FROM THEME" for the three-layer model (Theme → Layout → Components).
 
 ## 2) Scope
 
