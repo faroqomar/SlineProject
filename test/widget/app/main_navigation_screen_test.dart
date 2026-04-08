@@ -69,6 +69,9 @@ void main() {
         navigatorObservers: [observer],
       );
 
+      // Allow FAB spring entrance animation to complete
+      await tester.pumpAndSettle();
+
       await tester.tap(find.byKey(MainNavigationScreen.createTaskFabKey));
       await tester.pumpAndSettle();
 
@@ -87,12 +90,14 @@ void main() {
         ),
       );
 
+      // Allow initial animations to settle
+      await tester.pumpAndSettle();
+
       expect(find.byKey(const ValueKey('main_nav_stub_home')), findsOneWidget);
       expect(find.byKey(const ValueKey('main_nav_stub_tenders')), findsNothing);
 
       navigationProvider.setCurrentIndex(1);
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
 
       expect(find.byKey(const ValueKey('main_nav_stub_home')), findsNothing);
       expect(

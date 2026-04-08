@@ -1,42 +1,109 @@
 import 'package:flutter/material.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/widgets/app_button.dart';
 
-class MaintenanceScreen extends StatelessWidget {
-  const MaintenanceScreen({super.key, this.message});
+class MaintenanceScreen extends StatefulWidget {
+  const MaintenanceScreen({super.key, this.message, this.onRetry});
 
   final String? message;
+  final VoidCallback? onRetry;
+
+  @override
+  State<MaintenanceScreen> createState() => _MaintenanceScreenState();
+}
+
+class _MaintenanceScreenState extends State<MaintenanceScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _rotationController;
+  bool _isRetrying = false;
+
+  @override
+  void initState() {
+    super.initState();
+    AppLogger.d('Maintenance screen displayed', tag: 'Auth');
+    _rotationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 8),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _rotationController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleRetry() async {
+    if (_isRetrying) return;
+    setState(() => _isRetrying = true);
+    widget.onRetry?.call();
+    // Allow a brief loading indication before resetting
+    await Future<void>.delayed(AppMotion.emphasis);
+    if (!mounted) return;
+    setState(() => _isRetrying = false);
+  }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     return Scaffold(
       backgroundColor: colorScheme.phoneBackground,
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppDimens.p24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.build_circle_outlined, size: 64),
-                const SizedBox(height: AppDimens.p16),
-                Text(
-                  'Under Maintenance',
-                  style: AppTypography.h3.copyWith(color: colorScheme.text),
-                ),
-                const SizedBox(height: AppDimens.p12),
-                Text(
-                  message?.isNotEmpty ?? false
-                      ? message!
-                      : 'We are improving SLine right now. Please try again shortly.',
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: colorScheme.textSecondary,
+      body: Semantics(
+        label: 'App under maintenance',
+        child: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimens.p24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Animated rotating wrench icon
+                  RotationTransition(
+                    turns: _rotationController,
+                    child: Container(
+                      width: 96,
+                      height: 96,
+                      decoration: BoxDecoration(
+                        color: colorScheme.warning.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.build,
+                        size: 48,
+                        color: colorScheme.warning,
+                      ),
+                    ),
                   ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+                  const SizedBox(height: AppDimens.p24),
+                  Text(
+                    "We'll be back soon",
+                    style: AppTypography.h4.copyWith(color: colorScheme.text),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppDimens.p12),
+                  Text(
+                    widget.message?.isNotEmpty ?? false
+                        ? widget.message!
+                        : 'We are improving SLine right now. '
+                              'Please try again shortly.',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: colorScheme.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppDimens.p32),
+                  AppButton(
+                    text: 'Try Again',
+                    isLoading: _isRetrying,
+                    width: double.infinity,
+                    onPressed: _handleRetry,
+                  ),
+                ],
+              ),
             ),
           ),
         ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
@@ -21,6 +22,7 @@ class DashboardBookingCard extends StatelessWidget {
   final void Function(String bookingId) onDecline;
   final void Function(String bookingId) onCancel;
   final void Function(String bookingId, BookingStatus status) onUpdateStatus;
+  final VoidCallback? onMessagePressed;
 
   const DashboardBookingCard({
     super.key,
@@ -32,6 +34,7 @@ class DashboardBookingCard extends StatelessWidget {
     required this.onDecline,
     required this.onCancel,
     required this.onUpdateStatus,
+    this.onMessagePressed,
   });
 
   @override
@@ -67,156 +70,179 @@ class DashboardBookingCard extends StatelessWidget {
         booking.status == BookingStatus.pending &&
         booking.paymentStatus != PaymentStatus.held;
 
-    return AppCard(
-      padding: const EdgeInsets.all(AppDimens.p16),
-      margin: const EdgeInsets.only(bottom: AppDimens.p16),
-      onTap: () async {
-        final result = await onTapDetails(booking);
-        if ((result ?? false) && context.mounted && onRefresh != null) {
-          onRefresh!();
-        }
-      },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      taskTitle,
-                      style: AppTypography.h5.copyWith(color: colorScheme.text),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      bookingDue != null
-                          ? 'Due ${formatUtcToLocal(bookingDue)}'
-                          : 'No deadline',
-                      style: AppTypography.bodySmall.copyWith(
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.bold,
+    return Semantics(
+      container: true,
+      label: '$taskTitle booking, status ${statusLabel.toLowerCase()}',
+      child: AppCard(
+        padding: const EdgeInsets.all(AppDimens.p16),
+        margin: const EdgeInsets.only(bottom: AppDimens.p16),
+        onTap: () async {
+          AppLogger.d('DashboardBookingCard tapped', tag: 'Cards');
+          final result = await onTapDetails(booking);
+          if ((result ?? false) && context.mounted && onRefresh != null) {
+            onRefresh!();
+          }
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        taskTitle,
+                        style: AppTypography.h5.copyWith(
+                          color: colorScheme.text,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: AppDimens.p4),
+                      Text(
+                        bookingDue != null
+                            ? 'Due ${formatUtcToLocal(bookingDue)}'
+                            : 'No deadline',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                StatusBadge(
+                  text: statusLabel,
+                  color: statusColor,
+                  isSmall: true,
+                ),
+              ],
+            ),
+            if (displayNote != null) ...[
+              const SizedBox(height: AppDimens.p12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(AppDimens.p8),
+                decoration: BoxDecoration(
+                  color: colorScheme.background.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(AppDimens.r8),
+                ),
+                child: Text(
+                  '"$displayNote"',
+                  style: AppTypography.bodySmall.copyWith(
+                    fontStyle: FontStyle.italic,
+                    color: colorScheme.textSecondary,
+                  ),
                 ),
               ),
-              StatusBadge(text: statusLabel, color: statusColor, isSmall: true),
             ],
-          ),
-          if (displayNote != null) ...[
-            const SizedBox(height: AppDimens.p12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(AppDimens.p8),
-              decoration: BoxDecoration(
-                color: colorScheme.background.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(AppDimens.r8),
-              ),
-              child: Text(
-                '"$displayNote"',
+            if (booking.deliveryDays != null) ...[
+              const SizedBox(height: AppDimens.p12),
+              Text(
+                'Delivery: ${booking.deliveryDays} days',
                 style: AppTypography.bodySmall.copyWith(
-                  fontStyle: FontStyle.italic,
                   color: colorScheme.textSecondary,
                 ),
               ),
-            ),
-          ],
-          if (booking.deliveryDays != null) ...[
-            const SizedBox(height: AppDimens.p12),
-            Text(
-              'Delivery: ${booking.deliveryDays} days',
-              style: AppTypography.bodySmall.copyWith(
-                color: colorScheme.textSecondary,
+            ],
+            const SizedBox(height: AppDimens.p16),
+            if (booking.status == BookingStatus.pending ||
+                booking.status == BookingStatus.paidRequestPending)
+              Row(
+                children: [
+                  if (isProvider) ...[
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: canProviderAccept
+                            ? () => onAccept(booking.id)
+                            : null,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.teal,
+                        ),
+                        child: Text(
+                          canProviderAccept ? 'Accept' : 'Awaiting Payment',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppDimens.p12),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          if (canProviderAccept) {
+                            onDecline(booking.id);
+                            return;
+                          }
+                          if (awaitingClientPayment) {
+                            onCancel(booking.id);
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: colorScheme.danger,
+                          side: BorderSide(color: colorScheme.danger),
+                        ),
+                        child: const Text('Decline'),
+                      ),
+                    ),
+                  ] else ...[
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => onCancel(booking.id),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: colorScheme.danger,
+                          side: BorderSide(color: colorScheme.danger),
+                        ),
+                        child: const Text('Cancel Request'),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-            ),
-          ],
-          const SizedBox(height: AppDimens.p16),
-          if (booking.status == BookingStatus.pending ||
-              booking.status == BookingStatus.paidRequestPending)
-            Row(
-              children: [
-                if (isProvider) ...[
+            if (booking.status == BookingStatus.confirmed)
+              Row(
+                children: [
                   Expanded(
-                    child: FilledButton(
-                      onPressed: canProviderAccept
-                          ? () => onAccept(booking.id)
+                    child: OutlinedButton(
+                      onPressed: onMessagePressed != null
+                          ? () {
+                              AppLogger.d(
+                                'DashboardBookingCard message pressed',
+                                tag: 'Cards',
+                              );
+                              onMessagePressed!();
+                            }
                           : null,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.teal,
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                          color: onMessagePressed != null
+                              ? colorScheme.primary
+                              : colorScheme.textSecondary.withValues(
+                                  alpha: 0.3,
+                                ),
+                        ),
                       ),
-                      child: Text(
-                        canProviderAccept ? 'Accept' : 'Awaiting Payment',
-                      ),
+                      child: const Text('Message'),
                     ),
                   ),
                   const SizedBox(width: AppDimens.p12),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        if (canProviderAccept) {
-                          onDecline(booking.id);
-                          return;
-                        }
-                        if (awaitingClientPayment) {
-                          onCancel(booking.id);
-                        }
-                      },
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.lightRed,
-                        side: BorderSide(color: AppColors.lightRed),
+                  if (!isProvider)
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () =>
+                            onUpdateStatus(booking.id, BookingStatus.canceled),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: colorScheme.danger,
+                          side: BorderSide(color: colorScheme.danger),
+                        ),
+                        child: const Text('Cancel'),
                       ),
-                      child: const Text('Decline'),
                     ),
-                  ),
-                ] else ...[
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => onCancel(booking.id),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.lightRed,
-                        side: BorderSide(color: AppColors.lightRed),
-                      ),
-                      child: const Text('Cancel Request'),
-                    ),
-                  ),
                 ],
-              ],
-            ),
-          if (booking.status == BookingStatus.confirmed)
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      // Todo: Open Chat logic
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: colorScheme.primary),
-                    ),
-                    child: const Text('Message'),
-                  ),
-                ),
-                const SizedBox(width: AppDimens.p12),
-                if (!isProvider)
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () =>
-                          onUpdateStatus(booking.id, BookingStatus.canceled),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.lightRed,
-                        side: BorderSide(color: AppColors.lightRed),
-                      ),
-                      child: const Text('Cancel'),
-                    ),
-                  ),
-              ],
-            ),
-        ],
+              ),
+          ],
+        ),
       ),
     );
   }

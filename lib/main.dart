@@ -24,6 +24,7 @@ import 'package:sline_app/core/services/sentry_crash_reporting_service.dart';
 import 'package:sline_app/core/services/supabase_config.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/utils/flutter_error_filters.dart';
+import 'package:sline_app/core/utils/transitions/custom_route_transitions.dart';
 import 'package:sline_app/core/webview_platform_init_stub.dart'
     if (dart.library.html) 'package:sline_app/core/webview_platform_init_web.dart'
     as webview_platform;
@@ -520,23 +521,33 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener>
     }
   }
 
+  Route<dynamic>? _resolveRoute(RouteSettings settings) {
+    AppLogger.d('Resolving route: ${settings.name}', tag: 'Navigation');
+
+    final routes = <String, Widget>{
+      '/login': const LoginScreen(),
+      '/main': const MainNavigationScreen(),
+      '/signup': const SignupScreen(),
+      '/reset-password': const ResetPasswordUpdateScreen(),
+      '/home': const HomeScreen(),
+      '/dashboard': const DashboardScreen(),
+      '/categories': const CategoriesScreen(),
+      FavoritesRoutes.routeName: const FavoritesScreen(),
+    };
+
+    final screen = routes[settings.name];
+    if (screen != null) {
+      return SlinePageRoute.forwardPush(child: screen, settings: settings);
+    }
+
+    AppLogger.w('Unknown route: ${settings.name}', tag: 'Navigation');
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ThemeModeProvider>(
       builder: (context, themeModeProvider, child) {
-        final routes = <String, WidgetBuilder>{
-          '/login': (BuildContext _) => const LoginScreen(),
-          '/main': (BuildContext _) => const MainNavigationScreen(),
-          '/signup': (BuildContext _) => const SignupScreen(),
-          '/reset-password': (BuildContext _) =>
-              const ResetPasswordUpdateScreen(),
-          '/home': (BuildContext _) => const HomeScreen(),
-          '/dashboard': (BuildContext _) => const DashboardScreen(),
-          '/categories': (BuildContext _) => const CategoriesScreen(),
-          FavoritesRoutes.routeName: (BuildContext _) =>
-              const FavoritesScreen(),
-        };
-
         return MaterialApp(
           navigatorKey: _navigatorKey,
           title: 'SLine App',
@@ -548,7 +559,7 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener>
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
           home: _buildHome(context.watch<SystemConfigViewModel>()),
-          routes: routes,
+          onGenerateRoute: _resolveRoute,
         );
       },
     );

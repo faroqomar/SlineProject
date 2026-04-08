@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sline_app/core/app_enums.dart'; // Added for TaskStatus
-import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/utils/format_price.dart';
+import 'package:sline_app/core/widgets/scale_button.dart';
 import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 
@@ -26,28 +28,22 @@ class TenderTaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppDimens.p12),
-      decoration: BoxDecoration(
-        color: colorScheme.cardBackground,
-        borderRadius: BorderRadius.circular(20), // Matches rounded-[20px]
-        border: Border.all(color: colorScheme.cardBorder, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.isDark
-                ? AppColors.almostBlack.withValues(alpha: 0.2)
-                : AppColors.almostBlack.withValues(alpha: 0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
+    return Semantics(
+      button: true,
+      label: '${task.title} tender task card',
+      child: Container(
+        margin: const EdgeInsets.only(bottom: AppDimens.p12),
+        decoration: BoxDecoration(
+          color: colorScheme.cardBackground,
+          borderRadius: BorderRadius.circular(AppDimens.r20),
+          border: Border.all(color: colorScheme.cardBorder, width: 1),
+          boxShadow: AppDecorations.elevation(1, isDark: colorScheme.isDark),
+        ),
+        child: ScaleButton(
+          onPressed: () {
+            AppLogger.d('TenderTaskCard tapped: ${task.id}', tag: 'Cards');
+            onTap();
+          },
           child: IntrinsicHeight(
             child: Stack(
               children: [
@@ -58,10 +54,10 @@ class TenderTaskCard extends StatelessWidget {
                     Container(
                       width: 4,
                       decoration: BoxDecoration(
-                        color: AppColors.lightRed.withValues(alpha: 0.8),
+                        color: colorScheme.danger.withValues(alpha: 0.8),
                         borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(20),
-                          bottomLeft: Radius.circular(20),
+                          topLeft: Radius.circular(AppDimens.r20),
+                          bottomLeft: Radius.circular(AppDimens.r20),
                         ),
                       ),
                     ),
@@ -69,7 +65,12 @@ class TenderTaskCard extends StatelessWidget {
                     // Content Area
                     Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 16, 16, 16),
+                        padding: const EdgeInsets.fromLTRB(
+                          AppDimens.p20,
+                          AppDimens.p16,
+                          AppDimens.p16,
+                          AppDimens.p16,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -81,20 +82,22 @@ class TenderTaskCard extends StatelessWidget {
                                 // Tags (first 2)
                                 Expanded(
                                   child: Wrap(
-                                    spacing: 8,
-                                    runSpacing: 4,
+                                    spacing: AppDimens.p8,
+                                    runSpacing: AppDimens.p4,
                                     children: task.skills
                                         .take(2)
                                         .map(
                                           (tag) => Container(
                                             padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 2,
+                                              horizontal: AppDimens.p8,
+                                              vertical: AppDimens.p2,
                                             ),
                                             decoration: BoxDecoration(
                                               color: colorScheme.tagBackground,
                                               borderRadius:
-                                                  BorderRadius.circular(6),
+                                                  BorderRadius.circular(
+                                                    AppDimens.r8,
+                                                  ),
                                               border: Border.all(
                                                 color: colorScheme.tagBorder,
                                               ),
@@ -103,7 +106,6 @@ class TenderTaskCard extends StatelessWidget {
                                               tag.toUpperCase(),
                                               style: AppTypography.micro
                                                   .copyWith(
-                                                    fontSize: 10,
                                                     fontWeight: FontWeight.w700,
                                                     letterSpacing: 0.5,
                                                     color: colorScheme
@@ -119,13 +121,12 @@ class TenderTaskCard extends StatelessWidget {
                                 // Time
                                 Padding(
                                   padding: const EdgeInsets.only(
-                                    left: 8,
-                                    right: 24,
-                                  ), // Extra right padding for heart
+                                    left: AppDimens.p8,
+                                    right: AppDimens.p24,
+                                  ),
                                   child: Text(
                                     formatFriendlyTime(task.createdAt),
-                                    style: AppTypography.micro.copyWith(
-                                      fontSize: 11,
+                                    style: AppTypography.caption.copyWith(
                                       fontWeight: FontWeight.w500,
                                       color: colorScheme.textSecondary,
                                     ),
@@ -134,13 +135,12 @@ class TenderTaskCard extends StatelessWidget {
                               ],
                             ),
 
-                            const SizedBox(height: 12),
+                            const SizedBox(height: AppDimens.p12),
 
                             // Title
                             Text(
                               task.title,
-                              style: AppTypography.h6.copyWith(
-                                fontSize: 16,
+                              style: AppTypography.bodyLarge.copyWith(
                                 fontWeight: FontWeight.w700,
                                 height: 1.2,
                                 color: colorScheme.text,
@@ -149,13 +149,12 @@ class TenderTaskCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
 
-                            const SizedBox(height: 8),
+                            const SizedBox(height: AppDimens.p8),
 
                             // Description
                             Text(
                               task.description,
                               style: AppTypography.bodySmall.copyWith(
-                                fontSize: 13,
                                 color: colorScheme.textSecondary.withValues(
                                   alpha: 0.8,
                                 ),
@@ -165,11 +164,13 @@ class TenderTaskCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
 
-                            const SizedBox(height: 16),
+                            const SizedBox(height: AppDimens.p16),
 
                             // Footer
                             Container(
-                              padding: const EdgeInsets.only(top: 12),
+                              padding: const EdgeInsets.only(
+                                top: AppDimens.p12,
+                              ),
                               decoration: BoxDecoration(
                                 border: Border(
                                   top: BorderSide(color: colorScheme.divider),
@@ -192,14 +193,12 @@ class TenderTaskCard extends StatelessWidget {
                                         const SizedBox(width: 4),
                                         Text(
                                           _formatDeadline(task.deadline!),
-                                          style: AppTypography.captionBold
-                                              .copyWith(
-                                                fontSize: 11,
-                                                color:
-                                                    colorScheme.textSecondary,
-                                              ),
+                                          style: AppTypography.caption.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                            color: colorScheme.textSecondary,
+                                          ),
                                         ),
-                                        const SizedBox(width: 16),
+                                        const SizedBox(width: AppDimens.p16),
                                       ],
 
                                       // Bids Count
@@ -211,11 +210,10 @@ class TenderTaskCard extends StatelessWidget {
                                       const SizedBox(width: 4),
                                       Text(
                                         '${task.offers} bids',
-                                        style: AppTypography.captionBold
-                                            .copyWith(
-                                              fontSize: 11,
-                                              color: colorScheme.textSecondary,
-                                            ),
+                                        style: AppTypography.caption.copyWith(
+                                          fontWeight: FontWeight.w700,
+                                          color: colorScheme.textSecondary,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -225,17 +223,16 @@ class TenderTaskCard extends StatelessWidget {
                                     children: [
                                       Text(
                                         PriceFormatter.formatPrice(task.budget),
-                                        style: AppTypography.h5.copyWith(
-                                          fontSize: 15,
+                                        style: AppTypography.bodyLarge.copyWith(
                                           fontWeight: FontWeight.w900,
-                                          color: AppColors.lightRed,
+                                          color: colorScheme.danger,
                                         ),
                                       ),
                                       const SizedBox(width: 4),
                                       Icon(
                                         Icons.arrow_outward,
                                         size: 16,
-                                        color: AppColors.lightRed,
+                                        color: colorScheme.danger,
                                       ),
                                     ],
                                   ),
@@ -251,22 +248,20 @@ class TenderTaskCard extends StatelessWidget {
 
                 // Bookmark Button - Top Right
                 Positioned(
-                  top: 8,
-                  right: 8,
+                  top: AppDimens.p8,
+                  right: AppDimens.p8,
                   child: Consumer<SavedTasksViewModel>(
                     builder: (context, savedVM, child) {
                       final isSaved = savedVM.isSaved(task.id);
                       return GestureDetector(
                         onTap: () {
-                          // Prevent card tap propagation effectively?
-                          // No, GestureDetector inside InkWell might need to handle opaque hit test.
                           savedVM.toggle(task.id);
                         },
                         child: Container(
-                          padding: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(AppDimens.p8),
                           decoration: BoxDecoration(
                             color: isSaved
-                                ? AppColors.lightRed.withValues(alpha: 0.1)
+                                ? colorScheme.danger.withValues(alpha: 0.1)
                                 : Colors.transparent,
                             shape: BoxShape.circle,
                           ),
@@ -274,7 +269,7 @@ class TenderTaskCard extends StatelessWidget {
                             isSaved ? Icons.favorite : Icons.favorite_border,
                             size: 20,
                             color: isSaved
-                                ? AppColors.lightRed
+                                ? colorScheme.danger
                                 : colorScheme.textSecondary.withValues(
                                     alpha: 0.5,
                                   ),

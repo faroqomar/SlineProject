@@ -193,4 +193,86 @@ void main() {
       expect(find.byKey(const ValueKey('stub_home_screen')), findsNothing);
     });
   });
+
+  group('LoginScreen Phase 9 — animations & inline errors', () {
+    testWidgets(
+      'stagger animation completes and all form fields visible after 600ms',
+      (tester) async {
+        final fakeAuthVm = _FakeAuthFormViewModel();
+
+        await pumpApp(
+          tester,
+          LoginScreen(authViewModelFactory: () => fakeAuthVm),
+        );
+
+        // Advance past the stagger animation (500ms emphasis + margin)
+        await tester.pump(const Duration(milliseconds: 600));
+
+        // All form elements should be fully visible
+        expect(find.text('Welcome Back'), findsOneWidget);
+        expect(find.byKey(LoginScreen.emailFieldKey), findsOneWidget);
+        expect(find.byKey(LoginScreen.passwordFieldKey), findsOneWidget);
+        expect(find.byKey(LoginScreen.signInButtonKey), findsOneWidget);
+        expect(find.text("Don't have an account? "), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'inline error appears below fields on empty submit (not in SnackBar)',
+      (tester) async {
+        final fakeAuthVm = _FakeAuthFormViewModel(shouldSucceed: false);
+
+        await pumpApp(
+          tester,
+          LoginScreen(authViewModelFactory: () => fakeAuthVm),
+        );
+
+        // Let stagger finish
+        await tester.pump(const Duration(milliseconds: 600));
+
+        // Tap sign-in with empty fields
+        await tester.tap(find.byKey(LoginScreen.signInButtonKey));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        // Inline errors should appear (not inside a SnackBar)
+        expect(find.text('Please enter your email'), findsOneWidget);
+        expect(find.text('Please enter your password'), findsOneWidget);
+
+        // Verify they are NOT inside a SnackBar
+        expect(
+          find.ancestor(
+            of: find.text('Please enter your email'),
+            matching: find.byType(SnackBar),
+          ),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets('validation check icon appears after entering valid email', (
+      tester,
+    ) async {
+      final fakeAuthVm = _FakeAuthFormViewModel();
+
+      await pumpApp(
+        tester,
+        LoginScreen(authViewModelFactory: () => fakeAuthVm),
+      );
+
+      // Let stagger finish
+      await tester.pump(const Duration(milliseconds: 600));
+
+      // Type a valid email
+      await tester.enterText(
+        find.byKey(LoginScreen.emailFieldKey),
+        'test@example.com',
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // Verify the check_circle icon is present (validation icon)
+      expect(find.byIcon(Icons.check_circle), findsOneWidget);
+    });
+  });
 }
