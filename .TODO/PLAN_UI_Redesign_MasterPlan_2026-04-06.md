@@ -46,25 +46,91 @@ A **premium, fluid, responsive** marketplace app that feels like it was designed
 4. **Run `teach-impeccable` first** to populate `.impeccable.md` design context.
 5. **Verify after each section**: `flutter analyze` clean + visual check on device.
 6. **Screenshot-first workflow (MANDATORY for Phases 4+):** Before implementing any screen redesign, the user provides screenshots of the current UI. The agent reads the plan for that phase, requests specific screenshots, and implements with full visual context. This produces dramatically better results than text-only implementation.
+7. **Codebase discovery scan (MANDATORY before every phase):** Before implementing ANY phase, the agent MUST search the codebase for ALL files, widgets, components, screens, models, services, and viewmodels related to that phase's target area. The plan may have missed files, or new code may have been added since the plan was written. This scan ensures 100% coverage — nothing is left behind.
+8. **MVVM boundary enforcement (MANDATORY for all design work):** Every UI change MUST respect the MVVM architecture: View → ViewModel → Service → Supabase. Design work touches the View layer ONLY. No business logic in Views, no Supabase calls in Views or ViewModels, no navigation logic in ViewModels. This keeps the redesign safe — changing how something looks never breaks how it works.
 
-### Screenshot Workflow (Per Phase)
+### Codebase Discovery Scan (Per Phase — BEFORE Implementation)
+
+Before starting ANY phase, the agent MUST perform these scans:
+
+```
+Step 1: Read the plan for Phase N. Extract every file, widget, screen,
+        model, and service mentioned.
+Step 2: Search the codebase for RELATED code the plan may have missed:
+        - grep for the feature name (e.g., "dashboard", "booking", "chat")
+          across lib/ to find ALL files touching that area
+        - grep for widget class names that appear on the target screens
+        - grep for imports of the target files to find every caller/parent
+        - check for new files added since the plan was written
+Step 3: Compare the scan results against the plan's file list.
+Step 4: If any files are found that the plan doesn't cover:
+        - Log them as DISCOVERED FILES in the session log
+        - Assess whether they need changes for consistency
+        - Include them in the implementation scope or document why they're excluded
+Step 5: Report the full scope to the user BEFORE writing any code:
+        "Plan covers 8 files. Scan found 3 additional related files: [list].
+         Should I include them?"
+```
+
+**Why this matters:** Plans are written at a point in time. Code changes between planning
+and execution. New widgets get added, files get moved, features get expanded. Without a
+fresh scan, the agent implements the plan's scope but misses files that need the same
+treatment — leaving inconsistencies in the UI.
+
+### Screenshot Workflow (Per Phase — AFTER Discovery Scan)
 
 ```
 Step 1: Agent reads the plan for Phase N.
-Step 2: Agent lists what screenshots are needed (e.g., "HomeScreen default state",
-        "HomeScreen empty state", "HomeScreen dark mode").
-Step 3: User provides screenshots from device/emulator.
-Step 4: Agent implements with visual context — knows exact current spacing,
+Step 2: Agent performs codebase discovery scan (see above).
+Step 3: Agent lists what screenshots are needed (e.g., "HomeScreen default state",
+        "HomeScreen empty state", "HomeScreen dark mode", plus any discovered screens).
+Step 4: User provides screenshots from device/emulator.
+Step 5: Agent implements with visual context — knows exact current spacing,
         colors, visual weight, and hierarchy.
-Step 5: Agent runs flutter analyze + tests.
-Step 6: User tests on device and provides feedback screenshots.
-Step 7: Agent adjusts based on real visual feedback.
+Step 6: Agent runs flutter analyze + tests.
+Step 7: User tests on device and provides feedback screenshots.
+Step 8: Agent adjusts based on real visual feedback.
 ```
 
 **Why this matters:** Text descriptions of UI are imprecise. "120px header" doesn't tell you
 how cramped the card looks on a small phone. A screenshot does. Agents that implemented Phase 2
 without screenshots made layout choices that looked reasonable in code but may not match the
 actual visual intent. Screenshots close that gap.
+
+### MVVM Enforcement for Design Work
+
+All UI redesign work MUST follow the strict MVVM boundary:
+
+```
+┌─────────────────────────────────────────────────────┐
+│  View Layer (WHAT WE CHANGE in UI redesign)         │
+│  - Widgets, Screens, Animations, Layout, Styling    │
+│  - Consumes ViewModel state via Consumer/context     │
+│  - NEVER imports Supabase, NEVER contains logic      │
+│  - NEVER decides what data to fetch or when          │
+├─────────────────────────────────────────────────────┤
+│  ViewModel Layer (DO NOT CHANGE unless plan says so) │
+│  - State management, error handling, loading states  │
+│  - Calls Services, NEVER calls Supabase directly     │
+│  - NEVER imports Flutter widgets or Material          │
+├─────────────────────────────────────────────────────┤
+│  Service/Repository Layer (DO NOT CHANGE)            │
+│  - Supabase queries, error mapping, data transforms  │
+├─────────────────────────────────────────────────────┤
+│  Supabase Backend (DO NOT CHANGE)                    │
+└─────────────────────────────────────────────────────┘
+```
+
+**Rule:** When redesigning a screen, if the View needs data it doesn't currently have
+(e.g., the plan wants to show "online status" but no ViewModel exposes it), do NOT
+add Supabase calls to the View. Instead:
+1. Document the missing data as a gap in the session log.
+2. Add a TODO comment in the View: `// TODO: Wire to ViewModel when onlineStatus is available`.
+3. Use placeholder/fallback UI for the missing data.
+4. The ViewModel/Service change gets planned as a separate task.
+
+This keeps the redesign safe and reversible — pure View layer changes can always be
+reverted without affecting business logic or data flow.
 
 ---
 
