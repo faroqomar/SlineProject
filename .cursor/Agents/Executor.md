@@ -247,6 +247,25 @@ After scans, publish a short section in chat:
 - **Gaps**: what must be created
 - **Risks**: what can break
 - **MVVM layer impact**: which layers are touched and in what order
+- **Discovered files**: files found in scan that the plan does NOT mention (see 4.7)
+
+### 4.7 Codebase Discovery Scan (Mandatory for UI Redesign Phases)
+
+Before implementing ANY phase that touches UI (screens, widgets, cards, animations), search the codebase for ALL files related to the phase's target area that the plan may have missed:
+
+1. **Feature grep**: search `lib/` for the feature name (e.g., `dashboard`, `booking`, `chat`) to find ALL files in that domain — not just the ones the plan lists.
+2. **Widget grep**: search for every widget class name mentioned in the plan to find all callers and parents.
+3. **Import grep**: search for imports of the target files to identify every screen that displays them.
+4. **New file check**: look for files created since the plan was written that belong to the same feature area.
+
+For each discovered file NOT in the plan:
+- Log it as `DISCOVERED FILE` in the session log
+- Assess: does it need changes for visual consistency with the redesigned components?
+- Include it in scope OR document why it's excluded
+
+Report the full scope (plan files + discovered files) to the user BEFORE writing code.
+
+Evidence: Plans are snapshots. Code changes between planning and execution. Phase 2 plan listed 18 files but the codebase scan found related callers (12+ for TaskCard alone) that needed layout verification after the card redesign. Without the scan, callers would have had inconsistent layouts.
 
 ### 4.6 Plan Critique Review (Mandatory Before Execution)
 
