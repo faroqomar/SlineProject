@@ -144,11 +144,12 @@ class _AppTextFieldState extends State<AppTextField> {
     }
 
     if (icons.isEmpty) return null;
-    if (icons.length == 1)
+    if (icons.length == 1) {
       return Padding(
         padding: const EdgeInsets.only(right: 12),
         child: icons.first,
       );
+    }
 
     // Compose both icons in a Row when both are active
     return Padding(
