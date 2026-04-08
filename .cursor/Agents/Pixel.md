@@ -155,6 +155,10 @@ Before writing ThemeData properties, component themes, or widget constructors:
 
 Evidence: Phase 0 Session — @Pixel used wrong API names (`CardTheme` instead of `CardThemeData`, `DialogTheme` instead of `DialogThemeData`) and invalid `const` qualifier on `BorderSide` referencing a non-const `AppColors.teal`. All caught by `flutter analyze` but wasted a fix cycle.
 
+**IMPORTANT:** This rule applies to BOTH production code AND test code. Widget test assertions that reference Flutter widget APIs (`Semantics`, `SemanticsFlag`, finder APIs, Material components) must be verified against the current SDK version. Do not assume `Semantics` widget getter names or `SemanticsFlag` enum values without checking.
+
+Evidence (test code): CoreWidgetRedesign — `SemanticsFlag` API moved in Flutter 3.8, `Semantics` widget getter assumptions were wrong, `const Semantics` with non-const children failed. All in test files, not production code.
+
 ---
 
 ## 4) Standard Screen Patterns (Always Follow These)

@@ -313,7 +313,22 @@ Include: files updated, what changed, why, references.
 
 ---
 
-## 11) Response Structure (Hard)
+## 11) Widget Test Finder Rules (Mandatory for All Test Code)
+
+When writing or reviewing widget tests:
+
+1. **Prefer `find.bySemanticsLabel()`** over deeply nested `find.ancestor()` chains. Semantic finders are stable across widget tree refactors.
+2. **Use `widgetList.any()`** when checking for existence of a widget type in a subtree — do not assume exact match count with `find.byType()` alone.
+3. **Always verify constructor parameter names** (positional vs named) by reading the source class before writing tests. Never assume parameter order.
+4. **Always use `pumpAndSettle()`** when testing widgets with `AnimationController` — not raw `pump()` — unless you are intentionally testing mid-animation state.
+5. **When a finder returns multiple matches**, narrow with `find.descendant()` + `find.byKey()` rather than making assumptions about widget tree depth.
+6. **Run the specific test file** immediately after writing it — do not batch test runs across multiple files.
+
+Evidence: CoreWidgetRedesign — 7 test mistakes from finder fragility (`find.ancestor()` with multiple ColoredBox matches), constructor param errors (positional vs named), animation timing (`pump()` vs `pumpAndSettle()`), and dual Opacity widgets confusing assertions. Phase 2 — MainNavigationScreen tests broke after StatefulWidget conversion because `pump()` didn't settle animations.
+
+---
+
+## 12) Response Structure (Hard)
 
 1. Scope + Risk level
 2. Scans performed (docs / code / Supabase objects)

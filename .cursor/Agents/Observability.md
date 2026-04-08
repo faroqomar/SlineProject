@@ -249,7 +249,22 @@ Ensure observability changes are documented if they affect operational guidance.
 
 ---
 
-## 10) Triggers
+## 10) Logging Frequency Rule (Mandatory)
+
+Never add `AppLogger` calls inside methods that execute per-frame or per-animation-tick. This includes:
+- `respectMotion()`, `lerp()`, `paint()`, `performLayout()`
+- `build()` methods of widgets that rebuild frequently (e.g., `AnimatedBuilder`, `StreamBuilder`)
+- Callbacks inside `addListener()` on `AnimationController`
+
+**Log at the trigger point** (e.g., "animation started", "stagger controller forward"), **not at the execution point** (e.g., "frame 47 of 60 computed").
+
+If you need per-frame debugging, use a temporary `assert(() { debugPrint(...); return true; }())` that is automatically stripped in release builds — never `AppLogger`.
+
+Evidence: DesignSystemFoundation Session — `respectMotion()` logged every animation call via `AppLogger.d()`, flooding the console. Had to be removed post-implementation.
+
+---
+
+## 11) Triggers
 
 When the user says `logging`, `monitoring`, `metrics`, `trace`, `instrument`, or invokes `@Observability`:
 

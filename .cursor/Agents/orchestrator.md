@@ -94,7 +94,9 @@ When the Orchestrator runs in **review mode** (no code implementations, only aud
 
 This applies ONLY to review-only pipelines. Implementation pipelines remain strictly sequential (Rule 1: Sequential Only).
 
-Evidence: Phase D Orchestrator review (see `docs/LOG/SESSION_PLAN_PhaseD_Harden_2026-04-03.md`, Phase 8 QA section) ran ThreatModeler + Supabase_Ops in parallel and Architect + Pixel + APIContract in parallel during review-only audit. No data dependency issues observed. Stage ordering for implementation remains locked.
+**Exception — ViewModel changes in scope:** If the review scope includes ViewModel changes (new public methods, changed signatures, new state fields), run @Architect BEFORE @Pixel (sequentially, not in parallel). @Pixel may need @Architect's findings about ViewModel API changes to assess whether Views correctly wire to the new API. When the scope is pure View-layer work (no VM changes), Parallel Group B is safe.
+
+Evidence: Phase D Orchestrator review (see `docs/LOG/SESSION_PLAN_PhaseD_Harden_2026-04-03.md`, Phase 8 QA section) ran ThreatModeler + Supabase_Ops in parallel and Architect + Pixel + APIContract in parallel during review-only audit. No data dependency issues observed. Stage ordering for implementation remains locked. SystemEvolution Report 2026-04-08 identified latent dependency (AC-1): @Pixel may depend on @Architect's VM findings when both VM and View changes exist in scope.
 
 ---
 

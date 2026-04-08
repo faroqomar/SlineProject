@@ -95,6 +95,20 @@ lib/
 - **Queries**: Use Supabase JOINs (`.select('*, profiles!fkey(full_name)')`) to avoid N+1. Batch-fetch as fallback.
 - **Async in StatefulWidgets**: Always check `if (!mounted) return;` after `await`.
 - **Language**: All code, comments, variable names in English.
+- **Motion tokens**: Use `AppMotion.*` for all animation durations and curves. Never hardcode `Duration(milliseconds:...)` in feature code.
+- **Elevation**: Use `AppDecorations.elevation(level)` for card/surface shadows. Never hardcode `BoxShadow(...)` in feature code.
+- **Typography**: Use `AppTypography.*` for all text styles. Never hardcode `fontSize:` in feature code.
+
+### Code comments (MANDATORY)
+
+Every piece of code MUST include comments that explain **WHAT** it does and **WHY** it exists. This is non-negotiable.
+
+- **Every new file**: top-level `///` doc comment explaining what the file provides and why it was created.
+- **Every public class/method/widget**: `///` doc comment explaining what it does and why.
+- **Non-obvious logic**: inline `//` comment explaining why that approach was chosen (complex conditions, workarounds, performance choices, design decisions).
+- **Animation parameters**: comment explaining the design intent (e.g., `// 500ms stagger — first interactive element ready within 400ms`).
+- **Token choices**: comment explaining why a specific token was chosen when the choice isn't obvious (e.g., `// curveSpring for delight, not curveDecel — button should feel alive`).
+- **Do NOT comment the obvious** (`// increment counter` above `counter++`). Comments add information the code alone does not convey.
 
 ### Error handling
 

@@ -462,6 +462,42 @@ When creating new design token files (e.g., `app_motion.dart`) that supersede or
 
 Evidence: Phase 0 Session — `curveSpring` Y2 changed from 1.275 to 1.075 (reduced overshoot) and `pressScale` changed from 0.95 to 0.96 (subtler press) without documented rationale. Caught by @CodeGuard during Orchestrator review, requiring post-hoc documentation. Would have been cleaner to document during creation.
 
+### 3.9 Widget Conversion Test Gate (Mandatory After StatefulWidget Conversion)
+
+After converting ANY widget from `StatelessWidget` to `StatefulWidget` (or adding `AnimationController`s to an existing `StatefulWidget`):
+
+1. Run that widget's **existing test file** IMMEDIATELY — before proceeding to the next sub-phase.
+2. If tests fail due to animation timing (common: `pump()` needs `pumpAndSettle()`), fix the tests **in the same phase**.
+3. Log the test fix in the session log.
+
+Do NOT defer test verification to the QA phase. Animation timing breaks are invisible to `flutter analyze` and only surface in widget tests.
+
+Evidence: Phase 2 Session — MainNavigationScreen conversion from StatelessWidget to StatefulWidget broke T51/T52 tests (needed `pumpAndSettle()` for FAB animation). Caught only in Phase 9 (6 phases later). CoreWidgetRedesign — ScaleTransition finder issues after animation controller changes.
+
+### 3.10 Session Log Closure Enforcement
+
+If the session reaches the final phase or the user indicates work is complete, you MUST write the `SESSION CLOSED` entry, `Quick Summary`, and `Agent Improvement Notes` table BEFORE presenting the final status to the user. Never leave these as template placeholders.
+
+If no agent mistakes occurred, write a single row: `| None | No agent mistakes during execution | N/A |`.
+
+Evidence: CoreWidgetRedesign session — 9 phases completed but session log never formally closed. Quick Summary and Agent Improvement Notes left as empty placeholders, breaking @SystemEvolution's ability to analyse that session.
+
+### 3.11 Mandatory Code Comments (WHAT and WHY)
+
+Every piece of code written or modified during execution MUST include comments that explain:
+
+1. **WHAT** the code does — a brief description of the purpose of the class, method, widget, or non-obvious block.
+2. **WHY** it exists — the motivation, design decision, or requirement that led to this code being written.
+
+Rules:
+- Every new file MUST have a top-level doc comment (`///`) explaining what the file provides and why it was created.
+- Every new public class, method, or widget MUST have a `///` doc comment explaining what it does and why.
+- Non-obvious logic blocks (complex conditions, workarounds, performance choices) MUST have inline `//` comments explaining why the approach was chosen.
+- Animation parameters (durations, curves, intervals) MUST have comments explaining the design intent (e.g., `// 500ms stagger — first interactive element ready within 400ms`).
+- Do NOT comment the obvious (e.g., `// increment counter` above `counter++`). Comments should add information the code alone does not convey.
+
+This rule applies to ALL agents that produce code: @Architect, @Pixel, @Sentinel (tests), and @Executor.
+
 ### Step 4 — Integrate
 
 - Ensure pieces fit across MVVM layers
