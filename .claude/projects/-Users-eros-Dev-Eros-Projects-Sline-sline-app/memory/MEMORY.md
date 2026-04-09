@@ -1,0 +1,1 @@
+- [UI Redesign Progress](project_ui_redesign_progress.md) — Phases 0-3+5 done, Phase 4 planned, 6-16 pending

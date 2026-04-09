@@ -89,6 +89,36 @@ Any T-number appearing in more than one file is a collision that must be renumbe
 
 **Evidence**: Phase 1 — `glassBoxDecoration()`, `bottomNavBarDecoration()`, `glassCardGradient` survived the glass removal for an entire review cycle. Detected only by @SystemEvolution post-session analysis, not by any agent during execution.
 
+### Sliver Widget Safety (Phase 4 Home & Discovery, 2026-04-09)
+
+**Pattern**: Never wrap sliver widgets (`SliverList`, `SliverGrid`, `SliverPadding`, `SliverToBoxAdapter`, `DiscoveryTaskSliver`) with non-sliver widgets (`Semantics`, `Container`, `Padding`) inside a `CustomScrollView`. The viewport expects `RenderSliver` children. Add Semantics INSIDE sliver children instead, or use `SliverToBoxAdapter` to bridge.
+
+**Evidence**: Phase 4 — `Semantics(label: 'Task feed', child: DiscoveryTaskSliver(...))` inside `CustomScrollView` caused `RenderViewport` type mismatch crash. Fixed by removing the wrapper.
+
+### Widget Lifecycle Context Access (Phase 4, 2026-04-09)
+
+**Pattern**: Never call `MediaQuery.of(context)`, `Theme.of(context)`, `context.colorScheme`, or `AppMotion.respectMotion(context, ...)` inside `initState()`. Inherited widgets are not available before the widget is fully mounted. Use `didChangeDependencies()` with a `bool _didInit` guard for one-time setup.
+
+**Evidence**: Phase 4 — `AppMotion.respectMotion(context, ...)` in `_StaggeredTaskItemState.initState()` triggered "dependOnInheritedWidgetOfExactType was called before initState() completed" assertion.
+
+### Infinite Animation Test Pattern (Phase 4, 2026-04-09)
+
+**Pattern**: When testing widgets with infinite/repeating animations (skeleton shimmer with `controller..repeat()`, pulse animations), use `pump(Duration)` NOT `pumpAndSettle()`. `pumpAndSettle` times out after 10 seconds on non-terminating animations. Use `pump(Duration(milliseconds: 500))` to advance enough frames for the widget to render.
+
+**Evidence**: Phase 4 — HomeScreen tests (T53-T55) failed with "pumpAndSettle timed out" because `SkeletonLoader` uses `AnimationController..repeat()`.
+
+### DraggableScrollableSheet Test Pattern (Phase 4, 2026-04-09)
+
+**Pattern**: When testing widgets inside `DraggableScrollableSheet`, do not use `scrollUntilVisible` with `find.byType(Scrollable).last` — the sheet introduces nested `Scrollable` widgets. Use `tester.drag(find.byType(DraggableScrollableSheet), Offset(0, -N))` instead.
+
+**Evidence**: Phase 4 — FiltersModal test failed with "Bad state: No element" when `scrollUntilVisible` couldn't resolve which `Scrollable` to use after DraggableScrollableSheet conversion.
+
+### Test Text Expectation Atomic Updates (Phase 4, 2026-04-09)
+
+**Pattern**: When changing user-facing text in a View (even punctuation), update corresponding test expectations in the same phase. Grep `test/` for the old string immediately after the view change.
+
+**Evidence**: Phase 4 — Empty state text changed from "No favorites yet." to "No favorites yet" (trailing period removed) but test expected old text. Caught in QA, not during the change phase.
+
 ### Raw String Interpolation Guard (Phase E, 2026-04-05)
 
 **Pattern**: Never use raw string literals (`r'...'`) in `AppLogger` calls or any string containing `$variable` interpolation. Raw strings make `$` literal. Use normal single-quoted strings.

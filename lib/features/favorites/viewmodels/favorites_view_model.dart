@@ -25,6 +25,8 @@ class FavoritesViewModel extends ChangeNotifier {
   List<FavoriteWithProfile> get itemsWithProfile => _itemsWithProfile;
   bool get isLoading => _loading;
   String? get error => _error;
+  String get userFriendlyError =>
+      _error ?? 'Something went wrong. Please try again.';
   bool isPending(String freelancerId) => _pendingIds.contains(freelancerId);
 
   /// Ensures favorites are loaded at least once (e.g. for public profile toggle).

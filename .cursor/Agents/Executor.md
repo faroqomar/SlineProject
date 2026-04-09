@@ -249,6 +249,23 @@ After scans, publish a short section in chat:
 - **MVVM layer impact**: which layers are touched and in what order
 - **Discovered files**: files found in scan that the plan does NOT mention (see 4.7)
 
+### 4.6 Plan Critique Review (Mandatory Before Execution)
+
+Before starting execution of any plan, check if a matching critique file exists:
+
+`.TODO/PLAN_CRITIQUE_<YYYY-MM-DD>_<PlanTitle>.md`
+
+If it exists:
+
+1. Read it fully before writing any code.
+2. Log all CRITICAL GAPS found by @PlanCritic in the session log under the `[SESSION STARTED]` entry.
+3. Apply all fixes marked as "must-fix" during the relevant execution phase.
+4. If a critique fix contradicts the original plan, follow the critique (it contains more recent evidence and analysis).
+
+If it does NOT exist: proceed with the plan as-is, but note in the session log that no critique was available.
+
+Evidence: Phase 0 Session — @PlanCritic found that `AppColorScheme` already had `success`, `warning`, `info` as optional parameters with `Colors.*` defaults. The original plan would have added them again as required parameters, causing a compile error from duplicate named params. The critique's GAP 1 fix (convert optionals instead of adding duplicates) prevented this. Without reading the critique, @Executor would have broken the build.
+
 ### 4.7 Codebase Discovery Scan (Mandatory for UI Redesign Phases)
 
 Before implementing ANY phase that touches UI (screens, widgets, cards, animations), search the codebase for ALL files related to the phase's target area that the plan may have missed:
@@ -266,23 +283,6 @@ For each discovered file NOT in the plan:
 Report the full scope (plan files + discovered files) to the user BEFORE writing code.
 
 Evidence: Plans are snapshots. Code changes between planning and execution. Phase 2 plan listed 18 files but the codebase scan found related callers (12+ for TaskCard alone) that needed layout verification after the card redesign. Without the scan, callers would have had inconsistent layouts.
-
-### 4.6 Plan Critique Review (Mandatory Before Execution)
-
-Before starting execution of any plan, check if a matching critique file exists:
-
-`.TODO/PLAN_CRITIQUE_<YYYY-MM-DD>_<PlanTitle>.md`
-
-If it exists:
-
-1. Read it fully before writing any code.
-2. Log all CRITICAL GAPS found by @PlanCritic in the session log under the `[SESSION STARTED]` entry.
-3. Apply all fixes marked as "must-fix" during the relevant execution phase.
-4. If a critique fix contradicts the original plan, follow the critique (it contains more recent evidence and analysis).
-
-If it does NOT exist: proceed with the plan as-is, but note in the session log that no critique was available.
-
-Evidence: Phase 0 Session — @PlanCritic found that `AppColorScheme` already had `success`, `warning`, `info` as optional parameters with `Colors.*` defaults. The original plan would have added them again as required parameters, causing a compile error from duplicate named params. The critique's GAP 1 fix (convert optionals instead of adding duplicates) prevented this. Without reading the critique, @Executor would have broken the build.
 
 ---
 
@@ -481,7 +481,7 @@ When creating new design token files (e.g., `app_motion.dart`) that supersede or
 
 Evidence: Phase 0 Session — `curveSpring` Y2 changed from 1.275 to 1.075 (reduced overshoot) and `pressScale` changed from 0.95 to 0.96 (subtler press) without documented rationale. Caught by @CodeGuard during Orchestrator review, requiring post-hoc documentation. Would have been cleaner to document during creation.
 
-### 3.9 Widget Conversion Test Gate (Mandatory After StatefulWidget Conversion)
+### Step 3.9 — Widget Conversion Test Gate (Mandatory After StatefulWidget Conversion)
 
 After converting ANY widget from `StatelessWidget` to `StatefulWidget` (or adding `AnimationController`s to an existing `StatefulWidget`):
 
@@ -493,7 +493,7 @@ Do NOT defer test verification to the QA phase. Animation timing breaks are invi
 
 Evidence: Phase 2 Session — MainNavigationScreen conversion from StatelessWidget to StatefulWidget broke T51/T52 tests (needed `pumpAndSettle()` for FAB animation). Caught only in Phase 9 (6 phases later). CoreWidgetRedesign — ScaleTransition finder issues after animation controller changes.
 
-### 3.10 Session Log Closure Enforcement
+### Step 3.10 — Session Log Closure Enforcement
 
 If the session reaches the final phase or the user indicates work is complete, you MUST write the `SESSION CLOSED` entry, `Quick Summary`, and `Agent Improvement Notes` table BEFORE presenting the final status to the user. Never leave these as template placeholders.
 
@@ -501,7 +501,7 @@ If no agent mistakes occurred, write a single row: `| None | No agent mistakes d
 
 Evidence: CoreWidgetRedesign session — 9 phases completed but session log never formally closed. Quick Summary and Agent Improvement Notes left as empty placeholders, breaking @SystemEvolution's ability to analyse that session.
 
-### 3.11 Mandatory Code Comments (WHAT and WHY)
+### Step 3.11 — Mandatory Code Comments (WHAT and WHY)
 
 Every piece of code written or modified during execution MUST include comments that explain:
 
@@ -516,6 +516,19 @@ Rules:
 - Do NOT comment the obvious (e.g., `// increment counter` above `counter++`). Comments should add information the code alone does not convey.
 
 This rule applies to ALL agents that produce code: @Architect, @Pixel, @Sentinel (tests), and @Executor.
+
+### Step 3.12 — Test Text Expectation Atomic Update Rule
+
+> **Evidence:** Phase4_HomeDiscovery — empty state text changed from "No favorites yet." to "No favorites yet" (trailing period removed) but the test expectation was not updated until QA caught it.
+
+When changing user-facing text in a View (even punctuation changes like removing a trailing period), update the corresponding test expectations IN THE SAME PHASE — not deferred to QA. Immediately after changing view text:
+
+1. Grep for the old text string across `test/` directory.
+2. If any test asserts the old text (`expect(find.text('Old text'), findsOneWidget)`), update it to match the new text.
+3. Run the affected test file to confirm it passes.
+4. Log the test update in the session timeline.
+
+Do NOT rely on QA to catch text mismatches. Test assertion failures from stale strings waste debugging time.
 
 ### Step 4 — Integrate
 

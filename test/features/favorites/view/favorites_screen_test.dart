@@ -35,7 +35,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('favorites_empty')), findsOneWidget);
-      expect(find.text('No favorites yet.'), findsOneWidget);
+      expect(find.text('No favorites yet'), findsOneWidget);
     });
 
     testWidgets('shows list key when items present', (tester) async {

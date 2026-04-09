@@ -1,7 +1,7 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.23.0 (Phase 1 Core Widget Redesign: 14 widgets redesigned, NO GLASS POLICY, 8-state interaction model, haptics, Semantics, 87 component tests, zone mismatch fix, solid dark mode colors)
-**Last Updated**: 2026-04-07
+**Version**: 2.24.0 (Phase 4 Home & Discovery Redesign: 10 screens redesigned, DraggableScrollableSheet filters, staggered card entrance, skeleton loading everywhere, categories grid, enhanced empty/error states, design token compliance)
+**Last Updated**: 2026-04-09
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
 
@@ -1712,6 +1712,65 @@ Layer 3 — COMPONENTS (widgets that CONSUME Layer 1 + Layer 2)
 - To redesign layout: change Layer 2 files (AppLayout, AppDimens).
 - `AppDimens` = raw scale (p16 = 16px). `AppLayout` = semantic meaning (cardPadding = 16px for card context).
 - No overlapping icon sizes: AppDimens has 16/24/32, AppLayout has 12/20/48.
+
+### 3.3 Phase 4 Home & Discovery Patterns (2026-04-09)
+
+**Scope:** HomeScreen, FiltersModal, DiscoveryTaskSliver, SearchScreen, CategoriesScreen, FavoritesScreen, FavoriteCard, SavedTasksScreen + 3 new skeleton variants. Pure View layer — no ViewModel/Service changes.
+
+**Key Patterns Introduced:**
+
+1. **Staggered Card Entrance (DiscoveryTaskSliver)**
+   - Each task card slides up + fades in with 50ms stagger delay, capped at first 10 cards
+   - Uses `AppMotion.staggerMedium` (50ms), `AppMotion.standard` (300ms), `AppMotion.curveDecel`
+   - Only animates on initial load — NOT on load-more or pull-to-refresh
+   - `_StaggeredTaskItem` private widget wraps each card with AnimationController
+   - Respects reduced-motion via `AppMotion.respectMotion()` in `didChangeDependencies()` (NOT initState)
+   - Shared by HomeScreen, BookingsDiscoveryScreen, TendersScreen
+
+2. **DraggableScrollableSheet (FiltersModal)**
+   - Snap points: 0.5, 0.7 (initial), 0.9
+   - Drag handle: 32x4px, `colorScheme.outline`, centered
+   - Apply button shows active filter count ("Apply N Filters")
+   - All styling uses semantic tokens — no hardcoded colors
+
+3. **Enhanced Empty/Error States (All Screens)**
+   - Pattern: 80x80 icon circle (color at 8% alpha) + title (h5) + subtitle (bodySmall, secondary) + optional CTA button
+   - Error states include "Try Again" button with retry callback
+   - Empty states include CTA button (e.g., "Browse Tasks", "Explore Freelancers")
+   - All wrapped in `Semantics(label: ...)` for accessibility
+
+4. **Skeleton Loading (3 New Variants)**
+   - `SkeletonSearchResultCard` — avatar + text lines + tag pill (for SearchScreen)
+   - `SkeletonCategoryTile` — icon circle + name + count (for CategoriesScreen grid)
+   - `SkeletonFavoriteCard` — avatar + name/date + action button (for FavoritesScreen)
+   - All use existing `SkeletonLoader`/`SkeletonText`/`SkeletonAvatar` base widgets
+   - Match exact card layouts for seamless loading-to-content transition
+
+5. **CategoriesScreen Grid Layout**
+   - 2-column `SliverGrid` with category cards (replaces old `ListTile` layout)
+   - Each card: icon in colored circle + name + ScaleButton for press feedback
+   - Deterministic icon/color assignment per category name (hashed)
+
+6. **DiscoveryTaskSliver Error State**
+   - New `errorMessage` and `onRetry` parameters (optional, additive)
+   - Error state renders between loading check and empty check
+   - Danger-tinted icon circle + message + "Try Again" button
+
+**Files Changed:**
+- `lib/core/widgets/skeleton_card.dart` (+147 lines, 3 new skeleton widgets)
+- `lib/features/tasks/view/widgets/discovery_task_sliver.dart` (181→420+ lines, stagger + error state)
+- `lib/features/home/view/home_screen.dart` (tokenized, haptics, semantics)
+- `lib/features/home/view/widgets/filters_modal.dart` (DraggableScrollableSheet, tokenized)
+- `lib/features/search/view/search_screen.dart` (tokenized, skeletons, rich states)
+- `lib/features/categories/view/categories_screen.dart` (complete grid redesign)
+- `lib/features/favorites/view/favorites_screen.dart` (skeletons, rich states)
+- `lib/features/favorites/view/widgets/favorite_card.dart` (SignedAvatar, design tokens)
+- `lib/features/saved/view/saved_tasks_screen.dart` (skeletons, rich states)
+- `lib/features/profile/view/profile_screen.dart` (Favorites nav entry added)
+
+**Plan:** `.TODO/PLAN_Phase4_HomeDiscovery_2026-04-08.md`
+**Session Log:** `docs/LOG/SESSION_PLAN_Phase4_HomeDiscovery_2026-04-08.md`
+**Tests:** 1350 passed, 30 skipped, 1 failed (pre-existing). Zero new regressions.
 
 ## 4. Runtime Patterns
 

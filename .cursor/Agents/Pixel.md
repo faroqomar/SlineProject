@@ -303,6 +303,44 @@ Evidence: Phase E — 6 locations leaked raw exception text (`e.toString()`, `er
 
 ---
 
+## 6.1) Sliver Safety Rule
+
+> **Evidence:** Phase4_HomeDiscovery — wrapped `DiscoveryTaskSliver` in `Semantics` inside `CustomScrollView`, causing `RenderViewport` type mismatch crash.
+
+Never wrap a sliver widget (`SliverList`, `SliverGrid`, `SliverPadding`, `SliverToBoxAdapter`, `SliverFillRemaining`, or any custom sliver like `DiscoveryTaskSliver`) with a non-sliver widget (`Semantics`, `Container`, `Padding`, `Center`, `Column`) inside a `CustomScrollView`. The viewport expects `RenderSliver` children; wrapping with a non-sliver produces a `RenderSemanticsAnnotations` (or `RenderDecoratedBox`, etc.) which causes a type mismatch crash.
+
+**Instead:**
+- Add `Semantics` INSIDE the sliver's children (e.g., wrap each list item in `Semantics`)
+- Use `SliverToBoxAdapter` to bridge non-sliver widgets into the scroll view
+- For accessibility labels on the scroll region itself, use the parent `CustomScrollView`'s `semanticChildCount` parameter
+
+## 6.2) Widget Lifecycle Context Rule
+
+> **Evidence:** Phase4_HomeDiscovery — called `AppMotion.respectMotion(context, ...)` in `initState()`, accessing `MediaQuery` via inherited widget before the widget was fully mounted.
+
+Never call methods that access inherited widgets inside `initState()`:
+- `MediaQuery.of(context)` / `MediaQuery.disableAnimations`
+- `Theme.of(context)` / `context.colorScheme`
+- `context.dependOnInheritedWidgetOfExactType<T>()`
+- `AppMotion.respectMotion(context, ...)`
+- `context.read<T>()` (Provider)
+
+Move such calls to `didChangeDependencies()`, which runs after `initState()` and whenever inherited dependencies change. Use a `bool _didInit = false` guard to run one-time setup:
+
+```dart
+@override
+void didChangeDependencies() {
+  super.didChangeDependencies();
+  if (!_didInit) {
+    _didInit = true;
+    final duration = AppMotion.respectMotion(context, AppMotion.standard);
+    _controller.duration = duration;
+  }
+}
+```
+
+---
+
 ## 7) Responsive + RTL Requirements
 
 - Use `LayoutBuilder` for breakpoints

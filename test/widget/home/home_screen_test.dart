@@ -13,6 +13,8 @@ import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart'
 
 import '../../test_support/pump_app.dart';
 
+const Duration _kShimmerPumpDuration = Duration(milliseconds: 500);
+
 class _MockHomeViewModel extends Mock
     with ChangeNotifier
     implements HomeViewModel {}
@@ -109,6 +111,9 @@ void main() {
       final bundle = _buildHomeBundle();
 
       await _pumpHomeScreen(tester, bundle);
+      // Use pump(Duration) — skeleton shimmer animations repeat forever
+      // and pumpAndSettle will time out.
+      await tester.pump(_kShimmerPumpDuration);
 
       expect(find.byKey(HomeScreen.searchFieldKey), findsOneWidget);
       expect(find.text('All'), findsOneWidget);
@@ -122,9 +127,12 @@ void main() {
         final bundle = _buildHomeBundle();
 
         await _pumpHomeScreen(tester, bundle);
+        // Use pump(Duration) instead of pumpAndSettle — skeleton shimmer
+        // animations repeat forever and never settle.
+        await tester.pump(_kShimmerPumpDuration);
 
         await tester.enterText(find.byKey(HomeScreen.searchFieldKey), 'design');
-        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
 
         verify(() => bundle.filterVm.searchTasks('design')).called(1);
       },
@@ -136,10 +144,13 @@ void main() {
       final bundle = _buildHomeBundle();
 
       await _pumpHomeScreen(tester, bundle);
+      // Use pump(Duration) instead of pumpAndSettle — skeleton shimmer
+      // animations repeat forever and never settle.
+      await tester.pump(_kShimmerPumpDuration);
 
       await tester.drag(find.byType(CustomScrollView), const Offset(0, 400));
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump(_kShimmerPumpDuration);
 
       verify(
         () => bundle.homeVm.refresh(

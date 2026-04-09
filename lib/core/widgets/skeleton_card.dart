@@ -441,6 +441,153 @@ class SkeletonConversationTile extends StatelessWidget {
   }
 }
 
+/// Skeleton placeholder for search result cards.
+///
+/// Matches the layout of search result profile/task cards: avatar + two text
+/// lines + trailing tag pill. Used in SearchScreen loading state.
+class SkeletonSearchResultCard extends StatelessWidget {
+  const SkeletonSearchResultCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.p16),
+      margin: const EdgeInsets.only(bottom: AppDimens.p12),
+      decoration: BoxDecoration(
+        color: colorScheme.cardBackground,
+        borderRadius: BorderRadius.circular(AppDimens.r16),
+        border: Border.all(color: colorScheme.cardBorder),
+      ),
+      child: const Row(
+        children: [
+          // Avatar circle
+          SkeletonAvatar(size: 36),
+          SizedBox(width: AppDimens.p12),
+          // Name + subtitle lines
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SkeletonLoader(
+                  width: 120,
+                  height: 14,
+                  borderRadius: AppDimens.r4,
+                ),
+                SizedBox(height: AppDimens.p8),
+                SkeletonLoader(
+                  width: 180,
+                  height: 12,
+                  borderRadius: AppDimens.r4,
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: AppDimens.p12),
+          // Trailing tag pill
+          SkeletonLoader(width: 50, height: 22, borderRadius: AppDimens.r8),
+        ],
+      ),
+    );
+  }
+}
+
+/// Skeleton placeholder for category grid tiles.
+///
+/// Matches the redesigned category card layout: icon circle + title + subtitle.
+/// Designed for 2-column grid usage in CategoriesScreen.
+class SkeletonCategoryTile extends StatelessWidget {
+  const SkeletonCategoryTile({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.p12),
+      decoration: BoxDecoration(
+        color: colorScheme.cardBackground,
+        borderRadius: BorderRadius.circular(AppDimens.r16),
+        border: Border.all(color: colorScheme.cardBorder),
+      ),
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Icon circle placeholder
+          SkeletonAvatar(size: 40),
+          SizedBox(height: AppDimens.p8),
+          // Category name
+          SkeletonLoader(
+            width: 80,
+            height: 14,
+            borderRadius: AppDimens.r4,
+          ),
+          SizedBox(height: AppDimens.p4),
+          // Item count
+          SkeletonLoader(
+            width: 40,
+            height: 10,
+            borderRadius: AppDimens.r4,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Skeleton placeholder for favorite cards.
+///
+/// Matches the redesigned FavoriteCard layout: avatar + name/date lines +
+/// action button placeholder. Used in FavoritesScreen loading state.
+class SkeletonFavoriteCard extends StatelessWidget {
+  const SkeletonFavoriteCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.p16),
+      margin: const EdgeInsets.only(bottom: AppDimens.p12),
+      decoration: BoxDecoration(
+        color: colorScheme.cardBackground,
+        borderRadius: BorderRadius.circular(AppDimens.r16),
+        border: Border.all(color: colorScheme.cardBorder),
+      ),
+      child: const Row(
+        children: [
+          // Avatar
+          SkeletonAvatar(size: 44),
+          SizedBox(width: AppDimens.p12),
+          // Name + date
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SkeletonLoader(
+                  width: 130,
+                  height: 14,
+                  borderRadius: AppDimens.r4,
+                ),
+                SizedBox(height: AppDimens.p8),
+                SkeletonLoader(
+                  width: 80,
+                  height: 12,
+                  borderRadius: AppDimens.r4,
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: AppDimens.p8),
+          // Action button placeholder
+          SkeletonLoader(width: 80, height: 32, borderRadius: AppDimens.r8),
+        ],
+      ),
+    );
+  }
+}
+
 /// Skeleton for booking/task details screen.
 class SkeletonDetailsScreen extends StatelessWidget {
   const SkeletonDetailsScreen({super.key});

@@ -1,6 +1,6 @@
 # SLine App - Folder Structure Guide
 
-**Last Updated:** 2026-04-07 (Phase 1 Core Widget Redesign: glass_container/card/button renamed to app_card_container/app_card/app_styled_button. WorkItem moved to core/models/. Added signed_url_generator.dart, default_signed_url_generator.dart, skeleton_card_extended.dart. Removed glass_container.dart, glass_card.dart, glass_button.dart. 87 component tests in test/core/widgets/. Previous: Phase 0 Design System Foundation)
+**Last Updated:** 2026-04-09 (Phase 4 Home & Discovery Redesign: 3 new skeleton variants in skeleton_card.dart (SkeletonSearchResultCard, SkeletonCategoryTile, SkeletonFavoriteCard). CategoriesScreen → SliverGrid. DiscoveryTaskSliver → StatefulWidget with stagger. FiltersModal → DraggableScrollableSheet. FavoriteCard → SignedAvatar + design tokens. Favorites nav added to ProfileScreen. Previous: Phase 1 Core Widget Redesign)
 
 This document describes the current repository layout. It replaces older references to `presentation/` and `controllers/`; the live Flutter codebase uses `view/` and `viewmodels/` under `lib/features/`.
 

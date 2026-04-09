@@ -320,11 +320,13 @@ When writing or reviewing widget tests:
 1. **Prefer `find.bySemanticsLabel()`** over deeply nested `find.ancestor()` chains. Semantic finders are stable across widget tree refactors.
 2. **Use `widgetList.any()`** when checking for existence of a widget type in a subtree — do not assume exact match count with `find.byType()` alone.
 3. **Always verify constructor parameter names** (positional vs named) by reading the source class before writing tests. Never assume parameter order.
-4. **Always use `pumpAndSettle()`** when testing widgets with `AnimationController` — not raw `pump()` — unless you are intentionally testing mid-animation state.
+4. **Use `pumpAndSettle()` for FINITE animations** (`AnimationController` that calls `.forward()` or `.animateTo()`). **Use `pump(Duration)` for widgets with INFINITE animations** (shimmer with `..repeat()`, pulse with `..repeat(reverse: true)`, rotation loops). `pumpAndSettle` will time out after 10 seconds on non-terminating animations. Common infinite-animation widgets: `SkeletonLoader`, `SkeletonTaskCard`, `ShimmerEffect`, any widget with `controller..repeat()`.
 5. **When a finder returns multiple matches**, narrow with `find.descendant()` + `find.byKey()` rather than making assumptions about widget tree depth.
 6. **Run the specific test file** immediately after writing it — do not batch test runs across multiple files.
+7. **When testing widgets inside a `DraggableScrollableSheet`**, do not use `scrollUntilVisible` with `find.byType(Scrollable).first` or `.last` — the sheet introduces nested `Scrollable` widgets that make the finder ambiguous. Instead, use `tester.drag(find.byType(DraggableScrollableSheet), Offset(0, -N))` to scroll the sheet content directly.
+8. **When testing widgets that contain both finite AND infinite animations** (e.g., a screen with stagger entrance + skeleton shimmer), use `pump(Duration)` with a duration long enough to cover the finite animation (e.g., `pump(Duration(milliseconds: 600))` for a 500ms stagger). This avoids `pumpAndSettle` timeout while still advancing the finite animation.
 
-Evidence: CoreWidgetRedesign — 7 test mistakes from finder fragility (`find.ancestor()` with multiple ColoredBox matches), constructor param errors (positional vs named), animation timing (`pump()` vs `pumpAndSettle()`), and dual Opacity widgets confusing assertions. Phase 2 — MainNavigationScreen tests broke after StatefulWidget conversion because `pump()` didn't settle animations.
+Evidence: CoreWidgetRedesign — 7 test mistakes from finder fragility. Phase 2 — MainNavigationScreen tests broke after StatefulWidget conversion. Phase4_HomeDiscovery — pumpAndSettle timed out due to infinite shimmer animations in skeleton cards; scrollUntilVisible failed with nested Scrollables from DraggableScrollableSheet.
 
 ---
 

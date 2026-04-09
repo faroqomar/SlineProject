@@ -5,6 +5,9 @@ import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/features/home/view/widgets/filters_modal.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
 
+const Offset _sheetDragLarge = Offset(0, -500);
+const Offset _sheetDragSmall = Offset(0, -200);
+
 Future<void> _openFiltersModal(
   WidgetTester tester,
   TaskFilterViewModel viewModel,
@@ -51,16 +54,41 @@ void main() {
 
         await _openFiltersModal(tester, viewModel);
 
-        await tester.tap(find.text(TaskFilterViewModel.deliveryUpTo3Days));
+        // Expand the sheet to full height so all filters are visible.
+        // The drag handle area is at the top of the sheet — drag up to expand.
+        final sheetFinder = find.byType(DraggableScrollableSheet);
+        await tester.drag(sheetFinder, _sheetDragLarge);
         await tester.pumpAndSettle();
-        await tester.scrollUntilVisible(
-          find.text(TaskFilterViewModel.sellerLevel2),
-          200,
-          scrollable: find.byType(Scrollable).first,
-        );
-        await tester.tap(find.text(TaskFilterViewModel.sellerLevel2));
+
+        // Now scroll the inner ListView to find delivery time chips
+        final listFinder = find.byType(ListView);
+        await tester.drag(listFinder, _sheetDragSmall);
         await tester.pumpAndSettle();
-        await tester.tap(find.byKey(FiltersModal.applyButtonKey));
+
+        final deliveryFinder = find
+            .text(TaskFilterViewModel.deliveryUpTo3Days)
+            .hitTestable();
+        expect(deliveryFinder, findsOneWidget);
+        await tester.tap(deliveryFinder);
+        await tester.pumpAndSettle();
+
+        // Scroll more to reach seller levels
+        await tester.drag(listFinder, _sheetDragSmall);
+        await tester.pumpAndSettle();
+
+        final sellerFinder = find
+            .text(TaskFilterViewModel.sellerLevel2)
+            .hitTestable();
+        expect(sellerFinder, findsOneWidget);
+        await tester.tap(sellerFinder);
+        await tester.pumpAndSettle();
+
+        // Tap apply — it's fixed at the bottom so always visible
+        final applyFinder = find
+            .byKey(FiltersModal.applyButtonKey)
+            .hitTestable();
+        expect(applyFinder, findsOneWidget);
+        await tester.tap(applyFinder);
         await tester.pumpAndSettle();
 
         expect(viewModel.deliveryTimes, <String>[
@@ -87,6 +115,15 @@ void main() {
       await _openFiltersModal(tester, viewModel);
 
       await tester.tap(find.byKey(FiltersModal.resetButtonKey));
+      await tester.pumpAndSettle();
+
+      // Reset now only mutates local state. Tap Apply to commit to ViewModel.
+      // Scroll to make Apply button visible in DraggableScrollableSheet.
+      final sheetFinder = find.byType(DraggableScrollableSheet);
+      await tester.drag(sheetFinder, const Offset(0, -300));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(FiltersModal.applyButtonKey));
       await tester.pumpAndSettle();
 
       expect(viewModel.minBudget, isNull);
