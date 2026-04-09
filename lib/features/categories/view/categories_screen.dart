@@ -371,7 +371,10 @@ class _CategoryCard extends StatelessWidget {
               color: colorScheme.cardBackground,
               borderRadius: BorderRadius.circular(AppDimens.r16),
               border: Border.all(color: colorScheme.cardBorder),
-              boxShadow: AppDecorations.elevation(1, isDark: colorScheme.isDark),
+              boxShadow: AppDecorations.elevation(
+                1,
+                isDark: colorScheme.isDark,
+              ),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

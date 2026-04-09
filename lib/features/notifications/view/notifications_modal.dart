@@ -99,15 +99,13 @@ class _NotificationsModalState extends State<NotificationsModal>
   Animation<Offset> _buildSlide(int index, double begin, double end) {
     return _slideCache.putIfAbsent(
       index,
-      () => Tween<Offset>(
-        begin: const Offset(0, 0.15),
-        end: Offset.zero,
-      ).animate(
-        CurvedAnimation(
-          parent: _staggerController,
-          curve: Interval(begin, end, curve: AppMotion.curveDecel),
-        ),
-      ),
+      () =>
+          Tween<Offset>(begin: const Offset(0, 0.15), end: Offset.zero).animate(
+            CurvedAnimation(
+              parent: _staggerController,
+              curve: Interval(begin, end, curve: AppMotion.curveDecel),
+            ),
+          ),
     );
   }
 
@@ -253,9 +251,7 @@ class _NotificationsModalState extends State<NotificationsModal>
                           .markAllAsRead();
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('All marked as read'),
-                          ),
+                          const SnackBar(content: Text('All marked as read')),
                         );
                       }
                     } on Exception catch (e) {
@@ -267,9 +263,7 @@ class _NotificationsModalState extends State<NotificationsModal>
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(
-                              'Failed to mark all as read: $e',
-                            ),
+                            content: Text('Failed to mark all as read: $e'),
                           ),
                         );
                       }

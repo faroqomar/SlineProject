@@ -121,8 +121,9 @@ void main() {
       expect(semantics, findsOneWidget);
     });
 
-    testWidgets('delivered status icon uses metaColor (white with opacity)',
-        (tester) async {
+    testWidgets('delivered status icon uses metaColor (white with opacity)', (
+      tester,
+    ) async {
       // For isMine bubbles, delivered uses metaColor = white.withValues(alpha: 0.7).
       // This verifies the icon color matches that token rather than colorScheme.info.
       await tester.pumpWidget(

@@ -345,7 +345,9 @@ class _RoleButton extends StatelessWidget {
             label,
             style: AppTypography.captionBold.copyWith(
               // onPrimary (Material ColorScheme) ensures legible contrast against the primary-colored active background
-              color: isActive ? Theme.of(context).colorScheme.onPrimary : colorScheme.textSecondary,
+              color: isActive
+                  ? Theme.of(context).colorScheme.onPrimary
+                  : colorScheme.textSecondary,
             ),
           ),
         ),

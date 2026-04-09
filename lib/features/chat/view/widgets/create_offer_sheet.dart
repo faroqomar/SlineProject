@@ -79,7 +79,10 @@ class _CreateOfferSheetState extends State<CreateOfferSheet>
           ),
         ]).animate(
           // Symmetric ease for natural shake oscillation
-          CurvedAnimation(parent: _shakeController, curve: AppMotion.curveSymmetric),
+          CurvedAnimation(
+            parent: _shakeController,
+            curve: AppMotion.curveSymmetric,
+          ),
         );
   }
 

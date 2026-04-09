@@ -70,10 +70,7 @@ class _ActivityFeedPreviewState extends State<ActivityFeedPreview>
       final end = (staggerFraction + 0.3).clamp(0.0, 1.0);
 
       _slideAnimations.add(
-        Tween<Offset>(
-          begin: const Offset(0, 0.15),
-          end: Offset.zero,
-        ).animate(
+        Tween<Offset>(begin: const Offset(0, 0.15), end: Offset.zero).animate(
           CurvedAnimation(
             parent: _staggerController,
             curve: Interval(begin, end, curve: AppMotion.curveDecel),
@@ -353,8 +350,7 @@ class _ActivityRow extends StatelessWidget {
         description = 'You have a new booking request.';
       } else if (type == 'status_change') {
         // Guard against missing metadata key — fall back to 'updated' string.
-        final newStatus =
-            log.metadata['new_status'] as String? ?? 'updated';
+        final newStatus = log.metadata['new_status'] as String? ?? 'updated';
         title = 'Booking $newStatus';
         description = 'Booking status changed to $newStatus.';
         color = colorScheme.warning; // status_change → warning
@@ -366,8 +362,7 @@ class _ActivityRow extends StatelessWidget {
       color = colorScheme.info; // task → info
       if (type == 'status_change') {
         // Guard against missing metadata key — fall back to 'updated' string.
-        final newStatus =
-            log.metadata['new_status'] as String? ?? 'updated';
+        final newStatus = log.metadata['new_status'] as String? ?? 'updated';
         description = 'Task status updated to $newStatus.';
         title = 'Task Update';
         color = colorScheme.warning; // status_change → warning

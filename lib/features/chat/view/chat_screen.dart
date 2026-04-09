@@ -462,7 +462,10 @@ class _ChatScreenState extends State<ChatScreen> {
           // IgnorePointer prevents taps when the FAB is not visible.
           Positioned(
             // Position above input area: compact button + section spacing + extra
-            bottom: AppLayout.buttonHeightCompact + AppLayout.spacingSection + AppLayout.spacingSection,
+            bottom:
+                AppLayout.buttonHeightCompact +
+                AppLayout.spacingSection +
+                AppLayout.spacingSection,
             right: AppLayout.spacingSection,
             child: IgnorePointer(
               // Block taps when the FAB is not showing

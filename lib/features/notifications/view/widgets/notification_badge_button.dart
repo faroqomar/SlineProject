@@ -63,18 +63,19 @@ class _NotificationBadgeButtonState extends State<NotificationBadgeButton>
       duration: AppMotion.fast,
       vsync: this,
     );
-    _pulseScale = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 1.15),
-        weight: 50,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 1.15, end: 1.0),
-        weight: 50,
-      ),
-    ]).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
+    _pulseScale =
+        TweenSequence<double>([
+          TweenSequenceItem(
+            tween: Tween<double>(begin: 1.0, end: 1.15),
+            weight: 50,
+          ),
+          TweenSequenceItem(
+            tween: Tween<double>(begin: 1.15, end: 1.0),
+            weight: 50,
+          ),
+        ]).animate(
+          CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+        );
   }
 
   @override
@@ -167,25 +168,25 @@ class _NotificationBadgeButtonState extends State<NotificationBadgeButton>
                         child: ScaleTransition(
                           scale: _badgeScale,
                           child: Container(
-                          padding: const EdgeInsets.all(AppDimens.p4),
-                          decoration: BoxDecoration(
-                            // Semantic danger replaces hardcoded AppColors.lightRed
-                            color: colorScheme.danger,
-                            shape: BoxShape.circle,
-                          ),
-                          constraints: const BoxConstraints(
-                            minWidth: AppDimens.p16,
-                            minHeight: AppDimens.p16,
-                          ),
-                          child: Text(
-                            count > 9 ? '9+' : count.toString(),
-                            style: AppTypography.micro.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                            padding: const EdgeInsets.all(AppDimens.p4),
+                            decoration: BoxDecoration(
+                              // Semantic danger replaces hardcoded AppColors.lightRed
+                              color: colorScheme.danger,
+                              shape: BoxShape.circle,
                             ),
-                            textAlign: TextAlign.center,
+                            constraints: const BoxConstraints(
+                              minWidth: AppDimens.p16,
+                              minHeight: AppDimens.p16,
+                            ),
+                            child: Text(
+                              count > 9 ? '9+' : count.toString(),
+                              style: AppTypography.micro.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
                           ),
-                        ),
                         ),
                       ),
                     ),
