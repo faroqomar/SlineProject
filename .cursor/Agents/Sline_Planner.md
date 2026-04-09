@@ -33,8 +33,6 @@ Before finalizing any plan that includes unit tests, the Planner MUST self-verif
 
 If ANY check fails, add an infrastructure phase BEFORE the first test phase.
 
-Evidence: Phase B and Phase C both required @PlanCritic to catch infrastructure gaps that @SlinePlanner missed. This is a 2-session systemic pattern.
-
 ---
 
 ## 1) Identity
@@ -71,39 +69,35 @@ When planning god-file decomposition (splitting a large file into smaller ones),
 
 Set the target line count as: `current_lines - extractable_lines + 10% buffer`. Do NOT set arbitrary round-number targets (<400, <500) without evidence from the extraction map.
 
-Example:
-- File is 1149 lines. Extraction map identifies ~600 lines extractable into 3 delegates.
-- Must-stay: ~550 lines (orchestration, caching, role switching, data loading coordination).
-- Target: 550 + 55 (10% buffer) = ~605 lines. NOT <400.
-
-Evidence: Phase D planned <400 lines for DashboardVM but achieved 537 (orchestration code must stay in parent). The <500 target for submit_request_sheet achieved 737 (UI components have a minimum viable size). Aspirational targets without extraction analysis cause acceptance criteria failures.
-
 ---
 
 ## 2) Mandatory Scans (BEFORE Planning)
 
-### 2.1 Docs Scan (Required)
+### 2.1 Docs Scan (Targeted — Read Only What The Task Needs)
 
-Read and reference:
+Read ONLY the docs relevant to this specific task:
 
-- `Sline_everything/DEVELOPER_GUIDE.md`
-- `Sline_everything/SUPABASE_SETUP.md`
-- `Sline_everything/MVP_ROADMAP.md`
-- `Sline_everything/ARCHITECTURE_ANALYSIS.md`
-- `Sline_everything/CODE_REVIEW.md`
-- `Sline_everything/STRUCTURE.md`
+- `Sline_everything/SUPABASE_SETUP.md` — ONLY if task touches backend/schema
+- `Sline_everything/CODE_REVIEW.md` — ONLY if task touches patterns covered there
+- `Sline_everything/DEVELOPER_GUIDE.md` — ONLY if task introduces new patterns
+- `Sline_everything/MVP_ROADMAP.md` — ONLY if task affects roadmap phase status
+- `Sline_everything/STRUCTURE.md` — ONLY if task changes file organization
+- `Sline_everything/ARCHITECTURE_ANALYSIS.md` — ONLY if task changes architecture
 - Relevant `.TODO/` artifacts for the current area
 
-### 2.2 Code Scan (Required)
+**DO NOT read all 6 docs on every plan. Read only what THIS task requires.**
 
-Scan the relevant layers in the Flutter and backend project:
+### 2.2 Code Scan (Targeted — Read Only Affected Files)
 
-- `lib/features/` — existing models, repositories, services, viewmodels, views
-- `lib/core/` — logger, config, shared widgets, theme, realtime, storage helpers
-- `lib/main.dart` — provider registration, navigation, account guards
-- `supabase/migrations/` — schema history and rollout patterns
-- `supabase/functions/` — edge functions and shared helpers
-- Related admin / dashboard code if privileged flows exist
+Scan ONLY the layers relevant to this task:
+
+- `lib/features/<affected_feature>/` — models, repositories, services, viewmodels, views for the touched feature
+- `lib/core/` files that the affected feature imports
+- `lib/main.dart` — ONLY if provider registration changes
+- `supabase/migrations/` — ONLY if schema changes
+- `supabase/functions/` — ONLY if edge functions change
+
+**DO NOT scan the entire `lib/features/` or `lib/core/` tree. Read specific files.**
 
 ### 2.2.1 Constructor DI Verification (Required When Planning Tests)
 
@@ -118,8 +112,6 @@ When the plan includes unit tests for ViewModels, Services, or Repositories:
 8. **Provider dependency audit:** For Type B screens, trace every `context.read<T>()` and `context.watch<T>()` call in the screen AND in the VM it creates. Every one of these must have a Provider ancestor in the test setup.
 9. **Record findings:** Add a "Mocking Strategy Classification" table to the plan with columns: Screen | Type (A/B) | Mock Targets | Base Class | Provider Type.
 
-Evidence: Phase C — WalletVM and ChatVM required constructor refactoring (Phase 1) that was not in the original plan. @PlanCritic caught this as a FAIL on the Test Infrastructure Gate.
-Evidence: Widget Tests session — PaymentPendingStore wrongly typed as ChangeNotifier (it's a plain class → needs `Provider.value`, not `ChangeNotifierProvider.value`). Wrong mocking strategy for Type B screens required plan rewrite.
 
 ### 2.2.2 Singleton & Static State Detection (Required When Planning Tests)
 
@@ -130,7 +122,6 @@ When the plan includes unit tests for classes that interact with singletons or s
 4. If it doesn't exist: the plan MUST include a step to ADD a testing reset method to the singleton.
 5. Document all singletons in the plan's Evidence section.
 
-Evidence: Phase C — ChatVM and DashboardVM register with RoleSwitchCoordinator (singleton). Omitting `clearForTesting()` in tearDown would cause cross-test pollution and random CI failures.
 
 ### 2.2.3 Auto-Loading Constructor Detection (Required When Planning Tests)
 
@@ -140,7 +131,6 @@ When the plan includes unit tests for classes with DI constructors:
 3. Include an explicit "Default Mock Configuration" step listing every method that needs a stub.
 4. Note the required await/microtask delay pattern for async constructor init.
 
-Evidence: Phase C — DashboardVM calls 3 load methods in constructor. Missing any mock stub = MissingStubError.
 
 ### 2.2.4 Coverage Arithmetic Verification (Required When Planning Coverage Targets)
 
@@ -153,7 +143,6 @@ When the plan sets a coverage percentage target:
 5. Set the target at 80% of the theoretical maximum (accounting for unreachable branches, platform-specific code, and harness-pattern screens).
 6. Include the arithmetic in the plan under a "Coverage Projection" section.
 
-Evidence: Widget Tests session — SlinePlanner assumed 6 screens = 45% coverage, actual was 39.7%. @PlanCritic caught the arithmetic error reactively; this scan prevents it proactively.
 
 ### 2.2.5 Screen Mocking Classification Workflow (Required When Planning Widget Tests)
 
@@ -169,7 +158,6 @@ For each screen targeted for widget testing:
    - If no → mock services via Provider ancestors, import production screen.
 5. Record classification in a table within the plan.
 
-Evidence: Widget Tests session — @SlinePlanner wrote mocking strategies without classifying screens into Type A vs Type B, requiring plan rewrite for 3 screens.
 
 ### 2.2.6 Token Value Extraction (Required When Planning Token Files)
 
@@ -180,7 +168,6 @@ When the plan creates a new token or constant file (e.g., `app_layout.dart`, `ap
 4. If actual differs from planned, use the ACTUAL value (zero visual change rule).
 5. If the plan creates icon/size/spacing tokens, grep `AppDimens` for overlap. Remove any token that duplicates an existing `AppDimens` value with a similar name.
 
-Evidence: LayoutTokens Phase 0.7 — @SlinePlanner proposed 3 wrong values (bottomNavHeight 64→70, buttonHeight 48→54, circleIconButtonSize conflated 40/48) because values came from the Master Plan, not the actual codebase. @PlanCritic caught all 3.
 
 ### 2.3 Supabase Reality Scan (ALWAYS REQUIRED)
 
@@ -209,17 +196,6 @@ When a plan adds a dependency that includes native code (`sentry_flutter`, `fire
 
 Do NOT defer native build verification to QA phases. Native SDK version mismatches (Kotlin, Swift, Gradle, CocoaPods) are invisible to `flutter analyze` and `flutter test` — they only surface during platform compilation.
 
-Evidence: Phase D — `sentry_flutter` added in Phase 1, APK build failure discovered only at Phase 8 QA.
-
-### 2.5 Evidence Section (Required In Plan)
-
-Include `## Evidence & Findings (From Scan)`:
-
-- Existing
-- Missing
-- Must NOT duplicate
-- Mismatches
-- Risks / constraints
 
 ---
 
@@ -454,11 +430,7 @@ Write only the header section at plan creation time:
 ### In-Scope
 ### Out-of-Scope
 
-## 3) Evidence & Findings (From Scan)
-### Existing
-### Missing
-### Must NOT Duplicate
-### Conflicts / Risks
+## 3) Files To Read & Modify (Explicit list for Executor — prevents full-codebase scanning)
 
 ## 4) System Impact Map
 - UI:
@@ -719,6 +691,5 @@ Every plan MUST end with an appendix titled "## Scan Evidence" containing:
 
 This appendix is consumed by @PlanCritic for verification and by @Executor for execution awareness.
 
-Evidence: Sessions 2, 3, 6 — @PlanCritic consistently found 5-8 critical gaps in @SlinePlanner's v1 plans because scan output was not structured or attached. This appendix lets @PlanCritic verify faster and catch factual errors earlier.
 
 END.

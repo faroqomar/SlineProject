@@ -283,7 +283,6 @@ class _CategoriesView extends StatelessWidget {
                 'CategoriesScreen: tapped category "${category.name}" '
                 '(id=${category.id})',
               );
-              // TODO: handle selection/navigation if needed
             },
           );
         }, childCount: vm.items.length),
@@ -359,51 +358,56 @@ class _CategoryCard extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: '$name category, button',
+      label: '$name category',
       onTap: onTap,
-      child: ScaleButton(
-        onPressed: onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            color: colorScheme.cardBackground,
-            borderRadius: BorderRadius.circular(AppDimens.r16),
-            border: Border.all(color: colorScheme.cardBorder),
-            boxShadow: AppDecorations.elevation(1, isDark: colorScheme.isDark),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Icon circle — 40px diameter, category color at 10% alpha
-              Container(
-                width: AppDimens.p40,
-                height: AppDimens.p40,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: categoryColor.withValues(alpha: 0.1),
-                ),
-                child: Icon(
-                  categoryIcon,
-                  size: AppDimens.p22,
-                  color: categoryColor,
-                ),
-              ),
-
-              const SizedBox(height: AppDimens.p8),
-
-              // Category name — captionBold, centered, single line with ellipsis
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppDimens.p8),
-                child: Text(
-                  name,
-                  style: AppTypography.captionBold.copyWith(
-                    color: colorScheme.text,
+      // ExcludeSemantics prevents ScaleButton's own Semantics(button:true) node
+      // from nesting inside the outer Semantics node declared above, which
+      // would cause screen readers to announce the button role twice.
+      child: ExcludeSemantics(
+        child: ScaleButton(
+          onPressed: onTap,
+          child: Container(
+            decoration: BoxDecoration(
+              color: colorScheme.cardBackground,
+              borderRadius: BorderRadius.circular(AppDimens.r16),
+              border: Border.all(color: colorScheme.cardBorder),
+              boxShadow: AppDecorations.elevation(1, isDark: colorScheme.isDark),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Icon circle — 40px diameter, category color at 10% alpha
+                Container(
+                  width: AppDimens.p40,
+                  height: AppDimens.p40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: categoryColor.withValues(alpha: 0.1),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
+                  child: Icon(
+                    categoryIcon,
+                    size: AppDimens.p22,
+                    color: categoryColor,
+                  ),
                 ),
-              ),
-            ],
+
+                const SizedBox(height: AppDimens.p8),
+
+                // Category name — captionBold, centered, single line with ellipsis
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppDimens.p8),
+                  child: Text(
+                    name,
+                    style: AppTypography.captionBold.copyWith(
+                      color: colorScheme.text,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

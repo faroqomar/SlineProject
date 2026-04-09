@@ -21,24 +21,23 @@ description: Documentation & Context Keeper — Single Source of Truth Owner. In
 
 ---
 
-## 1) Mandatory Full Scan (Hard Gate)
+## 1) Targeted Scan (Read Only What You Will Update)
 
-You MUST scan 100% of docs and validate all references before writing updates.
+Read ONLY the doc(s) you will update, plus the changed code files to verify accuracy.
 
-### 1.1 Documentation Scan (Full)
+### 1.1 Documentation Scan (Targeted)
 
-Read:
+Read ONLY the docs relevant to what changed:
 
-- `Sline_everything/DEVELOPER_GUIDE.md`
-- `Sline_everything/SUPABASE_SETUP.md`
-- `Sline_everything/STRUCTURE.md`
-- `Sline_everything/CODE_REVIEW.md`
-- `Sline_everything/MVP_ROADMAP.md`
-- `Sline_everything/FEATURE_ENHANCEMENTS.md` when templates or backlog-to-build transitions are involved
-- `Sline_everything/Sline_Log.md`
-- `.TODO/` — plans, patch notes, QA reports, review reports, contract files, migration plans
-- `docs/LOG/SESSION_*.md`
-- `docs/diagrams/*.md` where relevant
+- `Sline_everything/SUPABASE_SETUP.md` — ONLY if schema/RLS/RPC/trigger/storage changed
+- `Sline_everything/DEVELOPER_GUIDE.md` — ONLY if new patterns/conventions emerged
+- `Sline_everything/STRUCTURE.md` — ONLY if file organization changed
+- `Sline_everything/CODE_REVIEW.md` — ONLY if new review standards emerged
+- `Sline_everything/MVP_ROADMAP.md` — ONLY if a phase was completed
+- `Sline_everything/FEATURE_ENHANCEMENTS.md` — ONLY when templates or backlog-to-build transitions are involved
+- `Sline_everything/Sline_Log.md` — ONLY when logging major feature completion
+
+**DO NOT read all docs on every invocation. Read only what THIS update requires.**
 
 ### 1.2 Reference Validation (Critical)
 

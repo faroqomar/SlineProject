@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
+import 'package:sline_app/core/theme/app_states.dart';
+import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/features/notifications/models/notification_model.dart';
 
+/// Individual notification tile with semantic colors, unread indicator,
+/// haptic feedback, and full Semantics coverage.
+///
+/// Phase 5 redesign: replaced all hardcoded `AppColors.teal/gold/mediumGrey/lightRed`
+/// with semantic tokens (`colorScheme.primary/warning/textSecondary/danger`).
+/// Enhanced unread dot from 8px to 10px, added haptic on tap, and full
+/// accessibility label. View-layer only.
 class NotificationTile extends StatelessWidget {
   final NotificationItem notification;
   final VoidCallback onTap;
@@ -17,97 +28,124 @@ class NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // theme variable unused, removed
+    final colorScheme = context.colorScheme;
     final isRead = notification.isRead;
 
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        color: isRead ? null : AppColors.teal.withValues(alpha: 0.05),
-        padding: const EdgeInsets.all(AppDimens.p16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildIcon(),
-            const SizedBox(width: AppDimens.p12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          notification.title,
-                          style: AppTypography.h4.copyWith(
-                            fontWeight: isRead
-                                ? FontWeight.normal
-                                : FontWeight.bold,
+    return Semantics(
+      label:
+          '${notification.type.name} notification: ${notification.title}, '
+          '${formatFriendlyTime(notification.createdAt)}'
+          '${!isRead ? ", unread" : ""}',
+      button: true,
+      // Prevent child widgets from emitting duplicate announcements —
+      // the label above already describes the full tile content.
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: () {
+          AppInteractionStates.hapticTap();
+          AppLogger.d(
+            'NotificationTile: tapped ${notification.id} '
+            '(type: ${notification.type.name})',
+            tag: 'Notifications',
+          );
+          onTap();
+        },
+        child: Container(
+          // Subtle primary tint for unread — replaces hardcoded AppColors.teal
+          color: isRead ? null : colorScheme.primary.withValues(alpha: 0.05),
+          padding: const EdgeInsets.all(AppDimens.p16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildIcon(colorScheme),
+              const SizedBox(width: AppDimens.p12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            notification.title,
+                            style: AppTypography.h4.copyWith(
+                              fontWeight: isRead
+                                  ? FontWeight.normal
+                                  : FontWeight.bold,
+                              color: colorScheme.text,
+                            ),
                           ),
                         ),
-                      ),
-                      Text(
-                        formatFriendlyTime(notification.createdAt),
-                        style: AppTypography.caption,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppDimens.p4),
-                  Text(
-                    notification.message,
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.mediumGrey,
+                        Text(
+                          formatFriendlyTime(notification.createdAt),
+                          style: AppTypography.caption.copyWith(
+                            color: colorScheme.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            if (!isRead) ...[
-              const SizedBox(width: AppDimens.p8),
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: AppColors.lightRed,
-                  shape: BoxShape.circle,
+                    const SizedBox(height: AppDimens.p4),
+                    Text(
+                      notification.message,
+                      style: AppTypography.bodyMedium.copyWith(
+                        // Semantic textSecondary replaces hardcoded mediumGrey
+                        color: colorScheme.textSecondary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
+              // Unread indicator — enhanced from 8px to 10px dot
+              if (!isRead) ...[
+                const SizedBox(width: AppDimens.p8),
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    // Semantic danger replaces hardcoded AppColors.lightRed
+                    color: colorScheme.danger,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildIcon() {
+  /// Type-colored icon with semantic token mapping.
+  Widget _buildIcon(AppColorScheme colorScheme) {
     IconData icon;
     Color color;
 
+    // Map notification types to semantic colors
     switch (notification.type) {
       case NotificationType.offer:
         icon = Icons.local_offer_outlined;
-        color = AppColors.gold;
+        color = colorScheme.warning; // replaces AppColors.gold
       case NotificationType.message:
         icon = Icons.chat_bubble_outline;
-        color = AppColors.teal;
+        color = colorScheme.primary; // replaces AppColors.teal
       case NotificationType.booking:
         icon = Icons.calendar_today_outlined;
-        color = AppColors.teal;
+        color = colorScheme.primary; // replaces AppColors.teal
       case NotificationType.payment:
         icon = Icons.payment_outlined;
-        color = AppColors.gold;
+        color = colorScheme.warning; // replaces AppColors.gold
       case NotificationType.review:
         icon = Icons.star_outline;
-        color = AppColors.gold;
+        color = colorScheme.warning; // replaces AppColors.gold
       case NotificationType.task:
         icon = Icons.assignment_outlined;
-        color = AppColors.teal;
+        color = colorScheme.primary; // replaces AppColors.teal
       case NotificationType.system:
         icon = Icons.notifications_none;
-        color = AppColors.mediumGrey;
+        color = colorScheme.textSecondary; // replaces AppColors.mediumGrey
     }
 
     return Container(
@@ -116,7 +154,7 @@ class NotificationTile extends StatelessWidget {
         color: color.withValues(alpha: 0.1),
         shape: BoxShape.circle,
       ),
-      child: Icon(icon, color: color, size: 20),
+      child: Icon(icon, color: color, size: AppLayout.iconStandard),
     );
   }
 }

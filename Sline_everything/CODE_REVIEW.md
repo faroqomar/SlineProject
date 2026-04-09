@@ -119,6 +119,55 @@ Any T-number appearing in more than one file is a collision that must be renumbe
 
 **Evidence**: Phase 4 — Empty state text changed from "No favorites yet." to "No favorites yet" (trailing period removed) but test expected old text. Caught in QA, not during the change phase.
 
+### Token Compliance Guardrail (Phase 5, 2026-04-09)
+
+**Pattern**: All visual properties MUST use design system tokens. Hardcoded values bypass the Three-Layer Architecture and prevent theme-level redesign.
+
+**Rules**:
+1. **Colors**: Use `context.colorScheme.*` or `AppColors.*`. Never `Color(0xFF...)`, `Colors.green`, `Colors.red`, etc.
+2. **Typography**: Use `AppTypography.*`. Never `fontSize:` in feature code. Exception: sub-micro sizes (< 10px) require a justification comment.
+3. **Motion**: Use `AppMotion.*` for all durations and curves. Never `Duration(milliseconds: ...)` or `Curves.*` in feature code.
+4. **Elevation**: Use `AppDecorations.elevation(level)`. Never `BoxShadow(...)` in feature code.
+5. **Spacing/Sizing**: Use `AppDimens.*` or `AppLayout.*`. Never magic numbers for padding, margins, or sizes.
+
+**Verification**: After any UI change, run:
+```bash
+grep -rn 'Colors\.\(green\|red\|blue\|grey\)' lib/features/
+grep -rn 'BoxShadow(' lib/features/
+grep -rn 'Duration(milliseconds:' lib/features/
+grep -rn 'fontSize:' lib/features/
+```
+Any hits must be replaced with tokens or documented with a justification comment.
+
+**Evidence**: Phase 5 — `Colors.green` and `Colors.red` in work_tab.dart SnackBars, `BoxShadow` in chat_screen.dart, `Duration(milliseconds: 600)` in conversation_list_tile.dart. All fixed to use semantic tokens.
+
+### Raw Exception Leak Prevention (Phase 5 Orchestrator, 2026-04-09)
+
+**Pattern**: Exception `.toString()` or `.message` must NEVER reach user-visible UI (SnackBars, dialogs, text widgets). Exception details in logs must use structured `error:` parameter, not string interpolation.
+
+**Rules**:
+1. UI: Always use `ErrorMapper.map(e)` for user-facing messages.
+2. Logs: Use `AppLogger.e('context message', error: e, tag: 'Tag')` — never `AppLogger.e('failed: $e')`.
+3. Semantics: Never include `${vm.error}` in accessibility labels — exposes internal error text to screen readers.
+
+**Evidence**: Phase 5 — `notifications_modal.dart` leaked `vm.error` in Semantics label. `chat_screen.dart` logged `$e` instead of structured error parameter. Both fixed.
+
+### Storage Path Redaction in Logs (Phase 5 Orchestrator, 2026-04-09)
+
+**Pattern**: Full Supabase storage paths (e.g., `chat-attachments/user-id/file.jpg`) contain user IDs and should not appear in logs.
+
+**Rule**: Log only the filename: `storagePath.split('/').last`. Never `'uploading $storagePath'`.
+
+**Evidence**: Phase 5 — `attachment_message_tile.dart` logged full storage paths in 3 locations. Fixed to log only filenames.
+
+### Animation Controller in Build Guard (Phase 5 Orchestrator, 2026-04-09)
+
+**Pattern**: Never call `AnimationController.forward()`, `.animateTo()`, or `.repeat()` synchronously during `build()`. This triggers "setState during build" assertions.
+
+**Rule**: Wrap animation triggers in `WidgetsBinding.instance.addPostFrameCallback((_) { ... })`.
+
+**Evidence**: Phase 5 — `notification_badge_button.dart` called `_handleCountChange(count)` (which triggers animation) directly in `build()`. Fixed with `addPostFrameCallback`.
+
 ### Raw String Interpolation Guard (Phase E, 2026-04-05)
 
 **Pattern**: Never use raw string literals (`r'...'`) in `AppLogger` calls or any string containing `$variable` interpolation. Raw strings make `$` literal. Use normal single-quoted strings.

@@ -13,7 +13,7 @@ description: Multi-Agent Coordinator & Report Synthesizer. Runs all agents seque
 ## 0) Prime Directive (Zero Exceptions)
 
 1. **Sequential Only**: Run one agent at a time. No parallel work. Order is locked.
-2. **No Fixes**: The Orchestrator NEVER implements fixes directly. It coordinates, merges, and orders fix recommendations. The human decides what to act on.
+2. **Review + Fix in One Pass**: The Orchestrator finds issues AND applies BLOCKER/HIGH/MED fixes immediately. LOW fixes are presented as recommendations. The human reviews the Master Report for any remaining items.
 3. **No Guessing**: If any agent reports missing paths, missing DB objects, or unresolvable conflicts — pause the pipeline immediately and report the blocker.
 4. **Evidence-Based**: Every agent must provide evidence — files scanned, DB objects validated, commands run, test results, or SQL proof.
 5. **Single Final Truth**: All agent findings are deduplicated, merged by severity, and presented in one Master Report. No scattered reports.
@@ -79,7 +79,6 @@ If the Master Report contains BLOCKER or HIGH findings:
 
 This stage only runs when the human approves fixes from Stage 12's Master Report. It is not automatic.
 
-Evidence: Phase E (Session 4) — Orchestrator review found 20 issues (1 BLOCKER, 4 HIGH, 8 MED, 7 LOW) after execution. Fixes were applied in a follow-up, but the "review → fix → re-verify" handoff was not formally defined, leading to ad-hoc process.
 
 ### 2.1 Parallel Review Mode (Review-Only Pipelines)
 
@@ -96,7 +95,6 @@ This applies ONLY to review-only pipelines. Implementation pipelines remain stri
 
 **Exception — ViewModel changes in scope:** If the review scope includes ViewModel changes (new public methods, changed signatures, new state fields), run @Architect BEFORE @Pixel (sequentially, not in parallel). @Pixel may need @Architect's findings about ViewModel API changes to assess whether Views correctly wire to the new API. When the scope is pure View-layer work (no VM changes), Parallel Group B is safe.
 
-Evidence: Phase D Orchestrator review (see `docs/LOG/SESSION_PLAN_PhaseD_Harden_2026-04-03.md`, Phase 8 QA section) ran ThreatModeler + Supabase_Ops in parallel and Architect + Pixel + APIContract in parallel during review-only audit. No data dependency issues observed. Stage ordering for implementation remains locked. SystemEvolution Report 2026-04-08 identified latent dependency (AC-1): @Pixel may depend on @Architect's VM findings when both VM and View changes exist in scope.
 
 ---
 
@@ -255,7 +253,6 @@ Audit focus:
 
 Output: Findings appended to `.TODO/SENTINEL_REPORT_<YYYY-MM-DD>_<Scope>.md`
 
-Evidence: SESSION_PhaseB — 2 bugs (setState during build, 9x bid sheet spam) were invisible to `flutter analyze` and `flutter test`, caught only on emulator.
 
 ---
 

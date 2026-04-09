@@ -71,6 +71,7 @@ Future<void> _pumpChatScreen(
   when(() => vm.isSending).thenReturn(false);
   when(() => vm.otherUserTyping).thenReturn(false);
   when(() => vm.isPresenceReceiptsEnabled).thenReturn(false);
+  when(() => vm.isLoadingMessages).thenReturn(false);
   when(() => vm.setTyping(any())).thenAnswer((_) async {});
   when(() => vm.sendMessage(any())).thenAnswer((_) async {});
 

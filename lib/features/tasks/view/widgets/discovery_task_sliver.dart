@@ -11,8 +11,8 @@
 // - Rich empty state with icon badge, title, and description.
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
@@ -20,7 +20,6 @@ import 'package:sline_app/core/theme/app_states.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
-
 import 'package:sline_app/features/tasks/models/task_model.dart';
 
 /// Displays a scrollable sliver of task cards for the discovery feed.

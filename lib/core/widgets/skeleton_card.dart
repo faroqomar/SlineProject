@@ -358,6 +358,9 @@ class SkeletonOfferCard extends StatelessWidget {
 }
 
 /// Skeleton for chat message bubbles.
+///
+/// Matches redesigned MessageBubble: 75% max width, r18 border radius,
+/// p14 horizontal / p10 vertical padding.
 class SkeletonMessageBubble extends StatelessWidget {
   const SkeletonMessageBubble({super.key, this.isMe = false});
 
@@ -370,16 +373,21 @@ class SkeletonMessageBubble extends StatelessWidget {
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        padding: const EdgeInsets.all(AppDimens.p12),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimens.p14,
+          vertical: AppDimens.p10,
+        ),
         margin: const EdgeInsets.only(bottom: AppDimens.p8),
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.7,
+          // 75% — matches redesigned MessageBubble ratio
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
         ),
         decoration: BoxDecoration(
           color: isMe
               ? colorScheme.primary.withValues(alpha: 0.2)
               : colorScheme.cardBackground,
-          borderRadius: BorderRadius.circular(AppDimens.r16),
+          borderRadius: BorderRadius.circular(AppDimens.r18),
+          border: isMe ? null : Border.all(color: colorScheme.cardBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -403,6 +411,9 @@ class SkeletonMessageBubble extends StatelessWidget {
 }
 
 /// Skeleton for conversation list tile.
+///
+/// Matches redesigned ConversationListTile: r18 card with border, 48px avatar,
+/// name + message preview lines, timestamp placeholder.
 class SkeletonConversationTile extends StatelessWidget {
   const SkeletonConversationTile({super.key});
 
@@ -411,13 +422,17 @@ class SkeletonConversationTile extends StatelessWidget {
     final colorScheme = context.colorScheme;
 
     return Container(
-      padding: const EdgeInsets.all(AppDimens.p16),
+      margin: const EdgeInsets.only(bottom: AppDimens.p12),
+      padding: const EdgeInsets.all(AppDimens.p14),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: colorScheme.divider)),
+        color: colorScheme.cardBackground,
+        borderRadius: BorderRadius.circular(AppDimens.r18),
+        border: Border.all(color: colorScheme.cardBorder),
       ),
       child: const Row(
         children: [
-          SkeletonAvatar(size: 52),
+          // Avatar — matches minTouchTarget (48px)
+          SkeletonLoader(width: 48, height: 48, borderRadius: AppDimens.r14),
           SizedBox(width: AppDimens.p12),
           Expanded(
             child: Column(

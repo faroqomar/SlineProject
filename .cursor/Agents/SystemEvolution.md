@@ -76,15 +76,9 @@ For each agent, understand:
 - what scan steps it performs before acting
 - what output files it produces
 
-### 1.3 Scan the Core SLINE Documents
+### 1.3 Scan the Core SLINE Documents (Targeted)
 
-Read:
-
-- `Sline_everything/DEVELOPER_GUIDE.md`
-- `Sline_everything/SUPABASE_SETUP.md`
-- `Sline_everything/STRUCTURE.md`
-- `Sline_everything/CODE_REVIEW.md`
-- `Sline_everything/MVP_ROADMAP.md`
+Read ONLY the `Sline_everything/` docs that session log findings reference. Do NOT read all 5 docs on every run.
 
 ### 1.4 Cross-Reference Scan
 

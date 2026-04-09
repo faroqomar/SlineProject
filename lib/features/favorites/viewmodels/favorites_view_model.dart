@@ -12,6 +12,9 @@ import 'package:sline_app/features/favorites/models/favorites_mutation_result.da
 class FavoritesViewModel extends ChangeNotifier {
   final FavoritesService service;
 
+  /// Default user-facing error message used when no specific mapping applies.
+  static const kDefaultErrorMessage = 'Something went wrong. Please try again.';
+
   FavoritesViewModel({required this.service});
 
   List<FavoriteModel> _items = [];
@@ -25,8 +28,7 @@ class FavoritesViewModel extends ChangeNotifier {
   List<FavoriteWithProfile> get itemsWithProfile => _itemsWithProfile;
   bool get isLoading => _loading;
   String? get error => _error;
-  String get userFriendlyError =>
-      _error ?? 'Something went wrong. Please try again.';
+  String get userFriendlyError => _error ?? kDefaultErrorMessage;
   bool isPending(String freelancerId) => _pendingIds.contains(freelancerId);
 
   /// Ensures favorites are loaded at least once (e.g. for public profile toggle).
@@ -189,6 +191,6 @@ class FavoritesViewModel extends ChangeNotifier {
     if (s.toLowerCase().contains('authenticated')) {
       return 'Please sign in to use favorites.';
     }
-    return 'Something went wrong. Please try again.';
+    return kDefaultErrorMessage;
   }
 }

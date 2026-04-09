@@ -1,6 +1,126 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2026-04-05
+**Last Updated:** 2026-04-09
+
+---
+
+## 🎨 UI Redesign Phase 5 — Chat, Dashboard & Notifications Token Normalization (2026-04-09)
+
+**Classification:** Token Normalization + Polish Pass (NOT a visual redesign)
+**Master Plan Coverage:** Phases 6, 7, 14 — token layer only; visual redesign deferred
+**Plan:** `.TODO/PLAN_Phase5_ChatDashboardNotifications_2026-04-09.md`
+**Session Log:** `docs/LOG/SESSION_PLAN_Phase5_ChatDashboardNotifications_2026-04-09.md`
+**Master Report:** `.TODO/MASTER_REPORT_2026-04-09_Phase5_ChatDashboardNotifications.md`
+**System Evolution:** `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-09_v2.md`
+
+### Scope: 17 files across Chat (10), Notifications (3), Dashboard (4)
+
+### Implemented
+- **Token compliance:** All `AppColors.teal/gold/lightTeal/lightRed` → `colorScheme.primary/warning/success/danger` in modified files
+- **Motion tokens:** All hardcoded `Duration(milliseconds:)` → `AppMotion.*` tokens; added `AppMotion.typingCycle` (600ms)
+- **Message grouping:** `isFirstInGroup`/`isLastInGroup` booleans on `MessageBubble`, computed in `ChatScreen._buildChatItems()` (2-min window + same sender)
+- **Date separators:** Sealed `_ChatListItem` pattern (`_MessageItem` + `_DateSeparatorItem`) in ChatScreen
+- **Stagger animations:** MessagesScreen, NotificationsModal, ActivityFeedPreview — single controller, Interval-based, `_hasAnimatedEntrance` guard
+- **Typing indicator:** 3-dot sine pulse animation in ConversationListTile
+- **Spring badge:** ScaleTransition with `AppMotion.curveSpring` on NotificationBadgeButton
+- **Shimmer loading:** SkeletonLoader replacing CircularProgressIndicator in AttachmentMessageTile, BookingsTab, NotificationsModal, ActivityFeedPreview
+- **Shake validation:** TweenSequence with `AppInteractionStates.shakeAmplitude` on CreateOfferSheet
+- **Haptic feedback:** All interactive elements (offer accept/decline, notification tap, send button, etc.)
+- **Semantics:** Full coverage on all modified widgets including "Needs Your Review" section header
+- **Skeleton updates:** SkeletonConversationTile (48px avatar, r18 card), SkeletonMessageBubble (75% width, r18)
+- **Tests:** +17 new widget tests (8 MessageBubble, 9 OfferMessageBubble)
+
+### Orchestrator Review Fixes (12 items)
+- `AppDecorations.elevation(2)` replacing hardcoded BoxShadow in ChatScreen FAB
+- `AppMotion.typingCycle` token added, used in ConversationListTile
+- `Colors.green`/`Colors.red` → `colorScheme.success`/`colorScheme.danger` in WorkTab SnackBars
+- Raw `$e` exception → `error: e` named param in ChatScreen image send log
+- Price/title removed from CreateOfferSheet INFO log (financial data leak)
+- Raw `vm.error` removed from NotificationsModal Semantics label
+- `_handleCountChange` moved to post-frame callback in NotificationBadgeButton
+- Dead `AnimatedOpacity` removed from MessagesScreen empty state
+- `bottom: 90` → `AppLayout` token expression in ChatScreen FAB
+- `Curves.easeInOut` → `AppMotion.curveSymmetric` in CreateOfferSheet shake
+- Storage paths redacted to filename only in AttachmentMessageTile logs
+- Stale `AppColors.lightRed` → `colorScheme.danger` in `01_app_ui_diagram.md`
+
+### QA Results
+- `flutter analyze`: 0 issues
+- `flutter test`: +1366 ~30 -2 (2 pre-existing failures, 30 skipped integration)
+- Architecture guards: All pass
+
+### Key Learning
+- **Phantom redesign problem identified:** This phase was labeled "Redesign" but produced zero visible UI changes. The user could not perceive any difference. Root cause: plan covered only token normalization, not the structural visual redesign specified in the Master Plan.
+- **System Evolution Report v2** produced 4 new critical rules (RG-6 through RG-9) to prevent recurrence: Visual Change Classification, Visual Verification Gate, Master Plan Cross-Reference, Visual Attestation.
+
+---
+
+## 🎨 UI Redesign Phase 4 — Home & Discovery (2026-04-08)
+
+**Classification:** Redesign (structural layout changes)
+**Master Plan Coverage:** Phase 4
+**Session Log:** `docs/LOG/SESSION_PLAN_Phase4_HomeDiscovery_2026-04-08.md`
+
+### Scope: 10 files — HomeScreen, discovery slivers, filters modal, 3 skeleton variants
+- Content-first home redesign with scrollable discovery
+- FiltersModal with DraggableScrollableSheet
+- 3 new skeleton variants (SkeletonSearchResultCard, SkeletonCategoryTile, SkeletonFavoriteCard)
+- Stagger entrance animations on discovery sections
+- 7 test regressions found and fixed in-session (sliver/Semantics crash, shimmer pumpAndSettle timeout, DraggableSheet scroll ambiguity)
+
+---
+
+## 🎨 UI Redesign Phase 2 — App Shell, Auth & Cards (2026-04-08)
+
+**Classification:** Redesign (structural layout + animation changes)
+**Master Plan Coverage:** Phases 2, 3, 5
+**Session Log:** `docs/LOG/SESSION_PLAN_Phase2_AppShellAuthCards_2026-04-08.md`
+
+### Scope: App shell transitions, 7 auth screens, 8 card widgets, +15 tests
+- MainNavigationScreen page transitions (StatefulWidget with AnimationControllers)
+- Login/signup stagger entrance animations
+- 8 card types redesigned (task, tender, booking, dashboard offer, booking card, dashboard booking, work item, counters)
+- ScaleButton press feedback on all interactive cards
+
+---
+
+## 🎨 UI Redesign Phase 0.7 — Layout Tokens (2026-04-08)
+
+**Classification:** Token Normalization (foundation infrastructure)
+**Master Plan Coverage:** Phase 0 sub-phase
+**Session Log:** `docs/LOG/SESSION_PLAN_LayoutTokens_Phase0_7_2026-04-08.md`
+
+### Scope: NEW `app_layout.dart` with 41 semantic tokens + 53 tests
+- Card sizes, avatar sizes, button heights, spacing rhythm
+- Design/theme separation: Layer 2 (layout) split from Layer 1 (theme)
+
+---
+
+## 🎨 UI Redesign Phase 1 — Core Widget Redesign (2026-04-07)
+
+**Classification:** Redesign (structural widget changes)
+**Master Plan Coverage:** Phase 1
+**Session Log:** `docs/LOG/SESSION_PLAN_CoreWidgetRedesign_2026-04-07.md`
+
+### Scope: 14 fundamental widgets redesigned + 87 tests
+- AppButton, AppTextField, GlassContainer (→ solid), SignedAvatar, CustomBottomNavBar, ScaleButton (NEW), SkeletonLoader (NEW)
+- NO GLASS policy enforced: all BackdropFilter removed, replaced with solid surfaces + AppDecorations.elevation
+
+---
+
+## 🎨 UI Redesign Phase 0 — Design System Foundation (2026-04-07)
+
+**Classification:** Token Normalization (foundation infrastructure)
+**Master Plan Coverage:** Phase 0 (sub-phases 0.1–0.6)
+**Session Log:** `docs/LOG/SESSION_PLAN_DesignSystemFoundation_2026-04-07.md`
+
+### Scope: 6 theme token files created/updated
+- NEW `app_motion.dart` — 7 durations, 7 curves, 4 scales, 3 staggers
+- NEW `app_states.dart` — 8-state model (default→hover→focus→active→disabled→loading→success→error)
+- NEW `app_decorations.dart` — 5-level elevation shadow scale
+- Updated `app_colors.dart` — semantic color expansion (success/warning/info/danger + muted)
+- Updated `app_typography.dart` — line height normalization
+- Updated `app_theme.dart` — CardThemeData, DialogThemeData, BottomSheetThemeData
 
 ---
 

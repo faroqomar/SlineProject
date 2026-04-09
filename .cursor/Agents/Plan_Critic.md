@@ -279,7 +279,6 @@ When auditing a plan with coverage targets:
 2. Verify the plan's coverage arithmetic against these numbers.
 3. If lcov.info does not exist, flag as CRITICAL GAP: "No baseline coverage data."
 
-Evidence: Widget Tests session — @PlanCritic caught coverage arithmetic error (assumed 6 screens = 45%, actual = 39.7%) but only AFTER SlinePlanner published v1. These checks make the catch proactive.
 
 ### 5.8 Testing & QA
 
@@ -329,7 +328,6 @@ This file is consumed by:
 - **@Sentinel** — for verification that critical gaps were addressed during implementation
 - **@SystemEvolution** — for durable evidence of planning issues across sessions
 
-Evidence: All prior sessions — PlanCritic's findings were inline in conversation only, not persisted. This broke traceability: @Executor could not reference PlanCritic's risk register during execution, @Sentinel could not verify gaps were addressed, and @SystemEvolution had to manually extract findings from session logs.
 
 ---
 

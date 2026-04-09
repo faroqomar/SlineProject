@@ -1,6 +1,6 @@
 # SLine MVP Roadmap
 
-**Last Updated:** 2026-04-05
+**Last Updated:** 2026-04-09
 
 This roadmap tracks the current code-state of the repository. Status values are intentionally simple:
 - `✅ Completed`
@@ -138,7 +138,35 @@ Tests: 706 → 780 (+74). Coverage floor: 40%. All 6 architecture guard checks p
 - System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-05.md`
 - Lint Debt: `.TODO/LINT_DEBT_PhaseE.md`
 
-## 10. Current Focus
+## 10. UI Redesign Progress (Master Plan)
+
+**Master Plan:** `.TODO/PLAN_UI_Redesign_MasterPlan_2026-04-06.md`
+
+| Phase | Name | Status | Classification | Session Log |
+|-------|------|--------|---------------|-------------|
+| 0 | Design System Foundation | ✅ Completed | Token Infrastructure | `SESSION_PLAN_DesignSystemFoundation_2026-04-07.md` |
+| 0.7 | Layout Tokens | ✅ Completed | Token Infrastructure | `SESSION_PLAN_LayoutTokens_Phase0_7_2026-04-08.md` |
+| 1 | Core Widget Redesign | ✅ Completed | Redesign | `SESSION_PLAN_CoreWidgetRedesign_2026-04-07.md` |
+| 2+3+5 | App Shell + Auth + Cards | ✅ Completed | Redesign | `SESSION_PLAN_Phase2_AppShellAuthCards_2026-04-08.md` |
+| 4 | Home & Discovery | ✅ Completed | Redesign | `SESSION_PLAN_Phase4_HomeDiscovery_2026-04-08.md` |
+| 6 | Chat & Messaging | 🚧 Token-normalized | Token Normalization (visual redesign pending) | `SESSION_PLAN_Phase5_ChatDashboardNotifications_2026-04-09.md` |
+| 7 | Dashboard | 🚧 Token-normalized | Token Normalization (visual redesign pending) | (same as above) |
+| 8 | Booking & Payments | ⏳ Planned | — | — |
+| 9 | Profile | ⏳ Planned | — | — |
+| 10 | Portfolio | ⏳ Planned | — | — |
+| 11 | Proposals & Direct Offers | ⏳ Planned | — | — |
+| 12 | Wallet | ⏳ Planned | — | — |
+| 13 | Work Management | ⏳ Planned | — | — |
+| 14 | Notifications | 🚧 Token-normalized | Token Normalization (visual redesign pending) | (same as Phase 6) |
+| 15 | Secondary Screens | ⏳ Planned | — | — |
+| 16 | Cross-Cutting Quality | ⏳ Planned | — | — |
+
+**Note:** Phase 5 (ChatDashboardNotifications) was executed as token normalization and polish, not as the visual redesign described in the Master Plan. The actual visual redesign of Chat, Dashboard, and Notifications is still pending.
+
+---
+
+## 11. Current Focus
 
 ### Current Focus
-1. **Phase F: Ship Preparation** (planned) — Arabic/Kurdish translations, widget tests for critical views, remaining lint debt adoption, GitHub repo safeguards (branch protection, CODEOWNERS, PR templates), non-atomic payment RPC consolidation
+1. **UI Redesign Phase 6: Chat & Messaging** (next) — actual visual redesign per Master Plan specs (new input bar, swipe-to-reply, emoji-only messages, link detection, long-press context menu, redesigned conversation list)
+2. **Phase F: Ship Preparation** (planned) — Arabic/Kurdish translations, widget tests for critical views, remaining lint debt adoption, GitHub repo safeguards

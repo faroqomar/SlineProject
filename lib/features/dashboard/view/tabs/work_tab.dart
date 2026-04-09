@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/error_mapper.dart';
@@ -90,28 +90,33 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
               const SizedBox(height: AppDimens.p16),
 
               // Nested Tab Bar
-              Container(
-                height: 40,
-                decoration: BoxDecoration(
-                  color: colorScheme.inputBackground,
-                  borderRadius: BorderRadius.circular(AppDimens.r12),
-                ),
-                child: TabBar(
-                  controller: _subTabController,
-                  indicator: BoxDecoration(
-                    color: AppColors.teal,
-                    borderRadius: BorderRadius.circular(AppDimens.r10),
+              Semantics(
+                label: 'Work sub-tabs',
+                child: Container(
+                  height: AppLayout.statusIndicatorHeight,
+                  decoration: BoxDecoration(
+                    color: colorScheme.inputBackground,
+                    borderRadius: BorderRadius.circular(AppDimens.r12),
                   ),
-                  labelColor: Colors.white,
-                  unselectedLabelColor: colorScheme.textSecondary,
-                  labelStyle: AppTypography.captionBold,
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  dividerColor: Colors.transparent,
-                  tabs: [
-                    Tab(text: 'Active (${active.length})'),
-                    Tab(text: 'Done (${completed.length})'),
-                    const Tab(text: 'Cancelled'),
-                  ],
+                  child: TabBar(
+                    controller: _subTabController,
+                    // Semantic primary replaces hardcoded AppColors.teal
+                    indicator: BoxDecoration(
+                      color: colorScheme.primary,
+                      borderRadius: BorderRadius.circular(AppDimens.r10),
+                    ),
+                    // onPrimary (Material ColorScheme) ensures contrast against the primary-colored active indicator
+                    labelColor: Theme.of(context).colorScheme.onPrimary,
+                    unselectedLabelColor: colorScheme.textSecondary,
+                    labelStyle: AppTypography.captionBold,
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    dividerColor: Colors.transparent,
+                    tabs: [
+                      Tab(text: 'Active (${active.length})'),
+                      Tab(text: 'Done (${completed.length})'),
+                      const Tab(text: 'Cancelled'),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: AppDimens.p16),
@@ -164,27 +169,35 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
         onRefresh: vm.refresh,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.5,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.work_off_outlined,
-                    size: 48,
-                    color: context.colorScheme.textSecondary.withValues(
-                      alpha: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: AppDimens.p16),
-                  Text(
-                    'No active work.',
-                    style: AppTypography.bodyMedium.copyWith(
+          child: Semantics(
+            label: 'No active work. Browse tasks to get started.',
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.4,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.work_off_outlined,
+                      size: AppLayout.iconFeature,
                       color: context.colorScheme.textSecondary,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: AppLayout.spacingSection),
+                    Text(
+                      'No active work',
+                      style: AppTypography.h5.copyWith(
+                        color: context.colorScheme.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: AppLayout.spacingStandard),
+                    Text(
+                      'Browse tasks to get started',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: context.colorScheme.textTertiary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -210,19 +223,27 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
         children: [
           // Pinned "Needs Review" section
           if (reviewItems.isNotEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppDimens.p8),
-              child: Row(
-                children: [
-                  Icon(Icons.rate_review, size: 16, color: AppColors.lightRed),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Needs Your Review (${reviewItems.length})',
-                    style: AppTypography.captionBold.copyWith(
-                      color: AppColors.lightRed,
+            Semantics(
+              header: true,
+              label: 'Needs your review, ${reviewItems.length} items',
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: AppDimens.p8),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.rate_review,
+                      size: AppDimens.iconSizeSmall,
+                      color: colorScheme.danger,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: AppLayout.spacingTight),
+                    Text(
+                      'Needs Your Review (${reviewItems.length})',
+                      style: AppTypography.captionBold.copyWith(
+                        color: colorScheme.danger,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             ...reviewItems.map(
@@ -347,9 +368,9 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
       await vm.cancelAwardedOffer(item.awardedRequestId!);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Award cancelled. Task is open again.'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Award cancelled. Task is open again.'),
+            backgroundColor: context.colorScheme.success,
           ),
         );
       }
@@ -358,7 +379,7 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(ErrorMapper.map(e)),
-            backgroundColor: Colors.red,
+            backgroundColor: context.colorScheme.danger,
           ),
         );
       }
@@ -405,27 +426,28 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
         onRefresh: vm.refresh,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.5,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.work_off_outlined,
-                    size: 48,
-                    color: context.colorScheme.textSecondary.withValues(
-                      alpha: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: AppDimens.p16),
-                  Text(
-                    emptyMessage,
-                    style: AppTypography.bodyMedium.copyWith(
+          child: Semantics(
+            label: emptyMessage,
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.4,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.work_off_outlined,
+                      size: AppLayout.iconFeature,
                       color: context.colorScheme.textSecondary,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: AppLayout.spacingSection),
+                    Text(
+                      emptyMessage,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: context.colorScheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -446,15 +468,22 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
         separatorBuilder: (_, __) => const SizedBox(height: AppDimens.p12),
         itemBuilder: (context, index) {
           final item = items[index];
-          return Opacity(
-            opacity: isDimmed ? 0.7 : 1.0,
-            child: WorkItemCard(
-              item: item,
-              onPrimaryAction: () => _onPrimaryAction(context, vm, item),
-              onSecondaryAction:
-                  item.permissions.canCancel && item.awardedRequestId != null
-                  ? () => _onCancelAward(context, vm, item)
-                  : null,
+          // 0.85 opacity for Done/Cancelled tabs — visually distinguishes completed/
+          // inactive items from active work; 0.85 is less aggressive than 0.7 for
+          // better readability while preserving the visual hierarchy intent.
+          return Semantics(
+            // Hint screen readers that this item is completed/inactive
+            label: isDimmed ? 'Completed work item' : null,
+            child: Opacity(
+              opacity: isDimmed ? 0.85 : 1.0,
+              child: WorkItemCard(
+                item: item,
+                onPrimaryAction: () => _onPrimaryAction(context, vm, item),
+                onSecondaryAction:
+                    item.permissions.canCancel && item.awardedRequestId != null
+                    ? () => _onCancelAward(context, vm, item)
+                    : null,
+              ),
             ),
           );
         },

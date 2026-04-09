@@ -50,7 +50,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(NotificationsModalKeys.empty), findsOneWidget);
-      expect(find.text('No notifications yet'), findsOneWidget);
+      expect(find.text("You're all caught up!"), findsOneWidget);
     });
 
     testWidgets('modal has stable key', (tester) async {

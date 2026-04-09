@@ -96,7 +96,7 @@ class FavoriteCard extends StatelessWidget {
 
               const SizedBox(width: AppDimens.p8),
 
-              // "Start Chat" outlined button — 48px meets minimum touch target
+              // "Start Chat" outlined button — Uses AppDimens.touchTarget to meet minimum touch target
               SizedBox(
                 height: AppDimens.touchTarget,
                 child: OutlinedButton(

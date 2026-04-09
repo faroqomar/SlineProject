@@ -172,49 +172,33 @@ You MUST read it fully first and extract:
 
 ---
 
-## 4) Full Context Scan (Hard Gate Before Any Execution)
+## 4) Targeted Context Load (Read Only What The Plan Needs)
 
-**No execution is allowed without passing this scan 100%.**
+**Read the plan's "Files To Read & Modify" section and load ONLY those files.**
 
-### 4.1 Documentation Scan (100% Required)
+### 4.1 Documentation Scan (Targeted)
 
-Read in full:
+Read ONLY the docs that the plan references or that the task requires:
 
-- `Sline_everything/DEVELOPER_GUIDE.md`
-- `Sline_everything/SUPABASE_SETUP.md`
-- `Sline_everything/MVP_ROADMAP.md`
-- `Sline_everything/ARCHITECTURE_ANALYSIS.md`
-- `Sline_everything/CODE_REVIEW.md`
-- `Sline_everything/STRUCTURE.md`
+- `Sline_everything/SUPABASE_SETUP.md` — ONLY if task touches backend/schema
+- `Sline_everything/CODE_REVIEW.md` — ONLY if task touches patterns covered there
+- Other `Sline_everything/` docs — ONLY if the plan explicitly references them
 
-Plus: scan the full `.TODO/` directory and read any doc relevant to the current plan.  
+**DO NOT read all 6 docs on every execution. Read only what THIS task requires.**
+
 If a session log for this plan already exists, read it before continuing.
 
-### 4.2 Codebase Scan (100% Required)
+### 4.2 Codebase Scan (Targeted)
 
-Scan and confirm paths / names are correct:
+Read ONLY the files listed in the plan's "Files To Read & Modify" section, plus:
 
-- `lib/features/` — all impacted feature modules
-- `lib/core/` — config, theme, widgets, services, logger, realtime
-- `lib/main.dart` — providers, account guards, navigation shell
-- `supabase/migrations/` — schema history
-- `supabase/functions/` — Edge Functions and shared helpers
-- `supabase/scripts/` — security or storage helper SQL if relevant
+- Any file you discover is needed during execution (read it then, not upfront)
 
-### 4.3 Supabase Reality Check (100% Required)
+**DO NOT scan entire feature directories or `lib/core/` tree upfront.**
 
-Confirm the existence and correct naming of any referenced DB objects:
+### 4.3 Supabase Reality Check (Only When Backend Is Touched)
 
-- tables / columns / enums
-- views
-- RPC / SQL functions
-- triggers
-- indexes
-- RLS policies
-- buckets / storage rules
-- Edge Functions
-
-Use the Supabase dashboard, SQL editor, migrations, CLI, or MCP as needed.
+Confirm referenced DB objects only when the plan includes schema/RLS/RPC work. Skip entirely for UI-only plans.
 
 ### 4.4 Validation Checklist (Must Be 100% Correct)
 
@@ -264,7 +248,7 @@ If it exists:
 
 If it does NOT exist: proceed with the plan as-is, but note in the session log that no critique was available.
 
-Evidence: Phase 0 Session — @PlanCritic found that `AppColorScheme` already had `success`, `warning`, `info` as optional parameters with `Colors.*` defaults. The original plan would have added them again as required parameters, causing a compile error from duplicate named params. The critique's GAP 1 fix (convert optionals instead of adding duplicates) prevented this. Without reading the critique, @Executor would have broken the build.
+
 
 ### 4.7 Codebase Discovery Scan (Mandatory for UI Redesign Phases)
 
@@ -282,7 +266,7 @@ For each discovered file NOT in the plan:
 
 Report the full scope (plan files + discovered files) to the user BEFORE writing code.
 
-Evidence: Plans are snapshots. Code changes between planning and execution. Phase 2 plan listed 18 files but the codebase scan found related callers (12+ for TaskCard alone) that needed layout verification after the card redesign. Without the scan, callers would have had inconsistent layouts.
+
 
 ---
 
@@ -397,7 +381,7 @@ After completing each sub-phase that modifies source code:
 
 This catches regressions at the smallest possible scope.
 
-Evidence: SESSION_PhaseB had 20 test failures discovered late because tests ran only after all B1-B7 changes were applied together.
+
 
 ### Step 3.2 — Test Mock Audit (Mandatory When ViewModel API Changes)
 
@@ -415,7 +399,7 @@ Steps:
 3. Run the specific test file(s) BEFORE proceeding to the next sub-phase.
 4. Log the mock audit in the session log.
 
-Evidence: SESSION_PhaseB — B7 agent added `loadCategories()` to TaskViewModel but did not update the mock in `create_task_screen_test.dart`, causing test failure.
+
 
 ### Step 3.3 — File Integrity Check (After Parallel Agent Execution)
 
@@ -425,7 +409,7 @@ After background agents complete in parallel:
 3. Regenerate the corrupted file before proceeding to the next step.
 4. Log the corruption as `PROBLEM ENCOUNTERED` in the session log.
 
-Evidence: Phase C — a background agent corrupted `wallet_view_model_test.dart` (overwrote with non-Dart text). Detected only at full QA phase via `flutter analyze` returning 1903 errors.
+
 
 ### 3.4 Native Dependency Build Gate (Mandatory After Adding Native Packages)
 
@@ -440,13 +424,13 @@ Do NOT defer platform builds to the QA phase. Native SDK version mismatches (Kot
 
 **Timing:** The Native Dependency Build Gate MUST run in the SAME phase that adds the native dependency to pubspec.yaml. Do not defer platform builds to a later phase. If the build takes >10 minutes, run it in the background while continuing non-dependent work, but do NOT mark the phase complete until the build succeeds.
 
-Evidence: Phase D — `sentry_flutter` added in Phase 1, APK build failure discovered only at Phase 8 QA. Root cause: `sentry_flutter 8.x` declares `languageVersion = 1.6` which Kotlin 2.x rejects (minimum is 1.8). Fix required adding a Kotlin language override in `android/build.gradle.kts`.
+
 
 ### 3.5 Per-Sub-Phase Test Gate for Multi-File Refactors
 
 When a phase involves creating 3+ new files that refactor an existing file (e.g., delegate decomposition, widget extraction), run `flutter test <affected_test_dir>` after EACH new file is created and wired — not just at the end of the phase. This catches wiring errors immediately instead of accumulating them into a cascade of failures.
 
-Evidence: Phase C post-mortem identified file corruption during parallel agent execution. Phase D applied this rule proactively for DashboardVM decomposition (3 delegates), running tests after each delegate was created — caught a setter visibility issue immediately.
+
 
 ### 3.6 Raw String Sweep (After Every Implementation Phase)
 
@@ -456,7 +440,7 @@ Command: `grep -rn "r'" <changed-files> | grep '\$'`
 
 Any match must be fixed immediately (remove the `r` prefix).
 
-Evidence: Phase E — 14 raw string literals discovered post-implementation in `task_requests_award_delegate.dart` and `task_requests_view_model.dart`. All AppLogger calls printed literal `$requestId` instead of actual values, creating blind spots in payment/award flow traceability.
+
 
 ### 3.7 Review CI Guard Exclusions After Architecture Fixes
 
@@ -468,7 +452,7 @@ Steps:
 3. Verify the tightened guard still passes on the current codebase.
 4. Verify it would CATCH the old violation if reintroduced.
 
-Evidence: Phase D — Architecture guard Check 3 excluded `Supabase.instance.client.auth.` patterns, which allowed the exact A6 violations the guard was supposed to catch. After the A6 fix, the exclusion was removed.
+
 
 ### 3.8 Token Value Intentionality Check (When Creating Design Tokens)
 
@@ -479,7 +463,7 @@ When creating new design token files (e.g., `app_motion.dart`) that supersede or
 3. Log the comparison table in the session log under the creation step.
 4. Do NOT leave value changes undocumented — @CodeGuard WILL flag them during Orchestrator review.
 
-Evidence: Phase 0 Session — `curveSpring` Y2 changed from 1.275 to 1.075 (reduced overshoot) and `pressScale` changed from 0.95 to 0.96 (subtler press) without documented rationale. Caught by @CodeGuard during Orchestrator review, requiring post-hoc documentation. Would have been cleaner to document during creation.
+
 
 ### Step 3.9 — Widget Conversion Test Gate (Mandatory After StatefulWidget Conversion)
 
@@ -491,7 +475,7 @@ After converting ANY widget from `StatelessWidget` to `StatefulWidget` (or addin
 
 Do NOT defer test verification to the QA phase. Animation timing breaks are invisible to `flutter analyze` and only surface in widget tests.
 
-Evidence: Phase 2 Session — MainNavigationScreen conversion from StatelessWidget to StatefulWidget broke T51/T52 tests (needed `pumpAndSettle()` for FAB animation). Caught only in Phase 9 (6 phases later). CoreWidgetRedesign — ScaleTransition finder issues after animation controller changes.
+
 
 ### Step 3.10 — Session Log Closure Enforcement
 
@@ -499,7 +483,7 @@ If the session reaches the final phase or the user indicates work is complete, y
 
 If no agent mistakes occurred, write a single row: `| None | No agent mistakes during execution | N/A |`.
 
-Evidence: CoreWidgetRedesign session — 9 phases completed but session log never formally closed. Quick Summary and Agent Improvement Notes left as empty placeholders, breaking @SystemEvolution's ability to analyse that session.
+
 
 ### Step 3.11 — Mandatory Code Comments (WHAT and WHY)
 
@@ -518,8 +502,6 @@ Rules:
 This rule applies to ALL agents that produce code: @Architect, @Pixel, @Sentinel (tests), and @Executor.
 
 ### Step 3.12 — Test Text Expectation Atomic Update Rule
-
-> **Evidence:** Phase4_HomeDiscovery — empty state text changed from "No favorites yet." to "No favorites yet" (trailing period removed) but the test expectation was not updated until QA caught it.
 
 When changing user-facing text in a View (even punctuation changes like removing a trailing period), update the corresponding test expectations IN THE SAME PHASE — not deferred to QA. Immediately after changing view text:
 
@@ -640,7 +622,7 @@ When the session ends:
 
 **Hard requirement:** The "Agent Improvement Notes" table in the session log MUST be filled before marking a session COMPLETED. If no agent mistakes occurred, write a single row: `| None | No agent mistakes during execution | N/A |`. An empty or template-placeholder table is a documentation defect.
 
-Evidence: Sessions 4 (Phase E) and 5 (GitHub CI) — Agent Improvement Notes tables were left empty or template-placeholder, breaking @SystemEvolution's ability to detect patterns from those sessions.
+
 
 ---
 

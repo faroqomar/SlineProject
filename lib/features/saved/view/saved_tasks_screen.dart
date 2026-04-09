@@ -77,8 +77,9 @@ class _SavedTasksView extends StatelessWidget {
                           child: ScaleButton(
                             onPressed: () => Navigator.pop(context),
                             child: Container(
-                              width: 48,
-                              height: 48,
+                              // AppDimens.touchTarget (48) meets the minimum recommended touch target
+                              width: AppDimens.touchTarget,
+                              height: AppDimens.touchTarget,
                               decoration: BoxDecoration(
                                 color: colorScheme.cardBackground,
                                 shape: BoxShape.circle,
@@ -89,7 +90,7 @@ class _SavedTasksView extends StatelessWidget {
                               child: Icon(
                                 Icons.arrow_back,
                                 color: colorScheme.text,
-                                size: 20,
+                                size: AppDimens.iconSmall,
                               ),
                             ),
                           ),

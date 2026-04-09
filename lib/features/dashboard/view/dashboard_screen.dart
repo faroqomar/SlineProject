@@ -6,7 +6,10 @@ import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/services/payment_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
+import 'package:sline_app/core/theme/app_motion.dart';
+import 'package:sline_app/core/theme/app_states.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/web_url_utils_stub.dart'
@@ -201,7 +204,10 @@ class _DashboardContentState extends State<_DashboardContent>
         centerTitle: true,
         elevation: 0,
         actions: [
+          // tooltip provides both a visible long-press hint and a Semantics label
+          // for accessibility, replacing a manual Semantics wrapper.
           IconButton(
+            tooltip: 'Dashboard settings',
             icon: Icon(
               key: DashboardScreen.settingsButtonKey,
               Icons.settings_outlined,
@@ -211,7 +217,8 @@ class _DashboardContentState extends State<_DashboardContent>
           ),
         ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
+          // Token: buttonHeightCompact (48) for tab bar height
+          preferredSize: const Size.fromHeight(AppLayout.buttonHeightCompact),
           child: TabBar(
             controller: _tabController,
             isScrollable: true,
@@ -234,8 +241,10 @@ class _DashboardContentState extends State<_DashboardContent>
         ),
       ),
       body: Padding(
-        // Add padding to avoid overlap with Main Bottom Nav Bar
-        padding: const EdgeInsets.only(bottom: 80),
+        // Padding to avoid overlap with Main Bottom Nav Bar
+        padding: const EdgeInsets.only(
+          bottom: AppLayout.bottomNavHeight + AppLayout.spacingStandard,
+        ),
         child: TabBarView(
           controller: _tabController,
           physics:
@@ -310,20 +319,34 @@ class _RoleButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        key: buttonKey,
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        decoration: BoxDecoration(
-          color: isActive ? colorScheme.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Text(
-          label,
-          style: AppTypography.captionBold.copyWith(
-            color: isActive ? AppColors.white : colorScheme.textSecondary,
+    return Semantics(
+      button: true,
+      // selected communicates active state to screen readers without embedding it
+      // in the label string, enabling proper VoiceOver/TalkBack announcements.
+      selected: isActive,
+      label: '$label role',
+      child: GestureDetector(
+        onTap: () {
+          AppInteractionStates.hapticTap();
+          onTap();
+        },
+        child: AnimatedContainer(
+          key: buttonKey,
+          duration: AppMotion.fast,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimens.p16,
+            vertical: AppDimens.p6,
+          ),
+          decoration: BoxDecoration(
+            color: isActive ? colorScheme.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppDimens.r16),
+          ),
+          child: Text(
+            label,
+            style: AppTypography.captionBold.copyWith(
+              // onPrimary (Material ColorScheme) ensures legible contrast against the primary-colored active background
+              color: isActive ? Theme.of(context).colorScheme.onPrimary : colorScheme.textSecondary,
+            ),
           ),
         ),
       ),

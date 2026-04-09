@@ -38,6 +38,11 @@ class AppMotion {
   /// Count-up numbers, progress bars, balance animations.
   static const Duration dramatic = Duration(milliseconds: 800);
 
+  // ── Repeating / Looping ─────────────────────────────────
+
+  /// Typing indicator dot animation cycle (repeating sine pulse).
+  static const Duration typingCycle = Duration(milliseconds: 600);
+
   /// Skeleton shimmer loaders (repeating).
   static const Duration shimmer = Duration(milliseconds: 1500);
 
