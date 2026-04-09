@@ -518,18 +518,10 @@ class SkeletonCategoryTile extends StatelessWidget {
           SkeletonAvatar(size: 40),
           SizedBox(height: AppDimens.p8),
           // Category name
-          SkeletonLoader(
-            width: 80,
-            height: 14,
-            borderRadius: AppDimens.r4,
-          ),
+          SkeletonLoader(width: 80, height: 14, borderRadius: AppDimens.r4),
           SizedBox(height: AppDimens.p4),
           // Item count
-          SkeletonLoader(
-            width: 40,
-            height: 10,
-            borderRadius: AppDimens.r4,
-          ),
+          SkeletonLoader(width: 40, height: 10, borderRadius: AppDimens.r4),
         ],
       ),
     );
