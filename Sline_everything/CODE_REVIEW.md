@@ -168,6 +168,47 @@ Any hits must be replaced with tokens or documented with a justification comment
 
 **Evidence**: Phase 5 — `notification_badge_button.dart` called `_handleCountChange(count)` (which triggers animation) directly in `build()`. Fixed with `addPostFrameCallback`.
 
+### Deferred Data Fetch for Navigation (Phase 6 Chat Redesign, 2026-04-10)
+
+**Pattern**: Never `await` a data-fetching call (e.g., `fetchMessages`, `fetchDetails`) BEFORE `Navigator.push`. The user must see the destination screen instantly. Move data loading to the destination screen's `initState()` (via `addPostFrameCallback`) and render a loading state (spinner or skeleton) while data arrives.
+
+**Anti-pattern** (causes lag):
+```dart
+await controller.fetchMessages(id);  // blocks UI ~500ms+
+Navigator.push(context, ...);
+```
+
+**Correct pattern**:
+```dart
+Navigator.push(context, ...);  // instant
+// In destination screen initState():
+WidgetsBinding.instance.addPostFrameCallback((_) {
+  controller.fetchMessages(id);
+});
+```
+
+**Evidence**: Phase 6 continuation — `_openChat()` in `messages_screen.dart` blocked on `await controller.fetchMessages(convo.id)` before navigation, causing ~500ms+ chat opening lag. Fixed by moving `fetchMessages` into `ChatScreen.initState()` with a loading spinner.
+
+### Optimistic Local State Updates (Phase 6 Chat Redesign, 2026-04-10)
+
+**Pattern**: When a user action triggers a backend update that also changes visible UI state (e.g., marking a message as read, toggling a favorite, changing a status), apply the change locally first via a `*Locally()` method on the ViewModel, then reconcile with a background `fetch*()` call. Never rely solely on a backend round-trip to update the UI.
+
+**Rule**:
+1. `viewModel.updateThingLocally(id)` — mutates the local list/object and calls `notifyListeners()`
+2. `unawaited(viewModel.fetchThings())` — background reconciliation
+
+**Evidence**: Phase 6 continuation — unread badge persisted after opening a conversation because `markSeen()` only updated the backend. Local `Conversation` object still had `lastMessageSeenAt == null`. Fixed by adding `markConversationReadLocally()` for instant optimistic update.
+
+### Auto-Scroll Differentiation (Phase 6 Chat Redesign, 2026-04-10)
+
+**Pattern**: When implementing auto-scroll-to-bottom in list views (chat, feeds, logs), distinguish two cases:
+1. **Initial load** (list goes from empty to populated): ALWAYS scroll to bottom.
+2. **Incremental update** (new item appended while list is visible): scroll to bottom ONLY if the user is near the bottom (within ~300px of `maxScrollExtent`).
+
+**Rule**: Detect the initial load case by checking `previousItemCount == 0` before the update.
+
+**Evidence**: Phase 6 continuation — auto-scroll guard `_previousMessageCount > 0` blocked the 0-to-N transition after `fetchMessages` was moved to `initState()`. Messages loaded but the view stayed at position 0 instead of scrolling to the latest message.
+
 ### Raw String Interpolation Guard (Phase E, 2026-04-05)
 
 **Pattern**: Never use raw string literals (`r'...'`) in `AppLogger` calls or any string containing `$variable` interpolation. Raw strings make `$` literal. Use normal single-quoted strings.

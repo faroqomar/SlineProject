@@ -3992,3 +3992,74 @@ Flutter + Supabase freelance marketplace with real-time chat, tasks, and profile
 - [x] Rate limiting tests (2s debounce)
 - [x] Notification verification (reject creates notification)
 
+### 🟢 Version 2.25 — Phase 6 Chat & Messaging Redesign
+
+**Date**: 2026-04-10
+**Status**: Phase 6 Complete — Chat & Messaging visual redesign with advanced interactions
+**Commit**: _Pending_
+
+#### ✅ Implemented
+
+- **Conversation List Redesign**: Elevated card tiles with `AppDecorations.elevation(1)`, left accent bar (3.5px primary) for unread state, inline unread dot (7px), primary border glow, "You:" prefix on sent messages, relative time formatting (Just now/Xm/Xh/Yesterday/weekday/MMMd), 50px circular avatar with online status dot
+- **Unread State Management**: Optimistic local update via `markConversationReadLocally()` + background `fetchConversations()` reconciliation. Unread pill badge in header showing total count
+- **Message Bubble Enhancements**: Emoji-only rendering (large without bubble for 1-3 emoji), link detection with tappable URLs via RichText, reply quote display (sender name + quoted text)
+- **Chat Interaction Features**: Swipe-to-reply gesture, long-press context menu, reply preview bar in composer
+- **Instant Chat Navigation**: Deferred `fetchMessages` from pre-navigation blocking call to `ChatScreen.initState()` with loading spinner, eliminating ~500ms+ lag
+- **Auto-Scroll Fix**: Differentiated initial load (always scroll to bottom) vs incremental updates (scroll only if within 300px of bottom)
+- **Offer Message Bubble**: Elevated card with AnimatedContainer, status-colored border, CUSTOM OFFER badge, status chips (Pending/Accepted/Declined/Completed)
+- **FullscreenImageViewer**: New reusable core widget with InteractiveViewer (pinch-to-zoom), close button, optional caption bar, full Semantics coverage
+- **Search Bar**: Debounced filtering (300ms) in MessagesScreen header with animated toggle
+- **Typing Indicator**: Disabled (TODO) — backend `otherUserTyping` unreliable, sine-wave dot pulse glitches. Downgraded from `TickerProviderStateMixin` to `SingleTickerProviderStateMixin`
+
+#### 📁 New Files
+
+| File | Purpose |
+|------|---------|
+| `lib/core/widgets/fullscreen_image_viewer.dart` | Reusable fullscreen image viewer with pinch-to-zoom |
+
+#### 🔧 Modified Files
+
+| File | Changes |
+|------|---------|
+| `lib/features/chat/view/widgets/conversation_list_tile.dart` | Complete redesign: elevated card, unread indicators, relative time, typing disabled |
+| `lib/features/chat/view/messages_screen.dart` | Search bar, unread badge, deferred navigation, optimistic read clearing |
+| `lib/features/chat/view/chat_screen.dart` | initState fetchMessages, loading spinner, auto-scroll fix, swipe-to-reply |
+| `lib/features/chat/view/widgets/message_bubble.dart` | Emoji-only rendering, link detection, reply quotes |
+| `lib/features/chat/view/widgets/offer_message_bubble.dart` | Elevated card, status borders, AnimatedContainer |
+| `lib/features/chat/view/widgets/chat_context_widget.dart` | Pill polish with icon differentiation |
+| `lib/features/chat/attachments/widgets/attachment_message_tile.dart` | Fullscreen viewer integration |
+| `lib/features/chat/viewmodels/chat_view_model.dart` | Added `markConversationReadLocally()` |
+| `lib/features/notifications/view/widgets/notification_badge_button.dart` | Ticker mixin fix |
+| `test/widget/chat/phase6_advanced_interactions_test.dart` | 19 new widget tests (47 total chat tests pass) |
+
+#### 📚 Documentation
+
+- **Session Log**: `docs/LOG/SESSION_PLAN_Phase6_ChatAdvancedInteractions_2026-04-10.md`
+- **System Evolution**: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-10.md`
+- **Developer Guide**: Updated Chat Feature Reference file inventory (v2.25.0)
+- **Structure**: Updated core/widgets/ and features/chat/ entries
+- **Code Review**: 3 new guardrail notes (Deferred Navigation, Optimistic Updates, Auto-Scroll)
+
+#### 📊 Impact
+
+- Chat conversations open instantly (no pre-fetch lag)
+- Unread indicators clear immediately on conversation open
+- Emoji messages render at large size for visual emphasis
+- URLs are tappable inline within message bubbles
+- Image attachments viewable fullscreen with pinch-to-zoom
+- Conversation list visually distinguishes read vs unread at a glance
+
+#### 🧪 Verification
+
+- Widget tests: `flutter test test/widget/chat/` — 47/47 pass
+- Full suite: `flutter test` — 1392 pass, 30 skip, 1 pre-existing flaky
+- Analyzer: `flutter analyze` — 0 errors, 0 warnings, 4 pre-existing infos
+- Formatter: `dart format --set-exit-if-changed .` — clean
+
+#### 🔒 Known Limitations (Backend Gaps)
+
+- Reply storage: needs `reply_to_message_id` column + MessageService + ChatViewModel.sendReply()
+- Message deletion: needs `delete_message` RPC with ownership verification
+- Delivery/read receipts: needs full status chain (sending→sent→delivered→read)
+- Explicit online status: using `presenceUpdatedAt` within 60s as heuristic (no `isOnline` field)
+

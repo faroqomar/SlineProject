@@ -8,6 +8,7 @@ import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/error_mapper.dart';
 import 'package:sline_app/core/utils/signed_url_cache.dart';
+import 'package:sline_app/core/widgets/fullscreen_image_viewer.dart';
 import 'package:sline_app/core/widgets/skeleton_loader.dart';
 import 'package:sline_app/features/chat/attachments/services/upload_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -340,61 +341,16 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
     );
   }
 
+  /// Opens the image in the shared [FullscreenImageViewer] with Hero animation,
+  /// pinch-to-zoom, and drag-to-dismiss. Replaces the old basic Dialog viewer.
+  /// Phase 6B: wired to reusable FullscreenImageViewer from core/widgets.
   void _showFullScreen(BuildContext context, String url) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          insetPadding: const EdgeInsets.all(AppDimens.p8),
-          backgroundColor: Colors.black,
-          child: GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: InteractiveViewer(
-              child: Image.network(
-                url,
-                fit: BoxFit.contain,
-                // Show a spinner while fullscreen image bytes are loading.
-                loadingBuilder: (ctx, child, progress) {
-                  if (progress == null) return child;
-                  return const Center(
-                    child: CircularProgressIndicator(color: Colors.white),
-                  );
-                },
-                // Show an error state with a close button if the image fails
-                // to load in the fullscreen viewer.
-                errorBuilder: (ctx, error, stackTrace) {
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.broken_image_outlined,
-                          color: Colors.white54,
-                          size: 48,
-                        ),
-                        const SizedBox(height: 12),
-                        // TODO(l10n): localize when l10n is added.
-                        const Text(
-                          'Failed to load',
-                          style: TextStyle(color: Colors.white70),
-                        ),
-                        const SizedBox(height: 16),
-                        TextButton(
-                          onPressed: () => Navigator.of(ctx).pop(),
-                          child: const Text(
-                            'Close',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        );
-      },
+    FullscreenImageViewer.show(
+      context,
+      imageUrl: url,
+      // Hero tag uses storage path for stable identity across URL regeneration
+      heroTag: 'chat-attachment-${widget.storagePath}',
+      caption: widget.caption,
     );
   }
 }

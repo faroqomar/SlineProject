@@ -31,7 +31,7 @@ class NotificationBadgeButton extends StatefulWidget {
 }
 
 class _NotificationBadgeButtonState extends State<NotificationBadgeButton>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   // ── Badge entrance animation ───────────────────────────────
   late final AnimationController _badgeController;
   late final Animation<double> _badgeScale;

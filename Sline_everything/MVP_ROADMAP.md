@@ -149,7 +149,7 @@ Tests: 706 → 780 (+74). Coverage floor: 40%. All 6 architecture guard checks p
 | 1 | Core Widget Redesign | ✅ Completed | Redesign | `SESSION_PLAN_CoreWidgetRedesign_2026-04-07.md` |
 | 2+3+5 | App Shell + Auth + Cards | ✅ Completed | Redesign | `SESSION_PLAN_Phase2_AppShellAuthCards_2026-04-08.md` |
 | 4 | Home & Discovery | ✅ Completed | Redesign | `SESSION_PLAN_Phase4_HomeDiscovery_2026-04-08.md` |
-| 6 | Chat & Messaging | 🚧 Token-normalized | Token Normalization (visual redesign pending) | `SESSION_PLAN_Phase5_ChatDashboardNotifications_2026-04-09.md` |
+| 6 | Chat & Messaging | ✅ Completed | Redesign (Phase 6 Advanced Interactions + continuation) | `SESSION_PLAN_Phase6_ChatAdvancedInteractions_2026-04-10.md` |
 | 7 | Dashboard | 🚧 Token-normalized | Token Normalization (visual redesign pending) | (same as above) |
 | 8 | Booking & Payments | ⏳ Planned | — | — |
 | 9 | Profile | ⏳ Planned | — | — |
@@ -161,12 +161,13 @@ Tests: 706 → 780 (+74). Coverage floor: 40%. All 6 architecture guard checks p
 | 15 | Secondary Screens | ⏳ Planned | — | — |
 | 16 | Cross-Cutting Quality | ⏳ Planned | — | — |
 
-**Note:** Phase 5 (ChatDashboardNotifications) was executed as token normalization and polish, not as the visual redesign described in the Master Plan. The actual visual redesign of Chat, Dashboard, and Notifications is still pending.
+**Note:** Phase 5 (ChatDashboardNotifications) was executed as token normalization and polish, not as the visual redesign described in the Master Plan. Phase 6 (Chat & Messaging) was then completed as the actual visual redesign: elevated conversation tiles, unread indicators, emoji-only rendering, link detection, reply quotes, swipe-to-reply, FullscreenImageViewer, deferred navigation for instant chat opening, and optimistic unread state management. Dashboard and Notifications visual redesign is still pending.
 
 ---
 
 ## 11. Current Focus
 
 ### Current Focus
-1. **UI Redesign Phase 6: Chat & Messaging** (next) — actual visual redesign per Master Plan specs (new input bar, swipe-to-reply, emoji-only messages, link detection, long-press context menu, redesigned conversation list)
-2. **Phase F: Ship Preparation** (planned) — Arabic/Kurdish translations, widget tests for critical views, remaining lint debt adoption, GitHub repo safeguards
+1. **UI Redesign Phase 7: Dashboard** (next) — actual visual redesign of dashboard tabs, overview cards, and work summaries
+2. **UI Redesign Phase 8: Booking & Payments** (planned) — booking flow screens, payment UI, escrow status
+3. **Phase F: Ship Preparation** (planned) — Arabic/Kurdish translations, widget tests for critical views, remaining lint debt adoption, GitHub repo safeguards

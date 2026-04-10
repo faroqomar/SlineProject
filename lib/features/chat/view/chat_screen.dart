@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
@@ -33,6 +34,10 @@ import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
 /// renders tighter spacing + adjusted corner radii), enhanced date separators
 /// (pill-style with horizontal rules), opacity-animated send button,
 /// keyboard-aware scroll FAB, and accessibility labels throughout.
+///
+/// Phase 6: Added swipe-to-reply gesture, long-press context menu (copy/reply),
+/// reply preview bar above input field. Reply is View-layer only — reply context
+/// does not persist until backend supports reply_to_message_id column.
 class ChatScreen extends StatefulWidget {
   final Conversation conversation;
   final bool enableLifecycleEffects;
@@ -85,6 +90,33 @@ class _ChatScreenState extends State<ChatScreen> {
   /// Whether the text input has content (for send button opacity animation).
   bool _hasText = false;
 
+  /// Tracks the previous message count so we can detect new incoming messages
+  /// and auto-scroll when the user is near the bottom of the chat.
+  int _previousMessageCount = 0;
+
+  // ── Reply-to state (Phase 6) ─────────────────────────────────
+  /// The message being replied to. When non-null, a reply preview bar
+  /// appears above the input field. Cleared on send or close.
+  // TODO: Pass _replyTarget?.id to ChatViewModel.sendMessage() when backend
+  // supports reply_to_message_id column. Currently reply context is View-only.
+  Message? _replyTarget;
+
+  /// Client-side map: sent message ID → replied-to message.
+  /// Keeps reply quotes visible for the current session. Not persisted — when
+  /// the user leaves and returns, reply quotes are lost until backend stores
+  /// reply_to_message_id.
+  final Map<String, Message> _replyMap = {};
+
+  /// Sets the reply target and requests focus on the input field so the user
+  /// can immediately start typing their reply.
+  void _setReplyTarget(Message msg) {
+    setState(() => _replyTarget = msg);
+    AppLogger.d('[ChatScreen] reply target set: ${msg.id}', tag: 'Chat');
+  }
+
+  /// Clears the reply target, hiding the reply preview bar.
+  void _clearReplyTarget() => setState(() => _replyTarget = null);
+
   @override
   void initState() {
     super.initState();
@@ -99,9 +131,21 @@ class _ChatScreenState extends State<ChatScreen> {
           '[ChatScreen] opened: convo=${widget.conversation.id}',
           tag: 'Chat',
         );
+        // Fetch messages here so the screen navigates instantly — the
+        // Consumer<ChatViewModel> builder reacts to isLoadingMessages and
+        // shows content as soon as messages arrive. Previously fetchMessages
+        // was called BEFORE navigation in MessagesScreen._openChat(), which
+        // caused a visible lag on tap.
+        unawaited(_chatCtrl.fetchMessages(widget.conversation.id));
         unawaited(_chatCtrl.subscribeToActiveConversation());
         if (!mounted) return;
         await _chatCtrl.markReceiptsForActive(delivered: true, seen: true);
+        // Scroll to bottom on initial load so the user sees the latest messages
+        if (mounted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _scrollToBottom();
+          });
+        }
       });
     }
   }
@@ -314,8 +358,51 @@ class _ChatScreenState extends State<ChatScreen> {
               builder: (context, controller, child) {
                 final messages = controller.currentMessages;
 
-                // Empty state
-                if (messages.isEmpty && !controller.isLoadingMessages) {
+                // Auto-scroll: two cases —
+                // 1) Initial load (previousCount was 0, now messages arrived):
+                //    always scroll to bottom so user sees latest messages.
+                // 2) New messages while viewing (previousCount > 0, count grew):
+                //    only scroll if user is near the bottom (within 300px).
+                if (messages.length > _previousMessageCount) {
+                  final wasEmpty = _previousMessageCount == 0;
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (!mounted || !_scrollController.hasClients) return;
+                    if (wasEmpty) {
+                      // Initial load — always scroll to bottom
+                      _scrollToBottom();
+                    } else {
+                      final maxScroll =
+                          _scrollController.position.maxScrollExtent;
+                      final currentScroll = _scrollController.offset;
+                      if (maxScroll - currentScroll < 300) {
+                        _scrollToBottom();
+                      }
+                    }
+                  });
+                }
+                _previousMessageCount = messages.length;
+
+                // Loading state — show a centered spinner while messages
+                // are being fetched. This runs when the screen navigates
+                // instantly and fetchMessages() hasn't resolved yet.
+                if (messages.isEmpty && controller.isLoadingMessages) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 120),
+                      child: SizedBox(
+                        width: 28,
+                        height: 28,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                // Empty state — no messages and not loading
+                if (messages.isEmpty) {
                   return _buildEmptyState(colorScheme);
                 }
 
@@ -325,11 +412,14 @@ class _ChatScreenState extends State<ChatScreen> {
                   label: 'Chat messages',
                   child: ListView.builder(
                     controller: _scrollController,
+                    // Bottom padding 140px — leaves room for the input bar (~80px)
+                    // plus typing indicator + safe area so the last message doesn't
+                    // sit flush against the input row.
                     padding: const EdgeInsets.fromLTRB(
                       AppLayout.spacingSection,
                       AppDimens.p100,
                       AppLayout.spacingSection,
-                      AppDimens.p100,
+                      140,
                     ),
                     itemCount: chatItems.length,
                     itemBuilder: (context, index) {
@@ -412,25 +502,44 @@ class _ChatScreenState extends State<ChatScreen> {
                               msg.attachmentUrl!.isNotEmpty);
 
                       if (hasImage) {
-                        return AttachmentMessageTile(
+                        return _wrapWithInteractions(
+                          message: msg,
                           isMine: isMine,
-                          storagePath: msg.attachmentUrl!,
-                          time: formatFriendlyTime(msg.createdAt),
-                          caption: msg.content != '[photo]'
-                              ? msg.content
-                              : null,
-                          signedUrlResolver: widget.attachmentSignedUrlResolver,
+                          isAttachment: true,
+                          child: AttachmentMessageTile(
+                            isMine: isMine,
+                            storagePath: msg.attachmentUrl!,
+                            time: formatFriendlyTime(msg.createdAt),
+                            caption: msg.content != '[photo]'
+                                ? msg.content
+                                : null,
+                            signedUrlResolver:
+                                widget.attachmentSignedUrlResolver,
+                          ),
                         );
                       }
 
-                      // Regular text messages with grouping
-                      return MessageBubble(
-                        text: msg.content,
-                        time: formatFriendlyTime(msg.createdAt),
+                      // Regular text messages with grouping + swipe-to-reply + long-press menu.
+                      // Check client-side reply map for quoted context.
+                      final repliedTo = _replyMap[msg.id];
+                      return _wrapWithInteractions(
+                        message: msg,
                         isMine: isMine,
-                        status: isMine ? status : null,
-                        isFirstInGroup: msgItem.isFirstInGroup,
-                        isLastInGroup: msgItem.isLastInGroup,
+                        child: MessageBubble(
+                          text: msg.content,
+                          time: formatFriendlyTime(msg.createdAt),
+                          isMine: isMine,
+                          status: isMine ? status : null,
+                          isFirstInGroup: msgItem.isFirstInGroup,
+                          isLastInGroup: msgItem.isLastInGroup,
+                          replyToSender: repliedTo != null
+                              ? (repliedTo.senderId == me
+                                    ? 'You'
+                                    : widget.conversation.otherUserName ??
+                                          'User')
+                              : null,
+                          replyToText: repliedTo?.content,
+                        ),
                       );
                     },
                   ),
@@ -739,124 +848,351 @@ class _ChatScreenState extends State<ChatScreen> {
         AppLayout.spacingSection,
         MediaQuery.of(context).padding.bottom + AppDimens.p12,
       ),
-      child: Row(
+      // DECISION-2: Column wraps reply bar + input row inside AppCardContainer.
+      // Reply bar slides in/out above the input row via AnimatedSize.
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Attachment button
-          Semantics(
-            button: true,
-            label: 'Attach image',
-            child: GestureDetector(
-              onTap: _onPickImage,
-              child: SizedBox(
-                width: AppLayout.circleButtonVisualSize,
-                height: AppLayout.circleButtonVisualSize,
-                child: Icon(
-                  Icons.attach_file,
-                  color: colorScheme.primary,
-                  size: AppDimens.p22,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: AppLayout.spacingStandard),
-
-          // Text input
-          Expanded(
-            child: Container(
-              height:
-                  AppLayout.buttonHeightCompact, // 48px standard input height
-              decoration: BoxDecoration(
-                color: colorScheme.inputBackground,
-                borderRadius: BorderRadius.circular(AppDimens.r23),
-                border: Border.all(color: colorScheme.inputBorder),
-              ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppLayout.spacingSection,
-              ),
-              child: TextField(
-                key: ChatScreen.messageInputKey,
-                controller: _messageController,
-                style: TextStyle(color: colorScheme.text),
-                decoration: InputDecoration(
-                  hintText: 'Type a message...',
-                  hintStyle: TextStyle(color: colorScheme.textSecondary),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.only(bottom: AppDimens.p10),
-                ),
-                onChanged: (value) {
-                  _chatCtrl.setTyping(value.trim().isNotEmpty);
-                },
-              ),
-            ),
-          ),
-          const SizedBox(width: AppLayout.spacingStandard),
-
-          // Send button — opacity animation based on text presence
-          Consumer<ChatViewModel>(
-            builder: (context, vm, _) {
-              final sending = vm.isSending;
-              return Semantics(
+          // Reply preview bar — shown when replying to a message
+          _buildReplyBar(colorScheme),
+          Row(
+            children: [
+              // Attachment button
+              Semantics(
                 button: true,
-                label: 'Send message',
+                label: 'Attach image',
                 child: GestureDetector(
-                  onTap: sending
-                      ? null
-                      : () async {
-                          final text = _messageController.text.trim();
-                          if (text.isEmpty) return;
-                          AppInteractionStates.hapticTap();
-                          try {
-                            await _chatCtrl.sendMessage(text);
-                            if (context.mounted) _messageController.clear();
-                          } on Exception catch (_) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Message could not be sent. Please try again.',
-                                  ),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                  child: AnimatedOpacity(
-                    // Fade 0.5→1.0 when text is entered, disabled when sending
-                    duration: AppMotion.fast,
-                    opacity: sending ? 0.5 : (_hasText ? 1.0 : 0.5),
-                    child: Container(
-                      key: ChatScreen.sendButtonKey,
-                      width: AppLayout.buttonHeightCompact,
-                      height: AppLayout.buttonHeightCompact,
-                      decoration: BoxDecoration(
-                        color: colorScheme.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      child: sending
-                          ? const Center(
-                              child: SizedBox(
-                                width: AppInteractionStates.loadingSize,
-                                height: AppInteractionStates.loadingSize,
-                                child: CircularProgressIndicator(
-                                  strokeWidth:
-                                      AppInteractionStates.loadingStrokeWidth,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            )
-                          : const Icon(
-                              Icons.send,
-                              color: Colors.white,
-                              size: AppLayout.iconStandard,
-                            ),
+                  onTap: _onPickImage,
+                  child: SizedBox(
+                    width: AppLayout.circleButtonVisualSize,
+                    height: AppLayout.circleButtonVisualSize,
+                    child: Icon(
+                      Icons.attach_file,
+                      color: colorScheme.primary,
+                      size: AppDimens.p22,
                     ),
                   ),
                 ),
-              );
-            },
+              ),
+              const SizedBox(width: AppLayout.spacingStandard),
+
+              // Text input
+              Expanded(
+                child: Container(
+                  height: AppLayout
+                      .buttonHeightCompact, // 48px standard input height
+                  decoration: BoxDecoration(
+                    color: colorScheme.inputBackground,
+                    borderRadius: BorderRadius.circular(AppDimens.r23),
+                    border: Border.all(color: colorScheme.inputBorder),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppLayout.spacingSection,
+                  ),
+                  child: TextField(
+                    key: ChatScreen.messageInputKey,
+                    controller: _messageController,
+                    style: TextStyle(color: colorScheme.text),
+                    decoration: InputDecoration(
+                      hintText: 'Type a message...',
+                      hintStyle: TextStyle(color: colorScheme.textSecondary),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.only(
+                        bottom: AppDimens.p10,
+                      ),
+                    ),
+                    onChanged: (value) {
+                      _chatCtrl.setTyping(value.trim().isNotEmpty);
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppLayout.spacingStandard),
+
+              // Send button — opacity animation based on text presence
+              Consumer<ChatViewModel>(
+                builder: (context, vm, _) {
+                  final sending = vm.isSending;
+                  return Semantics(
+                    button: true,
+                    label: 'Send message',
+                    child: GestureDetector(
+                      onTap: sending
+                          ? null
+                          : () async {
+                              final text = _messageController.text.trim();
+                              if (text.isEmpty) return;
+                              AppInteractionStates.hapticTap();
+                              // Capture reply target before async gap
+                              final replySnapshot = _replyTarget;
+                              try {
+                                await _chatCtrl.sendMessage(text);
+                                if (context.mounted) {
+                                  // Record reply association in client-side map.
+                                  // The latest message in the list is the one we just sent.
+                                  if (replySnapshot != null) {
+                                    final msgs = _chatCtrl.currentMessages;
+                                    if (msgs.isNotEmpty) {
+                                      _replyMap[msgs.last.id] = replySnapshot;
+                                    }
+                                  }
+                                  _messageController.clear();
+                                  _clearReplyTarget(); // Clear reply after send
+                                  // Auto-scroll to bottom after the next frame so the
+                                  // ListView has rebuilt with the new message included.
+                                  WidgetsBinding.instance.addPostFrameCallback((
+                                    _,
+                                  ) {
+                                    if (mounted) _scrollToBottom();
+                                  });
+                                }
+                              } on Exception catch (_) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Message could not be sent. Please try again.',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                      child: AnimatedOpacity(
+                        // Fade 0.5→1.0 when text is entered, disabled when sending
+                        duration: AppMotion.fast,
+                        opacity: sending ? 0.5 : (_hasText ? 1.0 : 0.5),
+                        child: Container(
+                          key: ChatScreen.sendButtonKey,
+                          width: AppLayout.buttonHeightCompact,
+                          height: AppLayout.buttonHeightCompact,
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: sending
+                              ? const Center(
+                                  child: SizedBox(
+                                    width: AppInteractionStates.loadingSize,
+                                    height: AppInteractionStates.loadingSize,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: AppInteractionStates
+                                          .loadingStrokeWidth,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.send,
+                                  color: Colors.white,
+                                  size: AppLayout.iconStandard,
+                                ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
         ],
       ),
+    );
+  }
+
+  /// Reply preview bar — shown above input when replying to a message.
+  /// Slides in/out with AnimatedSize. Shows sender name + message preview + close.
+  Widget _buildReplyBar(AppColorScheme colorScheme) {
+    return AnimatedSize(
+      // Smooth slide-in/out for the reply bar
+      duration: AppMotion.fast,
+      curve: AppMotion.curveDecel,
+      alignment: Alignment.topCenter,
+      child: _replyTarget != null
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: AppDimens.p8),
+              child: Container(
+                decoration: BoxDecoration(
+                  // Subtle tinted background for the reply bar
+                  color: colorScheme.primary.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(AppDimens.r12),
+                  // 3px left accent border matching the reply quote in bubbles
+                  border: Border(
+                    left: BorderSide(color: colorScheme.primary, width: 3),
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimens.p12,
+                  vertical: AppDimens.p8,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Sender name
+                          Text(
+                            _replyTarget!.senderId ==
+                                    context.read<ChatViewModel>().currentUserId
+                                ? 'You'
+                                : (widget.conversation.otherUserName ?? 'User'),
+                            style: AppTypography.captionBold.copyWith(
+                              color: colorScheme.primary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          // Message preview
+                          Text(
+                            _replyTarget!.content,
+                            style: AppTypography.caption.copyWith(
+                              color: colorScheme.textSecondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Close button to dismiss reply
+                    GestureDetector(
+                      onTap: _clearReplyTarget,
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppDimens.p4),
+                        child: Icon(
+                          Icons.close_rounded,
+                          size: AppDimens.iconSizeSmall,
+                          color: colorScheme.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : const SizedBox.shrink(),
+    );
+  }
+
+  /// Wraps a message widget with swipe-to-reply gesture and long-press context menu.
+  /// Only text and attachment messages support swipe + long-press.
+  /// Offer bubbles and date separators are not wrapped.
+  Widget _wrapWithInteractions({
+    required Message message,
+    required bool isMine,
+    required Widget child,
+    bool isAttachment = false,
+  }) {
+    return GestureDetector(
+      onLongPress: () => _showMessageMenu(
+        context,
+        message,
+        isMine,
+        isAttachment: isAttachment,
+      ),
+      child: _SwipeToReply(
+        onReply: () => _setReplyTarget(message),
+        child: child,
+      ),
+    );
+  }
+
+  /// Shows a styled bottom sheet context menu with Copy and/or Reply options.
+  /// Menu options vary by message type: text = Copy+Reply, attachment = Reply only
+  /// (unless caption exists), offer = Copy only.
+  void _showMessageMenu(
+    BuildContext context,
+    Message message,
+    bool isMine, {
+    bool isAttachment = false,
+  }) {
+    HapticFeedback.mediumImpact();
+    final colorScheme = context.colorScheme;
+
+    // Determine which actions to show based on message type
+    final hasTextToCopy = !isAttachment || (message.content != '[photo]');
+    final canReply = !isAttachment || message.content != '[photo]';
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: colorScheme.cardBackground,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppDimens.r24),
+        ),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppDimens.p8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Drag handle indicator
+                Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: AppDimens.p8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.textTertiary,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                // Copy option — available when message has copyable text
+                if (hasTextToCopy)
+                  ListTile(
+                    leading: Icon(
+                      Icons.copy_outlined,
+                      size: AppDimens.iconSizeSmall,
+                      color: colorScheme.text,
+                    ),
+                    title: Text(
+                      'Copy',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: colorScheme.text,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: AppDimens.p16,
+                    ),
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: message.content));
+                      Navigator.pop(sheetContext);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Message copied')),
+                      );
+                      AppInteractionStates.hapticTap();
+                    },
+                  ),
+                // Reply option — available for text and attachment messages
+                if (canReply)
+                  ListTile(
+                    leading: Icon(
+                      Icons.reply_rounded,
+                      size: AppDimens.iconSizeSmall,
+                      color: colorScheme.text,
+                    ),
+                    title: Text(
+                      'Reply',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: colorScheme.text,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: AppDimens.p16,
+                    ),
+                    onTap: () {
+                      Navigator.pop(sheetContext);
+                      _setReplyTarget(message);
+                    },
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -985,5 +1321,125 @@ class _ChatScreenState extends State<ChatScreen> {
     );
     if (result == null || result.isEmpty) return null;
     return result;
+  }
+}
+
+/// Stateful wrapper that provides swipe-to-reply gesture on chat messages.
+///
+/// Horizontal drag (start-to-end, i.e. right on LTR) reveals a reply icon
+/// behind the message. When the drag exceeds the 60px threshold and releases,
+/// the [onReply] callback fires with haptic feedback. Below threshold, the
+/// message springs back to its original position.
+///
+/// Only accepts right-swipe to avoid competing with ListView vertical scroll.
+/// Uses GestureDetector (not Dismissible) to prevent dismissal behavior.
+class _SwipeToReply extends StatefulWidget {
+  const _SwipeToReply({required this.onReply, required this.child});
+
+  final VoidCallback onReply;
+  final Widget child;
+
+  @override
+  State<_SwipeToReply> createState() => _SwipeToReplyState();
+}
+
+class _SwipeToReplyState extends State<_SwipeToReply>
+    with SingleTickerProviderStateMixin {
+  /// Horizontal drag offset in pixels.
+  double _dragOffset = 0;
+
+  /// Whether the drag has crossed the reply threshold.
+  bool _thresholdCrossed = false;
+
+  /// Threshold in pixels to trigger reply — 60px as specified in plan.
+  static const double _replyThreshold = 60.0;
+
+  /// Max drag to prevent the bubble from going too far off-screen.
+  static const double _maxDrag = 100.0;
+
+  /// Spring-back animation controller.
+  late final AnimationController _springController;
+
+  @override
+  void initState() {
+    super.initState();
+    _springController = AnimationController(
+      duration: AppMotion.fast,
+      vsync: this,
+    );
+  }
+
+  @override
+  void dispose() {
+    _springController.dispose();
+    super.dispose();
+  }
+
+  void _onDragUpdate(DragUpdateDetails details) {
+    // Only accept right-swipe (positive dx)
+    if (details.delta.dx < 0 && _dragOffset <= 0) return;
+    setState(() {
+      _dragOffset = (_dragOffset + details.delta.dx).clamp(0.0, _maxDrag);
+      _thresholdCrossed = _dragOffset >= _replyThreshold;
+    });
+  }
+
+  void _onDragEnd(DragEndDetails details) {
+    if (_thresholdCrossed) {
+      // Trigger reply with haptic feedback
+      AppInteractionStates.hapticTap();
+      widget.onReply();
+    }
+    // Spring back to original position
+    final startOffset = _dragOffset;
+    _springController.reset();
+    _springController.addListener(() {
+      if (!mounted) return;
+      setState(() {
+        _dragOffset = startOffset * (1 - _springController.value);
+      });
+    });
+    _springController.forward();
+    _thresholdCrossed = false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // Reply icon revealed behind the message during swipe
+        if (_dragOffset > 0)
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: AnimatedScale(
+                // Scale from 0→1 as drag approaches threshold
+                scale: (_dragOffset / _replyThreshold).clamp(0.0, 1.0),
+                duration: const Duration(milliseconds: 50),
+                curve: AppMotion.curveSpring,
+                child: Icon(
+                  Icons.reply_rounded,
+                  color: colorScheme.primary,
+                  size: AppLayout.iconStandard,
+                ),
+              ),
+            ),
+          ),
+        // Message bubble — translated right by drag offset
+        GestureDetector(
+          onHorizontalDragUpdate: _onDragUpdate,
+          onHorizontalDragEnd: _onDragEnd,
+          child: Transform.translate(
+            offset: Offset(_dragOffset, 0),
+            child: widget.child,
+          ),
+        ),
+      ],
+    );
   }
 }

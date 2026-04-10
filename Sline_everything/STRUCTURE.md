@@ -186,6 +186,7 @@ Important current core files:
 - `lib/core/utils/ledger_forensics.dart` — Ledger forensics (session_id, request_id) for p_meta; single source for ledger event flow (09)
 - `lib/core/widgets/signed_avatar.dart`
 - `lib/core/widgets/signed_image.dart`
+- `lib/core/widgets/fullscreen_image_viewer.dart` — **Phase 6** Reusable fullscreen image viewer with pinch-to-zoom and optional caption
 
 ### `lib/features/`
 
@@ -232,6 +233,9 @@ Not every feature uses every subfolder, but the standard live convention is:
   - `services/profile_deep_link_handler.dart` — **Phase E** Deep link handler for profile routes
 - `lib/features/chat/`: conversations, messages, attachments, realtime updates
   - `services/chat_deep_link_handler.dart` — **Phase E** Deep link handler for chat routes
+  - `view/widgets/conversation_list_tile.dart` — **Phase 6** Elevated card tile with unread indicators, relative time, online dot
+  - `view/widgets/message_bubble.dart` — **Phase 6** Emoji-only rendering, link detection, reply quotes
+  - `view/widgets/offer_message_bubble.dart` — **Phase 6** Elevated offer card with status borders
 - `lib/features/dashboard/`: unified dashboard tabs (Overview, Bookings, Work, Wallet, Inbox) and role-based work summaries, including the live bottom-nav dashboard slot. Tab cards (booking, offer, wallet snapshot) live in owning features: `booking/view/widgets/dashboard_booking_card.dart`, `tasks/view/widgets/dashboard_offer_card.dart`, `wallet/view/widgets/wallet_snapshot_card.dart`; dedicated Wallet tab in `view/tabs/wallet_tab.dart`; shared status helpers in `core/utils/status_presenter.dart`
 - `lib/features/direct_offers/`: direct chat offers (create, accept, pay, deliver, complete) and payment recovery
   - `services/direct_offer_deep_link_handler.dart` — **Phase E** Deep link handler for direct offer routes

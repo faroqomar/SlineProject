@@ -175,6 +175,26 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
     }
   }
 
+  /// Optimistically marks a conversation as read in the local list.
+  ///
+  /// Called after returning from a chat screen so the unread badge clears
+  /// instantly without waiting for a full `fetchConversations()` round-trip.
+  /// Sets `lastMessageSeenAt` to `DateTime.now()` on the matching
+  /// conversation. No backend call — `markSeen()` already handled that.
+  void markConversationReadLocally(String conversationId) {
+    final idx = conversations.indexWhere((c) => c.id == conversationId);
+    if (idx < 0) return;
+    final c = conversations[idx];
+    // Only update if currently "unread" (seenAt is null and sender is other)
+    if (c.lastMessageSeenAt != null) return;
+    conversations[idx] = c.copyWith(lastMessageSeenAt: DateTime.now());
+    AppLogger.d(
+      '[ChatVM] Optimistic local mark-read: $conversationId',
+      tag: 'ChatVM',
+    );
+    _notify();
+  }
+
   // --- Conversations ---
   Future<void> fetchConversations() async {
     final user = _repo.currentUser;

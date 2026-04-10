@@ -1,25 +1,33 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_states.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/utils/format_date.dart' as date_utils;
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/features/chat/models/conversation_model.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 
-/// Conversation list tile with animated typing dots, spring unread badge,
-/// and full Semantics coverage.
+/// Conversation list tile with elevated card design, animated unread badge,
+/// online status dot, relative time formatting, and full Semantics coverage.
 ///
-/// Phase 5 redesign: replaced all hardcoded colors with semantic tokens,
-/// added animated typing indicator (3-dot pulse), enhanced unread badge
-/// with spring entrance, and added accessibility labels. View-layer only.
+/// Phase 6 redesign: Elevated card with resting shadow, prominent primary
+/// accent bar on left edge for unread state, circular avatar with gradient
+/// fallback, "You:" prefix on sent messages, and inline unread dot next to
+/// the time. The tile animates between read/unread states smoothly using
+/// AnimatedContainer with AppMotion tokens.
+///
+/// TODO(typing-indicator): Typing dots animation was disabled because the
+/// backend/ViewModel integration for `otherUserTyping` is unreliable — it
+/// fires false positives and the sine-wave dot pulse glitches visually.
+/// Re-enable once the Realtime presence channel is stabilized. The previous
+/// implementation used a repeating AnimationController with staggered sine
+/// opacity on 3 dots. See git history for the removed `_buildTypingDots`.
 class ConversationListTile extends StatefulWidget {
   final Conversation conversation;
   final VoidCallback onTap;
@@ -35,11 +43,7 @@ class ConversationListTile extends StatefulWidget {
 }
 
 class _ConversationListTileState extends State<ConversationListTile>
-    with TickerProviderStateMixin {
-  // ── Typing dots animation ──────────────────────────────────
-  // Three dots pulse sequentially: opacity 0.3→1.0 each, staggered.
-  late final AnimationController _typingController;
-
+    with SingleTickerProviderStateMixin {
   // ── Unread badge entrance ──────────────────────────────────
   // Scale 0→1 with spring curve on first appearance.
   late final AnimationController _badgeController;
@@ -55,14 +59,7 @@ class _ConversationListTileState extends State<ConversationListTile>
   void initState() {
     super.initState();
 
-    // Typing animation: repeating loop, 600ms per cycle
-    // Repeating typing dot pulse animation
-    _typingController = AnimationController(
-      duration: AppMotion.typingCycle,
-      vsync: this,
-    );
-
-    // Badge entrance: fast spring scale
+    // Badge entrance: fast spring scale for a lively pop-in
     _badgeController = AnimationController(
       duration: AppMotion.fast,
       vsync: this,
@@ -74,7 +71,6 @@ class _ConversationListTileState extends State<ConversationListTile>
 
   @override
   void dispose() {
-    _typingController.dispose();
     _badgeController.dispose();
     super.dispose();
   }
@@ -83,16 +79,7 @@ class _ConversationListTileState extends State<ConversationListTile>
   ///
   /// Called via addPostFrameCallback so controller mutations never happen
   /// inside build(), which would trigger illegal setState-during-build errors.
-  void _updateAnimations({required bool isTyping, required bool isUnread}) {
-    // Typing dots: repeat while typing, stop+reset when done
-    if (isTyping && !_typingController.isAnimating) {
-      _typingController.repeat();
-    } else if (!isTyping && _typingController.isAnimating) {
-      _typingController
-        ..stop()
-        ..reset();
-    }
-
+  void _updateAnimations({required bool isUnread}) {
     // Badge entrance: forward on first appearance, reverse on dismissal
     if (isUnread && !_wasPreviouslyUnread) {
       _badgeController.forward(from: 0);
@@ -112,12 +99,43 @@ class _ConversationListTileState extends State<ConversationListTile>
     return widget.conversation.lastMessageSeenAt == null;
   }
 
-  static bool _isTypingWithin15s(
-    DateTime? presenceUpdatedAt,
-    bool otherUserTyping,
-  ) {
-    if (!otherUserTyping || presenceUpdatedAt == null) return false;
-    return DateTime.now().difference(presenceUpdatedAt).inSeconds <= 15;
+  /// Whether the other user is "online" — heuristic based on presenceUpdatedAt
+  /// being within 60 seconds. Only meaningful when presence feature flag is on.
+  // Online dot gated behind chat_presence_receipts_enabled feature flag.
+  // presenceUpdatedAt within 60s = heuristic for "online".
+  // TODO: Wire to explicit isOnline field when backend provides it.
+  static bool _isOnlineWithin60s(DateTime? presenceUpdatedAt) {
+    if (presenceUpdatedAt == null) return false;
+    return DateTime.now().difference(presenceUpdatedAt).inSeconds <= 60;
+  }
+
+  /// Compact relative time formatter for conversation list tiles.
+  ///
+  /// Returns: "Just now" (<60s), "2m" (minutes), "1h" (hours),
+  /// "Yesterday", weekday name (within 7 days), or "MMM d" (older).
+  /// Future timestamps (clock skew) are treated as "Just now".
+  static String _formatRelativeTime(DateTime? time) {
+    if (time == null) return '';
+    final now = DateTime.now();
+    final diff = now.difference(time);
+
+    // Future timestamps (clock skew edge case) — treat as "Just now"
+    if (diff.isNegative) return 'Just now';
+
+    if (diff.inSeconds < 60) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
+    if (diff.inHours < 24) return '${diff.inHours}h';
+
+    // Calendar-day checks for Yesterday and weekday names
+    final today = DateTime(now.year, now.month, now.day);
+    final messageDay = DateTime(time.year, time.month, time.day);
+    final dayDiff = today.difference(messageDay).inDays;
+
+    if (dayDiff == 1) return 'Yesterday';
+    // Within 7 days — show abbreviated weekday name (Mon, Tue, etc.)
+    if (dayDiff < 7) return DateFormat.E().format(time);
+    // Older — show abbreviated month + day (Mar 15)
+    return DateFormat.MMMd().format(time);
   }
 
   @override
@@ -127,35 +145,37 @@ class _ConversationListTileState extends State<ConversationListTile>
     final myId = vm.currentUserId;
     final isUnread = _isUnread(myId);
 
-    final isActiveConvo = vm.activeConversation?.id == widget.conversation.id;
-    final isTyping = isActiveConvo
-        ? vm.otherUserTyping
-        : _isTypingWithin15s(
-            widget.conversation.presenceUpdatedAt,
-            widget.conversation.otherUserTyping,
-          );
-
     // Schedule animation updates after the frame completes to avoid
     // mutating controllers inside build() — same pattern as notification_badge_button.
     if (!_animationCallbackPending) {
       _animationCallbackPending = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        _updateAnimations(isTyping: isTyping, isUnread: isUnread);
+        _updateAnimations(isUnread: isUnread);
       });
     }
 
+    // Gate online dot behind presence feature flag.
+    // Both conditions must be true: flag enabled AND presence within 60s.
+    final isPresenceEnabled = context
+        .watch<ChatViewModel>()
+        .isPresenceReceiptsEnabled;
+    final isOnline =
+        isPresenceEnabled &&
+        _isOnlineWithin60s(widget.conversation.presenceUpdatedAt);
+
     final previewText = widget.conversation.lastMessage ?? 'No messages yet';
     final userName = widget.conversation.otherUserName ?? 'User';
-    final timeText = widget.conversation.lastMessageTime != null
-        ? date_utils.formatFriendlyTime(widget.conversation.lastMessageTime!)
-        : '';
+    final timeText = _formatRelativeTime(widget.conversation.lastMessageTime);
+
+    // Whether the current user sent the last message — used to prefix preview.
+    final isMySend = widget.conversation.lastMessageSenderId == myId;
 
     return Semantics(
       label:
           '$userName, $previewText, $timeText'
           '${isUnread ? ", unread" : ""}'
-          '${isTyping ? ", typing" : ""}',
+          '${isOnline ? ", online" : ""}',
       button: true,
       child: GestureDetector(
         onTap: () {
@@ -163,228 +183,245 @@ class _ConversationListTileState extends State<ConversationListTile>
           widget.onTap();
         },
         child: AnimatedContainer(
-          // Use AppMotion.fast token — same 200ms value but from design system
+          // AppMotion.fast (200ms) for smooth theme/unread state transitions
           duration: AppMotion.fast,
-          margin: const EdgeInsets.only(bottom: AppDimens.p12),
-          padding: const EdgeInsets.all(AppLayout.cardPadding),
+          margin: const EdgeInsets.only(bottom: AppDimens.p10),
           decoration: BoxDecoration(
-            color: isUnread
-                ? colorScheme.primary.withValues(alpha: 0.05)
-                : colorScheme.cardBackground,
-            borderRadius: BorderRadius.circular(AppDimens.r18),
+            color: colorScheme.cardBackground,
+            borderRadius: BorderRadius.circular(AppDimens.r16),
             border: Border.all(
               color: isUnread
-                  ? colorScheme.primary.withValues(alpha: 0.4)
+                  ? colorScheme.primary.withValues(alpha: 0.3)
                   : colorScheme.cardBorder,
               width: isUnread ? 1.5 : AppLayout.cardBorderWidth,
             ),
+            // Level 1 resting shadow for depth — cards float above background
+            boxShadow: AppDecorations.elevation(1, isDark: colorScheme.isDark),
           ),
-          child: Row(
-            children: [
-              // Avatar with online/typing indicator
-              _buildAvatar(colorScheme, isTyping),
-              const SizedBox(width: AppDimens.p12),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppDimens.r16),
+            child: IntrinsicHeight(
+              child: Row(
+                children: [
+                  // ── Left accent bar — visible only when unread ──
+                  // A 3px primary-color bar on the leading edge draws the eye
+                  // to unread conversations instantly.
+                  AnimatedContainer(
+                    duration: AppMotion.fast,
+                    width: isUnread ? 3.5 : 0,
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(AppDimens.r16),
+                        bottomLeft: Radius.circular(AppDimens.r16),
+                      ),
+                    ),
+                  ),
 
-              // Content column
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Context row (Task/Booking title banner)
-                    if (widget.conversation.taskTitle != null) ...[
-                      Row(
+                  // ── Tile content ──
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppDimens.p12,
+                        AppDimens.p12,
+                        AppDimens.p14,
+                        AppDimens.p12,
+                      ),
+                      child: Row(
                         children: [
-                          Icon(
-                            widget.conversation.taskType == 'booking'
-                                ? Icons.calendar_today
-                                : Icons.assignment_outlined,
-                            size: AppLayout.iconTiny,
-                            color: widget.conversation.taskType == 'booking'
-                                ? colorScheme.warning
-                                : colorScheme.primary,
-                          ),
-                          const SizedBox(width: AppLayout.spacingTight),
+                          // ── Avatar with online status dot ──
+                          _buildAvatar(colorScheme, isOnline),
+                          const SizedBox(width: AppDimens.p12),
+
+                          // ── Content column ──
                           Expanded(
-                            child: Text(
-                              widget.conversation.taskTitle!.toUpperCase(),
-                              style: AppTypography.micro.copyWith(
-                                color: widget.conversation.taskType == 'booking'
-                                    ? colorScheme.warning
-                                    : colorScheme.primary,
-                                fontWeight: FontWeight.w900,
-                                // 9px — below AppTypography.micro (10px) for compact tag label
-                                fontSize: 9,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Name + time + unread dot row
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        userName,
+                                        style: AppTypography.bodyMedium
+                                            .copyWith(
+                                              fontWeight: isUnread
+                                                  ? FontWeight.w700
+                                                  : FontWeight.w600,
+                                              color: colorScheme.text,
+                                            ),
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                      ),
+                                    ),
+                                    const SizedBox(width: AppDimens.p6),
+                                    // Unread dot before time — small but high contrast
+                                    if (isUnread)
+                                      ScaleTransition(
+                                        scale: _badgeScale,
+                                        child: Container(
+                                          width: 7,
+                                          height: 7,
+                                          margin: const EdgeInsets.only(
+                                            right: AppDimens.p4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: colorScheme.primary,
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                      ),
+                                    if (timeText.isNotEmpty)
+                                      Text(
+                                        timeText,
+                                        style: AppTypography.micro.copyWith(
+                                          color: isUnread
+                                              ? colorScheme.primary
+                                              : colorScheme.textTertiary,
+                                          fontWeight: isUnread
+                                              ? FontWeight.w700
+                                              : FontWeight.w500,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+
+                                // Task/Booking context tag
+                                if (widget.conversation.taskTitle != null) ...[
+                                  const SizedBox(height: AppDimens.p2),
+                                  _buildContextTag(colorScheme),
+                                ],
+
+                                const SizedBox(height: AppDimens.p4),
+
+                                // Last message preview
+                                Text(
+                                  isMySend ? 'You: $previewText' : previewText,
+                                  style: AppTypography.bodySmall.copyWith(
+                                    color: isUnread
+                                        ? colorScheme.text
+                                        : colorScheme.textSecondary,
+                                    fontWeight: isUnread
+                                        ? FontWeight.w500
+                                        : FontWeight.normal,
+                                    height: 1.3,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: AppLayout.spacingTight),
-                    ],
-
-                    // Name + timestamp row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            userName,
-                            style: AppTypography.bodySmall.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: colorScheme.text,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (timeText.isNotEmpty)
-                          Text(
-                            timeText,
-                            style: AppTypography.micro.copyWith(
-                              color: colorScheme.textSecondary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                      ],
                     ),
-                    const SizedBox(height: AppLayout.spacingTight),
-
-                    // Last message preview OR typing indicator
-                    if (isTyping)
-                      _buildTypingDots(colorScheme)
-                    else
-                      Text(
-                        previewText,
-                        style: AppTypography.bodySmall.copyWith(
-                          color: isUnread
-                              ? colorScheme.text
-                              : colorScheme.textSecondary,
-                          fontWeight: isUnread
-                              ? FontWeight.w600
-                              : FontWeight.normal,
-                          height: 1.4,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                  ],
-                ),
-              ),
-
-              // Unread indicator — always in tree so reverse animation plays.
-              // ScaleTransition renders as invisible when scale is 0.
-              const SizedBox(width: AppLayout.spacingStandard),
-              ScaleTransition(
-                scale: _badgeScale,
-                child: Container(
-                  // AppDimens.p10 = 10px — minimum visible dot for accessibility
-                  width: AppDimens.p10,
-                  height: AppDimens.p10,
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary,
-                    shape: BoxShape.circle,
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  /// Animated typing dots — three dots that pulse sequentially.
-  /// Each dot fades between 0.3 and 1.0 opacity with 100ms stagger offset.
-  Widget _buildTypingDots(AppColorScheme colorScheme) {
-    return AnimatedBuilder(
-      animation: _typingController,
-      builder: (context, child) {
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(3, (i) {
-            // Stagger each dot by 0.15 of the cycle
-            final offset = i * 0.15;
-            final progress = (_typingController.value + offset) % 1.0;
-            // Sine wave for smooth pulse: range 0.3 → 1.0
-            final opacity = 0.3 + 0.7 * ((1 + _sinFromProgress(progress)) / 2);
-            return Padding(
-              padding: EdgeInsets.only(
-                right: i < 2 ? AppLayout.spacingTight : 0,
-              ),
-              child: Opacity(
-                opacity: opacity,
-                child: Container(
-                  // AppDimens.p6 = 6px — compact typing dot size
-                  width: AppDimens.p6,
-                  height: AppDimens.p6,
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            );
-          }),
-        );
-      },
+  /// Compact context tag showing the task or booking title inline.
+  ///
+  /// Uses a tiny icon + uppercase text for quick visual scanning. The color
+  /// differentiates booking (warning/amber) from task (primary/blue).
+  Widget _buildContextTag(AppColorScheme colorScheme) {
+    final isBooking = widget.conversation.taskType == 'booking';
+    final tagColor = isBooking ? colorScheme.warning : colorScheme.primary;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          isBooking ? Icons.calendar_today : Icons.assignment_outlined,
+          size: 10,
+          color: tagColor,
+        ),
+        const SizedBox(width: AppDimens.p4),
+        Flexible(
+          child: Text(
+            widget.conversation.taskTitle!.toUpperCase(),
+            style: AppTypography.micro.copyWith(
+              color: tagColor,
+              fontWeight: FontWeight.w800,
+              fontSize: 9,
+              letterSpacing: 0.3,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 
-  /// Convert a 0..1 progress value to a sine wave value (-1..1).
-  /// Uses dart:math for accuracy — no Taylor-series approximation needed.
-  static double _sinFromProgress(double progress) {
-    return math.sin(2 * math.pi * progress);
-  }
-
-  /// Avatar with online/typing indicator dot.
-  Widget _buildAvatar(AppColorScheme colorScheme, bool isOnline) {
+  /// Circular avatar with online indicator dot.
+  ///
+  /// Uses a circle shape with primary tint fallback for users without a
+  /// profile photo. The green online dot appears bottom-right with a
+  /// spring-scale entrance for a natural, lively feel.
+  Widget _buildAvatar(AppColorScheme colorScheme, bool showDot) {
     final initials = _getInitials(widget.conversation.otherUserName);
+    // 50px diameter — slightly larger than minTouchTarget for visual presence
+    const double avatarSize = 50;
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
+        // Circular avatar container
         Container(
-          width: AppLayout.minTouchTarget,
-          height: AppLayout.minTouchTarget,
+          width: avatarSize,
+          height: avatarSize,
           decoration: BoxDecoration(
-            color: colorScheme.warning,
-            borderRadius: BorderRadius.circular(AppDimens.r14),
-            border: Border.all(color: colorScheme.cardBorder, width: 2),
+            color: colorScheme.primary.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
           ),
           child: widget.conversation.otherUserAvatar != null
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(AppDimens.r12),
+              ? ClipOval(
                   child: SignedAvatar(
                     storagePathOrUrl: widget.conversation.otherUserAvatar,
-                    radius: 22,
+                    radius: avatarSize / 2,
                   ),
                 )
               : Center(
                   child: Text(
                     initials,
                     style: AppTypography.bodyLarge.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: colorScheme.text,
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.primary,
+                      fontSize: 18,
                     ),
                   ),
                 ),
         ),
 
-        // Online/typing indicator dot
-        if (isOnline)
+        // Online indicator dot — animated entrance with spring scale.
+        // 2.5px phoneBackground border creates a "cut-out" ring effect.
+        if (showDot)
           Positioned(
-            bottom: -2,
-            right: -2,
-            child: Container(
-              width: 14,
-              height: 14,
-              decoration: BoxDecoration(
-                color: colorScheme.success,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: colorScheme.phoneBackground,
-                  width: 2,
+            bottom: 0,
+            right: 0,
+            child: AnimatedScale(
+              scale: 1.0,
+              duration: AppMotion.fast,
+              curve: AppMotion.curveSpring,
+              child: Container(
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: colorScheme.success,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: colorScheme.cardBackground,
+                    width: 2.5,
+                  ),
                 ),
               ),
             ),
@@ -393,6 +430,8 @@ class _ConversationListTileState extends State<ConversationListTile>
     );
   }
 
+  /// Extract initials from a full name for the fallback avatar.
+  /// Returns first letter of first + last name, or just the first letter.
   String _getInitials(String? name) {
     if (name == null || name.isEmpty) return 'U';
     final parts = name.trim().split(' ');

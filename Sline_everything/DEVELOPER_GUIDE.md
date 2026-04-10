@@ -1,7 +1,7 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.24.0 (Phase 4 Home & Discovery Redesign: 10 screens redesigned, DraggableScrollableSheet filters, staggered card entrance, skeleton loading everywhere, categories grid, enhanced empty/error states, design token compliance)
-**Last Updated**: 2026-04-09
+**Version**: 2.25.0 (Phase 6 Chat & Messaging Redesign: elevated conversation tiles, unread indicators, emoji-only rendering, link detection, reply quotes, FullscreenImageViewer, deferred navigation, optimistic state updates, auto-scroll differentiation)
+**Last Updated**: 2026-04-10
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
 
@@ -2116,9 +2116,13 @@ Triggers/Functions
 | `lib/features/chat/services/attachment_service.dart`      | Service    | Storage upload/delete/signed URL helpers for attachments.                                                                                                |
 | `lib/features/chat/services/chat_realtime_merger.dart`    | Service    | Merges realtime message snapshots (dedupe, sort).                                                                                                        |
 | `lib/features/chat/viewmodels/chat_view_model.dart`       | ViewModel  | `ChangeNotifier` managing conversation list, active conversation, message list, subscriptions, and receipts.                                             |
-| `lib/features/chat/view/messages_screen.dart`             | View       | Conversations list with previews via joined selects.                                                                                                     |
-| `lib/features/chat/view/chat_screen.dart`                 | View       | Single conversation UI (messages + composer).                                                                                                            |
-| `lib/features/chat/view/widgets/chat_context_widget.dart` | Widget     | Glassmorphic banner showing task context + navigation.                                                                                                   |
+| `lib/features/chat/view/messages_screen.dart`             | View       | Conversations list with search bar (debounced filtering), unread pill badge, elevated card tiles. **Phase 6**: deferred navigation (no pre-fetch blocking), optimistic unread clearing via `markConversationReadLocally()`. |
+| `lib/features/chat/view/chat_screen.dart`                 | View       | Single conversation UI (messages + composer). **Phase 6**: loads messages in `initState()` with loading spinner, auto-scroll differentiates initial load (always scroll) vs incremental (scroll if near bottom within 300px), swipe-to-reply, long-press context menu. |
+| `lib/features/chat/view/widgets/chat_context_widget.dart` | Widget     | Pill-style banner showing task/booking context + navigation. **Phase 6**: pill polish with icon differentiation (task vs booking). |
+| `lib/features/chat/view/widgets/conversation_list_tile.dart` | Widget  | **Phase 6**: elevated card design with `AppDecorations.elevation(1)`, left accent bar (3.5px primary) for unread, inline unread dot, "You:" prefix on sent messages, relative time formatting (Just now/Xm/Xh/Yesterday/weekday/MMMd), 50px circular avatar with online status dot. Typing indicator disabled (TODO for backend stabilization). |
+| `lib/features/chat/view/widgets/message_bubble.dart`      | Widget     | **Phase 6**: emoji-only rendering (large without bubble), link detection with tappable URLs, reply quote display (sender name + quoted text). |
+| `lib/features/chat/view/widgets/offer_message_bubble.dart` | Widget    | **Phase 6**: elevated card with AnimatedContainer, status-colored border, CUSTOM OFFER badge, status chips (Pending/Accepted/Declined/Completed). |
+| `lib/core/widgets/fullscreen_image_viewer.dart`           | Widget     | **Phase 6 NEW**: reusable fullscreen image viewer with InteractiveViewer (pinch-to-zoom), close button, optional caption bar, full Semantics coverage. |
 | `lib/features/chat/models/conversation_model.dart`        | Model      | Conversation with display fields (other user name/avatar, last message).                                                                                 |
 | `lib/features/chat/models/message_model.dart`             | Model      | Message with attachments, type, payload (wire: snake_case); includes `MessageType.system`.                                                               |
 | `lib/features/chat/models/chat_offer_payload.dart`        | Model      | Canonical offer payload: `days` on write; legacy `delivery` read.                                                                                        |
