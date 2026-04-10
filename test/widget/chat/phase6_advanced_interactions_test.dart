@@ -29,7 +29,10 @@ class _MockChatViewModel extends Mock
 
 /// Wraps a single widget in MaterialApp with light theme for isolated testing.
 Widget _wrap(Widget child) {
-  return MaterialApp(theme: AppTheme.light(), home: Scaffold(body: child));
+  return MaterialApp(
+    theme: AppTheme.light(),
+    home: Scaffold(body: child),
+  );
 }
 
 void main() {
@@ -41,9 +44,7 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        _wrap(
-          const MessageBubble(text: '😀', time: '12:00', isMine: true),
-        ),
+        _wrap(const MessageBubble(text: '😀', time: '12:00', isMine: true)),
       );
 
       // Emoji-only messages render at 32px without the standard bubble
@@ -54,9 +55,7 @@ void main() {
       expect(find.text('😀'), findsOneWidget);
     });
 
-    testWidgets('renders three emoji without bubble container', (
-      tester,
-    ) async {
+    testWidgets('renders three emoji without bubble container', (tester) async {
       await tester.pumpWidget(
         _wrap(
           const MessageBubble(text: '🎉🔥💯', time: '12:00', isMine: false),
@@ -72,11 +71,7 @@ void main() {
     ) async {
       await tester.pumpWidget(
         _wrap(
-          const MessageBubble(
-            text: 'Hello 😀',
-            time: '12:00',
-            isMine: true,
-          ),
+          const MessageBubble(text: 'Hello 😀', time: '12:00', isMine: true),
         ),
       );
 
@@ -91,13 +86,7 @@ void main() {
       // DECISION-1: \p{Extended_Pictographic} should NOT match digits.
       // Verifies that "123" renders as a normal text bubble.
       await tester.pumpWidget(
-        _wrap(
-          const MessageBubble(
-            text: '123',
-            time: '12:00',
-            isMine: true,
-          ),
-        ),
+        _wrap(const MessageBubble(text: '123', time: '12:00', isMine: true)),
       );
 
       final emojiSemantics = find.bySemanticsLabel(RegExp('sent emoji'));
@@ -174,13 +163,7 @@ void main() {
 
     testWidgets('hides reply quote when replyToText is null', (tester) async {
       await tester.pumpWidget(
-        _wrap(
-          const MessageBubble(
-            text: 'Hello',
-            time: '12:00',
-            isMine: true,
-          ),
-        ),
+        _wrap(const MessageBubble(text: 'Hello', time: '12:00', isMine: true)),
       );
 
       // No reply quote elements should be present

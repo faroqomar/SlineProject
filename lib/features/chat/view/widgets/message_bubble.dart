@@ -135,8 +135,7 @@ class _MessageBubbleState extends State<MessageBubble> {
           'sent at ${widget.time}'
           '${widget.status != null ? ", status: ${widget.status}" : ""}',
       child: Align(
-        alignment:
-            widget.isMine ? Alignment.centerRight : Alignment.centerLeft,
+        alignment: widget.isMine ? Alignment.centerRight : Alignment.centerLeft,
         child: ConstrainedBox(
           // 75% max width — intentional ratio for readable chat bubbles
           constraints: BoxConstraints(
@@ -221,8 +220,7 @@ class _MessageBubbleState extends State<MessageBubble> {
           '${widget.isMine ? "You" : "Other"} sent emoji: ${widget.text}, '
           'sent at ${widget.time}',
       child: Align(
-        alignment:
-            widget.isMine ? Alignment.centerRight : Alignment.centerLeft,
+        alignment: widget.isMine ? Alignment.centerRight : Alignment.centerLeft,
         child: Padding(
           padding: EdgeInsets.only(
             top: widget.isFirstInGroup ? AppLayout.spacingTight : 2.0,
@@ -286,10 +284,7 @@ class _MessageBubbleState extends State<MessageBubble> {
       final recognizer = TapGestureRecognizer()
         ..onTap = () {
           AppLogger.d('MessageBubble: tapped link $trimmed', tag: 'Chat');
-          launchUrl(
-            Uri.parse(trimmed),
-            mode: LaunchMode.externalApplication,
-          );
+          launchUrl(Uri.parse(trimmed), mode: LaunchMode.externalApplication);
         };
       _recognizers.add(recognizer);
 
@@ -336,7 +331,8 @@ class _MessageBubbleState extends State<MessageBubble> {
   static String _trimTrailingPunctuation(String url) {
     const trailingChars = {'.', ',', ')', '!', '?', ';', ':'};
     var result = url;
-    while (result.isNotEmpty && trailingChars.contains(result[result.length - 1])) {
+    while (result.isNotEmpty &&
+        trailingChars.contains(result[result.length - 1])) {
       result = result.substring(0, result.length - 1);
     }
     return result;
@@ -367,9 +363,7 @@ class _MessageBubbleState extends State<MessageBubble> {
           color: bgColor,
           borderRadius: BorderRadius.circular(AppDimens.r8),
           // 3px left accent border for reply quote
-          border: Border(
-            left: BorderSide(color: accentColor, width: 3),
-          ),
+          border: Border(left: BorderSide(color: accentColor, width: 3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

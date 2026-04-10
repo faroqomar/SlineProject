@@ -90,8 +90,7 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
           '${widget.deliveryDays} days delivery, '
           'status: ${_semanticStatus()}',
       child: Align(
-        alignment:
-            widget.isMine ? Alignment.centerRight : Alignment.centerLeft,
+        alignment: widget.isMine ? Alignment.centerRight : Alignment.centerLeft,
         // AnimatedContainer smoothly transitions shadow and border when the
         // offer status changes (e.g. pending -> accepted), using motion tokens.
         child: AnimatedContainer(
@@ -268,11 +267,9 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
     final isActive =
         widget.rawStatus == 'active' || widget.rawStatus == 'active_held';
     final isDelivered =
-        widget.rawStatus == 'delivered' ||
-        widget.rawStatus == 'delivered_held';
+        widget.rawStatus == 'delivered' || widget.rawStatus == 'delivered_held';
     final isAcceptedPendingPayment =
-        widget.rawStatus == 'accepted' ||
-        widget.rawStatus == 'accepted_unpaid';
+        widget.rawStatus == 'accepted' || widget.rawStatus == 'accepted_unpaid';
 
     // Direct offer: accepted but not yet paid (client must pay from dashboard)
     if (isAcceptedPendingPayment && widget.offerId != null) {
@@ -338,9 +335,7 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
             Text(
               accepted
                   ? 'Accepted'
-                  : (widget.rawStatus == 'canceled'
-                      ? 'Canceled'
-                      : 'Declined'),
+                  : (widget.rawStatus == 'canceled' ? 'Canceled' : 'Declined'),
               style: AppTypography.captionBold.copyWith(color: stateColor),
             ),
           ],
@@ -376,8 +371,7 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
                   ),
                 ),
               ),
-              if (widget.onDecline != null)
-                const SizedBox(width: AppDimens.p8),
+              if (widget.onDecline != null) const SizedBox(width: AppDimens.p8),
             ],
             // Decline button — only rendered when onDecline is provided
             if (widget.onDecline != null)
