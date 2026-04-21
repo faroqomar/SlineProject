@@ -440,9 +440,11 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
                       color: context.colorScheme.textSecondary,
                     ),
                     const SizedBox(height: AppLayout.spacingSection),
+                    // Phase 7: h5 title + bodySmall subtitle for consistency
+                    // with _buildActiveList and other tab empty states.
                     Text(
                       emptyMessage,
-                      style: AppTypography.bodySmall.copyWith(
+                      style: AppTypography.h5.copyWith(
                         color: context.colorScheme.textSecondary,
                       ),
                     ),

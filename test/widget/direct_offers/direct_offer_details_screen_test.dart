@@ -231,7 +231,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Price'), findsOneWidget);
+      // Phase 7 REDESIGN: Price now shown in hero zone with overline label
+      expect(find.text('OFFER PRICE'), findsOneWidget);
       // 5000 => "5K IQD"
       expect(find.text('5K IQD'), findsOneWidget);
     });
@@ -253,7 +254,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Delivery (days)'), findsOneWidget);
+      // Phase 7 REDESIGN: Days shown in dedicated badge with "DAYS" micro label
+      expect(find.text('DAYS'), findsOneWidget);
       expect(find.text('7'), findsOneWidget);
     });
 
@@ -274,7 +276,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Status'), findsOneWidget);
+      // Phase 7 REDESIGN: Status shown in header badge + "CUSTOM OFFER" label
+      expect(find.text('CUSTOM OFFER'), findsOneWidget);
       expect(find.text('IN PROGRESS'), findsOneWidget);
     });
 

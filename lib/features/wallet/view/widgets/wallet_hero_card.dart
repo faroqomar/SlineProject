@@ -1,10 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_motion.dart';
+import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/features/wallet/utils/wallet_presentation_helper.dart';
 
+/// Wallet hero card — SLine brand identity, warm and professional.
+///
+/// Design skills applied:
+/// - Content-first: massive balance number is THE focal point
+/// - Brand warmth: teal primary surface (headerBackground) not cold dark grey
+/// - Generous whitespace: content breathes, not cramped
+/// - Asymmetric layout: balance left-aligned, breakdown offset right
+/// - Rewarding: composition bar animates on data change
+/// - NO gradients, NO glow orbs, NO glassmorphism (per .impeccable.md)
+/// - Solid surface + elevation shadow (per design system rules)
 class WalletHeroCard extends StatelessWidget {
   const WalletHeroCard({super.key, required this.summary});
 
@@ -12,132 +25,91 @@ class WalletHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+
     return Container(
       key: const ValueKey<String>('wallet_hero_card'),
       decoration: BoxDecoration(
+        // Warm teal-tinted surface — NOT cold grey cardBackground.
+        // headerBackground is a subtle teal tint that feels branded.
+        color: colorScheme.headerBackground,
         borderRadius: BorderRadius.circular(AppDimens.r24),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.darkTeal,
-            AppColors.teal,
-            AppColors.lightTeal.withValues(alpha: 0.92),
-          ],
+        border: Border.all(
+          color: colorScheme.headerBorder,
         ),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.darkTeal.withValues(alpha: 0.28),
-            blurRadius: 28,
-            offset: const Offset(0, 18),
-          ),
-        ],
+        boxShadow: AppDecorations.elevation(2, isDark: colorScheme.isDark),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppDimens.r24),
-        child: Stack(
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimens.p24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Positioned(
-              top: -48,
-              right: -24,
-              child: _GlowOrb(
-                size: 148,
-                color: Colors.white.withValues(alpha: 0.12),
+            // ── Top row: wallet icon + label ──
+            // Small, understated — the balance is the star, not the label
+            Row(
+              children: [
+                Icon(
+                  Icons.account_balance_wallet_outlined,
+                  size: AppDimens.iconSizeSmall,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: AppDimens.p6),
+                Text(
+                  'Wallet',
+                  style: AppTypography.captionBold.copyWith(
+                    color: colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: AppDimens.p20),
+
+            // ── Hero balance amount ──
+            // 36px/900 — largest text on the screen, left-aligned (not centered)
+            // "Content first, chrome second" — this IS the content
+            Text(
+              PriceFormatter.formatPrice(summary.totalFunds),
+              style: AppTypography.h1.copyWith(
+                color: colorScheme.text,
+                fontSize: 36,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.8,
+                height: 1.1,
               ),
             ),
-            Positioned(
-              bottom: -62,
-              left: -30,
-              child: _GlowOrb(
-                size: 168,
-                color: AppColors.gold.withValues(alpha: 0.18),
+
+            const SizedBox(height: AppDimens.p6),
+
+            // ── Activity context line ──
+            Text(
+              summary.activityCaption,
+              style: AppTypography.bodySmall.copyWith(
+                color: colorScheme.textSecondary,
               ),
             ),
-            Positioned(
-              top: 72,
-              right: 28,
-              child: Icon(
-                Icons.account_balance_wallet_rounded,
-                color: Colors.white.withValues(alpha: 0.24),
-                size: AppDimens.p40,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(AppDimens.p24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppDimens.p10,
-                          vertical: AppDimens.p6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(AppDimens.r30),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.18),
-                          ),
-                        ),
-                        child: Text(
-                          'WALLET',
-                          style: AppTypography.micro.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.9,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppDimens.p18),
-                  Text(
-                    'Total funds',
-                    style: AppTypography.bodySmall.copyWith(
-                      color: Colors.white.withValues(alpha: 0.76),
+
+            const SizedBox(height: AppDimens.p24),
+
+            // ── Composition bar — 6px, rounded, animated segments ──
+            // Thicker than a hairline but not chunky — noticeable, informative
+            _CompositionBar(slices: summary.balanceSlices),
+
+            const SizedBox(height: AppDimens.p18),
+
+            // ── Balance breakdown chips — wrapped in subtle containers ──
+            // Each balance state gets its own mini "card" for scannability
+            Wrap(
+              spacing: AppDimens.p10,
+              runSpacing: AppDimens.p10,
+              children: summary.balanceSlices
+                  .map(
+                    (slice) => _BalanceChip(
+                      slice: slice,
+                      color: _sliceColor(slice.kind, colorScheme),
                     ),
-                  ),
-                  const SizedBox(height: AppDimens.p8),
-                  Text(
-                    PriceFormatter.formatPrice(summary.totalFunds),
-                    style: AppTypography.h1.copyWith(
-                      color: Colors.white,
-                      fontSize: 34,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.8,
-                    ),
-                  ),
-                  const SizedBox(height: AppDimens.p8),
-                  Text(
-                    summary.activityCaption,
-                    style: AppTypography.bodySmall.copyWith(
-                      color: Colors.white.withValues(alpha: 0.78),
-                    ),
-                  ),
-                  const SizedBox(height: AppDimens.p20),
-                  Text(
-                    'Balance composition',
-                    style: AppTypography.micro.copyWith(
-                      color: Colors.white.withValues(alpha: 0.72),
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.7,
-                    ),
-                  ),
-                  const SizedBox(height: AppDimens.p10),
-                  _WalletBalanceCompositionBar(slices: summary.balanceSlices),
-                  const SizedBox(height: AppDimens.p18),
-                  Wrap(
-                    spacing: AppDimens.p10,
-                    runSpacing: AppDimens.p10,
-                    children: summary.balanceSlices
-                        .map((slice) => _BalanceChip(slice: slice))
-                        .toList(growable: false),
-                  ),
-                ],
-              ),
+                  )
+                  .toList(growable: false),
             ),
           ],
         ),
@@ -146,71 +118,56 @@ class WalletHeroCard extends StatelessWidget {
   }
 }
 
-class _GlowOrb extends StatelessWidget {
-  const _GlowOrb({required this.size, required this.color});
-
-  final double size;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-    );
-  }
-}
-
-class _WalletBalanceCompositionBar extends StatelessWidget {
-  const _WalletBalanceCompositionBar({required this.slices});
+/// Animated composition bar — 6px height with smooth segment transitions.
+/// Uses AppMotion tokens for animation duration and curves.
+class _CompositionBar extends StatelessWidget {
+  const _CompositionBar({required this.slices});
 
   final List<WalletBalanceSlice> slices;
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
     final totalRatio = slices.fold<double>(
       0,
-      (runningTotal, slice) => runningTotal + slice.ratio,
+      (sum, slice) => sum + slice.ratio,
     );
 
     return Container(
-      height: AppDimens.p12,
+      height: AppDimens.p6,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(AppDimens.r30),
+        color: colorScheme.divider,
+        borderRadius: BorderRadius.circular(AppDimens.r4),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          if (totalRatio == 0) {
-            return const SizedBox.expand();
-          }
+          if (totalRatio == 0) return const SizedBox.expand();
 
           var left = 0.0;
           final bars = <Widget>[];
-          for (var index = 0; index < slices.length; index += 1) {
-            final slice = slices[index];
-            final width = index == slices.length - 1
+          for (var i = 0; i < slices.length; i++) {
+            final slice = slices[i];
+            final width = i == slices.length - 1
                 ? constraints.maxWidth - left
                 : constraints.maxWidth * slice.ratio;
             bars.add(
               AnimatedPositioned(
-                duration: const Duration(milliseconds: 450),
-                curve: Curves.easeOutCubic,
+                duration: AppMotion.slow,
+                curve: AppMotion.curveStandard,
                 left: left,
                 top: 0,
                 bottom: 0,
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 450),
+                  duration: AppMotion.slow,
                   width: width.clamp(0.0, constraints.maxWidth),
                   decoration: BoxDecoration(
-                    color: _sliceColor(slice.kind),
+                    color: _sliceColor(slice.kind, colorScheme),
                     borderRadius: BorderRadius.horizontal(
-                      left: index == 0
-                          ? const Radius.circular(AppDimens.r30)
+                      left: i == 0
+                          ? const Radius.circular(AppDimens.r4)
                           : Radius.zero,
-                      right: index == slices.length - 1
-                          ? const Radius.circular(AppDimens.r30)
+                      right: i == slices.length - 1
+                          ? const Radius.circular(AppDimens.r4)
                           : Radius.zero,
                     ),
                   ),
@@ -219,7 +176,6 @@ class _WalletBalanceCompositionBar extends StatelessWidget {
             );
             left += width;
           }
-
           return Stack(children: bars);
         },
       ),
@@ -227,31 +183,39 @@ class _WalletBalanceCompositionBar extends StatelessWidget {
   }
 }
 
+/// Balance chip — colored dot + label + amount in a subtle container.
+///
+/// Warm design: uses a tinted background matching the dot color at low alpha
+/// so each chip has visual identity without being noisy. Generous padding
+/// for touch comfort and scannability.
 class _BalanceChip extends StatelessWidget {
-  const _BalanceChip({required this.slice});
+  const _BalanceChip({required this.slice, required this.color});
 
   final WalletBalanceSlice slice;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimens.p12,
-        vertical: AppDimens.p10,
+        vertical: AppDimens.p8,
       ),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(AppDimens.r16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+        // Subtle tinted background from the slice color — warm, not flat grey
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppDimens.r12),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Colored dot matching the composition bar
           Container(
             width: AppDimens.p8,
             height: AppDimens.p8,
             decoration: BoxDecoration(
-              color: _sliceColor(slice.kind),
+              color: color,
               shape: BoxShape.circle,
             ),
           ),
@@ -262,16 +226,14 @@ class _BalanceChip extends StatelessWidget {
               Text(
                 slice.label,
                 style: AppTypography.micro.copyWith(
-                  color: Colors.white.withValues(alpha: 0.74),
-                  fontWeight: FontWeight.w700,
+                  color: colorScheme.textSecondary,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 2),
               Text(
                 PriceFormatter.formatPrice(slice.amount),
-                style: AppTypography.bodySmall.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
+                style: AppTypography.captionBold.copyWith(
+                  color: colorScheme.text,
                 ),
               ),
             ],
@@ -282,13 +244,14 @@ class _BalanceChip extends StatelessWidget {
   }
 }
 
-Color _sliceColor(WalletBalanceSliceKind kind) {
+/// Semantic slice colors — primary (available), danger (pending), accent (held).
+Color _sliceColor(WalletBalanceSliceKind kind, AppColorScheme colorScheme) {
   switch (kind) {
     case WalletBalanceSliceKind.available:
-      return Colors.white;
+      return colorScheme.primary;
     case WalletBalanceSliceKind.pendingWithdrawal:
-      return AppColors.lightRed;
+      return colorScheme.danger;
     case WalletBalanceSliceKind.held:
-      return AppColors.gold;
+      return colorScheme.accent;
   }
 }

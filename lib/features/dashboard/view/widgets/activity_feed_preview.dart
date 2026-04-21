@@ -115,6 +115,11 @@ class _ActivityFeedPreviewState extends State<ActivityFeedPreview>
       return _buildEmptyState(colorScheme);
     }
 
+    // Build a flat display list interleaving group headers with activity items.
+    // Group headers show "Today", "Yesterday", or "Earlier" based on createdAt.
+    // Stagger animations are keyed to activity items only (not headers).
+    final displayList = _buildGroupedDisplayList(activities);
+
     // Schedule stagger trigger after the current frame to avoid mutating
     // controller state during build, which would cause assertion errors.
     if (!_hasAnimatedEntrance) {
@@ -128,19 +133,42 @@ class _ActivityFeedPreviewState extends State<ActivityFeedPreview>
       child: ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        itemCount: activities.length,
+        itemCount: displayList.length,
         itemBuilder: (context, index) {
+          final entry = displayList[index];
+
+          // Group headers render instantly — no stagger animation
+          if (entry.isHeader) {
+            return Padding(
+              padding: EdgeInsets.only(
+                top: index == 0 ? 0 : AppLayout.spacingSection,
+                bottom: AppLayout.spacingStandard,
+              ),
+              child: Semantics(
+                header: true,
+                label: '${entry.headerLabel} activities',
+                child: Text(
+                  entry.headerLabel!,
+                  style: AppTypography.captionBold.copyWith(
+                    color: colorScheme.textTertiary,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          // Activity rows get stagger entrance if within animation window
           final row = _ActivityRow(
-            item: activities[index],
-            isLast: index == activities.length - 1,
+            item: entry.activity!,
+            isLast: entry.isLastInGroup,
           );
 
-          // Use cached animations for the stagger entrance window.
-          if (_hasAnimatedEntrance && index < _maxStaggerCount) {
+          if (_hasAnimatedEntrance &&
+              entry.activityIndex < _maxStaggerCount) {
             return SlideTransition(
-              position: _slideAnimations[index],
+              position: _slideAnimations[entry.activityIndex],
               child: FadeTransition(
-                opacity: _fadeAnimations[index],
+                opacity: _fadeAnimations[entry.activityIndex],
                 child: row,
               ),
             );
@@ -192,6 +220,59 @@ class _ActivityFeedPreviewState extends State<ActivityFeedPreview>
         ),
       ),
     );
+  }
+
+  /// Returns a time group label based on comparison with today's date.
+  ///
+  /// Groups: "Today", "Yesterday", "Earlier" — matching the same grouping
+  /// pattern used in the Wallet tab's recent activity timeline.
+  static String _timeGroupLabel(DateTime createdAt) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final activityDate = DateTime(
+      createdAt.year,
+      createdAt.month,
+      createdAt.day,
+    );
+
+    if (activityDate == today) return 'Today';
+    if (activityDate == today.subtract(const Duration(days: 1))) {
+      return 'Yesterday';
+    }
+    return 'Earlier';
+  }
+
+  /// Builds a flat display list interleaving group headers with activity items.
+  ///
+  /// Each entry tracks its own `activityIndex` (sequential counter for
+  /// activity rows only, excluding headers) so stagger animations can be
+  /// keyed correctly without crashing on index-out-of-range.
+  List<_DisplayEntry> _buildGroupedDisplayList(List<ActivityLog> activities) {
+    final entries = <_DisplayEntry>[];
+    String? currentGroup;
+    var activityIndex = 0;
+
+    for (var i = 0; i < activities.length; i++) {
+      final group = _timeGroupLabel(activities[i].createdAt);
+
+      // Insert group header when the group label changes
+      if (group != currentGroup) {
+        currentGroup = group;
+        entries.add(_DisplayEntry.header(group));
+      }
+
+      // Determine if this is the last item in its group (controls
+      // connecting line visibility in the timeline dot column).
+      final isLastInGroup = i == activities.length - 1 ||
+          _timeGroupLabel(activities[i + 1].createdAt) != group;
+
+      entries.add(
+        _DisplayEntry.activity(activities[i], activityIndex, isLastInGroup),
+      );
+      activityIndex++;
+    }
+
+    return entries;
   }
 
   /// Enhanced empty state with icon and descriptive text.
@@ -380,4 +461,44 @@ class _ActivityInfo {
   final Color color;
 
   _ActivityInfo(this.title, this.description, this.icon, this.color);
+}
+
+/// Represents a single entry in the grouped activity display list.
+///
+/// Can be either a group header ("Today", "Yesterday", "Earlier") or an
+/// activity row. The `activityIndex` field tracks the sequential index
+/// of activity items only (excluding headers) for stagger animation keying.
+class _DisplayEntry {
+  final bool isHeader;
+  final String? headerLabel;
+  final ActivityLog? activity;
+  /// Sequential index among activity items only — used for stagger animation
+  /// indexing into `_slideAnimations` / `_fadeAnimations`.
+  final int activityIndex;
+  /// Whether this is the last item in its time group — controls the
+  /// connecting line visibility in the timeline dot column.
+  final bool isLastInGroup;
+
+  _DisplayEntry._({
+    required this.isHeader,
+    this.headerLabel,
+    this.activity,
+    this.activityIndex = 0,
+    this.isLastInGroup = false,
+  });
+
+  factory _DisplayEntry.header(String label) =>
+      _DisplayEntry._(isHeader: true, headerLabel: label);
+
+  factory _DisplayEntry.activity(
+    ActivityLog log,
+    int index,
+    bool isLast,
+  ) =>
+      _DisplayEntry._(
+        isHeader: false,
+        activity: log,
+        activityIndex: index,
+        isLastInGroup: isLast,
+      );
 }

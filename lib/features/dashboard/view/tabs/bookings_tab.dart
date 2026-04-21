@@ -10,12 +10,12 @@ import 'package:sline_app/features/booking/view/widgets/dashboard_booking_card.d
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 import 'package:sline_app/features/work/view/work_item_details_screen.dart';
 
-/// Bookings tab with skeleton loading, rich empty state, section Semantics,
-/// and token normalization.
+/// Bookings tab with skeleton loading, icon-badged section headers,
+/// dimmed past bookings, and enhanced empty state.
 ///
-/// Phase 5 redesign: replaced CircularProgressIndicator with skeleton list,
-/// enhanced empty state with icon + descriptive text, added Semantics to
-/// section headers, replaced hardcoded icon size with token. View-layer only.
+/// Phase 7 REDESIGN: Section headers get colored icon badges + count pills,
+/// past bookings wrapped in Opacity(0.6) for clear visual hierarchy,
+/// empty state icon in circular container for designed feel.
 class BookingsTab extends StatelessWidget {
   const BookingsTab({super.key});
 
@@ -52,13 +52,21 @@ class BookingsTab extends StatelessWidget {
             .where((b) => !upcomingIds.contains(b.id))
             .toList();
 
+        final colorScheme = context.colorScheme;
+
         return RefreshIndicator(
           onRefresh: () => vm.refresh(),
           child: ListView(
             padding: const EdgeInsets.all(AppDimens.p16),
             children: [
               if (upcoming.isNotEmpty) ...[
-                const _SectionHeader(title: 'Upcoming'),
+                // Phase 7: icon-badged header with count pill
+                _BookingSectionHeader(
+                  title: 'Upcoming',
+                  count: upcoming.length,
+                  icon: Icons.calendar_month_rounded,
+                  iconColor: colorScheme.primary,
+                ),
                 ...upcoming.map(
                   (b) => DashboardBookingCard(
                     booking: b,
@@ -79,29 +87,39 @@ class BookingsTab extends StatelessWidget {
                     onUpdateStatus: vm.updateBookingStatus,
                   ),
                 ),
-                const SizedBox(height: AppDimens.p24),
+                const SizedBox(height: AppLayout.spacingScreen),
               ],
 
               if (past.isNotEmpty) ...[
-                const _SectionHeader(title: 'Past'),
+                // Phase 7: muted header for past section
+                _BookingSectionHeader(
+                  title: 'Past',
+                  count: past.length,
+                  icon: Icons.history_rounded,
+                  iconColor: colorScheme.textTertiary,
+                ),
+                // Phase 7: dimmed past bookings — clearly secondary
                 ...past.map(
-                  (b) => DashboardBookingCard(
-                    booking: b,
-                    isProvider: vm.currentRole == UserRole.freelancer,
-                    onTapDetails: (booking) => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => WorkItemDetailsScreen(
-                          id: booking.id,
-                          type: WorkItemType.booking,
+                  (b) => Opacity(
+                    opacity: 0.6,
+                    child: DashboardBookingCard(
+                      booking: b,
+                      isProvider: vm.currentRole == UserRole.freelancer,
+                      onTapDetails: (booking) => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => WorkItemDetailsScreen(
+                            id: booking.id,
+                            type: WorkItemType.booking,
+                          ),
                         ),
                       ),
+                      onRefresh: vm.refresh,
+                      onAccept: vm.acceptBooking,
+                      onDecline: vm.declineBooking,
+                      onCancel: vm.cancelBooking,
+                      onUpdateStatus: vm.updateBookingStatus,
                     ),
-                    onRefresh: vm.refresh,
-                    onAccept: vm.acceptBooking,
-                    onDecline: vm.declineBooking,
-                    onCancel: vm.cancelBooking,
-                    onUpdateStatus: vm.updateBookingStatus,
                   ),
                 ),
               ],
@@ -122,7 +140,10 @@ class BookingsTab extends StatelessWidget {
     );
   }
 
-  /// Enhanced empty state with icon and descriptive text.
+  /// Enhanced empty state with circular icon container.
+  ///
+  /// Phase 7 REDESIGN: Icon wrapped in primary-tinted circle (80px) for
+  /// designed feel instead of a naked floating icon.
   Widget _buildEmptyState(BuildContext context, DashboardViewModel vm) {
     final colorScheme = context.colorScheme;
 
@@ -132,7 +153,6 @@ class BookingsTab extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         child: Semantics(
           label: 'No bookings yet. Discover services to book.',
-          // excludeSemantics prevents child widgets from duplicating the label
           excludeSemantics: true,
           child: SizedBox(
             height: MediaQuery.of(context).size.height * 0.4,
@@ -140,10 +160,19 @@ class BookingsTab extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.calendar_today,
-                    size: AppLayout.iconFeature,
-                    color: colorScheme.textSecondary,
+                  // Phase 7: Circular icon container — feels designed, not stock
+                  Container(
+                    width: AppDimens.emptyStateIconContainer,
+                    height: AppDimens.emptyStateIconContainer,
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withValues(alpha: 0.08),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.calendar_today,
+                      size: AppDimens.emptyStateIconSize,
+                      color: colorScheme.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: AppLayout.spacingSection),
                   Text(
@@ -169,26 +198,73 @@ class BookingsTab extends StatelessWidget {
   }
 }
 
-/// Section header with Semantics for accessibility.
-class _SectionHeader extends StatelessWidget {
+/// Icon-badged section header with count pill.
+///
+/// Phase 7 REDESIGN: Colored icon in rounded container + title + count badge.
+/// Matches OverviewTab _SectionCard pattern for visual consistency.
+class _BookingSectionHeader extends StatelessWidget {
   final String title;
-  const _SectionHeader({required this.title});
+  final int count;
+  final IconData icon;
+  final Color iconColor;
+
+  const _BookingSectionHeader({
+    required this.title,
+    required this.count,
+    required this.icon,
+    required this.iconColor,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+
     return Semantics(
       header: true,
-      label: '$title bookings',
-      // excludeSemantics prevents the child Text from announcing a duplicate label
+      label: '$title bookings: $count',
       excludeSemantics: true,
       child: Padding(
         padding: const EdgeInsets.only(
           bottom: AppDimens.p12,
           left: AppDimens.p4,
         ),
-        child: Text(
-          title,
-          style: AppTypography.h3.copyWith(color: context.colorScheme.text),
+        child: Row(
+          children: [
+            // Icon badge
+            Container(
+              padding: const EdgeInsets.all(AppDimens.p6),
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(AppDimens.r8),
+              ),
+              child: Icon(
+                icon,
+                size: AppDimens.iconSizeSmall,
+                color: iconColor,
+              ),
+            ),
+            const SizedBox(width: AppDimens.p8),
+            Text(
+              title,
+              style: AppTypography.h3.copyWith(color: colorScheme.text),
+            ),
+            const SizedBox(width: AppDimens.p8),
+            // Count pill
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimens.p8,
+                vertical: AppDimens.p2,
+              ),
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(AppDimens.r12),
+              ),
+              child: Text(
+                '$count',
+                style: AppTypography.captionBold.copyWith(color: iconColor),
+              ),
+            ),
+          ],
         ),
       ),
     );

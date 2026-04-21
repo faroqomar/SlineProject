@@ -97,7 +97,8 @@ void main() {
         await _pumpWorkTab(tester, vm);
 
         expect(find.text('Needs Your Review (1)'), findsNothing);
-        expect(find.text('Awaiting Client Review'), findsOneWidget);
+        // Phase 7 REDESIGN: review banner text updated for clarity
+        expect(find.text('Waiting for client review'), findsOneWidget);
         expect(find.text('Delivered booking'), findsOneWidget);
       },
     );
@@ -120,8 +121,9 @@ void main() {
       await _pumpWorkTab(tester, vm);
 
       expect(find.text('Needs Your Review (1)'), findsOneWidget);
-      expect(find.text('Needs Review'), findsOneWidget);
-      expect(find.text('Awaiting Client Review'), findsNothing);
+      // Phase 7 REDESIGN: review banner text updated for clarity
+      expect(find.text('Delivery ready for your review'), findsOneWidget);
+      expect(find.text('Waiting for client review'), findsNothing);
     });
   });
 }

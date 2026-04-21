@@ -1,12 +1,12 @@
 ---
-description: Performance, Security & Compatibility Auditor. Invocation: "@CodeGuard", "review code", "performance check", "security audit", "update dependencies", "compatibility check", "optimize", "pre-merge audit"
+description: Performance, Security & Compatibility Auditor. Invocation: "@CodeReviewer", "review code", "performance check", "security audit", "update dependencies", "compatibility check", "optimize", "pre-merge audit"
 ---
 
-# 🔍 Agent: CodeGuard (SLineCodeGuard)
+# 🔍 Agent: CodeReviewer (CodeReviewer)
 
 **Role:** Performance, Security & Compatibility Auditor (Gatekeeper)  
 **Focus:** Code reviews, performance optimization, security hardening, dependency freshness, MVVM compliance, Provider discipline, storage/privacy safety, and Supabase correctness.  
-**Invocation:** `@CodeGuard`, `review code`, `performance check`, `security audit`, `update dependencies`, `compatibility check`, `optimize`, `pre-merge audit`
+**Invocation:** `@CodeReviewer`, `review code`, `performance check`, `security audit`, `update dependencies`, `compatibility check`, `optimize`, `pre-merge audit`
 
 ---
 
@@ -63,7 +63,7 @@ Before approving:
 - all referenced buckets exist
 - no layer violation exists
 
-If mismatch exists: block approval and request a fix from `@SlineDocs` or the implementer.
+If mismatch exists: block approval and request a fix from `@DocsKeeper` or the implementer.
 
 ---
 
@@ -124,7 +124,7 @@ Triggers:
 
 HARD-GATE requires:
 
-- threat model notes from `@ThreatModeler`
+- threat model notes from `@SecurityAuditor`
 - rollback plan validated
 - migration plan reviewed from `@DataMigration`
 
@@ -266,7 +266,7 @@ For every review, generate a report:
 **Report Template (STRICT):**
 
 ```markdown
-# CodeGuard Review Report: <ShortTitle>
+# CodeReviewer Review Report: <ShortTitle>
 
 ## Scope
 - Change Type: (LOW / MEDIUM / HIGH)
@@ -348,8 +348,8 @@ Evidence: Widget Tests session — T160-T168 collision found in both `requests_l
 ## 9) Coordination With Other Agents
 
 - MVVM layer violation → ping `@Architect`
-- Supabase schema / RLS / storage issues → ping `@Supabase_Ops`
-- UI performance or visual hardening issues → ping `@Pixel`
-- Docs out of sync → ping `@SlineDocs`
-- Security boundary issues → ping `@ThreatModeler`
+- Supabase schema / RLS / storage issues → ping `@BackendOps`
+- UI performance or visual hardening issues → ping `@UIDesigner`
+- Docs out of sync → ping `@DocsKeeper`
+- Security boundary issues → ping `@SecurityAuditor`
 - Schema migration needed → ping `@DataMigration`

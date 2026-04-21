@@ -4,6 +4,8 @@ import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
+import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_date.dart';
@@ -160,65 +162,134 @@ class _DashboardOfferCardState extends State<DashboardOfferCard>
               _PaymentDeadlineCountdown(
                 deadline: widget.offer.paymentDeadline!,
               ),
-            Padding(
-              padding: const EdgeInsets.all(AppDimens.p16),
+            // ── HERO PRICE ZONE ─────────────────────────────────────
+            // Phase 7 REDESIGN: Price is the #1 information — give it a
+            // dedicated zone with h2 typography instead of burying it in
+            // a 12px info chip. Days get their own badge.
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimens.p16,
+                vertical: AppDimens.p16,
+              ),
+              decoration: BoxDecoration(
+                color: colorScheme.primary.withValues(alpha: 0.05),
+              ),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (widget.offer.bidderAvatar != null)
-                    Padding(
-                      padding: const EdgeInsets.only(right: AppDimens.p12),
-                      child: SignedAvatar(
-                        storagePathOrUrl: widget.offer.bidderAvatar,
-                        radius: 20,
-                      ),
-                    ),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.isClientView
-                              ? (widget.offer.bidderName ?? 'Freelancer')
-                              : 'My Offer',
-                          style: AppTypography.h4,
+                          'OFFER PRICE',
+                          style: AppTypography.overline.copyWith(
+                            color: colorScheme.textSecondary,
+                            letterSpacing: 1.5,
+                          ),
                         ),
                         const SizedBox(height: AppDimens.p4),
-                        _buildDeadlineText(colorScheme),
-                        const SizedBox(height: AppDimens.p12),
-                        Row(
-                          children: [
-                            _InfoChip(
-                              icon: Icons.attach_money,
-                              label: PriceFormatter.formatPrice(
-                                widget.offer.price.toDouble(),
-                              ),
-                              colorScheme: colorScheme,
-                            ),
-                            const SizedBox(width: AppDimens.p8),
-                            _InfoChip(
-                              icon: Icons.access_time,
-                              label: '${widget.offer.days} Days',
-                              colorScheme: colorScheme,
-                            ),
-                          ],
-                        ),
-                        if (widget.offer.note != null &&
-                            widget.offer.note!.isNotEmpty) ...[
-                          const SizedBox(height: AppDimens.p12),
-                          Text(
-                            '"${widget.offer.note}"',
-                            style: AppTypography.bodySmall.copyWith(
-                              fontStyle: FontStyle.italic,
-                              color: colorScheme.textSecondary,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                        Text(
+                          PriceFormatter.formatPrice(
+                            widget.offer.price.toDouble(),
                           ),
-                        ],
+                          style: AppTypography.h2.copyWith(
+                            color: colorScheme.text,
+                          ),
+                        ),
                       ],
                     ),
                   ),
+                  // Days badge with info color
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimens.p12,
+                      vertical: AppDimens.p8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colorScheme.infoMuted,
+                      borderRadius: BorderRadius.circular(AppDimens.r12),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          '${widget.offer.days}',
+                          style: AppTypography.h4.copyWith(
+                            color: colorScheme.info,
+                          ),
+                        ),
+                        Text(
+                          'DAYS',
+                          style: AppTypography.micro.copyWith(
+                            color: colorScheme.info,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── BIDDER SECTION ──────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.all(AppDimens.p16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Avatar + name + date row
+                  Row(
+                    children: [
+                      if (widget.offer.bidderAvatar != null)
+                        Padding(
+                          padding: const EdgeInsets.only(right: AppDimens.p12),
+                          child: SignedAvatar(
+                            storagePathOrUrl: widget.offer.bidderAvatar,
+                            // Phase 7 REDESIGN: avatarDefault (40px) for
+                            // more personality, up from 20px radius
+                            radius: AppLayout.avatarDefault / 2,
+                          ),
+                        ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.isClientView
+                                  ? (widget.offer.bidderName ?? 'Freelancer')
+                                  : 'My Offer',
+                              style: AppTypography.h6.copyWith(
+                                color: colorScheme.text,
+                              ),
+                            ),
+                            _buildDeadlineText(colorScheme),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Note block
+                  if (widget.offer.note != null &&
+                      widget.offer.note!.isNotEmpty) ...[
+                    const SizedBox(height: AppDimens.p12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(AppDimens.p10),
+                      decoration: BoxDecoration(
+                        color: colorScheme.background.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(AppDimens.r8),
+                      ),
+                      child: Text(
+                        '"${widget.offer.note}"',
+                        style: AppTypography.bodySmall.copyWith(
+                          fontStyle: FontStyle.italic,
+                          color: colorScheme.textSecondary,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -327,7 +398,7 @@ class _OfferActionRow extends StatelessWidget {
                   );
                   onAccept();
                 },
-                style: FilledButton.styleFrom(backgroundColor: AppColors.teal),
+                style: FilledButton.styleFrom(backgroundColor: colorScheme.primary),
                 child: const Text('Award'),
               ),
             if (showPay)
@@ -353,7 +424,7 @@ class _OfferActionRow extends StatelessWidget {
                   );
                   onAccept();
                 },
-                style: FilledButton.styleFrom(backgroundColor: AppColors.teal),
+                style: FilledButton.styleFrom(backgroundColor: colorScheme.primary),
                 child: const Text('Escrow Funds'),
               ),
             if (!showEscrow && !showAward && !showPay && isPending)
@@ -365,7 +436,7 @@ class _OfferActionRow extends StatelessWidget {
                   );
                   onAccept();
                 },
-                style: FilledButton.styleFrom(backgroundColor: AppColors.teal),
+                style: FilledButton.styleFrom(backgroundColor: colorScheme.primary),
                 child: const Text('Accept'),
               ),
             if (onRelease != null && showRelease)
@@ -377,7 +448,7 @@ class _OfferActionRow extends StatelessWidget {
                   );
                   onRelease?.call();
                 },
-                style: FilledButton.styleFrom(backgroundColor: AppColors.teal),
+                style: FilledButton.styleFrom(backgroundColor: colorScheme.primary),
                 child: const Text('Release Funds'),
               ),
             if (onRefund != null && showRefund)
@@ -447,44 +518,6 @@ class _OfferStatusBadge extends StatelessWidget {
   }
 }
 
-class _InfoChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final AppColorScheme colorScheme;
-
-  const _InfoChip({
-    required this.icon,
-    required this.label,
-    required this.colorScheme,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimens.p8,
-        vertical: AppDimens.p4,
-      ),
-      decoration: BoxDecoration(
-        color: colorScheme.background,
-        borderRadius: BorderRadius.circular(AppDimens.r8),
-        border: Border.all(color: colorScheme.cardBorder),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: colorScheme.textSecondary),
-          const SizedBox(width: AppDimens.p4),
-          Text(
-            label,
-            style: AppTypography.captionBold.copyWith(color: colorScheme.text),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// Payment deadline countdown widget for accepted unpaid offers.
 ///
 /// Shows a live countdown badge that changes color based on urgency:
@@ -515,7 +548,9 @@ class _PaymentDeadlineCountdownState extends State<_PaymentDeadlineCountdown>
 
     // Set up pulse animation for critical urgency
     _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
+      // Phase 7: replaced hardcoded 1000ms with dramatic (800ms) + standard
+      // curve for a slightly faster pulse that feels more urgent
+      duration: AppMotion.dramatic,
       vsync: this,
     );
   }

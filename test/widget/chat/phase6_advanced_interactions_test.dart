@@ -4,6 +4,7 @@
 /// relative time formatting, search bar filtering, offer bubble elevation,
 /// and fullscreen image viewer widget structure.
 /// All tests are view-layer only — no backend or ViewModel logic tested.
+library;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';

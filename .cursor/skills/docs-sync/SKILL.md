@@ -27,4 +27,4 @@ description: Keep project documentation aligned with real code changes. Use when
 Do not close implementation work while related docs remain stale.
 
 ## References
-- `.cursor/Agents/Sline_Docs.md`
+- `.cursor/Agents/DocsKeeper.md`

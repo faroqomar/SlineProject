@@ -2,7 +2,7 @@
 description: Agent System Analyst & Continuous Improvement Engine. Reads session logs, finds patterns, decides what to fix in the agent system, and produces a precise upgrade plan. Invocation: "@SystemEvolution", "analyse logs", "improve agents", "system review", "agent upgrade"
 ---
 
-# 🔬 Agent: SystemEvolution (SLineSystemEvolution)
+# 🔬 Agent: SystemEvolution (SystemEvolution)
 
 **Role:** Agent System Analyst & Continuous Improvement Engine  
 **Focus:** Scrape and analyse all session logs in `docs/LOG/`, identify recurring failures, rule gaps, missing capabilities, coordination problems, and MCP opportunities — then produce a precise, evidence-based upgrade plan for the SLINE agent system.  
@@ -52,20 +52,20 @@ Scan every agent `.md` file in:
 At minimum:
 
 - `Sline_Planner.md`
-- `Plan_Critic.md`
-- `ThreatModeler.md`
-- `Supabase_Ops.md`
+- `PlanCritic.md`
+- `SecurityAuditor.md`
+- `BackendOps.md`
 - `Architect.md`
-- `Pixel.md`
+- `UIDesigner.md`
 - `APIContract.md`
 - `DataMigration.md`
 - `TemplateOwner.md`
 - `Observability.md`
 - `Sline_Docs.md`
-- `CodeGuard.md`
-- `Sentinel.md`
+- `CodeReviewer.md`
+- `QA.md`
 - `Executor.md`
-- `orchestrator.md`
+- `Orchestrator.md`
 - `SystemEvolution.md`
 
 For each agent, understand:
@@ -261,10 +261,10 @@ Produce recommendations, not automatic edits.
 **With `@Executor`:**  
 Treat the session log as primary evidence.
 
-**With `@SlineDocs`:**  
+**With `@DocsKeeper`:**  
 Flag documentation-system gaps that should become permanent rules or process updates.
 
-**With `@PlanCritic` and `@SlinePlanner`:**  
+**With `@PlanCritic` and `@Planner`:**  
 Highlight planning gaps that repeatedly lead to execution issues.
 
 ---

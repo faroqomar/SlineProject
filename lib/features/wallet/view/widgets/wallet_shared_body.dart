@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
@@ -11,6 +12,10 @@ import 'package:sline_app/features/wallet/view/widgets/wallet_hero_card.dart';
 import 'package:sline_app/features/wallet/view/widgets/wallet_timeline_card.dart';
 import 'package:sline_app/features/wallet/viewmodels/wallet_view_model.dart';
 
+/// Wallet tab body — renders hero card, insights, withdrawals, and timeline.
+///
+/// Phase 7 PREMIUM REDESIGN: Stripe/Linear aesthetic — overline headers,
+/// hairline dividers, large colored amounts, minimal decoration, data-rich.
 class WalletSharedBody extends StatefulWidget {
   const WalletSharedBody({
     super.key,
@@ -63,7 +68,8 @@ class _WalletSharedBodyState extends State<WalletSharedBody> {
         } else {
           children.addAll([
             WalletHeroCard(summary: summary),
-            const SizedBox(height: AppDimens.p16),
+            // Increased spacing for premium breathing room
+            const SizedBox(height: AppDimens.p24),
             _WalletInsightsCard(summary: summary),
             const SizedBox(height: AppDimens.p16),
             _WalletActionCard(summary: summary),
@@ -89,6 +95,10 @@ class _WalletSharedBodyState extends State<WalletSharedBody> {
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Loading + Error states
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _WalletLoadingCard extends StatelessWidget {
   const _WalletLoadingCard();
@@ -129,6 +139,7 @@ class _WalletErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
     return AppCard(
       key: const ValueKey<String>('wallet_shared_error'),
       padding: const EdgeInsets.all(AppDimens.p24),
@@ -139,25 +150,25 @@ class _WalletErrorCard extends StatelessWidget {
             width: AppDimens.p48,
             height: AppDimens.p48,
             decoration: BoxDecoration(
-              color: AppColors.lightRed.withValues(alpha: 0.16),
+              color: colorScheme.danger.withValues(alpha: 0.16),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.wifi_tethering_error_rounded,
-              color: AppColors.lightRed,
+              color: colorScheme.danger,
               size: AppDimens.iconSizeMedium,
             ),
           ),
           const SizedBox(height: AppDimens.p16),
           Text(
             'Wallet unavailable',
-            style: AppTypography.h5.copyWith(color: context.colorScheme.text),
+            style: AppTypography.h5.copyWith(color: colorScheme.text),
           ),
           const SizedBox(height: AppDimens.p8),
           Text(
             message,
             style: AppTypography.bodyMedium.copyWith(
-              color: context.colorScheme.textSecondary,
+              color: colorScheme.textSecondary,
             ),
           ),
           const SizedBox(height: AppDimens.p20),
@@ -167,7 +178,7 @@ class _WalletErrorCard extends StatelessWidget {
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.teal,
+                backgroundColor: colorScheme.primary,
                 padding: const EdgeInsets.symmetric(vertical: AppDimens.p16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppDimens.r14),
@@ -182,6 +193,12 @@ class _WalletErrorCard extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Insights — Warm, branded stat cards
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Wallet flow stats — friendly h5 header, individual tinted stat tiles
+/// with colored left accent, generous spacing. Warm, not cold corporate.
 class _WalletInsightsCard extends StatelessWidget {
   const _WalletInsightsCard({required this.summary});
 
@@ -189,49 +206,125 @@ class _WalletInsightsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
+    final colorScheme = context.colorScheme;
+    return Column(
       key: const ValueKey<String>('wallet_insights_card'),
-      padding: const EdgeInsets.all(AppDimens.p20),
-      child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Section header — friendly, not cold overline ──
+        // TEST: must find text "Recent wallet flow"
+        Text(
+          'Recent wallet flow',
+          style: AppTypography.h5.copyWith(color: colorScheme.text),
+        ),
+        const SizedBox(height: AppDimens.p4),
+        Text(
+          summary.activityCaption,
+          style: AppTypography.bodySmall.copyWith(
+            color: colorScheme.textSecondary,
+          ),
+        ),
+        const SizedBox(height: AppDimens.p16),
+
+        // ── Insight tiles — each in its own tinted container ──
+        // Vertical stack on mobile, responsive wrap on wider screens
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final maxWidth = constraints.maxWidth;
+            final columns =
+                maxWidth >= 720 ? 3 : maxWidth >= 460 ? 2 : 1;
+            final tileWidth = columns == 1
+                ? maxWidth
+                : (maxWidth - ((columns - 1) * AppDimens.p12)) / columns;
+
+            return Wrap(
+              spacing: AppDimens.p12,
+              runSpacing: AppDimens.p12,
+              children: summary.insights
+                  .map(
+                    (insight) => SizedBox(
+                      width: tileWidth,
+                      child: _InsightTile(insight: insight),
+                    ),
+                  )
+                  .toList(growable: false),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+/// Individual insight tile — colored left accent bar + icon + amount.
+/// Warm tinted background from the insight color for visual identity.
+class _InsightTile extends StatelessWidget {
+  const _InsightTile({required this.insight});
+
+  final WalletInsightStat insight;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final accentColor = _insightColor(insight.kind, colorScheme);
+    final icon = _insightIcon(insight.kind);
+
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.p16),
+      decoration: BoxDecoration(
+        color: colorScheme.cardBackground,
+        borderRadius: BorderRadius.circular(AppDimens.r16),
+        border: Border.all(color: colorScheme.cardBorder),
+      ),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Recent wallet flow',
-            style: AppTypography.h5.copyWith(color: context.colorScheme.text),
-          ),
-          const SizedBox(height: AppDimens.p6),
-          Text(
-            summary.activityCaption,
-            style: AppTypography.bodySmall.copyWith(
-              color: context.colorScheme.textSecondary,
+          // Colored left accent bar — visual identity for each metric
+          Container(
+            width: 3,
+            height: AppDimens.p48,
+            decoration: BoxDecoration(
+              color: accentColor,
+              borderRadius: BorderRadius.circular(AppDimens.r4),
             ),
           ),
-          const SizedBox(height: AppDimens.p16),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final maxWidth = constraints.maxWidth;
-              final columns = maxWidth >= 720
-                  ? 3
-                  : maxWidth >= 460
-                  ? 2
-                  : 1;
-              final tileWidth = columns == 1
-                  ? maxWidth
-                  : (maxWidth - ((columns - 1) * AppDimens.p12)) / columns;
-
-              return Wrap(
-                spacing: AppDimens.p12,
-                runSpacing: AppDimens.p12,
-                children: summary.insights
-                    .map(
-                      (insight) => SizedBox(
-                        width: tileWidth,
-                        child: _InsightTile(insight: insight),
+          const SizedBox(width: AppDimens.p14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Icon + label row
+                Row(
+                  children: [
+                    Icon(icon, size: 14, color: accentColor),
+                    const SizedBox(width: AppDimens.p6),
+                    // TEST: must find text "Received", "Spent", "Fees"
+                    Text(
+                      insight.label,
+                      style: AppTypography.captionBold.copyWith(
+                        color: colorScheme.textSecondary,
                       ),
-                    )
-                    .toList(growable: false),
-              );
-            },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppDimens.p8),
+                // Hero amount — large, colored
+                Text(
+                  PriceFormatter.formatPrice(insight.amount),
+                  style: AppTypography.h4.copyWith(
+                    color: accentColor,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: AppDimens.p2),
+                Text(
+                  insight.caption,
+                  style: AppTypography.micro.copyWith(
+                    color: colorScheme.textTertiary,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -239,6 +332,12 @@ class _WalletInsightsCard extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Action card — Premium coming-soon preview with gradient accent
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Withdrawals feature preview with gradient left accent border.
+/// Stripe-like sharp badge, dot-indicator metrics, clean disabled CTA.
 class _WalletActionCard extends StatelessWidget {
   const _WalletActionCard({required this.summary});
 
@@ -248,215 +347,202 @@ class _WalletActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
 
-    return AppCard(
+    return Container(
       key: const ValueKey<String>('wallet_action_card'),
-      padding: const EdgeInsets.all(AppDimens.p20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(AppDimens.p10),
-                decoration: BoxDecoration(
-                  color: AppColors.gold.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(AppDimens.r12),
-                ),
-                child: Icon(
-                  Icons.savings_outlined,
-                  color: AppColors.gold,
-                  size: AppDimens.iconSizeSmall,
+      decoration: BoxDecoration(
+        color: colorScheme.cardBackground,
+        borderRadius: BorderRadius.circular(AppDimens.r20),
+        border: Border.all(color: colorScheme.cardBorder),
+        boxShadow: AppDecorations.elevation(1, isDark: colorScheme.isDark),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppDimens.r20),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Gradient left accent border (gold → teal) ──
+            // Signals premium/upcoming feature
+            Container(
+              width: 3,
+              // Needs explicit height to render in Row; use constraints
+              constraints: const BoxConstraints(minHeight: 180),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [colorScheme.accent, colorScheme.primary],
                 ),
               ),
-              const SizedBox(width: AppDimens.p12),
-              Expanded(
+            ),
+
+            // ── Content ──
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(AppDimens.p20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Withdrawals',
-                      style: AppTypography.h6.copyWith(color: colorScheme.text),
+                    // Title + "Coming Soon" sharp badge
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Withdrawals',
+                          style: AppTypography.h5.copyWith(
+                            color: colorScheme.text,
+                          ),
+                        ),
+                        // TEST: must find text "Coming Soon"
+                        // Sharp r4 badge — more technical than rounded pill
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppDimens.p8,
+                            vertical: AppDimens.p4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colorScheme.accent.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(AppDimens.r4),
+                            border: Border.all(
+                              color: colorScheme.accent.withValues(alpha: 0.24),
+                              width: 0.5,
+                            ),
+                          ),
+                          child: Text(
+                            'Coming Soon',
+                            style: AppTypography.micro.copyWith(
+                              color: colorScheme.accent,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: AppDimens.p4),
                     Text(
-                      'Live balances now, bank payout workflow next.',
+                      'Bank payout workflow is next on the roadmap.',
                       style: AppTypography.bodySmall.copyWith(
                         color: colorScheme.textSecondary,
+                      ),
+                    ),
+
+                    const SizedBox(height: AppDimens.p20),
+
+                    // ── Dot-indicator metrics (no inner container) ──
+                    Row(
+                      children: [
+                        _WithdrawalMetric(
+                          label: 'READY',
+                          value: PriceFormatter.formatPrice(
+                            summary.availableFunds,
+                          ),
+                          dotColor: colorScheme.primary,
+                        ),
+                        const SizedBox(width: AppDimens.p24),
+                        _WithdrawalMetric(
+                          label: 'PENDING',
+                          value: PriceFormatter.formatPrice(
+                            summary.pendingWithdrawalFunds,
+                          ),
+                          dotColor: colorScheme.danger,
+                        ),
+                        const SizedBox(width: AppDimens.p24),
+                        _WithdrawalMetric(
+                          label: 'HELD',
+                          value: PriceFormatter.formatPrice(
+                            summary.heldFunds,
+                          ),
+                          dotColor: colorScheme.accent,
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: AppDimens.p20),
+
+                    // ── Disabled CTA with subtle border ──
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: null,
+                        style: FilledButton.styleFrom(
+                          disabledBackgroundColor: colorScheme.inputBackground,
+                          disabledForegroundColor: colorScheme.textTertiary,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppDimens.p14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppDimens.r12),
+                            side: BorderSide(
+                              color: colorScheme.divider,
+                              width: 0.5,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          'Request withdrawal',
+                          style: AppTypography.bodySmall.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimens.p10,
-                  vertical: AppDimens.p6,
-                ),
-                decoration: BoxDecoration(
-                  color: colorScheme.textSecondary.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(AppDimens.r30),
-                ),
-                child: Text(
-                  'Coming Soon',
-                  style: AppTypography.micro.copyWith(
-                    color: colorScheme.textSecondary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppDimens.p18),
-          Container(
-            padding: const EdgeInsets.all(AppDimens.p16),
-            decoration: BoxDecoration(
-              color: colorScheme.inputBackground,
-              borderRadius: BorderRadius.circular(AppDimens.r16),
-              border: Border.all(color: colorScheme.inputBorder),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _ActionMetric(
-                    label: 'Ready now',
-                    value: PriceFormatter.formatPrice(summary.availableFunds),
-                    color: AppColors.teal,
-                  ),
-                ),
-                Expanded(
-                  child: _ActionMetric(
-                    label: 'Pending',
-                    value: PriceFormatter.formatPrice(
-                      summary.pendingWithdrawalFunds,
-                    ),
-                    color: AppColors.lightRed,
-                  ),
-                ),
-                Expanded(
-                  child: _ActionMetric(
-                    label: 'Held',
-                    value: PriceFormatter.formatPrice(summary.heldFunds),
-                    color: AppColors.gold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppDimens.p16),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: null,
-              icon: const Icon(Icons.arrow_outward_rounded),
-              style: FilledButton.styleFrom(
-                backgroundColor: colorScheme.textSecondary.withValues(
-                  alpha: 0.18,
-                ),
-                disabledBackgroundColor: colorScheme.textSecondary.withValues(
-                  alpha: 0.16,
-                ),
-                foregroundColor: colorScheme.text,
-                disabledForegroundColor: colorScheme.textSecondary,
-                padding: const EdgeInsets.symmetric(vertical: AppDimens.p16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppDimens.r14),
-                ),
-              ),
-              label: const Text('Request withdrawal'),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _InsightTile extends StatelessWidget {
-  const _InsightTile({required this.insight});
-
-  final WalletInsightStat insight;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final accent = _insightColor(insight.kind);
-    final icon = _insightIcon(insight.kind);
-
-    return Container(
-      padding: const EdgeInsets.all(AppDimens.p16),
-      decoration: BoxDecoration(
-        color: colorScheme.inputBackground,
-        borderRadius: BorderRadius.circular(AppDimens.r18),
-        border: Border.all(color: colorScheme.inputBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: AppDimens.p40,
-            height: AppDimens.p40,
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(AppDimens.r12),
-            ),
-            child: Icon(icon, color: accent, size: AppDimens.iconSizeSmall),
-          ),
-          const SizedBox(height: AppDimens.p12),
-          Text(
-            insight.label,
-            style: AppTypography.bodySmall.copyWith(
-              color: colorScheme.textSecondary,
-            ),
-          ),
-          const SizedBox(height: AppDimens.p4),
-          Text(
-            PriceFormatter.formatPrice(insight.amount),
-            style: AppTypography.h6.copyWith(
-              color: colorScheme.text,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: AppDimens.p4),
-          Text(
-            insight.caption,
-            style: AppTypography.micro.copyWith(
-              color: colorScheme.textSecondary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActionMetric extends StatelessWidget {
-  const _ActionMetric({
+/// Dot-indicator metric for the withdrawal section.
+class _WithdrawalMetric extends StatelessWidget {
+  const _WithdrawalMetric({
     required this.label,
     required this.value,
-    required this.color,
+    required this.dotColor,
   });
 
   final String label;
   final String value;
-  final Color color;
+  final Color dotColor;
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: AppTypography.micro.copyWith(
-            color: context.colorScheme.textSecondary,
-            fontWeight: FontWeight.w700,
-          ),
+        Row(
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: dotColor,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: AppDimens.p6),
+            Text(
+              label,
+              style: AppTypography.micro.copyWith(
+                color: colorScheme.textSecondary,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: AppDimens.p4),
         Text(
           value,
-          style: AppTypography.bodySmall.copyWith(
-            color: color,
-            fontWeight: FontWeight.w800,
+          style: AppTypography.bodyLarge.copyWith(
+            color: colorScheme.text,
+            fontWeight: FontWeight.w700,
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
       ],
@@ -464,17 +550,11 @@ class _ActionMetric extends StatelessWidget {
   }
 }
 
-Color _insightColor(WalletInsightKind kind) {
-  switch (kind) {
-    case WalletInsightKind.received:
-      return AppColors.teal;
-    case WalletInsightKind.spent:
-      return AppColors.lightRed;
-    case WalletInsightKind.fees:
-      return AppColors.gold;
-  }
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
 
+/// Icon for each insight kind — small, understated visual cue.
 IconData _insightIcon(WalletInsightKind kind) {
   switch (kind) {
     case WalletInsightKind.received:
@@ -483,5 +563,17 @@ IconData _insightIcon(WalletInsightKind kind) {
       return Icons.north_east_rounded;
     case WalletInsightKind.fees:
       return Icons.auto_awesome_rounded;
+  }
+}
+
+/// Semantic insight color for light/dark mode consistency.
+Color _insightColor(WalletInsightKind kind, AppColorScheme colorScheme) {
+  switch (kind) {
+    case WalletInsightKind.received:
+      return colorScheme.primary;
+    case WalletInsightKind.spent:
+      return colorScheme.danger;
+    case WalletInsightKind.fees:
+      return colorScheme.accent;
   }
 }

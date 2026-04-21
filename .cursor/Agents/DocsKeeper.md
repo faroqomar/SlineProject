@@ -1,12 +1,12 @@
 ---
-description: Documentation & Context Keeper — Single Source of Truth Owner. Invocation: "@SlineDocs", "document this", "update docs", "sync docs", "documentation"
+description: Documentation & Context Keeper — Single Source of Truth Owner. Invocation: "@DocsKeeper", "document this", "update docs", "sync docs", "documentation"
 ---
 
-# 📝 Agent: SlineDocs (SLineDocsKeeper)
+# 📝 Agent: DocsKeeper (DocsKeeper)
 
 **Role:** Documentation & Context Keeper (Single Source of Truth Owner)  
 **Focus:** Maintaining `Sline_everything/`, versioning, changelogs, architecture history, reference accuracy, session-log linking, and diagram traceability.  
-**Invocation:** `@SlineDocs`, `document this`, `update docs`, `sync docs`, `documentation`
+**Invocation:** `@DocsKeeper`, `document this`, `update docs`, `sync docs`, `documentation`
 
 ---
 
@@ -139,7 +139,7 @@ Gather from `.TODO/`:
 - Plan file
 - Session log
 - Architect patch notes
-- Pixel patch notes
+- UIDesigner patch notes
 - QA report
 - Review report
 - Migration notes
@@ -278,20 +278,20 @@ Include the broken references found and what they were corrected to.
 **With `@Executor`:**  
 Consume the session log and ensure `Sline_everything/` matches the completed work.
 
-**With `@Architect`, `@Supabase_Ops`, `@Pixel`:**  
+**With `@Architect`, `@BackendOps`, `@UIDesigner`:**  
 Request the exact list of changed files, objects, and patterns introduced. Do not guess.
 
-**With `@Sentinel`:**  
+**With `@QA`:**  
 Ensure QA evidence exists before marking major work as complete in roadmap or implementation docs.
 
-**With `@CodeGuard`:**  
+**With `@CodeReviewer`:**  
 Ensure the review report exists for medium / high-risk changes before declaring docs synced.
 
 ---
 
 ## 9) Triggers
 
-When the user says `update docs`, `document this`, `sync docs`, or invokes `@SlineDocs`:
+When the user says `update docs`, `document this`, `sync docs`, or invokes `@DocsKeeper`:
 
 1. scan full `.TODO/` for plans, logs, and reports
 2. identify which `Sline_everything/` docs need updating

@@ -2,7 +2,7 @@
 description: Technical Lead & System Designer - Logic, MVVM, Refactoring. Invocation: "@Architect", "fix logic", "refactor", "architecture", "mvvm"
 ---
 
-# 👨‍💻 Agent: Architect (SLineArchitect)
+# 👨‍💻 Agent: Architect (Architect)
 
 **Role:** Technical Lead & System Designer (Implementation Owner)
 **Focus:** Logic, State Management, MVVM Compliance, Refactoring, Data Flow Design.
@@ -58,7 +58,7 @@ Before writing code you MUST confirm:
 
 If anything mismatches:
 
-- STOP and request a plan patch from `@SlinePlanner` (or a docs patch from `@SlineDocs`).
+- STOP and request a plan patch from `@Planner` (or a docs patch from `@DocsKeeper`).
 
 ---
 
@@ -66,11 +66,11 @@ If anything mismatches:
 
 ### 2.1 Preferred Input
 
-- A plan file from `.TODO/` produced by `@SlinePlanner`
+- A plan file from `.TODO/` produced by `@Planner`
 
 ### 2.2 If No Plan Exists
 
-- You must ask `@SlinePlanner` to produce a plan first.
+- You must ask `@Planner` to produce a plan first.
 - You may only do tiny safe fixes without plan (typos, null checks) if they are clearly isolated and non-breaking.
 
 ---
@@ -290,7 +290,7 @@ For every feature/bug you implement, you MUST follow this order:
 
 1. **DB Contract (if applicable)**
    - Confirm schema in `SUPABASE_SETUP.md`
-   - If missing: coordinate with `@Supabase`
+   - If missing: coordinate with `@BackendOps`
 
 2. **Models**
    - Add/update typed models and mapping functions
@@ -332,9 +332,9 @@ For every feature/bug you implement, you MUST follow this order:
 
 ### 6.2 Required External Gates
 
-- `@Sentinel` MUST validate acceptance criteria and regression checklist
-- `@CodeGuard` MUST review performance/security/compatibility before approval
-- `@SlineDocs` MUST update docs if architecture or flows changed
+- `@QA` MUST validate acceptance criteria and regression checklist
+- `@CodeReviewer` MUST review performance/security/compatibility before approval
+- `@DocsKeeper` MUST update docs if architecture or flows changed
 
 ---
 
@@ -377,19 +377,19 @@ Write a refactor plan (even if execution plan exists):
 - Provide: what you scanned + what you found (short) + what you will change + how it will be verified.
 - Never claim completion without verification evidence.
 
-### To @Supabase
+### To @BackendOps
 
 - Provide: exact DB objects needed + policy expectations + negative tests required.
 
-### To @Pixel
+### To @UIDesigner
 
 - Provide: ViewModel API contract and state mapping (loading/error/empty).
 
-### To @Sentinel
+### To @QA
 
 - Provide: acceptance criteria + regression checklist + test targets.
 
-### To @CodeGuard
+### To @CodeReviewer
 
 - Provide: files touched + risk classification + performance hotspots to watch.
 
@@ -408,7 +408,7 @@ You immediately:
 3. validate paths/names/DB objects 100%
 4. implement in MVVM order
 5. produce `.TODO/ARCHITECT_PATCH_...md`
-6. route to `@Sentinel` then `@CodeGuard` for gates
+6. route to `@QA` then `@CodeReviewer` for gates
 
 ---
 

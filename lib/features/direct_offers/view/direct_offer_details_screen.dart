@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:sline_app/core/config/payment_runtime_config.dart';
 import 'package:sline_app/core/services/deep_link_service.dart';
 import 'package:sline_app/core/services/payment_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
@@ -187,45 +186,182 @@ class _DirectOfferDetailsContentState
             elevation: 0,
           ),
           body: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppDimens.p24),
+            padding: const EdgeInsets.all(AppDimens.p16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // ── Phase 7 REDESIGN: Structured offer details card ──
+                // Status-colored header + hero price zone + info rows
                 AppCardContainer(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppDimens.p16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: AppTypography.h3.copyWith(
-                            color: context.colorScheme.text,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Status header band
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppDimens.p16,
+                          vertical: AppDimens.p12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _statusColor(context, offer).withValues(
+                            alpha: 0.10,
+                          ),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(AppDimens.r16),
                           ),
                         ),
-                        if (offer.description?.trim().isNotEmpty ?? false) ...[
-                          const SizedBox(height: AppDimens.p12),
-                          Text(
-                            offer.description!,
-                            style: AppTypography.bodyMedium.copyWith(
-                              color: context.colorScheme.textSecondary,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.handshake_outlined,
+                                  size: AppDimens.iconSizeSmall,
+                                  color: _statusColor(context, offer),
+                                ),
+                                const SizedBox(width: AppDimens.p8),
+                                Text(
+                                  'CUSTOM OFFER',
+                                  style: AppTypography.captionBold.copyWith(
+                                    color: _statusColor(context, offer),
+                                  ),
+                                ),
+                              ],
                             ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppDimens.p8,
+                                vertical: AppDimens.p4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _statusColor(context, offer).withValues(
+                                  alpha: 0.20,
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                  AppDimens.r8,
+                                ),
+                              ),
+                              child: Text(
+                                offer.isAcceptedPendingPayment
+                                    ? 'PENDING PAYMENT'
+                                    : offer.status
+                                          .toUpperCase()
+                                          .replaceAll('_', ' '),
+                                style: AppTypography.micro.copyWith(
+                                  color: _statusColor(context, offer),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Premium hero price zone — subtle tint, tabular figures
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(AppDimens.p20),
+                        decoration: BoxDecoration(
+                          color: context.colorScheme.primary.withValues(
+                            alpha: 0.03,
                           ),
-                        ],
-                        const SizedBox(height: AppDimens.p16),
-                        _row(
-                          'Price',
-                          PriceFormatter.formatPrice(offer.price.toDouble()),
                         ),
-                        _row('Delivery (days)', '${offer.days}'),
-                        _row(
-                          'Status',
-                          offer.isAcceptedPendingPayment
-                              ? 'PENDING PAYMENT'
-                              : offer.status.toUpperCase().replaceAll('_', ' '),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'OFFER PRICE',
+                                    style: AppTypography.overline.copyWith(
+                                      color:
+                                          context.colorScheme.textSecondary,
+                                      letterSpacing: 1.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppDimens.p6),
+                                  Text(
+                                    PriceFormatter.formatPrice(
+                                      offer.price.toDouble(),
+                                    ),
+                                    style: AppTypography.h1.copyWith(
+                                      color: context.colorScheme.text,
+                                      fontSize: 34,
+                                      letterSpacing: -0.8,
+                                      fontFeatures: const [
+                                        FontFeature.tabularFigures(),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Days badge — neutral colors, not info-tinted
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppDimens.p14,
+                                vertical: AppDimens.p10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: context.colorScheme.inputBackground,
+                                borderRadius: BorderRadius.circular(
+                                  AppDimens.r10,
+                                ),
+                                border: Border.all(
+                                  color: context.colorScheme.divider,
+                                  width: 0.5,
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    '${offer.days}',
+                                    style: AppTypography.h4.copyWith(
+                                      color: context.colorScheme.text,
+                                    ),
+                                  ),
+                                  Text(
+                                    'DAYS',
+                                    style: AppTypography.micro.copyWith(
+                                      color: context.colorScheme.textTertiary,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                      // Title + description body
+                      Padding(
+                        padding: const EdgeInsets.all(AppDimens.p16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: AppTypography.h4.copyWith(
+                                color: context.colorScheme.text,
+                              ),
+                            ),
+                            if (offer.description?.trim().isNotEmpty ??
+                                false) ...[
+                              const SizedBox(height: AppDimens.p8),
+                              Text(
+                                offer.description!,
+                                style: AppTypography.bodyMedium.copyWith(
+                                  color: context.colorScheme.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 _DirectOfferDisputeBanner(offerId: widget.offerId),
@@ -268,7 +404,9 @@ class _DirectOfferDetailsContentState
                                   FilledButton(
                                     onPressed: () => Navigator.pop(ctx, true),
                                     style: FilledButton.styleFrom(
-                                      backgroundColor: AppColors.lightRed,
+                                      // Phase 7: semantic danger replaces AppColors.lightRed
+                                      backgroundColor:
+                                          context.colorScheme.danger,
                                     ),
                                     child: const Text('Cancel offer'),
                                   ),
@@ -383,27 +521,25 @@ class _DirectOfferDetailsContentState
     );
   }
 
-  Widget _row(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: AppTypography.bodySmall.copyWith(
-              color: context.colorScheme.textSecondary,
-            ),
-          ),
-          Text(
-            value,
-            style: AppTypography.bodyMedium.copyWith(
-              color: context.colorScheme.text,
-            ),
-          ),
-        ],
-      ),
-    );
+  /// Map offer status to semantic color for the header band.
+  Color _statusColor(BuildContext context, dynamic offer) {
+    final colorScheme = context.colorScheme;
+    if (offer.isAcceptedPendingPayment) return colorScheme.warning;
+    final status = (offer.status as String).toLowerCase();
+    switch (status) {
+      case 'active':
+      case 'in_progress':
+        return colorScheme.primary;
+      case 'delivered':
+        return colorScheme.info;
+      case 'completed':
+        return colorScheme.success;
+      case 'canceled':
+      case 'declined':
+        return colorScheme.danger;
+      default:
+        return colorScheme.warning;
+    }
   }
 }
 
@@ -498,7 +634,7 @@ class _ReportIssueGuardDirectOffer extends StatelessWidget {
               child: Text(
                 'Report Issue',
                 style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.lightRed,
+                  color: context.colorScheme.danger,
                 ),
               ),
             ),

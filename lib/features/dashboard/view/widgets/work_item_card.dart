@@ -6,8 +6,8 @@ import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/deep_link_service.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_date.dart';
@@ -52,30 +52,32 @@ class WorkItemCard extends StatelessWidget {
     final isDirectOffer = item.type == WorkItemType.directOffer;
     final deepLinkService = context.read<DeepLinkService>();
 
+    // Phase 7: migrated from AppColors.* to semantic colorScheme.* tokens
+    // for consistent light/dark mode rendering.
     Color statusColor;
     switch (item.statusRaw) {
       case 'open':
       case 'pending':
       case 'paid_request_pending':
       case 'accepted': // direct offer pending payment
-        statusColor = AppColors.gold;
+        statusColor = colorScheme.warning; // was AppColors.gold
       case 'assigned':
       case 'confirmed':
       case 'inProgress':
       case 'in_progress':
       case 'active':
-        statusColor = AppColors.teal;
+        statusColor = colorScheme.primary; // was AppColors.teal
       case 'delivered':
         statusColor = colorScheme.danger;
       case 'completed':
       case 'closed':
-        statusColor = AppColors.lightTeal;
+        statusColor = colorScheme.success; // was AppColors.lightTeal
       case 'canceled':
       case 'declined':
       case 'refunded':
         statusColor = colorScheme.danger;
       default:
-        statusColor = AppColors.mediumGrey;
+        statusColor = colorScheme.textTertiary; // was AppColors.mediumGrey
     }
 
     final typeLabel = isDirectOffer
@@ -107,10 +109,12 @@ class WorkItemCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppDimens.p16,
-                vertical: AppDimens.p12,
+                // Phase 7 REDESIGN: taller header for more visual weight
+                vertical: AppDimens.p14,
               ),
               decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.1),
+                // Phase 7 REDESIGN: 0.15 alpha up from 0.1 for more color presence
+                color: statusColor.withValues(alpha: 0.15),
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(AppDimens.r16),
                 ),
@@ -154,10 +158,23 @@ class WorkItemCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Text(
-                    _getStatusDisplayLabel(item.statusRaw),
-                    style: AppTypography.captionBold.copyWith(
-                      color: statusColor,
+                  // Phase 7 REDESIGN: Filled badge for status — more visual
+                  // weight than bare text, consistent with card header identity.
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimens.p8,
+                      vertical: AppDimens.p4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.20),
+                      borderRadius: BorderRadius.circular(AppDimens.r8),
+                    ),
+                    child: Text(
+                      _getStatusDisplayLabel(item.statusRaw),
+                      style: AppTypography.micro.copyWith(
+                        color: statusColor,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ],
@@ -185,30 +202,43 @@ class WorkItemCard extends StatelessWidget {
                     },
                     child: Row(
                       children: [
-                        // Avatar
+                        // Phase 7 REDESIGN: avatarDefault (40px) up from
+                        // avatarSmall (36px) for more personality
                         SignedAvatar(
                           storagePathOrUrl: item.counterpartyAvatar,
-                          radius: 18,
+                          radius: AppLayout.avatarDefault / 2,
                           placeholder: CircleAvatar(
-                            radius: 18,
+                            radius: AppLayout.avatarDefault / 2,
                             backgroundColor: colorScheme.textSecondary,
                             child: Icon(
                               Icons.person,
-                              size: 18,
-                              color: AppColors.white,
+                              size: AppLayout.avatarDefault / 2,
+                              color: Theme.of(context).colorScheme.onPrimary,
                             ),
                           ),
                         ),
                         const SizedBox(width: AppDimens.p8),
-                        // Name
+                        // Name + role subtitle
                         Flexible(
-                          child: Text(
-                            item.counterpartyName,
-                            style: AppTypography.bodySmall.copyWith(
-                              color: colorScheme.text,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            overflow: TextOverflow.ellipsis,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.counterpartyName,
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: colorScheme.text,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              // Phase 7: role subtitle for context
+                              Text(
+                                item.counterpartyRole,
+                                style: AppTypography.micro.copyWith(
+                                  color: colorScheme.textTertiary,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -217,33 +247,46 @@ class WorkItemCard extends StatelessWidget {
 
                   const SizedBox(height: AppDimens.p16),
 
+                  // Phase 7 REDESIGN: Full-width review banner with border —
+                  // impossible to miss, replaces the small inline chip.
                   if (item.needsReview)
                     Container(
-                      margin: const EdgeInsets.only(bottom: AppDimens.p8),
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: AppDimens.p12),
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppDimens.p12,
-                        vertical: AppDimens.p4,
+                        vertical: AppDimens.p10,
                       ),
                       decoration: BoxDecoration(
                         color: colorScheme.dangerMuted,
-                        borderRadius: BorderRadius.circular(AppDimens.r16),
+                        borderRadius: BorderRadius.circular(AppDimens.r12),
+                        border: Border.all(
+                          color: colorScheme.danger.withValues(alpha: 0.20),
+                        ),
                       ),
                       child: Row(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
                             Icons.rate_review,
-                            size: 14,
+                            size: AppDimens.iconSizeSmall,
                             color: colorScheme.danger,
                           ),
-                          const SizedBox(width: AppDimens.p4),
-                          Text(
-                            item.actionableNeedsReview
-                                ? 'Needs Review'
-                                : 'Awaiting Client Review',
-                            style: AppTypography.captionBold.copyWith(
-                              color: colorScheme.danger,
+                          const SizedBox(width: AppDimens.p8),
+                          Expanded(
+                            child: Text(
+                              item.actionableNeedsReview
+                                  ? 'Delivery ready for your review'
+                                  : 'Waiting for client review',
+                              style: AppTypography.captionBold.copyWith(
+                                color: colorScheme.danger,
+                              ),
                             ),
+                          ),
+                          // Chevron hints at actionability
+                          Icon(
+                            Icons.chevron_right,
+                            size: AppDimens.iconSizeSmall,
+                            color: colorScheme.danger,
                           ),
                         ],
                       ),
@@ -262,7 +305,8 @@ class WorkItemCard extends StatelessWidget {
                       child: FilledButton(
                         onPressed: onPrimaryAction,
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.teal,
+                          // Phase 7: semantic primary replaces AppColors.teal
+                          backgroundColor: colorScheme.primary,
                         ),
                         child: Text(
                           _getPrimaryButtonLabel(item.primaryActionType),

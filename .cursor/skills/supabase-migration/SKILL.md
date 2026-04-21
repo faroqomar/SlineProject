@@ -26,4 +26,4 @@ description: Design and validate Supabase/Postgres migrations with secure RLS an
 
 ## Reference
 - `.cursor/rules/supabase-database.mdc`
-- `.cursor/Agents/Supabase_Ops.md`
+- `.cursor/Agents/BackendOps.md`

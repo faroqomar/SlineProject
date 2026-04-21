@@ -204,6 +204,15 @@ void main() {
       expect(find.text('Received'), findsOneWidget);
       expect(find.text('Spent'), findsOneWidget);
       expect(find.text('Fees'), findsOneWidget);
+
+      // Phase 7: Action card may be below fold after hero card redesign —
+      // scroll it into view before asserting.
+      await tester.scrollUntilVisible(
+        find.text('Coming Soon'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
       expect(find.text('Coming Soon'), findsOneWidget);
 
       await tester.scrollUntilVisible(

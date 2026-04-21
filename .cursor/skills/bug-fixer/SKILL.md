@@ -33,4 +33,4 @@ description: Run a structured bug triage and repair workflow for Flutter and Sup
 
 ## References
 - `.cursor/rules/error-handling.mdc`
-- `.cursor/Agents/Sentinel.md`
+- `.cursor/Agents/QA.md`

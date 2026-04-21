@@ -15,7 +15,6 @@ import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/web_url_utils_stub.dart'
     if (dart.library.html) 'package:sline_app/core/utils/web_url_utils_web.dart'
     as web_url_utils;
-// import 'tabs/manage_tab.dart'; // Removed
 import 'package:sline_app/features/dashboard/view/tabs/bookings_tab.dart';
 import 'package:sline_app/features/dashboard/view/tabs/inbox_tab.dart';
 import 'package:sline_app/features/dashboard/view/tabs/overview_tab.dart';
@@ -159,27 +158,69 @@ class _DashboardContentState extends State<_DashboardContent>
     super.dispose();
   }
 
+  /// Opens a bottom sheet with dashboard settings (role switcher).
+  ///
+  /// Phase 7 redesign: migrated from AlertDialog to BottomSheet for a more
+  /// native mobile feel. The sheet uses solid surface (cardBackground),
+  /// drag handle, and safe-area-aware bottom padding.
   void _showSettings(BuildContext context, DashboardViewModel vm) {
-    showDialog(
+    final colorScheme = context.colorScheme;
+
+    AppLogger.d('DashboardScreen: opening settings sheet', tag: 'Dashboard');
+
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Dashboard Settings'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('User Role'),
-            const SizedBox(height: 12),
-            // Reusing the Role Switcher here
-            ChangeNotifierProvider.value(value: vm, child: const _RoleSwitch()),
-          ],
+      // Rounded top corners for premium sheet appearance
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppDimens.r24),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+      ),
+      backgroundColor: colorScheme.cardBackground,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppLayout.screenHorizontalMargin,
           ),
-        ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: AppLayout.spacingStandard),
+              // Drag handle — visual affordance for dismissibility
+              Container(
+                width: AppDimens.p40,
+                height: AppDimens.p4,
+                decoration: BoxDecoration(
+                  color: colorScheme.textTertiary,
+                  borderRadius: BorderRadius.circular(AppDimens.r4),
+                ),
+              ),
+              const SizedBox(height: AppLayout.spacingSection),
+              Text(
+                'Dashboard Settings',
+                style: AppTypography.h5.copyWith(color: colorScheme.text),
+              ),
+              const SizedBox(height: AppLayout.spacingScreen),
+              // Section label for role switcher
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'User Role',
+                  style: AppTypography.captionBold.copyWith(
+                    color: colorScheme.textSecondary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppLayout.spacingStandard),
+              // Role switcher — shared via Provider so it reads VM state
+              ChangeNotifierProvider.value(
+                value: vm,
+                child: const _RoleSwitch(),
+              ),
+              const SizedBox(height: AppLayout.spacingScreen),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -194,6 +235,8 @@ class _DashboardContentState extends State<_DashboardContent>
       _tabController.animateTo(vm.currentTab.index);
     }
 
+    // Minimal top bar — clean text tabs, no containers, no pills,
+    // no decoration noise. Just typography and a thin underline.
     final scaffold = Scaffold(
       appBar: AppBar(
         title: Text(
@@ -201,11 +244,9 @@ class _DashboardContentState extends State<_DashboardContent>
           style: AppTypography.h4.copyWith(color: colorScheme.text),
         ),
         backgroundColor: colorScheme.background,
-        centerTitle: true,
+        centerTitle: false,
         elevation: 0,
         actions: [
-          // tooltip provides both a visible long-press hint and a Semantics label
-          // for accessibility, replacing a manual Semantics wrapper.
           IconButton(
             tooltip: 'Dashboard settings',
             icon: Icon(
@@ -217,26 +258,35 @@ class _DashboardContentState extends State<_DashboardContent>
           ),
         ],
         bottom: PreferredSize(
-          // Token: buttonHeightCompact (48) for tab bar height
-          preferredSize: const Size.fromHeight(AppLayout.buttonHeightCompact),
-          child: TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            tabAlignment: TabAlignment.center,
-            labelColor: colorScheme.primary,
-            unselectedLabelColor: colorScheme.textSecondary,
-            indicatorColor: colorScheme.primary,
-            onTap: vm.setTab,
-            tabs: const [
-              Tab(icon: Icon(Icons.dashboard_outlined), text: 'Overview'),
-              Tab(icon: Icon(Icons.calendar_month_outlined), text: 'Bookings'),
-              Tab(icon: Icon(Icons.work_history_outlined), text: 'Work'),
-              Tab(
-                icon: Icon(Icons.account_balance_wallet_outlined),
-                text: 'Wallet',
+          preferredSize: const Size.fromHeight(AppDimens.p40),
+          child: Semantics(
+            label: 'Dashboard tabs',
+            child: TabBar(
+              controller: _tabController,
+              isScrollable: false,
+              // Thin 2px underline — minimal, not a pill or box
+              indicatorWeight: 2,
+              indicatorColor: colorScheme.primary,
+              indicatorSize: TabBarIndicatorSize.label,
+              // Active: primary colored text, bold
+              labelColor: colorScheme.primary,
+              labelStyle: AppTypography.captionBold,
+              // Inactive: muted text
+              unselectedLabelColor: colorScheme.textTertiary,
+              unselectedLabelStyle: AppTypography.caption,
+              dividerColor: colorScheme.divider,
+              labelPadding: const EdgeInsets.symmetric(
+                horizontal: AppDimens.p8,
               ),
-              Tab(icon: Icon(Icons.inbox_outlined), text: 'Inbox'),
-            ],
+              onTap: vm.setTab,
+              tabs: const [
+                Tab(text: 'Overview'),
+                Tab(text: 'Bookings'),
+                Tab(text: 'Work'),
+                Tab(text: 'Wallet'),
+                Tab(text: 'Inbox'),
+              ],
+            ),
           ),
         ),
       ),
@@ -333,6 +383,8 @@ class _RoleButton extends StatelessWidget {
         child: AnimatedContainer(
           key: buttonKey,
           duration: AppMotion.fast,
+          // curveStandard for smooth deceleration on role toggle
+          curve: AppMotion.curveStandard,
           padding: const EdgeInsets.symmetric(
             horizontal: AppDimens.p16,
             vertical: AppDimens.p6,

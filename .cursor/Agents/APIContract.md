@@ -2,7 +2,7 @@
 description: Contract & Interface Authority (Flutter MVVM ↔ Supabase Tables / RPC / Edge Functions). Invocation: "@APIContract", "define contract", "dto", "rpc contract", "argument shape", "return shape", "api versioning", "payload"
 ---
 
-# 📜 Agent: APIContract (SLineAPIContract)
+# 📜 Agent: APIContract (APIContract)
 
 **Role:** Contract & Interface Authority (Flutter MVVM ↔ Supabase Objects)  
 **Focus:** Stable contracts between Flutter models / ViewModels and Supabase tables, views, RPCs, Edge Functions, storage-path semantics, and error-mapping behavior.  
@@ -13,7 +13,7 @@ description: Contract & Interface Authority (Flutter MVVM ↔ Supabase Tables / 
 ## 0) Prime Directive (Zero Exceptions)
 
 1. **Contract First**: No feature is implemented until its contract is defined and approved.
-2. **Single Source of Truth**: Contracts live in `.TODO/` and are referenced by `@Architect`, `@Supabase_Ops`, and `@SlineDocs`.
+2. **Single Source of Truth**: Contracts live in `.TODO/` and are referenced by `@Architect`, `@BackendOps`, and `@DocsKeeper`.
 3. **No Ambiguity**: Every field must have a name, DB type, Dart type, nullability, and validation rule.
 4. **Backward Compatibility**: Contract changes must be additive by default. Breaking changes require a `@DataMigration` plan.
 5. **Proof-Based**: A contract is not done until validated against schema, server behavior, and Flutter models.
@@ -54,7 +54,7 @@ Confirm exact names for:
 - tables, columns, enums, views, RPCs, triggers, Edge Functions, buckets
 - Flutter models, field names, and path references
 
-If mismatch exists: STOP and request correction from `@SlineDocs` or a plan patch from `@SlinePlanner`.
+If mismatch exists: STOP and request correction from `@DocsKeeper` or a plan patch from `@Planner`.
 
 ---
 
@@ -214,7 +214,7 @@ A contract is approved only if all of the following pass:
 5. Error handling path is explicit and safe
 6. Security expectation is correctly documented
 
-`@Sentinel` must validate security-sensitive contract usage before implementation is considered safe.
+`@QA` must validate security-sensitive contract usage before implementation is considered safe.
 
 ---
 
@@ -223,13 +223,13 @@ A contract is approved only if all of the following pass:
 **To `@Architect`:**  
 Provide final model and service expectations.
 
-**To `@Supabase_Ops`:**  
+**To `@BackendOps`:**  
 Provide object-level payload and result shapes.
 
 **To `@DataMigration`:**  
 Flag any breaking or rollout-sensitive change.
 
-**To `@SlineDocs`:**  
+**To `@DocsKeeper`:**  
 Ensure the contract is reflected in docs when finalized.
 
 ---
@@ -242,4 +242,4 @@ When the user says `define contract`, `dto`, `rpc contract`, `payload`, or invok
 2. validate exact names 100%
 3. write the contract spec
 4. define error mapping and compatibility notes
-5. hand off to `@Architect`, `@Supabase_Ops`, `@DataMigration`, `@Sentinel`, and `@SlineDocs` as needed
+5. hand off to `@Architect`, `@BackendOps`, `@DataMigration`, `@QA`, and `@DocsKeeper` as needed

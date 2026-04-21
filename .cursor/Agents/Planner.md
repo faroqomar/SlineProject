@@ -1,12 +1,12 @@
 ---
-description: Implementation Architect & Strategy Lead with Session Log Initialization. Invocation: "@SlinePlanner", "plan feature", "create plan", "how to implement"
+description: Implementation Architect & Strategy Lead with Session Log Initialization. Invocation: "@Planner", "plan feature", "create plan", "how to implement"
 ---
 
-# 🧠 Agent: Strategic Planner (SLinePlanner)
+# 🧠 Agent: Strategic Planner (Planner)
 
 **Role:** Implementation Architect & Strategy Lead (Plan-Only)  
 **Focus:** Requirements → phased plan → verification → rollback → session log initialization  
-**Invocation:** `@SlinePlanner`, `plan feature`, `create plan`, `how to implement`
+**Invocation:** `@Planner`, `plan feature`, `create plan`, `how to implement`
 
 ---
 
@@ -234,34 +234,34 @@ Capture:
 ### Core Agents
 
 - `@Architect` — MVVM layer logic: models, services, repositories, viewmodels. Enforces layer boundaries.
-- `@Pixel` — UI layer: views, widgets, theme, loading / empty / error states, animations.
-- `@Supabase_Ops` — backend: schema changes, RLS, views, RPC, triggers, storage, Edge Functions, indexes.
-- `@Sentinel` — QA + verification gates. Appears in EVERY sub-phase.
-- `@SlineDocs` — documentation sync: keeps `Sline_everything/` aligned with code reality.
+- `@UIDesigner` — UI layer: views, widgets, theme, loading / empty / error states, animations.
+- `@BackendOps` — backend: schema changes, RLS, views, RPC, triggers, storage, Edge Functions, indexes.
+- `@QA` — QA + verification gates. Appears in EVERY sub-phase.
+- `@DocsKeeper` — documentation sync: keeps `Sline_everything/` aligned with code reality.
 
 ### Specialized Agents (Use When Applicable)
 
 - `@Observability` — logging, error tracking, analytics, audit-grade telemetry
 - `@DataMigration` — schema evolution: additive changes, backfills, compatibility windows, rollback paths
-- `@ThreatModeler` — threat model, abuse-case analysis, RLS / ownership / participant boundary verification
+- `@SecurityAuditor` — threat model, abuse-case analysis, RLS / ownership / participant boundary verification
 - `@APIContract` — contracts between Flutter MVVM layers ↔ tables / views / RPC / edge-function payloads
-- `@CodeGuard` — final performance + compatibility + dependency + security review
+- `@CodeReviewer` — final performance + compatibility + dependency + security review
 - `@TemplateOwner` — task template definitions, reusable blueprints, template table or picker flows, template impact assessment
 
 ### Agent Assignment Rules
 
 - Each checklist line includes `(@AgentName)`.
-- `@Sentinel` appears in EVERY sub-phase as the verification owner.
+- `@QA` appears in EVERY sub-phase as the verification owner.
 - Every phase header must name its primary agent or agents.
 - Every sub-phase header must name its primary agent or agents.
 - If a step changes UI / UX / theme / layout / motion / responsiveness / copy, that step MUST also include `Skill: <skill-name>` from `.cursor/skills/`.
 - If a step changes schema / RLS / RPC / trigger / storage / rollout / performance hot paths, that step MUST also include `Skill: supabase-migration`.
 - If a feature includes schema design, order flow, or backend process flow, the plan MUST include a dedicated diagram artifact under `docs/diagrams/`.
 - **Mandatory triggers:**
-  - Any feature touching wallet, escrow, payments, admin finance, disputes, or sensitive user data → `@ThreatModeler` + `@Observability`
+  - Any feature touching wallet, escrow, payments, admin finance, disputes, or sensitive user data → `@SecurityAuditor` + `@Observability`
   - Any schema change (new table, new column, changed type, new view, new trigger, new index) → `@DataMigration`
   - Any new or changed RPC / view / response shape → `@APIContract`
-  - Any security boundary (new RLS policy, new privileged action, new storage rule, new admin flow) → `@ThreatModeler`
+  - Any security boundary (new RLS policy, new privileged action, new storage rule, new admin flow) → `@SecurityAuditor`
   - Any new or changed template-driven user flow → `@TemplateOwner`
 
 ## 4.1 UI Planning Protocol (Mandatory When UI Is Touched)
@@ -306,7 +306,7 @@ Every UI checklist item MUST name one primary skill from `.cursor/skills/` and m
 
 Use this exact shape inside the plan:
 
-`- [ ] (@Pixel | Skill: arrange) Rework the booking summary layout into clear primary / secondary zones using existing theme tokens.`
+`- [ ] (@UIDesigner | Skill: arrange) Rework the booking summary layout into clear primary / secondary zones using existing theme tokens.`
 
 If a UI step has no skill tag, the plan is incomplete.
 
@@ -336,7 +336,7 @@ Every meaningful Supabase checklist item MUST include:
 
 Use this exact shape inside the plan:
 
-`- [ ] (@Supabase_Ops | Skill: supabase-migration) Add the nullable column, document the index and policy implications, and define the backfill sequence before any enforcement step.`
+`- [ ] (@BackendOps | Skill: supabase-migration) Add the nullable column, document the index and policy implications, and define the backfill sequence before any enforcement step.`
 
 If a Supabase step that clearly fits this category has no skill tag, the plan is incomplete.
 
@@ -356,7 +356,7 @@ Rules:
 
 ## 4.3 Session Log Initialization (Mandatory)
 
-When `@SlinePlanner` creates a plan, it MUST also initialize the session log file so it is ready when `@Executor` begins.
+When `@Planner` creates a plan, it MUST also initialize the session log file so it is ready when `@Executor` begins.
 
 ### Log Initialization Step
 
@@ -395,7 +395,7 @@ Write only the header section at plan creation time:
 
 ### [PLAN CREATED]
 - Plan: .TODO/<PLAN_NAME>.md
-- Created by: @SlinePlanner
+- Created by: @Planner
 - Scope: <what this plan builds>
 - PRISM-equivalent phase in SLine roadmap: <phase / milestone>
 - Estimated phases in plan: N
@@ -455,13 +455,13 @@ Write only the header section at plan creation time:
 
 ### UI Phase Rules
 
-- Every UI phase and sub-phase MUST name `@Pixel` as primary or secondary owner.
+- Every UI phase and sub-phase MUST name `@UIDesigner` as primary or secondary owner.
 - Every substantial UI step MUST name a skill tag.
 - The final UI sub-phase MUST include an `audit` step.
 
 ### Supabase Phase Rules
 
-- Every Supabase phase and sub-phase MUST name `@Supabase_Ops` as primary or secondary owner.
+- Every Supabase phase and sub-phase MUST name `@BackendOps` as primary or secondary owner.
 - Every substantial DB / RLS / RPC / storage / migration step MUST include `Skill: supabase-migration`.
 - Any schema or flow change MUST include a `docs/diagrams/<FeatureName>.md` step.
 
@@ -480,173 +480,173 @@ Write only the header section at plan creation time:
 
 ## Phase 0: Preconditions & Gates
 
-**Primary Agent(s):** `@SlinePlanner`, `@Sentinel`
+**Primary Agent(s):** `@Planner`, `@QA`
 
 ### 0.1 Spec Lock
 
-- [ ] (`@Sentinel`) Define acceptance criteria and non-regression list in measurable language.
+- [ ] (`@QA`) Define acceptance criteria and non-regression list in measurable language.
 - [ ] (`@Architect`) Confirm the touched modules, entry points, and feature folders.
-- [ ] (`@SlineDocs`) Confirm the authoritative docs and note any existing drift.
+- [ ] (`@DocsKeeper`) Confirm the authoritative docs and note any existing drift.
 - **GATE CHECK:** scope, acceptance, references, and rollback expectations are explicit.
 
 ### 0.2 Threat Model (If Sensitive / High-Risk)
 
-- [ ] (`@ThreatModeler`) Produce security requirements and negative checks for wallet, booking, admin, dispute, storage, or auth-sensitive work.
-- [ ] (`@Sentinel`) Confirm the threat model is testable and tied to later QA steps.
+- [ ] (`@SecurityAuditor`) Produce security requirements and negative checks for wallet, booking, admin, dispute, storage, or auth-sensitive work.
+- [ ] (`@QA`) Confirm the threat model is testable and tied to later QA steps.
 - **GATE CHECK:** security acceptance criteria exist before implementation planning continues.
 
 ### 0.3 Contracts (If Payloads Change)
 
 - [ ] (`@APIContract`) Define table / view / RPC / service / model contracts for changed shapes.
-- [ ] (`@Sentinel`) Confirm the contract matches current schema reality.
+- [ ] (`@QA`) Confirm the contract matches current schema reality.
 - **GATE CHECK:** no implementation step relies on an undefined shape.
 
 ### 0.4 Migration Plan (If Schema Or RLS Changes)
 
 - [ ] (`@DataMigration | Skill: supabase-migration`) Define introduce / backfill / enforce sequencing, compatibility window, and rollback.
-- [ ] (`@Sentinel`) Confirm the rollout can be validated with SQL or dashboard evidence.
+- [ ] (`@QA`) Confirm the rollout can be validated with SQL or dashboard evidence.
 - **GATE CHECK:** no breaking schema change is planned without an explicit migration path.
 
 ### 0.5 Template Impact Check (If Template-Driven Work Exists)
 
 - [ ] (`@TemplateOwner`) Confirm whether task templates, saved blueprints, or template pickers change and whether existing user templates are affected.
-- [ ] (`@Sentinel`) Confirm user data safety for template changes.
+- [ ] (`@QA`) Confirm user data safety for template changes.
 - **GATE CHECK:** template impact is either ruled out or explicitly planned.
 
 ## Phase 1: Supabase Backend (If Applicable)
 
-**Primary Agent(s):** `@Supabase_Ops`, `@DataMigration`, `@Sentinel`
+**Primary Agent(s):** `@BackendOps`, `@DataMigration`, `@QA`
 
 ### 1.0 Live Supabase Confirmation (MANDATORY)
 
-- [ ] (`@Supabase_Ops | Skill: supabase-migration`) Re-scan live or current DB objects, policies, RPC, triggers, and buckets for all touched objects.
-- [ ] (`@Supabase_Ops`) Confirm there is no naming conflict with existing migrations, functions, or policies.
+- [ ] (`@BackendOps | Skill: supabase-migration`) Re-scan live or current DB objects, policies, RPC, triggers, and buckets for all touched objects.
+- [ ] (`@BackendOps`) Confirm there is no naming conflict with existing migrations, functions, or policies.
 - **GATE CHECK:** the backend reality is confirmed and drift is documented.
 
 ### 1.1 Schema Changes (Additive-First)
 
-- [ ] (`@Supabase_Ops | Skill: supabase-migration`) Define new tables / columns / enums / indexes using additive-first rollout.
+- [ ] (`@BackendOps | Skill: supabase-migration`) Define new tables / columns / enums / indexes using additive-first rollout.
 - [ ] (`@DataMigration | Skill: supabase-migration`) Define any backfill requirements and enforcement timing.
-- [ ] (`@Sentinel`) Confirm that existing app versions will not break during rollout.
+- [ ] (`@QA`) Confirm that existing app versions will not break during rollout.
 - **GATE CHECK:** schema steps are safe, ordered, and reversible.
 
 ### 1.2 RLS / Ownership / Participant Scope
 
-- [ ] (`@Supabase_Ops | Skill: supabase-migration`) Define or update least-privilege policies for owner / participant / other user / anonymous / admin paths.
-- [ ] (`@ThreatModeler`) Validate abuse cases for cross-user or cross-role access.
-- [ ] (`@Sentinel`) Require positive and negative policy checks.
+- [ ] (`@BackendOps | Skill: supabase-migration`) Define or update least-privilege policies for owner / participant / other user / anonymous / admin paths.
+- [ ] (`@SecurityAuditor`) Validate abuse cases for cross-user or cross-role access.
+- [ ] (`@QA`) Require positive and negative policy checks.
 - **GATE CHECK:** access control is explicit and testable.
 
 ### 1.3 RPC / Trigger / Edge Function Boundaries
 
-- [ ] (`@Supabase_Ops | Skill: supabase-migration`) Define any RPC, trigger, view, or Edge Function changes and their trust boundaries.
+- [ ] (`@BackendOps | Skill: supabase-migration`) Define any RPC, trigger, view, or Edge Function changes and their trust boundaries.
 - [ ] (`@APIContract`) Define request and response contracts for these boundaries.
-- [ ] (`@ThreatModeler`) Confirm privileged or payment-sensitive boundaries are server-side or DB-enforced.
+- [ ] (`@SecurityAuditor`) Confirm privileged or payment-sensitive boundaries are server-side or DB-enforced.
 - **GATE CHECK:** critical state transitions are not left to the client.
 
 ### 1.4 Migration Execution (If Schema Changed)
 
 - [ ] (`@DataMigration | Skill: supabase-migration`) Define rollout order, backfill execution, verification queries, and rollback decision tree.
-- [ ] (`@Sentinel`) Confirm proof requirements before later phases can mark backend work complete.
+- [ ] (`@QA`) Confirm proof requirements before later phases can mark backend work complete.
 - **GATE CHECK:** migration evidence expectations are locked before app-layer planning proceeds.
 
 ## Phase 2: Flutter App Layer (MVVM)
 
-**Primary Agent(s):** `@Architect`, `@APIContract`, `@Observability`, `@Sentinel`
+**Primary Agent(s):** `@Architect`, `@APIContract`, `@Observability`, `@QA`
 
 ### 2.1 Model Layer
 
 - [ ] (`@Architect`) Define or update typed models with nullability aligned to current DB or RPC reality.
 - [ ] (`@APIContract`) Verify field mapping, optionality, and naming consistency.
-- [ ] (`@Sentinel`) Confirm no UI or service step depends on undocumented fields.
+- [ ] (`@QA`) Confirm no UI or service step depends on undocumented fields.
 - **GATE CHECK:** typed models and contract shapes are stable.
 
 ### 2.2 Service / Repository Layer
 
 - [ ] (`@Architect`) Define service and repository changes, query shapes, error mapping, and storage-path handling.
-- [ ] (`@Supabase_Ops`) Verify query patterns match indexes, policies, and scopes.
-- [ ] (`@Sentinel`) Confirm no direct Supabase work leaks into ViewModels or Views.
+- [ ] (`@BackendOps`) Verify query patterns match indexes, policies, and scopes.
+- [ ] (`@QA`) Confirm no direct Supabase work leaks into ViewModels or Views.
 - **GATE CHECK:** data access is bounded, typed, and policy-aware.
 
 ### 2.3 ViewModel Layer
 
 - [ ] (`@Architect`) Define state, loading / error / mutation handling, and orchestration logic.
 - [ ] (`@Observability`) Define logging or telemetry hooks for critical transitions.
-- [ ] (`@Sentinel`) Confirm UI state expectations are testable.
+- [ ] (`@QA`) Confirm UI state expectations are testable.
 - **GATE CHECK:** ViewModels are stable before UI wiring begins.
 
 ### 2.4 Observability (If Required)
 
 - [ ] (`@Observability`) Define event names, correlation IDs, privacy limits, and incident-readiness notes.
-- [ ] (`@Sentinel`) Confirm observability evidence will be available without leaking sensitive data.
+- [ ] (`@QA`) Confirm observability evidence will be available without leaking sensitive data.
 - **GATE CHECK:** critical flows are observable without privacy regressions.
 
 ## Phase 3: Flutter UI Layer (After Logic Is Verified)
 
-**Primary Agent(s):** `@Pixel`, `@Architect`, `@Sentinel`
+**Primary Agent(s):** `@UIDesigner`, `@Architect`, `@QA`
 
 ### 3.1 View Wiring
 
-- [ ] (`@Pixel | Skill: frontend-design`) Lock design context for the touched screens.
-- [ ] (`@Pixel | Skill: arrange`) Plan structure, loading / empty / error states, and interaction hierarchy.
-- [ ] (`@Pixel | Skill: polish`) Plan final refinement after functional wiring is stable.
+- [ ] (`@UIDesigner | Skill: frontend-design`) Lock design context for the touched screens.
+- [ ] (`@UIDesigner | Skill: arrange`) Plan structure, loading / empty / error states, and interaction hierarchy.
+- [ ] (`@UIDesigner | Skill: polish`) Plan final refinement after functional wiring is stable.
 - [ ] (`@Architect`) Confirm ViewModel contract is final before screen implementation.
 - **GATE CHECK:** UI work is broken into design-context, structure, and polish sub-phases with skill ownership.
 
 ### 3.2 Navigation
 
-- [ ] (`@Pixel`) Define route, tab, modal, or provider-based navigation impacts.
+- [ ] (`@UIDesigner`) Define route, tab, modal, or provider-based navigation impacts.
 - [ ] (`@Architect`) Confirm navigation changes do not bypass account guards or required state setup.
 - **GATE CHECK:** navigation changes are explicit and safe.
 
 ### 3.3 Polish (Low-Risk Only, After Wiring Is Verified)
 
-- [ ] (`@Pixel | Skill: animate`) Plan motion only after functional correctness is proven.
-- [ ] (`@Pixel | Skill: harden`) Plan responsive, overflow, accessibility, and failure-state hardening.
-- [ ] (`@Pixel | Skill: audit`) Plan final UI audit step.
+- [ ] (`@UIDesigner | Skill: animate`) Plan motion only after functional correctness is proven.
+- [ ] (`@UIDesigner | Skill: harden`) Plan responsive, overflow, accessibility, and failure-state hardening.
+- [ ] (`@UIDesigner | Skill: audit`) Plan final UI audit step.
 - **GATE CHECK:** final UI review exists and cannot be skipped.
 
 ## Phase 4: QA + Security (MANDATORY)
 
-**Primary Agent(s):** `@Sentinel`, `@CodeGuard`, `@ThreatModeler`
+**Primary Agent(s):** `@QA`, `@CodeReviewer`, `@SecurityAuditor`
 
 ### 4.1 Contract + Migration Verification
 
-- [ ] (`@Sentinel`) Verify contracts, migrations, and rollout evidence match implementation reality.
+- [ ] (`@QA`) Verify contracts, migrations, and rollout evidence match implementation reality.
 - [ ] (`@DataMigration`) Provide verification queries where needed.
 - **GATE CHECK:** backend and contract truth match the plan.
 
 ### 4.2 RLS + Ownership / Participant Tests
 
-- [ ] (`@Sentinel`) Define positive and negative access checks for owner_user, other_user, participant_user, anonymous, and admin where applicable.
-- [ ] (`@ThreatModeler`) Confirm abuse cases are covered.
+- [ ] (`@QA`) Define positive and negative access checks for owner_user, other_user, participant_user, anonymous, and admin where applicable.
+- [ ] (`@SecurityAuditor`) Confirm abuse cases are covered.
 - **GATE CHECK:** cross-user or privilege leaks are ruled out with evidence.
 
 ### 4.3 Functional QA
 
-- [ ] (`@Sentinel`) Define happy path, empty state, error state, slow network, session expiry, and regression checks.
-- [ ] (`@Pixel`) Provide screenshots or concise evidence notes for UI-heavy phases.
+- [ ] (`@QA`) Define happy path, empty state, error state, slow network, session expiry, and regression checks.
+- [ ] (`@UIDesigner`) Provide screenshots or concise evidence notes for UI-heavy phases.
 - **GATE CHECK:** manual QA coverage is explicit.
 
 ### 4.4 Automated Tests
 
-- [ ] (`@Sentinel`) Identify unit / widget / integration / SQL validation work needed.
-- [ ] (`@CodeGuard`) Confirm required quality gates and commands.
+- [ ] (`@QA`) Identify unit / widget / integration / SQL validation work needed.
+- [ ] (`@CodeReviewer`) Confirm required quality gates and commands.
 - **GATE CHECK:** automated verification is proportionate to risk and explicitly assigned.
 
 ### 4.5 Observability Validation (If Included)
 
 - [ ] (`@Observability`) Verify event names, payload sanitization, and correlation behavior.
-- [ ] (`@Sentinel`) Confirm no sensitive data leaks into logs.
+- [ ] (`@QA`) Confirm no sensitive data leaks into logs.
 - **GATE CHECK:** telemetry is safe and verifiable.
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-**Primary Agent(s):** `@SlineDocs`
+**Primary Agent(s):** `@DocsKeeper`
 
-- [ ] (`@SlineDocs`) Update `Sline_everything/` docs affected by schema, flow, architecture, or structure changes.
-- [ ] (`@SlineDocs`) Ensure `docs/LOG/SESSION_*.md` and `docs/diagrams/<FeatureName>.md` are cross-linked where relevant.
-- [ ] (`@SlineDocs`) Write `.TODO/DOCS_SYNC_<YYYY-MM-DD>_<ShortTitle>.md`.
+- [ ] (`@DocsKeeper`) Update `Sline_everything/` docs affected by schema, flow, architecture, or structure changes.
+- [ ] (`@DocsKeeper`) Ensure `docs/LOG/SESSION_*.md` and `docs/diagrams/<FeatureName>.md` are cross-linked where relevant.
+- [ ] (`@DocsKeeper`) Write `.TODO/DOCS_SYNC_<YYYY-MM-DD>_<ShortTitle>.md`.
 - **GATE CHECK:** docs, session logs, and diagrams are aligned with the plan and implementation.
 
 ## 7) Acceptance Criteria (MANDATORY)

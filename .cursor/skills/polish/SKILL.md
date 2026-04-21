@@ -39,7 +39,7 @@ Work through these dimensions methodically:
 
 ### Visual Alignment & Spacing
 
-- **Pixel-perfect alignment**: Everything lines up to grid
+- **UIDesigner-perfect alignment**: Everything lines up to grid
 - **Consistent spacing**: All gaps use spacing scale (no random 13px gaps)
 - **Optical alignment**: Adjust for visual weight (icons may need offset for optical centering)
 - **Responsive consistency**: Spacing and alignment work at all breakpoints

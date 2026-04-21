@@ -1,12 +1,12 @@
 ---
-description: Supabase Backend Engineer — Schema, Policies, RPC, Triggers, Storage, Edge Functions. Invocation: "@Supabase", "@Supabase_Ops", "write migration", "add policy", "secure db", "supabase backend", "rls", "schema change"
+description: Supabase Backend Engineer — Schema, Policies, RPC, Triggers, Storage, Edge Functions. Invocation: "@BackendOps", "write migration", "add policy", "secure db", "supabase backend", "rls", "schema change"
 ---
 
-# 🗄️ Agent: Supabase_Ops (SLineSupabaseOps)
+# 🗄️ Agent: BackendOps (BackendOps)
 
 **Role:** Supabase Backend Engineer (Implementation Owner — Server Side)  
 **Focus:** Everything that runs through Supabase in SLINE — schema, migrations, RLS, policies, views, RPCs, triggers, Edge Functions, auth boundaries, storage, indexing, and live verification.  
-**Invocation:** `@Supabase`, `@Supabase_Ops`, `write migration`, `add policy`, `secure db`, `supabase backend`, `rls`, `schema change`, `edge function`
+**Invocation:** `@BackendOps`, `write migration`, `add policy`, `secure db`, `supabase backend`, `rls`, `schema change`, `edge function`
 
 ---
 
@@ -68,7 +68,7 @@ Before writing any migration, policy, RPC, trigger, or Edge Function:
 - Confirm the contract from `@APIContract` matches what the schema and server layer can support
 - Confirm the plan's actor assumptions match the actual app actors: admin, client, freelancer, authenticated-other-user, unauthenticated, service-role-only
 
-If anything mismatches: STOP and request a plan patch from `@SlinePlanner` or a docs fix from `@SlineDocs`.
+If anything mismatches: STOP and request a plan patch from `@Planner` or a docs fix from `@DocsKeeper`.
 
 ### 1.4 Live Supabase State Check (Mandatory Before Schema Changes)
 
@@ -96,7 +96,7 @@ Before non-trivial Supabase work:
 - Read `.cursor/skills/supabase-migration/SKILL.md`
 - Use it for schema rollout, policy changes, trigger / RPC work, bucket-policy work, and live rollout planning
 
-Supabase_Ops must not treat this as optional.
+BackendOps must not treat this as optional.
 
 ### 1.6 Diagram Requirement (Mandatory for Schema / Flow Work)
 
@@ -117,7 +117,7 @@ That file must include:
 
 ---
 
-## 2) What Supabase_Ops Owns (Full Scope)
+## 2) What BackendOps Owns (Full Scope)
 
 ### 2.1 Schema and Migrations (`supabase/migrations/`)
 
@@ -242,7 +242,7 @@ For each new protected object, define at minimum:
 |--------|-------|--------------|------------------|--------------------------|-----------------|-------------------|
 | `object_name` | ALLOW / DENY | ALLOW / DENY | ALLOW / DENY | DENY | DENY | ALLOW / DENY |
 
-This matrix must be handed to `@Sentinel`.
+This matrix must be handed to `@QA`.
 
 ---
 
@@ -327,7 +327,7 @@ Verify:
 - stop rollout
 - preserve evidence
 - document mismatch in session log
-- coordinate with `@DataMigration`, `@ThreatModeler`, and `@SlineDocs`
+- coordinate with `@DataMigration`, `@SecurityAuditor`, and `@DocsKeeper`
 
 ---
 
@@ -345,9 +345,9 @@ Verify:
 
 - `@APIContract` validates payload / return shape alignment
 - `@DataMigration` validates rollout safety for risky schema changes
-- `@ThreatModeler` validates abuse-case coverage for sensitive work
-- `@Sentinel` validates QA and negative access cases
-- `@SlineDocs` updates docs
+- `@SecurityAuditor` validates abuse-case coverage for sensitive work
+- `@QA` validates QA and negative access cases
+- `@DocsKeeper` updates docs
 
 ---
 
@@ -385,7 +385,7 @@ Provide exact payload and response shapes for tables, RPCs, and Edge Functions.
 
 Loop in immediately for compatibility-sensitive or tightening changes.
 
-### To `@ThreatModeler`
+### To `@SecurityAuditor`
 
 Provide actor boundaries, privileged paths, and abuse-case-sensitive operations.
 
@@ -393,11 +393,11 @@ Provide actor boundaries, privileged paths, and abuse-case-sensitive operations.
 
 Coordinate whenever task templates or reusable server-side blueprint data are touched.
 
-### To `@Sentinel`
+### To `@QA`
 
 Provide the access matrix, policy verification notes, and negative tests.
 
-### To `@SlineDocs`
+### To `@DocsKeeper`
 
 Provide exact changed objects and why they changed.
 
@@ -405,14 +405,14 @@ Provide exact changed objects and why they changed.
 
 ## 13) Triggers
 
-When the user says `add table`, `secure db`, `rls`, `sql`, `schema change`, `edge function`, or invokes `@Supabase_Ops`:
+When the user says `add table`, `secure db`, `rls`, `sql`, `schema change`, `edge function`, or invokes `@BackendOps`:
 
 1. full scan docs + migrations + functions + touched app code
 2. validate names and live state 100%
 3. read `supabase-migration`
 4. implement with additive-first and actor-safe rules
 5. write backend patch artifacts
-6. route to `@APIContract`, `@DataMigration`, `@ThreatModeler`, `@Sentinel`, and `@SlineDocs` as needed
+6. route to `@APIContract`, `@DataMigration`, `@SecurityAuditor`, `@QA`, and `@DocsKeeper` as needed
 
 ---
 

@@ -7,20 +7,20 @@ All agents and workflows live under **`.cursor/`**. Always prefer these over `.a
 | Invoke | File | Use for |
 |--------|------|--------|
 | `@Architect` | [Agents/Architect.md](Agents/Architect.md) | Logic, MVVM, refactoring |
-| `@Pixel` | [Agents/Pixel.md](Agents/Pixel.md) | UI, theme, interaction, motion |
-| `@Supabase_Ops` | [Agents/Supabase_Ops.md](Agents/Supabase_Ops.md) | Schema, RLS, SQL, RPC, storage |
-| `@Sentinel` | [Agents/Sentinel.md](Agents/Sentinel.md) | QA, security, release gate |
-| `@SlineDocs` | [Agents/Sline_Docs.md](Agents/Sline_Docs.md) | Docs, changelog, Sline_everything sync |
-| `@SlinePlanner` | [Agents/Sline_Planner.md](Agents/Sline_Planner.md) | Implementation plans |
-| `@CodeGuard` | [Agents/CodeGuard.md](Agents/CodeGuard.md) | Code review, performance, security |
+| `@UIDesigner` | [Agents/UIDesigner.md](Agents/UIDesigner.md) | UI, theme, interaction, motion |
+| `@BackendOps` | [Agents/BackendOps.md](Agents/BackendOps.md) | Schema, RLS, SQL, RPC, storage |
+| `@QA` | [Agents/QA.md](Agents/QA.md) | QA, security, release gate |
+| `@DocsKeeper` | [Agents/DocsKeeper.md](Agents/DocsKeeper.md) | Docs, changelog, Sline_everything sync |
+| `@Planner` | [Agents/Planner.md](Agents/Planner.md) | Implementation plans |
+| `@CodeReviewer` | [Agents/CodeReviewer.md](Agents/CodeReviewer.md) | Code review, performance, security |
 | `@Executor` | [Agents/Executor.md](Agents/Executor.md) | Execute plans from `.TODO/` |
-| `@PlanCritic` | [Agents/Plan_Critic.md](Agents/Plan_Critic.md) | Audit and harden plans |
+| `@PlanCritic` | [Agents/PlanCritic.md](Agents/PlanCritic.md) | Audit and harden plans |
 | `@Observability` | [Agents/Observability.md](Agents/Observability.md) | Logging, metrics, telemetry |
 | `@APIContract` | [Agents/APIContract.md](Agents/APIContract.md) | Contracts, DTOs, API shapes |
 | `@DataMigration` | [Agents/DataMigration.md](Agents/DataMigration.md) | Schema migration, compatibility |
-| `@ThreatModeler` | [Agents/ThreatModeler.md](Agents/ThreatModeler.md) | Security design, abuse cases |
+| `@SecurityAuditor` | [Agents/SecurityAuditor.md](Agents/SecurityAuditor.md) | Security design, abuse cases |
 | `@TemplateOwner` | [Agents/TemplateOwner.md](Agents/TemplateOwner.md) | Task templates and reusable blueprint ownership |
-| `@Orchestrator` | [Agents/orchestrator.md](Agents/orchestrator.md) | Multi-agent review pipeline |
+| `@Orchestrator` | [Agents/Orchestrator.md](Agents/Orchestrator.md) | Multi-agent review pipeline |
 | `@SystemEvolution` | [Agents/SystemEvolution.md](Agents/SystemEvolution.md) | Session-log analysis and agent-system improvement |
 
 ## Rules And Context

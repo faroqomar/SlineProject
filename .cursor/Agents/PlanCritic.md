@@ -325,7 +325,7 @@ This file MUST include:
 
 This file is consumed by:
 - **@Executor** — for execution awareness of known risks and gaps
-- **@Sentinel** — for verification that critical gaps were addressed during implementation
+- **@QA** — for verification that critical gaps were addressed during implementation
 - **@SystemEvolution** — for durable evidence of planning issues across sessions
 
 
