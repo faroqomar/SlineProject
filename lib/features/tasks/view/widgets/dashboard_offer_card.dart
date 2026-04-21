@@ -398,7 +398,9 @@ class _OfferActionRow extends StatelessWidget {
                   );
                   onAccept();
                 },
-                style: FilledButton.styleFrom(backgroundColor: colorScheme.primary),
+                style: FilledButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                ),
                 child: const Text('Award'),
               ),
             if (showPay)
@@ -424,7 +426,9 @@ class _OfferActionRow extends StatelessWidget {
                   );
                   onAccept();
                 },
-                style: FilledButton.styleFrom(backgroundColor: colorScheme.primary),
+                style: FilledButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                ),
                 child: const Text('Escrow Funds'),
               ),
             if (!showEscrow && !showAward && !showPay && isPending)
@@ -436,7 +440,9 @@ class _OfferActionRow extends StatelessWidget {
                   );
                   onAccept();
                 },
-                style: FilledButton.styleFrom(backgroundColor: colorScheme.primary),
+                style: FilledButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                ),
                 child: const Text('Accept'),
               ),
             if (onRelease != null && showRelease)
@@ -448,7 +454,9 @@ class _OfferActionRow extends StatelessWidget {
                   );
                   onRelease?.call();
                 },
-                style: FilledButton.styleFrom(backgroundColor: colorScheme.primary),
+                style: FilledButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                ),
                 child: const Text('Release Funds'),
               ),
             if (onRefund != null && showRefund)

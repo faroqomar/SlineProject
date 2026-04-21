@@ -205,8 +205,7 @@ class _SectionCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
-                    style:
-                        AppTypography.h5.copyWith(color: colorScheme.text),
+                    style: AppTypography.h5.copyWith(color: colorScheme.text),
                   ),
                 ),
                 if (action != null) action!,

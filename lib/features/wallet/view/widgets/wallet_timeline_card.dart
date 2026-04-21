@@ -150,8 +150,9 @@ class _TimelineRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final accentColor =
-        entry.isReceived ? colorScheme.primary : colorScheme.danger;
+    final accentColor = entry.isReceived
+        ? colorScheme.primary
+        : colorScheme.danger;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppDimens.p10),

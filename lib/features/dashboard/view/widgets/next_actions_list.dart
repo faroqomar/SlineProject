@@ -221,9 +221,7 @@ class _NextActionsListState extends State<NextActionsList>
             margin: const EdgeInsets.only(bottom: AppDimens.p12),
             decoration: BoxDecoration(
               // Left bar indicates action urgency level
-              border: Border(
-                left: BorderSide(width: 4, color: priorityColor),
-              ),
+              border: Border(left: BorderSide(width: 4, color: priorityColor)),
               borderRadius: BorderRadius.circular(AppDimens.r16),
             ),
             child: WorkItemCard(
@@ -231,8 +229,8 @@ class _NextActionsListState extends State<NextActionsList>
               onPrimaryAction: () => _handlePrimaryAction(context, item),
               onSecondaryAction:
                   item.permissions.canCancel && item.awardedRequestId != null
-                      ? () => _handleSecondaryAction(context, item)
-                      : null,
+                  ? () => _handleSecondaryAction(context, item)
+                  : null,
             ),
           ),
         );
@@ -241,10 +239,7 @@ class _NextActionsListState extends State<NextActionsList>
         if (_hasAnimatedEntrance && index < _maxStaggerCount) {
           card = SlideTransition(
             position: _slideAnimations[index],
-            child: FadeTransition(
-              opacity: _fadeAnimations[index],
-              child: card,
-            ),
+            child: FadeTransition(opacity: _fadeAnimations[index], child: card),
           );
         }
 
@@ -260,10 +255,7 @@ class _NextActionsListState extends State<NextActionsList>
         3,
         (index) => const Padding(
           padding: EdgeInsets.only(bottom: AppDimens.p12),
-          child: SkeletonLoader(
-            height: 120,
-            borderRadius: AppDimens.r16,
-          ),
+          child: SkeletonLoader(height: 120, borderRadius: AppDimens.r16),
         ),
       ),
     );
@@ -312,10 +304,7 @@ class _NextActionsListState extends State<NextActionsList>
   ///
   /// Business logic routing is unchanged from pre-Phase 7 — only the widget
   /// structure around it changed (StatefulWidget + stagger).
-  Future<void> _handlePrimaryAction(
-    BuildContext context,
-    WorkItem item,
-  ) async {
+  Future<void> _handlePrimaryAction(BuildContext context, WorkItem item) async {
     final action = item.primaryActionType;
     final vm = context.read<DashboardViewModel>();
 
@@ -330,15 +319,15 @@ class _NextActionsListState extends State<NextActionsList>
         if (e.message.contains('Insufficient')) {
           _showInsufficientFundsDialog(context);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(ErrorMapper.map(e))),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(ErrorMapper.map(e))));
         }
       } on Exception catch (e) {
         if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ErrorMapper.map(e))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(ErrorMapper.map(e))));
       }
       return;
     }
@@ -393,15 +382,15 @@ class _NextActionsListState extends State<NextActionsList>
         if (e.message.contains('Insufficient')) {
           _showInsufficientFundsDialog(context);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(ErrorMapper.map(e))),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(ErrorMapper.map(e))));
         }
       } on Exception catch (e) {
         if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ErrorMapper.map(e))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(ErrorMapper.map(e))));
       }
     }
   }
@@ -418,9 +407,9 @@ class _NextActionsListState extends State<NextActionsList>
 
     AppInteractionStates.hapticTap();
     try {
-      await context
-          .read<DashboardViewModel>()
-          .cancelAwardedOffer(item.awardedRequestId!);
+      await context.read<DashboardViewModel>().cancelAwardedOffer(
+        item.awardedRequestId!,
+      );
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

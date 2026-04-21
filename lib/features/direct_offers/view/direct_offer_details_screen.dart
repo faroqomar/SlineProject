@@ -204,9 +204,10 @@ class _DirectOfferDetailsContentState
                           vertical: AppDimens.p12,
                         ),
                         decoration: BoxDecoration(
-                          color: _statusColor(context, offer).withValues(
-                            alpha: 0.10,
-                          ),
+                          color: _statusColor(
+                            context,
+                            offer,
+                          ).withValues(alpha: 0.10),
                           borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(AppDimens.r16),
                           ),
@@ -236,9 +237,10 @@ class _DirectOfferDetailsContentState
                                 vertical: AppDimens.p4,
                               ),
                               decoration: BoxDecoration(
-                                color: _statusColor(context, offer).withValues(
-                                  alpha: 0.20,
-                                ),
+                                color: _statusColor(
+                                  context,
+                                  offer,
+                                ).withValues(alpha: 0.20),
                                 borderRadius: BorderRadius.circular(
                                   AppDimens.r8,
                                 ),
@@ -246,9 +248,10 @@ class _DirectOfferDetailsContentState
                               child: Text(
                                 offer.isAcceptedPendingPayment
                                     ? 'PENDING PAYMENT'
-                                    : offer.status
-                                          .toUpperCase()
-                                          .replaceAll('_', ' '),
+                                    : offer.status.toUpperCase().replaceAll(
+                                        '_',
+                                        ' ',
+                                      ),
                                 style: AppTypography.micro.copyWith(
                                   color: _statusColor(context, offer),
                                   fontWeight: FontWeight.w700,
@@ -277,8 +280,7 @@ class _DirectOfferDetailsContentState
                                   Text(
                                     'OFFER PRICE',
                                     style: AppTypography.overline.copyWith(
-                                      color:
-                                          context.colorScheme.textSecondary,
+                                      color: context.colorScheme.textSecondary,
                                       letterSpacing: 1.5,
                                     ),
                                   ),

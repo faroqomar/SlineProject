@@ -231,8 +231,11 @@ class _WalletInsightsCard extends StatelessWidget {
         LayoutBuilder(
           builder: (context, constraints) {
             final maxWidth = constraints.maxWidth;
-            final columns =
-                maxWidth >= 720 ? 3 : maxWidth >= 460 ? 2 : 1;
+            final columns = maxWidth >= 720
+                ? 3
+                : maxWidth >= 460
+                ? 2
+                : 1;
             final tileWidth = columns == 1
                 ? maxWidth
                 : (maxWidth - ((columns - 1) * AppDimens.p12)) / columns;
@@ -449,9 +452,7 @@ class _WalletActionCard extends StatelessWidget {
                         const SizedBox(width: AppDimens.p24),
                         _WithdrawalMetric(
                           label: 'HELD',
-                          value: PriceFormatter.formatPrice(
-                            summary.heldFunds,
-                          ),
+                          value: PriceFormatter.formatPrice(summary.heldFunds),
                           dotColor: colorScheme.accent,
                         ),
                       ],

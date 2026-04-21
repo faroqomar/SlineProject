@@ -89,7 +89,8 @@ class DashboardBookingCard extends StatelessWidget {
         booking.status == BookingStatus.pending &&
         booking.paymentStatus != PaymentStatus.held;
 
-    final hasActions = booking.status == BookingStatus.pending ||
+    final hasActions =
+        booking.status == BookingStatus.pending ||
         booking.status == BookingStatus.paidRequestPending ||
         booking.status == BookingStatus.confirmed;
 
@@ -166,9 +167,7 @@ class DashboardBookingCard extends StatelessWidget {
                 children: [
                   Text(
                     taskTitle,
-                    style: AppTypography.h5.copyWith(
-                      color: colorScheme.text,
-                    ),
+                    style: AppTypography.h5.copyWith(color: colorScheme.text),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -226,15 +225,14 @@ class DashboardBookingCard extends StatelessWidget {
 
             // ── ACTION ZONE: Separated by divider ─────────────────
             if (hasActions) ...[
-              Divider(
-                height: 1,
-                thickness: 1,
-                color: colorScheme.divider,
-              ),
+              Divider(height: 1, thickness: 1, color: colorScheme.divider),
               Padding(
                 padding: const EdgeInsets.all(AppDimens.p12),
-                child: _buildActions(colorScheme, canProviderAccept,
-                    awaitingClientPayment),
+                child: _buildActions(
+                  colorScheme,
+                  canProviderAccept,
+                  awaitingClientPayment,
+                ),
               ),
             ],
           ],
@@ -262,9 +260,7 @@ class DashboardBookingCard extends StatelessWidget {
                 style: FilledButton.styleFrom(
                   backgroundColor: colorScheme.primary,
                 ),
-                child: Text(
-                  canProviderAccept ? 'Accept' : 'Awaiting Payment',
-                ),
+                child: Text(canProviderAccept ? 'Accept' : 'Awaiting Payment'),
               ),
             ),
             const SizedBox(width: AppDimens.p12),
@@ -355,17 +351,15 @@ class _DeadlineUrgencyBar extends StatelessWidget {
   final DateTime dueDate;
   final AppColorScheme colorScheme;
 
-  const _DeadlineUrgencyBar({
-    required this.dueDate,
-    required this.colorScheme,
-  });
+  const _DeadlineUrgencyBar({required this.dueDate, required this.colorScheme});
 
   @override
   Widget build(BuildContext context) {
     final hoursLeft = dueDate.difference(DateTime.now()).inHours;
     // < 24h = danger (red), < 48h = warning (orange)
-    final urgencyColor =
-        hoursLeft < 24 ? colorScheme.danger : colorScheme.warning;
+    final urgencyColor = hoursLeft < 24
+        ? colorScheme.danger
+        : colorScheme.warning;
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -375,9 +369,7 @@ class _DeadlineUrgencyBar extends StatelessWidget {
       decoration: BoxDecoration(
         color: urgencyColor.withValues(alpha: 0.08),
         border: Border(
-          bottom: BorderSide(
-            color: urgencyColor.withValues(alpha: 0.15),
-          ),
+          bottom: BorderSide(color: urgencyColor.withValues(alpha: 0.15)),
         ),
       ),
       child: Row(

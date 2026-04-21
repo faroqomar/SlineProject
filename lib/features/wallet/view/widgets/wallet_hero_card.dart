@@ -34,9 +34,7 @@ class WalletHeroCard extends StatelessWidget {
         // headerBackground is a subtle teal tint that feels branded.
         color: colorScheme.headerBackground,
         borderRadius: BorderRadius.circular(AppDimens.r24),
-        border: Border.all(
-          color: colorScheme.headerBorder,
-        ),
+        border: Border.all(color: colorScheme.headerBorder),
         boxShadow: AppDecorations.elevation(2, isDark: colorScheme.isDark),
       ),
       child: Padding(
@@ -214,10 +212,7 @@ class _BalanceChip extends StatelessWidget {
           Container(
             width: AppDimens.p8,
             height: AppDimens.p8,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: AppDimens.p8),
           Column(

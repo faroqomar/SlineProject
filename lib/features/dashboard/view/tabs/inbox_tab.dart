@@ -176,10 +176,7 @@ class _InboxTabState extends State<InboxTab> {
       itemCount: 3,
       itemBuilder: (_, index) => const Padding(
         padding: EdgeInsets.only(bottom: AppDimens.p12),
-        child: SkeletonLoader(
-          height: 160,
-          borderRadius: AppDimens.r16,
-        ),
+        child: SkeletonLoader(height: 160, borderRadius: AppDimens.r16),
       ),
     );
   }
@@ -216,8 +213,9 @@ class _EmptyInboxState extends StatelessWidget {
             Text(
               'No $label Yet',
               // Phase 7: h5 replaces h3 for consistency with WorkTab/BookingsTab
-              style:
-                  AppTypography.h5.copyWith(color: colorScheme.textSecondary),
+              style: AppTypography.h5.copyWith(
+                color: colorScheme.textSecondary,
+              ),
             ),
             const SizedBox(height: AppLayout.spacingStandard),
             Text(

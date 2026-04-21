@@ -366,7 +366,6 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     }
   }
 
-
   /// Premium contract info — hero price on surface, hairline divider,
   /// deadline with icon. No card wrapper, lives directly in the overview.
   Widget _buildContractInfo(WorkItemDetailsViewModel vm) {
@@ -395,11 +394,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
           const SizedBox(height: AppDimens.p8),
           Row(
             children: [
-              Icon(
-                Icons.schedule,
-                size: 14,
-                color: colorScheme.textTertiary,
-              ),
+              Icon(Icons.schedule, size: 14, color: colorScheme.textTertiary),
               const SizedBox(width: AppDimens.p6),
               Text(
                 'Due ${vm.workItem!.deadline}',

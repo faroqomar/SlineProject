@@ -163,8 +163,7 @@ class _ActivityFeedPreviewState extends State<ActivityFeedPreview>
             isLast: entry.isLastInGroup,
           );
 
-          if (_hasAnimatedEntrance &&
-              entry.activityIndex < _maxStaggerCount) {
+          if (_hasAnimatedEntrance && entry.activityIndex < _maxStaggerCount) {
             return SlideTransition(
               position: _slideAnimations[entry.activityIndex],
               child: FadeTransition(
@@ -263,7 +262,8 @@ class _ActivityFeedPreviewState extends State<ActivityFeedPreview>
 
       // Determine if this is the last item in its group (controls
       // connecting line visibility in the timeline dot column).
-      final isLastInGroup = i == activities.length - 1 ||
+      final isLastInGroup =
+          i == activities.length - 1 ||
           _timeGroupLabel(activities[i + 1].createdAt) != group;
 
       entries.add(
@@ -472,9 +472,11 @@ class _DisplayEntry {
   final bool isHeader;
   final String? headerLabel;
   final ActivityLog? activity;
+
   /// Sequential index among activity items only — used for stagger animation
   /// indexing into `_slideAnimations` / `_fadeAnimations`.
   final int activityIndex;
+
   /// Whether this is the last item in its time group — controls the
   /// connecting line visibility in the timeline dot column.
   final bool isLastInGroup;
@@ -490,11 +492,7 @@ class _DisplayEntry {
   factory _DisplayEntry.header(String label) =>
       _DisplayEntry._(isHeader: true, headerLabel: label);
 
-  factory _DisplayEntry.activity(
-    ActivityLog log,
-    int index,
-    bool isLast,
-  ) =>
+  factory _DisplayEntry.activity(ActivityLog log, int index, bool isLast) =>
       _DisplayEntry._(
         isHeader: false,
         activity: log,
