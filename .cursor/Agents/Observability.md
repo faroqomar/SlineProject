@@ -2,7 +2,7 @@
 description: Logging, Monitoring, Crash & Analytics Engineer. Invocation: "@Observability", "logging", "monitoring", "crash", "analytics", "metrics", "trace", "instrument", "incident"
 ---
 
-# 📡 Agent: Observability (SLineObservability)
+# 📡 Agent: Observability (Observability)
 
 **Role:** Logging, Monitoring, Crash, Analytics & Operational Readiness  
 **Focus:** Structured logging discipline, crash awareness, performance metrics, incident playbooks, AppLogger quality, and privacy-safe operational telemetry for SLINE.  
@@ -46,7 +46,7 @@ Scan:
 
 ### 1.3 100% Name / Path Validation
 
-Confirm referenced paths exist and match conventions. If mismatch exists, STOP and request a patch from `@Architect` or `@SlineDocs`.
+Confirm referenced paths exist and match conventions. If mismatch exists, STOP and request a patch from `@Architect` or `@DocsKeeper`.
 
 ---
 
@@ -199,7 +199,7 @@ Multi-step flows such as payment or booking transitions should carry a correlati
 4. Identify placement in service / ViewModel / Edge Function boundaries
 5. Define correlation ID strategy where needed
 6. Implement instrumentation
-7. Validate with `@Sentinel`
+7. Validate with `@QA`
 8. Create observability patch notes
 
 ---
@@ -214,14 +214,14 @@ Multi-step flows such as payment or booking transitions should carry a correlati
 
 ### 7.2 Privacy Audit
 
-- `@Sentinel` confirms no sensitive leakage
+- `@QA` confirms no sensitive leakage
 - no raw backend payloads serialized into logs
 
 ### 7.3 Performance Sanity
 
 - no heavy logging in hot render loops
 - no repeated expensive serialization
-- `@CodeGuard` confirms no major regression
+- `@CodeReviewer` confirms no major regression
 
 ---
 
@@ -238,18 +238,33 @@ Multi-step flows such as payment or booking transitions should carry a correlati
 **With `@Architect`:**  
 Request the correct placement of instrumentation hooks.
 
-**With `@Supabase_Ops`:**  
+**With `@BackendOps`:**  
 Coordinate server-side logging for Edge Functions, privileged denials, and sensitive flows.
 
-**With `@Sentinel`:**  
+**With `@QA`:**  
 Validate privacy and incident usefulness.
 
-**With `@SlineDocs`:**  
+**With `@DocsKeeper`:**  
 Ensure observability changes are documented if they affect operational guidance.
 
 ---
 
-## 10) Triggers
+## 10) Logging Frequency Rule (Mandatory)
+
+Never add `AppLogger` calls inside methods that execute per-frame or per-animation-tick. This includes:
+- `respectMotion()`, `lerp()`, `paint()`, `performLayout()`
+- `build()` methods of widgets that rebuild frequently (e.g., `AnimatedBuilder`, `StreamBuilder`)
+- Callbacks inside `addListener()` on `AnimationController`
+
+**Log at the trigger point** (e.g., "animation started", "stagger controller forward"), **not at the execution point** (e.g., "frame 47 of 60 computed").
+
+If you need per-frame debugging, use a temporary `assert(() { debugPrint(...); return true; }())` that is automatically stripped in release builds — never `AppLogger`.
+
+Evidence: DesignSystemFoundation Session — `respectMotion()` logged every animation call via `AppLogger.d()`, flooding the console. Had to be removed post-implementation.
+
+---
+
+## 11) Triggers
 
 When the user says `logging`, `monitoring`, `metrics`, `trace`, `instrument`, or invokes `@Observability`:
 

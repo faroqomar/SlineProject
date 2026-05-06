@@ -5,12 +5,13 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/deep_link_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_date.dart';
-import 'package:sline_app/core/widgets/glass_card.dart';
+import 'package:sline_app/core/widgets/app_card.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/features/dashboard/models/work_item.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
@@ -51,228 +52,283 @@ class WorkItemCard extends StatelessWidget {
     final isDirectOffer = item.type == WorkItemType.directOffer;
     final deepLinkService = context.read<DeepLinkService>();
 
+    // Phase 7: migrated from AppColors.* to semantic colorScheme.* tokens
+    // for consistent light/dark mode rendering.
     Color statusColor;
     switch (item.statusRaw) {
       case 'open':
       case 'pending':
       case 'paid_request_pending':
       case 'accepted': // direct offer pending payment
-        statusColor = AppColors.gold;
+        statusColor = colorScheme.warning; // was AppColors.gold
       case 'assigned':
       case 'confirmed':
       case 'inProgress':
       case 'in_progress':
       case 'active':
-        statusColor = AppColors.teal;
+        statusColor = colorScheme.primary; // was AppColors.teal
       case 'delivered':
-        statusColor = AppColors.lightRed;
+        statusColor = colorScheme.danger;
       case 'completed':
       case 'closed':
-        statusColor = AppColors.lightTeal;
+        statusColor = colorScheme.success; // was AppColors.lightTeal
       case 'canceled':
       case 'declined':
       case 'refunded':
-        statusColor = AppColors.lightRed;
+        statusColor = colorScheme.danger;
       default:
-        statusColor = AppColors.mediumGrey;
+        statusColor = colorScheme.textTertiary; // was AppColors.mediumGrey
     }
 
-    return GlassCard(
-      onTap: () async {
-        final result = await deepLinkService.handleWorkItem(
-          context,
-          item.type.name,
-          item.id,
-          conversationId: item.conversationId,
-        );
-        if (result == true && context.mounted) {
-          unawaited(context.read<DashboardViewModel>().refresh());
-        }
-      },
-      margin: const EdgeInsets.only(bottom: AppDimens.p16),
-      padding: EdgeInsets.zero,
-      child: Column(
-        children: [
-          // Removed extra closing stuff
-          // Header
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimens.p16,
-              vertical: AppDimens.p12,
-            ),
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.1),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(AppDimens.r16),
+    final typeLabel = isDirectOffer
+        ? 'Custom offer'
+        : (isBooking ? 'Booking' : 'Task');
+    final statusLabel = _getStatusDisplayLabel(item.statusRaw);
+
+    return Semantics(
+      label: '$typeLabel: ${item.title}, $statusLabel',
+      child: AppCard(
+        onTap: () async {
+          AppLogger.d('WorkItemCard tapped', tag: 'Cards');
+          final result = await deepLinkService.handleWorkItem(
+            context,
+            item.type.name,
+            item.id,
+            conversationId: item.conversationId,
+          );
+          if (result == true && context.mounted) {
+            unawaited(context.read<DashboardViewModel>().refresh());
+          }
+        },
+        margin: const EdgeInsets.only(bottom: AppDimens.p16),
+        padding: EdgeInsets.zero,
+        child: Column(
+          children: [
+            // Removed extra closing stuff
+            // Header
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimens.p16,
+                // Phase 7 REDESIGN: taller header for more visual weight
+                vertical: AppDimens.p14,
               ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      Icon(
-                        isDirectOffer
-                            ? Icons.chat_bubble_outline
-                            : (isBooking
-                                  ? Icons.calendar_today
-                                  : Icons.assignment),
-                        size: 16,
-                        color: statusColor,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        isDirectOffer
-                            ? 'CUSTOM OFFER'
-                            : (isBooking ? 'BOOKING' : 'TASK'),
-                        style: AppTypography.captionBold.copyWith(
-                          color: statusColor,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          item.scheduledAt != null
-                              ? '• Due ${DateFormat('MMM d, h:mm a').format(item.scheduledAt!.toLocal())}'
-                              : '• Posted ${formatFriendlyTime(item.createdAt)}',
-                          style: AppTypography.caption.copyWith(
-                            color: statusColor.withValues(alpha: 0.8),
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
+              decoration: BoxDecoration(
+                // Phase 7 REDESIGN: 0.15 alpha up from 0.1 for more color presence
+                color: statusColor.withValues(alpha: 0.15),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(AppDimens.r16),
                 ),
-                Text(
-                  _getStatusDisplayLabel(item.statusRaw),
-                  style: AppTypography.captionBold.copyWith(color: statusColor),
-                ),
-              ],
-            ),
-          ),
-
-          // Body
-          Padding(
-            padding: const EdgeInsets.all(AppDimens.p16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.title,
-                  style: AppTypography.h5.copyWith(color: colorScheme.text),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                // Avatar + Name (Clickable)
-                GestureDetector(
-                  onTap: () {
-                    if (context.mounted) {
-                      showProfilePreview(context, item.counterpartyId);
-                    }
-                  },
-                  child: Row(
-                    children: [
-                      // Avatar
-                      SignedAvatar(
-                        storagePathOrUrl: item.counterpartyAvatar,
-                        radius: 12,
-                        placeholder: CircleAvatar(
-                          radius: 12,
-                          backgroundColor: colorScheme.textSecondary,
-                          child: Icon(
-                            Icons.person,
-                            size: 14,
-                            color: AppColors.white,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Name
-                      Flexible(
-                        child: Text(
-                          item.counterpartyName,
-                          style: AppTypography.bodySmall.copyWith(
-                            color: colorScheme.text,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: AppDimens.p16),
-
-                if (item.needsReview)
-                  Container(
-                    margin: const EdgeInsets.only(bottom: AppDimens.p8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimens.p12,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.lightRed.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(AppDimens.r16),
-                    ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
                     child: Row(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          Icons.rate_review,
-                          size: 14,
-                          color: AppColors.lightRed,
+                          isDirectOffer
+                              ? Icons.chat_bubble_outline
+                              : (isBooking
+                                    ? Icons.calendar_today
+                                    : Icons.assignment),
+                          size: AppDimens.iconSizeSmall,
+                          color: statusColor,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: AppDimens.p8),
                         Text(
-                          item.actionableNeedsReview
-                              ? 'Needs Review'
-                              : 'Awaiting Client Review',
+                          isDirectOffer
+                              ? 'CUSTOM OFFER'
+                              : (isBooking ? 'BOOKING' : 'TASK'),
                           style: AppTypography.captionBold.copyWith(
-                            color: AppColors.lightRed,
+                            color: statusColor,
+                          ),
+                        ),
+                        const SizedBox(width: AppDimens.p8),
+                        Flexible(
+                          child: Text(
+                            item.scheduledAt != null
+                                ? '• Due ${DateFormat('MMM d, h:mm a').format(item.scheduledAt!.toLocal())}'
+                                : '• Posted ${formatFriendlyTime(item.createdAt)}',
+                            style: AppTypography.caption.copyWith(
+                              color: statusColor.withValues(alpha: 0.8),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Phase 7 REDESIGN: Filled badge for status — more visual
+                  // weight than bare text, consistent with card header identity.
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimens.p8,
+                      vertical: AppDimens.p4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.20),
+                      borderRadius: BorderRadius.circular(AppDimens.r8),
+                    ),
+                    child: Text(
+                      _getStatusDisplayLabel(item.statusRaw),
+                      style: AppTypography.micro.copyWith(
+                        color: statusColor,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Body
+            Padding(
+              padding: const EdgeInsets.all(AppDimens.p16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    style: AppTypography.h5.copyWith(color: colorScheme.text),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  // Avatar + Name (Clickable)
+                  GestureDetector(
+                    onTap: () {
+                      if (context.mounted) {
+                        showProfilePreview(context, item.counterpartyId);
+                      }
+                    },
+                    child: Row(
+                      children: [
+                        // Phase 7 REDESIGN: avatarDefault (40px) up from
+                        // avatarSmall (36px) for more personality
+                        SignedAvatar(
+                          storagePathOrUrl: item.counterpartyAvatar,
+                          radius: AppLayout.avatarDefault / 2,
+                          placeholder: CircleAvatar(
+                            radius: AppLayout.avatarDefault / 2,
+                            backgroundColor: colorScheme.textSecondary,
+                            child: Icon(
+                              Icons.person,
+                              size: AppLayout.avatarDefault / 2,
+                              color: Theme.of(context).colorScheme.onPrimary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppDimens.p8),
+                        // Name + role subtitle
+                        Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.counterpartyName,
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: colorScheme.text,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              // Phase 7: role subtitle for context
+                              Text(
+                                item.counterpartyRole,
+                                style: AppTypography.micro.copyWith(
+                                  color: colorScheme.textTertiary,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
 
-                // Actions
-                if (item.primaryActionType != PrimaryActionType.startWork &&
-                    item.primaryActionType !=
-                        PrimaryActionType.reviewDelivery &&
-                    (item.permissions.canComplete ||
-                        item.permissions.canApprove ||
-                        item.permissions.canReview ||
-                        item.permissions.canPayEscrow))
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: onPrimaryAction,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.teal,
-                      ),
-                      child: Text(
-                        _getPrimaryButtonLabel(item.primaryActionType),
-                      ),
-                    ),
-                  ),
-                if (onSecondaryAction != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: AppDimens.p8),
-                    child: SizedBox(
+                  const SizedBox(height: AppDimens.p16),
+
+                  // Phase 7 REDESIGN: Full-width review banner with border —
+                  // impossible to miss, replaces the small inline chip.
+                  if (item.needsReview)
+                    Container(
                       width: double.infinity,
-                      child: TextButton(
-                        onPressed: onSecondaryAction,
-                        child: const Text('Cancel payment'),
+                      margin: const EdgeInsets.only(bottom: AppDimens.p12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimens.p12,
+                        vertical: AppDimens.p10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorScheme.dangerMuted,
+                        borderRadius: BorderRadius.circular(AppDimens.r12),
+                        border: Border.all(
+                          color: colorScheme.danger.withValues(alpha: 0.20),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.rate_review,
+                            size: AppDimens.iconSizeSmall,
+                            color: colorScheme.danger,
+                          ),
+                          const SizedBox(width: AppDimens.p8),
+                          Expanded(
+                            child: Text(
+                              item.actionableNeedsReview
+                                  ? 'Delivery ready for your review'
+                                  : 'Waiting for client review',
+                              style: AppTypography.captionBold.copyWith(
+                                color: colorScheme.danger,
+                              ),
+                            ),
+                          ),
+                          // Chevron hints at actionability
+                          Icon(
+                            Icons.chevron_right,
+                            size: AppDimens.iconSizeSmall,
+                            color: colorScheme.danger,
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-              ],
+
+                  // Actions
+                  if (item.primaryActionType != PrimaryActionType.startWork &&
+                      item.primaryActionType !=
+                          PrimaryActionType.reviewDelivery &&
+                      (item.permissions.canComplete ||
+                          item.permissions.canApprove ||
+                          item.permissions.canReview ||
+                          item.permissions.canPayEscrow))
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: onPrimaryAction,
+                        style: FilledButton.styleFrom(
+                          // Phase 7: semantic primary replaces AppColors.teal
+                          backgroundColor: colorScheme.primary,
+                        ),
+                        child: Text(
+                          _getPrimaryButtonLabel(item.primaryActionType),
+                        ),
+                      ),
+                    ),
+                  if (onSecondaryAction != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppDimens.p8),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: TextButton(
+                          onPressed: onSecondaryAction,
+                          child: const Text('Cancel payment'),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

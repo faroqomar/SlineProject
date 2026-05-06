@@ -3,7 +3,7 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
 import 'package:sline_app/features/work/models/change_request_model.dart';
 import 'package:sline_app/features/work/models/extension_request_model.dart';
@@ -44,7 +44,7 @@ class DisputeBannerContent extends StatelessWidget {
         final text = status == 'active'
             ? 'Work frozen — in dispute.'
             : 'Dispute under review. Approve and release disabled.';
-        return GlassContainer(
+        return AppCardContainer(
           child: Padding(
             padding: const EdgeInsets.all(AppDimens.p12),
             child: Row(

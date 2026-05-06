@@ -7,7 +7,7 @@ import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
 import 'package:sline_app/features/profile/view/manage_portfolio_screen.dart';
 
@@ -231,7 +231,7 @@ class SettingsScreen extends StatelessWidget {
     final colorScheme = context.colorScheme;
     return GestureDetector(
       onTap: onTap,
-      child: GlassContainer(
+      child: AppCardContainer(
         padding: const EdgeInsets.all(AppDimens.p16),
         borderRadius: BorderRadius.circular(AppDimens.r16),
         child: Row(
@@ -289,7 +289,7 @@ class SettingsScreen extends StatelessWidget {
           ),
         );
       },
-      child: GlassContainer(
+      child: AppCardContainer(
         padding: const EdgeInsets.all(AppDimens.p16),
         borderRadius: BorderRadius.circular(AppDimens.r16),
         child: Row(

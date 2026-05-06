@@ -51,4 +51,15 @@ class AppDimens {
   static const double iconSizeSmall = 16.0;
   static const double iconSizeMedium = 24.0;
   static const double iconSizeLarge = 32.0;
+
+  // --- Semantic UI Tokens ---
+  // Empty states reuse one visual pattern across multiple screens.
+  static const double emptyStateIconContainer = p80;
+  static const double emptyStateIconSize = p48;
+
+  // Favorite card avatar and actions keep these values centralized.
+  static const double avatarMedium = 44.0;
+  static const double avatarRadius = 22.0;
+  static const double touchTarget = p48;
+  static const double iconSmall = 20.0;
 }

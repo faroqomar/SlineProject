@@ -128,7 +128,7 @@ _See files `02_auth_ui_sequence.md` through `08_profile_ui_sequence.md`._
 - **Loading**: Entire screen utilizes a skeleton loader when fetching base data.
 - **Inline Loading**: Buttons show progressive spinners (Material 3 standard) during async mutations.
 - **Empty State**: Friendly illustration + descriptive text + CTA (e.g., "No tasks found. Create one!").
-- **Error / No Network**: Snackbar pattern (`AppColors.lightRed`) using `ErrorMapper` to translate PostgREST/Socket errors. Refresh/Retry button on main feeds.
+- **Error / No Network**: Snackbar pattern (`colorScheme.danger`) using `ErrorMapper` to translate PostgREST/Socket errors. Refresh/Retry button on main feeds.
 - **Destructive Actions**: Always wrapped in a confirmation dialog (e.g., "Cancel Booking", "Delete Portfolio").
 
 # 11. Transition Rules

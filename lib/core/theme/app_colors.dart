@@ -116,16 +116,6 @@ class AppColors {
     opacity: 0.40,
   ); // New: taskGradient from in light mode
 
-  // --- Glassmorphism Gradients ---
-  static final List<Color> glassCardGradientLight = [
-    AppColors.white.withValues(alpha: 0.7),
-    AppColors.white.withValues(alpha: 0.4),
-  ];
-  static final List<Color> glassCardGradientDark = [
-    AppColors.teal.withValues(alpha: 0.2), // rgba(20, 96, 104, 0.2)
-    AppColors.almostBlack.withValues(alpha: 0.4), // rgba(0, 0, 0, 0.4)
-  ];
-
   // --- Semantic Colors for Task Types (Tender vs Booking) ---
   // These methods maintain the signature expected by existing code.
 
@@ -185,12 +175,22 @@ class AppColorScheme {
     required this.bottomNavInactive,
     required this.divider,
     required this.taskGradientFrom,
-    required this.glassCardGradient, // ADD THIS LINE
     required this.error,
     required this.isDark,
-    this.success = Colors.green, // Default for now
-    this.warning = Colors.orange, // Default for now
-    this.info = Colors.blue, // Default for now
+    // Semantic status colors (converted from optional defaults to required tokens)
+    required this.success,
+    required this.successMuted,
+    required this.warning,
+    required this.warningMuted,
+    required this.info,
+    required this.infoMuted,
+    required this.danger,
+    required this.dangerMuted,
+    // Interactive state colors
+    required this.hoverOverlay,
+    required this.pressedOverlay,
+    required this.focusRing,
+    required this.disabledFill,
   });
 
   final Color primary;
@@ -224,11 +224,19 @@ class AppColorScheme {
   final Color bottomNavInactive;
   final Color divider;
   final Color taskGradientFrom;
-  final List<Color> glassCardGradient; // ADD THIS LINE
   final Color error;
   final Color success;
+  final Color successMuted;
   final Color warning;
+  final Color warningMuted;
   final Color info;
+  final Color infoMuted;
+  final Color danger;
+  final Color dangerMuted;
+  final Color hoverOverlay;
+  final Color pressedOverlay;
+  final Color focusRing;
+  final Color disabledFill;
   final bool isDark;
 
   factory AppColorScheme.lerp(AppColorScheme? a, AppColorScheme? b, double t) {
@@ -301,18 +309,19 @@ class AppColorScheme {
       )!,
       divider: Color.lerp(a.divider, b.divider, t)!,
       taskGradientFrom: Color.lerp(a.taskGradientFrom, b.taskGradientFrom, t)!,
-      glassCardGradient: List.generate(
-        a.glassCardGradient.length,
-        (index) => Color.lerp(
-          a.glassCardGradient[index],
-          b.glassCardGradient[index],
-          t,
-        )!,
-      ),
       error: Color.lerp(a.error, b.error, t)!,
       success: Color.lerp(a.success, b.success, t)!,
+      successMuted: Color.lerp(a.successMuted, b.successMuted, t)!,
       warning: Color.lerp(a.warning, b.warning, t)!,
+      warningMuted: Color.lerp(a.warningMuted, b.warningMuted, t)!,
       info: Color.lerp(a.info, b.info, t)!,
+      infoMuted: Color.lerp(a.infoMuted, b.infoMuted, t)!,
+      danger: Color.lerp(a.danger, b.danger, t)!,
+      dangerMuted: Color.lerp(a.dangerMuted, b.dangerMuted, t)!,
+      hoverOverlay: Color.lerp(a.hoverOverlay, b.hoverOverlay, t)!,
+      pressedOverlay: Color.lerp(a.pressedOverlay, b.pressedOverlay, t)!,
+      focusRing: Color.lerp(a.focusRing, b.focusRing, t)!,
+      disabledFill: Color.lerp(a.disabledFill, b.disabledFill, t)!,
       isDark: t < 0.5
           ? (a.isDark)
           : (b.isDark), // Boolean lerp is not meaningful, pick based on interpolation factor
@@ -356,9 +365,22 @@ class AppColorScheme {
       bottomNavInactive: AppColors.mediumGrey,
       divider: AppColors.tealTransparent15,
       taskGradientFrom: AppColors.almostBlackTransparent40,
-      glassCardGradient: AppColors.glassCardGradientLight,
       error: AppColors.lightRed,
       isDark: false,
+      // Semantic status colors — light mode
+      success: const Color(0xFF2E7D32),
+      successMuted: const Color(0xFFE8F5E9),
+      warning: const Color(0xFFF57F17),
+      warningMuted: const Color(0xFFFFF8E1),
+      info: const Color(0xFF1565C0),
+      infoMuted: const Color(0xFFE3F2FD),
+      danger: const Color(0xFFC62828),
+      dangerMuted: const Color(0xFFFFEBEE),
+      // Interactive state colors — light mode
+      hoverOverlay: AppColors.teal.withValues(alpha: 0.04),
+      pressedOverlay: AppColors.teal.withValues(alpha: 0.08),
+      focusRing: AppColors.teal,
+      disabledFill: const Color(0x14000000),
     );
   }
 
@@ -373,38 +395,46 @@ class AppColorScheme {
       text: AppColors.offWhite,
       textSecondary: AppColors.mediumGreyBlue,
       textTertiary: AppColors.mediumGrey,
-      authGradientStart: AppColors.tealTransparent5,
+      // Dark mode: SOLID colors (NO GLASS POLICY)
+      authGradientStart: const Color(0xFF0E1A1B),
       authGradientEnd: AppColors.almostBlack,
-      authInputBackground: AppColors.offWhiteTransparent10,
-      authInputBorder: AppColors.lightTealTransparent20,
-      cardBackground: AppColors.offWhiteTransparent8,
-      cardBorder: HexColor.fromHex(
-        '#93ccce',
-        opacity: 0.10,
-      ), // border-[#93ccce]/10
-      cardBorderHover: AppColors.tealTransparent40, // border-[#146068]/40
-      inputBackground: AppColors.offWhiteTransparent10,
-      inputBorder: AppColors.lightTealTransparent20,
-      inputFocusBackground: AppColors.offWhiteTransparent15,
-      tagBackground: AppColors.offWhiteTransparent10,
-      tagBorder: HexColor.fromHex(
-        '#93ccce',
-        opacity: 0.10,
-      ), // border-[#93ccce]/10
-      hotBadgeBackground: AppColors.goldTransparent20,
-      hotBadgeBorder: AppColors.goldTransparent30,
-      headerBackground: AppColors.tealTransparent20,
-      headerBorder: AppColors.lightTealTransparent20,
-      contentGradientEnd: AppColors.almostBlackTransparent70,
+      authInputBackground: const Color(0xFF1A1E21),
+      authInputBorder: const Color(0xFF1E3A3C),
+      cardBackground: const Color(0xFF161A1D),
+      cardBorder: const Color(0xFF1E3A3C),
+      cardBorderHover: const Color(0xFF1E5A5F),
+      inputBackground: const Color(0xFF1A1E21),
+      inputBorder: const Color(0xFF1E3A3C),
+      inputFocusBackground: const Color(0xFF1E2226),
+      tagBackground: const Color(0xFF1A1E21),
+      tagBorder: const Color(0xFF1E3A3C),
+      hotBadgeBackground: const Color(0xFF3D2E00),
+      hotBadgeBorder: const Color(0xFF5A4400),
+      headerBackground: const Color(0xFF0E2628),
+      headerBorder: const Color(0xFF1E3A3C),
+      contentGradientEnd: AppColors.almostBlack,
       scrollbarColorThumb: AppColors.teal,
-      bottomNavBackground: AppColors.tealTransparent20,
-      bottomNavBorder: AppColors.lightTealTransparent20,
+      bottomNavBackground: const Color(0xFF161A1D),
+      bottomNavBorder: const Color(0xFF1E3A3C),
       bottomNavInactive: AppColors.mediumGreyBlue,
-      divider: AppColors.lightTealTransparent20,
-      taskGradientFrom: AppColors.almostBlackTransparent60,
-      glassCardGradient: AppColors.glassCardGradientDark,
+      divider: const Color(0xFF1E3A3C),
+      taskGradientFrom: const Color(0xFF080A0C),
       error: AppColors.lightRed,
       isDark: true,
+      // Semantic status colors — dark mode
+      success: const Color(0xFF66BB6A),
+      successMuted: const Color(0xFF1B3D1F),
+      warning: const Color(0xFFFFB300),
+      warningMuted: const Color(0xFF3D2E00),
+      info: const Color(0xFF42A5F5),
+      infoMuted: const Color(0xFF0D2137),
+      danger: const Color(0xFFEF5350),
+      dangerMuted: const Color(0xFF3D1111),
+      // Interactive state colors — dark mode
+      hoverOverlay: AppColors.lightTeal.withValues(alpha: 0.06),
+      pressedOverlay: AppColors.lightTeal.withValues(alpha: 0.10),
+      focusRing: AppColors.lightTeal,
+      disabledFill: const Color(0x14FFFFFF),
     );
   }
 }

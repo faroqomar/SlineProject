@@ -6,13 +6,24 @@ import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/deep_link_service.dart'
     as sline_deep_link;
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
+import 'package:sline_app/core/theme/app_motion.dart';
+import 'package:sline_app/core/theme/app_states.dart';
+import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/error_mapper.dart';
+import 'package:sline_app/core/widgets/skeleton_loader.dart';
+import 'package:sline_app/features/dashboard/models/work_item.dart';
 import 'package:sline_app/features/dashboard/view/widgets/work_item_card.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 import 'package:sline_app/features/proposals/models/proposal_payment_summary.dart';
 import 'package:sline_app/features/proposals/routes/proposal_payment_route.dart';
 import 'package:sline_app/features/wallet/view/wallet_screen.dart';
 
+/// Insufficient funds dialog — shown when user tries to pay escrow without
+/// enough wallet balance. Navigates to WalletScreen to add funds.
 void _showInsufficientFundsDialog(BuildContext context) {
   showDialog<void>(
     context: context,
@@ -41,152 +52,383 @@ void _showInsufficientFundsDialog(BuildContext context) {
   );
 }
 
-class NextActionsList extends StatelessWidget {
+/// Priority-driven next actions list with stagger entrance animation,
+/// skeleton loading, and enhanced empty state.
+///
+/// Phase 7 redesign: converted from StatelessWidget to StatefulWidget to
+/// support stagger entrance animation. Added priority-colored left bar on
+/// each action card, skeleton shimmer loading, and "All caught up!" empty
+/// state with icon. View-layer only — no ViewModel changes.
+class NextActionsList extends StatefulWidget {
   const NextActionsList({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // In Phase 2, we consume the VM directly
-    final vm = context.watch<DashboardViewModel>();
-    // Use calculated priority actions (Phase 1.3 Logic)
-    final items = vm.nextActions;
+  State<NextActionsList> createState() => _NextActionsListState();
+}
 
-    if (vm.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+class _NextActionsListState extends State<NextActionsList>
+    with SingleTickerProviderStateMixin {
+  // ── Stagger entrance animation ─────────────────────────────
+  late final AnimationController _staggerController;
+  bool _hasAnimatedEntrance = false;
+  static const int _maxStaggerCount = 3;
+
+  // Cached per-item animations — built once to avoid allocating new
+  // Animation objects on every rebuild.
+  final List<Animation<Offset>> _slideAnimations = [];
+  final List<Animation<double>> _fadeAnimations = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _staggerController = AnimationController(
+      // emphasis (500ms) — same as ActivityFeedPreview for visual consistency
+      duration: AppMotion.emphasis,
+      vsync: this,
+    );
+  }
+
+  @override
+  void dispose() {
+    _staggerController.dispose();
+    super.dispose();
+  }
+
+  /// Builds and caches per-item slide+fade animations, then triggers the
+  /// stagger entrance. Called once via postFrameCallback to avoid setState
+  /// during build (RG-5 from Phase 5 learnings).
+  void _triggerStaggerIfNeeded(int itemCount) {
+    if (_hasAnimatedEntrance || itemCount == 0) return;
+    _hasAnimatedEntrance = true;
+
+    final count = itemCount.clamp(0, _maxStaggerCount);
+    for (var i = 0; i < count; i++) {
+      final staggerFraction = i / (_maxStaggerCount + 2);
+      final begin = staggerFraction;
+      final end = (staggerFraction + 0.3).clamp(0.0, 1.0);
+
+      _slideAnimations.add(
+        Tween<Offset>(begin: const Offset(0, 0.15), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _staggerController,
+            // curveDecel for natural entrance deceleration
+            curve: Interval(begin, end, curve: AppMotion.curveDecel),
+          ),
+        ),
+      );
+
+      _fadeAnimations.add(
+        Tween<double>(begin: 0, end: 1).animate(
+          CurvedAnimation(
+            parent: _staggerController,
+            curve: Interval(begin, end, curve: AppMotion.curveDecel),
+          ),
+        ),
+      );
     }
 
+    AppLogger.d(
+      'NextActionsList: stagger entrance ($itemCount items)',
+      tag: 'Dashboard',
+    );
+    _staggerController.forward();
+  }
+
+  /// Maps a work item's primary action type to a priority color.
+  ///
+  /// Higher urgency actions (payment) get danger color, review gets warning,
+  /// standard actions get primary — creating visual urgency hierarchy on the
+  /// left border of each card.
+  Color _priorityColor(
+    PrimaryActionType? actionType,
+    AppColorScheme colorScheme,
+  ) {
+    switch (actionType) {
+      // Urgent — money action requires immediate attention
+      case PrimaryActionType.payEscrow:
+        return colorScheme.danger;
+      // Attention — delivery needs review
+      case PrimaryActionType.reviewDelivery:
+        return colorScheme.warning;
+      // Action needed — evidence submission
+      case PrimaryActionType.submitEvidence:
+        return colorScheme.info;
+      // Standard — general actions
+      case PrimaryActionType.startWork:
+      case PrimaryActionType.markCompleted:
+      case PrimaryActionType.approveClose:
+      case PrimaryActionType.viewDetails:
+      case null:
+        return colorScheme.primary;
+    }
+  }
+
+  /// Returns a human-readable priority label for accessibility.
+  String _priorityLabel(PrimaryActionType? actionType) {
+    switch (actionType) {
+      case PrimaryActionType.payEscrow:
+        return 'Urgent';
+      case PrimaryActionType.reviewDelivery:
+        return 'Needs attention';
+      case PrimaryActionType.submitEvidence:
+        return 'Action needed';
+      default:
+        return 'Standard';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final vm = context.watch<DashboardViewModel>();
+    final colorScheme = context.colorScheme;
+    final items = vm.nextActions;
+
+    // ── Skeleton loading state ──────────────────────────────────
+    if (vm.isLoading && items.isEmpty) {
+      return _buildSkeletonList();
+    }
+
+    // ── Enhanced empty state ────────────────────────────────────
     if (items.isEmpty) {
-      return const Center(child: Text('No actions pending.'));
+      return _buildEmptyState(colorScheme);
     }
 
     // Show top 3 items for "Next Actions" section
-    final displayItems = items.take(3).toList();
+    final displayItems = items.take(_maxStaggerCount).toList();
+
+    // Schedule stagger trigger after the current frame to avoid mutating
+    // controller state during build (RG-5 from Phase 5).
+    if (!_hasAnimatedEntrance) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _triggerStaggerIfNeeded(displayItems.length),
+      );
+    }
 
     return Column(
       key: const Key('next_actions_list'),
-      children: displayItems
-          .map(
-            (item) => WorkItemCard(
+      children: List.generate(displayItems.length, (index) {
+        final item = displayItems[index];
+        final priorityColor = _priorityColor(
+          item.primaryActionType,
+          colorScheme,
+        );
+
+        // Priority-colored left border wrapping each card — creates visual
+        // urgency hierarchy without IntrinsicHeight (zero extra layout cost).
+        Widget card = Semantics(
+          label: 'Priority: ${_priorityLabel(item.primaryActionType)}',
+          child: Container(
+            margin: const EdgeInsets.only(bottom: AppDimens.p12),
+            decoration: BoxDecoration(
+              // Left bar indicates action urgency level
+              border: Border(left: BorderSide(width: 4, color: priorityColor)),
+              borderRadius: BorderRadius.circular(AppDimens.r16),
+            ),
+            child: WorkItemCard(
               item: item,
-              onPrimaryAction: () async {
-                final action = item.primaryActionType;
-                final vm = context.read<DashboardViewModel>();
-                // Direct offer Pay Now: perform payment from dashboard
-                if (item.type == WorkItemType.directOffer &&
-                    action == PrimaryActionType.payEscrow) {
-                  try {
-                    await vm.performPrimaryAction(item);
-                    if (context.mounted) unawaited(vm.refresh());
-                  } on FormatException catch (e) {
-                    if (!context.mounted) return;
-                    if (e.message.contains('Insufficient')) {
-                      _showInsufficientFundsDialog(context);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(ErrorMapper.map(e))),
-                      );
-                    }
-                  } on Exception catch (e) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text(ErrorMapper.map(e))));
-                  }
-                  return;
-                }
-                // Task awarded pending payment: open via shared route
-                if (item.type == WorkItemType.task &&
-                    action == PrimaryActionType.payEscrow &&
-                    item.awardedRequestId != null) {
-                  AppLogger.i(
-                    'NextActions: opening tender payment request=${item.awardedRequestId}',
-                    tag: 'dashboard.work',
-                  );
-                  final summary = ProposalPaymentSummary(
-                    requestId: item.awardedRequestId!,
-                    taskId: item.id,
-                    taskTitle: item.title,
-                    freelancerName: item.counterpartyName,
-                    amount: item.price ?? 0,
-                    paymentDeadline: item.paymentDeadline,
-                  );
-                  await openProposalPayment(
-                    context,
-                    summary: summary,
-                    launcherSource: 'next_actions_list',
-                  );
-                  if (context.mounted) unawaited(vm.refresh());
-                  return;
-                }
-                // Navigate for review/pay/view (booking/task pay goes to details)
-                if (action == PrimaryActionType.reviewDelivery ||
-                    action == PrimaryActionType.submitEvidence ||
-                    action == PrimaryActionType.payEscrow ||
-                    action == PrimaryActionType.viewDetails) {
-                  final result = await context
-                      .read<sline_deep_link.DeepLinkService>()
-                      .handleWorkItem(
-                        context,
-                        item.type.name,
-                        item.id,
-                        conversationId: item.conversationId,
-                      );
-                  if (result == true && context.mounted) {
-                    unawaited(vm.refresh());
-                  }
-                } else {
-                  try {
-                    await vm.performPrimaryAction(item);
-                    if (context.mounted) unawaited(vm.refresh());
-                  } on FormatException catch (e) {
-                    if (!context.mounted) return;
-                    if (e.message.contains('Insufficient')) {
-                      _showInsufficientFundsDialog(context);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(ErrorMapper.map(e))),
-                      );
-                    }
-                  } on Exception catch (e) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text(ErrorMapper.map(e))));
-                  }
-                }
-              },
+              onPrimaryAction: () => _handlePrimaryAction(context, item),
               onSecondaryAction:
                   item.permissions.canCancel && item.awardedRequestId != null
-                  ? () async {
-                      try {
-                        await context
-                            .read<DashboardViewModel>()
-                            .cancelAwardedOffer(item.awardedRequestId!);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Award cancelled. Task is open again.',
-                              ),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                        }
-                      } on Exception catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(ErrorMapper.map(e)),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      }
-                    }
+                  ? () => _handleSecondaryAction(context, item)
                   : null,
             ),
-          )
-          .toList(),
+          ),
+        );
+
+        // Apply stagger entrance for items within the animation window
+        if (_hasAnimatedEntrance && index < _maxStaggerCount) {
+          card = SlideTransition(
+            position: _slideAnimations[index],
+            child: FadeTransition(opacity: _fadeAnimations[index], child: card),
+          );
+        }
+
+        return card;
+      }),
     );
+  }
+
+  /// Skeleton loading — 3 placeholder cards matching WorkItemCard shape.
+  Widget _buildSkeletonList() {
+    return Column(
+      children: List.generate(
+        3,
+        (index) => const Padding(
+          padding: EdgeInsets.only(bottom: AppDimens.p12),
+          child: SkeletonLoader(height: 120, borderRadius: AppDimens.r16),
+        ),
+      ),
+    );
+  }
+
+  /// Enhanced empty state — "All caught up!" with check icon.
+  ///
+  /// Replaces bare "No actions pending." text with an illustrated, accessible
+  /// empty state matching the pattern used in WorkTab and BookingsTab.
+  Widget _buildEmptyState(AppColorScheme colorScheme) {
+    return Padding(
+      padding: const EdgeInsets.all(AppDimens.p16),
+      child: Semantics(
+        label: 'All caught up. No actions need your attention right now.',
+        excludeSemantics: true,
+        child: Center(
+          child: Column(
+            children: [
+              Icon(
+                Icons.check_circle_outline,
+                size: AppLayout.iconFeature,
+                color: colorScheme.success,
+              ),
+              const SizedBox(height: AppLayout.spacingStandard),
+              Text(
+                'All caught up!',
+                style: AppTypography.h5.copyWith(
+                  color: colorScheme.textSecondary,
+                ),
+              ),
+              const SizedBox(height: AppLayout.spacingTight),
+              Text(
+                'No actions need your attention right now.',
+                style: AppTypography.bodySmall.copyWith(
+                  color: colorScheme.textTertiary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Handles primary action (pay, navigate, review) for a next action item.
+  ///
+  /// Business logic routing is unchanged from pre-Phase 7 — only the widget
+  /// structure around it changed (StatefulWidget + stagger).
+  Future<void> _handlePrimaryAction(BuildContext context, WorkItem item) async {
+    final action = item.primaryActionType;
+    final vm = context.read<DashboardViewModel>();
+
+    // Direct offer Pay Now: perform payment from dashboard
+    if (item.type == WorkItemType.directOffer &&
+        action == PrimaryActionType.payEscrow) {
+      try {
+        await vm.performPrimaryAction(item);
+        if (context.mounted) unawaited(vm.refresh());
+      } on FormatException catch (e) {
+        if (!context.mounted) return;
+        if (e.message.contains('Insufficient')) {
+          _showInsufficientFundsDialog(context);
+        } else {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(ErrorMapper.map(e))));
+        }
+      } on Exception catch (e) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(ErrorMapper.map(e))));
+      }
+      return;
+    }
+
+    // Task awarded pending payment: open via shared route
+    if (item.type == WorkItemType.task &&
+        action == PrimaryActionType.payEscrow &&
+        item.awardedRequestId != null) {
+      AppLogger.i(
+        'NextActions: opening tender payment request=${item.awardedRequestId}',
+        tag: 'dashboard.work',
+      );
+      final summary = ProposalPaymentSummary(
+        requestId: item.awardedRequestId!,
+        taskId: item.id,
+        taskTitle: item.title,
+        freelancerName: item.counterpartyName,
+        amount: item.price ?? 0,
+        paymentDeadline: item.paymentDeadline,
+      );
+      await openProposalPayment(
+        context,
+        summary: summary,
+        launcherSource: 'next_actions_list',
+      );
+      if (context.mounted) unawaited(vm.refresh());
+      return;
+    }
+
+    // Navigate for review/pay/view (booking/task pay goes to details)
+    if (action == PrimaryActionType.reviewDelivery ||
+        action == PrimaryActionType.submitEvidence ||
+        action == PrimaryActionType.payEscrow ||
+        action == PrimaryActionType.viewDetails) {
+      final result = await context
+          .read<sline_deep_link.DeepLinkService>()
+          .handleWorkItem(
+            context,
+            item.type.name,
+            item.id,
+            conversationId: item.conversationId,
+          );
+      if (result == true && context.mounted) {
+        unawaited(vm.refresh());
+      }
+    } else {
+      try {
+        await vm.performPrimaryAction(item);
+        if (context.mounted) unawaited(vm.refresh());
+      } on FormatException catch (e) {
+        if (!context.mounted) return;
+        if (e.message.contains('Insufficient')) {
+          _showInsufficientFundsDialog(context);
+        } else {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(ErrorMapper.map(e))));
+        }
+      } on Exception catch (e) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(ErrorMapper.map(e))));
+      }
+    }
+  }
+
+  /// Handles secondary action (cancel awarded offer) for a next action item.
+  ///
+  /// Phase 7: SnackBar colors migrated from Colors.green/red to semantic
+  /// colorScheme.success/danger for light+dark mode consistency.
+  Future<void> _handleSecondaryAction(
+    BuildContext context,
+    WorkItem item,
+  ) async {
+    final colorScheme = context.colorScheme;
+
+    AppInteractionStates.hapticTap();
+    try {
+      await context.read<DashboardViewModel>().cancelAwardedOffer(
+        item.awardedRequestId!,
+      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Award cancelled. Task is open again.'),
+            // Phase 7: semantic success color replaces hardcoded Colors.green
+            backgroundColor: colorScheme.success,
+          ),
+        );
+      }
+    } on Exception catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ErrorMapper.map(e)),
+            // Phase 7: semantic danger color replaces hardcoded Colors.red
+            backgroundColor: colorScheme.danger,
+          ),
+        );
+      }
+    }
   }
 }

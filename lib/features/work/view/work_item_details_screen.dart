@@ -10,7 +10,6 @@ import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/error_mapper.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
 import 'package:sline_app/features/chat/view/chat_screen.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
@@ -120,8 +119,19 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
                 title: Text(isBooking ? 'Booking' : 'Task'),
                 backgroundColor: Colors.transparent,
                 elevation: 0,
-                bottom: const TabBar(
-                  tabs: [
+                // Phase 7 REDESIGN: Pill-style tabs matching dashboard pattern
+                bottom: TabBar(
+                  indicator: BoxDecoration(
+                    color: context.colorScheme.primary,
+                    borderRadius: BorderRadius.circular(AppDimens.r20),
+                  ),
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  labelColor: Theme.of(context).colorScheme.onPrimary,
+                  labelStyle: AppTypography.captionBold,
+                  unselectedLabelColor: context.colorScheme.textSecondary,
+                  unselectedLabelStyle: AppTypography.caption,
+                  dividerColor: Colors.transparent,
+                  tabs: const [
                     Tab(text: 'Overview'),
                     Tab(text: 'Extensions'),
                     Tab(text: 'Contract'),
@@ -207,10 +217,19 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     );
   }
 
+  /// Contract tab — clean sections with hairline dividers.
   Widget _buildContractTab(WorkItemDetailsViewModel vm) {
     final contract = vm.activeContract;
+    final colorScheme = context.colorScheme;
     if (contract == null) {
-      return const Center(child: Text('No active contract'));
+      return Center(
+        child: Text(
+          'No active contract',
+          style: AppTypography.bodyMedium.copyWith(
+            color: colorScheme.textTertiary,
+          ),
+        ),
+      );
     }
 
     return SingleChildScrollView(
@@ -218,7 +237,12 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Contract Info', style: AppTypography.h3),
+          Text(
+            'Contract Info',
+            style: AppTypography.h4.copyWith(color: colorScheme.text),
+          ),
+          const SizedBox(height: AppDimens.p16),
+          Container(height: 0.5, color: colorScheme.divider),
           const SizedBox(height: AppDimens.p16),
           _infoRow('Version', contract.version.toString()),
           _infoRow(
@@ -226,8 +250,16 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
             contract.createdAt.toString().split(' ')[0],
           ),
           const SizedBox(height: AppDimens.p16),
-          Text('Snapshot Data', style: AppTypography.bodyLarge),
-          const SizedBox(height: AppDimens.p8),
+          Container(height: 0.5, color: colorScheme.divider),
+          const SizedBox(height: AppDimens.p16),
+          Text(
+            'SNAPSHOT',
+            style: AppTypography.overline.copyWith(
+              color: colorScheme.textSecondary,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const SizedBox(height: AppDimens.p12),
           ...contract.snapshot.entries.map(
             (e) => _infoRow(e.key, e.value.toString()),
           ),
@@ -265,59 +297,126 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     );
   }
 
+  /// Premium status strip — inline, no card wrapper. Colored dot + overline
+  /// label + status name. Minimal, Stripe-like.
   Widget _buildUnifiedStatus(WorkItemDetailsViewModel vm) {
-    return GlassContainer(
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimens.p16),
-        child: Row(
-          children: [
-            Text(
-              'Status:',
-              style: AppTypography.bodyLarge.copyWith(
-                color: context.colorScheme.text,
-                fontWeight: FontWeight.bold,
-              ),
+    final colorScheme = context.colorScheme;
+    final statusColor = _mapStatusColor(vm.status, colorScheme);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimens.p16,
+        vertical: AppDimens.p14,
+      ),
+      decoration: BoxDecoration(
+        color: statusColor.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(AppDimens.r12),
+      ),
+      child: Row(
+        children: [
+          // Small colored dot indicator
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: statusColor,
+              shape: BoxShape.circle,
             ),
-            const SizedBox(width: AppDimens.p8),
-            Text(
-              vm.status.name.toUpperCase(),
-              style: AppTypography.bodyMedium.copyWith(
-                color: context.colorScheme.primary,
+          ),
+          const SizedBox(width: AppDimens.p12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'STATUS',
+                style: AppTypography.micro.copyWith(
+                  color: colorScheme.textTertiary,
+                  letterSpacing: 0.8,
+                ),
               ),
-            ),
-          ],
-        ),
+              Text(
+                vm.status.name.toUpperCase().replaceAll('_', ' '),
+                style: AppTypography.h6.copyWith(color: statusColor),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
+  /// Map UnifiedWorkStatus to semantic color.
+  Color _mapStatusColor(UnifiedWorkStatus status, AppColorScheme cs) {
+    switch (status) {
+      case UnifiedWorkStatus.pending:
+      case UnifiedWorkStatus.pendingPayment:
+      case UnifiedWorkStatus.requestPending:
+        return cs.warning;
+      case UnifiedWorkStatus.active:
+        return cs.primary;
+      case UnifiedWorkStatus.delivered:
+        return cs.info;
+      case UnifiedWorkStatus.completed:
+        return cs.success;
+      case UnifiedWorkStatus.canceled:
+      case UnifiedWorkStatus.disputed:
+        return cs.danger;
+      case UnifiedWorkStatus.unknown:
+        return cs.textSecondary;
+    }
+  }
+
+  /// Premium contract info — hero price on surface, hairline divider,
+  /// deadline with icon. No card wrapper, lives directly in the overview.
   Widget _buildContractInfo(WorkItemDetailsViewModel vm) {
     if (vm.activeContract == null) return const SizedBox.shrink();
-    return GlassContainer(
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimens.p16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Contract Info',
-              style: AppTypography.bodyLarge.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: AppDimens.p8),
-            Text(
-              'Price: ${PriceFormatter.formatPrice(vm.workItem?.price ?? 0)}',
-              style: AppTypography.bodyMedium,
-            ),
-            if (vm.workItem?.deadline != null)
-              Text(
-                'Deadline: ${vm.workItem!.deadline}',
-                style: AppTypography.bodyMedium,
-              ),
-          ],
+    final colorScheme = context.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Hero price — overline label + h1 amount
+        Text(
+          'PRICE',
+          style: AppTypography.overline.copyWith(
+            color: colorScheme.textSecondary,
+            letterSpacing: 1.5,
+          ),
         ),
-      ),
+        const SizedBox(height: AppDimens.p4),
+        Text(
+          PriceFormatter.formatPrice(vm.workItem?.price ?? 0),
+          style: AppTypography.h1.copyWith(
+            color: colorScheme.text,
+            letterSpacing: -0.5,
+          ),
+        ),
+        if (vm.workItem?.deadline != null) ...[
+          const SizedBox(height: AppDimens.p8),
+          Row(
+            children: [
+              Icon(Icons.schedule, size: 14, color: colorScheme.textTertiary),
+              const SizedBox(width: AppDimens.p6),
+              Text(
+                'Due ${vm.workItem!.deadline}',
+                style: AppTypography.caption.copyWith(
+                  color: colorScheme.textTertiary,
+                ),
+              ),
+            ],
+          ),
+        ],
+        const SizedBox(height: AppDimens.p24),
+        // Hairline divider between price and rest
+        Container(height: 0.5, color: colorScheme.divider),
+        const SizedBox(height: AppDimens.p16),
+        // Contract label
+        Text(
+          'Contract Info',
+          style: AppTypography.captionBold.copyWith(
+            color: colorScheme.textSecondary,
+          ),
+        ),
+      ],
     );
   }
 

@@ -1,7 +1,7 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.21.0 (Phase F: widget tests, coverage 40.8%, agent system evolution)
-**Last Updated**: 2026-04-05
+**Version**: 2.25.1 (Home discovery navigation consolidation: four-slot bottom nav, Home-hosted Bookings/Tenders discovery modes, named nav destination contract, route-push test seam)
+**Last Updated**: 2026-04-30
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
 
@@ -107,7 +107,7 @@ erDiagram
 
 ## 5. Feature Map (Where to look)
 
-- **Core**: `lib/core/` – Supabase bootstrap, logging, theme, utils, shared widgets (signed avatar/image)
+- **Core**: `lib/core/` – Supabase bootstrap, logging, theme, named navigation contracts, utils, shared widgets (signed avatar/image)
 - **Auth**: `lib/features/auth/` – signup/login, session. Profile fetch after signup/session restore uses retry (see `AuthConfig` in `lib/core/config/auth_config.dart`). `AccountGuardService` is invoked on login and on cold start (session restore) in `main.dart` to block banned/suspended users.
 - **Profile**: `lib/features/profile/` – profile edit, avatar upload, role switch, my tasks
 - **Tasks**: `lib/features/tasks/` – create/list/details, images, requests (offers)
@@ -206,6 +206,45 @@ Shared mock classes live in `test/helpers/mock_services.dart` (8 classes). Impor
 - Pre-configure ALL stubs BEFORE constructing VMs that auto-load in constructor (e.g., DashboardVM)
 - Add `RoleSwitchCoordinator().clearForTesting()` in `tearDown` for VMs that register with the singleton (ChatVM, DashboardVM)
 - Use `thenAnswer((_) async => throw Exception(...))` for async error mocking with `Future.wait`, NOT `thenThrow()`
+
+### Navigation Contract and Home Discovery (2026-04-30)
+
+The authenticated app shell uses a four-slot bottom navigation contract:
+
+- Home
+- Dashboard
+- Messages
+- Profile
+
+The named index contract lives in `lib/core/navigation/main_nav_destinations.dart`. `lib/app/main_navigation_screen.dart`, `lib/core/widgets/custom_bottom_nav_bar.dart`, `lib/features/profile/services/profile_deep_link_handler.dart`, and navigation tests must reference `MainNavDestinations` instead of hardcoded tab positions. `Tenders` and `Bookings` are no longer bottom-nav destinations.
+
+Home now owns the marketplace discovery modes below the search bar:
+
+- `All Work`
+- `Bookings`
+- `Tenders`
+
+`lib/features/home/view/home_screen.dart` keeps these modes as Home-local filters over `HomeViewModel.tasks`; `Bookings` shows booking tasks and `Tenders` shows tender tasks without creating separate app-shell tabs. Mode changes and stale nav-index normalization are logged through `AppLogger`, so new code paths in this area must preserve structured logging.
+
+When changing this surface, update all of these together:
+
+- `lib/core/navigation/main_nav_destinations.dart`
+- `lib/app/main_navigation_screen.dart`
+- `lib/core/widgets/custom_bottom_nav_bar.dart`
+- `lib/features/home/view/home_screen.dart`
+- `lib/features/profile/services/profile_deep_link_handler.dart`
+- `test/core/widgets/custom_bottom_nav_bar_test.dart`
+- `test/widget/app/main_navigation_screen_test.dart`
+- `test/widget/home/home_screen_test.dart`
+- `test/features/profile/services/profile_deep_link_handler_test.dart`
+
+References:
+- Plan: `.TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
+- Plan Critique: `.TODO/PLAN_CRITIQUE_2026-04-30_HomeDiscoveryNavConsolidation.md`
+- Master Report: `.TODO/MASTER_REPORT_2026-04-30_HomeDiscoveryNavConsolidation.md`
+- Session Log: `docs/LOG/SESSION_HomeDiscoveryNavConsolidation_2026-04-30.md`
+- System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-30.md`
+- Supabase objects changed: none
 
 ### 10.1 CI/CD Pipeline
 
@@ -1677,13 +1716,100 @@ Core also owns two browser-specific stability helpers:
 | `lib/core/providers/theme_mode_provider.dart`    | provider  | Light/dark theme mode state.                                                            |
 | `lib/core/models/user_profile.dart`              | model     | Shared typed profile model.                                                             |
 | `lib/core/models/payment_return_args.dart`       | model     | Shared typed browser payment callback payload.                                          |
-| `lib/core/theme/app_colors.dart`                 | theme     | Central palette definitions.                                                            |
-| `lib/core/theme/app_dimens.dart`                 | theme     | Spacing, radius, sizing tokens.                                                         |
-| `lib/core/theme/app_typography.dart`             | theme     | Shared typography and fallback font configuration.                                      |
-| `lib/core/theme/app_theme.dart`                  | theme     | Builds the app `ThemeData` and `AppThemeExtension`.                                     |
+| `lib/core/theme/app_colors.dart`                 | theme     | Central palette + semantic status colors (success/warning/info/danger) + interactive state colors. |
+| `lib/core/theme/app_dimens.dart`                 | theme     | Raw spacing primitives (p0-p100), border radii (r4-r50), icon sizes (Layer 2 primitives). |
+| `lib/core/theme/app_layout.dart`                 | theme     | **Phase 0.7** Semantic layout tokens: card, avatar, button, spacing, icon, thumbnail, nav, border (Layer 2 semantic). |
+| `lib/core/theme/app_typography.dart`             | theme     | Typography with per-style line heights (1.0-1.5) and letter spacing.                    |
+| `lib/core/theme/app_theme.dart`                  | theme     | Builds `ThemeData` + `AppThemeExtension` + 7 component themes (Card, Dialog, BottomSheet, Chip, Divider, SnackBar, TabBar). |
+| `lib/core/theme/app_motion.dart`                 | theme     | Animation tokens: durations (100-1500ms), curves (ease-out family), scales, stagger delays, reduced-motion helper. |
+| `lib/core/theme/app_states.dart`                 | theme     | Interaction state definitions: 8-state model (default→error), focus ring, shake, haptic mapping. |
+| `lib/core/theme/app_decorations.dart`            | theme     | 5-level elevation shadow scale + input/badge/avatar decoration methods. NO GLASS (Phase 1). |
+| `lib/core/theme/theme_dashboard.dart`            | theme     | Documentation-only reference for all design tokens. **Read this first for token overview.** |
 | `lib/core/widgets/custom_bottom_nav_bar.dart`    | widget    | Shared app shell bottom nav.                                                            |
 | `lib/core/widgets/signed_avatar.dart`            | widget    | Renders private avatar paths through signed URLs.                                       |
 | `lib/core/widgets/signed_image.dart`             | widget    | Renders private image paths through signed URLs.                                        |
+
+### 3.2 Three-Layer Design System Architecture (Phase 0 + 0.7)
+
+The design system separates DESIGN (structure) from THEME (visual identity) so either can change independently:
+
+```
+Layer 1 — THEME (colors, typography, motion, elevation, interaction states)
+  AppColors, AppTypography, AppMotion, AppDecorations, AppStates, AppTheme
+
+Layer 2 — LAYOUT (spacing, sizes, structure, proportions)
+  AppLayout (semantic tokens: cardPadding, avatarMedium, buttonHeight, spacingSection)
+  AppDimens  (raw primitives: p0-p100, r4-r50, iconSizeSmall/Medium/Large)
+
+Layer 3 — COMPONENTS (widgets that CONSUME Layer 1 + Layer 2)
+  All widgets in lib/core/widgets/ and lib/features/*/view/
+```
+
+**Rules:**
+- Components NEVER hardcode colors, font sizes, durations, padding, avatar sizes, card heights, or spacing.
+- To retheme: change Layer 1 files (AppColors, AppTypography, AppMotion).
+- To redesign layout: change Layer 2 files (AppLayout, AppDimens).
+- `AppDimens` = raw scale (p16 = 16px). `AppLayout` = semantic meaning (cardPadding = 16px for card context).
+- No overlapping icon sizes: AppDimens has 16/24/32, AppLayout has 12/20/48.
+
+### 3.3 Phase 4 Home & Discovery Patterns (2026-04-09)
+
+**Scope:** HomeScreen, FiltersModal, DiscoveryTaskSliver, SearchScreen, CategoriesScreen, FavoritesScreen, FavoriteCard, SavedTasksScreen + 3 new skeleton variants. Pure View layer — no ViewModel/Service changes.
+
+**Key Patterns Introduced:**
+
+1. **Staggered Card Entrance (DiscoveryTaskSliver)**
+   - Each task card slides up + fades in with 50ms stagger delay, capped at first 10 cards
+   - Uses `AppMotion.staggerMedium` (50ms), `AppMotion.standard` (300ms), `AppMotion.curveDecel`
+   - Only animates on initial load — NOT on load-more or pull-to-refresh
+   - `_StaggeredTaskItem` private widget wraps each card with AnimationController
+   - Respects reduced-motion via `AppMotion.respectMotion()` in `didChangeDependencies()` (NOT initState)
+   - Shared by HomeScreen, BookingsDiscoveryScreen, TendersScreen
+
+2. **DraggableScrollableSheet (FiltersModal)**
+   - Snap points: 0.5, 0.7 (initial), 0.9
+   - Drag handle: 32x4px, `colorScheme.outline`, centered
+   - Apply button shows active filter count ("Apply N Filters")
+   - All styling uses semantic tokens — no hardcoded colors
+
+3. **Enhanced Empty/Error States (All Screens)**
+   - Pattern: 80x80 icon circle (color at 8% alpha) + title (h5) + subtitle (bodySmall, secondary) + optional CTA button
+   - Error states include "Try Again" button with retry callback
+   - Empty states include CTA button (e.g., "Browse Tasks", "Explore Freelancers")
+   - All wrapped in `Semantics(label: ...)` for accessibility
+
+4. **Skeleton Loading (3 New Variants)**
+   - `SkeletonSearchResultCard` — avatar + text lines + tag pill (for SearchScreen)
+   - `SkeletonCategoryTile` — icon circle + name + count (for CategoriesScreen grid)
+   - `SkeletonFavoriteCard` — avatar + name/date + action button (for FavoritesScreen)
+   - All use existing `SkeletonLoader`/`SkeletonText`/`SkeletonAvatar` base widgets
+   - Match exact card layouts for seamless loading-to-content transition
+
+5. **CategoriesScreen Grid Layout**
+   - 2-column `SliverGrid` with category cards (replaces old `ListTile` layout)
+   - Each card: icon in colored circle + name + ScaleButton for press feedback
+   - Deterministic icon/color assignment per category name (hashed)
+
+6. **DiscoveryTaskSliver Error State**
+   - New `errorMessage` and `onRetry` parameters (optional, additive)
+   - Error state renders between loading check and empty check
+   - Danger-tinted icon circle + message + "Try Again" button
+
+**Files Changed:**
+- `lib/core/widgets/skeleton_card.dart` (+147 lines, 3 new skeleton widgets)
+- `lib/features/tasks/view/widgets/discovery_task_sliver.dart` (181→420+ lines, stagger + error state)
+- `lib/features/home/view/home_screen.dart` (tokenized, haptics, semantics)
+- `lib/features/home/view/widgets/filters_modal.dart` (DraggableScrollableSheet, tokenized)
+- `lib/features/search/view/search_screen.dart` (tokenized, skeletons, rich states)
+- `lib/features/categories/view/categories_screen.dart` (complete grid redesign)
+- `lib/features/favorites/view/favorites_screen.dart` (skeletons, rich states)
+- `lib/features/favorites/view/widgets/favorite_card.dart` (SignedAvatar, design tokens)
+- `lib/features/saved/view/saved_tasks_screen.dart` (skeletons, rich states)
+- `lib/features/profile/view/profile_screen.dart` (Favorites nav entry added)
+
+**Plan:** `.TODO/PLAN_Phase4_HomeDiscovery_2026-04-08.md`
+**Session Log:** `docs/LOG/SESSION_PLAN_Phase4_HomeDiscovery_2026-04-08.md`
+**Tests:** 1350 passed, 30 skipped, 1 failed (pre-existing). Zero new regressions.
 
 ## 4. Runtime Patterns
 
@@ -2029,9 +2155,13 @@ Triggers/Functions
 | `lib/features/chat/services/attachment_service.dart`      | Service    | Storage upload/delete/signed URL helpers for attachments.                                                                                                |
 | `lib/features/chat/services/chat_realtime_merger.dart`    | Service    | Merges realtime message snapshots (dedupe, sort).                                                                                                        |
 | `lib/features/chat/viewmodels/chat_view_model.dart`       | ViewModel  | `ChangeNotifier` managing conversation list, active conversation, message list, subscriptions, and receipts.                                             |
-| `lib/features/chat/view/messages_screen.dart`             | View       | Conversations list with previews via joined selects.                                                                                                     |
-| `lib/features/chat/view/chat_screen.dart`                 | View       | Single conversation UI (messages + composer).                                                                                                            |
-| `lib/features/chat/view/widgets/chat_context_widget.dart` | Widget     | Glassmorphic banner showing task context + navigation.                                                                                                   |
+| `lib/features/chat/view/messages_screen.dart`             | View       | Conversations list with search bar (debounced filtering), unread pill badge, elevated card tiles. **Phase 6**: deferred navigation (no pre-fetch blocking), optimistic unread clearing via `markConversationReadLocally()`. |
+| `lib/features/chat/view/chat_screen.dart`                 | View       | Single conversation UI (messages + composer). **Phase 6**: loads messages in `initState()` with loading spinner, auto-scroll differentiates initial load (always scroll) vs incremental (scroll if near bottom within 300px), swipe-to-reply, long-press context menu. |
+| `lib/features/chat/view/widgets/chat_context_widget.dart` | Widget     | Pill-style banner showing task/booking context + navigation. **Phase 6**: pill polish with icon differentiation (task vs booking). |
+| `lib/features/chat/view/widgets/conversation_list_tile.dart` | Widget  | **Phase 6**: elevated card design with `AppDecorations.elevation(1)`, left accent bar (3.5px primary) for unread, inline unread dot, "You:" prefix on sent messages, relative time formatting (Just now/Xm/Xh/Yesterday/weekday/MMMd), 50px circular avatar with online status dot. Typing indicator disabled (TODO for backend stabilization). |
+| `lib/features/chat/view/widgets/message_bubble.dart`      | Widget     | **Phase 6**: emoji-only rendering (large without bubble), link detection with tappable URLs, reply quote display (sender name + quoted text). |
+| `lib/features/chat/view/widgets/offer_message_bubble.dart` | Widget    | **Phase 6**: elevated card with AnimatedContainer, status-colored border, CUSTOM OFFER badge, status chips (Pending/Accepted/Declined/Completed). |
+| `lib/core/widgets/fullscreen_image_viewer.dart`           | Widget     | **Phase 6 NEW**: reusable fullscreen image viewer with InteractiveViewer (pinch-to-zoom), close button, optional caption bar, full Semantics coverage. |
 | `lib/features/chat/models/conversation_model.dart`        | Model      | Conversation with display fields (other user name/avatar, last message).                                                                                 |
 | `lib/features/chat/models/message_model.dart`             | Model      | Message with attachments, type, payload (wire: snake_case); includes `MessageType.system`.                                                               |
 | `lib/features/chat/models/chat_offer_payload.dart`        | Model      | Canonical offer payload: `days` on write; legacy `delivery` read.                                                                                        |

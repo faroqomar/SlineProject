@@ -2,16 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
 import 'package:sline_app/features/home/view/home_screen.dart';
 import 'package:sline_app/features/home/viewmodels/home_view_model.dart';
 import 'package:sline_app/features/notifications/viewmodels/notification_view_model.dart';
 import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:sline_app/features/tasks/viewmodels/discovery_feed_view_model_contract.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
 
-import '../../test_support/pump_app.dart';
+const Duration _kShimmerPumpDuration = Duration(milliseconds: 500);
 
 class _MockHomeViewModel extends Mock
     with ChangeNotifier
@@ -32,6 +35,16 @@ class _MockNotificationViewModel extends Mock
 class _MockSavedTasksViewModel extends Mock
     with ChangeNotifier
     implements SavedTasksViewModel {}
+
+class _TestNavigatorObserver extends NavigatorObserver {
+  int didPushCount = 0;
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    didPushCount += 1;
+    super.didPush(route, previousRoute);
+  }
+}
 
 typedef _HomeBundle = ({
   _MockHomeViewModel homeVm,
@@ -76,9 +89,33 @@ _HomeBundle _buildHomeBundle() {
   );
 }
 
-Future<void> _pumpHomeScreen(WidgetTester tester, _HomeBundle bundle) async {
-  await pumpApp(
-    tester,
+Task _task({
+  required String id,
+  required String title,
+  required TaskType taskType,
+  String? category,
+}) {
+  return Task(
+    id: id,
+    title: title,
+    description: 'Description for $title',
+    budget: 120,
+    userId: 'user-1',
+    status: TaskStatus.open,
+    taskType: taskType,
+    createdAt: DateTime.utc(2026, 3, 1),
+    category: category,
+    categoryName: category,
+  );
+}
+
+Future<void> _pumpHomeScreen(
+  WidgetTester tester,
+  _HomeBundle bundle, {
+  List<NavigatorObserver> navigatorObservers = const [],
+  Widget Function(Task task)? taskDetailsScreenBuilder,
+}) async {
+  await tester.pumpWidget(
     MultiProvider(
       providers: [
         ChangeNotifierProvider<HomeViewModel>.value(value: bundle.homeVm),
@@ -96,9 +133,17 @@ Future<void> _pumpHomeScreen(WidgetTester tester, _HomeBundle bundle) async {
           value: bundle.savedVm,
         ),
       ],
-      child: const HomeScreen(autoLoadOnInit: false),
+      child: MaterialApp(
+        theme: AppTheme.light(),
+        navigatorObservers: navigatorObservers,
+        home: HomeScreen(
+          autoLoadOnInit: false,
+          taskDetailsScreenBuilder: taskDetailsScreenBuilder,
+        ),
+      ),
     ),
   );
+  await tester.pump();
 }
 
 void main() {
@@ -109,8 +154,15 @@ void main() {
       final bundle = _buildHomeBundle();
 
       await _pumpHomeScreen(tester, bundle);
+      // Use pump(Duration) — skeleton shimmer animations repeat forever
+      // and pumpAndSettle will time out.
+      await tester.pump(_kShimmerPumpDuration);
 
       expect(find.byKey(HomeScreen.searchFieldKey), findsOneWidget);
+      expect(find.byKey(HomeScreen.discoveryAllWorkKey), findsOneWidget);
+      expect(find.byKey(HomeScreen.discoveryBookingsKey), findsOneWidget);
+      expect(find.byKey(HomeScreen.discoveryTendersKey), findsOneWidget);
+      expect(find.text('All Work'), findsOneWidget);
       expect(find.text('All'), findsOneWidget);
       expect(find.text('Design'), findsOneWidget);
       expect(find.byType(SkeletonTaskCard), findsWidgets);
@@ -122,9 +174,12 @@ void main() {
         final bundle = _buildHomeBundle();
 
         await _pumpHomeScreen(tester, bundle);
+        // Use pump(Duration) instead of pumpAndSettle — skeleton shimmer
+        // animations repeat forever and never settle.
+        await tester.pump(_kShimmerPumpDuration);
 
         await tester.enterText(find.byKey(HomeScreen.searchFieldKey), 'design');
-        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
 
         verify(() => bundle.filterVm.searchTasks('design')).called(1);
       },
@@ -136,10 +191,13 @@ void main() {
       final bundle = _buildHomeBundle();
 
       await _pumpHomeScreen(tester, bundle);
+      // Use pump(Duration) instead of pumpAndSettle — skeleton shimmer
+      // animations repeat forever and never settle.
+      await tester.pump(_kShimmerPumpDuration);
 
       await tester.drag(find.byType(CustomScrollView), const Offset(0, 400));
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump(_kShimmerPumpDuration);
 
       verify(
         () => bundle.homeVm.refresh(
@@ -149,6 +207,122 @@ void main() {
       ).called(1);
       verify(bundle.profileVm.loadHeaderProfile).called(1);
       verify(bundle.savedVm.refresh).called(1);
+    });
+
+    testWidgets('T56 Bookings discovery mode filters booking tasks', (
+      tester,
+    ) async {
+      final bundle = _buildHomeBundle();
+      final tasks = <Task>[
+        _task(id: 'tender-1', title: 'Tender Task', taskType: TaskType.tender),
+        _task(
+          id: 'booking-1',
+          title: 'Booking Task',
+          taskType: TaskType.booking,
+        ),
+      ];
+
+      when(() => bundle.homeVm.isLoading).thenReturn(false);
+      when(() => bundle.filterVm.filteredTasks).thenReturn(tasks);
+      when(() => bundle.savedVm.isSaved(any())).thenReturn(false);
+
+      await _pumpHomeScreen(tester, bundle);
+      await tester.pump(_kShimmerPumpDuration);
+
+      await tester.tap(find.byKey(HomeScreen.discoveryBookingsKey));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Booking Task'), findsOneWidget);
+      expect(find.text('Tender Task'), findsNothing);
+    });
+
+    testWidgets('T57 Tenders discovery mode filters tender tasks', (
+      tester,
+    ) async {
+      final bundle = _buildHomeBundle();
+      final tasks = <Task>[
+        _task(id: 'tender-1', title: 'Tender Task', taskType: TaskType.tender),
+        _task(
+          id: 'booking-1',
+          title: 'Booking Task',
+          taskType: TaskType.booking,
+        ),
+      ];
+
+      when(() => bundle.homeVm.isLoading).thenReturn(false);
+      when(() => bundle.filterVm.filteredTasks).thenReturn(tasks);
+      when(() => bundle.savedVm.isSaved(any())).thenReturn(false);
+
+      await _pumpHomeScreen(tester, bundle);
+      await tester.pump(_kShimmerPumpDuration);
+
+      await tester.tap(find.byKey(HomeScreen.discoveryTendersKey));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Tender Task'), findsOneWidget);
+      expect(find.text('Booking Task'), findsNothing);
+    });
+
+    testWidgets(
+      'T58 category filter still delegates while Bookings mode is selected',
+      (tester) async {
+        final bundle = _buildHomeBundle();
+        final tasks = <Task>[
+          _task(
+            id: 'booking-1',
+            title: 'Booking Task',
+            taskType: TaskType.booking,
+            category: 'Design',
+          ),
+        ];
+
+        when(() => bundle.homeVm.isLoading).thenReturn(false);
+        when(() => bundle.filterVm.filteredTasks).thenReturn(tasks);
+        when(() => bundle.savedVm.isSaved(any())).thenReturn(false);
+
+        await _pumpHomeScreen(tester, bundle);
+        await tester.pump(_kShimmerPumpDuration);
+
+        await tester.tap(find.byKey(HomeScreen.discoveryBookingsKey));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Design'));
+        await tester.pump();
+
+        expect(find.text('Booking Task'), findsOneWidget);
+        verify(() => bundle.filterVm.filterByCategory('Design')).called(1);
+      },
+    );
+
+    testWidgets('T59 task-card tap pushes task details route', (tester) async {
+      final bundle = _buildHomeBundle();
+      final observer = _TestNavigatorObserver();
+      final tasks = <Task>[
+        _task(
+          id: 'booking-1',
+          title: 'Booking Task',
+          taskType: TaskType.booking,
+        ),
+      ];
+
+      when(() => bundle.homeVm.isLoading).thenReturn(false);
+      when(() => bundle.filterVm.filteredTasks).thenReturn(tasks);
+      when(() => bundle.savedVm.isSaved(any())).thenReturn(false);
+
+      await _pumpHomeScreen(
+        tester,
+        bundle,
+        navigatorObservers: [observer],
+        taskDetailsScreenBuilder: (task) =>
+            Scaffold(body: Center(child: Text('Details for ${task.title}'))),
+      );
+      await tester.pump(_kShimmerPumpDuration);
+
+      await tester.tap(find.text('Booking Task'));
+      await tester.pump(const Duration(milliseconds: 60));
+      await tester.pump();
+
+      expect(observer.didPushCount, greaterThan(0));
+      expect(find.text('Details for Booking Task'), findsOneWidget);
     });
   });
 }

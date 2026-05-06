@@ -4,7 +4,7 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/profile/view/public_profile_screen.dart';
 
 /// Deprecated: No call sites. Use RequestsListScreen + RequestTile for offer
@@ -292,7 +292,7 @@ class ProposalDetailsModal extends StatelessWidget {
             ),
 
             // Bottom Bar
-            GlassContainer(
+            AppCardContainer(
               padding: const EdgeInsets.all(AppDimens.p24),
               borderRadius: BorderRadius.zero,
               child: Row(

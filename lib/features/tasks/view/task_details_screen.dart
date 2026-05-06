@@ -11,7 +11,7 @@ import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/core/widgets/signed_image.dart';
 import 'package:sline_app/features/booking/view/payment_checkout_screen.dart';
@@ -82,7 +82,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
       body: Column(
         children: [
           // --- Header ---
-          GlassContainer(
+          AppCardContainer(
             borderRadius: BorderRadius.zero,
             padding: EdgeInsets.fromLTRB(
               AppDimens.p24,
@@ -233,7 +233,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                           ),
                         );
                       },
-                      child: GlassContainer(
+                      child: AppCardContainer(
                         padding: const EdgeInsets.all(AppDimens.p16),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -260,7 +260,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
           ),
 
           // --- Bottom Bar ---
-          GlassContainer(
+          AppCardContainer(
             borderRadius: const BorderRadius.vertical(
               top: Radius.circular(AppDimens.r30),
             ),
@@ -514,7 +514,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
       }
     }
 
-    return GlassContainer(
+    return AppCardContainer(
       padding: const EdgeInsets.all(AppDimens.p20),
       borderRadius: BorderRadius.circular(AppDimens.r18),
       child: Column(

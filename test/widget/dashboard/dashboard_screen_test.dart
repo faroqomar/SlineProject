@@ -76,9 +76,13 @@ void main() {
 
       await _pumpDashboardScreen(tester, vm);
 
+      // Tap settings button to open the bottom sheet (Phase 7: migrated
+      // from AlertDialog to showModalBottomSheet).
       await tester.tap(find.byKey(DashboardScreen.settingsButtonKey));
+      // pumpAndSettle waits for bottom sheet slide-up animation to finish
       await tester.pumpAndSettle();
 
+      // Role buttons are now inside the bottom sheet — find by key
       await tester.tap(find.byKey(DashboardScreen.clientRoleButtonKey));
       await tester.pump();
       await tester.tap(find.byKey(DashboardScreen.freelancerRoleButtonKey));

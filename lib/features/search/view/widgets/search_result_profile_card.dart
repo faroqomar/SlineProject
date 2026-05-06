@@ -3,7 +3,7 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
-import 'package:sline_app/core/widgets/glass_card.dart';
+import 'package:sline_app/core/widgets/app_card.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/features/profile/models/profile_model.dart';
 
@@ -23,7 +23,7 @@ class SearchResultProfileCard extends StatelessWidget {
     final skillsToShow = profile.skills.take(3).toList();
     final remainingSkills = profile.skills.length - skillsToShow.length;
 
-    return GlassCard(
+    return AppCard(
       onTap: onTap,
       padding: const EdgeInsets.all(AppDimens.p16),
       child: Column(

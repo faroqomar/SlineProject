@@ -24,6 +24,7 @@ import 'package:sline_app/core/services/sentry_crash_reporting_service.dart';
 import 'package:sline_app/core/services/supabase_config.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/utils/flutter_error_filters.dart';
+import 'package:sline_app/core/utils/transitions/custom_route_transitions.dart';
 import 'package:sline_app/core/webview_platform_init_stub.dart'
     if (dart.library.html) 'package:sline_app/core/webview_platform_init_web.dart'
     as webview_platform;
@@ -125,94 +126,65 @@ void main() async {
         );
       }
 
-      // Ensure bindings BEFORE the zone guard so runApp() is in the same zone.
-      WidgetsFlutterBinding.ensureInitialized();
+      // Global Flutter framework error handler (widget build errors, etc.)
+      FlutterError.onError = (FlutterErrorDetails details) {
+        if (isIgnoredFlutterWebEngineDisposeError(details.exception) ||
+            isIgnoredRealtimeEncodeError(details.exception) ||
+            isIgnoredRealtimePayloadError(details.exception)) {
+          return;
+        }
+        AppLogger.e(
+          'Flutter Error: ${details.summary}',
+          tag: 'System',
+          error: details.exception,
+          stackTrace: details.stack,
+        );
+        unawaited(
+          CrashReportingService.instance.recordError(
+            details.exception,
+            details.stack,
+            reason: details.summary.toString(),
+            fatal: true,
+          ),
+        );
+      };
 
-      // Inner error zone catches async exceptions
-      await runZonedGuarded(
-        () async {
-          // Global Flutter framework error handler (widget build errors, etc.)
-          FlutterError.onError = (FlutterErrorDetails details) {
-            if (isIgnoredFlutterWebEngineDisposeError(details.exception) ||
-                isIgnoredRealtimeEncodeError(details.exception) ||
-                isIgnoredRealtimePayloadError(details.exception)) {
-              return;
-            }
-            AppLogger.e(
-              'Flutter Error: ${details.summary}',
-              tag: 'System',
-              error: details.exception,
-              stackTrace: details.stack,
-            );
-            unawaited(
-              CrashReportingService.instance.recordError(
-                details.exception,
-                details.stack,
-                reason: details.summary.toString(),
-                fatal: true,
-              ),
-            );
-          };
+      // Global platform error handler (native crashes, isolate errors)
+      PlatformDispatcher.instance.onError = (error, stack) {
+        if (isIgnoredFlutterWebEngineDisposeError(error) ||
+            isIgnoredRealtimeEncodeError(error) ||
+            isIgnoredRealtimePayloadError(error)) {
+          return true;
+        }
+        AppLogger.e(
+          'Platform Error',
+          tag: 'System',
+          error: error,
+          stackTrace: stack,
+        );
+        unawaited(
+          CrashReportingService.instance.recordError(error, stack, fatal: true),
+        );
+        return true; // Prevent app termination
+      };
 
-          // Global platform error handler (native crashes, isolate errors)
-          PlatformDispatcher.instance.onError = (error, stack) {
-            if (isIgnoredFlutterWebEngineDisposeError(error) ||
-                isIgnoredRealtimeEncodeError(error) ||
-                isIgnoredRealtimePayloadError(error)) {
-              return true;
-            }
-            AppLogger.e(
-              'Platform Error',
-              tag: 'System',
-              error: error,
-              stackTrace: stack,
-            );
-            unawaited(
-              CrashReportingService.instance.recordError(
-                error,
-                stack,
-                fatal: true,
-              ),
-            );
-            return true; // Prevent app termination
-          };
+      await SupabaseConfig.init();
 
-          await SupabaseConfig.init();
+      // Web: register WebView platform so in-app payment WebView works
+      webview_platform.initWebViewPlatform();
 
-          // Web: register WebView platform so in-app payment WebView works
-          webview_platform.initWebViewPlatform();
+      // Set logger level (info = clean logs, debug = verbose logs)
+      AppLogger.currentLevel = LogLevel.info;
 
-          // Set logger level (info = clean logs, debug = verbose logs)
-          AppLogger.currentLevel = LogLevel.info;
+      // Initialize SharedPreferences for caching
+      final prefs = await SharedPreferences.getInstance();
+      AppLogger.i('✅ Cache service ready');
 
-          // Initialize SharedPreferences for caching
-          final prefs = await SharedPreferences.getInstance();
-          AppLogger.i('✅ Cache service ready');
-
-          runApp(SLineApp(prefs: prefs));
-        },
-        (error, stack) {
-          if (isIgnoredFlutterWebEngineDisposeError(error) ||
-              isIgnoredRealtimeEncodeError(error) ||
-              isIgnoredRealtimePayloadError(error)) {
-            return;
-          }
-          // Catches any uncaught async exceptions outside the Flutter framework
-          AppLogger.e(
-            'Uncaught Zone Error',
-            tag: 'System',
-            error: error,
-            stackTrace: stack,
-          );
-          unawaited(
-            CrashReportingService.instance.recordError(
-              error,
-              stack,
-              fatal: false,
-            ),
-          );
-        },
-      );
+      // runApp in the SAME zone as the binding (Sentry's appRunner zone).
+      // Previously wrapped in runZonedGuarded which created a different zone,
+      // causing "Zone mismatch" warning. Sentry already provides zone-based
+      // error catching, so the extra runZonedGuarded is unnecessary.
+      runApp(SLineApp(prefs: prefs));
     },
   );
 }
@@ -549,23 +521,33 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener>
     }
   }
 
+  Route<dynamic>? _resolveRoute(RouteSettings settings) {
+    AppLogger.d('Resolving route: ${settings.name}', tag: 'Navigation');
+
+    final routes = <String, Widget>{
+      '/login': const LoginScreen(),
+      '/main': const MainNavigationScreen(),
+      '/signup': const SignupScreen(),
+      '/reset-password': const ResetPasswordUpdateScreen(),
+      '/home': const HomeScreen(),
+      '/dashboard': const DashboardScreen(),
+      '/categories': const CategoriesScreen(),
+      FavoritesRoutes.routeName: const FavoritesScreen(),
+    };
+
+    final screen = routes[settings.name];
+    if (screen != null) {
+      return SlinePageRoute.forwardPush(child: screen, settings: settings);
+    }
+
+    AppLogger.w('Unknown route: ${settings.name}', tag: 'Navigation');
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ThemeModeProvider>(
       builder: (context, themeModeProvider, child) {
-        final routes = <String, WidgetBuilder>{
-          '/login': (BuildContext _) => const LoginScreen(),
-          '/main': (BuildContext _) => const MainNavigationScreen(),
-          '/signup': (BuildContext _) => const SignupScreen(),
-          '/reset-password': (BuildContext _) =>
-              const ResetPasswordUpdateScreen(),
-          '/home': (BuildContext _) => const HomeScreen(),
-          '/dashboard': (BuildContext _) => const DashboardScreen(),
-          '/categories': (BuildContext _) => const CategoriesScreen(),
-          FavoritesRoutes.routeName: (BuildContext _) =>
-              const FavoritesScreen(),
-        };
-
         return MaterialApp(
           navigatorKey: _navigatorKey,
           title: 'SLine App',
@@ -577,7 +559,7 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener>
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
           home: _buildHome(context.watch<SystemConfigViewModel>()),
-          routes: routes,
+          onGenerateRoute: _resolveRoute,
         );
       },
     );

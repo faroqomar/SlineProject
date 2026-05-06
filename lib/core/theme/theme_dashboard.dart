@@ -8,13 +8,14 @@
 /// **Usage:** This is a reference/documentation file. Use the actual theme classes
 /// (`AppColors`, `AppTypography`, `AppDimens`, `AppDecorations`) in your code.
 ///
-/// **Last Updated:** 2024
+/// **Last Updated:** 2026-04-08 (Phase 0.7 — Layout Tokens)
 
 // ignore_for_file: unused_import
 
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 
 /// Theme Dashboard - Comprehensive Reference
@@ -206,18 +207,26 @@ class ThemeDashboard {
   // DECORATIONS
   // ============================================================================
 
-  /// **Glassmorphism Effects** (from `AppDecorations`)
+  /// **NO GLASS POLICY — Mandatory**
   ///
-  /// Use `AppDecorations.glassBoxDecoration()` for glassmorphism cards:
-  /// - Gradient background with transparency
-  /// - Subtle border
-  /// - Multi-layered shadow
-  /// - Backdrop blur effect
+  /// Glass effects (BackdropFilter, frosted blur, semi-transparent gradients)
+  /// are BANNED from the SLine design system. They are performance-heavy,
+  /// dated in 2026, and harm readability. See `.impeccable.md` for full rationale.
+  ///
+  /// **Use instead:**
+  /// - Solid `colorScheme.cardBackground` for surfaces
+  /// - `colorScheme.cardBorder` for subtle borders
+  /// - `AppDecorations.elevation(level)` for depth/shadow
+  ///
+  /// **Legacy glass widgets** have been migrated to solid-surface equivalents
+  /// in Phase 1: `GlassContainer` → `AppCardContainer`, `GlassCard` → `AppCard`,
+  /// `GlassButton` → `AppStyledButton`. All `BackdropFilter` usage removed.
 
   /// **Common Decorations:**
   ///
-  /// - `AppDecorations.glassBoxDecoration()` - General glassmorphism
-  /// - `AppDecorations.bottomNavBarDecoration()` - Bottom navigation
+  /// - `AppDecorations.elevation(1)` - Resting card shadow (blur=4, offset=1)
+  /// - `AppDecorations.elevation(2)` - Raised/hovered card shadow (blur=8, offset=2)
+  /// - `AppDecorations.elevation(3)` - Floating modal/FAB shadow (blur=16, offset=4)
   /// - `AppDecorations.inputFieldDecoration()` - Input fields
   /// - `AppDecorations.hotBadgeDecoration()` - Hot badges
   /// - `AppDecorations.authorInitialsDecoration()` - Avatar circles
@@ -246,14 +255,11 @@ class ThemeDashboard {
 
   /// **Common Patterns:**
   ///
-  /// **Card:**
+  /// **Card (solid surface — NO GLASS per .impeccable.md):**
   /// ```dart
-  /// Container(
-  ///   padding: EdgeInsets.all(AppDimens.p16),
-  ///   decoration: AppDecorations.glassBoxDecoration(
-  ///     colorScheme: context.colorScheme,
-  ///     borderRadius: BorderRadius.circular(AppDimens.r20),
-  ///   ),
+  /// AppCardContainer(
+  ///   padding: EdgeInsets.all(AppLayout.cardPadding),
+  ///   elevation: 1,
   ///   child: Text('Content', style: AppTypography.bodyMedium),
   /// )
   /// ```
@@ -356,9 +362,12 @@ class ThemeDashboard {
   ///
   /// - `lib/core/theme/app_colors.dart` - Color palette and color schemes
   /// - `lib/core/theme/app_typography.dart` - Typography styles
-  /// - `lib/core/theme/app_dimens.dart` - Spacing and dimensions
-  /// - `lib/core/theme/app_decorations.dart` - Box decorations
-  /// - `lib/core/theme/app_theme.dart` - Material 3 theme data
+  /// - `lib/core/theme/app_dimens.dart` - Spacing and dimensions (raw primitives)
+  /// - `lib/core/theme/app_layout.dart` - Layout tokens (semantic structure) [Phase 0.7]
+  /// - `lib/core/theme/app_decorations.dart` - Box decorations and elevation scale
+  /// - `lib/core/theme/app_motion.dart` - Animation durations, curves, scales [Phase 0]
+  /// - `lib/core/theme/app_states.dart` - Interaction state constants [Phase 0]
+  /// - `lib/core/theme/app_theme.dart` - Material 3 theme data + component themes
   /// - `lib/core/theme/theme_dashboard.dart` - This file (reference)
 
   /// **Design Reference:**
@@ -391,4 +400,199 @@ class ThemeDashboard {
   /// - Small: `AppDimens.r8`, `r10`, `r12`
   /// - Medium: `AppDimens.r14`, `r16`, `r18`
   /// - Large: `AppDimens.r20`, `r24`, `r30`
+
+  // ============================================================================
+  // MOTION TOKENS (Phase 0 — AppMotion)
+  // ============================================================================
+
+  /// **Durations:**
+  /// - micro: 100ms (ripples, toggles, icon swaps)
+  /// - fast: 200ms (chips, badges, small state changes)
+  /// - standard: 300ms (cards, sheets, tab switches)
+  /// - slow: 400ms (entrance animations, expanding containers)
+  /// - emphasis: 500ms (page transitions, hero animations)
+  /// - dramatic: 800ms (count-up numbers, progress bars)
+  /// - shimmer: 1500ms (skeleton loaders)
+  ///
+  /// **Curves:**
+  /// - curveStandard: easeOutCubic (default for most interactions)
+  /// - curveDecel: easeOutQuart (elements entering)
+  /// - curveSharp: easeOutExpo (snappy — FAB, badge)
+  /// - curveAccel: easeInCubic (elements leaving)
+  /// - curveSymmetric: easeInOutCubic (expand/collapse)
+  /// - curveSpring: Cubic(0.175, 0.885, 0.32, 1.075) (subtle overshoot)
+  /// - curveSlideUp: Cubic(0.2, 0.8, 0.2, 1) (modals/sheets)
+  ///
+  /// **Scale Amounts:**
+  /// - pressScale: 0.96 (button/card press-down)
+  /// - hoverScale: 1.02 (desktop hover)
+  /// - badgeEntrance: 1.15 (badge pop-in)
+  /// - emphasize: 1.05 (attention draw)
+  ///
+  /// **Stagger Delays:**
+  /// - staggerSmall: 30ms (list items)
+  /// - staggerMedium: 50ms (grid cards)
+  /// - staggerLarge: 100ms (major sections)
+  ///
+  /// **BANNED:** bounceIn, bounceOut, elasticIn, elasticOut, linear for visible animations.
+  /// **HELPER:** `AppMotion.respectMotion(context, duration)` returns Duration.zero if reduced motion is preferred.
+
+  // ============================================================================
+  // INTERACTION STATES (Phase 0 — AppInteractionStates)
+  // ============================================================================
+
+  /// **8-State Model:** default, hover, focus, active/pressed, disabled, loading, success, error
+  ///
+  /// **Opacity Values:**
+  /// - disabledOpacity: 0.38 (Material standard)
+  /// - hoverOverlayOpacity: 0.04
+  /// - pressedOverlayOpacity: 0.08
+  /// - flashOverlayOpacity: 0.15
+  ///
+  /// **Focus Ring:** width=2.0, offset=2.0
+  /// **Loading:** size=18.0, strokeWidth=2.0
+  /// **Error Shake:** amplitude=4.0, cycles=3, duration=300ms
+  /// **Flash:** flashDuration=300ms, revertDelay=1500ms
+  ///
+  /// **Haptic Methods:**
+  /// - `hapticTap()` → lightImpact (button taps)
+  /// - `hapticSelection()` → selectionClick (toggles, tabs)
+  /// - `hapticSuccess()` → mediumImpact (successful actions)
+  /// - `hapticHeavy()` → heavyImpact (destructive/error)
+
+  // ============================================================================
+  // ELEVATION SCALE (Phase 0 — AppDecorations.elevation)
+  // ============================================================================
+
+  /// **5-Level Shadow System:**
+  ///
+  /// | Level | Name     | Blur | Offset  | Alpha (light) | Use Case              |
+  /// |-------|----------|------|---------|---------------|-----------------------|
+  /// | 0     | Flat     | 0    | (0,0)   | 0             | Items at rest in list |
+  /// | 1     | Resting  | 4    | (0,1)   | 0.06          | Default cards, tiles  |
+  /// | 2     | Raised   | 8    | (0,2)   | 0.08          | Hovered/focused cards |
+  /// | 3     | Floating | 16   | (0,4)   | 0.12          | Modals, FAB, dragged  |
+  /// | 4     | Dramatic | 24   | (0,8)   | 0.16          | Popovers, dropdowns   |
+  ///
+  /// Dark mode multiplier: 0.3x alpha.
+  /// Usage: `AppDecorations.elevation(1, isDark: colorScheme.isDark)`
+
+  // ============================================================================
+  // SEMANTIC COLORS (Phase 0 — AppColorScheme)
+  // ============================================================================
+
+  /// **Status Colors (light / dark):**
+  ///
+  /// | Token         | Light Mode | Dark Mode  | Use Case                     |
+  /// |---------------|------------|------------|------------------------------|
+  /// | success       | #2E7D32    | #66BB6A    | Completed, approved, online  |
+  /// | successMuted  | #E8F5E9    | #1B3D1F    | Success backgrounds          |
+  /// | warning       | #F57F17    | #FFB300    | Pending, expiring, attention |
+  /// | warningMuted  | #FFF8E1    | #3D2E00    | Warning backgrounds          |
+  /// | info          | #1565C0    | #42A5F5    | Informational, neutral       |
+  /// | infoMuted     | #E3F2FD    | #0D2137    | Info backgrounds             |
+  /// | danger        | #C62828    | #EF5350    | Errors, declined, urgent     |
+  /// | dangerMuted   | #FFEBEE    | #3D1111    | Danger backgrounds           |
+  ///
+  /// **Interactive Colors:**
+  /// - hoverOverlay: primary at 4% (light) / lightTeal at 6% (dark)
+  /// - pressedOverlay: primary at 8% (light) / lightTeal at 10% (dark)
+  /// - focusRing: teal (light) / lightTeal (dark)
+  /// - disabledFill: black at 8% (light) / white at 8% (dark)
+
+  // ============================================================================
+  // COMPONENT THEMES (Phase 0 — AppTheme)
+  // ============================================================================
+
+  /// **Themed Components:**
+  ///
+  /// | Component    | Shape           | Background       | Elevation |
+  /// |-------------|-----------------|------------------|-----------|
+  /// | Card        | r16 rounded     | cardBackground   | 0         |
+  /// | Dialog      | r24 rounded     | cardBackground   | 0         |
+  /// | BottomSheet | r24 top rounded | cardBackground   | 0         |
+  /// | Chip        | Stadium (pill)  | transparent      | 0         |
+  /// | Divider     | —               | divider color    | 0         |
+  /// | SnackBar    | r12 rounded     | text color       | floating  |
+  /// | TabBar      | label underline | teal indicator   | 0         |
+  ///
+  /// BottomSheet has `showDragHandle: true` with 32x4 handle.
+  /// Chip has 0.5px divider-color border.
+  /// SnackBar has inverted colors (text bg, phoneBackground text).
+  /// TabBar: label=captionBold, unselected=caption, teal indicator (width 3).
+
+  // ============================================================================
+  // TYPOGRAPHY LINE HEIGHTS (Phase 0 — AppTypography)
+  // ============================================================================
+
+  /// **Updated Line Heights:**
+  ///
+  /// | Style       | Size | Weight | Height | Letter Spacing | Category     |
+  /// |-------------|------|--------|--------|----------------|-------------|
+  /// | logo        | 36px | w900   | 1.0    | -0.5           | Display      |
+  /// | h1          | 32px | w900   | 1.1    | -0.5           | Heading      |
+  /// | h2          | 28px | w900   | 1.15   | -0.4           | Heading      |
+  /// | h3          | 22px | w800   | 1.2    | -0.3           | Heading      |
+  /// | h4          | 20px | w800   | 1.2    | -0.2           | Heading      |
+  /// | h5          | 18px | w700   | 1.25   | —              | Heading      |
+  /// | subtitle    | 17px | w700   | 1.3    | —              | Heading      |
+  /// | h6          | 16px | w800   | 1.25   | —              | Heading      |
+  /// | bodyLarge   | 15px | w500   | 1.5    | —              | Body         |
+  /// | bodyMedium  | 14px | normal | 1.5    | —              | Body         |
+  /// | bodySmall   | 13px | w500   | 1.4    | 0.1            | Body         |
+  /// | caption     | 12px | normal | 1.3    | 0.2            | Utility      |
+  /// | captionBold | 12px | w700   | 1.3    | 0.2            | Utility      |
+  /// | overline    | 11px | w600   | 1.3    | 1.5            | Utility      |
+  /// | micro       | 10px | w500   | 1.2    | 0.3            | Utility      |
+
+  // ============================================================================
+  // LAYOUT TOKENS (Phase 0.7 — AppLayout)
+  // ============================================================================
+
+  /// ## Three-Layer Architecture
+  ///
+  /// ```
+  /// Layer 1 — THEME: AppColors, AppTypography, AppMotion, AppDecorations, AppStates
+  /// Layer 2 — LAYOUT: AppLayout (semantic structure) + AppDimens (raw primitives)
+  /// Layer 3 — COMPONENTS: Widgets consume Layer 1 + Layer 2, own neither
+  /// ```
+  ///
+  /// ## AppDimens vs AppLayout
+  ///
+  /// - `AppDimens` = raw spacing/radius primitives (p0–p100, r4–r50, iconSize*)
+  /// - `AppLayout` = semantic structural tokens with named intent
+  /// - Both are Layer 2. No value overlap for icon sizes.
+  ///
+  /// ## Token Categories
+  ///
+  /// **Card Dimensions:**
+  /// - cardPadding: 16.0 — standard card content padding
+  /// - cardPaddingCompact: 12.0 — dense list padding
+  /// - cardSectionSpacing: 8.0 — inner card section gap
+  /// - cardHeaderHeight: 60.0 — card gradient/image header
+  /// - cardBorderWidth: 1.0 — solid surface border width
+  ///
+  /// **Avatar Sizes (diameter):**
+  /// - avatarTiny: 24.0, avatarSmall: 36.0, avatarDefault: 40.0
+  /// - avatarMedium: 44.0, avatarLarge: 64.0, avatarHero: 80.0
+  ///
+  /// **Button Heights:**
+  /// - buttonHeight: 54.0 (AppButton default)
+  /// - buttonHeightCompact: 48.0 (AppStyledButton default)
+  /// - buttonHeightSmall: 36.0, fabSize: 56.0
+  /// - circleButtonVisualSize: 40.0, minTouchTarget: 48.0 (WCAG)
+  ///
+  /// **Spacing Rhythm (semantic, for raw use AppDimens):**
+  /// - spacingTight: 4.0, spacingStandard: 8.0, spacingSection: 16.0
+  /// - spacingScreen: 24.0, spacingLarge: 32.0, screenHorizontalMargin: 24.0
+  ///
+  /// **Icon Sizes (NO overlap with AppDimens.iconSize*):**
+  /// - iconTiny: 12.0, iconStandard: 20.0, iconFeature: 48.0
+  /// - For 16/24/32 use AppDimens.iconSizeSmall/Medium/Large
+  ///
+  /// **Navigation:**
+  /// - bottomNavHeight: 70.0, fabBottomOffset: 100.0, statusIndicatorHeight: 40.0
+  ///
+  /// **Border Widths:**
+  /// - borderStandard: 1.0, borderThick: 1.5, borderAvatar: 2.0
 }

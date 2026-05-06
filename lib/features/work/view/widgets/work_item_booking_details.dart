@@ -4,7 +4,7 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_date.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/features/booking/models/booking_model.dart';
 
@@ -28,7 +28,7 @@ class WorkItemBookingDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassContainer(
+    return AppCardContainer(
       child: Padding(
         padding: const EdgeInsets.all(AppDimens.p16),
         child: Column(

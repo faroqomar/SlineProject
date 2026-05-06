@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/core/widgets/skeleton_loader.dart';
 
 /// Pre-built skeleton card that mimics a TenderTaskCard loading state.
@@ -358,6 +358,9 @@ class SkeletonOfferCard extends StatelessWidget {
 }
 
 /// Skeleton for chat message bubbles.
+///
+/// Matches redesigned MessageBubble: 75% max width, r18 border radius,
+/// p14 horizontal / p10 vertical padding.
 class SkeletonMessageBubble extends StatelessWidget {
   const SkeletonMessageBubble({super.key, this.isMe = false});
 
@@ -370,16 +373,21 @@ class SkeletonMessageBubble extends StatelessWidget {
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        padding: const EdgeInsets.all(AppDimens.p12),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimens.p14,
+          vertical: AppDimens.p10,
+        ),
         margin: const EdgeInsets.only(bottom: AppDimens.p8),
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.7,
+          // 75% — matches redesigned MessageBubble ratio
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
         ),
         decoration: BoxDecoration(
           color: isMe
               ? colorScheme.primary.withValues(alpha: 0.2)
               : colorScheme.cardBackground,
-          borderRadius: BorderRadius.circular(AppDimens.r16),
+          borderRadius: BorderRadius.circular(AppDimens.r18),
+          border: isMe ? null : Border.all(color: colorScheme.cardBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -403,6 +411,9 @@ class SkeletonMessageBubble extends StatelessWidget {
 }
 
 /// Skeleton for conversation list tile.
+///
+/// Matches redesigned ConversationListTile: r18 card with border, 48px avatar,
+/// name + message preview lines, timestamp placeholder.
 class SkeletonConversationTile extends StatelessWidget {
   const SkeletonConversationTile({super.key});
 
@@ -411,13 +422,17 @@ class SkeletonConversationTile extends StatelessWidget {
     final colorScheme = context.colorScheme;
 
     return Container(
-      padding: const EdgeInsets.all(AppDimens.p16),
+      margin: const EdgeInsets.only(bottom: AppDimens.p12),
+      padding: const EdgeInsets.all(AppDimens.p14),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: colorScheme.divider)),
+        color: colorScheme.cardBackground,
+        borderRadius: BorderRadius.circular(AppDimens.r18),
+        border: Border.all(color: colorScheme.cardBorder),
       ),
       child: const Row(
         children: [
-          SkeletonAvatar(size: 52),
+          // Avatar — matches minTouchTarget (48px)
+          SkeletonLoader(width: 48, height: 48, borderRadius: AppDimens.r14),
           SizedBox(width: AppDimens.p12),
           Expanded(
             child: Column(
@@ -435,6 +450,145 @@ class SkeletonConversationTile extends StatelessWidget {
           ),
           SizedBox(width: AppDimens.p12),
           SkeletonLoader(width: 40, height: 12, borderRadius: AppDimens.r4),
+        ],
+      ),
+    );
+  }
+}
+
+/// Skeleton placeholder for search result cards.
+///
+/// Matches the layout of search result profile/task cards: avatar + two text
+/// lines + trailing tag pill. Used in SearchScreen loading state.
+class SkeletonSearchResultCard extends StatelessWidget {
+  const SkeletonSearchResultCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.p16),
+      margin: const EdgeInsets.only(bottom: AppDimens.p12),
+      decoration: BoxDecoration(
+        color: colorScheme.cardBackground,
+        borderRadius: BorderRadius.circular(AppDimens.r16),
+        border: Border.all(color: colorScheme.cardBorder),
+      ),
+      child: const Row(
+        children: [
+          // Avatar circle
+          SkeletonAvatar(size: 36),
+          SizedBox(width: AppDimens.p12),
+          // Name + subtitle lines
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SkeletonLoader(
+                  width: 120,
+                  height: 14,
+                  borderRadius: AppDimens.r4,
+                ),
+                SizedBox(height: AppDimens.p8),
+                SkeletonLoader(
+                  width: 180,
+                  height: 12,
+                  borderRadius: AppDimens.r4,
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: AppDimens.p12),
+          // Trailing tag pill
+          SkeletonLoader(width: 50, height: 22, borderRadius: AppDimens.r8),
+        ],
+      ),
+    );
+  }
+}
+
+/// Skeleton placeholder for category grid tiles.
+///
+/// Matches the redesigned category card layout: icon circle + title + subtitle.
+/// Designed for 2-column grid usage in CategoriesScreen.
+class SkeletonCategoryTile extends StatelessWidget {
+  const SkeletonCategoryTile({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.p12),
+      decoration: BoxDecoration(
+        color: colorScheme.cardBackground,
+        borderRadius: BorderRadius.circular(AppDimens.r16),
+        border: Border.all(color: colorScheme.cardBorder),
+      ),
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Icon circle placeholder
+          SkeletonAvatar(size: 40),
+          SizedBox(height: AppDimens.p8),
+          // Category name
+          SkeletonLoader(width: 80, height: 14, borderRadius: AppDimens.r4),
+          SizedBox(height: AppDimens.p4),
+          // Item count
+          SkeletonLoader(width: 40, height: 10, borderRadius: AppDimens.r4),
+        ],
+      ),
+    );
+  }
+}
+
+/// Skeleton placeholder for favorite cards.
+///
+/// Matches the redesigned FavoriteCard layout: avatar + name/date lines +
+/// action button placeholder. Used in FavoritesScreen loading state.
+class SkeletonFavoriteCard extends StatelessWidget {
+  const SkeletonFavoriteCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.p16),
+      margin: const EdgeInsets.only(bottom: AppDimens.p12),
+      decoration: BoxDecoration(
+        color: colorScheme.cardBackground,
+        borderRadius: BorderRadius.circular(AppDimens.r16),
+        border: Border.all(color: colorScheme.cardBorder),
+      ),
+      child: const Row(
+        children: [
+          // Avatar
+          SkeletonAvatar(size: 44),
+          SizedBox(width: AppDimens.p12),
+          // Name + date
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SkeletonLoader(
+                  width: 130,
+                  height: 14,
+                  borderRadius: AppDimens.r4,
+                ),
+                SizedBox(height: AppDimens.p8),
+                SkeletonLoader(
+                  width: 80,
+                  height: 12,
+                  borderRadius: AppDimens.r4,
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: AppDimens.p8),
+          // Action button placeholder
+          SkeletonLoader(width: 80, height: 32, borderRadius: AppDimens.r8),
         ],
       ),
     );
@@ -487,7 +641,7 @@ class SkeletonDetailsScreen extends StatelessWidget {
           const SkeletonText(lines: 4),
           const SizedBox(height: AppDimens.p24),
           // Price card
-          GlassContainer(
+          AppCardContainer(
             padding: const EdgeInsets.all(AppDimens.p16),
             borderRadius: BorderRadius.circular(AppDimens.r16),
             child: const Row(

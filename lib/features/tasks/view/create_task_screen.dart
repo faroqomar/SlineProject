@@ -6,8 +6,8 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
 import 'package:sline_app/features/categories/models/category_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:sline_app/features/tasks/view/widgets/booking_logistics_section.dart';
@@ -565,7 +565,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   }
 
   Widget _buildBottomBar(AppColorScheme colorScheme) {
-    return GlassContainer(
+    return AppCardContainer(
       padding: const EdgeInsets.all(AppDimens.p24),
       borderRadius: BorderRadius.zero, // Stick to bottom
       child: Row(

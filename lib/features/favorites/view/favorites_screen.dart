@@ -3,6 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_states.dart';
+import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/widgets/skeleton_card.dart';
 import 'package:sline_app/features/chat/view/chat_screen.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 import 'package:sline_app/features/favorites/models/favorites_mutation_result.dart';
@@ -20,6 +25,12 @@ class FavoritesScreen extends StatefulWidget {
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
   bool _ensureLoadedScheduled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    AppLogger.d('favorites_screen_loaded', tag: 'FavoritesScreen');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,21 +60,66 @@ class _FavoritesView extends StatelessWidget {
         child: Builder(
           builder: (context) {
             if (vm.isLoading) {
-              return const Center(
-                key: Key('favorites_loading'),
-                child: CircularProgressIndicator(),
+              // Skeleton shimmer list — 5 placeholder cards for perceived speed
+              return ListView.builder(
+                key: const Key('favorites_loading'),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimens.p24,
+                  vertical: AppDimens.p16,
+                ),
+                itemCount: 5,
+                itemBuilder: (_, __) => const SkeletonFavoriteCard(),
               );
             }
             if (vm.error != null) {
+              final colorScheme = context.colorScheme;
               return ListView(
                 key: const Key('favorites_error'),
                 children: [
                   const SizedBox(height: 120),
+                  // Error icon in a tinted circle
                   Center(
-                    child: Text(
-                      vm.error!,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
+                    child: Semantics(
+                      label: 'Error loading favorites',
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: AppDimens.p80,
+                            height: AppDimens.p80,
+                            decoration: BoxDecoration(
+                              color: colorScheme.danger.withValues(alpha: 0.08),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.error_outline,
+                              size: AppDimens.p48,
+                              color: colorScheme.danger,
+                            ),
+                          ),
+                          const SizedBox(height: AppDimens.p16),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppDimens.p24,
+                            ),
+                            child: Text(
+                              vm.userFriendlyError,
+                              textAlign: TextAlign.center,
+                              style: AppTypography.bodySmall.copyWith(
+                                color: colorScheme.danger,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: AppDimens.p16),
+                          // Retry button to refresh favorites
+                          OutlinedButton(
+                            onPressed: () {
+                              AppInteractionStates.hapticTap();
+                              vm.refresh();
+                            },
+                            child: const Text('Try Again'),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -72,11 +128,62 @@ class _FavoritesView extends StatelessWidget {
             }
             final items = vm.itemsWithProfile;
             if (items.isEmpty) {
+              final colorScheme = context.colorScheme;
               return ListView(
                 key: const Key('favorites_empty'),
-                children: const [
-                  SizedBox(height: 120),
-                  Center(child: Text('No favorites yet.')),
+                children: [
+                  const SizedBox(height: 120),
+                  // Empty state: icon + title + subtitle
+                  Center(
+                    child: Semantics(
+                      label: 'No favorites yet',
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Icon in a tinted circle
+                          Container(
+                            width: AppDimens.p80,
+                            height: AppDimens.p80,
+                            decoration: BoxDecoration(
+                              color: colorScheme.primary.withValues(
+                                alpha: 0.08,
+                              ),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.favorite_border,
+                              size: AppDimens.p48,
+                              color: colorScheme.primary,
+                            ),
+                          ),
+                          const SizedBox(height: AppDimens.p16),
+                          Text(
+                            'No favorites yet',
+                            style: AppTypography.h5.copyWith(
+                              color: colorScheme.text,
+                            ),
+                          ),
+                          const SizedBox(height: AppDimens.p8),
+                          Text(
+                            'Find and save your favorite freelancers',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: colorScheme.textSecondary,
+                            ),
+                          ),
+                          // CTA button to guide users toward discovery
+                          const SizedBox(height: AppDimens.p24),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              AppInteractionStates.hapticTap();
+                              Navigator.pop(context);
+                            },
+                            icon: const Icon(Icons.explore, size: 18),
+                            label: const Text('Explore Freelancers'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               );
             }

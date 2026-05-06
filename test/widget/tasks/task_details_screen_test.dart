@@ -15,7 +15,7 @@ import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/account_guard_service.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
@@ -560,7 +560,7 @@ void main() {
       expect(find.byIcon(Icons.flag_outlined), findsOneWidget);
     });
 
-    testWidgets('T249 GlassContainer wraps header and bottom bar', (
+    testWidgets('T249 AppCardContainer wraps header and bottom bar', (
       tester,
     ) async {
       await _pumpScreen(
@@ -574,8 +574,8 @@ void main() {
       );
       await tester.pump();
 
-      // Header GlassContainer + bottom bar GlassContainer = at least 2
-      expect(find.byType(GlassContainer), findsAtLeastNWidgets(2));
+      // Header AppCardContainer + bottom bar AppCardContainer = at least 2
+      expect(find.byType(AppCardContainer), findsAtLeastNWidgets(2));
     });
 
     testWidgets('T250 back arrow icon is present in header', (tester) async {

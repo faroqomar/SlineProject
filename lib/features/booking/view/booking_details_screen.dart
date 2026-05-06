@@ -11,7 +11,7 @@ import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/core/utils/unified_cta_resolver.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/features/booking/models/booking_model.dart';
 import 'package:sline_app/features/booking/viewmodels/booking_view_model.dart';
@@ -91,7 +91,7 @@ class BookingDetailsScreen extends StatelessWidget {
             // Service Card (Task Info)
             _buildSectionHeader(context, 'Service'),
             const SizedBox(height: AppDimens.p12),
-            GlassContainer(
+            AppCardContainer(
               padding: const EdgeInsets.all(AppDimens.p16),
               child: Row(
                 children: [
@@ -133,7 +133,7 @@ class BookingDetailsScreen extends StatelessWidget {
             // Counterparty Info
             _buildSectionHeader(context, isProvider ? 'Client' : 'Provider'),
             const SizedBox(height: AppDimens.p12),
-            GlassContainer(
+            AppCardContainer(
               padding: const EdgeInsets.all(AppDimens.p16),
               child: Row(
                 children: [
@@ -180,7 +180,7 @@ class BookingDetailsScreen extends StatelessWidget {
             // Timeline
             _buildSectionHeader(context, 'Timeline'),
             const SizedBox(height: AppDimens.p12),
-            GlassContainer(
+            AppCardContainer(
               padding: const EdgeInsets.all(AppDimens.p16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -680,7 +680,7 @@ class _BookingDisputeBanner extends StatelessWidget {
                 : 'Dispute under review. Approve and release disabled.';
             return Padding(
               padding: const EdgeInsets.only(bottom: AppDimens.p24),
-              child: GlassContainer(
+              child: AppCardContainer(
                 child: Padding(
                   padding: const EdgeInsets.all(AppDimens.p12),
                   child: Row(

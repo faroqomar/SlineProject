@@ -2,19 +2,23 @@ import 'dart:typed_data';
 
 import 'package:sline_app/core/config/storage_config.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/services/signed_url_generator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Service for handling task image operations with Supabase Storage.
 ///
+/// Implements [SignedUrlGenerator] so that core widgets ([SignedImage]) can
+/// depend on the abstract interface instead of this feature-specific class.
+///
 /// Architecture: This service is used by TaskViewModel to upload task images
 /// to the private 'task-images' bucket. UI widgets should never call this
-/// service directly.
+/// service directly — they use the [SignedUrlGenerator] interface.
 ///
 /// Storage Pattern: Store paths in DB, not signed URLs. Generate signed URLs
 /// at render time using SignedImage widget.
 ///
 /// Uses [SharedStorageConfig] for consistent TTL values.
-class TaskImageService {
+class TaskImageService implements SignedUrlGenerator {
   final SupabaseClient _supabase;
   final String bucket = 'task-images';
 
@@ -108,6 +112,7 @@ class TaskImageService {
   /// Uses [SharedStorageConfig.taskImageTtlSeconds] for consistent TTL.
   /// Returns the signed URL string on success, null on failure.
   /// Does not throw - returns null for graceful degradation in UI.
+  @override
   Future<String?> createSignedUrl(String path, {Duration? expire}) async {
     if (path.isEmpty) {
       return null;

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sline_app/core/app_enums.dart'; // Added for TaskStatus
+import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_price.dart';
+import 'package:sline_app/core/widgets/scale_button.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/core/widgets/signed_image.dart';
 import 'package:sline_app/features/profile/view/widgets/profile_preview_modal.dart';
@@ -30,34 +33,28 @@ class BookingTaskCard extends StatelessWidget {
     final authorName = task.userName ?? 'Provider';
     final initials = _getInitials(authorName);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppDimens.p12),
-      decoration: BoxDecoration(
-        color: colorScheme.cardBackground,
-        borderRadius: BorderRadius.circular(24), // Matches rounded-[24px]
-        border: Border.all(color: colorScheme.cardBorder, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.isDark
-                ? AppColors.almostBlack.withValues(alpha: 0.2)
-                : AppColors.almostBlack.withValues(alpha: 0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(24),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(24),
+    return Semantics(
+      button: true,
+      label: '${task.title} booking task card',
+      child: Container(
+        margin: const EdgeInsets.only(bottom: AppDimens.p12),
+        decoration: BoxDecoration(
+          color: colorScheme.cardBackground,
+          borderRadius: BorderRadius.circular(AppDimens.r24),
+          border: Border.all(color: colorScheme.cardBorder, width: 1),
+          boxShadow: AppDecorations.elevation(1, isDark: colorScheme.isDark),
+        ),
+        child: ScaleButton(
+          onPressed: () {
+            AppLogger.d('BookingTaskCard tapped: ${task.id}', tag: 'Cards');
+            onTap();
+          },
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- Header Section (Gradient + Featured Badge + Bookmark) ---
+              // --- Header Section (Reduced to 60px) ---
               SizedBox(
-                height: 90,
+                height: 60,
                 width: double.infinity,
                 child: Stack(
                   fit: StackFit.expand,
@@ -66,13 +63,13 @@ class BookingTaskCard extends StatelessWidget {
                     if (task.imagePaths.isNotEmpty)
                       ClipRRect(
                         borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(24),
-                          topRight: Radius.circular(24),
+                          topLeft: Radius.circular(AppDimens.r24),
+                          topRight: Radius.circular(AppDimens.r24),
                         ),
                         child: SignedImage(
                           storagePathOrUrl: task.imagePaths.first,
                           width: double.infinity,
-                          height: 90,
+                          height: 60,
                           fit: BoxFit.cover,
                         ),
                       )
@@ -80,13 +77,13 @@ class BookingTaskCard extends StatelessWidget {
                       Container(
                         decoration: BoxDecoration(
                           borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(24),
-                            topRight: Radius.circular(24),
+                            topLeft: Radius.circular(AppDimens.r24),
+                            topRight: Radius.circular(AppDimens.r24),
                           ),
                           gradient: LinearGradient(
                             colors: [
-                              AppColors.teal.withValues(alpha: 0.9),
-                              AppColors.lightTeal.withValues(alpha: 0.9),
+                              colorScheme.success.withValues(alpha: 0.9),
+                              colorScheme.success.withValues(alpha: 0.6),
                             ],
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
@@ -99,8 +96,8 @@ class BookingTaskCard extends StatelessWidget {
                       Container(
                         decoration: BoxDecoration(
                           borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(24),
-                            topRight: Radius.circular(24),
+                            topLeft: Radius.circular(AppDimens.r24),
+                            topRight: Radius.circular(AppDimens.r24),
                           ),
                           gradient: LinearGradient(
                             colors: [
@@ -113,19 +110,19 @@ class BookingTaskCard extends StatelessWidget {
                         ),
                       ),
 
-                    // Featured Badge (Left now)
+                    // Featured Badge (Left)
                     if (isHot)
                       Positioned(
-                        top: 12,
-                        left: 12,
+                        top: AppDimens.p12,
+                        left: AppDimens.p12,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+                            horizontal: AppDimens.p8,
+                            vertical: AppDimens.p4,
                           ),
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(AppDimens.r8),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -133,15 +130,14 @@ class BookingTaskCard extends StatelessWidget {
                               Icon(
                                 Icons.auto_awesome,
                                 size: 12,
-                                color: AppColors.gold,
+                                color: colorScheme.warning,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 'Featured',
                                 style: AppTypography.micro.copyWith(
-                                  fontSize: 10,
                                   fontWeight: FontWeight.w700,
-                                  color: Colors.white,
+                                  color: AppColors.white,
                                 ),
                               ),
                             ],
@@ -151,8 +147,8 @@ class BookingTaskCard extends StatelessWidget {
 
                     // Bookmark Button (Right)
                     Positioned(
-                      top: 12,
-                      right: 12,
+                      top: AppDimens.p8,
+                      right: AppDimens.p8,
                       child: Consumer<SavedTasksViewModel>(
                         builder: (context, savedVM, child) {
                           final isSaved = savedVM.isSaved(task.id);
@@ -161,10 +157,10 @@ class BookingTaskCard extends StatelessWidget {
                               savedVM.toggle(task.id);
                             },
                             child: Container(
-                              padding: const EdgeInsets.all(8),
+                              padding: const EdgeInsets.all(AppDimens.p8),
                               decoration: BoxDecoration(
                                 color: isSaved
-                                    ? AppColors.lightRed
+                                    ? colorScheme.danger
                                     : Colors.black.withValues(alpha: 0.2),
                                 shape: BoxShape.circle,
                               ),
@@ -173,7 +169,7 @@ class BookingTaskCard extends StatelessWidget {
                                     ? Icons.favorite
                                     : Icons.favorite_border,
                                 size: 18,
-                                color: Colors.white,
+                                color: AppColors.white,
                               ),
                             ),
                           );
@@ -186,110 +182,110 @@ class BookingTaskCard extends StatelessWidget {
 
               // --- Content Section ---
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                padding: const EdgeInsets.fromLTRB(
+                  AppDimens.p20,
+                  AppDimens.p16,
+                  AppDimens.p20,
+                  AppDimens.p20,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Avatar + Rating Row (Avatar overlaps header)
-                    Transform.translate(
-                      offset: const Offset(
-                        0,
-                        -24,
-                      ), // Negative margin to overlap
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // Avatar Box
-                          GestureDetector(
-                            onTap: () {
-                              showProfilePreview(context, task.userId);
-                            },
-                            child: Container(
-                              width: 56,
-                              height: 56,
-                              decoration: BoxDecoration(
-                                color: AppColors.gold,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: colorScheme.cardBackground,
-                                  width: 4,
+                    // Avatar + Name + Rating Row (inline, no Transform.translate)
+                    Row(
+                      children: [
+                        // Avatar Box
+                        GestureDetector(
+                          onTap: () {
+                            showProfilePreview(context, task.userId);
+                          },
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: AppColors.gold,
+                              borderRadius: BorderRadius.circular(
+                                AppDimens.r12,
+                              ),
+                              boxShadow: AppDecorations.elevation(
+                                1,
+                                isDark: colorScheme.isDark,
+                              ),
+                            ),
+                            child:
+                                task.userAvatar != null &&
+                                    task.userAvatar!.isNotEmpty
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(
+                                      AppDimens.r12,
+                                    ),
+                                    child: SignedAvatar(
+                                      storagePathOrUrl: task.userAvatar,
+                                      size: 44,
+                                      borderRadius: BorderRadius.circular(
+                                        AppDimens.r12,
+                                      ),
+                                    ),
+                                  )
+                                : Center(
+                                    child: Text(
+                                      initials,
+                                      style: AppTypography.bodyLarge.copyWith(
+                                        fontWeight: FontWeight.w900,
+                                        color: AppColors.almostBlack,
+                                      ),
+                                    ),
+                                  ),
+                          ),
+                        ),
+
+                        const SizedBox(width: AppDimens.p12),
+
+                        // Name + Rating
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                authorName,
+                                style: AppTypography.caption.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: colorScheme.text,
                                 ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.1),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: AppDimens.p2),
+                              // Rating Pill
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.star,
+                                    size: 12,
+                                    color: colorScheme.warning,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '4.9',
+                                    style: AppTypography.captionBold.copyWith(
+                                      color: colorScheme.text,
+                                    ),
                                   ),
                                 ],
                               ),
-                              child:
-                                  task.userAvatar != null &&
-                                      task.userAvatar!.isNotEmpty
-                                  ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(
-                                        12,
-                                      ), // Inner radius
-                                      child: SignedAvatar(
-                                        storagePathOrUrl: task.userAvatar,
-                                        size: 48, // 56 - border
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    )
-                                  : Center(
-                                      child: Text(
-                                        initials,
-                                        style: AppTypography.h5.copyWith(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w900,
-                                          color: AppColors.almostBlack,
-                                        ),
-                                      ),
-                                    ),
-                            ),
+                            ],
                           ),
-
-                          // Rating Pill
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            margin: const EdgeInsets.only(bottom: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.gold.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: AppColors.gold.withValues(alpha: 0.2),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.star,
-                                  size: 12,
-                                  color: AppColors.gold,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '4.9', // Placeholder rating
-                                  style: AppTypography.captionBold.copyWith(
-                                    fontSize: 11,
-                                    color: colorScheme.text,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
+
+                    const SizedBox(height: AppDimens.p12),
 
                     // Title
                     Text(
                       task.title,
-                      style: AppTypography.h6.copyWith(
-                        fontSize: 16,
+                      style: AppTypography.bodyLarge.copyWith(
                         fontWeight: FontWeight.w800,
                         height: 1.1,
                         color: colorScheme.text,
@@ -298,49 +294,32 @@ class BookingTaskCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
 
-                    const SizedBox(height: 4),
-
-                    // Author Name
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.person_outline,
-                          size: 12,
-                          color: colorScheme.textSecondary,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          authorName,
-                          style: AppTypography.caption.copyWith(
-                            fontSize: 12,
-                            color: colorScheme.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppDimens.p12),
 
                     // Tags
                     Wrap(
-                      spacing: 8,
-                      runSpacing: 4,
+                      spacing: AppDimens.p8,
+                      runSpacing: AppDimens.p4,
                       children: task.skills
                           .take(3)
                           .map(
                             (tag) => Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
+                                horizontal: AppDimens.p8,
+                                vertical: AppDimens.p4,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.grey.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(6),
+                                color: colorScheme.tagBackground,
+                                borderRadius: BorderRadius.circular(
+                                  AppDimens.r8,
+                                ),
+                                border: Border.all(
+                                  color: colorScheme.tagBorder,
+                                ),
                               ),
                               child: Text(
                                 tag,
                                 style: AppTypography.micro.copyWith(
-                                  fontSize: 10,
                                   fontWeight: FontWeight.w600,
                                   color: colorScheme.textSecondary,
                                 ),
@@ -350,11 +329,11 @@ class BookingTaskCard extends StatelessWidget {
                           .toList(),
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppDimens.p16),
 
                     // Footer
                     Container(
-                      padding: const EdgeInsets.only(top: 12),
+                      padding: const EdgeInsets.only(top: AppDimens.p12),
                       decoration: BoxDecoration(
                         border: Border(
                           top: BorderSide(color: colorScheme.divider),
@@ -371,7 +350,6 @@ class BookingTaskCard extends StatelessWidget {
                               Text(
                                 'FROM',
                                 style: AppTypography.micro.copyWith(
-                                  fontSize: 10,
                                   fontWeight: FontWeight.w700,
                                   color: colorScheme.textSecondary.withValues(
                                     alpha: 0.6,
@@ -382,9 +360,8 @@ class BookingTaskCard extends StatelessWidget {
                               Text(
                                 PriceFormatter.formatPrice(task.budget),
                                 style: AppTypography.h5.copyWith(
-                                  fontSize: 18,
                                   fontWeight: FontWeight.w900,
-                                  color: AppColors.teal,
+                                  color: colorScheme.success,
                                 ),
                               ),
                             ],
@@ -396,11 +373,13 @@ class BookingTaskCard extends StatelessWidget {
                             Container(
                               height: 36,
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
+                                horizontal: AppDimens.p12,
                               ),
                               decoration: BoxDecoration(
                                 color: colorScheme.background,
-                                borderRadius: BorderRadius.circular(18),
+                                borderRadius: BorderRadius.circular(
+                                  AppDimens.r18,
+                                ),
                                 border: Border.all(color: colorScheme.divider),
                               ),
                               child: Row(
@@ -408,7 +387,6 @@ class BookingTaskCard extends StatelessWidget {
                                   Text(
                                     'Completed',
                                     style: AppTypography.captionBold.copyWith(
-                                      fontSize: 12,
                                       color: colorScheme.textSecondary,
                                     ),
                                   ),
@@ -419,35 +397,31 @@ class BookingTaskCard extends StatelessWidget {
                             Container(
                               height: 36,
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
+                                horizontal: AppDimens.p16,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.teal,
-                                borderRadius: BorderRadius.circular(18),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.teal.withValues(
-                                      alpha: 0.2,
-                                    ),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
+                                color: colorScheme.success,
+                                borderRadius: BorderRadius.circular(
+                                  AppDimens.r18,
+                                ),
+                                boxShadow: AppDecorations.elevation(
+                                  1,
+                                  isDark: colorScheme.isDark,
+                                ),
                               ),
                               child: Row(
                                 children: [
                                   Text(
                                     'Book Now',
                                     style: AppTypography.captionBold.copyWith(
-                                      fontSize: 12,
-                                      color: Colors.white,
+                                      color: AppColors.white,
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  const Icon(
+                                  const SizedBox(width: AppDimens.p8),
+                                  Icon(
                                     Icons.arrow_forward,
                                     size: 14,
-                                    color: Colors.white,
+                                    color: AppColors.white,
                                   ),
                                 ],
                               ),
@@ -466,7 +440,6 @@ class BookingTaskCard extends StatelessWidget {
   }
 
   String _getInitials(String name) {
-    // Split by spaces and filter out empty strings
     final parts = name.trim().split(' ').where((p) => p.isNotEmpty).toList();
     if (parts.isEmpty) return '?';
     if (parts.length == 1) {

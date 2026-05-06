@@ -1,16 +1,20 @@
 import 'dart:typed_data';
 
 import 'package:sline_app/core/config/storage_config.dart';
+import 'package:sline_app/core/services/signed_url_generator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Service responsible for uploading user avatar images to Supabase Storage
 /// and generating short-lived signed URLs for private display.
 ///
+/// Implements [SignedUrlGenerator] so that core widgets ([SignedAvatar]) can
+/// depend on the abstract interface instead of this feature-specific class.
+///
 /// NOTE:
 /// - We store only the **storage path** in the DB (e.g. `avatars/<uid>/<ts>.jpg`).
 /// - Display layers should call [createSignedUrl] to obtain a temporary link.
 /// - Uses [SharedStorageConfig] for consistent TTL values.
-class AvatarService {
+class AvatarService implements SignedUrlGenerator {
   /// Private bucket name used for storing avatars.
   static const String bucket = 'avatars';
 
@@ -53,7 +57,11 @@ class AvatarService {
   ///
   /// Uses [SharedStorageConfig.avatarTtlSeconds] for consistent TTL.
   /// Returns a temporary public URL suitable for display in the UI.
-  Future<String> createSignedUrl(String storagePath, {Duration? expire}) async {
+  @override
+  Future<String?> createSignedUrl(
+    String storagePath, {
+    Duration? expire,
+  }) async {
     final seconds = expire?.inSeconds ?? SharedStorageConfig.avatarTtlSeconds;
     final url = await _supabase.storage
         .from(bucket)

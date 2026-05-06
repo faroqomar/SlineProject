@@ -1,10 +1,15 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+
 import 'package:sline_app/core/config/storage_config.dart';
+import 'package:sline_app/core/services/default_signed_url_generator.dart';
+import 'package:sline_app/core/services/signed_url_generator.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
+import 'package:sline_app/core/theme/app_motion.dart';
+import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/utils/signed_url_cache.dart';
-import 'package:sline_app/features/profile/services/avatar_service.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sline_app/core/widgets/skeleton_loader.dart';
 
 /// Renders a user avatar from either a public URL or a private Supabase Storage path.
 ///
@@ -53,16 +58,30 @@ class SignedAvatar extends StatefulWidget {
   /// Background color for the placeholder
   final Color? backgroundColor;
 
+  /// Optional [SignedUrlGenerator] for resolving storage paths to signed URLs.
+  final SignedUrlGenerator? urlGenerator;
+
+  /// Initials to display when the image fails to load (e.g., "JD" for John Doe).
+  /// When provided, shows initials in a colored circle instead of the generic person icon.
+  final String? initials;
+
+  /// When true, shows a 12px green circle at the bottom-right corner
+  /// indicating the user is online.
+  final bool showOnlineIndicator;
+
   const SignedAvatar({
     super.key,
     required this.storagePathOrUrl,
-    this.radius = 20,
+    this.radius = AppLayout.avatarDefault / 2,
     this.size,
     this.borderRadius,
     this.borderColor,
-    this.borderWidth = 2,
+    this.borderWidth = AppLayout.borderAvatar,
     this.placeholder,
     this.backgroundColor,
+    this.urlGenerator,
+    this.initials,
+    this.showOnlineIndicator = false,
   });
 
   @override
@@ -70,7 +89,7 @@ class SignedAvatar extends StatefulWidget {
 }
 
 class _SignedAvatarState extends State<SignedAvatar> {
-  AvatarService? _avatarService;
+  SignedUrlGenerator? _urlGenerator;
   String? _resolvedUrl;
   bool _loading = true;
 
@@ -80,8 +99,9 @@ class _SignedAvatarState extends State<SignedAvatar> {
     _resolve();
   }
 
-  AvatarService _ensureAvatarService() {
-    return _avatarService ??= AvatarService(Supabase.instance.client);
+  SignedUrlGenerator _ensureUrlGenerator() {
+    return _urlGenerator ??=
+        widget.urlGenerator ?? DefaultSignedUrlGenerator(bucket: 'avatars');
   }
 
   @override
@@ -129,11 +149,13 @@ class _SignedAvatarState extends State<SignedAvatar> {
 
     // Generate new signed URL and cache it
     try {
-      final signed = await _ensureAvatarService().createSignedUrl(
+      final signed = await _ensureUrlGenerator().createSignedUrl(
         v,
         expire: SharedStorageConfig.ttlDurationForBucket('avatars'),
       );
-      SignedUrlCache.set(v, signed);
+      if (signed != null && signed.isNotEmpty) {
+        SignedUrlCache.set(v, signed);
+      }
       if (!mounted) return;
       setState(() {
         _resolvedUrl = signed;
@@ -164,23 +186,12 @@ class _SignedAvatarState extends State<SignedAvatar> {
     Widget avatar;
 
     if (_loading) {
-      avatar = Container(
+      // Shimmer placeholder for rounded rect mode
+      avatar = SkeletonLoader(
         width: avatarSize,
         height: avatarSize,
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: widget.borderRadius,
-        ),
-        child: Center(
-          child: SizedBox(
-            width: 14,
-            height: 14,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: AppColors.offWhite,
-            ),
-          ),
-        ),
+        borderRadius:
+            widget.borderRadius?.resolve(TextDirection.ltr).topLeft.x ?? 12,
       );
     } else if (_resolvedUrl == null) {
       avatar =
@@ -215,10 +226,12 @@ class _SignedAvatarState extends State<SignedAvatar> {
             ),
             child: Center(
               child: SizedBox(
+                // Loading spinner dimensions — intentionally hardcoded,
+                // these are indicator-specific sizes, not layout tokens.
                 width: 14,
                 height: 14,
                 child: CircularProgressIndicator(
-                  strokeWidth: 2,
+                  strokeWidth: AppLayout.borderAvatar,
                   color: AppColors.offWhite,
                 ),
               ),
@@ -261,41 +274,81 @@ class _SignedAvatarState extends State<SignedAvatar> {
   /// Builds a circular avatar (original behavior)
   Widget _buildCircularAvatar() {
     final bgColor = widget.backgroundColor ?? AppColors.teal;
+    final avatarSize = widget.radius * 2;
+
+    Widget avatar;
 
     if (_loading) {
-      return CircleAvatar(
-        radius: widget.radius,
-        backgroundColor: bgColor,
-        child: SizedBox(
-          width: 14,
-          height: 14,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: AppColors.offWhite,
-          ),
+      // Shimmer placeholder instead of CircularProgressIndicator
+      avatar = SkeletonAvatar(size: avatarSize);
+    } else if (_resolvedUrl == null) {
+      // Initials fallback or placeholder
+      avatar =
+          widget.placeholder ?? _buildInitialsFallback(bgColor, avatarSize);
+    } else {
+      // Loaded — fade in
+      avatar = AnimatedOpacity(
+        opacity: 1.0,
+        duration: AppMotion.standard,
+        curve: AppMotion.curveDecel,
+        child: CircleAvatar(
+          radius: widget.radius,
+          backgroundColor: bgColor,
+          backgroundImage: CachedNetworkImageProvider(_resolvedUrl!),
+          onBackgroundImageError: (exception, stackTrace) {},
         ),
       );
     }
 
-    if (_resolvedUrl == null) {
-      return widget.placeholder ??
-          CircleAvatar(
-            radius: widget.radius,
-            backgroundColor: bgColor,
-            child: Icon(
-              Icons.person,
-              color: AppColors.offWhite,
-              size: widget.radius,
+    // Online indicator overlay — green dot at bottom-right
+    if (widget.showOnlineIndicator) {
+      final colorScheme = context.colorScheme;
+      avatar = Stack(
+        children: [
+          avatar,
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Container(
+              width: AppLayout.iconTiny,
+              height: AppLayout.iconTiny,
+              decoration: BoxDecoration(
+                color: colorScheme.success,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: colorScheme.phoneBackground,
+                  width: AppLayout.borderAvatar,
+                ),
+              ),
             ),
-          );
+          ),
+        ],
+      );
     }
 
-    // Use CachedNetworkImageProvider for circular avatars
+    return Semantics(image: true, label: 'User avatar', child: avatar);
+  }
+
+  /// Builds initials fallback when image fails to load.
+  Widget _buildInitialsFallback(Color bgColor, double size) {
+    if (widget.initials != null && widget.initials!.isNotEmpty) {
+      return CircleAvatar(
+        radius: size / 2,
+        backgroundColor: AppColors.gold,
+        child: Text(
+          widget.initials!.substring(0, widget.initials!.length.clamp(0, 2)),
+          style: TextStyle(
+            color: AppColors.offWhite,
+            fontWeight: FontWeight.bold,
+            fontSize: size * 0.35,
+          ),
+        ),
+      );
+    }
     return CircleAvatar(
-      radius: widget.radius,
+      radius: size / 2,
       backgroundColor: bgColor,
-      backgroundImage: CachedNetworkImageProvider(_resolvedUrl!),
-      onBackgroundImageError: (exception, stackTrace) {},
+      child: Icon(Icons.person, color: AppColors.offWhite, size: size * 0.5),
     );
   }
 }

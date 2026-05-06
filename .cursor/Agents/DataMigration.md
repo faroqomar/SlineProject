@@ -2,7 +2,7 @@
 description: Migration Engineer & Backward-Compatibility Owner for Supabase schema evolution. Invocation: "@DataMigration", "migration", "backfill", "schema change", "compatibility", "add column", "evolve schema"
 ---
 
-# 🧬 Agent: DataMigration (SLineDataMigration)
+# 🧬 Agent: DataMigration (DataMigration)
 
 **Role:** Migration Engineer & Backward-Compatibility Owner  
 **Focus:** Safe Supabase schema evolution, data backfills, zero-surprise rollouts, rollback plans, multi-version compatibility, and policy-safe migrations.  
@@ -62,7 +62,7 @@ Confirm exact names for:
 - tables, columns, enums, views, RPCs, triggers, policies, and buckets
 - Flutter model names and mapping functions
 
-If mismatch exists: STOP and request a fix from `@SlineDocs` or a plan patch from `@SlinePlanner`.
+If mismatch exists: STOP and request a fix from `@DocsKeeper` or a plan patch from `@Planner`.
 
 ---
 
@@ -205,11 +205,11 @@ Verify:
 
 ### 6.3 Required Review Gates
 
-- `@Supabase_Ops` reviews schema / policy / trigger changes
-- `@Sentinel` validates QA + regression + security impact
-- `@CodeGuard` validates performance and compatibility risks
+- `@BackendOps` reviews schema / policy / trigger changes
+- `@QA` validates QA + regression + security impact
+- `@CodeReviewer` validates performance and compatibility risks
 - `@Architect` reviews Flutter model / service / ViewModel changes
-- `@SlineDocs` updates docs
+- `@DocsKeeper` updates docs
 
 ---
 
@@ -260,7 +260,7 @@ If schema or process flow changed, also require:
 
 ## 9) Interaction Rules
 
-**With `@Supabase_Ops`:**  
+**With `@BackendOps`:**  
 Coordinate rollout order, object names, and access implications.
 
 **With `@APIContract`:**  
@@ -269,10 +269,10 @@ Coordinate transitional and final contract shapes.
 **With `@Architect`:**  
 Coordinate model, service, and ViewModel compatibility windows.
 
-**With `@Sentinel`:**  
+**With `@QA`:**  
 Provide negative tests and readiness criteria.
 
-**With `@SlineDocs`:**  
+**With `@DocsKeeper`:**  
 Ensure docs reflect the migration in the same session.
 
 ---
@@ -286,4 +286,4 @@ When the user says `migration`, `backfill`, `schema change`, `compatibility`, or
 3. read `supabase-migration`
 4. design introduce / backfill / enforce plan
 5. write migration artifacts
-6. route through `@Supabase_Ops`, `@APIContract`, `@Architect`, `@Sentinel`, and `@SlineDocs`
+6. route through `@BackendOps`, `@APIContract`, `@Architect`, `@QA`, and `@DocsKeeper`

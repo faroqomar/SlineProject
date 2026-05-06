@@ -7,13 +7,15 @@ import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/core/widgets/signed_image.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
+import 'package:sline_app/features/favorites/view/favorites_screen.dart';
+import 'package:sline_app/features/favorites/viewmodels/favorites_view_model.dart';
 import 'package:sline_app/features/profile/view/edit_profile_screen.dart';
 import 'package:sline_app/features/profile/view/my_services_screen.dart';
-import 'package:sline_app/features/profile/view/public_profile_screen.dart'; // Added
+import 'package:sline_app/features/profile/view/public_profile_screen.dart';
 import 'package:sline_app/features/profile/view/settings_screen.dart';
 import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 import 'package:sline_app/features/saved/view/saved_tasks_screen.dart';
@@ -140,7 +142,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppDimens.p24,
                   ),
-                  child: GlassContainer(
+                  child: AppCardContainer(
                     padding: const EdgeInsets.all(AppDimens.p16),
                     borderRadius: BorderRadius.circular(AppDimens.r20),
                     child: Column(
@@ -447,6 +449,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       },
                     ),
                     const SizedBox(height: AppDimens.p8),
+                    Selector<FavoritesViewModel, int>(
+                      selector: (_, vm) => vm.itemsWithProfile.length,
+                      builder: (context, count, _) {
+                        return _buildMenuItem(
+                          context,
+                          'Favorites',
+                          Icons.star_outline,
+                          AppColors.gold,
+                          badge: count > 0 ? '$count' : null,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const FavoritesScreen(),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                    const SizedBox(height: AppDimens.p8),
                     _buildMenuItem(
                       context,
                       'Work History',
@@ -624,7 +647,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final colorScheme = context.colorScheme;
     return GestureDetector(
       onTap: onTap,
-      child: GlassContainer(
+      child: AppCardContainer(
         padding: const EdgeInsets.all(AppDimens.p16),
         borderRadius: BorderRadius.circular(AppDimens.r16),
         child: Row(
@@ -686,7 +709,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return GestureDetector(
       onTap: themeProvider.toggleThemeMode,
-      child: GlassContainer(
+      child: AppCardContainer(
         padding: const EdgeInsets.all(AppDimens.p16),
         borderRadius: BorderRadius.circular(AppDimens.r16),
         child: Row(

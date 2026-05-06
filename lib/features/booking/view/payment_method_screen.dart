@@ -5,8 +5,8 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
 import 'package:sline_app/features/booking/viewmodels/booking_view_model.dart';
 
 class PaymentMethodScreen extends StatefulWidget {
@@ -125,7 +125,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
   }
 
   Widget _buildTotalAmountCard(BuildContext context) {
-    return GlassContainer(
+    return AppCardContainer(
       padding: const EdgeInsets.all(AppDimens.p20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -167,7 +167,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
   }
 
   Widget _buildCreditCardForm(BuildContext context) {
-    return GlassContainer(
+    return AppCardContainer(
       padding: const EdgeInsets.all(AppDimens.p20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

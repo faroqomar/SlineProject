@@ -11,7 +11,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/deep_link_service.dart';
 import 'package:sline_app/core/services/payment_service.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
 import 'package:sline_app/features/direct_offers/models/direct_offer_model.dart';
 import 'package:sline_app/features/direct_offers/services/direct_offers_service.dart';
@@ -231,7 +231,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Price'), findsOneWidget);
+      // Phase 7 REDESIGN: Price now shown in hero zone with overline label
+      expect(find.text('OFFER PRICE'), findsOneWidget);
       // 5000 => "5K IQD"
       expect(find.text('5K IQD'), findsOneWidget);
     });
@@ -253,7 +254,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Delivery (days)'), findsOneWidget);
+      // Phase 7 REDESIGN: Days shown in dedicated badge with "DAYS" micro label
+      expect(find.text('DAYS'), findsOneWidget);
       expect(find.text('7'), findsOneWidget);
     });
 
@@ -274,7 +276,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Status'), findsOneWidget);
+      // Phase 7 REDESIGN: Status shown in header badge + "CUSTOM OFFER" label
+      expect(find.text('CUSTOM OFFER'), findsOneWidget);
       expect(find.text('IN PROGRESS'), findsOneWidget);
     });
 
@@ -602,7 +605,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // AppBar and the GlassContainer title both show "Custom offer"
+      // AppBar and the AppCardContainer title both show "Custom offer"
       expect(find.text('Custom offer'), findsAtLeastNWidgets(1));
     });
 
@@ -751,9 +754,9 @@ void main() {
       expect(find.byIcon(Icons.arrow_back), findsOneWidget);
     });
 
-    // ── T205: GlassContainer wraps offer details ─────────────────────────
+    // ── T205: AppCardContainer wraps offer details ─────────────────────────
 
-    testWidgets('T205 offer details are inside a GlassContainer', (
+    testWidgets('T205 offer details are inside a AppCardContainer', (
       tester,
     ) async {
       when(
@@ -770,8 +773,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // At least one GlassContainer for the main details card
-      expect(find.byType(GlassContainer), findsAtLeastNWidgets(1));
+      // At least one AppCardContainer for the main details card
+      expect(find.byType(AppCardContainer), findsAtLeastNWidgets(1));
     });
   });
 }

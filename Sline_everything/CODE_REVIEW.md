@@ -7,7 +7,43 @@
 
 > Historical review note: this document records review findings and fixes from earlier passes. Treat references to removed files or older structure as historical context; the current live structure is documented in `Sline_everything/STRUCTURE.md` and `Sline_everything/DEVELOPER_GUIDE.md`.
 
-## Current Guardrail Notes (2026-04-05)
+## Current Guardrail Notes (2026-04-30)
+
+### Home Discovery Navigation Contract (2026-04-30)
+
+**Pattern**: When bottom-nav destinations change, define the contract once and reference it everywhere. The live authenticated shell uses `MainNavDestinations` from `lib/core/navigation/main_nav_destinations.dart` for Home, Dashboard, Messages, and Profile. Bookings and Tenders are Home discovery modes, not app-shell destinations.
+
+**Rule**:
+1. Do not hardcode bottom-nav indexes in shell, bottom nav, deep-link handlers, or tests.
+2. Update `CustomBottomNavBar.visibleDestinations` tests whenever the visible app-shell contract changes.
+3. Scan for retired nav labels and stale index assumptions after consolidation.
+4. Preserve `AppLogger` instrumentation for stale index normalization and Home discovery mode changes.
+
+**Evidence**: Home Discovery Nav Consolidation (2026-04-30) removed Tenders/Bookings from the bottom nav and moved them below Home search. Orchestrator MED-2 found fallback normalization still depended on raw provider indexes for short override screen lists; fixed by normalizing whenever `rawIndex != currentIndex`.
+
+### Route-Push Widget Test Isolation (2026-04-30)
+
+**Pattern**: Tests that only need to prove a tap pushes a route should not instantiate backend-heavy destination screens.
+
+**Rule**: Add a narrow test seam, such as an optional destination builder, and keep the production default unchanged. The seam must be private to widget construction and must not leak test-only behavior into production code paths.
+
+**Evidence**: Home Discovery Nav Consolidation Orchestrator MED-1 found the Home task-card route-push test coupled to real `TaskDetailsScreen` and its management/Supabase loading. `HomeScreen.taskDetailsScreenBuilder` now lets the widget test push a stub details route while production still pushes `TaskDetailsScreen(task: task)`.
+
+### Press-Animation Timing in Widget Tests (2026-04-30)
+
+**Pattern**: `ScaleButton` delays callbacks briefly to allow press feedback before executing tap behavior.
+
+**Rule**: After tapping a widget that uses `ScaleButton`, advance the test clock past the callback delay before asserting navigation, callbacks, or observer counts.
+
+**Evidence**: Home task-card route-push coverage initially left a pending timer and failed until the test advanced time after the tap.
+
+### NavigatorObserver Assumption Check (2026-04-30)
+
+**Pattern**: Widget tests should not assume the initial route push is counted unless the harness proves it.
+
+**Rule**: For interaction-driven route assertions, assert the post-interaction push contract directly, or write the observer to distinguish initial and interaction pushes explicitly.
+
+**Evidence**: Home route-push coverage initially expected an initial observer push that was not emitted by the harness. The test now asserts a push after the task-card tap.
 
 ### Widget Test Type A/B Classification (Phase F, 2026-04-05)
 
@@ -70,6 +106,144 @@ Any T-number appearing in more than one file is a collision that must be renumbe
 **Process**: After multi-session work, run `@SystemEvolution` to scan all session logs, agent files, and core docs. It produces an evidence-based report identifying rule gaps, clarity gaps, propagation gaps, and coordination improvements. Apply recommendations to `.cursor/Agents/` files to prevent repeat failures.
 
 **Evidence**: Phase F — First SystemEvolution report identified 13 priority actions across 7 agent files, all applied. Most common failure type: planning gaps (wrong assumptions about codebase reality).
+
+### NO GLASS POLICY (Phase 1 Core Widget Redesign, 2026-04-07)
+
+**Pattern**: NEVER use `BackdropFilter`, `ImageFilter.blur`, or any glassmorphism/frosted effect. All surfaces must be solid: `colorScheme.cardBackground` + `colorScheme.cardBorder` + `AppDecorations.elevation()`. Glass files (`glass_container.dart`, `glass_card.dart`, `glass_button.dart`) have been deleted. Use `AppCardContainer`, `AppCard`, `AppStyledButton` instead.
+
+**Evidence**: Phase 1 — Removed all BackdropFilter from 3 core widgets + bottom nav bar. Replaced 28 dark mode transparent color tokens with solid opaque equivalents. Removed `glassBoxDecoration()`, `bottomNavBarDecoration()`, `glassCardGradient` dead code (~143 lines).
+
+### Zone Initialization Guard (Phase 1, 2026-04-07)
+
+**Pattern**: `WidgetsFlutterBinding.ensureInitialized()` and `runApp()` MUST be in the SAME zone. When using `SentryFlutter.init(appRunner: ...)`, do NOT wrap `runApp` in `runZonedGuarded` — Sentry already provides zone-based error catching. `runZonedGuarded` creates a different zone, causing Flutter's "Zone mismatch" warning.
+
+**Evidence**: Phase 1 — Zone mismatch error on every app start. `ensureInitialized` was called by Sentry in its zone, but `runApp` was inside `runZonedGuarded` (a different zone). Fixed by removing `runZonedGuarded` — Sentry + `FlutterError.onError` + `PlatformDispatcher.onError` already cover all error boundaries.
+
+### Dead Code Detection After Refactors (Phase 1, 2026-04-07)
+
+**Pattern**: After any major refactor (rename, remove, replace), run @CodeGuard dead code grep patterns to verify no orphaned functions, unused imports, or stale definitions remain. Check specifically: deprecated functions still defined but never called, old file names in imports, and transparent color tokens from glass era.
+
+**Evidence**: Phase 1 — `glassBoxDecoration()`, `bottomNavBarDecoration()`, `glassCardGradient` survived the glass removal for an entire review cycle. Detected only by @SystemEvolution post-session analysis, not by any agent during execution.
+
+### Sliver Widget Safety (Phase 4 Home & Discovery, 2026-04-09)
+
+**Pattern**: Never wrap sliver widgets (`SliverList`, `SliverGrid`, `SliverPadding`, `SliverToBoxAdapter`, `DiscoveryTaskSliver`) with non-sliver widgets (`Semantics`, `Container`, `Padding`) inside a `CustomScrollView`. The viewport expects `RenderSliver` children. Add Semantics INSIDE sliver children instead, or use `SliverToBoxAdapter` to bridge.
+
+**Evidence**: Phase 4 — `Semantics(label: 'Task feed', child: DiscoveryTaskSliver(...))` inside `CustomScrollView` caused `RenderViewport` type mismatch crash. Fixed by removing the wrapper.
+
+### Widget Lifecycle Context Access (Phase 4, 2026-04-09)
+
+**Pattern**: Never call `MediaQuery.of(context)`, `Theme.of(context)`, `context.colorScheme`, or `AppMotion.respectMotion(context, ...)` inside `initState()`. Inherited widgets are not available before the widget is fully mounted. Use `didChangeDependencies()` with a `bool _didInit` guard for one-time setup.
+
+**Evidence**: Phase 4 — `AppMotion.respectMotion(context, ...)` in `_StaggeredTaskItemState.initState()` triggered "dependOnInheritedWidgetOfExactType was called before initState() completed" assertion.
+
+### Infinite Animation Test Pattern (Phase 4, 2026-04-09)
+
+**Pattern**: When testing widgets with infinite/repeating animations (skeleton shimmer with `controller..repeat()`, pulse animations), use `pump(Duration)` NOT `pumpAndSettle()`. `pumpAndSettle` times out after 10 seconds on non-terminating animations. Use `pump(Duration(milliseconds: 500))` to advance enough frames for the widget to render.
+
+**Evidence**: Phase 4 — HomeScreen tests (T53-T55) failed with "pumpAndSettle timed out" because `SkeletonLoader` uses `AnimationController..repeat()`.
+
+### DraggableScrollableSheet Test Pattern (Phase 4, 2026-04-09)
+
+**Pattern**: When testing widgets inside `DraggableScrollableSheet`, do not use `scrollUntilVisible` with `find.byType(Scrollable).last` — the sheet introduces nested `Scrollable` widgets. Use `tester.drag(find.byType(DraggableScrollableSheet), Offset(0, -N))` instead.
+
+**Evidence**: Phase 4 — FiltersModal test failed with "Bad state: No element" when `scrollUntilVisible` couldn't resolve which `Scrollable` to use after DraggableScrollableSheet conversion.
+
+### Test Text Expectation Atomic Updates (Phase 4, 2026-04-09)
+
+**Pattern**: When changing user-facing text in a View (even punctuation), update corresponding test expectations in the same phase. Grep `test/` for the old string immediately after the view change.
+
+**Evidence**: Phase 4 — Empty state text changed from "No favorites yet." to "No favorites yet" (trailing period removed) but test expected old text. Caught in QA, not during the change phase.
+
+### Token Compliance Guardrail (Phase 5, 2026-04-09)
+
+**Pattern**: All visual properties MUST use design system tokens. Hardcoded values bypass the Three-Layer Architecture and prevent theme-level redesign.
+
+**Rules**:
+1. **Colors**: Use `context.colorScheme.*` or `AppColors.*`. Never `Color(0xFF...)`, `Colors.green`, `Colors.red`, etc.
+2. **Typography**: Use `AppTypography.*`. Never `fontSize:` in feature code. Exception: sub-micro sizes (< 10px) require a justification comment.
+3. **Motion**: Use `AppMotion.*` for all durations and curves. Never `Duration(milliseconds: ...)` or `Curves.*` in feature code.
+4. **Elevation**: Use `AppDecorations.elevation(level)`. Never `BoxShadow(...)` in feature code.
+5. **Spacing/Sizing**: Use `AppDimens.*` or `AppLayout.*`. Never magic numbers for padding, margins, or sizes.
+
+**Verification**: After any UI change, run:
+```bash
+grep -rn 'Colors\.\(green\|red\|blue\|grey\)' lib/features/
+grep -rn 'BoxShadow(' lib/features/
+grep -rn 'Duration(milliseconds:' lib/features/
+grep -rn 'fontSize:' lib/features/
+```
+Any hits must be replaced with tokens or documented with a justification comment.
+
+**Evidence**: Phase 5 — `Colors.green` and `Colors.red` in work_tab.dart SnackBars, `BoxShadow` in chat_screen.dart, `Duration(milliseconds: 600)` in conversation_list_tile.dart. All fixed to use semantic tokens.
+
+### Raw Exception Leak Prevention (Phase 5 Orchestrator, 2026-04-09)
+
+**Pattern**: Exception `.toString()` or `.message` must NEVER reach user-visible UI (SnackBars, dialogs, text widgets). Exception details in logs must use structured `error:` parameter, not string interpolation.
+
+**Rules**:
+1. UI: Always use `ErrorMapper.map(e)` for user-facing messages.
+2. Logs: Use `AppLogger.e('context message', error: e, tag: 'Tag')` — never `AppLogger.e('failed: $e')`.
+3. Semantics: Never include `${vm.error}` in accessibility labels — exposes internal error text to screen readers.
+
+**Evidence**: Phase 5 — `notifications_modal.dart` leaked `vm.error` in Semantics label. `chat_screen.dart` logged `$e` instead of structured error parameter. Both fixed.
+
+### Storage Path Redaction in Logs (Phase 5 Orchestrator, 2026-04-09)
+
+**Pattern**: Full Supabase storage paths (e.g., `chat-attachments/user-id/file.jpg`) contain user IDs and should not appear in logs.
+
+**Rule**: Log only the filename: `storagePath.split('/').last`. Never `'uploading $storagePath'`.
+
+**Evidence**: Phase 5 — `attachment_message_tile.dart` logged full storage paths in 3 locations. Fixed to log only filenames.
+
+### Animation Controller in Build Guard (Phase 5 Orchestrator, 2026-04-09)
+
+**Pattern**: Never call `AnimationController.forward()`, `.animateTo()`, or `.repeat()` synchronously during `build()`. This triggers "setState during build" assertions.
+
+**Rule**: Wrap animation triggers in `WidgetsBinding.instance.addPostFrameCallback((_) { ... })`.
+
+**Evidence**: Phase 5 — `notification_badge_button.dart` called `_handleCountChange(count)` (which triggers animation) directly in `build()`. Fixed with `addPostFrameCallback`.
+
+### Deferred Data Fetch for Navigation (Phase 6 Chat Redesign, 2026-04-10)
+
+**Pattern**: Never `await` a data-fetching call (e.g., `fetchMessages`, `fetchDetails`) BEFORE `Navigator.push`. The user must see the destination screen instantly. Move data loading to the destination screen's `initState()` (via `addPostFrameCallback`) and render a loading state (spinner or skeleton) while data arrives.
+
+**Anti-pattern** (causes lag):
+```dart
+await controller.fetchMessages(id);  // blocks UI ~500ms+
+Navigator.push(context, ...);
+```
+
+**Correct pattern**:
+```dart
+Navigator.push(context, ...);  // instant
+// In destination screen initState():
+WidgetsBinding.instance.addPostFrameCallback((_) {
+  controller.fetchMessages(id);
+});
+```
+
+**Evidence**: Phase 6 continuation — `_openChat()` in `messages_screen.dart` blocked on `await controller.fetchMessages(convo.id)` before navigation, causing ~500ms+ chat opening lag. Fixed by moving `fetchMessages` into `ChatScreen.initState()` with a loading spinner.
+
+### Optimistic Local State Updates (Phase 6 Chat Redesign, 2026-04-10)
+
+**Pattern**: When a user action triggers a backend update that also changes visible UI state (e.g., marking a message as read, toggling a favorite, changing a status), apply the change locally first via a `*Locally()` method on the ViewModel, then reconcile with a background `fetch*()` call. Never rely solely on a backend round-trip to update the UI.
+
+**Rule**:
+1. `viewModel.updateThingLocally(id)` — mutates the local list/object and calls `notifyListeners()`
+2. `unawaited(viewModel.fetchThings())` — background reconciliation
+
+**Evidence**: Phase 6 continuation — unread badge persisted after opening a conversation because `markSeen()` only updated the backend. Local `Conversation` object still had `lastMessageSeenAt == null`. Fixed by adding `markConversationReadLocally()` for instant optimistic update.
+
+### Auto-Scroll Differentiation (Phase 6 Chat Redesign, 2026-04-10)
+
+**Pattern**: When implementing auto-scroll-to-bottom in list views (chat, feeds, logs), distinguish two cases:
+1. **Initial load** (list goes from empty to populated): ALWAYS scroll to bottom.
+2. **Incremental update** (new item appended while list is visible): scroll to bottom ONLY if the user is near the bottom (within ~300px of `maxScrollExtent`).
+
+**Rule**: Detect the initial load case by checking `previousItemCount == 0` before the update.
+
+**Evidence**: Phase 6 continuation — auto-scroll guard `_previousMessageCount > 0` blocked the 0-to-N transition after `fetchMessages` was moved to `initState()`. Messages loaded but the view stayed at position 0 instead of scrolling to the latest message.
 
 ### Raw String Interpolation Guard (Phase E, 2026-04-05)
 

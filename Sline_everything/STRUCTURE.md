@@ -1,6 +1,6 @@
 # SLine App - Folder Structure Guide
 
-**Last Updated:** 2026-04-05 (Phase F: widget tests, coverage 40.8%, full agent inventory in .cursor/Agents/ including SystemEvolution meta-agent; previous: Phase E sealed ViewState/AppFailure, DeepLinkRegistry, 14 VM test files, 1200+ tests)
+**Last Updated:** 2026-04-30 (Home discovery navigation consolidation: `lib/core/navigation/main_nav_destinations.dart` added as the named bottom-nav index contract; authenticated shell now exposes Home, Dashboard, Messages, Profile while Home hosts Bookings/Tenders discovery modes below search. Previous: Phase 4 Home & Discovery Redesign)
 
 This document describes the current repository layout. It replaces older references to `presentation/` and `controllers/`; the live Flutter codebase uses `view/` and `viewmodels/` under `lib/features/`.
 
@@ -117,6 +117,7 @@ lib/
 ├── core/
 │   ├── config/
 │   ├── models/
+│   ├── navigation/
 │   ├── providers/
 │   ├── services/
 │   ├── theme/
@@ -153,11 +154,22 @@ Current subfolders:
 - `models/`: global models such as `user_profile.dart` and shared `payment_return_args.dart`
   - `view_state.dart` — **Phase E** Sealed ViewState<T> (ViewInitial, ViewLoading, ViewLoaded, ViewFailed)
   - `app_failure.dart` — **Phase E** Sealed AppFailure (NetworkFailure, AuthFailure, ValidationFailure, BusinessFailure)
+- `navigation/`: app-shell navigation contracts
+  - `main_nav_destinations.dart` — named bottom-nav indexes for Home, Dashboard, Messages, and Profile. Keep app shell, bottom nav, profile deep links, and navigation tests on this contract instead of duplicating numeric indexes.
 - `providers/`: app-wide providers such as navigation and theme mode
 - `services/`: Supabase bootstrap, payment services, cache, deep links, crash reporting, logging, **role switch coordinator**
   - `deep_link_registry.dart` — **Phase E** DeepLinkRegistry with feature-side handler registration
   - `payment_response_helpers.dart` — **Phase E** Pure helper functions for payment response parsing
-- `theme/`: color, spacing, typography, decorations, theme assembly, theme dashboard
+- `theme/`: Three-layer design system (Theme → Layout → Components)
+  - `app_colors.dart` — color palette + 44-property AppColorScheme (semantic status + interactive colors)
+  - `app_typography.dart` — 14 text styles with per-style line heights (1.0–1.5)
+  - `app_dimens.dart` — raw spacing primitives (p0–p100), border radii (r4–r50), icon sizes
+  - `app_layout.dart` — **Phase 0.7** semantic layout tokens (card, avatar, button, spacing, icon, nav, border)
+  - `app_motion.dart` — **Phase 0** animation tokens (7 durations, 7 curves, 4 scales, 3 staggers)
+  - `app_states.dart` — **Phase 0** interaction state constants (8-state model, haptic mapping)
+  - `app_decorations.dart` — 5-level elevation shadow scale + decoration methods
+  - `app_theme.dart` — Material 3 ThemeData assembly + 13 component themes
+  - `theme_dashboard.dart` — documentation-only reference for all design tokens
 - `utils/`: error mapping, formatting, loading overlays, URL cache, route transitions, web error filters, **ledger forensics** (p_meta session_id/request_id for ledger event flow)
 - `widgets/`: shared UI widgets such as signed media, buttons, badges, loaders, bottom nav
 - `mixins/`: shared behavior mixins such as `role_switch_aware.dart`
@@ -165,6 +177,7 @@ Current subfolders:
 Important current core files:
 
 - `lib/core/services/supabase_config.dart`
+- `lib/core/navigation/main_nav_destinations.dart` — Home/Dashboard/Messages/Profile named index contract for the authenticated bottom navigation
 - `lib/core/services/crash_reporting_service.dart` — Abstract interface + NoOp stub for crash reporting
 - `lib/core/services/sentry_crash_reporting_service.dart` — Phase D: Sentry implementation of CrashReportingService
 - `lib/core/services/payment_service.dart`
@@ -177,6 +190,7 @@ Important current core files:
 - `lib/core/utils/ledger_forensics.dart` — Ledger forensics (session_id, request_id) for p_meta; single source for ledger event flow (09)
 - `lib/core/widgets/signed_avatar.dart`
 - `lib/core/widgets/signed_image.dart`
+- `lib/core/widgets/fullscreen_image_viewer.dart` — **Phase 6** Reusable fullscreen image viewer with pinch-to-zoom and optional caption
 
 ### `lib/features/`
 
@@ -223,6 +237,9 @@ Not every feature uses every subfolder, but the standard live convention is:
   - `services/profile_deep_link_handler.dart` — **Phase E** Deep link handler for profile routes
 - `lib/features/chat/`: conversations, messages, attachments, realtime updates
   - `services/chat_deep_link_handler.dart` — **Phase E** Deep link handler for chat routes
+  - `view/widgets/conversation_list_tile.dart` — **Phase 6** Elevated card tile with unread indicators, relative time, online dot
+  - `view/widgets/message_bubble.dart` — **Phase 6** Emoji-only rendering, link detection, reply quotes
+  - `view/widgets/offer_message_bubble.dart` — **Phase 6** Elevated offer card with status borders
 - `lib/features/dashboard/`: unified dashboard tabs (Overview, Bookings, Work, Wallet, Inbox) and role-based work summaries, including the live bottom-nav dashboard slot. Tab cards (booking, offer, wallet snapshot) live in owning features: `booking/view/widgets/dashboard_booking_card.dart`, `tasks/view/widgets/dashboard_offer_card.dart`, `wallet/view/widgets/wallet_snapshot_card.dart`; dedicated Wallet tab in `view/tabs/wallet_tab.dart`; shared status helpers in `core/utils/status_presenter.dart`
 - `lib/features/direct_offers/`: direct chat offers (create, accept, pay, deliver, complete) and payment recovery
   - `services/direct_offer_deep_link_handler.dart` — **Phase E** Deep link handler for direct offer routes

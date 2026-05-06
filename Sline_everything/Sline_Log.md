@@ -1,6 +1,167 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2026-04-05
+**Last Updated:** 2026-04-30
+
+---
+
+## 🧭 Version 2.25.1 — Home Discovery Navigation Consolidation (2026-04-30)
+
+**Classification:** Navigation consolidation + Home discovery polish
+**Plan:** `.TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
+**Plan Critique:** `.TODO/PLAN_CRITIQUE_2026-04-30_HomeDiscoveryNavConsolidation.md`
+**Session Log:** `docs/LOG/SESSION_HomeDiscoveryNavConsolidation_2026-04-30.md`
+**Master Report:** `.TODO/MASTER_REPORT_2026-04-30_HomeDiscoveryNavConsolidation.md`
+**System Evolution:** `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-30.md`
+**Supabase objects changed:** none
+
+### Scope
+- Bottom navigation now exposes four app-shell destinations: Home, Dashboard, Messages, Profile.
+- `Tenders` and `Bookings` moved into Home below the search bar as discovery modes alongside `All Work`.
+- Added `lib/core/navigation/main_nav_destinations.dart` so shell, bottom nav, deep links, and tests share named destination indexes.
+- Added `AppLogger` instrumentation for stale navigation-index normalization and Home discovery mode changes/reselects.
+
+### Key Files
+- `lib/app/main_navigation_screen.dart`
+- `lib/core/navigation/main_nav_destinations.dart`
+- `lib/core/widgets/custom_bottom_nav_bar.dart`
+- `lib/features/home/view/home_screen.dart`
+- `lib/features/profile/services/profile_deep_link_handler.dart`
+- `test/core/widgets/custom_bottom_nav_bar_test.dart`
+- `test/widget/app/main_navigation_screen_test.dart`
+- `test/widget/home/home_screen_test.dart`
+- `test/features/profile/services/profile_deep_link_handler_test.dart`
+- `test/widget/auth/login_screen_test.dart`
+- `test/integration_test/create_tender_task_flow_test.dart`
+
+### Review Fixes
+- Orchestrator MED-1: isolated Home route-push widget coverage with `HomeScreen.taskDetailsScreenBuilder`, preserving the production `TaskDetailsScreen(task: task)` default.
+- Orchestrator MED-2: normalized `MainNavigationScreen` provider state whenever the raw provider index differs from the effective visible index.
+
+### Verification
+- Changed-file analyzer: no issues.
+- Focused widget tests: custom bottom nav, main navigation, Home, profile deep links, and login screen passed.
+- Full `flutter test`: `+1400 ~30`.
+- Full `flutter analyze`: still fails only on unrelated pre-existing chat analyzer baseline issues in `lib/features/chat/view/widgets/message_bubble.dart` and `test/widget/chat/phase6_advanced_interactions_test.dart`.
+
+---
+
+## 🎨 UI Redesign Phase 5 — Chat, Dashboard & Notifications Token Normalization (2026-04-09)
+
+**Classification:** Token Normalization + Polish Pass (NOT a visual redesign)
+**Master Plan Coverage:** Phases 6, 7, 14 — token layer only; visual redesign deferred
+**Plan:** `.TODO/PLAN_Phase5_ChatDashboardNotifications_2026-04-09.md`
+**Session Log:** `docs/LOG/SESSION_PLAN_Phase5_ChatDashboardNotifications_2026-04-09.md`
+**Master Report:** `.TODO/MASTER_REPORT_2026-04-09_Phase5_ChatDashboardNotifications.md`
+**System Evolution:** `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-09_v2.md`
+
+### Scope: 17 files across Chat (10), Notifications (3), Dashboard (4)
+
+### Implemented
+- **Token compliance:** All `AppColors.teal/gold/lightTeal/lightRed` → `colorScheme.primary/warning/success/danger` in modified files
+- **Motion tokens:** All hardcoded `Duration(milliseconds:)` → `AppMotion.*` tokens; added `AppMotion.typingCycle` (600ms)
+- **Message grouping:** `isFirstInGroup`/`isLastInGroup` booleans on `MessageBubble`, computed in `ChatScreen._buildChatItems()` (2-min window + same sender)
+- **Date separators:** Sealed `_ChatListItem` pattern (`_MessageItem` + `_DateSeparatorItem`) in ChatScreen
+- **Stagger animations:** MessagesScreen, NotificationsModal, ActivityFeedPreview — single controller, Interval-based, `_hasAnimatedEntrance` guard
+- **Typing indicator:** 3-dot sine pulse animation in ConversationListTile
+- **Spring badge:** ScaleTransition with `AppMotion.curveSpring` on NotificationBadgeButton
+- **Shimmer loading:** SkeletonLoader replacing CircularProgressIndicator in AttachmentMessageTile, BookingsTab, NotificationsModal, ActivityFeedPreview
+- **Shake validation:** TweenSequence with `AppInteractionStates.shakeAmplitude` on CreateOfferSheet
+- **Haptic feedback:** All interactive elements (offer accept/decline, notification tap, send button, etc.)
+- **Semantics:** Full coverage on all modified widgets including "Needs Your Review" section header
+- **Skeleton updates:** SkeletonConversationTile (48px avatar, r18 card), SkeletonMessageBubble (75% width, r18)
+- **Tests:** +17 new widget tests (8 MessageBubble, 9 OfferMessageBubble)
+
+### Orchestrator Review Fixes (12 items)
+- `AppDecorations.elevation(2)` replacing hardcoded BoxShadow in ChatScreen FAB
+- `AppMotion.typingCycle` token added, used in ConversationListTile
+- `Colors.green`/`Colors.red` → `colorScheme.success`/`colorScheme.danger` in WorkTab SnackBars
+- Raw `$e` exception → `error: e` named param in ChatScreen image send log
+- Price/title removed from CreateOfferSheet INFO log (financial data leak)
+- Raw `vm.error` removed from NotificationsModal Semantics label
+- `_handleCountChange` moved to post-frame callback in NotificationBadgeButton
+- Dead `AnimatedOpacity` removed from MessagesScreen empty state
+- `bottom: 90` → `AppLayout` token expression in ChatScreen FAB
+- `Curves.easeInOut` → `AppMotion.curveSymmetric` in CreateOfferSheet shake
+- Storage paths redacted to filename only in AttachmentMessageTile logs
+- Stale `AppColors.lightRed` → `colorScheme.danger` in `01_app_ui_diagram.md`
+
+### QA Results
+- `flutter analyze`: 0 issues
+- `flutter test`: +1366 ~30 -2 (2 pre-existing failures, 30 skipped integration)
+- Architecture guards: All pass
+
+### Key Learning
+- **Phantom redesign problem identified:** This phase was labeled "Redesign" but produced zero visible UI changes. The user could not perceive any difference. Root cause: plan covered only token normalization, not the structural visual redesign specified in the Master Plan.
+- **System Evolution Report v2** produced 4 new critical rules (RG-6 through RG-9) to prevent recurrence: Visual Change Classification, Visual Verification Gate, Master Plan Cross-Reference, Visual Attestation.
+
+---
+
+## 🎨 UI Redesign Phase 4 — Home & Discovery (2026-04-08)
+
+**Classification:** Redesign (structural layout changes)
+**Master Plan Coverage:** Phase 4
+**Session Log:** `docs/LOG/SESSION_PLAN_Phase4_HomeDiscovery_2026-04-08.md`
+
+### Scope: 10 files — HomeScreen, discovery slivers, filters modal, 3 skeleton variants
+- Content-first home redesign with scrollable discovery
+- FiltersModal with DraggableScrollableSheet
+- 3 new skeleton variants (SkeletonSearchResultCard, SkeletonCategoryTile, SkeletonFavoriteCard)
+- Stagger entrance animations on discovery sections
+- 7 test regressions found and fixed in-session (sliver/Semantics crash, shimmer pumpAndSettle timeout, DraggableSheet scroll ambiguity)
+
+---
+
+## 🎨 UI Redesign Phase 2 — App Shell, Auth & Cards (2026-04-08)
+
+**Classification:** Redesign (structural layout + animation changes)
+**Master Plan Coverage:** Phases 2, 3, 5
+**Session Log:** `docs/LOG/SESSION_PLAN_Phase2_AppShellAuthCards_2026-04-08.md`
+
+### Scope: App shell transitions, 7 auth screens, 8 card widgets, +15 tests
+- MainNavigationScreen page transitions (StatefulWidget with AnimationControllers)
+- Login/signup stagger entrance animations
+- 8 card types redesigned (task, tender, booking, dashboard offer, booking card, dashboard booking, work item, counters)
+- ScaleButton press feedback on all interactive cards
+
+---
+
+## 🎨 UI Redesign Phase 0.7 — Layout Tokens (2026-04-08)
+
+**Classification:** Token Normalization (foundation infrastructure)
+**Master Plan Coverage:** Phase 0 sub-phase
+**Session Log:** `docs/LOG/SESSION_PLAN_LayoutTokens_Phase0_7_2026-04-08.md`
+
+### Scope: NEW `app_layout.dart` with 41 semantic tokens + 53 tests
+- Card sizes, avatar sizes, button heights, spacing rhythm
+- Design/theme separation: Layer 2 (layout) split from Layer 1 (theme)
+
+---
+
+## 🎨 UI Redesign Phase 1 — Core Widget Redesign (2026-04-07)
+
+**Classification:** Redesign (structural widget changes)
+**Master Plan Coverage:** Phase 1
+**Session Log:** `docs/LOG/SESSION_PLAN_CoreWidgetRedesign_2026-04-07.md`
+
+### Scope: 14 fundamental widgets redesigned + 87 tests
+- AppButton, AppTextField, GlassContainer (→ solid), SignedAvatar, CustomBottomNavBar, ScaleButton (NEW), SkeletonLoader (NEW)
+- NO GLASS policy enforced: all BackdropFilter removed, replaced with solid surfaces + AppDecorations.elevation
+
+---
+
+## 🎨 UI Redesign Phase 0 — Design System Foundation (2026-04-07)
+
+**Classification:** Token Normalization (foundation infrastructure)
+**Master Plan Coverage:** Phase 0 (sub-phases 0.1–0.6)
+**Session Log:** `docs/LOG/SESSION_PLAN_DesignSystemFoundation_2026-04-07.md`
+
+### Scope: 6 theme token files created/updated
+- NEW `app_motion.dart` — 7 durations, 7 curves, 4 scales, 3 staggers
+- NEW `app_states.dart` — 8-state model (default→hover→focus→active→disabled→loading→success→error)
+- NEW `app_decorations.dart` — 5-level elevation shadow scale
+- Updated `app_colors.dart` — semantic color expansion (success/warning/info/danger + muted)
+- Updated `app_typography.dart` — line height normalization
+- Updated `app_theme.dart` — CardThemeData, DialogThemeData, BottomSheetThemeData
 
 ---
 
@@ -3872,3 +4033,73 @@ Flutter + Supabase freelance marketplace with real-time chat, tasks, and profile
 - [x] Rate limiting tests (2s debounce)
 - [x] Notification verification (reject creates notification)
 
+### 🟢 Version 2.25 — Phase 6 Chat & Messaging Redesign
+
+**Date**: 2026-04-10
+**Status**: Phase 6 Complete — Chat & Messaging visual redesign with advanced interactions
+**Commit**: _Pending_
+
+#### ✅ Implemented
+
+- **Conversation List Redesign**: Elevated card tiles with `AppDecorations.elevation(1)`, left accent bar (3.5px primary) for unread state, inline unread dot (7px), primary border glow, "You:" prefix on sent messages, relative time formatting (Just now/Xm/Xh/Yesterday/weekday/MMMd), 50px circular avatar with online status dot
+- **Unread State Management**: Optimistic local update via `markConversationReadLocally()` + background `fetchConversations()` reconciliation. Unread pill badge in header showing total count
+- **Message Bubble Enhancements**: Emoji-only rendering (large without bubble for 1-3 emoji), link detection with tappable URLs via RichText, reply quote display (sender name + quoted text)
+- **Chat Interaction Features**: Swipe-to-reply gesture, long-press context menu, reply preview bar in composer
+- **Instant Chat Navigation**: Deferred `fetchMessages` from pre-navigation blocking call to `ChatScreen.initState()` with loading spinner, eliminating ~500ms+ lag
+- **Auto-Scroll Fix**: Differentiated initial load (always scroll to bottom) vs incremental updates (scroll only if within 300px of bottom)
+- **Offer Message Bubble**: Elevated card with AnimatedContainer, status-colored border, CUSTOM OFFER badge, status chips (Pending/Accepted/Declined/Completed)
+- **FullscreenImageViewer**: New reusable core widget with InteractiveViewer (pinch-to-zoom), close button, optional caption bar, full Semantics coverage
+- **Search Bar**: Debounced filtering (300ms) in MessagesScreen header with animated toggle
+- **Typing Indicator**: Disabled (TODO) — backend `otherUserTyping` unreliable, sine-wave dot pulse glitches. Downgraded from `TickerProviderStateMixin` to `SingleTickerProviderStateMixin`
+
+#### 📁 New Files
+
+| File | Purpose |
+|------|---------|
+| `lib/core/widgets/fullscreen_image_viewer.dart` | Reusable fullscreen image viewer with pinch-to-zoom |
+
+#### 🔧 Modified Files
+
+| File | Changes |
+|------|---------|
+| `lib/features/chat/view/widgets/conversation_list_tile.dart` | Complete redesign: elevated card, unread indicators, relative time, typing disabled |
+| `lib/features/chat/view/messages_screen.dart` | Search bar, unread badge, deferred navigation, optimistic read clearing |
+| `lib/features/chat/view/chat_screen.dart` | initState fetchMessages, loading spinner, auto-scroll fix, swipe-to-reply |
+| `lib/features/chat/view/widgets/message_bubble.dart` | Emoji-only rendering, link detection, reply quotes |
+| `lib/features/chat/view/widgets/offer_message_bubble.dart` | Elevated card, status borders, AnimatedContainer |
+| `lib/features/chat/view/widgets/chat_context_widget.dart` | Pill polish with icon differentiation |
+| `lib/features/chat/attachments/widgets/attachment_message_tile.dart` | Fullscreen viewer integration |
+| `lib/features/chat/viewmodels/chat_view_model.dart` | Added `markConversationReadLocally()` |
+| `lib/features/notifications/view/widgets/notification_badge_button.dart` | Ticker mixin fix |
+| `test/widget/chat/phase6_advanced_interactions_test.dart` | 19 new widget tests (47 total chat tests pass) |
+
+#### 📚 Documentation
+
+- **Session Log**: `docs/LOG/SESSION_PLAN_Phase6_ChatAdvancedInteractions_2026-04-10.md`
+- **System Evolution**: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-10.md`
+- **Developer Guide**: Updated Chat Feature Reference file inventory (v2.25.0)
+- **Structure**: Updated core/widgets/ and features/chat/ entries
+- **Code Review**: 3 new guardrail notes (Deferred Navigation, Optimistic Updates, Auto-Scroll)
+
+#### 📊 Impact
+
+- Chat conversations open instantly (no pre-fetch lag)
+- Unread indicators clear immediately on conversation open
+- Emoji messages render at large size for visual emphasis
+- URLs are tappable inline within message bubbles
+- Image attachments viewable fullscreen with pinch-to-zoom
+- Conversation list visually distinguishes read vs unread at a glance
+
+#### 🧪 Verification
+
+- Widget tests: `flutter test test/widget/chat/` — 47/47 pass
+- Full suite: `flutter test` — 1392 pass, 30 skip, 1 pre-existing flaky
+- Analyzer: `flutter analyze` — 0 errors, 0 warnings, 4 pre-existing infos
+- Formatter: `dart format --set-exit-if-changed .` — clean
+
+#### 🔒 Known Limitations (Backend Gaps)
+
+- Reply storage: needs `reply_to_message_id` column + MessageService + ChatViewModel.sendReply()
+- Message deletion: needs `delete_message` RPC with ownership verification
+- Delivery/read receipts: needs full status chain (sending→sent→delivered→read)
+- Explicit online status: using `presenceUpdatedAt` within 60s as heuristic (no `isOnline` field)

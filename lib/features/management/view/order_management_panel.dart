@@ -4,7 +4,7 @@ import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/management/models/work_log_scope.dart';
 import 'package:sline_app/features/management/view/widgets/work_log_tile.dart';
 import 'package:sline_app/features/management/viewmodels/order_management_view_model.dart';
@@ -60,7 +60,7 @@ class _OrderManagementPanelState extends State<OrderManagementPanel> {
           style: AppTypography.h5.copyWith(color: colorScheme.text),
         ),
         const SizedBox(height: AppDimens.p12),
-        GlassContainer(
+        AppCardContainer(
           padding: const EdgeInsets.all(AppDimens.p16),
           child: Column(
             children: [

@@ -2,17 +2,103 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/deep_link_service.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
+import 'package:sline_app/core/theme/app_motion.dart';
+import 'package:sline_app/core/theme/app_states.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/widgets/glass_container.dart';
+import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/notifications/view/notifications_modal.dart';
 import 'package:sline_app/features/notifications/viewmodels/notification_view_model.dart';
 
-class NotificationBadgeButton extends StatelessWidget {
+/// Notification bell button with animated badge entrance and pulse.
+///
+/// Phase 5 redesign: converted from StatelessWidget to StatefulWidget with
+/// TickerProviderStateMixin to host AnimationController for badge entrance
+/// (scale 0→1 with spring curve) and pulse on count change (1.0→1.1→1.0).
+/// Replaced hardcoded `AppColors.lightRed` with `colorScheme.danger`,
+/// hardcoded font size with `AppTypography.micro`, and added full
+/// Semantics coverage. View-layer only.
+class NotificationBadgeButton extends StatefulWidget {
   const NotificationBadgeButton({super.key});
 
   static const Key buttonKey = ValueKey<String>('notification_badge_button');
+
+  @override
+  State<NotificationBadgeButton> createState() =>
+      _NotificationBadgeButtonState();
+}
+
+class _NotificationBadgeButtonState extends State<NotificationBadgeButton>
+    with TickerProviderStateMixin {
+  // ── Badge entrance animation ───────────────────────────────
+  late final AnimationController _badgeController;
+  late final Animation<double> _badgeScale;
+
+  // ── Pulse animation — separate controller so the badge stays
+  // visible (entrance at full scale) while the pulse plays ────
+  late final AnimationController _pulseController;
+  late final Animation<double> _pulseScale;
+
+  /// Track previous count to detect changes and trigger pulse.
+  int _previousCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Badge entrance: scale 0→1 with spring, fast duration.
+    _badgeController = AnimationController(
+      duration: AppMotion.fast,
+      vsync: this,
+    );
+    _badgeScale = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _badgeController, curve: AppMotion.curveSpring),
+    );
+
+    // Pulse: 1.0 → 1.15 → 1.0 via TweenSequence for a real pop feel.
+    // Uses a short duration so it feels snappy rather than sluggish.
+    _pulseController = AnimationController(
+      duration: AppMotion.fast,
+      vsync: this,
+    );
+    _pulseScale =
+        TweenSequence<double>([
+          TweenSequenceItem(
+            tween: Tween<double>(begin: 1.0, end: 1.15),
+            weight: 50,
+          ),
+          TweenSequenceItem(
+            tween: Tween<double>(begin: 1.15, end: 1.0),
+            weight: 50,
+          ),
+        ]).animate(
+          CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+        );
+  }
+
+  @override
+  void dispose() {
+    _badgeController.dispose();
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  /// Trigger badge entrance or pulse when count changes.
+  void _handleCountChange(int newCount) {
+    if (newCount > 0 && _previousCount == 0) {
+      // Badge appearing — entrance animation from zero.
+      _badgeController.forward(from: 0);
+    } else if (newCount == 0 && _previousCount > 0) {
+      // Badge disappearing — reverse the entrance animation.
+      _badgeController.reverse();
+    } else if (newCount != _previousCount && newCount > 0) {
+      // Count changed while badge stays visible — play real pulse.
+      _pulseController.forward(from: 0);
+    }
+    _previousCount = newCount;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,64 +107,91 @@ class NotificationBadgeButton extends StatelessWidget {
         final count = vm.unreadCount;
         final colorScheme = context.colorScheme;
 
-        return GestureDetector(
-          key: buttonKey,
-          onTap: () async {
-            AppLogger.d(
-              'Notification badge tapped, opening modal',
-              tag: 'Notifications',
-            );
-            final selected = await NotificationsModal.show(context);
-            if (selected != null && context.mounted) {
-              AppLogger.i(
-                'notification_tap entityType=${selected.relatedEntityType} id=${selected.relatedEntityId}',
+        // Only schedule the post-frame callback when the count has actually
+        // changed — avoids spurious animation calls on unrelated rebuilds.
+        if (count != _previousCount) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _handleCountChange(count);
+          });
+        }
+
+        return Semantics(
+          label:
+              'Notifications'
+              '${count > 0 ? ", $count unread" : ""}',
+          button: true,
+          excludeSemantics: true,
+          child: GestureDetector(
+            key: NotificationBadgeButton.buttonKey,
+            onTap: () async {
+              AppInteractionStates.hapticTap();
+              AppLogger.d(
+                'Notification badge tapped, opening modal',
                 tag: 'Notifications',
               );
-              await context.read<DeepLinkService>().handleNotification(
-                context,
-                entityType: selected.relatedEntityType,
-                entityId: selected.relatedEntityId,
-                metadata: selected.metadata,
-              );
-            }
-          },
-          child: GlassContainer(
-            borderRadius: BorderRadius.circular(AppDimens.r16),
-            padding: const EdgeInsets.all(AppDimens.p12),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Icon(
-                  Icons.notifications_outlined,
-                  color: colorScheme.text,
-                  size: AppDimens.p24,
-                ),
-                if (count > 0)
-                  Positioned(
-                    top: -4,
-                    right: -4,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: AppColors.lightRed,
-                        shape: BoxShape.circle,
-                      ),
-                      constraints: const BoxConstraints(
-                        minWidth: 16,
-                        minHeight: 16,
-                      ),
-                      child: Text(
-                        count > 9 ? '9+' : count.toString(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
+              final selected = await NotificationsModal.show(context);
+              if (selected != null && context.mounted) {
+                AppLogger.i(
+                  'notification_tap entityType=${selected.relatedEntityType} '
+                  'id=${selected.relatedEntityId}',
+                  tag: 'Notifications',
+                );
+                await context.read<DeepLinkService>().handleNotification(
+                  context,
+                  entityType: selected.relatedEntityType,
+                  entityId: selected.relatedEntityId,
+                  metadata: selected.metadata,
+                );
+              }
+            },
+            child: AppCardContainer(
+              borderRadius: BorderRadius.circular(AppDimens.r16),
+              padding: const EdgeInsets.all(AppDimens.p12),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(
+                    Icons.notifications_outlined,
+                    color: colorScheme.text,
+                    size: AppLayout.iconStandard,
+                  ),
+                  if (count > 0)
+                    Positioned(
+                      top: -4,
+                      right: -4,
+                      // Outer ScaleTransition drives the pulse (1.0→1.15→1.0).
+                      // Inner ScaleTransition drives the entrance (0→1).
+                      // Multiplying both lets the badge pop in on appearance
+                      // and pulse on count change independently.
+                      child: ScaleTransition(
+                        scale: _pulseScale,
+                        child: ScaleTransition(
+                          scale: _badgeScale,
+                          child: Container(
+                            padding: const EdgeInsets.all(AppDimens.p4),
+                            decoration: BoxDecoration(
+                              // Semantic danger replaces hardcoded AppColors.lightRed
+                              color: colorScheme.danger,
+                              shape: BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: AppDimens.p16,
+                              minHeight: AppDimens.p16,
+                            ),
+                            child: Text(
+                              count > 9 ? '9+' : count.toString(),
+                              style: AppTypography.micro.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         );

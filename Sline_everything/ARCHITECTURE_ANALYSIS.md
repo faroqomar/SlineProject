@@ -1,10 +1,41 @@
 # SLine Architecture Analysis & Optimization Guide
 
-**Date**: 2026-03-07 (with embedded notes through 2026-04-06)
-**Version**: 2.20
+**Date**: 2026-03-07 (with embedded notes through 2026-04-08)
+**Version**: 2.21
 **Architecture Pattern**: MVVM with Provider
 
 > Historical analysis note: this document captures architectural assessment snapshots over time. For the current live repository layout and active contracts, use `Sline_everything/STRUCTURE.md`, `Sline_everything/DEVELOPER_GUIDE.md`, and `Sline_everything/SUPABASE_SETUP.md`.
+
+## Three-Layer Design System Architecture (2026-04-08, Phase 0 + 0.7)
+
+The design system uses a three-layer architecture that separates visual identity (THEME) from structural proportions (LAYOUT) from consumption (COMPONENTS):
+
+```
+Layer 1 — THEME: AppColors, AppTypography, AppMotion, AppDecorations, AppStates, AppTheme
+           What it controls: colors, fonts, animation timing, shadows, interaction states
+           To retheme: change these files only
+
+Layer 2 — LAYOUT: AppLayout (semantic) + AppDimens (raw primitives)
+           What it controls: card padding, avatar sizes, button heights, spacing rhythm,
+                             icon sizes, navigation dimensions, border widths
+           To redesign layout: change these files only
+
+Layer 3 — COMPONENTS: All widgets in lib/core/widgets/ and lib/features/*/view/
+           Rule: consume Layer 1 + Layer 2, own neither. Never hardcode values.
+```
+
+**Key design decisions:**
+- `AppDimens` (raw primitives: p0-p100, r4-r50) and `AppLayout` (semantic tokens: cardPadding, avatarMedium, buttonHeight) coexist in Layer 2 with no value overlap for icon sizes.
+- Phase 0 (2026-04-07): Created Layer 1 foundation — motion tokens, interaction states, elevation scale, semantic colors, typography line heights, component themes.
+- Phase 0.7 (2026-04-08): Created `app_layout.dart` with 41 semantic layout tokens across 11 categories. Migrated 10 core widget files + main_navigation_screen.dart. 53 new tests verify token values and architecture invariants.
+- All 15 `lib/core/widgets/` files are now classified: 10 migrated, 2 clean (already tokenized), 3 skip (animation-only or selective-only).
+
+**References:**
+- Plan: `.TODO/PLAN_LayoutTokens_Phase0.7_2026-04-08.md`
+- Session Log: `docs/LOG/SESSION_PLAN_LayoutTokens_Phase0.7_2026-04-08.md`
+- Master Report: `.TODO/MASTER_REPORT_2026-04-08_LayoutTokens_Phase0.7.md`
+
+---
 
 ## Current Live Architecture Notes (2026-03-07)
 

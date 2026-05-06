@@ -178,6 +178,116 @@ class AppTheme {
         ),
       ),
 
+      // ── Component Themes (Phase 0 — Design System Foundation) ──
+
+      // Card Theme
+      cardTheme: CardThemeData(
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimens.r16),
+        ),
+        color: appColorScheme.cardBackground,
+        margin: EdgeInsets.zero,
+      ),
+
+      // Dialog Theme
+      dialogTheme: DialogThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimens.r24),
+        ),
+        backgroundColor: appColorScheme.cardBackground,
+        elevation: 0,
+      ),
+
+      // Bottom Sheet Theme
+      bottomSheetTheme: BottomSheetThemeData(
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        backgroundColor: appColorScheme.cardBackground,
+        elevation: 0,
+        showDragHandle: true,
+        dragHandleColor: appColorScheme.divider,
+        dragHandleSize: const Size(32, 4),
+      ),
+
+      // Chip Theme
+      chipTheme: ChipThemeData(
+        shape: const StadiumBorder(),
+        backgroundColor: Colors.transparent,
+        side: BorderSide(color: appColorScheme.divider, width: 0.5),
+        labelStyle: AppTypography.captionBold.copyWith(
+          color: appColorScheme.text,
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimens.p12,
+          vertical: AppDimens.p4,
+        ),
+      ),
+
+      // Divider Theme
+      dividerTheme: DividerThemeData(
+        color: appColorScheme.divider,
+        thickness: 0.5,
+        space: 0,
+      ),
+
+      // SnackBar Theme
+      snackBarTheme: SnackBarThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimens.r12),
+        ),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: appColorScheme.text,
+        contentTextStyle: AppTypography.bodySmall.copyWith(
+          color: appColorScheme.phoneBackground,
+        ),
+      ),
+
+      // TabBar Theme
+      tabBarTheme: TabBarThemeData(
+        labelColor: AppColors.teal,
+        unselectedLabelColor: appColorScheme.textSecondary,
+        indicatorSize: TabBarIndicatorSize.label,
+        indicator: UnderlineTabIndicator(
+          borderSide: BorderSide(color: AppColors.teal, width: 3),
+          borderRadius: BorderRadius.circular(2),
+        ),
+        labelStyle: AppTypography.captionBold,
+        unselectedLabelStyle: AppTypography.caption,
+      ),
+
+      // TextButton Theme (Phase 1 — deferred from Phase 0 LOW-2)
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: appColorScheme.primary,
+          textStyle: AppTypography.bodyMedium,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimens.r14),
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimens.p16,
+            vertical: AppDimens.p12,
+          ),
+        ),
+      ),
+
+      // OutlinedButton Theme (Phase 1 — deferred from Phase 0 LOW-2)
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: appColorScheme.primary,
+          side: BorderSide(color: appColorScheme.primary, width: 1),
+          textStyle: AppTypography.bodyMedium,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimens.r14),
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimens.p16,
+            vertical: AppDimens.p12,
+          ),
+        ),
+      ),
+
       // Extensions
       extensions: <ThemeExtension<dynamic>>[
         AppThemeExtension(colors: appColorScheme),
