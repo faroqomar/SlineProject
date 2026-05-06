@@ -1,6 +1,6 @@
 # SLine App - Folder Structure Guide
 
-**Last Updated:** 2026-04-09 (Phase 4 Home & Discovery Redesign: 3 new skeleton variants in skeleton_card.dart (SkeletonSearchResultCard, SkeletonCategoryTile, SkeletonFavoriteCard). CategoriesScreen → SliverGrid. DiscoveryTaskSliver → StatefulWidget with stagger. FiltersModal → DraggableScrollableSheet. FavoriteCard → SignedAvatar + design tokens. Favorites nav added to ProfileScreen. Previous: Phase 1 Core Widget Redesign)
+**Last Updated:** 2026-04-30 (Home discovery navigation consolidation: `lib/core/navigation/main_nav_destinations.dart` added as the named bottom-nav index contract; authenticated shell now exposes Home, Dashboard, Messages, Profile while Home hosts Bookings/Tenders discovery modes below search. Previous: Phase 4 Home & Discovery Redesign)
 
 This document describes the current repository layout. It replaces older references to `presentation/` and `controllers/`; the live Flutter codebase uses `view/` and `viewmodels/` under `lib/features/`.
 
@@ -117,6 +117,7 @@ lib/
 ├── core/
 │   ├── config/
 │   ├── models/
+│   ├── navigation/
 │   ├── providers/
 │   ├── services/
 │   ├── theme/
@@ -153,6 +154,8 @@ Current subfolders:
 - `models/`: global models such as `user_profile.dart` and shared `payment_return_args.dart`
   - `view_state.dart` — **Phase E** Sealed ViewState<T> (ViewInitial, ViewLoading, ViewLoaded, ViewFailed)
   - `app_failure.dart` — **Phase E** Sealed AppFailure (NetworkFailure, AuthFailure, ValidationFailure, BusinessFailure)
+- `navigation/`: app-shell navigation contracts
+  - `main_nav_destinations.dart` — named bottom-nav indexes for Home, Dashboard, Messages, and Profile. Keep app shell, bottom nav, profile deep links, and navigation tests on this contract instead of duplicating numeric indexes.
 - `providers/`: app-wide providers such as navigation and theme mode
 - `services/`: Supabase bootstrap, payment services, cache, deep links, crash reporting, logging, **role switch coordinator**
   - `deep_link_registry.dart` — **Phase E** DeepLinkRegistry with feature-side handler registration
@@ -174,6 +177,7 @@ Current subfolders:
 Important current core files:
 
 - `lib/core/services/supabase_config.dart`
+- `lib/core/navigation/main_nav_destinations.dart` — Home/Dashboard/Messages/Profile named index contract for the authenticated bottom navigation
 - `lib/core/services/crash_reporting_service.dart` — Abstract interface + NoOp stub for crash reporting
 - `lib/core/services/sentry_crash_reporting_service.dart` — Phase D: Sentry implementation of CrashReportingService
 - `lib/core/services/payment_service.dart`

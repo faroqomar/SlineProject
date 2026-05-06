@@ -20,7 +20,7 @@ void main() {
 
       T61T70Preflight.log(
         tag,
-        'Using default surfaces: Tenders list + TaskDetailsScreen',
+        'Using default surfaces: Home Tenders discovery mode + TaskDetailsScreen',
       );
 
       await launchAppForIntegration(tester, tag: tag, resetAuth: true);
@@ -93,15 +93,15 @@ void main() {
       await tester.pump();
       await pumpFor(tester, duration: const Duration(seconds: 1));
 
-      // Surface 1: Tenders list
-      await tapByKey(tester, CustomBottomNavBar.tendersNavKey, tag: tag);
+      // Surface 1: Home Tenders discovery mode
+      await tapByKey(tester, HomeScreen.discoveryTendersKey, tag: tag);
       await pumpUntilFound(
         tester,
         find.text(marker),
         tag: tag,
         timeout: const Duration(seconds: 15),
         reason:
-            'Created tender marker not visible in Tenders list surface after refresh.',
+            'Created tender marker not visible in Home Tenders discovery mode after refresh.',
       );
       expect(find.text(marker), findsAtLeastNWidgets(1));
 
@@ -113,7 +113,8 @@ void main() {
         [find.text('Job Details'), find.text('Booking Details')],
         tag: tag,
         timeout: const Duration(seconds: 12),
-        reason: 'Task details screen did not open from Tenders list item tap.',
+        reason:
+            'Task details screen did not open from Home Tenders discovery item tap.',
       );
       expect(find.text(marker), findsAtLeastNWidgets(1));
       expect(find.text('Job Details'), findsOneWidget);

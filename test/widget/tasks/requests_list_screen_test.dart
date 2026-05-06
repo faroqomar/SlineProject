@@ -21,6 +21,7 @@ import 'package:sline_app/features/favorites/viewmodels/favorites_view_model.dar
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/features/tasks/services/task_requests_service.dart';
 import 'package:sline_app/features/tasks/services/task_service.dart';
+import 'package:sline_app/features/tasks/view/widgets/requests/requests_list_screen.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_requests_view_model.dart';
 
 import '../../test_support/pump_app.dart';
@@ -436,6 +437,41 @@ void main() {
     );
 
     expect(find.byKey(const Key('requests_list_screen')), findsOneWidget);
+  });
+
+  testWidgets('T140b: auto-open submit proposal sheet only launches once', (
+    tester,
+  ) async {
+    var launchCount = 0;
+
+    await pumpApp(
+      tester,
+      RequestsListScreen(
+        taskId: _kTaskId,
+        autoOpenSubmitSheet: true,
+        isOwner: false,
+        budget: '50000',
+        viewModelBuilder: ({required taskId, required isOwner}) => vm,
+        submitSheetLauncher:
+            (
+              context, {
+              required taskId,
+              required controller,
+              required budget,
+            }) async {
+              launchCount += 1;
+            },
+      ),
+    );
+
+    await tester.pump();
+    expect(launchCount, 1);
+
+    vm.notifyListeners();
+    await tester.pump();
+    await tester.pump();
+
+    expect(launchCount, 1);
   });
 
   // ==========================================================================

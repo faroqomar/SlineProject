@@ -71,13 +71,15 @@ STAGE 13 ─── @Orchestrator      Fix Verification (Conditional — see §2.
 
 ### 2.2 Stage 13: Fix Verification (Conditional)
 
-If the Master Report contains BLOCKER or HIGH findings:
+If the Master Report contains BLOCKER, HIGH, or MEDIUM findings:
 1. Executor applies fixes per the Fix Plan (Section C of the report).
 2. Re-run the affected pipeline stages (per the re-run policy in §8).
 3. Update the Master Report with a "Fix Verification" section confirming each fix was applied and re-verified.
 4. If new findings emerge from re-run, repeat until clean.
 
 This stage only runs when the human approves fixes from Stage 12's Master Report. It is not automatic.
+
+If the human explicitly asks in the same request to review and fix findings, treat that as approval to execute Stage 13 after the Master Report is produced. Still write the Master Report first, cite the user authorization in the session log or final response, and rerun the affected verification stages after fixes.
 
 
 ### 2.1 Parallel Review Mode (Review-Only Pipelines)

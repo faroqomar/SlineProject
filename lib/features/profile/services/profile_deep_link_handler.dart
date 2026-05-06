@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/navigation/main_nav_destinations.dart';
 import 'package:sline_app/core/providers/navigation_provider.dart';
 import 'package:sline_app/core/services/deep_link_registry.dart';
 import 'package:sline_app/core/services/logger_service.dart';
@@ -21,12 +22,13 @@ Future<void> _handleProfile(
   Map<String, dynamic>? metadata,
 }) async {
   AppLogger.d('Deep link: navigating to profile $entityId', tag: 'DeepLink');
-  // Navigate to own profile: pop to root and switch to Profile tab (index 5).
+  // Profile is selected through the visible-nav contract so removed tabs do
+  // not leave deep links pointing at stale positions.
   if (!context.mounted) return;
   Navigator.popUntil(context, (route) => route.isFirst);
   if (context.mounted) {
     final navProvider = Provider.of<NavigationProvider>(context, listen: false);
-    navProvider.setCurrentIndex(5);
+    navProvider.setCurrentIndex(MainNavDestinations.profile);
   }
 }
 

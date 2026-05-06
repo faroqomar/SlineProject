@@ -15,6 +15,20 @@ import 'package:sline_app/features/tasks/view/widgets/requests/widgets/request_t
 import 'package:sline_app/features/tasks/viewmodels/requests_filter_view_model.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_requests_view_model.dart';
 
+typedef SubmitRequestSheetLauncher =
+    Future<void> Function(
+      BuildContext context, {
+      required String taskId,
+      required TaskRequestsViewModel controller,
+      required String budget,
+    });
+
+typedef TaskRequestsViewModelBuilder =
+    TaskRequestsViewModel Function({
+      required String taskId,
+      required bool isOwner,
+    });
+
 /// Displays paginated offers (task requests) for a given task.
 class RequestsListScreen extends StatefulWidget {
   final String taskId;
@@ -24,6 +38,8 @@ class RequestsListScreen extends StatefulWidget {
   /// True when the viewer is the owner of the task (can accept/reject)
   final bool isOwner;
   final String? budget; // Added budget
+  final SubmitRequestSheetLauncher? submitSheetLauncher;
+  final TaskRequestsViewModelBuilder? viewModelBuilder;
 
   const RequestsListScreen({
     super.key,
@@ -32,6 +48,8 @@ class RequestsListScreen extends StatefulWidget {
     this.isTender = true,
     this.isOwner = false,
     this.budget,
+    this.submitSheetLauncher,
+    this.viewModelBuilder,
   });
 
   @override
@@ -42,6 +60,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
   BuildContext? _providerCtx;
   late final ScrollController _scroll;
   bool _isShowingBidSheet = false;
+  bool _didAutoOpenSubmitSheet = false;
   RequestsFilterViewModel? _filterVm;
 
   @override
@@ -56,6 +75,10 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
     if (oldWidget.taskId != widget.taskId) {
       _filterVm?.dispose();
       _filterVm = null; // Recreated lazily in build()
+      _didAutoOpenSubmitSheet = false;
+      _isShowingBidSheet = false;
+    } else if (!oldWidget.autoOpenSubmitSheet && widget.autoOpenSubmitSheet) {
+      _didAutoOpenSubmitSheet = false;
     }
   }
 
@@ -119,6 +142,70 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
     );
   }
 
+  void _scheduleAutoOpenSubmitSheet(
+    BuildContext providerContext,
+    TaskRequestsViewModel controller,
+  ) {
+    if (!widget.autoOpenSubmitSheet ||
+        widget.isOwner ||
+        _didAutoOpenSubmitSheet ||
+        _isShowingBidSheet) {
+      return;
+    }
+
+    _didAutoOpenSubmitSheet = true;
+    _isShowingBidSheet = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) {
+        _isShowingBidSheet = false;
+        return;
+      }
+
+      try {
+        await _launchSubmitSheet(providerContext, controller);
+      } finally {
+        _isShowingBidSheet = false;
+      }
+    });
+  }
+
+  Future<void> _openSubmitSheet(
+    BuildContext providerContext,
+    TaskRequestsViewModel controller,
+  ) async {
+    if (_isShowingBidSheet) return;
+
+    _isShowingBidSheet = true;
+    try {
+      await _launchSubmitSheet(providerContext, controller);
+    } finally {
+      _isShowingBidSheet = false;
+    }
+  }
+
+  Future<void> _launchSubmitSheet(
+    BuildContext providerContext,
+    TaskRequestsViewModel controller,
+  ) {
+    final launcher = widget.submitSheetLauncher;
+    if (launcher != null) {
+      return launcher(
+        providerContext,
+        taskId: widget.taskId,
+        controller: controller,
+        budget: widget.budget ?? '0',
+      );
+    }
+
+    return showSubmitRequestSheet(
+      providerContext,
+      taskId: widget.taskId,
+      controller: controller,
+      budget: widget.budget ?? '0',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!widget.isTender) {
@@ -138,10 +225,15 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
     return ChangeNotifierProvider<TaskRequestsViewModel>(
       key: ValueKey('requests_provider_${widget.taskId}'),
       create: (_) {
-        final c = TaskRequestsViewModel(
-          taskId: widget.taskId,
-          isOwner: widget.isOwner,
-        );
+        final c =
+            widget.viewModelBuilder?.call(
+              taskId: widget.taskId,
+              isOwner: widget.isOwner,
+            ) ??
+            TaskRequestsViewModel(
+              taskId: widget.taskId,
+              isOwner: widget.isOwner,
+            );
         c.loadInitial();
         return c;
       },
@@ -151,17 +243,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
         _filterVm ??= RequestsFilterViewModel(
           requestsVm: ctx.read<TaskRequestsViewModel>(),
         );
-        WidgetsBinding.instance.addPostFrameCallback((_) async {
-          if (widget.autoOpenSubmitSheet && !widget.isOwner) {
-            final c = ctx.read<TaskRequestsViewModel>();
-            await showSubmitRequestSheet(
-              ctx,
-              taskId: widget.taskId,
-              controller: c,
-              budget: widget.budget ?? '0',
-            );
-          }
-        });
+        _scheduleAutoOpenSubmitSheet(ctx, ctx.read<TaskRequestsViewModel>());
         return Consumer<TaskRequestsViewModel>(
           builder: (context, c, __) {
             final filteredItems = _getFilteredItems(c.items);
@@ -249,19 +331,8 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
                   ? null
                   : FloatingActionButton.extended(
                       onPressed: () async {
-                        if (_isShowingBidSheet) return;
-                        _isShowingBidSheet = true;
-                        try {
-                          final prov = _providerCtx ?? context;
-                          await showSubmitRequestSheet(
-                            prov,
-                            taskId: widget.taskId,
-                            controller: c,
-                            budget: widget.budget ?? '0',
-                          );
-                        } finally {
-                          _isShowingBidSheet = false;
-                        }
+                        final prov = _providerCtx ?? context;
+                        await _openSubmitSheet(prov, c);
                       },
                       icon: const Icon(Icons.add),
                       label: const Text('New Offer'),
@@ -487,24 +558,13 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
                     // Freelancer CTA: Submit bid
                     FilledButton.icon(
                       onPressed: () async {
-                        if (_isShowingBidSheet) return;
-                        _isShowingBidSheet = true;
-                        try {
-                          AppLogger.d(
-                            'Freelancer tapped submit bid CTA',
-                            tag: 'TaskRequests',
-                          );
-                          final prov = _providerCtx ?? context;
-                          final vm = context.read<TaskRequestsViewModel>();
-                          await showSubmitRequestSheet(
-                            prov,
-                            taskId: widget.taskId,
-                            controller: vm,
-                            budget: widget.budget ?? '0',
-                          );
-                        } finally {
-                          _isShowingBidSheet = false;
-                        }
+                        AppLogger.d(
+                          'Freelancer tapped submit bid CTA',
+                          tag: 'TaskRequests',
+                        );
+                        final prov = _providerCtx ?? context;
+                        final vm = prov.read<TaskRequestsViewModel>();
+                        await _openSubmitSheet(prov, vm);
                       },
                       icon: const Icon(Icons.add),
                       label: const Text('Submit a Bid'),

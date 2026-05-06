@@ -80,6 +80,11 @@ If the plan includes significant test implementation work, add:
 - **Gate 0: Test Infrastructure Gate**
 - Mark it PASS / FAIL using the same format
 - Block execution if harness / directories / fixtures / seeded data strategy are missing
+- Block execution if planned test command paths do not exist and the plan does not first create them.
+- Block execution if route-push widget tests do not define Provider scope for pushed routes or a test-only route-builder seam.
+- Block execution if widgets with delayed tap behavior (for example `ScaleButton.callbackDelay`) are tested without advancing time past the delay.
+
+If the plan includes meaningful UI work, the UI / Integration Gate MUST verify every `Skill:` label resolves to an installed `.cursor/skills/<name>/SKILL.md`. Descriptive labels that are not concrete skill names are a plan defect.
 
 For each gate:
 

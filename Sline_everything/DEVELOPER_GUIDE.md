@@ -1,7 +1,7 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.25.0 (Phase 6 Chat & Messaging Redesign: elevated conversation tiles, unread indicators, emoji-only rendering, link detection, reply quotes, FullscreenImageViewer, deferred navigation, optimistic state updates, auto-scroll differentiation)
-**Last Updated**: 2026-04-10
+**Version**: 2.25.1 (Home discovery navigation consolidation: four-slot bottom nav, Home-hosted Bookings/Tenders discovery modes, named nav destination contract, route-push test seam)
+**Last Updated**: 2026-04-30
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
 
@@ -107,7 +107,7 @@ erDiagram
 
 ## 5. Feature Map (Where to look)
 
-- **Core**: `lib/core/` – Supabase bootstrap, logging, theme, utils, shared widgets (signed avatar/image)
+- **Core**: `lib/core/` – Supabase bootstrap, logging, theme, named navigation contracts, utils, shared widgets (signed avatar/image)
 - **Auth**: `lib/features/auth/` – signup/login, session. Profile fetch after signup/session restore uses retry (see `AuthConfig` in `lib/core/config/auth_config.dart`). `AccountGuardService` is invoked on login and on cold start (session restore) in `main.dart` to block banned/suspended users.
 - **Profile**: `lib/features/profile/` – profile edit, avatar upload, role switch, my tasks
 - **Tasks**: `lib/features/tasks/` – create/list/details, images, requests (offers)
@@ -206,6 +206,45 @@ Shared mock classes live in `test/helpers/mock_services.dart` (8 classes). Impor
 - Pre-configure ALL stubs BEFORE constructing VMs that auto-load in constructor (e.g., DashboardVM)
 - Add `RoleSwitchCoordinator().clearForTesting()` in `tearDown` for VMs that register with the singleton (ChatVM, DashboardVM)
 - Use `thenAnswer((_) async => throw Exception(...))` for async error mocking with `Future.wait`, NOT `thenThrow()`
+
+### Navigation Contract and Home Discovery (2026-04-30)
+
+The authenticated app shell uses a four-slot bottom navigation contract:
+
+- Home
+- Dashboard
+- Messages
+- Profile
+
+The named index contract lives in `lib/core/navigation/main_nav_destinations.dart`. `lib/app/main_navigation_screen.dart`, `lib/core/widgets/custom_bottom_nav_bar.dart`, `lib/features/profile/services/profile_deep_link_handler.dart`, and navigation tests must reference `MainNavDestinations` instead of hardcoded tab positions. `Tenders` and `Bookings` are no longer bottom-nav destinations.
+
+Home now owns the marketplace discovery modes below the search bar:
+
+- `All Work`
+- `Bookings`
+- `Tenders`
+
+`lib/features/home/view/home_screen.dart` keeps these modes as Home-local filters over `HomeViewModel.tasks`; `Bookings` shows booking tasks and `Tenders` shows tender tasks without creating separate app-shell tabs. Mode changes and stale nav-index normalization are logged through `AppLogger`, so new code paths in this area must preserve structured logging.
+
+When changing this surface, update all of these together:
+
+- `lib/core/navigation/main_nav_destinations.dart`
+- `lib/app/main_navigation_screen.dart`
+- `lib/core/widgets/custom_bottom_nav_bar.dart`
+- `lib/features/home/view/home_screen.dart`
+- `lib/features/profile/services/profile_deep_link_handler.dart`
+- `test/core/widgets/custom_bottom_nav_bar_test.dart`
+- `test/widget/app/main_navigation_screen_test.dart`
+- `test/widget/home/home_screen_test.dart`
+- `test/features/profile/services/profile_deep_link_handler_test.dart`
+
+References:
+- Plan: `.TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
+- Plan Critique: `.TODO/PLAN_CRITIQUE_2026-04-30_HomeDiscoveryNavConsolidation.md`
+- Master Report: `.TODO/MASTER_REPORT_2026-04-30_HomeDiscoveryNavConsolidation.md`
+- Session Log: `docs/LOG/SESSION_HomeDiscoveryNavConsolidation_2026-04-30.md`
+- System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-30.md`
+- Supabase objects changed: none
 
 ### 10.1 CI/CD Pipeline
 

@@ -195,6 +195,17 @@ HARD-GATE requires:
 - [ ] Platform guards for mobile / web where relevant
 - [ ] Route table, deep-link behavior, maintenance mode, and restricted-account flows remain compatible
 - [ ] Supabase schema changes remain compatible with current app expectations during rollout
+- [ ] Positional navigation contracts compare against named destination constants, not list entry positions that only happen to match today.
+- [ ] If tests use screen-list or route-builder overrides, stale/fallback indexes normalize provider state as well as render a safe fallback.
+
+### 🧪 Test Quality Review
+
+- [ ] Widget tests that assert route pushes are not over-coupled to unrelated backend-dependent destination screens. Prefer route-builder seams or stub destinations unless the destination behavior itself is under review.
+- [ ] Test harnesses place Providers above `MaterialApp` when pushed routes must read them.
+- [ ] Tests involving delayed tap wrappers such as `ScaleButton` advance fake time past the callback delay before asserting effects.
+- [ ] NavigatorObserver assertions match the harness behavior; do not assume the initial `home` route increments the observer.
+
+Evidence: HomeDiscoveryNavConsolidation — Orchestrator MED findings caught an over-coupled Home route-push test and incomplete fallback-index normalization. Gap-scan test failures also showed provider scope, delayed tap timers, and observer-count assumptions as recurring test hazards in navigation/widget work.
 
 ---
 

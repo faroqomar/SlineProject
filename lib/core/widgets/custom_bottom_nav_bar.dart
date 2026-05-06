@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
-import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/navigation/main_nav_destinations.dart';
 import 'package:sline_app/core/providers/navigation_provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
@@ -32,8 +32,6 @@ class CustomBottomNavBar extends StatelessWidget {
   const CustomBottomNavBar({super.key});
 
   static const Key homeNavKey = ValueKey<String>('bottom_nav_home');
-  static const Key tendersNavKey = ValueKey<String>('bottom_nav_tenders');
-  static const Key bookingsNavKey = ValueKey<String>('bottom_nav_bookings');
   static const Key dashboardNavKey = ValueKey<String>('bottom_nav_dashboard');
   @Deprecated('Use dashboardNavKey instead.')
   static const Key ordersNavKey = dashboardNavKey;
@@ -46,35 +44,21 @@ class CustomBottomNavBar extends StatelessWidget {
 
     final navItems = <_NavItem>[
       const _NavItem(
-        NavView.home,
+        MainNavDestinations.home,
         Icons.home_outlined,
         Icons.home,
         'Home',
         key: homeNavKey,
       ),
       const _NavItem(
-        NavView.tender,
-        Icons.assignment_outlined,
-        Icons.assignment,
-        'Tenders',
-        key: tendersNavKey,
-      ),
-      const _NavItem(
-        NavView.booking,
-        Icons.calendar_today_outlined,
-        Icons.calendar_today,
-        'Bookings',
-        key: bookingsNavKey,
-      ),
-      const _NavItem(
-        NavView.orders,
+        MainNavDestinations.dashboard,
         Icons.dashboard_outlined,
         Icons.dashboard,
         'Dashboard',
         key: dashboardNavKey,
       ),
       const _NavItem(
-        NavView.messages,
+        MainNavDestinations.messages,
         Icons.message_outlined,
         Icons.message,
         'Messages',
@@ -82,7 +66,7 @@ class CustomBottomNavBar extends StatelessWidget {
         key: messagesNavKey,
       ),
       const _NavItem(
-        NavView.profile,
+        MainNavDestinations.profile,
         Icons.person_outline,
         Icons.person,
         'Profile',
@@ -92,10 +76,10 @@ class CustomBottomNavBar extends StatelessWidget {
 
     return Consumer<NavigationProvider>(
       builder: (context, navigationProvider, child) {
-        final currentIndex = navigationProvider.currentIndex.clamp(
-          0,
-          navItems.length - 1,
-        );
+        final currentIndex =
+            MainNavDestinations.isVisibleIndex(navigationProvider.currentIndex)
+            ? navigationProvider.currentIndex
+            : MainNavDestinations.home;
         if (currentIndex != navigationProvider.currentIndex) {
           AppLogger.w(
             'Clamped navigation index ${navigationProvider.currentIndex} -> $currentIndex',
@@ -103,8 +87,10 @@ class CustomBottomNavBar extends StatelessWidget {
           );
         }
 
+        final bottomSafePadding = MediaQuery.viewPaddingOf(context).bottom;
+
         return Positioned(
-          bottom: AppDimens.p16,
+          bottom: AppDimens.p16 + bottomSafePadding,
           left: AppDimens.p16,
           right: AppDimens.p16,
           child: Container(
@@ -123,10 +109,8 @@ class CustomBottomNavBar extends StatelessWidget {
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: navItems.asMap().entries.map((entry) {
-                final index = entry.key;
-                final item = entry.value;
-                final isActive = currentIndex == index;
+              children: navItems.map((item) {
+                final isActive = currentIndex == item.index;
 
                 return _SolidNavItem(
                   item: item,
@@ -134,10 +118,10 @@ class CustomBottomNavBar extends StatelessWidget {
                   onTap: () {
                     HapticFeedback.selectionClick();
                     AppLogger.i(
-                      'Bottom nav tap -> ${item.label} ($index)',
+                      'Bottom nav tap -> ${item.label} (${item.index})',
                       tag: 'Navigation',
                     );
-                    navigationProvider.setCurrentIndex(index);
+                    navigationProvider.setCurrentIndex(item.index);
                   },
                   colorScheme: colorScheme,
                 );
@@ -339,7 +323,7 @@ class _SolidNavItemState extends State<_SolidNavItem>
 
 /// Navigation item data model
 class _NavItem {
-  final NavView id;
+  final int index;
   final IconData icon;
   final IconData activeIcon;
   final String label;
@@ -347,7 +331,7 @@ class _NavItem {
   final Key? key;
 
   const _NavItem(
-    this.id,
+    this.index,
     this.icon,
     this.activeIcon,
     this.label, {

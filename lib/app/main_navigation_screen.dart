@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
-import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/navigation/main_nav_destinations.dart';
 import 'package:sline_app/core/providers/navigation_provider.dart';
 import 'package:sline_app/core/providers/system_config_view_model.dart';
 import 'package:sline_app/core/services/logger_service.dart';
@@ -13,14 +13,11 @@ import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/utils/app_animations.dart';
 import 'package:sline_app/core/utils/transitions/custom_route_transitions.dart';
 import 'package:sline_app/core/widgets/custom_bottom_nav_bar.dart';
-import 'package:sline_app/features/booking/view/bookings_discovery_screen.dart';
 import 'package:sline_app/features/chat/view/messages_screen.dart';
 import 'package:sline_app/features/dashboard/view/dashboard_screen.dart';
 import 'package:sline_app/features/home/view/home_screen.dart';
 import 'package:sline_app/features/profile/view/profile_screen.dart';
 import 'package:sline_app/features/tasks/view/create_task_screen.dart';
-import 'package:sline_app/features/tasks/view/tenders_screen.dart';
-import 'package:sline_app/features/wallet/view/wallet_dashboard_screen.dart';
 
 /// Main navigation screen that manages bottom navigation and screen switching.
 ///
@@ -131,30 +128,46 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
         widget.screens ??
         const [
           HomeScreen(),
-          TendersScreen(),
-          BookingsDiscoveryScreen(),
           DashboardScreen(),
           MessagesScreen(),
           ProfileScreen(),
-          WalletDashboardScreen(),
         ];
 
-    if (screens.length != NavView.values.length) {
+    if (screens.length != MainNavDestinations.visibleCount) {
       AppLogger.w(
-        'MainNavigationScreen received ${screens.length} screens, expected ${NavView.values.length}',
+        'MainNavigationScreen received ${screens.length} screens, expected ${MainNavDestinations.visibleCount}',
         tag: 'Navigation',
       );
     }
 
     return Consumer<NavigationProvider>(
       builder: (context, navigationProvider, child) {
-        final currentIndex = navigationProvider.currentIndex;
+        final rawIndex = navigationProvider.currentIndex;
+        final currentIndex =
+            MainNavDestinations.isVisibleIndex(rawIndex) &&
+                rawIndex < screens.length
+            ? rawIndex
+            : MainNavDestinations.home;
+        if (rawIndex != currentIndex) {
+          AppLogger.w(
+            'Normalizing stale main navigation index $rawIndex to ${MainNavDestinations.home}',
+            tag: 'Navigation',
+          );
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted &&
+                navigationProvider.currentIndex == rawIndex &&
+                rawIndex != currentIndex) {
+              navigationProvider.setCurrentIndex(MainNavDestinations.home);
+            }
+          });
+        }
         final runtimeConfig = context.watch<SystemConfigViewModel?>()?.config;
         final hasBanner =
             runtimeConfig != null &&
             runtimeConfig.bannerEnabled &&
             runtimeConfig.bannerText.trim().isNotEmpty;
         final showBanner = !_bannerDismissed && hasBanner;
+        final bottomSafePadding = MediaQuery.viewPaddingOf(context).bottom;
 
         // Start banner animation if banner should be visible
         if (showBanner &&
@@ -263,7 +276,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
 
                 // 6. FAB (Create Task) with spring entrance + scroll-aware
                 Positioned(
-                  bottom: AppLayout.fabBottomOffset,
+                  bottom: AppLayout.fabBottomOffset + bottomSafePadding,
                   right: AppDimens.p24,
                   child: ScaleTransition(
                     scale: _fabScale,

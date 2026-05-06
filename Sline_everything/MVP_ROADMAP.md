@@ -1,6 +1,6 @@
 # SLine MVP Roadmap
 
-**Last Updated:** 2026-04-09
+**Last Updated:** 2026-04-30
 
 This roadmap tracks the current code-state of the repository. Status values are intentionally simple:
 - `✅ Completed`
@@ -11,7 +11,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 
 | Area | Status | Notes |
 | --- | --- | --- |
-| Flutter app shell and navigation | ✅ Completed | `main.dart` + `lib/app/main_navigation_screen.dart` |
+| Flutter app shell and navigation | ✅ Completed | `main.dart` + `lib/app/main_navigation_screen.dart`; visible bottom nav is Home, Dashboard, Messages, Profile via `lib/core/navigation/main_nav_destinations.dart` |
 | Supabase bootstrap and app providers | ✅ Completed | shared client/bootstrap in `lib/core/services/supabase_config.dart` and root providers in `main.dart` |
 | Theme system (Layer 1) | ✅ Completed | Phase 0: `app_colors.dart`, `app_typography.dart`, `app_motion.dart`, `app_states.dart`, `app_decorations.dart`, `app_theme.dart` |
 | Layout tokens (Layer 2) | ✅ Completed | Phase 0.7: `app_layout.dart` (41 semantic tokens), `app_dimens.dart` (raw primitives). Three-layer architecture complete. |
@@ -33,9 +33,9 @@ This roadmap tracks the current code-state of the repository. Status values are 
 
 | Feature | Status | Notes |
 | --- | --- | --- |
-| Home feed and task discovery | ✅ Completed | repo implementation is live; production rollout depends on the `20260301_*home*` migrations and RLS verification |
+| Home feed and task discovery | ✅ Completed | repo implementation is live; production rollout depends on the `20260301_*home*` migrations and RLS verification. **2026-04-30:** Home now hosts `All Work`, `Bookings`, and `Tenders` discovery modes below search; Tenders/Bookings were removed from the bottom nav. Plan: `.TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`; Session: `docs/LOG/SESSION_HomeDiscoveryNavConsolidation_2026-04-30.md`; Supabase changes: none. |
 | Category-backed task browsing | ✅ Completed | categories feature and task filters exist |
-| Booking discovery feed | ✅ Completed | `BookingsDiscoveryScreen` reuses the task feed for booking tasks |
+| Booking discovery feed | ✅ Completed | Booking discovery is accessible from Home's `Bookings` mode and continues to reuse task-feed data for booking tasks |
 | Search | 🚧 In Progress | dedicated `search/` feature exists; ongoing refinement |
 | Services/proposals surfacing | ✅ Completed | Proposals remediation (Mar 2026): models, repositories, payment route, view re-exports; secure RPCs; list/submit/award/pay from Inbox/Work/Requests; see DEVELOPER_GUIDE/Proposals_Feature.md |
 
@@ -150,6 +150,7 @@ Tests: 706 → 780 (+74). Coverage floor: 40%. All 6 architecture guard checks p
 | 2+3+5 | App Shell + Auth + Cards | ✅ Completed | Redesign | `SESSION_PLAN_Phase2_AppShellAuthCards_2026-04-08.md` |
 | 4 | Home & Discovery | ✅ Completed | Redesign | `SESSION_PLAN_Phase4_HomeDiscovery_2026-04-08.md` |
 | 6 | Chat & Messaging | ✅ Completed | Redesign (Phase 6 Advanced Interactions + continuation) | `SESSION_PLAN_Phase6_ChatAdvancedInteractions_2026-04-10.md` |
+| 6.1 | Home Discovery Nav Consolidation | ✅ Completed | Navigation consolidation + Home discovery polish | `SESSION_HomeDiscoveryNavConsolidation_2026-04-30.md` |
 | 7 | Dashboard | 🚧 Token-normalized | Token Normalization (visual redesign pending) | (same as above) |
 | 8 | Booking & Payments | ⏳ Planned | — | — |
 | 9 | Profile | ⏳ Planned | — | — |

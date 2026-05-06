@@ -214,6 +214,10 @@ Before starting execution, confirm:
 - All new DB / policy work has verification steps in the plan
 - All substantial UI steps have skill tags
 - All substantial backend rollout steps use `supabase-migration`
+- Every `Skill:` label resolves to an existing `.cursor/skills/<name>/SKILL.md`
+- Every planned command that names a file path is backed by an existing file, unless an earlier step in the plan creates that exact path
+
+If the plan expects full `flutter analyze` as a gate, run or record the baseline before edits. If the baseline is already dirty, log the exact pre-existing findings and additionally require scoped analyzer evidence for every changed file.
 
 If ANY item fails:
 

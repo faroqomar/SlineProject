@@ -15,6 +15,7 @@ import 'package:sline_app/features/home/view/widgets/filters_modal.dart';
 import 'package:sline_app/features/notifications/view/widgets/notification_badge_button.dart';
 import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
+import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:sline_app/features/tasks/view/task_details_screen.dart';
 import 'package:sline_app/features/tasks/view/widgets/discovery_task_sliver.dart';
 import 'package:sline_app/features/tasks/view/widgets/task_card.dart';
@@ -24,21 +25,43 @@ import 'package:sline_app/shared/constants/categories.dart';
 
 /// Home screen - main dashboard for the app (MVVM) with Glassmorphism design.
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, this.autoLoadOnInit = true});
+  const HomeScreen({
+    super.key,
+    this.autoLoadOnInit = true,
+    this.taskDetailsScreenBuilder,
+  });
 
   static const Key searchFieldKey = ValueKey<String>('home_search_field');
+  static const Key discoveryAllWorkKey = ValueKey<String>(
+    'home_discovery_all_work',
+  );
+  static const Key discoveryBookingsKey = ValueKey<String>(
+    'home_discovery_bookings',
+  );
+  static const Key discoveryTendersKey = ValueKey<String>(
+    'home_discovery_tenders',
+  );
   static const Key refreshIndicatorKey = ValueKey<String>(
     'home_refresh_indicator',
   );
   static const Key filterButtonKey = ValueKey<String>('home_filter_button');
 
   final bool autoLoadOnInit;
+  final Widget Function(Task task)? taskDetailsScreenBuilder;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+/// The Home discovery mode controls task-type filtering below search.
+///
+/// It stays local to the View because it only changes presentation of the
+/// already-loaded discovery feed owned by the existing ViewModels.
+enum _HomeDiscoveryMode { allWork, bookings, tenders }
+
 class _HomeScreenState extends State<HomeScreen> {
+  _HomeDiscoveryMode _selectedDiscoveryMode = _HomeDiscoveryMode.allWork;
+
   @override
   void initState() {
     super.initState();
@@ -68,6 +91,11 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Consumer3<DiscoveryFeedViewModelContract, TaskFilterViewModel, ProfileViewModel>(
         builder: (context, homeViewModel, filterController, profileVM, child) {
           final topPadding = MediaQuery.of(context).padding.top;
+          final visibleTasks = _tasksForMode(
+            filterController.filteredTasks,
+            _selectedDiscoveryMode,
+          );
+          final selectedModeMetadata = _metadataForMode(_selectedDiscoveryMode);
 
           return RefreshIndicator(
             key: HomeScreen.refreshIndicatorKey,
@@ -218,7 +246,39 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: AppDimens.p24),
 
-                        // 3. Categories
+                        // 3. Discovery mode chips
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          clipBehavior: Clip.none,
+                          child: Row(
+                            children: [
+                              _buildDiscoveryModeChip(
+                                context,
+                                key: HomeScreen.discoveryAllWorkKey,
+                                metadata: _metadataForMode(
+                                  _HomeDiscoveryMode.allWork,
+                                ),
+                              ),
+                              _buildDiscoveryModeChip(
+                                context,
+                                key: HomeScreen.discoveryBookingsKey,
+                                metadata: _metadataForMode(
+                                  _HomeDiscoveryMode.bookings,
+                                ),
+                              ),
+                              _buildDiscoveryModeChip(
+                                context,
+                                key: HomeScreen.discoveryTendersKey,
+                                metadata: _metadataForMode(
+                                  _HomeDiscoveryMode.tenders,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: AppDimens.p16),
+
+                        // 4. Categories
                         SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           clipBehavior: Clip.none,
@@ -257,7 +317,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 // children). Individual cards have their own Semantics.
                 DiscoveryTaskSliver(
                   surface: 'home',
-                  tasks: filterController.filteredTasks,
+                  tasks: visibleTasks,
                   isInitialLoading: homeViewModel.isLoading,
                   isLoadingMore: homeViewModel.isLoadingMore,
                   hasMore: homeViewModel.hasMore,
@@ -265,8 +325,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     filterController: filterController,
                     surface: 'home',
                   ),
-                  emptyTitle: 'No tasks found',
-                  emptyIcon: Icons.work_outline,
+                  emptyTitle: selectedModeMetadata.emptyTitle,
+                  emptyIcon: selectedModeMetadata.icon,
                   taskBuilder: (context, task) {
                     return TaskCard(
                       task: task,
@@ -282,7 +342,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => TaskDetailsScreen(task: task),
+                            builder: (_) =>
+                                widget.taskDetailsScreenBuilder?.call(task) ??
+                                TaskDetailsScreen(task: task),
                           ),
                         );
                       },
@@ -293,6 +355,139 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  List<Task> _tasksForMode(List<Task> tasks, _HomeDiscoveryMode mode) {
+    switch (mode) {
+      case _HomeDiscoveryMode.allWork:
+        return tasks;
+      case _HomeDiscoveryMode.bookings:
+        return tasks.where((task) => task.isBooking == true).toList();
+      case _HomeDiscoveryMode.tenders:
+        return tasks.where((task) => task.isTender == true).toList();
+    }
+  }
+
+  ({
+    _HomeDiscoveryMode mode,
+    String label,
+    String semanticLabel,
+    IconData icon,
+    String emptyTitle,
+  })
+  _metadataForMode(_HomeDiscoveryMode mode) {
+    switch (mode) {
+      case _HomeDiscoveryMode.allWork:
+        return (
+          mode: mode,
+          label: 'All Work',
+          semanticLabel: 'Discovery mode: All Work',
+          icon: Icons.work_outline,
+          emptyTitle: 'No tasks found',
+        );
+      case _HomeDiscoveryMode.bookings:
+        return (
+          mode: mode,
+          label: 'Bookings',
+          semanticLabel: 'Discovery mode: Bookings',
+          icon: Icons.calendar_today_outlined,
+          emptyTitle: 'No booking services',
+        );
+      case _HomeDiscoveryMode.tenders:
+        return (
+          mode: mode,
+          label: 'Tenders',
+          semanticLabel: 'Discovery mode: Tenders',
+          icon: Icons.assignment_outlined,
+          emptyTitle: 'No active tenders',
+        );
+    }
+  }
+
+  /// Builds the Home discovery mode chip below search.
+  ///
+  /// It uses the same solid token family as category chips so the new entry
+  /// points feel native to Home instead of becoming a second navigation bar.
+  Widget _buildDiscoveryModeChip(
+    BuildContext context, {
+    required Key key,
+    required ({
+      _HomeDiscoveryMode mode,
+      String label,
+      String semanticLabel,
+      IconData icon,
+      String emptyTitle,
+    })
+    metadata,
+  }) {
+    final colorScheme = context.colorScheme;
+    final isSelected = _selectedDiscoveryMode == metadata.mode;
+    return Padding(
+      padding: const EdgeInsets.only(right: AppDimens.p8),
+      child: Semantics(
+        selected: isSelected,
+        label: metadata.semanticLabel,
+        button: true,
+        child: GestureDetector(
+          key: key,
+          onTap: () {
+            AppInteractionStates.hapticSelection();
+            if (isSelected) {
+              AppLogger.d(
+                'home_discovery_mode_reselected',
+                tag: 'HomeUI',
+                json: {'surface': 'home', 'mode': metadata.mode.name},
+              );
+              return;
+            }
+            AppLogger.d(
+              'home_discovery_mode_changed',
+              tag: 'HomeUI',
+              json: {'surface': 'home', 'mode': metadata.mode.name},
+            );
+            setState(() => _selectedDiscoveryMode = metadata.mode);
+          },
+          child: AnimatedContainer(
+            duration: AppMotion.fast,
+            curve: AppMotion.curveStandard,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimens.p14,
+              vertical: AppDimens.p10,
+            ),
+            decoration: BoxDecoration(
+              color: isSelected ? AppColors.teal : colorScheme.inputBackground,
+              borderRadius: BorderRadius.circular(AppDimens.r12),
+              border: Border.all(
+                color: isSelected ? AppColors.teal : colorScheme.inputBorder,
+              ),
+              boxShadow: isSelected
+                  ? AppDecorations.elevation(1, isDark: colorScheme.isDark)
+                  : [],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  metadata.icon,
+                  size: AppDimens.iconSizeSmall,
+                  color: isSelected ? AppColors.offWhite : colorScheme.text,
+                ),
+                const SizedBox(width: AppDimens.p8),
+                Text(
+                  metadata.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.bodySmall.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: isSelected ? AppColors.offWhite : colorScheme.text,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

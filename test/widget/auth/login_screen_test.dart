@@ -72,12 +72,9 @@ class _TestNavigatorObserver extends NavigatorObserver {
 List<Widget> _stubMainNavScreens() {
   return const [
     Center(key: ValueKey('stub_home_screen'), child: Text('Stub Home')),
-    Center(child: Text('Stub Tender')),
-    Center(child: Text('Stub Booking')),
     Center(child: Text('Stub Dashboard')),
     Center(child: Text('Stub Messages')),
     Center(child: Text('Stub Profile')),
-    Center(child: Text('Stub Wallet')),
   ];
 }
 

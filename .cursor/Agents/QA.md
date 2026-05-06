@@ -325,8 +325,13 @@ When writing or reviewing widget tests:
 6. **Run the specific test file** immediately after writing it — do not batch test runs across multiple files.
 7. **When testing widgets inside a `DraggableScrollableSheet`**, do not use `scrollUntilVisible` with `find.byType(Scrollable).first` or `.last` — the sheet introduces nested `Scrollable` widgets that make the finder ambiguous. Instead, use `tester.drag(find.byType(DraggableScrollableSheet), Offset(0, -N))` to scroll the sheet content directly.
 8. **When testing widgets that contain both finite AND infinite animations** (e.g., a screen with stagger entrance + skeleton shimmer), use `pump(Duration)` with a duration long enough to cover the finite animation (e.g., `pump(Duration(milliseconds: 600))` for a 500ms stagger). This avoids `pumpAndSettle` timeout while still advancing the finite animation.
+9. **When tapping widgets wrapped in `ScaleButton` or any delayed callback wrapper**, advance the fake clock beyond the callback delay before asserting effects. For the default `ScaleButton.callbackDelay`, use at least `tester.pump(Duration(milliseconds: 60))`, then pump a frame if a route should build.
+10. **When a widget test verifies a route push**, do not accidentally turn it into a test of the pushed screen's backend dependencies. Prefer a route-builder seam or a stub destination when the acceptance criterion is "tap pushes a route." If the real destination must build, place every Provider it reads above `MaterialApp` so pushed routes can access them.
+11. **When using a `NavigatorObserver` in widget tests**, assert the event that matters for the harness. Do not assume the initial `home` route is counted as a push; in many test harnesses only subsequent route pushes increment the observer.
 
 Evidence: CoreWidgetRedesign — 7 test mistakes from finder fragility. Phase 2 — MainNavigationScreen tests broke after StatefulWidget conversion. Phase4_HomeDiscovery — pumpAndSettle timed out due to infinite shimmer animations in skeleton cards; scrollUntilVisible failed with nested Scrollables from DraggableScrollableSheet.
+
+Additional evidence: HomeDiscoveryNavConsolidation — route-push testing initially failed because the observer count assumed the initial route was counted, `ScaleButton` left a delayed timer pending, and providers placed below `MaterialApp` were unavailable to the pushed `TaskDetailsScreen`. The test was stabilized by pumping past the delay and using a stub route builder for navigation-only coverage.
 
 ---
 

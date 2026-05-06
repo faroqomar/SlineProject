@@ -30,6 +30,9 @@ Before finalizing any plan that includes unit tests, the Planner MUST self-verif
 1. Can every target class be constructed with mock dependencies? (See §2.2.1)
 2. Are singleton cleanup methods documented? (See §2.2.2)
 3. Are auto-loading constructors flagged with mock pre-configuration? (See §2.2.3)
+4. Do all planned test command paths exist, or are they explicitly marked as files to be created before the command runs?
+5. If a widget test taps through navigation to another route, does the plan either provide every Provider required by the pushed route above `MaterialApp`, or define a test-only route-builder seam so the test proves navigation without constructing unrelated backend-dependent screens?
+6. If a widget under test uses delayed tap callbacks such as `ScaleButton.callbackDelay`, does the test plan advance the clock beyond that delay before asserting route pushes or callback effects?
 
 If ANY check fails, add an infrastructure phase BEFORE the first test phase.
 
@@ -256,6 +259,7 @@ Capture:
 - Every sub-phase header must name its primary agent or agents.
 - If a step changes UI / UX / theme / layout / motion / responsiveness / copy, that step MUST also include `Skill: <skill-name>` from `.cursor/skills/`.
 - If a step changes schema / RLS / RPC / trigger / storage / rollout / performance hot paths, that step MUST also include `Skill: supabase-migration`.
+- Every named skill MUST resolve to an existing `.cursor/skills/<skill-name>/SKILL.md` file. Do not use descriptive labels such as "Flutter UI + design tokens" where the Executor requires a concrete skill name.
 - If a feature includes schema design, order flow, or backend process flow, the plan MUST include a dedicated diagram artifact under `docs/diagrams/`.
 - **Mandatory triggers:**
   - Any feature touching wallet, escrow, payments, admin finance, disputes, or sensitive user data → `@SecurityAuditor` + `@Observability`
@@ -309,6 +313,8 @@ Use this exact shape inside the plan:
 `- [ ] (@UIDesigner | Skill: arrange) Rework the booking summary layout into clear primary / secondary zones using existing theme tokens.`
 
 If a UI step has no skill tag, the plan is incomplete.
+
+Before finalizing the plan, run or logically perform a skill-label validation pass: every `Skill:` value in the plan must match an installed `.cursor/skills/<name>/SKILL.md`. If any label does not resolve, patch the plan before handing it to `@Executor`.
 
 ## 4.2 Supabase Planning Protocol (Mandatory When Backend Work Is Touched)
 

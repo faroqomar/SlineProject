@@ -7,7 +7,43 @@
 
 > Historical review note: this document records review findings and fixes from earlier passes. Treat references to removed files or older structure as historical context; the current live structure is documented in `Sline_everything/STRUCTURE.md` and `Sline_everything/DEVELOPER_GUIDE.md`.
 
-## Current Guardrail Notes (2026-04-05)
+## Current Guardrail Notes (2026-04-30)
+
+### Home Discovery Navigation Contract (2026-04-30)
+
+**Pattern**: When bottom-nav destinations change, define the contract once and reference it everywhere. The live authenticated shell uses `MainNavDestinations` from `lib/core/navigation/main_nav_destinations.dart` for Home, Dashboard, Messages, and Profile. Bookings and Tenders are Home discovery modes, not app-shell destinations.
+
+**Rule**:
+1. Do not hardcode bottom-nav indexes in shell, bottom nav, deep-link handlers, or tests.
+2. Update `CustomBottomNavBar.visibleDestinations` tests whenever the visible app-shell contract changes.
+3. Scan for retired nav labels and stale index assumptions after consolidation.
+4. Preserve `AppLogger` instrumentation for stale index normalization and Home discovery mode changes.
+
+**Evidence**: Home Discovery Nav Consolidation (2026-04-30) removed Tenders/Bookings from the bottom nav and moved them below Home search. Orchestrator MED-2 found fallback normalization still depended on raw provider indexes for short override screen lists; fixed by normalizing whenever `rawIndex != currentIndex`.
+
+### Route-Push Widget Test Isolation (2026-04-30)
+
+**Pattern**: Tests that only need to prove a tap pushes a route should not instantiate backend-heavy destination screens.
+
+**Rule**: Add a narrow test seam, such as an optional destination builder, and keep the production default unchanged. The seam must be private to widget construction and must not leak test-only behavior into production code paths.
+
+**Evidence**: Home Discovery Nav Consolidation Orchestrator MED-1 found the Home task-card route-push test coupled to real `TaskDetailsScreen` and its management/Supabase loading. `HomeScreen.taskDetailsScreenBuilder` now lets the widget test push a stub details route while production still pushes `TaskDetailsScreen(task: task)`.
+
+### Press-Animation Timing in Widget Tests (2026-04-30)
+
+**Pattern**: `ScaleButton` delays callbacks briefly to allow press feedback before executing tap behavior.
+
+**Rule**: After tapping a widget that uses `ScaleButton`, advance the test clock past the callback delay before asserting navigation, callbacks, or observer counts.
+
+**Evidence**: Home task-card route-push coverage initially left a pending timer and failed until the test advanced time after the tap.
+
+### NavigatorObserver Assumption Check (2026-04-30)
+
+**Pattern**: Widget tests should not assume the initial route push is counted unless the harness proves it.
+
+**Rule**: For interaction-driven route assertions, assert the post-interaction push contract directly, or write the observer to distinguish initial and interaction pushes explicitly.
+
+**Evidence**: Home route-push coverage initially expected an initial observer push that was not emitted by the harness. The test now asserts a push after the task-card tap.
 
 ### Widget Test Type A/B Classification (Phase F, 2026-04-05)
 

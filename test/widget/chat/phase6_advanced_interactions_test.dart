@@ -180,7 +180,7 @@ void main() {
     /// Creates a mock ChatViewModel with standard stubs for ConversationListTile.
     /// Note: otherUserTyping/activeConversation stubs removed — typing indicator
     /// was disabled (see conversation_list_tile.dart TODO).
-    _MockChatViewModel _buildVm() {
+    _MockChatViewModel buildVm() {
       final vm = _MockChatViewModel();
       when(() => vm.currentUserId).thenReturn('user-1');
       when(() => vm.isPresenceReceiptsEnabled).thenReturn(false);
@@ -190,7 +190,7 @@ void main() {
     testWidgets('shows "Just now" for messages less than 60s old', (
       tester,
     ) async {
-      final vm = _buildVm();
+      final vm = buildVm();
       final convo = Conversation(
         id: 'c1',
         user1Id: 'user-1',
@@ -216,7 +216,7 @@ void main() {
     testWidgets('shows minute format for messages < 60 minutes old', (
       tester,
     ) async {
-      final vm = _buildVm();
+      final vm = buildVm();
       final convo = Conversation(
         id: 'c1',
         user1Id: 'user-1',
@@ -242,7 +242,7 @@ void main() {
     testWidgets('shows hour format for messages < 24 hours old', (
       tester,
     ) async {
-      final vm = _buildVm();
+      final vm = buildVm();
       final convo = Conversation(
         id: 'c1',
         user1Id: 'user-1',
@@ -270,7 +270,7 @@ void main() {
   // Group 5 — MessagesScreen: Search Bar
   // ═══════════════════════════════════════════════════════════════════════════
   group('MessagesScreen search', () {
-    _MockChatViewModel _buildVm({List<Conversation>? conversations}) {
+    _MockChatViewModel buildVm({List<Conversation>? conversations}) {
       final vm = _MockChatViewModel();
       when(() => vm.conversations).thenReturn(conversations ?? []);
       when(() => vm.isLoadingConversations).thenReturn(false);
@@ -283,7 +283,7 @@ void main() {
     }
 
     testWidgets('shows search icon in header', (tester) async {
-      final vm = _buildVm();
+      final vm = buildVm();
 
       await pumpApp(
         tester,
@@ -298,7 +298,7 @@ void main() {
     });
 
     testWidgets('toggles search bar on icon tap', (tester) async {
-      final vm = _buildVm();
+      final vm = buildVm();
 
       await pumpApp(
         tester,
@@ -342,7 +342,7 @@ void main() {
           lastMessageSenderId: 'u2',
         ),
       ];
-      final vm = _buildVm(conversations: conversations);
+      final vm = buildVm(conversations: conversations);
       when(() => vm.isPresenceReceiptsEnabled).thenReturn(false);
 
       await pumpApp(

@@ -1,6 +1,47 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2026-04-09
+**Last Updated:** 2026-04-30
+
+---
+
+## 🧭 Version 2.25.1 — Home Discovery Navigation Consolidation (2026-04-30)
+
+**Classification:** Navigation consolidation + Home discovery polish
+**Plan:** `.TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
+**Plan Critique:** `.TODO/PLAN_CRITIQUE_2026-04-30_HomeDiscoveryNavConsolidation.md`
+**Session Log:** `docs/LOG/SESSION_HomeDiscoveryNavConsolidation_2026-04-30.md`
+**Master Report:** `.TODO/MASTER_REPORT_2026-04-30_HomeDiscoveryNavConsolidation.md`
+**System Evolution:** `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-30.md`
+**Supabase objects changed:** none
+
+### Scope
+- Bottom navigation now exposes four app-shell destinations: Home, Dashboard, Messages, Profile.
+- `Tenders` and `Bookings` moved into Home below the search bar as discovery modes alongside `All Work`.
+- Added `lib/core/navigation/main_nav_destinations.dart` so shell, bottom nav, deep links, and tests share named destination indexes.
+- Added `AppLogger` instrumentation for stale navigation-index normalization and Home discovery mode changes/reselects.
+
+### Key Files
+- `lib/app/main_navigation_screen.dart`
+- `lib/core/navigation/main_nav_destinations.dart`
+- `lib/core/widgets/custom_bottom_nav_bar.dart`
+- `lib/features/home/view/home_screen.dart`
+- `lib/features/profile/services/profile_deep_link_handler.dart`
+- `test/core/widgets/custom_bottom_nav_bar_test.dart`
+- `test/widget/app/main_navigation_screen_test.dart`
+- `test/widget/home/home_screen_test.dart`
+- `test/features/profile/services/profile_deep_link_handler_test.dart`
+- `test/widget/auth/login_screen_test.dart`
+- `test/integration_test/create_tender_task_flow_test.dart`
+
+### Review Fixes
+- Orchestrator MED-1: isolated Home route-push widget coverage with `HomeScreen.taskDetailsScreenBuilder`, preserving the production `TaskDetailsScreen(task: task)` default.
+- Orchestrator MED-2: normalized `MainNavigationScreen` provider state whenever the raw provider index differs from the effective visible index.
+
+### Verification
+- Changed-file analyzer: no issues.
+- Focused widget tests: custom bottom nav, main navigation, Home, profile deep links, and login screen passed.
+- Full `flutter test`: `+1400 ~30`.
+- Full `flutter analyze`: still fails only on unrelated pre-existing chat analyzer baseline issues in `lib/features/chat/view/widgets/message_bubble.dart` and `test/widget/chat/phase6_advanced_interactions_test.dart`.
 
 ---
 
@@ -4062,4 +4103,3 @@ Flutter + Supabase freelance marketplace with real-time chat, tasks, and profile
 - Message deletion: needs `delete_message` RPC with ownership verification
 - Delivery/read receipts: needs full status chain (sending→sent→delivered→read)
 - Explicit online status: using `presenceUpdatedAt` within 60s as heuristic (no `isOnline` field)
-
