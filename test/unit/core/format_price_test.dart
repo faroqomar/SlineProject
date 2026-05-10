@@ -38,12 +38,16 @@ void main() {
     });
 
     test('timeAgo returns hours branch', () {
-      final date = DateTime.now().subtract(const Duration(hours: 3, minutes: 10));
+      final date = DateTime.now().subtract(
+        const Duration(hours: 3, minutes: 10),
+      );
       expect(DateFormatter.timeAgo(date), '3 hours ago');
     });
 
     test('timeAgo returns minutes branch', () {
-      final date = DateTime.now().subtract(const Duration(minutes: 12, seconds: 40));
+      final date = DateTime.now().subtract(
+        const Duration(minutes: 12, seconds: 40),
+      );
       expect(DateFormatter.timeAgo(date), '12 minutes ago');
     });
 

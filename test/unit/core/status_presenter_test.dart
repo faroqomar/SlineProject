@@ -7,7 +7,10 @@ import 'package:sline_app/core/utils/status_presenter.dart';
 void main() {
   group('StatusPresenter.bookingStatusColor', () {
     test('maps active/confirmed statuses to teal', () {
-      expect(StatusPresenter.bookingStatusColor(BookingStatus.active), AppColors.teal);
+      expect(
+        StatusPresenter.bookingStatusColor(BookingStatus.active),
+        AppColors.teal,
+      );
       expect(
         StatusPresenter.bookingStatusColor(BookingStatus.confirmed),
         AppColors.teal,
@@ -15,7 +18,10 @@ void main() {
     });
 
     test('maps pending and paidRequestPending to gold', () {
-      expect(StatusPresenter.bookingStatusColor(BookingStatus.pending), AppColors.gold);
+      expect(
+        StatusPresenter.bookingStatusColor(BookingStatus.pending),
+        AppColors.gold,
+      );
       expect(
         StatusPresenter.bookingStatusColor(BookingStatus.paidRequestPending),
         AppColors.gold,
@@ -44,7 +50,10 @@ void main() {
     test('returns fallback for unhandled statuses', () {
       const customFallback = Color(0xFF123456);
       expect(
-        StatusPresenter.bookingStatusColor(BookingStatus.refunded, customFallback),
+        StatusPresenter.bookingStatusColor(
+          BookingStatus.refunded,
+          customFallback,
+        ),
         customFallback,
       );
       expect(
@@ -64,7 +73,10 @@ void main() {
         StatusPresenter.bookingStatusLabel(BookingStatus.inProgress),
         'IN PROGRESS',
       );
-      expect(StatusPresenter.bookingStatusLabel(BookingStatus.noShow), 'NO SHOW');
+      expect(
+        StatusPresenter.bookingStatusLabel(BookingStatus.noShow),
+        'NO SHOW',
+      );
       expect(
         StatusPresenter.bookingStatusLabel(BookingStatus.expiredUnanswered),
         'EXPIRED',
@@ -76,15 +88,27 @@ void main() {
     });
 
     test('falls back to uppercase enum name for normal statuses', () {
-      expect(StatusPresenter.bookingStatusLabel(BookingStatus.confirmed), 'CONFIRMED');
-      expect(StatusPresenter.bookingStatusLabel(BookingStatus.pending), 'PENDING');
+      expect(
+        StatusPresenter.bookingStatusLabel(BookingStatus.confirmed),
+        'CONFIRMED',
+      );
+      expect(
+        StatusPresenter.bookingStatusLabel(BookingStatus.pending),
+        'PENDING',
+      );
     });
   });
 
   group('StatusPresenter.offerStatusColor', () {
     test('maps all offer statuses to expected colors', () {
-      expect(StatusPresenter.offerStatusColor(OfferStatus.pending), AppColors.gold);
-      expect(StatusPresenter.offerStatusColor(OfferStatus.accepted), AppColors.teal);
+      expect(
+        StatusPresenter.offerStatusColor(OfferStatus.pending),
+        AppColors.gold,
+      );
+      expect(
+        StatusPresenter.offerStatusColor(OfferStatus.accepted),
+        AppColors.teal,
+      );
       expect(
         StatusPresenter.offerStatusColor(OfferStatus.rejected),
         AppColors.lightRed,
@@ -93,17 +117,32 @@ void main() {
         StatusPresenter.offerStatusColor(OfferStatus.withdrawn),
         AppColors.lightRed,
       );
-      expect(StatusPresenter.offerStatusColor(OfferStatus.unknown), AppColors.lightRed);
+      expect(
+        StatusPresenter.offerStatusColor(OfferStatus.unknown),
+        AppColors.lightRed,
+      );
     });
   });
 
   group('StatusPresenter.offerStatusLabel', () {
     test('maps all offer statuses to expected labels', () {
       expect(StatusPresenter.offerStatusLabel(OfferStatus.pending), 'Pending');
-      expect(StatusPresenter.offerStatusLabel(OfferStatus.accepted), 'Accepted');
-      expect(StatusPresenter.offerStatusLabel(OfferStatus.rejected), 'Rejected');
-      expect(StatusPresenter.offerStatusLabel(OfferStatus.withdrawn), 'Withdrawn');
-      expect(StatusPresenter.offerStatusLabel(OfferStatus.unknown), 'Unavailable');
+      expect(
+        StatusPresenter.offerStatusLabel(OfferStatus.accepted),
+        'Accepted',
+      );
+      expect(
+        StatusPresenter.offerStatusLabel(OfferStatus.rejected),
+        'Rejected',
+      );
+      expect(
+        StatusPresenter.offerStatusLabel(OfferStatus.withdrawn),
+        'Withdrawn',
+      );
+      expect(
+        StatusPresenter.offerStatusLabel(OfferStatus.unknown),
+        'Unavailable',
+      );
     });
   });
 }

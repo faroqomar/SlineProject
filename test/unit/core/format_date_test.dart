@@ -11,12 +11,16 @@ void main() {
     });
 
     test('returns minutes for less than one hour', () {
-      final date = DateTime.now().subtract(const Duration(minutes: 5, seconds: 30));
+      final date = DateTime.now().subtract(
+        const Duration(minutes: 5, seconds: 30),
+      );
       expect(formatFriendlyTime(date), '5m ago');
     });
 
     test('returns hours for less than one day', () {
-      final date = DateTime.now().subtract(const Duration(hours: 3, minutes: 15));
+      final date = DateTime.now().subtract(
+        const Duration(hours: 3, minutes: 15),
+      );
       expect(formatFriendlyTime(date), '3h ago');
     });
 
@@ -32,7 +36,10 @@ void main() {
 
     test('returns DD/MM/YYYY for one week or older', () {
       final date = DateTime.now().subtract(const Duration(days: 10));
-      expect(formatFriendlyTime(date), '${date.day}/${date.month}/${date.year}');
+      expect(
+        formatFriendlyTime(date),
+        '${date.day}/${date.month}/${date.year}',
+      );
     });
   });
 
@@ -69,12 +76,16 @@ void main() {
     });
 
     test('returns days left when more than one day remains', () {
-      final date = DateTime.now().toUtc().add(const Duration(days: 2, hours: 3));
+      final date = DateTime.now().toUtc().add(
+        const Duration(days: 2, hours: 3),
+      );
       expect(formatTimeLeft(date), '2d left');
     });
 
     test('returns hours left when less than one day remains', () {
-      final date = DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 20));
+      final date = DateTime.now().toUtc().add(
+        const Duration(hours: 5, minutes: 20),
+      );
       expect(formatTimeLeft(date), '5h left');
     });
 
