@@ -2,7 +2,7 @@
 
 **Scope:** Hardened Payment Linking System (24)  
 **Plan:** `.TODO/PLAN_HardenedPaymentLinking_2026-03-08_PlanCritic.md`  
-**Pipeline:** Architect → Observability → SlineDocs → CodeGuard  
+**Pipeline:** Architect → Observability → DocsKeeper → CodeGuard  
 **Date:** 2026-03-08
 
 ---
@@ -45,7 +45,7 @@
 ### Docs / reference integrity
 | Severity | Owner | Location | Finding | Fix |
 |----------|--------|----------|---------|-----|
-| MED | SlineDocs | SUPABASE_SETUP.md, DEVELOPER_GUIDE.md | New columns, RLS, trigger, and ledger meta not yet documented. | Update SUPABASE_SETUP (tables, migrations 20260308200000, 20260308200100); DEVELOPER_GUIDE (intent path, Realtime, CONTRACT/LOGGING refs). |
+| MED | DocsKeeper | SUPABASE_SETUP.md, DEVELOPER_GUIDE.md | New columns, RLS, trigger, and ledger meta not yet documented. | Update SUPABASE_SETUP (tables, migrations 20260308200000, 20260308200100); DEVELOPER_GUIDE (intent path, Realtime, CONTRACT/LOGGING refs). |
 
 ---
 
@@ -53,8 +53,8 @@
 
 | Step | Owner | Action | Status |
 |------|--------|--------|--------|
-| 1 | @SlineDocs | Update SUPABASE_SETUP.md: payment_intents (signature, currency, paid_at), payment_events (RLS, append-only trigger), orphan_payments (investigated); migrations; journal_entries.meta.payment_intent_id. | **Done** — §5.23–5.25, Quick Reference, Key Business Rules, journal_entries note. |
-| 2 | @SlineDocs | Update DEVELOPER_GUIDE.md: Hardened flow intent path in webhook, payment_events audit, ledger meta; Realtime when intent_id present; reference CONTRACT and LOGGING_AND_SECRETS. | **Done** — §1–5 rewritten; CONTRACT/LOGGING refs added. |
+| 1 | @DocsKeeper | Update SUPABASE_SETUP.md: payment_intents (signature, currency, paid_at), payment_events (RLS, append-only trigger), orphan_payments (investigated); migrations; journal_entries.meta.payment_intent_id. | **Done** — §5.23–5.25, Quick Reference, Key Business Rules, journal_entries note. |
+| 2 | @DocsKeeper | Update DEVELOPER_GUIDE.md: Hardened flow intent path in webhook, payment_events audit, ledger meta; Realtime when intent_id present; reference CONTRACT and LOGGING_AND_SECRETS. | **Done** — §1–5 rewritten; CONTRACT/LOGGING refs added. |
 | 3 | @Observability | Add structured outcome log in webhook (intent_path_processed, intent_path_orphan). | **Done** — qicard_webhook_handler logs event + intent_id/gateway_event_id/entity_type or reason. |
 | 4 | @CodeGuard | Re-run gate after docs/observability changes (optional). | Pending (no BLOCKER expected). |
 

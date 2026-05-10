@@ -143,7 +143,7 @@ Stages skipped (not applicable to Phase A+B scope):
 - Stage 6 (@DataMigration): No schema changes
 - Stage 7 (@TemplateOwner): No template changes
 - Stage 8 (@Observability): AppLogger verified in @Architect audit
-- Stage 9 (@SlineDocs): Docs synced in prior step
+- Stage 9 (@DocsKeeper): Docs synced in prior step
 
 ---
 

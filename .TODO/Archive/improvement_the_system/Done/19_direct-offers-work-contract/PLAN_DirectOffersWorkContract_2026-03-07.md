@@ -238,16 +238,16 @@
 
 **Steps:**
 
-5.1 (@SlineDocs) **SUPABASE_SETUP.md**  
+5.1 (@DocsKeeper) **SUPABASE_SETUP.md**  
 - Admin section or §5.14: admin schema, vw_direct_offer_money_story, vw_direct_offer_stuck_funds, admin_refund_direct_offer, self-offer guard.
 
-5.2 (@SlineDocs) **Direct_Offers_Feature.md**  
+5.2 (@DocsKeeper) **Direct_Offers_Feature.md**  
 - Admin tooling (views + RPC); refund path; self-offer rule; link to contract.
 
-5.3 (@SlineDocs) **STRUCTURE.md / MVP_ROADMAP.md**  
+5.3 (@DocsKeeper) **STRUCTURE.md / MVP_ROADMAP.md**  
 - Note new migration(s) and admin objects if needed.
 
-5.4 (@SlineDocs) **Execution summary**  
+5.4 (@DocsKeeper) **Execution summary**  
 - In folder 19 or .TODO: link to this plan; “Completed: views, RPC, self-offer guard, guard script run, E2E run, docs.”
 
 **GATE CHECK Phase 5:** Docs updated; summary written. Release gate PASS.

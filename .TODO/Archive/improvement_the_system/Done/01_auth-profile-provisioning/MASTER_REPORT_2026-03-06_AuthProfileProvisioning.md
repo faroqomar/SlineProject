@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-06  
 **Scope:** Auth Profile Provisioning  
-**Orchestrator:** Pipeline run per `.agents/workflows/orchestrator.md`
+**Orchestrator:** Pipeline run per `.agents/workflows/Orchestrator.md`
 
 ---
 
@@ -57,7 +57,7 @@ CodeGuard: **APPROVED**. No pipeline halt.
 |------|--------|--------|--------------|
 | 1 | @Observability / dev | In `auth_form_view_model.dart`, replace `AppLogger.e('Login failed: $e')` with `AppLogger.e('Login failed', tag: 'Auth', error: e)` and same for registration. | Grep for `$e` in AppLogger.e in that file → none. |
 | 2 | (Optional) | In `AuthSessionViewModel.logout()`, call `clearError()` so error state is cleared on sign-out. | Manual: sign in → trigger profile failure → sign out → sign in again; no stale error. |
-| 3 | (Optional) | @SlineDocs: add “Profile provisioning retry” subsection under Auth in DEVELOPER_GUIDE. | Doc scan. |
+| 3 | (Optional) | @DocsKeeper: add “Profile provisioning retry” subsection under Auth in DEVELOPER_GUIDE. | Doc scan. |
 | 4 | @CodeGuard | Re-run review after Step 1 if desired (no gate required for MED). | Run `flutter analyze` and auth tests. |
 
 ---

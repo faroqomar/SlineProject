@@ -8,7 +8,7 @@
 
 ## 1. Executive Summary
 
-The Ledger Event Flow implementation was reviewed by **Architect**, **Observability**, **SlineDocs**, and **CodeGuard**. All four agents reported **no blockers**. The change set is additive: LedgerService forensics merge, unit and RLS tests, contract and smoke/runbook docs, and developer-guide updates. MVVM is preserved; logging uses AppLogger only; documentation references are valid; security and performance checks pass.
+The Ledger Event Flow implementation was reviewed by **Architect**, **Observability**, **DocsKeeper**, and **CodeGuard**. All four agents reported **no blockers**. The change set is additive: LedgerService forensics merge, unit and RLS tests, contract and smoke/runbook docs, and developer-guide updates. MVVM is preserved; logging uses AppLogger only; documentation references are valid; security and performance checks pass.
 
 **Pipeline status:** **APPROVED** — no PIPELINE_BLOCKED file written.
 
@@ -29,7 +29,7 @@ The Ledger Event Flow implementation was reviewed by **Architect**, **Observabil
 - **Gaps:** No request_id/correlation id in logs (optional later); no dedicated ledger metrics (acceptable for current scope).
 - **Compliance:** No sensitive data logged; session_id in DB for audit.
 
-### 2.3 Documentation (SlineDocs)
+### 2.3 Documentation (DocsKeeper)
 
 - **Delta:** DEVELOPER_GUIDE (Finance & Payment Ledger) and Wallet_Feature updated with 09 folder refs and test commands; contract and smoke/runbook added.
 - **Integrity:** All refs to 09 folder and test paths verified; no outdated statements found.
@@ -52,7 +52,7 @@ The Ledger Event Flow implementation was reviewed by **Architect**, **Observabil
 
 - **ForensicsProvider / single source:** Added `lib/core/utils/ledger_forensics.dart` — `LedgerForensics.build(sessionId, includeRequestId)` returns `{ session_id?, request_id? }`; LedgerService uses it in `_mergeForensics` so all ledger call sites share one forensics source.
 - **request_id in p_meta and logs:** LedgerService now injects `request_id` (UUID v4) into p_meta and includes it in start/success/error log lines for correlation (Observability + Architect).
-- **Changelog / MVP entry:** Sline_Log.md — new entry "Ledger Event Flow — Forensics, Contract, Tests, Runbook (2026-03-07)"; MVP_ROADMAP.md — "Wallet and ledger views" row updated with 09_ledger-event-flow and contract ref (SlineDocs).
+- **Changelog / MVP entry:** Sline_Log.md — new entry "Ledger Event Flow — Forensics, Contract, Tests, Runbook (2026-03-07)"; MVP_ROADMAP.md — "Wallet and ledger views" row updated with 09_ledger-event-flow and contract ref (DocsKeeper).
 - **Verification:** `flutter analyze lib/features/wallet/ lib/core/utils/ledger_forensics.dart` — clean; `flutter test test/unit/wallet/ test/rls/ledger_rls_test.dart` — 6 passed.
 
 ---
@@ -87,5 +87,5 @@ The Ledger Event Flow implementation was reviewed by **Architect**, **Observabil
 |-------|-------------|
 | Architect | `.TODO/ARCHITECT_REPORT_2026-03-07_LedgerEventFlow.md` |
 | Observability | `.TODO/OBSERVABILITY_REPORT_2026-03-07_LedgerEventFlow.md` |
-| SlineDocs | `.TODO/DOCS_REPORT_2026-03-07_LedgerEventFlow.md` |
+| DocsKeeper | `.TODO/DOCS_REPORT_2026-03-07_LedgerEventFlow.md` |
 | CodeGuard | `.TODO/CODEGUARD_REVIEW_2026-03-07_LedgerEventFlow.md` |

@@ -4,7 +4,7 @@
 **Execution log:** `.TODO/EXECUTION_LOG_DirectChatOfferFlow_2026-03-07_CRITIC.md`  
 **Scope:** DirectChatOfferFlow implementation — documentation delta and reference integrity  
 **Date:** 2026-03-08  
-**Author:** @SlineDocs
+**Author:** @DocsKeeper
 
 ---
 

@@ -3,7 +3,7 @@
 **Scope:** DirectOffersWorkContract (Plan 19)  
 **Plan:** `.TODO/improvement_the_system/ImplementReady/19_direct-offers-work-contract/PLAN_DirectOffersWorkContract_2026-03-07.md`  
 **Date:** 2026-03-07  
-**Agent:** @Observability (per `.agents/workflows/orchestrator.md` pipeline)
+**Agent:** @Observability (per `.agents/workflows/Orchestrator.md` pipeline)
 
 ---
 

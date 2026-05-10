@@ -370,14 +370,14 @@
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> **Primary:** @SlineDocs  
+> **Primary:** @DocsKeeper  
 > **Verify:** @Sentinel
 
-- [ ] (@SlineDocs) Update `Sline_everything/SUPABASE_SETUP.md` §13 (RLS policies) with new policy list
-- [ ] (@SlineDocs) Update `Sline_everything/SUPABASE_SETUP.md` §14 (Views) with security_invoker requirement
-- [ ] (@SlineDocs) Add JWT-based RLS policy documentation
-- [ ] (@SlineDocs) Document role switch flow in `Sline_everything/DEVELOPER_GUIDE.md`
-- [ ] (@SlineDocs) Archive old `15_rls-authorization-map.md` diagram; reference new audit files
+- [ ] (@DocsKeeper) Update `Sline_everything/SUPABASE_SETUP.md` §13 (RLS policies) with new policy list
+- [ ] (@DocsKeeper) Update `Sline_everything/SUPABASE_SETUP.md` §14 (Views) with security_invoker requirement
+- [ ] (@DocsKeeper) Add JWT-based RLS policy documentation
+- [ ] (@DocsKeeper) Document role switch flow in `Sline_everything/DEVELOPER_GUIDE.md`
+- [ ] (@DocsKeeper) Archive old `15_rls-authorization-map.md` diagram; reference new audit files
 - **Verify (@Sentinel):** All docs match live DB reality
 
 ---
@@ -462,7 +462,7 @@ If critical issues discovered post-deployment:
 | 2 — App Layer | @Architect | @Sentinel |
 | 3 — UI | @Pixel (verification) | @Sentinel |
 | 4 — QA + Security | @Sentinel | @ThreatModeler |
-| 5 — Documentation | @SlineDocs | @Sentinel |
+| 5 — Documentation | @DocsKeeper | @Sentinel |
 
 ---
 

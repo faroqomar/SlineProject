@@ -313,16 +313,16 @@
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> **Primary**: @SlineDocs
+> **Primary**: @DocsKeeper
 
-- [ ] (@SlineDocs) Update `Sline_everything/SUPABASE_SETUP.md`:
+- [ ] (@DocsKeeper) Update `Sline_everything/SUPABASE_SETUP.md`:
   - Add `platform_settings` table documentation (Section 5.x)
   - Update `bookings`, `direct_offers`, `task_requests` with new fee columns
   - Update `process_payment_event_ledger` RPC documentation with fee locking behavior
-- [ ] (@SlineDocs) Update `Sline_everything/AppDigram/All_Diagrams/22_Dynamic_Platform_Fee.md`:
+- [ ] (@DocsKeeper) Update `Sline_everything/AppDigram/All_Diagrams/22_Dynamic_Platform_Fee.md`:
   - Mark implemented features as complete
   - Update diagram to reflect actual implementation
-- [ ] (@SlineDocs) Add changelog entry in `Sline_everything/Sline_Log.md`
+- [ ] (@DocsKeeper) Add changelog entry in `Sline_everything/Sline_Log.md`
 - **Verify (@Sentinel)**: Docs match code + live DB reality
 
 ---

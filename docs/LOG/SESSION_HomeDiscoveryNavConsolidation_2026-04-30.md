@@ -80,7 +80,7 @@ Plan artifact: `.TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
 ### [2026-04-30 19:17:14 +03] PHASE STARTED
 
 - Phase: Phase 1 / Phase 2 / Phase 3 navigation contract and shell wiring
-- Agents: `@Architect`, `@Executor`, `@UIDesigner`
+- Agents: `@Architect`, `@Executor`, `@Pixel`
 - Skill: `frontend-design` for UI surface preservation.
 
 ### [2026-04-30 19:17:14 +03] STEP COMPLETED

@@ -31,7 +31,7 @@ None.
 | M4 | @Pixel | `custom_bottom_nav_bar.dart:299,316` | Hardcoded `fontSize: 9` — violates "Use AppTypography.*" rule | Replace with `AppTypography.micro` scaled or document as nav-specific exception |
 | M5 | @Pixel | `main_navigation_screen.dart:290-295` | Hardcoded `BoxShadow` on FAB — should use `AppDecorations.elevation()` | Replace with `AppDecorations.elevation(3, isDark: ...)` or create FAB-specific elevation |
 | M6 | @Pixel | `main_navigation_screen.dart:301` | Hardcoded icon `size: 30` — no matching token | Leave as FAB-specific with inline comment documenting the intentional gap |
-| M7 | @SlineDocs | `theme_dashboard.dart:261` | Stale `glassBoxDecoration` code example references a method that no longer exists in `app_decorations.dart` | Remove or update the stale code example |
+| M7 | @DocsKeeper | `theme_dashboard.dart:261` | Stale `glassBoxDecoration` code example references a method that no longer exists in `app_decorations.dart` | Remove or update the stale code example |
 
 ### LOW (Fix When Convenient)
 
@@ -43,9 +43,9 @@ None.
 | L4 | @Architect | `status_badge.dart:185,193-194` | Hardcoded conditional padding/icon sizes (badge-specific) |
 | L5 | @Architect | `custom_bottom_nav_bar.dart:248` | Hardcoded `width: 0.5` border — no token exists for sub-pixel |
 | L6 | @Architect | `custom_bottom_nav_bar.dart:278-280` | Hardcoded badge padding `horizontal: 4, vertical: 1` |
-| L7 | @SlineDocs | `theme_dashboard.dart:363-370` | `app_layout.dart` missing from File References section |
-| L8 | @SlineDocs | `theme_dashboard.dart:13-18` | `app_layout.dart` import missing from imports |
-| L9 | @SlineDocs | `theme_dashboard.dart:220-221` | Stale "will be migrated in Phase 1" note — Phase 1 is complete |
+| L7 | @DocsKeeper | `theme_dashboard.dart:363-370` | `app_layout.dart` missing from File References section |
+| L8 | @DocsKeeper | `theme_dashboard.dart:13-18` | `app_layout.dart` import missing from imports |
+| L9 | @DocsKeeper | `theme_dashboard.dart:220-221` | Stale "will be migrated in Phase 1" note — Phase 1 is complete |
 | L10 | @Pixel | `circle_icon_button.dart:69` | Duplicate WCAG comment (old + new) |
 
 ---
@@ -54,7 +54,7 @@ None.
 
 | Step | Owner | What | Why | Verification |
 |------|-------|------|-----|-------------|
-| 1 | @SlineDocs | Remove stale `glassBoxDecoration` example from `theme_dashboard.dart:261` | References non-existent method — confuses developers | `flutter analyze` clean |
+| 1 | @DocsKeeper | Remove stale `glassBoxDecoration` example from `theme_dashboard.dart:261` | References non-existent method — confuses developers | `flutter analyze` clean |
 | 2 | @Pixel | Replace `signed_avatar.dart:309` — `width: 12` with `AppLayout.iconTiny` and `width: 2` with `AppLayout.borderAvatar` | Tokens exist for these exact values | `flutter test` passes |
 | 3 | @Pixel | Add `app_layout.dart` import + file reference to `theme_dashboard.dart` | Documentation completeness | `flutter analyze` clean |
 | 4 | @Pixel | Add inline comments to remaining hardcoded values (M1, M2, M4, M6) documenting them as intentional exceptions | Prevents future audits from re-flagging known decisions | Code review |
@@ -148,7 +148,7 @@ For Phase 1+ (downstream redesigns), verify:
 | 6 | @DataMigration | SKIPPED | N/A |
 | 7 | @TemplateOwner | SKIPPED | N/A |
 | 8 | @Observability | CLEAN | PASS |
-| 9 | @SlineDocs | 1 MED, 3 LOW | PASS |
+| 9 | @DocsKeeper | 1 MED, 3 LOW | PASS |
 | 10 | @CodeGuard | All gates PASS | PASS |
 | 11 | @Sentinel | 11/11 criteria met | PASS |
 

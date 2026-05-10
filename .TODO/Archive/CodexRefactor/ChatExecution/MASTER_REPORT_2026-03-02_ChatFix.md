@@ -2,7 +2,7 @@
 
 **Scope:** ChatFix (PLAN_ChatFix_v2_2026-03-01 execution)  
 **Date:** 2026-03-02  
-**Pipeline:** Architect → Observability → SlineDocs → CodeGuard
+**Pipeline:** Architect → Observability → DocsKeeper → CodeGuard
 
 ---
 
@@ -32,8 +32,8 @@
 - None. AppLogger used; CHAT_OBSERVABILITY satisfied; no print() in chat.
 
 ### Docs / Reference Integrity
-- **LOW | SlineDocs:** Add `archive_conversation_v1` and `can_access_chat_attachment` to SUPABASE_SETUP.md after migration is applied, for schema doc consistency.
-- **LOW | SlineDocs:** Optionally ensure STRUCTURE.md or MVP_ROADMAP.md reflect new Chat files (chat_offer_payload.dart, chat_realtime_merger.dart) if those docs list feature files.
+- **LOW | DocsKeeper:** Add `archive_conversation_v1` and `can_access_chat_attachment` to SUPABASE_SETUP.md after migration is applied, for schema doc consistency.
+- **LOW | DocsKeeper:** Optionally ensure STRUCTURE.md or MVP_ROADMAP.md reflect new Chat files (chat_offer_payload.dart, chat_realtime_merger.dart) if those docs list feature files.
 
 ---
 
@@ -43,8 +43,8 @@
 |------|--------|--------|---------------|
 | 1 | (Done) Remove duplicate Phase 3/4/5 rows from EXECUTION_LOG_PLAN_ChatFix_v2_2026-03-01.md | Executor | Phase table has single row per phase. |
 | 2 | (Done) Add MessageType.system to message_model.dart for DB enum parity | Architect | message_model_test and flutter analyze pass. |
-| 3 | (Done) Add archive_conversation_v1 and can_access_chat_attachment to SUPABASE_SETUP.md | SlineDocs | Doc search finds new RPC/helper in SUPABASE_SETUP. |
-| 4 | (Done) Update STRUCTURE.md: Chat includes chat_offer_payload.dart, chat_realtime_merger.dart, archive RPC | SlineDocs | STRUCTURE.md Recent Updates mentions new Chat files. |
+| 3 | (Done) Add archive_conversation_v1 and can_access_chat_attachment to SUPABASE_SETUP.md | DocsKeeper | Doc search finds new RPC/helper in SUPABASE_SETUP. |
+| 4 | (Done) Update STRUCTURE.md: Chat includes chat_offer_payload.dart, chat_realtime_merger.dart, archive RPC | DocsKeeper | STRUCTURE.md Recent Updates mentions new Chat files. |
 
 No BLOCKER or HIGH items. Steps 1–4 completed.
 

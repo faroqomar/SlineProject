@@ -56,7 +56,7 @@ $ flutter pub outdated
   - `js` package discontinued
 - **Risk**: Security patches, bug fixes, and performance improvements not available
 - **Suggestion**: Schedule migration to supabase_flutter v2.x (breaking changes expected)
-- **Owner**: @SlinePlanner for migration plan
+- **Owner**: @Planner for migration plan
 
 ### 2. Resource Leak (LOW)
 - **Location**: `manage_portfolio_screen.dart:33-34`

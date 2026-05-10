@@ -218,11 +218,11 @@
 
 **Steps:**
 
-1. (@SlineDocs) 18_realtime-subscription-topology.md: Remove “conversations in publication”; diagram Inbox from messages stream receiver_id=eq.{auth.uid}; Evidence table fixed; status/verification updated.
-2. (@SlineDocs) SUPABASE_SETUP.md Realtime: only messages and notifications in publication; do NOT add conversations; align snippet with Phase 1 result.
-3. (@SlineDocs) Chat Feature.md: Inbox realtime = subscribeToInboxMessages(userId); merge in ChatViewModel; no conversations stream.
-4. (@SlineDocs) DEVELOPER_GUIDE.md / STRUCTURE.md: minimal reference to topology; point to diagram and Chat Feature.
-5. (@SlineDocs) Optional: Sline_Log.md entry for realtime topology fix.
+1. (@DocsKeeper) 18_realtime-subscription-topology.md: Remove “conversations in publication”; diagram Inbox from messages stream receiver_id=eq.{auth.uid}; Evidence table fixed; status/verification updated.
+2. (@DocsKeeper) SUPABASE_SETUP.md Realtime: only messages and notifications in publication; do NOT add conversations; align snippet with Phase 1 result.
+3. (@DocsKeeper) Chat Feature.md: Inbox realtime = subscribeToInboxMessages(userId); merge in ChatViewModel; no conversations stream.
+4. (@DocsKeeper) DEVELOPER_GUIDE.md / STRUCTURE.md: minimal reference to topology; point to diagram and Chat Feature.
+5. (@DocsKeeper) Optional: Sline_Log.md entry for realtime topology fix.
 
 **GATE CHECK:** No doc claims “conversations in realtime”; diagram shows messages-driven Inbox.
 

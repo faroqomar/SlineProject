@@ -70,4 +70,4 @@ flutter analyze lib/features/dashboard lib/features/work/models/unified_work_ite
 
 **Decision: APPROVED ✅**
 
-No blocking issues. Optional: add index on task_requests(task_id, status, payment_status) for the view’s third branch; add Observability-recommended logs in work_tab; apply doc updates from SlineDocs report.
+No blocking issues. Optional: add index on task_requests(task_id, status, payment_status) for the view’s third branch; add Observability-recommended logs in work_tab; apply doc updates from DocsKeeper report.

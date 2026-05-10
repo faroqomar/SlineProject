@@ -225,7 +225,7 @@
 2. **(@Sentinel)** Run threat model negative cases (unauthorized cancel, double webhook, fee tampering, timeout abuse). **Output:** Test log. **Stop:** All negative cases fail as expected.
 3. **(@Sentinel)** Manual E2E script: create → accept → pay (with recovery) → deliver → complete; deliver → simulate cron → auto-release; cancel sent; cancel accepted unpaid; (optional) create dispute. Edge: app crash after redirect → recovery by payment_request_id; duplicate webhook → idempotency. **Output:** E2E checklist or script. **Stop:** All scenarios pass.
 4. **(@Sentinel)** Observability: required events logged; no PII. **Output:** Verification note. **Stop:** Logs usable; no leak.
-5. **(@SlineDocs)** Update DEVELOPER_GUIDE/Direct_Offers_Feature.md (schema, lifecycle, composite states, dispute, timeout, gateway columns). Update SUPABASE_SETUP.md §5.14 direct_offers, §5.24 disputes, RPC/cron. Update AppDiagram/state diagram to V3 composite (sent_unpaid → ...). **Output:** Updated docs. **Stop:** Docs match code and DB.
+5. **(@DocsKeeper)** Update DEVELOPER_GUIDE/Direct_Offers_Feature.md (schema, lifecycle, composite states, dispute, timeout, gateway columns). Update SUPABASE_SETUP.md §5.14 direct_offers, §5.24 disputes, RPC/cron. Update AppDiagram/state diagram to V3 composite (sent_unpaid → ...). **Output:** Updated docs. **Stop:** Docs match code and DB.
 
 **GATE CHECK:** All Phase 5 steps done; E2E and negative tests pass; docs updated. Then release.
 

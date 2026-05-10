@@ -174,7 +174,7 @@
   - test evidence review
   - docs-sync review
 - [ ] (@Sentinel) Create `.TODO/RELEASE_CHECKLIST_Dashboard_2026-03-01.md` with definition of done per slice, merge blockers, and rollback points.
-- [ ] (@SlineDocs) Map which docs must be updated in each slice so docs drift does not remain until the final merge.
+- [ ] (@DocsKeeper) Map which docs must be updated in each slice so docs drift does not remain until the final merge.
 - **Verify (@Sentinel):** each slice has one owner, one rollback point, and one merge checklist.
 
 ### 0.2 Spec Lock
@@ -555,11 +555,11 @@
 
 ### 5.4 Slice Closeout and Docs Sync
 
-- [ ] (@SlineDocs) Update `Sline_everything/DEVELOPER_GUIDE.md`.
-- [ ] (@SlineDocs) Update `Sline_everything/SUPABASE_SETUP.md`.
-- [ ] (@SlineDocs) Update `Sline_everything/MVP_ROADMAP.md`.
-- [ ] (@SlineDocs) Update `Sline_everything/STRUCTURE.md`.
-- [ ] (@SlineDocs) Update `Sline_everything/CODE_REVIEW.md` and `Sline_everything/ARCHITECTURE_ANALYSIS.md` only where the current-live contract changed.
+- [ ] (@DocsKeeper) Update `Sline_everything/DEVELOPER_GUIDE.md`.
+- [ ] (@DocsKeeper) Update `Sline_everything/SUPABASE_SETUP.md`.
+- [ ] (@DocsKeeper) Update `Sline_everything/MVP_ROADMAP.md`.
+- [ ] (@DocsKeeper) Update `Sline_everything/STRUCTURE.md`.
+- [ ] (@DocsKeeper) Update `Sline_everything/CODE_REVIEW.md` and `Sline_everything/ARCHITECTURE_ANALYSIS.md` only where the current-live contract changed.
 - [ ] (@Sentinel) Close the release checklist only after code, DB evidence, tests, and docs all match.
 - **Verify (@Sentinel):** docs and release evidence are synchronized with the shipped contract.
 

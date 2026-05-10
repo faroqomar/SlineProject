@@ -81,7 +81,7 @@
 - **Acceptance check:** `mock_services.dart` contains mock classes for all services/repositories used by untested VMs.
 
 **Gap 5: View decomposition phases lack `Skill: audit` final step**
-- **Why it will break:** SlinePlanner §4.1 UI Phase Rules mandate a final `audit` step in every UI phase. Phases 7.1–7.4 have `arrange` and `harden` but no `audit`.
+- **Why it will break:** Planner §4.1 UI Phase Rules mandate a final `audit` step in every UI phase. Phases 7.1–7.4 have `arrange` and `harden` but no `audit`.
 - **Fix:** Add `(@Pixel | Skill: audit)` as the final step in each view decomposition sub-phase.
 - **Owner:** @Pixel
 - **Acceptance check:** Every Phase 7 sub-phase ends with an audit step.
@@ -177,7 +177,7 @@
 - Stop condition: Every service/repository dependency of every untested VM has a mock in the shared file.
 
 **Fix 5: Add `Skill: audit` to all Phase 7 sub-phases**
-- Goal: Comply with SlinePlanner §4.1 UI Phase Rules
+- Goal: Comply with Planner §4.1 UI Phase Rules
 - Why: Mandatory rule. Plan is incomplete without it.
 - How: Add `(@Pixel | Skill: audit)` as final checklist item in 7.1–7.4.
 - Output artifact: Updated Phase 7 steps
@@ -310,7 +310,7 @@
 
 ## 5) Agent Map
 
-- **Phase 0:** `@SlinePlanner`, `@Sentinel`
+- **Phase 0:** `@Planner`, `@Sentinel`
 - **Phase 1:** `@Architect`, `@Sentinel` (APK fix + CI guard expansion)
 - **Phase 2:** `@Architect`, `@Sentinel` (lint migration + auto-fixes)
 - **Phase 3:** `@Architect`, `@Sentinel` (VM DI normalization)
@@ -322,13 +322,13 @@
 - **Phase 9:** `@Architect`, `@Sentinel` (DeepLinkService refactor)
 - **Phase 10:** `@Architect`, `@Pixel`, `@Sentinel` (localization infrastructure)
 - **Phase 11:** `@Sentinel`, `@CodeGuard` (final QA)
-- **Phase 12:** `@SlineDocs` (documentation sync)
+- **Phase 12:** `@DocsKeeper` (documentation sync)
 
 ---
 
 ## Phase 0: Preconditions & Gates
 
-**Primary Agent(s):** `@SlinePlanner`, `@Sentinel`
+**Primary Agent(s):** `@Planner`, `@Sentinel`
 **Goal:** Lock acceptance criteria and confirm baseline state before execution begins.
 **Why:** Phase E is large (12 execution phases); clear boundaries prevent scope creep and ensure measurable progress.
 **How:** Define pass/fail criteria, verify baseline numbers, confirm session log.
@@ -371,7 +371,7 @@
   - `android/settings.gradle.kts` + `android/app/build.gradle.kts` (APK fix)
   - `.github/workflows/ci.yml` (guard expansion + coverage floor)
   - `test/helpers/mock_services.dart` (mock expansion)
-- [ ] (`@SlineDocs`) Confirm authoritative docs: `AUDIT_Quality_Architecture_2026-04-01.md`, `DEVELOPER_GUIDE.md`, `STRUCTURE.md`, `ARCHITECTURE_ANALYSIS.md`.
+- [ ] (`@DocsKeeper`) Confirm authoritative docs: `AUDIT_Quality_Architecture_2026-04-01.md`, `DEVELOPER_GUIDE.md`, `STRUCTURE.md`, `ARCHITECTURE_ANALYSIS.md`.
 - **GATE CHECK:** All acceptance criteria are measurable with exact commands. Baseline snapshot matches expected values. Touched file list is explicit.
 
 ### 0.2 Session Log Confirmation
@@ -1234,7 +1234,7 @@
 
 ## Phase 12: Documentation Sync (MANDATORY)
 
-**Primary Agent(s):** `@SlineDocs`
+**Primary Agent(s):** `@DocsKeeper`
 **Goal:** Update all documentation to reflect Phase E changes.
 **Why:** Docs must match code reality. Phase E changes lint config, file structure, state patterns, localization, deep link architecture, CI config, and coverage thresholds.
 **How:** Update each affected doc file. Write sync artifact.
@@ -1242,29 +1242,29 @@
 
 ### 12.1 Update Core Docs
 
-**Primary Agent(s):** `@SlineDocs`
+**Primary Agent(s):** `@DocsKeeper`
 **Goal:** Update Sline_everything docs.
 **Why:** Developers reference these docs. Stale docs cause wrong implementations.
 **How:** Update each doc with Phase E changes.
 **Result:** All docs match code reality.
 
-- [ ] (`@SlineDocs`) Update `Sline_everything/DEVELOPER_GUIDE.md`:
+- [ ] (`@DocsKeeper`) Update `Sline_everything/DEVELOPER_GUIDE.md`:
   - New lint package (`very_good_analysis` or continued `flutter_lints` + rationale)
   - Sealed `ViewState<T>` pattern documentation with example usage
   - Localization setup: `l10n.yaml`, `.arb` workflow, `flutter gen-l10n` command
   - `DeepLinkRegistry` pattern documentation
   - Test helper (`testApp()`) documentation
-- [ ] (`@SlineDocs`) Update `Sline_everything/STRUCTURE.md`:
+- [ ] (`@DocsKeeper`) Update `Sline_everything/STRUCTURE.md`:
   - New files from god-file decomposition (all delegates, sub-services, widgets)
   - `lib/l10n/` directory
   - `lib/core/models/view_state.dart` and `app_failure.dart`
   - `lib/core/services/deep_link_registry.dart`
   - Feature-side deep link handler files
-- [ ] (`@SlineDocs`) Update `Sline_everything/ARCHITECTURE_ANALYSIS.md`:
+- [ ] (`@DocsKeeper`) Update `Sline_everything/ARCHITECTURE_ANALYSIS.md`:
   - Sealed state class architecture decision + evidence from Phase 4.5 decision gate
   - DeepLinkService decoupling decision + registry pattern rationale
   - CI guard expansion (Check 7)
-- [ ] (`@SlineDocs`) Update `CLAUDE.md`:
+- [ ] (`@DocsKeeper`) Update `CLAUDE.md`:
   - Lint package reference
   - Sealed state pattern reference
   - Localization commands (`flutter gen-l10n`)
@@ -1275,13 +1275,13 @@
 
 ### 12.2 Write Phase E Docs Sync Artifact
 
-**Primary Agent(s):** `@SlineDocs`
+**Primary Agent(s):** `@DocsKeeper`
 **Goal:** Create tracking artifact for doc changes.
 **Why:** Artifact pattern established in Phases A–D. Provides audit trail.
 **How:** Write summary file.
 **Result:** Sync artifact exists.
 
-- [ ] (`@SlineDocs`) Write `.TODO/DOCS_SYNC_2026-04-04_PhaseE.md` documenting:
+- [ ] (`@DocsKeeper`) Write `.TODO/DOCS_SYNC_2026-04-04_PhaseE.md` documenting:
   - Which docs were updated
   - What changed in each doc
   - Cross-references to plan and session log
@@ -1289,13 +1289,13 @@
 
 ### 12.3 Update Audit File
 
-**Primary Agent(s):** `@SlineDocs`
+**Primary Agent(s):** `@DocsKeeper`
 **Goal:** Update the master audit file to reflect Phase E completion.
 **Why:** Audit file is the single source of truth for project health. Must reflect current state.
 **How:** Update Phase E section, Feature-Level Health Map, test count, coverage, god file status.
 **Result:** Audit file current.
 
-- [ ] (`@SlineDocs`) Update `.TODO/AUDIT_Quality_Architecture_2026-04-01.md`:
+- [ ] (`@DocsKeeper`) Update `.TODO/AUDIT_Quality_Architecture_2026-04-01.md`:
   - Mark Phase E tasks as DONE with details and dates.
   - Update Feature-Level Health Map — all features should be GREEN or YELLOW (no RED).
   - Update test count (774 + new tests).
@@ -1384,7 +1384,7 @@
 | 1 | Phase 1.3: CI architecture guard Check 7 (core→features) | v1 had no guard for this boundary. DeepLinkService violation would go undetected by CI after Phase 10 refactor. |
 | 2 | Phase 7.0: Mock infrastructure expansion sub-phase | v1 jumped straight to test writing. Without shared mocks, each test file would re-create mock classes. |
 | 3 | Phase 10.3: Test localization helper | v1 wired localization but didn't address widget test breakage from `AppLocalizations.of(context)!` null crash. |
-| 4 | `Skill: audit` step in all Phase 6 (formerly 7) sub-phases | v1 view decomposition phases lacked mandatory audit step per SlinePlanner §4.1. |
+| 4 | `Skill: audit` step in all Phase 6 (formerly 7) sub-phases | v1 view decomposition phases lacked mandatory audit step per Planner §4.1. |
 | 5 | Phase 9.3: Graduate CI Check 7 to hard failure | v1 had no step to graduate the warning-only guard after DeepLinkService refactor completed. |
 | 6 | `.arb` stubs increased from 10 to 15 | v1's 10 stubs were thin. 15 covers navigation, actions, states, and errors for realistic proof of concept. |
 
@@ -1422,7 +1422,7 @@ The v1 plan was structurally sound but had:
 - **CI blind spot:** No guard for core→features imports meant the DeepLinkService refactor could succeed but future violations would go undetected.
 - **Redundancy:** Standalone `dart fix` phase was a no-op after lint migration phase already ran it.
 - **Ambiguity:** "if VM exists" conditional in Phase 5.4 was resolvable at plan time (VM exists).
-- **Missing mandatory skill:** View decomposition phases lacked `Skill: audit` per SlinePlanner §4.1.
+- **Missing mandatory skill:** View decomposition phases lacked `Skill: audit` per Planner §4.1.
 
 ### 7. Residual Risks
 

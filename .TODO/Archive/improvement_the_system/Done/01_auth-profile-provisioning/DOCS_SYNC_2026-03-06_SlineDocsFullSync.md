@@ -1,4 +1,4 @@
-# Docs Sync Note: SlineDocs Full Sync
+# Docs Sync Note: DocsKeeper Full Sync
 
 **Date:** 2026-03-06  
 **Workflow:** `.agents/workflows/slinedocs.md`  

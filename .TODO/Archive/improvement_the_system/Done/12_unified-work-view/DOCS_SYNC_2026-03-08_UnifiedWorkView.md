@@ -48,4 +48,4 @@ All listed docs are aligned with:
 - Direct offers in work list with conversation_id
 - Plan 12 critic, execution log, master report, and contract references
 
-SlineDocs workflow (everything up to date) completed for Unified Work View.
+DocsKeeper workflow (everything up to date) completed for Unified Work View.

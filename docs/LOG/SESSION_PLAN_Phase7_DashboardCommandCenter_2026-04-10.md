@@ -26,7 +26,7 @@ Phase 7 Dashboard Command Center Redesign — COMPLETED. 13 view files modified 
 
 ### [PLAN CREATED]
 - Plan: .TODO/PLAN_Phase7_DashboardCommandCenter_2026-04-10.md
-- Created by: @SlinePlanner
+- Created by: @Planner
 - Scope: Dashboard command center UI redesign — pill-style TabBar, bottom sheet settings, priority next actions, time-grouped activity feed, skeleton loading, token normalization across 13 view files
 - PRISM-equivalent phase in SLine roadmap: Phase 7 of UI Redesign Master Plan
 - Estimated phases in plan: 10 (Phase 0 Preconditions → Phase 10 Docs Sync)

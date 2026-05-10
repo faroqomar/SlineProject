@@ -52,8 +52,8 @@
 
 | # | Severity | Owner | Path / Object | Fix |
 |---|----------|--------|----------------|-----|
-| 8 | MED | SlineDocs | Sline_everything/DEVELOPER_GUIDE.md | Update vw_unified_work_items description: "UNION ALL of tasks (in progress + awarded pending payment) and bookings"; add sentence that Award moves task to Work as Waiting payment, Pay/Cancel from there. |
-| 9 | LOW | SlineDocs | Sline_everything/Sline_Log.md | Add changelog entry: Award → Work flow, cancel_awarded_offer, vw_unified_work_items third branch. |
+| 8 | MED | DocsKeeper | Sline_everything/DEVELOPER_GUIDE.md | Update vw_unified_work_items description: "UNION ALL of tasks (in progress + awarded pending payment) and bookings"; add sentence that Award moves task to Work as Waiting payment, Pay/Cancel from there. |
+| 9 | LOW | DocsKeeper | Sline_everything/Sline_Log.md | Add changelog entry: Award → Work flow, cancel_awarded_offer, vw_unified_work_items third branch. |
 
 ---
 
@@ -64,8 +64,8 @@ No BLOCKER; fixes are optional. Recommended order if implementing:
 | Step | Owner | Action | Verification |
 |------|--------|--------|---------------|
 | 1 | @Observability | Add 1–2 info logs in work_tab.dart: Pay from Work (requestId/taskId), Cancel (requestId). Tag: dashboard.work. | grep AppLogger work_tab.dart; run flow and check logs. |
-| 2 | @SlineDocs | Update DEVELOPER_GUIDE.md: vw_unified_work_items table text + Award → Work sentence. | Read DEVELOPER_GUIDE.md §Dashboard. |
-| 3 | @SlineDocs | Add Sline_Log.md entry for Award → Work + cancel_awarded_offer + view branch. | Read Sline_Log.md. |
+| 2 | @DocsKeeper | Update DEVELOPER_GUIDE.md: vw_unified_work_items table text + Award → Work sentence. | Read DEVELOPER_GUIDE.md §Dashboard. |
+| 3 | @DocsKeeper | Add Sline_Log.md entry for Award → Work + cancel_awarded_offer + view branch. | Read Sline_Log.md. |
 | 4 | @Supabase_Ops (optional) | If view third-branch queries are slow: add index task_requests(task_id, status, payment_status). | EXPLAIN on SELECT from vw_unified_work_items WHERE unified_status = 'pending_payment'. |
 | 5 | @CodeGuard | Re-run review after Step 1–3 if desired (no gate re-run required). | flutter analyze; manual Pay/Cancel from Work. |
 
@@ -93,7 +93,7 @@ Quick test: Award one offer → open Work → Pay (or Cancel) → verify state a
 
 ## Next Actions
 
-1. **Optional:** Implement Observability and SlineDocs fixes (Steps 1–3 above).
+1. **Optional:** Implement Observability and DocsKeeper fixes (Steps 1–3 above).
 2. **Optional:** Add index on task_requests for view performance (Step 4).
 3. Deploy migrations 20260313000000 and 20260315000000 to target environment if not already applied.
 4. Run regression checklist before release.

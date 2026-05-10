@@ -3,7 +3,7 @@
 **Scope:** RealtimeSubscriptionTopology (Plan 18)  
 **Plan:** `.TODO/PLAN_RealtimeSubscriptionTopology_2026-03-07.md`  
 **Date:** 2026-03-07  
-**Agent:** @SlineDocs
+**Agent:** @DocsKeeper
 
 ---
 

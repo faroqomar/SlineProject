@@ -50,4 +50,4 @@ No broken file paths or missing artifacts. Plan refs (.TODO/PLAN_*, CONTRACT_*, 
 | Outdated snippets | 1 (Favorites §5.2 Dart example) — MED |
 | Blockers | None |
 
-**SlineDocs output**: No BLOCKER. One MED doc update recommended for §5.2 example.
+**DocsKeeper output**: No BLOCKER. One MED doc update recommended for §5.2 example.

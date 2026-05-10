@@ -26,7 +26,7 @@ All 4 critical security blockers resolved. Test coverage comprehensive. No break
 |-------|--------|-------------|
 | @Architect | ✅ APPROVED | Clean MVVM separation, 100% AppLogger usage |
 | @Observability | ✅ PASS | Production-ready logging, no privacy leaks |
-| @SlineDocs | ⚠️ NEEDS_UPDATE | Code docs excellent, project docs need update |
+| @DocsKeeper | ⚠️ NEEDS_UPDATE | Code docs excellent, project docs need update |
 | @CodeGuard | ✅ APPROVED | No security blockers, 26 tests passing |
 
 **Pipeline Status:** **PASSED** - No hard gates blocked.
@@ -105,9 +105,9 @@ All 4 critical security blockers resolved. Test coverage comprehensive. No break
 
 | Finding | Severity | Owner | Status |
 |---------|----------|-------|--------|
-| Sline_Log.md entry | MED | @SlineDocs | ❌ Missing |
-| test/rls/README.md | LOW | @SlineDocs | ❌ Missing |
-| MVP_ROADMAP update | LOW | @SlineDocs | ❌ Outdated |
+| Sline_Log.md entry | MED | @DocsKeeper | ❌ Missing |
+| test/rls/README.md | LOW | @DocsKeeper | ❌ Missing |
+| MVP_ROADMAP update | LOW | @DocsKeeper | ❌ Outdated |
 
 **Non-blocking:** Documentation gaps don't affect production readiness.
 
@@ -119,9 +119,9 @@ All 4 critical security blockers resolved. Test coverage comprehensive. No break
 
 | Step | Owner | Deliverable | Priority |
 |------|-------|-------------|----------|
-| 1 | @SlineDocs | Add RLS entry to `Sline_Log.md` | MED |
-| 2 | @SlineDocs | Create `test/rls/README.md` | LOW |
-| 3 | @SlineDocs | Update `MVP_ROADMAP.md` | LOW |
+| 1 | @DocsKeeper | Add RLS entry to `Sline_Log.md` | MED |
+| 2 | @DocsKeeper | Create `test/rls/README.md` | LOW |
+| 3 | @DocsKeeper | Update `MVP_ROADMAP.md` | LOW |
 
 ### Code Cleanup (Optional)
 
@@ -193,7 +193,7 @@ curl $SUPABASE_URL/rest/v1/messages?select=* \
 |-------|-------------|----------------|
 | @Architect | `ARCHITECT_REPORT_2026-03-06_RLS_Authorization_Map.md` | 1,931 |
 | @Observability | `OBSERVABILITY_REPORT_2026-03-06_RLS_Authorization_Map.md` | 1,931 |
-| @SlineDocs | `DOCS_REPORT_2026-03-06_RLS_Authorization_Map.md` | 1,931 |
+| @DocsKeeper | `DOCS_REPORT_2026-03-06_RLS_Authorization_Map.md` | 1,931 |
 | @CodeGuard | `CODEGUARD_REVIEW_2026-03-06_RLS_Authorization_Map.md` | 2,448 |
 
 ### Execution Artifacts
@@ -233,7 +233,7 @@ curl $SUPABASE_URL/rest/v1/messages?select=* \
 |------|-------|--------|
 | Architecture | @Architect | ✅ APPROVED |
 | Observability | @Observability | ✅ PASS |
-| Documentation | @SlineDocs | ⚠️ NEEDS_UPDATE (non-blocking) |
+| Documentation | @DocsKeeper | ⚠️ NEEDS_UPDATE (non-blocking) |
 | Security/Final Gate | @CodeGuard | ✅ APPROVED |
 | **Orchestrator Final** | **@Orchestrator** | **✅ PIPELINE PASSED** |
 

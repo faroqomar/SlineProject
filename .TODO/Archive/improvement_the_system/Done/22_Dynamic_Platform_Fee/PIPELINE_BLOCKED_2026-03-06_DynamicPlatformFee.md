@@ -80,7 +80,7 @@ After fixes are complete, the following agents must rerun in order:
 
 1. **@Architect** (rerun) - Verify fixes, re-review RPC implementation
 2. **@Observability** (new) - Telemetry gaps review (was cancelled)
-3. **@SlineDocs** (new) - Documentation delta review (was cancelled)
+3. **@DocsKeeper** (new) - Documentation delta review (was cancelled)
 4. **@CodeGuard** (new) - Final gatekeeper review (was cancelled)
 
 Only after all agents pass should the **Master Report** be generated.
@@ -93,7 +93,7 @@ Only after all agents pass should the **Master Report** be generated.
 |-------|--------|-------------|-------|
 | @Architect | ✅ COMPLETE (with blockers) | `ARCHITECT_REPORT_2026-03-06_DynamicPlatformFee.md` | Found 2 CRITICAL issues |
 | @Observability | 🚫 CANCELLED | N/A | Pipeline blocked |
-| @SlineDocs | 🚫 CANCELLED | N/A | Pipeline blocked |
+| @DocsKeeper | 🚫 CANCELLED | N/A | Pipeline blocked |
 | @CodeGuard | 🚫 CANCELLED | N/A | Pipeline blocked |
 
 ---

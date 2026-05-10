@@ -3,7 +3,7 @@
 **Date:** 2026-03-02  
 **Scope:** Notifications server-authority completion + Approve-and-Release ledger fix  
 **Plan:** `.TODO/Archive/NotificationExecution/PLAN_NotificationsFix_2026-03-01.md`  
-**Pipeline:** Architect → Observability → SlineDocs → CodeGuard
+**Pipeline:** Architect → Observability → DocsKeeper → CodeGuard
 
 ---
 
@@ -57,8 +57,8 @@
 
 | Severity | Owner | Finding | Fix |
 |----------|--------|---------|-----|
-| HIGH | SlineDocs | Sline_Log, MVP_ROADMAP, ARCHITECT_REPORT reference plan/execution/checklist at `.TODO/` root; files live under `.TODO/Archive/NotificationExecution/`. | Update refs to Archive paths (see Fix Plan). |
-| LOW | SlineDocs | STRUCTURE.md: Last Updated 2026-03-01; migration themes omit 20260308. | Optional: set 2026-03-02, add 20260308. |
+| HIGH | DocsKeeper | Sline_Log, MVP_ROADMAP, ARCHITECT_REPORT reference plan/execution/checklist at `.TODO/` root; files live under `.TODO/Archive/NotificationExecution/`. | Update refs to Archive paths (see Fix Plan). |
+| LOW | DocsKeeper | STRUCTURE.md: Last Updated 2026-03-01; migration themes omit 20260308. | Optional: set 2026-03-02, add 20260308. |
 
 ---
 
@@ -66,7 +66,7 @@
 
 ### Step 1 — Doc reference fixes (required)
 
-**Owner:** @SlineDocs (or implementer)
+**Owner:** @DocsKeeper (or implementer)
 
 1. **Sline_Log.md** (Version 2.17.1 Verification): Replace:
    - `.TODO/PLAN_NotificationsFix_2026-03-01.md` → `.TODO/Archive/NotificationExecution/PLAN_NotificationsFix_2026-03-01.md`
@@ -139,7 +139,7 @@ After Step 1 (and optionally 2–3), re-run CodeGuard on the same scope to confi
 |-------|-------------|--------------------|
 | @Architect | `.TODO/ARCHITECT_REPORT_2026-03-02_NotificationsFix.md` | MVVM and server-authority compliant; no mandatory refactors. |
 | @Observability | `.TODO/OBSERVABILITY_REPORT_2026-03-02_NotificationsFix.md` | Gaps: structured events, correlation, Ledger success log and tags. |
-| @SlineDocs | `.TODO/DOCS_REPORT_2026-03-02_NotificationsFix.md` | Required: fix plan/execution/checklist refs to Archive paths. |
+| @DocsKeeper | `.TODO/DOCS_REPORT_2026-03-02_NotificationsFix.md` | Required: fix plan/execution/checklist refs to Archive paths. |
 | @CodeGuard | `.TODO/CODEGUARD_REVIEW_2026-03-02_NotificationsFix.md` | **APPROVED**; no blockers; 2 unused imports fixed in tests. |
 
 ---

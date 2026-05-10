@@ -253,7 +253,7 @@
   - Slice 2: DB bootstrap migration + self-heal RPC + backfill + verify queries
   - Slice 3: final app refactor + reset completion UI + tests + docs sync + removal of transitional client bootstrap path
 - [ ] (@Sentinel) Create `.TODO/RELEASE_CHECKLIST_AuthFix_2026-03-01.md` with definition of done per slice.
-- [ ] (@SlineDocs) Identify which docs change in each slice so docs drift does not persist until the end.
+- [ ] (@DocsKeeper) Identify which docs change in each slice so docs drift does not persist until the end.
 - **Verify (@Sentinel):** rollout sequencing is explicit and no large unreviewable auth batch remains.
 
 ### GATE CHECK
@@ -554,7 +554,7 @@
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
 - Goal: reconcile docs with the final auth contract, live schema, and testing/release workflow.
 - Why: current docs still describe stale auth/profile behavior and field names.
@@ -563,24 +563,24 @@
 
 ### 5.1 Developer / Setup Docs
 
-- [ ] (@SlineDocs) Update `Sline_everything/DEVELOPER_GUIDE.md` to reflect:
+- [ ] (@DocsKeeper) Update `Sline_everything/DEVELOPER_GUIDE.md` to reflect:
   - server-authoritative profile bootstrap
   - signup metadata contract
   - password recovery completion flow
   - final auth state ownership
-- [ ] (@SlineDocs) Update `Sline_everything/SUPABASE_SETUP.md` to reflect:
+- [ ] (@DocsKeeper) Update `Sline_everything/SUPABASE_SETUP.md` to reflect:
   - current live object list
   - actual auth/profile counts or remove stale fixed counts
   - canonical `public.profiles` policies
   - new trigger/RPC objects if retained during the release window
-- [ ] (@SlineDocs) Update `Sline_everything/STRUCTURE.md` for new auth VM and screen files.
+- [ ] (@DocsKeeper) Update `Sline_everything/STRUCTURE.md` for new auth VM and screen files.
 - **Verify (@Sentinel):** docs no longer describe client profile insertion or stale field names.
 
 ### 5.2 Architecture / Quality Docs
 
-- [ ] (@SlineDocs) Update `Sline_everything/ARCHITECTURE_ANALYSIS.md` if the session/form VM split changes the documented MVVM boundary.
-- [ ] (@SlineDocs) Update `Sline_everything/CODE_REVIEW.md` or related review checklist docs if auth release gates add new mandatory checks.
-- [ ] (@SlineDocs) Update `Sline_everything/MVP_ROADMAP.md` only if the auth remediation changes milestone status or future auth scope.
+- [ ] (@DocsKeeper) Update `Sline_everything/ARCHITECTURE_ANALYSIS.md` if the session/form VM split changes the documented MVVM boundary.
+- [ ] (@DocsKeeper) Update `Sline_everything/CODE_REVIEW.md` or related review checklist docs if auth release gates add new mandatory checks.
+- [ ] (@DocsKeeper) Update `Sline_everything/MVP_ROADMAP.md` only if the auth remediation changes milestone status or future auth scope.
 - **Verify (@Sentinel):** docs reflect the implemented architecture and release criteria, not the pre-fix state.
 
 ### GATE CHECK

@@ -416,13 +416,13 @@
 
 ### 5.3 Documentation Sync
 
-- [ ] (@SlineDocs) Update `Sline_everything/SUPABASE_SETUP.md` for:
+- [ ] (@DocsKeeper) Update `Sline_everything/SUPABASE_SETUP.md` for:
   - notification write contract
   - realtime publication state
   - current policy source references
   - current trigger/function sources
-- [ ] (@SlineDocs) Update `Sline_everything/DEVELOPER_GUIDE.md` to say notifications are server-generated and client read/update-only.
-- [ ] (@SlineDocs) Update `Sline_everything/MVP_ROADMAP.md` notification status/note if the feature is now execution-safe.
+- [ ] (@DocsKeeper) Update `Sline_everything/DEVELOPER_GUIDE.md` to say notifications are server-generated and client read/update-only.
+- [ ] (@DocsKeeper) Update `Sline_everything/MVP_ROADMAP.md` notification status/note if the feature is now execution-safe.
 - **Verify (@Sentinel):** docs match code and live DB.
 
 ### 5.4 Release Gate

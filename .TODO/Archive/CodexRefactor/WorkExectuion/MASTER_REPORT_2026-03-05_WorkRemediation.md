@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-05  
 **Scope:** Work Full Remediation (Executor-led)  
-**Pipeline:** Orchestrator — Architect → Observability → SlineDocs → CodeGuard  
+**Pipeline:** Orchestrator — Architect → Observability → DocsKeeper → CodeGuard  
 **Plan:** `.TODO/Archive/WorkExectuion/PLAN_Work_Full_Remediation_2026-03-04.md`, `work.TODO.md`
 
 ---
@@ -46,8 +46,8 @@
 ### Docs / reference integrity
 | Severity | Owner | Path / object | Fix |
 |----------|--------|----------------|-----|
-| LOW | SlineDocs | SUPABASE_SETUP | Optional: add migration refs for work tables and RPCs. |
-| LOW | SlineDocs | Sline_Log / changelog | Optional: add Work Remediation entry. |
+| LOW | DocsKeeper | SUPABASE_SETUP | Optional: add migration refs for work tables and RPCs. |
+| LOW | DocsKeeper | Sline_Log / changelog | Optional: add Work Remediation entry. |
 
 ---
 
@@ -61,7 +61,7 @@ No mandatory fix. Optional improvements:
    - Verification: Grep for `AppLogger.i` in that file and confirm level.
 
 2. **Docs (optional)**  
-   - Owner: @SlineDocs  
+   - Owner: @DocsKeeper  
    - Action: In SUPABASE_SETUP, add references to `20260305180000_work_contracts_change_extension_requests.sql` and `20260305180100_work_revision_and_change_rpcs.sql`; add Work Remediation entry to Sline_Log/changelog.  
    - Verification: Doc scan and ref check.
 
@@ -96,5 +96,5 @@ No mandatory fix. Optional improvements:
 ## Next Actions
 
 1. Proceed with merge of Work Full Remediation as-is (Ready).
-2. Optionally schedule: log level change (Observability), SUPABASE_SETUP + changelog (SlineDocs), partial-failure + service split (Architect).
+2. Optionally schedule: log level change (Observability), SUPABASE_SETUP + changelog (DocsKeeper), partial-failure + service split (Architect).
 3. Use this report and the four agent reports in `.TODO/Archive/WorkExectuion/` for future work or audits.

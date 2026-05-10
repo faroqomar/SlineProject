@@ -3,7 +3,7 @@
 **Diagram name (exact):** `24_hardened_paymentLinking_system.md`  
 **Document version:** v2 (Implemented)  
 **Date:** 2026-03-08  
-**Owner:** @SlineDocs / Backend + Flutter
+**Owner:** @DocsKeeper / Backend + Flutter
 
 ---
 
@@ -125,7 +125,7 @@ payment_intents → payer/receiver/entity/amount; payment_events → raw gateway
 - **Title:** Hardened Payment Linking System (Implemented)
 - **Diagram name (exact):** `24_hardened_paymentLinking_system.md`
 - **Version:** v2 (final implemented) + date 2026-03-08
-- **Owner/author:** Backend (Edge) + Flutter team; doc owner @SlineDocs
+- **Owner/author:** Backend (Edge) + Flutter team; doc owner @DocsKeeper
 
 ---
 

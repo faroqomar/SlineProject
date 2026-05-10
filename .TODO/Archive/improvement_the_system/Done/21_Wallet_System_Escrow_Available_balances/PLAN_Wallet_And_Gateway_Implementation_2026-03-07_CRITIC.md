@@ -158,7 +158,7 @@
 - [ ] (@Sentinel) E2E Test: Attempt to modify cart price client-side (verify Edge Function ignores it).
 - [ ] (@Sentinel) E2E Test: Simulate valid webhook using service role. Verify Wallet UI updates balance automatically.
 - [ ] (@Sentinel) Check `orphan_payments` logs for unexpected errors during testing.
-- [ ] (@SlineDocs) Document the new Payment Intent flow in DEVELOPER_GUIDE.md.
+- [ ] (@DocsKeeper) Document the new Payment Intent flow in DEVELOPER_GUIDE.md.
 - **GATE CHECK:** Functional logic completely circumvents client tampering? **PASS/FAIL**
 
 ---

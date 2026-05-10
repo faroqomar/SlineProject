@@ -553,14 +553,14 @@
 
 ### 5.4 Docs Sync
 
-- [ ] (@SlineDocs) Update these docs from the final live/code truth:
+- [ ] (@DocsKeeper) Update these docs from the final live/code truth:
   - `Sline_everything/DEVELOPER_GUIDE.md`
   - `Sline_everything/DEVELOPER_GUIDE/Chat Feature.md`
   - `Sline_everything/SUPABASE_SETUP.md`
   - `Sline_everything/MVP_ROADMAP.md`
   - `Sline_everything/CODE_REVIEW.md` if new Chat-specific guardrails are added
   - `Sline_everything/STRUCTURE.md` after the Chat viewmodel split and any file additions
-- [ ] (@SlineDocs) Remove contradictory statements about DM authorization, task initiator semantics, and notification ownership.
+- [ ] (@DocsKeeper) Remove contradictory statements about DM authorization, task initiator semantics, and notification ownership.
 - **Verify (@Sentinel):** docs, code, and live Supabase state match before closure.
 
 **GATE CHECK (@Sentinel):** Release only after automated checks, RLS/storage validation, manual scenarios, rollback proof, and docs sync all pass.

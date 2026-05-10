@@ -754,18 +754,18 @@ if (success) {
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
-- [ ] (@SlineDocs) Update `Sline_everything/AppDigram/All_Diagrams/02_role-switching-flow.md`:
+- [ ] (@DocsKeeper) Update `Sline_everything/AppDigram/All_Diagrams/02_role-switching-flow.md`:
   - Replace state diagram with sequence diagram (use `06_DIAGRAM_FINAL.md` as reference)
   - Document teardown contract
   - Document RPC atomic guard
   - Document session refresh requirement
-- [ ] (@SlineDocs) Update `Sline_everything/DEVELOPER_GUIDE.md`:
+- [ ] (@DocsKeeper) Update `Sline_everything/DEVELOPER_GUIDE.md`:
   - Add Role Switching section
   - Document ViewModel teardown pattern
   - Reference new RPC and RLS approach
-- [ ] (@SlineDocs) Update `Sline_everything/SUPABASE_SETUP.md`:
+- [ ] (@DocsKeeper) Update `Sline_everything/SUPABASE_SETUP.md`:
   - Document `switch_active_role` RPC
   - Document Auth Hook/trigger for JWT claims
   - Document updated RLS policies

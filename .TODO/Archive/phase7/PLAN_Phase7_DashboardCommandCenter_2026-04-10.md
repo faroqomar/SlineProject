@@ -86,7 +86,7 @@
 - **Contracts:** None. ViewModel → View contract unchanged.
 
 ## 5) Agent Map
-- **Phase 0:** `@SlinePlanner`, `@Sentinel` — Preconditions & gates
+- **Phase 0:** `@Planner`, `@Sentinel` — Preconditions & gates
 - **Phase 1:** `@Pixel`, `@Sentinel` — Dashboard screen TabBar + settings redesign
 - **Phase 2:** `@Pixel`, `@Sentinel` — Overview tab layout polish
 - **Phase 3:** `@Pixel`, `@Sentinel` — Next actions list redesign
@@ -96,19 +96,19 @@
 - **Phase 7:** `@Pixel`, `@Sentinel` — Bookings tab + Inbox tab polish
 - **Phase 8:** `@Pixel`, `@Sentinel` — Cross-feature card normalization (wallet snapshot, booking card, offer card)
 - **Phase 9:** `@Sentinel`, `@CodeGuard` — QA + verification
-- **Phase 10:** `@SlineDocs` — Documentation sync
+- **Phase 10:** `@DocsKeeper` — Documentation sync
 
 ---
 
 ## Phase 0: Preconditions & Gates
 
-**Primary Agent(s):** `@SlinePlanner`, `@Sentinel`
+**Primary Agent(s):** `@Planner`, `@Sentinel`
 
 ### 0.1 Spec Lock
 
 - [x] (`@Sentinel`) Acceptance criteria defined (see Section 7 below).
 - [x] (`@Architect`) Confirm touched modules: `lib/features/dashboard/view/` (10 files), 3 cross-feature widget files.
-- [x] (`@SlineDocs`) Confirm session log path: `docs/LOG/SESSION_PLAN_Phase7_DashboardCommandCenter_2026-04-10.md`.
+- [x] (`@DocsKeeper`) Confirm session log path: `docs/LOG/SESSION_PLAN_Phase7_DashboardCommandCenter_2026-04-10.md`.
 - **GATE CHECK:** Scope is limited to View-layer files. No ViewModel, Service, Repository, or backend changes.
 
 ### 0.2 Codebase Discovery Scan (MANDATORY)
@@ -834,15 +834,15 @@ Every view/widget in SLine must consume these design system layers:
 
 ## Phase 10: Documentation Sync (MANDATORY)
 
-**Primary Agent(s):** `@SlineDocs`
+**Primary Agent(s):** `@DocsKeeper`
 
-- [ ] (`@SlineDocs`) Update session log with completion status, timeline, and agent notes.
-- [ ] (`@SlineDocs`) Write `.TODO/DOCS_SYNC_2026-04-10_Phase7_Dashboard.md` documenting:
+- [ ] (`@DocsKeeper`) Update session log with completion status, timeline, and agent notes.
+- [ ] (`@DocsKeeper`) Write `.TODO/DOCS_SYNC_2026-04-10_Phase7_Dashboard.md` documenting:
   - Files changed.
   - Tokens introduced/used.
   - Visual changes made.
   - Known gaps or deferred items.
-- [ ] (`@SlineDocs`) Verify session log cross-references plan file.
+- [ ] (`@DocsKeeper`) Verify session log cross-references plan file.
 - **GATE CHECK:** Documentation is aligned with implementation.
 
 ---

@@ -30,7 +30,7 @@
 
 ### Execution strategy
 
-- Roster: Sentinel (0, 4), Supabase_Ops (1), Architect (2), Pixel (0.0, 3), APIContract, ThreatModeler, DataMigration, Observability, SlineDocs, CodeGuard.
+- Roster: Sentinel (0, 4), Supabase_Ops (1), Architect (2), Pixel (0.0, 3), APIContract, ThreatModeler, DataMigration, Observability, DocsKeeper, CodeGuard.
 - Step→Agent: per plan checklist.
 - Risk: Phase 0 LOW; Phase 1, 2, 4 HIGH; Phase 3 MEDIUM; Phase 5 LOW.
 

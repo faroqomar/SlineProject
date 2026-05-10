@@ -44,7 +44,7 @@ No issues found! (ran in 24.7s)
 - **Blockers**: 0 (all resolved)
 - **High**: 4 issues (optional improvements)
 
-### @SlineDocs: PASS ✅
+### @DocsKeeper: PASS ✅
 - **Status**: 8.5/10
 - **Blockers**: 0
 - **High**: 2 issues (documentation gaps)

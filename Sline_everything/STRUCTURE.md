@@ -34,13 +34,13 @@ sline_app/
 ### `.agents/`
 
 - `skills/`: reusable local workflows such as `docs_sync`, `bug_fixer`, and `supabase_migration`
-- `workflows/`: higher-order coordination docs such as `planner.md`, `executor.md`, and `orchestrator.md`
+- `workflows/`: higher-order coordination docs such as `planner.md`, `executor.md`, and `Orchestrator.md`
 
 ### `.cursor/`
 
 - `Agents/`: role definitions for the multi-agent system (16 agents)
-  - **Core agents**: `Architect.md` (MVVM logic), `Pixel.md` (UI/UX), `Supabase_Ops.md` (backend), `Sline_Docs.md` (documentation), `Sentinel.md` (QA/verification)
-  - **Planning & execution**: `Sline_Planner.md` (implementation architect), `Executor.md` (task orchestrator), `Plan_Critic.md` (plan auditor), `orchestrator.md` (multi-agent coordinator)
+  - **Core agents**: `Architect.md` (MVVM logic), `Pixel.md` (UI/UX), `Supabase_Ops.md` (backend), `DocsKeeper.md` (documentation), `Sentinel.md` (QA/verification)
+  - **Planning & execution**: `Planner.md` (implementation architect), `Executor.md` (task orchestrator), `PlanCritic.md` (plan auditor), `Orchestrator.md` (multi-agent coordinator)
   - **Specialized**: `CodeGuard.md` (performance/security audit), `ThreatModeler.md` (security design), `APIContract.md` (contract alignment), `DataMigration.md` (schema safety), `Observability.md` (telemetry), `TemplateOwner.md` (task templates)
   - **Meta**: `SystemEvolution.md` (cross-session agent improvement — scans logs and agent files, produces upgrade reports)
 - `rules/`: project-specific rules used by Cursor tooling (`flutter-mvvm.mdc`, `error-handling.mdc`)

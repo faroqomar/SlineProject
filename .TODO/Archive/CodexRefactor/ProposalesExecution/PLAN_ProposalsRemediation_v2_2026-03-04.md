@@ -270,7 +270,7 @@
     - PR2: app/runtime refactor + unit/widget tests + compatibility exports
     - PR3: DB reconcile (if needed) + integration/manual/security checks + docs sync + release gate
   - [ ] (@Sentinel) Add reviewer checklist and definition of done per PR.
-  - [ ] (@SlineDocs) Add docs-sync requirements to PR3 and release checklist.
+  - [ ] (@DocsKeeper) Add docs-sync requirements to PR3 and release checklist.
 - Result:
   - One reviewable rollout structure.
 - **Verify (@Sentinel):** each slice has owners, reviewers, acceptance, rollback point, and stop condition.
@@ -634,20 +634,20 @@
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
 - Goal:
   - Align docs with final proposal runtime and verified DB truth.
 - Why:
   - Current docs/roadmap already drift on `active_role` mutation and proposal module ownership. References: `Sline_everything/MVP_ROADMAP.md:45-49`, `Sline_everything/STRUCTURE.md:97-103`
 - How:
-  - [ ] (@SlineDocs) Update:
+  - [ ] (@DocsKeeper) Update:
     - `Sline_everything/DEVELOPER_GUIDE.md`
     - `Sline_everything/SUPABASE_SETUP.md`
     - `Sline_everything/MVP_ROADMAP.md`
     - `Sline_everything/STRUCTURE.md`
     - `Sline_everything/Sline_Log.md`
-  - [ ] (@SlineDocs) Add or update a proposal deep-dive under `Sline_everything/DEVELOPER_GUIDE/`.
+  - [ ] (@DocsKeeper) Add or update a proposal deep-dive under `Sline_everything/DEVELOPER_GUIDE/`.
 - Result:
   - Proposal docs match code and live DB reality.
 - **Verify (@Sentinel):** docs reflect the final implementation and release state, not historical intent.

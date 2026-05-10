@@ -1,9 +1,9 @@
-# SlineDocs Report: Hardened Payment Linking
+# DocsKeeper Report: Hardened Payment Linking
 
 **Scope:** Hardened Payment Linking System (24)  
 **Plan:** `.TODO/PLAN_HardenedPaymentLinking_2026-03-08_PlanCritic.md`  
 **Date:** 2026-03-08  
-**Agent:** @SlineDocs (per orchestrator pipeline)
+**Agent:** @DocsKeeper (per orchestrator pipeline)
 
 ---
 

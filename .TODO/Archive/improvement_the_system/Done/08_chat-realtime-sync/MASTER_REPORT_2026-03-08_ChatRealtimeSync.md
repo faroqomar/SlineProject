@@ -4,7 +4,7 @@
 **Scope:** Chat Realtime Sync (08_chat-realtime-sync)  
 **Plan:** `.TODO/PLAN_ChatRealtimeSync_2026-03-07_PlanCritic.md`  
 **Execution:** `.TODO/EXECUTION_LOG_ChatRealtimeSync_2026-03-07.md`  
-**Pipeline:** Architect → Observability → SlineDocs → CodeGuard
+**Pipeline:** Architect → Observability → DocsKeeper → CodeGuard
 
 ---
 
@@ -65,13 +65,13 @@ Grouped by category; each with Severity, Owner agent, Path/object, and Fix recom
 
 | # | Severity | Owner | Path / object | Fix |
 |---|----------|--------|----------------|------|
-| 1 | HIGH | SlineDocs | `Sline_everything/SUPABASE_SETUP.md` §5.7, §8 | Remove or correct reference to `expire_typing_presence` trigger and `trg_expire_presence` — **trigger does not exist** in migrations; document **client-only 15s TTL**. |
-| 2 | MED | SlineDocs | `Sline_everything/SUPABASE_SETUP.md` §12 Realtime | Add **conversation_presence** to publication list (with messages, notifications); state that conversations must NOT be added. |
-| 3 | MED | SlineDocs | `Sline_everything/SUPABASE_SETUP.md` §5.8 app_config | Document **chat_presence_receipts_enabled** (purpose: typing + receipt ticks; values `'true'`/`'false'`). |
-| 4 | MED | SlineDocs | `.TODO/08_chat_realtime_contract.md` | Fix `user_id` FK: state **profiles(id)** (migration and live DB use profiles, not auth.users). |
-| 5 | LOW | SlineDocs | `Sline_everything/Sline_Log.md` | Add version entry for Chat Realtime Sync: plan, execution log, contract, RLS matrix, verification doc, migration names. |
-| 6 | LOW | SlineDocs | `Sline_everything/MVP_ROADMAP.md` | Add/update row for 08_chat-realtime-sync (presence, receipts, feature flag, ChatRealtimeMerger). |
-| 7 | LOW | SlineDocs | `Sline_everything/STRUCTURE.md` | Optional: one line in “Recent Structure-Sensitive Updates” for Chat Realtime Sync. |
+| 1 | HIGH | DocsKeeper | `Sline_everything/SUPABASE_SETUP.md` §5.7, §8 | Remove or correct reference to `expire_typing_presence` trigger and `trg_expire_presence` — **trigger does not exist** in migrations; document **client-only 15s TTL**. |
+| 2 | MED | DocsKeeper | `Sline_everything/SUPABASE_SETUP.md` §12 Realtime | Add **conversation_presence** to publication list (with messages, notifications); state that conversations must NOT be added. |
+| 3 | MED | DocsKeeper | `Sline_everything/SUPABASE_SETUP.md` §5.8 app_config | Document **chat_presence_receipts_enabled** (purpose: typing + receipt ticks; values `'true'`/`'false'`). |
+| 4 | MED | DocsKeeper | `.TODO/08_chat_realtime_contract.md` | Fix `user_id` FK: state **profiles(id)** (migration and live DB use profiles, not auth.users). |
+| 5 | LOW | DocsKeeper | `Sline_everything/Sline_Log.md` | Add version entry for Chat Realtime Sync: plan, execution log, contract, RLS matrix, verification doc, migration names. |
+| 6 | LOW | DocsKeeper | `Sline_everything/MVP_ROADMAP.md` | Add/update row for 08_chat-realtime-sync (presence, receipts, feature flag, ChatRealtimeMerger). |
+| 7 | LOW | DocsKeeper | `Sline_everything/STRUCTURE.md` | Optional: one line in “Recent Structure-Sensitive Updates” for Chat Realtime Sync. |
 
 ### Migration / Backend
 
@@ -85,12 +85,12 @@ Grouped by category; each with Severity, Owner agent, Path/object, and Fix recom
 
 | Step | Owner | Action | Verification |
 |------|--------|--------|----------------|
-| 1 | @SlineDocs | Update SUPABASE_SETUP: remove expire_typing_presence trigger refs; document client-only 15s TTL; add conversation_presence to §12; add app_config §5.8 chat_presence_receipts_enabled. | Grep confirms no “expire_typing_presence” in SUPABASE_SETUP; §12 lists messages, notifications, conversation_presence. |
-| 2 | @SlineDocs | Fix 08_chat_realtime_contract.md: user_id FK to profiles(id). | Contract text matches migration. |
+| 1 | @DocsKeeper | Update SUPABASE_SETUP: remove expire_typing_presence trigger refs; document client-only 15s TTL; add conversation_presence to §12; add app_config §5.8 chat_presence_receipts_enabled. | Grep confirms no “expire_typing_presence” in SUPABASE_SETUP; §12 lists messages, notifications, conversation_presence. |
+| 2 | @DocsKeeper | Fix 08_chat_realtime_contract.md: user_id FK to profiles(id). | Contract text matches migration. |
 | 3 | @Observability | Remove/redact PII in conversation_model.dart (rawLastMessage, other_user name/avatar). Add conversation_id + operation to “Error marking receipts” in chat_view_model. | No message content or identifiable name/avatar in logs; receipt failure log has conversation_id and operation. |
 | 4 | @Supabase_Ops or @DataMigration | Make migration 20260307220000 idempotent (IF NOT EXISTS for ADD TABLE conversation_presence) OR document that 19900 is canonical and 20000 is legacy. | New deploy runs migrations without “already in publication” error. |
 | 5 | @Architect | (Optional) Debounce refreshOfferStatusesForCurrentMessages; optionally reduce markReceiptsForActive frequency. | No behavioral regression; same tests pass. |
-| 6 | @SlineDocs | Sline_Log version entry for Chat Realtime Sync; MVP_ROADMAP row for 08; optional STRUCTURE note. | Refs to plan, execution, contract, migrations are traceable. |
+| 6 | @DocsKeeper | Sline_Log version entry for Chat Realtime Sync; MVP_ROADMAP row for 08; optional STRUCTURE note. | Refs to plan, execution, contract, migrations are traceable. |
 | 7 | @CodeGuard | Re-run review after Steps 1–4 (or 1–6) if desired. | No new BLOCKERs. |
 
 ---
@@ -116,7 +116,7 @@ Grouped by category; each with Severity, Owner agent, Path/object, and Fix recom
 ## F) Next Actions
 
 1. **Before release:** Run RLS verification (Check 1–4 in `.TODO/08_RLS_verification_chat.md`) and record outcome.
-2. **Docs:** Execute Fix Plan Steps 1, 2, 6 (SlineDocs) so SUPABASE_SETUP and contract are accurate and Chat Realtime Sync is traceable in Sline_Log/MVP_ROADMAP.
+2. **Docs:** Execute Fix Plan Steps 1, 2, 6 (DocsKeeper) so SUPABASE_SETUP and contract are accurate and Chat Realtime Sync is traceable in Sline_Log/MVP_ROADMAP.
 3. **Observability:** Execute Step 3 (PII redaction + receipt failure context); optionally adopt event taxonomy (Step 3 and Observability report §4).
 4. **Migration:** Execute Step 4 (20260307220000 idempotent or deprecated) to avoid deploy risk.
 5. **Performance (optional):** Step 5 — debounce offer refresh and tune receipt calls when convenient.

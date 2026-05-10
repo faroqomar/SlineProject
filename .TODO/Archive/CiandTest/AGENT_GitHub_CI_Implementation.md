@@ -195,7 +195,7 @@ updates:
   - What NOT to report (Supabase anon key is public by design)
   - Response timeline expectations
 - [ ] NO internal secrets or infrastructure details exposed
-- **Owner:** @SlineDocs
+- **Owner:** @DocsKeeper
 - **Why:** Financial marketplace needs responsible disclosure process
 
 ---
@@ -212,7 +212,7 @@ updates:
 - [ ] Add comments explaining each variable's purpose
 - [ ] Mark which are required vs optional
 - [ ] Use placeholder values only (e.g., `your-key-here`) — NO actual secrets
-- **Owner:** @SlineDocs
+- **Owner:** @DocsKeeper
 - **Why:** 14 env vars undocumented; onboarding friction and deployment risk
 
 ---
@@ -245,7 +245,7 @@ updates:
   - Code style (reference `analysis_options.yaml`)
   - Migration process (reference `MIGRATION_REVIEW_CHECKLIST.md`)
 - [ ] Keep concise — reference existing docs, don't duplicate
-- **Owner:** @SlineDocs
+- **Owner:** @DocsKeeper
 
 ---
 
@@ -253,14 +253,14 @@ updates:
 
 - [ ] Section 9 "Current Focus": change "coverage enforcement (70% target)" to "coverage enforcement (40% regression floor)"
 - [ ] Add Phase D progress notes
-- **Owner:** @SlineDocs
+- **Owner:** @DocsKeeper
 
 ---
 
 ### 15. Fix `Sline_everything/ARCHITECTURE_ANALYSIS.md` (UPDATE)
 
 - [ ] Fix header date from "March 7, 2024" to "2026-03-07"
-- **Owner:** @SlineDocs
+- **Owner:** @DocsKeeper
 
 ---
 

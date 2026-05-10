@@ -3,8 +3,8 @@
 **Scope:** Tasks Tender Fix (PLAN_Tasks_Fix_All_2026-03-01 executed subset)  
 **Plan reference:** `.TODO/PLAN_Tasks_Fix_All_2026-03-01.md`  
 **Date:** 2026-03-04  
-**Orchestrator:** Per `.agents/workflows/orchestrator.md`  
-**Pipeline:** @Architect → @Observability → @SlineDocs → @CodeGuard
+**Orchestrator:** Per `.agents/workflows/Orchestrator.md`  
+**Pipeline:** @Architect → @Observability → @DocsKeeper → @CodeGuard
 
 ---
 
@@ -61,9 +61,9 @@ No print(); AppLogger used; no PII/secrets in logs.
 
 | ID | Severity | Owner | Location | Fix |
 |----|----------|--------|----------|-----|
-| D1 | MED | SlineDocs | SUPABASE_SETUP.md | Add changelog entry for migration 20260311000000_replace_task_request.sql. |
-| D2 | MED | SlineDocs | DEVELOPER_GUIDE.md | Document tender fail-closed (demo/QiCard) and active_role removal for offer submit. |
-| D3 | LOW | SlineDocs | Sline_Log.md / MVP_ROADMAP | Optional: log Tasks Tender Fix and tender hardening status. |
+| D1 | MED | DocsKeeper | SUPABASE_SETUP.md | Add changelog entry for migration 20260311000000_replace_task_request.sql. |
+| D2 | MED | DocsKeeper | DEVELOPER_GUIDE.md | Document tender fail-closed (demo/QiCard) and active_role removal for offer submit. |
+| D3 | LOW | DocsKeeper | Sline_Log.md / MVP_ROADMAP | Optional: log Tasks Tender Fix and tender hardening status. |
 
 No broken refs; paths and names validated.
 
@@ -74,8 +74,8 @@ No broken refs; paths and names validated.
 | Step | Owner | Action | Verification |
 |------|--------|--------|----------------|
 | 1 | @Supabase_Ops or @Architect | Harden replace_task_request: add is_freelancer(v_me) check before INSERT (or document that RLS applies to definer). | Re-run migration or apply patch; regression test replace flow. |
-| 2 | @SlineDocs | Update SUPABASE_SETUP.md changelog with 20260311000000_replace_task_request and replace_task_request now in repo. | Grep changelog for migration name. |
-| 3 | @SlineDocs | Update DEVELOPER_GUIDE.md (or Task Feature): tender fail-closed when Demo/QiCard; offer submit no longer mutates active_role; RLS/UX message. | Read Task/tender section for new wording. |
+| 2 | @DocsKeeper | Update SUPABASE_SETUP.md changelog with 20260311000000_replace_task_request and replace_task_request now in repo. | Grep changelog for migration name. |
+| 3 | @DocsKeeper | Update DEVELOPER_GUIDE.md (or Task Feature): tender fail-closed when Demo/QiCard; offer submit no longer mutates active_role; RLS/UX message. | Read Task/tender section for new wording. |
 | 4 | @Observability (optional) | Add AppLogger.i on replaceOffer success in TaskRequestsService. | Log present in replace path. |
 | 5 | @CodeGuard | Re-run review after Step 1 if migration changed. | CODEGUARD_REVIEW updated; no BLOCKER. |
 

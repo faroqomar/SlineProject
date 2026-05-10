@@ -95,19 +95,19 @@
 - **Phase 5 (Typography):** `@Pixel` (primary), `@Sentinel` (gate)
 - **Phase 6 (Semantic Colors):** `@Pixel` (primary), `@Sentinel` (gate)
 - **Phase 7 (Component Themes):** `@Pixel` (primary), `@Architect` (review), `@Sentinel` (gate)
-- **Phase 8 (Theme Dashboard Doc):** `@SlineDocs` (primary), `@Sentinel` (gate)
+- **Phase 8 (Theme Dashboard Doc):** `@DocsKeeper` (primary), `@Sentinel` (gate)
 - **Phase 9 (QA + Verification):** `@Sentinel` (primary), `@CodeGuard` (review)
 
 ---
 
 ## Phase 0: Preconditions & Gates
 
-**Primary Agent(s):** `@SlinePlanner`, `@Sentinel`
+**Primary Agent(s):** `@Planner`, `@Sentinel`
 
 ### 0.1 Spec Lock
 - [ ] (`@Sentinel`) Acceptance criteria defined (see Section 7 below).
 - [ ] (`@Architect`) Confirm touched files: 6 existing theme files + 2 new files + `app_animations.dart` + `theme_dashboard.dart`.
-- [ ] (`@SlineDocs`) Confirm `.impeccable.md` does not exist yet.
+- [ ] (`@DocsKeeper`) Confirm `.impeccable.md` does not exist yet.
 - **GATE CHECK:** Scope is limited to `lib/core/theme/`, `lib/core/utils/app_animations.dart`, and `.impeccable.md`. No feature files touched.
 
 ### 0.2 Duplication Check
@@ -381,20 +381,20 @@
 
 ## Phase 8: Theme Dashboard Documentation Update
 
-**Primary Agent(s):** `@SlineDocs`
+**Primary Agent(s):** `@DocsKeeper`
 **Goal:** Update `theme_dashboard.dart` to reflect all Phase 0 additions.
 **Why:** Currently says "Last Updated: 2024" and is missing motion tokens, interaction states, elevation scale, semantic colors, and component themes.
 **How:** Update the documentation-only reference class.
 **Result:** Updated `theme_dashboard.dart` with all new tokens documented.
 
 ### 8.1 Update theme_dashboard.dart
-- [ ] (`@SlineDocs`) Update the "Last Updated" timestamp to 2026-04-07.
-- [ ] (`@SlineDocs`) Add "Motion Tokens" section documenting all `AppMotion` values.
-- [ ] (`@SlineDocs`) Add "Interaction States" section documenting `AppInteractionStates` values.
-- [ ] (`@SlineDocs`) Add "Elevation Scale" section documenting the 5 levels.
-- [ ] (`@SlineDocs`) Add "Semantic Colors" section documenting success/warning/info/danger (light + dark).
-- [ ] (`@SlineDocs`) Add "Component Themes" section listing all 7 themed components with their properties.
-- [ ] (`@SlineDocs`) Update existing Typography section with new line-height and letter-spacing values.
+- [ ] (`@DocsKeeper`) Update the "Last Updated" timestamp to 2026-04-07.
+- [ ] (`@DocsKeeper`) Add "Motion Tokens" section documenting all `AppMotion` values.
+- [ ] (`@DocsKeeper`) Add "Interaction States" section documenting `AppInteractionStates` values.
+- [ ] (`@DocsKeeper`) Add "Elevation Scale" section documenting the 5 levels.
+- [ ] (`@DocsKeeper`) Add "Semantic Colors" section documenting success/warning/info/danger (light + dark).
+- [ ] (`@DocsKeeper`) Add "Component Themes" section listing all 7 themed components with their properties.
+- [ ] (`@DocsKeeper`) Update existing Typography section with new line-height and letter-spacing values.
 - [ ] (`@Sentinel`) Verify `flutter analyze` passes clean.
 - **GATE CHECK:** `theme_dashboard.dart` is current and comprehensive.
 

@@ -1,9 +1,9 @@
-# SlineDocs Report: Work Contract Revisions
+# DocsKeeper Report: Work Contract Revisions
 
 **Scope:** Work Contract Revisions  
 **Plan:** `.TODO/PLAN_WorkContractRevisions_2025-03-08_PlanCritic.md`  
 **Date:** 2025-03-08  
-**Agent:** @SlineDocs
+**Agent:** @DocsKeeper
 
 ---
 

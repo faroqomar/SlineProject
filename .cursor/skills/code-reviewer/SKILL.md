@@ -35,4 +35,4 @@ description: Perform structured code review focused on correctness, regressions,
 ## References
 - `.cursor/rules/code-quality.mdc`
 - `.cursor/rules/flutter-mvvm.mdc`
-- `.cursor/Agents/CodeReviewer.md`
+- `.cursor/Agents/CodeGuard.md`

@@ -39,11 +39,11 @@
 | `Architect.md` | §4.6.4 | Web Platform Awareness |
 | `Executor.md` | §1.5 | When to Use This Agent (vs Orchestrator) |
 | `Executor.md` | §3.6 | Raw String Sweep — grep after every implementation phase |
-| `orchestrator.md` | §0.5 | When to Use This Agent (vs Executor) |
+| `Orchestrator.md` | §0.5 | When to Use This Agent (vs Executor) |
 | `Observability.md` | §2.4.1 | Sentry Integration Rules (DSN, sanitizePii, sample rate) |
-| `Plan_Critic.md` | §5.5 | Output Artifact — `.TODO/PLAN_CRITIQUE_*.md` |
+| `PlanCritic.md` | §5.5 | Output Artifact — `.TODO/PLAN_CRITIQUE_*.md` |
 | `CodeGuard.md` | §5 | Automated Grep Checks (raw strings + error sanitization) |
-| `Sline_Planner.md` | §2.4 | Native Dependency Build Gate |
+| `Planner.md` | §2.4 | Native Dependency Build Gate |
 
 ### Path Corrections (all 16 agent files + AGENTS.md)
 

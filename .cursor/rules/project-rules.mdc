@@ -98,10 +98,10 @@ This project uses specialized agents defined in `.cursor/Agents/`:
   - *Trigger*: "@Supabase", "add table", "secure db"
 - **@Sentinel** (`Agents/Sentinel.md`): QA & Safety - Tests, Documentation, Analyzers
   - *Trigger*: "@Sentinel", "check this", "run tests"
-- **@SlineDocs** (`Agents/Sline_Docs.md`): Documentation Keeper - `Sline_everything` folder
-  - *Trigger*: "@SlineDocs", "document this", "update changelog"
-- **@SlinePlanner** (`Agents/Sline_Planner.md`): Strategic Planner - Implementation plans
-  - *Trigger*: "@SlinePlanner", "plan this feature", "how do I add..."
+- **@DocsKeeper** (`Agents/DocsKeeper.md`): Documentation Keeper - `Sline_everything` folder
+  - *Trigger*: "@DocsKeeper", "document this", "update changelog"
+- **@Planner** (`Agents/Planner.md`): Strategic Planner - Implementation plans
+  - *Trigger*: "@Planner", "plan this feature", "how do I add..."
 - **@CodeGuard** (`Agents/CodeGuard.md`): Code reviews, performance, security
   - *Trigger*: "@CodeGuard", "review code", "performance check"
 - **@Executor** (`Agents/Executor.md`): Execute plans from `.TODO/`

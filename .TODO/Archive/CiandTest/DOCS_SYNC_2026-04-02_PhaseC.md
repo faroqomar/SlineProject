@@ -43,7 +43,7 @@
 - **Why:** Phase C completed all C1-C6 tasks
 
 ### 7. Agent Files (3)
-- **`Sline_Planner.md`:** Added §0.1 (test plan self-verification), §2.2.1 (constructor DI), §2.2.2 (singleton detection), §2.2.3 (auto-loading constructors)
+- **`Planner.md`:** Added §0.1 (test plan self-verification), §2.2.1 (constructor DI), §2.2.2 (singleton detection), §2.2.3 (auto-loading constructors)
 - **`Architect.md`:** Added §4.5 (field immutability preservation during refactoring)
 - **`Executor.md`:** Added Step 3.3 (file integrity check after parallel agents)
 - **Why:** System Evolution Report v2 identified 6 rule gaps from Phase C evidence

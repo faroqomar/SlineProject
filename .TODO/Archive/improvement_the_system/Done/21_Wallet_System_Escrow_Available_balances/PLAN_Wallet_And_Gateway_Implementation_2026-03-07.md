@@ -179,9 +179,9 @@
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
-- [ ] (@SlineDocs) Update `DEVELOPER_GUIDE` to formally declare the Hardened Payment Linking as the active system.
+- [ ] (@DocsKeeper) Update `DEVELOPER_GUIDE` to formally declare the Hardened Payment Linking as the active system.
 - **Verify (@Sentinel):** docs match code + live DB reality.
 
 ---

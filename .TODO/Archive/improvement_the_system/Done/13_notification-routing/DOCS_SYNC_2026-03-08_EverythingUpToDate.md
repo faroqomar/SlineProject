@@ -2,11 +2,11 @@
 
 **Workflow:** `.agents/workflows/slinedocs.md`  
 **Completed:** 2026-03-08  
-**Trigger:** User request to ensure everything up to date using SlineDocs workflow.
+**Trigger:** User request to ensure everything up to date using DocsKeeper workflow.
 
 ## Summary
 
-Full SlineDocs pass: added missing **Notification Routing (13)** entry to Sline_Log; updated MVP_ROADMAP and STRUCTURE so notifications (push, Edge, foreground sync) are reflected; validated key references; added notification Edge functions to STRUCTURE supabase tree.
+Full DocsKeeper pass: added missing **Notification Routing (13)** entry to Sline_Log; updated MVP_ROADMAP and STRUCTURE so notifications (push, Edge, foreground sync) are reflected; validated key references; added notification Edge functions to STRUCTURE supabase tree.
 
 ## Docs updated
 
@@ -46,4 +46,4 @@ Sline_everything and .TODO references are aligned with:
 
 - Notification Routing (13): user_devices, notification_push_queue, trigger, PushDeviceService, Edge push-notify/process-push-queue, foreground sync, diagram 13, runbook, checklist.
 
-SlineDocs workflow (everything up to date) completed.
+DocsKeeper workflow (everything up to date) completed.

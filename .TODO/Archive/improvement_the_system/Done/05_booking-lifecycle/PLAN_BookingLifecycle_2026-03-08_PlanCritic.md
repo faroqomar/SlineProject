@@ -265,7 +265,7 @@
 - Confirm transition logs exist and are safe.  
 - **GATE CHECK:** Auditable; no leaks.
 
-4.5 **Documentation (SlineDocs)**  
+4.5 **Documentation (DocsKeeper)**  
 - Update 05_booking-lifecycle.md (Mermaid + ledger labels).  
 - SUPABASE_SETUP: §4.2 enum, transition matrix, fn_booking_guard, rpc_finalize_auto_approval.  
 - DEVELOPER_GUIDE: booking lifecycle, dispute gate, no_show, link to contract.  

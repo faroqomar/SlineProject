@@ -47,7 +47,7 @@
 - Added Step 3.1 — Fast Feedback Gate (sub-phase test gate)
 - Added Step 3.2 — Test Mock Audit (ViewModel API changes)
 
-**`.cursor/Agents/orchestrator.md`:**
+**`.cursor/Agents/Orchestrator.md`:**
 - Added Stage 11.5 — Runtime Smoke Test (emulator/device)
 
 ---

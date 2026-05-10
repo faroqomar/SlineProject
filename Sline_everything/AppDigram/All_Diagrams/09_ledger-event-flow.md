@@ -30,7 +30,7 @@ This document satisfies the **diagram document standard**. It includes:
 - **Diagram name (exact):** Ledger Event Flow
 - **Version:** v2 (Final / Implemented)
 - **Date:** 2026-03-08
-- **Owner/author:** Backend + Mobile; @APIContract; SlineDocs
+- **Owner/author:** Backend + Mobile; @APIContract; DocsKeeper
 
 ---
 

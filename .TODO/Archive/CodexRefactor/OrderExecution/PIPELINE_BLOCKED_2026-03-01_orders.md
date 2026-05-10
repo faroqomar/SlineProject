@@ -10,7 +10,7 @@
 # Pipeline Blocked — orders
 
 - Date: 2026-03-01
-- Workflow: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.agents/workflows/orchestrator.md`
+- Workflow: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.agents/workflows/Orchestrator.md`
 - Final Status: BLOCKED
 
 ## Why Blocked
@@ -37,7 +37,7 @@
 
 ## Which Agent Must Re-Run After Fix
 - `@Supabase_Ops`
-- `@SlineDocs`
+- `@DocsKeeper`
 - `@CodeGuard`
 
 ## Agent Outputs Produced Before Halt

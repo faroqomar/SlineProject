@@ -3,7 +3,7 @@
 **Scope:** EscrowInvariantsIdempotency  
 **Plan:** `.TODO/PLAN_EscrowInvariantsIdempotency_2026-03-07_CRITIC.md`  
 **Date:** 2026-03-07  
-**Pipeline:** @Architect → @Observability → @SlineDocs → @CodeGuard
+**Pipeline:** @Architect → @Observability → @DocsKeeper → @CodeGuard
 
 ---
 
@@ -48,8 +48,8 @@
 ### Docs / Reference Integrity
 | Severity | Owner | Finding | Fix |
 |----------|--------|---------|-----|
-| LOW | @SlineDocs | Optional DEVELOPER_GUIDE note (escrow idempotent under retry) not added. | Optional: add one sentence in Finance & Payment Ledger or Work Management. |
-| LOW | @SlineDocs | Sline_Log.md / changelog may need one line for this feature. | Optional: add entry per project convention. |
+| LOW | @DocsKeeper | Optional DEVELOPER_GUIDE note (escrow idempotent under retry) not added. | Optional: add one sentence in Finance & Payment Ledger or Work Management. |
+| LOW | @DocsKeeper | Sline_Log.md / changelog may need one line for this feature. | Optional: add entry per project convention. |
 
 **No BLOCKER or HIGH findings.** All agents passed; CodeGuard APPROVED.
 
@@ -59,10 +59,10 @@
 
 No **mandatory** fix steps. Optional only:
 
-1. **Optional (LOW)** — @SlineDocs: Add one sentence in DEVELOPER_GUIDE (e.g. Finance & Payment Ledger or Work Management): “Escrow release via approve delivery is idempotent under retry; server uses a stable key and FOR UPDATE.”  
+1. **Optional (LOW)** — @DocsKeeper: Add one sentence in DEVELOPER_GUIDE (e.g. Finance & Payment Ledger or Work Management): “Escrow release via approve delivery is idempotent under retry; server uses a stable key and FOR UPDATE.”  
    **Verification:** Grep for “idempotent” in DEVELOPER_GUIDE.
 
-2. **Optional (LOW)** — @SlineDocs: If Sline_Log or changelog is maintained, add: “Escrow idempotency: stable key + FOR UPDATE in rpc_approve_delivery (migration 20260307000001).”  
+2. **Optional (LOW)** — @DocsKeeper: If Sline_Log or changelog is maintained, add: “Escrow idempotency: stable key + FOR UPDATE in rpc_approve_delivery (migration 20260307000001).”  
    **Verification:** Changelog/Sline_Log updated.
 
 No @Supabase_Ops, @Architect, @Pixel, or @CodeGuard re-run required for current scope.

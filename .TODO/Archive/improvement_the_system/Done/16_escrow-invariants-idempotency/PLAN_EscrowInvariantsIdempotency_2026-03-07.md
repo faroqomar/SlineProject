@@ -204,11 +204,11 @@
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
-- [ ] (@SlineDocs) Update `Sline_everything/AppDigram/All_Diagrams/16_escrow-invariants-idempotency.md`: key formula in diagram and evidence table (digest input without `now()`); verification date and result.
-- [ ] (@SlineDocs) Update `Sline_everything/SUPABASE_SETUP.md` section for `rpc_approve_delivery`: document stable key formula and optional FOR UPDATE/pre-flight if implemented.
-- [ ] (@SlineDocs) Optional: short note in DEVELOPER_GUIDE (Finance & Payment Ledger or Work Management) that escrow release is idempotent under retry.
+- [ ] (@DocsKeeper) Update `Sline_everything/AppDigram/All_Diagrams/16_escrow-invariants-idempotency.md`: key formula in diagram and evidence table (digest input without `now()`); verification date and result.
+- [ ] (@DocsKeeper) Update `Sline_everything/SUPABASE_SETUP.md` section for `rpc_approve_delivery`: document stable key formula and optional FOR UPDATE/pre-flight if implemented.
+- [ ] (@DocsKeeper) Optional: short note in DEVELOPER_GUIDE (Finance & Payment Ledger or Work Management) that escrow release is idempotent under retry.
 - **Verify (@Sentinel):** Docs match code and live DB.
 
 ---

@@ -12,7 +12,7 @@
 - Date: 2026-03-01
 - Scope: `orders`
 - Plan Reference: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.TODO/PLAN_OrdersFix_2026-03-01.md`
-- Workflow: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.agents/workflows/orchestrator.md`
+- Workflow: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.agents/workflows/Orchestrator.md`
 
 ## Freshness Checks
 - Repo check: `flutter analyze` on 2026-03-01 -> passed with no issues.

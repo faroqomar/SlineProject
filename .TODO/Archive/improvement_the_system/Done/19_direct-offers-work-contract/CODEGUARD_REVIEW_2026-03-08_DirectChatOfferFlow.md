@@ -53,7 +53,7 @@
 
 2. **Developer guide sync**
    - **Suggestion:** Update `Sline_everything/DEVELOPER_GUIDE/Direct_Offers_Feature.md` to document `delivered_at`, `review_expires_at`, auto-release cron (`run_auto_release_expired_direct_offers`, hourly), and payment traceability columns (per Plan Phase 5).
-   - **Owner:** @SlineDocs or implementer
+   - **Owner:** @DocsKeeper or implementer
 
 3. **Analyzer (unrelated)**
    - **Suggestion:** Fix or remove `test/services/repro_test.dart` (3× avoid_print) so `flutter analyze` is clean project-wide.

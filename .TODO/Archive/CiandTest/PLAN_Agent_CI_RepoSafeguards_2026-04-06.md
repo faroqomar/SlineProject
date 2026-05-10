@@ -2,7 +2,7 @@
 
 **Plan Version:** 2.0 (Post-Critique)
 **Date:** 2026-04-06
-**Created By:** @SlinePlanner, reviewed by @PlanCritic
+**Created By:** @Planner, reviewed by @PlanCritic
 **Session Log:** `docs/LOG/SESSION_PLAN_Agent_CI_RepoSafeguards_2026-04-06.md`
 **Parent Plan:** `.TODO/PLAN_GitHub_CI_RepoSafeguards_2026-04-04.md`
 **Manual Counterpart:** `.TODO/Future_Plans/MANUAL_GitHub_Setup_Checklist.md`
@@ -122,22 +122,22 @@
 
 ## 5) Agent Map
 
-- Phase 0: @SlinePlanner, @Sentinel (preconditions & gates)
+- Phase 0: @Planner, @Sentinel (preconditions & gates)
 - Phase 1: @CodeGuard, @Sentinel (secret scanning infrastructure)
 - Phase 2: @CodeGuard, @Sentinel (CI workflow enhancements)
 - Phase 3: @Architect, @Sentinel (developer workflow files)
-- Phase 4: @SlineDocs, @Sentinel (documentation & drift fixes)
+- Phase 4: @DocsKeeper, @Sentinel (documentation & drift fixes)
 - Phase 5: @Sentinel (verification & non-regression)
 
 ---
 
 ## Phase 0: Preconditions & Gates
 
-**Primary Agent(s):** @SlinePlanner, @Sentinel
+**Primary Agent(s):** @Planner, @Sentinel
 
 ### 0.1 Spec Lock
 
-**Primary Agent(s):** @SlinePlanner, @Sentinel
+**Primary Agent(s):** @Planner, @Sentinel
 **Goal:** Lock acceptance criteria and non-regression expectations
 **Why:** Any regression in CI blocks all development
 **How:** Define measurable acceptance and non-regression checks
@@ -150,7 +150,7 @@
   - No existing CI checks are weakened, removed, or renamed
   - All manual configuration dependencies are documented
   - Secret patterns must NOT match Supabase anon key (it is public by design)
-- [ ] (@SlinePlanner) Define non-regression list:
+- [ ] (@Planner) Define non-regression list:
   - `flutter test` must still pass (~1229 tests, 0 failures)
   - `flutter analyze` must still pass (0 issues)
   - `dart format --set-exit-if-changed .` must pass
@@ -158,8 +158,8 @@
   - Coverage floor (40%) must still be enforced
   - Pre-commit hook (format + analyze) must still work unchanged
   - `.github/PULL_REQUEST_TEMPLATE/migration.md` must remain intact
-- [ ] (@SlinePlanner) **[ADDED — Critique Fix 4] Blocking Input: GitHub username** — Ask the developer for their exact GitHub username. Required for CODEOWNERS. Do NOT use a placeholder.
-- [ ] (@SlinePlanner) **[ADDED — Critique Fix 4] Blocking Input: Security contact email** — Ask the developer for the email to use in SECURITY.md. Do NOT use a placeholder.
+- [ ] (@Planner) **[ADDED — Critique Fix 4] Blocking Input: GitHub username** — Ask the developer for their exact GitHub username. Required for CODEOWNERS. Do NOT use a placeholder.
+- [ ] (@Planner) **[ADDED — Critique Fix 4] Blocking Input: Security contact email** — Ask the developer for the email to use in SECURITY.md. Do NOT use a placeholder.
 - [ ] (@CodeGuard) **[ADDED — Critique Fix 5] TruffleHog version freshness check** — Run `gh api repos/trufflesecurity/trufflehog/releases/latest --jq .tag_name` and record the current release tag. If newer than `v3.88.0`, use the newer version in Phase 1.3.
 - **GATE CHECK:** Scope, acceptance criteria, non-regression list, blocking inputs, and version checks are complete.
 
@@ -418,9 +418,9 @@
 
 ---
 
-## Phase 4: Documentation & Drift Fixes (@SlineDocs)
+## Phase 4: Documentation & Drift Fixes (@DocsKeeper)
 
-**Primary Agent(s):** @SlineDocs, @Sentinel
+**Primary Agent(s):** @DocsKeeper, @Sentinel
 **Goal:** Create missing repo documentation and fix documentation drift
 **Why:** Financial app needs SECURITY.md; 18 Edge Function env vars are undocumented; stale docs cause confusion
 **How:** Create new documentation files and update stale sections
@@ -428,13 +428,13 @@
 
 ### 4.1 Create SECURITY.md
 
-**Primary Agent(s):** @SlineDocs, @Sentinel
+**Primary Agent(s):** @DocsKeeper, @Sentinel
 **Goal:** Document responsible disclosure process
 **Why:** Financial marketplace must have a security reporting channel
 **How:** Create root-level SECURITY.md with clear reporting instructions
 **Result:** Security researchers and users know how to report vulnerabilities
 
-- [ ] (@SlineDocs) Create `SECURITY.md` using the **real security contact email collected in Phase 0** (NOT a placeholder):
+- [ ] (@DocsKeeper) Create `SECURITY.md` using the **real security contact email collected in Phase 0** (NOT a placeholder):
   - **Reporting a Vulnerability** — use the real email from Phase 0 blocking input
   - **What to Report** — authentication bypass, data exposure, RLS circumvention, payment manipulation, unauthorized access
   - **What NOT to Report** — Supabase anon key (public by design, protected by RLS), known cosmetic issues
@@ -447,7 +447,7 @@
 
 ### 4.2 Create Edge Function Environment Documentation
 
-**Primary Agent(s):** @SlineDocs, @Sentinel
+**Primary Agent(s):** @DocsKeeper, @Sentinel
 **Goal:** Document all 18 Edge Function environment variables
 **Why:** Undocumented env vars cause onboarding friction and deployment failures
 **How:** Create `.env.example` with placeholder values and comments
@@ -457,7 +457,7 @@
 
 **Scan found these 18 unique `Deno.env.get()` calls across all Edge Functions:**
 
-- [ ] (@SlineDocs) Create `supabase/functions/.env.example` with ALL 18 variables:
+- [ ] (@DocsKeeper) Create `supabase/functions/.env.example` with ALL 18 variables:
   - `# --- Supabase Core (auto-injected in hosted, manual in local) ---`
   - `SUPABASE_URL=https://your-project.supabase.co`
   - `SUPABASE_ANON_KEY=your-anon-key`
@@ -481,8 +481,8 @@
   - `ALLOWED_ORIGIN=https://sline.app`
   - `ENVIRONMENT=production`
   - `BOOKING_PAYMENT_EXPIRY_MINUTES=30`
-- [ ] (@SlineDocs) Add comments explaining each variable's purpose
-- [ ] (@SlineDocs) Mark which are required vs optional (e.g., `QICARD_ALLOW_UNSIGNED_LOCAL_DEV` is optional, defaults to `false`)
+- [ ] (@DocsKeeper) Add comments explaining each variable's purpose
+- [ ] (@DocsKeeper) Mark which are required vs optional (e.g., `QICARD_ALLOW_UNSIGNED_LOCAL_DEV` is optional, defaults to `false`)
 - [ ] (@Sentinel) Verify NO actual secrets are in the file (only placeholder values like `your-*`)
 - [ ] (@Sentinel) Verify all 18 env vars from the scan are included
 - [ ] (@Sentinel) Verify `.env.example` is NOT in `.gitignore` (it must be committed)
@@ -490,13 +490,13 @@
 
 ### 4.3 Create CONTRIBUTING.md
 
-**Primary Agent(s):** @SlineDocs, @Sentinel
+**Primary Agent(s):** @DocsKeeper, @Sentinel
 **Goal:** Create contributor onboarding guide
 **Why:** CLAUDE.md covers conventions but is not contributor-facing; new developers need a quick-start
 **How:** Create root-level CONTRIBUTING.md that references existing docs
 **Result:** Contributors can onboard quickly without reading all internal docs
 
-- [ ] (@SlineDocs) Create `CONTRIBUTING.md` with sections:
+- [ ] (@DocsKeeper) Create `CONTRIBUTING.md` with sections:
   - **Getting Started** — Flutter 3.8.1+, `flutter pub get`, `git config core.hooksPath .githooks`
   - **Architecture** — MVVM, reference CLAUDE.md for details
   - **PR Process** — create feature branch, run `flutter test` + `flutter analyze`, submit PR (template auto-applied)
@@ -512,7 +512,7 @@
 
 ### 4.4 Fix Documentation Drift — MVP_ROADMAP.md
 
-**Primary Agent(s):** @SlineDocs, @Sentinel
+**Primary Agent(s):** @DocsKeeper, @Sentinel
 **Goal:** Fix stale coverage and architecture guard numbers
 **Why:** Stale docs cause confusion when planning future phases
 **How:** Update specific lines with current values
@@ -520,16 +520,16 @@
 
 **File:** `Sline_everything/MVP_ROADMAP.md` (UPDATE)
 
-- [ ] (@SlineDocs) Line 92: Change "6 MVVM boundary checks" to "7 MVVM boundary checks" (Check 7 added in Phase E)
-- [ ] (@SlineDocs) Section 9 "Current Focus": Change any reference to "coverage enforcement (70% target)" to "coverage enforcement (40% regression floor)"
-- [ ] (@SlineDocs) Verify Phase E completion notes (line ~125-139) reflect current reality: 27/27 VMs tested, 982+ tests, 40% floor
+- [ ] (@DocsKeeper) Line 92: Change "6 MVVM boundary checks" to "7 MVVM boundary checks" (Check 7 added in Phase E)
+- [ ] (@DocsKeeper) Section 9 "Current Focus": Change any reference to "coverage enforcement (70% target)" to "coverage enforcement (40% regression floor)"
+- [ ] (@DocsKeeper) Verify Phase E completion notes (line ~125-139) reflect current reality: 27/27 VMs tested, 982+ tests, 40% floor
 - [ ] (@Sentinel) Verify no other stale numbers exist in the file
 - [ ] (@Sentinel) Verify only drift-related content is changed (no unrelated edits)
 - **GATE CHECK:** Coverage, test count, and architecture guard numbers match CI reality.
 
 ### 4.5 Fix Documentation Drift — ARCHITECTURE_ANALYSIS.md
 
-**Primary Agent(s):** @SlineDocs, @Sentinel
+**Primary Agent(s):** @DocsKeeper, @Sentinel
 **Goal:** Fix date typo
 **Why:** Header says 2024 but content is from 2026
 **How:** Change one line
@@ -537,7 +537,7 @@
 
 **File:** `Sline_everything/ARCHITECTURE_ANALYSIS.md` (UPDATE)
 
-- [ ] (@SlineDocs) Line 3: Change "Date: March 7, 2024" to "Date: 2026-03-07 (with embedded notes through 2026-04-06)"
+- [ ] (@DocsKeeper) Line 3: Change "Date: March 7, 2024" to "Date: 2026-03-07 (with embedded notes through 2026-04-06)"
 - [ ] (@Sentinel) Verify content accuracy is unchanged (only date line modified)
 - **GATE CHECK:** Date typo fixed, content unchanged.
 

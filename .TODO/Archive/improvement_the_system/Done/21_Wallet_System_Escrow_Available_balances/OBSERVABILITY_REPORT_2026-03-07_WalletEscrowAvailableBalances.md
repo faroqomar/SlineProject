@@ -57,4 +57,4 @@ Current implementation matches the above. No secrets, tokens, or raw PII are log
 - **Observability:** AppLogger used consistently; no print(); critical paths (complete offer, balance fetch error) covered.
 - **Privacy:** No PII in logs.
 - **Blockers:** None.
-- **Recommendation:** Proceed to SlineDocs and CodeGuard.
+- **Recommendation:** Proceed to DocsKeeper and CodeGuard.

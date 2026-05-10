@@ -3,7 +3,7 @@
 - **Diagram Name**: SLine App Master UI Sequence Specification
 - **Version**: 1.0 (Aligns with SLine v2.20.1)
 - **Date**: 2026-03-11
-- **Owner / Author**: SLinePlanner (@Architect & @SlineDocs proxy)
+- **Owner / Author**: Planner (@Architect & @DocsKeeper proxy)
 - **Scope**: Entire Flutter Application (Client & Freelancer roles)
 - **Status**: Production-Ready / Implementation Alignment
 

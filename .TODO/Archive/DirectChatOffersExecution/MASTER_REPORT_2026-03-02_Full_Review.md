@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-02  
 **Scope:** Full_Review (entire codebase: lib/, direct_offers, dashboard, wallet, migrations)  
-**Pipeline:** Architect → Observability → SlineDocs → CodeGuard  
+**Pipeline:** Architect → Observability → DocsKeeper → CodeGuard  
 **Final Decision:** BLOCKED (fix BLOCKERs first, then APPROVED)
 
 ---
@@ -35,7 +35,7 @@ CodeGuard reported BLOCKERs. Pipeline proceeds to produce this report and a fix 
 |---------|----------|-------|----------|-----|
 | **MVVM: View uses Supabase** | **BLOCKER** | Architect, CodeGuard | `lib/features/direct_offers/view/direct_offer_details_screen.dart` line 40 | Obtain `currentUserId` from `context.read<AuthViewModel>().currentUserId`; remove `Supabase.instance.client` from View. |
 | Single source of truth, no N+1 | PASS | Architect | dashboard_repository, wallet, ledger | None. |
-| direct_offers missing from STRUCTURE | LOW | Architect, SlineDocs | Sline_everything/STRUCTURE.md | Add direct_offers to feature list. |
+| direct_offers missing from STRUCTURE | LOW | Architect, DocsKeeper | Sline_everything/STRUCTURE.md | Add direct_offers to feature list. |
 
 ### Performance
 | Finding | Severity | Owner | File/Ref | Fix |
@@ -54,11 +54,11 @@ CodeGuard reported BLOCKERs. Pipeline proceeds to produce this report and a fix 
 ### Docs / Reference Integrity
 | Finding | Severity | Owner | File/Ref | Fix |
 |---------|----------|-------|----------|-----|
-| SUPABASE_SETUP Last Updated, migrations 20260303–20260307 | HIGH | SlineDocs | SUPABASE_SETUP.md | Update date and changelog. |
-| STRUCTURE: direct_offers + edge functions list | HIGH | SlineDocs | STRUCTURE.md | Add direct_offers; add qicard_payment_*_direct_offer. |
-| DEVELOPER_GUIDE: DM/favorites, message_type_enum, trigger names | HIGH | SlineDocs | DEVELOPER_GUIDE.md | Align with SUPABASE_SETUP v2.1; add system; fix trigger names. |
-| MVP_ROADMAP: Direct Chat Offers row | LOW | SlineDocs | MVP_ROADMAP.md | Add row. |
-| Inventory Feature.md (Planned) | LOW | SlineDocs | DEVELOPER_GUIDE quick links | Keep as planned or add placeholder. |
+| SUPABASE_SETUP Last Updated, migrations 20260303–20260307 | HIGH | DocsKeeper | SUPABASE_SETUP.md | Update date and changelog. |
+| STRUCTURE: direct_offers + edge functions list | HIGH | DocsKeeper | STRUCTURE.md | Add direct_offers; add qicard_payment_*_direct_offer. |
+| DEVELOPER_GUIDE: DM/favorites, message_type_enum, trigger names | HIGH | DocsKeeper | DEVELOPER_GUIDE.md | Align with SUPABASE_SETUP v2.1; add system; fix trigger names. |
+| MVP_ROADMAP: Direct Chat Offers row | LOW | DocsKeeper | MVP_ROADMAP.md | Add row. |
+| Inventory Feature.md (Planned) | LOW | DocsKeeper | DEVELOPER_GUIDE quick links | Keep as planned or add placeholder. |
 
 ### Compatibility / Analyzer
 | Finding | Severity | Owner | File/Ref | Fix |
@@ -91,7 +91,7 @@ CodeGuard reported BLOCKERs. Pipeline proceeds to produce this report and a fix 
 - **Verification:** `dart format --set-exit-if-changed .` passes.
 
 ### Step 3: Documentation updates
-**Owner:** @SlineDocs (or implementer per DOCS_REPORT)
+**Owner:** @DocsKeeper (or implementer per DOCS_REPORT)
 - Update SUPABASE_SETUP.md: Last Updated, changelog for 20260303–20260307.
 - Update STRUCTURE.md: add direct_offers to feature list; add qicard_payment_create_direct_offer, qicard_payment_recovery_direct_offer to functions list.
 - Update DEVELOPER_GUIDE.md: DM/favorites v2.1, message_type_enum (add system), trigger names (trg_conversations_before_insert_guard, trg_messages_before_insert_validate), direct_offers inventory (view/viewmodels).

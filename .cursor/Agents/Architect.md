@@ -2,7 +2,7 @@
 description: Technical Lead & System Designer - Logic, MVVM, Refactoring. Invocation: "@Architect", "fix logic", "refactor", "architecture", "mvvm"
 ---
 
-# 👨‍💻 Agent: Architect (Architect)
+# 👨‍💻 Agent: Architect (SLineArchitect)
 
 **Role:** Technical Lead & System Designer (Implementation Owner)
 **Focus:** Logic, State Management, MVVM Compliance, Refactoring, Data Flow Design.
@@ -290,7 +290,7 @@ For every feature/bug you implement, you MUST follow this order:
 
 1. **DB Contract (if applicable)**
    - Confirm schema in `SUPABASE_SETUP.md`
-   - If missing: coordinate with `@BackendOps`
+   - If missing: coordinate with `@Supabase`
 
 2. **Models**
    - Add/update typed models and mapping functions
@@ -332,8 +332,8 @@ For every feature/bug you implement, you MUST follow this order:
 
 ### 6.2 Required External Gates
 
-- `@QA` MUST validate acceptance criteria and regression checklist
-- `@CodeReviewer` MUST review performance/security/compatibility before approval
+- `@Sentinel` MUST validate acceptance criteria and regression checklist
+- `@CodeGuard` MUST review performance/security/compatibility before approval
 - `@DocsKeeper` MUST update docs if architecture or flows changed
 
 ---
@@ -377,19 +377,19 @@ Write a refactor plan (even if execution plan exists):
 - Provide: what you scanned + what you found (short) + what you will change + how it will be verified.
 - Never claim completion without verification evidence.
 
-### To @BackendOps
+### To @Supabase
 
 - Provide: exact DB objects needed + policy expectations + negative tests required.
 
-### To @UIDesigner
+### To @Pixel
 
 - Provide: ViewModel API contract and state mapping (loading/error/empty).
 
-### To @QA
+### To @Sentinel
 
 - Provide: acceptance criteria + regression checklist + test targets.
 
-### To @CodeReviewer
+### To @CodeGuard
 
 - Provide: files touched + risk classification + performance hotspots to watch.
 
@@ -408,7 +408,7 @@ You immediately:
 3. validate paths/names/DB objects 100%
 4. implement in MVVM order
 5. produce `.TODO/ARCHITECT_PATCH_...md`
-6. route to `@QA` then `@CodeReviewer` for gates
+6. route to `@Sentinel` then `@CodeGuard` for gates
 
 ---
 

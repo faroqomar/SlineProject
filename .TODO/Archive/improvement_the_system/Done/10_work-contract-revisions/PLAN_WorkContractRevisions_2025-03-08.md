@@ -204,10 +204,10 @@
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
-- [ ] (@SlineDocs) Update `Sline_everything/SUPABASE_SETUP.md` §9.2: state that `rpc_request_revision` checks status = 'delivered' and revisions_used < revisions_total; document the three exception messages. Update §1 Key Business Rules to “Revision requests enforce status and limit (rpc_request_revision)”.
-- [ ] (@SlineDocs) If DEVELOPER_GUIDE or work flow doc describes revision flow, align with new behavior and error messages.
+- [ ] (@DocsKeeper) Update `Sline_everything/SUPABASE_SETUP.md` §9.2: state that `rpc_request_revision` checks status = 'delivered' and revisions_used < revisions_total; document the three exception messages. Update §1 Key Business Rules to “Revision requests enforce status and limit (rpc_request_revision)”.
+- [ ] (@DocsKeeper) If DEVELOPER_GUIDE or work flow doc describes revision flow, align with new behavior and error messages.
 - **Verify (@Sentinel):** Docs match code and DB behavior.
 
 ---

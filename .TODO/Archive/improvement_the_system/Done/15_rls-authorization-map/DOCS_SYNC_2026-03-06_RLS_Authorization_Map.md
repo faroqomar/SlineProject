@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-06  
 **Scope:** RLS Authorization Map Implementation Documentation Update  
-**Agent:** @SlineDocs
+**Agent:** @DocsKeeper
 
 ---
 

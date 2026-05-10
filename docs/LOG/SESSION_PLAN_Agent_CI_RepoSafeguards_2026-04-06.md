@@ -25,7 +25,7 @@ All 12 new files created + 3 existing files updated. Zero Dart code changes. Pre
 
 ### [PLAN CREATED]
 - Plan: .TODO/PLAN_Agent_CI_RepoSafeguards_2026-04-06.md
-- Created by: @SlinePlanner
+- Created by: @Planner
 - Scope: Agent-side implementation of 12 new files + 3 updates for CI workflows, developer tooling, and documentation
 - Parent plan: .TODO/PLAN_GitHub_CI_RepoSafeguards_2026-04-04.md
 - Manual counterpart: .TODO/Future_Plans/MANUAL_GitHub_Setup_Checklist.md

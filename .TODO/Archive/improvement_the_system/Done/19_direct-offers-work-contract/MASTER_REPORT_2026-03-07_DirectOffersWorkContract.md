@@ -3,7 +3,7 @@
 **Scope:** DirectOffersWorkContract (Plan 19)  
 **Plan:** `.TODO/improvement_the_system/ImplementReady/19_direct-offers-work-contract/PLAN_DirectOffersWorkContract_2026-03-07.md`  
 **Date:** 2026-03-07  
-**Orchestrator:** Multi-agent pipeline per `.agents/workflows/orchestrator.md`
+**Orchestrator:** Multi-agent pipeline per `.agents/workflows/Orchestrator.md`
 
 ---
 
@@ -19,7 +19,7 @@
 
 | Category | Severity | Owner | Path / Object | Fix recommendation |
 |----------|----------|--------|----------------|--------------------|
-| **Data Integrity / Docs** | MED | @SlineDocs | `Sline_everything/SUPABASE_SETUP.md` §5.14; live `direct_offers` table | Verify live `direct_offers` has `delivered_at`, `review_expires_at`, and fee columns (`fee_rate_applied_bps`, `fee_amount`, `net_amount`). If yes, add them to §5.14 table and note the migration that added them. |
+| **Data Integrity / Docs** | MED | @DocsKeeper | `Sline_everything/SUPABASE_SETUP.md` §5.14; live `direct_offers` table | Verify live `direct_offers` has `delivered_at`, `review_expires_at`, and fee columns (`fee_rate_applied_bps`, `fee_amount`, `net_amount`). If yes, add them to §5.14 table and note the migration that added them. |
 | **Observability** | LOW | @Observability | `lib/features/direct_offers/services/direct_offers_service.dart` | Optionally add `AppLogger.w` for "offer not found" in `rejectOffer` and `cancelOffer` for consistency with other methods. |
 | **Security** | — | @CodeGuard | — | No findings. RLS, admin check, REVOKE anon, idempotency in place. |
 | **Architecture/MVVM** | — | @Architect | — | No findings. Service-only backend access; contract matches. |
@@ -33,7 +33,7 @@
    - **Owner:** @Supabase_Ops or dev with DB access.  
    - **Action:** On live DB, run `SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'direct_offers' ORDER BY ordinal_position;`  
    - If `delivered_at`, `review_expires_at`, `fee_rate_applied_bps`, `fee_amount`, `net_amount` exist:  
-     - **Owner:** @SlineDocs  
+     - **Owner:** @DocsKeeper  
      - **Action:** Update `Sline_everything/SUPABASE_SETUP.md` §5.14 to list these columns and reference the migration that added them.  
    - **Verification:** Grep §5.14 for `delivered_at` / `review_expires_at`; confirm they match schema.
 

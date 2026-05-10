@@ -1,6 +1,6 @@
 # Docs Sync: ChatFix (2026-03-02)
 
-**Scope:** Align `Sline_everything/` and cross-references with ChatFix implementation per SlineDocs workflow.
+**Scope:** Align `Sline_everything/` and cross-references with ChatFix implementation per DocsKeeper workflow.
 
 ---
 
@@ -38,7 +38,7 @@
 
 ## Why each update was needed
 
-1. **Sline_Log:** SlineDocs §3 – any plan executed must have execution log and release entry; §6.1 template used for traceability.
+1. **Sline_Log:** DocsKeeper §3 – any plan executed must have execution log and release entry; §6.1 template used for traceability.
 2. **Chat Feature.md:** Fix errant character; document MessageType.system for contract/DB parity.
 3. **DEVELOPER_GUIDE.md:** §2 – feature completion and DB changes; archive RPC and new Chat files must appear in the main guide’s Chat section for discoverability.
 4. **MVP_ROADMAP.md:** §3 – feature completion; Realtime chat and Attachments statuses updated to reflect archive RPC and storage helper.

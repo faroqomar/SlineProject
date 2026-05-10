@@ -15,7 +15,7 @@
 - **@ThreatModeler**: Security design, abuse cases (Phase 0.3)
 - **@APIContract**: Contract file (Phase 0.2)
 - **@DataMigration**: Migration plan, backfill verification (Phase 0.4, Phase 2)
-- **@SlineDocs**: Documentation updates (Phase 5)
+- **@DocsKeeper**: Documentation updates (Phase 5)
 - **@CodeGuard**: Final review gate (Phase 4, Phase 5)
 
 ### Risk Classification

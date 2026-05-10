@@ -177,7 +177,7 @@
   - PR2: app-layer correctness/state fixes + unit/widget tests
   - PR3: live DB reconcile (if needed) + docs sync + integration/release gate
 - [ ] (@Sentinel) Add reviewer checklist and definition of done per PR into `.TODO/PR_PLAN_Saved_2026-03-04.md`.
-- [ ] (@SlineDocs) Create `.TODO/RELEASE_CHECKLIST_Saved_2026-03-04.md` and include release-blocking items for live DB verification, tests, manual scenarios, docs sync, and rollback notes.
+- [ ] (@DocsKeeper) Create `.TODO/RELEASE_CHECKLIST_Saved_2026-03-04.md` and include release-blocking items for live DB verification, tests, manual scenarios, docs sync, and rollback notes.
 - **Verify (@Sentinel):** slicing, reviewers, DoD, and release checklist exist before implementation begins.
 
 ---
@@ -348,16 +348,16 @@
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
-- [ ] (@SlineDocs) Update:
+- [ ] (@DocsKeeper) Update:
   - `Sline_everything/DEVELOPER_GUIDE.md`
   - `Sline_everything/DEVELOPER_GUIDE/Saved Feature.md`
   - `Sline_everything/SUPABASE_SETUP.md`
   - `Sline_everything/STRUCTURE.md`
   - `Sline_everything/MVP_ROADMAP.md` if status/coverage wording changes
   - `Sline_everything/Sline_Log.md`
-- [ ] (@SlineDocs) Document:
+- [ ] (@DocsKeeper) Document:
   - final orphan-row UX
   - typed mutation result contract
   - final saved route/helper seam

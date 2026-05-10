@@ -91,7 +91,7 @@ These Master Plan §6.3 features require backend/ViewModel support not yet avail
 - **Contracts:** NONE.
 
 ## 5) Agent Map
-- **Phase 0 (Preconditions):** `@SlinePlanner`, `@Sentinel`
+- **Phase 0 (Preconditions):** `@Planner`, `@Sentinel`
 - **Phase 1 (MessagesScreen — Search):** `@Pixel` (primary), `@Sentinel` (gate)
 - **Phase 2 (ConversationListTile — Online Dot + Time):** `@Pixel` (primary), `@Sentinel` (gate)
 - **Phase 3A (MessageBubble — StatefulWidget + Link Detection):** `@Pixel` (primary), `@Sentinel` (gate)
@@ -106,7 +106,7 @@ These Master Plan §6.3 features require backend/ViewModel support not yet avail
 - **Phase 7 (ChatContextWidget — Pill Polish):** `@Pixel` (primary), `@Sentinel` (gate)
 - **Phase 8A (Widget Tests):** `@Sentinel` (primary)
 - **Phase 8B (QA + Verification):** `@Sentinel` (primary), `@CodeGuard` (review)
-- **Phase 9 (Documentation Sync):** `@SlineDocs` (primary)
+- **Phase 9 (Documentation Sync):** `@DocsKeeper` (primary)
 
 **Session Log:** `docs/LOG/SESSION_PLAN_Phase6_ChatAdvancedInteractions_2026-04-10.md`
 
@@ -114,7 +114,7 @@ These Master Plan §6.3 features require backend/ViewModel support not yet avail
 
 ## Phase 0: Preconditions & Gates
 
-**Primary Agent(s):** `@SlinePlanner`, `@Sentinel`
+**Primary Agent(s):** `@Planner`, `@Sentinel`
 
 ### 0.1 Spec Lock
 - [ ] (`@Sentinel`) Acceptance criteria defined (see Section 7 below — 22 items).
@@ -745,17 +745,17 @@ These Master Plan §6.3 features require backend/ViewModel support not yet avail
 
 ## Phase 9: Documentation Sync (MANDATORY)
 
-**Primary Agent(s):** `@SlineDocs`
+**Primary Agent(s):** `@DocsKeeper`
 
-- [ ] (`@SlineDocs`) Update session log `docs/LOG/SESSION_PLAN_Phase6_ChatAdvancedInteractions_2026-04-10.md` with all phase completions.
-- [ ] (`@SlineDocs`) Write `.TODO/DOCS_SYNC_2026-04-10_Phase6_Chat.md` documenting:
+- [ ] (`@DocsKeeper`) Update session log `docs/LOG/SESSION_PLAN_Phase6_ChatAdvancedInteractions_2026-04-10.md` with all phase completions.
+- [ ] (`@DocsKeeper`) Write `.TODO/DOCS_SYNC_2026-04-10_Phase6_Chat.md` documenting:
   - New features added (search, online dot, relative time, link detection, emoji-only, reply quote, swipe-to-reply, context menu, reply bar, offer elevation, fullscreen images, task pill)
   - New shared widget created (`FullscreenImageViewer`)
   - StatefulWidget conversions (MessageBubble, OfferMessageBubble)
   - MVVM gaps documented (reply storage, message delete, delivery receipts)
   - File line count changes
   - Widget tests added
-- [ ] (`@SlineDocs`) Verify session log and docs sync are cross-linked.
+- [ ] (`@DocsKeeper`) Verify session log and docs sync are cross-linked.
 - **GATE CHECK:** Session log complete. Docs sync written.
 
 ---

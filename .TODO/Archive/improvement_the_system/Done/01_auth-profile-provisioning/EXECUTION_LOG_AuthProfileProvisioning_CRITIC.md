@@ -84,6 +84,6 @@
 - flutter test test/unit test/widget: 158 passed. vw_orphaned_auth_users count: 0. RLS profiles_select_self verified. Manual QA checklist documented in plan. Agent: Sentinel.
 
 ### Phase 7 (Documentation Sync)
-- SUPABASE_SETUP.md: added vw_orphaned_auth_users to Views table; added auth profile provisioning rule (trigger, sweep_orphaned_auth_users, view). Agent: SlineDocs.
-- DEVELOPER_GUIDE.md: Auth line updated with retry (AuthConfig) and AccountGuard cold start. Agent: SlineDocs.
-- Sline_Log.md: new changelog entry for auth profile provisioning hardening (2026-03-06). Agent: SlineDocs.
+- SUPABASE_SETUP.md: added vw_orphaned_auth_users to Views table; added auth profile provisioning rule (trigger, sweep_orphaned_auth_users, view). Agent: DocsKeeper.
+- DEVELOPER_GUIDE.md: Auth line updated with retry (AuthConfig) and AccountGuard cold start. Agent: DocsKeeper.
+- Sline_Log.md: new changelog entry for auth profile provisioning hardening (2026-03-06). Agent: DocsKeeper.

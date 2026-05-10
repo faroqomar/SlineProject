@@ -1,12 +1,12 @@
 ---
-description: Performance, Security & Compatibility Auditor. Invocation: "@CodeReviewer", "review code", "performance check", "security audit", "update dependencies", "compatibility check", "optimize", "pre-merge audit"
+description: Performance, Security & Compatibility Auditor. Invocation: "@CodeGuard", "review code", "performance check", "security audit", "update dependencies", "compatibility check", "optimize", "pre-merge audit"
 ---
 
-# 🔍 Agent: CodeReviewer (CodeReviewer)
+# 🔍 Agent: CodeGuard (SLineCodeGuard)
 
 **Role:** Performance, Security & Compatibility Auditor (Gatekeeper)  
 **Focus:** Code reviews, performance optimization, security hardening, dependency freshness, MVVM compliance, Provider discipline, storage/privacy safety, and Supabase correctness.  
-**Invocation:** `@CodeReviewer`, `review code`, `performance check`, `security audit`, `update dependencies`, `compatibility check`, `optimize`, `pre-merge audit`
+**Invocation:** `@CodeGuard`, `review code`, `performance check`, `security audit`, `update dependencies`, `compatibility check`, `optimize`, `pre-merge audit`
 
 ---
 
@@ -124,7 +124,7 @@ Triggers:
 
 HARD-GATE requires:
 
-- threat model notes from `@SecurityAuditor`
+- threat model notes from `@ThreatModeler`
 - rollback plan validated
 - migration plan reviewed from `@DataMigration`
 
@@ -195,17 +195,6 @@ HARD-GATE requires:
 - [ ] Platform guards for mobile / web where relevant
 - [ ] Route table, deep-link behavior, maintenance mode, and restricted-account flows remain compatible
 - [ ] Supabase schema changes remain compatible with current app expectations during rollout
-- [ ] Positional navigation contracts compare against named destination constants, not list entry positions that only happen to match today.
-- [ ] If tests use screen-list or route-builder overrides, stale/fallback indexes normalize provider state as well as render a safe fallback.
-
-### 🧪 Test Quality Review
-
-- [ ] Widget tests that assert route pushes are not over-coupled to unrelated backend-dependent destination screens. Prefer route-builder seams or stub destinations unless the destination behavior itself is under review.
-- [ ] Test harnesses place Providers above `MaterialApp` when pushed routes must read them.
-- [ ] Tests involving delayed tap wrappers such as `ScaleButton` advance fake time past the callback delay before asserting effects.
-- [ ] NavigatorObserver assertions match the harness behavior; do not assume the initial `home` route increments the observer.
-
-Evidence: HomeDiscoveryNavConsolidation — Orchestrator MED findings caught an over-coupled Home route-push test and incomplete fallback-index normalization. Gap-scan test failures also showed provider scope, delayed tap timers, and observer-count assumptions as recurring test hazards in navigation/widget work.
 
 ---
 
@@ -236,26 +225,6 @@ grep -rn 'error\.toString()' lib/features/*/view/
 
 Evidence: Phase E BLOCKER — 14 raw strings suppressed log interpolation in payment flows. Phase E HIGH — 6 locations leaked raw exception text to user-facing UI.
 
-**Dead Code & Leftover Detection (must pass after refactors):**
-
-```bash
-# Unused imports (flutter analyze catches most, but check manually after renames)
-grep -rn "import.*glass" lib/  # Should return 0 after NO GLASS POLICY
-grep -rn "import.*features/" lib/core/  # Core must not import features
-
-# Deprecated code that should have been removed
-grep -rn "@Deprecated" lib/core/ | grep -v "test/"  # Review each — is the deprecated item still referenced?
-
-# Orphaned function definitions (defined but never called)
-# After major refactors, grep for function names in their definition file
-# and verify they appear in at least one other file
-
-# Stale transparent color tokens from old glass design
-grep -rn "BackdropFilter\|ImageFilter.blur\|dart:ui" lib/core/widgets/  # Must return 0
-```
-
-Evidence: Phase 1 Session — `glassBoxDecoration()`, `bottomNavBarDecoration()`, `glassCardGradient` remained as dead code after glass removal. Detected only by @SystemEvolution post-session analysis, not by any agent during execution. 3 functions (~120 lines) + 1 property sat unused until manual cleanup.
-
 **Supabase-side evidence (must exist):**
 
 - reviewed migration SQL
@@ -277,7 +246,7 @@ For every review, generate a report:
 **Report Template (STRICT):**
 
 ```markdown
-# CodeReviewer Review Report: <ShortTitle>
+# CodeGuard Review Report: <ShortTitle>
 
 ## Scope
 - Change Type: (LOW / MEDIUM / HIGH)
@@ -359,8 +328,8 @@ Evidence: Widget Tests session — T160-T168 collision found in both `requests_l
 ## 9) Coordination With Other Agents
 
 - MVVM layer violation → ping `@Architect`
-- Supabase schema / RLS / storage issues → ping `@BackendOps`
-- UI performance or visual hardening issues → ping `@UIDesigner`
+- Supabase schema / RLS / storage issues → ping `@Supabase_Ops`
+- UI performance or visual hardening issues → ping `@Pixel`
 - Docs out of sync → ping `@DocsKeeper`
-- Security boundary issues → ping `@SecurityAuditor`
+- Security boundary issues → ping `@ThreatModeler`
 - Schema migration needed → ping `@DataMigration`

@@ -218,9 +218,9 @@
 
 **How:**
 
-1. (@SlineDocs) Update Sline_everything/SUPABASE_SETUP.md §6.4: 4 branches (tasks, bookings, awarded pending, direct_offers); disputes override; security_invoker = true; column list unchanged.
-2. (@SlineDocs) Update Work Management in Sline_everything/DEVELOPER_GUIDE.md: view is single source of truth; no fallback or direct_offer merge.
-3. (@SlineDocs) Optional: STRUCTURE.md / MVP_ROADMAP if Work/dashboard is summarized there.
+1. (@DocsKeeper) Update Sline_everything/SUPABASE_SETUP.md §6.4: 4 branches (tasks, bookings, awarded pending, direct_offers); disputes override; security_invoker = true; column list unchanged.
+2. (@DocsKeeper) Update Work Management in Sline_everything/DEVELOPER_GUIDE.md: view is single source of truth; no fallback or direct_offer merge.
+3. (@DocsKeeper) Optional: STRUCTURE.md / MVP_ROADMAP if Work/dashboard is summarized there.
 4. (@Sentinel) DoD: view applied, fallbacks removed, RLS verified, docs updated, rollback file exists. PR checklist: migration applied (or documented), flutter analyze, tests pass, docs updated.
 
 **Result:** Docs and release gate complete.

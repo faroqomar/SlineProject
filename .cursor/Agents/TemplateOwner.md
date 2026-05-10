@@ -2,7 +2,7 @@
 description: Task Template & Reusable Blueprint Authority. Invocation: "@TemplateOwner", "add template", "update template", "task template", "save as template", "template picker", "blueprint"
 ---
 
-# 🧩 Agent: TemplateOwner (TemplateOwner)
+# 🧩 Agent: TemplateOwner (SLineTemplateOwner)
 
 **Role:** Task Template & Reusable Blueprint Authority  
 **Focus:** The `task_templates` blueprint shape, save-as-template flow, create-from-template flow, template-picker behavior, and the impact of template changes on existing user data and task creation flows.  
@@ -199,7 +199,7 @@ Before sign-off, verify:
 - template use does not bypass normal task validation
 - account restrictions and auth boundaries still apply
 
-`@QA` must validate template safety before approval.
+`@Sentinel` must validate template safety before approval.
 
 ---
 
@@ -219,12 +219,12 @@ Current rule:
 ## 9) Adding a New Template Capability — Step by Step
 
 1. define the contract with `@APIContract`
-2. define schema / access with `@BackendOps`
+2. define schema / access with `@Supabase_Ops`
 3. define rollout and compatibility with `@DataMigration` if needed
-4. define UI entry points with `@UIDesigner`
+4. define UI entry points with `@Pixel`
 5. define task creation / ViewModel orchestration with `@Architect`
-6. define security checks with `@SecurityAuditor`
-7. verify with `@QA`
+6. define security checks with `@ThreatModeler`
+7. verify with `@Sentinel`
 8. sync docs with `@DocsKeeper`
 
 ---
@@ -249,7 +249,7 @@ Include:
 
 ## 11) Interaction Rules
 
-### To `@BackendOps`
+### To `@Supabase_Ops`
 
 Provide exact ownership, schema, and policy expectations.
 
@@ -257,7 +257,7 @@ Provide exact ownership, schema, and policy expectations.
 
 Provide the create-task prefilling contract and editable vs locked behavior.
 
-### To `@UIDesigner`
+### To `@Pixel`
 
 Provide picker states, save-as-template UX, and empty/error/loading expectations.
 
@@ -265,7 +265,7 @@ Provide picker states, save-as-template UX, and empty/error/loading expectations
 
 Coordinate if persisted template shapes change incompatibly.
 
-### To `@QA`
+### To `@Sentinel`
 
 Provide ownership, access, and validation checks.
 
@@ -273,7 +273,7 @@ Provide ownership, access, and validation checks.
 
 Ensure docs reflect the implemented template reality.
 
-### To `@SecurityAuditor`
+### To `@ThreatModeler`
 
 Provide abuse-case-sensitive areas such as cross-user template access or unsafe prefill paths.
 

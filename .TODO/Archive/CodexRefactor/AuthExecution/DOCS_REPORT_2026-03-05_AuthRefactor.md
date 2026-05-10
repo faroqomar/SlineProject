@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-05
 **Scope:** AuthRefactor
-**Agent:** @SlineDocs
+**Agent:** @DocsKeeper
 
 ## Overview
 

@@ -15,7 +15,7 @@ The **Tender Task Lifecycle** implementation has been reviewed by all four agent
 |-------|--------|-------|----------|
 | @Architect | PASS | 98% | None |
 | @Observability | PASS | B- | None |
-| @SlineDocs | PASS | 8.5/10 | None |
+| @DocsKeeper | PASS | 8.5/10 | None |
 | @CodeGuard | **FIXED** | N/A | **Resolved** |
 
 **Final Decision**: ✅ **APPROVED for merge** after fixes
@@ -80,8 +80,8 @@ The **Tender Task Lifecycle** implementation has been reviewed by all four agent
 ### Step 2: Optional Improvements (Post-Merge)
 - [ ] Move exception classes to `exceptions/offer_exceptions.dart` (@Architect)
 - [ ] Add correlation IDs to tender flow (@Observability)
-- [ ] Update changelog with tender implementation (@SlineDocs)
-- [ ] Fix contract to match two-step flow (@SlineDocs)
+- [ ] Update changelog with tender implementation (@DocsKeeper)
+- [ ] Fix contract to match two-step flow (@DocsKeeper)
 
 ---
 
@@ -126,7 +126,7 @@ The **Tender Task Lifecycle** implementation has been reviewed by all four agent
 
 **Summary**: B- grade. Good foundation with AppLogger usage, but enterprise observability gaps (correlation IDs, audit logs).
 
-### @SlineDocs Report
+### @DocsKeeper Report
 **File**: `.TODO/DOCS_REPORT_2026-03-06_TenderTaskLifecycle.md`
 
 **Summary**: 8.5/10. Comprehensive DEVELOPER_GUIDE section, but changelog missing and contract doesn't match implementation.
@@ -187,5 +187,5 @@ The **Tender Task Lifecycle** implementation has been reviewed by all four agent
 ---
 
 **Pipeline Completed**: 2026-03-06  
-**Orchestrator**: SLineOrchestrator  
+**Orchestrator**: Orchestrator  
 **Final Status**: APPROVED ✅

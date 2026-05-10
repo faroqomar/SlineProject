@@ -3,7 +3,7 @@
 **Scope:** EscrowInvariantsIdempotency  
 **Plan:** `.TODO/PLAN_EscrowInvariantsIdempotency_2026-03-07_CRITIC.md`  
 **Date:** 2026-03-07  
-**Agent:** @SlineDocs
+**Agent:** @DocsKeeper
 
 ---
 

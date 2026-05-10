@@ -208,7 +208,7 @@ This execution log tracks the recovery of the Portfolio feature, addressing:
 | 2 - App Layer (MVVM) | ⏳ Not Started | @Architect | Repository consolidation |
 | 3 - UI | ⏳ Not Started | @Pixel | Screen wiring, widgets |
 | 4 - QA + Security | ⏳ Not Started | @Sentinel | Testing, verification |
-| 5 - Documentation Sync | ⏳ Not Started | @SlineDocs | Doc updates |
+| 5 - Documentation Sync | ⏳ Not Started | @DocsKeeper | Doc updates |
 
 ---
 

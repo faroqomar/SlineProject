@@ -43,7 +43,7 @@
 
 - **Finding:** Guide and Log documentation accurately replaces older instructions for `AuthViewModel` with the split models and database trigger definitions.
 - **Severity:** LOW (Verified)
-- **Owner:** @SlineDocs
+- **Owner:** @DocsKeeper
 - **Files:** `Sline_everything/DEVELOPER_GUIDE.md`, `Sline_everything/Sline_Log.md`
 
 ## C) Fix Plan Verification Checklist
@@ -53,7 +53,7 @@ The original implementation plan is already 100% complete. Here is the post-veri
 - [x] **@Supabase_Ops:** Validate SQL trigger presence and RPC installation.
 - [x] **@Architect:** Validate exact separation of `AuthSessionViewModel` for auth change streams vs `AuthFormViewModel` for input loading.
 - [x] **@Observability:** Confirm logging masks emails/credentials via `AppLogger`.
-- [x] **@SlineDocs:** Confirm documentation changes correctly depict MVVM compliance.
+- [x] **@DocsKeeper:** Confirm documentation changes correctly depict MVVM compliance.
 - [x] **@CodeGuard:** Run tests successfully after addressing timer leaks.
 
 ## D) Regression Checklist

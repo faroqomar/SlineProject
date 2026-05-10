@@ -39,7 +39,7 @@
 | **Diagram name (exact)** | Unified Work View |
 | **Version** | v2 (final) |
 | **Date** | 2026-03-08 |
-| **Owner/author** | Backend + App (SlineDocs / Plan 12) |
+| **Owner/author** | Backend + App (DocsKeeper / Plan 12) |
 | **Plan / contract** | `.TODO/PLAN_UnifiedWorkView_2026-03-08_CRITIC.md`, `.TODO/contract_vw_unified_work_items.md` |
 
 ---

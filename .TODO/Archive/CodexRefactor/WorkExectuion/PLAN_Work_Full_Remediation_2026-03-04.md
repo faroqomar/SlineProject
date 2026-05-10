@@ -267,11 +267,11 @@
 
 ### 0.7 PR Plan & Release Skeleton
 
-- [ ] (@SlineDocs) Create `.TODO/PR_PLAN_work_2026-03-04.md` with three slices:
+- [ ] (@DocsKeeper) Create `.TODO/PR_PLAN_work_2026-03-04.md` with three slices:
   - PR1: gates/contracts/provenance/test infra
   - PR2: runtime/backend/UI changes
   - PR3: release evidence/docs sync/live verification closeout
-- [ ] (@SlineDocs) Create `.TODO/RELEASE_CHECKLIST_work_2026-03-04.md` tying analyze, tests, manual scenarios, live DB verification, docs sync, and rollback readiness together.
+- [ ] (@DocsKeeper) Create `.TODO/RELEASE_CHECKLIST_work_2026-03-04.md` tying analyze, tests, manual scenarios, live DB verification, docs sync, and rollback readiness together.
 - [ ] (@Sentinel) Define per-slice done criteria and reviewer expectations.
 - **Verify (@Sentinel):** rollout/review order is explicit before implementation begins.
 
@@ -503,13 +503,13 @@
 
 ### 5.4 Docs Sync and Release Decision
 
-- [ ] (@SlineDocs) Update:
+- [ ] (@DocsKeeper) Update:
   - `Sline_everything/DEVELOPER_GUIDE.md`
   - `Sline_everything/SUPABASE_SETUP.md`
   - `Sline_everything/MVP_ROADMAP.md`
   - `Sline_everything/STRUCTURE.md`
   only after code and live verification are final.
-- [ ] (@SlineDocs) Ensure docs reflect the final work architecture, SQL provenance story, state matrix, and test coverage.
+- [ ] (@DocsKeeper) Ensure docs reflect the final work architecture, SQL provenance story, state matrix, and test coverage.
 - [ ] (@Sentinel) Execute `.TODO/RELEASE_CHECKLIST_work_2026-03-04.md` and produce the final go/no-go outcome.
 - **Verify (@Sentinel):** docs, code, live DB reality, and release evidence are consistent.
 

@@ -363,7 +363,7 @@
 
 | Phase | Agents                                         |
 | ----- | ---------------------------------------------- |
-| 0     | `@SlinePlanner`, `@Sentinel`                   |
+| 0     | `@Planner`, `@Sentinel`                   |
 | 1     | `@Observability`, `@Architect`, `@Sentinel`    |
 | 2     | `@Architect`, `@Sentinel`                      |
 | 3     | `@Architect`, `@Pixel`, `@Sentinel`            |
@@ -372,14 +372,14 @@
 | 6     | `@Supabase_Ops`, `@Sentinel`                   |
 | 7     | `@Architect`, `@Sentinel`                      |
 | 8     | `@Sentinel`, `@CodeGuard`, `@ThreatModeler`    |
-| 9     | `@SlineDocs`                                   |
+| 9     | `@DocsKeeper`                                   |
 
 
 ---
 
 ## Phase 0: Preconditions & Gates
 
-**Primary Agent(s):** `@SlinePlanner`, `@Sentinel`
+**Primary Agent(s):** `@Planner`, `@Sentinel`
 
 ### Goal
 
@@ -418,7 +418,7 @@ Locked baseline. Explicit acceptance criteria. Rollback expectations.
   14. Both build targets compile (`apk --debug`, `web --release`).
   15. Documentation synced: STRUCTURE.md, DEVELOPER_GUIDE.md, CLAUDE.md updated.
 - (`@Architect`) Confirm touched modules: `lib/core/services/`, `lib/features/dashboard/viewmodels/`, `lib/features/tasks/view/widgets/requests/`, `lib/features/tasks/viewmodels/`, `lib/features/notifications/viewmodels/`, `lib/features/saved/viewmodels/`, `supabase/functions/`, `.github/workflows/ci.yml`, `test/helpers/mock_services.dart`.
-- (`@SlineDocs`) Confirm authoritative docs: Audit file, DEVELOPER_GUIDE, STRUCTURE, SUPABASE_SETUP.
+- (`@DocsKeeper`) Confirm authoritative docs: Audit file, DEVELOPER_GUIDE, STRUCTURE, SUPABASE_SETUP.
 - **GATE CHECK:** Scope, criteria, and doc references are explicit.
 
 ### 0.2 Non-Regression Baseline
@@ -526,13 +526,13 @@ Fatal and non-fatal errors reported to Sentry. User ID attached. Breadcrumbs for
 
 ### 1.5 Sentry Documentation + Verification
 
-**Primary Agent(s):** `@Sentinel`, `@SlineDocs`
+**Primary Agent(s):** `@Sentinel`, `@DocsKeeper`
 
 - (`@Sentinel`) Run `flutter test` — all 706+ tests pass.
 - (`@Sentinel`) Run `flutter analyze` — 0 issues.
 - (`@Sentinel`) Run `flutter build apk --debug` — compiles.
 - (`@Sentinel`) Run `flutter build web --release` — compiles.
-- (`@SlineDocs`) Add to `CLAUDE.md` Build & Run section:
+- (`@DocsKeeper`) Add to `CLAUDE.md` Build & Run section:
   ```
   flutter run --dart-define=SENTRY_DSN=<your_dsn>   # Enable crash reporting
   flutter run --dart-define=SENTRY_ENV=production    # Set environment
@@ -1078,7 +1078,7 @@ SQL tests exist for 3 RPCs. Execution documented.
 
 ### 6.5 Document Test Runner
 
-**Primary Agent(s):** `@Supabase_Ops`, `@SlineDocs`
+**Primary Agent(s):** `@Supabase_Ops`, `@DocsKeeper`
 
 - (`@Supabase_Ops`) Add to `CLAUDE.md` Build & Run section:
   ```
@@ -1193,10 +1193,10 @@ All VMs injectable. Coverage floor enforced. Checklist exists. Guard tightened.
 
 ### 7.5 Create Migration Review Checklist (D6)
 
-**Primary Agent(s):** `@SlineDocs`
+**Primary Agent(s):** `@DocsKeeper`
 
-- (`@SlineDocs`) Create `MIGRATION_REVIEW_CHECKLIST.md` in project root.
-- (`@SlineDocs`) Include 7 review questions from Audit §4.8:
+- (`@DocsKeeper`) Create `MIGRATION_REVIEW_CHECKLIST.md` in project root.
+- (`@DocsKeeper`) Include 7 review questions from Audit §4.8:
   1. **Naming:** `YYYYMMDD_description.sql` convention?
   2. **Rollback:** Down migration or rollback plan?
   3. **Data safety:** Existing rows that violate new constraints?
@@ -1204,8 +1204,8 @@ All VMs injectable. Coverage floor enforced. Checklist exists. Guard tightened.
   5. **RPC contract:** Signature changes? Client updated in same PR?
   6. **Idempotency:** Safe to re-run? (`CREATE OR REPLACE`, `IF NOT EXISTS`)
   7. **Performance:** New index? Query hits existing index?
-- (`@SlineDocs`) Add "How to use" section: reference in every PR with `supabase/migrations/` files.
-- (`@SlineDocs`) Add reference in `CLAUDE.md` Supabase Backend section.
+- (`@DocsKeeper`) Add "How to use" section: reference in every PR with `supabase/migrations/` files.
+- (`@DocsKeeper`) Add reference in `CLAUDE.md` Supabase Backend section.
 - (`@Sentinel`) Confirm checklist covers all Audit §4.8 categories.
 - **GATE CHECK:** Checklist exists. Referenced in CLAUDE.md.
 
@@ -1295,7 +1295,7 @@ All 15 acceptance criteria verified. Results documented in session log.
 
 ## Phase 9: Documentation Sync (MANDATORY)
 
-**Primary Agent(s):** `@SlineDocs`
+**Primary Agent(s):** `@DocsKeeper`
 
 ### Goal
 
@@ -1315,9 +1315,9 @@ All docs current. Audit file updated with Phase D completion markers.
 
 ### 9.1 Update Structure Documentation
 
-**Primary Agent(s):** `@SlineDocs`
+**Primary Agent(s):** `@DocsKeeper`
 
-- (`@SlineDocs`) Update `Sline_everything/STRUCTURE.md`:
+- (`@DocsKeeper`) Update `Sline_everything/STRUCTURE.md`:
   - Add delegate files under `lib/features/dashboard/viewmodels/`.
   - Add `submit_request_view_model.dart` under `lib/features/tasks/viewmodels/`.
   - Add `requests_filter_view_model.dart` under `lib/features/tasks/viewmodels/` (or note extension of existing).
@@ -1330,13 +1330,13 @@ All docs current. Audit file updated with Phase D completion markers.
 
 ### 9.2 Update Developer Guide + CLAUDE.md
 
-**Primary Agent(s):** `@SlineDocs`
+**Primary Agent(s):** `@DocsKeeper`
 
-- (`@SlineDocs`) Update `Sline_everything/DEVELOPER_GUIDE.md`:
+- (`@DocsKeeper`) Update `Sline_everything/DEVELOPER_GUIDE.md`:
   - Add Sentry crash reporting section.
   - Update crash reporting section (no longer NoOp).
   - Document delegate pattern for DashboardVM as architectural example.
-- (`@SlineDocs`) Update `CLAUDE.md`:
+- (`@DocsKeeper`) Update `CLAUDE.md`:
   - Build & Run: Add `--dart-define=SENTRY_DSN=<dsn>` for release builds.
   - Build & Run: Add pgTAP/SQL test runner commands.
   - CI/CD: Add coverage floor enforcement note (28% threshold).
@@ -1346,13 +1346,13 @@ All docs current. Audit file updated with Phase D completion markers.
 
 ### 9.3 Update Audit File + Write Sync Doc
 
-**Primary Agent(s):** `@SlineDocs`
+**Primary Agent(s):** `@DocsKeeper`
 
-- (`@SlineDocs`) Update `.TODO/AUDIT_Quality_Architecture_2026-04-01.md`:
+- (`@DocsKeeper`) Update `.TODO/AUDIT_Quality_Architecture_2026-04-01.md`:
   - Mark D1–D11 items as DONE with dates in Phase D section.
   - Update Feature-Level Health Map if applicable (search → still RED, saved → GREEN after A6 fix).
-- (`@SlineDocs`) Write `.TODO/DOCS_SYNC_2026-04-03_PhaseD.md` documenting all doc changes.
-- (`@SlineDocs`) Update session log with final status, timeline, and findings.
+- (`@DocsKeeper`) Write `.TODO/DOCS_SYNC_2026-04-03_PhaseD.md` documenting all doc changes.
+- (`@DocsKeeper`) Update session log with final status, timeline, and findings.
 - **GATE CHECK:** Audit file updated. Sync doc written. Session log complete.
 
 ---

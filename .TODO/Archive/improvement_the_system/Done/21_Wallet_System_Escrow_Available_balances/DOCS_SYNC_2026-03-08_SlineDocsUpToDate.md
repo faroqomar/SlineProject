@@ -1,4 +1,4 @@
-# Docs Sync: SlineDocs Up To Date (Reference Integrity)
+# Docs Sync: DocsKeeper Up To Date (Reference Integrity)
 
 **Date:** 2026-03-08  
 **Trigger:** User request — "make sure everything up to date using @.agents/workflows/slinedocs.md"
@@ -52,7 +52,7 @@ No dead paths. DB objects (rpc_approve_delivery, vw_wallet_activity_user, journa
 ## 4) Why Each Update Was Needed
 
 - **Sline_Log:** Escrow Idempotency and Ledger Event Flow entries must point to the actual folder locations (Done). Contract for 21 must be fully qualified for search and traceability.
-- **MVP_ROADMAP:** Full paths prevent broken links when .TODO structure is reorganized and match SlineDocs "no dead paths" rule.
+- **MVP_ROADMAP:** Full paths prevent broken links when .TODO structure is reorganized and match DocsKeeper "no dead paths" rule.
 - **SUPABASE_SETUP:** Every DB migration must appear in the changelog; wallet_activity_include_spent was missing.
 
 ---
@@ -63,4 +63,4 @@ No dead paths. DB objects (rpc_approve_delivery, vw_wallet_activity_user, journa
 
 ---
 
-**Produced by:** SlineDocs workflow (`.agents/workflows/slinedocs.md`). Documentation is up to date; reference integrity validated.
+**Produced by:** DocsKeeper workflow (`.agents/workflows/slinedocs.md`). Documentation is up to date; reference integrity validated.

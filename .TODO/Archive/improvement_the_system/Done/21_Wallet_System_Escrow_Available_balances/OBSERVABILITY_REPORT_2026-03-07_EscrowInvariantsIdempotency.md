@@ -72,4 +72,4 @@ All use **AppLogger**; no `print()`. Tags: `WorkManagement`, `WorkItemDetails`, 
 - **AppLogger:** Used consistently; no print.  
 - **Privacy:** No secrets or unnecessary PII.  
 - **Actionable:** Start/success/error and guard hit are traceable.  
-- **Blockers:** None. Proceed to @SlineDocs.
+- **Blockers:** None. Proceed to @DocsKeeper.

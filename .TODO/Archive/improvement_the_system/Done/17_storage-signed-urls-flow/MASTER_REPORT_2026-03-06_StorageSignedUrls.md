@@ -25,7 +25,7 @@ All agents approved with only minor recommendations (no blockers).
 | Agent | Grade | Decision | Blockers |
 |-------|-------|----------|----------|
 | @Architect | A- | ✅ PASS | 0 |
-| @SlineDocs | A | ✅ PASS | 0 |
+| @DocsKeeper | A | ✅ PASS | 0 |
 | @CodeGuard | LOW Risk | ✅ APPROVED | 0 |
 
 ---
@@ -81,10 +81,10 @@ No telemetry gaps identified. Cache size accessible via `SignedUrlCache.size` fo
 
 | Finding | Severity | Owner | Status |
 |---------|----------|-------|--------|
-| All file paths valid | N/A | @SlineDocs | ✅ Verified |
-| All class names exist | N/A | @SlineDocs | ✅ 13/13 verified |
-| Cross-references correct | N/A | @SlineDocs | ✅ 11/11 verified |
-| Changelog entry missing | LOW | @SlineDocs | ⚠️ Should add to Sline_Log.md |
+| All file paths valid | N/A | @DocsKeeper | ✅ Verified |
+| All class names exist | N/A | @DocsKeeper | ✅ 13/13 verified |
+| Cross-references correct | N/A | @DocsKeeper | ✅ 11/11 verified |
+| Changelog entry missing | LOW | @DocsKeeper | ⚠️ Should add to Sline_Log.md |
 
 **Recommendation**: Add changelog entry post-merge for v2.17.0
 
@@ -100,7 +100,7 @@ All agents approved with no blockers. The following are **optional improvements*
 
 | Step | Owner | Action | Priority |
 |------|-------|--------|----------|
-| 1 | @SlineDocs | Add Sline_Log.md entry for v2.17.0 | LOW |
+| 1 | @DocsKeeper | Add Sline_Log.md entry for v2.17.0 | LOW |
 | 2 | @Architect | Align core widgets to use `SharedStorageConfig` | LOW |
 | 3 | @CodeGuard | Schedule `supabase_flutter` v2 upgrade | P2 |
 | 4 | @Sentinel | Add RLS policy integration tests | P3 |
@@ -180,7 +180,7 @@ All agent reports are available:
 | Agent | Report File |
 |-------|-------------|
 | @Architect | `.TODO/ARCHITECT_REPORT_2026-03-06_StorageSignedUrls.md` |
-| @SlineDocs | `.TODO/DOCS_REPORT_2026-03-06_StorageSignedUrls.md` |
+| @DocsKeeper | `.TODO/DOCS_REPORT_2026-03-06_StorageSignedUrls.md` |
 | @CodeGuard | `.TODO/CODEGUARD_REVIEW_2026-03-06_StorageSignedUrls.md` |
 
 ---

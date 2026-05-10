@@ -24,9 +24,9 @@ Phase 0.7 (Layout Tokens) fully executed. Created `lib/core/theme/app_layout.dar
 
 | Agent | Mistake Made | Rule to Add/Change |
 |-------|-------------|-------------------|
-| @SlinePlanner | 3 wrong token values in original plan (bottomNavHeight 64→70, buttonHeight 48→54, circleIconButtonSize conflated 40/48) | Always extract token values from ACTUAL codebase, never from aspirational Master Plan. Add mandatory "Value Extraction" workflow to Phase 1 of any token-creation plan. |
-| @SlinePlanner | Icon size naming collision (AppLayout.iconSmall=16 duplicated AppDimens.iconSizeSmall=16) | When creating new token files, scan ALL existing token files for value overlap. Remove duplicates before plan approval. |
-| @SlinePlanner | Skeleton files over-scoped (planned full migration of 20+ non-semantic values) | Add explicit Migration Rule to all token migration plans: "Only replace values that map to semantic tokens. Document non-semantic exceptions." |
+| @Planner | 3 wrong token values in original plan (bottomNavHeight 64→70, buttonHeight 48→54, circleIconButtonSize conflated 40/48) | Always extract token values from ACTUAL codebase, never from aspirational Master Plan. Add mandatory "Value Extraction" workflow to Phase 1 of any token-creation plan. |
+| @Planner | Icon size naming collision (AppLayout.iconSmall=16 duplicated AppDimens.iconSizeSmall=16) | When creating new token files, scan ALL existing token files for value overlap. Remove duplicates before plan approval. |
+| @Planner | Skeleton files over-scoped (planned full migration of 20+ non-semantic values) | Add explicit Migration Rule to all token migration plans: "Only replace values that map to semantic tokens. Document non-semantic exceptions." |
 
 ---
 
@@ -35,7 +35,7 @@ Phase 0.7 (Layout Tokens) fully executed. Created `lib/core/theme/app_layout.dar
 
 ### [PLAN CREATED]
 - Plan: .TODO/PLAN_LayoutTokens_Phase0.7_2026-04-08.md
-- Created by: @SlinePlanner
+- Created by: @Planner
 - Scope: Create `lib/core/theme/app_layout.dart` (centralized layout tokens for the three-layer architecture) and migrate all 16 `lib/core/widgets/` files to consume layout tokens instead of hardcoded values.
 - PRISM-equivalent phase in SLine roadmap: Phase 0.7 — Layout Tokens (Design/Theme Separation)
 - Estimated phases in plan: 9 (Phase 0 Preconditions + Phase 1 Create + Phases 2-6 Widget Migration + Phase 7 Docs + Phase 8 QA)

@@ -232,7 +232,7 @@ The implementation cannot proceed to production until the following are fixed:
 
 | Priority | Action | Owner | ETA |
 |----------|--------|-------|-----|
-| P0 | Fix test fixture naming collision | @SlineDocs or Test Lead | Immediate |
+| P0 | Fix test fixture naming collision | @DocsKeeper or Test Lead | Immediate |
 | P0 | Create mock_supabase.dart helpers | Test author | Immediate |
 | P0 | Fix test type mismatches | Test author | Immediate |
 | P1 | Remove unused imports (dashboard_offer_card, requests_list_screen) | Implementer | Same session |

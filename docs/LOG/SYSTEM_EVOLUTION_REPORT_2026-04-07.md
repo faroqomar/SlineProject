@@ -49,7 +49,7 @@ Evidence: Phase 0 Session — curveSpring changed from 1.275→1.075 and pressSc
 
 ## 2) Rule Clarity Gaps
 
-### RC-1: @SlinePlanner — Existing Rule 1.2 (Decomposition) Could Apply to Token Creation
+### RC-1: @Planner — Existing Rule 1.2 (Decomposition) Could Apply to Token Creation
 **Evidence:** The plan correctly decomposed Phases 0-9 but did not foresee the token value comparison need. Rule 1.2 focuses on god-file line counts, not token value drift.
 **Status:** Low priority — the @PlanCritic caught the most critical gap (AppColorScheme duplicate params) before execution.
 
@@ -109,7 +109,7 @@ Evidence: Phase 0 Session — PlanCritic found that AppColorScheme already had s
 ## 7) New Agent Recommendations
 
 ### No New Agents Needed
-**Rationale:** The 16-agent system handled Phase 0 adequately. @Pixel handled theme work, @Architect reviewed MVVM isolation, @CodeGuard caught value drift, @Observability caught logging noise, @SlineDocs caught stale docs. No gap required a new agent.
+**Rationale:** The 16-agent system handled Phase 0 adequately. @Pixel handled theme work, @Architect reviewed MVVM isolation, @CodeGuard caught value drift, @Observability caught logging noise, @DocsKeeper caught stale docs. No gap required a new agent.
 
 ---
 
@@ -163,7 +163,7 @@ These likely existed in previous Cursor sessions but were not persisted to disk,
 | E-5 | DesignSystem | Orchestrator | @CodeGuard | curveSpring 1.275→1.075 undocumented |
 | E-6 | DesignSystem | Orchestrator | @CodeGuard | pressScale 0.95→0.96 undocumented |
 | E-7 | DesignSystem | Orchestrator | @Observability | respectMotion() noisy logging |
-| E-8 | DesignSystem | Orchestrator | @SlineDocs | Sline_everything/ docs stale |
+| E-8 | DesignSystem | Orchestrator | @DocsKeeper | Sline_everything/ docs stale |
 | E-9 | Historical | Missing | N/A | 3 referenced session logs don't exist |
 
 ---

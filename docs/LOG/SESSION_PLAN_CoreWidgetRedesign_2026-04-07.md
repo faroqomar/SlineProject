@@ -26,7 +26,7 @@
 
 ### [PLAN CREATED]
 - Plan: .TODO/PLAN_CoreWidgetRedesign_2026-04-07.md
-- Created by: @SlinePlanner
+- Created by: @Planner
 - Scope: Redesign all 14 core widgets in lib/core/widgets/ — add AppMotion tokens, 8-state interaction model, Semantics, HapticFeedback, fix 3 architecture violations, create component-level widget tests, add 8 new skeleton variants
 - Prerequisite: Phase 0 Design System Foundation (COMPLETED — all 12 acceptance criteria pass)
 - Estimated phases in plan: 10 (Phases 0-9)

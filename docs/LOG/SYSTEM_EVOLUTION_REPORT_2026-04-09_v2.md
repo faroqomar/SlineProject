@@ -5,7 +5,7 @@
 **Agent Files Scanned:** 16 (all agents in .cursor/Agents/)
 **Core Docs Scanned:** DEVELOPER_GUIDE.md, SUPABASE_SETUP.md, STRUCTURE.md, .TODO/PLAN_UI_Redesign_MasterPlan_2026-04-06.md
 **Most Common Failure Type:** Visual verification gap — process completion without visual outcome verification (NEW, CRITICAL)
-**Most Frequently Flagged Agent:** @Pixel (9 mistakes across 3 sessions) + @SlinePlanner (scope mislabeling, NEW)
+**Most Frequently Flagged Agent:** @Pixel (9 mistakes across 3 sessions) + @Planner (scope mislabeling, NEW)
 **Highest-Value Improvement:** Visual Change Classification + Verification Gate (prevents entire phases of wasted work)
 
 ---
@@ -48,7 +48,7 @@ The agent system has **zero visual verification checkpoints**. Every gate checks
 
 | Agent | What It Checked | What It Missed |
 |-------|-----------------|----------------|
-| @SlinePlanner | Plan structure, phases, gates | Plan labeled "redesign" but scoped token-only work |
+| @Planner | Plan structure, phases, gates | Plan labeled "redesign" but scoped token-only work |
 | @PlanCritic | Plan gaps, acceptance criteria | No criterion: "user must perceive visual change" |
 | @Executor | Phase completion, lint, tests | No visual diff at phase end |
 | @Pixel | Token compliance, Semantics, motion | No before/after screenshot comparison |
@@ -60,13 +60,13 @@ The agent system has **zero visual verification checkpoints**. Every gate checks
 
 ## 1) Rule Gaps (NEW — not in any previous evolution report)
 
-### RG-6: @SlinePlanner — Visual Change Classification [CRITICAL, NEW]
+### RG-6: @Planner — Visual Change Classification [CRITICAL, NEW]
 
 **Evidence:** Phase5_ChatDashboardNotifications — Plan was labeled "Phase 5 — Chat, Dashboard & Notifications UI Redesign" but contained only token normalization and micro-interactions. Zero structural layout changes. The user could not perceive any difference.
 
-**Current state:** Sline_Planner.md §4.1 (UI Planning Protocol) has no classification of what constitutes a "redesign" vs a "polish pass" vs a "token normalization."
+**Current state:** Planner.md §4.1 (UI Planning Protocol) has no classification of what constitutes a "redesign" vs a "polish pass" vs a "token normalization."
 
-**Rule text to add to Sline_Planner.md §4.1:**
+**Rule text to add to Planner.md §4.1:**
 
 > ### Visual Change Classification (Required Before Phase Naming)
 >
@@ -209,11 +209,11 @@ No agent has a workflow for "compare current screen to baseline and report diffe
 
 ## 5) Agent Coordination Gaps
 
-### AC-2: @SlinePlanner → @Executor handoff lacks Master Plan cross-reference [NEW]
+### AC-2: @Planner → @Executor handoff lacks Master Plan cross-reference [NEW]
 
-**Evidence:** Phase 5 — @SlinePlanner produced a plan that covered token normalization. @Executor executed it faithfully. Neither checked whether the plan covered the Master Plan's actual redesign scope.
+**Evidence:** Phase 5 — @Planner produced a plan that covered token normalization. @Executor executed it faithfully. Neither checked whether the plan covered the Master Plan's actual redesign scope.
 
-**Fix:** RG-8 (above) adds the cross-reference requirement to @Executor. Additionally, @SlinePlanner should include a "Master Plan Coverage" section in every plan showing which Master Plan items are IN scope and which are DEFERRED.
+**Fix:** RG-8 (above) adds the cross-reference requirement to @Executor. Additionally, @Planner should include a "Master Plan Coverage" section in every plan showing which Master Plan items are IN scope and which are DEFERRED.
 
 ### AC-3: @Orchestrator → User handoff lacks visual evidence [NEW]
 
@@ -279,7 +279,7 @@ The executed plans use their own phase numbering (Phase 0, 1, 2, 3, 4, 5) that d
 
 | Priority | Action | Owner | Effort |
 |----------|--------|-------|--------|
-| **P0** | Add RG-6 (Visual Change Classification) to Sline_Planner.md | Human | 5 min |
+| **P0** | Add RG-6 (Visual Change Classification) to Planner.md | Human | 5 min |
 | **P0** | Add RG-7 (Visual Verification Gate) to Sentinel.md | Human | 5 min |
 | **P0** | Add RG-8 (Master Plan Cross-Reference) to Executor.md | Human | 5 min |
 | **P0** | Add RG-9 (Visual Attestation) to Pixel.md | Human | 5 min |
@@ -287,7 +287,7 @@ The executed plans use their own phase numbering (Phase 0, 1, 2, 3, 4, 5) that d
 | **P1** | Add OP-2 (Visual Changes Summary) to Orchestrator.md Master Report template | Human | 5 min |
 | **P2** | Fix pre-existing flaky test (6 sessions carrying) | Executor | 30 min |
 | **P2** | Formally close CoreWidgetRedesign session log | Executor | 10 min |
-| **P3** | Add Master Plan Coverage section to plan template | Sline_Planner | 10 min |
+| **P3** | Add Master Plan Coverage section to plan template | Planner | 10 min |
 
 ---
 
@@ -300,7 +300,7 @@ The executed plans use their own phase numbering (Phase 0, 1, 2, 3, 4, 5) that d
 - ✅ Widget Conversion Test Gate (Executor.md §3.9) — from 2026-04-08
 - ✅ Widget Test Finder Rules (Sentinel.md) — from 2026-04-08
 - ✅ Session Log Closure Enforcement (Executor.md §3.10) — from 2026-04-08
-- ✅ Token Value Extraction Workflow (Sline_Planner.md §2.2.6) — from 2026-04-08_v2
+- ✅ Token Value Extraction Workflow (Planner.md §2.2.6) — from 2026-04-08_v2
 - ✅ Orchestrator Parallel Review Mode — from 2026-04-08
 
 ### From Previous Reports — Still Pending:
@@ -311,7 +311,7 @@ The executed plans use their own phase numbering (Phase 0, 1, 2, 3, 4, 5) that d
 - ⚠️ RG-5: DraggableScrollableSheet Test Rule (Sentinel.md) — from 2026-04-09
 
 ### New This Report:
-- 🆕 RG-6: Visual Change Classification (Sline_Planner.md) — CRITICAL
+- 🆕 RG-6: Visual Change Classification (Planner.md) — CRITICAL
 - 🆕 RG-7: Visual Verification Gate (Sentinel.md) — CRITICAL
 - 🆕 RG-8: Master Plan Cross-Reference (Executor.md) — HIGH
 - 🆕 RG-9: Visual Attestation (Pixel.md) — HIGH

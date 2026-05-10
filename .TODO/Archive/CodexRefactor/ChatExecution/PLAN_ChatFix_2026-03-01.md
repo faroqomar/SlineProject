@@ -526,17 +526,17 @@
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
-- [ ] (@SlineDocs) Update Chat contract and architecture docs to match live reality after fixes:
+- [ ] (@DocsKeeper) Update Chat contract and architecture docs to match live reality after fixes:
   - `Sline_everything/DEVELOPER_GUIDE.md`
   - `Sline_everything/DEVELOPER_GUIDE/Chat Feature.md`
   - `Sline_everything/SUPABASE_SETUP.md`
   - `Sline_everything/MVP_ROADMAP.md`
   - `Sline_everything/CODE_REVIEW.md` if a new chat-specific guardrail is introduced
   - `Sline_everything/STRUCTURE.md` if Chat files are split/moved
-- [ ] (@SlineDocs) Record the final direct DM rule and task-linked initiation rule explicitly; remove contradictory statements.
-- [ ] (@SlineDocs) Document server-owned notification behavior and attachment access model.
+- [ ] (@DocsKeeper) Record the final direct DM rule and task-linked initiation rule explicitly; remove contradictory statements.
+- [ ] (@DocsKeeper) Document server-owned notification behavior and attachment access model.
 - **Verify (@Sentinel):** docs match code and live DB reality exactly.
 
 ---

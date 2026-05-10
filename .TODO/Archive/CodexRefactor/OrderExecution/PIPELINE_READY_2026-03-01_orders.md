@@ -10,7 +10,7 @@
 # Pipeline Ready — orders
 
 - Date: 2026-03-01
-- Workflow baseline: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.agents/workflows/orchestrator.md`
+- Workflow baseline: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.agents/workflows/Orchestrator.md`
 - Final Status: READY
 - Supersedes: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.TODO/PIPELINE_BLOCKED_2026-03-01_orders.md`
 

@@ -202,27 +202,27 @@ The corrected plan is written as an update to the original. Changes are marked w
 
 **Plan Version:** 2.0 (Post-Critique)
 **Date:** 2026-04-06
-**Created By:** @SlinePlanner, reviewed by @PlanCritic
+**Created By:** @Planner, reviewed by @PlanCritic
 **Session Log:** `docs/LOG/SESSION_PLAN_Agent_CI_RepoSafeguards_2026-04-06.md`
 
 ---
 
 ## Phase 0: Preconditions & Gates
 
-**Primary Agent(s):** @SlinePlanner, @Sentinel
+**Primary Agent(s):** @Planner, @Sentinel
 
 ### 0.1 Spec Lock
 
-**Primary Agent(s):** @SlinePlanner, @Sentinel
+**Primary Agent(s):** @Planner, @Sentinel
 **Goal:** Lock acceptance criteria, non-regression list, and blocking inputs
 **Why:** Any regression in CI blocks all development; missing inputs block execution
 **How:** Define measurable checks and collect required inputs
 **Result:** Clear pass/fail criteria + all blocking inputs resolved
 
 - [ ] (@Sentinel) Define acceptance criteria (unchanged from v1)
-- [ ] (@SlinePlanner) Define non-regression list (unchanged from v1)
-- [ ] `[ADDED]` (@SlinePlanner) **Blocking Input: GitHub username** — Ask the developer for their exact GitHub username. This is required for CODEOWNERS. Do NOT use a placeholder.
-- [ ] `[ADDED]` (@SlinePlanner) **Blocking Input: Security contact email** — Ask the developer for the email to use in SECURITY.md responsible disclosure section. Do NOT use a placeholder.
+- [ ] (@Planner) Define non-regression list (unchanged from v1)
+- [ ] `[ADDED]` (@Planner) **Blocking Input: GitHub username** — Ask the developer for their exact GitHub username. This is required for CODEOWNERS. Do NOT use a placeholder.
+- [ ] `[ADDED]` (@Planner) **Blocking Input: Security contact email** — Ask the developer for the email to use in SECURITY.md responsible disclosure section. Do NOT use a placeholder.
 - [ ] `[ADDED]` (@CodeGuard) **Version freshness check** — Run `gh api repos/trufflesecurity/trufflehog/releases/latest --jq .tag_name` and record the current TruffleHog release tag. If newer than `v3.88.0`, use the newer version.
 - **GATE CHECK:** Scope, acceptance, non-regression, blocking inputs, and version checks are complete.
 
@@ -386,13 +386,13 @@ The corrected plan is written as an update to the original. Changes are marked w
 
 ---
 
-## Phase 4: Documentation & Drift Fixes (@SlineDocs)
+## Phase 4: Documentation & Drift Fixes (@DocsKeeper)
 
-**Primary Agent(s):** @SlineDocs, @Sentinel
+**Primary Agent(s):** @DocsKeeper, @Sentinel
 
 ### 4.1 Create SECURITY.md
 
-- [ ] (@SlineDocs) Create `SECURITY.md` using the **real security contact email collected in Phase 0** (NOT a placeholder)
+- [ ] (@DocsKeeper) Create `SECURITY.md` using the **real security contact email collected in Phase 0** (NOT a placeholder)
 - [ ] (remaining steps unchanged from v1)
 - **GATE CHECK:** SECURITY.md has real email, no sensitive info exposed.
 
@@ -402,8 +402,8 @@ The corrected plan is written as an update to the original. Changes are marked w
 
 ### 4.3 Create CONTRIBUTING.md
 
-- [ ] (@SlineDocs) Create `CONTRIBUTING.md` with sections (unchanged from v1)
-- [ ] `[ADDED]` (@SlineDocs) Add note in security section: "Pub dependency vulnerabilities are monitored via GitHub Dependabot alerts. The `Dependency Vulnerability Check` CI workflow covers GitHub Actions dependencies and license compliance."
+- [ ] (@DocsKeeper) Create `CONTRIBUTING.md` with sections (unchanged from v1)
+- [ ] `[ADDED]` (@DocsKeeper) Add note in security section: "Pub dependency vulnerabilities are monitored via GitHub Dependabot alerts. The `Dependency Vulnerability Check` CI workflow covers GitHub Actions dependencies and license compliance."
 - **GATE CHECK:** CONTRIBUTING.md concise, references canonical docs, dependency security accurately described.
 
 ### 4.4 Fix Documentation Drift — MVP_ROADMAP.md

@@ -1,4 +1,4 @@
-# Docs Sync: Escrow Idempotency (SlineDocs)
+# Docs Sync: Escrow Idempotency (DocsKeeper)
 
 **Date:** 2026-03-08  
 **Scope:** Escrow Invariants & Idempotency — ensure all Sline_everything and cross-references are up to date per `.agents/workflows/slinedocs.md`.
@@ -65,4 +65,4 @@ No broken or dead paths. DB objects `rpc_approve_delivery`, `journal_entries`, `
 
 ---
 
-**Produced by:** SlineDocs workflow (`.agents/workflows/slinedocs.md`). Documentation is up to date with the Escrow Idempotency implementation.
+**Produced by:** DocsKeeper workflow (`.agents/workflows/slinedocs.md`). Documentation is up to date with the Escrow Idempotency implementation.

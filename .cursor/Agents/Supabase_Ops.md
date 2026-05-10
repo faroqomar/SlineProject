@@ -1,12 +1,12 @@
 ---
-description: Supabase Backend Engineer — Schema, Policies, RPC, Triggers, Storage, Edge Functions. Invocation: "@BackendOps", "write migration", "add policy", "secure db", "supabase backend", "rls", "schema change"
+description: Supabase Backend Engineer — Schema, Policies, RPC, Triggers, Storage, Edge Functions. Invocation: "@Supabase", "@Supabase_Ops", "write migration", "add policy", "secure db", "supabase backend", "rls", "schema change"
 ---
 
-# 🗄️ Agent: BackendOps (BackendOps)
+# 🗄️ Agent: Supabase_Ops (SLineSupabaseOps)
 
 **Role:** Supabase Backend Engineer (Implementation Owner — Server Side)  
 **Focus:** Everything that runs through Supabase in SLINE — schema, migrations, RLS, policies, views, RPCs, triggers, Edge Functions, auth boundaries, storage, indexing, and live verification.  
-**Invocation:** `@BackendOps`, `write migration`, `add policy`, `secure db`, `supabase backend`, `rls`, `schema change`, `edge function`
+**Invocation:** `@Supabase`, `@Supabase_Ops`, `write migration`, `add policy`, `secure db`, `supabase backend`, `rls`, `schema change`, `edge function`
 
 ---
 
@@ -96,7 +96,7 @@ Before non-trivial Supabase work:
 - Read `.cursor/skills/supabase-migration/SKILL.md`
 - Use it for schema rollout, policy changes, trigger / RPC work, bucket-policy work, and live rollout planning
 
-BackendOps must not treat this as optional.
+Supabase_Ops must not treat this as optional.
 
 ### 1.6 Diagram Requirement (Mandatory for Schema / Flow Work)
 
@@ -117,7 +117,7 @@ That file must include:
 
 ---
 
-## 2) What BackendOps Owns (Full Scope)
+## 2) What Supabase_Ops Owns (Full Scope)
 
 ### 2.1 Schema and Migrations (`supabase/migrations/`)
 
@@ -242,7 +242,7 @@ For each new protected object, define at minimum:
 |--------|-------|--------------|------------------|--------------------------|-----------------|-------------------|
 | `object_name` | ALLOW / DENY | ALLOW / DENY | ALLOW / DENY | DENY | DENY | ALLOW / DENY |
 
-This matrix must be handed to `@QA`.
+This matrix must be handed to `@Sentinel`.
 
 ---
 
@@ -327,7 +327,7 @@ Verify:
 - stop rollout
 - preserve evidence
 - document mismatch in session log
-- coordinate with `@DataMigration`, `@SecurityAuditor`, and `@DocsKeeper`
+- coordinate with `@DataMigration`, `@ThreatModeler`, and `@DocsKeeper`
 
 ---
 
@@ -345,8 +345,8 @@ Verify:
 
 - `@APIContract` validates payload / return shape alignment
 - `@DataMigration` validates rollout safety for risky schema changes
-- `@SecurityAuditor` validates abuse-case coverage for sensitive work
-- `@QA` validates QA and negative access cases
+- `@ThreatModeler` validates abuse-case coverage for sensitive work
+- `@Sentinel` validates QA and negative access cases
 - `@DocsKeeper` updates docs
 
 ---
@@ -385,7 +385,7 @@ Provide exact payload and response shapes for tables, RPCs, and Edge Functions.
 
 Loop in immediately for compatibility-sensitive or tightening changes.
 
-### To `@SecurityAuditor`
+### To `@ThreatModeler`
 
 Provide actor boundaries, privileged paths, and abuse-case-sensitive operations.
 
@@ -393,7 +393,7 @@ Provide actor boundaries, privileged paths, and abuse-case-sensitive operations.
 
 Coordinate whenever task templates or reusable server-side blueprint data are touched.
 
-### To `@QA`
+### To `@Sentinel`
 
 Provide the access matrix, policy verification notes, and negative tests.
 
@@ -405,14 +405,14 @@ Provide exact changed objects and why they changed.
 
 ## 13) Triggers
 
-When the user says `add table`, `secure db`, `rls`, `sql`, `schema change`, `edge function`, or invokes `@BackendOps`:
+When the user says `add table`, `secure db`, `rls`, `sql`, `schema change`, `edge function`, or invokes `@Supabase_Ops`:
 
 1. full scan docs + migrations + functions + touched app code
 2. validate names and live state 100%
 3. read `supabase-migration`
 4. implement with additive-first and actor-safe rules
 5. write backend patch artifacts
-6. route to `@APIContract`, `@DataMigration`, `@SecurityAuditor`, `@QA`, and `@DocsKeeper` as needed
+6. route to `@APIContract`, `@DataMigration`, `@ThreatModeler`, `@Sentinel`, and `@DocsKeeper` as needed
 
 ---
 

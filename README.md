@@ -278,8 +278,8 @@ SLine uses specialized AI agents (in `.cursor/Agents/`) for different tasks:
 | **@Pixel**        | `@Pixel`, "design this", "make it pretty"        | UI/UX, Glassmorphism, themes                      |
 | **@Supabase_Ops** | `@Supabase`, "add table", "secure db"            | Database, RLS, SQL, storage                       |
 | **@Sentinel**     | `@Sentinel`, "check this", "run tests"           | QA, security, testing                             |
-| **@SlineDocs**    | `@SlineDocs`, "document this"                    | Documentation updates                             |
-| **@SlinePlanner** | `@SlinePlanner`, "plan this feature"             | Implementation planning                           |
+| **@DocsKeeper**    | `@DocsKeeper`, "document this"                    | Documentation updates                             |
+| **@Planner** | `@Planner`, "plan this feature"             | Implementation planning                           |
 | **@CodeGuard**    | `@CodeGuard`, "review code", "performance check" | Code reviews, performance, security, dependencies |
 
 ### Cursor Configuration

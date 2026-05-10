@@ -7,7 +7,7 @@
 - **Diagram name (exact):** `02_role-switching-flow`
 - **Version:** v2 (Final) — Implemented
 - **Date:** 2026-03-06
-- **Owner/author:** SLine team (Documentation: @SlineDocs; Implementation: @Executor + @Architect)
+- **Owner/author:** SLine team (Documentation: @DocsKeeper; Implementation: @Executor + @Architect)
 
 ---
 

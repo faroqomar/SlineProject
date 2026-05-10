@@ -86,7 +86,7 @@
 - **Contracts:** None. All data contracts stable.
 
 ## 5) Agent Map
-- **Phase 0 (Preconditions):** `@SlinePlanner`, `@Sentinel`
+- **Phase 0 (Preconditions):** `@Planner`, `@Sentinel`
 - **Phase 1 (Codebase Discovery Scan):** `@Pixel`, `@Sentinel`
 - **Phase 2 (Skeleton Variants):** `@Pixel`, `@Sentinel`
 - **Phase 3 (DiscoveryTaskSliver):** `@Pixel`, `@Sentinel`
@@ -97,7 +97,7 @@
 - **Phase 8 (FavoritesScreen + FavoriteCard):** `@Pixel`, `@Sentinel`
 - **Phase 9 (SavedTasksScreen):** `@Pixel`, `@Sentinel`
 - **Phase 10 (QA + Tests):** `@Sentinel`, `@CodeGuard`
-- **Phase 11 (Documentation Sync):** `@SlineDocs`, `@Sentinel`
+- **Phase 11 (Documentation Sync):** `@DocsKeeper`, `@Sentinel`
 
 **Session Log Path:** `docs/LOG/SESSION_PLAN_Phase4_HomeDiscovery_2026-04-08.md`
 
@@ -105,12 +105,12 @@
 
 ## Phase 0: Preconditions & Gates
 
-**Primary Agent(s):** `@SlinePlanner`, `@Sentinel`
+**Primary Agent(s):** `@Planner`, `@Sentinel`
 
 ### 0.1 Spec Lock
 - [ ] (`@Sentinel`) Acceptance criteria defined (see Section 7 below).
 - [ ] (`@Architect`) Confirm touched modules: `home/view/`, `home/view/widgets/`, `tasks/view/widgets/discovery_task_sliver.dart`, `search/view/`, `categories/view/`, `favorites/view/`, `favorites/view/widgets/`, `saved/view/`, `core/widgets/skeleton_card.dart`.
-- [ ] (`@SlineDocs`) Confirm Master Plan Phase 4 (Home & Discovery, lines 701-738) + Phase 15.1-15.4 (Secondary Screens) requirements are addressed.
+- [ ] (`@DocsKeeper`) Confirm Master Plan Phase 4 (Home & Discovery, lines 701-738) + Phase 15.1-15.4 (Secondary Screens) requirements are addressed.
 - **GATE CHECK:** Scope, acceptance criteria, and file list are explicit. No ViewModel/Service files in scope.
 
 ### 0.2 Design Token Verification
@@ -546,13 +546,13 @@
 
 ## Phase 11: Documentation Sync (MANDATORY)
 
-**Primary Agent(s):** `@SlineDocs`
+**Primary Agent(s):** `@DocsKeeper`
 
 ### 11.1 Session Log
-- [ ] (`@SlineDocs`) Update `docs/LOG/SESSION_PLAN_Phase4_HomeDiscovery_2026-04-08.md` with all phase completions, metrics, and evidence.
+- [ ] (`@DocsKeeper`) Update `docs/LOG/SESSION_PLAN_Phase4_HomeDiscovery_2026-04-08.md` with all phase completions, metrics, and evidence.
 
 ### 11.2 Plan Closure
-- [ ] (`@SlineDocs`) Mark this plan as COMPLETED with final metrics.
+- [ ] (`@DocsKeeper`) Mark this plan as COMPLETED with final metrics.
 - **GATE CHECK:** Session log complete. Plan closed.
 
 ---

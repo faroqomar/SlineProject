@@ -2,7 +2,7 @@
 
 **Date:** 2026-04-08
 **Triggered by:** Phase 0.7 execution (Layout Tokens — Design/Theme Separation)
-**Synced by:** @SlineDocs
+**Synced by:** @DocsKeeper
 
 ---
 

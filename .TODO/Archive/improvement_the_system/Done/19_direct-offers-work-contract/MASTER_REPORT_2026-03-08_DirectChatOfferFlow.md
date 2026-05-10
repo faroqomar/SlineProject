@@ -3,7 +3,7 @@
 **Date:** 2026-03-08  
 **Scope:** DirectChatOfferFlow (06_direct-chat-offer-flow)  
 **Plan reference:** `.TODO/PLAN_DirectChatOfferFlow_2026-03-07_CRITIC.md`  
-**Pipeline:** @Architect → @Observability → @SlineDocs → @CodeGuard (sequential)
+**Pipeline:** @Architect → @Observability → @DocsKeeper → @CodeGuard (sequential)
 
 ---
 
@@ -62,12 +62,12 @@ Grouped by category with severity, owner agent, paths, and fix recommendation.
 
 | # | Finding | Severity | Owner | Paths / objects | Fix |
 |---|---------|----------|--------|------------------|-----|
-| 13 | SUPABASE_SETUP §5.14: missing trigger, index, cron; §5.24: missing direct_offer_id, chk_dispute_entity, RLS. | HIGH | SlineDocs | SUPABASE_SETUP.md | Apply doc updates per DOCS_REPORT §3.1 (trigger, index, cron, disputes schema/RLS, changelog). |
-| 14 | Direct_Offers_Feature.md: table 2.1 missing new columns; lifecycle §4.5 missing delivered_at, review_expires_at, auto-release. | HIGH | SlineDocs | DEVELOPER_GUIDE/Direct_Offers_Feature.md | Add full column ref or link to §5.14; document delivered_at, review_expires_at, cron; add contract ref; Last Updated. |
-| 15 | STRUCTURE.md: no bullet for 20260319* migrations. | HIGH | SlineDocs | STRUCTURE.md | Add Direct Chat Offer Flow hardening bullet (three migrations). |
-| 16 | Sline_Log.md: no entry for Direct Chat Offer Flow implementation. | HIGH | SlineDocs | Sline_Log.md | Add entry with plan/execution log links and implemented items. |
-| 17 | AppDigram 06_direct-chat-offer-flow: "pending" vs "sent"; direct_offer_status_enum (DB uses text); missing trigger/cron. | MED | SlineDocs | AppDigram/All_Diagrams/06_direct-chat-offer-flow.md | Use "sent"; fix enum ref; add trigger and auto-release; last_verified 2026-03-08. |
-| 18 | SUPABASE_SETUP §9.5 rpc_approve_delivery: migration 20260319110000 not listed (fee from row). | MED | SlineDocs | SUPABASE_SETUP.md §9.5 | Add migration ref for direct_offer fee-from-row. |
+| 13 | SUPABASE_SETUP §5.14: missing trigger, index, cron; §5.24: missing direct_offer_id, chk_dispute_entity, RLS. | HIGH | DocsKeeper | SUPABASE_SETUP.md | Apply doc updates per DOCS_REPORT §3.1 (trigger, index, cron, disputes schema/RLS, changelog). |
+| 14 | Direct_Offers_Feature.md: table 2.1 missing new columns; lifecycle §4.5 missing delivered_at, review_expires_at, auto-release. | HIGH | DocsKeeper | DEVELOPER_GUIDE/Direct_Offers_Feature.md | Add full column ref or link to §5.14; document delivered_at, review_expires_at, cron; add contract ref; Last Updated. |
+| 15 | STRUCTURE.md: no bullet for 20260319* migrations. | HIGH | DocsKeeper | STRUCTURE.md | Add Direct Chat Offer Flow hardening bullet (three migrations). |
+| 16 | Sline_Log.md: no entry for Direct Chat Offer Flow implementation. | HIGH | DocsKeeper | Sline_Log.md | Add entry with plan/execution log links and implemented items. |
+| 17 | AppDigram 06_direct-chat-offer-flow: "pending" vs "sent"; direct_offer_status_enum (DB uses text); missing trigger/cron. | MED | DocsKeeper | AppDigram/All_Diagrams/06_direct-chat-offer-flow.md | Use "sent"; fix enum ref; add trigger and auto-release; last_verified 2026-03-08. |
+| 18 | SUPABASE_SETUP §9.5 rpc_approve_delivery: migration 20260319110000 not listed (fee from row). | MED | DocsKeeper | SUPABASE_SETUP.md §9.5 | Add migration ref for direct_offer fee-from-row. |
 
 ---
 
@@ -76,10 +76,10 @@ Grouped by category with severity, owner agent, paths, and fix recommendation.
 | Step | Owner | Action | Verification |
 |------|--------|--------|---------------|
 | 1 | Implementer | Run `dart format lib/features/direct_offers/ test/features/direct_offers/` and commit. | `dart format --set-exit-if-changed` exits 0; no diff. |
-| 2 | @SlineDocs | Update SUPABASE_SETUP.md: §5.14 (trigger, index, cron), §5.24 (direct_offer_id, chk_dispute_entity, RLS), §9.5 (migration ref), §17 Changelog. | Grep confirms trg_direct_offer_protect_price_currency, run_auto_release_expired_direct_offers, direct_offer_id, 20260319* in doc. |
-| 3 | @SlineDocs | Update Direct_Offers_Feature.md: table/column ref, lifecycle (delivered_at, review_expires_at, auto-release), contract ref, Last Updated. | Doc describes cron and new columns; link to 06_direct_offer_contract.md. |
-| 4 | @SlineDocs | Update STRUCTURE.md and Sline_Log.md with migration themes and implementation entry. | STRUCTURE has 20260319* bullet; Sline_Log has Direct Chat Offer Flow entry with plan/execution links. |
-| 5 | @SlineDocs | Update AppDigram 06_direct-chat-offer-flow.md: sent vs pending, enum ref, trigger, auto-release, last_verified. | Diagram matches implementation; no "direct_offer_status_enum" as type. |
+| 2 | @DocsKeeper | Update SUPABASE_SETUP.md: §5.14 (trigger, index, cron), §5.24 (direct_offer_id, chk_dispute_entity, RLS), §9.5 (migration ref), §17 Changelog. | Grep confirms trg_direct_offer_protect_price_currency, run_auto_release_expired_direct_offers, direct_offer_id, 20260319* in doc. |
+| 3 | @DocsKeeper | Update Direct_Offers_Feature.md: table/column ref, lifecycle (delivered_at, review_expires_at, auto-release), contract ref, Last Updated. | Doc describes cron and new columns; link to 06_direct_offer_contract.md. |
+| 4 | @DocsKeeper | Update STRUCTURE.md and Sline_Log.md with migration themes and implementation entry. | STRUCTURE has 20260319* bullet; Sline_Log has Direct Chat Offer Flow entry with plan/execution links. |
+| 5 | @DocsKeeper | Update AppDigram 06_direct-chat-offer-flow.md: sent vs pending, enum ref, trigger, auto-release, last_verified. | Diagram matches implementation; no "direct_offer_status_enum" as type. |
 | 6 | @Observability (optional) | Add payment_request_id to recover success log in DirectOffersService. | recoverPaymentAfterCallback success log includes payment_request_id (no PII). |
 | 7 | @Architect (optional) | Extend fn_direct_offer_protect_price_currency to block fee_rate_applied_bps when not sent/unpaid (or document that existing immutability trigger covers it). | Plan Phase 1 step 4 fully met; no UPDATE of fee after accept. |
 | 8 | Implementer (optional) | Fix or remove test/services/repro_test.dart (avoid_print) for clean flutter analyze. | `flutter analyze` has 0 issues in project (or repro_test excluded). |
@@ -121,5 +121,5 @@ Grouped by category with severity, owner agent, paths, and fix recommendation.
 
 ---
 
-**Report produced by:** Orchestrator (orchestrator.md)  
+**Report produced by:** Orchestrator (Orchestrator.md)  
 **Agent reports:** ARCHITECT_REPORT_2026-03-08_DirectChatOfferFlow.md, OBSERVABILITY_REPORT_2026-03-08_DirectChatOfferFlow.md, DOCS_REPORT_2026-03-08_DirectChatOfferFlow.md, CODEGUARD_REVIEW_2026-03-08_DirectChatOfferFlow.md

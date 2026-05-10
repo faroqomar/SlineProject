@@ -791,7 +791,7 @@ WHERE key = 'fee_locking_enabled';
 ### Phase 5: Documentation & Release
 
 #### 5.1 Documentation Update
-**Goal**: Accurate documentation  **How**: @SlineDocs updates:
+**Goal**: Accurate documentation  **How**: @DocsKeeper updates:
 - `SUPABASE_SETUP.md`: Add platform_settings table, update entity columns, update RPC docs
 - `22_Dynamic_Platform_Fee.md`: Mark implemented features as complete
 - `Sline_Log.md`: Add changelog entry

@@ -26,7 +26,7 @@ Phase 6 Chat Advanced Interactions — all 16 sub-phases completed. Added: searc
 
 ### [PLAN CREATED]
 - Plan: .TODO/PLAN_Phase6_ChatAdvancedInteractions_2026-04-10.md
-- Created by: @SlinePlanner
+- Created by: @Planner
 - Scope: Advanced chat interaction features — search bar, swipe-to-reply, long-press context menu, link detection, emoji-only rendering, fullscreen image viewer, offer bubble elevation, online status dot, relative time formatting. 7 view-layer files + 1 new shared widget, ~3,059 lines current, ~3,610 estimated after.
 - Critique: `.TODO/PLAN_CRITIQUE_2026-04-10_Phase6_ChatAdvancedInteractions.md` — READ, 9 fixes applied to plan
 - PRISM-equivalent phase in SLine roadmap: Master Plan Phase 6 (Chat & Messaging — Real-time Feel) — advanced interactions layer
@@ -104,7 +104,7 @@ Phase 5 (executed 2026-04-09) completed the following for chat:
   - `create_offer_sheet.dart` exists but is out-of-scope (not modified in this plan)
   - 10 test files exist for chat (4 widget, 3 unit, 2 integration, 1 RLS)
 - **Execution Strategy:**
-  - Crew: @Pixel (view code), @Sentinel (verification), @SlineDocs (documentation)
+  - Crew: @Pixel (view code), @Sentinel (verification), @DocsKeeper (documentation)
   - All phases are LOW risk — View-layer only, no backend
   - Execute sequentially: Phase 1 → 2 → 3A → 3B → 3C → 4A → 4B → 4C → 5 → 6A → 6B → 7 → 8A → 8B → 9
   - Gate after each sub-phase: `flutter analyze` + targeted `flutter test test/widget/chat/`

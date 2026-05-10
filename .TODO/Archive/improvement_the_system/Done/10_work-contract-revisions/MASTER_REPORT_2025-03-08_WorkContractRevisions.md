@@ -3,7 +3,7 @@
 **Scope:** Work Contract Revisions (RPC hardening + app error mapping + UI)  
 **Plan:** `.TODO/PLAN_WorkContractRevisions_2025-03-08_PlanCritic.md`  
 **Date:** 2025-03-08  
-**Pipeline:** @Architect → @Observability → @SlineDocs → @CodeGuard
+**Pipeline:** @Architect → @Observability → @DocsKeeper → @CodeGuard
 
 ---
 
@@ -47,8 +47,8 @@
 ### Docs / Reference Integrity
 | Severity | Owner | Finding | Fix |
 |----------|--------|---------|-----|
-| LOW | SlineDocs | DEVELOPER_GUIDE work/delivery section could mention revision error mapping. | Optional: add one line that revision errors are mapped via ErrorMapper. |
-| LOW | SlineDocs | Sline_Log.md has no entry for this change. | Optional: add Work Contract Revisions hardening entry (date, migration, app changes). |
+| LOW | DocsKeeper | DEVELOPER_GUIDE work/delivery section could mention revision error mapping. | Optional: add one line that revision errors are mapped via ErrorMapper. |
+| LOW | DocsKeeper | Sline_Log.md has no entry for this change. | Optional: add Work Contract Revisions hardening entry (date, migration, app changes). |
 
 ---
 
@@ -59,8 +59,8 @@ All steps are **optional** (no blockers).
 | Step | Owner | Action | Verification |
 |------|--------|--------|--------------|
 | 1 | @Architect | In `WorkItemDetailsViewModel.acceptChangeRequest` catch, set `_error = ErrorMapper.map(e)` instead of `_error = 'Failed to accept change request'`. | Run app; trigger change-request error; confirm UI shows mapped message. |
-| 2 | @SlineDocs | In DEVELOPER_GUIDE (work/delivery/revision), add: revision errors (no revisions left, not delivered) are shown via ErrorMapper. | Grep for revision/request revision; confirm sentence present. |
-| 3 | @SlineDocs | In Sline_Log.md add entry: Work Contract Revisions hardening (2025-03-08): migration 20260308120000, ErrorMapper + VM + UI. | Log entry exists and references correct migration. |
+| 2 | @DocsKeeper | In DEVELOPER_GUIDE (work/delivery/revision), add: revision errors (no revisions left, not delivered) are shown via ErrorMapper. | Grep for revision/request revision; confirm sentence present. |
+| 3 | @DocsKeeper | In Sline_Log.md add entry: Work Contract Revisions hardening (2025-03-08): migration 20260308120000, ErrorMapper + VM + UI. | Log entry exists and references correct migration. |
 | 4 | @CodeGuard | Re-run review after Step 1 if implemented. | CodeGuard re-check; no new findings. |
 
 ---

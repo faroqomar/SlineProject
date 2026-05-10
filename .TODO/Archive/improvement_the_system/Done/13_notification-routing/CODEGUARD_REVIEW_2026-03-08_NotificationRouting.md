@@ -69,4 +69,4 @@ flutter test test/rls/notifications_insert_blocked_test.dart test/unit/notificat
 **APPROVED** with recommendations:
 - Set `CRON_SECRET` for process-push-queue in production.
 - Document push-notify as internal-only or add auth.
-- Update diagram 13 per SlineDocs report.
+- Update diagram 13 per DocsKeeper report.

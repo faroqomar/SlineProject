@@ -223,9 +223,9 @@
 
 **Steps:**
 
-5.1 **@SlineDocs:** Update SUPABASE_SETUP.md — escrow guard behavior, RPC changes, enum/trigger if added, RLS for dispute_messages/dispute_evidence.  
-5.2 **@SlineDocs:** Update DEVELOPER_GUIDE.md — dispute lifecycle, safety entry points, dashboard disputed state.  
-5.3 **@SlineDocs:** MVP_ROADMAP.md and STRUCTURE.md if new modules/screens.  
+5.1 **@DocsKeeper:** Update SUPABASE_SETUP.md — escrow guard behavior, RPC changes, enum/trigger if added, RLS for dispute_messages/dispute_evidence.  
+5.2 **@DocsKeeper:** Update DEVELOPER_GUIDE.md — dispute lifecycle, safety entry points, dashboard disputed state.  
+5.3 **@DocsKeeper:** MVP_ROADMAP.md and STRUCTURE.md if new modules/screens.  
 5.4 **Rollback:** Document: revert migration (RPC + trigger + policies; optional enum→text); app revert; emergency: remove only escrow guard if needed.
 
 **GATE CHECK:** Docs match code and DB; rollback steps executable.

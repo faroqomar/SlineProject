@@ -78,4 +78,4 @@
 
 - **Observability:** Adequate. Critical paths (complete offer, balance fetch, load error) are logged.
 - **Gaps:** None blocking. Optional: debug log on WalletTab init.
-- **Recommendation:** Proceed to SlineDocs. No mandatory changes.
+- **Recommendation:** Proceed to DocsKeeper. No mandatory changes.

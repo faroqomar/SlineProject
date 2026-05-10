@@ -11,7 +11,7 @@
 ### Assumptions (inferred)
 
 - Stack: Flutter app, Supabase (Postgres, Edge Functions), QiCard gateway; Admin dashboard is Next.js (referenced in improvement folder).
-- Single team or cross-functional execution; agents @Supabase_Ops, @Architect, @Sentinel, @Pixel, @SlineDocs own steps.
+- Single team or cross-functional execution; agents @Supabase_Ops, @Architect, @Sentinel, @Pixel, @DocsKeeper own steps.
 - PAYMENT_HMAC_SECRET (or equivalent) will be provisioned in Supabase secrets / Vault before edge deployment; no implementation without it.
 - Tender payment flow remains separate (tender-specific edge/RPC); hardening applies to booking and direct_offer first, with optional later extension to tender.
 - Realtime is already enabled for `payment_intents` in Supabase project.
@@ -214,7 +214,7 @@
 
 1. (@Sentinel) Run full test plan (T-SEC, T-ROB, T-RLS, E2E); document flake/retry (e.g. 1 retry, 30s timeout); artifact capture for failures.
 2. (@Architect) Rollout: deploy edge first (backward compatible response); then app; or feature flag “use_intent_create” and switch when ready. Document rollback: revert edge, app keeps recovery path.
-3. (@SlineDocs) Update SUPABASE_SETUP.md: payment_intents, payment_events, orphan_payments (columns, RLS); process_payment_event_ledger p_payment_intent_id and meta; hardened flow. Update DEVELOPER_GUIDE.md: intent lifecycle, HMAC, webhook validation, Realtime, Admin. Update STRUCTURE.md / MVP_ROADMAP.md.
+3. (@DocsKeeper) Update SUPABASE_SETUP.md: payment_intents, payment_events, orphan_payments (columns, RLS); process_payment_event_ledger p_payment_intent_id and meta; hardened flow. Update DEVELOPER_GUIDE.md: intent lifecycle, HMAC, webhook validation, Realtime, Admin. Update STRUCTURE.md / MVP_ROADMAP.md.
 4. (@Sentinel) Definition of done per PR: contract respected, RLS tests pass, one E2E path (booking or direct_offer) verified.
 
 **GATE CHECK (Phase 5):** All gates 0–5 pass; docs updated; rollout and rollback documented.

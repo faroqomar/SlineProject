@@ -297,10 +297,10 @@
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
-- [ ] (@SlineDocs) Update `Sline_everything/DEVELOPER_GUIDE.md`, `Sline_everything/SUPABASE_SETUP.md`, `Sline_everything/MVP_ROADMAP.md`, `Sline_everything/STRUCTURE.md`, and `Sline_everything/Sline_Log.md` to reflect the surviving portfolio architecture, canonical image contract, and live DB/storage reality.
-- [ ] (@SlineDocs) If `PortfolioScreen` is deprecated or removed, document that consolidation explicitly and remove dead-runtime references in the same patch, following the architecture cleanup rule. References: `Sline_everything/ARCHITECTURE_ANALYSIS.md:8-15`, `Sline_everything/CODE_REVIEW.md:11-21`
+- [ ] (@DocsKeeper) Update `Sline_everything/DEVELOPER_GUIDE.md`, `Sline_everything/SUPABASE_SETUP.md`, `Sline_everything/MVP_ROADMAP.md`, `Sline_everything/STRUCTURE.md`, and `Sline_everything/Sline_Log.md` to reflect the surviving portfolio architecture, canonical image contract, and live DB/storage reality.
+- [ ] (@DocsKeeper) If `PortfolioScreen` is deprecated or removed, document that consolidation explicitly and remove dead-runtime references in the same patch, following the architecture cleanup rule. References: `Sline_everything/ARCHITECTURE_ANALYSIS.md:8-15`, `Sline_everything/CODE_REVIEW.md:11-21`
 - **Verify (@Sentinel):** docs match code and live Supabase reality with no stale parallel-surface references.
 
 ---

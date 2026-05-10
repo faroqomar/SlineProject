@@ -246,9 +246,9 @@
 
 ## Phase 6: Documentation Sync
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
-- [ ] (@SlineDocs) Update `Sline_everything/DEVELOPER_GUIDE.md`, `Sline_everything/SUPABASE_SETUP.md`, `Sline_everything/MVP_ROADMAP.md`, `Sline_everything/STRUCTURE.md`, and `Sline_everything/Sline_Log.md` only after the final code and live DB evidence are verified. [File Reference: `Sline_everything/DEVELOPER_GUIDE.md:41-68`, `Sline_everything/SUPABASE_SETUP.md:1192-1212`, `Sline_everything/MVP_ROADMAP.md:31-39`, `Sline_everything/CODE_REVIEW.md:20-25`]
+- [ ] (@DocsKeeper) Update `Sline_everything/DEVELOPER_GUIDE.md`, `Sline_everything/SUPABASE_SETUP.md`, `Sline_everything/MVP_ROADMAP.md`, `Sline_everything/STRUCTURE.md`, and `Sline_everything/Sline_Log.md` only after the final code and live DB evidence are verified. [File Reference: `Sline_everything/DEVELOPER_GUIDE.md:41-68`, `Sline_everything/SUPABASE_SETUP.md:1192-1212`, `Sline_everything/MVP_ROADMAP.md:31-39`, `Sline_everything/CODE_REVIEW.md:20-25`]
 - **Verify (@Sentinel):** docs match final code and authenticated live DB reality, not interim assumptions.
 
 ## 7) PR Slices

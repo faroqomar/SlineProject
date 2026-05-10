@@ -2,7 +2,7 @@
 
 **Plan Version:** 1.0
 **Date:** 2026-04-04
-**Created By:** @SlinePlanner + Senior Engineering Audit
+**Created By:** @Planner + Senior Engineering Audit
 **Session Log:** `docs/LOG/SESSION_PLAN_GitHub_CI_RepoSafeguards_2026-04-04.md`
 
 ---
@@ -125,19 +125,19 @@
 
 ## 5) Agent Map
 
-- Phase 0: @SlinePlanner, @Sentinel (preconditions)
+- Phase 0: @Planner, @Sentinel (preconditions)
 - Phase 1: @CodeGuard, @Sentinel (CI workflow enhancements)
 - Phase 2: @CodeGuard, @Sentinel (new CI workflows)
 - Phase 3: @Architect, @Sentinel (developer workflow files)
-- Phase 4: @SlineDocs, @Sentinel (documentation)
-- Phase 5: @SlinePlanner (manual configuration guide)
+- Phase 4: @DocsKeeper, @Sentinel (documentation)
+- Phase 5: @Planner (manual configuration guide)
 - Phase 6: @Sentinel (verification)
 
 ---
 
 ## Phase 0: Preconditions & Gates
 
-**Primary Agent(s):** @SlinePlanner, @Sentinel
+**Primary Agent(s):** @Planner, @Sentinel
 
 ### 0.1 Spec Lock
 
@@ -147,7 +147,7 @@
   - Pre-commit hook enhancements do not break existing developer workflow
   - No existing CI checks are weakened or removed
   - All manual steps are documented with exact click paths
-- [ ] (@SlinePlanner) Non-regression list:
+- [ ] (@Planner) Non-regression list:
   - `flutter test` must still pass (706+ tests)
   - `flutter analyze` must still pass (0 issues)
   - Architecture guard (7 checks) must still pass
@@ -306,9 +306,9 @@
 
 ---
 
-## Phase 4: Documentation (@SlineDocs)
+## Phase 4: Documentation (@DocsKeeper)
 
-**Primary Agent(s):** @SlineDocs, @Sentinel
+**Primary Agent(s):** @DocsKeeper, @Sentinel
 **Goal:** Add missing repo docs and fix documentation drift
 **Why:** Financial app needs SECURITY.md, contributors need onboarding docs, stale docs create confusion
 **Result:** Repo has responsible disclosure process, contributor guide, and accurate documentation
@@ -317,7 +317,7 @@
 
 **File:** `SECURITY.md` (NEW)
 
-- [ ] (@SlineDocs) Create with sections:
+- [ ] (@DocsKeeper) Create with sections:
   - Responsible disclosure process (email contact)
   - Security architecture overview (RLS, auth, payment security)
   - What to report (vulnerabilities, data exposure, auth bypass)
@@ -329,7 +329,7 @@
 
 **File:** `CONTRIBUTING.md` (NEW)
 
-- [ ] (@SlineDocs) Create with sections:
+- [ ] (@DocsKeeper) Create with sections:
   - Getting started (Flutter setup, `git config core.hooksPath .githooks`)
   - Architecture overview (MVVM, reference CLAUDE.md)
   - PR process (reference PR template)
@@ -343,38 +343,38 @@
 
 **File:** `supabase/functions/.env.example` (NEW)
 
-- [ ] (@SlineDocs) Document all required Edge Function environment variables:
+- [ ] (@DocsKeeper) Document all required Edge Function environment variables:
   - `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
   - `QICARD_API_BASE_URL`, `QICARD_TERMINAL_ID`, `QICARD_USERNAME`, `QICARD_PASSWORD`
   - `QICARD_RSA_PUBLIC_KEY_PEM`, `QICARD_FINISH_URL`
   - `QICARD_ALLOW_UNSIGNED_LOCAL_DEV`
   - `FCM_SERVER_KEY`, `CRON_SECRET`, `PUSH_NOTIFY_SECRET`
   - `ALLOWED_ORIGIN`
-- [ ] (@SlineDocs) Add comments explaining each variable's purpose
-- [ ] (@SlineDocs) Mark which are required vs optional
+- [ ] (@DocsKeeper) Add comments explaining each variable's purpose
+- [ ] (@DocsKeeper) Mark which are required vs optional
 - [ ] (@Sentinel) Verify NO actual secrets are in the example file (only placeholders)
 
 ### 4.4 Documentation Drift Fixes
 
 **File:** `Sline_everything/MVP_ROADMAP.md` (UPDATE)
 
-- [ ] (@SlineDocs) Update Section 9 "Current Focus":
+- [ ] (@DocsKeeper) Update Section 9 "Current Focus":
   - Change "coverage enforcement (70% target)" to "coverage enforcement (40% regression floor)"
   - Add Phase D progress notes (D1-D3 complete, D4-D11 queued)
 - [ ] (@Sentinel) Verify no other sections need updates
 
 **File:** `Sline_everything/ARCHITECTURE_ANALYSIS.md` (UPDATE)
 
-- [ ] (@SlineDocs) Fix header date from "March 7, 2024" to "2026-03-07 (with embedded notes through 2026-04-03)"
+- [ ] (@DocsKeeper) Fix header date from "March 7, 2024" to "2026-03-07 (with embedded notes through 2026-04-03)"
 - [ ] (@Sentinel) Verify content accuracy is unchanged
 
 **GATE CHECK:** All docs created, drift fixed, no secrets exposed.
 
 ---
 
-## Phase 5: Manual Configuration Guide (@SlinePlanner)
+## Phase 5: Manual Configuration Guide (@Planner)
 
-**Primary Agent(s):** @SlinePlanner
+**Primary Agent(s):** @Planner
 **Goal:** Document every manual step the developer must perform outside the repository
 **Why:** Branch protection, required checks, secret scanning settings, and environments cannot be configured via code
 **Result:** A clear checklist of manual GitHub configuration steps

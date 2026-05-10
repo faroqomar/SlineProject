@@ -32,7 +32,7 @@
 - `Sline_everything/CODE_REVIEW.md`: this decommission exposed a reusable cleanup rule for orphaned feature/provider/doc surfaces after navigation consolidation.
 - `.TODO/CodexRefactor/01_FEATURES_INDEX.md`: active feature inventory still listed `orders` as auditable runtime code.
 - `.TODO/CONTRACT_Orders_Runtime_2026-03-01.md`: current contract note was incorrect and would mislead future fixes.
-- `.TODO/DOCS_REFERENCE_FIX_2026-03-01_Orders_Dashboard_Decommission.md`: created to log the missing artifact cross-links and current architecture/reference corrections required by `Sline_Docs.md`.
+- `.TODO/DOCS_REFERENCE_FIX_2026-03-01_Orders_Dashboard_Decommission.md`: created to log the missing artifact cross-links and current architecture/reference corrections required by `DocsKeeper.md`.
 
 ## Reference Validation
 

@@ -409,17 +409,17 @@
 
 ## Phase 5: Documentation Sync
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
 - Goal:
   - Prevent the same portfolio drift from reappearing in docs.
 - Why:
   - Current docs already conflict on storage semantics and bucket history.
 - How:
-  - [ ] (@SlineDocs) Update `Sline_everything/DEVELOPER_GUIDE.md` to reflect canonical `image_path` persistence, shared portfolio ownership under `lib/features/portfolio/**`, and final public-profile DTO contract.
-  - [ ] (@SlineDocs) Update `Sline_everything/SUPABASE_SETUP.md` with final portfolio schema, index, and policy source-of-truth.
-  - [ ] (@SlineDocs) Update `Sline_everything/STRUCTURE.md` and feature inventory docs if files move.
-  - [ ] (@SlineDocs) Reconcile `Sline_everything/Sline_Log.md` if it still contradicts final bucket reality.
+  - [ ] (@DocsKeeper) Update `Sline_everything/DEVELOPER_GUIDE.md` to reflect canonical `image_path` persistence, shared portfolio ownership under `lib/features/portfolio/**`, and final public-profile DTO contract.
+  - [ ] (@DocsKeeper) Update `Sline_everything/SUPABASE_SETUP.md` with final portfolio schema, index, and policy source-of-truth.
+  - [ ] (@DocsKeeper) Update `Sline_everything/STRUCTURE.md` and feature inventory docs if files move.
+  - [ ] (@DocsKeeper) Reconcile `Sline_everything/Sline_Log.md` if it still contradicts final bucket reality.
 - Result:
   - Docs match code plus live DB reality after rollout.
 - **Verify (@Sentinel):**

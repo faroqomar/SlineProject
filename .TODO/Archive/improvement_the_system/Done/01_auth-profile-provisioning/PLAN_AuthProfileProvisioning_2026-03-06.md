@@ -2,7 +2,7 @@
 
 **Date**: 2026-03-06  
 **Source**: `.TODO/improvement_the_system/ImplementReady/01_auth-profile-provisioning`  
-**Planner**: @SlinePlanner
+**Planner**: @Planner
 
 ---
 
@@ -406,16 +406,16 @@
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
-- [ ] (@SlineDocs) Update `Sline_everything/SUPABASE_SETUP.md`:
+- [ ] (@DocsKeeper) Update `Sline_everything/SUPABASE_SETUP.md`:
   - Add `pg_cron` extension note
   - Document `sweep_orphaned_auth_users()` function
-- [ ] (@SlineDocs) Update `Sline_everything/DEVELOPER_GUIDE.md`:
+- [ ] (@DocsKeeper) Update `Sline_everything/DEVELOPER_GUIDE.md`:
   - Document auth retry logic behavior
   - Document AccountGuard cold start check
-- [ ] (@SlineDocs) Update `.cursor/PROJECT_CONTEXT.md` if auth flow summary exists
-- [ ] (@SlineDocs) Add changelog entry to `Sline_everything/Sline_Log.md`
+- [ ] (@DocsKeeper) Update `.cursor/PROJECT_CONTEXT.md` if auth flow summary exists
+- [ ] (@DocsKeeper) Add changelog entry to `Sline_everything/Sline_Log.md`
 - **Verify (@Sentinel):** docs match code + live DB reality
 
 ---

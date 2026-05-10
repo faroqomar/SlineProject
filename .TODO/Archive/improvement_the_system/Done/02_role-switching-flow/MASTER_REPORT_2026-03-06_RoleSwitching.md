@@ -3,7 +3,7 @@
 **Date:** 2026-03-06  
 **Scope:** Role Switching Flow Hardening (Phases 0-4)  
 **Orchestrator:** @Orchestrator  
-**Agents:** @Architect, @Observability, @SlineDocs, @CodeGuard  
+**Agents:** @Architect, @Observability, @DocsKeeper, @CodeGuard  
 **Status:** ✅ APPROVED (with fixes applied)
 
 ---
@@ -79,13 +79,13 @@ CodeGuard initially blocked due to test fixture/model key mismatch. Fixed:
 ### Docs/Reference Integrity: 🟡 NEEDS UPDATES
 | Finding | Severity | Owner | Status |
 |---------|----------|-------|--------|
-| Code documentation excellent | - | @SlineDocs | ✅ PASS |
-| Test fixtures documented | - | @SlineDocs | ✅ PASS |
-| Migration file documented | - | @SlineDocs | ✅ PASS |
-| Sline_Log.md version entry | HIGH | @SlineDocs | ❌ MISSING |
-| SUPABASE_SETUP.md RPC docs | HIGH | @SlineDocs | ❌ MISSING |
-| STRUCTURE.md new files | MED | @SlineDocs | ❌ MISSING |
-| Diagram file outdated | MED | @SlineDocs | ❌ OUTDATED |
+| Code documentation excellent | - | @DocsKeeper | ✅ PASS |
+| Test fixtures documented | - | @DocsKeeper | ✅ PASS |
+| Migration file documented | - | @DocsKeeper | ✅ PASS |
+| Sline_Log.md version entry | HIGH | @DocsKeeper | ❌ MISSING |
+| SUPABASE_SETUP.md RPC docs | HIGH | @DocsKeeper | ❌ MISSING |
+| STRUCTURE.md new files | MED | @DocsKeeper | ❌ MISSING |
+| Diagram file outdated | MED | @DocsKeeper | ❌ OUTDATED |
 
 ---
 
@@ -93,7 +93,7 @@ CodeGuard initially blocked due to test fixture/model key mismatch. Fixed:
 
 ### Immediate (Before Merge)
 
-#### Step 1: Documentation Updates (@SlineDocs)
+#### Step 1: Documentation Updates (@DocsKeeper)
 - [ ] Update `Sline_everything/Sline_Log.md` - Add version entry for role switching
 - [ ] Update `Sline_everything/SUPABASE_SETUP.md` - Document:
   - `switch_active_role` RPC
@@ -117,7 +117,7 @@ CodeGuard initially blocked due to test fixture/model key mismatch. Fixed:
 
 ### Short-term (This Week)
 
-#### Step 3: Diagram Update (@SlineDocs)
+#### Step 3: Diagram Update (@DocsKeeper)
 - [ ] Update `Sline_everything/AppDigram/All_Diagrams/02_role-switching-flow.md`
 - [ ] Replace state diagram with sequence diagram
 - [ ] Document teardown contract
@@ -213,7 +213,7 @@ if (useLegacyRoleSwitch) {
 |-------|-------------|-------------|--------|
 | @Architect | `.TODO/ARCHITECT_REPORT_2026-03-06_RoleSwitching.md` | MVVM boundaries correct, coordinator pattern valid | ✅ APPROVED |
 | @Observability | `.TODO/OBSERVABILITY_REPORT_2026-03-06_RoleSwitching.md` | 40+ events logged, privacy-safe, gaps in correlation IDs | 🟡 B+ GRADE |
-| @SlineDocs | `.TODO/DOCS_REPORT_2026-03-06_RoleSwitching.md` | Code docs excellent, missing 4 doc updates | 🟡 NEEDS UPDATES |
+| @DocsKeeper | `.TODO/DOCS_REPORT_2026-03-06_RoleSwitching.md` | Code docs excellent, missing 4 doc updates | 🟡 NEEDS UPDATES |
 | @CodeGuard | `.TODO/CODEGUARD_REVIEW_2026-03-06_RoleSwitching.md` | Security/perf good, blocked on test fixtures | ✅ FIXED |
 
 ---

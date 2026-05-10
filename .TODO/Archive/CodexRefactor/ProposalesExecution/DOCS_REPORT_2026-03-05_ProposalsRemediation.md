@@ -1,4 +1,4 @@
-# SlineDocs Report: Proposals Remediation 2026-03-05
+# DocsKeeper Report: Proposals Remediation 2026-03-05
 
 **Scope**: Proposals Remediation  
 **Plan**: `.TODO/Archive/ProposalesExecution/PLAN_ProposalsRemediation_v2_2026-03-04.md`  

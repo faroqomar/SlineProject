@@ -221,9 +221,9 @@
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
-- [ ] (@SlineDocs) Update DEVELOPER_GUIDE, Wallet_Feature, SUPABASE_SETUP (if view names or RPC changed), and diagram `21_Wallet_System_Escrow_Available_balances.md` to ledger-only terminology; mark Withdraw as **Upcoming feature**.
+- [ ] (@DocsKeeper) Update DEVELOPER_GUIDE, Wallet_Feature, SUPABASE_SETUP (if view names or RPC changed), and diagram `21_Wallet_System_Escrow_Available_balances.md` to ledger-only terminology; mark Withdraw as **Upcoming feature**.
 - **Verify (@Sentinel):** docs match code + live DB reality.
 
 ---

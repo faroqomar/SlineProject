@@ -223,11 +223,11 @@
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
-- [ ] (@SlineDocs) Update `Sline_everything/SUPABASE_SETUP.md` §6.4: view now 4 branches (tasks, bookings, awarded pending, direct_offers); disputes override; `security_invoker = true`; column list unchanged.
-- [ ] (@SlineDocs) Update Work Management section in `Sline_everything/DEVELOPER_GUIDE.md` if it references fallback or direct-offer merge; state that view is single source of truth.
-- [ ] (@SlineDocs) Optional: STRUCTURE.md or MVP_ROADMAP if Work/dashboard behavior is summarized there.
+- [ ] (@DocsKeeper) Update `Sline_everything/SUPABASE_SETUP.md` §6.4: view now 4 branches (tasks, bookings, awarded pending, direct_offers); disputes override; `security_invoker = true`; column list unchanged.
+- [ ] (@DocsKeeper) Update Work Management section in `Sline_everything/DEVELOPER_GUIDE.md` if it references fallback or direct-offer merge; state that view is single source of truth.
+- [ ] (@DocsKeeper) Optional: STRUCTURE.md or MVP_ROADMAP if Work/dashboard behavior is summarized there.
 - **Verify (@Sentinel):** Docs match code and live view.
 
 ---

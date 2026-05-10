@@ -315,13 +315,13 @@
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
-- [ ] (@SlineDocs) Update `Sline_everything/DEVELOPER_GUIDE.md` and `Sline_everything/DEVELOPER_GUIDE/Task Feature.md` to reflect the final task/tender contract, status model, and MVVM boundaries.
-- [ ] (@SlineDocs) Update `Sline_everything/SUPABASE_SETUP.md` with the final live-verified task/task_request/payment/RLS/storage contract, including `replace_task_request` if it exists.
-- [ ] (@SlineDocs) Update `Sline_everything/MVP_ROADMAP.md` to reflect tender payment hardening progress and the post-fix status.
-- [ ] (@SlineDocs) Update `Sline_everything/STRUCTURE.md` if service/viewmodel/screen splits or new `.TODO/` artifacts become part of the working structure.
-- [ ] (@SlineDocs) Update `Sline_everything/CODE_REVIEW.md` with the reusable lessons from the tender payment hardening and MVVM cleanup.
+- [ ] (@DocsKeeper) Update `Sline_everything/DEVELOPER_GUIDE.md` and `Sline_everything/DEVELOPER_GUIDE/Task Feature.md` to reflect the final task/tender contract, status model, and MVVM boundaries.
+- [ ] (@DocsKeeper) Update `Sline_everything/SUPABASE_SETUP.md` with the final live-verified task/task_request/payment/RLS/storage contract, including `replace_task_request` if it exists.
+- [ ] (@DocsKeeper) Update `Sline_everything/MVP_ROADMAP.md` to reflect tender payment hardening progress and the post-fix status.
+- [ ] (@DocsKeeper) Update `Sline_everything/STRUCTURE.md` if service/viewmodel/screen splits or new `.TODO/` artifacts become part of the working structure.
+- [ ] (@DocsKeeper) Update `Sline_everything/CODE_REVIEW.md` with the reusable lessons from the tender payment hardening and MVVM cleanup.
 - **Verify (@Sentinel):** docs match code plus live DB reality and do not preserve outdated tender/payment assumptions.
 
 ---

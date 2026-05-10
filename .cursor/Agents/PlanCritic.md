@@ -80,11 +80,6 @@ If the plan includes significant test implementation work, add:
 - **Gate 0: Test Infrastructure Gate**
 - Mark it PASS / FAIL using the same format
 - Block execution if harness / directories / fixtures / seeded data strategy are missing
-- Block execution if planned test command paths do not exist and the plan does not first create them.
-- Block execution if route-push widget tests do not define Provider scope for pushed routes or a test-only route-builder seam.
-- Block execution if widgets with delayed tap behavior (for example `ScaleButton.callbackDelay`) are tested without advancing time past the delay.
-
-If the plan includes meaningful UI work, the UI / Integration Gate MUST verify every `Skill:` label resolves to an installed `.cursor/skills/<name>/SKILL.md`. Descriptive labels that are not concrete skill names are a plan defect.
 
 For each gate:
 
@@ -284,6 +279,7 @@ When auditing a plan with coverage targets:
 2. Verify the plan's coverage arithmetic against these numbers.
 3. If lcov.info does not exist, flag as CRITICAL GAP: "No baseline coverage data."
 
+Evidence: Widget Tests session — @PlanCritic caught coverage arithmetic error (assumed 6 screens = 45%, actual = 39.7%) but only AFTER Planner published v1. These checks make the catch proactive.
 
 ### 5.8 Testing & QA
 
@@ -330,9 +326,10 @@ This file MUST include:
 
 This file is consumed by:
 - **@Executor** — for execution awareness of known risks and gaps
-- **@QA** — for verification that critical gaps were addressed during implementation
+- **@Sentinel** — for verification that critical gaps were addressed during implementation
 - **@SystemEvolution** — for durable evidence of planning issues across sessions
 
+Evidence: All prior sessions — PlanCritic's findings were inline in conversation only, not persisted. This broke traceability: @Executor could not reference PlanCritic's risk register during execution, @Sentinel could not verify gaps were addressed, and @SystemEvolution had to manually extract findings from session logs.
 
 ---
 

@@ -236,7 +236,7 @@
 
 4.4 (@Sentinel) Observability: push failure and token failure logged; redaction verified.
 
-4.5 (@SlineDocs) Update DEVELOPER_GUIDE, SUPABASE_SETUP, diagram 13_notification-routing to match implementation and CONTRACT. Correct `private_upsert_notification` description (collapse-on-unread; no idempotency_key unless added).
+4.5 (@DocsKeeper) Update DEVELOPER_GUIDE, SUPABASE_SETUP, diagram 13_notification-routing to match implementation and CONTRACT. Correct `private_upsert_notification` description (collapse-on-unread; no idempotency_key unless added).
 
 **GATE CHECK (Phase 4):** All acceptance criteria have a passing test or manual sign-off; RLS tests pass; push E2E passes when app killed; docs updated. If any fails, do not release.
 

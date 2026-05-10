@@ -171,7 +171,7 @@ After fixes, re-test:
 | 5 | @APIContract | Combined report (2 findings: 0 BLOCKER, 0 HIGH, 0 MED, 2 LOW, 6 pass) |
 | 6 | @DataMigration | PASS — 0 findings |
 | 8 | @Observability | 2 findings: 1 BLOCKER, 1 MED |
-| 9 | @SlineDocs | PASS — 0 findings, docs fully synchronized |
+| 9 | @DocsKeeper | PASS — 0 findings, docs fully synchronized |
 | 10 | @CodeGuard | PASS — all hard gates pass |
 | 11 | @Sentinel | PASS WITH CONDITIONS — 3 AC checks need fixes |
 

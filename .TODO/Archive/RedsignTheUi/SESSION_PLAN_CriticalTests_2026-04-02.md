@@ -21,8 +21,8 @@ Phase C executed in a single session. 306 new tests added (400 → 706). 5 ViewM
 
 | Agent | Mistake Made | Rule to Add/Change |
 | ----- | ------------ | ------------------ |
-| @SlinePlanner (v1) | Did not identify WalletVM/ChatVM constructor DI gap | Always verify constructor injectability for EVERY target VM during planning scan |
-| @SlinePlanner (v1) | Did not include RoleSwitchCoordinator singleton cleanup | Always check for singleton patterns in target classes and plan tearDown strategy |
+| @Planner (v1) | Did not identify WalletVM/ChatVM constructor DI gap | Always verify constructor injectability for EVERY target VM during planning scan |
+| @Planner (v1) | Did not include RoleSwitchCoordinator singleton cleanup | Always check for singleton patterns in target classes and plan tearDown strategy |
 | None | No agent mistakes during execution | N/A |
 
 
@@ -35,7 +35,7 @@ Phase C executed in a single session. 306 new tests added (400 → 706). 5 ViewM
 ### [PLAN CREATED]
 
 - Plan: .TODO/PLAN_CriticalTests_2026-04-02.md
-- Created by: @SlinePlanner
+- Created by: @Planner
 - Scope: Unit tests for 5 critical ViewModels (AuthSession, Wallet, TenderPayment, Chat, Dashboard) + DTO parsing tests for 7 new models + extensions to 4 existing model test suites
 - PRISM-equivalent phase in SLine roadmap: Phase C — Critical Tests (Week 3-4)
 - Estimated phases in plan: 10 (Phase 0-9)

@@ -209,12 +209,12 @@
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
-- [ ] (@SlineDocs) Update `Sline_everything/DEVELOPER_GUIDE.md` (notification flow: realtime + push; client read/update only; device registration).
-- [ ] (@SlineDocs) Update `Sline_everything/SUPABASE_SETUP.md`: `user_devices` table, RLS, trigger on `notifications`, push Edge Function reference; correct description of `private_upsert_notification` (collapse-on-unread, no idempotency_key param unless added).
-- [ ] (@SlineDocs) Update `Sline_everything/AppDigram/All_Diagrams/13_notification-routing.md` to match implementation (RPC/trigger sources for booking/task; push path; Flutter token registration).
-- [ ] (@SlineDocs) Move or reference `.TODO/improvement_the_system/ImplementReady/13_notification-routing/` content into plan/execution log as needed.
+- [ ] (@DocsKeeper) Update `Sline_everything/DEVELOPER_GUIDE.md` (notification flow: realtime + push; client read/update only; device registration).
+- [ ] (@DocsKeeper) Update `Sline_everything/SUPABASE_SETUP.md`: `user_devices` table, RLS, trigger on `notifications`, push Edge Function reference; correct description of `private_upsert_notification` (collapse-on-unread, no idempotency_key param unless added).
+- [ ] (@DocsKeeper) Update `Sline_everything/AppDigram/All_Diagrams/13_notification-routing.md` to match implementation (RPC/trigger sources for booking/task; push path; Flutter token registration).
+- [ ] (@DocsKeeper) Move or reference `.TODO/improvement_the_system/ImplementReady/13_notification-routing/` content into plan/execution log as needed.
 - **Verify (@Sentinel):** docs match code + live DB reality.
 
 ---

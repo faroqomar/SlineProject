@@ -100,7 +100,7 @@
 - **Phase 8 (Dashboard Cards):** `@Pixel` (primary), `@Architect` (extraction), `@Sentinel` (gate)
 - **Phase 9 (Widget Tests):** `@Sentinel` (primary), `@Architect` (test infrastructure)
 - **Phase 10 (Visual QA & Polish):** `@Sentinel` (primary), `@Pixel` (fixes)
-- **Phase 11 (Documentation):** `@SlineDocs` (primary), `@Sentinel` (gate)
+- **Phase 11 (Documentation):** `@DocsKeeper` (primary), `@Sentinel` (gate)
 
 **Session Log:** `docs/LOG/SESSION_PLAN_Phase2_AppShellAuthCards_2026-04-08.md`
 
@@ -108,12 +108,12 @@
 
 ## Phase 0: Preconditions & Gates
 
-**Primary Agent(s):** `@SlinePlanner`, `@Sentinel`
+**Primary Agent(s):** `@Planner`, `@Sentinel`
 
 ### 0.1 Spec Lock
 - [ ] (`@Sentinel`) Acceptance criteria defined (see Section 7 below).
 - [ ] (`@Architect`) Confirm touched modules: `lib/app/`, `lib/core/utils/`, `lib/features/auth/view/`, `lib/features/tasks/view/widgets/`, `lib/features/booking/view/widgets/`, `lib/features/dashboard/view/widgets/`.
-- [ ] (`@SlineDocs`) Confirm Phase 0 and Phase 1 deliverables exist: `app_motion.dart`, `app_states.dart`, `AppDecorations.elevation()`, semantic colors in `AppColorScheme`, `ScaleButton` upgraded, `StatusBadge` upgraded.
+- [ ] (`@DocsKeeper`) Confirm Phase 0 and Phase 1 deliverables exist: `app_motion.dart`, `app_states.dart`, `AppDecorations.elevation()`, semantic colors in `AppColorScheme`, `ScaleButton` upgraded, `StatusBadge` upgraded.
 - **GATE CHECK:** Scope, acceptance criteria, and Phase 0/1 prerequisites confirmed.
 
 ### 0.2 Phase 0/1 Dependency Verification
@@ -789,17 +789,17 @@
 
 ## Phase 11: Documentation Sync
 
-**Primary Agent(s):** `@SlineDocs`
+**Primary Agent(s):** `@DocsKeeper`
 **Goal:** Update documentation to reflect Phase 2 changes.
 **Why:** Documentation must stay aligned with implementation.
 **How:** Update relevant docs.
 **Result:** Docs current.
 
 ### 11.1 Update Documentation
-- [ ] (`@SlineDocs`) Update session log with all execution events.
-- [ ] (`@SlineDocs`) Update `theme_dashboard.dart` if new tokens or patterns were introduced.
-- [ ] (`@SlineDocs`) Note any drift from Master Plan in session log (e.g., no `package:animations`, `SlinePageRoute` instead of `OpenContainer`).
-- [ ] (`@SlineDocs`) Write `.TODO/DOCS_SYNC_2026-04-08_Phase2_AppShellAuthCards.md`.
+- [ ] (`@DocsKeeper`) Update session log with all execution events.
+- [ ] (`@DocsKeeper`) Update `theme_dashboard.dart` if new tokens or patterns were introduced.
+- [ ] (`@DocsKeeper`) Note any drift from Master Plan in session log (e.g., no `package:animations`, `SlinePageRoute` instead of `OpenContainer`).
+- [ ] (`@DocsKeeper`) Write `.TODO/DOCS_SYNC_2026-04-08_Phase2_AppShellAuthCards.md`.
 - **GATE CHECK:** Session log complete. Documentation aligned. Docs sync file written.
 
 ---
@@ -840,8 +840,8 @@
 ## 9) References (From Scan)
 
 ### Docs Scanned
-- `.cursor/Agents/Plan_Critic.md`
-- `.cursor/Agents/Sline_Planner.md`
+- `.cursor/Agents/PlanCritic.md`
+- `.cursor/Agents/Planner.md`
 - `.TODO/PLAN_UI_Redesign_MasterPlan_2026-04-06.md`
 - `.TODO/PLAN_DesignSystemFoundation_2026-04-07.md`
 - `.impeccable.md`

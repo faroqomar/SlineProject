@@ -33,6 +33,6 @@
 
 ## Why each update was needed
 
-1. **SUPABASE_SETUP.md** — DB changes (trigger function + RPC) must be documented immediately per SlineDocs; changelog and key rules keep history and behavior discoverable.
-2. **Sline_Log.md** — Feature/fix completion must have a release-style entry with plan/checklist links and technical notes per SlineDocs template.
+1. **SUPABASE_SETUP.md** — DB changes (trigger function + RPC) must be documented immediately per DocsKeeper; changelog and key rules keep history and behavior discoverable.
+2. **Sline_Log.md** — Feature/fix completion must have a release-style entry with plan/checklist links and technical notes per DocsKeeper template.
 3. **DEVELOPER_GUIDE.md** — Trigger names and guard behavior must match SUPABASE_SETUP and code; the reject exception is a contract detail that affects when the owner can create a task-linked conversation.

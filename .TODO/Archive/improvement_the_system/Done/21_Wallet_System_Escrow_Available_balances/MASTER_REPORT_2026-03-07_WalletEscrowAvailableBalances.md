@@ -3,7 +3,7 @@
 **Scope:** Wallet Escrow Available Balances  
 **Plan:** `.TODO/PLAN_WalletEscrowAvailableBalances_2026-03-07_CRITIC.md`  
 **Date:** 2026-03-07  
-**Pipeline:** Architect → Observability → SlineDocs → CodeGuard
+**Pipeline:** Architect → Observability → DocsKeeper → CodeGuard
 
 ---
 
@@ -45,9 +45,9 @@
 ### Docs / Reference Integrity
 | Finding | Severity | Owner | Path / Object | Fix |
 |---------|----------|--------|----------------|-----|
-| DEVELOPER_GUIDE/Wallet_Feature: direct offer completion path not stated | LOW | @SlineDocs | DEVELOPER_GUIDE or Wallet_Feature.md | State that direct offer “Approve & release” uses rpc_approve_delivery(entity_type: 'direct_offer'). |
-| SUPABASE_SETUP: rpc_approve_delivery entity_type list | LOW | @SlineDocs | SUPABASE_SETUP.md | Ensure entity_type lists task, booking, direct_offer. |
-| Sline_Log: execution not logged | LOW | @SlineDocs | Sline_Log.md | Optional: add entry for Wallet Escrow plan + direct_offer RPC. |
+| DEVELOPER_GUIDE/Wallet_Feature: direct offer completion path not stated | LOW | @DocsKeeper | DEVELOPER_GUIDE or Wallet_Feature.md | State that direct offer “Approve & release” uses rpc_approve_delivery(entity_type: 'direct_offer'). |
+| SUPABASE_SETUP: rpc_approve_delivery entity_type list | LOW | @DocsKeeper | SUPABASE_SETUP.md | Ensure entity_type lists task, booking, direct_offer. |
+| Sline_Log: execution not logged | LOW | @DocsKeeper | Sline_Log.md | Optional: add entry for Wallet Escrow plan + direct_offer RPC. |
 
 ---
 
@@ -55,9 +55,9 @@
 
 | Step | Owner | Action | Verification |
 |------|--------|--------|--------------|
-| 1 | @SlineDocs | Update DEVELOPER_GUIDE or Wallet_Feature: direct offer completion calls rpc_approve_delivery(entity_type: 'direct_offer', entity_id). | Grep for rpc_approve_delivery and direct_offer in docs; sentence present. |
-| 2 | @SlineDocs | In SUPABASE_SETUP, in rpc_approve_delivery section, list entity_type as task, booking, direct_offer. | Read section; three types listed. |
-| 3 | @SlineDocs (optional) | In Sline_Log, add line: Wallet Escrow plan executed; rpc_approve_delivery direct_offer; DirectOffersService uses RPC. | Optional. |
+| 1 | @DocsKeeper | Update DEVELOPER_GUIDE or Wallet_Feature: direct offer completion calls rpc_approve_delivery(entity_type: 'direct_offer', entity_id). | Grep for rpc_approve_delivery and direct_offer in docs; sentence present. |
+| 2 | @DocsKeeper | In SUPABASE_SETUP, in rpc_approve_delivery section, list entity_type as task, booking, direct_offer. | Read section; three types listed. |
+| 3 | @DocsKeeper (optional) | In Sline_Log, add line: Wallet Escrow plan executed; rpc_approve_delivery direct_offer; DirectOffersService uses RPC. | Optional. |
 | 4 | @CodeGuard | No re-run required unless code or DB changes again. | — |
 
 ---

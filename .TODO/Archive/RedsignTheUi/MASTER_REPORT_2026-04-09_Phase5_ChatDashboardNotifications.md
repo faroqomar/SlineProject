@@ -50,8 +50,8 @@ Pipeline ran 11 of 13 stages (Stages 6 DataMigration and 7 TemplateOwner skipped
 
 | ID | Owner | File | Lines | Finding | Category |
 |----|-------|------|-------|---------|----------|
-| L-1 | SlineDocs | `Sline_everything/AppDigram/UI_Sequence/01_app_ui_diagram.md` | 131 | Stale `AppColors.lightRed` reference — should be `colorScheme.danger` | OUT_OF_SCOPE |
-| L-2 | SlineDocs | `Sline_everything/Sline_Log.md` | — | Missing Phase 5 version entry | OUT_OF_SCOPE |
+| L-1 | DocsKeeper | `Sline_everything/AppDigram/UI_Sequence/01_app_ui_diagram.md` | 131 | Stale `AppColors.lightRed` reference — should be `colorScheme.danger` | OUT_OF_SCOPE |
+| L-2 | DocsKeeper | `Sline_everything/Sline_Log.md` | — | Missing Phase 5 version entry | OUT_OF_SCOPE |
 | L-3 | Observability | `offer_message_bubble.dart` | 311, 377 | Accept/Complete offer taps logged at DEBUG — financial actions should be INFO | PHASE_5_INTRODUCED |
 | L-4 | Observability | `chat_screen.dart` | 784-801 | Send message success path has no log | PRE_EXISTING |
 | L-5 | ThreatModeler | `chat_screen.dart` | 944-950 | No maxLength on report-reason TextField | PRE_EXISTING |
@@ -72,7 +72,7 @@ Pipeline ran 11 of 13 stages (Stages 6 DataMigration and 7 TemplateOwner skipped
 | 8 | Pixel | Replace `bottom: 90` with token expression in `chat_screen.dart:455` | Hardcoded spacing | grep for `bottom: 90` |
 | 9 | Pixel | Replace `Curves.easeInOut` with `AppMotion.curveDecel` in `create_offer_sheet.dart:80` | Hardcoded curve | grep for Curves.easeInOut |
 | 10 | Observability | Redact storage paths to filename only in `attachment_message_tile.dart:87,124,287` | Path enumeration risk | grep for storagePath in log |
-| 11 | SlineDocs | Update `AppColors.lightRed` → `colorScheme.danger` in `01_app_ui_diagram.md:131` | Stale doc | read line 131 |
+| 11 | DocsKeeper | Update `AppColors.lightRed` → `colorScheme.danger` in `01_app_ui_diagram.md:131` | Stale doc | read line 131 |
 | 12 | All | Run `flutter analyze` + `flutter test` | Final verification | 0 issues, +1366 pass |
 
 ---
@@ -155,7 +155,7 @@ View-layer only — rollback is a simple `git revert` of the Phase 5 commits. No
 | 6 | @DataMigration | Skipped — no schema changes |
 | 7 | @TemplateOwner | Skipped — no template changes |
 | 8 | @Observability | Complete — 2 HIGH, 4 MED, 4 LOW |
-| 9 | @SlineDocs | Complete — 0 BLOCKER, 2 MED |
+| 9 | @DocsKeeper | Complete — 0 BLOCKER, 2 MED |
 | 10 | @CodeGuard | Complete — 1 BLOCKER (recategorized HIGH), 2 HIGH |
 | 11 | @Sentinel | Complete — CONDITIONAL_PASS |
 

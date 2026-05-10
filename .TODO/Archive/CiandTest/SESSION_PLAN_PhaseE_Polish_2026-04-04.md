@@ -41,7 +41,7 @@ Phase E Polish executed across 13 phases (Phase 0–12) in a single session. All
 
 ### [PLAN CREATED]
 - Plan: .TODO/PLAN_PhaseE_Polish_2026-04-04.md
-- Created by: @SlinePlanner
+- Created by: @Planner
 - Scope: Polish, test coverage expansion, code quality hardening — elevate from "hardened MVP" to "release-candidate quality"
 - PRISM-equivalent phase in SLine roadmap: Phase E (Month 3+)
 - Estimated phases in plan: 13 (Phase 0–12)

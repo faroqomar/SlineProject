@@ -3,7 +3,7 @@
 **Scope:** Dashboard Wallet Tab + Wallet Escrow Available Balances  
 **Plans:** Dashboard Wallet Tab plan; PLAN_WalletEscrowAvailableBalances_2026-03-07_CRITIC  
 **Date:** 2026-03-07  
-**Pipeline:** Architect → Observability → SlineDocs → CodeGuard
+**Pipeline:** Architect → Observability → DocsKeeper → CodeGuard
 
 ---
 
@@ -45,10 +45,10 @@
 ### Docs / Reference Integrity
 | Finding | Severity | Owner | Path / Object | Fix |
 |---------|----------|--------|----------------|-----|
-| STRUCTURE: Dashboard tabs + wallet/utils not listed | LOW | @SlineDocs | STRUCTURE.md | Add Wallet tab; add transaction_label_helper. |
-| Wallet_Feature: Dashboard Wallet tab + helper not in inventory | LOW | @SlineDocs | Wallet_Feature.md | Add WalletTab, transaction_label_helper to file list. |
-| MVP_ROADMAP: Dashboard Wallet tab not mentioned | LOW | @SlineDocs | MVP_ROADMAP.md | Optional: note dedicated Wallet tab. |
-| Sline_Log: Dashboard Wallet Tab not logged | LOW | @SlineDocs | Sline_Log.md | Optional: add entry. |
+| STRUCTURE: Dashboard tabs + wallet/utils not listed | LOW | @DocsKeeper | STRUCTURE.md | Add Wallet tab; add transaction_label_helper. |
+| Wallet_Feature: Dashboard Wallet tab + helper not in inventory | LOW | @DocsKeeper | Wallet_Feature.md | Add WalletTab, transaction_label_helper to file list. |
+| MVP_ROADMAP: Dashboard Wallet tab not mentioned | LOW | @DocsKeeper | MVP_ROADMAP.md | Optional: note dedicated Wallet tab. |
+| Sline_Log: Dashboard Wallet Tab not logged | LOW | @DocsKeeper | Sline_Log.md | Optional: add entry. |
 
 ---
 
@@ -56,10 +56,10 @@
 
 | Step | Owner | Action | Verification |
 |------|--------|--------|--------------|
-| 1 | @SlineDocs | Update STRUCTURE.md: dashboard tabs = Overview, Bookings, Work, Wallet, Inbox; add wallet/utils/transaction_label_helper.dart. | Grep STRUCTURE for Wallet, transaction_label. |
-| 2 | @SlineDocs | Update Wallet_Feature.md: add Dashboard Wallet tab (wallet_tab.dart) and transaction_label_helper to file inventory. | Read Wallet_Feature §3. |
-| 3 | @SlineDocs (optional) | MVP_ROADMAP: add note about dedicated Wallet tab in Wallet row. | Optional. |
-| 4 | @SlineDocs (optional) | Sline_Log: add entry for Dashboard Wallet Tab. | Optional. |
+| 1 | @DocsKeeper | Update STRUCTURE.md: dashboard tabs = Overview, Bookings, Work, Wallet, Inbox; add wallet/utils/transaction_label_helper.dart. | Grep STRUCTURE for Wallet, transaction_label. |
+| 2 | @DocsKeeper | Update Wallet_Feature.md: add Dashboard Wallet tab (wallet_tab.dart) and transaction_label_helper to file inventory. | Read Wallet_Feature §3. |
+| 3 | @DocsKeeper (optional) | MVP_ROADMAP: add note about dedicated Wallet tab in Wallet row. | Optional. |
+| 4 | @DocsKeeper (optional) | Sline_Log: add entry for Dashboard Wallet Tab. | Optional. |
 | 5 | @Observability (optional) | Add AppLogger.d in WalletTab init. | Optional. |
 | 6 | @CodeGuard | No re-run required unless code or DB changes again. | — |
 

@@ -4,7 +4,7 @@
 **Plan:** `.TODO/PLAN_DisputeLifecycle_2026-03-08.md`  
 **Execution:** `.TODO/EXECUTION_LOG_DisputeLifecycle_2026-03-08.md`  
 **Date:** 2026-03-08  
-**Orchestrator:** Pipeline run per `.agents/workflows/orchestrator.md`
+**Orchestrator:** Pipeline run per `.agents/workflows/Orchestrator.md`
 
 ---
 
@@ -41,8 +41,8 @@
 
 | # | Severity | Owner | Path / object | Finding | Fix recommendation |
 |---|----------|--------|----------------|--------|---------------------|
-| B3 | MED | SlineDocs | SUPABASE_SETUP §5.24, §1, §17 | `disputes.status` documented as text; enum and 20260308150000 not in enums table or changelog. | Update §5.24 (status = dispute_status_enum), §1 (add dispute_status_enum), §17 (add 20260308150000). |
-| B4 | MED | SlineDocs | SUPABASE_SETUP §5.25, §5.26, §6.4 | RLS for dispute_messages/dispute_evidence and view recreate (20260308150000) not documented. | Add RLS policy names/behavior; §6.4 note view recreated in 20260308150000. |
+| B3 | MED | DocsKeeper | SUPABASE_SETUP §5.24, §1, §17 | `disputes.status` documented as text; enum and 20260308150000 not in enums table or changelog. | Update §5.24 (status = dispute_status_enum), §1 (add dispute_status_enum), §17 (add 20260308150000). |
+| B4 | MED | DocsKeeper | SUPABASE_SETUP §5.25, §5.26, §6.4 | RLS for dispute_messages/dispute_evidence and view recreate (20260308150000) not documented. | Add RLS policy names/behavior; §6.4 note view recreated in 20260308150000. |
 
 ### Architecture / MVVM
 
@@ -69,9 +69,9 @@
 
 | # | Severity | Owner | Path / object | Finding | Fix recommendation |
 |---|----------|--------|----------------|--------|---------------------|
-| B11 | HIGH | SlineDocs | AppDigram/All_Diagrams/14_dispute-lifecycle.md | States "NO enum", "NO trigger", "status is plain text" — outdated after 20260308150000. | Update diagram and evidence: dispute_status_enum, trg_dispute_guard, trg_dispute_set_resolved_at, RLS; bump last_verified. |
-| B12 | MED | SlineDocs | DEVELOPER_GUIDE.md | Dispute lifecycle and single source for “has dispute” not described. | Add subsection: escrow guard, dashboard vs SafetyViewModel, UI guards. |
-| B13 | MED | SlineDocs | STRUCTURE.md, MVP_ROADMAP.md, Sline_Log.md | Test file, migrations, and completion status not reflected. | Add test path; migrations; roadmap/Sline_Log entry per DOCS_REPORT §3. |
+| B11 | HIGH | DocsKeeper | AppDigram/All_Diagrams/14_dispute-lifecycle.md | States "NO enum", "NO trigger", "status is plain text" — outdated after 20260308150000. | Update diagram and evidence: dispute_status_enum, trg_dispute_guard, trg_dispute_set_resolved_at, RLS; bump last_verified. |
+| B12 | MED | DocsKeeper | DEVELOPER_GUIDE.md | Dispute lifecycle and single source for “has dispute” not described. | Add subsection: escrow guard, dashboard vs SafetyViewModel, UI guards. |
+| B13 | MED | DocsKeeper | STRUCTURE.md, MVP_ROADMAP.md, Sline_Log.md | Test file, migrations, and completion status not reflected. | Add test path; migrations; roadmap/Sline_Log entry per DOCS_REPORT §3. |
 
 ---
 
@@ -79,9 +79,9 @@
 
 | Step | Owner | Action | Verification |
 |------|--------|--------|---------------|
-| 1 | @SlineDocs | Update SUPABASE_SETUP §1, §5.24–5.26, §6.4, §17 per DOCS_REPORT §3. | Grep for dispute_status_enum, disputes_deny_*, dispute_messages/evidence RLS; changelog has 20260308150000. |
-| 2 | @SlineDocs | Update DEVELOPER_GUIDE: dispute lifecycle, escrow guard, single source, UI guards. | Search for "dispute" and "SafetyViewModel.hasOpenDispute". |
-| 3 | @SlineDocs | Update STRUCTURE (test + migrations), MVP_ROADMAP, Sline_Log; update AppDigram/14_dispute-lifecycle.md. | Diagram no longer says "NO enum"/"NO trigger"; STRUCTURE lists dispute test and migrations. |
+| 1 | @DocsKeeper | Update SUPABASE_SETUP §1, §5.24–5.26, §6.4, §17 per DOCS_REPORT §3. | Grep for dispute_status_enum, disputes_deny_*, dispute_messages/evidence RLS; changelog has 20260308150000. |
+| 2 | @DocsKeeper | Update DEVELOPER_GUIDE: dispute lifecycle, escrow guard, single source, UI guards. | Search for "dispute" and "SafetyViewModel.hasOpenDispute". |
+| 3 | @DocsKeeper | Update STRUCTURE (test + migrations), MVP_ROADMAP, Sline_Log; update AppDigram/14_dispute-lifecycle.md. | Diagram no longer says "NO enum"/"NO trigger"; STRUCTURE lists dispute test and migrations. |
 | 4 | Observability / Implementer | Add entity id to DisputeService hasOpen* error logs (task_id, direct_offer_id, booking_id). | AppLogger.e in each catch has json with correct id. |
 | 5 | Observability / Implementer | Add task_id and event_name to SafetyViewModel.submitDispute catch log. | VM error log includes task_id and safety_dispute_submit_failed. |
 | 6 | (Optional) Implementer | Booking details: use hasOpenDisputeForBooking(booking.id) in _ApproveWithDisputeGuard. | booking_details_screen passes booking.id; service handles null task_id. |
@@ -110,13 +110,13 @@
 | **App (UI guards)** | Remove _ApproveWithDisputeGuard / _ReviewWithDisputeGuard; restore plain Approve/Review buttons. Revert SafetyViewModel/DisputeService hasOpen* methods if not used elsewhere. |
 | **Migration 20260308150000** | Non-trivial: revert view to 20260308110000 definition (with text status comparison); drop triggers; alter status back to text; drop enum. Re-add disputes_status_check if it was dropped. |
 | **Migration 20260308140000** | Revert RPC bodies to prior version; drop RLS on dispute_messages/dispute_evidence; drop deny policies on disputes; drop new indexes. Document in SUPABASE_SETUP. |
-| **Docs** | Revert SlineDocs changes from Fix Plan steps 1–3. |
+| **Docs** | Revert DocsKeeper changes from Fix Plan steps 1–3. |
 
 ---
 
 ## F) Next Actions
 
-1. **Required (docs):** Execute Fix Plan steps 1–3 (@SlineDocs) so SUPABASE_SETUP, DEVELOPER_GUIDE, STRUCTURE, MVP_ROADMAP, Sline_Log, and diagram 14 match the implementation.
+1. **Required (docs):** Execute Fix Plan steps 1–3 (@DocsKeeper) so SUPABASE_SETUP, DEVELOPER_GUIDE, STRUCTURE, MVP_ROADMAP, Sline_Log, and diagram 14 match the implementation.
 2. **Recommended (observability):** Execute steps 4–5 (entity id in dispute error logs; VM submit failure log with task_id and event_name).
 3. **Optional:** Step 6 (booking details guard via hasOpenDisputeForBooking(booking.id)); optional shared DisputeAwareActionButton; optional cache of dispute check in SafetyViewModel.
 4. **Pipeline:** No BLOCKERs; merge of Dispute Lifecycle scope is approved. Optional CodeGuard re-run after doc/logging changes.

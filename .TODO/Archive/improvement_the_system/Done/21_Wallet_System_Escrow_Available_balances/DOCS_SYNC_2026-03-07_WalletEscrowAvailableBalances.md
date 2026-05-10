@@ -50,7 +50,7 @@ No broken paths found; no DOCS_REFERENCE_FIX required.
 
 ---
 
-## 4. Cross-links (for SlineDocs)
+## 4. Cross-links (for DocsKeeper)
 
 - Plan: `.TODO/PLAN_WalletEscrowAvailableBalances_2026-03-07_CRITIC.md`  
 - Execution log: `.TODO/EXECUTION_LOG_PLAN_WalletEscrowAvailableBalances_2026-03-07.md`  

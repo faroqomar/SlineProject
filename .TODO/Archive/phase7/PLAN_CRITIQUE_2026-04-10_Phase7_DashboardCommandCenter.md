@@ -122,7 +122,7 @@
 - **Gap:** Phase 4 says "Modify `activity_feed_preview.dart` only" but Phase 4.2 modifies `overview_tab.dart` (wrapping in `AnimatedSize`).
 - **Why it will break:** Executor may skip reading `overview_tab.dart` before modifying it.
 - **Fix:** Update Phase 4 "How" field to: "Modify `activity_feed_preview.dart` and `overview_tab.dart`."
-- **Owner:** @SlinePlanner
+- **Owner:** @Planner
 - **Acceptance check:** "How" field lists both files.
 
 ---

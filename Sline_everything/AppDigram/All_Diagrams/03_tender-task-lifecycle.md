@@ -70,7 +70,7 @@ stateDiagram-v2
 **Diagram name (exact):** `03_tender-task-lifecycle`  
 **Version:** v2.0 FINAL  
 **Date:** 2026-03-06  
-**Owner/author:** Backend + Mobile teams; @SlineDocs (documentation)
+**Owner/author:** Backend + Mobile teams; @DocsKeeper (documentation)
 
 ---
 

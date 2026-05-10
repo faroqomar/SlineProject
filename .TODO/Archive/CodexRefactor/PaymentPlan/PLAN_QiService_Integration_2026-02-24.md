@@ -261,12 +261,12 @@
 
 ## Phase 5: Documentation Sync
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
-- [ ] (@SlineDocs) Update `Sline_everything/DEVELOPER_GUIDE.md` — payment flow section
-- [ ] (@SlineDocs) Update `Sline_everything/SUPABASE_SETUP.md` — gateway_escrow event, webhook
-- [ ] (@SlineDocs) Update `Sline_everything/STRUCTURE.md` — QiCardPaymentService
-- [ ] (@SlineDocs) Update `Sline_everything/Sline_Log.md` — QiCard integration
+- [ ] (@DocsKeeper) Update `Sline_everything/DEVELOPER_GUIDE.md` — payment flow section
+- [ ] (@DocsKeeper) Update `Sline_everything/SUPABASE_SETUP.md` — gateway_escrow event, webhook
+- [ ] (@DocsKeeper) Update `Sline_everything/STRUCTURE.md` — QiCardPaymentService
+- [ ] (@DocsKeeper) Update `Sline_everything/Sline_Log.md` — QiCard integration
 - **Verify (@Sentinel):** Docs match code
 
 ---

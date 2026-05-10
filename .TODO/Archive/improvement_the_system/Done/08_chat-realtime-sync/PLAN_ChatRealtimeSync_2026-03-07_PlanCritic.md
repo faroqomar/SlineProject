@@ -302,7 +302,7 @@
 
 **Steps:**
 
-5.1 **(@SlineDocs)**  
+5.1 **(@DocsKeeper)**  
 - Update DEVELOPER_GUIDE/Chat Feature.md: presence table, presence service, receipt lifecycle, realtime merge strategy, feature flag, 15s TTL.  
 - Update SUPABASE_SETUP.md: conversation_presence, messages RLS (including UPDATE), realtime publication.  
 - Update STRUCTURE.md or MVP_ROADMAP.md if chat surface changed.  

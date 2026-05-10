@@ -61,7 +61,7 @@
 | UI can call RPC when revisions already exhausted | Wasted call and confusing generic error. | In work item detail screen, when `revisionsUsed >= revisionsTotal`, disable "Request revision" and optionally show "No revisions left". | Frontend/Pixel | With 0 remaining, button disabled or hidden; no RPC call. |
 | Migration does not enforce order of checks | If UPDATE ran before guards, state could be corrupted. | In new migration, for both task and booking: SELECT row into variable; check client; check status = 'delivered'; check revisions_used < revisions_total; then single UPDATE. | Backend/Supabase_Ops | Read migration SQL; no UPDATE before both IFs. |
 | Column existence not confirmed before migration | Applying RPC that references revisions_total could fail if column missing. | Phase 1.0: list columns for tasks and bookings (Supabase MCP or SQL). If either column missing on either table, add prerequisite migration and apply first. | Backend/Supabase_Ops | Migration applies without error on target project. |
-| Exception contract not written down | Backend might change message; app might expect different string. | Add "Contract" subsection in plan and in SUPABASE_SETUP: exact three messages. ErrorMapper uses contains(); document substrings. | APIContract/SlineDocs | SUPABASE_SETUP and plan both list the three messages. |
+| Exception contract not written down | Backend might change message; app might expect different string. | Add "Contract" subsection in plan and in SUPABASE_SETUP: exact three messages. ErrorMapper uses contains(); document substrings. | APIContract/DocsKeeper | SUPABASE_SETUP and plan both list the three messages. |
 
 ---
 
@@ -249,8 +249,8 @@
 **How:** Update SUPABASE_SETUP and any work flow doc.  
 **Result:** §9.2 and §1 describe guards and three exception messages.
 
-- [ ] (@SlineDocs) `Sline_everything/SUPABASE_SETUP.md` §9.2: state that `rpc_request_revision` checks status = 'delivered' and revisions_used < revisions_total; list the three exception messages. §1 Key Business Rules: "Revision requests enforce status and limit (rpc_request_revision)."
-- [ ] (@SlineDocs) If DEVELOPER_GUIDE or work flow doc describes revision flow, align with new behavior and error messages.
+- [ ] (@DocsKeeper) `Sline_everything/SUPABASE_SETUP.md` §9.2: state that `rpc_request_revision` checks status = 'delivered' and revisions_used < revisions_total; list the three exception messages. §1 Key Business Rules: "Revision requests enforce status and limit (rpc_request_revision)."
+- [ ] (@DocsKeeper) If DEVELOPER_GUIDE or work flow doc describes revision flow, align with new behavior and error messages.
 
 **GATE CHECK (Phase 5):** Docs updated and consistent with implementation.
 

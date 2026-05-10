@@ -1,8 +1,8 @@
-# SlineDocs Report: Dashboard Wallet Tab + Wallet Escrow
+# DocsKeeper Report: Dashboard Wallet Tab + Wallet Escrow
 
 **Scope:** Dashboard Wallet Tab + Wallet Escrow Available Balances  
 **Date:** 2026-03-07  
-**Pipeline:** SlineDocs (3/4)
+**Pipeline:** DocsKeeper (3/4)
 
 ---
 

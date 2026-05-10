@@ -58,7 +58,7 @@ No new code or DB changes in this sync; only documentation and cross-references.
 
 ## 4. Why each update was needed
 
-- **Sline_Log:** SlineDocs workflow requires every meaningful change to be in the master log with plan/execution/verification refs.
+- **Sline_Log:** DocsKeeper workflow requires every meaningful change to be in the master log with plan/execution/verification refs.
 - **MVP_ROADMAP:** QiCard hardening is complete for the intent path and Realtime; status must be ✅ and notes must match reality.
 - **STRUCTURE:** Migration list must include 20260308200000 and 20260308200100 and link to plan/execution for discoverability.
 - **ARCHITECTURE_ANALYSIS:** High-level architecture doc should reference the latest payment hardening and plan for traceability.

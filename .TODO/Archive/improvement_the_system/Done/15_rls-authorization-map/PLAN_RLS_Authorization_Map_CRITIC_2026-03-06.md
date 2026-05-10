@@ -709,15 +709,15 @@ test('teardownForRoleSwitch clears messages cache', () {
 **How:**
 
 #### 5.1 Update SUPABASE_SETUP.md
-- [ ] (@SlineDocs) Update §13 with current policy list
-- [ ] (@SlineDocs) Update §14 with `security_invoker` requirement
+- [ ] (@DocsKeeper) Update §13 with current policy list
+- [ ] (@DocsKeeper) Update §14 with `security_invoker` requirement
 
 #### 5.2 Update DEVELOPER_GUIDE.md
-- [ ] (@SlineDocs) Document role switch flow
-- [ ] (@SlineDocs) Document `RoleSwitchAware` mixin usage
+- [ ] (@DocsKeeper) Document role switch flow
+- [ ] (@DocsKeeper) Document `RoleSwitchAware` mixin usage
 
 #### 5.3 Archive Old Diagrams
-- [ ] (@SlineDocs) Add note to old `15_rls-authorization-map.md` pointing to new audit files
+- [ ] (@DocsKeeper) Add note to old `15_rls-authorization-map.md` pointing to new audit files
 
 #### PHASE 5 GATE CHECK
 ```

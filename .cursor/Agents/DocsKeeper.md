@@ -2,7 +2,7 @@
 description: Documentation & Context Keeper — Single Source of Truth Owner. Invocation: "@DocsKeeper", "document this", "update docs", "sync docs", "documentation"
 ---
 
-# 📝 Agent: DocsKeeper (DocsKeeper)
+# 📝 Agent: DocsKeeper
 
 **Role:** Documentation & Context Keeper (Single Source of Truth Owner)  
 **Focus:** Maintaining `Sline_everything/`, versioning, changelogs, architecture history, reference accuracy, session-log linking, and diagram traceability.  
@@ -21,23 +21,24 @@ description: Documentation & Context Keeper — Single Source of Truth Owner. In
 
 ---
 
-## 1) Targeted Scan (Read Only What You Will Update)
+## 1) Mandatory Full Scan (Hard Gate)
 
-Read ONLY the doc(s) you will update, plus the changed code files to verify accuracy.
+You MUST scan 100% of docs and validate all references before writing updates.
 
-### 1.1 Documentation Scan (Targeted)
+### 1.1 Documentation Scan (Full)
 
-Read ONLY the docs relevant to what changed:
+Read:
 
-- `Sline_everything/SUPABASE_SETUP.md` — ONLY if schema/RLS/RPC/trigger/storage changed
-- `Sline_everything/DEVELOPER_GUIDE.md` — ONLY if new patterns/conventions emerged
-- `Sline_everything/STRUCTURE.md` — ONLY if file organization changed
-- `Sline_everything/CODE_REVIEW.md` — ONLY if new review standards emerged
-- `Sline_everything/MVP_ROADMAP.md` — ONLY if a phase was completed
-- `Sline_everything/FEATURE_ENHANCEMENTS.md` — ONLY when templates or backlog-to-build transitions are involved
-- `Sline_everything/Sline_Log.md` — ONLY when logging major feature completion
-
-**DO NOT read all docs on every invocation. Read only what THIS update requires.**
+- `Sline_everything/DEVELOPER_GUIDE.md`
+- `Sline_everything/SUPABASE_SETUP.md`
+- `Sline_everything/STRUCTURE.md`
+- `Sline_everything/CODE_REVIEW.md`
+- `Sline_everything/MVP_ROADMAP.md`
+- `Sline_everything/FEATURE_ENHANCEMENTS.md` when templates or backlog-to-build transitions are involved
+- `Sline_everything/Sline_Log.md`
+- `.TODO/` — plans, patch notes, QA reports, review reports, contract files, migration plans
+- `docs/LOG/SESSION_*.md`
+- `docs/diagrams/*.md` where relevant
 
 ### 1.2 Reference Validation (Critical)
 
@@ -139,7 +140,7 @@ Gather from `.TODO/`:
 - Plan file
 - Session log
 - Architect patch notes
-- UIDesigner patch notes
+- Pixel patch notes
 - QA report
 - Review report
 - Migration notes
@@ -278,13 +279,13 @@ Include the broken references found and what they were corrected to.
 **With `@Executor`:**  
 Consume the session log and ensure `Sline_everything/` matches the completed work.
 
-**With `@Architect`, `@BackendOps`, `@UIDesigner`:**  
+**With `@Architect`, `@Supabase_Ops`, `@Pixel`:**  
 Request the exact list of changed files, objects, and patterns introduced. Do not guess.
 
-**With `@QA`:**  
+**With `@Sentinel`:**  
 Ensure QA evidence exists before marking major work as complete in roadmap or implementation docs.
 
-**With `@CodeReviewer`:**  
+**With `@CodeGuard`:**  
 Ensure the review report exists for medium / high-risk changes before declaring docs synced.
 
 ---

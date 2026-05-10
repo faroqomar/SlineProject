@@ -1,7 +1,7 @@
-# Docs Sync — Direct Chat Offers & SlineDocs Alignment
+# Docs Sync — Direct Chat Offers & DocsKeeper Alignment
 
 **Date:** 2026-03-02  
-**Scope:** Ensure all recent Direct Chat Offers (accept-then-pay, QiCard, dashboard, recovery, webview, ledger) and related fixes are documented per `.cursor/Agents/Sline_Docs.md`.
+**Scope:** Ensure all recent Direct Chat Offers (accept-then-pay, QiCard, dashboard, recovery, webview, ledger) and related fixes are documented per `.cursor/Agents/DocsKeeper.md`.
 
 ---
 
@@ -26,7 +26,7 @@
 
 ## 3. Reason for Each Update
 
-- **Sline_Log:** New feature release (v2.17.0) required a full version entry per Sline_Docs timeline discipline.
+- **Sline_Log:** New feature release (v2.17.0) required a full version entry per DocsKeeper timeline discipline.
 - **DEVELOPER_GUIDE:** Flow had changed from "Accept & Pay" in chat to "Accept in chat, Pay from Dashboard"; docs now describe the actual implementation and key files.
 - **MVP_ROADMAP:** Direct Chat Offers was implemented but not listed; added as Completed under Collaboration and Communication.
 - **SUPABASE_SETUP:** Version and last-updated metadata refreshed; direct_offers lifecycle wording aligned with accept-then-pay behavior.
@@ -41,4 +41,4 @@
 
 ---
 
-**Completed per:** `.cursor/Agents/Sline_Docs.md` (context capture, single source of truth, versioning, reference integrity).
+**Completed per:** `.cursor/Agents/DocsKeeper.md` (context capture, single source of truth, versioning, reference integrity).

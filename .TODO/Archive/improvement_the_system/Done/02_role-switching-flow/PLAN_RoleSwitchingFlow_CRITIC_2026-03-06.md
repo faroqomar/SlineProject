@@ -602,7 +602,7 @@ class RoleSwitchError {
 - [ ] (@Sentinel) Deploy to staging: verify both flag values work
 - [ ] (@Sentinel) Production rollout: Day 1 (5%), Day 3 (50%), Day 7 (100%)
 - [ ] (@Sentinel) Calendar reminder: 2026-03-20 - remove legacy code
-- [ ] (@SlineDocs) Update all documentation
+- [ ] (@DocsKeeper) Update all documentation
 
 **Output artifact:** Feature flag working, monitoring dashboard live, docs updated  
 **GATE CHECK:** Staging proves flag works; production 5% rollout successful; docs complete
@@ -623,7 +623,7 @@ class RoleSwitchError {
 - [ ] (@Architect) Remove `ProfileRepository.changeRole()` method
 - [ ] (@Supabase_Ops) Migration: Remove legacy join-based RLS policies
 - [ ] (@DevOps) Remove `enable_atomic_role_switch` remote config
-- [ ] (@SlineDocs) Final docs pass: remove references to legacy flow
+- [ ] (@DocsKeeper) Final docs pass: remove references to legacy flow
 
 **Output artifact:** Clean codebase, no legacy references  
 **GATE CHECK:** Code search for `changeRole` returns only new method; all tests still pass

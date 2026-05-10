@@ -3,7 +3,7 @@
 **Scope:** Dispute Lifecycle — escrow guard, RLS, dispute enum, UI dispute guards, vw_unified_work_items disputed check.  
 **Plan:** `.TODO/PLAN_DisputeLifecycle_2026-03-08.md`  
 **Execution:** `.TODO/EXECUTION_LOG_DisputeLifecycle_2026-03-08.md`  
-**Author:** @SlineDocs (Orchestrator pipeline)
+**Author:** @DocsKeeper (Orchestrator pipeline)
 
 ---
 

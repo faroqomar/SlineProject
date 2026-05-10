@@ -1,7 +1,7 @@
 # Docs Sync: Ledger Event Flow (09_ledger-event-flow)
 
 **Date:** 2026-03-08  
-**Scope:** SlineDocs workflow — ensure everything up to date after Ledger Event Flow implementation and report fixes.  
+**Scope:** DocsKeeper workflow — ensure everything up to date after Ledger Event Flow implementation and report fixes.  
 **Trigger:** User request "make sure Everything up to date using @.agents/workflows/slinedocs.md"
 
 ---
@@ -13,7 +13,7 @@
 | `Sline_everything/STRUCTURE.md` | Added `lib/core/utils/ledger_forensics.dart` to core utils description and to "Important current core files"; updated "Last Updated" note. | New file added for ledger forensics; single source of truth for folder layout. |
 | `Sline_everything/DEVELOPER_GUIDE.md` | Finance & Payment Ledger §: clarified that forensics are built via `lib/core/utils/ledger_forensics.dart` and merged by LedgerService. Core Module table: added row for `ledger_forensics.dart`. | Explicit code paths; no vague "forensics" without file reference. |
 | `Sline_everything/DEVELOPER_GUIDE/Wallet_Feature.md` | Added sentence: forensics (session_id, request_id) are built by `lib/core/utils/ledger_forensics.dart` and merged by LedgerService on every ledger call. | Wallet feature doc must point to forensics source. |
-| `Sline_everything/Sline_Log.md` | Ledger Event Flow entry: renamed "🔗 References" to "🧪 Verification" and added explicit "Review: CODEGUARD_REVIEW_2026-03-07_LedgerEventFlow.md". | Align with SlineDocs Sline_Log template (Plan, Execution Log, Review). |
+| `Sline_everything/Sline_Log.md` | Ledger Event Flow entry: renamed "🔗 References" to "🧪 Verification" and added explicit "Review: CODEGUARD_REVIEW_2026-03-07_LedgerEventFlow.md". | Align with DocsKeeper Sline_Log template (Plan, Execution Log, Review). |
 
 ---
 
@@ -47,4 +47,4 @@
 1. **STRUCTURE.md:** New file `ledger_forensics.dart` must appear in the folder guide so developers find the single forensics source.
 2. **DEVELOPER_GUIDE.md:** Finance section and Core table are the system map; they must name the forensics util and LedgerService so code and docs stay in sync.
 3. **Wallet_Feature.md:** Wallet is the main user-facing entry for ledger; it must document where forensics come from.
-4. **Sline_Log.md:** Verification section must list Plan, Execution Log, and Review per SlineDocs template for traceability.
+4. **Sline_Log.md:** Verification section must list Plan, Execution Log, and Review per DocsKeeper template for traceability.

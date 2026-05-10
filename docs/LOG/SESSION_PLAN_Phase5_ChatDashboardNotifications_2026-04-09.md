@@ -72,7 +72,7 @@ Phase 5 UI redesign executed across 17 files (Chat, Notifications, Dashboard). A
 
 ### [PLAN CREATED]
 - Plan: .TODO/PLAN_Phase5_ChatDashboardNotifications_2026-04-09.md
-- Created by: @SlinePlanner
+- Created by: @Planner
 - Scope: UI redesign of Chat (10 files, ~2,343 lines), Notifications (3 files, ~345 lines), and remaining Dashboard components (4 files, ~1,074 lines). Total: 17 files, ~4,343 lines.
 - PRISM-equivalent phase in SLine roadmap: Master Plan Phase 6 (Chat & Messaging) + Phase 7 (Dashboard) partial
 - Estimated phases in plan: 13 (0-12 including preconditions, QA, and docs sync)

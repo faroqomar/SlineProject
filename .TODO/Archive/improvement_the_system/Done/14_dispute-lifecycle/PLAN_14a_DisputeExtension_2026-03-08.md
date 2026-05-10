@@ -190,7 +190,7 @@
 
 ## Phase 9: QA & Documentation (Extension)
 
-> Primary: @Sentinel, @SlineDocs
+> Primary: @Sentinel, @DocsKeeper
 
 ### 9.1 QA
 
@@ -202,8 +202,8 @@
 
 ### 9.2 Documentation
 
-- [ ] **9.2.1** (@SlineDocs) Update SUPABASE_SETUP: §9.1 rpc_submit_delivery (Frozen guard), §9.2 rpc_request_revision (Frozen guard), new § for rpc_submit_dispute (if added); partial unique indexes on disputes; eligibility and single-active rule.  
-- [ ] **9.2.2** (@SlineDocs) Update DEVELOPER_GUIDE: dispute entry points (booking, task, direct_offer); Frozen behaviour (submit_delivery, request_revision blocked); banner copy (open vs active).  
+- [ ] **9.2.1** (@DocsKeeper) Update SUPABASE_SETUP: §9.1 rpc_submit_delivery (Frozen guard), §9.2 rpc_request_revision (Frozen guard), new § for rpc_submit_dispute (if added); partial unique indexes on disputes; eligibility and single-active rule.  
+- [ ] **9.2.2** (@DocsKeeper) Update DEVELOPER_GUIDE: dispute entry points (booking, task, direct_offer); Frozen behaviour (submit_delivery, request_revision blocked); banner copy (open vs active).  
 - **GATE (@Sentinel):** Docs match code and DB.
 
 ---

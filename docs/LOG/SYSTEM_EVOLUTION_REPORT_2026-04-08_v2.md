@@ -12,7 +12,7 @@
 
 - **Most common failure type:** Flutter API misuse in test code (7 mistakes across 2 sessions)
 - **Most frequently flagged agent:** @Pixel (7 mistakes), @Sentinel (7 mistakes, all test-related)
-- **Highest-value improvement:** Add "Value Extraction from Codebase" mandatory workflow to @SlinePlanner — prevents the 3 wrong token values caught by @PlanCritic
+- **Highest-value improvement:** Add "Value Extraction from Codebase" mandatory workflow to @Planner — prevents the 3 wrong token values caught by @PlanCritic
 - **MCP servers recommended:** None (no evidence of manual work that a tool would automate)
 - **New rules to add:** 4 (detailed below)
 - **Agents needing significant rewrites:** None
@@ -22,13 +22,13 @@
 
 ## 1) Rule Gaps (Must Add)
 
-### RG-1: @SlinePlanner — Token Value Extraction Workflow
+### RG-1: @Planner — Token Value Extraction Workflow
 
-**Evidence:** LayoutTokens Phase 0.7 session — @SlinePlanner proposed `bottomNavHeight = 64` (actual: 70), `buttonHeight = 48` (actual: 54), `circleIconButtonSize = 48` (actual: 40 visual / 48 touch). All 3 caught by @PlanCritic before execution.
+**Evidence:** LayoutTokens Phase 0.7 session — @Planner proposed `bottomNavHeight = 64` (actual: 70), `buttonHeight = 48` (actual: 54), `circleIconButtonSize = 48` (actual: 40 visual / 48 touch). All 3 caught by @PlanCritic before execution.
 
 **Pattern:** 1 session, 3 mistakes. Single-session but HIGH impact — wrong token values would have broken the zero-visual-change invariant across every widget migration.
 
-**Rule text to add to `Sline_Planner.md` after §2.2.5:**
+**Rule text to add to `Planner.md` after §2.2.5:**
 
 ```markdown
 ### 2.2.6 Token Value Extraction (Required When Planning Token Files)
@@ -40,7 +40,7 @@ When the plan creates a new token or constant file (e.g., `app_layout.dart`, `ap
 4. If actual differs from planned, use the ACTUAL value (zero visual change rule).
 5. If the plan creates icon/size/spacing tokens, grep `AppDimens` for overlap. Remove any token that duplicates an existing `AppDimens` value with a similar name.
 
-Evidence: LayoutTokens Phase 0.7 — @SlinePlanner proposed 3 wrong values (bottomNavHeight 64→70, buttonHeight 48→54, circleIconButtonSize conflated 40/48) because values came from the Master Plan, not the actual codebase. @PlanCritic caught all 3.
+Evidence: LayoutTokens Phase 0.7 — @Planner proposed 3 wrong values (bottomNavHeight 64→70, buttonHeight 48→54, circleIconButtonSize conflated 40/48) because values came from the Master Plan, not the actual codebase. @PlanCritic caught all 3.
 ```
 
 ---
@@ -205,7 +205,7 @@ This rule applies to BOTH production code AND test code. Test files use the same
 
 | Priority | Action | Agent | Evidence Sessions | Type |
 |----------|--------|-------|-------------------|------|
-| **P1** | Add RG-1: Token Value Extraction Workflow | @SlinePlanner | LayoutTokens | Rule Gap |
+| **P1** | Add RG-1: Token Value Extraction Workflow | @Planner | LayoutTokens | Rule Gap |
 | **P2** | Add RG-3: Widget Test Finder Best Practices | @Sentinel | CoreWidget, Phase2 | Rule Gap (Systemic) |
 | **P3** | Amend RC-1: @Pixel API verification → include test code | @Pixel | DesignSystem, CoreWidget | Rule Clarity (Systemic) |
 | **P4** | Add RG-2: Intentional Hardcoded Exception Documentation | @Pixel | LayoutTokens | Rule Gap |
@@ -233,7 +233,7 @@ This rule applies to BOTH production code AND test code. Test files use the same
 
 | Rule | Agent | Status |
 |------|-------|--------|
-| RG-1: Token Value Extraction Workflow | @SlinePlanner §2.2.6 | APPLIED — added to Sline_Planner.md |
+| RG-1: Token Value Extraction Workflow | @Planner §2.2.6 | APPLIED — added to Planner.md |
 | RG-2: Hardcoded Exception Documentation | @Pixel §3.4 | APPLIED — added to Pixel.md |
 | RG-3: Widget Test Finder Best Practices | @Sentinel §11 | ALREADY EXISTS — 6 rules covering all patterns |
 | RC-1: API Verification → include test code | @Pixel §3.3 IMPORTANT note | ALREADY EXISTS — "BOTH production code AND test code" amendment present |
@@ -266,7 +266,7 @@ This rule applies to BOTH production code AND test code. Test files use the same
 | @Pixel | 4 | 7 (+3 from CoreWidget) | STABLE — new sessions added, but mistakes are session-specific API issues, not worsening |
 | @Executor | 2 | 2 | STABLE — rules added after DesignSystem session prevented recurrence |
 | @Sentinel | 0 | 7 (newly attributed) | NEW DATA — CoreWidget test mistakes now attributed to @Sentinel |
-| @SlinePlanner | 0 | 3 (planning) | NEW DATA — LayoutTokens planning mistakes caught by @PlanCritic before execution |
+| @Planner | 0 | 3 (planning) | NEW DATA — LayoutTokens planning mistakes caught by @PlanCritic before execution |
 | @PlanCritic | 0 | 0 | STRONG — caught 7 critical gaps in LayoutTokens, 6 gaps in DesignSystem |
 | @Orchestrator | 0 | 0 | STRONG — correctly identified 17 findings in LayoutTokens post-execution |
 

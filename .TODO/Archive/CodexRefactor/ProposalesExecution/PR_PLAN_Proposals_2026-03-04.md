@@ -21,10 +21,10 @@
 - **Contents**: Phase 1 migrations (if not in separate DB-only PR), Phase 4 integration/manual/SQL, Phase 5 docs, RELEASE_CHECKLIST completion.
 - **Acceptance**: All release gates pass; docs updated.
 - **Rollback**: Per rollback plan (migrations revert or forward-fix).
-- **Reviewer**: @Supabase_Ops, @Sentinel, @SlineDocs.
+- **Reviewer**: @Supabase_Ops, @Sentinel, @DocsKeeper.
 
 ## Reviewer checklist (per slice)
 
 - No direct Supabase in views; AppLogger used; no print().
 - Compatibility exports documented in DEPRECATION_Proposals.
-- Docs-sync requirements in PR3 and release checklist (per @SlineDocs).
+- Docs-sync requirements in PR3 and release checklist (per @DocsKeeper).

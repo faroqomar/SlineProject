@@ -1,6 +1,6 @@
 # Docs Sync: Phase D Harden (2026-04-04)
 
-## @SlineDocs Full Sync (2026-04-04)
+## @DocsKeeper Full Sync (2026-04-04)
 
 This is the complete documentation sync for Phase D. All 7 core documents updated.
 
@@ -73,7 +73,7 @@ This is the complete documentation sync for Phase D. All 7 core documents update
 - `supabase/functions/_shared/bookin_payment.ts` — CORS tightened
 - `supabase/functions/qicard_webhook_handler/index.ts` — paymentId validation
 
-## @SlineDocs Full Sync Updates (2026-04-04)
+## @DocsKeeper Full Sync Updates (2026-04-04)
 
 ### `Sline_everything/Sline_Log.md`
 - Added: Complete Phase D version entry with all D1–D11 items, bug fixes, metrics, and references
@@ -111,8 +111,8 @@ This is the complete documentation sync for Phase D. All 7 core documents update
 ### Agent Files Updated (System Evolution v3)
 - `.cursor/Agents/Architect.md` — Added §4.7 Lazy Supabase Client Resolution
 - `.cursor/Agents/Executor.md` — Added §3.4 Native Dependency Build Gate, §3.5 Per-Sub-Phase Test Gate, §3.6 CI Guard Exclusion Review
-- `.cursor/Agents/Sline_Planner.md` — Added §1.2 Decomposition Line-Count Feasibility
-- `.cursor/Agents/orchestrator.md` — Added §2.1 Parallel Review Mode
+- `.cursor/Agents/Planner.md` — Added §1.2 Decomposition Line-Count Feasibility
+- `.cursor/Agents/Orchestrator.md` — Added §2.1 Parallel Review Mode
 
 ## References Validated
 - All Flutter file paths verified against `lib/` directory

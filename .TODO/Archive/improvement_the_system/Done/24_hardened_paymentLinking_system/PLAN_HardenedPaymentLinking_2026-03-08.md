@@ -213,11 +213,11 @@
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
-- [ ] (@SlineDocs) Update SUPABASE_SETUP.md: tables payment_intents, payment_events, orphan_payments (columns, RLS, indexes); process_payment_event_ledger new parameter and meta; hardened flow (create intent → gateway → webhook → ledger link).
-- [ ] (@SlineDocs) Update DEVELOPER_GUIDE.md / Hardened Payment Gateway section: intent lifecycle, signature, webhook validation, Realtime resolution, admin orphan queue.
-- [ ] (@SlineDocs) STRUCTURE.md / MVP_ROADMAP.md: reflect intent-based flow and admin views.
+- [ ] (@DocsKeeper) Update SUPABASE_SETUP.md: tables payment_intents, payment_events, orphan_payments (columns, RLS, indexes); process_payment_event_ledger new parameter and meta; hardened flow (create intent → gateway → webhook → ledger link).
+- [ ] (@DocsKeeper) Update DEVELOPER_GUIDE.md / Hardened Payment Gateway section: intent lifecycle, signature, webhook validation, Realtime resolution, admin orphan queue.
+- [ ] (@DocsKeeper) STRUCTURE.md / MVP_ROADMAP.md: reflect intent-based flow and admin views.
 - **Verify (@Sentinel):** Docs match code + live DB reality.
 
 ---

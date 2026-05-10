@@ -3,7 +3,7 @@
 **Scope:** Unified Work View (12_unified-work-view)  
 **Plan:** `.TODO/PLAN_UnifiedWorkView_2026-03-08_CRITIC.md`  
 **Date:** 2026-03-08  
-**Pipeline:** @Architect → @Observability → @SlineDocs → @CodeGuard
+**Pipeline:** @Architect → @Observability → @DocsKeeper → @CodeGuard
 
 ---
 
@@ -56,7 +56,7 @@
 | # | Finding | Severity | Owner | File / Object | Fix |
 |---|---------|----------|--------|----------------|-----|
 | 10 | SUPABASE_SETUP §6.4 and DEVELOPER_GUIDE updated | — | — | — | No change. ✅ |
-| 11 | Sline_Log.md may still mention UnifiedWorkItemFallbackMapper | MED | @SlineDocs | `Sline_everything/Sline_Log.md` | Optional: remove or soften reference in changelog/history. |
+| 11 | Sline_Log.md may still mention UnifiedWorkItemFallbackMapper | MED | @DocsKeeper | `Sline_everything/Sline_Log.md` | Optional: remove or soften reference in changelog/history. |
 
 ---
 
@@ -70,7 +70,7 @@ Optional (non-blocking) fixes; can be done in one small follow-up.
 | 2 | @Architect | In `work_item_details_view_model.dart`, update comment at line 74 to remove "and booking fallback". | Read-through. |
 | 3 | @Observability | Add tag `WorkDetails` (or similar) to success log in WorkItemDetailsViewModel loadData. | Grep for tag. |
 | 4 | @Observability | (Optional) Add debug log in listUnifiedWorkItems with item count on success. | Grep for log. |
-| 5 | @SlineDocs | (Optional) In Sline_Log.md, adjust or remove reference to UnifiedWorkItemFallbackMapper if present. | Grep Sline_Log for fallback mapper. |
+| 5 | @DocsKeeper | (Optional) In Sline_Log.md, adjust or remove reference to UnifiedWorkItemFallbackMapper if present. | Grep Sline_Log for fallback mapper. |
 | 6 | @CodeGuard | Re-run `flutter analyze` and tests; confirm no new issues. | All pass. |
 
 ---

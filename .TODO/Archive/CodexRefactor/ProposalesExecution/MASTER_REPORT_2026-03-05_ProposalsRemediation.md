@@ -1,6 +1,6 @@
 # Master Report: Proposals Remediation 2026-03-05
 
-**Orchestrator pipeline**: Architect → Observability → SlineDocs → CodeGuard  
+**Orchestrator pipeline**: Architect → Observability → DocsKeeper → CodeGuard  
 **Scope**: Proposals Remediation (PLAN_ProposalsRemediation_v2_2026-03-04)  
 **Plan**: `.TODO/Archive/ProposalesExecution/PLAN_ProposalsRemediation_v2_2026-03-04.md`
 
@@ -48,8 +48,8 @@
 ### Docs / reference integrity
 | Severity | Owner | Path / object | Fix recommendation |
 |----------|--------|----------------|--------------------|
-| MED | SlineDocs | DEVELOPER_GUIDE.md § Tender payment | Optional: add one sentence that all payment entry points use openProposalPayment (see Proposals_Feature.md). |
-| LOW | SlineDocs | TASK_TENDER_PAYMENT_PLAN, TENDER_PAYMENT_VERIFICATION_CHECKLIST | Optional: add note that payment entry is now openProposalPayment (historical docs). |
+| MED | DocsKeeper | DEVELOPER_GUIDE.md § Tender payment | Optional: add one sentence that all payment entry points use openProposalPayment (see Proposals_Feature.md). |
+| LOW | DocsKeeper | TASK_TENDER_PAYMENT_PLAN, TENDER_PAYMENT_VERIFICATION_CHECKLIST | Optional: add note that payment entry is now openProposalPayment (historical docs). |
 
 No BLOCKER; no HIGH that blocks release.
 
@@ -64,7 +64,7 @@ All steps are **optional** (no blocking defects).
 | 1 | @Architect | (Optional) Register ProposalRepository and ProposalAwardRepository in main.dart and inject where list/award could use them. | Grep for Provider/Repository; analyze. |
 | 2 | @Architect | (Optional) Switch RequestsListScreen owner list to ProposalRepository.listByTask(isOwner: true) and remove direct profile join from TaskRequestsService for that path. | Owner list still loads; RLS-safe names. |
 | 3 | @Observability | (Optional) Add single log in openProposalPayment e.g. AppLogger.d('Proposals: payment screen opened', tag: 'Proposals'); or pass launcher name. | No PII; tag only. |
-| 4 | @SlineDocs | (Optional) In DEVELOPER_GUIDE.md tender payment paragraph, add: "All payment entry points use openProposalPayment(context, summary) from lib/features/proposals/routes/proposal_payment_route.dart." | Link to Proposals_Feature. |
+| 4 | @DocsKeeper | (Optional) In DEVELOPER_GUIDE.md tender payment paragraph, add: "All payment entry points use openProposalPayment(context, summary) from lib/features/proposals/routes/proposal_payment_route.dart." | Link to Proposals_Feature. |
 | 5 | @CodeGuard | Re-run analyze and test suite before release. | flutter analyze; flutter test (proposals + related). |
 
 ---

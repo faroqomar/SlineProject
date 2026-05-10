@@ -12,7 +12,7 @@
 
 ## Why This File Exists
 
-- `Sline_Docs.md` requires reference integrity and explicit logging when documentation references are wrong or incomplete.
+- `DocsKeeper.md` requires reference integrity and explicit logging when documentation references are wrong or incomplete.
 - The initial `Version 2.16.7` changelog entry documented the cleanup but did not yet cross-link the plan/execution/review artifacts required by the docs workflow.
 
 ## Validation

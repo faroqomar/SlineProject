@@ -1,7 +1,7 @@
 # Docs Sync: Dashboard Remediation + Refresh on All Tabs
 
 **Date:** 2026-03-02  
-**Scope:** Align `Sline_everything/` and version history with dashboard remediation, pull-to-refresh on every tab, and Sline_Docs requirements.
+**Scope:** Align `Sline_everything/` and version history with dashboard remediation, pull-to-refresh on every tab, and DocsKeeper requirements.
 
 ---
 
@@ -35,12 +35,12 @@
 
 ## 4. Why each update was needed
 
-- **DEVELOPER_GUIDE §2.1**: Sline_Docs requires flows and UI behavior to be documented with file paths; pull-to-refresh on every dashboard tab is a UX contract and belongs in “Current dashboard behavior.”
-- **Sline_Log 2.17.2**: Same change set (remediation + refresh) should be traceable in the master timeline with exact paths and doc updates, per Sline_Docs versioning and context capture.
+- **DEVELOPER_GUIDE §2.1**: DocsKeeper requires flows and UI behavior to be documented with file paths; pull-to-refresh on every dashboard tab is a UX contract and belongs in “Current dashboard behavior.”
+- **Sline_Log 2.17.2**: Same change set (remediation + refresh) should be traceable in the master timeline with exact paths and doc updates, per DocsKeeper versioning and context capture.
 
 ---
 
-## 5. Cross-references (per Sline_Docs §4)
+## 5. Cross-references (per DocsKeeper §4)
 
 - Plan: `.TODO/PLAN_Dashboard_Full_Remediation_2026-03-01.md`
 - Execution / reports: `.TODO/EXECUTION_LOG_Dashboard_Full_Remediation_v2_2026-03-01.md`, `.TODO/MASTER_REPORT_2026-03-02_DashboardRemediation.md`, `.TODO/DOCS_REPORT_2026-03-02_DashboardRemediation.md`
@@ -49,4 +49,4 @@
 
 ---
 
-**Produced per** `.cursor/Agents/Sline_Docs.md` §8.1 (Docs Sync Note for major work).
+**Produced per** `.cursor/Agents/DocsKeeper.md` §8.1 (Docs Sync Note for major work).

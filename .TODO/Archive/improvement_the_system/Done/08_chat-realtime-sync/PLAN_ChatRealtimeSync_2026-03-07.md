@@ -230,11 +230,11 @@
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
-- [ ] (@SlineDocs) Update `Sline_everything/DEVELOPER_GUIDE/Chat Feature.md`: presence table, presence service, receipt lifecycle, realtime merge strategy.
-- [ ] (@SlineDocs) Update `Sline_everything/SUPABASE_SETUP.md` if migration adds objects not yet documented; align realtime publication and RLS sections with actual migration.
-- [ ] (@SlineDocs) Update `Sline_everything/STRUCTURE.md` or `MVP_ROADMAP.md` if chat surface or status changes.
+- [ ] (@DocsKeeper) Update `Sline_everything/DEVELOPER_GUIDE/Chat Feature.md`: presence table, presence service, receipt lifecycle, realtime merge strategy.
+- [ ] (@DocsKeeper) Update `Sline_everything/SUPABASE_SETUP.md` if migration adds objects not yet documented; align realtime publication and RLS sections with actual migration.
+- [ ] (@DocsKeeper) Update `Sline_everything/STRUCTURE.md` or `MVP_ROADMAP.md` if chat surface or status changes.
 - **Verify (@Sentinel):** docs match code + live DB reality.
 
 ---

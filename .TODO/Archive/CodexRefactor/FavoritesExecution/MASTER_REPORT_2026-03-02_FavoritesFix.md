@@ -2,7 +2,7 @@
 
 **Scope**: FavoritesFix (PLAN_FavoritesFix_2026-03-01)  
 **Date**: 2026-03-02  
-**Pipeline**: Architect → Observability → SlineDocs → CodeGuard
+**Pipeline**: Architect → Observability → DocsKeeper → CodeGuard
 
 ---
 
@@ -53,7 +53,7 @@
 
 | Severity | Owner | Finding | Fix |
 |----------|--------|---------|-----|
-| MED | SlineDocs | DEVELOPER_GUIDE Favorites §5.2: example still shows List<Map> and listFavorites() | Update snippet to List<FavoriteWithProfile>, add/remove typed result |
+| MED | DocsKeeper | DEVELOPER_GUIDE Favorites §5.2: example still shows List<Map> and listFavorites() | Update snippet to List<FavoriteWithProfile>, add/remove typed result |
 
 ---
 
@@ -64,7 +64,7 @@ Optional improvements (no BLOCKER):
 | Step | Owner | Action | Verification |
 |------|--------|--------|--------------|
 | 1 | Observability | In `favorites_screen.dart` catch block for chat-start failure, add `AppLogger.e('Chat start failed', tag: 'Favorites', error: e);` before showing snackbar | Grep for log; run widget test |
-| 2 | SlineDocs | In DEVELOPER_GUIDE/Favorites Feature.md §5.2, update Dart example: listFavoritesWithProfile returns List<FavoriteWithProfile>; remove or note listFavorites() deprecated; mention FavoritesMutationResult for add/remove | Doc diff; link to CONTRACT_FavoritesMutation |
+| 2 | DocsKeeper | In DEVELOPER_GUIDE/Favorites Feature.md §5.2, update Dart example: listFavoritesWithProfile returns List<FavoriteWithProfile>; remove or note listFavorites() deprecated; mention FavoritesMutationResult for add/remove | Doc diff; link to CONTRACT_FavoritesMutation |
 | 3 | Architect (optional) | Public profile: one-time ensureLoaded (e.g. State with _ensureLoadedDone in didChangeDependencies) | Rebuild count unchanged or lower |
 
 After any step: re-run `flutter analyze` and `flutter test test/features/favorites/`. CodeGuard gate already **APPROVED**; no re-run required unless code changes.

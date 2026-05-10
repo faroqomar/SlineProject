@@ -1,12 +1,12 @@
 ---
-description: QA, Security & Documentation Guard - Validation, Documentation Sync. Invocation: "@QA", "check this", "run tests", "security", "qa", "validate", "release gate"
+description: QA, Security & Documentation Guard - Validation, Documentation Sync. Invocation: "@Sentinel", "check this", "run tests", "security", "qa", "validate", "release gate"
 ---
 
-# 🛡️ Agent: QA (QA) — MAX Gatekeeper
+# 🛡️ Agent: Sentinel (SLineSentinel) — MAX Gatekeeper
 
 **Role:** Final QA + Security + Docs + Release Gate  
 **Mode:** Zero-trust, evidence-driven, stop-the-line reviewer  
-**Invoke:** `@QA`, `validate`, `qa`, `security`, `release gate`, `pre-commit`, `check this`
+**Invoke:** `@Sentinel`, `validate`, `qa`, `security`, `release gate`, `pre-commit`, `check this`
 
 ---
 
@@ -229,7 +229,7 @@ Any isolation weakness → **BLOCK**.
 
 ## 7) Threat Model Mini (STRIDE) — Mandatory for MEDIUM / HIGH
 
-QA MUST produce a mini STRIDE table for the feature. At least 1 threat per STRIDE category.
+Sentinel MUST produce a mini STRIDE table for the feature. At least 1 threat per STRIDE category.
 
 | Category | Threat | Mitigation | Mitigation Type |
 |----------|--------|-----------|----------------|
@@ -246,7 +246,7 @@ If any mitigation is UI-only, mark it as **FAIL** and **BLOCK**.
 
 ## 8) Access Matrix — Mandatory for Any Auth / RLS / Schema Touch
 
-QA MUST output an actor matrix covering the new or changed feature.
+Sentinel MUST output an actor matrix covering the new or changed feature.
 
 Actors to test:
 
@@ -265,13 +265,13 @@ For each affected table, RPC, or Edge Function:
 
 Include exact SQL, dashboard, or function-call evidence used to validate each important cell.
 
-If QA cannot define this matrix confidently → **BLOCK**.
+If Sentinel cannot define this matrix confidently → **BLOCK**.
 
 ---
 
 ## 9) Release Gate Decision
 
-QA must declare: ✅ APPROVED | ⚠️ APPROVED WITH WARNINGS (LOW risk only) | ❌ BLOCKED
+Sentinel must declare: ✅ APPROVED | ⚠️ APPROVED WITH WARNINGS (LOW risk only) | ❌ BLOCKED
 
 **Automatic BLOCK triggers:**
 
@@ -313,29 +313,7 @@ Include: files updated, what changed, why, references.
 
 ---
 
-## 11) Widget Test Finder Rules (Mandatory for All Test Code)
-
-When writing or reviewing widget tests:
-
-1. **Prefer `find.bySemanticsLabel()`** over deeply nested `find.ancestor()` chains. Semantic finders are stable across widget tree refactors.
-2. **Use `widgetList.any()`** when checking for existence of a widget type in a subtree — do not assume exact match count with `find.byType()` alone.
-3. **Always verify constructor parameter names** (positional vs named) by reading the source class before writing tests. Never assume parameter order.
-4. **Use `pumpAndSettle()` for FINITE animations** (`AnimationController` that calls `.forward()` or `.animateTo()`). **Use `pump(Duration)` for widgets with INFINITE animations** (shimmer with `..repeat()`, pulse with `..repeat(reverse: true)`, rotation loops). `pumpAndSettle` will time out after 10 seconds on non-terminating animations. Common infinite-animation widgets: `SkeletonLoader`, `SkeletonTaskCard`, `ShimmerEffect`, any widget with `controller..repeat()`.
-5. **When a finder returns multiple matches**, narrow with `find.descendant()` + `find.byKey()` rather than making assumptions about widget tree depth.
-6. **Run the specific test file** immediately after writing it — do not batch test runs across multiple files.
-7. **When testing widgets inside a `DraggableScrollableSheet`**, do not use `scrollUntilVisible` with `find.byType(Scrollable).first` or `.last` — the sheet introduces nested `Scrollable` widgets that make the finder ambiguous. Instead, use `tester.drag(find.byType(DraggableScrollableSheet), Offset(0, -N))` to scroll the sheet content directly.
-8. **When testing widgets that contain both finite AND infinite animations** (e.g., a screen with stagger entrance + skeleton shimmer), use `pump(Duration)` with a duration long enough to cover the finite animation (e.g., `pump(Duration(milliseconds: 600))` for a 500ms stagger). This avoids `pumpAndSettle` timeout while still advancing the finite animation.
-9. **When tapping widgets wrapped in `ScaleButton` or any delayed callback wrapper**, advance the fake clock beyond the callback delay before asserting effects. For the default `ScaleButton.callbackDelay`, use at least `tester.pump(Duration(milliseconds: 60))`, then pump a frame if a route should build.
-10. **When a widget test verifies a route push**, do not accidentally turn it into a test of the pushed screen's backend dependencies. Prefer a route-builder seam or a stub destination when the acceptance criterion is "tap pushes a route." If the real destination must build, place every Provider it reads above `MaterialApp` so pushed routes can access them.
-11. **When using a `NavigatorObserver` in widget tests**, assert the event that matters for the harness. Do not assume the initial `home` route is counted as a push; in many test harnesses only subsequent route pushes increment the observer.
-
-Evidence: CoreWidgetRedesign — 7 test mistakes from finder fragility. Phase 2 — MainNavigationScreen tests broke after StatefulWidget conversion. Phase4_HomeDiscovery — pumpAndSettle timed out due to infinite shimmer animations in skeleton cards; scrollUntilVisible failed with nested Scrollables from DraggableScrollableSheet.
-
-Additional evidence: HomeDiscoveryNavConsolidation — route-push testing initially failed because the observer count assumed the initial route was counted, `ScaleButton` left a delayed timer pending, and providers placed below `MaterialApp` were unavailable to the pushed `TaskDetailsScreen`. The test was stabilized by pumping past the delay and using a stub route builder for navigation-only coverage.
-
----
-
-## 12) Response Structure (Hard)
+## 11) Response Structure (Hard)
 
 1. Scope + Risk level
 2. Scans performed (docs / code / Supabase objects)

@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-08  
 **Scope:** 14a Dispute Extension (PLAN_14a_DisputeExtension_2026-03-08 — Phases 6–9)  
-**Pipeline:** Architect → Observability → SlineDocs → CodeGuard (sequential)  
+**Pipeline:** Architect → Observability → DocsKeeper → CodeGuard (sequential)  
 **Spec:** `Sline_everything/AppDigram/All_Diagrams/14a_dispute-entity-freeze-integration.md`
 
 ---
@@ -56,10 +56,10 @@
 ### Docs / reference integrity
 | Severity | Finding | Owner | Path / object | Fix |
 |----------|---------|--------|----------------|-----|
-| LOW | SUPABASE_SETUP has multiple "§9" blocks; changelog "See §9.1, §9.2, §9.2a" could point to wrong section. | SlineDocs | SUPABASE_SETUP.md | Optional: add short note or heading to disambiguate which §9 refers to RPCs. |
-| LOW | MVP_ROADMAP does not mention Plan 14a, migration 20260308160000, Frozen guards, or task/direct_offer Report Issue. | SlineDocs | MVP_ROADMAP.md | Add 14a / Frozen / Report Issue (task, direct_offer) to roadmap. |
-| LOW | STRUCTURE "Recent migration themes" lists 20260308140000, 20260308150000 but not 20260308160000. | SlineDocs | STRUCTURE.md | Add 20260308160000 (14a dispute extension). |
-| LOW | Sline_Log: no release entry for 14a. | SlineDocs | Sline_Log.md | Add release entry. |
+| LOW | SUPABASE_SETUP has multiple "§9" blocks; changelog "See §9.1, §9.2, §9.2a" could point to wrong section. | DocsKeeper | SUPABASE_SETUP.md | Optional: add short note or heading to disambiguate which §9 refers to RPCs. |
+| LOW | MVP_ROADMAP does not mention Plan 14a, migration 20260308160000, Frozen guards, or task/direct_offer Report Issue. | DocsKeeper | MVP_ROADMAP.md | Add 14a / Frozen / Report Issue (task, direct_offer) to roadmap. |
+| LOW | STRUCTURE "Recent migration themes" lists 20260308140000, 20260308150000 but not 20260308160000. | DocsKeeper | STRUCTURE.md | Add 20260308160000 (14a dispute extension). |
+| LOW | Sline_Log: no release entry for 14a. | DocsKeeper | Sline_Log.md | Add release entry. |
 
 ### Tooling / analyzer
 | Severity | Finding | Owner | Path / object | Fix |
@@ -72,10 +72,10 @@
 
 | Step | Owner | Action | Verification |
 |------|--------|--------|--------------|
-| 1 | @SlineDocs | Update MVP_ROADMAP: add 14a Dispute Extension (Frozen guards, rpc_submit_dispute, task/direct_offer Report Issue, banners). | MVP_ROADMAP mentions 14a and migration. |
-| 2 | @SlineDocs | Update STRUCTURE: add migration 20260308160000 to recent migration themes. | STRUCTURE lists 14a migration. |
-| 3 | @SlineDocs | Update Sline_Log: add release entry for 14a (Frozen guards, dispute UI, banners). | Sline_Log has entry. |
-| 4 | @SlineDocs | Optional: in SUPABASE_SETUP, add one-line note near changelog that "§9.1, §9.2, §9.2a" refer to "Functions (RPCs)" section. | No broken refs. |
+| 1 | @DocsKeeper | Update MVP_ROADMAP: add 14a Dispute Extension (Frozen guards, rpc_submit_dispute, task/direct_offer Report Issue, banners). | MVP_ROADMAP mentions 14a and migration. |
+| 2 | @DocsKeeper | Update STRUCTURE: add migration 20260308160000 to recent migration themes. | STRUCTURE lists 14a migration. |
+| 3 | @DocsKeeper | Update Sline_Log: add release entry for 14a (Frozen guards, dispute UI, banners). | Sline_Log has entry. |
+| 4 | @DocsKeeper | Optional: in SUPABASE_SETUP, add one-line note near changelog that "§9.1, §9.2, §9.2a" refer to "Functions (RPCs)" section. | No broken refs. |
 | 5 | @Architect or dev | Optional: work_item_details_screen — in _ReportIssueGuard, when sourceType == 'direct_offer', use hasOpenDisputeForDirectOffer(entityId) and show Report Issue when eligible. | Manual: unified work item as direct_offer shows Report Issue when active/delivered and no dispute. |
 | 6 | Dev | Optional: resolve analyzer info — add postgrest to dev_dependencies or change test to avoid direct postgrest import. | flutter analyze with 0 info. |
 | 7 | @CodeGuard | Re-run review after steps 1–4 (and optionally 5–6) if fixes applied. | CODEGUARD_REVIEW updated or re-run. |

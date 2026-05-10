@@ -407,16 +407,16 @@
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
-- [ ] (@SlineDocs) Update the favorites deep-dive, developer guide, and Supabase setup docs to match the locked DM rule and the final implementation.
+- [ ] (@DocsKeeper) Update the favorites deep-dive, developer guide, and Supabase setup docs to match the locked DM rule and the final implementation.
   - References:
     - `/Users/eros/Dev/Eros_Projects/Sline/sline_app/Sline_everything/DEVELOPER_GUIDE/Favorites Feature.md`
     - `/Users/eros/Dev/Eros_Projects/Sline/sline_app/Sline_everything/DEVELOPER_GUIDE.md`
     - `/Users/eros/Dev/Eros_Projects/Sline/sline_app/Sline_everything/SUPABASE_SETUP.md`
-- [ ] (@SlineDocs) Update historical review notes if the request-tile direct-service fallback is fully removed.
+- [ ] (@DocsKeeper) Update historical review notes if the request-tile direct-service fallback is fully removed.
   - Reference: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/Sline_everything/CODE_REVIEW.md:258-268`
-- [ ] (@SlineDocs) Add a provenance note if `public.favorites` remains live without historical repo migration coverage after this fix.
+- [ ] (@DocsKeeper) Add a provenance note if `public.favorites` remains live without historical repo migration coverage after this fix.
 - **Verify (@Sentinel):** docs match code, live DB, and the locked contract with no contradictory DM statements.
 
 ---

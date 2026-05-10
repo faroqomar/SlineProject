@@ -189,7 +189,7 @@
 1. (@Sentinel) **Regression list:** Wallet from view; no wallet_transactions; idempotent approve; direct_offer approvable; RLS blocks cross-user read; loading/empty/error.
 2. (@Sentinel) **Run:** Smoke, critical path (pay→deliver→approve), idempotency test, RLS tests. Document runner (manual / automated) and timeout/retry.
 3. (@ThreatModeler) **Negative:** Unauthorized approve attempt fails; cross-user balance read fails.
-4. (@SlineDocs) **Docs:** DEVELOPER_GUIDE, Wallet_Feature, diagram 21: ledger-only terminology; canonical view name; Withdraw = Upcoming feature. SUPABASE_SETUP if RPC/view changed.
+4. (@DocsKeeper) **Docs:** DEVELOPER_GUIDE, Wallet_Feature, diagram 21: ledger-only terminology; canonical view name; Withdraw = Upcoming feature. SUPABASE_SETUP if RPC/view changed.
 
 **GATE CHECK (Phase 4):** All regression items pass; threat checks pass; docs updated. If FAIL, do not release.
 
@@ -197,7 +197,7 @@
 
 ### Phase 5: Documentation Sync (parallel or after Phase 4)
 
-- (@SlineDocs) Update DEVELOPER_GUIDE, Wallet_Feature, SUPABASE_SETUP (if needed), diagram 21. Mark Withdraw as **Upcoming feature**.
+- (@DocsKeeper) Update DEVELOPER_GUIDE, Wallet_Feature, SUPABASE_SETUP (if needed), diagram 21. Mark Withdraw as **Upcoming feature**.
 - (@Sentinel) Docs match code and live DB (view names, RPC contract).
 
 ---

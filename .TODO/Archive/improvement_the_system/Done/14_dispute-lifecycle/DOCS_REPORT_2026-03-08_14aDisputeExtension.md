@@ -5,7 +5,7 @@
 **Spec:** `Sline_everything/AppDigram/All_Diagrams/14a_dispute-entity-freeze-integration.md`  
 **Execution Log:** `.TODO/EXECUTION_LOG_14a_DisputeExtension_2026-03-08.md`  
 **Scope:** Migration `20260308160000_14a_dispute_extension_frozen_guards.sql`; DisputeService, SafetyViewModel, work_item_details_screen, direct_offer_details_screen, booking_details_screen; SUPABASE_SETUP and DEVELOPER_GUIDE (Phase 9).  
-**Author:** @SlineDocs (review only; no fixes applied).
+**Author:** @DocsKeeper (review only; no fixes applied).
 
 ---
 
@@ -78,7 +78,7 @@
 |----------|-----------------------------|----------|
 | **MVP_ROADMAP.md** | "Booking dispute submission" row (lines 72–73) describes Dispute lifecycle (20260308140000, 20260308150000) and Plan_DisputeLifecycle only. It does **not** mention Plan 14a, migration 20260308160000, Frozen guards, task/direct_offer Report Issue, or open/active banners. **Recommendation:** Add one line or bullet: e.g. "**14a (2026-03-08):** Frozen guards in rpc_submit_delivery and rpc_request_revision; rpc_submit_dispute; task and direct_offer Report Issue; open/active dispute banners. Migration 20260308160000. Plan: `.TODO/PLAN_14a_DisputeExtension_2026-03-08.md`." | **Recommended** |
 | **STRUCTURE.md** | "Recent migration themes" (around lines 79–90) lists Dispute lifecycle 20260308140000 and 20260308150000; **does not** list 20260308160000 (14a). **Recommendation:** Add bullet: e.g. "**Plan 14a — Dispute extension (2026-03-08):** `20260308160000_14a_dispute_extension_frozen_guards.sql`: rpc_submit_delivery restored with Frozen guard; rpc_request_revision Frozen guard; partial unique indexes on disputes; rpc_submit_dispute. Plan: `.TODO/PLAN_14a_DisputeExtension_2026-03-08.md`." | **Recommended** |
-| **Sline_Log.md** | No version entry for 14a or "Dispute Extension" or "Frozen guard" or migration 20260308160000. **Recommendation:** Add a release entry per SlineDocs template (Version X.Y.Z — 14a Dispute Extension; Implemented: migration, DisputeService, SafetyViewModel, screens, banners; Impact; Verification: plan, execution log; Technical notes: migrations, rollback). | **Recommended** |
+| **Sline_Log.md** | No version entry for 14a or "Dispute Extension" or "Frozen guard" or migration 20260308160000. **Recommendation:** Add a release entry per DocsKeeper template (Version X.Y.Z — 14a Dispute Extension; Implemented: migration, DisputeService, SafetyViewModel, screens, banners; Impact; Verification: plan, execution log; Technical notes: migrations, rollback). | **Recommended** |
 | **14a spec (14a_dispute-entity-freeze-integration.md)** | Spec is requirement-only; no "Implementation status" section. **Optional:** Add a short note at top or end, e.g. "**Implementation (2026-03-08):** Plan `.TODO/PLAN_14a_DisputeExtension_2026-03-08.md`; migration `20260308160000_14a_dispute_extension_frozen_guards.sql`; app: DisputeService rpc_submit_dispute, task/direct_offer Report Issue, open/active banners." Not required for reference integrity. | **Optional** |
 
 ---

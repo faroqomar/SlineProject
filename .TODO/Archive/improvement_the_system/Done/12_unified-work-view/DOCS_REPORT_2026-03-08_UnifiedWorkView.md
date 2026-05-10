@@ -3,7 +3,7 @@
 **Scope:** Unified Work View (12_unified-work-view)  
 **Plan:** `.TODO/PLAN_UnifiedWorkView_2026-03-08_CRITIC.md`  
 **Date:** 2026-03-08  
-**Agent:** @SlineDocs
+**Agent:** @DocsKeeper
 
 ---
 
@@ -42,7 +42,7 @@
 
 | Action | Owner | File |
 |--------|--------|------|
-| **Optional:** Remove or soften reference to `UnifiedWorkItemFallbackMapper` in Sline_Log.md if it exists (changelog / history). | @SlineDocs | `Sline_everything/Sline_Log.md` |
+| **Optional:** Remove or soften reference to `UnifiedWorkItemFallbackMapper` in Sline_Log.md if it exists (changelog / history). | @DocsKeeper | `Sline_everything/Sline_Log.md` |
 
 No broken code references; only historical/changelog mentions may remain.
 

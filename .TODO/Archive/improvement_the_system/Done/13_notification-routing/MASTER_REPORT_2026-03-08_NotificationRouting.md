@@ -3,7 +3,7 @@
 **Scope:** Notification Routing (13_notification-routing)  
 **Plan:** `.TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md`  
 **Date:** 2026-03-08  
-**Pipeline:** Architect → Observability → SlineDocs → CodeGuard
+**Pipeline:** Architect → Observability → DocsKeeper → CodeGuard
 
 ---
 
@@ -47,7 +47,7 @@
 
 | Severity | Owner | Path | Finding | Fix |
 |----------|--------|------|---------|-----|
-| MED | SlineDocs | `Sline_everything/AppDigram/All_Diagrams/13_notification-routing.md` | Diagram outdated: missing user_devices, notification_push_queue, trigger, Edge Functions, foreground sync; booking/dispute source still "UNVERIFIED". | Update diagram to match CONTRACT and implementation (see DOCS_REPORT). |
+| MED | DocsKeeper | `Sline_everything/AppDigram/All_Diagrams/13_notification-routing.md` | Diagram outdated: missing user_devices, notification_push_queue, trigger, Edge Functions, foreground sync; booking/dispute source still "UNVERIFIED". | Update diagram to match CONTRACT and implementation (see DOCS_REPORT). |
 
 ---
 
@@ -57,7 +57,7 @@
 |------|--------|--------|--------------|
 | 1 | @Supabase_Ops / DevOps | Set `CRON_SECRET` for production and document that process-push-queue must be invoked with `Authorization: Bearer <CRON_SECRET>`. | Runbook updated; secret set in project. |
 | 2 | @Architect / Backend | Document push-notify as internal-only or add auth (e.g. secret header); ensure it is not publicly callable in production. | Doc or code review. |
-| 3 | @SlineDocs | Update `Sline_everything/AppDigram/All_Diagrams/13_notification-routing.md`: add user_devices, notification_push_queue, trigger, push-notify/process-push-queue, foreground sync; correct booking/dispute source to RPC/triggers. | Diagram matches CONTRACT and execution log. |
+| 3 | @DocsKeeper | Update `Sline_everything/AppDigram/All_Diagrams/13_notification-routing.md`: add user_devices, notification_push_queue, trigger, push-notify/process-push-queue, foreground sync; correct booking/dispute source to RPC/triggers. | Diagram matches CONTRACT and execution log. |
 | 4 | @Observability (optional) | Add correlation (e.g. notification_id) to Edge Function error logs; optional structured push_batch event. | Log sample checked. |
 | 5 | @CodeGuard | Re-run review after steps 1–3 if desired. | CODEGUARD_REVIEW re-run. |
 

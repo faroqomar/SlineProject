@@ -3,7 +3,7 @@
 **Scope:** Notification Routing (13_notification-routing)  
 **Plan:** `.TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md`  
 **Date:** 2026-03-08  
-**Agent:** @SlineDocs
+**Agent:** @DocsKeeper
 
 ---
 
@@ -41,8 +41,8 @@
 
 | # | Update | Owner | Verification |
 |---|--------|--------|---------------|
-| 1 | Update `Sline_everything/AppDigram/All_Diagrams/13_notification-routing.md`: add user_devices, notification_push_queue, trigger, Edge Functions, foreground sync, correct booking/dispute source. | @SlineDocs | Diagram matches CONTRACT and execution log. |
-| 2 | Optional: Add a short "Notification push" subsection under DEVELOPER_GUIDE feature map pointing to CONTRACT and SUPABASE_SETUP §5.13a/5.13b. | @SlineDocs | Refs valid. |
+| 1 | Update `Sline_everything/AppDigram/All_Diagrams/13_notification-routing.md`: add user_devices, notification_push_queue, trigger, Edge Functions, foreground sync, correct booking/dispute source. | @DocsKeeper | Diagram matches CONTRACT and execution log. |
+| 2 | Optional: Add a short "Notification push" subsection under DEVELOPER_GUIDE feature map pointing to CONTRACT and SUPABASE_SETUP §5.13a/5.13b. | @DocsKeeper | Refs valid. |
 
 ---
 

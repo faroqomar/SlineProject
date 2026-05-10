@@ -264,7 +264,7 @@
 
 | Phase | Content | Primary Agent |
 |-------|---------|---------------|
-| 0 | Preconditions (Spec Lock, Discovery, Screenshots, **Stagger Pattern Lock**) | @SlinePlanner, @Sentinel |
+| 0 | Preconditions (Spec Lock, Discovery, Screenshots, **Stagger Pattern Lock**) | @Planner, @Sentinel |
 | 1 | Messages Screen — Inbox (stagger, empty state, **boolean** unread badge) | @Pixel, @Sentinel |
 | 2 | ConversationListTile (typing dots, **boolean** unread indicator, tokens) | @Pixel, @Sentinel |
 | 3 | **MessageBubble** (tokens, grouping API, status icons, Semantics) — **MOVED UP** | @Pixel, @Sentinel |
@@ -277,7 +277,7 @@
 | 10 | Skeleton Updates (dimension alignment) | @Pixel, @Sentinel |
 | 10A | **Widget Tests** (NEW — grouping, separators, badge states, notification skeleton) | @Sentinel, @Pixel |
 | 11 | QA & Verification (analyze, test, architecture guard, token audit, visual) | @Sentinel, @CodeGuard |
-| 12 | Documentation Sync | @SlineDocs |
+| 12 | Documentation Sync | @DocsKeeper |
 
 ### Corrected Phase 0 (added 0.4):
 

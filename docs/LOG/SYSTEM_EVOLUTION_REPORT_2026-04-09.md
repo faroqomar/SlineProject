@@ -2,7 +2,7 @@
 
 **Sessions Analyzed:** 7
 **Previous Evolution Reports:** 3 (2026-04-07, 2026-04-08, 2026-04-08_v2)
-**Agent Files Scanned:** 6 (Pixel, Executor, Sentinel, Sline_Planner, Observability, Orchestrator)
+**Agent Files Scanned:** 6 (Pixel, Executor, Sentinel, Planner, Observability, Orchestrator)
 **Most Common Failure Type:** Test regressions after animation/widget structural changes (3 sessions)
 **Most Frequently Flagged Agent:** @Pixel (9 mistakes across 3 sessions)
 **Highest-Value Improvement:** Sliver safety rule for @Pixel (brand new mistake category)
@@ -86,7 +86,7 @@
 
 ## 5) Agent Coordination Gaps
 
-**None new.** All agent handoffs in Phase 4 worked correctly (@SlinePlanner → @Executor → @Sentinel/@Pixel/@Architect for review).
+**None new.** All agent handoffs in Phase 4 worked correctly (@Planner → @Executor → @Sentinel/@Pixel/@Architect for review).
 
 ---
 
@@ -133,7 +133,7 @@ Supabase integration tests are always skipped. Either they should be run periodi
 - Plan Critique Review (Executor 3.9) — EFFECTIVE, used in LayoutTokens and Phase2
 - Flutter API Verification (Pixel 3.3) — EFFECTIVE (now covers test code too)
 - Widget Conversion Test Gate (Executor 3.9) — EFFECTIVE, test regressions caught earlier
-- Token Value Extraction Workflow (Sline_Planner 2.2.6) — EFFECTIVE, no recurrence
+- Token Value Extraction Workflow (Planner 2.2.6) — EFFECTIVE, no recurrence
 - Logging Frequency Rule (Observability §10) — EFFECTIVE, no recurrence
 
 ### Previously Applied (Partially Effective)

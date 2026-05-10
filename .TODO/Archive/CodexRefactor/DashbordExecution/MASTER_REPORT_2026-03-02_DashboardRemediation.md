@@ -3,7 +3,7 @@
 **Date:** 2026-03-02  
 **Scope:** Dashboard Full Remediation  
 **Plan:** `.TODO/PLAN_Dashboard_Full_Remediation_2026-03-01.md`  
-**Pipeline:** Architect → Observability → SlineDocs → CodeGuard (sequential)
+**Pipeline:** Architect → Observability → DocsKeeper → CodeGuard (sequential)
 
 ---
 
@@ -45,8 +45,8 @@
 ### Docs / Reference Integrity
 | Severity | Owner | Location | Finding | Fix |
 |----------|-------|----------|---------|-----|
-| LOW | SlineDocs | `Sline_everything/Sline_Log.md` | No version entry yet for this remediation. | Add Sline_Log entry linking plan + report (optional). |
-| ✅ Pass | SlineDocs | DEVELOPER_GUIDE, STRUCTURE, MVP_ROADMAP | Paths and statuses updated; all references valid. | None. |
+| LOW | DocsKeeper | `Sline_everything/Sline_Log.md` | No version entry yet for this remediation. | Add Sline_Log entry linking plan + report (optional). |
+| ✅ Pass | DocsKeeper | DEVELOPER_GUIDE, STRUCTURE, MVP_ROADMAP | Paths and statuses updated; all references valid. | None. |
 
 ---
 
@@ -55,7 +55,7 @@
 | Step | Owner | Action | Verification |
 |------|--------|--------|--------------|
 | 1 | (Optional) Implementer | Remove unnecessary `!` in `dashboard_view_model.dart` (lines 375–377, 414–416). | `flutter analyze lib/features/dashboard` shows 0 warnings in that file. |
-| 2 | (Optional) SlineDocs | Add entry to `Sline_everything/Sline_Log.md` for dashboard remediation (widget moves, StatusPresenter, lazy-load, docs). | Log entry exists with date, scope, and link to plan/report. |
+| 2 | (Optional) DocsKeeper | Add entry to `Sline_everything/Sline_Log.md` for dashboard remediation (widget moves, StatusPresenter, lazy-load, docs). | Log entry exists with date, scope, and link to plan/report. |
 | — | — | No CodeGuard re-run required unless new code is added. | — |
 
 ---
@@ -84,7 +84,7 @@
 
 1. **Architect:** `.TODO/ARCHITECT_REPORT_2026-03-02_DashboardRemediation.md` — MVVM and paths OK; no blockers.
 2. **Observability:** `.TODO/OBSERVABILITY_REPORT_2026-03-02_DashboardRemediation.md` — Logging and privacy OK; no new events required.
-3. **SlineDocs:** `.TODO/DOCS_REPORT_2026-03-02_DashboardRemediation.md` — References valid; optional Sline_Log entry.
+3. **DocsKeeper:** `.TODO/DOCS_REPORT_2026-03-02_DashboardRemediation.md` — References valid; optional Sline_Log entry.
 4. **CodeGuard:** `.TODO/CODEGUARD_REVIEW_2026-03-02_DashboardRemediation.md` — APPROVED ✅; optional lint fix.
 
 ---

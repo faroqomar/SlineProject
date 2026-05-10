@@ -154,7 +154,7 @@ All changes are pure UI, additive, and independently revertable:
 | 10 | @CodeGuard | 4 LOW |
 | 13 | Fix Verification | All 4 HIGHs + 1 MED fixed, verified clean |
 
-Stages skipped (N/A for pure UI changes): 1 (@ThreatModeler), 2 (@Supabase_Ops), 5 (@APIContract), 6 (@DataMigration), 7 (@TemplateOwner), 9 (@SlineDocs)
+Stages skipped (N/A for pure UI changes): 1 (@ThreatModeler), 2 (@Supabase_Ops), 5 (@APIContract), 6 (@DataMigration), 7 (@TemplateOwner), 9 (@DocsKeeper)
 
 ---
 

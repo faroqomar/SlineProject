@@ -230,11 +230,11 @@
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
-- [ ] (@SlineDocs) Update Sline_everything/DEVELOPER_GUIDE/Direct_Offers_Feature.md (schema, lifecycle, composite states, dispute, timeout, gateway columns).
-- [ ] (@SlineDocs) Update Sline_everything/SUPABASE_SETUP.md §5.14 direct_offers, §5.24 disputes, RPC/cron sections.
-- [ ] (@SlineDocs) Update any AppDiagram/state diagram to V3 composite state machine (sent_unpaid → ... → completed_released / canceled_*).
+- [ ] (@DocsKeeper) Update Sline_everything/DEVELOPER_GUIDE/Direct_Offers_Feature.md (schema, lifecycle, composite states, dispute, timeout, gateway columns).
+- [ ] (@DocsKeeper) Update Sline_everything/SUPABASE_SETUP.md §5.14 direct_offers, §5.24 disputes, RPC/cron sections.
+- [ ] (@DocsKeeper) Update any AppDiagram/state diagram to V3 composite state machine (sent_unpaid → ... → completed_released / canceled_*).
 - **Verify (@Sentinel):** docs match code + live DB reality.
 
 ---

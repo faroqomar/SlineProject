@@ -86,7 +86,7 @@ A security permission matrix showing which roles can perform SELECT/INSERT/UPDAT
 **Diagram name (exact):** `15_rls-authorization-map`  
 **Version:** v2.0 FINAL  
 **Date:** 2026-03-06  
-**Owner/author:** @Executor / @Supabase_Ops (implementation); @SlineDocs (documentation)
+**Owner/author:** @Executor / @Supabase_Ops (implementation); @DocsKeeper (documentation)
 
 ---
 

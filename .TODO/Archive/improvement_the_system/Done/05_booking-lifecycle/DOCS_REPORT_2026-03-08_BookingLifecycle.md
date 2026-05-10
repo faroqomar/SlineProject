@@ -2,7 +2,7 @@
 
 **Scope:** 05_booking-lifecycle only.  
 **Date:** 2026-03-08  
-**Owner:** @SlineDocs  
+**Owner:** @DocsKeeper  
 **Plan reference:** `.TODO/PLAN_BookingLifecycle_2026-03-08_PlanCritic.md`  
 **Execution log:** `.TODO/EXECUTION_LOG_PLAN_BookingLifecycle_2026-03-08.md`
 
@@ -77,7 +77,7 @@ No other broken file paths or DB object names found in scope. Plan and execution
 
 ---
 
-## 4. Required doc updates (ordered, owner @SlineDocs)
+## 4. Required doc updates (ordered, owner @DocsKeeper)
 
 1. **Sline_everything/AppDigram/All_Diagrams/05_booking-lifecycle.md**  
    - Fix code source: remove `lib/features/booking/booking_screen.dart`; add `lib/features/booking/view/payment_checkout_screen.dart` (and optionally discovery/details).  

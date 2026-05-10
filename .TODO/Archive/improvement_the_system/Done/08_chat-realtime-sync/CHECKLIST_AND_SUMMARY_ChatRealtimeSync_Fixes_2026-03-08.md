@@ -37,7 +37,7 @@ Use this list to confirm behavior in the running app.
 
 ### Why we did it
 
-The Orchestrator pipeline (Architect, Observability, SlineDocs, CodeGuard) reviewed the Chat Realtime Sync feature and produced a Master Report. We applied all recommended fixes: docs accuracy, PII safety, traceability, performance, and migration safety.
+The Orchestrator pipeline (Architect, Observability, DocsKeeper, CodeGuard) reviewed the Chat Realtime Sync feature and produced a Master Report. We applied all recommended fixes: docs accuracy, PII safety, traceability, performance, and migration safety.
 
 ---
 

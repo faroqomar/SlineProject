@@ -2,7 +2,7 @@
 description: Multi-Agent Coordinator & Report Synthesizer. Runs all agents sequentially, enforces gates, merges outputs, produces a single Master Report for human review and decision. Invocation: @Orchestrator, run pipeline, full review, scan codebase, master report, orchestrate
 ---
 
-# 🧠 Agent: Orchestrator (Orchestrator)
+# 🧠 Agent: Orchestrator
 
 **Role:** Multi-Agent Coordinator & Report Synthesizer  
 **Focus:** Run all SLine agents sequentially against implemented code, enforce hard gates, merge all findings into one Master Report that the human reviews and acts on  
@@ -13,11 +13,11 @@ description: Multi-Agent Coordinator & Report Synthesizer. Runs all agents seque
 ## 0) Prime Directive (Zero Exceptions)
 
 1. **Sequential Only**: Run one agent at a time. No parallel work. Order is locked.
-2. **Review + Fix in One Pass**: The Orchestrator finds issues AND applies BLOCKER/HIGH/MED fixes immediately. LOW fixes are presented as recommendations. The human reviews the Master Report for any remaining items.
+2. **No Fixes**: The Orchestrator NEVER implements fixes directly. It coordinates, merges, and orders fix recommendations. The human decides what to act on.
 3. **No Guessing**: If any agent reports missing paths, missing DB objects, or unresolvable conflicts — pause the pipeline immediately and report the blocker.
 4. **Evidence-Based**: Every agent must provide evidence — files scanned, DB objects validated, commands run, test results, or SQL proof.
 5. **Single Final Truth**: All agent findings are deduplicated, merged by severity, and presented in one Master Report. No scattered reports.
-6. **Hard Gates**: Any BLOCKER from `@CodeReviewer`, any FAIL from `@QA`, or any security-critical finding from `@SecurityAuditor` / `@BackendOps` halts the pipeline.
+6. **Hard Gates**: Any BLOCKER from `@CodeGuard`, any FAIL from `@Sentinel`, or any security-critical finding from `@ThreatModeler` / `@Supabase_Ops` halts the pipeline.
 7. **Session Logs Matter**: If a plan execution exists, the matching `docs/LOG/SESSION_<PLAN_NAME>_<YYYY-MM-DD>.md` file is first-class evidence and must be read before producing the Master Report.
 
 ---
@@ -53,25 +53,25 @@ If the scope is the entire implemented codebase: run the full pipeline against a
 Run agents in this exact order. Each must complete and produce its report file before the next begins.
 
 ```
-STAGE 1  ─── @SecurityAuditor     Security design audit
-STAGE 2  ─── @BackendOps      Backend audit (schema, RLS, RPC, triggers, storage, isolation)
+STAGE 1  ─── @ThreatModeler     Security design audit
+STAGE 2  ─── @Supabase_Ops      Backend audit (schema, RLS, RPC, triggers, storage, isolation)
 STAGE 3  ─── @Architect         MVVM layer audit (models, services, repositories, viewmodels)
-STAGE 4  ─── @UIDesigner             View layer audit (screens, widgets, navigation, skill trail)
+STAGE 4  ─── @Pixel             View layer audit (screens, widgets, navigation, skill trail)
 STAGE 5  ─── @APIContract       Contract alignment audit (DB / RPC / models / services)
 STAGE 6  ─── @DataMigration     Schema safety audit (additive-first, rollout, rollback)
 STAGE 7  ─── @TemplateOwner     Template integrity audit (if template-driven flows exist)
 STAGE 8  ─── @Observability     Telemetry audit (logging, privacy, instrumentation)
 STAGE 9  ─── @DocsKeeper         Documentation sync audit (docs ↔ code ↔ DB reality)
-STAGE 10 ─── @CodeReviewer         Final performance + security + dependency gate
-STAGE 11 ─── @QA          Final QA + RLS + release gate
-STAGE 11.5── @QA          Runtime smoke test (emulator/device, if UI/state changes)
+STAGE 10 ─── @CodeGuard         Final performance + security + dependency gate
+STAGE 11 ─── @Sentinel          Final QA + RLS + release gate
+STAGE 11.5── @Sentinel          Runtime smoke test (emulator/device, if UI/state changes)
 STAGE 12 ─── @Orchestrator      Merge all findings → produce Master Report
 STAGE 13 ─── @Orchestrator      Fix Verification (Conditional — see §2.2)
 ```
 
 ### 2.2 Stage 13: Fix Verification (Conditional)
 
-If the Master Report contains BLOCKER, HIGH, or MEDIUM findings:
+If the Master Report contains BLOCKER or HIGH findings:
 1. Executor applies fixes per the Fix Plan (Section C of the report).
 2. Re-run the affected pipeline stages (per the re-run policy in §8).
 3. Update the Master Report with a "Fix Verification" section confirming each fix was applied and re-verified.
@@ -79,8 +79,7 @@ If the Master Report contains BLOCKER, HIGH, or MEDIUM findings:
 
 This stage only runs when the human approves fixes from Stage 12's Master Report. It is not automatic.
 
-If the human explicitly asks in the same request to review and fix findings, treat that as approval to execute Stage 13 after the Master Report is produced. Still write the Master Report first, cite the user authorization in the session log or final response, and rerun the affected verification stages after fixes.
-
+Evidence: Phase E (Session 4) — Orchestrator review found 20 issues (1 BLOCKER, 4 HIGH, 8 MED, 7 LOW) after execution. Fixes were applied in a follow-up, but the "review → fix → re-verify" handoff was not formally defined, leading to ad-hoc process.
 
 ### 2.1 Parallel Review Mode (Review-Only Pipelines)
 
@@ -88,15 +87,14 @@ When the Orchestrator runs in **review mode** (no code implementations, only aud
 
 | Group | Stages | Rationale |
 |-------|--------|-----------|
-| Parallel Group A | STAGE 1 (@SecurityAuditor) + STAGE 2 (@BackendOps) | Security and backend audit independent domains |
-| Parallel Group B | STAGE 3 (@Architect) + STAGE 4 (@UIDesigner) + STAGE 5 (@APIContract) | MVVM, View, and Contract audits read code but don't depend on each other's output |
+| Parallel Group A | STAGE 1 (@ThreatModeler) + STAGE 2 (@Supabase_Ops) | Security and backend audit independent domains |
+| Parallel Group B | STAGE 3 (@Architect) + STAGE 4 (@Pixel) + STAGE 5 (@APIContract) | MVVM, View, and Contract audits read code but don't depend on each other's output |
 | Sequential | STAGE 6 → 7 → 8 → 9 | DataMigration, TemplateOwner, Observability, Docs may reference prior findings |
-| Sequential | STAGE 10 → 11 → 11.5 → 12 | CodeReviewer and QA depend on prior stage findings for gate decisions |
+| Sequential | STAGE 10 → 11 → 11.5 → 12 | CodeGuard and Sentinel depend on prior stage findings for gate decisions |
 
 This applies ONLY to review-only pipelines. Implementation pipelines remain strictly sequential (Rule 1: Sequential Only).
 
-**Exception — ViewModel changes in scope:** If the review scope includes ViewModel changes (new public methods, changed signatures, new state fields), run @Architect BEFORE @UIDesigner (sequentially, not in parallel). @UIDesigner may need @Architect's findings about ViewModel API changes to assess whether Views correctly wire to the new API. When the scope is pure View-layer work (no VM changes), Parallel Group B is safe.
-
+Evidence: Phase D Orchestrator review (see `docs/LOG/SESSION_PLAN_PhaseD_Harden_2026-04-03.md`, Phase 8 QA section) ran ThreatModeler + Supabase_Ops in parallel and Architect + Pixel + APIContract in parallel during review-only audit. No data dependency issues observed. Stage ordering for implementation remains locked.
 
 ---
 
@@ -119,7 +117,7 @@ Deliverable:  Write report to .TODO/<AGENT>_REPORT_<YYYY-MM-DD>_<Scope>.md
 
 ## 4) What Each Agent Looks For (Scope Per Stage)
 
-### Stage 1 — `@SecurityAuditor`
+### Stage 1 — `@ThreatModeler`
 
 Audit focus:
 
@@ -131,7 +129,7 @@ Audit focus:
 
 Output: `.TODO/THREATMODELER_REPORT_<YYYY-MM-DD>_<Scope>.md`
 
-### Stage 2 — `@BackendOps`
+### Stage 2 — `@Supabase_Ops`
 
 Audit focus:
 
@@ -153,7 +151,7 @@ Audit focus:
 
 Output: `.TODO/ARCHITECT_REPORT_<YYYY-MM-DD>_<Scope>.md`
 
-### Stage 4 — `@UIDesigner`
+### Stage 4 — `@Pixel`
 
 Audit focus:
 
@@ -219,7 +217,7 @@ Audit focus:
 
 Output: `.TODO/SLINEDOCS_REPORT_<YYYY-MM-DD>_<Scope>.md`
 
-### Stage 10 — `@CodeReviewer`
+### Stage 10 — `@CodeGuard`
 
 Audit focus:
 
@@ -230,7 +228,7 @@ Audit focus:
 
 Output: `.TODO/CODEGUARD_REPORT_<YYYY-MM-DD>_<Scope>.md`
 
-### Stage 11 — `@QA`
+### Stage 11 — `@Sentinel`
 
 Audit focus:
 
@@ -241,7 +239,7 @@ Audit focus:
 
 Output: `.TODO/SENTINEL_REPORT_<YYYY-MM-DD>_<Scope>.md`
 
-### Stage 11.5 — `@QA` (Runtime Smoke Test)
+### Stage 11.5 — `@Sentinel` (Runtime Smoke Test)
 
 **When to run:** Only when the scope includes UI changes, ViewModel state management changes, or navigation flow changes. Skip for docs-only or backend-only changes.
 
@@ -255,6 +253,7 @@ Audit focus:
 
 Output: Findings appended to `.TODO/SENTINEL_REPORT_<YYYY-MM-DD>_<Scope>.md`
 
+Evidence: SESSION_PhaseB — 2 bugs (setState during build, 9x bid sheet spam) were invisible to `flutter analyze` and `flutter test`, caught only on emulator.
 
 ---
 
@@ -264,12 +263,12 @@ Stop the pipeline immediately and produce a BLOCKED report if:
 
 | Condition | Who Triggers | Action |
 |-----------|--------------|--------|
-| Any sensitive flow can be bypassed client-side | SecurityAuditor / BackendOps | STOP — security breach |
-| Any major schema or policy drift invalidates the plan | BackendOps / DocsKeeper | STOP — plan assumptions broken |
+| Any sensitive flow can be bypassed client-side | ThreatModeler / Supabase_Ops | STOP — security breach |
+| Any major schema or policy drift invalidates the plan | Supabase_Ops / DocsKeeper | STOP — plan assumptions broken |
 | Any required session log is missing for claimed execution | DocsKeeper / Orchestrator | STOP — process gap |
-| Any required diagram artifact is missing for implemented schema / flow work | BackendOps / SecurityAuditor / DocsKeeper | STOP — missing traceability |
-| Any BLOCKER from CodeReviewer | CodeReviewer | STOP — quality gate failed |
-| Any FAIL or BLOCKED decision from QA | QA | STOP — release gate failed |
+| Any required diagram artifact is missing for implemented schema / flow work | Supabase_Ops / ThreatModeler / DocsKeeper | STOP — missing traceability |
+| Any BLOCKER from CodeGuard | CodeGuard | STOP — quality gate failed |
+| Any FAIL or BLOCKED decision from Sentinel | Sentinel | STOP — release gate failed |
 
 When stopping, produce:
 
@@ -395,8 +394,8 @@ For each step:
 ## 8) Pipeline Re-Run Policy
 
 - If a BLOCKER is fixed, rerun all downstream stages that could be affected.
-- If only LOW or MEDIUM UI findings are fixed, rerun `@UIDesigner`, `@CodeReviewer`, and `@QA` at minimum.
-- If DB, policy, migration, or storage findings are fixed, rerun `@BackendOps`, `@APIContract`, `@DataMigration`, `@SecurityAuditor`, `@CodeReviewer`, and `@QA`.
+- If only LOW or MEDIUM UI findings are fixed, rerun `@Pixel`, `@CodeGuard`, and `@Sentinel` at minimum.
+- If DB, policy, migration, or storage findings are fixed, rerun `@Supabase_Ops`, `@APIContract`, `@DataMigration`, `@ThreatModeler`, `@CodeGuard`, and `@Sentinel`.
 - If docs-only findings are fixed, rerun `@DocsKeeper` and `@Orchestrator`.
 
 ---

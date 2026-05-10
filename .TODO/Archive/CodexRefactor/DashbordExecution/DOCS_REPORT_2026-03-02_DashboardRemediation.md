@@ -1,4 +1,4 @@
-# SlineDocs Report: Dashboard Full Remediation
+# DocsKeeper Report: Dashboard Full Remediation
 
 **Date:** 2026-03-02  
 **Scope:** Dashboard Full Remediation — documentation delta and reference integrity
@@ -42,7 +42,7 @@ No broken or stale file paths found in `Sline_everything/`.
 
 | Item | Priority | Owner |
 |------|----------|-------|
-| `Sline_everything/Sline_Log.md` | MED | SlineDocs | Add version entry for dashboard remediation (widget moves, status presenter, lazy-load flags, docs updates) and link to plan/execution log. |
+| `Sline_everything/Sline_Log.md` | MED | DocsKeeper | Add version entry for dashboard remediation (widget moves, status presenter, lazy-load flags, docs updates) and link to plan/execution log. |
 | `SUPABASE_SETUP.md` | None | — | No schema/RLS changes in this scope; finance view restriction was documented in a prior migration. |
 
 ---
@@ -61,4 +61,4 @@ No broken or stale file paths found in `Sline_everything/`.
 
 ---
 
-**SlineDocs output:** No broken references. Doc deltas applied; one optional follow-up (Sline_Log entry). No BLOCKER.
+**DocsKeeper output:** No broken references. Doc deltas applied; one optional follow-up (Sline_Log entry). No BLOCKER.

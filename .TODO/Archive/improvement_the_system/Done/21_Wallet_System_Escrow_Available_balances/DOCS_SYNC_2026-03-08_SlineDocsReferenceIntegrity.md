@@ -1,4 +1,4 @@
-# DOCS_SYNC — SlineDocs Reference Integrity & Diagram Standard
+# DOCS_SYNC — DocsKeeper Reference Integrity & Diagram Standard
 
 **Date:** 2026-03-08  
 **Workflow:** `.agents/workflows/slinedocs.md`  
@@ -42,7 +42,7 @@
 
 ## 4. Why each update was needed
 
-- **Sline_Log / DEVELOPER_GUIDE / Wallet_Feature:** Links to 09 and 16 pointed to `ImplementReady`, which no longer contains those plans; updating to `Done` removes dead paths and satisfies SlineDocs “No Dead Paths” rule.
+- **Sline_Log / DEVELOPER_GUIDE / Wallet_Feature:** Links to 09 and 16 pointed to `ImplementReady`, which no longer contains those plans; updating to `Done` removes dead paths and satisfies DocsKeeper “No Dead Paths” rule.
 - **SUPABASE_SETUP §6.6:** The view definition and behavior changed in a migration; doc must match deployed schema and describe “include spent” for Wallet UI and diagram 21.
 - **Sline_Log new entry:** Documents this docs sync and reference fix for traceability.
 

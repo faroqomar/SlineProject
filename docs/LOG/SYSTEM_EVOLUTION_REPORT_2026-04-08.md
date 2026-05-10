@@ -105,8 +105,8 @@ This applies to BOTH production code AND test code. Widget test assertions that 
 - **Risk:** LOW — only manifests when a session includes both VM and View changes.
 - **Recommendation:** Add a note to Orchestrator §2.1: "If the scope includes ViewModel changes, run @Architect before @Pixel (sequentially), not in parallel."
 
-### AC-2: @SlineDocs always last, always catching stale docs reactively
-- **Evidence:** DesignSystemFoundation and Agent_CI sessions both had stale docs caught by @SlineDocs in the Orchestrator pipeline.
+### AC-2: @DocsKeeper always last, always catching stale docs reactively
+- **Evidence:** DesignSystemFoundation and Agent_CI sessions both had stale docs caught by @DocsKeeper in the Orchestrator pipeline.
 - **Pattern:** Docs drift is caught reactively (in review) rather than proactively (during execution).
 - **Recommendation:** No agent change — the Executor already has a Phase 11 (Documentation Sync) in plans. The pattern is acceptable as long as the Orchestrator pipeline catches it.
 

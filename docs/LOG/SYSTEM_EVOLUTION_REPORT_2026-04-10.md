@@ -38,7 +38,7 @@
 
 | ID | Rule | Target Agent | Priority | Evidence |
 |---|---|---|---|---|
-| RG-6 | Visual Change Classification — classify scope as Redesign / Polish / Token Normalization before execution | Sline_Planner.md | CRITICAL | Phase 5 labeled "Redesign" but produced zero visual changes; user saw nothing different |
+| RG-6 | Visual Change Classification — classify scope as Redesign / Polish / Token Normalization before execution | Planner.md | CRITICAL | Phase 5 labeled "Redesign" but produced zero visual changes; user saw nothing different |
 | RG-7 | Visual Verification Gate — mandatory before/after visual evidence for Redesign/Polish phases | Sentinel.md | CRITICAL | Phase 5 Sentinel passed without any visual check |
 | RG-8 | Master Plan Cross-Reference — compare plan scope against Master Plan before executing UI phases | Executor.md | HIGH | Phase 5 never referenced Master Plan Phase 6 specs (swipe-to-reply, emoji, link detection) |
 | RG-9 | Visual Attestation Requirement — list specific visual changes per screen after Redesign/Polish | Pixel.md | HIGH | Phase 5 @Pixel reported PASS without specifying what visually changed |
@@ -150,7 +150,7 @@ No new MCP opportunities identified. The Phase 6 continuation work was entirely 
 
 | ID | Gap | Status |
 |---|---|---|
-| AC-2 | @SlinePlanner to @Executor handoff lacks Master Plan cross-reference | OPEN — RG-8 not yet applied |
+| AC-2 | @Planner to @Executor handoff lacks Master Plan cross-reference | OPEN — RG-8 not yet applied |
 | AC-3 | @Orchestrator to User handoff lacks visual evidence in Master Report | OPEN — OP-2 not yet applied |
 
 ### NEW
@@ -202,7 +202,7 @@ None. All identified gaps can be addressed by adding rules to existing agents. N
 
 | Priority | Action | Owner | Effort | New/Carried |
 |---|---|---|---|---|
-| P0 | Apply RG-6 (Visual Change Classification) to `Sline_Planner.md` | Human | 5 min | Carried (v2) |
+| P0 | Apply RG-6 (Visual Change Classification) to `Planner.md` | Human | 5 min | Carried (v2) |
 | P0 | Apply RG-7 (Visual Verification Gate) to `Sentinel.md` | Human | 5 min | Carried (v2) |
 | P0 | Apply RG-8 (Master Plan Cross-Reference) to `Executor.md` | Human | 5 min | Carried (v2) |
 | P0 | Apply RG-9 (Visual Attestation) to `Pixel.md` | Human | 5 min | Carried (v2) |
@@ -215,7 +215,7 @@ None. All identified gaps can be addressed by adding rules to existing agents. N
 | P2 | Fix pre-existing flaky test (7 sessions carrying) | Executor | 30 min | Carried (v1) |
 | P2 | Formally close CoreWidgetRedesign session log | Executor | 10 min | Carried (v2) |
 | P3 | Audit or remove 30 skipped integration tests | Executor | 30 min | Carried (v1) |
-| P3 | Update Phase 6 session log to reflect continuation work (conversation redesign, unread fix, chat lag fix, auto-scroll fix) | SlineDocs | 15 min | NEW |
+| P3 | Update Phase 6 session log to reflect continuation work (conversation redesign, unread fix, chat lag fix, auto-scroll fix) | DocsKeeper | 15 min | NEW |
 
 ---
 
@@ -229,7 +229,7 @@ None. All identified gaps can be addressed by adding rules to existing agents. N
 | Plan Critique Review Gate | Executor.md | 4 | No |
 | Flutter API Verification | Pixel.md | 3 | No (Phase 6 had 2 regex mistakes, but these are regex logic errors, not API surface errors) |
 | Widget Conversion Test Gate | Executor.md | 3 | No |
-| Token Value Extraction Workflow | Sline_Planner.md | 3 | No |
+| Token Value Extraction Workflow | Planner.md | 3 | No |
 | Logging Frequency Rule | Observability.md | 4 | No |
 | Widget Test Finder Rules | Sentinel.md | 3 | No |
 | Session Log Closure Enforcement | Executor.md | 2 | Partially (CoreWidgetRedesign still unclosed) |
@@ -242,7 +242,7 @@ None. All identified gaps can be addressed by adding rules to existing agents. N
 
 | Rule | Target | Sessions Pending |
 |---|---|---|
-| RG-6 Visual Change Classification | Sline_Planner.md | 2 sessions |
+| RG-6 Visual Change Classification | Planner.md | 2 sessions |
 | RG-7 Visual Verification Gate | Sentinel.md | 2 sessions |
 | RG-8 Master Plan Cross-Reference | Executor.md | 2 sessions |
 | RG-9 Visual Attestation | Pixel.md | 2 sessions |
@@ -271,7 +271,7 @@ None. All identified gaps can be addressed by adding rules to existing agents. N
 | RG-2 applied, no recurrence | Phase 5, Phase 6 — no initState context access errors |
 | RG-4 applied, no recurrence | Phase 5, Phase 6 — no pumpAndSettle timeouts on infinite animations |
 | RG-5 applied, no recurrence | Phase 5, Phase 6 — no DraggableScrollableSheet test failures |
-| RG-6 not applied | Pixel.md, Sline_Planner.md — grep confirms absence |
+| RG-6 not applied | Pixel.md, Planner.md — grep confirms absence |
 | RG-7 not applied | Sentinel.md — grep confirms absence |
 | RG-8 not applied | Executor.md — grep confirms absence |
 | RG-9 not applied | Pixel.md — grep confirms absence |
@@ -294,7 +294,7 @@ None. All identified gaps can be addressed by adding rules to existing agents. N
 
 ## Cross-Session Mistake Trend
 
-| Session | @Pixel | @Executor | @SlinePlanner | @Sentinel | Total |
+| Session | @Pixel | @Executor | @Planner | @Sentinel | Total |
 |---|---|---|---|---|---|
 | DesignSystemFoundation (04-07) | 4 | 2 | 0 | 0 | 6 |
 | CoreWidgetRedesign (04-07) | 7 | 0 | 0 | 0 | 7 |
@@ -305,7 +305,7 @@ None. All identified gaps can be addressed by adding rules to existing agents. N
 | Phase6 ChatAdvanced (04-10) | 2 | 0 | 0 | 0 | 2 |
 | **Totals** | **15** | **5** | **3** | **0** | **23** |
 
-**Trend:** @Pixel mistakes peaked at 7 (CoreWidgetRedesign) and have declined to 2 per session since rule additions. The remaining mistakes are shifting from API surface errors (fixed by RG-1, RG-2, Flutter API verification rule) to logic errors (regex validation, auto-scroll guards) — a healthier failure mode. @SlinePlanner mistakes eliminated after Token Value Extraction rule. @Executor mistakes stable at 1-2 per session (compliance oversights).
+**Trend:** @Pixel mistakes peaked at 7 (CoreWidgetRedesign) and have declined to 2 per session since rule additions. The remaining mistakes are shifting from API surface errors (fixed by RG-1, RG-2, Flutter API verification rule) to logic errors (regex validation, auto-scroll guards) — a healthier failure mode. @Planner mistakes eliminated after Token Value Extraction rule. @Executor mistakes stable at 1-2 per session (compliance oversights).
 
 ---
 

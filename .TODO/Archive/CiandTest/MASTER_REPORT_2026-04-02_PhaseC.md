@@ -146,7 +146,7 @@ These would be covered by Stage 11.5 runtime smoke if UI changes existed, but ar
 | 6 | @DataMigration | N/A (no schema changes) |
 | 7 | @TemplateOwner | N/A (no template changes) |
 | 8 | @Observability | LOW (no concerns) |
-| 9 | @SlineDocs | Covered in Phase 9 execution |
+| 9 | @DocsKeeper | Covered in Phase 9 execution |
 | 10 | @CodeGuard | PASS (all quality gates clean) |
 | 11 | @Sentinel | PASS (all 12 acceptance criteria met) |
 | 11.5 | @Sentinel Runtime | N/A (no UI changes) |

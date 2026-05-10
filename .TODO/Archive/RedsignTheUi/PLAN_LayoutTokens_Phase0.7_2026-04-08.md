@@ -100,21 +100,21 @@
 - **Contracts:** None.
 
 ## 5) Agent Map
-- **Phase 0 (Preconditions + Audits):** `@SlinePlanner`, `@Sentinel`, `@Architect`
+- **Phase 0 (Preconditions + Audits):** `@Planner`, `@Sentinel`, `@Architect`
 - **Phase 1 (Create app_layout.dart):** `@Pixel` (primary), `@Architect` (review), `@Sentinel` (gate)
 - **Phase 2 (Migrate Card/Container group):** `@Pixel` (primary), `@Sentinel` (gate)
 - **Phase 3 (Migrate Button group):** `@Pixel` (primary), `@Sentinel` (gate)
 - **Phase 4 (Migrate Avatar/Image group):** `@Pixel` (primary), `@Sentinel` (gate)
 - **Phase 5 (Migrate Skeleton/Loader group):** `@Pixel` (primary), `@Sentinel` (gate)
 - **Phase 6 (Migrate Remaining + App Shell):** `@Pixel` (primary), `@Sentinel` (gate)
-- **Phase 7 (Documentation):** `@SlineDocs` (primary), `@Sentinel` (gate)
+- **Phase 7 (Documentation):** `@DocsKeeper` (primary), `@Sentinel` (gate)
 - **Phase 8 (QA + Verification):** `@Sentinel` (primary), `@CodeGuard` (review)
 
 ---
 
 ## Phase 0: Preconditions, Discovery & Audits
 
-**Primary Agent(s):** `@SlinePlanner`, `@Sentinel`, `@Architect`
+**Primary Agent(s):** `@Planner`, `@Sentinel`, `@Architect`
 **Goal:** Verify all preconditions, classify every widget, audit test assertions, and lock scope before any code changes.
 **Why:** @PlanCritic found 3+ wrong token values, 1 already-clean widget, and 3 test files with pixel assertions. Without this phase, execution will produce wrong values and regressions.
 **How:** Systematic scans, classification, and value verification.
@@ -510,14 +510,14 @@
 
 ## Phase 7: Documentation Sync (MANDATORY)
 
-**Primary Agent(s):** `@SlineDocs`, `@Sentinel`
+**Primary Agent(s):** `@DocsKeeper`, `@Sentinel`
 **Goal:** Update documentation to reflect the new Layout token layer.
 **Why:** `theme_dashboard.dart` must document the three-layer architecture.
 **How:** Update docs, finalize session log.
 **Result:** Documentation current and comprehensive.
 
 ### 7.1 Update theme_dashboard.dart
-- [ ] (`@SlineDocs`) Update `lib/core/theme/theme_dashboard.dart`:
+- [ ] (`@DocsKeeper`) Update `lib/core/theme/theme_dashboard.dart`:
   - Sub-step 7.1.1: Add "Layout Tokens (AppLayout)" section documenting ALL token categories with values.
   - Sub-step 7.1.2: Add "Three-Layer Architecture" diagram:
     ```
@@ -530,7 +530,7 @@
 - [ ] (`@Sentinel`) Verify `flutter analyze` passes clean.
 
 ### 7.2 Session log finalization
-- [ ] (`@SlineDocs`) Ensure session log contains:
+- [ ] (`@DocsKeeper`) Ensure session log contains:
   - Migration Classification Table (from Phase 0.2)
   - Test Assertion Inventory (from Phase 0.3)
   - Value Extraction Table (from Phase 1)

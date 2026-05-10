@@ -34,18 +34,18 @@ Agents are defined in `.cursor/Agents/` and can be invoked using triggers:
 | Agent | File | Trigger Keywords | Use Case |
 |-------|------|-----------------|----------|
 | **@Architect** | `Agents/Architect.md` | "@Architect", "fix logic", "refactor" | Logic, MVVM compliance, refactoring |
-| **@UIDesigner** | `Agents/UIDesigner.md` | "@UIDesigner", "design this", "make it pretty" | UI/UX, Glassmorphism, themes |
-| **@BackendOps** | `Agents/BackendOps.md` | "@BackendOps", "add table", "secure db" | Database, RLS, SQL, storage |
-| **@QA** | `Agents/QA.md` | "@QA", "check this", "run tests" | QA, security, documentation sync |
+| **@Pixel** | `Agents/Pixel.md` | "@Pixel", "design this", "make it pretty" | UI/UX, Glassmorphism, themes |
+| **@Supabase_Ops** | `Agents/Supabase_Ops.md` | "@Supabase", "add table", "secure db" | Database, RLS, SQL, storage |
+| **@Sentinel** | `Agents/Sentinel.md` | "@Sentinel", "check this", "run tests" | QA, security, documentation sync |
 | **@DocsKeeper** | `Agents/DocsKeeper.md` | "@DocsKeeper", "document this", "update changelog" | Documentation updates |
 | **@Planner** | `Agents/Planner.md` | "@Planner", "plan this feature" | Implementation planning |
-| **@CodeReviewer** | `Agents/CodeReviewer.md` | "@CodeReviewer", "review code", "performance check" | Code reviews, performance, security |
+| **@CodeGuard** | `Agents/CodeGuard.md` | "@CodeGuard", "review code", "performance check" | Code reviews, performance, security |
 | **@Executor** | `Agents/Executor.md` | "@Executor", "execute plan", "start phase" | Execute plans from `.TODO/` |
 | **@PlanCritic** | `Agents/PlanCritic.md` | "@PlanCritic" | Audit plans, risk prediction |
 | **@Observability** | `Agents/Observability.md` | "@Observability", "logging", "metrics" | Logging, monitoring, telemetry |
 | **@APIContract** | `Agents/APIContract.md` | "@APIContract", "define contract" | Contracts, DTOs, API shapes |
 | **@DataMigration** | `Agents/DataMigration.md` | "@DataMigration", "migration", "backfill" | Schema migration, compatibility |
-| **@SecurityAuditor** | `Agents/SecurityAuditor.md` | "@SecurityAuditor", "threat model" | Security design, abuse cases |
+| **@ThreatModeler** | `Agents/ThreatModeler.md` | "@ThreatModeler", "threat model" | Security design, abuse cases |
 
 **Reference**: See `GEMINI.md` for complete agent definitions.
 
@@ -252,4 +252,4 @@ flutter format .
 1. Check `Sline_everything/DEVELOPER_GUIDE.md` for feature-specific docs
 2. Check `Sline_everything/SUPABASE_SETUP.md` for database questions
 3. Check `.cursor/rules/` for coding patterns
-4. Invoke appropriate agent: `@Architect`, `@UIDesigner`, `@BackendOps`, `@CodeReviewer`, etc.
+4. Invoke appropriate agent: `@Architect`, `@Pixel`, `@Supabase_Ops`, `@CodeGuard`, etc.

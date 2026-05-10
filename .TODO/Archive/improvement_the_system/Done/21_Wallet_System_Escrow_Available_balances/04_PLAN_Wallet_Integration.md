@@ -137,10 +137,10 @@
 
 ## Phase 5: Documentation Sync
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
-- [ ] (@SlineDocs) Update `Wallet_Feature.md` to note that UI explicitly supports Held and Pending states natively now.
-- [ ] (@SlineDocs) Save the new unified diagram (below) to `Sline_everything/AppDigram/All_Diagrams/25_wallet_ui_integration.md`.
+- [ ] (@DocsKeeper) Update `Wallet_Feature.md` to note that UI explicitly supports Held and Pending states natively now.
+- [ ] (@DocsKeeper) Save the new unified diagram (below) to `Sline_everything/AppDigram/All_Diagrams/25_wallet_ui_integration.md`.
 
 ---
 

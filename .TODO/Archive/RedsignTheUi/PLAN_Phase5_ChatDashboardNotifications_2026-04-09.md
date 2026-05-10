@@ -216,7 +216,7 @@
 - **Contracts:** None.
 
 ## 5) Agent Map
-- **Phase 0 (Preconditions + Stagger Pattern Lock):** `@SlinePlanner`, `@Sentinel`, `@Architect`
+- **Phase 0 (Preconditions + Stagger Pattern Lock):** `@Planner`, `@Sentinel`, `@Architect`
 - **Phase 1 (Messages Screen — Inbox):** `@Pixel` (primary), `@Sentinel` (gate)
 - **Phase 2 (ConversationListTile):** `@Pixel` (primary), `@Sentinel` (gate)
 - **Phase 3 (MessageBubble — Grouping API & Polish):** `@Pixel` (primary), `@Sentinel` (gate) — **MOVED UP (was Phase 4)**
@@ -229,7 +229,7 @@
 - **Phase 10 (Skeleton Updates):** `@Pixel` (primary), `@Sentinel` (gate)
 - **Phase 10A (Widget Tests — NEW):** `@Sentinel` (primary), `@Pixel` (support)
 - **Phase 11 (QA & Verification):** `@Sentinel` (primary), `@CodeGuard` (review)
-- **Phase 12 (Documentation Sync):** `@SlineDocs` (primary)
+- **Phase 12 (Documentation Sync):** `@DocsKeeper` (primary)
 
 **Critique File:** `.TODO/PLAN_CRITIQUE_2026-04-09_Phase5_ChatDashboardNotifications.md` — READ FULLY before execution.
 
@@ -239,12 +239,12 @@
 
 ## Phase 0: Preconditions & Gates
 
-**Primary Agent(s):** `@SlinePlanner`, `@Sentinel`
+**Primary Agent(s):** `@Planner`, `@Sentinel`
 
 ### 0.1 Spec Lock
 - [x] (`@Sentinel`) Acceptance criteria defined (see Section 7 below).
 - [x] (`@Architect`) Confirm touched modules: `lib/features/chat/view/`, `lib/features/chat/attachments/widgets/`, `lib/features/notifications/view/`, `lib/features/dashboard/view/`, `lib/core/widgets/skeleton_card.dart`.
-- [x] (`@SlineDocs`) Confirm `.impeccable.md` exists and is current.
+- [x] (`@DocsKeeper`) Confirm `.impeccable.md` exists and is current.
 - [x] (`@Architect`) Confirm design tokens available: AppMotion, AppStates, AppDecorations.elevation(), semantic colors, AppLayout, AppTypography — all verified present.
 - **GATE CHECK:** Scope is limited to View layer files. No ViewModel/Service/Backend changes. All required tokens exist.
 
@@ -755,11 +755,11 @@
 
 ## Phase 12: Documentation Sync (MANDATORY)
 
-**Primary Agent(s):** `@SlineDocs`
+**Primary Agent(s):** `@DocsKeeper`
 
-- [x] (`@SlineDocs`) Update session log `docs/LOG/SESSION_PLAN_Phase5_ChatDashboardNotifications_2026-04-09.md` with execution timeline, discoveries, and agent improvement notes.
-- [x] (`@SlineDocs`) Update `Sline_everything/STRUCTURE.md` if file structure changed.
-- [x] (`@SlineDocs`) Ensure session log references this plan file.
+- [x] (`@DocsKeeper`) Update session log `docs/LOG/SESSION_PLAN_Phase5_ChatDashboardNotifications_2026-04-09.md` with execution timeline, discoveries, and agent improvement notes.
+- [x] (`@DocsKeeper`) Update `Sline_everything/STRUCTURE.md` if file structure changed.
+- [x] (`@DocsKeeper`) Ensure session log references this plan file.
 - **GATE CHECK:** Docs and session log aligned with implementation.
 
 ---

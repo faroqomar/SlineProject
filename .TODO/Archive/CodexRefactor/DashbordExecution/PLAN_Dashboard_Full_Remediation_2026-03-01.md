@@ -300,13 +300,13 @@
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
-- [ ] (@SlineDocs) Update `Sline_everything/DEVELOPER_GUIDE.md` for dashboard shell ownership, work/payment contracts, and any new ViewModel/service paths.
-- [ ] (@SlineDocs) Update `Sline_everything/SUPABASE_SETUP.md` for actual dashboard views, grants, RPCs, and RLS behavior after live reconciliation.
-- [ ] (@SlineDocs) Update `Sline_everything/MVP_ROADMAP.md` to reflect the post-remediation status of dashboard, wallet, and payment hardening.
-- [ ] (@SlineDocs) Update `Sline_everything/STRUCTURE.md` and, if needed, `Sline_everything/CODE_REVIEW.md` with the final file layout and reusable review rules.
-- [ ] (@SlineDocs) If the implementation materially changes architecture guidance, update `Sline_everything/ARCHITECTURE_ANALYSIS.md` current-live notes rather than historical sections.
+- [ ] (@DocsKeeper) Update `Sline_everything/DEVELOPER_GUIDE.md` for dashboard shell ownership, work/payment contracts, and any new ViewModel/service paths.
+- [ ] (@DocsKeeper) Update `Sline_everything/SUPABASE_SETUP.md` for actual dashboard views, grants, RPCs, and RLS behavior after live reconciliation.
+- [ ] (@DocsKeeper) Update `Sline_everything/MVP_ROADMAP.md` to reflect the post-remediation status of dashboard, wallet, and payment hardening.
+- [ ] (@DocsKeeper) Update `Sline_everything/STRUCTURE.md` and, if needed, `Sline_everything/CODE_REVIEW.md` with the final file layout and reusable review rules.
+- [ ] (@DocsKeeper) If the implementation materially changes architecture guidance, update `Sline_everything/ARCHITECTURE_ANALYSIS.md` current-live notes rather than historical sections.
 - **Verify (@Sentinel):** docs match code and confirmed live DB reality, not stale intent.
 
 ---

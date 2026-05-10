@@ -570,7 +570,7 @@
 ## 🏷️ Post-14a fixes and tender/docs sync (2026-03-08)
 
 **Workflow:** `.agents/workflows/slinedocs.md`  
-**Docs sync note:** `.TODO/DOCS_SYNC_2026-03-08_SlineDocsUpToDate.md`
+**Docs sync note:** `.TODO/DOCS_SYNC_2026-03-08_DocsKeeperUpToDate.md`
 
 ### ✅ Implemented
 
@@ -740,7 +740,7 @@
 - RLS verification: `.TODO/08_RLS_verification_chat.md`
 - Master report: `.TODO/MASTER_REPORT_2026-03-08_ChatRealtimeSync.md`
 - Checklist & app verification: `.TODO/CHECKLIST_AND_SUMMARY_ChatRealtimeSync_Fixes_2026-03-08.md`
-- Docs sync (this pass): `.TODO/DOCS_SYNC_2026-03-08_SlineDocsUpToDate.md`
+- Docs sync (this pass): `.TODO/DOCS_SYNC_2026-03-08_DocsKeeperUpToDate.md`
 
 ---
 
@@ -810,8 +810,8 @@
 
 ### 🔗 References
 
-- DOCS_SYNC note: `.TODO/DOCS_SYNC_2026-03-08_SlineDocsReferenceIntegrity.md`
-- This pass (full scan + ref integrity): `.TODO/DOCS_SYNC_2026-03-08_SlineDocsUpToDate.md` — Sline_Log 16/21 paths, MVP_ROADMAP full paths, SUPABASE_SETUP changelog bullet for wallet_activity_include_spent.
+- DOCS_SYNC note: `.TODO/DOCS_SYNC_2026-03-08_DocsKeeperReferenceIntegrity.md`
+- This pass (full scan + ref integrity): `.TODO/DOCS_SYNC_2026-03-08_DocsKeeperUpToDate.md` — Sline_Log 16/21 paths, MVP_ROADMAP full paths, SUPABASE_SETUP changelog bullet for wallet_activity_include_spent.
 - Diagram 09: `Sline_everything/AppDigram/All_Diagrams/09_ledger-event-flow.md`
 - Done 09: `.TODO/improvement_the_system/Done/09_ledger-event-flow/`
 - Done 16: `.TODO/improvement_the_system/Done/16_escrow-invariants-idempotency/`
@@ -926,7 +926,7 @@
 ## 🏷️ Diagram 21 + Wallet activity include spent (2026-03-08)
 
 **Date:** 2026-03-08  
-**Scope:** Documentation sync (SlineDocs); reference integrity; diagram and schema docs aligned with implemented behaviour.
+**Scope:** Documentation sync (DocsKeeper); reference integrity; diagram and schema docs aligned with implemented behaviour.
 
 ### ✅ Implemented / Updated
 
@@ -937,7 +937,7 @@
 ### 📊 Impact
 
 - **Single source of truth:** Diagram 21 and core docs now match implemented behaviour (direct_offer release, activity include spent, gateway_escrow).
-- **Reference integrity:** No dead paths; all cross-references validated per SlineDocs workflow.
+- **Reference integrity:** No dead paths; all cross-references validated per DocsKeeper workflow.
 
 ### 🧪 Verification
 
@@ -1360,7 +1360,7 @@
 - Review: `.TODO/CODEGUARD_REVIEW_2026-03-06_AuthProfileProvisioning.md`
 - Master report: `.TODO/MASTER_REPORT_2026-03-06_AuthProfileProvisioning.md`
 - App verification checklist: `.TODO/CHECKLIST_AuthProfileProvisioning_Verification.md`
-- Docs sync: `.TODO/DOCS_SYNC_2026-03-06_SlineDocsFullSync.md`
+- Docs sync: `.TODO/DOCS_SYNC_2026-03-06_DocsKeeperFullSync.md`
 
 ---
 
@@ -1520,7 +1520,7 @@
 #### 🧪 Verification
 
 - Execution log: `.TODO/EXECUTION_LOG_PLAN_Tasks_Fix_All_2026-03-01.md`
-- Multi-agent review: `.TODO/MASTER_REPORT_2026-03-04_TasksTenderFix.md` (Architect, Observability, SlineDocs, CodeGuard)
+- Multi-agent review: `.TODO/MASTER_REPORT_2026-03-04_TasksTenderFix.md` (Architect, Observability, DocsKeeper, CodeGuard)
 
 ---
 
@@ -1688,7 +1688,7 @@
   - `lib/features/chat/view/chat_screen.dart`: offer creation uses `days` and `ChatOfferPayload`; accept/reject use `offer_accepted`/`offer_rejected`; user-safe error strings; offer button only for task-linked chats.
 
 - **Docs and .TODO**
-  - `Sline_everything/DEVELOPER_GUIDE/Chat Feature.md`, `Sline_everything/SUPABASE_SETUP.md`, `Sline_everything/STRUCTURE.md` updated. `.TODO/` plan, execution log, contract, test strategy, threat model, RLS matrix, rollout matrix, observability, and orchestrator reports (Architect, Observability, SlineDocs, CodeGuard, Master).
+  - `Sline_everything/DEVELOPER_GUIDE/Chat Feature.md`, `Sline_everything/SUPABASE_SETUP.md`, `Sline_everything/STRUCTURE.md` updated. `.TODO/` plan, execution log, contract, test strategy, threat model, RLS matrix, rollout matrix, observability, and orchestrator reports (Architect, Observability, DocsKeeper, CodeGuard, Master).
 
 #### 📊 Impact
 
@@ -2027,7 +2027,7 @@
 ### 🟢 Version 2.15.1 — Navigation & UI Polish (Hotfixes)
 
 **Date:** 2026-02-22
-**Agent:** @Architect, @Pixel, @SlineDocs
+**Agent:** @Architect, @Pixel, @DocsKeeper
 **Status:** ✅ Complete
 
 #### ✅ Implemented
@@ -2323,7 +2323,7 @@
 ### 🟢 Version 2.8 — Booking Packages & Payment UI
 
 **Date:** 2026-01-11
-**Agent:** @Architect, @SlineDocs
+**Agent:** @Architect, @DocsKeeper
 **Status:** ✅ Complete
 
 ---

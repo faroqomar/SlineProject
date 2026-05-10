@@ -311,7 +311,7 @@
 
 | Phase | Owner(s) | Focus |
 |-------|----------|-------|
-| 0 | `@SlinePlanner`, `@Sentinel` | Preconditions |
+| 0 | `@Planner`, `@Sentinel` | Preconditions |
 | 1 | `@Architect`, `@Sentinel` | Test infrastructure & constructor refactoring |
 | 2 | `@Architect`, `@Sentinel` | AuthSessionViewModel tests |
 | 3 | `@Architect`, `@Sentinel` | WalletViewModel tests |
@@ -320,13 +320,13 @@
 | 6 | `@Architect`, `@Sentinel` | DashboardViewModel tests |
 | 7 | `@Architect`, `@APIContract`, `@Sentinel` | DTO / model mapping tests |
 | 8 | `@Sentinel`, `@CodeGuard` | Final QA & CI verification |
-| 9 | `@SlineDocs` | Documentation sync |
+| 9 | `@DocsKeeper` | Documentation sync |
 
 ---
 
 ## Phase 0: Preconditions & Gates
 
-**Primary Agent(s):** `@SlinePlanner`, `@Sentinel`
+**Primary Agent(s):** `@Planner`, `@Sentinel`
 
 **Goal:** Lock scope, acceptance criteria, verify readiness.
 **Why:** Prevent ambiguous "done" criteria.
@@ -361,7 +361,7 @@
   - `test/unit/models/direct_offer_model_test.dart` (NEW)
   - `test/helpers/mock_services.dart` (NEW)
   - Extend: 4 existing model test files
-- [ ] (`@SlineDocs`) Confirm authoritative docs:
+- [ ] (`@DocsKeeper`) Confirm authoritative docs:
   - `.TODO/AUDIT_Quality_Architecture_2026-04-01.md` — Phase C definition
   - `Sline_everything/SUPABASE_SETUP.md` — table schemas for DTO column name validation
 - **GATE CHECK:** Scope, acceptance, files, and docs explicit.
@@ -1142,7 +1142,7 @@
 
 ## Phase 9: Documentation Sync (MANDATORY)
 
-**Primary Agent(s):** `@SlineDocs`
+**Primary Agent(s):** `@DocsKeeper`
 
 **Goal:** Update audit doc, close session log, align CLAUDE.md.
 **Why:** Documentation must reflect reality.
@@ -1151,17 +1151,17 @@
 
 ### 9.1 Audit Document Update
 
-- [ ] (`@SlineDocs`) Update `.TODO/AUDIT_Quality_Architecture_2026-04-01.md`: Mark C1-C6 DONE. Update Section 4.4 + 4.10. Record test count.
+- [ ] (`@DocsKeeper`) Update `.TODO/AUDIT_Quality_Architecture_2026-04-01.md`: Mark C1-C6 DONE. Update Section 4.4 + 4.10. Record test count.
 - **GATE CHECK:** Audit doc reflects completion.
 
 ### 9.2 Session Log Close
 
-- [ ] (`@SlineDocs`) Complete `docs/LOG/SESSION_PLAN_CriticalTests_2026-04-02.md`: dates, summary, agent notes, timeline.
+- [ ] (`@DocsKeeper`) Complete `docs/LOG/SESSION_PLAN_CriticalTests_2026-04-02.md`: dates, summary, agent notes, timeline.
 - **GATE CHECK:** Session log closed.
 
 ### 9.3 CLAUDE.md Update
 
-- [ ] (`@SlineDocs`) Note constructor injection pattern for WalletVM/ChatVM if noteworthy.
+- [ ] (`@DocsKeeper`) Note constructor injection pattern for WalletVM/ChatVM if noteworthy.
 - **GATE CHECK:** CLAUDE.md aligned.
 
 ---
@@ -1197,7 +1197,7 @@
 
 ### Docs
 - `.TODO/AUDIT_Quality_Architecture_2026-04-01.md`
-- `.cursor/Agents/Sline_Planner.md`, `.cursor/Agents/Plan_Critic.md`
+- `.cursor/Agents/Planner.md`, `.cursor/Agents/PlanCritic.md`
 - `CLAUDE.md`, `Sline_everything/SUPABASE_SETUP.md`
 
 ### Code Paths

@@ -2,7 +2,7 @@
 description: Migration Engineer & Backward-Compatibility Owner for Supabase schema evolution. Invocation: "@DataMigration", "migration", "backfill", "schema change", "compatibility", "add column", "evolve schema"
 ---
 
-# 🧬 Agent: DataMigration (DataMigration)
+# 🧬 Agent: DataMigration (SLineDataMigration)
 
 **Role:** Migration Engineer & Backward-Compatibility Owner  
 **Focus:** Safe Supabase schema evolution, data backfills, zero-surprise rollouts, rollback plans, multi-version compatibility, and policy-safe migrations.  
@@ -205,9 +205,9 @@ Verify:
 
 ### 6.3 Required Review Gates
 
-- `@BackendOps` reviews schema / policy / trigger changes
-- `@QA` validates QA + regression + security impact
-- `@CodeReviewer` validates performance and compatibility risks
+- `@Supabase_Ops` reviews schema / policy / trigger changes
+- `@Sentinel` validates QA + regression + security impact
+- `@CodeGuard` validates performance and compatibility risks
 - `@Architect` reviews Flutter model / service / ViewModel changes
 - `@DocsKeeper` updates docs
 
@@ -260,7 +260,7 @@ If schema or process flow changed, also require:
 
 ## 9) Interaction Rules
 
-**With `@BackendOps`:**  
+**With `@Supabase_Ops`:**  
 Coordinate rollout order, object names, and access implications.
 
 **With `@APIContract`:**  
@@ -269,7 +269,7 @@ Coordinate transitional and final contract shapes.
 **With `@Architect`:**  
 Coordinate model, service, and ViewModel compatibility windows.
 
-**With `@QA`:**  
+**With `@Sentinel`:**  
 Provide negative tests and readiness criteria.
 
 **With `@DocsKeeper`:**  
@@ -286,4 +286,4 @@ When the user says `migration`, `backfill`, `schema change`, `compatibility`, or
 3. read `supabase-migration`
 4. design introduce / backfill / enforce plan
 5. write migration artifacts
-6. route through `@BackendOps`, `@APIContract`, `@Architect`, `@QA`, and `@DocsKeeper`
+6. route through `@Supabase_Ops`, `@APIContract`, `@Architect`, `@Sentinel`, and `@DocsKeeper`

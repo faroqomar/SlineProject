@@ -87,7 +87,7 @@ final Map<String, dynamic> roleSwitchStaleStateResponse = {
 };
 ```
 
-**Owner:** Test Author / @SlineDocs
+**Owner:** Test Author / @DocsKeeper
 
 ---
 
@@ -167,7 +167,7 @@ final retrySuccess = await _repo.roleSwitch.refreshSession(maxRetries: 1);
 
 **Recommendation:** Add a comment explaining the business decision and consider logging these failures for monitoring.
 
-**Owner:** @SlineDocs
+**Owner:** @DocsKeeper
 
 ---
 

@@ -97,7 +97,7 @@
 - **Contracts:** None.
 
 ## 5) Agent Map
-- **Phase 0 (Preconditions):** `@Sentinel` (primary), `@SlinePlanner` (gate)
+- **Phase 0 (Preconditions):** `@Sentinel` (primary), `@Planner` (gate)
 - **Phase 1 (Architecture Fixes):** `@Architect` (primary), `@Sentinel` (gate)
 - **Phase 2 (Test Infrastructure):** `@Sentinel` (primary), `@Architect` (support)
 - **Phase 3 (Foundation Widgets):** `@Pixel` (primary), `@Architect` (review), `@Sentinel` (gate)
@@ -112,7 +112,7 @@
 
 ## Phase 0: Preconditions & Gates
 
-**Primary Agent(s):** `@Sentinel`, `@SlinePlanner`
+**Primary Agent(s):** `@Sentinel`, `@Planner`
 
 ### 0.1 Phase 0 Completion Verification
 - [ ] (`@Sentinel`) Confirm all 12 Phase 0 acceptance criteria pass (see PLAN_DesignSystemFoundation Section 7).

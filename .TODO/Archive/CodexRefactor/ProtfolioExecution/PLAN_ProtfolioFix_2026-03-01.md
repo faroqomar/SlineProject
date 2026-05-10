@@ -280,12 +280,12 @@
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
-- [ ] (@SlineDocs) Update `Sline_everything/DEVELOPER_GUIDE.md` so portfolio storage semantics, MVVM ownership, and public-profile DTO ownership describe the new canonical contract and no longer conflict internally. File References: `Sline_everything/DEVELOPER_GUIDE.md:65-65`, `Sline_everything/DEVELOPER_GUIDE.md:129-129`, `Sline_everything/DEVELOPER_GUIDE.md:383-429`, `Sline_everything/DEVELOPER_GUIDE.md:552-552`
-- [ ] (@SlineDocs) Update `Sline_everything/SUPABASE_SETUP.md` with the final portfolio schema, index, and policy source-of-truth, including `image_path` if introduced and the actual bucket privacy model verified live. File References: `Sline_everything/SUPABASE_SETUP.md:689-722`, `Sline_everything/SUPABASE_SETUP.md:1133-1142`, `Sline_everything/SUPABASE_SETUP.md:1575-1588`
-- [ ] (@SlineDocs) Update `Sline_everything/STRUCTURE.md` and any feature inventory docs if `ManagePortfolioScreen` or public-profile repositories/models move paths. File References: `Sline_everything/STRUCTURE.md`, `.TODO/CodexRefactor/01_FEATURES_INDEX.md:768-823`
-- [ ] (@SlineDocs) Reconcile historical notes in `Sline_everything/Sline_Log.md` if they still state a private `portfolio` bucket after the live rescan confirms the final state. File References: `Sline_everything/Sline_Log.md:1042-1046`
+- [ ] (@DocsKeeper) Update `Sline_everything/DEVELOPER_GUIDE.md` so portfolio storage semantics, MVVM ownership, and public-profile DTO ownership describe the new canonical contract and no longer conflict internally. File References: `Sline_everything/DEVELOPER_GUIDE.md:65-65`, `Sline_everything/DEVELOPER_GUIDE.md:129-129`, `Sline_everything/DEVELOPER_GUIDE.md:383-429`, `Sline_everything/DEVELOPER_GUIDE.md:552-552`
+- [ ] (@DocsKeeper) Update `Sline_everything/SUPABASE_SETUP.md` with the final portfolio schema, index, and policy source-of-truth, including `image_path` if introduced and the actual bucket privacy model verified live. File References: `Sline_everything/SUPABASE_SETUP.md:689-722`, `Sline_everything/SUPABASE_SETUP.md:1133-1142`, `Sline_everything/SUPABASE_SETUP.md:1575-1588`
+- [ ] (@DocsKeeper) Update `Sline_everything/STRUCTURE.md` and any feature inventory docs if `ManagePortfolioScreen` or public-profile repositories/models move paths. File References: `Sline_everything/STRUCTURE.md`, `.TODO/CodexRefactor/01_FEATURES_INDEX.md:768-823`
+- [ ] (@DocsKeeper) Reconcile historical notes in `Sline_everything/Sline_Log.md` if they still state a private `portfolio` bucket after the live rescan confirms the final state. File References: `Sline_everything/Sline_Log.md:1042-1046`
 - **Verify (@Sentinel):** docs match the merged code and the post-change live Supabase reality, with no remaining portfolio storage-contract contradictions.
 
 ## 7) Acceptance Criteria (MANDATORY)

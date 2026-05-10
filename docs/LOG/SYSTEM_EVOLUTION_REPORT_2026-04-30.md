@@ -5,7 +5,7 @@
 - Sessions analysed: all `docs/LOG/SESSION_*.md` files with indexed problem, mistake, quick-summary, and improvement-note entries.
 - Primary evidence session: `docs/LOG/SESSION_HomeDiscoveryNavConsolidation_2026-04-30.md`.
 - Most common failure type in this run: test/planning specificity gaps.
-- Most frequently affected agents: `@Planner`, `@PlanCritic`, `@Executor`, `@QA`, `@CodeReviewer`.
+- Most frequently affected agents: `@Planner`, `@PlanCritic`, `@Executor`, `@Sentinel`, `@CodeGuard`.
 - Highest-value improvement: force concrete validation of plan skill labels, command paths, and route-push widget-test harnesses before execution.
 - MCP servers recommended: none. The observed failures were rule/process gaps, not missing live-tool access.
 - New agents recommended: none.
@@ -81,8 +81,8 @@
 - `.cursor/Agents/Planner.md`
 - `.cursor/Agents/PlanCritic.md`
 - `.cursor/Agents/Executor.md`
-- `.cursor/Agents/QA.md`
-- `.cursor/Agents/CodeReviewer.md`
+- `.cursor/Agents/Sentinel.md`
+- `.cursor/Agents/CodeGuard.md`
 - `.cursor/Agents/Orchestrator.md`
 - `.cursor/Agents/SystemEvolution.md`
 

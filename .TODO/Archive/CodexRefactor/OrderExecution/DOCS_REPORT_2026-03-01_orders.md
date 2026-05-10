@@ -12,7 +12,7 @@
 - Date: 2026-03-01
 - Scope: `orders`
 - Plan Reference: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.TODO/PLAN_OrdersFix_2026-03-01.md`
-- Workflow: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.agents/workflows/orchestrator.md`
+- Workflow: `/Users/eros/Dev/Eros_Projects/Sline/sline_app/.agents/workflows/Orchestrator.md`
 
 ## Evidence
 - The main developer guide now documents owner-compatible orders reads and the dedicated orders flow.

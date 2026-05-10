@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-01  
 **Scope:** Portfolio image display fixes  
-**Pipeline:** Architect → Observability → SlineDocs → CodeGuard  
+**Pipeline:** Architect → Observability → DocsKeeper → CodeGuard  
 **Final Decision:** ✅ **APPROVED FOR MERGE**
 
 ---
@@ -81,13 +81,13 @@ The code is production-ready. Minor documentation updates and observability enha
 ### 📝 Documentation / Reference Integrity
 | Finding | Severity | Owner | Status | Details |
 |---------|----------|-------|--------|---------|
-| DEVELOPER_GUIDE.md outdated | HIGH | @SlineDocs | ❌ NEEDS UPDATE | Line 404: wrong field documentation |
-| SUPABASE_SETUP.md missing image_path | HIGH | @SlineDocs | ❌ NEEDS UPDATE | Table docs don't list canonical field |
-| Sline_Log.md no entry | REQUIRED | @SlineDocs | ❌ NEEDS UPDATE | No v2.16.8 changelog entry |
+| DEVELOPER_GUIDE.md outdated | HIGH | @DocsKeeper | ❌ NEEDS UPDATE | Line 404: wrong field documentation |
+| SUPABASE_SETUP.md missing image_path | HIGH | @DocsKeeper | ❌ NEEDS UPDATE | Table docs don't list canonical field |
+| Sline_Log.md no entry | REQUIRED | @DocsKeeper | ❌ NEEDS UPDATE | No v2.16.8 changelog entry |
 | Code comments | - | - | ✅ ADEQUATE | Good triple-slash docs |
 | Broken references | - | - | ✅ NONE | All paths valid |
 
-**SlineDocs Verdict:** 3 critical documentation gaps requiring immediate update post-merge.
+**DocsKeeper Verdict:** 3 critical documentation gaps requiring immediate update post-merge.
 
 ---
 
@@ -95,7 +95,7 @@ The code is production-ready. Minor documentation updates and observability enha
 
 ### Immediate (Post-Merge, This Sprint)
 
-**Step 1: Documentation Updates (@SlineDocs)**
+**Step 1: Documentation Updates (@DocsKeeper)**
 - [ ] Update `Sline_everything/DEVELOPER_GUIDE.md` line 404 with correct field documentation
 - [ ] Add `image_path` column to `Sline_everything/SUPABASE_SETUP.md` section 5.10
 - [ ] Add Version 2.16.8 entry to `Sline_everything/Sline_Log.md`
@@ -188,7 +188,7 @@ The code is production-ready. Minor documentation updates and observability enha
 |-------|--------|---------|
 | @Architect | ✅ COMPLETE | APPROVED |
 | @Observability | ✅ COMPLETE | ACCEPTABLE (with recommended fix) |
-| @SlineDocs | ✅ COMPLETE | 3 doc updates required post-merge |
+| @DocsKeeper | ✅ COMPLETE | 3 doc updates required post-merge |
 | @CodeGuard | ✅ COMPLETE | APPROVED |
 
 ### Pipeline Status

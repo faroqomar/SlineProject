@@ -43,9 +43,9 @@
 
 ## 4. Why each update was needed
 
-- **Diagram 21 execution log path:** The execution log lives in the 21 folder, not at `.TODO` root. Wrong path would break “no dead paths” rule (SlineDocs §7.1).
+- **Diagram 21 execution log path:** The execution log lives in the 21 folder, not at `.TODO` root. Wrong path would break “no dead paths” rule (DocsKeeper §7.1).
 - **Sline_Log Plan / Execution Log / Master Report paths:** Same reason; Sline_Log is the master timeline and must reference existing files.
-- **Sline_Log new entry:** Any meaningful doc change (diagram checklist, reference fixes, wallet activity behaviour) must be captured with specifics (SlineDocs §1, §4).
+- **Sline_Log new entry:** Any meaningful doc change (diagram checklist, reference fixes, wallet activity behaviour) must be captured with specifics (DocsKeeper §1, §4).
 - **DEVELOPER_GUIDE Wallet_Feature:** Diagram 21 and SUPABASE_SETUP already described “include spent”; Wallet_Feature is the developer-facing wallet doc and must state the same behaviour and point to diagram 21 and §6.6 for a single source of truth.
 
 ---

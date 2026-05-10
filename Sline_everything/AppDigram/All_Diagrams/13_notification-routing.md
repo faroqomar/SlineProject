@@ -3,7 +3,7 @@
 **Diagram name:** 13_notification-routing  
 **Version:** v2 (Implemented)  
 **Date:** 2026-03-08  
-**Owner/author:** SlineDocs / Backend + Flutter  
+**Owner/author:** DocsKeeper / Backend + Flutter  
 **Plan:** `.TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md`  
 **Contract:** `.TODO/improvement_the_system/ImplementReady/13_notification-routing/CONTRACT_notification_push.md`  
 **Runbook:** `.TODO/improvement_the_system/ImplementReady/13_notification-routing/RUNBOOK_notification_push.md`

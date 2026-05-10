@@ -1,6 +1,6 @@
 # Master Report: Booking Lifecycle (05_booking-lifecycle)
 
-**Orchestrator:** SLineOrchestrator  
+**Orchestrator:** Orchestrator  
 **Scope:** Booking Lifecycle hardening (05_booking-lifecycle)  
 **Plan:** `.TODO/PLAN_BookingLifecycle_2026-03-08_PlanCritic.md` (section H)  
 **Execution log:** `.TODO/EXECUTION_LOG_PLAN_BookingLifecycle_2026-03-08.md`  
@@ -19,7 +19,7 @@
 **Agent reports used:**  
 - @Architect → `.TODO/ARCHITECT_REPORT_2026-03-08_BookingLifecycle.md` (APPROVED)  
 - @Observability → `.TODO/OBSERVABILITY_REPORT_2026-03-08_BookingLifecycle.md` (BLOCKER)  
-- @SlineDocs → `.TODO/DOCS_REPORT_2026-03-08_BookingLifecycle.md` (Deltas + 1 broken ref; no BLOCKER)  
+- @DocsKeeper → `.TODO/DOCS_REPORT_2026-03-08_BookingLifecycle.md` (Deltas + 1 broken ref; no BLOCKER)  
 - @CodeGuard → `.TODO/CODEGUARD_REVIEW_2026-03-08_BookingLifecycle.md` (APPROVED)
 
 ---
@@ -63,8 +63,8 @@
 
 | Severity | Owner | Finding | File / object | Fix recommendation |
 |----------|--------|---------|----------------|--------------------|
-| MED | SlineDocs | 05_booking-lifecycle.md references non-existent lib/features/booking/booking_screen.dart. | Sline_everything/AppDigram/All_Diagrams/05_booking-lifecycle.md | Replace with lib/features/booking/view/payment_checkout_screen.dart (and optionally discovery/details). |
-| MED | SlineDocs | SUPABASE_SETUP, DEVELOPER_GUIDE, MVP_ROADMAP, Sline_Log, STRUCTURE, 05_booking-lifecycle diagram lack disputed/no_show, guard, admin RPC, migrations. | Sline_everything/* | Apply ordered list in DOCS_REPORT §4 (05_booking-lifecycle, SUPABASE_SETUP, DEVELOPER_GUIDE, Booking Feature, MVP_ROADMAP, Sline_Log, STRUCTURE). |
+| MED | DocsKeeper | 05_booking-lifecycle.md references non-existent lib/features/booking/booking_screen.dart. | Sline_everything/AppDigram/All_Diagrams/05_booking-lifecycle.md | Replace with lib/features/booking/view/payment_checkout_screen.dart (and optionally discovery/details). |
+| MED | DocsKeeper | SUPABASE_SETUP, DEVELOPER_GUIDE, MVP_ROADMAP, Sline_Log, STRUCTURE, 05_booking-lifecycle diagram lack disputed/no_show, guard, admin RPC, migrations. | Sline_everything/* | Apply ordered list in DOCS_REPORT §4 (05_booking-lifecycle, SUPABASE_SETUP, DEVELOPER_GUIDE, Booking Feature, MVP_ROADMAP, Sline_Log, STRUCTURE). |
 
 ### Compatibility / deployment
 
@@ -80,10 +80,10 @@
 | Step | Owner | Action | Verification |
 |------|--------|--------|--------------|
 | **1** | **Observability / Implementer** | **Resolve BLOCKER:** In `BookingViewModel.updateBookingStatus`, in the catch block: if `e is StateError`, log with `AppLogger.w` only and do not report to crash. For non-StateError, keep `AppLogger.e`. | **DONE:** Implemented; `flutter test test/unit/booking/` — 11 tests passed. |
-| 2 | @SlineDocs | Fix broken ref in 05_booking-lifecycle.md: replace `booking_screen.dart` with `payment_checkout_screen.dart` (and optionally discovery/details). Update diagram and verification block (disputed, no_show, guard, rpc_finalize_auto_approval, admin_resolve_booking_dispute). | Grep for booking_screen.dart → 0 refs; diagram and verification block mention correct paths and behaviors. |
-| 3 | @SlineDocs | Update SUPABASE_SETUP.md: add disputed, no_show to enum; guard-aligned transition diagram; fn_booking_guard summary from 20260308210100; RPC list + changelog for admin_resolve_booking_dispute and migrations 20260308210000–20260308210400. | Enum table and §4.2/§9 match migrations; RPC list includes admin_resolve_booking_dispute. |
-| 4 | @SlineDocs | Update DEVELOPER_GUIDE.md and DEVELOPER_GUIDE/Booking Feature.md: add disputed to status list; note client cannot cancel after delivery (Report Issue); rpc_finalize_auto_approval booking ledger; admin_resolve_booking_dispute. | Docs describe guard, auto-approval, admin RPC. |
-| 5 | @SlineDocs | Update MVP_ROADMAP.md, Sline_Log.md, STRUCTURE.md per DOCS_REPORT §4. | Booking Lifecycle 2026-03-08 and migration bullets present. |
+| 2 | @DocsKeeper | Fix broken ref in 05_booking-lifecycle.md: replace `booking_screen.dart` with `payment_checkout_screen.dart` (and optionally discovery/details). Update diagram and verification block (disputed, no_show, guard, rpc_finalize_auto_approval, admin_resolve_booking_dispute). | Grep for booking_screen.dart → 0 refs; diagram and verification block mention correct paths and behaviors. |
+| 3 | @DocsKeeper | Update SUPABASE_SETUP.md: add disputed, no_show to enum; guard-aligned transition diagram; fn_booking_guard summary from 20260308210100; RPC list + changelog for admin_resolve_booking_dispute and migrations 20260308210000–20260308210400. | Enum table and §4.2/§9 match migrations; RPC list includes admin_resolve_booking_dispute. |
+| 4 | @DocsKeeper | Update DEVELOPER_GUIDE.md and DEVELOPER_GUIDE/Booking Feature.md: add disputed to status list; note client cannot cancel after delivery (Report Issue); rpc_finalize_auto_approval booking ledger; admin_resolve_booking_dispute. | Docs describe guard, auto-approval, admin RPC. |
+| 5 | @DocsKeeper | Update MVP_ROADMAP.md, Sline_Log.md, STRUCTURE.md per DOCS_REPORT §4. | Booking Lifecycle 2026-03-08 and migration bullets present. |
 | 6 | Implementer | Run `dart format .` and commit. | `dart format --set-exit-if-changed` passes. |
 | 7 | @CodeGuard (gate re-run) | After Step 1, re-run CodeGuard on changed ViewModel file only (or full scope) and confirm no new blockers. | CODEGUARD_REVIEW still APPROVED; no BLOCKER. |
 
@@ -114,7 +114,7 @@
 ## F) Next Actions
 
 1. **Implement Step 1 (BLOCKER):** In `BookingViewModel.updateBookingStatus`, treat `StateError` as expected business rule: use `AppLogger.w` and do not report to crash. Re-run tests and confirm crash tool does not receive guard-block events.
-2. **Execute doc updates (Steps 2–5):** Assign to @SlineDocs per DOCS_REPORT_2026-03-08_BookingLifecycle.md §4.
+2. **Execute doc updates (Steps 2–5):** Assign to @DocsKeeper per DOCS_REPORT_2026-03-08_BookingLifecycle.md §4.
 3. **Format and commit (Step 6):** Run `dart format .` and commit.
 4. **Re-run CodeGuard (Step 7)** after Step 1; then mark pipeline **Ready** if no blockers remain.
 5. **Optional:** Set booking.status = disputed after Report Issue; harden ledger patch migration; align BookingModel.toJson status with DB for write path.

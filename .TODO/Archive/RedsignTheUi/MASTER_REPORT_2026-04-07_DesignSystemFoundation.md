@@ -127,7 +127,7 @@ For emulator testing (see `.TODO/PHASE_0_EMULATOR_TEST_CHECKLIST.md`):
 | 3 | @Architect | Inline — MVVM audit: 0 BLOCKER, 0 HIGH, 0 MED, 0 LOW |
 | 4 | @Pixel | Inline — View audit: 0 BLOCKER, 0 HIGH, 1 MED (contrast — accepted), 2 LOW |
 | 8 | @Observability | Inline — 1 MED (logging noise — FIXED) |
-| 9 | @SlineDocs | Inline — 1 MED (docs stale — FIXED) |
+| 9 | @DocsKeeper | Inline — 1 MED (docs stale — FIXED) |
 | 10 | @CodeGuard | Inline — 1 HIGH (curveSpring — FIXED), 1 MED (pressScale — FIXED) |
 
 ---

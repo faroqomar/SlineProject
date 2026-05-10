@@ -267,10 +267,10 @@
 
 **How:**
 
-- [ ] (@SlineDocs) Update DEVELOPER_GUIDE (Finance & Payment Ledger): link 06_DIAGRAM_FINAL, 03_RISK_REGISTER; p_meta forensics; admin_adjustment if in scope.  
-- [ ] (@SlineDocs) Update Wallet_Feature.md: event types and flow match diagram; test plan and run commands.  
-- [ ] (@SlineDocs) Update SUPABASE_SETUP.md if new RPC/enum.  
-- [ ] (@SlineDocs) If two-phase withdrawal: add runbook and orphan detection query to docs.
+- [ ] (@DocsKeeper) Update DEVELOPER_GUIDE (Finance & Payment Ledger): link 06_DIAGRAM_FINAL, 03_RISK_REGISTER; p_meta forensics; admin_adjustment if in scope.  
+- [ ] (@DocsKeeper) Update Wallet_Feature.md: event types and flow match diagram; test plan and run commands.  
+- [ ] (@DocsKeeper) Update SUPABASE_SETUP.md if new RPC/enum.  
+- [ ] (@DocsKeeper) If two-phase withdrawal: add runbook and orphan detection query to docs.
 
 **GATE CHECK 5:** Docs updated; smoke checklist signed off; no destructive migrations. If FAIL → do not release.
 

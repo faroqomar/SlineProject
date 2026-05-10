@@ -215,12 +215,12 @@
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
-- [ ] (@SlineDocs) Update `Sline_everything/AppDigram/All_Diagrams/05_booking-lifecycle.md` with final Mermaid diagram (from 04_DIAGRAM_FINAL.md + critic’s ledger labels if desired).
-- [ ] (@SlineDocs) Update `Sline_everything/SUPABASE_SETUP.md`: §4.2 booking_status_enum (add disputed, no_show); status transition matrix; fn_booking_guard description; rpc_finalize_auto_approval booking/ledger behavior if changed.
-- [ ] (@SlineDocs) Update `Sline_everything/DEVELOPER_GUIDE.md` booking section: lifecycle, dispute gate, no_show, and link to contract/ledger mapping.
-- [ ] (@SlineDocs) Update `Sline_everything/MVP_ROADMAP.md` and `Sline_everything/Sline_Log.md` with booking lifecycle hardening entry.
+- [ ] (@DocsKeeper) Update `Sline_everything/AppDigram/All_Diagrams/05_booking-lifecycle.md` with final Mermaid diagram (from 04_DIAGRAM_FINAL.md + critic’s ledger labels if desired).
+- [ ] (@DocsKeeper) Update `Sline_everything/SUPABASE_SETUP.md`: §4.2 booking_status_enum (add disputed, no_show); status transition matrix; fn_booking_guard description; rpc_finalize_auto_approval booking/ledger behavior if changed.
+- [ ] (@DocsKeeper) Update `Sline_everything/DEVELOPER_GUIDE.md` booking section: lifecycle, dispute gate, no_show, and link to contract/ledger mapping.
+- [ ] (@DocsKeeper) Update `Sline_everything/MVP_ROADMAP.md` and `Sline_everything/Sline_Log.md` with booking lifecycle hardening entry.
 - **Verify (@Sentinel):** docs match code + live DB reality.
 
 ---

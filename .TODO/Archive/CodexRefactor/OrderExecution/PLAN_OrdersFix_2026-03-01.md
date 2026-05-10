@@ -335,12 +335,12 @@
 
 ## Phase 5: Documentation Sync (MANDATORY)
 
-> Primary: @SlineDocs
+> Primary: @DocsKeeper
 
-- [ ] (@SlineDocs) Update `Sline_everything/DEVELOPER_GUIDE.md` and `Sline_everything/DEVELOPER_GUIDE/Orders Feature.md` to reflect the final orders entry point, owner contract, task status contract, and offer flow.
-- [ ] (@SlineDocs) Update `Sline_everything/SUPABASE_SETUP.md` if touched RLS/RPC definitions were reconciled or exported.
-- [ ] (@SlineDocs) Update `.TODO/CodexRefactor/01_FEATURES_INDEX.md` if feature boundaries or touchpoints change.
-- [ ] (@SlineDocs) If the orders module is formally deprecated instead of restored, document that decision explicitly in roadmap and guide files.
+- [ ] (@DocsKeeper) Update `Sline_everything/DEVELOPER_GUIDE.md` and `Sline_everything/DEVELOPER_GUIDE/Orders Feature.md` to reflect the final orders entry point, owner contract, task status contract, and offer flow.
+- [ ] (@DocsKeeper) Update `Sline_everything/SUPABASE_SETUP.md` if touched RLS/RPC definitions were reconciled or exported.
+- [ ] (@DocsKeeper) Update `.TODO/CodexRefactor/01_FEATURES_INDEX.md` if feature boundaries or touchpoints change.
+- [ ] (@DocsKeeper) If the orders module is formally deprecated instead of restored, document that decision explicitly in roadmap and guide files.
 - **Verify (@Sentinel):** docs match code and live DB reality after the fix set lands.
 
 ---
