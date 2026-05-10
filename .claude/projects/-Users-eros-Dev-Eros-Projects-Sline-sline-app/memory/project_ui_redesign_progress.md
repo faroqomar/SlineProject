@@ -14,6 +14,6 @@ UI Redesign Master Plan has 17 phases (0-16). Progress as of 2026-04-08:
 - Phase 4 (Home & Discovery): PLANNED — `.TODO/PLAN_Phase4_HomeDiscovery_2026-04-08.md` ready for execution
 - Phases 6-16: NOT YET PLANNED
 
-**Why:** User is working through the Master Plan phase by phase. Some phases were consolidated (2+3+5 in one session). Phase 4 plan was created with @SlinePlanner and covers Home, Search, Categories, Favorites, Saved screens.
+**Why:** User is working through the Master Plan phase by phase. Some phases were consolidated (2+3+5 in one session). Phase 4 plan was created with @Planner and covers Home, Search, Categories, Favorites, Saved screens.
 
 **How to apply:** When the user asks for next planning work, check this file for what's done and what's next. Phase 6 (Chat & Messaging) is likely the next phase after Phase 4 execution.
