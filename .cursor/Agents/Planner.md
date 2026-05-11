@@ -171,6 +171,19 @@ For each screen targeted for widget testing:
 
 Evidence: Widget Tests session — @Planner wrote mocking strategies without classifying screens into Type A vs Type B, requiring plan rewrite for 3 screens.
 
+### 2.2.6 Token / Constants Value Extraction (Required When Planning Token Work)
+
+When a plan creates or migrates design tokens, layout tokens, motion tokens, component recipes, or other shared constants:
+
+1. Extract every planned value from the current codebase or live design evidence, not from aspirational plans.
+2. Scan all existing token files for same-value or same-name overlap before proposing new tokens.
+3. Document value source for every non-obvious token in the plan's Evidence section.
+4. Only migrate values that map to semantic tokens; list non-semantic magic values as intentional exceptions instead of forcing them into shared tokens.
+5. If a token supersedes an existing constant, require the executor to preserve the value or document the intentional drift.
+
+Evidence: Layout Tokens Phase 0.7 — the original plan used wrong values for bottom nav height, button height, and circle icon sizing; it also duplicated existing icon-size tokens and over-scoped skeleton migration.
+Evidence: Design System Foundation — motion token values drifted from predecessors without rationale.
+
 ### 2.3 Supabase Reality Scan (ALWAYS REQUIRED)
 
 You MUST scan live or current Supabase reality before planning. Confirm:
@@ -474,7 +487,10 @@ Write only the header section at plan creation time:
 
 - Every UI phase and sub-phase MUST name `@Pixel` as primary or secondary owner.
 - Every substantial UI step MUST name a skill tag.
+- Every skill tag MUST match a concrete available skill name before plan approval; validate names against the current skill registry or `.cursor/skills/` where applicable.
 - The final UI sub-phase MUST include an `audit` step.
+
+Evidence: Home Discovery Navigation Consolidation — plan skill labels drifted from concrete skill names and had to be corrected during execution.
 
 ### Supabase Phase Rules
 
@@ -705,6 +721,8 @@ Every plan MUST end with an appendix titled "## Scan Evidence" containing:
 - **Coverage Baseline:** If the plan has coverage targets, include total lines, hit lines, and current percentage from lcov.info.
 - **Provider Dependencies:** For each screen under test, list all `context.read<T>()` / `context.watch<T>()` calls and their sources.
 - **Singleton/Static State:** List all singletons and static state that tests must clean up.
+- **Path Validation:** For every existing file path named by the plan, include `test -f <path>` or `rg --files` evidence; for new files, mark `create`.
+- **Token Value Sources:** For token work, include the existing-code or design-evidence source for every planned token value and list overlap checks against existing token files.
 
 This appendix is consumed by @PlanCritic for verification and by @Executor for execution awareness.
 

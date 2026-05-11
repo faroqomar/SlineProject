@@ -1,6 +1,6 @@
 # SLine MVP Roadmap
 
-**Last Updated:** 2026-04-30
+**Last Updated:** 2026-05-11
 
 This roadmap tracks the current code-state of the repository. Status values are intentionally simple:
 - `✅ Completed`
@@ -13,7 +13,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | --- | --- | --- |
 | Flutter app shell and navigation | ✅ Completed | `main.dart` + `lib/app/main_navigation_screen.dart`; visible bottom nav is Home, Dashboard, Messages, Profile via `lib/core/navigation/main_nav_destinations.dart` |
 | Supabase bootstrap and app providers | ✅ Completed | shared client/bootstrap in `lib/core/services/supabase_config.dart` and root providers in `main.dart` |
-| Theme system (Layer 1) | ✅ Completed | Phase 0: `app_colors.dart`, `app_typography.dart`, `app_motion.dart`, `app_states.dart`, `app_decorations.dart`, `app_theme.dart` |
+| Theme system (Layer 1) | ✅ Completed | Phase 0: `app_colors.dart`, `app_typography.dart`, `app_motion.dart`, `app_states.dart`, `app_decorations.dart`, `app_theme.dart`. **2026-05-11:** Amber Dusk Phase 0 added a staged inactive Open Design token layer under `lib/core/theme/designs/amber_dusk/`; it is not runtime-activated. |
 | Layout tokens (Layer 2) | ✅ Completed | Phase 0.7: `app_layout.dart` (41 semantic tokens), `app_dimens.dart` (raw primitives). Three-layer architecture complete. |
 | Logging and crash boundaries | ✅ Completed | `AppLogger`, `CrashReportingService`, zoned/global handlers |
 | Documentation hub | ✅ Completed | maintained under `Sline_everything/` |
@@ -33,7 +33,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 
 | Feature | Status | Notes |
 | --- | --- | --- |
-| Home feed and task discovery | ✅ Completed | repo implementation is live; production rollout depends on the `20260301_*home*` migrations and RLS verification. **2026-04-30:** Home now hosts `All Work`, `Bookings`, and `Tenders` discovery modes below search; Tenders/Bookings were removed from the bottom nav. Plan: `.TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`; Session: `docs/LOG/SESSION_HomeDiscoveryNavConsolidation_2026-04-30.md`; Supabase changes: none. |
+| Home feed and task discovery | ✅ Completed | repo implementation is live; production rollout depends on the `20260301_*home*` migrations and RLS verification. **2026-04-30:** Home now hosts `All Work`, `Bookings`, and `Tenders` discovery modes below search; Tenders/Bookings were removed from the bottom nav. Plan: `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`; Session: `docs/LOG/SESSION_HomeDiscoveryNavConsolidation_2026-04-30.md`; Supabase changes: none. |
 | Category-backed task browsing | ✅ Completed | categories feature and task filters exist |
 | Booking discovery feed | ✅ Completed | Booking discovery is accessible from Home's `Bookings` mode and continues to reuse task-feed data for booking tasks |
 | Search | 🚧 In Progress | dedicated `search/` feature exists; ongoing refinement |
@@ -96,6 +96,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | Supabase migrations | ✅ Completed | repo contains live migration history under `supabase/migrations/` |
 | Edge functions | ✅ Completed | booking/payment functions are checked into `supabase/functions/` |
 | Docs sync discipline | ✅ Completed | docs now reflect current `view/viewmodels/data/services` layout and payment/runtime helpers |
+| Agent system evolution | ✅ Completed | `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-11.md` merged deduped session-log findings into seven `.cursor/Agents/*.md` files; no runtime app code changed. |
 
 ## 9. Completed Phases
 
@@ -145,7 +146,8 @@ Tests: 706 → 780 (+74). Coverage floor: 40%. All 6 architecture guard checks p
 | Phase | Name | Status | Classification | Session Log |
 |-------|------|--------|---------------|-------------|
 | 0 | Design System Foundation | ✅ Completed | Token Infrastructure | `SESSION_PLAN_DesignSystemFoundation_2026-04-07.md` |
-| 0.7 | Layout Tokens | ✅ Completed | Token Infrastructure | `SESSION_PLAN_LayoutTokens_Phase0_7_2026-04-08.md` |
+| 0.7 | Layout Tokens | ✅ Completed | Token Infrastructure | `SESSION_PLAN_LayoutTokens_Phase0.7_2026-04-08.md` |
+| 0.9 | Amber Dusk Phase 0 Phone Foundation | ✅ Completed | Staged Open Design token layer | `SESSION_PLAN_OpenDesign_AmberDusk_Phase0_PhoneFoundation_2026-05-11.md` |
 | 1 | Core Widget Redesign | ✅ Completed | Redesign | `SESSION_PLAN_CoreWidgetRedesign_2026-04-07.md` |
 | 2+3+5 | App Shell + Auth + Cards | ✅ Completed | Redesign | `SESSION_PLAN_Phase2_AppShellAuthCards_2026-04-08.md` |
 | 4 | Home & Discovery | ✅ Completed | Redesign | `SESSION_PLAN_Phase4_HomeDiscovery_2026-04-08.md` |
@@ -169,6 +171,7 @@ Tests: 706 → 780 (+74). Coverage floor: 40%. All 6 architecture guard checks p
 ## 11. Current Focus
 
 ### Current Focus
-1. **UI Redesign Phase 7: Dashboard** (next) — actual visual redesign of dashboard tabs, overview cards, and work summaries
-2. **UI Redesign Phase 8: Booking & Payments** (planned) — booking flow screens, payment UI, escrow status
-3. **Phase F: Ship Preparation** (planned) — Arabic/Kurdish translations, widget tests for critical views, remaining lint debt adoption, GitHub repo safeguards
+1. **Amber Dusk next phase** — optional activation/preview work must explicitly map staged tokens into active `AppTheme` before widgets depend on them.
+2. **UI Redesign Phase 7: Dashboard** — actual visual redesign of dashboard tabs, overview cards, and work summaries.
+3. **UI Redesign Phase 8: Booking & Payments** — booking flow screens, payment UI, escrow status.
+4. **Phase F: Ship Preparation** — Arabic/Kurdish translations, widget tests for critical views, remaining lint debt adoption, GitHub repo safeguards.

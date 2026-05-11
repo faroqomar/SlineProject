@@ -231,6 +231,8 @@ Before starting execution, confirm:
 - All substantial UI steps have skill tags
 - All substantial backend rollout steps use `supabase-migration`
 
+For every planned existing path, run `test -f <path>` or confirm through `rg --files`. For every planned skill tag, confirm it matches a concrete available skill before delegating.
+
 If ANY item fails:
 
 - STOP execution immediately
@@ -247,6 +249,7 @@ After scans, publish a short section in chat:
 - **Gaps**: what must be created
 - **Risks**: what can break
 - **MVVM layer impact**: which layers are touched and in what order
+- **Baseline gates**: current analyzer/test status when the plan uses analyzer or test results as acceptance gates
 
 ---
 
@@ -339,6 +342,9 @@ For each Sub-Phase:
 - Keep changes minimal and reversible
 - If the agent makes a mistake: log `AGENT MISTAKE` immediately
 - If an unexpected problem occurs: log `PROBLEM ENCOUNTERED` immediately
+- For file-contract tasks, create or verify the public entry-point/barrel/contract file first, then fill supporting files. Dependent agents must be able to compile against the contract even if a worker is interrupted.
+
+Evidence: Open Design Amber Dusk Phase 0 — the assigned theme worker was closed before creating the root token entry point and several planned token files, leaving dependent work without the public contract.
 
 ### Step 3 — Verify (Mandatory Gate)
 
@@ -362,6 +368,33 @@ After completing each sub-phase that modifies source code:
 This catches regressions at the smallest possible scope.
 
 Evidence: SESSION_PhaseB had 20 test failures discovered late because tests ran only after all B1-B7 changes were applied together.
+
+### Step 3.1.1 — Import, Const, and Orphan Hygiene Gate
+
+After creating files, removing imports, or replacing token usages:
+
+1. Run `flutter analyze` immediately after any new Dart file or theme file is created.
+2. Before removing an import, grep the file for all types/classes provided by that import, not just the obvious constants.
+3. After removing code that used a local variable, verify the variable declaration is not orphaned.
+4. Use `final` without explicit local variable type annotations unless the type is required for clarity or inference fails.
+5. Check whether referenced tokens are `static const` or `static final` before introducing `const` constructors.
+6. When token files supersede existing constants, compare every predecessor value; preserve exact values unless the plan explicitly authorizes drift, and document any intentional drift in comments or session evidence.
+
+Evidence: Design System Foundation — unused imports, explicit local variable types, wrong Material theme classes, and `const` constructors referencing non-const colors caused analyzer failures.
+Evidence: Phase 5 and Phase 7 — imports were forgotten, removed too aggressively, or left orphaned variables after token migrations.
+Evidence: Design System Foundation — motion token values changed from predecessors without documented rationale.
+
+### Step 3.1.2 — UI Runtime Test Pattern Gate
+
+When a UI change adds animation, navigation, route pushes, or route-level providers:
+
+1. Reuse existing nearby widget-test harness patterns before writing new expectations.
+2. For animated widgets, advance the test clock or `pumpAndSettle()` according to the widget's motion behavior.
+3. For route-push coverage, put providers above `MaterialApp` when pushed routes need them.
+4. Initialize required test services, including Supabase test helpers, when the pushed route constructs ViewModels that expect them.
+
+Evidence: Home Discovery Navigation Consolidation — route-push coverage initially used the wrong navigator-observer assumption, missed a `ScaleButton` timer pump, and placed providers below `MaterialApp`.
+Evidence: Phase 2 App Shell/Auth/Cards — navigation/FAB animation tests needed settling after the screen became stateful.
 
 ### Step 3.2 — Test Mock Audit (Mandatory When ViewModel API Changes)
 

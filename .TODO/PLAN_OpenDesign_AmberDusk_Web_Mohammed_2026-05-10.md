@@ -6,7 +6,7 @@
 > Execution agents: @Pixel, @Architect, @Sentinel, @DocsKeeper  
 > Date: 2026-05-10  
 > Companion phone plan: `.TODO/PLAN_OpenDesign_AmberDusk_Phone_2026-05-10.md`  
-> Critique artifact: `.TODO/PLAN_CRITIQUE_2026-05-10_OpenDesign_AmberDusk.md`
+> Critique artifact: `.TODO/Archive/OpenDesign_AmberDusk_2026-05-10/PLAN_CRITIQUE_2026-05-10_OpenDesign_AmberDusk.md`
 
 ---
 

@@ -17,11 +17,11 @@ Quick reference guide for Cursor AI to understand the SLine Flutter app architec
 
 ### Core Code Locations
 
-- **Theme System**: `lib/core/theme/` (AppColors, AppTheme, AppDimens, AppTypography, AppDecorations)
+- **Theme System**: `lib/core/theme/` (AppColors, AppTheme, AppDimens, AppTypography, AppDecorations) and staged design layers such as `lib/core/theme/designs/amber_dusk/amber_dusk_tokens.dart`
 - **Services**: `lib/core/services/` (SupabaseConfig, AppLogger)
 - **Runtime Guards**: `lib/core/services/account_guard_service.dart` (moderation + force logout checks)
 - **Runtime Config**: `lib/core/services/system_config_service.dart`, `lib/core/providers/system_config_view_model.dart`
-- **Widgets**: `lib/core/widgets/` (GlassContainer, SignedAvatar, AppButton, etc.)
+- **Widgets**: `lib/core/widgets/` (AppCardContainer, AppCard, AppStyledButton, SignedAvatar, AppButton, etc.; no glass/blur surfaces)
 - **Utils**: `lib/core/utils/` (format_date.dart, format_price.dart, transitions)
 - **Main App**: `lib/main.dart` (Provider setup, MaterialApp configuration)
 
@@ -34,7 +34,7 @@ Agents are defined in `.cursor/Agents/` and can be invoked using triggers:
 | Agent | File | Trigger Keywords | Use Case |
 |-------|------|-----------------|----------|
 | **@Architect** | `Agents/Architect.md` | "@Architect", "fix logic", "refactor" | Logic, MVVM compliance, refactoring |
-| **@Pixel** | `Agents/Pixel.md` | "@Pixel", "design this", "make it pretty" | UI/UX, Glassmorphism, themes |
+| **@Pixel** | `Agents/Pixel.md` | "@Pixel", "design this", "make it pretty" | UI/UX, solid-surface themes, staged design tokens |
 | **@Supabase_Ops** | `Agents/Supabase_Ops.md` | "@Supabase", "add table", "secure db" | Database, RLS, SQL, storage |
 | **@Sentinel** | `Agents/Sentinel.md` | "@Sentinel", "check this", "run tests" | QA, security, documentation sync |
 | **@DocsKeeper** | `Agents/DocsKeeper.md` | "@DocsKeeper", "document this", "update changelog" | Documentation updates |

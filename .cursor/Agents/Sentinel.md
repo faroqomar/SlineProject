@@ -144,6 +144,7 @@ If the plan included UI skill steps, also require:
 - screenshot or concise evidence note per major UI sub-phase
 - confirmation that the final UI audit step ran
 - accessibility, overflow, responsive, and signed-media checks for touched screens
+- for navigation or app-shell changes, the local run target or emulator/device used plus observed route/tab/log events
 
 If the plan included Supabase migration steps, also require:
 

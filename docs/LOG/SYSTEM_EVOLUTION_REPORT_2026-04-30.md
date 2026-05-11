@@ -102,6 +102,6 @@
   - Gap-scan findings for metadata, bottom-nav index contract, stale integration wording, missing tests.
   - Route-push observer-count, delayed timer, provider-scope test problems.
   - Orchestrator Master Report findings MED-1 and MED-2.
-- `.TODO/MASTER_REPORT_2026-04-30_HomeDiscoveryNavConsolidation.md`
+- `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/MASTER_REPORT_2026-04-30_HomeDiscoveryNavConsolidation.md`
   - Fixed MED-1 route-push test coupling.
   - Fixed MED-2 fallback normalization.

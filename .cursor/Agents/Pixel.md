@@ -67,6 +67,22 @@ Before implementing:
 
 If anything mismatches: STOP and request clarification from `@Architect` or `@Planner`.
 
+### 1.3.1 Flutter Implementation Pitfalls From Prior Sessions
+
+Before changing UI code, apply these hard-learned checks:
+
+- Never wrap a sliver (`SliverList`, `SliverGrid`, `SliverPadding`, custom sliver widgets) with a non-sliver widget inside `CustomScrollView`; put semantics or padding inside sliver children or use sliver-safe wrappers.
+- Never call inherited-widget APIs (`MediaQuery.of`, `Theme.of`, `context.colorScheme`, `AppMotion.respectMotion(context, ...)`) from `initState()`; use `didChangeDependencies()` with a one-time guard.
+- When converting a widget to `StatefulWidget` with `AnimationController`, run that widget's existing tests immediately and update tests for animation settling.
+- Validate regex behavior with unit tests before writing widget tests or UI logic that depends on the regex.
+- Verify exact Flutter Material API names for the repository's Flutter version before using theme classes such as `CardThemeData` or `DialogThemeData`.
+- Check whether token values are `static const` or `static final` before adding `const` constructors that reference them.
+
+Evidence: Phase 4 Home Discovery — sliver wrapped with `Semantics` caused a `RenderViewport` type mismatch, and `AppMotion.respectMotion(context, ...)` in `initState()` triggered an inherited-widget assertion.
+Evidence: Phase 2 App Shell/Auth/Cards — `MainNavigationScreen` became stateful with animations and existing tests needed animation settling.
+Evidence: Phase 6 Chat Advanced Interactions — emoji regex assumptions were wrong until edge cases were tested.
+Evidence: Design System Foundation — wrong Material theme class names and `const` usage against non-const color tokens caused analyzer failures.
+
 ### 1.4 UI Skill Context Gate (Mandatory)
 
 Before non-trivial UI design work:
@@ -365,6 +381,8 @@ Include:
 - [ ] `const` used where possible
 - [ ] Controllers / focus nodes / animations disposed
 - [ ] No repeated signed URL generation in build-heavy loops
+- [ ] `flutter analyze` has been run after new UI files or theme files were created
+- [ ] Imports are used, no orphan local variables remain after edits, and removed imports were checked against all type references
 
 ### Accessibility Verification
 

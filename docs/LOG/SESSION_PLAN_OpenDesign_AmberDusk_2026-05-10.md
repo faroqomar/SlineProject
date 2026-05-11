@@ -24,4 +24,4 @@
 
 - `.TODO/PLAN_OpenDesign_AmberDusk_Phone_2026-05-10.md`
 - `.TODO/PLAN_OpenDesign_AmberDusk_Web_Mohammed_2026-05-10.md`
-- `.TODO/PLAN_CRITIQUE_2026-05-10_OpenDesign_AmberDusk.md`
+- `.TODO/Archive/OpenDesign_AmberDusk_2026-05-10/PLAN_CRITIQUE_2026-05-10_OpenDesign_AmberDusk.md`

@@ -7,7 +7,31 @@
 
 > Historical review note: this document records review findings and fixes from earlier passes. Treat references to removed files or older structure as historical context; the current live structure is documented in `Sline_everything/STRUCTURE.md` and `Sline_everything/DEVELOPER_GUIDE.md`.
 
-## Current Guardrail Notes (2026-04-30)
+## Current Guardrail Notes (2026-05-11)
+
+### Amber Dusk Staged Token Layer Review Rule (2026-05-11)
+
+**Pattern**: Staged design layers under `lib/core/theme/designs/<design_name>/` are prepared token sources, not active runtime themes. Importing a staged token barrel such as `lib/core/theme/designs/amber_dusk/amber_dusk_tokens.dart` must not change widget appearance until the active `AppTheme` activation workflow explicitly maps the staged tokens into runtime theme data.
+
+**Rule**:
+1. Review staged token changes as passive `core/theme` work unless a patch also touches `AppTheme`, `MaterialApp`, shared widgets, feature views, or provider/theme activation code.
+2. Verify the staged layer has a public barrel/entry point before dependent work starts.
+3. Keep staged design tests focused on token contracts, no-glass/no-blur guardrails, layout relationships, and activation safety.
+4. If Open Design evidence says a component is borderless or transparent, pin both authored dark tokens and derived parity tokens to that contract.
+
+**Evidence**: Open Design Amber Dusk Phase 0 (2026-05-11) created the inactive Amber Dusk token layer and Orchestrator MED review fixed `heroChipBorder` to transparent in both dark and derived-light schemes.
+
+### SystemEvolution Merge Runs (2026-05-11)
+
+**Pattern**: When the human explicitly requests a SystemEvolution merge, the report is written first, then only deduped, evidence-backed rules are applied to the owning `.cursor/Agents/*.md` files.
+
+**Rule**:
+1. Do not add speculative process rules; every merged rule needs session-log evidence.
+2. Dedupe against existing agent rules and core docs before editing agent files.
+3. Prefer narrow agent-owner edits over broad rewrites.
+4. Record the merged files and evidence index in `docs/LOG/SYSTEM_EVOLUTION_REPORT_<date>.md`.
+
+**Evidence**: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-11.md` merged token provenance, entry-point-first contracts, UI lifecycle pitfalls, import/orphan hygiene, regex edge-case coverage, path/skill validation, and navigation smoke evidence into seven agent files.
 
 ### Home Discovery Navigation Contract (2026-04-30)
 

@@ -187,6 +187,12 @@ HARD-GATE requires:
 - [ ] No unjustified `dynamic`
 - [ ] `AppLogger` used instead of `print()`
 - [ ] Error mapping is consistent with `ErrorMapper` or approved typed exceptions
+- [ ] Imports removed during refactors were checked against all type/class references, not only constants
+- [ ] No orphan local variables remain after removing or replacing token usages
+- [ ] Regex changes have direct unit coverage for edge cases, not only widget-level assumptions
+
+Evidence: Phase 5 and Phase 7 — token migrations forgot required imports, removed imports still needed for type signatures, and left orphan variables.
+Evidence: Phase 6 — emoji-only regex behavior was misread until edge-case tests were added.
 
 ### 🔄 Compatibility Review
 

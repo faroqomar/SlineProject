@@ -5,7 +5,7 @@
 - Reviewed scope: Home discovery + bottom-navigation consolidation implemented in this session.
 - Overall risk level: Low after fixes.
 - Final decision: PASS for the reviewed change set. No open BLOCKER, HIGH, or MEDIUM findings remain in session code.
-- Plan reference: `.TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
+- Plan reference: `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
 - Session log reference: `docs/LOG/SESSION_HomeDiscoveryNavConsolidation_2026-04-30.md`
 
 ## B) Consolidated Findings

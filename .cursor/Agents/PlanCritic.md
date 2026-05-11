@@ -221,6 +221,7 @@ For each invariant:
 - Any service / repository work planned before schema / view / RPC truth is confirmed?
 - Any migration or backfill work missing before enforcement?
 - Are there enough phases and sub-phases to isolate these dependencies clearly?
+- Are all planned existing file paths and skill tags verified against the current repo/tooling before execution?
 
 ### 5.3 Data Model & Contracts
 
@@ -260,6 +261,19 @@ For each invariant:
 - Prevent double submit / replay?
 - Offline / timeout / retry behavior?
 - Responsive, accessibility, and overflow hardening phase present?
+
+### 5.7.0 Token / Design-System Plan Checks
+
+When auditing plans that create or migrate theme, layout, motion, component, or design tokens:
+
+1. Verify every planned token value has current-code or design-evidence provenance.
+2. Check for overlap with existing token files so the plan does not duplicate names or values.
+3. Confirm migration scope only replaces semantic values and explicitly exempts non-semantic magic numbers.
+4. Require a public entry-point/barrel/contract file to be created first when downstream work depends on a new token namespace.
+5. Flag undocumented drift from predecessor constants as a CRITICAL GAP.
+
+Evidence: Layout Tokens Phase 0.7 — PlanCritic caught wrong token values, duplicate icon-size semantics, and over-scoped skeleton migration before execution.
+Evidence: Open Design Amber Dusk Phase 0 — interrupted worker output missed the public token entry point and several planned files until gap scan.
 
 ### 5.7.1 Coverage Target Verification (for test-heavy plans)
 

@@ -185,7 +185,7 @@
 
 Corrected plan reference:
 
-- `.TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
+- `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
 
 The corrected plan rewrites the work into:
 

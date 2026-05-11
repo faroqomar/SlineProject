@@ -1,16 +1,63 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2026-04-30
+**Last Updated:** 2026-05-11
+
+---
+
+## 🧭 Version 2.26.0 — Amber Dusk Phase 0 + Agent System Evolution (2026-05-11)
+
+**Classification:** Staged Open Design token foundation + agent-system process hardening
+**Plan:** `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/PLAN_OpenDesign_AmberDusk_Phase0_PhoneFoundation_2026-05-11.md`
+**Plan Critique:** `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/PLAN_CRITIQUE_2026-05-11_OpenDesign_AmberDusk_Phase0_PhoneFoundation.md`
+**Session Log:** `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phase0_PhoneFoundation_2026-05-11.md`
+**Master Report:** `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/MASTER_REPORT_2026-05-11_OpenDesign_AmberDusk_Phase0.md`
+**System Evolution:** `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-11.md`
+**Docs Sync:** `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/DOCS_SYNC_2026-05-11_DocsKeeper_AgentSystemAmberDusk.md`
+**Supabase objects changed:** none
+
+### Scope
+- Added staged Amber Dusk Open Design tokens under `lib/core/theme/designs/amber_dusk/`.
+- Added `lib/core/theme/designs/amber_dusk/amber_dusk_tokens.dart` as the public barrel for colors, typography, spacing, surfaces, motion, component recipes, and phone layout constants.
+- Added focused token and phone layout tests under `test/core/theme/`.
+- Clarified that staged design layers are imported for token access only and are not runtime replacements for active Layer 1 `AppTheme`.
+- Ran Orchestrator Step 6 review, fixed all MED findings, and produced `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-11_OpenDesign_AmberDusk_Phase0.md`.
+- Ran SystemEvolution Step 7 and merged evidence-backed process rules into seven `.cursor/Agents/*.md` files.
+
+### Key Files
+- `lib/core/theme/designs/amber_dusk/amber_dusk_tokens.dart`
+- `lib/core/theme/designs/amber_dusk/amber_dusk_colors.dart`
+- `lib/core/theme/designs/amber_dusk/amber_dusk_typography.dart`
+- `lib/core/theme/designs/amber_dusk/amber_dusk_spacing.dart`
+- `lib/core/theme/designs/amber_dusk/amber_dusk_surfaces.dart`
+- `lib/core/theme/designs/amber_dusk/amber_dusk_motion.dart`
+- `lib/core/theme/designs/amber_dusk/amber_dusk_components.dart`
+- `lib/core/theme/designs/amber_dusk/phone/amber_dusk_phone_layout.dart`
+- `test/core/theme/amber_dusk_tokens_test.dart`
+- `test/core/theme/amber_dusk_phone_layout_test.dart`
+- `.cursor/Agents/Planner.md`
+- `.cursor/Agents/PlanCritic.md`
+- `.cursor/Agents/Pixel.md`
+- `.cursor/Agents/Executor.md`
+- `.cursor/Agents/Sentinel.md`
+- `.cursor/Agents/CodeGuard.md`
+- `.cursor/Agents/SystemEvolution.md`
+
+### Verification
+- `flutter analyze --no-fatal-infos`: passed.
+- `flutter test test/core/theme/`: passed.
+- `flutter test --coverage`: passed, coverage above the 40% floor.
+- `Architecture Guard / Check MVVM boundaries`: passed.
+- `git diff --check`: passed.
 
 ---
 
 ## 🧭 Version 2.25.1 — Home Discovery Navigation Consolidation (2026-04-30)
 
 **Classification:** Navigation consolidation + Home discovery polish
-**Plan:** `.TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
-**Plan Critique:** `.TODO/PLAN_CRITIQUE_2026-04-30_HomeDiscoveryNavConsolidation.md`
+**Plan:** `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
+**Plan Critique:** `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/PLAN_CRITIQUE_2026-04-30_HomeDiscoveryNavConsolidation.md`
 **Session Log:** `docs/LOG/SESSION_HomeDiscoveryNavConsolidation_2026-04-30.md`
-**Master Report:** `.TODO/MASTER_REPORT_2026-04-30_HomeDiscoveryNavConsolidation.md`
+**Master Report:** `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/MASTER_REPORT_2026-04-30_HomeDiscoveryNavConsolidation.md`
 **System Evolution:** `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-30.md`
 **Supabase objects changed:** none
 
@@ -129,7 +176,7 @@
 
 **Classification:** Token Normalization (foundation infrastructure)
 **Master Plan Coverage:** Phase 0 sub-phase
-**Session Log:** `docs/LOG/SESSION_PLAN_LayoutTokens_Phase0_7_2026-04-08.md`
+**Session Log:** `docs/LOG/SESSION_PLAN_LayoutTokens_Phase0.7_2026-04-08.md`
 
 ### Scope: NEW `app_layout.dart` with 41 semantic tokens + 53 tests
 - Card sizes, avatar sizes, button heights, spacing rhythm

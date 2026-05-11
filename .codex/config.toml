@@ -1,0 +1,4 @@
+[mcp_servers.supabase]
+# Keep project_ref and debug/development features out of repo config.
+# Use a user-local Codex config override for project-scoped local debugging.
+url = "https://mcp.supabase.com/mcp?features=docs%2Cdatabase%2Caccount%2Cfunctions%2Cbranching%2Cstorage"

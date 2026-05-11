@@ -1,6 +1,6 @@
 # SLine App - Folder Structure Guide
 
-**Last Updated:** 2026-04-30 (Home discovery navigation consolidation: `lib/core/navigation/main_nav_destinations.dart` added as the named bottom-nav index contract; authenticated shell now exposes Home, Dashboard, Messages, Profile while Home hosts Bookings/Tenders discovery modes below search. Previous: Phase 4 Home & Discovery Redesign)
+**Last Updated:** 2026-05-11 (Amber Dusk Phase 0 staged Open Design token layer and SystemEvolution agent-rule merge documented. Previous: 2026-04-30 Home discovery navigation consolidation)
 
 This document describes the current repository layout. It replaces older references to `presentation/` and `controllers/`; the live Flutter codebase uses `view/` and `viewmodels/` under `lib/features/`.
 
@@ -13,7 +13,7 @@ sline_app/
 ├── .github/workflows/    # CI pipeline (lint, test, build, architecture guard)
 ├── .githooks/            # Pre-commit hook (format + analyze)
 ├── .TODO/                # Audits, plans, execution logs, QA notes, docs-sync notes
-├── docs/LOG/             # Session logs, system evolution reports
+├── docs/LOG/             # Session logs and SystemEvolution reports
 ├── docs/diagrams/        # Feature diagrams (Mermaid + explanations)
 ├── Sline_everything/     # Source-of-truth project documentation
 ├── assets/               # Bundled app assets
@@ -42,7 +42,7 @@ sline_app/
   - **Core agents**: `Architect.md` (MVVM logic), `Pixel.md` (UI/UX), `Supabase_Ops.md` (backend), `DocsKeeper.md` (documentation), `Sentinel.md` (QA/verification)
   - **Planning & execution**: `Planner.md` (implementation architect), `Executor.md` (task orchestrator), `PlanCritic.md` (plan auditor), `Orchestrator.md` (multi-agent coordinator)
   - **Specialized**: `CodeGuard.md` (performance/security audit), `ThreatModeler.md` (security design), `APIContract.md` (contract alignment), `DataMigration.md` (schema safety), `Observability.md` (telemetry), `TemplateOwner.md` (task templates)
-  - **Meta**: `SystemEvolution.md` (cross-session agent improvement — scans logs and agent files, produces upgrade reports)
+  - **Meta**: `SystemEvolution.md` (cross-session agent improvement — scans logs and agent files, produces upgrade reports; explicit merge runs may update agent files after the report)
 - `rules/`: project-specific rules used by Cursor tooling (`flutter-mvvm.mdc`, `error-handling.mdc`)
 - `skills/`: skill definitions referenced by agents for specialized work
 
@@ -55,7 +55,7 @@ Typical files:
 - feature audits: `management.TODO.md`
 - plans: `PLAN_*.md`
 - execution logs: `EXECUTION_LOG_*.md`
-- review and QA artifacts: `CODEGUARD_REVIEW_*.md`, `SENTINEL_QA_*.md`
+- review and QA artifacts: `MASTER_REPORT_*.md`, `CODEGUARD_REVIEW_*.md`, `SENTINEL_QA_*.md`, emulator checklists, evidence, and handoff notes
 - docs sync notes: `DOCS_SYNC_*.md`
 
 ## `Sline_everything/` - Documentation Hub
@@ -170,6 +170,7 @@ Current subfolders:
   - `app_decorations.dart` — 5-level elevation shadow scale + decoration methods
   - `app_theme.dart` — Material 3 ThemeData assembly + 13 component themes
   - `theme_dashboard.dart` — documentation-only reference for all design tokens
+  - `designs/amber_dusk/` — **Amber Dusk Phase 0** staged Open Design (staged/under development) token layer; `amber_dusk_tokens.dart` exports all Amber Dusk token files for phone/web redesign phases without globally activating the theme
 - `utils/`: error mapping, formatting, loading overlays, URL cache, route transitions, web error filters, **ledger forensics** (p_meta session_id/request_id for ledger event flow)
 - `widgets/`: shared UI widgets such as signed media, buttons, badges, loaders, bottom nav
 - `mixins/`: shared behavior mixins such as `role_switch_aware.dart`

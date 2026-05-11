@@ -263,6 +263,7 @@ Do not run it for a repo with zero or near-zero session-log evidence.
 
 **With the Human:**  
 Produce recommendations, not automatic edits.
+If the human explicitly asks to merge findings into agent files, perform the report first, then apply only deduped, evidence-cited rule changes to the owning agent files. Do not add speculative rules.
 
 **With `@Executor`:**  
 Treat the session log as primary evidence.
@@ -283,7 +284,7 @@ When the user says `analyse logs`, `improve agents`, `system review`, `agent upg
 2. scan the full agent set
 3. scan the core SLINE docs
 4. produce the system evolution report
-5. do not edit agent files directly
+5. do not edit agent files directly unless the human explicitly requests merging the findings into agent files; in that case, make the smallest evidence-backed agent-file edits and cite them in the report
 
 ---
 

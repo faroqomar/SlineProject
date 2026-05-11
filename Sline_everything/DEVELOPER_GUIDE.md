@@ -1,7 +1,7 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.25.1 (Home discovery navigation consolidation: four-slot bottom nav, Home-hosted Bookings/Tenders discovery modes, named nav destination contract, route-push test seam)
-**Last Updated**: 2026-04-30
+**Version**: 2.26.0 (Amber Dusk Phase 0 staged Open Design token layer plus 2026-05-11 SystemEvolution agent-rule merge)
+**Last Updated**: 2026-05-11
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
 
@@ -239,11 +239,38 @@ When changing this surface, update all of these together:
 - `test/features/profile/services/profile_deep_link_handler_test.dart`
 
 References:
-- Plan: `.TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
-- Plan Critique: `.TODO/PLAN_CRITIQUE_2026-04-30_HomeDiscoveryNavConsolidation.md`
-- Master Report: `.TODO/MASTER_REPORT_2026-04-30_HomeDiscoveryNavConsolidation.md`
+- Plan: `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
+- Plan Critique: `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/PLAN_CRITIQUE_2026-04-30_HomeDiscoveryNavConsolidation.md`
+- Master Report: `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/MASTER_REPORT_2026-04-30_HomeDiscoveryNavConsolidation.md`
 - Session Log: `docs/LOG/SESSION_HomeDiscoveryNavConsolidation_2026-04-30.md`
 - System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-30.md`
+- Supabase objects changed: none
+
+### Amber Dusk Phase 0 and Agent System Evolution (2026-05-11)
+
+Amber Dusk Phase 0 added a staged Open Design token layer under
+`lib/core/theme/designs/amber_dusk/`. This layer is prepared-but-inactive:
+it can be imported through
+`lib/core/theme/designs/amber_dusk/amber_dusk_tokens.dart` for token access,
+tests, and future preview tooling, but it does not change runtime `ThemeData`
+or any widget appearance until a later activation step explicitly maps it into
+`AppTheme`.
+
+The 2026-05-11 Orchestrator review closed all BLOCKER/HIGH/MED findings for
+this staged layer. The follow-up SystemEvolution pass merged durable agent rules
+for token value provenance, public entry-point-first file contracts, UI
+lifecycle pitfalls, import/orphan hygiene, regex edge-case coverage, path/skill
+validation, and navigation smoke evidence into `.cursor/Agents/`.
+
+References:
+- Plan: `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/PLAN_OpenDesign_AmberDusk_Phase0_PhoneFoundation_2026-05-11.md`
+- Plan Critique: `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/PLAN_CRITIQUE_2026-05-11_OpenDesign_AmberDusk_Phase0_PhoneFoundation.md`
+- Master Report: `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/MASTER_REPORT_2026-05-11_OpenDesign_AmberDusk_Phase0.md`
+- Emulator Checklist: `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-11_OpenDesign_AmberDusk_Phase0.md`
+- Session Log: `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phase0_PhoneFoundation_2026-05-11.md`
+- System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-11.md`
+- Docs Sync: `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/DOCS_SYNC_2026-05-11_DocsKeeper_AgentSystemAmberDusk.md`
+- Key token entry point: `lib/core/theme/designs/amber_dusk/amber_dusk_tokens.dart`
 - Supabase objects changed: none
 
 ### 10.1 CI/CD Pipeline
@@ -1725,6 +1752,7 @@ Core also owns two browser-specific stability helpers:
 | `lib/core/theme/app_states.dart`                 | theme     | Interaction state definitions: 8-state model (default→error), focus ring, shake, haptic mapping. |
 | `lib/core/theme/app_decorations.dart`            | theme     | 5-level elevation shadow scale + input/badge/avatar decoration methods. NO GLASS (Phase 1). |
 | `lib/core/theme/theme_dashboard.dart`            | theme     | Documentation-only reference for all design tokens. **Read this first for token overview.** |
+| `lib/core/theme/designs/amber_dusk/`             | theme     | **Amber Dusk Phase 0** staged token layer: prepared design tokens for future theme-prototype work. Importing `amber_dusk_tokens.dart` exposes constants for previews/tests/code references, but does not change runtime `ThemeData` until the AppTheme activation workflow explicitly switches to those tokens. Intended for Open Design phone/web prototyping across form factors, not as a platform-only theme. |
 | `lib/core/widgets/custom_bottom_nav_bar.dart`    | widget    | Shared app shell bottom nav.                                                            |
 | `lib/core/widgets/signed_avatar.dart`            | widget    | Renders private avatar paths through signed URLs.                                       |
 | `lib/core/widgets/signed_image.dart`             | widget    | Renders private image paths through signed URLs.                                        |
@@ -1736,6 +1764,7 @@ The design system separates DESIGN (structure) from THEME (visual identity) so e
 ```
 Layer 1 — THEME (colors, typography, motion, elevation, interaction states)
   AppColors, AppTypography, AppMotion, AppDecorations, AppStates, AppTheme
+  Optional staged design layers under lib/core/theme/designs/<design_name>/
 
 Layer 2 — LAYOUT (spacing, sizes, structure, proportions)
   AppLayout (semantic tokens: cardPadding, avatarMedium, buttonHeight, spacingSection)
@@ -1745,10 +1774,35 @@ Layer 3 — COMPONENTS (widgets that CONSUME Layer 1 + Layer 2)
   All widgets in lib/core/widgets/ and lib/features/*/view/
 ```
 
+Layer 1 is the active runtime theme. Today `MaterialApp` receives
+`AppTheme.light()`, `AppTheme.dark()`, and `ThemeModeProvider.themeMode`; widgets
+consume the resulting `ThemeData`, `ColorScheme`, `AppThemeExtension`, and core
+tokens. Optional staged designs under `lib/core/theme/designs/<design_name>/`
+are prepared-but-inactive supplement layers. Importing a staged barrel such as
+`amber_dusk_tokens.dart` only gives read-only access to named token constants for
+preview, tests, adapters, or future implementation work. It does not apply those
+values to widgets by itself.
+
+Token contracts are agreed token interfaces and named token sets. For example,
+`amber_dusk_tokens.dart` is the Amber Dusk contract: it exports colors,
+typography roles, spacing, surfaces, motion, component recipes, and phone layout
+values using stable names. Consumers may reference those tokens for prototype
+previews and tests now, but production widgets should continue to read from the
+active `AppTheme` until a theme activation change is accepted.
+
+The current activation workflow is a code merge through `AppTheme` and the
+`MaterialApp` theme wiring in `lib/main.dart`. A future activation must document
+the exact adapter/API it introduces, the changelog or session-log entry that
+records the switch, and the user impact: runtime visuals change only after
+activation, preview tooling can opt into staged tokens earlier, and consumers
+should opt out by continuing to use the active `AppTheme` tokens.
+
 **Rules:**
 - Components NEVER hardcode colors, font sizes, durations, padding, avatar sizes, card heights, or spacing.
-- To retheme: change Layer 1 files (AppColors, AppTypography, AppMotion).
+- To retheme the active app: change Layer 1 files (`AppColors`, `AppTypography`, `AppMotion`, `AppDecorations`, `AppStates`, `AppTheme`) and verify the whole affected runtime surface.
+- To activate a staged design: add an explicit adapter or merge path that feeds the staged token set into `AppTheme.light()` / `AppTheme.dark()` or a documented theme activation API, then record that activation in the session log/docs before widgets depend on it.
 - To redesign layout: change Layer 2 files (AppLayout, AppDimens).
+- Components consume tokens from the active `AppTheme`; staged layers such as Amber Dusk remain non-active token sources until switched through the activation workflow.
 - `AppDimens` = raw scale (p16 = 16px). `AppLayout` = semantic meaning (cardPadding = 16px for card context).
 - No overlapping icon sizes: AppDimens has 16/24/32, AppLayout has 12/20/48.
 
@@ -2073,7 +2127,7 @@ The chat module provides one-to-one messaging between a client and a freelancer.
 
 **New in v2.8.2**:
 
-- `ChatContextWidget`: Glassmorphism banner linking chat to its task. Tapping navigates to Task Details.
+- `ChatContextWidget`: Solid context banner linking chat to its task. Tapping navigates to Task Details.
 - `LoadingUtils`: Used to show blocking loaders during navigation or heavy actions.
 
 **Direct Chat Offers (v2.17)**: Freelancer creates an offer from any 1:1 chat (no task required). Client accepts in chat only; payment is from Dashboard (QiCard). Full flow, DB mapping, and file inventory: [Direct Chat Offers (Direct Offers Feature)](DEVELOPER_GUIDE/Direct_Offers_Feature.md).

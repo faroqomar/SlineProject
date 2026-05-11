@@ -6,9 +6,9 @@
 
 ## Source Evidence
 
-- Plan: `.TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
-- Plan Critique: `.TODO/PLAN_CRITIQUE_2026-04-30_HomeDiscoveryNavConsolidation.md`
-- Master Report: `.TODO/MASTER_REPORT_2026-04-30_HomeDiscoveryNavConsolidation.md`
+- Plan: `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
+- Plan Critique: `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/PLAN_CRITIQUE_2026-04-30_HomeDiscoveryNavConsolidation.md`
+- Master Report: `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/MASTER_REPORT_2026-04-30_HomeDiscoveryNavConsolidation.md`
 - Session Log: `docs/LOG/SESSION_HomeDiscoveryNavConsolidation_2026-04-30.md`
 - System Evolution Report: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-30.md`
 - Supabase objects changed: none

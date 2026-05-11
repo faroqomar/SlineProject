@@ -592,7 +592,7 @@ GATE CHECK:
 
 - `.cursor/Agents/Planner.md`
 - `.cursor/Agents/PlanCritic.md`
-- `.TODO/PLAN_CRITIQUE_2026-04-30_HomeDiscoveryNavConsolidation.md`
+- `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/PLAN_CRITIQUE_2026-04-30_HomeDiscoveryNavConsolidation.md`
 - `lib/app/main_navigation_screen.dart`
 - `lib/core/widgets/custom_bottom_nav_bar.dart`
 - `lib/core/app_enums.dart`
