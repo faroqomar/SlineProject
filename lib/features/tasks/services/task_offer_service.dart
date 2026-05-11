@@ -93,8 +93,8 @@ class TaskOfferService {
           .or(
             'status.eq.pending,and(status.eq.accepted,payment_status.eq.unpaid)',
           )
-          .is_('deleted_at', null)
-          .in_('task_id', taskIds)
+          .isFilter('deleted_at', null)
+          .inFilter('task_id', taskIds)
           .order('created_at', ascending: false);
 
       final rows = response as List;

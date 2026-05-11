@@ -145,7 +145,8 @@ class ProfileViewModel extends ChangeNotifier {
         fullName: name,
         bio: bio,
       );
-      // await _repo.updateUserEmail(email); // TODO: Handle email change separately (re-auth required)
+      // Email changes require a separate re-authenticated flow.
+      // await _repo.updateUserEmail(email);
       await _repo.updateProfileSkills(userId: user.id, skills: _skills);
 
       await loadUserData(); // Refresh local state

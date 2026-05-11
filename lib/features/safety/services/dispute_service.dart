@@ -61,7 +61,7 @@ class DisputeService {
           .from('disputes')
           .select('id')
           .eq('task_id', taskId)
-          .in_('status', ['open', 'active'])
+          .inFilter('status', ['open', 'active'])
           .limit(1)
           .maybeSingle();
       final hasOpen = res != null;
@@ -93,7 +93,7 @@ class DisputeService {
           .from('disputes')
           .select('id')
           .eq('direct_offer_id', offerId)
-          .in_('status', ['open', 'active'])
+          .inFilter('status', ['open', 'active'])
           .limit(1)
           .maybeSingle();
       final hasOpen = res != null;
@@ -125,7 +125,7 @@ class DisputeService {
           .from('disputes')
           .select('status')
           .eq('task_id', taskId)
-          .in_('status', ['open', 'active'])
+          .inFilter('status', ['open', 'active'])
           .limit(1)
           .maybeSingle();
       return res?['status'] as String?;
@@ -149,7 +149,7 @@ class DisputeService {
           .from('disputes')
           .select('status')
           .eq('direct_offer_id', offerId)
-          .in_('status', ['open', 'active'])
+          .inFilter('status', ['open', 'active'])
           .limit(1)
           .maybeSingle();
       return res?['status'] as String?;

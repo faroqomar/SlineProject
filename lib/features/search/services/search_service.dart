@@ -123,7 +123,7 @@ class SearchService {
       final response = await _client
           .from('categories')
           .select('id, name')
-          .in_('id', categoryIds.toList());
+          .inFilter('id', categoryIds.toList());
 
       final map = <String, Map<String, dynamic>>{};
       for (final row in (response as List)) {

@@ -21,7 +21,7 @@ import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:sline_app/features/tasks/view/task_details_screen.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../supabase_test_helper.dart';
 import '../../test_support/pump_app.dart';
@@ -178,8 +178,10 @@ void main() {
       url: 'https://test.supabase.co',
       anonKey: 'test-anon-key',
       debug: false,
-      localStorage: supabaseTestLocalStorage,
-      pkceAsyncStorage: supabaseTestPkceStorage,
+      authOptions: FlutterAuthClientOptions(
+        localStorage: supabaseTestLocalStorage,
+        pkceAsyncStorage: supabaseTestPkceStorage,
+      ),
     );
   });
 

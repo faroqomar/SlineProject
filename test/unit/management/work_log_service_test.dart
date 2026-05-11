@@ -14,7 +14,7 @@ void main() {
       final client = SupabaseClient(
         'https://example.supabase.co',
         'public-anon-key',
-        autoRefreshToken: false,
+        authOptions: const AuthClientOptions(autoRefreshToken: false),
         httpClient: MockClient((request) async {
           requestedUri = request.url;
           return http.Response(

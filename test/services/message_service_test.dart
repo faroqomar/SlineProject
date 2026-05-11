@@ -9,22 +9,19 @@ import '../fixtures/chat_fixtures.dart';
 
 // --- Mocks & Fakes ---
 
-// Supabase-1.11.11 declares rpc as non-generic:
-//   PostgrestFilterBuilder rpc(String fn, {Map<String, dynamic>? params, FetchOptions options = const FetchOptions()})
-//
 // We extend Mock but explicitly override rpc so that mocktail's `when()` stubs
 // can intercept it AND it always returns a valid non-null value.
 class _MC extends Mock implements SupabaseClient {
   @override
-  PostgrestFilterBuilder rpc(
+  PostgrestFilterBuilder<T> rpc<T>(
     String fn, {
     Map<String, dynamic>? params,
-    FetchOptions options = const FetchOptions(),
+    dynamic get = false,
   }) {
     return (super.noSuchMethod(
-          Invocation.method(#rpc, [fn], {#params: params, #options: options}),
+          Invocation.method(#rpc, [fn], {#params: params, #get: get}),
         ))
-        as PostgrestFilterBuilder;
+        as PostgrestFilterBuilder<T>;
   }
 }
 
@@ -33,20 +30,28 @@ class _MA extends Mock implements GoTrueClient {}
 /// A simple stub filterbuilder that holds onto a value and resolves it.
 class _StubFB<T> extends Fake
     implements PostgrestFilterBuilder<T>, PostgrestTransformBuilder<T> {
-  final T _data;
-  _StubFB(T data) : _data = data;
+  final Object? _data;
+  _StubFB(this._data);
+
+  Map<String, dynamic> _dataAsMap(String methodName) {
+    if (_data is Map) {
+      return Map<String, dynamic>.from(_data);
+    }
+    throw StateError(
+      '$methodName expected stub data shaped as Map, got ${_data.runtimeType}',
+    );
+  }
 
   @override
-  PostgrestFilterBuilder<R> select<R>([
-    String columns = '*',
-    FetchOptions options = const FetchOptions(),
-  ]) => _StubFB<R>(_data as R);
+  PostgrestTransformBuilder<PostgrestList> select([String columns = '*']) =>
+      _StubFB<PostgrestList>(_data);
   @override
   PostgrestFilterBuilder<T> eq(String column, dynamic value) => this;
   @override
-  PostgrestFilterBuilder<T> or(String filters, {String? foreignTable}) => this;
+  PostgrestFilterBuilder<T> or(String filters, {String? referencedTable}) =>
+      this;
   @override
-  PostgrestFilterBuilder<T> is_(String column, dynamic value) => this;
+  PostgrestFilterBuilder<T> isFilter(String column, bool? value) => this;
   @override
   PostgrestFilterBuilder<T> lt(String column, dynamic value) => this;
   @override
@@ -54,22 +59,25 @@ class _StubFB<T> extends Fake
     String column, {
     bool ascending = false,
     bool nullsFirst = false,
-    String? foreignTable,
+    String? referencedTable,
   }) => this;
   @override
-  PostgrestTransformBuilder<T> limit(int count, {String? foreignTable}) => this;
+  PostgrestTransformBuilder<T> limit(int count, {String? referencedTable}) =>
+      this;
   @override
-  PostgrestTransformBuilder<T> single() => this;
+  PostgrestTransformBuilder<PostgrestMap> single() =>
+      _StubFB<PostgrestMap>(_dataAsMap('single'));
   @override
-  PostgrestTransformBuilder<T> maybeSingle() => this;
+  PostgrestTransformBuilder<PostgrestMap?> maybeSingle() =>
+      _StubFB<PostgrestMap?>(_data == null ? null : _dataAsMap('maybeSingle'));
   @override
   Future<T> timeout(
     Duration timeLimit, {
     FutureOr<T> Function()? onTimeout,
-  }) async => _data;
+  }) async => _data as T;
   @override
   Future<R> then<R>(FutureOr<R> Function(T) onValue, {Function? onError}) =>
-      Future.value(_data).then(onValue, onError: onError);
+      Future.value(_data as T).then(onValue, onError: onError);
 }
 
 // The generic typed version, used for from() stubs
@@ -82,20 +90,16 @@ class _QB extends Fake implements SupabaseQueryBuilder {
   _QB(this.next);
 
   @override
-  PostgrestFilterBuilder<R> select<R>([
-    String columns = '*',
-    FetchOptions options = const FetchOptions(),
-  ]) => next;
+  PostgrestFilterBuilder<PostgrestList> select([String columns = '*']) =>
+      _StubFB<PostgrestList>(next is _StubFB ? next._data : next);
   @override
   PostgrestFilterBuilder<Map<String, dynamic>> insert(
     dynamic values, {
     bool defaultToNull = true,
-  }) => next;
+  }) => _StubFB<Map<String, dynamic>>(next is _StubFB ? next._data : next);
   @override
-  PostgrestFilterBuilder<Map<String, dynamic>> update(
-    Map values, {
-    FetchOptions options = const FetchOptions(),
-  }) => next;
+  PostgrestFilterBuilder update(Map values) =>
+      _StubFB<dynamic>(next is _StubFB ? next._data : next);
 }
 
 // --- Test Main ---
@@ -110,7 +114,6 @@ void main() {
       registerFallbackValue(Uri.parse('https://test.com'));
       registerFallbackValue('');
       registerFallbackValue(<String, dynamic>{});
-      registerFallbackValue(const FetchOptions());
     });
 
     setUp(() {
@@ -169,7 +172,9 @@ void main() {
           conversationsCallCount++;
           if (conversationsCallCount == 1) {
             // First call: no existing DM
-            return _QB(_FB<List<Map<String, dynamic>>>([]));
+            return _QB(
+              _FB<List<Map<String, dynamic>>>(<Map<String, dynamic>>[]),
+            );
           } else {
             // Second call: return the newly inserted conversation
             return _QB(_FB<Map<String, dynamic>>(existingDirectConversation));

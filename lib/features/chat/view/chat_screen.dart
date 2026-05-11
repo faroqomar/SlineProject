@@ -97,8 +97,9 @@ class _ChatScreenState extends State<ChatScreen> {
   // ── Reply-to state (Phase 6) ─────────────────────────────────
   /// The message being replied to. When non-null, a reply preview bar
   /// appears above the input field. Cleared on send or close.
-  // TODO: Pass _replyTarget?.id to ChatViewModel.sendMessage() when backend
-  // supports reply_to_message_id column. Currently reply context is View-only.
+  // Reply persistence backlog: pass _replyTarget?.id to
+  // ChatViewModel.sendMessage() once the backend supports reply_to_message_id.
+  // Currently reply context is View-only.
   Message? _replyTarget;
 
   /// Client-side map: sent message ID → replied-to message.

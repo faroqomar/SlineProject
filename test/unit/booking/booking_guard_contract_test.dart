@@ -16,10 +16,8 @@ class _StubBookingBuilder extends Fake
   _StubBookingBuilder(this._data);
 
   @override
-  PostgrestFilterBuilder<R> select<R>([
-    String columns = '*',
-    FetchOptions options = const FetchOptions(),
-  ]) => this as PostgrestFilterBuilder<R>;
+  PostgrestTransformBuilder<PostgrestList> select([String columns = '*']) =>
+      _StubBookingListBuilder(_data);
 
   @override
   PostgrestFilterBuilder<Map<String, dynamic>> eq(
@@ -28,7 +26,7 @@ class _StubBookingBuilder extends Fake
   ) => this;
 
   @override
-  PostgrestTransformBuilder<Map<String, dynamic>> single() => this;
+  PostgrestTransformBuilder<PostgrestMap> single() => this;
 
   @override
   Future<R> then<R>(
@@ -37,14 +35,28 @@ class _StubBookingBuilder extends Fake
   }) => Future.value(_data).then(onValue, onError: onError);
 }
 
+class _StubBookingListBuilder extends Fake
+    implements
+        PostgrestFilterBuilder<PostgrestList>,
+        PostgrestTransformBuilder<PostgrestList> {
+  final Map<String, dynamic> _data;
+  _StubBookingListBuilder(this._data);
+
+  @override
+  PostgrestFilterBuilder<PostgrestList> eq(String column, dynamic value) =>
+      this;
+
+  @override
+  PostgrestTransformBuilder<PostgrestMap> single() =>
+      _StubBookingBuilder(_data);
+}
+
 class _QueryBuilder extends Fake implements SupabaseQueryBuilder {
   final dynamic _next;
   _QueryBuilder(this._next);
   @override
-  PostgrestFilterBuilder<R> select<R>([
-    String columns = '*',
-    FetchOptions options = const FetchOptions(),
-  ]) => _next;
+  PostgrestFilterBuilder<PostgrestList> select([String columns = '*']) =>
+      _StubBookingListBuilder((_next as _StubBookingBuilder)._data);
 }
 
 /// Contract test: client cannot cancel a delivered booking (Plan: PLAN_BookingLifecycle_2026-03-08_PlanCritic).

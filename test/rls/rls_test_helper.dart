@@ -29,6 +29,17 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// Log tag for RLS test operations
 const String _logTag = 'rls_test';
 
+PostgrestFilterBuilder<T> _applyFilters<T>(
+  PostgrestFilterBuilder<T> query,
+  Map<String, dynamic> filters,
+) {
+  var filtered = query;
+  for (final entry in filters.entries) {
+    filtered = filtered.eq(entry.key, entry.value);
+  }
+  return filtered;
+}
+
 /// Result of an RLS policy check
 class RlsCheckResult {
   /// Whether the operation was allowed by RLS
@@ -91,8 +102,7 @@ class RlsTestHelper {
     try {
       if (_client != null) {
         // Integration test path - actual Supabase query
-        final query = _client.from(table).select();
-        filters.forEach(query.eq);
+        final query = _applyFilters(_client.from(table).select(), filters);
 
         await query;
         // Query success means SELECT was allowed
@@ -127,8 +137,7 @@ class RlsTestHelper {
 
     try {
       if (_client != null) {
-        final query = _client.from(table).select();
-        filters.forEach(query.eq);
+        final query = _applyFilters(_client.from(table).select(), filters);
 
         await query;
         // If we get here without exception, the RLS policy allowed access
@@ -240,8 +249,7 @@ class RlsTestHelper {
 
     try {
       if (_client != null) {
-        final query = _client.from(table).update(data);
-        filters.forEach(query.eq);
+        final query = _applyFilters(_client.from(table).update(data), filters);
 
         await query;
       }
@@ -268,8 +276,7 @@ class RlsTestHelper {
 
     try {
       if (_client != null) {
-        final query = _client.from(table).update(data);
-        filters.forEach(query.eq);
+        final query = _applyFilters(_client.from(table).update(data), filters);
 
         await query;
         AppLogger.e(
@@ -303,8 +310,7 @@ class RlsTestHelper {
 
     try {
       if (_client != null) {
-        final query = _client.from(table).delete();
-        filters.forEach(query.eq);
+        final query = _applyFilters(_client.from(table).delete(), filters);
 
         await query;
       }
@@ -330,8 +336,7 @@ class RlsTestHelper {
 
     try {
       if (_client != null) {
-        final query = _client.from(table).delete();
-        filters.forEach(query.eq);
+        final query = _applyFilters(_client.from(table).delete(), filters);
 
         await query;
       }

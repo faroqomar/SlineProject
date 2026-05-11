@@ -269,14 +269,12 @@ class MessageService {
         'and(user1_id.eq.$user1Id,user2_id.eq.$user2Id),and(user1_id.eq.$user2Id,user2_id.eq.$user1Id)';
 
     // Only look for DMs (task_id IS NULL)
-    final query = base.is_('task_id', null).or(pairFilter).limit(1);
+    final query = base.isFilter('task_id', null).or(pairFilter).limit(1);
 
     final existing = await query.timeout(timeout);
 
-    AppLogger.d(
-      '🔎 Existing DM conversations found: ${existing is List ? existing.length : 'n/a'}',
-    );
-    if (existing is List && existing.isNotEmpty) {
+    AppLogger.d('🔎 Existing DM conversations found: ${existing.length}');
+    if (existing.isNotEmpty) {
       AppLogger.i('📌 Using existing DM conversation: ${existing.first['id']}');
       return Conversation.fromJson(
         Map<String, dynamic>.from(existing.first as Map),
@@ -366,64 +364,59 @@ class MessageService {
             last_message:messages!conversation_id(content, created_at, seen_at, sender_id)
           ''')
           .or('user1_id.eq.$userId,user2_id.eq.$userId')
-          .order('created_at', foreignTable: 'messages', ascending: false)
-          .limit(1, foreignTable: 'messages')
+          .order('created_at', referencedTable: 'messages', ascending: false)
+          .limit(1, referencedTable: 'messages')
           .order('created_at', ascending: false);
 
-      if (response is List) {
-        AppLogger.d('📦 Conversations response count: ${response.length}');
-        final validConversations = <Conversation>[];
+      AppLogger.d('📦 Conversations response count: ${response.length}');
+      final validConversations = <Conversation>[];
 
-        for (final raw in response) {
-          final json = Map<String, dynamic>.from(raw as Map);
+      for (final raw in response) {
+        final json = Map<String, dynamic>.from(raw);
 
-          // Check deletion status
-          final isUser1 = json['user1_id'] == userId;
-          final deletedAtStr = isUser1
-              ? json['deleted_at_user1']
-              : json['deleted_at_user2'];
+        // Check deletion status
+        final isUser1 = json['user1_id'] == userId;
+        final deletedAtStr = isUser1
+            ? json['deleted_at_user1']
+            : json['deleted_at_user2'];
 
-          if (deletedAtStr != null) {
-            final deletedAt = DateTime.parse(deletedAtStr);
-            final lastMsg = json['last_message'];
-            // If no messages, or last message was before deletion, skip it
-            if (lastMsg == null || (lastMsg is List && lastMsg.isEmpty)) {
-              continue;
-            }
-            final msgData = lastMsg is List ? lastMsg.first : lastMsg;
-            final msgTime = DateTime.parse(msgData['created_at']);
-
-            if (msgTime.isBefore(deletedAt)) {
-              continue; // Still deleted
-            }
+        if (deletedAtStr != null) {
+          final deletedAt = DateTime.parse(deletedAtStr);
+          final lastMsg = json['last_message'];
+          // If no messages, or last message was before deletion, skip it
+          if (lastMsg == null || lastMsg is! List || lastMsg.isEmpty) {
+            continue;
           }
+          final msgData = Map<String, dynamic>.from(lastMsg.first as Map);
+          final msgTime = DateTime.parse(msgData['created_at']);
 
-          final otherUser = isUser1 ? json['user2'] : json['user1'];
-          validConversations.add(
-            Conversation.fromJson({
-              ...json,
-              'task_title': json['tasks']?['title'] ?? 'Untitled Task',
-              'task_type': json['tasks']?['task_type'],
-              'user1_name': json['user1']?['full_name'] ?? 'User',
-              'user2_name': json['user2']?['full_name'] ?? 'User',
-              'other_user_name': otherUser?['full_name'],
-              'other_user_avatar': otherUser?['avatar_url'],
-            }),
-          );
+          if (msgTime.isBefore(deletedAt)) {
+            continue; // Still deleted
+          }
         }
 
-        // Sort by last message time descending
-        validConversations.sort((a, b) {
-          final aTime = a.lastMessageTime ?? a.createdAt;
-          final bTime = b.lastMessageTime ?? b.createdAt;
-          return bTime.compareTo(aTime);
-        });
-
-        return validConversations;
-      } else {
-        AppLogger.w('⚠️ Unexpected response type: $response');
-        return [];
+        final otherUser = isUser1 ? json['user2'] : json['user1'];
+        validConversations.add(
+          Conversation.fromJson({
+            ...json,
+            'task_title': json['tasks']?['title'] ?? 'Untitled Task',
+            'task_type': json['tasks']?['task_type'],
+            'user1_name': json['user1']?['full_name'] ?? 'User',
+            'user2_name': json['user2']?['full_name'] ?? 'User',
+            'other_user_name': otherUser?['full_name'],
+            'other_user_avatar': otherUser?['avatar_url'],
+          }),
+        );
       }
+
+      // Sort by last message time descending
+      validConversations.sort((a, b) {
+        final aTime = a.lastMessageTime ?? a.createdAt;
+        final bTime = b.lastMessageTime ?? b.createdAt;
+        return bTime.compareTo(aTime);
+      });
+
+      return validConversations;
     } on Exception catch (e) {
       AppLogger.e('❌ Error fetching conversations: $e');
       return [];

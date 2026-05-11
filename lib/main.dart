@@ -74,7 +74,7 @@ import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
 import 'package:sline_app/features/wallet/viewmodels/wallet_view_model.dart';
 import 'package:sline_app/features/work/services/work_deep_link_handler.dart';
 import 'package:sline_app/l10n/app_localizations.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 const bool kUseQiCardPayment = bool.fromEnvironment(
   'USE_QICARD_PAYMENT',

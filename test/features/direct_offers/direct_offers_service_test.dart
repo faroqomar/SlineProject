@@ -19,31 +19,40 @@ const String _logTag = 'direct_offers_service_test';
 /// Stub filter builder that resolves to [T] when awaited (getOffer uses .maybeSingle() then await).
 class _StubDirectOfferBuilder<T> extends Fake
     implements PostgrestFilterBuilder<T>, PostgrestTransformBuilder<T> {
-  final T _data;
+  final Object? _data;
   _StubDirectOfferBuilder(this._data);
 
   @override
-  PostgrestFilterBuilder<R> select<R>([
-    String columns = '*',
-    FetchOptions options = const FetchOptions(),
-  ]) => _StubDirectOfferBuilder<R>(_data as R);
+  PostgrestTransformBuilder<PostgrestList> select([String columns = '*']) =>
+      _StubDirectOfferBuilder<PostgrestList>(_data);
   @override
   PostgrestFilterBuilder<T> eq(String column, dynamic value) => this;
   @override
-  PostgrestTransformBuilder<T> maybeSingle() => this;
+  PostgrestTransformBuilder<PostgrestMap?> maybeSingle() =>
+      _StubDirectOfferBuilder<PostgrestMap?>(
+        _data is Map ? Map<String, dynamic>.from(_data) : null,
+      );
   @override
-  Future<R> then<R>(FutureOr<R> Function(T) onValue, {Function? onError}) =>
-      Future.value(_data).then(onValue, onError: onError);
+  Future<R> then<R>(FutureOr<R> Function(T) onValue, {Function? onError}) {
+    if (_data is T) {
+      return Future<T>.value(_data).then(onValue, onError: onError);
+    }
+    return Future<T>.error(
+      StateError(
+        'Stubbed _data has type ${_data.runtimeType}, not expected $T',
+      ),
+    ).then(onValue, onError: onError);
+  }
 }
 
 class _QueryBuilder extends Fake implements SupabaseQueryBuilder {
-  final dynamic _next;
+  final Object? _next;
   _QueryBuilder(this._next);
   @override
-  PostgrestFilterBuilder<R> select<R>([
-    String columns = '*',
-    FetchOptions options = const FetchOptions(),
-  ]) => _next;
+  PostgrestFilterBuilder<PostgrestList> select([String columns = '*']) =>
+      _StubDirectOfferBuilder<PostgrestList>(
+        _next is _StubDirectOfferBuilder ? _next._data : _next,
+      );
 }
 
 Map<String, dynamic> _offerRow({

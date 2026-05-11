@@ -223,7 +223,7 @@ class ProfileRepository {
           })
           .select()
           .single();
-      return PortfolioItem.fromJson(row as Map<String, dynamic>);
+      return PortfolioItem.fromJson(row);
     }
 
     // Otherwise, use the normal flow with upload
@@ -337,7 +337,7 @@ class ProfileRepository {
     );
 
     // 3. Mock Reviews (for now, as table doesn't exist)
-    // TODO: Implement reviews table and fetching
+    // Reviews backlog: replace this with reviews table fetching when available.
     final reviews = [
       const ReviewItem(
         client: 'Previous Client',
@@ -356,7 +356,7 @@ class ProfileRepository {
           deadline, skills, category_id, category, freelancer_id, assigned_freelancer_id,
           image_paths, packages
         ''')
-        .in_('status', ['completed', 'closed'])
+        .inFilter('status', ['completed', 'closed'])
         .or('freelancer_id.eq.$userId,assigned_freelancer_id.eq.$userId')
         .order('created_at', ascending: false)
         .limit(20);

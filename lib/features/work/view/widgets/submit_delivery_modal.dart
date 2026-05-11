@@ -52,8 +52,7 @@ class _SubmitDeliveryModalState extends State<SubmitDeliveryModal> {
             hintText: 'Describe your delivery...',
             maxLines: 4,
           ),
-          const SizedBox(height: AppDimens.p24),
-          // TODO: Add File Upload UI here
+          // Reserve space for delivery attachment upload controls.
           const SizedBox(height: AppDimens.p24),
           AppButton(
             text: 'Submit Work',

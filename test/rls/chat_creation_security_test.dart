@@ -36,8 +36,10 @@ void main() {
       await Supabase.initialize(
         url: 'http://localhost:54321',
         anonKey: 'test-anon-key',
-        localStorage: supabaseTestLocalStorage,
-        pkceAsyncStorage: supabaseTestPkceStorage,
+        authOptions: FlutterAuthClientOptions(
+          localStorage: supabaseTestLocalStorage,
+          pkceAsyncStorage: supabaseTestPkceStorage,
+        ),
       );
       client = Supabase.instance.client;
     });

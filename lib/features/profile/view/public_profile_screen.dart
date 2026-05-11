@@ -154,7 +154,15 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
                                       CircleIconButton(
                                         icon: Icons.share,
                                         onTap: () {
-                                          // TODO: Implement share
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Share coming soon',
+                                              ),
+                                            ),
+                                          );
                                         },
                                       ),
                                       const SizedBox(width: 8),

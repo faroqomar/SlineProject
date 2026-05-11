@@ -8,7 +8,7 @@ import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/features/notifications/services/notification_service.dart';
 import 'package:sline_app/features/notifications/view/notifications_modal.dart';
 import 'package:sline_app/features/notifications/viewmodels/notification_view_model.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _MockNotificationService extends Mock implements NotificationService {}
 

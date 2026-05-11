@@ -328,7 +328,7 @@ void main() {
     expect(vm.savedTaskIds, isNotEmpty);
 
     // Emit signedOut
-    result.authCtrl.add(AuthState(AuthChangeEvent.signedOut, null));
+    result.authCtrl.add(const AuthState(AuthChangeEvent.signedOut, null));
     await Future<void>.delayed(const Duration(milliseconds: 50));
 
     expect(vm.savedTaskIds, isEmpty);

@@ -166,7 +166,7 @@ void main() {
             () => authRepo.getCurrentUserProfileWithRetry(),
           ).thenAnswer((_) async => profile);
 
-          authStreamController.add(AuthState(AuthChangeEvent.signedIn, null));
+          authStreamController.add(const AuthState(AuthChangeEvent.signedIn, null));
 
           // Allow the async profile load to complete.
           await Future<void>.delayed(Duration.zero);
@@ -189,7 +189,7 @@ void main() {
 
         // Simulate sign-out.
         when(() => authRepo.currentUser).thenReturn(null);
-        authStreamController.add(AuthState(AuthChangeEvent.signedOut, null));
+        authStreamController.add(const AuthState(AuthChangeEvent.signedOut, null));
 
         // Allow stream handler to process.
         await Future<void>.delayed(Duration.zero);
@@ -207,7 +207,7 @@ void main() {
         when(() => authRepo.currentUser).thenReturn(mockUser);
 
         authStreamController.add(
-          AuthState(AuthChangeEvent.tokenRefreshed, null),
+          const AuthState(AuthChangeEvent.tokenRefreshed, null),
         );
         await Future<void>.delayed(Duration.zero);
 
@@ -222,7 +222,7 @@ void main() {
         expect(vm.onPasswordRecovery, isNull);
 
         authStreamController.add(
-          AuthState(AuthChangeEvent.passwordRecovery, null),
+          const AuthState(AuthChangeEvent.passwordRecovery, null),
         );
 
         // The pending flag is private, but we can verify it fires when we
@@ -251,7 +251,7 @@ void main() {
           };
 
           authStreamController.add(
-            AuthState(AuthChangeEvent.passwordRecovery, null),
+            const AuthState(AuthChangeEvent.passwordRecovery, null),
           );
 
           expect(callbackFired, isTrue);
@@ -271,7 +271,7 @@ void main() {
           () => authRepo.getCurrentUserProfileWithRetry(),
         ).thenAnswer((_) async => updatedProfile);
 
-        authStreamController.add(AuthState(AuthChangeEvent.userUpdated, null));
+        authStreamController.add(const AuthState(AuthChangeEvent.userUpdated, null));
         await Future<void>.delayed(Duration.zero);
 
         expect(vm.currentUserProfile!.fullName, 'Updated Name');
@@ -542,7 +542,7 @@ void main() {
 
         // Emit password recovery before callback is registered.
         authStreamController.add(
-          AuthState(AuthChangeEvent.passwordRecovery, null),
+          const AuthState(AuthChangeEvent.passwordRecovery, null),
         );
 
         var recoveryFired = false;
@@ -581,7 +581,7 @@ void main() {
         addTearDown(vm.dispose);
 
         authStreamController.add(
-          AuthState(AuthChangeEvent.passwordRecovery, null),
+          const AuthState(AuthChangeEvent.passwordRecovery, null),
         );
 
         // Setting to null should not throw or fire anything.
@@ -604,7 +604,7 @@ void main() {
         // Emitting after dispose should not cause errors.
         // The controller is still open (tearDown closes it), but the
         // subscription should have been cancelled.
-        authStreamController.add(AuthState(AuthChangeEvent.signedIn, null));
+        authStreamController.add(const AuthState(AuthChangeEvent.signedIn, null));
 
         // Allow microtask to settle.
         await Future<void>.delayed(Duration.zero);
@@ -637,11 +637,11 @@ void main() {
           vm.dispose();
 
           // Emit multiple events after dispose.
-          authStreamController.add(AuthState(AuthChangeEvent.signedIn, null));
+          authStreamController.add(const AuthState(AuthChangeEvent.signedIn, null));
           authStreamController.add(
-            AuthState(AuthChangeEvent.userUpdated, null),
+            const AuthState(AuthChangeEvent.userUpdated, null),
           );
-          authStreamController.add(AuthState(AuthChangeEvent.signedOut, null));
+          authStreamController.add(const AuthState(AuthChangeEvent.signedOut, null));
 
           await Future<void>.delayed(Duration.zero);
 

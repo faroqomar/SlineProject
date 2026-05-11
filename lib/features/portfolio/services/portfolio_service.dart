@@ -157,7 +157,7 @@ class PortfolioService {
           .select()
           .single();
 
-      final item = PortfolioItem.fromJson(row as Map<String, dynamic>);
+      final item = PortfolioItem.fromJson(Map<String, dynamic>.from(row));
       AppLogger.i('Portfolio item created', tag: _tag, json: {'id': item.id});
       return item;
     } on Exception catch (e, st) {
@@ -189,7 +189,7 @@ class PortfolioService {
       );
       return;
     }
-    final item = PortfolioItem.fromJson(row as Map<String, dynamic>);
+    final item = PortfolioItem.fromJson(Map<String, dynamic>.from(row));
 
     // Delete DB row first (RLS requires owner)
     await _client.from(_table).delete().eq('id', id);

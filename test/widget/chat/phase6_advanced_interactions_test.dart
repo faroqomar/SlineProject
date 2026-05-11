@@ -179,7 +179,7 @@ void main() {
   group('ConversationListTile relative time', () {
     /// Creates a mock ChatViewModel with standard stubs for ConversationListTile.
     /// Note: otherUserTyping/activeConversation stubs removed — typing indicator
-    /// was disabled (see conversation_list_tile.dart TODO).
+    /// was disabled (see conversation_list_tile.dart backlog note).
     _MockChatViewModel buildVm() {
       final vm = _MockChatViewModel();
       when(() => vm.currentUserId).thenReturn('user-1');

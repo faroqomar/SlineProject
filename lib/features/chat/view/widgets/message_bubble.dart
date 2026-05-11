@@ -36,7 +36,8 @@ class MessageBubble extends StatefulWidget {
 
   /// Optional reply quote — sender name of the replied-to message.
   /// When set (along with [replyToText]), shows a quoted section above the text.
-  // TODO: Wire replyToText/replyToSender when Message model has reply_to_message_id.
+  // Reply persistence backlog: wire replyToText/replyToSender when Message
+  // model has reply_to_message_id.
   // Until then, these params are available for the View-layer reply preview in ChatScreen.
   final String? replyToSender;
 
@@ -67,11 +68,11 @@ class _MessageBubbleState extends State<MessageBubble> {
   /// Uses Extended_Pictographic to exclude digits (#, *, 0-9) that \p{Emoji} includes.
   /// DECISION-1: \p{Extended_Pictographic} chosen over \p{Emoji} to avoid
   /// false positives on digits and symbol characters.
-  // Analyzer reports valid_regexps false positive because it doesn't
-  // understand \p{Extended_Pictographic} unicode property escapes.
-  // Runtime test confirms pattern is valid with unicode: true.
-  // ignore: valid_regexps
+  // Analyzer reports valid_regexps false positive because it doesn't understand
+  // \p{Extended_Pictographic} unicode property escapes. Runtime tests confirm
+  // this pattern is valid with unicode: true.
   static final _emojiOnlyPattern = RegExp(
+    // ignore: valid_regexps
     r'^\s*(\p{Extended_Pictographic}(\u{FE0F}|\u{200D}|\p{Extended_Pictographic})*\s*){1,3}\s*$',
     unicode: true,
   );

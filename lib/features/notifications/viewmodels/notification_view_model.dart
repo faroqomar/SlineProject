@@ -38,6 +38,10 @@ class NotificationViewModel extends ChangeNotifier {
 
   int get unreadCount => _notifications.where((n) => !n.isRead).length;
 
+  bool _shouldDisconnectForAuthEvent(AuthChangeEvent event) {
+    return event == AuthChangeEvent.signedOut || event.name == 'userDeleted';
+  }
+
   void _init(Stream<AuthState>? authStateChanges) {
     if (authStateChanges != null) {
       _authSubscription = authStateChanges.listen((data) {
@@ -50,10 +54,9 @@ class NotificationViewModel extends ChangeNotifier {
             );
             _connect();
           }
-        } else if (event == AuthChangeEvent.signedOut ||
-            event == AuthChangeEvent.userDeleted) {
+        } else if (_shouldDisconnectForAuthEvent(event)) {
           AppLogger.d(
-            'NotificationViewModel: signed out, disconnecting and clearing state',
+            'NotificationViewModel: auth ended, disconnecting and clearing state',
             tag: 'Notifications',
           );
           _disconnect();
@@ -81,10 +84,9 @@ class NotificationViewModel extends ChangeNotifier {
           );
           _connect();
         }
-      } else if (event == AuthChangeEvent.signedOut ||
-          event == AuthChangeEvent.userDeleted) {
+      } else if (_shouldDisconnectForAuthEvent(event)) {
         AppLogger.d(
-          'NotificationViewModel: signed out, disconnecting and clearing state',
+          'NotificationViewModel: auth ended, disconnecting and clearing state',
           tag: 'Notifications',
         );
         _disconnect();

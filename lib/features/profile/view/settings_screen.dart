@@ -108,7 +108,10 @@ class SettingsScreen extends StatelessWidget {
                   subtitle: 'Manage alerts',
                   trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                   onTap: () {
-                    // TODO: Implement notification settings
+                    _showComingSoonSnackBar(
+                      context,
+                      'Notification settings coming soon',
+                    );
                   },
                 ),
                 const SizedBox(height: AppDimens.p12),
@@ -145,7 +148,10 @@ class SettingsScreen extends StatelessWidget {
                   subtitle: 'English',
                   trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                   onTap: () {
-                    // TODO: Implement language settings
+                    _showComingSoonSnackBar(
+                      context,
+                      'Language settings coming soon',
+                    );
                   },
                 ),
 
@@ -269,6 +275,12 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showComingSoonSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
   }
 

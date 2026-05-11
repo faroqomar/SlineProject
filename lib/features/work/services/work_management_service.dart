@@ -80,7 +80,7 @@ class WorkManagementService {
       }
 
       if (statusFilter != null && statusFilter.isNotEmpty) {
-        query = query.in_('unified_status', statusFilter);
+        query = query.inFilter('unified_status', statusFilter);
       }
 
       final response = await query.order('deadline', ascending: true);

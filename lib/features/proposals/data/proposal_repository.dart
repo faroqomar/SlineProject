@@ -36,7 +36,7 @@ class ProposalRepository {
             'id, task_id, bidder_id, freelancer_id, price, days, note, message, status, payment_status, created_at, updated_at, payment_deadline, tasks(title)',
           )
           .eq('task_id', taskId)
-          .is_('deleted_at', null);
+          .isFilter('deleted_at', null);
 
       if (before != null) {
         query = query.lt('created_at', before.toUtc().toIso8601String());

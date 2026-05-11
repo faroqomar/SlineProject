@@ -138,7 +138,7 @@ class WalletService {
     var query = _client.from('withdrawal_requests').select().eq('user_id', uid);
 
     if (statuses != null && statuses.isNotEmpty) {
-      query = query.in_('status', statuses);
+      query = query.inFilter('status', statuses);
     }
 
     final data = await query.order('created_at', ascending: false).limit(limit);

@@ -44,9 +44,8 @@ class MockSupabaseQueryBuilder extends Mock implements SupabaseQueryBuilder {
 }
 
 /// Mock implementation of [PostgrestFilterBuilder] for filter operations
-/// Uses dynamic type to avoid complex generic constraints
 class MockPostgrestFilterBuilder extends Mock
-    implements PostgrestFilterBuilder<dynamic> {
+    implements PostgrestFilterBuilder<PostgrestList> {
   MockPostgrestFilterBuilder() {
     AppLogger.d('MockPostgrestFilterBuilder created', tag: _logTag);
   }
@@ -437,10 +436,10 @@ void setupFilterChaining(MockPostgrestFilterBuilder builder) {
   when(() => builder.ilike(any(), any())).thenReturn(builder);
 
   // List filters
-  when(() => builder.in_(any(), any())).thenReturn(builder);
+  when(() => builder.inFilter(any(), any())).thenReturn(builder);
 
   // Null check filters
-  when(() => builder.is_(any(), any())).thenReturn(builder);
+  when(() => builder.isFilter(any(), any())).thenReturn(builder);
 
   // Logical filters
   when(() => builder.not(any(), any(), any())).thenReturn(builder);

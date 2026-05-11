@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/features/wallet/models/wallet_activity_model.dart';
 import 'package:sline_app/features/wallet/models/wallet_balance_model.dart';
+import 'package:sline_app/features/wallet/utils/wallet_presentation_helper.dart';
 import 'package:sline_app/features/wallet/view/wallet_dashboard_screen.dart';
 import 'package:sline_app/features/wallet/view/widgets/wallet_shared_body.dart';
 import 'package:sline_app/features/wallet/viewmodels/wallet_view_model.dart';
@@ -17,7 +18,9 @@ class _TestWalletViewModel extends WalletViewModel {
     String? errorMessage,
     WalletBalanceModel? walletBalance,
     List<WalletActivityModel>? walletActivities,
+    DateTime? summaryNow,
   }) : _loaded = loaded,
+       _summaryNow = summaryNow,
        super(client: createMockSupabaseClient()) {
     isLoading = loading;
     error = errorMessage;
@@ -26,10 +29,18 @@ class _TestWalletViewModel extends WalletViewModel {
   }
 
   final bool _loaded;
+  final DateTime? _summaryNow;
   int ensureLoadedCalls = 0;
 
   @override
   bool get hasLoadedWallet => _loaded;
+
+  @override
+  WalletPresentationSummary get summary => buildWalletPresentationSummary(
+    balance: balance,
+    activities: activities,
+    now: _summaryNow,
+  );
 
   @override
   Future<void> ensureLoaded({bool forceRefresh = false}) async {
@@ -152,9 +163,9 @@ void main() {
     testWidgets('renders populated state with insights and timeline groups', (
       tester,
     ) async {
-      // Use local "now" to build test timestamps so that the "Today"
-      // bucket is stable regardless of the host timezone offset.
-      final localNow = DateTime.now();
+      // Pin presentation time to a Wednesday so all timeline buckets are
+      // available regardless of the day this test runs.
+      final localNow = DateTime(2026, 3, 11, 12);
       final todayNoon = DateTime(
         localNow.year,
         localNow.month,
@@ -168,6 +179,7 @@ void main() {
           pendingWithdrawalBalance: 200,
           heldBalance: 300,
         ),
+        summaryNow: localNow,
         walletActivities: [
           _activity(
             id: 'txn-today',
@@ -231,6 +243,7 @@ void main() {
   testWidgets('WalletDashboardScreen no longer renders mock wallet content', (
     tester,
   ) async {
+    final summaryNow = DateTime.utc(2026, 3, 11, 12);
     final vm = _TestWalletViewModel(
       loaded: true,
       walletBalance: const WalletBalanceModel(
@@ -241,9 +254,7 @@ void main() {
       walletActivities: [
         _activity(
           id: 'txn-1',
-          createdAtUtc: DateTime.now().toUtc().subtract(
-            const Duration(hours: 1),
-          ),
+          createdAtUtc: summaryNow.subtract(const Duration(hours: 1)),
           eventType: 'release_with_fee',
           amountGross: 900,
           amountNet: 850,
@@ -251,6 +262,7 @@ void main() {
           relatedEntityType: 'booking',
         ),
       ],
+      summaryNow: summaryNow,
     );
 
     await _pumpWallet(tester, vm, child: const WalletDashboardScreen());

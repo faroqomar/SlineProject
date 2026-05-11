@@ -62,7 +62,7 @@ class CategoriesService {
     final row = await _client.from(_table).select().eq('id', id).maybeSingle();
 
     if (row == null) return null;
-    return CategoryModel.fromJson(row as Map<String, dynamic>);
+    return CategoryModel.fromJson(Map<String, dynamic>.from(row));
   }
 
   /// Returns cached categories if present, otherwise fetches from the server.

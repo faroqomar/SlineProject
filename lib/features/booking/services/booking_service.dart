@@ -180,7 +180,7 @@ class BookingService {
         'Updated booking $bookingId status to $newStatus',
         tag: 'Booking',
       );
-      return BookingModel.fromJson(res as Map<String, dynamic>);
+      return BookingModel.fromJson(res);
     } on Exception catch (e, st) {
       if (e is StateError) rethrow;
       AppLogger.e(

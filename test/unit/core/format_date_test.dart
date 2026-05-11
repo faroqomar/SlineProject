@@ -90,7 +90,9 @@ void main() {
     });
 
     test('returns minutes left when less than one hour remains', () {
-      final date = DateTime.now().toUtc().add(const Duration(minutes: 40));
+      final date = DateTime.now().toUtc().add(
+        const Duration(minutes: 40, seconds: 30),
+      );
       expect(formatTimeLeft(date), '40m left');
     });
   });

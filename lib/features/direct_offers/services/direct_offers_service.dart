@@ -106,7 +106,7 @@ class DirectOffersService {
     final response = await _client
         .from('direct_offers')
         .select()
-        .in_('id', ids);
+        .inFilter('id', ids);
     final list = response as List<dynamic>? ?? [];
     final map = <String, DirectOffer>{};
     for (final row in list) {

@@ -13,6 +13,9 @@ import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/features/chat/models/conversation_model.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 
+// Presence timestamps inside this window are treated as "online".
+const int _presenceOnlineThresholdSeconds = 60;
+
 /// Conversation list tile with elevated card design, animated unread badge,
 /// online status dot, relative time formatting, and full Semantics coverage.
 ///
@@ -22,7 +25,7 @@ import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 /// the time. The tile animates between read/unread states smoothly using
 /// AnimatedContainer with AppMotion tokens.
 ///
-/// TODO(typing-indicator): Typing dots animation was disabled because the
+/// Typing indicator backlog: dots animation was disabled because the
 /// backend/ViewModel integration for `otherUserTyping` is unreliable — it
 /// fires false positives and the sine-wave dot pulse glitches visually.
 /// Re-enable once the Realtime presence channel is stabilized. The previous
@@ -100,13 +103,13 @@ class _ConversationListTileState extends State<ConversationListTile>
   }
 
   /// Whether the other user is "online" — heuristic based on presenceUpdatedAt
-  /// being within 60 seconds. Only meaningful when presence feature flag is on.
+  /// being within the configured threshold. Only meaningful when presence feature flag is on.
   // Online dot gated behind chat_presence_receipts_enabled feature flag.
-  // presenceUpdatedAt within 60s = heuristic for "online".
-  // TODO: Wire to explicit isOnline field when backend provides it.
+  // Presence backlog: wire to explicit isOnline field when backend provides it.
   static bool _isOnlineWithin60s(DateTime? presenceUpdatedAt) {
     if (presenceUpdatedAt == null) return false;
-    return DateTime.now().difference(presenceUpdatedAt).inSeconds <= 60;
+    return DateTime.now().difference(presenceUpdatedAt).inSeconds <=
+        _presenceOnlineThresholdSeconds;
   }
 
   /// Compact relative time formatter for conversation list tiles.

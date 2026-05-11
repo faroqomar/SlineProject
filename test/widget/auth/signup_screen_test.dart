@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sline_app/features/auth/view/signup_screen.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../supabase_test_helper.dart';
 import '../../test_support/pump_app.dart';
@@ -13,8 +13,10 @@ void main() {
       url: 'https://test.supabase.co',
       anonKey: 'test-anon-key',
       debug: false,
-      localStorage: supabaseTestLocalStorage,
-      pkceAsyncStorage: supabaseTestPkceStorage,
+      authOptions: FlutterAuthClientOptions(
+        localStorage: supabaseTestLocalStorage,
+        pkceAsyncStorage: supabaseTestPkceStorage,
+      ),
     );
   });
 

@@ -92,11 +92,11 @@ class TaskRequestsService {
           .select()
           .eq('task_id', taskId)
           .eq('freelancer_id', uid)
-          .is_('deleted_at', null)
+          .isFilter('deleted_at', null)
           .eq('status', 'pending')
           .limit(1);
       if (rows.isEmpty) return null;
-      return TaskRequest.fromMap(rows.first as Map<String, dynamic>);
+      return TaskRequest.fromMap(rows.first);
     } on Exception catch (e, st) {
       AppLogger.e(
         'Failed to load existing active offer for task $taskId',
@@ -130,6 +130,7 @@ class TaskRequestsService {
           .from('task_requests')
           .select('created_at')
           .eq('id', bidId)
+          .isFilter('deleted_at', null)
           .single();
 
       final createdAt = DateTime.parse(row['created_at'] as String);
@@ -208,7 +209,7 @@ class TaskRequestsService {
           .select(_selectWithProfile)
           .eq('task_id', taskId)
           .eq('freelancer_id', uid)
-          .is_('deleted_at', null)
+          .isFilter('deleted_at', null)
           .order('created_at', ascending: false)
           .limit(1);
 
@@ -217,9 +218,7 @@ class TaskRequestsService {
         return BidReplaceabilityResult.noExistingBid();
       }
 
-      final existingBid = TaskRequest.fromMap(
-        rows.first as Map<String, dynamic>,
-      );
+      final existingBid = TaskRequest.fromMap(rows.first);
 
       // Only pending bids are replaceable
       if (existingBid.isPending) {
@@ -291,7 +290,7 @@ class TaskRequestsService {
           .from('task_requests')
           .select(_selectWithProfile)
           .eq('task_id', taskId)
-          .is_('deleted_at', null);
+          .isFilter('deleted_at', null);
 
       if (before != null) {
         query = query.lt('created_at', before.toUtc().toIso8601String());
@@ -369,7 +368,7 @@ class TaskRequestsService {
           .select()
           .single();
 
-      final model = TaskRequest.fromMap(inserted as Map<String, dynamic>);
+      final model = TaskRequest.fromMap(inserted);
       AppLogger.i('Offer submitted: ${model.id}', tag: 'Offers');
 
       return model;
@@ -549,6 +548,7 @@ class TaskRequestsService {
         .from('task_requests')
         .select('task_id')
         .eq('id', requestId)
+        .isFilter('deleted_at', null)
         .single();
     return row['task_id'] as String;
   }
@@ -559,7 +559,7 @@ class TaskRequestsService {
         .select(_selectWithProfile)
         .eq('id', requestId)
         .single();
-    return TaskRequest.fromMap(row as Map<String, dynamic>);
+    return TaskRequest.fromMap(row);
   }
 
   /// Maps any RPC error to a user-friendly message.

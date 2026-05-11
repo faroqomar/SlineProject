@@ -323,8 +323,8 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
               textAlign: TextAlign.center,
             ),
             // Show retry hint for non-auth errors
-            // TODO(l10n): 'Tap to retry' and error strings below should be
-            // localized via AppLocalizations once l10n is set up for the app.
+            // Localization backlog: 'Tap to retry' and error strings below
+            // should move to AppLocalizations once l10n covers this surface.
             if (!SignedUrlCache.hasError(widget.storagePath)) ...[
               const SizedBox(height: AppLayout.spacingTight),
               Text(

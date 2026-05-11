@@ -36,8 +36,10 @@ void main() {
           url: 'https://test.supabase.co',
           anonKey: 'dummy-key',
           debug: false,
-          localStorage: supabaseTestLocalStorage,
-          pkceAsyncStorage: supabaseTestPkceStorage,
+          authOptions: FlutterAuthClientOptions(
+            localStorage: supabaseTestLocalStorage,
+            pkceAsyncStorage: supabaseTestPkceStorage,
+          ),
         );
       }
     });
