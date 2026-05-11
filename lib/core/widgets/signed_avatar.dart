@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 
 import 'package:sline_app/core/config/storage_config.dart';
 import 'package:sline_app/core/services/default_signed_url_generator.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/services/signed_url_generator.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/signed_url_cache.dart';
 import 'package:sline_app/core/widgets/skeleton_loader.dart';
 
@@ -88,6 +88,34 @@ class SignedAvatar extends StatefulWidget {
   State<SignedAvatar> createState() => _SignedAvatarState();
 }
 
+String? _redactedStorageFileName(String? storagePathOrUrl) {
+  final trimmed = storagePathOrUrl?.trim();
+  if (trimmed == null || trimmed.isEmpty) return null;
+
+  final normalized = trimmed.replaceAll(RegExp(r'/+$'), '');
+  if (normalized.isEmpty) return null;
+
+  if (!normalized.contains('/')) {
+    return _maskedStorageToken(normalized);
+  }
+
+  final filename = normalized.split('/').last.trim();
+  if (filename.isEmpty) return null;
+
+  final safeFilename = RegExp(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$');
+  if (safeFilename.hasMatch(filename)) return filename;
+
+  return _maskedStorageToken(filename);
+}
+
+String _maskedStorageToken(String value) {
+  final safe = value.replaceAll(RegExp('[^A-Za-z0-9._-]'), '');
+  if (safe.length <= 4) return '****';
+  return '****${safe.substring(safe.length - 4)}';
+}
+
+String _safeSignedAvatarError(Object error) => error.runtimeType.toString();
+
 class _SignedAvatarState extends State<SignedAvatar> {
   SignedUrlGenerator? _urlGenerator;
   String? _resolvedUrl;
@@ -161,8 +189,14 @@ class _SignedAvatarState extends State<SignedAvatar> {
         _resolvedUrl = signed;
         _loading = false;
       });
-    } on Exception catch (_) {
+    } on Exception catch (e) {
       if (!mounted) return;
+      AppLogger.w(
+        'Failed to resolve signed avatar URL',
+        tag: 'SignedAvatar',
+        error: _safeSignedAvatarError(e),
+        json: {'file': _redactedStorageFileName(widget.storagePathOrUrl)},
+      );
       setState(() => _loading = false);
     }
   }
@@ -181,7 +215,8 @@ class _SignedAvatarState extends State<SignedAvatar> {
   /// Builds a rounded rectangle avatar with optional border
   Widget _buildRoundedRectAvatar() {
     final avatarSize = widget.size ?? (widget.radius * 2);
-    final bgColor = widget.backgroundColor ?? AppColors.teal;
+    final mediaTheme = AmberDuskTokens.widgetTheme.media;
+    final bgColor = widget.backgroundColor ?? mediaTheme.avatarFallback;
 
     Widget avatar;
 
@@ -205,7 +240,7 @@ class _SignedAvatarState extends State<SignedAvatar> {
             ),
             child: Icon(
               Icons.person,
-              color: AppColors.offWhite,
+              color: mediaTheme.foreground,
               size: avatarSize * 0.5,
             ),
           );
@@ -217,25 +252,12 @@ class _SignedAvatarState extends State<SignedAvatar> {
           width: avatarSize,
           height: avatarSize,
           fit: BoxFit.cover,
-          placeholder: (context, url) => Container(
+          placeholder: (context, url) => SkeletonLoader(
             width: avatarSize,
             height: avatarSize,
-            decoration: BoxDecoration(
-              color: bgColor,
-              borderRadius: widget.borderRadius,
-            ),
-            child: Center(
-              child: SizedBox(
-                // Loading spinner dimensions — intentionally hardcoded,
-                // these are indicator-specific sizes, not layout tokens.
-                width: 14,
-                height: 14,
-                child: CircularProgressIndicator(
-                  strokeWidth: AppLayout.borderAvatar,
-                  color: AppColors.offWhite,
-                ),
-              ),
-            ),
+            borderRadius:
+                widget.borderRadius?.resolve(TextDirection.ltr).topLeft.x ??
+                AmberDuskTokens.spacing.md,
           ),
           errorWidget: (context, url, error) => Container(
             width: avatarSize,
@@ -246,7 +268,7 @@ class _SignedAvatarState extends State<SignedAvatar> {
             ),
             child: Icon(
               Icons.person,
-              color: AppColors.offWhite,
+              color: mediaTheme.foreground,
               size: avatarSize * 0.5,
             ),
           ),
@@ -273,13 +295,14 @@ class _SignedAvatarState extends State<SignedAvatar> {
 
   /// Builds a circular avatar (original behavior)
   Widget _buildCircularAvatar() {
-    final bgColor = widget.backgroundColor ?? AppColors.teal;
+    final mediaTheme = AmberDuskTokens.widgetTheme.media;
+    final bgColor = widget.backgroundColor ?? mediaTheme.avatarFallback;
     final avatarSize = widget.radius * 2;
 
     Widget avatar;
 
     if (_loading) {
-      // Shimmer placeholder instead of CircularProgressIndicator
+      // Shimmer placeholder keeps avatar loading consistent with skeleton cards.
       avatar = SkeletonAvatar(size: avatarSize);
     } else if (_resolvedUrl == null) {
       // Initials fallback or placeholder
@@ -300,9 +323,9 @@ class _SignedAvatarState extends State<SignedAvatar> {
       );
     }
 
-    // Online indicator overlay — green dot at bottom-right
+    // Online indicator overlay uses the Amber forest semantic so presence is
+    // visually distinct from the old teal-era avatar fallback.
     if (widget.showOnlineIndicator) {
-      final colorScheme = context.colorScheme;
       avatar = Stack(
         children: [
           avatar,
@@ -313,10 +336,10 @@ class _SignedAvatarState extends State<SignedAvatar> {
               width: AppLayout.iconTiny,
               height: AppLayout.iconTiny,
               decoration: BoxDecoration(
-                color: colorScheme.success,
+                color: mediaTheme.onlineDot,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: colorScheme.phoneBackground,
+                  color: AmberDuskTokens.colors.page,
                   width: AppLayout.borderAvatar,
                 ),
               ),
@@ -331,24 +354,21 @@ class _SignedAvatarState extends State<SignedAvatar> {
 
   /// Builds initials fallback when image fails to load.
   Widget _buildInitialsFallback(Color bgColor, double size) {
+    final mediaTheme = AmberDuskTokens.widgetTheme.media;
     if (widget.initials != null && widget.initials!.isNotEmpty) {
       return CircleAvatar(
         radius: size / 2,
-        backgroundColor: AppColors.gold,
+        backgroundColor: bgColor,
         child: Text(
           widget.initials!.substring(0, widget.initials!.length.clamp(0, 2)),
-          style: TextStyle(
-            color: AppColors.offWhite,
-            fontWeight: FontWeight.bold,
-            fontSize: size * 0.35,
-          ),
+          style: mediaTheme.initialsTextStyle(size),
         ),
       );
     }
     return CircleAvatar(
       radius: size / 2,
       backgroundColor: bgColor,
-      child: Icon(Icons.person, color: AppColors.offWhite, size: size * 0.5),
+      child: Icon(Icons.person, color: mediaTheme.foreground, size: size * 0.5),
     );
   }
 }

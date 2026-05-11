@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/app_styled_button.dart';
 import 'package:sline_app/core/widgets/scale_button.dart';
 
@@ -16,6 +17,47 @@ void main() {
       expect(find.text('Action'), findsOneWidget);
       // NO BackdropFilter per NO GLASS POLICY
       expect(find.byType(BackdropFilter), findsNothing);
+    });
+
+    testWidgets('T-CW070a uses Amber Dusk compact action tokens', (
+      tester,
+    ) async {
+      final buttonTheme = AmberDuskTokens.widgetTheme.buttons;
+      await pumpCoreWidget(
+        tester,
+        AppStyledButton(text: 'Action', onPressed: () {}),
+      );
+
+      final container = tester
+          .widgetList<Container>(find.byType(Container))
+          .firstWhere(
+            (widget) => widget.constraints?.maxHeight == buttonTheme.minHeight,
+            orElse: () => throw TestFailure(
+              'No AppStyledButton container matched minHeight '
+              '${buttonTheme.minHeight}.',
+            ),
+          );
+      final rawDecoration = container.decoration;
+      if (rawDecoration is! BoxDecoration) {
+        throw TestFailure(
+          'Expected AppStyledButton decoration to be BoxDecoration.',
+        );
+      }
+      final decoration = rawDecoration;
+      final rawRadius = decoration.borderRadius;
+      if (rawRadius is! BorderRadius) {
+        throw TestFailure(
+          'Expected AppStyledButton radius to be BorderRadius.',
+        );
+      }
+      final radius = rawRadius;
+      final text = tester.widget<Text>(find.text('Action'));
+
+      expect(decoration.color, buttonTheme.primary.background);
+      expect(radius.topLeft.x, buttonTheme.radius);
+      expect(decoration.border, isNull);
+      expect(container.padding, buttonTheme.padding);
+      expect(text.style?.color, buttonTheme.primary.foreground);
     });
 
     testWidgets('T-CW071 fires onPressed', (tester) async {
@@ -48,7 +90,7 @@ void main() {
       expect(hasReducedOpacity, isTrue);
     });
 
-    testWidgets('T-CW074 primary vs secondary styling differs', (tester) async {
+    testWidgets('T-CW074 primary vs ghost styling differs', (tester) async {
       // Primary
       await pumpCoreWidget(
         tester,
@@ -60,22 +102,43 @@ void main() {
       final primaryBox = primaryContainers
           .where((c) => c.decoration is BoxDecoration)
           .firstOrNull;
+      if (primaryBox == null) {
+        throw TestFailure('No primary AppStyledButton decoration found.');
+      }
+      final primaryRawDecoration = primaryBox.decoration;
+      if (primaryRawDecoration is! BoxDecoration) {
+        throw TestFailure(
+          'Expected primary AppStyledButton decoration to be BoxDecoration.',
+        );
+      }
+      final primaryDecoration = primaryRawDecoration;
 
-      // Secondary
+      // Ghost
       await pumpCoreWidget(
         tester,
-        AppStyledButton(text: 'Secondary', onPressed: () {}, isPrimary: false),
+        AppStyledButton(text: 'Ghost', onPressed: () {}, isPrimary: false),
       );
-      final secondaryContainers = tester.widgetList<Container>(
+      final ghostContainers = tester.widgetList<Container>(
         find.byType(Container),
       );
-      final secondaryBox = secondaryContainers
+      final ghostBox = ghostContainers
           .where((c) => c.decoration is BoxDecoration)
           .firstOrNull;
+      if (ghostBox == null) {
+        throw TestFailure('No ghost AppStyledButton decoration found.');
+      }
+      final ghostRawDecoration = ghostBox.decoration;
+      if (ghostRawDecoration is! BoxDecoration) {
+        throw TestFailure(
+          'Expected ghost AppStyledButton decoration to be BoxDecoration.',
+        );
+      }
+      final ghostDecoration = ghostRawDecoration;
+      final buttonTheme = AmberDuskTokens.widgetTheme.buttons;
 
-      // They should exist and be different
-      expect(primaryBox, isNotNull);
-      expect(secondaryBox, isNotNull);
+      expect(primaryDecoration.color, buttonTheme.primary.background);
+      expect(ghostDecoration.color, buttonTheme.ghost.background);
+      expect(primaryDecoration.color, isNot(ghostDecoration.color));
     });
 
     testWidgets('T-CW075 has Semantics with label', (tester) async {

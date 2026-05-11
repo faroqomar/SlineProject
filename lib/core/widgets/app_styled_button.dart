@@ -1,29 +1,29 @@
 import 'package:flutter/material.dart';
 
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
-import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_states.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/scale_button.dart';
 
-/// A styled button with primary/secondary variants, solid surface.
+/// A styled button with primary/ghost variants, solid surface.
 ///
 /// ## NO GLASS POLICY (see .impeccable.md)
 ///
 /// All [BackdropFilter] blur has been removed. The button now uses
-/// solid colors from [AppColorScheme] for both primary and secondary styles.
+/// solid Amber Dusk adapter colors for primary and ghost styles.
 ///
 /// ## Phase 1 Changes
 /// - Removed ALL BackdropFilter / glass effects
-/// - Primary: solid primary color background + white text
-/// - Secondary: solid cardBackground + primary text + border
+/// - Primary: solid Amber primary background + cream text
+/// - Ghost: low-opacity quiet action surface + cream text
 /// - Disabled opacity from [AppInteractionStates.disabledOpacity]
 /// - Added [disabled] parameter forwarded to [ScaleButton]
 /// - Added [Semantics] wrapper
-/// - All existing constructor params preserved (backward compatible)
+/// - Amber Dusk tokens now provide default geometry and variant colors.
+///
+/// The [height] default now comes from Amber Dusk while the public field stays
+/// non-null for compatibility with existing call sites.
 class AppStyledButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -44,23 +44,24 @@ class AppStyledButton extends StatelessWidget {
     this.isPrimary = true,
     this.isLoading = false,
     this.width,
-    this.height = AppLayout.buttonHeightCompact,
+    this.height = AmberDuskWidgetTheme.buttonMinHeight,
     this.disabled = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final buttonTheme = AmberDuskTokens.widgetTheme.buttons;
+    final buttonRecipe = isPrimary ? buttonTheme.primary : buttonTheme.ghost;
     final isInactive = onPressed == null || disabled || isLoading;
     final opacity = isInactive ? AppInteractionStates.disabledOpacity : 1.0;
 
-    final effectiveBg = isPrimary
-        ? colorScheme.primary
-        : colorScheme.cardBackground;
-    final effectiveFg = isPrimary ? AppColors.white : colorScheme.text;
-    final effectiveBorder = isPrimary
-        ? colorScheme.primary
-        : colorScheme.cardBorder;
+    final effectiveBg = buttonRecipe.background;
+    final effectiveFg = buttonRecipe.foreground;
+    final tokenTextStyle = buttonTheme.textStyle;
+    final finalTextStyle = tokenTextStyle.color == null
+        ? tokenTextStyle.copyWith(color: effectiveFg)
+        : tokenTextStyle;
 
     Widget content;
     if (isLoading) {
@@ -78,18 +79,12 @@ class AppStyledButton extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (icon != null) ...[
-            // 18px icon — intentionally between iconSizeSmall (16) and
-            // iconStandard (20) for compact styled buttons.
-            Icon(icon, size: 18, color: effectiveFg),
-            const SizedBox(width: AppDimens.p8),
+            // The button recipe owns icon sizing so compact CTAs stay aligned
+            // with the Amber Dusk control system.
+            Icon(icon, size: buttonTheme.iconSize, color: effectiveFg),
+            SizedBox(width: AmberDuskTokens.spacing.sm),
           ],
-          Text(
-            text,
-            style: AppTypography.bodySmall.copyWith(
-              color: effectiveFg,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          Text(text, style: finalTextStyle),
         ],
       );
     }
@@ -99,17 +94,16 @@ class AppStyledButton extends StatelessWidget {
       child: Container(
         width: width,
         height: height,
-        padding: const EdgeInsets.symmetric(horizontal: AppDimens.p16),
+        padding: buttonTheme.padding,
         decoration: BoxDecoration(
           color: effectiveBg,
-          borderRadius: BorderRadius.circular(AppDimens.r12),
-          border: Border.all(
-            color: effectiveBorder,
-            width: AppLayout.borderStandard,
+          borderRadius: BorderRadius.circular(buttonTheme.radius),
+          boxShadow: AppDecorations.elevation(
+            isInactive
+                ? buttonTheme.inactiveElevationLevel
+                : buttonTheme.activeElevationLevel,
+            isDark: colorScheme.isDark,
           ),
-          boxShadow: isInactive
-              ? AppDecorations.elevation(0)
-              : AppDecorations.elevation(1, isDark: colorScheme.isDark),
         ),
         alignment: Alignment.center,
         child: content,

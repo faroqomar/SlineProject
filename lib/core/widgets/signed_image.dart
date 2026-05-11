@@ -5,10 +5,35 @@ import 'package:sline_app/core/config/storage_config.dart';
 import 'package:sline_app/core/services/default_signed_url_generator.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/services/signed_url_generator.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/signed_url_cache.dart';
 import 'package:sline_app/core/widgets/skeleton_loader.dart';
+import 'package:sline_app/l10n/app_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+/// Visual tokens for [SignedImage] fallback and retry surfaces.
+///
+/// This generic adapter keeps the shared widget API independent from any one
+/// named design system while still allowing callers to override media styling.
+@immutable
+class SignedImageMediaTokens {
+  const SignedImageMediaTokens({
+    required this.profilePhotoFallback,
+    required this.foreground,
+    required this.fallbackLabelStyle,
+  });
+
+  /// Background color for the retry/fallback image placeholder.
+  final Color profilePhotoFallback;
+
+  /// Foreground color for fallback icons and labels.
+  final Color foreground;
+
+  /// Text style for the localized retry label.
+  final TextStyle fallbackLabelStyle;
+}
 
 /// Renders an image from either a public URL or a private Supabase Storage path.
 ///
@@ -42,6 +67,11 @@ class SignedImage extends StatefulWidget {
   /// If not provided, a default generator for 'task-images' bucket is used.
   final SignedUrlGenerator? urlGenerator;
 
+  /// Optional media placeholder tokens for alternate visual themes.
+  ///
+  /// Existing callers keep the Amber Dusk fallback by leaving this unset.
+  final SignedImageMediaTokens? mediaTokens;
+
   const SignedImage({
     super.key,
     required this.storagePathOrUrl,
@@ -52,10 +82,48 @@ class SignedImage extends StatefulWidget {
     this.placeholder,
     this.bucket,
     this.urlGenerator,
+    this.mediaTokens,
   });
 
   @override
   State<SignedImage> createState() => _SignedImageState();
+}
+
+String? _redactedStorageFileName(String? storagePathOrUrl) {
+  final trimmed = storagePathOrUrl?.trim();
+  if (trimmed == null || trimmed.isEmpty) return null;
+
+  final normalized = trimmed.replaceAll(RegExp(r'/+$'), '');
+  if (normalized.isEmpty) return null;
+
+  if (!normalized.contains('/')) {
+    return _maskedStorageToken(normalized);
+  }
+
+  final filename = normalized.split('/').last.trim();
+  if (filename.isEmpty) return null;
+
+  final safeFilename = RegExp(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$');
+  if (safeFilename.hasMatch(filename)) return filename;
+
+  return _maskedStorageToken(filename);
+}
+
+String _maskedStorageToken(String value) {
+  final safe = value.replaceAll(RegExp('[^A-Za-z0-9._-]'), '');
+  if (safe.length <= 4) return '****';
+  return '****${safe.substring(safe.length - 4)}';
+}
+
+String _safeSignedImageError(Object error) => error.runtimeType.toString();
+
+SignedImageMediaTokens _defaultSignedImageMediaTokens() {
+  final mediaTheme = AmberDuskTokens.widgetTheme.media;
+  return SignedImageMediaTokens(
+    profilePhotoFallback: mediaTheme.profilePhotoFallback,
+    foreground: mediaTheme.foreground,
+    fallbackLabelStyle: mediaTheme.fallbackLabelStyle,
+  );
 }
 
 class _SignedImageState extends State<SignedImage> {
@@ -143,7 +211,8 @@ class _SignedImageState extends State<SignedImage> {
       AppLogger.w(
         'Failed to resolve signed image URL',
         tag: 'SignedImage',
-        json: {'path': widget.storagePathOrUrl, 'error': e.toString()},
+        error: _safeSignedImageError(e),
+        json: {'file': _redactedStorageFileName(widget.storagePathOrUrl)},
       );
       setState(() {
         _loading = false;
@@ -154,7 +223,10 @@ class _SignedImageState extends State<SignedImage> {
 
   @override
   Widget build(BuildContext context) {
-    // Shimmer loading state (replaces CircularProgressIndicator)
+    final mediaTheme = widget.mediaTokens ?? _defaultSignedImageMediaTokens();
+    final l10n = AppLocalizations.of(context);
+
+    // Shimmer loading state keeps signed media aligned with skeleton cards.
     if (_loading) {
       return SkeletonLoader(
         width: widget.width,
@@ -184,21 +256,21 @@ class _SignedImageState extends State<SignedImage> {
                 height: widget.height,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(widget.borderRadius),
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.surface.withValues(alpha: 0.3),
-                  border: Border.all(
-                    color: Theme.of(
-                      context,
-                    ).dividerColor.withValues(alpha: 0.2),
-                  ),
+                  color: mediaTheme.profilePhotoFallback,
                 ),
-                child: const Column(
+                child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.image_not_supported_outlined, size: 22),
-                    SizedBox(height: 4),
-                    Text('Tap to retry', style: TextStyle(fontSize: 10)),
+                    Icon(
+                      Icons.image_not_supported_outlined,
+                      size: AppDimens.p22,
+                      color: mediaTheme.foreground,
+                    ),
+                    const SizedBox(height: AppDimens.p4),
+                    Text(
+                      l10n?.tapToRetry ?? 'Tap to retry',
+                      style: mediaTheme.fallbackLabelStyle,
+                    ),
                   ],
                 ),
               ),
@@ -241,11 +313,13 @@ class _SignedImageState extends State<SignedImage> {
               height: widget.height,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(widget.borderRadius),
-                color: Theme.of(
-                  context,
-                ).colorScheme.surface.withValues(alpha: 0.3),
+                color: mediaTheme.profilePhotoFallback,
               ),
-              child: const Icon(Icons.image_not_supported_outlined, size: 22),
+              child: Icon(
+                Icons.image_not_supported_outlined,
+                size: AppDimens.p22,
+                color: mediaTheme.foreground,
+              ),
             ),
           ),
         ),

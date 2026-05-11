@@ -54,6 +54,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionRetry => 'Retry';
 
   @override
+  String get tapToRetry => 'Tap to retry';
+
+  @override
   String get stateLoading => 'Loading...';
 
   @override

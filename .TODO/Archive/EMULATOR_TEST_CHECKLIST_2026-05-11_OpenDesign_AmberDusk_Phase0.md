@@ -62,9 +62,9 @@ Amber Dusk Phase 0 is a staged token layer only. The emulator pass should prove 
 - [ ] `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/BASELINE_OpenDesign_AmberDusk_Phase0_2026-05-11.md`: no emulator runtime effect; verify baseline counts still match review evidence.
 - [ ] `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/EVIDENCE_OpenDesign_AmberDusk_Phase0_2026-05-11.md`: no emulator runtime effect; compare emulator screenshots only if a later preview activates Amber Dusk.
 - [ ] `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/DOCS_SYNC_2026-05-11_OpenDesign_AmberDusk_Phase0.md`: no emulator runtime effect; verify docs-sync notes match the staged inactive behavior.
-- [ ] `.TODO/HANDOFF_OpenDesign_AmberDusk_Phase0_ToWeb_2026-05-11.md`: no emulator runtime effect; verify no web-specific assumptions are required for phone emulator smoke.
+- [ ] `.TODO/WebRedsign/HANDOFF_OpenDesign_AmberDusk_Phase0_ToWeb_2026-05-11.md`: no emulator runtime effect; verify no web-specific assumptions are required for phone emulator smoke.
 - [ ] `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/MASTER_REPORT_2026-05-11_OpenDesign_AmberDusk_Phase0.md`: no emulator runtime effect; verify all BLOCKER/HIGH/MED findings are closed.
-- [ ] `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-11_OpenDesign_AmberDusk_Phase0.md`: no emulator runtime effect; use this file as the single manual-test source.
+- [ ] `.TODO/Archive/EMULATOR_TEST_CHECKLIST_2026-05-11_OpenDesign_AmberDusk_Phase0.md`: no emulator runtime effect; use this file as the single manual-test source.
 - [ ] `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phase0_PhoneFoundation_2026-05-11.md`: no emulator runtime effect; verify logged validation matches the commands run for this checklist.
 
 ### Amber Dusk Token Layer

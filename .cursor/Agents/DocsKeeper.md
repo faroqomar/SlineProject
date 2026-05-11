@@ -238,6 +238,12 @@ Every significant update must be logged:
 
 Never reference a file path that does not exist. If a file was moved or renamed, update all mentions across the docs and log the change.
 
+### 6.1.1 No Stale CI Or Platform Numbers
+
+When docs mention CI coverage floors, architecture-guard counts, required status-check names, branch protection, CODEOWNERS enforcement, Dependabot alerts, or secret scanning, verify those claims against current workflow/config files and latest session logs before publishing. Do not preserve older roadmap numbers when newer source-of-truth docs or CI files disagree.
+
+Evidence: Agent CI Repo Safeguards corrected stale 28% coverage and 6-check architecture-guard numbers to 40% and 7 checks. Current docs show why DocsKeeper must verify CI numbers against live workflow reality before syncing.
+
 ### 6.2 No Outdated Code Examples
 
 If a code pattern changed:

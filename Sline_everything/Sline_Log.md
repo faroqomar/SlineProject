@@ -4,6 +4,64 @@
 
 ---
 
+## 🧭 Version 2.27.0 — Amber Dusk Phase 1 Core Phone Widgets + Docs Sync (2026-05-11)
+
+**Classification:** Scoped shared-widget runtime activation + QA/process documentation
+**Plan:** `.TODO/Archive/OpenDesign_AmberDusk_Phase1_2026-05-11/PLAN_OpenDesign_AmberDusk_Phase1_CorePhoneWidgets_2026-05-11.md`
+**Plan Critique:** `.TODO/Archive/OpenDesign_AmberDusk_Phase1_2026-05-11/PLAN_CRITIQUE_2026-05-11_OpenDesign_AmberDusk_Phase1_CorePhoneWidgets.md`
+**Session Log:** `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phase1_CorePhoneWidgets_2026-05-11.md`
+**Master Report:** `.TODO/Archive/OpenDesign_AmberDusk_Phase1_2026-05-11/MASTER_REPORT_2026-05-11_OpenDesign_AmberDusk_Phase1_CoreWidgets.md`
+**Emulator Checklist:** `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-11_OpenDesign_AmberDusk_Phase1_CoreWidgets.md`
+**System Evolution:** `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-11.md`
+**Docs Sync:** `.TODO/Archive/OpenDesign_AmberDusk_Phase1_2026-05-11/DOCS_SYNC_2026-05-11_OpenDesign_AmberDusk_Phase1_CoreWidgets.md`
+**Supabase objects changed:** none
+
+### Scope
+- Added `lib/core/theme/designs/amber_dusk/amber_dusk_widget_theme.dart` as the typed shared-widget adapter for Amber Dusk Phase 1.
+- Routed selected shared phone widgets through `AmberDuskTokens.widgetTheme` without globally flipping `MaterialApp`, `AppTheme.light()`, or `AppTheme.dark()`.
+- Covered buttons, fields, icon buttons, cards, bottom nav, tab styling, status badges, skeleton placeholders, and signed-media placeholders.
+- Preserved signed-media URL resolution behavior while hardening fallback visuals, localized retry text, media-token overrides, and redacted logging.
+- Added focused theme/widget tests for adapter roles and missing states, including skeleton loader/card coverage.
+- Updated CI hygiene so generated `coverage/lcov.info` is ignored locally, removed from the branch, and uploaded by CI as the `coverage-lcov` artifact.
+- Ran SystemEvolution after Phase 1 and merged rules for visual-evidence classification, screenshot hash sanity, external platform release gates, and stale CI/platform fact validation.
+
+### Key Files
+- `lib/core/theme/designs/amber_dusk/amber_dusk_widget_theme.dart`
+- `lib/core/theme/designs/amber_dusk/amber_dusk_tokens.dart`
+- `lib/core/theme/app_theme.dart`
+- `lib/core/widgets/app_button.dart`
+- `lib/core/widgets/app_styled_button.dart`
+- `lib/core/widgets/app_text_field.dart`
+- `lib/core/widgets/circle_icon_button.dart`
+- `lib/core/widgets/custom_bottom_nav_bar.dart`
+- `lib/core/widgets/signed_avatar.dart`
+- `lib/core/widgets/signed_image.dart`
+- `lib/core/widgets/skeleton_card.dart`
+- `lib/core/widgets/skeleton_card_extended.dart`
+- `lib/core/widgets/skeleton_loader.dart`
+- `lib/core/widgets/sliver_tab_bar_delegate.dart`
+- `lib/core/widgets/status_badge.dart`
+- `lib/l10n/app_en.arb`
+- `.github/workflows/ci.yml`
+- `.cursor/Agents/Planner.md`
+- `.cursor/Agents/PlanCritic.md`
+- `.cursor/Agents/Executor.md`
+- `.cursor/Agents/Pixel.md`
+- `.cursor/Agents/Sentinel.md`
+- `.cursor/Agents/DocsKeeper.md`
+
+### Verification
+- `flutter gen-l10n`: passed.
+- `dart format --set-exit-if-changed lib/core/widgets lib/core/theme test/core/widgets test/core/theme`: passed.
+- `flutter analyze --no-fatal-infos`: passed.
+- `flutter test test/core/theme/ test/core/widgets/`: passed, 210 tests.
+- Downstream smoke tests: passed, 73 tests.
+- `flutter test --coverage`: passed, 1502 passed, 30 skipped, 46.80% coverage.
+- `git diff --check && git diff --cached --check`: passed.
+- Manual emulator visual QA remains open until the Phase 1 checklist is executed at 360, 390, 402, and 430 logical widths.
+
+---
+
 ## 🧭 Version 2.26.0 — Amber Dusk Phase 0 + Agent System Evolution (2026-05-11)
 
 **Classification:** Staged Open Design token foundation + agent-system process hardening
@@ -20,7 +78,7 @@
 - Added `lib/core/theme/designs/amber_dusk/amber_dusk_tokens.dart` as the public barrel for colors, typography, spacing, surfaces, motion, component recipes, and phone layout constants.
 - Added focused token and phone layout tests under `test/core/theme/`.
 - Clarified that staged design layers are imported for token access only and are not runtime replacements for active Layer 1 `AppTheme`.
-- Ran Orchestrator Step 6 review, fixed all MED findings, and produced `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-11_OpenDesign_AmberDusk_Phase0.md`.
+- Ran Orchestrator Step 6 review, fixed all MED findings, and produced `.TODO/Archive/EMULATOR_TEST_CHECKLIST_2026-05-11_OpenDesign_AmberDusk_Phase0.md`.
 - Ran SystemEvolution Step 7 and merged evidence-backed process rules into seven `.cursor/Agents/*.md` files.
 
 ### Key Files

@@ -87,7 +87,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 
 | Area | Status | Notes |
 | --- | --- | --- |
-| CI/CD pipeline | ✅ Completed | GitHub Actions: lint + test + build + architecture guard. `.github/workflows/ci.yml`. Added 2026-04-01. |
+| CI/CD pipeline | ✅ Completed | GitHub Actions: lint + test/coverage + coverage artifact upload + build + architecture guard. Coverage floor is 40%; generated `coverage/` output is ignored and `coverage/lcov.info` is uploaded as `coverage-lcov`. `.github/workflows/ci.yml`. Added 2026-04-01; coverage artifact documented 2026-05-11. |
 | Pre-commit hook | ✅ Completed | `.githooks/pre-commit` runs format + analyze locally. Enable: `git config core.hooksPath .githooks`. Added 2026-04-01. |
 | Lint rules (34 rules) | ✅ Completed | `analysis_options.yaml`: 18 core + 7 safety + 9 code quality. Strong mode enabled. Updated 2026-04-01. |
 | Architecture guard | ✅ Completed | 7 MVVM boundary checks in CI (hard failure). Graduated 2026-04-01 after Phase B fixed all violations. |
@@ -96,7 +96,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | Supabase migrations | ✅ Completed | repo contains live migration history under `supabase/migrations/` |
 | Edge functions | ✅ Completed | booking/payment functions are checked into `supabase/functions/` |
 | Docs sync discipline | ✅ Completed | docs now reflect current `view/viewmodels/data/services` layout and payment/runtime helpers |
-| Agent system evolution | ✅ Completed | `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-11.md` merged deduped session-log findings into seven `.cursor/Agents/*.md` files; no runtime app code changed. |
+| Agent system evolution | ✅ Completed | `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-11.md` records the latest deduped session-log findings. The Phase 1 pass updated six `.cursor/Agents/*.md` files for visual evidence, platform gates, and stale CI fact checks; no runtime app code changed. |
 
 ## 9. Completed Phases
 
@@ -111,11 +111,11 @@ All 11 items (D1–D11) completed:
 - Migration review checklist (7 sections)
 - Edge Function CORS hardening (wildcard `*` → `sline.app` allowlist)
 - paymentId regex validation in webhook handler
-- CI coverage floor (28% regression prevention)
+- CI coverage floor introduced for regression prevention; current floor is 40%
 - A6 architecture violations fixed (NotificationVM, SavedTasksVM)
 - Architecture guard Check 3 tightened
 
-Tests: 706 → 780 (+74). Coverage floor: 40%. All 6 architecture guard checks pass.
+Tests: 706 → 780 (+74). Coverage floor: 40%. Architecture guard had 6 checks in Phase D and now has 7 checks after the Phase E core-to-features boundary guard.
 
 ### Phase E: Polish (2026-04-05) ✅
 - **E1** — APK build self-resolved (Kotlin version mismatch fixed by SDK update)
@@ -148,6 +148,7 @@ Tests: 706 → 780 (+74). Coverage floor: 40%. All 6 architecture guard checks p
 | 0 | Design System Foundation | ✅ Completed | Token Infrastructure | `SESSION_PLAN_DesignSystemFoundation_2026-04-07.md` |
 | 0.7 | Layout Tokens | ✅ Completed | Token Infrastructure | `SESSION_PLAN_LayoutTokens_Phase0.7_2026-04-08.md` |
 | 0.9 | Amber Dusk Phase 0 Phone Foundation | ✅ Completed | Staged Open Design token layer | `SESSION_PLAN_OpenDesign_AmberDusk_Phase0_PhoneFoundation_2026-05-11.md` |
+| 1.0 | Amber Dusk Phase 1 Core Phone Widgets | ✅ Code complete; manual emulator visual QA checklist open | Shared-widget Amber Dusk adapter | `SESSION_PLAN_OpenDesign_AmberDusk_Phase1_CorePhoneWidgets_2026-05-11.md` |
 | 1 | Core Widget Redesign | ✅ Completed | Redesign | `SESSION_PLAN_CoreWidgetRedesign_2026-04-07.md` |
 | 2+3+5 | App Shell + Auth + Cards | ✅ Completed | Redesign | `SESSION_PLAN_Phase2_AppShellAuthCards_2026-04-08.md` |
 | 4 | Home & Discovery | ✅ Completed | Redesign | `SESSION_PLAN_Phase4_HomeDiscovery_2026-04-08.md` |

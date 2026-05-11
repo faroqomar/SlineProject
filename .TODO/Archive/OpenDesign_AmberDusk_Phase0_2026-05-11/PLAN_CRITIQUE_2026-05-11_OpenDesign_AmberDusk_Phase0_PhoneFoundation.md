@@ -99,7 +99,7 @@ Session log: `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phase0_PhoneFoundation_
   - `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/EVIDENCE_OpenDesign_AmberDusk_Phase0_2026-05-11.md`
   - `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/BASELINE_OpenDesign_AmberDusk_Phase0_2026-05-11.md`
 - Implementation plan requires these artifacts before handoff:
-  - `.TODO/HANDOFF_OpenDesign_AmberDusk_Phase0_ToWeb_2026-05-11.md`
+  - `.TODO/WebRedsign/HANDOFF_OpenDesign_AmberDusk_Phase0_ToWeb_2026-05-11.md`
   - `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/DOCS_SYNC_2026-05-11_OpenDesign_AmberDusk_Phase0.md`
 - Planned verification includes `dart format`, `flutter analyze`, targeted core theme/widget tests, raw-token diff scan, and no-backend-change scan.
 

@@ -10,6 +10,7 @@ import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_motion.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_spacing.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_surfaces.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_widget_theme.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/phone/amber_dusk_phone_layout.dart';
 
 export 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_colors.dart';
@@ -18,6 +19,7 @@ export 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_motion.dart';
 export 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_spacing.dart';
 export 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_surfaces.dart';
 export 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_typography.dart';
+export 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_widget_theme.dart';
 export 'package:sline_app/core/theme/designs/amber_dusk/phone/amber_dusk_phone_layout.dart';
 
 /// Root token namespace for Amber Dusk.
@@ -45,6 +47,10 @@ abstract final class AmberDuskTokens {
 
   /// Component recipe registry for later UI phases.
   static const AmberDuskComponentTokens components = AmberDuskComponents.tokens;
+
+  /// Shared-widget adapter for the Phase 1 phone runtime activation.
+  static const AmberDuskWidgetThemeTokens widgetTheme =
+      AmberDuskWidgetTheme.tokens;
 
   /// Phone-specific 402x874 layout registry.
   static const AmberDuskPhoneLayoutTokens phoneLayout =

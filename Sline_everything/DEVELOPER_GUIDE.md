@@ -1,6 +1,6 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.26.0 (Amber Dusk Phase 0 staged Open Design token layer plus 2026-05-11 SystemEvolution agent-rule merge)
+**Version**: 2.27.0 (Amber Dusk Phase 1 shared phone widgets plus 2026-05-11 SystemEvolution agent-rule merge)
 **Last Updated**: 2026-05-11
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
@@ -266,11 +266,43 @@ References:
 - Plan: `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/PLAN_OpenDesign_AmberDusk_Phase0_PhoneFoundation_2026-05-11.md`
 - Plan Critique: `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/PLAN_CRITIQUE_2026-05-11_OpenDesign_AmberDusk_Phase0_PhoneFoundation.md`
 - Master Report: `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/MASTER_REPORT_2026-05-11_OpenDesign_AmberDusk_Phase0.md`
-- Emulator Checklist: `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-11_OpenDesign_AmberDusk_Phase0.md`
+- Emulator Checklist: `.TODO/Archive/EMULATOR_TEST_CHECKLIST_2026-05-11_OpenDesign_AmberDusk_Phase0.md`
 - Session Log: `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phase0_PhoneFoundation_2026-05-11.md`
 - System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-11.md`
 - Docs Sync: `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/DOCS_SYNC_2026-05-11_DocsKeeper_AgentSystemAmberDusk.md`
 - Key token entry point: `lib/core/theme/designs/amber_dusk/amber_dusk_tokens.dart`
+- Supabase objects changed: none
+
+### Amber Dusk Phase 1 Core Phone Widgets (2026-05-11)
+
+Amber Dusk Phase 1 activates the Open Design look for a narrow shared-widget
+surface without flipping the entire app theme. The activation point is
+`lib/core/theme/designs/amber_dusk/amber_dusk_widget_theme.dart`, exported
+through `amber_dusk_tokens.dart` as `AmberDuskTokens.widgetTheme`.
+
+Runtime widget changes are limited to shared controls and surfaces: buttons,
+text fields, icon buttons, cards, the bottom nav, tab styling, status badges,
+skeleton placeholders, and signed-media placeholders. Signed media remains
+visual-only in this phase: `SignedImage` keeps its pre-existing URL/Supabase
+resolution behavior and `SignedAvatar` keeps the existing generator contract.
+
+Implementation notes:
+- Use `AmberDuskTokens.widgetTheme` for shared-widget recipes instead of raw
+  Amber colors, radii, font sizes, shadows, or padding inside widgets.
+- Keep `AppTheme.light()` and `AppTheme.dark()` as the active global theme;
+  Phase 1 only updates the tab theme and listed shared widgets.
+- Do not add blur, glass, `BackdropFilter`, `ImageFilter.blur`, or deleted
+  `glass_*` widget files.
+- Run focused shared-widget tests, representative downstream widget smoke
+  tests, and `flutter test --coverage` for future changes to this surface.
+
+References:
+- Plan: `.TODO/Archive/OpenDesign_AmberDusk_Phase1_2026-05-11/PLAN_OpenDesign_AmberDusk_Phase1_CorePhoneWidgets_2026-05-11.md`
+- Plan Critique: `.TODO/Archive/OpenDesign_AmberDusk_Phase1_2026-05-11/PLAN_CRITIQUE_2026-05-11_OpenDesign_AmberDusk_Phase1_CorePhoneWidgets.md`
+- Session Log: `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phase1_CorePhoneWidgets_2026-05-11.md`
+- Open Design screenshots: `.TODO/Archive/OpenDesign_AmberDusk_Phase1_2026-05-11/OpenDesign_AmberDusk_Phase1_OpenDesignScreenshots_2026-05-11/`
+- Docs Sync: `.TODO/Archive/OpenDesign_AmberDusk_Phase1_2026-05-11/DOCS_SYNC_2026-05-11_OpenDesign_AmberDusk_Phase1_CoreWidgets.md`
+- Web Handoff: `.TODO/WebRedsign/HANDOFF_OpenDesign_AmberDusk_Phase1_CoreWidgets_ToWeb_2026-05-11.md`
 - Supabase objects changed: none
 
 ### 10.1 CI/CD Pipeline
@@ -281,7 +313,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every push/PR to `main`:
 |-----|-------------|---------------|
 | **Lint & Analyze** | `dart format --set-exit-if-changed .` + `flutter analyze --no-fatal-infos` | Yes (warnings/errors fail) |
 | **Architecture Guard** | 7 grep-based MVVM boundary checks (Supabase in views, controllers in VMs, Navigator in VMs, repo imports in views, view imports in VMs, Supabase in VMs, core-to-features boundary). Check 7 (Phase E): blocks `core/` importing from `features/` (max 5 threshold). | Yes (hard failure since Phase B, 2026-04-01) |
-| **Unit & Widget Tests** | `flutter test --coverage` with coverage % reported to PR summary | Yes |
+| **Unit & Widget Tests** | `flutter test --coverage` with coverage % reported to PR summary, 40% floor enforced, and `coverage/lcov.info` uploaded as the `coverage-lcov` artifact for 7 days. The generated `coverage/` folder is ignored locally and should not be committed. | Yes |
 | **Build** | APK (debug) + Web (release) compilation | Yes |
 
 Flutter version pinned: **3.38.9** across all jobs.
@@ -1752,7 +1784,7 @@ Core also owns two browser-specific stability helpers:
 | `lib/core/theme/app_states.dart`                 | theme     | Interaction state definitions: 8-state model (default→error), focus ring, shake, haptic mapping. |
 | `lib/core/theme/app_decorations.dart`            | theme     | 5-level elevation shadow scale + input/badge/avatar decoration methods. NO GLASS (Phase 1). |
 | `lib/core/theme/theme_dashboard.dart`            | theme     | Documentation-only reference for all design tokens. **Read this first for token overview.** |
-| `lib/core/theme/designs/amber_dusk/`             | theme     | **Amber Dusk Phase 0** staged token layer: prepared design tokens for future theme-prototype work. Importing `amber_dusk_tokens.dart` exposes constants for previews/tests/code references, but does not change runtime `ThemeData` until the AppTheme activation workflow explicitly switches to those tokens. Intended for Open Design phone/web prototyping across form factors, not as a platform-only theme. |
+| `lib/core/theme/designs/amber_dusk/`             | theme     | **Amber Dusk Phase 0/1** design layer: staged tokens plus the Phase 1 shared-widget adapter. Importing `amber_dusk_tokens.dart` exposes constants and `AmberDuskTokens.widgetTheme`; only widgets explicitly routed through the adapter change appearance. The global `MaterialApp` theme is not flipped by this layer. |
 | `lib/core/widgets/custom_bottom_nav_bar.dart`    | widget    | Shared app shell bottom nav.                                                            |
 | `lib/core/widgets/signed_avatar.dart`            | widget    | Renders private avatar paths through signed URLs.                                       |
 | `lib/core/widgets/signed_image.dart`             | widget    | Renders private image paths through signed URLs.                                        |
@@ -1778,17 +1810,19 @@ Layer 1 is the active runtime theme. Today `MaterialApp` receives
 `AppTheme.light()`, `AppTheme.dark()`, and `ThemeModeProvider.themeMode`; widgets
 consume the resulting `ThemeData`, `ColorScheme`, `AppThemeExtension`, and core
 tokens. Optional staged designs under `lib/core/theme/designs/<design_name>/`
-are prepared-but-inactive supplement layers. Importing a staged barrel such as
-`amber_dusk_tokens.dart` only gives read-only access to named token constants for
-preview, tests, adapters, or future implementation work. It does not apply those
-values to widgets by itself.
+are prepared supplement layers. Importing a staged barrel such as
+`amber_dusk_tokens.dart` gives access to named token constants for preview,
+tests, adapters, or implementation work. It does not apply values globally by
+itself; widgets change only when they explicitly consume an adapter such as
+`AmberDuskTokens.widgetTheme`.
 
 Token contracts are agreed token interfaces and named token sets. For example,
 `amber_dusk_tokens.dart` is the Amber Dusk contract: it exports colors,
 typography roles, spacing, surfaces, motion, component recipes, and phone layout
 values using stable names. Consumers may reference those tokens for prototype
-previews and tests now, but production widgets should continue to read from the
-active `AppTheme` until a theme activation change is accepted.
+previews and tests now. Production widgets should continue to read from the
+active `AppTheme` unless a scoped adapter activation has been accepted and
+documented, as Phase 1 does for selected shared phone widgets.
 
 The current activation workflow is a code merge through `AppTheme` and the
 `MaterialApp` theme wiring in `lib/main.dart`. A future activation must document
@@ -1802,7 +1836,7 @@ should opt out by continuing to use the active `AppTheme` tokens.
 - To retheme the active app: change Layer 1 files (`AppColors`, `AppTypography`, `AppMotion`, `AppDecorations`, `AppStates`, `AppTheme`) and verify the whole affected runtime surface.
 - To activate a staged design: add an explicit adapter or merge path that feeds the staged token set into `AppTheme.light()` / `AppTheme.dark()` or a documented theme activation API, then record that activation in the session log/docs before widgets depend on it.
 - To redesign layout: change Layer 2 files (AppLayout, AppDimens).
-- Components consume tokens from the active `AppTheme`; staged layers such as Amber Dusk remain non-active token sources until switched through the activation workflow.
+- Components consume tokens from the active `AppTheme` unless a documented staged-design adapter is explicitly in scope for that component family.
 - `AppDimens` = raw scale (p16 = 16px). `AppLayout` = semantic meaning (cardPadding = 16px for card context).
 - No overlapping icon sizes: AppDimens has 16/24/32, AppLayout has 12/20/48.
 

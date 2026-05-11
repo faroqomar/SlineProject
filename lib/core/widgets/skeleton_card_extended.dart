@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/skeleton_loader.dart';
 
 /// Extended skeleton card variants for loading states across the app.
@@ -19,11 +19,11 @@ class SkeletonWalletHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final panelCard = AmberDuskTokens.widgetTheme.cards.panel;
     return Container(
       padding: const EdgeInsets.all(AppDimens.p24),
       decoration: BoxDecoration(
-        color: colorScheme.cardBackground,
+        color: panelCard.background,
         borderRadius: BorderRadius.circular(AppDimens.r24),
       ),
       child: const Column(
@@ -91,15 +91,22 @@ class SkeletonProposalTile extends StatelessWidget {
 class SkeletonWorkItemCard extends StatelessWidget {
   const SkeletonWorkItemCard({super.key});
 
+  static const Key rootKey = ValueKey<String>('skeleton_work_item_card_root');
+
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final cardTheme = AmberDuskTokens.widgetTheme.cards;
+    final panelCard = cardTheme.panel;
     return Container(
+      key: rootKey,
       margin: const EdgeInsets.only(bottom: AppDimens.p16),
       decoration: BoxDecoration(
-        color: colorScheme.cardBackground,
+        color: panelCard.background,
         borderRadius: BorderRadius.circular(AppDimens.r16),
-        border: Border.all(color: colorScheme.cardBorder),
+        border: Border.all(
+          color: cardTheme.border,
+          width: cardTheme.borderWidth,
+        ),
       ),
       child: Column(
         children: [
@@ -109,9 +116,8 @@ class SkeletonWorkItemCard extends StatelessWidget {
               horizontal: AppDimens.p16,
               vertical: AppDimens.p12,
             ),
-            decoration: BoxDecoration(
-              color: colorScheme.cardBackground,
-              borderRadius: const BorderRadius.vertical(
+            decoration: const BoxDecoration(
+              borderRadius: BorderRadius.vertical(
                 top: Radius.circular(AppDimens.r16),
               ),
             ),
@@ -190,12 +196,16 @@ class SkeletonServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final cardTheme = AmberDuskTokens.widgetTheme.cards;
+    final panelCard = cardTheme.panel;
     return Container(
       decoration: BoxDecoration(
-        color: colorScheme.cardBackground,
+        color: panelCard.background,
         borderRadius: BorderRadius.circular(AppDimens.r16),
-        border: Border.all(color: colorScheme.cardBorder),
+        border: Border.all(
+          color: cardTheme.border,
+          width: cardTheme.borderWidth,
+        ),
       ),
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -58,7 +58,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.text('Disabled'));
+      await tester.tap(find.text('Disabled'), warnIfMissed: false);
       await tester.pump(const Duration(milliseconds: 100));
 
       expect(fired, isFalse);

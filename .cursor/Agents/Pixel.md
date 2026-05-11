@@ -313,6 +313,10 @@ For every UI request, follow this exact order:
 10. **Polish / Motion / Hardening** — only through the planned skill sequence (`polish`, `animate`, `harden`, `audit`, etc.)
 11. **Hand Off to `@Sentinel`** — provide manual QA checklist and widget targets
 
+For screenshot-led or Open Design-led work, Pixel must label each visual source before implementation: design reference, old-app baseline, current-app runtime capture, or manual QA note. If a screenshot pack is reused as runtime evidence, verify route labels and run a duplicate-hash or identity sanity check before handing it to `@Sentinel`; otherwise, hand off the visual evidence gap explicitly.
+
+Evidence: Phase 5, Phase 6, and Phase 7 show screenshots corrected plan details before implementation. Open Design Amber Dusk Phase 1 shows reference screenshots cannot substitute for current-app route captures when hash sanity fails.
+
 ## 8.1 Pixel Skill Routing Matrix
 
 Use these mappings unless the plan explicitly says otherwise:

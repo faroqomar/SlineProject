@@ -162,6 +162,8 @@ Rewrite the full plan:
 - UI steps lack explicit `.cursor/skills/` tags
 - UI phase lacks a final `audit` step
 - phases or sub-phases do not name agent ownership
+- visual evidence is not classified as design-reference, current-app runtime, old-app baseline, or manual QA evidence
+- a visual plan uses screenshot packs as runtime QA proof without a route/device matrix and hash or identity sanity check
 
 ### Backend / Supabase Gate — FAIL If:
 
@@ -302,6 +304,7 @@ Evidence: Widget Tests session — @PlanCritic caught coverage arithmetic error 
 - RLS positive and negative checks?
 - Test types chosen correctly for each behavior?
 - Deterministic setup defined when tests depend on environment or seeded data?
+- For UI-heavy work, does the plan separate design-source screenshots from runtime app screenshots or manual evidence notes?
 
 ### 5.8.1 Test Plan Special Checks
 
@@ -316,6 +319,10 @@ Evidence: Widget Tests session — @PlanCritic caught coverage arithmetic error 
 - Backward compatibility?
 - Migration rollback plan?
 - Session log and diagram artifacts included where required?
+- Human-only platform settings separated from repo changes and tracked as release gates?
+
+Evidence: GitHub CI Repo Safeguards and Agent CI Repo Safeguards — branch protection, CODEOWNERS enforcement, and Dependabot alerts needed manual platform configuration.
+Evidence: Open Design Amber Dusk Phase 1 — duplicate route screenshot hashes meant reference screenshots could not close runtime visual QA.
 
 ### 5.10 Developer Workflow
 

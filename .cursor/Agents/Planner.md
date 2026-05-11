@@ -489,8 +489,13 @@ Write only the header section at plan creation time:
 - Every substantial UI step MUST name a skill tag.
 - Every skill tag MUST match a concrete available skill name before plan approval; validate names against the current skill registry or `.cursor/skills/` where applicable.
 - The final UI sub-phase MUST include an `audit` step.
+- UI plans that rely on screenshots, Open Design, Figma, browser captures, or user-provided images MUST classify each evidence source as design-reference evidence, current-app runtime evidence, old-app baseline, or manual QA evidence.
+- Visual implementation plans MUST include a route/device-width evidence matrix. If screenshot files are already available, include a hash or identity sanity check before using them as proof of route-specific runtime QA.
+- Design-reference artifacts can justify visual intent and token values, but they do not close runtime app QA unless they were captured from the implemented app.
 
 Evidence: Home Discovery Navigation Consolidation — plan skill labels drifted from concrete skill names and had to be corrected during execution.
+Evidence: Phase 5, Phase 6, and Phase 7 — screenshots materially corrected UI plans before implementation.
+Evidence: Open Design Amber Dusk Phase 1 — duplicate screenshot hashes made the Open Design screenshot pack provisional only, not route-specific runtime QA evidence.
 
 ### Supabase Phase Rules
 
@@ -672,6 +677,14 @@ Evidence: Home Discovery Navigation Consolidation — plan skill labels drifted 
 - [ ] (`@Observability`) Verify event names, payload sanitization, and correlation behavior.
 - [ ] (`@Sentinel`) Confirm no sensitive data leaks into logs.
 - **GATE CHECK:** telemetry is safe and verifiable.
+
+### 4.6 External Platform Configuration (If Included)
+
+- [ ] (`@Sentinel`) Separate repository-file work from manual platform settings such as GitHub branch protection, required status checks, secret scanning, Dependabot alerts, app-store settings, or dashboard-only toggles.
+- [ ] (`@DocsKeeper`) Document manual steps as open release gates when the agent cannot perform or verify them from repo files.
+- **GATE CHECK:** agent-completable work is not confused with human-only platform configuration.
+
+Evidence: GitHub CI Repo Safeguards and Agent CI Repo Safeguards — CODEOWNERS, Dependabot alerts, and branch protection all required manual GitHub configuration outside committed files.
 
 ## Phase 5: Documentation Sync (MANDATORY)
 

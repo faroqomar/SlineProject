@@ -5,31 +5,42 @@ import 'package:provider/provider.dart';
 import 'package:sline_app/core/navigation/main_nav_destinations.dart';
 import 'package:sline_app/core/providers/navigation_provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 
 /// Custom bottom navigation bar with solid surface design.
 ///
 /// ## NO GLASS POLICY (see .impeccable.md)
 ///
-/// All frosted glass / BackdropFilter effects have been removed.
-/// The bar now uses a solid cardBackground with elevation shadow.
+/// All frosted translucent effects have been removed.
+/// The bar now uses the solid Amber Dusk nav surface with elevation shadow.
 ///
 /// ## Phase 1 Changes
-/// - Removed ALL BackdropFilter / frosted glass / liquid glass decoration
-/// - Solid surface: cardBackground + cardBorder + elevation Level 3 shadow
+/// - Removed all frosted translucent decoration
+/// - Solid surface: Amber Dusk nav surface + elevation Level 3 shadow
 /// - Migrated all animation values to AppMotion tokens
 /// - Added tiny label text below each icon (fades in/out with active state)
 /// - Notification badge: pill with count text (max "99+"), animated entrance
 /// - Added HapticFeedback.selectionClick on each tap
 /// - Added Semantics to each nav item
 class CustomBottomNavBar extends StatelessWidget {
-  const CustomBottomNavBar({super.key});
+  const CustomBottomNavBar({
+    super.key,
+    this.showMessagesNotification = true,
+    this.messagesNotificationCount = 0,
+  }) : assert(
+         messagesNotificationCount == null || messagesNotificationCount >= 0,
+         'messagesNotificationCount must be non-negative when provided.',
+       );
+
+  /// Whether the Messages tab should display its notification marker.
+  final bool showMessagesNotification;
+
+  /// Optional Messages badge count; null or zero renders a compact dot.
+  final int? messagesNotificationCount;
 
   static const Key homeNavKey = ValueKey<String>('bottom_nav_home');
   static const Key dashboardNavKey = ValueKey<String>('bottom_nav_dashboard');
@@ -37,10 +48,16 @@ class CustomBottomNavBar extends StatelessWidget {
   static const Key ordersNavKey = dashboardNavKey;
   static const Key messagesNavKey = ValueKey<String>('bottom_nav_messages');
   static const Key profileNavKey = ValueKey<String>('bottom_nav_profile');
+  static const Key navSurfaceKey = ValueKey<String>('bottom_nav_surface');
+  static const Key activeCapsuleKey = ValueKey<String>(
+    'bottom_nav_active_capsule',
+  );
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navTheme = AmberDuskTokens.widgetTheme.bottomNav;
+    const phoneLayout = AmberDuskTokens.phoneLayout;
 
     final navItems = <_NavItem>[
       const _NavItem(
@@ -57,12 +74,13 @@ class CustomBottomNavBar extends StatelessWidget {
         'Dashboard',
         key: dashboardNavKey,
       ),
-      const _NavItem(
+      _NavItem(
         MainNavDestinations.messages,
         Icons.message_outlined,
         Icons.message,
         'Messages',
-        hasNotification: true,
+        hasNotification: showMessagesNotification,
+        notificationCount: messagesNotificationCount,
         key: messagesNavKey,
       ),
       const _NavItem(
@@ -90,22 +108,16 @@ class CustomBottomNavBar extends StatelessWidget {
         final bottomSafePadding = MediaQuery.viewPaddingOf(context).bottom;
 
         return Positioned(
-          bottom: AppDimens.p16 + bottomSafePadding,
-          left: AppDimens.p16,
-          right: AppDimens.p16,
+          bottom: phoneLayout.bottomNavBottom + bottomSafePadding,
+          left: phoneLayout.bottomNavInset,
+          right: phoneLayout.bottomNavInset,
           child: Container(
-            height: AppLayout.bottomNavHeight,
+            key: navSurfaceKey,
+            height: phoneLayout.bottomNavHeight,
             decoration: BoxDecoration(
-              color: colorScheme.cardBackground,
-              borderRadius: BorderRadius.circular(AppDimens.r30),
-              border: Border.all(
-                color: colorScheme.cardBorder,
-                width: AppLayout.borderStandard,
-              ),
-              boxShadow: AppDecorations.elevation(
-                3,
-                isDark: colorScheme.isDark,
-              ),
+              color: navTheme.surface,
+              borderRadius: BorderRadius.circular(navTheme.radius),
+              boxShadow: AppDecorations.elevation(3, isDark: isDark),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -123,7 +135,6 @@ class CustomBottomNavBar extends StatelessWidget {
                     );
                     navigationProvider.setCurrentIndex(item.index);
                   },
-                  colorScheme: colorScheme,
                 );
               }).toList(),
             ),
@@ -139,13 +150,11 @@ class _SolidNavItem extends StatefulWidget {
   final _NavItem item;
   final bool isActive;
   final VoidCallback onTap;
-  final AppColorScheme colorScheme;
 
   const _SolidNavItem({
     required this.item,
     required this.isActive,
     required this.onTap,
-    required this.colorScheme,
   });
 
   @override
@@ -196,8 +205,44 @@ class _SolidNavItemState extends State<_SolidNavItem>
     super.dispose();
   }
 
+  Widget _buildNotificationBadge(AmberDuskBottomNavThemeTokens navTheme) {
+    final count = widget.item.notificationCount;
+    if (count == null || count <= 0) {
+      return Container(
+        width: AmberDuskTokens.spacing.sm,
+        height: AmberDuskTokens.spacing.sm,
+        decoration: const BoxDecoration(
+          color: AmberDuskColors.rust,
+          shape: BoxShape.circle,
+        ),
+      );
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: AmberDuskTokens.spacing.xs,
+        vertical: AmberDuskTokens.spacing.xxs,
+      ),
+      constraints: const BoxConstraints(minWidth: AppDimens.iconSizeSmall),
+      decoration: BoxDecoration(
+        color: AmberDuskTokens.colors.rust,
+        borderRadius: BorderRadius.circular(AmberDuskTokens.spacing.sm),
+      ),
+      child: Text(
+        widget.item.displayNotificationCount,
+        textAlign: TextAlign.center,
+        style: navTheme.labelStyle.copyWith(
+          color: AmberDuskTokens.colors.text,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final navTheme = AmberDuskTokens.widgetTheme.bottomNav;
+
     return Semantics(
       label: widget.item.label,
       selected: widget.isActive,
@@ -210,37 +255,37 @@ class _SolidNavItemState extends State<_SolidNavItem>
           animation: _controller,
           builder: (context, child) {
             return SizedBox(
-              width: AppLayout.fabSize,
+              width: AppLayout.minTouchTarget,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Stack(
-                    alignment: Alignment.center,
-                    clipBehavior: Clip.none,
-                    children: [
-                      // Solid pill background (active state)
-                      if (widget.isActive)
-                        Positioned.fill(
-                          child: Transform.scale(
-                            scale: _pillAnimation.value,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                color: AppColors.teal.withValues(alpha: 0.15),
-                                border: Border.all(
-                                  color: AppColors.teal.withValues(alpha: 0.3),
-                                  width: 0.5,
-                                ),
+                  SizedBox(
+                    width: AppLayout.minTouchTarget,
+                    height: AppDimens.p40,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      clipBehavior: Clip.none,
+                      children: [
+                        // The active capsule uses the exact Amber Dusk nav
+                        // geometry so the icon state does not inherit teal-era
+                        // pill sizing from the previous theme.
+                        Transform.scale(
+                          scale: widget.isActive ? _pillAnimation.value : 0,
+                          child: Container(
+                            key: widget.isActive
+                                ? CustomBottomNavBar.activeCapsuleKey
+                                : null,
+                            width: navTheme.activeIconSize.width,
+                            height: navTheme.activeIconSize.height,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(
+                                navTheme.activeIconRadius,
                               ),
+                              color: navTheme.activeIconBackground,
                             ),
                           ),
                         ),
-                      // Icon
-                      Padding(
-                        padding: const EdgeInsets.all(
-                          AppLayout.spacingStandard,
-                        ),
-                        child: Transform.scale(
+                        Transform.scale(
                           scale: _scaleAnimation.value,
                           child: Icon(
                             widget.isActive
@@ -248,46 +293,21 @@ class _SolidNavItemState extends State<_SolidNavItem>
                                 : widget.item.icon,
                             size: AppDimens.iconSizeMedium,
                             color: widget.isActive
-                                ? AppColors.teal
-                                : widget.colorScheme.textSecondary,
+                                ? navTheme.activeForeground
+                                : navTheme.inactiveForeground,
                           ),
                         ),
-                      ),
-                      // Notification badge (pill with count)
-                      if (widget.item.hasNotification)
-                        Positioned(
-                          top: 0,
-                          right: 0,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 4,
-                              vertical: 1,
-                            ),
-                            constraints: const BoxConstraints(
-                              minWidth: AppDimens.iconSizeSmall,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.lightRed,
-                              borderRadius: BorderRadius.circular(AppDimens.r8),
-                              border: Border.all(
-                                color: widget.colorScheme.cardBackground,
-                                width: AppLayout.borderThick,
-                              ),
-                            ),
-                            child: Text(
-                              '', // Badge count injected by parent if needed
-                              textAlign: TextAlign.center,
-                              // Badge count text — intentionally smaller than
-                              // micro (10px) for compact notification pill.
-                              style: AppTypography.micro.copyWith(
-                                color: AppColors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 9,
-                              ),
-                            ),
+                        // Notification badge keeps the existing marker
+                        // behavior while switching the visual role to Amber
+                        // Dusk rust instead of the previous red token.
+                        if (widget.item.showsNotification)
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            child: _buildNotificationBadge(navTheme),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                   // Label text (fades with active state)
                   AnimatedOpacity(
@@ -298,16 +318,10 @@ class _SolidNavItemState extends State<_SolidNavItem>
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
-                      // Nav label — intentionally 9px, smaller than micro (10px)
-                      // for compact bottom navigation bar layout.
-                      style: TextStyle(
-                        fontSize: 9,
+                      style: navTheme.labelStyle.copyWith(
                         color: widget.isActive
-                            ? AppColors.teal
-                            : widget.colorScheme.textSecondary,
-                        fontWeight: widget.isActive
-                            ? FontWeight.bold
-                            : FontWeight.normal,
+                            ? navTheme.activeForeground
+                            : navTheme.inactiveForeground,
                       ),
                     ),
                   ),
@@ -328,6 +342,7 @@ class _NavItem {
   final IconData activeIcon;
   final String label;
   final bool hasNotification;
+  final int? notificationCount;
   final Key? key;
 
   const _NavItem(
@@ -336,6 +351,18 @@ class _NavItem {
     this.activeIcon,
     this.label, {
     this.hasNotification = false,
+    this.notificationCount,
     this.key,
-  });
+  }) : assert(
+         notificationCount == null || notificationCount >= 0,
+         'notificationCount must be non-negative when provided.',
+       );
+
+  bool get showsNotification => hasNotification;
+
+  String get displayNotificationCount {
+    final count = notificationCount;
+    if (count == null || count <= 0) return '';
+    return count > 99 ? '99+' : count.toString();
+  }
 }

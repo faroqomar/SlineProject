@@ -145,6 +145,8 @@ If the plan included UI skill steps, also require:
 - confirmation that the final UI audit step ran
 - accessibility, overflow, responsive, and signed-media checks for touched screens
 - for navigation or app-shell changes, the local run target or emulator/device used plus observed route/tab/log events
+- visual evidence source labels: design reference, old-app baseline, current-app runtime capture, or manual QA note
+- for route/device screenshot packs, confirmation that duplicate-hash or identity sanity checks did not invalidate the pack as runtime evidence
 
 If the plan included Supabase migration steps, also require:
 
@@ -152,6 +154,12 @@ If the plan included Supabase migration steps, also require:
 - positive and negative RLS verification
 - rollout or migration verification notes
 - policy or trigger rationale when behavior depends on them
+
+If the plan includes platform configuration outside repo files, also require:
+
+- manual platform checklist location
+- which items are already verified and which remain human-only release gates
+- exact external setting names where possible, such as branch protection, required checks, CODEOWNERS review, Dependabot alerts, or secret scanning
 
 If the feature changed schema, order flow, or backend process flow, also require:
 

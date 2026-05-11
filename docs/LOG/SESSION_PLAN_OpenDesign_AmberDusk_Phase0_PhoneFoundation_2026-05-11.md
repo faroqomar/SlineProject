@@ -184,7 +184,7 @@ Phase 0 Amber Dusk phone foundation completed as a staged token layer under `lib
   - `.cursor/PROJECT_CONTEXT.md`
 - Artifacts created:
   - `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/DOCS_SYNC_2026-05-11_OpenDesign_AmberDusk_Phase0.md`
-  - `.TODO/HANDOFF_OpenDesign_AmberDusk_Phase0_ToWeb_2026-05-11.md`
+  - `.TODO/WebRedsign/HANDOFF_OpenDesign_AmberDusk_Phase0_ToWeb_2026-05-11.md`
 
 ### [2026-05-11 15:37:14 +03] PHASE COMPLETED
 - Phase: OpenDesign Amber Dusk Phase 0 Phone Foundation.

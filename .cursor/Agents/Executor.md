@@ -230,8 +230,11 @@ Before starting execution, confirm:
 - All new DB / policy work has verification steps in the plan
 - All substantial UI steps have skill tags
 - All substantial backend rollout steps use `supabase-migration`
+- Any human-only platform configuration is listed separately from repo-file work
 
 For every planned existing path, run `test -f <path>` or confirm through `rg --files`. For every planned skill tag, confirm it matches a concrete available skill before delegating.
+
+If the plan touches platform settings outside committed files, such as GitHub branch protection, required status checks, CODEOWNERS enforcement, Dependabot alerts, secret scanning, app-store settings, or dashboard-only toggles, record those items as manual release gates. Do not mark them complete based only on committed config files.
 
 If ANY item fails:
 
@@ -395,6 +398,17 @@ When a UI change adds animation, navigation, route pushes, or route-level provid
 
 Evidence: Home Discovery Navigation Consolidation — route-push coverage initially used the wrong navigator-observer assumption, missed a `ScaleButton` timer pump, and placed providers below `MaterialApp`.
 Evidence: Phase 2 App Shell/Auth/Cards — navigation/FAB animation tests needed settling after the screen became stateful.
+
+### Step 3.1.3 — Visual Evidence Gate
+
+When a UI or visual-design phase uses screenshots, Open Design, browser captures, emulator captures, or user-provided images:
+
+1. Classify every visual artifact as design reference, old-app baseline, current-app runtime capture, or manual QA note.
+2. For route/device screenshot sets, perform a hash or identity sanity check before treating the set as route-specific runtime evidence.
+3. If screenshots are unavailable or fail sanity checks, record the gap and keep runtime visual QA open instead of closing the phase.
+4. Open Design or design-system screenshots may prove visual intent, but they are not proof that the implemented Flutter route rendered correctly.
+
+Evidence: Open Design Amber Dusk Phase 1 — the session closed code remediation while runtime visual QA stayed open because available route screenshots had duplicate hashes and were treated as provisional reference evidence.
 
 ### Step 3.2 — Test Mock Audit (Mandatory When ViewModel API Changes)
 

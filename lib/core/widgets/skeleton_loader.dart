@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
@@ -8,7 +7,8 @@ import 'package:sline_app/core/theme/app_theme.dart';
 /// Animated shimmer skeleton for loading states.
 ///
 /// Displays a subtle shimmer animation to indicate content is loading.
-/// Uses theme-aware colors that adapt to light/dark mode.
+/// Uses [SkeletonColors] from the active theme, with optional per-instance
+/// color overrides for specialty loading surfaces.
 ///
 /// Usage:
 /// ```dart
@@ -25,6 +25,8 @@ class SkeletonLoader extends StatefulWidget {
     this.height,
     this.borderRadius = AppDimens.r8,
     this.isCircle = false,
+    this.baseColor,
+    this.highlightColor,
   });
 
   /// Width of the skeleton. If null, expands to fill available space.
@@ -38,6 +40,12 @@ class SkeletonLoader extends StatefulWidget {
 
   /// If true, renders as a circle (ignores borderRadius).
   final bool isCircle;
+
+  /// Optional base color override for this skeleton instance.
+  final Color? baseColor;
+
+  /// Optional shimmer highlight override for this skeleton instance.
+  final Color? highlightColor;
 
   @override
   State<SkeletonLoader> createState() => _SkeletonLoaderState();
@@ -67,13 +75,14 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final baseColor = colorScheme.isDark
-        ? AppColors.offWhiteTransparent10
-        : AppColors.tealTransparent5;
-    final highlightColor = colorScheme.isDark
-        ? AppColors.offWhiteTransparent15
-        : AppColors.tealTransparent15;
+    final skeletonColors = Theme.of(context).extension<SkeletonColors>();
+    final appColors = context.colorScheme;
+    final baseColor =
+        widget.baseColor ?? skeletonColors?.base ?? appColors.cardBackground;
+    final highlightColor =
+        widget.highlightColor ??
+        skeletonColors?.highlight ??
+        appColors.cardBorderHover;
 
     return AnimatedBuilder(
       animation: _animation,

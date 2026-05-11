@@ -674,7 +674,7 @@ How:
   - Whether docs were updated or why not.
   - Token/import contract summary.
   - Any docs needing future sync.
-- Write `.TODO/HANDOFF_OpenDesign_AmberDusk_Phase0_ToWeb_2026-05-11.md` with:
+- Write `.TODO/WebRedsign/HANDOFF_OpenDesign_AmberDusk_Phase0_ToWeb_2026-05-11.md` with:
   - Token files created.
   - Semantic color names.
   - Typography role names and font caveats.

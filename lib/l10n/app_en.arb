@@ -33,6 +33,8 @@
   "@actionConfirm": { "description": "Generic confirm button" },
   "actionRetry": "Retry",
   "@actionRetry": { "description": "Retry after error" },
+  "tapToRetry": "Tap to retry",
+  "@tapToRetry": { "description": "Retry hint shown on tappable media fallback states" },
 
   "stateLoading": "Loading...",
   "@stateLoading": { "description": "Generic loading indicator text" },

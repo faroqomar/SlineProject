@@ -184,6 +184,12 @@ abstract class AppLocalizations {
   /// **'Retry'**
   String get actionRetry;
 
+  /// Retry hint shown on tappable media fallback states
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to retry'**
+  String get tapToRetry;
+
   /// Generic loading indicator text
   ///
   /// In en, this message translates to:

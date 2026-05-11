@@ -101,7 +101,7 @@ Pass:
 
 See the comprehensive emulator checklist:
 
-- `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-11_OpenDesign_AmberDusk_Phase0.md`
+- `.TODO/Archive/EMULATOR_TEST_CHECKLIST_2026-05-11_OpenDesign_AmberDusk_Phase0.md`
 
 Minimum regression expectations:
 
