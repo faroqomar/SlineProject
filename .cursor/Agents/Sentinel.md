@@ -148,6 +148,10 @@ If the plan included UI skill steps, also require:
 - visual evidence source labels: design reference, old-app baseline, current-app runtime capture, or manual QA note
 - for route/device screenshot packs, confirmation that duplicate-hash or identity sanity checks did not invalidate the pack as runtime evidence
 
+For review-fix passes, behavior changes must have behavior-level tests. Do not accept tests that only assert token constants or static theme values when the finding was about runtime behavior. If a fix changes filtering, action enablement, callback routing, accessibility semantics, visual state selection, visible labels, or badge/status text, require a widget/unit test that exercises that behavior directly. When text changes, scan the test suite for stale assertions against the same component before approving the fix.
+
+Evidence: Open Design Amber Dusk Phases 2-4 Step 6 — Orchestrator review found a stale `BOOKING TASK` badge assertion, and Messages filtering, Inbox/Dashboard actions, DashboardOfferCard callbacks, and CreateTaskScreen interactions needed direct behavior tests rather than static token assertions; fixes added those targeted tests before full-suite approval.
+
 If the plan included Supabase migration steps, also require:
 
 - evidence tied to `supabase-migration`

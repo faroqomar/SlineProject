@@ -1,6 +1,6 @@
 # SLine MVP Roadmap
 
-**Last Updated:** 2026-05-11
+**Last Updated:** 2026-05-12
 
 This roadmap tracks the current code-state of the repository. Status values are intentionally simple:
 - `✅ Completed`
@@ -13,7 +13,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | --- | --- | --- |
 | Flutter app shell and navigation | ✅ Completed | `main.dart` + `lib/app/main_navigation_screen.dart`; visible bottom nav is Home, Dashboard, Messages, Profile via `lib/core/navigation/main_nav_destinations.dart` |
 | Supabase bootstrap and app providers | ✅ Completed | shared client/bootstrap in `lib/core/services/supabase_config.dart` and root providers in `main.dart` |
-| Theme system (Layer 1) | ✅ Completed | Phase 0: `app_colors.dart`, `app_typography.dart`, `app_motion.dart`, `app_states.dart`, `app_decorations.dart`, `app_theme.dart`. **2026-05-11:** Amber Dusk Phase 0 added a staged inactive Open Design token layer under `lib/core/theme/designs/amber_dusk/`; it is not runtime-activated. |
+| Theme system (Layer 1) | ✅ Completed | Phase 0: `app_colors.dart`, `app_typography.dart`, `app_motion.dart`, `app_states.dart`, `app_decorations.dart`, `app_theme.dart`. **2026-05-11:** Amber Dusk Phase 0 added a staged inactive Open Design token layer under `lib/core/theme/designs/amber_dusk/`; it is not globally runtime-activated. **2026-05-12:** Phases 2-4 consume Amber Dusk tokens in scoped phone shell/discovery/dashboard surfaces while final emulator visual parity remains open. |
 | Layout tokens (Layer 2) | ✅ Completed | Phase 0.7: `app_layout.dart` (41 semantic tokens), `app_dimens.dart` (raw primitives). Three-layer architecture complete. |
 | Logging and crash boundaries | ✅ Completed | `AppLogger`, `CrashReportingService`, zoned/global handlers |
 | Documentation hub | ✅ Completed | maintained under `Sline_everything/` |
@@ -96,7 +96,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | Supabase migrations | ✅ Completed | repo contains live migration history under `supabase/migrations/` |
 | Edge functions | ✅ Completed | booking/payment functions are checked into `supabase/functions/` |
 | Docs sync discipline | ✅ Completed | docs now reflect current `view/viewmodels/data/services` layout and payment/runtime helpers |
-| Agent system evolution | ✅ Completed | `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-11.md` records the latest deduped session-log findings. The Phase 1 pass updated six `.cursor/Agents/*.md` files for visual evidence, platform gates, and stale CI fact checks; no runtime app code changed. |
+| Agent system evolution | ✅ Completed | `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-12.md` records the latest deduped session-log findings. The Step 7 pass updated six `.cursor/Agents/*.md` files for scope amendments, missing model-contract inference, custom gesture semantics, view-log privacy, behavior-level review tests, and visual QA status in Master Reports. |
 
 ## 9. Completed Phases
 
@@ -149,12 +149,13 @@ Tests: 706 → 780 (+74). Coverage floor: 40%. Architecture guard had 6 checks i
 | 0.7 | Layout Tokens | ✅ Completed | Token Infrastructure | `SESSION_PLAN_LayoutTokens_Phase0.7_2026-04-08.md` |
 | 0.9 | Amber Dusk Phase 0 Phone Foundation | ✅ Completed | Staged Open Design token layer | `SESSION_PLAN_OpenDesign_AmberDusk_Phase0_PhoneFoundation_2026-05-11.md` |
 | 1.0 | Amber Dusk Phase 1 Core Phone Widgets | ✅ Code complete; manual emulator visual QA checklist open | Shared-widget Amber Dusk adapter | `SESSION_PLAN_OpenDesign_AmberDusk_Phase1_CorePhoneWidgets_2026-05-11.md` |
+| 1.1 | Amber Dusk Phases 2-4 Phone Shell, Discovery, Dashboard | ✅ Code complete; manual emulator visual QA gate open | Scoped phone-view Amber Dusk runtime surfaces | `SESSION_PLAN_OpenDesign_AmberDusk_Phases2_3_4_PhoneShellDiscoveryDashboard_2026-05-11.md` |
 | 1 | Core Widget Redesign | ✅ Completed | Redesign | `SESSION_PLAN_CoreWidgetRedesign_2026-04-07.md` |
 | 2+3+5 | App Shell + Auth + Cards | ✅ Completed | Redesign | `SESSION_PLAN_Phase2_AppShellAuthCards_2026-04-08.md` |
 | 4 | Home & Discovery | ✅ Completed | Redesign | `SESSION_PLAN_Phase4_HomeDiscovery_2026-04-08.md` |
 | 6 | Chat & Messaging | ✅ Completed | Redesign (Phase 6 Advanced Interactions + continuation) | `SESSION_PLAN_Phase6_ChatAdvancedInteractions_2026-04-10.md` |
 | 6.1 | Home Discovery Nav Consolidation | ✅ Completed | Navigation consolidation + Home discovery polish | `SESSION_HomeDiscoveryNavConsolidation_2026-04-30.md` |
-| 7 | Dashboard | 🚧 Token-normalized | Token Normalization (visual redesign pending) | (same as above) |
+| 7 | Dashboard | 🚧 Amber Dusk scoped code complete; final emulator parity open | Token-normalized / scoped Amber Dusk surface; broader visual redesign evidence still gated | `SESSION_PLAN_OpenDesign_AmberDusk_Phases2_3_4_PhoneShellDiscoveryDashboard_2026-05-11.md` |
 | 8 | Booking & Payments | ⏳ Planned | — | — |
 | 9 | Profile | ⏳ Planned | — | — |
 | 10 | Portfolio | ⏳ Planned | — | — |
@@ -172,7 +173,7 @@ Tests: 706 → 780 (+74). Coverage floor: 40%. Architecture guard had 6 checks i
 ## 11. Current Focus
 
 ### Current Focus
-1. **Amber Dusk next phase** — optional activation/preview work must explicitly map staged tokens into active `AppTheme` before widgets depend on them.
-2. **UI Redesign Phase 7: Dashboard** — actual visual redesign of dashboard tabs, overview cards, and work summaries.
-3. **UI Redesign Phase 8: Booking & Payments** — booking flow screens, payment UI, escrow status.
+1. **Amber Dusk visual gate** — run `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4_Step6.md` on the target iOS Simulator and update `.TODO/VisualQA_OpenDesign_AmberDusk_Phases2_3_4_iOSSimulator_2026-05-12/REPORT.md`.
+2. **Missing Open Design states** — Search, Categories, Saved, Favorites, loading, empty, error, create failure/loading/success, and dashboard role/detail variants still need exact Open Design or user screenshots before pixel-match claims.
+3. **Amber Dusk activation/preview work** — optional broader activation must explicitly map staged tokens into active `AppTheme` before widgets depend on them.
 4. **Phase F: Ship Preparation** — Arabic/Kurdish translations, widget tests for critical views, remaining lint debt adoption, GitHub repo safeguards.

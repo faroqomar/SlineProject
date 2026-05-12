@@ -4,13 +4,12 @@ import 'package:provider/provider.dart';
 
 import 'package:sline_app/core/navigation/main_nav_destinations.dart';
 import 'package:sline_app/core/providers/navigation_provider.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/custom_bottom_nav_bar.dart';
 
 void main() {
-  group('CustomBottomNavBar (Solid Surface — NO GLASS)', () {
+  group('CustomBottomNavBar Amber Dusk solid surface', () {
     Widget buildTestApp({
       int initialIndex = 0,
       bool showMessagesNotification = true,
@@ -47,11 +46,11 @@ void main() {
       expect(find.text('Bookings'), findsNothing);
     });
 
-    testWidgets('T-CW111 does NOT contain BackdropFilter', (tester) async {
+    testWidgets('T-CW111 does not contain BackdropFilter blur', (tester) async {
       await tester.pumpWidget(buildTestApp());
       await tester.pump();
 
-      // NO GLASS POLICY — zero BackdropFilter
+      // The Phase 2 shell uses an opaque Amber Dusk surface.
       expect(find.byType(BackdropFilter), findsNothing);
     });
 
@@ -87,7 +86,6 @@ void main() {
 
       final activeIcon = tester.widget<Icon>(find.byIcon(Icons.home));
       expect(activeIcon.color, navTheme.activeForeground);
-      expect(activeIcon.color, isNot(AppColors.teal));
 
       final activeCapsule = tester.widget<Container>(
         find.byKey(CustomBottomNavBar.activeCapsuleKey),

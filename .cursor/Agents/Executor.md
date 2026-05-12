@@ -410,6 +410,17 @@ When a UI or visual-design phase uses screenshots, Open Design, browser captures
 
 Evidence: Open Design Amber Dusk Phase 1 — the session closed code remediation while runtime visual QA stayed open because available route screenshots had duplicate hashes and were treated as provisional reference evidence.
 
+### Step 3.1.4 — Scope Amendment Ledger
+
+When the human adds new review findings or file targets after a plan has been critiqued or execution has started:
+
+1. Record a `SCOPE AMENDMENT` entry in the session log before editing those files.
+2. State whether the new files are still inside the current plan, an explicit human-approved expansion, or a separate future-work item.
+3. If the amendment changes architecture, ViewModel contracts, backend behavior, payment, storage, or release risk, pause and route back through `@Planner` / `@PlanCritic` before implementation.
+4. If the amendment is accepted as current-scope work, update verification and manual QA coverage so the expanded files are not omitted from the final report.
+
+Evidence: Open Design Amber Dusk Phases 2-4 Step 6 — Profile and Messages changes exceeded the original phase file scope but were accepted because the human supplied explicit follow-up review findings; the Master Report kept them in scope and added tests plus emulator checklist coverage.
+
 ### Step 3.2 — Test Mock Audit (Mandatory When ViewModel API Changes)
 
 **Trigger:** Run the Test Mock Audit whenever ANY of these happen:

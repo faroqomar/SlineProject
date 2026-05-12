@@ -253,9 +253,21 @@ final isAdmin = profileVm.profile?.activeRole == 'admin';
 
 Do not hardcode assumptions about who should see a screen or button.
 
+### 4.7 Custom Gesture Semantics Pattern
+
+Any `GestureDetector`, `InkWell`, `ScaleButton`, custom pill, custom card, or nonstandard control that acts like a button, toggle, tab, or selectable chip must expose the same accessibility contract as the visual UI:
+
+- `Semantics(button: true)` for actionable controls.
+- `Semantics(selected: true/false)` for custom tabs, chips, segmented controls, or category cards.
+- A clear label or hint when the visible text is not enough.
+- `HitTestBehavior.opaque` when transparent space is intended to be tappable.
+- No outer semantic button wrapper around a container that contains separate interactive children unless the inner controls are intentionally excluded from semantics.
+
+Evidence: Open Design Amber Dusk Phases 2-4 Step 6 — review found custom GestureDetector controls missing selected/button semantics, a no-op DashboardOfferCard wrapper announcing a button without an action, and several transparent tap areas that needed explicit hit behavior.
+
 ---
 
-## 4.7) Error Message Rendering (Explicit Forbid)
+### 4.8 Error Message Rendering (Explicit Forbid)
 
 - **Never render raw exception text in the UI.** Error messages shown to users must come from the ViewModel's mapped error string (via `ErrorMapper.map(e)`). Never call `.toString()` or `.message` on exceptions in view code. If a ViewModel exposes an error field, display it verbatim — it has already been sanitized by the ViewModel.
 

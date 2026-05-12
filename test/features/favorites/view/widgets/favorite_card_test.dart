@@ -42,5 +42,35 @@ void main() {
 
       expect(find.text('Freelancer'), findsOneWidget);
     });
+
+    testWidgets('fires chat and remove callbacks from action buttons', (
+      tester,
+    ) async {
+      final favorite = FavoriteWithProfile(
+        id: 'f3',
+        freelancerId: 'fl-3',
+        createdAt: DateTime.utc(2026, 3, 1),
+        freelancerName: 'Action User',
+      );
+      var startChatCount = 0;
+      var removeCount = 0;
+
+      await pumpApp(
+        tester,
+        FavoriteCard(
+          favorite: favorite,
+          onStartChat: () => startChatCount++,
+          onRemove: () => removeCount++,
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('favorite_card_start_chat_fl-3')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('favorite_card_remove_fl-3')));
+      await tester.pump();
+
+      expect(startChatCount, 1);
+      expect(removeCount, 1);
+    });
   });
 }

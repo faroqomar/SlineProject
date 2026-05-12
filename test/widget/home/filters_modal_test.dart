@@ -132,5 +132,21 @@ void main() {
       expect(viewModel.sellerLevels, isEmpty);
       expect(viewModel.sortBy, TaskFilterViewModel.sortRelevance);
     });
+
+    testWidgets('shows active filter count before applying changes', (
+      tester,
+    ) async {
+      final viewModel = TaskFilterViewModel();
+      final initialSortBy = viewModel.sortBy;
+
+      await _openFiltersModal(tester, viewModel);
+      expect(find.text('Apply Filters'), findsOneWidget);
+
+      await tester.tap(find.text(TaskFilterViewModel.sortNewest).hitTestable());
+      await tester.pumpAndSettle();
+
+      expect(find.text('Apply 1 Filter'), findsOneWidget);
+      expect(viewModel.sortBy, initialSortBy);
+    });
   });
 }

@@ -1,6 +1,81 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2026-05-11
+**Last Updated:** 2026-05-12
+
+---
+
+## 🧭 Version 2.28.0 — Amber Dusk Phases 2-4 Phone Shell, Discovery, Dashboard + SystemEvolution + Docs Sync (2026-05-12)
+
+**Classification:** Scoped phone-view Amber Dusk runtime work + review fixes + agent-system rule merge + documentation sync
+**Plan:** `.TODO/PLAN_OpenDesign_AmberDusk_Phases2_3_4_PhoneShellDiscoveryDashboard_2026-05-11.md`
+**Plan Critique:** `.TODO/PLAN_CRITIQUE_2026-05-11_OpenDesign_AmberDusk_Phases2_3_4_PhoneShellDiscoveryDashboard.md`
+**Open Design Screenshots:** `.TODO/OpenDesign_AmberDusk_Phases2_3_4_OpenDesignScreenshots_2026-05-11/`
+**Runtime Visual QA Captures:** `.TODO/VisualQA_OpenDesign_AmberDusk_Phases2_3_4_iOSSimulator_2026-05-12/`
+**Session Log:** `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phases2_3_4_PhoneShellDiscoveryDashboard_2026-05-11.md`
+**Master Report:** `.TODO/Archive/OpenDesign_AmberDusk_Phases2_3_4_2026-05-12/MASTER_REPORT_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4_Step6.md`
+**Emulator Checklist:** `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4_Step6.md`
+**System Evolution:** `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-12.md`
+**Docs Sync:** `.TODO/Archive/OpenDesign_AmberDusk_Phases2_3_4_2026-05-12/DOCS_SYNC_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4.md`
+**Supabase objects changed:** none
+
+### Scope
+- Applied Amber Dusk tokens and component recipes across the authenticated phone shell, bottom navigation, create-task sheet, Home discovery modes, task/tender/booking cards, Dashboard tabs/cards, Wallet surfaces, and selected secondary screens.
+- Kept Search, Categories, Saved, and Favorites to token-normalization/accessibility-only where exact Open Design phone screenshots are missing.
+- Accepted explicit Step 6 scope amendments for Messages and Profile review fixes, then covered them with targeted tests and the emulator checklist.
+- Centralized temporary create/card package-detail metadata through `Task.packageDetailsKey`, `Task.packageDetailsFrom`, and `Task.packagesWithDetails`.
+- Removed unsafe Messages request/response filtering that inferred direction from sender identity until a real model contract exists.
+- Hardened custom gesture semantics and hit behavior across Messages mode controls, Inbox mode controls, Create category/deadline controls, and dashboard offer card action semantics.
+- Removed raw task/booking/offer IDs from new routine view-level logs while keeping event instrumentation.
+- Ran SystemEvolution Step 7 and merged deduped rules into `Architect`, `Executor`, `Observability`, `Orchestrator`, `Pixel`, and `Sentinel`.
+
+### Key Files
+- `lib/app/main_navigation_screen.dart`
+- `lib/core/widgets/custom_bottom_nav_bar.dart`
+- `lib/core/theme/designs/amber_dusk/amber_dusk_colors.dart`
+- `lib/core/theme/designs/amber_dusk/amber_dusk_spacing.dart`
+- `lib/core/theme/designs/amber_dusk/amber_dusk_tokens.dart`
+- `lib/core/theme/designs/amber_dusk/amber_dusk_widget_theme.dart`
+- `lib/features/home/view/home_screen.dart`
+- `lib/features/home/view/widgets/filters_modal.dart`
+- `lib/features/tasks/models/task_model.dart`
+- `lib/features/tasks/view/create_task_screen.dart`
+- `lib/features/tasks/view/widgets/task_card.dart`
+- `lib/features/tasks/view/widgets/tender_task_card.dart`
+- `lib/features/tasks/view/widgets/booking_task_card.dart`
+- `lib/features/tasks/view/widgets/dashboard_offer_card.dart`
+- `lib/features/booking/view/widgets/booking_card.dart`
+- `lib/features/booking/view/widgets/dashboard_booking_card.dart`
+- `lib/features/dashboard/view/dashboard_screen.dart`
+- `lib/features/dashboard/view/tabs/inbox_tab.dart`
+- `lib/features/dashboard/view/tabs/work_tab.dart`
+- `lib/features/dashboard/view/widgets/work_item_card.dart`
+- `lib/features/chat/view/messages_screen.dart`
+- `lib/features/profile/view/profile_screen.dart`
+- `lib/features/profile/viewmodels/profile_view_model.dart`
+- `lib/features/search/view/search_screen.dart`
+- `lib/features/search/view/widgets/search_result_profile_card.dart`
+- `lib/features/saved/view/saved_tasks_screen.dart`
+- `lib/features/favorites/view/widgets/favorite_card.dart`
+- `lib/features/wallet/view/wallet_screen.dart`
+- `lib/features/wallet/view/widgets/wallet_hero_card.dart`
+- `lib/features/wallet/view/widgets/wallet_snapshot_card.dart`
+- `.cursor/Agents/Architect.md`
+- `.cursor/Agents/Executor.md`
+- `.cursor/Agents/Observability.md`
+- `.cursor/Agents/Orchestrator.md`
+- `.cursor/Agents/Pixel.md`
+- `.cursor/Agents/Sentinel.md`
+
+### Verification
+- `flutter gen-l10n`: passed.
+- `dart format` on changed Dart files: passed, 68 files checked, 0 changed.
+- `git diff --check`: passed.
+- `flutter analyze --no-fatal-infos`: passed.
+- Focused Step 6 regression suite: passed, 47 tests.
+- Full suite: `flutter test`: passed, 1523 passed, 30 skipped.
+
+### Open Release Gate
+- Final iOS Simulator visual parity remains open. The current checklist is `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4_Step6.md`; update `.TODO/VisualQA_OpenDesign_AmberDusk_Phases2_3_4_iOSSimulator_2026-05-12/REPORT.md` after the manual device pass.
 
 ---
 

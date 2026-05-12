@@ -36,6 +36,9 @@ class AppDimens {
   /// Header height for booking skeleton cards.
   static const double bookingHeaderHeight = p80 + p10;
 
+  /// Hairline divider for dense timeline and ledger rows.
+  static const double hairlineDivider = 0.5;
+
   // --- Border Radii ---
   static const double r4 = 4.0;
   static const double r8 = 8.0;

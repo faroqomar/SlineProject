@@ -112,6 +112,14 @@ If anything mismatches:
 - Error handling must follow approved project patterns such as `ErrorMapper` or typed domain wrappers
 - No raw backend internals should leak to the view layer
 
+### 3.2.1 View Contract Inference Rule
+
+Views must not invent model contracts by inferring semantic state from unrelated fields. If a UI mode needs request/response direction, presence, rating, status, payment action, package details, or review state, use an explicit model/ViewModel field or request one from the owning layer. If the contract does not exist yet, keep the control visual-only with a code comment and test that it does not hide valid data, or remove the control until the contract exists.
+
+Temporary UI metadata keys are allowed only behind a model/helper constant or typed mapper. Do not repeat sentinel strings such as `__details` across view widgets.
+
+Evidence: Open Design Amber Dusk Phases 2-4 Step 6 — Orchestrator review found Messages mode inferred request/response direction from `lastMessageSenderId`, hiding valid conversations, and create/card package details used scattered raw `__details` map access. Both were fixed by removing unsafe filtering and centralizing metadata access on `Task`.
+
 ### 3.2.2 Error Message Sanitization (Explicit Rule)
 
 NEVER pass `e.toString()`, `e.message`, or `error.toString()` to SnackBars, dialogs, or any user-visible UI. ALWAYS use `ErrorMapper.map(e)` from `lib/core/utils/error_mapper.dart`. This applies in:
@@ -123,7 +131,7 @@ The ONLY exception is logging via `AppLogger` (which is developer-facing, not us
 
 Evidence: Phase E — 6 raw exception text leaks found across ViewModels and views (`DirectOfferDetailsVM`, `BookingVM`, `work_tab.dart`, `next_actions_list.dart`, `work_item_details_screen.dart`). Each exposed SQL table names or raw Supabase error text to users.
 
-### 3.2.1 Error vs Exception Handling (Dart-Specific)
+### 3.2.3 Error vs Exception Handling (Dart-Specific)
 
 In Dart, `Error` and `Exception` are separate hierarchies under `Object`:
 - `Exception` = recoverable runtime errors (network, auth, validation, Supabase queries)

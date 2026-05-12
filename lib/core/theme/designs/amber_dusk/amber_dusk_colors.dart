@@ -234,6 +234,9 @@ final class AmberDuskColorTokens {
   /// Secondary cream text color from the default dark scheme.
   Color get textSubtle => dark.textSubtle;
 
+  /// Inverse text color from the default dark scheme.
+  Color get textInverse => dark.textInverse;
+
   /// First structural background color from the default dark scheme.
   Color get background => dark.background;
 
@@ -279,6 +282,9 @@ final class AmberDuskColorTokens {
   /// Hero rim color from the default dark scheme.
   Color get heroRim => dark.heroRim;
 
+  /// Dark scrim used for authored hero overlays.
+  Color get scrim => dark.scrim;
+
   /// Forest accent alias used by status and badge recipes.
   Color get forest => dark.forest;
 
@@ -314,6 +320,12 @@ final class AmberDuskColorTokens {
 
   /// Active state glow tint from the default dark scheme.
   Color get activeGlow => dark.activeGlow;
+
+  /// Transparent token used by borderless Amber Dusk controls.
+  Color get transparent => AmberDuskColors.transparent;
+
+  /// Dark text token used on light hero/action fills.
+  Color get textDark => AmberDuskColors.textDark;
 }
 
 /// A semantic Amber Dusk color mapping for one brightness mode.

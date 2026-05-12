@@ -12,6 +12,7 @@ import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_states.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/web_url_utils_stub.dart'
     if (dart.library.html) 'package:sline_app/core/utils/web_url_utils_web.dart'
     as web_url_utils;
@@ -23,6 +24,19 @@ import 'package:sline_app/features/dashboard/view/tabs/work_tab.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 import 'package:sline_app/features/direct_offers/services/direct_offers_service.dart';
 
+/// Single source of dashboard tab labels for both TabBar and header copy.
+const List<String> _dashboardTabLabels = [
+  'Overview',
+  'Bookings',
+  'Work',
+  'Wallet',
+  'Inbox',
+];
+
+/// Phone dashboard shell for overview, bookings, work, wallet, and inbox.
+///
+/// The shell owns only tab presentation and recovery wiring; data loading and
+/// role state remain in [DashboardViewModel] so lazy loading stays centralized.
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key, this.tabViews});
 
@@ -228,91 +242,131 @@ class _DashboardContentState extends State<_DashboardContent>
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<DashboardViewModel>();
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
+    final tabTheme = AmberDuskTokens.widgetTheme.tabs;
+    const spacing = AmberDuskTokens.spacing;
+    const typography = AmberDuskTokens.typography;
 
     // Sync controller with VM state
     if (_tabController.index != vm.currentTab.index) {
       _tabController.animateTo(vm.currentTab.index);
     }
 
-    // Minimal top bar — clean text tabs, no containers, no pills,
-    // no decoration noise. Just typography and a thin underline.
-    final scaffold = Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Dashboard',
-          style: AppTypography.h4.copyWith(color: colorScheme.text),
-        ),
-        backgroundColor: colorScheme.background,
-        centerTitle: false,
-        elevation: 0,
-        actions: [
-          IconButton(
-            tooltip: 'Dashboard settings',
-            icon: Icon(
-              key: DashboardScreen.settingsButtonKey,
-              Icons.settings_outlined,
-              color: colorScheme.textSecondary,
-            ),
-            onPressed: () => _showSettings(context, vm),
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(AppDimens.p40),
-          child: Semantics(
-            label: 'Dashboard tabs',
-            child: TabBar(
-              controller: _tabController,
-              isScrollable: false,
-              // Thin 2px underline — minimal, not a pill or box
-              indicatorWeight: 2,
-              indicatorColor: colorScheme.primary,
-              indicatorSize: TabBarIndicatorSize.label,
-              // Active: primary colored text, bold
-              labelColor: colorScheme.primary,
-              labelStyle: AppTypography.captionBold,
-              // Inactive: muted text
-              unselectedLabelColor: colorScheme.textTertiary,
-              unselectedLabelStyle: AppTypography.caption,
-              dividerColor: colorScheme.divider,
-              labelPadding: const EdgeInsets.symmetric(
-                horizontal: AppDimens.p8,
+    return Scaffold(
+      backgroundColor: amber.page,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                spacing.contentHorizontalPadding,
+                spacing.md,
+                spacing.contentHorizontalPadding,
+                spacing.sm,
               ),
-              onTap: vm.setTab,
-              tabs: const [
-                Tab(text: 'Overview'),
-                Tab(text: 'Bookings'),
-                Tab(text: 'Work'),
-                Tab(text: 'Wallet'),
-                Tab(text: 'Inbox'),
-              ],
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Semantics(
+                      header: true,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _dashboardTabLabel(vm.currentTab).toUpperCase(),
+                            style: typography.chip.copyWith(
+                              color: amber.muted,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: AppDimens.p4),
+                          Text(
+                            'Dashboard',
+                            style: typography.screenTitle.copyWith(
+                              color: amber.text,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Dashboard settings',
+                    icon: Icon(
+                      key: DashboardScreen.settingsButtonKey,
+                      Icons.settings_outlined,
+                      color: amber.textSubtle,
+                    ),
+                    onPressed: () => _showSettings(context, vm),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ),
-      ),
-      body: Padding(
-        // Padding to avoid overlap with Main Bottom Nav Bar
-        padding: const EdgeInsets.only(
-          bottom: AppLayout.bottomNavHeight + AppLayout.spacingStandard,
-        ),
-        child: TabBarView(
-          controller: _tabController,
-          physics:
-              const NeverScrollableScrollPhysics(), // Disable swipe to avoid conflict with internal tabs
-          children:
-              widget.tabViews ??
-              const [
-                OverviewTab(),
-                BookingsTab(),
-                WorkTab(),
-                WalletTab(),
-                InboxTab(),
-              ],
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: spacing.contentHorizontalPadding,
+              ),
+              child: Semantics(
+                label: 'Dashboard tabs',
+                child: TabBar(
+                  controller: _tabController,
+                  // Keep scrollable for narrow/localized phone widths where
+                  // the five labels would otherwise compress below touch size.
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.start,
+                  indicator: BoxDecoration(
+                    color: amber.activeGlow,
+                    borderRadius: BorderRadius.circular(
+                      spacing.compactControlRadius,
+                    ),
+                  ),
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  labelColor: tabTheme.activeLabelColor,
+                  labelStyle: tabTheme.labelStyle,
+                  unselectedLabelColor: tabTheme.inactiveLabelColor,
+                  unselectedLabelStyle: tabTheme.inactiveLabelStyle,
+                  dividerColor: AmberDuskColors.transparent,
+                  labelPadding: EdgeInsets.symmetric(horizontal: spacing.md),
+                  onTap: vm.setTab,
+                  tabs: _dashboardTabLabels
+                      .map((label) => Tab(text: label))
+                      .toList(growable: false),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppDimens.p8),
+            Expanded(
+              child: Padding(
+                // Padding avoids overlap with the app-level bottom nav.
+                padding: const EdgeInsets.only(
+                  bottom: AppLayout.tabViewBottomPadding,
+                ),
+                child: TabBarView(
+                  controller: _tabController,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children:
+                      widget.tabViews ??
+                      const [
+                        OverviewTab(),
+                        BookingsTab(),
+                        WorkTab(),
+                        WalletTab(),
+                        InboxTab(),
+                      ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
-    return scaffold;
   }
+
+  /// Returns the visible section label for the active dashboard tab.
+  String _dashboardTabLabel(DashboardTab tab) => _dashboardTabLabels[tab.index];
 }
 
 class _RoleSwitch extends StatelessWidget {
@@ -390,7 +444,7 @@ class _RoleButton extends StatelessWidget {
             vertical: AppDimens.p6,
           ),
           decoration: BoxDecoration(
-            color: isActive ? colorScheme.primary : Colors.transparent,
+            color: isActive ? colorScheme.primary : AmberDuskColors.transparent,
             borderRadius: BorderRadius.circular(AppDimens.r16),
           ),
           child: Text(

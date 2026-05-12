@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:sline_app/app/main_navigation_screen.dart';
 import 'package:sline_app/core/navigation/main_nav_destinations.dart';
 import 'package:sline_app/core/providers/navigation_provider.dart';
-import 'package:sline_app/core/theme/app_layout.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 
 import '../../test_support/pump_app.dart';
 
@@ -212,8 +212,65 @@ void main() {
         matching: find.byType(Positioned),
       );
       final positioned = tester.widget<Positioned>(positionedFinder);
+      final expectedOffset =
+          AmberDuskTokens.phoneLayout.bottomNavBottom +
+          AmberDuskTokens.phoneLayout.bottomNavHeight +
+          AmberDuskTokens.spacing.sm;
 
-      expect(positioned.bottom, AppLayout.fabBottomOffset + bottomSystemInset);
+      expect(positioned.bottom, expectedOffset + bottomSystemInset);
+    });
+
+    testWidgets('T57 FAB is owned by Home and absent on other tabs', (
+      tester,
+    ) async {
+      final navigationProvider = NavigationProvider();
+
+      await pumpApp(
+        tester,
+        ChangeNotifierProvider<NavigationProvider>.value(
+          value: navigationProvider,
+          child: MainNavigationScreen(screens: _stubScreens()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(MainNavigationScreen.createTaskFabKey), findsOneWidget);
+
+      for (final destination in [
+        MainNavDestinations.dashboard,
+        MainNavDestinations.messages,
+        MainNavDestinations.profile,
+      ]) {
+        navigationProvider.setCurrentIndex(destination);
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(MainNavigationScreen.createTaskFabKey), findsNothing);
+      }
+    });
+
+    testWidgets('T58 FAB uses Amber Dusk action tokens', (tester) async {
+      await pumpApp(
+        tester,
+        ChangeNotifierProvider(
+          create: (_) => NavigationProvider(),
+          child: MainNavigationScreen(screens: _stubScreens()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final fab = tester.widget<Container>(
+        find.byKey(MainNavigationScreen.createTaskFabKey),
+      );
+      final decoration = fab.decoration;
+      expect(decoration, isA<BoxDecoration>());
+      if (decoration is! BoxDecoration) return;
+      final box = decoration;
+
+      expect(box.color, AmberDuskTokens.colors.primary);
+      expect(
+        box.borderRadius,
+        BorderRadius.circular(AmberDuskTokens.phoneLayout.fabRadius),
+      );
     });
   });
 }

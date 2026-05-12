@@ -35,6 +35,23 @@ abstract final class AmberDuskWidgetTheme {
   /// Default panel-card elevation level for Flutter shadow recipes.
   static const int panelCardElevationLevel = 1;
 
+  /// Task card top fill after applying the authored white overlay to bg2.
+  static const Color taskCardTopFill = Color(0xFF28231E);
+
+  /// Task card bottom fill after applying the authored dark overlay to bg2.
+  static const Color taskCardBottomFill = Color(0xFF241F1A);
+
+  /// Subtle task price and tag surface from `.price-pill` evidence.
+  static const Color taskPillSurface = Color.fromRGBO(255, 255, 255, 0.035);
+
+  /// Circular booking action surface from `.round-action` evidence.
+  static const Color bookingRoundActionSurface = Color.fromRGBO(
+    255,
+    255,
+    255,
+    0.055,
+  );
+
   /// Low-opacity action surface from `.ghost-action` and `.danger-action`.
   static const Color quietActionSurface = Color.fromRGBO(255, 255, 255, 0.045);
 
@@ -457,6 +474,155 @@ final class AmberDuskCardThemeTokens {
 
   /// Shared border width remains zero because OD cards are borderless.
   double get borderWidth => AmberDuskSpacing.borderWidth;
+
+  /// Task-card gradient from `.task-card` Open Design evidence.
+  List<Color> get taskGradientStops => const <Color>[
+    AmberDuskWidgetTheme.taskCardTopFill,
+    AmberDuskWidgetTheme.taskCardBottomFill,
+  ];
+
+  /// Task-card padding from Open Design evidence.
+  EdgeInsets get taskPadding => const EdgeInsets.fromLTRB(15, 13, 15, 14);
+
+  /// Booking-card padding from Open Design evidence.
+  EdgeInsets get bookingPadding => const EdgeInsets.fromLTRB(19, 17, 19, 18);
+
+  /// Task-card avatar size from Open Design evidence.
+  double get taskAvatarSize => 46;
+
+  /// Booking-card photo size from Open Design evidence.
+  double get bookingPhotoSize => 54;
+
+  /// Circular action size used on booking cards.
+  double get bookingRoundActionSize => 40;
+
+  /// Circular booking action icon size from `.round-action svg`.
+  double get bookingRoundActionIconSize => 14;
+
+  /// Booking metadata chip icon size from `.booking-chip svg`.
+  double get bookingChipIconSize => 11;
+
+  /// Booking metadata chip inner gap from `.booking-chip`.
+  double get bookingChipGap => 5;
+
+  /// Gap between circular booking actions from `.booking-actions`.
+  double get bookingActionGap => 6;
+
+  /// Booking CTA icon size from `.booking-cta svg`.
+  double get bookingCtaIconSize => 13;
+
+  /// Shared card CTA height from `.outline-action` and `.booking-cta`.
+  double get cardActionHeight => 42;
+
+  /// Task vertical rhythm between title/content groups from `.task-title`.
+  double get taskSectionSpacing => 13;
+
+  /// Gap below the provider photo row in the booking hero card.
+  double get bookingTopSpacing => 14;
+
+  /// Gap between provider name and role in the booking hero card.
+  double get bookingNameGap => 5;
+
+  /// Gap below the booking divider before the price/action row.
+  double get bookingDividerBottomSpacing => 13;
+
+  /// Task price pill radius from `.price-pill`.
+  double get taskPriceRadius => 13;
+
+  /// Inline icon/text gap used by task tags and price suffixes.
+  double get taskInlineGap => 5;
+
+  /// Task tag and price pill fill from Open Design evidence.
+  Color get taskPillFill => AmberDuskWidgetTheme.taskPillSurface;
+
+  /// Booking circular action fill from Open Design evidence.
+  Color get bookingRoundActionFill =>
+      AmberDuskWidgetTheme.bookingRoundActionSurface;
+
+  /// Task price pill padding from Open Design evidence.
+  EdgeInsets get taskPricePadding =>
+      const EdgeInsets.symmetric(horizontal: 10, vertical: 7);
+
+  /// Task metadata tag padding from Open Design evidence.
+  EdgeInsets get taskTagPadding =>
+      const EdgeInsets.symmetric(horizontal: 9, vertical: 5);
+
+  /// Booking metadata chip padding from Open Design evidence.
+  EdgeInsets get bookingChipPadding =>
+      const EdgeInsets.symmetric(horizontal: 10, vertical: 5);
+
+  /// Booking CTA horizontal padding from Open Design evidence.
+  EdgeInsets get bookingActionPadding =>
+      const EdgeInsets.symmetric(horizontal: 15);
+
+  /// Task title typography from `.task-title`.
+  TextStyle get taskTitleStyle => AmberDuskTypography.sectionTitle.copyWith(
+    fontSize: 16.5,
+    fontWeight: FontWeight.w800,
+    height: 1.23,
+  );
+
+  /// Task copy typography from `.task-copy`.
+  TextStyle get taskCopyStyle =>
+      AmberDuskTypography.bodySmall.copyWith(fontSize: 12.5, height: 1.4);
+
+  /// Task author typography from `.person strong`.
+  TextStyle get taskAuthorStyle =>
+      AmberDuskTypography.chip.copyWith(fontSize: 13.5);
+
+  /// Task chip typography from `.tag`.
+  TextStyle get taskChipStyle => AmberDuskTypography.chip.copyWith(
+    fontSize: 11.5,
+    fontWeight: FontWeight.w700,
+  );
+
+  /// Task price typography from `.price-pill`.
+  TextStyle get taskPriceStyle => AmberDuskTypography.control.copyWith(
+    fontSize: 14.5,
+    fontWeight: FontWeight.w800,
+  );
+
+  /// Task CTA typography from `.outline-action`.
+  TextStyle get taskActionStyle => AmberDuskTypography.control.copyWith(
+    fontSize: 12.5,
+    fontWeight: FontWeight.w800,
+  );
+
+  /// Booking provider name typography from `.booking-name`.
+  TextStyle get bookingNameStyle =>
+      AmberDuskTypography.bookingName.copyWith(letterSpacing: 0);
+
+  /// Booking role typography from `.booking-role`.
+  TextStyle get bookingRoleStyle => AmberDuskTypography.chip.copyWith(
+    fontSize: 11,
+    fontWeight: FontWeight.w500,
+    height: 1.2,
+  );
+
+  /// Booking chip typography from `.booking-chip`.
+  TextStyle get bookingChipStyle => AmberDuskTypography.chip.copyWith(
+    fontSize: 11.5,
+    fontWeight: FontWeight.w600,
+  );
+
+  /// Booking price typography from `.booking-price span`.
+  TextStyle get bookingPriceStyle => AmberDuskTypography.bookingName.copyWith(
+    fontSize: 25,
+    fontWeight: FontWeight.w700,
+    height: 1,
+  );
+
+  /// Booking period typography from `.booking-period`.
+  TextStyle get bookingPeriodStyle => AmberDuskTypography.chip.copyWith(
+    fontSize: 11,
+    fontWeight: FontWeight.w500,
+  );
+
+  /// Card CTA typography shared by booking and task actions.
+  TextStyle get cardActionStyle => AmberDuskTypography.control.copyWith(
+    fontSize: 13,
+    fontWeight: FontWeight.w700,
+  );
 }
 
 /// Visual recipe for one Amber Dusk card surface.

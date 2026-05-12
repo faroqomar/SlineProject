@@ -295,6 +295,7 @@ The Master Report MUST include:
 - Final decision
 - Plan reference
 - Session log reference
+- Any post-plan scope amendments accepted during review
 
 ## B) Consolidated Findings
 
@@ -353,6 +354,7 @@ For each step:
 - SQL / policy evidence summary
 - Manual QA summary
 - What still lacks evidence
+- For UI phases, visual evidence status: design-reference screenshots, current-app runtime screenshots, missing states, and any open emulator/device gate
 
 ## G) Phase Definition Of Done — Compliance
 
@@ -387,6 +389,8 @@ For each step:
 - Always read the plan and session log before merging findings if they exist.
 - Always deduplicate findings; one root cause should not appear as five separate items.
 - If two agents disagree, preserve the disagreement explicitly in the Master Report.
+- If the human supplies findings after the plan/session scope was locked, treat them as explicit scope amendments only when the request clearly names files or issues; include them in the Master Report instead of silently reverting or silently calling them out of scope.
+- For UI work, never let green analyzer/tests imply visual completion. The Master Report must say whether runtime visual QA is complete, open, superseded by current-app screenshots, or blocked by missing fixture/device evidence.
 - Always end with `Next Actions`.
 
 ---

@@ -1,13 +1,28 @@
 # SLine Code Review & Improvement Report
 
-**Date**: December 14, 2025 (Updated)
+**Date**: 2026-05-12 (Updated)
 **Reviewed By**: CodeGuard + Architect + Sentinel Agents
 **Previous Score**: 9/10
 **Current Score**: 9.7/10
 
 > Historical review note: this document records review findings and fixes from earlier passes. Treat references to removed files or older structure as historical context; the current live structure is documented in `Sline_everything/STRUCTURE.md` and `Sline_everything/DEVELOPER_GUIDE.md`.
 
-## Current Guardrail Notes (2026-05-11)
+## Current Guardrail Notes (2026-05-12)
+
+### Amber Dusk Phases 2-4 Phone Surface Review Rule (2026-05-12)
+
+**Pattern**: Amber Dusk Phases 2-4 are scoped runtime view work for phone shell, Home discovery, create flow, dashboard, wallet/dashboard cards, and selected secondary surfaces. They are not Supabase, repository, or global `MaterialApp` theme activation work.
+
+**Rule**:
+1. Exact visual matching is allowed only for screens/states with Open Design MCP or user-provided screenshot evidence. Missing states are token-normalization, accessibility, and behavior hardening only.
+2. Keep Dashboard, booking, offer, wallet, and task card actions wired through existing ViewModel/service contracts. Views may adjust labels, disabled states, semantics, and tokens; they must not invent business transitions.
+3. Do not infer model contracts from unrelated fields. If direction, presence, rating, package details, or review state is not modeled, request an explicit model/ViewModel contract or keep the UI visual-only with tests proving valid data is not hidden.
+4. Custom gesture controls must expose button/selected semantics and use `HitTestBehavior.opaque` when transparent space is intended to be tappable.
+5. Review-fix tests must exercise runtime behavior directly. Static token assertions do not prove filtering, action enablement, callback routing, visible label changes, or accessibility semantics.
+6. Keep routine view-layer logs privacy-safe. Do not add raw task, booking, offer, conversation, or user IDs to tap/render logs.
+7. Green analyzer/tests do not close visual QA. The Master Report must state whether emulator/runtime visual parity is complete or open.
+
+**Evidence**: Open Design Amber Dusk Phases 2-4 Step 6 fixed analyzer/test blockers, unsafe Messages mode filtering, scattered `Task` package-detail metadata access, missing Inbox/Dashboard action tests, custom gesture semantics, no-op DashboardOfferCard semantics, raw migrated visuals, and raw IDs in UI logs. Runtime visual parity remains gated by `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4_Step6.md`.
 
 ### Amber Dusk Staged Token Layer Review Rule (2026-05-11)
 
@@ -34,7 +49,7 @@
 
 **Evidence**: Open Design Amber Dusk Phase 1 (2026-05-11) activated buttons, fields, icon buttons, cards, bottom nav, tabs, status badges, skeletons, and signed-media placeholders through the shared-widget adapter while leaving global `MaterialApp` theme wiring and Supabase behavior unchanged.
 
-### SystemEvolution Merge Runs (2026-05-11)
+### SystemEvolution Merge Runs (2026-05-12)
 
 **Pattern**: When the human explicitly requests a SystemEvolution merge, the report is written first, then only deduped, evidence-backed rules are applied to the owning `.cursor/Agents/*.md` files.
 
@@ -44,7 +59,7 @@
 3. Prefer narrow agent-owner edits over broad rewrites.
 4. Record the merged files and evidence index in `docs/LOG/SYSTEM_EVOLUTION_REPORT_<date>.md`.
 
-**Evidence**: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-11.md` now records both the earlier token/provenance merge and the later Phase 1 merge for visual-evidence classification, route/device screenshot hash sanity, human-only platform release gates, and stale CI/platform fact verification.
+**Evidence**: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-11.md` records the token/provenance and Phase 1 visual-evidence merge. `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-12.md` records the Step 7 merge for scope amendments, no invented model contracts in views, custom gesture semantics, privacy-safe view logs, behavior-level review tests, and explicit visual QA status in Master Reports.
 
 ### Coverage Artifact Hygiene (2026-05-11)
 

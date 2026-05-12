@@ -53,6 +53,8 @@ void main() {
       expect(viewModel.fullName, 'Ada Lovelace');
       expect(viewModel.avatarUrl, 'https://signed/avatar.png');
       expect(viewModel.skills, <String>['Flutter']);
+      expect(viewModel.badges, <String>['LEVEL_2', 'AVAILABLE']);
+      expect(viewModel.rating, isNull);
       verify(() => repository.fetchProfileSummary('user-1')).called(1);
       verify(() => repository.getAvatarPath('user-1')).called(1);
       verifyNever(() => repository.getPortfolioItems(any()));

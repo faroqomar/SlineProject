@@ -2,10 +2,16 @@
 /// Why: Centralizes IQD display rules: K-abbreviation for large amounts, full value for small, currency at end.
 /// Single source of truth for all money display across wallet, tasks, booking, work, services, management.
 class PriceFormatter {
+  /// Default app currency while payment and wallet services are IQD-only.
+  static const String defaultCurrency = 'IQD';
+
   /// Format amount in IQD for display.
   /// - Small (< 1,000): full value, e.g. "950 IQD"
   /// - Large (>= 1,000): abbreviated with K, no decimal K, e.g. "75K IQD", "12K IQD"
-  static String formatPrice(double amountIqd, {String suffix = 'IQD'}) {
+  static String formatPrice(
+    double amountIqd, {
+    String suffix = defaultCurrency,
+  }) {
     final abs = amountIqd.abs();
     final rounded = amountIqd.round();
     if (abs < 1000) {
@@ -20,7 +26,7 @@ class PriceFormatter {
   static String formatPriceRange(
     double minPrice,
     double maxPrice, {
-    String suffix = 'IQD',
+    String suffix = defaultCurrency,
   }) {
     return '${formatPrice(minPrice, suffix: suffix)} - ${formatPrice(maxPrice, suffix: suffix)}';
   }

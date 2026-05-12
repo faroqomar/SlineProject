@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/deep_link_service.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_states.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/widgets/skeleton_loader.dart';
 import 'package:sline_app/features/dashboard/models/activity_log.dart';
@@ -17,10 +16,8 @@ import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dar
 /// Activity feed preview with enhanced timeline visual, stagger entrance,
 /// skeleton loading, and full Semantics coverage.
 ///
-/// Phase 5 redesign: replaced CircularProgressIndicator with skeleton list,
-/// replaced hardcoded spacing/icon sizes with tokens, added type-colored
-/// timeline dots, stagger entrance animation, and accessibility labels.
-/// View-layer only.
+/// View-layer only: activity data and deep-link handling stay in the existing
+/// DashboardViewModel and DeepLinkService.
 class ActivityFeedPreview extends StatefulWidget {
   final int? limit;
 
@@ -98,7 +95,7 @@ class _ActivityFeedPreviewState extends State<ActivityFeedPreview>
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<DashboardViewModel>();
-    final colorScheme = context.colorScheme;
+    final amber = context.amberColors;
     var activities = vm.activityFeed;
 
     if (widget.limit != null && activities.length > widget.limit!) {
@@ -107,12 +104,12 @@ class _ActivityFeedPreviewState extends State<ActivityFeedPreview>
 
     // Skeleton loading state
     if (vm.isLoading && activities.isEmpty) {
-      return _buildSkeletonList(colorScheme);
+      return _buildSkeletonList(amber);
     }
 
     // Enhanced empty state
     if (activities.isEmpty) {
-      return _buildEmptyState(colorScheme);
+      return _buildEmptyState(amber);
     }
 
     // Build a flat display list interleaving group headers with activity items.
@@ -149,9 +146,7 @@ class _ActivityFeedPreviewState extends State<ActivityFeedPreview>
                 label: '${entry.headerLabel} activities',
                 child: Text(
                   entry.headerLabel!,
-                  style: AppTypography.captionBold.copyWith(
-                    color: colorScheme.textTertiary,
-                  ),
+                  style: AppTypography.captionBold.copyWith(color: amber.muted),
                 ),
               ),
             );
@@ -180,7 +175,7 @@ class _ActivityFeedPreviewState extends State<ActivityFeedPreview>
   }
 
   /// Skeleton loading — 3 placeholder timeline rows.
-  Widget _buildSkeletonList(AppColorScheme colorScheme) {
+  Widget _buildSkeletonList(AmberDuskColorScheme colors) {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -194,7 +189,7 @@ class _ActivityFeedPreviewState extends State<ActivityFeedPreview>
               children: [
                 const SkeletonLoader(width: 36, height: 36, isCircle: true),
                 if (index < 2)
-                  Container(width: 1, height: 32, color: colorScheme.divider),
+                  Container(width: 1, height: 32, color: colors.heroDivider),
               ],
             ),
             const SizedBox(width: AppDimens.p12),
@@ -276,7 +271,7 @@ class _ActivityFeedPreviewState extends State<ActivityFeedPreview>
   }
 
   /// Enhanced empty state with icon and descriptive text.
-  Widget _buildEmptyState(AppColorScheme colorScheme) {
+  Widget _buildEmptyState(AmberDuskColorScheme colors) {
     return Padding(
       padding: const EdgeInsets.all(AppDimens.p16),
       child: Semantics(
@@ -287,13 +282,13 @@ class _ActivityFeedPreviewState extends State<ActivityFeedPreview>
               Icon(
                 Icons.history_rounded,
                 size: AppLayout.iconFeature,
-                color: colorScheme.textTertiary,
+                color: colors.muted,
               ),
               const SizedBox(height: AppLayout.spacingStandard),
               Text(
                 'No recent activity',
                 style: AppTypography.bodySmall.copyWith(
-                  color: colorScheme.textSecondary,
+                  color: colors.textSubtle,
                 ),
               ),
             ],
@@ -313,8 +308,8 @@ class _ActivityRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final info = _ActivityRow._mapActivityToInfo(item, colorScheme);
+    final amber = context.amberColors;
+    final info = _ActivityRow._mapActivityToInfo(item, amber);
     final deepLinkService = context.read<DeepLinkService>();
 
     return Semantics(
@@ -356,7 +351,7 @@ class _ActivityRow extends StatelessWidget {
                 ),
                 // Vertical connecting line between timeline dots
                 if (!isLast)
-                  Container(width: 1, height: 32, color: colorScheme.divider),
+                  Container(width: 1, height: 32, color: amber.heroDivider),
               ],
             ),
             const SizedBox(width: AppDimens.p12),
@@ -377,14 +372,14 @@ class _ActivityRow extends StatelessWidget {
                             info.title,
                             style: AppTypography.bodySmall.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: colorScheme.text,
+                              color: amber.text,
                             ),
                           ),
                         ),
                         Text(
                           formatFriendlyTime(item.createdAt),
                           style: AppTypography.caption.copyWith(
-                            color: colorScheme.textTertiary,
+                            color: amber.muted,
                           ),
                         ),
                       ],
@@ -393,7 +388,7 @@ class _ActivityRow extends StatelessWidget {
                     Text(
                       info.description,
                       style: AppTypography.caption.copyWith(
-                        color: colorScheme.textSecondary,
+                        color: amber.textSubtle,
                       ),
                     ),
                   ],
@@ -412,20 +407,20 @@ class _ActivityRow extends StatelessWidget {
   /// a pure [ActivityLog] value into display data using the provided scheme.
   static _ActivityInfo _mapActivityToInfo(
     ActivityLog log,
-    AppColorScheme colorScheme,
+    AmberDuskColorScheme colors,
   ) {
     var title = 'Notification';
     var description = 'New activity';
     var icon = Icons.notifications_none;
     // Default to primary; booking = primary, task = info, status = warning
-    var color = colorScheme.primary;
+    var color = colors.primary;
 
     final type = log.eventType;
     final entity = log.entityType;
 
     if (entity == 'booking') {
       icon = Icons.calendar_today;
-      color = colorScheme.primary; // booking → primary
+      color = colors.primary;
       if (type == 'created') {
         title = 'New Booking Request';
         description = 'You have a new booking request.';
@@ -434,19 +429,19 @@ class _ActivityRow extends StatelessWidget {
         final newStatus = log.metadata['new_status'] as String? ?? 'updated';
         title = 'Booking $newStatus';
         description = 'Booking status changed to $newStatus.';
-        color = colorScheme.warning; // status_change → warning
+        color = colors.warning;
         if (newStatus == 'confirmed') icon = Icons.check_circle_outline;
         if (newStatus == 'canceled') icon = Icons.cancel_outlined;
       }
     } else if (entity == 'task') {
       icon = Icons.assignment;
-      color = colorScheme.info; // task → info
+      color = colors.info;
       if (type == 'status_change') {
         // Guard against missing metadata key — fall back to 'updated' string.
         final newStatus = log.metadata['new_status'] as String? ?? 'updated';
         description = 'Task status updated to $newStatus.';
         title = 'Task Update';
-        color = colorScheme.warning; // status_change → warning
+        color = colors.warning;
       }
     }
 

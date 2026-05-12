@@ -30,6 +30,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navWallet => 'Wallet';
 
   @override
+  String get availableBalance => 'AVAILABLE BALANCE';
+
+  @override
+  String get withdraw => 'Withdraw';
+
+  @override
+  String get topUp => 'Top up';
+
+  @override
+  String get createPost => 'Create a post';
+
+  @override
+  String get tenderPostTitle => 'Tender post';
+
+  @override
+  String get tenderPostSubtitle =>
+      'Client request with budget, deadline, and offers.';
+
+  @override
+  String get bookingPostTitle => 'Booking post';
+
+  @override
+  String get bookingPostSubtitle => 'Freelancer service package with price.';
+
+  @override
+  String get roleLabel => 'Role';
+
+  @override
+  String get roleHint => 'e.g., UX designer';
+
+  @override
+  String get seniorityLabel => 'Seniority';
+
+  @override
+  String get seniorityHint => 'e.g., Senior';
+
+  @override
   String get actionLogin => 'Log In';
 
   @override

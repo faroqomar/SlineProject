@@ -11,15 +11,14 @@ import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 
-/// Custom bottom navigation bar with solid surface design.
+/// Custom bottom navigation bar with the Amber Dusk solid surface design.
 ///
-/// ## NO GLASS POLICY (see .impeccable.md)
+/// ## Solid Surface Policy
 ///
-/// All frosted translucent effects have been removed.
-/// The bar now uses the solid Amber Dusk nav surface with elevation shadow.
+/// The bar uses the staged Amber Dusk nav surface with elevation shadow and
+/// keeps the existing four-destination shell contract.
 ///
 /// ## Phase 1 Changes
-/// - Removed all frosted translucent decoration
 /// - Solid surface: Amber Dusk nav surface + elevation Level 3 shadow
 /// - Migrated all animation values to AppMotion tokens
 /// - Added tiny label text below each icon (fades in/out with active state)
@@ -29,8 +28,8 @@ import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 class CustomBottomNavBar extends StatelessWidget {
   const CustomBottomNavBar({
     super.key,
-    this.showMessagesNotification = true,
-    this.messagesNotificationCount = 0,
+    this.showMessagesNotification = false,
+    this.messagesNotificationCount,
   }) : assert(
          messagesNotificationCount == null || messagesNotificationCount >= 0,
          'messagesNotificationCount must be non-negative when provided.',
@@ -225,7 +224,7 @@ class _SolidNavItemState extends State<_SolidNavItem>
       ),
       constraints: const BoxConstraints(minWidth: AppDimens.iconSizeSmall),
       decoration: BoxDecoration(
-        color: AmberDuskTokens.colors.rust,
+        color: AmberDuskColors.rust,
         borderRadius: BorderRadius.circular(AmberDuskTokens.spacing.sm),
       ),
       child: Text(
@@ -266,9 +265,8 @@ class _SolidNavItemState extends State<_SolidNavItem>
                       alignment: Alignment.center,
                       clipBehavior: Clip.none,
                       children: [
-                        // The active capsule uses the exact Amber Dusk nav
-                        // geometry so the icon state does not inherit teal-era
-                        // pill sizing from the previous theme.
+                        // The active capsule uses the Amber Dusk nav geometry
+                        // so the shell stays aligned with the Open Design pack.
                         Transform.scale(
                           scale: widget.isActive ? _pillAnimation.value : 0,
                           child: Container(
@@ -291,15 +289,17 @@ class _SolidNavItemState extends State<_SolidNavItem>
                             widget.isActive
                                 ? widget.item.activeIcon
                                 : widget.item.icon,
-                            size: AppDimens.iconSizeMedium,
+                            size: AmberDuskTokens
+                                .widgetTheme
+                                .iconButtons
+                                .iconSize,
                             color: widget.isActive
                                 ? navTheme.activeForeground
                                 : navTheme.inactiveForeground,
                           ),
                         ),
-                        // Notification badge keeps the existing marker
-                        // behavior while switching the visual role to Amber
-                        // Dusk rust instead of the previous red token.
+                        // Notification badge keeps the existing marker behavior
+                        // while using the Amber Dusk rust status accent.
                         if (widget.item.showsNotification)
                           Positioned(
                             top: 0,

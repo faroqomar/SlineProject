@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/skeleton_loader.dart';
 import 'package:sline_app/features/booking/view/widgets/dashboard_booking_card.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
@@ -13,9 +13,8 @@ import 'package:sline_app/features/work/view/work_item_details_screen.dart';
 /// Bookings tab with skeleton loading, icon-badged section headers,
 /// dimmed past bookings, and enhanced empty state.
 ///
-/// Phase 7 REDESIGN: Section headers get colored icon badges + count pills,
-/// past bookings wrapped in Opacity(0.6) for clear visual hierarchy,
-/// empty state icon in circular container for designed feel.
+/// The tab keeps booking callbacks in [DashboardViewModel] while normalizing
+/// the dashboard list rhythm to Amber Dusk section and surface tokens.
 class BookingsTab extends StatelessWidget {
   const BookingsTab({super.key});
 
@@ -52,20 +51,19 @@ class BookingsTab extends StatelessWidget {
             .where((b) => !upcomingIds.contains(b.id))
             .toList();
 
-        final colorScheme = context.colorScheme;
+        const spacing = AmberDuskTokens.spacing;
 
         return RefreshIndicator(
           onRefresh: () => vm.refresh(),
           child: ListView(
-            padding: const EdgeInsets.all(AppDimens.p16),
+            padding: EdgeInsets.symmetric(
+              horizontal: spacing.contentHorizontalPadding,
+            ),
             children: [
               if (upcoming.isNotEmpty) ...[
-                // Phase 7: icon-badged header with count pill
                 _BookingSectionHeader(
                   title: 'Upcoming',
                   count: upcoming.length,
-                  icon: Icons.calendar_month_rounded,
-                  iconColor: colorScheme.primary,
                 ),
                 ...upcoming.map(
                   (b) => DashboardBookingCard(
@@ -87,18 +85,11 @@ class BookingsTab extends StatelessWidget {
                     onUpdateStatus: vm.updateBookingStatus,
                   ),
                 ),
-                const SizedBox(height: AppLayout.spacingScreen),
+                SizedBox(height: spacing.xl),
               ],
 
               if (past.isNotEmpty) ...[
-                // Phase 7: muted header for past section
-                _BookingSectionHeader(
-                  title: 'Past',
-                  count: past.length,
-                  icon: Icons.history_rounded,
-                  iconColor: colorScheme.textTertiary,
-                ),
-                // Phase 7: dimmed past bookings — clearly secondary
+                _BookingSectionHeader(title: 'Past', count: past.length),
                 ...past.map(
                   (b) => Opacity(
                     opacity: 0.6,
@@ -132,8 +123,13 @@ class BookingsTab extends StatelessWidget {
 
   /// Skeleton loading — 4 placeholder booking cards.
   Widget _buildSkeletonList() {
+    const spacing = AmberDuskTokens.spacing;
+
     return ListView.separated(
-      padding: const EdgeInsets.all(AppDimens.p16),
+      padding: EdgeInsets.symmetric(
+        horizontal: spacing.contentHorizontalPadding,
+        vertical: AppDimens.p16,
+      ),
       itemCount: 4,
       separatorBuilder: (_, __) => const SizedBox(height: AppDimens.p12),
       itemBuilder: (_, __) => const _SkeletonBookingCard(),
@@ -142,10 +138,8 @@ class BookingsTab extends StatelessWidget {
 
   /// Enhanced empty state with circular icon container.
   ///
-  /// Phase 7 REDESIGN: Icon wrapped in primary-tinted circle (80px) for
-  /// designed feel instead of a naked floating icon.
   Widget _buildEmptyState(BuildContext context, DashboardViewModel vm) {
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
 
     return RefreshIndicator(
       onRefresh: () => vm.refresh(),
@@ -165,28 +159,24 @@ class BookingsTab extends StatelessWidget {
                     width: AppDimens.emptyStateIconContainer,
                     height: AppDimens.emptyStateIconContainer,
                     decoration: BoxDecoration(
-                      color: colorScheme.primary.withValues(alpha: 0.08),
+                      color: amber.activeGlow,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       Icons.calendar_today,
                       size: AppDimens.emptyStateIconSize,
-                      color: colorScheme.textSecondary,
+                      color: amber.textSubtle,
                     ),
                   ),
                   const SizedBox(height: AppLayout.spacingSection),
                   Text(
                     'No bookings yet',
-                    style: AppTypography.h5.copyWith(
-                      color: colorScheme.textSecondary,
-                    ),
+                    style: AppTypography.h5.copyWith(color: amber.textSubtle),
                   ),
                   const SizedBox(height: AppLayout.spacingStandard),
                   Text(
                     'Discover services to book',
-                    style: AppTypography.bodySmall.copyWith(
-                      color: colorScheme.textTertiary,
-                    ),
+                    style: AppTypography.bodySmall.copyWith(color: amber.muted),
                   ),
                 ],
               ),
@@ -198,76 +188,50 @@ class BookingsTab extends StatelessWidget {
   }
 }
 
-/// Icon-badged section header with count pill.
+/// Compact booking section header with count suffix.
 ///
-/// Phase 7 REDESIGN: Colored icon in rounded container + title + count badge.
-/// Matches OverviewTab _SectionCard pattern for visual consistency.
+/// Open Design uses uppercase dashboard section labels rather than large card
+/// headers, so the count stays in-line to avoid adding another surface.
 class _BookingSectionHeader extends StatelessWidget {
   final String title;
   final int count;
-  final IconData icon;
-  final Color iconColor;
 
-  const _BookingSectionHeader({
-    required this.title,
-    required this.count,
-    required this.icon,
-    required this.iconColor,
-  });
+  const _BookingSectionHeader({required this.title, required this.count});
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
+    const typography = AmberDuskTokens.typography;
 
     return Semantics(
       header: true,
       label: '$title bookings: $count',
       excludeSemantics: true,
       child: Padding(
-        padding: const EdgeInsets.only(
-          bottom: AppDimens.p12,
-          left: AppDimens.p4,
-        ),
+        padding: const EdgeInsets.only(bottom: AppDimens.p12),
         child: Row(
           children: [
-            // Icon badge
-            Container(
-              padding: const EdgeInsets.all(AppDimens.p6),
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(AppDimens.r8),
-              ),
-              child: Icon(
-                icon,
-                size: AppDimens.iconSizeSmall,
-                color: iconColor,
-              ),
-            ),
-            const SizedBox(width: AppDimens.p8),
             Text(
-              title,
-              style: AppTypography.h3.copyWith(color: colorScheme.text),
+              _uppercaseForLocale(context, title),
+              style: typography.chip.copyWith(
+                color: amber.text,
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(width: AppDimens.p8),
-            // Count pill
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimens.p8,
-                vertical: AppDimens.p2,
-              ),
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(AppDimens.r12),
-              ),
-              child: Text(
-                '$count',
-                style: AppTypography.captionBold.copyWith(color: iconColor),
-              ),
-            ),
+            Text('$count', style: typography.chip.copyWith(color: amber.muted)),
           ],
         ),
       ),
     );
+  }
+
+  String _uppercaseForLocale(BuildContext context, String value) {
+    final locale = Localizations.localeOf(context).languageCode.toLowerCase();
+    if (locale == 'tr' || locale == 'az') {
+      return value.replaceAll('i', 'İ').replaceAll('ı', 'I').toUpperCase();
+    }
+    return value.toUpperCase();
   }
 }
 

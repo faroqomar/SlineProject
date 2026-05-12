@@ -1,63 +1,42 @@
 import 'package:flutter/material.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_colors.dart' show AppColorScheme;
+import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/features/categories/models/category_model.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:sline_app/features/tasks/view/create_task_screen.dart';
+import 'package:sline_app/l10n/app_localizations.dart';
 
-/// Step 1 of Create Task: task type selection and category picker.
+/// Step 1 of Create Task: task type selection.
 ///
-/// Displays two type cards (Tender / Booking) and a grid of categories.
-/// All state changes are communicated back via callbacks.
+/// Displays the two Open Design concept cards only; all detailed fields move to
+/// the details step so the progression stays Type -> Details -> Review.
 class TaskConceptSection extends StatelessWidget {
   final TaskType selectedTaskType;
-  final String? selectedCategoryId;
-  final String? selectedCategoryName;
-  final List<CategoryModel> categories;
-  final bool categoriesLoading;
   final ValueChanged<TaskType> onTaskTypeChanged;
-  final void Function(String? id, String name) onCategorySelected;
 
   const TaskConceptSection({
     super.key,
     required this.selectedTaskType,
-    required this.selectedCategoryId,
-    required this.selectedCategoryName,
-    required this.categories,
-    required this.categoriesLoading,
     required this.onTaskTypeChanged,
-    required this.onCategorySelected,
   });
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-
-    final popularCategories = [
-      {
-        'icon': Icons.palette_outlined,
-        'name': 'Design',
-        'color': AppColors.lightRed,
-      },
-      {'icon': Icons.code, 'name': 'Development', 'color': AppColors.lightTeal},
-      {'icon': Icons.edit_note, 'name': 'Writing', 'color': AppColors.sand},
-      {'icon': Icons.phone_iphone, 'name': 'Mobile', 'color': AppColors.gold},
-      {
-        'icon': Icons.campaign_outlined,
-        'name': 'Marketing',
-        'color': AppColors.mediumGreyBlue,
-      },
-      {'icon': Icons.movie_outlined, 'name': 'Video', 'color': AppColors.teal},
-    ];
+    const colors = AmberDuskTokens.colors;
+    final l10n = AppLocalizations.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Select Task Type',
-          style: AppTypography.h5.copyWith(color: colorScheme.text),
+          l10n?.createPost ?? 'Create a post',
+          style: AmberDuskTokens.typography.sectionTitle.copyWith(
+            color: colors.text,
+          ),
         ),
         const SizedBox(height: AppDimens.p12),
         Row(
@@ -66,11 +45,13 @@ class TaskConceptSection extends StatelessWidget {
               child: _buildTypeCard(
                 cardKey: CreateTaskScreen.tenderTypeCardKey,
                 icon: Icons.assignment_outlined,
-                label: 'Tender',
-                subLabel: 'Open proposals',
+                label: l10n?.tenderPostTitle ?? 'Tender post',
+                subLabel:
+                    l10n?.tenderPostSubtitle ??
+                    'Client request with budget, deadline, and offers.',
                 type: TaskType.tender,
                 colorScheme: colorScheme,
-                color: AppColors.lightRed,
+                color: colors.primary,
               ),
             ),
             const SizedBox(width: AppDimens.p12),
@@ -78,67 +59,17 @@ class TaskConceptSection extends StatelessWidget {
               child: _buildTypeCard(
                 cardKey: CreateTaskScreen.bookingTypeCardKey,
                 icon: Icons.calendar_today_outlined,
-                label: 'Booking',
-                subLabel: 'Direct hire',
+                label: l10n?.bookingPostTitle ?? 'Booking post',
+                subLabel:
+                    l10n?.bookingPostSubtitle ??
+                    'Freelancer service package with price.',
                 type: TaskType.booking,
                 colorScheme: colorScheme,
-                color: AppColors.teal,
+                color: colors.primary,
               ),
             ),
           ],
         ),
-        const SizedBox(height: AppDimens.p24),
-        Text(
-          'Choose Category',
-          style: AppTypography.h5.copyWith(color: colorScheme.text),
-        ),
-        const SizedBox(height: AppDimens.p12),
-        if (categoriesLoading)
-          const Center(child: CircularProgressIndicator())
-        else
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: AppDimens.p10,
-              mainAxisSpacing: AppDimens.p10,
-              childAspectRatio: 1.0,
-            ),
-            itemCount: categories.isNotEmpty
-                ? categories.length
-                : popularCategories.length,
-            itemBuilder: (context, index) {
-              if (categories.isNotEmpty) {
-                final cat = categories[index];
-                final isSelected = selectedCategoryId == cat.id;
-                final icon = _getCategoryIcon(cat.name);
-                final catColor = _getCategoryColor(cat.name);
-
-                return _buildCategoryCard(
-                  icon: icon,
-                  name: cat.name,
-                  isSelected: isSelected,
-                  color: catColor,
-                  colorScheme: colorScheme,
-                  onTap: () => onCategorySelected(cat.id, cat.name),
-                );
-              } else {
-                final cat = popularCategories[index];
-                final catName = cat['name']! as String;
-                final isSelected = selectedCategoryName == catName;
-
-                return _buildCategoryCard(
-                  icon: cat['icon']! as IconData,
-                  name: catName,
-                  isSelected: isSelected,
-                  color: cat['color']! as Color,
-                  colorScheme: colorScheme,
-                  onTap: () => onCategorySelected(null, catName),
-                );
-              }
-            },
-          ),
       ],
     );
   }
@@ -153,127 +84,69 @@ class TaskConceptSection extends StatelessWidget {
     required Color color,
   }) {
     final isSelected = selectedTaskType == type;
-    return GestureDetector(
+    return Semantics(
+      label: '$label. $subLabel',
+      selected: isSelected,
+      button: true,
       onTap: () => onTaskTypeChanged(type),
-      child: AnimatedContainer(
+      child: GestureDetector(
         key: cardKey,
-        duration: const Duration(milliseconds: 200),
-        height: 100,
-        decoration: BoxDecoration(
-          color: isSelected
-              ? color.withValues(alpha: 0.2)
-              : colorScheme.cardBackground,
-          borderRadius: BorderRadius.circular(AppDimens.r18),
-          border: Border.all(
-            color: isSelected ? color : Colors.transparent,
-            width: 2,
+        onTap: () => onTaskTypeChanged(type),
+        child: AnimatedContainer(
+          duration: AppMotion.fast,
+          constraints: const BoxConstraints(minHeight: 124),
+          padding: const EdgeInsets.all(AppDimens.p14),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? color.withValues(alpha: 0.18)
+                : AmberDuskTokens.colors.surface,
+            borderRadius: BorderRadius.circular(
+              AmberDuskTokens.spacing.moduleRadius,
+            ),
+            border: Border.all(
+              color: isSelected ? color : AmberDuskTokens.colors.surfaceHighest,
+            ),
+            boxShadow: AppDecorations.elevation(
+              isSelected ? 2 : 1,
+              isDark: colorScheme.isDark,
+            ),
           ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 28, color: isSelected ? color : colorScheme.text),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: AppTypography.bodySmall.copyWith(
-                fontWeight: FontWeight.bold,
-                color: isSelected ? color : colorScheme.text,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: AppDimens.p40,
+                height: AppDimens.p40,
+                decoration: BoxDecoration(
+                  color: AmberDuskTokens.colors.activeGlow,
+                  borderRadius: BorderRadius.circular(AppDimens.r12),
+                ),
+                child: Icon(
+                  icon,
+                  size: AppDimens.iconSmall,
+                  color: isSelected ? color : AmberDuskTokens.colors.textSubtle,
+                ),
               ),
-            ),
-            Text(
-              subLabel,
-              style: AppTypography.micro.copyWith(
-                color: colorScheme.textSecondary,
+              const SizedBox(height: AppDimens.p12),
+              Text(
+                label,
+                style: AmberDuskTokens.typography.control.copyWith(
+                  color: isSelected ? color : AmberDuskTokens.colors.text,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: AppDimens.p4),
+              Text(
+                subLabel,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: AmberDuskTokens.typography.bodySmall.copyWith(
+                  color: AmberDuskTokens.colors.muted,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
-  }
-
-  Widget _buildCategoryCard({
-    required IconData icon,
-    required String name,
-    required bool isSelected,
-    required Color color,
-    required AppColorScheme colorScheme,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? color.withValues(alpha: 0.2)
-              : colorScheme.cardBackground,
-          borderRadius: BorderRadius.circular(AppDimens.r16),
-          border: Border.all(
-            color: isSelected ? color : Colors.transparent,
-            width: 2,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 24, color: isSelected ? color : colorScheme.text),
-            const SizedBox(height: 6),
-            Text(
-              name,
-              style: AppTypography.captionBold.copyWith(
-                color: colorScheme.text,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  IconData _getCategoryIcon(String name) {
-    final lowerName = name.toLowerCase();
-    if (lowerName.contains('design')) return Icons.palette_outlined;
-    if (lowerName.contains('dev') || lowerName.contains('code')) {
-      return Icons.code;
-    }
-    if (lowerName.contains('writ') || lowerName.contains('content')) {
-      return Icons.edit_note;
-    }
-    if (lowerName.contains('mobile') || lowerName.contains('app')) {
-      return Icons.phone_iphone;
-    }
-    if (lowerName.contains('market') || lowerName.contains('seo')) {
-      return Icons.campaign_outlined;
-    }
-    if (lowerName.contains('video') || lowerName.contains('media')) {
-      return Icons.movie_outlined;
-    }
-    return Icons.folder_outlined;
-  }
-
-  Color _getCategoryColor(String name) {
-    final lowerName = name.toLowerCase();
-    if (lowerName.contains('design')) return AppColors.lightRed;
-    if (lowerName.contains('dev') || lowerName.contains('code')) {
-      return AppColors.lightTeal;
-    }
-    if (lowerName.contains('writ') || lowerName.contains('content')) {
-      return AppColors.sand;
-    }
-    if (lowerName.contains('mobile') || lowerName.contains('app')) {
-      return AppColors.gold;
-    }
-    if (lowerName.contains('market') || lowerName.contains('seo')) {
-      return AppColors.mediumGreyBlue;
-    }
-    if (lowerName.contains('video') || lowerName.contains('media')) {
-      return AppColors.teal;
-    }
-    return AppColors.teal;
   }
 }

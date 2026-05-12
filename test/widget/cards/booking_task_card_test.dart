@@ -115,5 +115,30 @@ void main() {
       // Avatar initials should be visible (JS for John Smith)
       expect(find.text('JS'), findsOneWidget);
     });
+
+    testWidgets('renders Amber Dusk booking CTA and featured state', (
+      tester,
+    ) async {
+      await pumpApp(
+        tester,
+        ChangeNotifierProvider<SavedTasksViewModel>.value(
+          value: mockSavedVm,
+          child: Scaffold(
+            body: SingleChildScrollView(
+              child: BookingTaskCard(
+                task: _bookingTask(),
+                onTap: () {},
+                isHot: true,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('See details'), findsOneWidget);
+      expect(find.text('Featured'), findsOneWidget);
+      expect(find.text('PER MONTH'), findsOneWidget);
+      expect(find.byIcon(Icons.chat_bubble_outline), findsOneWidget);
+    });
   });
 }

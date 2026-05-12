@@ -6,13 +6,12 @@ import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/deep_link_service.dart'
     as sline_deep_link;
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_states.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/error_mapper.dart';
 import 'package:sline_app/core/widgets/skeleton_loader.dart';
 import 'package:sline_app/features/dashboard/models/work_item.dart';
@@ -55,10 +54,8 @@ void _showInsufficientFundsDialog(BuildContext context) {
 /// Priority-driven next actions list with stagger entrance animation,
 /// skeleton loading, and enhanced empty state.
 ///
-/// Phase 7 redesign: converted from StatelessWidget to StatefulWidget to
-/// support stagger entrance animation. Added priority-colored left bar on
-/// each action card, skeleton shimmer loading, and "All caught up!" empty
-/// state with icon. View-layer only — no ViewModel changes.
+/// View-layer only: the list preserves existing payment, cancel, and deep-link
+/// callback routing while using Amber Dusk priority colors.
 class NextActionsList extends StatefulWidget {
   const NextActionsList({super.key});
 
@@ -141,25 +138,25 @@ class _NextActionsListState extends State<NextActionsList>
   /// left border of each card.
   Color _priorityColor(
     PrimaryActionType? actionType,
-    AppColorScheme colorScheme,
+    AmberDuskColorTokens colors,
   ) {
     switch (actionType) {
       // Urgent — money action requires immediate attention
       case PrimaryActionType.payEscrow:
-        return colorScheme.danger;
+        return colors.danger;
       // Attention — delivery needs review
       case PrimaryActionType.reviewDelivery:
-        return colorScheme.warning;
+        return colors.warning;
       // Action needed — evidence submission
       case PrimaryActionType.submitEvidence:
-        return colorScheme.info;
+        return colors.info;
       // Standard — general actions
       case PrimaryActionType.startWork:
       case PrimaryActionType.markCompleted:
       case PrimaryActionType.approveClose:
       case PrimaryActionType.viewDetails:
       case null:
-        return colorScheme.primary;
+        return colors.primary;
     }
   }
 
@@ -180,7 +177,7 @@ class _NextActionsListState extends State<NextActionsList>
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<DashboardViewModel>();
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
     final items = vm.nextActions;
 
     // ── Skeleton loading state ──────────────────────────────────
@@ -190,7 +187,7 @@ class _NextActionsListState extends State<NextActionsList>
 
     // ── Enhanced empty state ────────────────────────────────────
     if (items.isEmpty) {
-      return _buildEmptyState(colorScheme);
+      return _buildEmptyState(amber);
     }
 
     // Show top 3 items for "Next Actions" section
@@ -208,10 +205,7 @@ class _NextActionsListState extends State<NextActionsList>
       key: const Key('next_actions_list'),
       children: List.generate(displayItems.length, (index) {
         final item = displayItems[index];
-        final priorityColor = _priorityColor(
-          item.primaryActionType,
-          colorScheme,
-        );
+        final priorityColor = _priorityColor(item.primaryActionType, amber);
 
         // Priority-colored left border wrapping each card — creates visual
         // urgency hierarchy without IntrinsicHeight (zero extra layout cost).
@@ -265,7 +259,7 @@ class _NextActionsListState extends State<NextActionsList>
   ///
   /// Replaces bare "No actions pending." text with an illustrated, accessible
   /// empty state matching the pattern used in WorkTab and BookingsTab.
-  Widget _buildEmptyState(AppColorScheme colorScheme) {
+  Widget _buildEmptyState(AmberDuskColorTokens colors) {
     return Padding(
       padding: const EdgeInsets.all(AppDimens.p16),
       child: Semantics(
@@ -277,21 +271,17 @@ class _NextActionsListState extends State<NextActionsList>
               Icon(
                 Icons.check_circle_outline,
                 size: AppLayout.iconFeature,
-                color: colorScheme.success,
+                color: colors.success,
               ),
               const SizedBox(height: AppLayout.spacingStandard),
               Text(
                 'All caught up!',
-                style: AppTypography.h5.copyWith(
-                  color: colorScheme.textSecondary,
-                ),
+                style: AppTypography.h5.copyWith(color: colors.textSubtle),
               ),
               const SizedBox(height: AppLayout.spacingTight),
               Text(
                 'No actions need your attention right now.',
-                style: AppTypography.bodySmall.copyWith(
-                  color: colorScheme.textTertiary,
-                ),
+                style: AppTypography.bodySmall.copyWith(color: colors.muted),
               ),
             ],
           ),
@@ -403,7 +393,7 @@ class _NextActionsListState extends State<NextActionsList>
     BuildContext context,
     WorkItem item,
   ) async {
-    final colorScheme = context.colorScheme;
+    final materialColors = Theme.of(context).colorScheme;
 
     AppInteractionStates.hapticTap();
     try {
@@ -413,9 +403,11 @@ class _NextActionsListState extends State<NextActionsList>
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Award cancelled. Task is open again.'),
-            // Phase 7: semantic success color replaces hardcoded Colors.green
-            backgroundColor: colorScheme.success,
+            content: Text(
+              'Award cancelled. Task is open again.',
+              style: TextStyle(color: materialColors.onPrimary),
+            ),
+            backgroundColor: materialColors.primary,
           ),
         );
       }
@@ -423,9 +415,11 @@ class _NextActionsListState extends State<NextActionsList>
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(ErrorMapper.map(e)),
-            // Phase 7: semantic danger color replaces hardcoded Colors.red
-            backgroundColor: colorScheme.danger,
+            content: Text(
+              ErrorMapper.map(e),
+              style: TextStyle(color: materialColors.onError),
+            ),
+            backgroundColor: materialColors.error,
           ),
         );
       }

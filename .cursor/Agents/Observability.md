@@ -129,6 +129,10 @@ Allowed only with care:
 - storage path identifiers when necessary
 - sanitized error codes
 
+View-layer logging must be more conservative than service/repository logging. Do not add raw task IDs, booking IDs, offer IDs, conversation IDs, or user IDs to routine view tap/render logs. If an identifier is needed for investigation, log it in the service/ViewModel layer with a clear operation context and only after checking it is not a private URL, token, message body, payment secret, or other durable sensitive payload.
+
+Evidence: Open Design Amber Dusk Phases 2-4 Step 6 — new UI instrumentation included raw task, booking, and offer IDs in view-level logs; the fix kept event instrumentation but removed raw identifiers.
+
 ---
 
 ## 4) Standard Event Taxonomy (Stable Naming)

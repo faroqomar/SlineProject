@@ -87,7 +87,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Booking Task'), findsOneWidget);
+    expect(find.textContaining('BOOKING TASK'), findsOneWidget);
     expect(find.text('Tender Task'), findsNothing);
     verify(
       () =>

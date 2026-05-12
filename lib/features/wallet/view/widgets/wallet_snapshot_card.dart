@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
-import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/features/wallet/viewmodels/wallet_view_model.dart';
 
 /// Compact wallet balance snapshot for dashboard overview.
 ///
-/// Matches the WalletHeroCard brand identity: warm teal-tinted surface
-/// (headerBackground), left-aligned hero number, colored breakdown chips.
-/// Compact version — no composition bar, just balance + breakdown.
+/// The snapshot mirrors the dashboard wallet hero shape while keeping the
+/// existing wallet ViewModel as the only source of balance data.
 class WalletSnapshotCard extends StatelessWidget {
   const WalletSnapshotCard({super.key});
 
@@ -19,69 +17,128 @@ class WalletSnapshotCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final walletVM = context.watch<WalletViewModel>();
     final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
+    const spacing = AmberDuskTokens.spacing;
+    const typography = AmberDuskTokens.typography;
+    final denseSix = spacing.xs + spacing.xxs;
     final totalBalance =
         (walletVM.balance.availableBalance + walletVM.balance.heldBalance)
             .toDouble();
 
     return Container(
       decoration: BoxDecoration(
-        // Warm teal-tinted surface matching the full wallet hero card
-        color: colorScheme.headerBackground,
-        borderRadius: BorderRadius.circular(AppDimens.r20),
-        border: Border.all(color: colorScheme.headerBorder),
+        color: amber.hero,
+        borderRadius: BorderRadius.circular(spacing.heroCardRadius),
+        border: Border.all(color: amber.heroRim),
         boxShadow: AppDecorations.elevation(1, isDark: colorScheme.isDark),
       ),
-      padding: const EdgeInsets.all(AppDimens.p20),
+      padding: EdgeInsets.all(spacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Wallet icon + label — small, understated
+          Text(
+            'AVAILABLE BALANCE',
+            style: typography.chip.copyWith(
+              color: amber.heroMuted,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          SizedBox(height: denseSix),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: Text(
+                  PriceFormatter.formatPrice(totalBalance),
+                  style: typography.moneyMedium.copyWith(color: amber.heroText),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              SizedBox(width: spacing.sm),
+              Text(
+                'IQD',
+                style: typography.bodySmall.copyWith(color: amber.heroMuted),
+              ),
+            ],
+          ),
+          SizedBox(height: spacing.md),
           Row(
             children: [
-              Icon(
-                Icons.account_balance_wallet_outlined,
-                size: AppDimens.iconSizeSmall,
-                color: colorScheme.primary,
+              Expanded(
+                child: _SnapshotActionPill(
+                  label: 'Withdraw',
+                  foreground: amber.textDark,
+                  background: amber.heroText,
+                ),
               ),
-              const SizedBox(width: AppDimens.p6),
-              Text(
-                'Wallet',
-                style: AppTypography.captionBold.copyWith(
-                  color: colorScheme.primary,
+              SizedBox(width: spacing.md),
+              Expanded(
+                child: _SnapshotActionPill(
+                  label: 'Top up',
+                  foreground: amber.heroText,
+                  background: amber.heroChip,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppDimens.p12),
-
-          // Hero balance number
-          Text(
-            PriceFormatter.formatPrice(totalBalance),
-            style: AppTypography.h2.copyWith(
-              color: colorScheme.text,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: AppDimens.p16),
-
-          // Balance breakdown chips
+          SizedBox(height: spacing.md),
           Row(
             children: [
               _BreakdownChip(
                 label: 'Available',
                 amount: walletVM.balance.availableBalance.toDouble(),
-                color: colorScheme.primary,
+                color: amber.primary,
               ),
-              const SizedBox(width: AppDimens.p10),
+              SizedBox(width: spacing.sm),
               _BreakdownChip(
                 label: 'Held',
                 amount: walletVM.balance.heldBalance.toDouble(),
-                color: colorScheme.accent,
+                color: amber.star,
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Disabled dashboard wallet action matching the Open Design affordance.
+///
+/// The full withdraw and top-up flows remain owned by the wallet screen; this
+/// overview snapshot only mirrors the dashboard reference controls.
+class _SnapshotActionPill extends StatelessWidget {
+  final String label;
+  final Color foreground;
+  final Color background;
+
+  const _SnapshotActionPill({
+    required this.label,
+    required this.foreground,
+    required this.background,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final buttons = AmberDuskTokens.widgetTheme.buttons;
+
+    return Semantics(
+      button: true,
+      enabled: false,
+      label: label,
+      hint: 'Open wallet screen to withdraw or top up',
+      child: Container(
+        height: buttons.minHeight,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(buttons.radius),
+        ),
+        child: Text(
+          label,
+          style: buttons.textStyle.copyWith(color: foreground),
+        ),
       ),
     );
   }
@@ -101,40 +158,41 @@ class _BreakdownChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
+    const spacing = AmberDuskTokens.spacing;
+    const typography = AmberDuskTokens.typography;
+    // Amber Dusk has no standalone 6px/10px primitives, so derive them from
+    // adjacent spacing tokens to preserve the compact chip proportions.
+    final denseSix = spacing.xs + spacing.xxs;
+    final compactTen = spacing.md - spacing.xxs;
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimens.p10,
-        vertical: AppDimens.p6,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: compactTen, vertical: denseSix),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(AppDimens.r10),
+        color: amber.heroChip,
+        borderRadius: BorderRadius.circular(compactTen),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: AppDimens.p6,
-            height: AppDimens.p6,
+            width: denseSix,
+            height: denseSix,
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
-          const SizedBox(width: AppDimens.p6),
+          SizedBox(width: denseSix),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 label,
-                style: AppTypography.micro.copyWith(
-                  color: colorScheme.textSecondary,
+                style: typography.chip.copyWith(
+                  color: amber.heroMuted,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               Text(
                 PriceFormatter.formatPrice(amount),
-                style: AppTypography.captionBold.copyWith(
-                  color: colorScheme.text,
-                ),
+                style: typography.chip.copyWith(color: amber.heroText),
               ),
             ],
           ),

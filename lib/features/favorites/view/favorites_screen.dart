@@ -7,6 +7,7 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_states.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
 import 'package:sline_app/features/chat/view/chat_screen.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
@@ -48,13 +49,25 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 class _FavoritesView extends StatelessWidget {
   const _FavoritesView();
 
+  /// Top gap used by scrollable empty/error states so pull-to-refresh remains
+  /// available while the state content still lands near the visual center.
+  static const double _stateTopGap = AppDimens.p100 + AppDimens.p20;
+
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<FavoritesViewModel>();
+    final colorScheme = context.colorScheme;
+    final amber = _amberScheme(context);
 
     return Scaffold(
       key: const Key('favorites_screen'),
-      appBar: AppBar(title: const Text('Favorites')),
+      backgroundColor: amber.page,
+      appBar: AppBar(
+        title: const Text('Favorites'),
+        backgroundColor: amber.page,
+        foregroundColor: colorScheme.text,
+        surfaceTintColor: AmberDuskColors.transparent,
+      ),
       body: RefreshIndicator(
         onRefresh: vm.refresh,
         child: Builder(
@@ -72,11 +85,11 @@ class _FavoritesView extends StatelessWidget {
               );
             }
             if (vm.error != null) {
-              final colorScheme = context.colorScheme;
+              final amber = _amberScheme(context);
               return ListView(
                 key: const Key('favorites_error'),
                 children: [
-                  const SizedBox(height: 120),
+                  const SizedBox(height: _stateTopGap),
                   // Error icon in a tinted circle
                   Center(
                     child: Semantics(
@@ -88,13 +101,13 @@ class _FavoritesView extends StatelessWidget {
                             width: AppDimens.p80,
                             height: AppDimens.p80,
                             decoration: BoxDecoration(
-                              color: colorScheme.danger.withValues(alpha: 0.08),
+                              color: amber.dangerMuted,
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               Icons.error_outline,
                               size: AppDimens.p48,
-                              color: colorScheme.danger,
+                              color: amber.danger,
                             ),
                           ),
                           const SizedBox(height: AppDimens.p16),
@@ -106,7 +119,7 @@ class _FavoritesView extends StatelessWidget {
                               vm.userFriendlyError,
                               textAlign: TextAlign.center,
                               style: AppTypography.bodySmall.copyWith(
-                                color: colorScheme.danger,
+                                color: amber.danger,
                               ),
                             ),
                           ),
@@ -117,6 +130,7 @@ class _FavoritesView extends StatelessWidget {
                               AppInteractionStates.hapticTap();
                               vm.refresh();
                             },
+                            style: _outlineButtonStyle(context),
                             child: const Text('Try Again'),
                           ),
                         ],
@@ -129,10 +143,11 @@ class _FavoritesView extends StatelessWidget {
             final items = vm.itemsWithProfile;
             if (items.isEmpty) {
               final colorScheme = context.colorScheme;
+              final amber = _amberScheme(context);
               return ListView(
                 key: const Key('favorites_empty'),
                 children: [
-                  const SizedBox(height: 120),
+                  const SizedBox(height: _stateTopGap),
                   // Empty state: icon + title + subtitle
                   Center(
                     child: Semantics(
@@ -145,15 +160,13 @@ class _FavoritesView extends StatelessWidget {
                             width: AppDimens.p80,
                             height: AppDimens.p80,
                             decoration: BoxDecoration(
-                              color: colorScheme.primary.withValues(
-                                alpha: 0.08,
-                              ),
+                              color: amber.activeGlow,
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               Icons.favorite_border,
                               size: AppDimens.p48,
-                              color: colorScheme.primary,
+                              color: amber.primary,
                             ),
                           ),
                           const SizedBox(height: AppDimens.p16),
@@ -177,7 +190,11 @@ class _FavoritesView extends StatelessWidget {
                               AppInteractionStates.hapticTap();
                               Navigator.pop(context);
                             },
-                            icon: const Icon(Icons.explore, size: 18),
+                            style: _outlineButtonStyle(context),
+                            icon: const Icon(
+                              Icons.explore,
+                              size: AppDimens.iconSmall,
+                            ),
                             label: const Text('Explore Freelancers'),
                           ),
                         ],
@@ -264,6 +281,23 @@ class _FavoritesView extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+
+  /// Returns the brightness-aware Amber Dusk scheme for local state accents.
+  AmberDuskColorScheme _amberScheme(BuildContext context) {
+    return context.colorScheme.isDark
+        ? AmberDuskTokens.colors.dark
+        : AmberDuskTokens.colors.light;
+  }
+
+  /// Applies Amber Dusk action color to secondary buttons without replacing
+  /// the existing Material button behavior or callbacks.
+  ButtonStyle _outlineButtonStyle(BuildContext context) {
+    final amber = _amberScheme(context);
+    return OutlinedButton.styleFrom(
+      foregroundColor: amber.primary,
+      side: BorderSide(color: amber.primary),
     );
   }
 }

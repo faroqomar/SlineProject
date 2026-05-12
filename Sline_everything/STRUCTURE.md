@@ -1,6 +1,6 @@
 # SLine App - Folder Structure Guide
 
-**Last Updated:** 2026-05-11 (Amber Dusk Phase 1 shared phone-widget adapter, coverage artifact hygiene, and latest SystemEvolution agent-rule merge documented)
+**Last Updated:** 2026-05-12 (Amber Dusk Phases 2-4 phone-surface work, Step 6/7 reports, and latest SystemEvolution agent-rule merge documented)
 
 This document describes the current repository layout. It replaces older references to `presentation/` and `controllers/`; the live Flutter codebase uses `view/` and `viewmodels/` under `lib/features/`.
 
@@ -42,7 +42,7 @@ sline_app/
   - **Core agents**: `Architect.md` (MVVM logic), `Pixel.md` (UI/UX), `Supabase_Ops.md` (backend), `DocsKeeper.md` (documentation), `Sentinel.md` (QA/verification)
   - **Planning & execution**: `Planner.md` (implementation architect), `Executor.md` (task orchestrator), `PlanCritic.md` (plan auditor), `Orchestrator.md` (multi-agent coordinator)
   - **Specialized**: `CodeGuard.md` (performance/security audit), `ThreatModeler.md` (security design), `APIContract.md` (contract alignment), `DataMigration.md` (schema safety), `Observability.md` (telemetry), `TemplateOwner.md` (task templates)
-  - **Meta**: `SystemEvolution.md` (cross-session agent improvement — scans logs and agent files, produces upgrade reports; explicit merge runs may update agent files after the report)
+  - **Meta**: `SystemEvolution.md` (cross-session agent improvement — scans logs and agent files, produces upgrade reports; explicit merge runs may update agent files after the report; latest merge report: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-12.md`)
 - `rules/`: project-specific rules used by Cursor tooling (`flutter-mvvm.mdc`, `error-handling.mdc`)
 - `skills/`: skill definitions referenced by agents for specialized work
 
@@ -170,7 +170,7 @@ Current subfolders:
   - `app_decorations.dart` — 5-level elevation shadow scale + decoration methods
   - `app_theme.dart` — Material 3 ThemeData assembly + 13 component themes
   - `theme_dashboard.dart` — documentation-only reference for all design tokens
-  - `designs/amber_dusk/` — **Amber Dusk Phase 0/1** Open Design token layer plus shared-widget adapter; `amber_dusk_tokens.dart` exports all Amber Dusk token files and `AmberDuskTokens.widgetTheme` for scoped phone/web redesign phases without globally flipping `MaterialApp`
+  - `designs/amber_dusk/` — **Amber Dusk Phase 0-4** Open Design token layer plus shared-widget adapter; `amber_dusk_tokens.dart` exports all Amber Dusk token files and `AmberDuskTokens.widgetTheme` for scoped phone/web redesign phases without globally flipping `MaterialApp`
     - `amber_dusk_widget_theme.dart` — Phase 1 typed shared-widget recipes for buttons, fields, cards, nav, tabs, badges, skeletons, and signed-media placeholders
 - `utils/`: error mapping, formatting, loading overlays, URL cache, route transitions, web error filters, **ledger forensics** (p_meta session_id/request_id for ledger event flow)
 - `widgets/`: shared UI widgets such as signed media, buttons, badges, loaders, bottom nav
@@ -242,14 +242,14 @@ Not every feature uses every subfolder, but the standard live convention is:
   - `view/widgets/conversation_list_tile.dart` — **Phase 6** Elevated card tile with unread indicators, relative time, online dot
   - `view/widgets/message_bubble.dart` — **Phase 6** Emoji-only rendering, link detection, reply quotes
   - `view/widgets/offer_message_bubble.dart` — **Phase 6** Elevated offer card with status borders
-- `lib/features/dashboard/`: unified dashboard tabs (Overview, Bookings, Work, Wallet, Inbox) and role-based work summaries, including the live bottom-nav dashboard slot. Tab cards (booking, offer, wallet snapshot) live in owning features: `booking/view/widgets/dashboard_booking_card.dart`, `tasks/view/widgets/dashboard_offer_card.dart`, `wallet/view/widgets/wallet_snapshot_card.dart`; dedicated Wallet tab in `view/tabs/wallet_tab.dart`; shared status helpers in `core/utils/status_presenter.dart`
+- `lib/features/dashboard/`: unified dashboard tabs (Overview, Bookings, Work, Wallet, Inbox) and role-based work summaries, including the live bottom-nav dashboard slot. Amber Dusk Phase 4 updates dashboard shell/tabs/cards in this feature while keeping card ownership in booking/tasks/wallet. Tab cards (booking, offer, wallet snapshot) live in owning features: `booking/view/widgets/dashboard_booking_card.dart`, `tasks/view/widgets/dashboard_offer_card.dart`, `wallet/view/widgets/wallet_snapshot_card.dart`; dedicated Wallet tab in `view/tabs/wallet_tab.dart`; shared status helpers in `core/utils/status_presenter.dart`
 - `lib/features/direct_offers/`: direct chat offers (create, accept, pay, deliver, complete) and payment recovery
   - `services/direct_offer_deep_link_handler.dart` — **Phase E** Deep link handler for direct offer routes
 - `lib/features/notifications/`: in-app notification list (server-authority; foreground sync then stream), badge/modal/deep links; `PushDeviceService` registers FCM tokens in `user_devices`; push delivery via `notification_push_queue` + Edge (`push-notify`, `process-push-queue`). Diagram: `Sline_everything/AppDigram/All_Diagrams/13_notification-routing.md`. Plan: `.TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md`.
 - `lib/features/management/`: order timeline / note management for tasks and bookings
 - `lib/features/orders/`: decommissioned placeholder folder with `README.md` only; standalone orders runtime was removed on 2026-03-01
 - `lib/features/proposals/`: proposal models, data (repositories), routes (payment); view re-exports from tasks for list/submit/tile/payment screens
-- `lib/features/tasks/`: task creation, details, requests/offers, tender payment, delivery flows
+- `lib/features/tasks/`: task creation, details, requests/offers, tender payment, delivery flows. Amber Dusk Phases 2-4 touch create flow, task/tender/booking card widgets, dashboard offer cards, and `models/task_model.dart` package-detail helper accessors without changing Supabase contracts.
   - `exceptions/offer_exceptions.dart` — **NEW (v2.20)** Custom exceptions: `PriceMismatchException`, `OfferAlreadyAcceptedException`
   - `models/expired_bid_filter.dart` — **Phase D** Extracted `ExpiredBidFilter` enum + extension for bid list filtering
   - `viewmodels/award_expiration_monitor.dart` — **NEW (v2.20)** Countdown timer for unpaid awards with urgency levels
@@ -262,7 +262,7 @@ Not every feature uses every subfolder, but the standard live convention is:
   - `services/task_deep_link_handler.dart` — **Phase E** Deep link handler for task routes
   - `view/widgets/task_concept_section.dart` — **Phase E** Extracted task concept section widget
   - `view/widgets/booking_logistics_section.dart` — **Phase E** Extracted booking logistics section widget
-- `lib/features/wallet/`: wallet state and ledger-backed balance views; `utils/transaction_label_helper.dart` — human-readable transaction source/destination labels
+- `lib/features/wallet/`: wallet state and ledger-backed balance views; `utils/transaction_label_helper.dart` — human-readable transaction source/destination labels. Amber Dusk Phase 4 updates wallet screen/dashboard card surfaces, localization labels, and accessibility labels without changing wallet data contracts.
   - `view/widgets/wallet_hero_card.dart` — **Phase E** Extracted wallet hero/balance card
   - `view/widgets/wallet_timeline_card.dart` — **Phase E** Extracted wallet transaction timeline card
 - `lib/features/work/`: unified work item details and CTA resolution

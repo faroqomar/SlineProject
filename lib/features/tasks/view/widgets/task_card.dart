@@ -4,6 +4,7 @@ import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/widgets/scale_button.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
@@ -34,6 +35,8 @@ class TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const colors = AmberDuskTokens.colors;
+    const radii = AmberDuskTokens.radius;
     // Delegate to type-specific cards unless legacy layout is requested
     if (!useLegacyLayout) {
       if (task.isTender) {
@@ -46,6 +49,10 @@ class TaskCard extends StatelessWidget {
     // Compact card layout below
     final colorScheme = context.colorScheme;
     final isTender = task.isTender;
+    final statusColor = isTender ? colors.rust : colors.forest;
+    final borderColor = colorScheme.isDark
+        ? colors.dark.border
+        : colors.light.border;
 
     return Semantics(
       button: true,
@@ -53,10 +60,10 @@ class TaskCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: AppDimens.p16),
         decoration: BoxDecoration(
-          color: colorScheme.cardBackground,
-          borderRadius: BorderRadius.circular(AppDimens.r16),
-          border: Border.all(color: colorScheme.cardBorder, width: 1),
-          boxShadow: AppDecorations.elevation(1, isDark: colorScheme.isDark),
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(radii.taskCard),
+          border: Border.all(color: borderColor),
+          boxShadow: AppDecorations.elevation(2, isDark: colorScheme.isDark),
         ),
         child: ScaleButton(
           onPressed: () {
@@ -78,19 +85,14 @@ class TaskCard extends StatelessWidget {
                         vertical: AppDimens.p4,
                       ),
                       decoration: BoxDecoration(
-                        color: isTender
-                            ? colorScheme.danger.withValues(alpha: 0.1)
-                            : colorScheme.success.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(AppDimens.r8),
+                        color: statusColor.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(radii.pill),
                       ),
                       child: Text(
                         isTender ? 'TENDER' : 'BOOKING',
                         style: AppTypography.micro.copyWith(
                           fontWeight: FontWeight.w800,
-                          color: isTender
-                              ? colorScheme.danger
-                              : colorScheme.success,
-                          letterSpacing: 0.5,
+                          color: isTender ? colors.rust : colors.forest,
                         ),
                       ),
                     ),
@@ -104,7 +106,7 @@ class TaskCard extends StatelessWidget {
                           vertical: AppDimens.p4,
                         ),
                         decoration: BoxDecoration(
-                          color: colorScheme.warning.withValues(alpha: 0.1),
+                          color: colors.star.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(AppDimens.r8),
                         ),
                         child: Row(
@@ -113,15 +115,14 @@ class TaskCard extends StatelessWidget {
                             Icon(
                               Icons.local_fire_department,
                               size: 12,
-                              color: colorScheme.warning,
+                              color: colors.star,
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: AppDimens.p4),
                             Text(
                               'HOT',
                               style: AppTypography.micro.copyWith(
                                 fontWeight: FontWeight.w800,
-                                color: colorScheme.warning,
-                                letterSpacing: 0.5,
+                                color: colors.star,
                               ),
                             ),
                           ],
@@ -138,7 +139,7 @@ class TaskCard extends StatelessWidget {
                   task.title,
                   style: AppTypography.bodyLarge.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: colorScheme.text,
+                    color: colors.text,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -150,7 +151,7 @@ class TaskCard extends StatelessWidget {
                 Text(
                   task.description,
                   style: AppTypography.bodySmall.copyWith(
-                    color: colorScheme.textSecondary,
+                    color: colors.muted,
                     height: 1.4,
                   ),
                   maxLines: 2,
@@ -164,7 +165,7 @@ class TaskCard extends StatelessWidget {
                   padding: const EdgeInsets.only(top: AppDimens.p12),
                   decoration: BoxDecoration(
                     border: Border(
-                      top: BorderSide(color: colorScheme.cardBorder),
+                      top: BorderSide(color: colors.surfaceHighest),
                     ),
                   ),
                   child: Row(
@@ -174,29 +175,19 @@ class TaskCard extends StatelessWidget {
                       Row(
                         children: [
                           if (task.deadline != null) ...[
-                            Icon(
-                              Icons.schedule,
-                              size: 14,
-                              color: isTender
-                                  ? colorScheme.danger
-                                  : colorScheme.success,
-                            ),
-                            const SizedBox(width: 4),
+                            Icon(Icons.schedule, size: 14, color: statusColor),
+                            const SizedBox(width: AppDimens.p4),
                             Text(
                               _formatDeadline(task.deadline!),
                               style: AppTypography.captionBold.copyWith(
-                                color: isTender
-                                    ? colorScheme.danger
-                                    : colorScheme.success,
+                                color: statusColor,
                               ),
                             ),
                           ] else
                             Text(
                               isTender ? 'Open' : 'Available',
                               style: AppTypography.captionBold.copyWith(
-                                color: isTender
-                                    ? colorScheme.danger
-                                    : colorScheme.success,
+                                color: statusColor,
                               ),
                             ),
                         ],
@@ -206,7 +197,7 @@ class TaskCard extends StatelessWidget {
                       Text(
                         PriceFormatter.formatPrice(task.budget),
                         style: AppTypography.h5.copyWith(
-                          color: colorScheme.primary,
+                          color: colors.primary,
                           fontWeight: FontWeight.w900,
                         ),
                       ),

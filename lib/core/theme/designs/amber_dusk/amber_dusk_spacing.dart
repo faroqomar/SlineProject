@@ -81,6 +81,23 @@ abstract final class AmberDuskSpacing {
   static const double borderWidthStrong = 0;
 }
 
+/// Namespace for Amber Dusk corner radius constants.
+///
+/// Radius aliases keep shape intent separate from spacing while preserving the
+/// values authored during the phone redesign.
+abstract final class AmberDuskRadius {
+  const AmberDuskRadius._();
+
+  /// Token registry exposed by `AmberDuskTokens.radius`.
+  static const AmberDuskRadiusTokens tokens = AmberDuskRadiusTokens();
+
+  /// Task card radius from Open Design evidence.
+  static const double taskCard = AmberDuskSpacing.taskCardRadius;
+
+  /// Fully rounded radius for chips and capsule controls.
+  static const double pill = AmberDuskSpacing.pillRadius;
+}
+
 /// Instance-facing spacing registry used by `AmberDuskTokens.spacing`.
 ///
 /// The registry mirrors namespace constants so consumers can enter through the
@@ -174,4 +191,20 @@ final class AmberDuskSpacingTokens {
 
   /// Strong surface border width.
   final double borderWidthStrong;
+}
+
+/// Instance-facing radius registry used by `AmberDuskTokens.radius`.
+@immutable
+final class AmberDuskRadiusTokens {
+  /// Creates an immutable radius token set for Amber Dusk shapes.
+  const AmberDuskRadiusTokens({
+    this.taskCard = AmberDuskRadius.taskCard,
+    this.pill = AmberDuskRadius.pill,
+  });
+
+  /// Task card radius from Open Design evidence.
+  final double taskCard;
+
+  /// Fully rounded radius for chips and capsule controls.
+  final double pill;
 }

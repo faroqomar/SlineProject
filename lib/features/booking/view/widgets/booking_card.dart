@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/utils/status_presenter.dart';
@@ -13,11 +13,12 @@ import 'package:sline_app/core/widgets/signed_image.dart';
 import 'package:sline_app/core/widgets/status_badge.dart';
 import 'package:sline_app/features/booking/models/booking_model.dart';
 
+/// Compact booking list card rendered with Amber Dusk booking material.
+///
+/// The card keeps the existing booking navigation callback and model parsing
+/// while aligning the visible booking summary with Phase 3 hero card tokens.
 class BookingCard extends StatelessWidget {
-  final BookingModel booking;
-  final VoidCallback onTap;
-  final bool asProvider;
-
+  /// Creates a booking summary card.
   const BookingCard({
     super.key,
     required this.booking,
@@ -25,9 +26,20 @@ class BookingCard extends StatelessWidget {
     this.asProvider = false,
   });
 
+  /// Booking row supplied by the bookings ViewModel.
+  final BookingModel booking;
+
+  /// Opens the existing booking detail flow.
+  final VoidCallback onTap;
+
+  /// Whether the current user is viewing the booking as provider.
+  final bool asProvider;
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    const amberColors = AmberDuskTokens.colors;
+    final heroSurface = AmberDuskTokens.surfaces.hero;
     final taskData = booking.taskData;
     final taskTitle =
         taskData?['title'] as String? ??
@@ -36,7 +48,9 @@ class BookingCard extends StatelessWidget {
         (taskData?['image_paths'] as List<dynamic>?)?.cast<String>() ?? [];
     final imagePath = taskImages.isNotEmpty ? taskImages.first : null;
     final rawBudget = taskData?['budget'];
-    final budget = rawBudget is num ? rawBudget.toDouble() : 0.0;
+    final budget = rawBudget is num
+        ? rawBudget.toDouble()
+        : booking.price?.toDouble() ?? 0.0;
     final timeline = booking.dueAtUtc ?? booking.scheduledAt;
 
     final statusColor = StatusPresenter.bookingStatusColor(booking.status);
@@ -53,10 +67,17 @@ class BookingCard extends StatelessWidget {
         child: Container(
           margin: const EdgeInsets.only(bottom: AppDimens.p12),
           decoration: BoxDecoration(
-            color: colorScheme.cardBackground,
-            borderRadius: BorderRadius.circular(AppDimens.r16),
-            border: Border.all(color: colorScheme.cardBorder, width: 1),
-            boxShadow: AppDecorations.elevation(1),
+            gradient: LinearGradient(
+              colors: heroSurface.gradientStops,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(heroSurface.radius),
+            border: Border.all(color: amberColors.heroRim),
+            boxShadow: AppDecorations.elevation(
+              heroSurface.elevationLevel,
+              isDark: colorScheme.isDark,
+            ),
           ),
           child: Padding(
             padding: const EdgeInsets.all(AppDimens.p12),
@@ -76,10 +97,10 @@ class BookingCard extends StatelessWidget {
                             fit: BoxFit.cover,
                           )
                         : ColoredBox(
-                            color: colorScheme.cardBorder,
+                            color: amberColors.heroChip,
                             child: Icon(
                               Icons.work_outline,
-                              color: colorScheme.textSecondary,
+                              color: amberColors.heroMuted,
                             ),
                           ),
                   ),
@@ -103,7 +124,7 @@ class BookingCard extends StatelessWidget {
                         taskTitle,
                         style: AppTypography.bodyLarge.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: colorScheme.text,
+                          color: amberColors.heroText,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -112,7 +133,7 @@ class BookingCard extends StatelessWidget {
                       Text(
                         'Booked: ${formatUtcToLocal(booking.createdAtUtc)}',
                         style: AppTypography.caption.copyWith(
-                          color: colorScheme.textSecondary,
+                          color: amberColors.heroMuted,
                         ),
                       ),
                       const SizedBox(height: AppDimens.p2),
@@ -121,7 +142,7 @@ class BookingCard extends StatelessWidget {
                             ? 'Due: ${formatUtcToLocal(timeline)}'
                             : 'Due: No deadline',
                         style: AppTypography.caption.copyWith(
-                          color: colorScheme.textSecondary,
+                          color: amberColors.heroMuted,
                         ),
                       ),
                       if (booking.deliveryDays != null) ...[
@@ -129,7 +150,7 @@ class BookingCard extends StatelessWidget {
                         Text(
                           'Delivery: ${booking.deliveryDays} days',
                           style: AppTypography.caption.copyWith(
-                            color: colorScheme.textSecondary,
+                            color: amberColors.heroMuted,
                           ),
                         ),
                       ],
@@ -145,15 +166,12 @@ class BookingCard extends StatelessWidget {
                       Text(
                         PriceFormatter.formatPrice(budget),
                         style: AppTypography.h6.copyWith(
-                          color: AppColors.teal,
+                          color: amberColors.primary,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
                     const SizedBox(height: AppDimens.p8),
-                    Icon(
-                      Icons.chevron_right,
-                      color: colorScheme.textSecondary.withValues(alpha: 0.5),
-                    ),
+                    Icon(Icons.chevron_right, color: amberColors.heroMuted),
                   ],
                 ),
               ],

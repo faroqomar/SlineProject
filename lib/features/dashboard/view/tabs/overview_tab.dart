@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sline_app/core/app_enums.dart';
-import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/features/dashboard/view/widgets/activity_feed_preview.dart';
 import 'package:sline_app/features/dashboard/view/widgets/dashboard_counters_grid.dart';
 import 'package:sline_app/features/dashboard/view/widgets/next_actions_list.dart';
@@ -15,9 +11,9 @@ import 'package:sline_app/features/wallet/viewmodels/wallet_view_model.dart';
 
 /// Dashboard overview tab — the default landing view after login.
 ///
-/// Phase 7 REDESIGN: Hero h2 greeting, icon-badged section headers via
-/// _SectionCard, increased spacing rhythm with spacingLarge for visual
-/// breathing room. AnimatedSize for smooth activity feed expand/collapse.
+/// The tab starts at dashboard content because [DashboardScreen] owns the page
+/// title and tab context. Wallet, counters, actions, and activity stay wired to
+/// their existing ViewModels.
 class OverviewTab extends StatefulWidget {
   const OverviewTab({super.key});
 
@@ -39,89 +35,31 @@ class _OverviewTabState extends State<OverviewTab> {
     });
   }
 
-  /// Returns a time-aware greeting based on the current hour.
-  ///
-  /// Provides a warmer, more personal feel than a static "Hello" — consistent
-  /// with .impeccable.md brand voice: "Warm but competent."
-  String _timeAwareGreeting(String userName) {
-    final hour = DateTime.now().hour;
-    final String timeGreeting;
-    if (hour < 12) {
-      timeGreeting = 'Good morning';
-    } else if (hour < 17) {
-      timeGreeting = 'Good afternoon';
-    } else {
-      timeGreeting = 'Good evening';
-    }
-    return '$timeGreeting, $userName!';
-  }
-
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<DashboardViewModel>();
-    final colorScheme = context.colorScheme;
+    const spacing = AmberDuskTokens.spacing;
+    const amber = AmberDuskTokens.colors;
 
     return RefreshIndicator(
       onRefresh: vm.refresh,
       child: ListView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimens.p16,
-          vertical: AppLayout.spacingSection,
+        padding: EdgeInsets.symmetric(
+          horizontal: spacing.contentHorizontalPadding,
         ),
         children: [
-          // ── Hero Greeting ─────────────────────────────────────────
-          // Phase 7 REDESIGN: h2 (28px/900) up from h3, bodyLarge up from
-          // bodyMedium — first thing the user sees should be commanding.
-          Semantics(
-            label: 'Greeting: ${_timeAwareGreeting(vm.userName)}',
-            excludeSemantics: true,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _timeAwareGreeting(vm.userName),
-                  style: AppTypography.h2.copyWith(color: colorScheme.text),
-                ),
-                const SizedBox(height: AppLayout.spacingTight),
-                Text(
-                  vm.currentRole == UserRole.freelancer
-                      ? 'Ready to pick up some work?'
-                      : "Let's get your projects moving.",
-                  style: AppTypography.bodyLarge.copyWith(
-                    color: colorScheme.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // ── Wallet Snapshot ───────────────────────────────────────
-          const SizedBox(height: AppLayout.spacingScreen),
+          // Wallet appears first to match the dashboard overview evidence.
           const WalletSnapshotCard(),
 
-          // ── Counters Grid ─────────────────────────────────────────
-          const SizedBox(height: AppLayout.spacingScreen),
+          SizedBox(height: spacing.md),
           const DashboardCountersGrid(),
 
-          // ── Next Actions ──────────────────────────────────────────
-          // Phase 7 REDESIGN: spacingLarge (32px) creates a visual paragraph
-          // break before the action sections — separates metrics from actions.
-          const SizedBox(height: AppLayout.spacingLarge),
-          _SectionCard(
-            title: 'Next Actions',
-            // Bolt icon in accent/gold — urgency and action
-            icon: Icons.bolt_rounded,
-            iconColor: colorScheme.accent,
-            child: const NextActionsList(),
-          ),
+          SizedBox(height: spacing.lg),
+          const _SectionCard(title: 'Next Actions', child: NextActionsList()),
 
-          // ── Recent Activity ───────────────────────────────────────
-          const SizedBox(height: AppLayout.spacingScreen),
+          SizedBox(height: spacing.lg),
           _SectionCard(
             title: 'Recent Activity',
-            // History icon in info/blue — informational timeline
-            icon: Icons.history_rounded,
-            iconColor: colorScheme.info,
             action: TextButton(
               onPressed: () {
                 setState(() {
@@ -130,8 +68,8 @@ class _OverviewTabState extends State<OverviewTab> {
               },
               child: Text(
                 _showAllActivity ? 'Show Less' : 'See All',
-                style: AppTypography.captionBold.copyWith(
-                  color: colorScheme.primary,
+                style: AmberDuskTokens.typography.chip.copyWith(
+                  color: amber.primary,
                 ),
               ),
             ),
@@ -145,67 +83,47 @@ class _OverviewTabState extends State<OverviewTab> {
             ),
           ),
 
-          // Bottom padding to clear the main bottom nav bar
-          const SizedBox(height: AppLayout.fabBottomOffset),
+          SizedBox(height: spacing.xxl),
         ],
       ),
     );
   }
 }
 
-/// Section header with icon badge and optional trailing action button.
+/// Dashboard section header with optional trailing action.
 ///
-/// Phase 7 REDESIGN: Replaces plain-text _SectionHeader. Each section gets
-/// a colored icon badge (icon in rounded container) for visual identity —
-/// bolt/accent for Next Actions, history/info for Recent Activity.
+/// The Open Design dashboard uses compact uppercase labels; this widget keeps
+/// that rhythm while preserving the existing section children.
 class _SectionCard extends StatelessWidget {
   final String title;
-  final IconData icon;
-  final Color iconColor;
   final Widget? action;
   final Widget child;
 
-  const _SectionCard({
-    required this.title,
-    required this.icon,
-    required this.iconColor,
-    this.action,
-    required this.child,
-  });
+  const _SectionCard({required this.title, this.action, required this.child});
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
+    const typography = AmberDuskTokens.typography;
+    const spacing = AmberDuskTokens.spacing;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section header row with icon badge
         Semantics(
           header: true,
           label: '$title section',
           child: Padding(
-            padding: const EdgeInsets.only(bottom: AppLayout.spacingStandard),
+            padding: EdgeInsets.only(bottom: spacing.md),
             child: Row(
               children: [
-                // Icon badge — icon in colored rounded container
-                Container(
-                  padding: const EdgeInsets.all(AppDimens.p6),
-                  decoration: BoxDecoration(
-                    color: iconColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(AppDimens.r8),
-                  ),
-                  child: Icon(
-                    icon,
-                    size: AppDimens.iconSizeSmall,
-                    color: iconColor,
-                  ),
-                ),
-                const SizedBox(width: AppDimens.p8),
                 Expanded(
                   child: Text(
-                    title,
-                    style: AppTypography.h5.copyWith(color: colorScheme.text),
+                    title.toUpperCase(),
+                    style: typography.chip.copyWith(
+                      color: amber.text,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
                 if (action != null) action!,
@@ -213,7 +131,6 @@ class _SectionCard extends StatelessWidget {
             ),
           ),
         ),
-        // Section content
         child,
       ],
     );

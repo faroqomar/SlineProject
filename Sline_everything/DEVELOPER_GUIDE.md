@@ -1,7 +1,7 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.27.0 (Amber Dusk Phase 1 shared phone widgets plus 2026-05-11 SystemEvolution agent-rule merge)
-**Last Updated**: 2026-05-11
+**Version**: 2.28.0 (Amber Dusk Phases 2-4 phone shell, discovery, dashboard review, and 2026-05-12 SystemEvolution/DocsKeeper sync)
+**Last Updated**: 2026-05-12
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
 
@@ -303,6 +303,69 @@ References:
 - Open Design screenshots: `.TODO/Archive/OpenDesign_AmberDusk_Phase1_2026-05-11/OpenDesign_AmberDusk_Phase1_OpenDesignScreenshots_2026-05-11/`
 - Docs Sync: `.TODO/Archive/OpenDesign_AmberDusk_Phase1_2026-05-11/DOCS_SYNC_2026-05-11_OpenDesign_AmberDusk_Phase1_CoreWidgets.md`
 - Web Handoff: `.TODO/WebRedsign/HANDOFF_OpenDesign_AmberDusk_Phase1_CoreWidgets_ToWeb_2026-05-11.md`
+- Supabase objects changed: none
+
+### Amber Dusk Phases 2-4 Phone Shell, Discovery, And Dashboard (2026-05-12)
+
+Amber Dusk Phases 2-4 apply the Open Design phone direction to scoped runtime
+surfaces without changing Supabase, services, repositories, or global
+`MaterialApp` theme activation. The affected surface is the authenticated phone
+shell, create-task sheet, Home discovery modes, task/booking cards, selected
+secondary discovery screens, dashboard tabs/cards, and wallet dashboard
+surfaces.
+
+Implementation notes:
+- `lib/app/main_navigation_screen.dart` and
+  `lib/core/widgets/custom_bottom_nav_bar.dart` own the phone shell, FAB, and
+  bottom-nav Amber Dusk treatment.
+- `lib/features/tasks/view/create_task_screen.dart` owns the create-task type,
+  details, and review sheet states. Temporary package-detail metadata is routed
+  through `Task.packageDetailsKey`, `Task.packageDetailsFrom`, and
+  `Task.packagesWithDetails` in `lib/features/tasks/models/task_model.dart`;
+  views must not repeat raw sentinel keys.
+- Home and discovery card visuals are scoped to
+  `lib/features/home/view/home_screen.dart`,
+  `lib/features/home/view/widgets/filters_modal.dart`,
+  `lib/features/tasks/view/widgets/task_card.dart`,
+  `lib/features/tasks/view/widgets/tender_task_card.dart`,
+  `lib/features/tasks/view/widgets/booking_task_card.dart`, and
+  `lib/features/booking/view/widgets/booking_card.dart`.
+- Dashboard work covers `lib/features/dashboard/view/dashboard_screen.dart`,
+  dashboard tab files, `DashboardBookingCard`, `DashboardOfferCard`,
+  `WorkItemCard`, and wallet card widgets. Dashboard action behavior remains
+  ViewModel/service-owned; the UI only adjusts actions, labels, tokens, and
+  accessibility.
+- Search, Categories, Saved, and Favorites are token-normalization /
+  accessibility-only unless a future Open Design or user screenshot provides an
+  exact phone-state reference.
+- Messages and Profile were added to the Step 6 review scope by explicit
+  follow-up findings. Their fixes are documented as scope amendments and covered
+  by targeted tests plus the emulator checklist.
+- No Supabase objects changed.
+
+Validation recorded in the Step 6 Master Report:
+- `flutter gen-l10n`: passed.
+- `dart format` on changed Dart files: passed, 68 files checked, 0 changed.
+- `git diff --check`: passed.
+- `flutter analyze --no-fatal-infos`: passed.
+- Focused regression suite: passed, 47 tests.
+- `flutter test`: passed, 1523 tests passed, 30 skipped.
+
+Runtime visual QA remains an open release gate. The implementation has Open
+Design screenshots and runtime iOS Simulator captures, but final visual parity
+must be checked with the emulator checklist before the phase is called visually
+complete.
+
+References:
+- Plan: `.TODO/PLAN_OpenDesign_AmberDusk_Phases2_3_4_PhoneShellDiscoveryDashboard_2026-05-11.md`
+- Plan Critique: `.TODO/PLAN_CRITIQUE_2026-05-11_OpenDesign_AmberDusk_Phases2_3_4_PhoneShellDiscoveryDashboard.md`
+- Open Design screenshots: `.TODO/OpenDesign_AmberDusk_Phases2_3_4_OpenDesignScreenshots_2026-05-11/`
+- Runtime visual QA captures: `.TODO/VisualQA_OpenDesign_AmberDusk_Phases2_3_4_iOSSimulator_2026-05-12/`
+- Master Report: `.TODO/Archive/OpenDesign_AmberDusk_Phases2_3_4_2026-05-12/MASTER_REPORT_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4_Step6.md`
+- Emulator Checklist: `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4_Step6.md`
+- Session Log: `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phases2_3_4_PhoneShellDiscoveryDashboard_2026-05-11.md`
+- System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-12.md`
+- Docs Sync: `.TODO/Archive/OpenDesign_AmberDusk_Phases2_3_4_2026-05-12/DOCS_SYNC_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4.md`
 - Supabase objects changed: none
 
 ### 10.1 CI/CD Pipeline

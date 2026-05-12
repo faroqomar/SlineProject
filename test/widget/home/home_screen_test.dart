@@ -11,6 +11,7 @@ import 'package:sline_app/features/notifications/viewmodels/notification_view_mo
 import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
+import 'package:sline_app/features/tasks/view/widgets/booking_task_card.dart';
 import 'package:sline_app/features/tasks/viewmodels/discovery_feed_view_model_contract.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
 
@@ -148,7 +149,7 @@ Future<void> _pumpHomeScreen(
 
 void main() {
   group('HomeScreen T53-T55', () {
-    testWidgets('T53 renders search, categories, and task list shell', (
+    testWidgets('T53 renders search, discovery modes, and task list shell', (
       tester,
     ) async {
       final bundle = _buildHomeBundle();
@@ -162,9 +163,10 @@ void main() {
       expect(find.byKey(HomeScreen.discoveryAllWorkKey), findsOneWidget);
       expect(find.byKey(HomeScreen.discoveryBookingsKey), findsOneWidget);
       expect(find.byKey(HomeScreen.discoveryTendersKey), findsOneWidget);
-      expect(find.text('All Work'), findsOneWidget);
-      expect(find.text('All'), findsOneWidget);
-      expect(find.text('Design'), findsOneWidget);
+      expect(find.text('All'), findsWidgets);
+      expect(find.text('Tasks'), findsOneWidget);
+      expect(find.text('FEED'), findsOneWidget);
+      expect(find.text('0 tasks'), findsOneWidget);
       expect(find.byType(SkeletonTaskCard), findsWidgets);
     });
 
@@ -232,7 +234,7 @@ void main() {
       await tester.tap(find.byKey(HomeScreen.discoveryBookingsKey));
       await tester.pumpAndSettle();
 
-      expect(find.text('Booking Task'), findsOneWidget);
+      expect(find.textContaining('BOOKING TASK'), findsOneWidget);
       expect(find.text('Tender Task'), findsNothing);
     });
 
@@ -264,7 +266,7 @@ void main() {
     });
 
     testWidgets(
-      'T58 category filter still delegates while Bookings mode is selected',
+      'T58 discovery mode no longer renders the legacy category chip row',
       (tester) async {
         final bundle = _buildHomeBundle();
         final tasks = <Task>[
@@ -285,11 +287,9 @@ void main() {
 
         await tester.tap(find.byKey(HomeScreen.discoveryBookingsKey));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Design'));
-        await tester.pump();
 
-        expect(find.text('Booking Task'), findsOneWidget);
-        verify(() => bundle.filterVm.filterByCategory('Design')).called(1);
+        expect(find.byType(BookingTaskCard), findsOneWidget);
+        verifyNever(() => bundle.filterVm.filterByCategory(any()));
       },
     );
 
@@ -317,7 +317,7 @@ void main() {
       );
       await tester.pump(_kShimmerPumpDuration);
 
-      await tester.tap(find.text('Booking Task'));
+      await tester.tap(find.textContaining('BOOKING TASK'));
       await tester.pump(const Duration(milliseconds: 60));
       await tester.pump();
 

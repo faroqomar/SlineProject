@@ -136,6 +136,78 @@ abstract class AppLocalizations {
   /// **'Wallet'**
   String get navWallet;
 
+  /// Wallet balance heading
+  ///
+  /// In en, this message translates to:
+  /// **'AVAILABLE BALANCE'**
+  String get availableBalance;
+
+  /// Wallet withdrawal action label
+  ///
+  /// In en, this message translates to:
+  /// **'Withdraw'**
+  String get withdraw;
+
+  /// Wallet top-up action label
+  ///
+  /// In en, this message translates to:
+  /// **'Top up'**
+  String get topUp;
+
+  /// Create task concept section heading
+  ///
+  /// In en, this message translates to:
+  /// **'Create a post'**
+  String get createPost;
+
+  /// Tender task type option title
+  ///
+  /// In en, this message translates to:
+  /// **'Tender post'**
+  String get tenderPostTitle;
+
+  /// Tender task type option subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Client request with budget, deadline, and offers.'**
+  String get tenderPostSubtitle;
+
+  /// Booking task type option title
+  ///
+  /// In en, this message translates to:
+  /// **'Booking post'**
+  String get bookingPostTitle;
+
+  /// Booking task type option subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Freelancer service package with price.'**
+  String get bookingPostSubtitle;
+
+  /// Booking task role field label
+  ///
+  /// In en, this message translates to:
+  /// **'Role'**
+  String get roleLabel;
+
+  /// Booking task role field hint
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., UX designer'**
+  String get roleHint;
+
+  /// Booking task seniority field label
+  ///
+  /// In en, this message translates to:
+  /// **'Seniority'**
+  String get seniorityLabel;
+
+  /// Booking task seniority field hint
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., Senior'**
+  String get seniorityHint;
+
   /// Login button text
   ///
   /// In en, this message translates to:

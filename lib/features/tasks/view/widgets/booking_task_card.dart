@@ -1,25 +1,27 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/widgets/scale_button.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
-import 'package:sline_app/core/widgets/signed_image.dart';
 import 'package:sline_app/features/profile/view/widgets/profile_preview_modal.dart';
 import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 
+/// Hero Amber Dusk card for booking-style discovery tasks.
+///
+/// The widget preserves the existing tap, profile preview, and saved callbacks
+/// while giving bookings the stronger rust hero treatment from Phase 3.
 class BookingTaskCard extends StatelessWidget {
-  final Task task;
-  final VoidCallback onTap;
-  final bool isHot;
-
+  /// Creates a booking card for the discovery feed.
   const BookingTaskCard({
     super.key,
     required this.task,
@@ -27,11 +29,59 @@ class BookingTaskCard extends StatelessWidget {
     this.isHot = false,
   });
 
+  /// Booking task supplied by the existing discovery feed contract.
+  final Task task;
+
+  /// Opens the existing task details route.
+  final VoidCallback onTap;
+
+  /// Marks promoted booking cards with the featured badge.
+  final bool isHot;
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    const amberColors = AmberDuskTokens.colors;
+    final heroSurface = AmberDuskTokens.surfaces.hero;
+    final cardTheme = AmberDuskTokens.widgetTheme.cards;
     final authorName = task.userName ?? 'Provider';
     final initials = _getInitials(authorName);
+    final details = _bookingDetails;
+    final providerRole = _firstNonEmpty([
+      details['role'],
+      task.categoryName,
+      task.category,
+      if (task.skills.isNotEmpty) task.skills.first,
+      task.title,
+    ]);
+    final providerLevel = _firstNonEmpty([
+      task.authorSellerLevel,
+      details['seniority'],
+      'Available',
+    ])!;
+    final locationLabel = _firstNonEmpty([
+      details['location'],
+      task.categoryName,
+      task.category,
+      if (task.skills.isNotEmpty) task.skills.first,
+    ]);
+    final experienceLabel = _firstNonEmpty([
+      details['experience'],
+      if (task.skills.isNotEmpty) task.skills.first,
+      'Available',
+    ]);
+    final ratingLabel =
+        _formatRatingLabel(details['rating']) ??
+        _formatRatingLabel(details['average_rating']) ??
+        _formatRatingLabel(details['averageRating']);
+    final providerIsOnline = _isTruthyDetail([
+      details['isOnline'],
+      details['is_online'],
+      details['providerOnline'],
+      details['provider_online'],
+    ]);
+    final periodLabel = _firstNonEmpty([details['period'], 'month'])!;
+    final price = _splitFormattedPrice(_formatCardPrice(task.budget));
 
     return Semantics(
       button: true,
@@ -39,404 +89,249 @@ class BookingTaskCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: AppDimens.p12),
         decoration: BoxDecoration(
-          color: colorScheme.cardBackground,
-          borderRadius: BorderRadius.circular(AppDimens.r24),
-          border: Border.all(color: colorScheme.cardBorder, width: 1),
-          boxShadow: AppDecorations.elevation(1, isDark: colorScheme.isDark),
+          gradient: LinearGradient(
+            colors: heroSurface.gradientStops,
+            stops: const [0, 0.56, 1],
+            begin: const Alignment(0.14, -1),
+            end: const Alignment(-0.14, 1),
+          ),
+          borderRadius: BorderRadius.circular(heroSurface.radius),
+          border: Border.all(
+            color: heroSurface.border,
+            width: AmberDuskTokens.spacing.borderWidth,
+          ),
+          boxShadow: AppDecorations.elevation(
+            heroSurface.elevationLevel,
+            isDark: colorScheme.isDark,
+          ),
         ),
         child: ScaleButton(
           onPressed: () {
-            AppLogger.d('BookingTaskCard tapped: ${task.id}', tag: 'Cards');
+            AppLogger.d('BookingTaskCard tapped', tag: 'Cards');
             onTap();
           },
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // --- Header Section (Reduced to 60px) ---
-              SizedBox(
-                height: 60,
-                width: double.infinity,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    // Background Image or Gradient
-                    if (task.imagePaths.isNotEmpty)
-                      ClipRRect(
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(AppDimens.r24),
-                          topRight: Radius.circular(AppDimens.r24),
-                        ),
-                        child: SignedImage(
-                          storagePathOrUrl: task.imagePaths.first,
-                          width: double.infinity,
-                          height: 60,
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    else
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(AppDimens.r24),
-                            topRight: Radius.circular(AppDimens.r24),
-                          ),
-                          gradient: LinearGradient(
-                            colors: [
-                              colorScheme.success.withValues(alpha: 0.9),
-                              colorScheme.success.withValues(alpha: 0.6),
-                            ],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                          ),
-                        ),
-                      ),
-
-                    // Gradient Overlay
-                    if (task.imagePaths.isNotEmpty)
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(AppDimens.r24),
-                            topRight: Radius.circular(AppDimens.r24),
-                          ),
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.black.withValues(alpha: 0.3),
-                              Colors.transparent,
-                            ],
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                          ),
-                        ),
-                      ),
-
-                    // Featured Badge (Left)
-                    if (isHot)
-                      Positioned(
-                        top: AppDimens.p12,
-                        left: AppDimens.p12,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppDimens.p8,
-                            vertical: AppDimens.p4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(AppDimens.r8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.auto_awesome,
-                                size: 12,
-                                color: colorScheme.warning,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Featured',
-                                style: AppTypography.micro.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                    // Bookmark Button (Right)
-                    Positioned(
-                      top: AppDimens.p8,
-                      right: AppDimens.p8,
-                      child: Consumer<SavedTasksViewModel>(
-                        builder: (context, savedVM, child) {
-                          final isSaved = savedVM.isSaved(task.id);
-                          return GestureDetector(
-                            onTap: () {
-                              savedVM.toggle(task.id);
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(AppDimens.p8),
-                              decoration: BoxDecoration(
-                                color: isSaved
-                                    ? colorScheme.danger
-                                    : Colors.black.withValues(alpha: 0.2),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                isSaved
-                                    ? Icons.favorite
-                                    : Icons.favorite_border,
-                                size: 18,
-                                color: AppColors.white,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // --- Content Section ---
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppDimens.p20,
-                  AppDimens.p16,
-                  AppDimens.p20,
-                  AppDimens.p20,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Avatar + Name + Rating Row (inline, no Transform.translate)
-                    Row(
-                      children: [
-                        // Avatar Box
-                        GestureDetector(
-                          onTap: () {
-                            showProfilePreview(context, task.userId);
-                          },
-                          child: Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: AppColors.gold,
-                              borderRadius: BorderRadius.circular(
-                                AppDimens.r12,
-                              ),
-                              boxShadow: AppDecorations.elevation(
-                                1,
-                                isDark: colorScheme.isDark,
-                              ),
-                            ),
-                            child:
-                                task.userAvatar != null &&
-                                    task.userAvatar!.isNotEmpty
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(
-                                      AppDimens.r12,
-                                    ),
-                                    child: SignedAvatar(
-                                      storagePathOrUrl: task.userAvatar,
-                                      size: 44,
-                                      borderRadius: BorderRadius.circular(
-                                        AppDimens.r12,
-                                      ),
-                                    ),
-                                  )
-                                : Center(
-                                    child: Text(
-                                      initials,
-                                      style: AppTypography.bodyLarge.copyWith(
-                                        fontWeight: FontWeight.w900,
-                                        color: AppColors.almostBlack,
-                                      ),
-                                    ),
-                                  ),
-                          ),
-                        ),
-
-                        const SizedBox(width: AppDimens.p12),
-
-                        // Name + Rating
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                authorName,
-                                style: AppTypography.caption.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: colorScheme.text,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: AppDimens.p2),
-                              // Rating Pill
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.star,
-                                    size: 12,
-                                    color: colorScheme.warning,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '4.9',
-                                    style: AppTypography.captionBold.copyWith(
-                                      color: colorScheme.text,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: AppDimens.p12),
-
-                    // Title
-                    Text(
-                      task.title,
-                      style: AppTypography.bodyLarge.copyWith(
-                        fontWeight: FontWeight.w800,
-                        height: 1.1,
-                        color: colorScheme.text,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-
-                    const SizedBox(height: AppDimens.p12),
-
-                    // Tags
-                    Wrap(
-                      spacing: AppDimens.p8,
-                      runSpacing: AppDimens.p4,
-                      children: task.skills
-                          .take(3)
-                          .map(
-                            (tag) => Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppDimens.p8,
-                                vertical: AppDimens.p4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: colorScheme.tagBackground,
-                                borderRadius: BorderRadius.circular(
-                                  AppDimens.r8,
-                                ),
-                                border: Border.all(
-                                  color: colorScheme.tagBorder,
-                                ),
-                              ),
-                              child: Text(
-                                tag,
-                                style: AppTypography.micro.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: colorScheme.textSecondary,
-                                ),
-                              ),
-                            ),
-                          )
-                          .toList(),
-                    ),
-
-                    const SizedBox(height: AppDimens.p16),
-
-                    // Footer
-                    Container(
-                      padding: const EdgeInsets.only(top: AppDimens.p12),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          top: BorderSide(color: colorScheme.divider),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          // Price
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'FROM',
-                                style: AppTypography.micro.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: colorScheme.textSecondary.withValues(
-                                    alpha: 0.6,
-                                  ),
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              Text(
-                                PriceFormatter.formatPrice(task.budget),
-                                style: AppTypography.h5.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  color: colorScheme.success,
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          // Action Button (Book Now or Completed)
-                          if (task.status == TaskStatus.completed ||
-                              task.status == TaskStatus.closed)
-                            Container(
-                              height: 36,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppDimens.p12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: colorScheme.background,
-                                borderRadius: BorderRadius.circular(
-                                  AppDimens.r18,
-                                ),
-                                border: Border.all(color: colorScheme.divider),
-                              ),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    'Completed',
-                                    style: AppTypography.captionBold.copyWith(
-                                      color: colorScheme.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          else
-                            Container(
-                              height: 36,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppDimens.p16,
-                              ),
-                              decoration: BoxDecoration(
-                                color: colorScheme.success,
-                                borderRadius: BorderRadius.circular(
-                                  AppDimens.r18,
-                                ),
-                                boxShadow: AppDecorations.elevation(
-                                  1,
-                                  isDark: colorScheme.isDark,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    'Book Now',
-                                    style: AppTypography.captionBold.copyWith(
-                                      color: AppColors.white,
-                                    ),
-                                  ),
-                                  const SizedBox(width: AppDimens.p8),
-                                  Icon(
-                                    Icons.arrow_forward,
-                                    size: 14,
-                                    color: AppColors.white,
-                                  ),
-                                ],
-                              ),
-                            ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(heroSurface.radius),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: RadialGradient(
+                        center: const Alignment(-0.64, -1),
+                        radius: 0.78,
+                        colors: [
+                          amberColors.heroText.withValues(alpha: 0.08),
+                          amberColors.transparent,
                         ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.center,
+                        colors: [
+                          amberColors.heroHighlight,
+                          amberColors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.center,
+                        colors: [
+                          amberColors.scrim.withValues(alpha: 0.18),
+                          amberColors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: cardTheme.bookingPadding,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          GestureDetector(
+                            onTap: () =>
+                                showProfilePreview(context, task.userId),
+                            child: _ProviderAvatar(
+                              initials: initials,
+                              avatarPath: task.userAvatar,
+                              isOnline: providerIsOnline,
+                            ),
+                          ),
+                          const Spacer(),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _BookingSaveButton(taskId: task.id),
+                              SizedBox(width: cardTheme.bookingActionGap),
+                              _BookingMessageButton(
+                                taskId: task.id,
+                                onTap: onTap,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: cardTheme.bookingTopSpacing),
+                      Text(
+                        authorName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: cardTheme.bookingNameStyle.copyWith(
+                          color: amberColors.heroText,
+                        ),
+                      ),
+                      SizedBox(height: cardTheme.bookingNameGap),
+                      Text(
+                        _roleLine(providerLevel, providerRole).toUpperCase(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: cardTheme.bookingRoleStyle.copyWith(
+                          color: amberColors.heroMuted,
+                        ),
+                      ),
+                      const SizedBox(height: AppDimens.p14),
+                      Wrap(
+                        spacing: AppDimens.p6,
+                        runSpacing: AppDimens.p6,
+                        children: [
+                          if (ratingLabel != null)
+                            _HeroChip(icon: Icons.star, label: ratingLabel),
+                          if (locationLabel != null)
+                            _HeroChip(
+                              icon: Icons.location_on_outlined,
+                              label: locationLabel,
+                            ),
+                          if (experienceLabel != null)
+                            _HeroChip(
+                              icon: Icons.workspace_premium_outlined,
+                              label: experienceLabel,
+                            ),
+                          if (isHot) const _FeaturedPill(),
+                        ],
+                      ),
+                      const SizedBox(height: AppDimens.p14),
+                      Container(height: 1, color: amberColors.heroDivider),
+                      SizedBox(height: cardTheme.bookingDividerBottomSpacing),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.baseline,
+                                    textBaseline: TextBaseline.alphabetic,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        price.amount,
+                                        style: cardTheme.bookingPriceStyle
+                                            .copyWith(
+                                              color: amberColors.heroText,
+                                            ),
+                                      ),
+                                      if (price.suffix != null) ...[
+                                        const SizedBox(width: AppDimens.p4),
+                                        Text(
+                                          price.suffix!,
+                                          style: AmberDuskTokens.typography.chip
+                                              .copyWith(
+                                                color: amberColors.heroMuted,
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: AppDimens.p4),
+                                Text(
+                                  'PER ${periodLabel.toUpperCase()}',
+                                  style: cardTheme.bookingPeriodStyle.copyWith(
+                                    color: amberColors.heroMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          _BookingActionPill(isClosed: _isClosed),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  bool get _isClosed =>
+      task.status == TaskStatus.completed || task.status == TaskStatus.closed;
+
+  Map<String, dynamic> get _bookingDetails {
+    return Task.packageDetailsFrom(task.packages) ?? const <String, dynamic>{};
+  }
+
+  String _roleLine(String level, String? role) {
+    final trimmedRole = role?.trim();
+    if (trimmedRole == null || trimmedRole.isEmpty) return level;
+    return '$level · $trimmedRole';
+  }
+
+  String? _firstNonEmpty(List<Object?> values) {
+    for (final value in values) {
+      final text = value?.toString().trim();
+      if (text != null && text.isNotEmpty) return text;
+    }
+    return null;
+  }
+
+  String? _formatRatingLabel(Object? value) {
+    final rating = switch (value) {
+      final num number => number.toDouble(),
+      final String text => double.tryParse(text.trim()),
+      _ => null,
+    };
+    if (rating == null || rating <= 0) return null;
+    return rating.toStringAsFixed(1);
+  }
+
+  bool _isTruthyDetail(List<Object?> values) {
+    for (final value in values) {
+      if (value is bool) return value;
+      if (value is num) return value != 0;
+      if (value is String) {
+        final normalized = value.trim().toLowerCase();
+        if (normalized == 'true' || normalized == 'online') return true;
+        if (normalized == 'false' || normalized == 'offline') return false;
+      }
+    }
+    return false;
   }
 
   String _getInitials(String name) {
@@ -447,4 +342,320 @@ class BookingTaskCard extends StatelessWidget {
     }
     return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
   }
+}
+
+class _BookingSaveButton extends StatelessWidget {
+  const _BookingSaveButton({required this.taskId});
+
+  final String taskId;
+
+  @override
+  Widget build(BuildContext context) {
+    const amberColors = AmberDuskTokens.colors;
+    final cardTheme = AmberDuskTokens.widgetTheme.cards;
+
+    return Consumer<SavedTasksViewModel>(
+      builder: (context, savedVM, child) {
+        final isSaved = savedVM.isSaved(taskId);
+        return Semantics(
+          button: true,
+          label: isSaved ? 'Unsave booking' : 'Save booking',
+          child: GestureDetector(
+            onTap: () => unawaited(savedVM.toggle(taskId)),
+            child: Container(
+              width: cardTheme.bookingRoundActionSize,
+              height: cardTheme.bookingRoundActionSize,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: isSaved
+                    ? amberColors.rust.withValues(alpha: 0.18)
+                    : cardTheme.bookingRoundActionFill,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isSaved ? Icons.favorite : Icons.favorite_border,
+                size: cardTheme.bookingRoundActionIconSize,
+                color: isSaved ? amberColors.rust : amberColors.heroMuted,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _BookingMessageButton extends StatelessWidget {
+  const _BookingMessageButton({required this.taskId, required this.onTap});
+
+  final String taskId;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    const amberColors = AmberDuskTokens.colors;
+    final cardTheme = AmberDuskTokens.widgetTheme.cards;
+
+    return Semantics(
+      button: true,
+      label: 'View booking details',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          AppLogger.d('BookingTaskCard details action tapped', tag: 'Cards');
+          onTap();
+        },
+        child: Container(
+          width: cardTheme.bookingRoundActionSize,
+          height: cardTheme.bookingRoundActionSize,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: cardTheme.bookingRoundActionFill,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.chat_bubble_outline,
+            size: cardTheme.bookingRoundActionIconSize,
+            color: amberColors.heroMuted,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FeaturedPill extends StatelessWidget {
+  const _FeaturedPill();
+
+  @override
+  Widget build(BuildContext context) {
+    const amberColors = AmberDuskTokens.colors;
+    final cardTheme = AmberDuskTokens.widgetTheme.cards;
+    return Container(
+      padding: cardTheme.bookingChipPadding,
+      decoration: BoxDecoration(
+        color: amberColors.heroChip,
+        borderRadius: BorderRadius.circular(AmberDuskTokens.spacing.pillRadius),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.auto_awesome,
+            size: cardTheme.bookingChipIconSize,
+            color: amberColors.star,
+          ),
+          SizedBox(width: cardTheme.bookingChipGap),
+          Text(
+            'Featured',
+            style: cardTheme.bookingChipStyle.copyWith(
+              color: amberColors.heroText,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProviderAvatar extends StatelessWidget {
+  const _ProviderAvatar({
+    required this.initials,
+    required this.avatarPath,
+    required this.isOnline,
+  });
+
+  final String initials;
+  final String? avatarPath;
+  final bool isOnline;
+
+  @override
+  Widget build(BuildContext context) {
+    final cardTheme = AmberDuskTokens.widgetTheme.cards;
+    final media = AmberDuskTokens.widgetTheme.media;
+    final colorScheme = context.colorScheme;
+    const amberColors = AmberDuskTokens.colors;
+    final photoSize = cardTheme.bookingPhotoSize;
+    final path = avatarPath;
+
+    if (path != null && path.isNotEmpty) {
+      return SignedAvatar(
+        storagePathOrUrl: path,
+        radius: photoSize / 2,
+        borderColor: amberColors.heroRim,
+        borderWidth: 2,
+        initials: initials,
+        showOnlineIndicator: isOnline,
+      );
+    }
+
+    return SizedBox(
+      width: photoSize,
+      height: photoSize,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: photoSize,
+            height: photoSize,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: media.avatarFallback,
+              shape: BoxShape.circle,
+              boxShadow: AppDecorations.elevation(
+                1,
+                isDark: colorScheme.isDark,
+              ),
+            ),
+            child: Text(initials, style: media.initialsTextStyle(photoSize)),
+          ),
+          if (isOnline)
+            Positioned(
+              right: -1,
+              bottom: -1,
+              child: Container(
+                width: AppDimens.p14,
+                height: AppDimens.p14,
+                decoration: BoxDecoration(
+                  color: media.onlineDot,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: amberColors.hero, width: 2.5),
+                  boxShadow: AppDecorations.elevation(
+                    1,
+                    isDark: colorScheme.isDark,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroChip extends StatelessWidget {
+  const _HeroChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    const amberColors = AmberDuskTokens.colors;
+    final cardTheme = AmberDuskTokens.widgetTheme.cards;
+    return Container(
+      padding: cardTheme.bookingChipPadding,
+      decoration: BoxDecoration(
+        color: amberColors.heroChip,
+        borderRadius: BorderRadius.circular(AmberDuskTokens.spacing.pillRadius),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: cardTheme.bookingChipIconSize,
+            color: amberColors.star,
+          ),
+          SizedBox(width: cardTheme.bookingChipGap),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 112),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: cardTheme.bookingChipStyle.copyWith(
+                color: amberColors.heroText,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BookingActionPill extends StatelessWidget {
+  const _BookingActionPill({required this.isClosed});
+
+  final bool isClosed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    const amberColors = AmberDuskTokens.colors;
+    final cardTheme = AmberDuskTokens.widgetTheme.cards;
+
+    if (isClosed) {
+      return Container(
+        height: cardTheme.cardActionHeight,
+        padding: cardTheme.bookingActionPadding,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: amberColors.heroChip,
+          borderRadius: BorderRadius.circular(
+            AmberDuskTokens.spacing.pillRadius,
+          ),
+          border: Border.all(color: amberColors.heroDivider),
+        ),
+        child: Text(
+          'Completed',
+          style: cardTheme.cardActionStyle.copyWith(
+            color: amberColors.heroMuted,
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      height: cardTheme.cardActionHeight,
+      padding: cardTheme.bookingActionPadding,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: amberColors.text,
+        borderRadius: BorderRadius.circular(AmberDuskTokens.spacing.pillRadius),
+        boxShadow: AppDecorations.elevation(2, isDark: colorScheme.isDark),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'See details',
+            style: cardTheme.cardActionStyle.copyWith(
+              color: amberColors.textInverse,
+            ),
+          ),
+          const SizedBox(width: AppDimens.p8),
+          Icon(
+            Icons.arrow_forward,
+            size: cardTheme.bookingCtaIconSize,
+            color: amberColors.textInverse,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+({String amount, String? suffix}) _splitFormattedPrice(String value) {
+  final trimmed = value.trim();
+  final suffixMatch = RegExp(r'\s+([A-Z]{2,5})$').firstMatch(trimmed);
+  if (suffixMatch == null) return (amount: trimmed, suffix: null);
+  return (
+    amount: trimmed.substring(0, suffixMatch.start).trim(),
+    suffix: suffixMatch.group(1),
+  );
+}
+
+String _formatCardPrice(
+  double amount, {
+  String suffix = PriceFormatter.defaultCurrency,
+  String? locale,
+}) {
+  final rounded = amount.round();
+  final prefix = rounded < 0 ? '-' : '';
+  final formatter = NumberFormat.decimalPattern(
+    locale ?? Intl.getCurrentLocale(),
+  );
+  return '$prefix${formatter.format(rounded.abs())} $suffix';
 }

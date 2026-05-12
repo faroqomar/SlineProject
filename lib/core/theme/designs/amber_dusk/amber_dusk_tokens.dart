@@ -4,6 +4,7 @@
 /// token files, keeping Phase 0 as the single named design-system contract.
 library;
 
+import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_colors.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_components.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_motion.dart';
@@ -39,6 +40,9 @@ abstract final class AmberDuskTokens {
   /// Reusable spacing and radius registry.
   static const AmberDuskSpacingTokens spacing = AmberDuskSpacing.tokens;
 
+  /// Reusable corner radius registry.
+  static const AmberDuskRadiusTokens radius = AmberDuskRadius.tokens;
+
   /// Solid surface recipe registry.
   static const AmberDuskSurfaceTokens surfaces = AmberDuskSurfaces.tokens;
 
@@ -55,4 +59,16 @@ abstract final class AmberDuskTokens {
   /// Phone-specific 402x874 layout registry.
   static const AmberDuskPhoneLayoutTokens phoneLayout =
       AmberDuskPhoneLayout.tokens;
+}
+
+/// Resolves the staged Amber Dusk colors from the active Flutter brightness.
+///
+/// Amber Dusk is still a staged design layer, so this helper centralizes the
+/// dark/light selection without activating a global app theme switch.
+extension AmberDuskContextTokens on BuildContext {
+  /// Mode-aware Amber Dusk semantic colors for the current build context.
+  AmberDuskColorScheme get amberColors =>
+      Theme.of(this).brightness == Brightness.dark
+      ? AmberDuskTokens.colors.dark
+      : AmberDuskTokens.colors.light;
 }

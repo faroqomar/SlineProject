@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/widgets/app_card.dart';
 import 'package:sline_app/features/wallet/utils/wallet_presentation_helper.dart';
 
 /// Wallet activity timeline — Stripe payment timeline aesthetic.
 ///
-/// Phase 7 PREMIUM REDESIGN: Overline header, hairline dividers between
-/// entries (no bordered containers), small dots without shadows, event
-/// metadata on same row, right-aligned colored amounts with tabular figures.
+/// The timeline keeps wallet activity grouped by presentation helper sections
+/// and uses Amber Dusk amount colors for received and spent entries.
 class WalletTimelineCard extends StatelessWidget {
   const WalletTimelineCard({super.key, required this.summary});
 
@@ -18,7 +17,7 @@ class WalletTimelineCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
 
     return AppCard(
       key: const ValueKey<String>('wallet_timeline_card'),
@@ -26,7 +25,6 @@ class WalletTimelineCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Friendly section header ──
           Padding(
             padding: const EdgeInsets.fromLTRB(
               AppDimens.p20,
@@ -36,7 +34,7 @@ class WalletTimelineCard extends StatelessWidget {
             ),
             child: Text(
               'Recent activity',
-              style: AppTypography.h5.copyWith(color: colorScheme.text),
+              style: AppTypography.h5.copyWith(color: amber.text),
             ),
           ),
 
@@ -65,31 +63,25 @@ class _WalletEmptyActivityState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
     return Padding(
       key: const ValueKey<String>('wallet_empty_state'),
       padding: const EdgeInsets.all(AppDimens.p24),
       child: Column(
         children: [
-          Icon(
-            Icons.timeline_rounded,
-            color: colorScheme.textTertiary,
-            size: AppDimens.p32,
-          ),
+          Icon(Icons.timeline_rounded, color: amber.muted, size: AppDimens.p32),
           const SizedBox(height: AppDimens.p12),
           Text(
             'No wallet activity yet',
             style: AppTypography.bodyLarge.copyWith(
-              color: colorScheme.textSecondary,
+              color: amber.textSubtle,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: AppDimens.p4),
           Text(
             'Releases, refunds, and escrow moves will appear here.',
-            style: AppTypography.bodySmall.copyWith(
-              color: colorScheme.textTertiary,
-            ),
+            style: AppTypography.bodySmall.copyWith(color: amber.muted),
             textAlign: TextAlign.center,
           ),
         ],
@@ -106,7 +98,7 @@ class _TimelineSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,10 +108,7 @@ class _TimelineSection extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: AppDimens.p12),
           child: Text(
             section.title,
-            style: AppTypography.captionBold.copyWith(
-              color: colorScheme.textSecondary,
-              letterSpacing: 0.3,
-            ),
+            style: AppTypography.captionBold.copyWith(color: amber.textSubtle),
           ),
         ),
 
@@ -129,7 +118,10 @@ class _TimelineSection extends StatelessWidget {
           if (i < section.entries.length - 1)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: AppDimens.p2),
-              child: Container(height: 0.5, color: colorScheme.divider),
+              child: Container(
+                height: AppDimens.hairlineDivider,
+                color: amber.heroDivider,
+              ),
             ),
         ],
         const SizedBox(height: AppDimens.p16),
@@ -149,10 +141,8 @@ class _TimelineRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final accentColor = entry.isReceived
-        ? colorScheme.primary
-        : colorScheme.danger;
+    const amber = AmberDuskTokens.colors;
+    final accentColor = entry.isReceived ? amber.success : amber.danger;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppDimens.p10),
@@ -177,7 +167,7 @@ class _TimelineRow extends StatelessWidget {
                 Text(
                   entry.label,
                   style: AppTypography.bodySmall.copyWith(
-                    color: colorScheme.text,
+                    color: amber.text,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -187,16 +177,12 @@ class _TimelineRow extends StatelessWidget {
                   children: [
                     Text(
                       entry.eventName,
-                      style: AppTypography.micro.copyWith(
-                        color: colorScheme.textTertiary,
-                      ),
+                      style: AppTypography.micro.copyWith(color: amber.muted),
                     ),
                     const SizedBox(width: AppDimens.p8),
                     Text(
                       entry.timestampLabel,
-                      style: AppTypography.micro.copyWith(
-                        color: colorScheme.textTertiary,
-                      ),
+                      style: AppTypography.micro.copyWith(color: amber.muted),
                     ),
                   ],
                 ),
