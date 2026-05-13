@@ -60,16 +60,16 @@ class WalletHeroCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: _HeroActionPill(
-                    label: l10n?.withdraw ?? 'Withdraw',
-                    foreground: amber.textDark,
-                    background: amber.heroText,
+                    label: '${l10n?.withdraw ?? 'Withdraw'} soon',
+                    foreground: amber.heroMuted,
+                    background: amber.heroChip,
                   ),
                 ),
                 SizedBox(width: spacing.md),
                 Expanded(
                   child: _HeroActionPill(
-                    label: l10n?.topUp ?? 'Top up',
-                    foreground: amber.heroText,
+                    label: '${l10n?.topUp ?? 'Top up'} soon',
+                    foreground: amber.heroMuted,
                     background: amber.heroChip,
                   ),
                 ),
@@ -119,6 +119,7 @@ class _HeroActionPill extends StatelessWidget {
     return Semantics(
       button: true,
       enabled: false,
+      hint: 'Wallet actions are coming soon',
       child: Container(
         height: buttons.minHeight,
         alignment: Alignment.center,

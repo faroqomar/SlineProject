@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
 import 'package:sline_app/features/tasks/view/task_details_screen.dart';
 import 'package:sline_app/features/tasks/view/widgets/discovery_task_sliver.dart';
@@ -11,7 +10,9 @@ import 'package:sline_app/features/tasks/view/widgets/task_card.dart';
 import 'package:sline_app/features/tasks/viewmodels/discovery_feed_view_model_contract.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
 
+/// Booking discovery surface that filters the shared task feed to booking work.
 class BookingsDiscoveryScreen extends StatefulWidget {
+  /// Creates the booking discovery screen.
   const BookingsDiscoveryScreen({super.key});
 
   @override
@@ -42,11 +43,17 @@ class _BookingsDiscoveryScreenState extends State<BookingsDiscoveryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
+    const spacing = AmberDuskTokens.spacing;
+    const typography = AmberDuskTokens.typography;
     final topPadding = MediaQuery.of(context).padding.top;
+    final baseInputBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(spacing.moduleRadius),
+      borderSide: BorderSide.none,
+    );
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: amber.page,
       body: Consumer2<DiscoveryFeedViewModelContract, TaskFilterViewModel>(
         builder: (context, homeVM, filterVM, child) {
           final bookings = filterVM.filteredTasks
@@ -67,16 +74,43 @@ class _BookingsDiscoveryScreenState extends State<BookingsDiscoveryScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Bookings',
-                        style: AppTypography.h1.copyWith(
-                          color: colorScheme.text,
+                        'BROWSE',
+                        style: typography.chip.copyWith(
+                          color: amber.muted,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
+                      const SizedBox(height: AppDimens.p4),
                       Text(
-                        'Direct hire opportunities',
-                        style: AppTypography.bodySmall.copyWith(
-                          color: colorScheme.textSecondary,
-                          fontWeight: FontWeight.bold,
+                        'Bookings',
+                        style: typography.screenTitle.copyWith(
+                          color: amber.text,
+                        ),
+                      ),
+                      SizedBox(height: spacing.md),
+                      Semantics(
+                        label: 'Search services',
+                        child: TextField(
+                          onChanged: filterVM.searchTasks,
+                          style: typography.body.copyWith(color: amber.text),
+                          decoration: InputDecoration(
+                            hintText: 'Search services...',
+                            hintStyle: typography.body.copyWith(
+                              color: amber.muted,
+                            ),
+                            prefixIcon: Icon(
+                              Icons.search_rounded,
+                              color: amber.muted,
+                            ),
+                            filled: true,
+                            fillColor:
+                                AmberDuskTokens.widgetTheme.fields.background,
+                            border: baseInputBorder,
+                            enabledBorder: baseInputBorder,
+                            focusedBorder: baseInputBorder.copyWith(
+                              borderSide: BorderSide(color: amber.primary),
+                            ),
+                          ),
                         ),
                       ),
                     ],

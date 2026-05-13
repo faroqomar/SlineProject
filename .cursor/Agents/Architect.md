@@ -118,7 +118,6 @@ Views must not invent model contracts by inferring semantic state from unrelated
 
 Temporary UI metadata keys are allowed only behind a model/helper constant or typed mapper. Do not repeat sentinel strings such as `__details` across view widgets.
 
-Evidence: Open Design Amber Dusk Phases 2-4 Step 6 — Orchestrator review found Messages mode inferred request/response direction from `lastMessageSenderId`, hiding valid conversations, and create/card package details used scattered raw `__details` map access. Both were fixed by removing unsafe filtering and centralizing metadata access on `Task`.
 
 ### 3.2.2 Error Message Sanitization (Explicit Rule)
 
@@ -129,7 +128,6 @@ NEVER pass `e.toString()`, `e.message`, or `error.toString()` to SnackBars, dial
 
 The ONLY exception is logging via `AppLogger` (which is developer-facing, not user-facing).
 
-Evidence: Phase E — 6 raw exception text leaks found across ViewModels and views (`DirectOfferDetailsVM`, `BookingVM`, `work_tab.dart`, `next_actions_list.dart`, `work_item_details_screen.dart`). Each exposed SQL table names or raw Supabase error text to users.
 
 ### 3.2.3 Error vs Exception Handling (Dart-Specific)
 
@@ -144,7 +142,6 @@ Rules:
 4. JSON parsing of external data (realtime, webhooks) should catch `FormatException` and `TypeError` explicitly — never `on Object catch`.
 5. Global error boundaries (`runZonedGuarded`, `FlutterError.onError`) are the only places that should catch everything.
 
-Evidence: SESSION_PhaseB_BugExposure — `AssertionError` from `Supabase.instance` broke 4 tests after `catch (e)` → `on Exception catch (e)` migration.
 
 ### 3.3 Storage and Media Boundary Rules
 
@@ -160,6 +157,18 @@ Evidence: SESSION_PhaseB_BugExposure — `AssertionError` from `Supabase.instanc
 - Navigation decisions should be explicit and minimal, not hidden inside lower layers
 - Role, account restriction, and runtime-config assumptions must be surfaced clearly to the UI contract
 
+### 3.4.0 Realtime Stream Lifecycle Discipline
+
+ViewModels that own Supabase Realtime or other long-lived streams must treat transient transport closes differently from domain failures:
+
+- keep the last known good UI state when the stream drops
+- cancel the broken subscription before reconnecting
+- guard reconnects with a generation token or equivalent stale-callback protection
+- use bounded backoff, injectable delay values for tests, and dispose-safe timers
+- log transient transport failures as warnings, not hard user-facing errors
+- keep non-transient service/domain failures on the existing user-facing error path
+
+
 ### 3.4.3 ViewState Mutation Pattern (No Data Wipe)
 
 When a ViewModel uses sealed `ViewState<T>`, action methods (approve, reject, submit, cancel) MUST NOT overwrite `ViewLoaded` → `ViewLoading`. This wipes the loaded data from the UI and causes "No data found" flash during mutations.
@@ -170,8 +179,6 @@ Use an `_actionInProgress` boolean flag instead:
 - On completion: `_actionInProgress = false`, reload data, `notifyListeners()`
 - This preserves the loaded data in the UI during mutations
 
-Evidence: Phase E — 8 action methods in `WorkItemDetailsVM` wiped `ViewLoaded` state to `ViewLoading`, causing UI to flash "No details found".
-
 ### 3.4.1 notifyListeners() Timing
 
 - NEVER call `notifyListeners()` synchronously inside a method that may be invoked during `build()`, `initState()`, or `didChangeDependencies()`.
@@ -181,7 +188,6 @@ Evidence: Phase E — 8 action methods in `WorkItemDetailsVM` wiped `ViewLoaded`
 - The `finally` block after an `await` is always safe — the build frame has completed by then.
 - Views calling ViewModel methods during initialization should use `addPostFrameCallback` as defense-in-depth.
 
-Evidence: SESSION_PhaseB emulator — `TaskViewModel.loadCategories()` called `notifyListeners()` during build, causing "setState during build" error.
 
 ### 3.4.2 Async Callback Guards
 
@@ -191,7 +197,6 @@ Any `onPressed` or `onTap` callback that calls an async function (especially one
 - Clear the flag in a `finally` block.
 - This prevents double-tap, rapid-fire, and race condition issues with bottom sheets and modals.
 
-Evidence: SESSION_PhaseB emulator — `showSubmitRequestSheet` called 9+ times in <1 second without debounce.
 
 ---
 
@@ -226,7 +231,6 @@ When refactoring a constructor to add optional DI parameters:
 - Do NOT downgrade `late final` to `late` just to make conditional assignment work — this removes a compile-time immutability guarantee.
 - Pattern: `final X _field;` with `: _field = param ?? DefaultX()` in the initializer list.
 
-Evidence: Phase C — ChatVM fields were changed from `late final` to `late` to support conditional assignment, then reverted to `final` via initializer list restructuring after the Orchestrator audit flagged the mutability risk.
 
 ### 4.6 Supabase Query Builder Pattern
 
@@ -239,7 +243,6 @@ Rules:
 - The `unawaited_futures` lint is a FALSE POSITIVE for query builder methods. Use `// ignore: unawaited_futures` only as a last resort, and add a comment explaining why.
 - Prefer reassignment over `// ignore:` for clarity.
 
-Evidence: Phase B wrapped `query.lt()` in `unawaited()`, silently breaking cursor-based pagination in 3 files (booking_service.dart x2, task_requests_service.dart x1).
 
 ### 4.6.1 Raw String Guard
 
@@ -247,13 +250,11 @@ Never use raw string literals (`r'...'`) in `AppLogger` calls or any string that
 
 Use normal single-quoted strings: `'text $variable text'`.
 
-Evidence: Phase E BLOCKER — 14 raw string literals (`r'...$var...'`) in `task_requests_award_delegate.dart` and `task_requests_view_model.dart` produced blind spots in financial flow traceability. Logs showed literal `$requestId` instead of actual payment/award IDs.
 
 ### 4.6.2 Zone Initialization Order
 
 `WidgetsFlutterBinding.ensureInitialized()` MUST be called BEFORE `runZonedGuarded()` (but inside Sentry's `appRunner` if using Sentry). Calling it inside a guarded zone creates a zone mismatch with `runApp()` because Sentry wraps the `appRunner` callback in its own zone.
 
-Evidence: Phase E — Zone mismatch error on every app startup (web + iOS) because `ensureInitialized()` was inside `runZonedGuarded()` while Sentry's zone was the outer boundary.
 
 ### 4.6.3 Web URL Cleanup After Payment Callbacks
 
@@ -261,13 +262,11 @@ Every code path that processes web payment return URLs MUST call `clearPaymentRe
 
 Both `PaymentReturnScreen` and `DashboardScreen` (and any future payment return handlers) must clear.
 
-Evidence: Phase E — `PaymentReturnScreen` missed URL cleanup, causing 20+ duplicate "Detected explicit web payment callback at app start" log entries per session. Every navigation re-triggered payment detection.
 
 ### 4.6.4 Web Platform Awareness
 
 When implementing features that differ between web and mobile (payment redirects, URL handling, WebView vs browser tab, file downloads), ensure the web code path is explicitly tested. Web-specific cleanup (URL params, browser history state) must not be forgotten.
 
-Evidence: Phase E — Web payment redirect persisted URL params in browser history, invisible to mobile-only testing. Required `window.history.replaceState()` cleanup via `package:web`.
 
 ### 4.7 Lazy Supabase Client Resolution
 
@@ -288,7 +287,6 @@ NEVER assign eagerly in the initializer list:
 
 `Supabase.instance` throws `AssertionError` (which is `Error`, not `Exception`) when not initialized. Eager assignment in the initializer list runs during construction, before any test can provide a mock. The lazy getter defers resolution to the first actual access, which only happens in production code paths.
 
-Evidence: Phase B — `AssertionError` from `Supabase.instance` not caught by `on Exception catch`. Phase C — `ChatVM.teardownForRoleSwitch()` calls `Supabase.instance` directly. Phase D — `NotificationVM` eager client initialization crashed 6 tests. Same root cause across 3 sessions = systemic.
 
 ---
 
@@ -383,7 +381,7 @@ Write a refactor plan (even if execution plan exists):
 ### To User
 
 - Provide: what you scanned + what you found (short) + what you will change + how it will be verified.
-- Never claim completion without verification evidence.
+- Never claim completion without verification proof.
 
 ### To @Supabase
 

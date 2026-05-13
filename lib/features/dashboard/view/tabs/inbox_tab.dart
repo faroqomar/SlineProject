@@ -132,9 +132,9 @@ class _InboxTabState extends State<InboxTab> {
           ),
           children: [
             _EmptyInboxState(
-              label: 'Sent $label',
+              label: 'Sent $label Preview',
               message:
-                  'Sent ${label.toLowerCase()} will appear here after you submit offers.',
+                  'Sent inbox data needs a separate dashboard contract before this mode can become active.',
             ),
           ],
         ),
@@ -230,6 +230,7 @@ class _InboxTabState extends State<InboxTab> {
                 label: 'Sent',
                 mode: _InboxMode.sent,
                 textStyle: tabTheme.labelStyle,
+                enabled: false,
               ),
             ],
           ),
@@ -242,6 +243,7 @@ class _InboxTabState extends State<InboxTab> {
     required String label,
     required _InboxMode mode,
     required TextStyle textStyle,
+    bool enabled = true,
   }) {
     const amber = AmberDuskTokens.colors;
     final isSelected = _mode == mode;
@@ -249,11 +251,19 @@ class _InboxTabState extends State<InboxTab> {
     return Expanded(
       child: Semantics(
         button: true,
+        enabled: enabled,
         selected: isSelected,
-        label: '$label inbox mode',
+        label: enabled ? '$label inbox mode' : '$label inbox mode unavailable',
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () {
+            if (!enabled) {
+              AppLogger.d(
+                'Inbox sent mode blocked by data contract gap',
+                tag: 'dashboard.inbox',
+              );
+              return;
+            }
             if (_mode == mode) return;
             AppLogger.d(
               'Inbox mode switched',
@@ -275,7 +285,11 @@ class _InboxTabState extends State<InboxTab> {
             child: Text(
               label,
               style: textStyle.copyWith(
-                color: isSelected ? amber.text : amber.textSubtle,
+                color: !enabled
+                    ? amber.muted
+                    : isSelected
+                    ? amber.text
+                    : amber.textSubtle,
               ),
             ),
           ),

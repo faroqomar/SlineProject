@@ -1,6 +1,108 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2026-05-12
+**Last Updated:** 2026-05-13
+
+---
+
+## 🧭 Version 2.30.0 — UI Surface Inventory + Agent Maintenance Gates (2026-05-13)
+
+**Classification:** Documentation source-of-truth addition + agent workflow routing
+**Supabase objects changed:** none
+
+### Scope
+- Added `Sline_everything/UI_SURFACE_INVENTORY.md` as the maintained inventory for screens, routes, app-shell surfaces, tabs, sheets, dialogs, popup menus, deep-link UI, transient feedback, and shared widgets.
+- Expanded the inventory with a full visual-file coverage index covering every current app-shell, core-widget, feature `view/`, feature `routes/`, and feature deep-link handler file found in the scan.
+- Wired Planner, PlanCritic, Executor, Pixel, Orchestrator, Sentinel, SystemEvolution, and DocsKeeper so UI work must read and maintain the inventory.
+- Updated `Sline_everything/DOC_SOURCE_MAP.md`, `.cursor/PROJECT_CONTEXT.md`, `.cursor/rules/project-rules.mdc`, and `README.md` so new developers and agents can find the inventory before redesign or navigation work.
+
+### Key Files
+- `Sline_everything/UI_SURFACE_INVENTORY.md`
+- `Sline_everything/DOC_SOURCE_MAP.md`
+- `README.md`
+- `.cursor/PROJECT_CONTEXT.md`
+- `.cursor/rules/project-rules.mdc`
+- `.cursor/Agents/Planner.md`
+- `.cursor/Agents/PlanCritic.md`
+- `.cursor/Agents/Executor.md`
+- `.cursor/Agents/Pixel.md`
+- `.cursor/Agents/Orchestrator.md`
+- `.cursor/Agents/Sentinel.md`
+- `.cursor/Agents/SystemEvolution.md`
+- `.cursor/Agents/DocsKeeper.md`
+
+### Verification
+- Verified `Sline_everything/UI_SURFACE_INVENTORY.md` backtick file references point to existing repo paths.
+- Verified the inventory has no missing exact file references for the 131 scanned visual/routing files under `lib/main.dart`, `lib/app/`, `lib/core/widgets/`, feature `view/`, feature `routes/`, and feature deep-link handlers.
+- `rg -ni "evidence" .cursor/Agents .cursor/rules`: no matches.
+- `git diff --check` on changed agent, rule, README, and `Sline_everything/` docs: passed.
+
+---
+
+## 🧭 Version 2.29.0 — Amber Dusk Phases 5-8 + Notification Realtime Hardening + Docs Sync (2026-05-13)
+
+**Classification:** Scoped phone-view Amber Dusk runtime work + notification realtime resilience + agent-system rule merge + documentation sync
+**Plan:** `.TODO/PLAN_OpenDesign_AmberDusk_Phases5_6_7_8_PhoneTrustMessagingWorkPayments_2026-05-12.md`
+**Plan Critique:** `.TODO/PLAN_CRITIQUE_2026-05-12_OpenDesign_AmberDusk_Phases5_6_7_8_PhoneTrustMessagingWorkPayments.md`
+**Open Design Screenshots:** `.TODO/OpenDesign_AmberDusk_Phases5_6_7_8_OpenDesignScreenshots_2026-05-12/`
+**Session Log:** `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phases5_6_7_8_PhoneTrustMessagingWorkPayments_2026-05-12.md`
+**Master Report:** `.TODO/Archive/OpenDesign_AmberDusk_Phases5_6_7_8_2026-05-13/MASTER_REPORT_2026-05-12_OpenDesign_AmberDusk_Phases5_6_7_8_Step6.md`
+**Emulator Checklist:** `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases5_6_7_8.md`
+**System Evolution:** `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-13.md`
+**Docs Sync:** `.TODO/Archive/OpenDesign_AmberDusk_Phases5_6_7_8_2026-05-13/DOCS_SYNC_2026-05-13_OpenDesign_AmberDusk_Phases5_6_7_8.md`
+**Reference Fix:** `.TODO/Archive/OpenDesign_AmberDusk_Phases5_6_7_8_2026-05-13/DOCS_REFERENCE_FIX_2026-05-13_GuidancePaths.md`
+**Supabase objects changed:** none
+
+### Scope
+- Applied scoped Amber Dusk treatment across Phase 5 auth/system gates, Phase 6 chat/attachments/notifications, Phase 7 tasks/tenders/work/management, and Phase 8 booking/payment/wallet surfaces.
+- Kept Amber Dusk as scoped token/widget consumption; no global `MaterialApp` theme activation occurred.
+- Preserved backend/payment/wallet authority: no Supabase migrations, RLS, Edge Functions, RPCs, or active withdrawal flow were introduced.
+- Kept Messages `Received`/`Sent` as visual copy only until a stable conversation-direction model contract exists.
+- Moved attachment signed URL resolution behind `ChatViewModel`/services and kept attachment UI errors generic.
+- Sanitized Payment WebView logging to safe URL facts instead of raw callback URL structure.
+- Fixed solid payment/award CTA contrast and added the per-file emulator checklist for every touched source/test/docs/screenshot artifact.
+- Hardened `NotificationViewModel` so transient Supabase Realtime websocket closes (`1002`, `1006`, subscribe timeout) preserve cached notifications, cancel stale streams, and reconnect instead of surfacing a hard notification load error.
+- Ran SystemEvolution Step 7 and merged deduped rules into `SystemEvolution`, `Executor`, `Architect`, `Sentinel`, `Observability`, `DocsKeeper`, and `Orchestrator`.
+- Ran DocsKeeper Step 8 and replaced stale `GEMINI.md` guidance references with `AGENTS.md` / `.cursor/Agents/`.
+
+### Key Files
+- `lib/features/auth/view/login_screen.dart`
+- `lib/features/auth/view/signup_screen.dart`
+- `lib/features/auth/view/forgot_password_screen.dart`
+- `lib/features/auth/view/account_restricted_screen.dart`
+- `lib/features/auth/view/update_required_screen.dart`
+- `lib/features/chat/view/messages_screen.dart`
+- `lib/features/chat/view/chat_screen.dart`
+- `lib/features/chat/attachments/widgets/attachment_message_tile.dart`
+- `lib/features/chat/viewmodels/chat_view_model.dart`
+- `lib/features/notifications/viewmodels/notification_view_model.dart`
+- `lib/features/notifications/view/notifications_modal.dart`
+- `lib/features/tasks/view/tenders_screen.dart`
+- `lib/features/tasks/view/widgets/requests/request_award_dialog.dart`
+- `lib/features/work/view/work_item_details_screen.dart`
+- `lib/features/booking/view/payment_webview_screen.dart`
+- `lib/features/booking/view/payment_checkout_screen.dart`
+- `lib/features/booking/view/booking_details_screen.dart`
+- `lib/features/wallet/view/widgets/wallet_snapshot_card.dart`
+- `.cursor/rules/project-rules.mdc`
+- `.cursor/PROJECT_CONTEXT.md`
+- `.cursor/Agents/SystemEvolution.md`
+- `.cursor/Agents/Executor.md`
+- `.cursor/Agents/Architect.md`
+- `.cursor/Agents/Sentinel.md`
+- `.cursor/Agents/Observability.md`
+- `.cursor/Agents/DocsKeeper.md`
+- `.cursor/Agents/Orchestrator.md`
+
+### Verification
+- `dart format` on touched Dart files: passed.
+- `flutter analyze --no-fatal-infos`: passed.
+- Focused touched-surface tests: passed.
+- `flutter test --coverage`: passed; parsed coverage was 49.77%.
+- Full `flutter test`: passed.
+- `git diff --check`: passed.
+
+### Open Release Gate
+- Final emulator visual parity remains open for Phase 5-8. Use `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases5_6_7_8.md` against the exported Open Design screenshot folder before claiming visual completion.
 
 ---
 
@@ -2988,7 +3090,7 @@
 - **Theme:** `lib/core/theme/theme_dashboard.dart` (new), `lib/core/theme/app_typography.dart`, `lib/core/theme/app_dimens.dart`
 - **Navigation:** `lib/core/widgets/custom_bottom_nav_bar.dart`, `lib/app/main_navigation_screen.dart`
 - **Agents:** `.cursor/Agents/CodeGuard.md` (new)
-- **Documentation:** `GEMINI.md`, `.cursorrules`, `.cursor/PROJECT_CONTEXT.md`
+- **Documentation:** `AGENTS.md`, `.cursorrules`, `.cursor/PROJECT_CONTEXT.md`
 - **Removed:** `lib/features/chat/view/video_call_modal.dart`, video call references in chat
 
 #### 🔜 Next

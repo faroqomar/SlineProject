@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/app_enums.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
@@ -81,13 +81,14 @@ class WorkItemBottomActions extends StatelessWidget {
     var promotedMessageToPrimary = false;
 
     if (canAccept) {
+      final colorScheme = context.colorScheme;
       primaryActionBlock = Row(
         children: [
           Expanded(
             child: AppButton(
               text: 'Decline',
               isPrimary: false,
-              backgroundColor: AppColors.lightRed,
+              backgroundColor: colorScheme.danger,
               onPressed: onDeclineBooking,
             ),
           ),
@@ -98,10 +99,11 @@ class WorkItemBottomActions extends StatelessWidget {
         ],
       );
     } else if (canCancel) {
+      final colorScheme = context.colorScheme;
       primaryActionBlock = AppButton(
         text: 'Cancel Request',
         isPrimary: false,
-        backgroundColor: AppColors.lightRed,
+        backgroundColor: colorScheme.danger,
         onPressed: onCancelBooking,
       );
     } else {
@@ -169,7 +171,7 @@ class WorkItemBottomActions extends StatelessWidget {
               context: ctx,
               icon: Icons.warning_amber_rounded,
               label: 'Report',
-              color: AppColors.lightRed,
+              color: ctx.colorScheme.danger,
               onPressed: onPressed,
             ),
           ),
@@ -185,13 +187,10 @@ class WorkItemBottomActions extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: context.colorScheme.cardBackground,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            offset: const Offset(0, -4),
-            blurRadius: AppDimens.p16,
-          ),
-        ],
+        boxShadow: AppDecorations.elevation(
+          2,
+          isDark: context.colorScheme.isDark,
+        ),
       ),
       child: SafeArea(
         child: Padding(
@@ -244,14 +243,13 @@ class WorkItemBottomActions extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                size: 22,
+                size: AppDimens.p22,
                 color: color ?? context.colorScheme.textSecondary,
               ),
               const SizedBox(height: AppDimens.p2),
               Text(
                 label,
-                style: AppTypography.bodySmall.copyWith(
-                  fontSize: 10,
+                style: AppTypography.micro.copyWith(
                   color: color ?? context.colorScheme.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),

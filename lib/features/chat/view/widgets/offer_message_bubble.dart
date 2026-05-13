@@ -74,6 +74,14 @@ class OfferMessageBubble extends StatefulWidget {
 /// Holds the build logic that was previously in the StatelessWidget. All field
 /// references now go through `widget.*` to access the immutable parameters.
 class _OfferMessageBubbleState extends State<OfferMessageBubble> {
+  String _actionLog(String action) {
+    final offerId = widget.offerId;
+    if (offerId == null || offerId.isEmpty) {
+      return 'OfferMessageBubble: $action tapped';
+    }
+    return 'OfferMessageBubble: $action tapped for offer $offerId';
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
@@ -138,7 +146,7 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
                               'CUSTOM OFFER',
                               style: AppTypography.micro.copyWith(
                                 fontWeight: FontWeight.w800,
-                                color: Colors.white,
+                                color: AppColors.white,
                                 letterSpacing: 0.5,
                               ),
                             ),
@@ -362,10 +370,7 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
                     height: AppLayout.buttonHeightSmall,
                     onPressed: () {
                       AppInteractionStates.hapticTap();
-                      AppLogger.d(
-                        'OfferMessageBubble: Accept tapped for offer ${widget.offerId ?? 'unknown'}',
-                        tag: 'Chat',
-                      );
+                      AppLogger.d(_actionLog('accept'), tag: 'Chat');
                       widget.onAccept!();
                     },
                   ),
@@ -393,10 +398,7 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
                       child: InkWell(
                         onTap: () {
                           AppInteractionStates.hapticTap();
-                          AppLogger.d(
-                            'OfferMessageBubble: Decline tapped for offer ${widget.offerId ?? 'unknown'}',
-                            tag: 'Chat',
-                          );
+                          AppLogger.d(_actionLog('decline'), tag: 'Chat');
                           widget.onDecline!();
                         },
                         borderRadius: BorderRadius.circular(AppDimens.r14),
@@ -428,10 +430,7 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
               height: AppLayout.buttonHeightSmall,
               onPressed: () {
                 AppInteractionStates.hapticTap();
-                AppLogger.d(
-                  'OfferMessageBubble: Complete tapped for offer ${widget.offerId ?? 'unknown'}',
-                  tag: 'Chat',
-                );
+                AppLogger.d(_actionLog('complete'), tag: 'Chat');
                 widget.onComplete!();
               },
             ),
@@ -461,10 +460,7 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
                 child: InkWell(
                   onTap: () {
                     AppInteractionStates.hapticTap();
-                    AppLogger.d(
-                      'OfferMessageBubble: Cancel tapped for offer ${widget.offerId ?? 'unknown'}',
-                      tag: 'Chat',
-                    );
+                    AppLogger.d(_actionLog('cancel'), tag: 'Chat');
                     widget.onCancel!();
                   },
                   borderRadius: BorderRadius.circular(AppDimens.r14),
@@ -494,10 +490,7 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
               height: AppLayout.buttonHeightSmall,
               onPressed: () {
                 AppInteractionStates.hapticTap();
-                AppLogger.d(
-                  'OfferMessageBubble: Deliver tapped for offer ${widget.offerId ?? 'unknown'}',
-                  tag: 'Chat',
-                );
+                AppLogger.d(_actionLog('deliver'), tag: 'Chat');
                 widget.onDeliver!();
               },
             ),

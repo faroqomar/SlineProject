@@ -1,19 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
 import 'package:sline_app/features/booking/viewmodels/booking_view_model.dart';
 
+/// Legacy demo payment-method form used by booking package flows.
 class PaymentMethodScreen extends StatefulWidget {
+  /// Amount to pay.
   final double amount;
+
+  /// Selected package tier label.
   final String packageTier;
+
+  /// Task identifier forwarded to the existing payment delegate.
   final String taskId;
 
+  /// Creates the payment method route.
   const PaymentMethodScreen({
     super.key,
     required this.amount,
@@ -45,12 +52,19 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final viewModel = context.read<BookingViewModel>();
+    AppLogger.i(
+      'Payment method submit requested',
+      tag: 'Payment',
+      json: <String, dynamic>{
+        'has_package': widget.packageTier.isNotEmpty,
+        'package_tier': widget.packageTier,
+      },
+    );
 
-    // Call the payment process
     final txnId = await viewModel.processPayment(
       amount: widget.amount,
       currency: 'USD',
-      description: 'Task: ${widget.taskId} - Tier: ${widget.packageTier}',
+      description: 'Booking package payment - Tier: ${widget.packageTier}',
     );
 
     if (txnId != null && mounted) {
@@ -61,62 +75,54 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<BookingViewModel>();
-    final colorScheme = Theme.of(context).colorScheme;
+    const amber = AmberDuskTokens.colors;
+    const typography = AmberDuskTokens.typography;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: amber.page,
       appBar: AppBar(
-        title: Text('Payment Method', style: AppTypography.h3),
+        title: Text(
+          'Payment Method',
+          style: typography.sectionTitle.copyWith(color: amber.text),
+        ),
         centerTitle: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: amber.page,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.close, color: colorScheme.onSurface),
+          icon: Icon(Icons.close, color: amber.text),
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      extendBodyBehindAppBar: true,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.teal.withValues(alpha: 0.1),
-              AppColors.lightTeal.withValues(alpha: 0.05),
-            ],
-          ),
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppDimens.p20),
-          child: SafeArea(
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildTotalAmountCard(context),
-                  const SizedBox(height: AppDimens.p24),
-                  Text('Card Details', style: AppTypography.h3),
-                  const SizedBox(height: AppDimens.p16),
-                  _buildCreditCardForm(context),
-                  const SizedBox(height: AppDimens.p32),
-                  AppButton(
-                    text: 'Pay ${PriceFormatter.formatPrice(widget.amount)}',
-                    isLoading: viewModel.isProcessingPayment,
-                    onPressed: _processPayment,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppDimens.p20),
+        child: SafeArea(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildTotalAmountCard(context),
+                const SizedBox(height: AppDimens.p24),
+                Text(
+                  'Card Details',
+                  style: typography.sectionTitle.copyWith(color: amber.text),
+                ),
+                const SizedBox(height: AppDimens.p16),
+                _buildCreditCardForm(context),
+                const SizedBox(height: AppDimens.p32),
+                AppButton(
+                  text: 'Pay ${PriceFormatter.formatPrice(widget.amount)}',
+                  isLoading: viewModel.isProcessingPayment,
+                  onPressed: _processPayment,
+                ),
+                const SizedBox(height: AppDimens.p16),
+                Center(
+                  child: Text(
+                    'This is a demo secure environment',
+                    style: typography.bodySmall.copyWith(color: amber.muted),
                   ),
-                  const SizedBox(height: AppDimens.p16),
-                  Center(
-                    child: Text(
-                      'This is a demo secure environment',
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.mediumGrey,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -125,6 +131,8 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
   }
 
   Widget _buildTotalAmountCard(BuildContext context) {
+    const amber = AmberDuskTokens.colors;
+    const typography = AmberDuskTokens.typography;
     return AppCardContainer(
       padding: const EdgeInsets.all(AppDimens.p20),
       child: Row(
@@ -135,14 +143,12 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
             children: [
               Text(
                 'Total to Pay',
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.mediumGrey,
-                ),
+                style: typography.bodySmall.copyWith(color: amber.muted),
               ),
               const SizedBox(height: AppDimens.p4),
               Text(
                 PriceFormatter.formatPrice(widget.amount),
-                style: AppTypography.h1.copyWith(color: AppColors.teal),
+                style: typography.moneyMedium.copyWith(color: amber.primary),
               ),
             ],
           ),
@@ -152,13 +158,13 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
               vertical: AppDimens.p6,
             ),
             decoration: BoxDecoration(
-              color: AppColors.gold.withValues(alpha: 0.2),
+              color: amber.warningMuted,
               borderRadius: BorderRadius.circular(AppDimens.r20),
-              border: Border.all(color: AppColors.gold.withValues(alpha: 0.5)),
+              border: Border.all(color: amber.warning.withValues(alpha: 0.5)),
             ),
             child: Text(
               widget.packageTier,
-              style: AppTypography.captionBold.copyWith(color: AppColors.gold),
+              style: typography.chip.copyWith(color: amber.warning),
             ),
           ),
         ],
@@ -182,7 +188,10 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
               if (value == null || value.isEmpty) {
                 return 'Required';
               }
-              if (value.replaceAll(' ', '').length < 16) {
+              final cleaned = value.replaceAll(' ', '');
+              if (cleaned.length < 13 ||
+                  cleaned.length > 19 ||
+                  !_isValidLuhn(cleaned)) {
                 return 'Invalid card number';
               }
               return null;
@@ -203,6 +212,33 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                       keyboardType: TextInputType.datetime,
                       validator: (value) {
                         if (value == null || value.isEmpty) return 'Required';
+                        final expiryPattern = RegExp(
+                          r'^(\d{2})/(\d{2}|\d{4})$',
+                        );
+                        final match = expiryPattern.firstMatch(value.trim());
+                        if (match == null) return 'Invalid format (MM/YY)';
+
+                        final month = int.tryParse(match.group(1)!);
+                        final rawYear = int.tryParse(match.group(2)!);
+                        if (month == null ||
+                            rawYear == null ||
+                            month < 1 ||
+                            month > 12) {
+                          return 'Invalid format (MM/YY)';
+                        }
+
+                        final year = rawYear < 100 ? 2000 + rawYear : rawYear;
+                        final expiryEnd = DateTime(
+                          year,
+                          month + 1,
+                          0,
+                          23,
+                          59,
+                          59,
+                        );
+                        if (expiryEnd.isBefore(DateTime.now())) {
+                          return 'Card expired';
+                        }
                         return null;
                       },
                     ),
@@ -249,9 +285,24 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
   }
 
   Widget _buildLabel(String text) {
-    return Text(
-      text,
-      style: AppTypography.captionBold.copyWith(color: AppColors.mediumGrey),
-    );
+    const amber = AmberDuskTokens.colors;
+    const typography = AmberDuskTokens.typography;
+    return Text(text, style: typography.chip.copyWith(color: amber.muted));
+  }
+
+  bool _isValidLuhn(String digits) {
+    if (!RegExp(r'^\d+$').hasMatch(digits)) return false;
+    var sum = 0;
+    var doubleDigit = false;
+    for (var i = digits.length - 1; i >= 0; i--) {
+      var digit = int.parse(digits[i]);
+      if (doubleDigit) {
+        digit *= 2;
+        if (digit > 9) digit -= 9;
+      }
+      sum += digit;
+      doubleDigit = !doubleDigit;
+    }
+    return sum % 10 == 0;
   }
 }

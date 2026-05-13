@@ -12,7 +12,9 @@ import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_form_view_model.dart';
 
+/// Password reset request screen using the Amber Dusk auth form pattern.
 class ForgotPasswordScreen extends StatefulWidget {
+  /// Creates the password reset request route.
   const ForgotPasswordScreen({super.key});
 
   static const Key emailFieldKey = ValueKey<String>('forgot_email_field');
@@ -135,15 +137,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
           child: Semantics(
             label: 'Email sent successfully',
             child: Container(
-              width: 96,
-              height: 96,
+              width: AppDimens.p80,
+              height: AppDimens.p80,
               decoration: BoxDecoration(
                 color: colorScheme.success.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.mail_outline_rounded,
-                size: 48,
+                size: AppDimens.p40,
                 color: colorScheme.success,
               ),
             ),
@@ -188,16 +190,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
           const SizedBox(height: AppDimens.p48),
           // Icon
           Container(
-            width: 80,
-            height: 80,
+            width: AppDimens.p80,
+            height: AppDimens.p80,
             decoration: BoxDecoration(
-              color: AppColors.teal.withValues(alpha: 0.1),
+              color: colorScheme.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.lock_reset_rounded,
-              size: 40,
-              color: AppColors.teal,
+              size: AppDimens.p40,
+              color: colorScheme.primary,
             ),
           ),
           const SizedBox(height: AppDimens.p24),

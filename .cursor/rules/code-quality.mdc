@@ -69,7 +69,7 @@ Follow `analysis_options.yaml` rules. Common requirements:
 
 ```dart
 /// Document public APIs with triple-slash comments
-/// 
+///
 /// Explains what the function does, parameters, and return value.
 Future<List<Task>> getTasks({String? categoryId}) async {
   // Single-line comments for complex logic
@@ -116,11 +116,11 @@ Future<List<Task>> loadMore(String? cursorIso) async {
       .select()
       .order('created_at', ascending: false)
       .limit(20);
-  
+
   if (cursorIso != null) {
     query = query.lt('created_at', cursorIso);
   }
-  
+
   return (await query).map((json) => Task.fromJson(json)).toList();
 }
 ```
@@ -217,7 +217,7 @@ class TaskScreen extends StatefulWidget {
 class _TaskScreenState extends State<TaskScreen> {
   StreamSubscription? _subscription;
   TextEditingController? _controller;
-  
+
   @override
   void dispose() {
     _subscription?.cancel();

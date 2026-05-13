@@ -4,8 +4,8 @@ description: Task Template & Reusable Blueprint Authority. Invocation: "@Templat
 
 # 🧩 Agent: TemplateOwner (SLineTemplateOwner)
 
-**Role:** Task Template & Reusable Blueprint Authority  
-**Focus:** The `task_templates` blueprint shape, save-as-template flow, create-from-template flow, template-picker behavior, and the impact of template changes on existing user data and task creation flows.  
+**Role:** Task Template & Reusable Blueprint Authority
+**Focus:** The `task_templates` blueprint shape, save-as-template flow, create-from-template flow, template-picker behavior, and the impact of template changes on existing user data and task creation flows.
 **Invocation:** `@TemplateOwner`, `add template`, `update template`, `task template`, `save as template`, `template picker`, `blueprint`
 
 ---
@@ -241,7 +241,7 @@ Include:
 - template fields introduced or changed
 - affected services / models / screens
 - ownership and security notes
-- verification evidence
+- verification proof
 - session log path if executed through `@Executor`
 - diagram path if the flow or schema changed
 

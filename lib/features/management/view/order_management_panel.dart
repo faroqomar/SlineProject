@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
@@ -82,7 +81,7 @@ class _OrderManagementPanelState extends State<OrderManagementPanel> {
                             vm.loadError!,
                             key: OrderManagementPanel.timelineErrorKey,
                             style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.lightRed,
+                              color: colorScheme.danger,
                             ),
                           ),
                           const SizedBox(height: AppDimens.p12),
@@ -118,7 +117,7 @@ class _OrderManagementPanelState extends State<OrderManagementPanel> {
                           child: Text(
                             vm.loadError!,
                             style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.lightRed,
+                              color: colorScheme.danger,
                             ),
                           ),
                         ),
@@ -166,7 +165,7 @@ class _OrderManagementPanelState extends State<OrderManagementPanel> {
                             icon: Icon(
                               _isPrivate ? Icons.lock : Icons.lock_open,
                               color: _isPrivate
-                                  ? AppColors.gold
+                                  ? colorScheme.warning
                                   : colorScheme.textSecondary,
                             ),
                             onPressed: vm.isSending
@@ -190,7 +189,7 @@ class _OrderManagementPanelState extends State<OrderManagementPanel> {
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : Icon(Icons.send, color: AppColors.teal),
+                                : Icon(Icons.send, color: colorScheme.primary),
                             onPressed: vm.isSending
                                 ? null
                                 : () async {
@@ -211,7 +210,7 @@ class _OrderManagementPanelState extends State<OrderManagementPanel> {
                           vm.actionError!,
                           key: OrderManagementPanel.actionErrorKey,
                           style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.lightRed,
+                            color: colorScheme.danger,
                           ),
                         ),
                       ],

@@ -208,6 +208,294 @@ abstract class AppLocalizations {
   /// **'e.g., Senior'**
   String get seniorityHint;
 
+  /// Tenders screen search field placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'Search tenders…'**
+  String get searchTenders;
+
+  /// Fallback booking service title
+  ///
+  /// In en, this message translates to:
+  /// **'Booked service'**
+  String get bookedService;
+
+  /// Booking details screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Booking Details'**
+  String get bookingDetails;
+
+  /// Booking details service section title
+  ///
+  /// In en, this message translates to:
+  /// **'Service'**
+  String get bookingService;
+
+  /// Booking created date line
+  ///
+  /// In en, this message translates to:
+  /// **'Booked on {date}'**
+  String bookedOn(String date);
+
+  /// Booking client role label
+  ///
+  /// In en, this message translates to:
+  /// **'Client'**
+  String get bookingClient;
+
+  /// Booking provider role label
+  ///
+  /// In en, this message translates to:
+  /// **'Provider'**
+  String get bookingProvider;
+
+  /// Booking counterparty subtitle for client
+  ///
+  /// In en, this message translates to:
+  /// **'Booking requester'**
+  String get bookingRequester;
+
+  /// Booking counterparty subtitle for provider
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned service provider'**
+  String get assignedServiceProvider;
+
+  /// Booking timeline section title
+  ///
+  /// In en, this message translates to:
+  /// **'Timeline'**
+  String get bookingTimeline;
+
+  /// Booking timeline booked label
+  ///
+  /// In en, this message translates to:
+  /// **'Booked'**
+  String get bookingTimelineBooked;
+
+  /// Booking timeline due label
+  ///
+  /// In en, this message translates to:
+  /// **'Due'**
+  String get bookingTimelineDue;
+
+  /// Booking timeline missing deadline value
+  ///
+  /// In en, this message translates to:
+  /// **'No deadline'**
+  String get noDeadline;
+
+  /// Booking timeline delivery label
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery'**
+  String get bookingTimelineDelivery;
+
+  /// Booking delivery duration in days
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0 {0 days} =1 {1 day} other {{count} days}}'**
+  String bookingDeliveryDays(int count);
+
+  /// Legacy slot booking warning label
+  ///
+  /// In en, this message translates to:
+  /// **'Legacy slot-based booking'**
+  String get legacySlotBasedBooking;
+
+  /// Reject booking action label
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get reject;
+
+  /// Booking awaiting payment action label
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting Payment'**
+  String get awaitingPayment;
+
+  /// Cancel booking action label
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Booking'**
+  String get cancelBooking;
+
+  /// Escrow booking funds action label
+  ///
+  /// In en, this message translates to:
+  /// **'Escrow Funds'**
+  String get escrowFunds;
+
+  /// Issue booking refund action label
+  ///
+  /// In en, this message translates to:
+  /// **'Issue Refund'**
+  String get issueRefund;
+
+  /// Decline booking action label
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get decline;
+
+  /// Accept booking job action label
+  ///
+  /// In en, this message translates to:
+  /// **'Accept Job'**
+  String get acceptJob;
+
+  /// Mark booking delivered action label
+  ///
+  /// In en, this message translates to:
+  /// **'Mark Delivered'**
+  String get markDelivered;
+
+  /// Dispute unavailable message when task data is missing
+  ///
+  /// In en, this message translates to:
+  /// **'This booking cannot be disputed because task data is missing.'**
+  String get bookingCannotDisputeMissingTask;
+
+  /// Booking dispute reason text field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the problem with this booking'**
+  String get describeBookingProblem;
+
+  /// Dispute submitted success snackbar
+  ///
+  /// In en, this message translates to:
+  /// **'Dispute submitted.'**
+  String get disputeSubmitted;
+
+  /// Dispute submission failure fallback
+  ///
+  /// In en, this message translates to:
+  /// **'Dispute failed.'**
+  String get disputeFailed;
+
+  /// Booking status label
+  ///
+  /// In en, this message translates to:
+  /// **'Pending Confirmation'**
+  String get bookingStatusPendingConfirmation;
+
+  /// Booking status label
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed'**
+  String get bookingStatusConfirmed;
+
+  /// Booking status label
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get bookingStatusCompleted;
+
+  /// Booking status label
+  ///
+  /// In en, this message translates to:
+  /// **'Canceled'**
+  String get bookingStatusCanceled;
+
+  /// Booking status label
+  ///
+  /// In en, this message translates to:
+  /// **'No Show'**
+  String get bookingStatusNoShow;
+
+  /// Booking status label
+  ///
+  /// In en, this message translates to:
+  /// **'In Progress'**
+  String get bookingStatusInProgress;
+
+  /// Booking status label
+  ///
+  /// In en, this message translates to:
+  /// **'Declined'**
+  String get bookingStatusDeclined;
+
+  /// Booking status label
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get bookingStatusActive;
+
+  /// Booking status label
+  ///
+  /// In en, this message translates to:
+  /// **'Request Pending'**
+  String get bookingStatusRequestPending;
+
+  /// Booking status label
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered (Review)'**
+  String get bookingStatusDeliveredReview;
+
+  /// Booking status label
+  ///
+  /// In en, this message translates to:
+  /// **'Refunded'**
+  String get bookingStatusRefunded;
+
+  /// Booking status label
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get bookingStatusExpired;
+
+  /// Booking status label
+  ///
+  /// In en, this message translates to:
+  /// **'Disputed (Under Review)'**
+  String get bookingStatusDisputedUnderReview;
+
+  /// Booking status update success snackbar
+  ///
+  /// In en, this message translates to:
+  /// **'Status updated'**
+  String get statusUpdated;
+
+  /// Booking status update failure snackbar
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update status'**
+  String get statusUpdateFailed;
+
+  /// Report issue action and dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Report Issue'**
+  String get reportIssue;
+
+  /// Active dispute banner message
+  ///
+  /// In en, this message translates to:
+  /// **'Work frozen — in dispute.'**
+  String get workFrozenInDispute;
+
+  /// Open dispute banner message
+  ///
+  /// In en, this message translates to:
+  /// **'Dispute under review. Approve and release disabled.'**
+  String get disputeUnderReviewReleaseDisabled;
+
+  /// Disabled action while a guard is loading
+  ///
+  /// In en, this message translates to:
+  /// **'Checking…'**
+  String get checking;
+
+  /// Approve and release booking funds action
+  ///
+  /// In en, this message translates to:
+  /// **'Approve & Release Funds'**
+  String get approveReleaseFunds;
+
   /// Login button text
   ///
   /// In en, this message translates to:

@@ -44,8 +44,7 @@ class NotificationTile extends StatelessWidget {
         onTap: () {
           AppInteractionStates.hapticTap();
           AppLogger.d(
-            'NotificationTile: tapped ${notification.id} '
-            '(type: ${notification.type.name})',
+            'NotificationTile: tapped ${notification.type.name} notification',
             tag: 'Notifications',
           );
           onTap();
@@ -75,6 +74,8 @@ class NotificationTile extends StatelessWidget {
                                   : FontWeight.bold,
                               color: colorScheme.text,
                             ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         Text(
@@ -102,8 +103,8 @@ class NotificationTile extends StatelessWidget {
               if (!isRead) ...[
                 const SizedBox(width: AppDimens.p8),
                 Container(
-                  width: 10,
-                  height: 10,
+                  width: AppDimens.p10,
+                  height: AppDimens.p10,
                   decoration: BoxDecoration(
                     // Semantic danger replaces hardcoded AppColors.lightRed
                     color: colorScheme.danger,

@@ -60,8 +60,8 @@ void main() {
     registerFallbackValue(_offer());
   });
 
-  group('InboxTab tab switching', () {
-    testWidgets('shows Received and Sent modes without data-contract calls', (
+  group('InboxTab functionality', () {
+    testWidgets('shows Received and disables Sent without data-contract calls', (
       tester,
     ) async {
       final vm = _MockDashboardViewModel();
@@ -77,10 +77,12 @@ void main() {
       await tester.pumpAndSettle();
       verifyNever(vm.refresh);
 
-      expect(find.text('No Sent Proposals Yet'), findsOneWidget);
+      expect(find.text('No Proposals Yet'), findsOneWidget);
       expect(
-        find.text('Sent proposals will appear here after you submit offers.'),
-        findsOneWidget,
+        find.text(
+          'Sent inbox data needs a separate dashboard contract before this mode can become active.',
+        ),
+        findsNothing,
       );
     });
 

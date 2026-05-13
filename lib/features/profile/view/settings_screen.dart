@@ -1,9 +1,6 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/providers/theme_mode_provider.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
@@ -11,7 +8,9 @@ import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
 import 'package:sline_app/features/profile/view/manage_portfolio_screen.dart';
 
+/// Account settings screen using grouped Amber Dusk row treatment.
 class SettingsScreen extends StatelessWidget {
+  /// Creates the settings route.
   const SettingsScreen({super.key});
 
   @override
@@ -73,7 +72,7 @@ class SettingsScreen extends StatelessWidget {
                       subtitle: isDark ? 'On' : 'Off',
                       trailing: Switch(
                         value: isDark,
-                        activeThumbColor: AppColors.teal,
+                        activeThumbColor: colorScheme.primary,
                         onChanged: (value) => themeProvider.toggleThemeMode(),
                       ),
                     );
@@ -175,32 +174,30 @@ class SettingsScreen extends StatelessWidget {
                     await authVM.logout();
                     if (!context.mounted) return;
 
-                    unawaited(
-                      Navigator.pushNamedAndRemoveUntil(
-                        context,
-                        '/login',
-                        (route) => false,
-                      ),
+                    await Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/login',
+                      (route) => false,
                     );
                   },
                   child: Container(
                     padding: const EdgeInsets.all(AppDimens.p16),
                     decoration: BoxDecoration(
-                      color: AppColors.lightRed.withValues(alpha: 0.1),
+                      color: colorScheme.dangerMuted,
                       borderRadius: BorderRadius.circular(AppDimens.r16),
                       border: Border.all(
-                        color: AppColors.lightRed.withValues(alpha: 0.3),
+                        color: colorScheme.danger.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.logout, color: AppColors.lightRed),
+                        Icon(Icons.logout, color: colorScheme.danger),
                         const SizedBox(width: 8),
                         Text(
                           'Log Out',
                           style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.lightRed,
+                            color: colorScheme.danger,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -309,10 +306,10 @@ class SettingsScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.teal.withValues(alpha: 0.15),
+                color: colorScheme.primary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: AppColors.teal, size: 20),
+              child: Icon(icon, color: colorScheme.primary, size: 20),
             ),
             const SizedBox(width: AppDimens.p16),
             Expanded(
@@ -341,16 +338,16 @@ class SettingsScreen extends StatelessWidget {
                 vertical: AppDimens.p4,
               ),
               decoration: BoxDecoration(
-                color: AppColors.teal.withValues(alpha: 0.2),
+                color: colorScheme.primary.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: AppColors.teal.withValues(alpha: 0.5),
+                  color: colorScheme.primary.withValues(alpha: 0.5),
                 ),
               ),
               child: Text(
                 'Coming soon',
                 style: AppTypography.micro.copyWith(
-                  color: AppColors.teal,
+                  color: colorScheme.primary,
                   fontWeight: FontWeight.w600,
                 ),
               ),

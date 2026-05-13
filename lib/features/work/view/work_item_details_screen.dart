@@ -7,6 +7,7 @@ import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/error_mapper.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
@@ -117,7 +118,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
                   onPressed: () => Navigator.pop(context, _shouldRefresh),
                 ),
                 title: Text(isBooking ? 'Booking' : 'Task'),
-                backgroundColor: Colors.transparent,
+                backgroundColor: AmberDuskColors.transparent,
                 elevation: 0,
                 // Phase 7 REDESIGN: Pill-style tabs matching dashboard pattern
                 bottom: TabBar(
@@ -130,7 +131,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
                   labelStyle: AppTypography.captionBold,
                   unselectedLabelColor: context.colorScheme.textSecondary,
                   unselectedLabelStyle: AppTypography.caption,
-                  dividerColor: Colors.transparent,
+                  dividerColor: AmberDuskColors.transparent,
                   tabs: const [
                     Tab(text: 'Overview'),
                     Tab(text: 'Extensions'),
@@ -502,7 +503,9 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
                 );
               }
             },
-            style: FilledButton.styleFrom(backgroundColor: AppColors.teal),
+            style: FilledButton.styleFrom(
+              backgroundColor: context.colorScheme.primary,
+            ),
             child: const Text('Pay & Confirm'),
           ),
         ),
@@ -517,9 +520,11 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
                 );
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Award cancelled. Task is open again.'),
-                      backgroundColor: Colors.green,
+                    SnackBar(
+                      content: const Text(
+                        'Award cancelled. Task is open again.',
+                      ),
+                      backgroundColor: context.colorScheme.success,
                     ),
                   );
                   Navigator.of(context).pop();
@@ -529,7 +534,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(ErrorMapper.map(e)),
-                      backgroundColor: Colors.red,
+                      backgroundColor: context.colorScheme.danger,
                     ),
                   );
                 }
@@ -581,7 +586,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AmberDuskColors.transparent,
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: SubmitDeliveryModal(
@@ -599,7 +604,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AmberDuskColors.transparent,
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: RequestExtensionModal(

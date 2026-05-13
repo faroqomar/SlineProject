@@ -46,24 +46,24 @@ import 'package:sline_app/core/services/logger_service.dart';
 
 class ExampleViewModel extends ChangeNotifier {
   final ExampleService _service;
-  
+
   // State
   List<ExampleModel> _items = [];
   bool _isLoading = false;
   String? _error;
-  
+
   // Getters
   List<ExampleModel> get items => List.unmodifiable(_items);
   bool get isLoading => _isLoading;
   String? get error => _error;
-  
+
   ExampleViewModel(this._service);
-  
+
   Future<void> loadItems() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
-    
+
     try {
       _items = await _service.getItems();
       AppLogger.i('Loaded ${_items.length} items');
@@ -75,7 +75,7 @@ class ExampleViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   String _mapError(dynamic e) {
     // Map technical errors to user-friendly messages
     if (e is PostgrestException && e.code == '42501') {

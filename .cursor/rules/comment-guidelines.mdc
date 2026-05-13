@@ -1,19 +1,28 @@
 ---
-description: Guidelines for adding meaningful comments ("Why" & "How") only when necessary
+description: Guidelines for keeping meaningful comments consistent across Dart files
 globs: "**/*.dart"
 alwaysApply: true
 ---
 
-# Commenting Guidelines (Smart Documentation)
+# Commenting Guidelines (Consistent Code Context)
 
-**Goal**: Code should be self-documenting. Comments are for *context*, *intent*, and *complexity*.
+**Goal**: Code should stay easy for agents and new developers to understand. Names and structure carry the obvious meaning; comments explain *what the code provides*, *why it exists*, and *why non-obvious choices were made*.
 
-## The "Only If Needed" Rule
+## Required Comment Coverage
 
-**DO NOT** comment on obvious code.
-**DO** comment on *why* a decision was made or *how* a complex block works.
+Every Dart file touched by an agent must be checked for comment coverage before the edit is considered complete.
 
-### ❌ Bad Comments (What)
+Required:
+
+1. New files start with a top-level `///` doc comment explaining what the file provides and why it exists.
+2. Public classes, widgets, methods, and helpers have `///` comments that explain responsibility and purpose.
+3. Non-obvious logic has a short `//` comment explaining the business rule, technical constraint, workaround, or design choice.
+4. Token, animation, platform, payment, storage, realtime, and security-sensitive choices include a short reason when the choice is not obvious from the code.
+5. If an agent inspects or edits a file and finds sparse or outdated comments around the touched area, it must add or refresh the missing comments in the same patch.
+
+Do not add filler comments that only restate a line of code.
+
+### ❌ Bad Comments
 Avoid stating the obvious.
 ```dart
 // ❌ Initialize list
@@ -23,8 +32,8 @@ List<String> items = [];
 if (items.isEmpty) return;
 ```
 
-### ✅ Good Comments (Why & How)
-Explain the business rule or technical constraint.
+### ✅ Good Comments
+Explain the responsibility, business rule, or technical constraint.
 ```dart
 // ✅ We iterate backwards to safely remove items without index shifting issues
 for (var i = items.length - 1; i >= 0; i--) { ... }
@@ -33,14 +42,15 @@ for (var i = items.length - 1; i >= 0; i--) { ... }
 if (auth.currentUser == null) throw AuthException('Session missing');
 ```
 
-## When to Comment
+## When to Add Or Refresh Comments
 
 1. **Workarounds**: If you are working around a bug or library limitation.
 2. **Complex Logic**: Algorithms or multi-step logic that isn't instantly readable.
 3. **Business Rules**: Why are we filtering this?
-4. **Public APIs**: Triple-slash `///` for public classes/methods is always good practice but generally optional for internal logic unless complex.
+4. **Public APIs**: Use `///` for public classes, widgets, methods, and helpers.
+5. **Sparse touched files**: If the inspected file lacks enough comments for a new developer to understand the touched area, add them automatically.
 
 ## Format
 - Use `//` for inline explanations.
 - Use `///` for documentation comments (classes, public methods).
-- Keep it concise.
+- Keep it concise and useful.

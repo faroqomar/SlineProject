@@ -1,11 +1,11 @@
 # Notification Routing — Diagram Document
 
-**Diagram name:** 13_notification-routing  
-**Version:** v2 (Implemented)  
-**Date:** 2026-03-08  
-**Owner/author:** DocsKeeper / Backend + Flutter  
-**Plan:** `.TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md`  
-**Contract:** `.TODO/improvement_the_system/ImplementReady/13_notification-routing/CONTRACT_notification_push.md`  
+**Diagram name:** 13_notification-routing
+**Version:** v2.1 (Implemented + transient realtime reconnect note)
+**Date:** 2026-05-13
+**Owner/author:** DocsKeeper / Backend + Flutter
+**Plan:** `.TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md`
+**Contract:** `.TODO/improvement_the_system/ImplementReady/13_notification-routing/CONTRACT_notification_push.md`
 **Runbook:** `.TODO/improvement_the_system/ImplementReady/13_notification-routing/RUNBOOK_notification_push.md`
 
 ---
@@ -71,7 +71,7 @@
 - **Service/ViewModel/Repository:**
   - `lib/features/notifications/services/notification_service.dart` — getUnreadNotifications(limit), streamNotifications(), markAsRead, markAllAsRead.
   - `lib/features/notifications/services/push_device_service.dart` — registerDevice(fcmToken, platform) → user_devices upsert.
-  - `lib/features/notifications/viewmodels/notification_view_model.dart` — _connect(): await getUnreadNotifications(50) then streamNotifications().listen(...).
+  - `lib/features/notifications/viewmodels/notification_view_model.dart` — _connect(): await getUnreadNotifications(50) then streamNotifications().listen(...); transient Supabase Realtime close codes `1002` and `1006` keep cached notifications visible and schedule reconnect.
 - **Database objects:**
   - **Tables:** `notifications`, `user_devices`, `notification_push_queue`.
   - **Views:** None specific to this flow.
@@ -107,7 +107,8 @@
 - **process-push-queue called without CRON_SECRET:** Edge returns 503 "Queue processor disabled; set CRON_SECRET and invoke with Authorization: Bearer <CRON_SECRET>".
 - **CRON_SECRET unset:** Function returns 503; queue is not drained until secret is set and cron re-invokes.
 - **FCM send fails:** Edge marks queue row status = 'failed'; logs error (no token in logs); no retry in current design (row stays failed).
-- **Stream error in ViewModel:** ViewModel restores last known list from state; logs error; user can retry.
+- **Transient Realtime close in ViewModel:** Realtime close codes `1002`, `1006`, or subscribe timeout are treated as transport interruptions. ViewModel keeps the last known notification list, logs a warning, cancels the stale subscription, and schedules reconnect.
+- **Non-transient stream error in ViewModel:** ViewModel logs the hard failure and exposes the existing user-facing notification load error.
 
 ---
 

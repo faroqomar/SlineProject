@@ -8,11 +8,14 @@ import 'package:sline_app/app/main_navigation_screen.dart';
 import 'package:sline_app/core/providers/system_config_view_model.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_states.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/transitions/custom_route_transitions.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
@@ -247,7 +250,7 @@ class _LoginScreenState extends State<LoginScreen>
       );
     } else {
       final error = authVM.error ?? 'Login failed';
-      AppLogger.e('Login failed: $error', tag: 'Auth');
+      AppLogger.e('Login failed', tag: 'Auth');
       setState(() => _emailError = error);
       _triggerShake();
     }
@@ -259,8 +262,16 @@ class _LoginScreenState extends State<LoginScreen>
     if (isValid == null) return const SizedBox.shrink();
 
     final icon = isValid
-        ? Icon(Icons.check_circle, color: colorScheme.success, size: 20)
-        : Icon(Icons.cancel, color: colorScheme.danger, size: 20);
+        ? Icon(
+            Icons.check_circle,
+            color: colorScheme.success,
+            size: AppLayout.iconStandard,
+          )
+        : Icon(
+            Icons.cancel,
+            color: colorScheme.danger,
+            size: AppLayout.iconStandard,
+          );
 
     final label = isValid ? 'Valid input' : 'Invalid input';
 
@@ -295,10 +306,13 @@ class _LoginScreenState extends State<LoginScreen>
                   top: AppDimens.p4,
                   left: AppDimens.p4,
                 ),
-                child: Text(
-                  errorText,
-                  style: AppTypography.caption.copyWith(
-                    color: colorScheme.danger,
+                child: Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    errorText,
+                    style: AppTypography.caption.copyWith(
+                      color: colorScheme.danger,
+                    ),
                   ),
                 ),
               )
@@ -323,12 +337,15 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final amber = context.amberColors;
+    final panelRecipe = AmberDuskTokens.surfaces.raised;
     final signupsDisabled =
         context.watch<SystemConfigViewModel?>()?.config.disableSignups ?? false;
 
     return ChangeNotifierProvider(
       create: (_) => widget.authViewModelFactory?.call() ?? AuthFormViewModel(),
       child: Scaffold(
+        backgroundColor: amber.page,
         body: Container(
           width: double.infinity,
           height: double.infinity,
@@ -336,16 +353,18 @@ class _LoginScreenState extends State<LoginScreen>
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                colorScheme.authGradientStart,
-                colorScheme.authGradientEnd,
-              ],
+              colors: [amber.background, amber.page],
             ),
           ),
           child: SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: AppDimens.p32),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimens.p20,
+                  vertical: AppDimens.p24,
+                ),
                 // Form shake wrapper
                 child: AnimatedBuilder(
                   animation: _shakeController,
@@ -363,216 +382,279 @@ class _LoginScreenState extends State<LoginScreen>
                       child: child,
                     );
                   },
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // --- Header ---
-                        // Logo
-                        _staggered(
-                          slide: _logoSlide,
-                          fade: _logoFade,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: AppLayout.formMaxWidth,
+                    ),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: panelRecipe.fill,
+                        borderRadius: BorderRadius.circular(panelRecipe.radius),
+                        border: Border.all(
+                          color: panelRecipe.border,
+                          width: AmberDuskTokens.spacing.borderWidth,
+                        ),
+                        boxShadow: AppDecorations.elevation(
+                          panelRecipe.elevationLevel,
+                          isDark: colorScheme.isDark,
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppDimens.p24),
+                        child: Form(
+                          key: _formKey,
                           child: Column(
                             children: [
-                              Container(
-                                width: 80,
-                                height: 80,
-                                decoration: BoxDecoration(
-                                  color: AppColors.teal,
-                                  borderRadius: BorderRadius.circular(
-                                    AppDimens.r20,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.teal.withValues(
-                                        alpha: 0.3,
+                              // --- Header ---
+                              // A stable trust mark keeps first-run auth calm
+                              // while using Amber Dusk's warm surface language.
+                              _staggered(
+                                slide: _logoSlide,
+                                fade: _logoFade,
+                                child: Column(
+                                  children: [
+                                    DecoratedBox(
+                                      decoration: BoxDecoration(
+                                        color: amber.primary,
+                                        borderRadius: BorderRadius.circular(
+                                          AmberDuskTokens.spacing.moduleRadius,
+                                        ),
+                                        boxShadow: AppDecorations.elevation(
+                                          AppDimens.p2.toInt(),
+                                          isDark: colorScheme.isDark,
+                                        ),
                                       ),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 10),
+                                      child: SizedBox.square(
+                                        dimension: AppLayout.avatarHero,
+                                        child: Center(
+                                          child: Text(
+                                            'S',
+                                            style: AppTypography.logo.copyWith(
+                                              color: amber.textInverse,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                     ),
+                                    const SizedBox(height: AppDimens.p24),
+
+                                    // Title
+                                    Text(
+                                      'Welcome Back',
+                                      style: AmberDuskTokens
+                                          .typography
+                                          .screenTitle
+                                          .copyWith(color: amber.text),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: AppDimens.p8),
+
+                                    // Subtitle
+                                    Text(
+                                      'Sign in to continue to SLine',
+                                      style: AmberDuskTokens.typography.body
+                                          .copyWith(color: amber.muted),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    if (signupsDisabled) ...[
+                                      const SizedBox(height: AppDimens.p12),
+                                      Semantics(
+                                        liveRegion: true,
+                                        child: DecoratedBox(
+                                          decoration: BoxDecoration(
+                                            color: amber.dangerMuted,
+                                            borderRadius: BorderRadius.circular(
+                                              AmberDuskTokens
+                                                  .spacing
+                                                  .moduleRadius,
+                                            ),
+                                          ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(
+                                              AppDimens.p12,
+                                            ),
+                                            child: Text(
+                                              'New account registration is '
+                                              'temporarily paused.',
+                                              style: AmberDuskTokens
+                                                  .typography
+                                                  .bodySmall
+                                                  .copyWith(
+                                                    color: amber.rust,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
-                                child: Center(
-                                  child: Text(
-                                    'S',
-                                    style: AppTypography.h1.copyWith(
-                                      fontSize: 36,
-                                      color: AppColors.offWhite,
+                              ),
+                              const SizedBox(height: AppDimens.p32),
+
+                              // --- Email field ---
+                              _staggered(
+                                slide: _emailSlide,
+                                fade: _emailFade,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Email',
+                                      style: AmberDuskTokens
+                                          .widgetTheme
+                                          .fields
+                                          .labelStyle
+                                          .copyWith(color: amber.text),
                                     ),
-                                  ),
+                                    const SizedBox(height: AppDimens.p8),
+                                    AppTextField(
+                                      fieldKey: LoginScreen.emailFieldKey,
+                                      controller: _emailController,
+                                      hintText: 'your@email.com',
+                                      keyboardType: TextInputType.emailAddress,
+                                      onChanged: _onEmailChanged,
+                                      showClearButton: true,
+                                      suffixIcon: _buildValidationIcon(
+                                        _emailValid,
+                                        colorScheme,
+                                      ),
+                                    ),
+                                    _buildInlineError(_emailError, colorScheme),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: AppDimens.p16),
+
+                              // --- Password field ---
+                              _staggered(
+                                slide: _passwordSlide,
+                                fade: _passwordFade,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Password',
+                                      style: AmberDuskTokens
+                                          .widgetTheme
+                                          .fields
+                                          .labelStyle
+                                          .copyWith(color: amber.text),
+                                    ),
+                                    const SizedBox(height: AppDimens.p8),
+                                    AppTextField(
+                                      fieldKey: LoginScreen.passwordFieldKey,
+                                      controller: _passwordController,
+                                      hintText: 'Enter your password',
+                                      obscureText: true,
+                                      showPasswordToggle: true,
+                                      onChanged: _onPasswordChanged,
+                                    ),
+                                    _buildInlineError(
+                                      _passwordError,
+                                      colorScheme,
+                                    ),
+
+                                    // Forgot Password
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: TextButton(
+                                        onPressed: () {
+                                          AppLogger.i(
+                                            'Forgot password tapped from '
+                                            'login',
+                                            tag: 'Auth',
+                                          );
+                                          Navigator.push(
+                                            context,
+                                            SlinePageRoute.forwardPush(
+                                              child:
+                                                  const ForgotPasswordScreen(),
+                                            ),
+                                          );
+                                        },
+                                        child: Text(
+                                          'Forgot Password?',
+                                          style: AmberDuskTokens
+                                              .typography
+                                              .control
+                                              .copyWith(color: amber.primary),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                               const SizedBox(height: AppDimens.p24),
 
-                              // Title
-                              Text(
-                                'Welcome Back',
-                                style: AppTypography.h1.copyWith(
-                                  color: colorScheme.text,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: AppDimens.p8),
-
-                              // Subtitle
-                              Text(
-                                'Sign in to continue to SLine',
-                                style: AppTypography.bodyMedium.copyWith(
-                                  color: colorScheme.textSecondary,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              if (signupsDisabled) ...[
-                                const SizedBox(height: AppDimens.p8),
-                                Text(
-                                  'New account registration is currently '
-                                  'disabled.',
-                                  style: AppTypography.bodySmall.copyWith(
-                                    color: AppColors.lightRed,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: AppDimens.p32),
-
-                        // --- Email field ---
-                        _staggered(
-                          slide: _emailSlide,
-                          fade: _emailFade,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Email',
-                                style: AppTypography.bodySmall.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: colorScheme.text,
-                                ),
-                              ),
-                              const SizedBox(height: AppDimens.p8),
-                              AppTextField(
-                                fieldKey: LoginScreen.emailFieldKey,
-                                controller: _emailController,
-                                hintText: 'your@email.com',
-                                keyboardType: TextInputType.emailAddress,
-                                onChanged: _onEmailChanged,
-                                suffixIcon: _buildValidationIcon(
-                                  _emailValid,
-                                  colorScheme,
-                                ),
-                              ),
-                              _buildInlineError(_emailError, colorScheme),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: AppDimens.p16),
-
-                        // --- Password field ---
-                        _staggered(
-                          slide: _passwordSlide,
-                          fade: _passwordFade,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Password',
-                                style: AppTypography.bodySmall.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: colorScheme.text,
-                                ),
-                              ),
-                              const SizedBox(height: AppDimens.p8),
-                              AppTextField(
-                                fieldKey: LoginScreen.passwordFieldKey,
-                                controller: _passwordController,
-                                hintText: 'Enter your password',
-                                obscureText: true,
-                                onChanged: _onPasswordChanged,
-                                suffixIcon: _buildValidationIcon(
-                                  _passwordValid,
-                                  colorScheme,
-                                ),
-                              ),
-                              _buildInlineError(_passwordError, colorScheme),
-
-                              // Forgot Password
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: TextButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      SlinePageRoute.forwardPush(
-                                        child: const ForgotPasswordScreen(),
-                                      ),
+                              // --- Sign In Button ---
+                              _staggered(
+                                slide: _signInSlide,
+                                fade: _signInFade,
+                                child: Consumer<AuthFormViewModel>(
+                                  builder: (context, authVM, child) {
+                                    return AppButton(
+                                      tapTargetKey: LoginScreen.signInButtonKey,
+                                      text: 'Sign In',
+                                      isLoading: authVM.isLoading,
+                                      width: double.infinity,
+                                      onPressed: () => _handleLogin(authVM),
                                     );
                                   },
-                                  child: Text(
-                                    'Forgot Password?',
-                                    style: AppTypography.bodySmall.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: colorScheme.primary,
+                                ),
+                              ),
+                              const SizedBox(height: AppDimens.p24),
+
+                              // --- Sign Up Link ---
+                              _staggered(
+                                slide: _signUpSlide,
+                                fade: _signUpFade,
+                                child: Wrap(
+                                  alignment: WrapAlignment.center,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  children: [
+                                    Text(
+                                      "Don't have an account? ",
+                                      style: AmberDuskTokens
+                                          .typography
+                                          .bodySmall
+                                          .copyWith(color: amber.muted),
                                     ),
-                                  ),
+                                    TextButton(
+                                      onPressed: () {
+                                        AppLogger.i(
+                                          'Signup link tapped from login',
+                                          tag: 'Auth',
+                                        );
+                                        Navigator.pushNamed(context, '/signup');
+                                      },
+                                      style: TextButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: AppDimens.p8,
+                                          vertical: AppDimens.p8,
+                                        ),
+                                        minimumSize: const Size(
+                                          AppDimens.touchTarget,
+                                          AppDimens.touchTarget,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'Sign Up',
+                                        style: AmberDuskTokens
+                                            .typography
+                                            .control
+                                            .copyWith(color: amber.primary),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: AppDimens.p24),
-
-                        // --- Sign In Button ---
-                        _staggered(
-                          slide: _signInSlide,
-                          fade: _signInFade,
-                          child: Consumer<AuthFormViewModel>(
-                            builder: (context, authVM, child) {
-                              return AppButton(
-                                tapTargetKey: LoginScreen.signInButtonKey,
-                                text: 'Sign In',
-                                isLoading: authVM.isLoading,
-                                width: double.infinity,
-                                onPressed: () => _handleLogin(authVM),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: AppDimens.p24),
-
-                        // --- Sign Up Link ---
-                        _staggered(
-                          slide: _signUpSlide,
-                          fade: _signUpFade,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Don't have an account? ",
-                                style: AppTypography.bodySmall.copyWith(
-                                  color: colorScheme.textSecondary,
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.pushNamed(context, '/signup');
-                                },
-                                child: Text(
-                                  'Sign Up',
-                                  style: AppTypography.bodySmall.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: colorScheme.primary,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),

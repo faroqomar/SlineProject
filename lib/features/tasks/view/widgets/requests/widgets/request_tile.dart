@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/features/favorites/models/favorites_mutation_result.dart';
 import 'package:sline_app/features/favorites/viewmodels/favorites_view_model.dart';
@@ -66,6 +68,8 @@ class RequestTile extends StatelessWidget {
     final priceText = PriceFormatter.formatPrice(request.price.toDouble());
     final isExpired = request.isExpired;
     final hasPaymentError = _hasPaymentError();
+    const amberColors = AmberDuskTokens.colors;
+    final cardTheme = AmberDuskTokens.widgetTheme.cards;
 
     // Disable actions for expired bids
     final canAct =
@@ -77,27 +81,38 @@ class RequestTile extends StatelessWidget {
 
     return Card(
       key: Key('request_tile_${request.id}'),
-      elevation: hasPaymentError ? 2 : 1,
+      color: cardTheme.panel.background,
+      shadowColor: amberColors.page,
+      elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(
+          AmberDuskTokens.spacing.taskCardRadius,
+        ),
         side: hasPaymentError
             ? BorderSide(
-                color: AppColors.lightRed.withValues(alpha: 0.5),
-                width: 1,
+                color: amberColors.danger,
+                width: AppDimens.hairlineDivider,
               )
             : BorderSide.none,
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppDimens.p16,
+              vertical: AppDimens.p8,
+            ),
             title: Row(
               children: [
                 Text(
                   priceText,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  style: AmberDuskTokens.typography.moneyMedium.copyWith(
+                    color: amberColors.primary,
+                  ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppDimens.p8),
                 // Show expiration badge for pending bids (only when not expired yet)
                 if (request.isPending && !isExpired)
                   ExpirationBadge(
@@ -106,16 +121,20 @@ class RequestTile extends StatelessWidget {
                   ),
                 // Show expired badge for expired bids
                 if (isExpired)
-                  const Chip(
-                    label: Text('Expired', style: TextStyle(fontSize: 10)),
-                    backgroundColor: Colors.grey,
-                    labelStyle: TextStyle(color: Colors.white),
+                  Chip(
+                    label: Text(
+                      'Expired',
+                      style: AmberDuskTokens.typography.chip.copyWith(
+                        color: amberColors.text,
+                      ),
+                    ),
+                    backgroundColor: amberColors.surfaceRaised,
                     padding: EdgeInsets.zero,
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
               ],
             ),
-            subtitle: _buildSubtitle(),
+            subtitle: _buildSubtitle(context),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -147,20 +166,20 @@ class RequestTile extends StatelessWidget {
                   ),
                 if (isOwner && isLoading)
                   const SizedBox(
-                    width: 24,
-                    height: 24,
+                    width: AppDimens.p24,
+                    height: AppDimens.p24,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 // Action buttons - disabled for expired bids
                 if (isOwner && canAct) ...[
                   IconButton(
                     tooltip: 'Award',
-                    icon: const Icon(Icons.check_circle, color: Colors.green),
+                    icon: Icon(Icons.check_circle, color: amberColors.forest),
                     onPressed: onAccept,
                   ),
                   IconButton(
                     tooltip: 'Reject',
-                    icon: const Icon(Icons.cancel, color: Colors.red),
+                    icon: Icon(Icons.cancel, color: amberColors.danger),
                     onPressed: onReject,
                   ),
                 ],
@@ -172,6 +191,12 @@ class RequestTile extends StatelessWidget {
                     showDeadline: request.isPendingPayment,
                   ),
               ],
+            ),
+            titleTextStyle: AmberDuskTokens.typography.body.copyWith(
+              color: amberColors.text,
+            ),
+            subtitleTextStyle: AmberDuskTokens.typography.bodySmall.copyWith(
+              color: amberColors.muted,
             ),
           ),
           // Payment Recovery Actions - Phase 3.5
@@ -185,16 +210,26 @@ class RequestTile extends StatelessWidget {
     );
   }
 
-  Widget _buildSubtitle() {
+  Widget _buildSubtitle(BuildContext context) {
     final daysText = '${request.days} days';
     final statusLabel = _getStatusLabel();
+    const amberColors = AmberDuskTokens.colors;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('$daysText • $statusLabel'),
+        Flexible(
+          child: Text(
+            '$daysText • $statusLabel',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AmberDuskTokens.typography.bodySmall.copyWith(
+              color: amberColors.muted,
+            ),
+          ),
+        ),
         if (request.isPending && !request.isExpired) ...[
-          const SizedBox(width: 8),
+          const SizedBox(width: AppDimens.p8),
           // Detailed countdown for pending bids
           ExpirationCountdown(
             expirationTime: request.expirationTime,
@@ -231,9 +266,15 @@ class RequestTile extends StatelessWidget {
   Widget _buildPaymentRecoveryActions(BuildContext context) {
     final isDeadlineNear = _isDeadlineNear();
     final isExpired = _isPaymentDeadlineExpired();
+    const amberColors = AmberDuskTokens.colors;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      padding: const EdgeInsets.fromLTRB(
+        AppDimens.p16,
+        0,
+        AppDimens.p16,
+        AppDimens.p12,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -244,8 +285,8 @@ class RequestTile extends StatelessWidget {
 
           // Action buttons row
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: AppDimens.p8,
+            runSpacing: AppDimens.p8,
             children: [
               // Retry Payment button
               if (!isExpired)
@@ -256,25 +297,25 @@ class RequestTile extends StatelessWidget {
                       : () => _handleRetryPayment(context),
                   icon: isLoading
                       ? const SizedBox(
-                          width: 16,
-                          height: 16,
+                          width: AppDimens.iconSizeSmall,
+                          height: AppDimens.iconSizeSmall,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(Icons.payment, size: 16),
+                      : const Icon(
+                          Icons.payment,
+                          size: AppDimens.iconSizeSmall,
+                        ),
                   label: Text(isLoading ? 'Opening...' : 'Pay Now'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isDeadlineNear
-                        ? AppColors.lightRed
-                        : AppColors.teal,
-                    foregroundColor: Colors.white,
+                        ? amberColors.danger
+                        : amberColors.primary,
+                    foregroundColor: amberColors.textInverse,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
+                      horizontal: AppDimens.p12,
+                      vertical: AppDimens.p8,
                     ),
-                    textStyle: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    textStyle: AppTypography.captionBold,
                   ),
                 ),
 
@@ -282,19 +323,19 @@ class RequestTile extends StatelessWidget {
               OutlinedButton.icon(
                 key: Key('cancel_award_btn_${request.id}'),
                 onPressed: isLoading ? null : () => _handleCancelAward(context),
-                icon: const Icon(Icons.cancel_outlined, size: 16),
+                icon: const Icon(
+                  Icons.cancel_outlined,
+                  size: AppDimens.iconSizeSmall,
+                ),
                 label: const Text('Cancel Award'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.darkerGrey,
-                  side: BorderSide(color: AppColors.mediumGrey),
+                  foregroundColor: amberColors.muted,
+                  side: BorderSide(color: amberColors.surfaceRaised),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+                    horizontal: AppDimens.p12,
+                    vertical: AppDimens.p8,
                   ),
-                  textStyle: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  textStyle: AppTypography.captionBold,
                 ),
               ),
             ],
@@ -318,24 +359,24 @@ class RequestTile extends StatelessWidget {
       timeText = '$minutesLeft minutes left';
     }
 
-    final color = isDeadlineNear ? AppColors.lightRed : AppColors.gold;
+    const amberColors = AmberDuskTokens.colors;
+    final color = isDeadlineNear ? amberColors.danger : amberColors.warning;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: AppDimens.p8),
       child: Row(
         children: [
           Icon(
             isDeadlineNear ? Icons.warning_rounded : Icons.access_time,
-            size: 14,
+            size: AppDimens.p14,
             color: color,
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppDimens.p4),
           Text(
             isDeadlineNear
                 ? 'URGENT: $timeText'
                 : 'Payment deadline: $timeText',
-            style: TextStyle(
-              fontSize: 12,
+            style: AppTypography.caption.copyWith(
               fontWeight: FontWeight.w600,
               color: color,
             ),
@@ -349,20 +390,27 @@ class RequestTile extends StatelessWidget {
   Widget _buildErrorDisplay(BuildContext context) {
     final isRetryable = viewModel?.isRetryableError(errorMessage) ?? false;
     final isCritical = _isCriticalError();
-    final errorColor = isCritical ? AppColors.lightRed : Colors.orange;
+    const amberColors = AmberDuskTokens.colors;
+    final errorColor = isCritical ? amberColors.danger : amberColors.warning;
 
     AppLogger.d(
-      'Displaying error in RequestTile: $errorMessage (retryable=$isRetryable, critical=$isCritical)',
+      'request_tile_error_visible',
       tag: 'RequestTile',
+      json: {'retryable': isRetryable, 'critical': isCritical},
     );
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.fromLTRB(
+        AppDimens.p12,
+        0,
+        AppDimens.p12,
+        AppDimens.p12,
+      ),
+      padding: const EdgeInsets.all(AppDimens.p12),
       decoration: BoxDecoration(
-        color: errorColor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: errorColor.withValues(alpha: 0.3)),
+        color: errorColor.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(AppDimens.r8),
+        border: Border.all(color: errorColor.withValues(alpha: 0.30)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -372,15 +420,14 @@ class RequestTile extends StatelessWidget {
             children: [
               Icon(
                 isCritical ? Icons.error : Icons.warning_amber_rounded,
-                size: 16,
+                size: AppDimens.iconSizeSmall,
                 color: errorColor,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppDimens.p8),
               Expanded(
                 child: Text(
                   errorMessage!,
-                  style: TextStyle(
-                    fontSize: 13,
+                  style: AppTypography.bodySmall.copyWith(
                     color: errorColor,
                     fontWeight: FontWeight.w500,
                   ),
@@ -389,7 +436,7 @@ class RequestTile extends StatelessWidget {
             ],
           ),
           if (isRetryable || onDismissError != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppDimens.p8),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -397,21 +444,28 @@ class RequestTile extends StatelessWidget {
                   TextButton.icon(
                     key: Key('retry_error_btn_${request.id}'),
                     onPressed: onRetryError,
-                    icon: const Icon(Icons.refresh, size: 16),
+                    icon: const Icon(
+                      Icons.refresh,
+                      size: AppDimens.iconSizeSmall,
+                    ),
                     label: const Text('Try Again'),
                     style: TextButton.styleFrom(
                       foregroundColor: errorColor,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimens.p8,
+                      ),
                     ),
                   ),
                 if (onDismissError != null) ...[
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppDimens.p8),
                   TextButton(
                     key: Key('dismiss_error_btn_${request.id}'),
                     onPressed: onDismissError,
                     style: TextButton.styleFrom(
-                      foregroundColor: AppColors.mediumGrey,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      foregroundColor: amberColors.muted,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimens.p8,
+                      ),
                     ),
                     child: const Text('Dismiss'),
                   ),
@@ -458,10 +512,7 @@ class RequestTile extends StatelessWidget {
 
   /// Opens payment screen for retry
   Future<void> _handleRetryPayment(BuildContext context) async {
-    AppLogger.i(
-      'Retry payment clicked for request ${request.id}',
-      tag: 'RequestTile',
-    );
+    AppLogger.i('request_tile_retry_payment_tapped', tag: 'RequestTile');
 
     final summary = ProposalPaymentSummary(
       requestId: request.id,
@@ -481,56 +532,56 @@ class RequestTile extends StatelessWidget {
 
   /// Shows confirmation dialog and cancels the award
   Future<void> _handleCancelAward(BuildContext context) async {
-    AppLogger.i(
-      'Cancel award clicked for request ${request.id}',
-      tag: 'RequestTile',
-    );
+    AppLogger.i('request_tile_cancel_award_tapped', tag: 'RequestTile');
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Cancel Award?'),
-        content: const Text(
-          'This will return the task to open status and the freelancer will be notified. Are you sure?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Keep Award'),
+      builder: (context) {
+        const amberColors = AmberDuskTokens.colors;
+        return AlertDialog(
+          backgroundColor: amberColors.background,
+          title: Text(
+            'Cancel Award?',
+            style: AppTypography.h5.copyWith(color: amberColors.text),
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.lightRed,
-              foregroundColor: Colors.white,
+          content: Text(
+            'This returns the task to open status and notifies the freelancer.',
+            style: AppTypography.bodyMedium.copyWith(color: amberColors.muted),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Keep Award'),
             ),
-            child: const Text('Cancel Award'),
-          ),
-        ],
-      ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: amberColors.danger,
+                foregroundColor: amberColors.textInverse,
+                textStyle: AppTypography.captionBold,
+              ),
+              child: const Text('Cancel Award'),
+            ),
+          ],
+        );
+      },
     );
 
     if ((confirmed ?? false) && context.mounted) {
-      AppLogger.i(
-        'User confirmed cancel award for request ${request.id}',
-        tag: 'RequestTile',
-      );
+      AppLogger.i('request_tile_cancel_award_confirmed', tag: 'RequestTile');
 
       final success = await viewModel?.cancelAwardedOffer(request.id);
 
       if (context.mounted && (success ?? false)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Award cancelled successfully'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Award cancelled successfully'),
+            backgroundColor: AmberDuskTokens.colors.forest,
           ),
         );
       }
     } else {
-      AppLogger.d(
-        'User cancelled the cancel award dialog for request ${request.id}',
-        tag: 'RequestTile',
-      );
+      AppLogger.d('request_tile_cancel_award_dismissed', tag: 'RequestTile');
     }
   }
 

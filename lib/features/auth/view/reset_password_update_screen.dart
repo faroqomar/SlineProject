@@ -8,11 +8,14 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_form_view_model.dart';
 
+/// Password update screen for users returning from a reset link.
 class ResetPasswordUpdateScreen extends StatefulWidget {
+  /// Creates the reset-password update route.
   const ResetPasswordUpdateScreen({super.key});
 
   static const Key passwordFieldKey = ValueKey<String>('reset_password_field');
@@ -128,7 +131,7 @@ class _ResetPasswordUpdateScreenState extends State<ResetPasswordUpdateScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text('Reset Password', style: AppTypography.h3),
-          backgroundColor: Colors.transparent,
+          backgroundColor: AmberDuskColors.transparent,
           elevation: 0,
           centerTitle: true,
         ),

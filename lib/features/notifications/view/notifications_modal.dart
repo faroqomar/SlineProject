@@ -7,6 +7,7 @@ import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_states.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/core/widgets/skeleton_loader.dart';
 import 'package:sline_app/features/notifications/models/notification_model.dart';
@@ -39,7 +40,7 @@ class NotificationsModal extends StatefulWidget {
     return showModalBottomSheet<NotificationItem>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AmberDuskColors.transparent,
       builder: (_) => const NotificationsModal(),
     );
   }
@@ -254,16 +255,19 @@ class _NotificationsModalState extends State<NotificationsModal>
                           const SnackBar(content: Text('All marked as read')),
                         );
                       }
-                    } on Exception catch (e) {
-                      AppLogger.e(
+                    } on Object catch (e, st) {
+                      AppLogger.w(
                         'NotificationsModal: markAllAsRead failed',
                         tag: 'Notifications',
                         error: e,
+                        json: <String, dynamic>{'stack_trace': st.toString()},
                       );
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Failed to mark all as read: $e'),
+                          const SnackBar(
+                            content: Text(
+                              'Could not mark notifications as read. Please try again.',
+                            ),
                           ),
                         );
                       }

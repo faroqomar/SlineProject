@@ -25,7 +25,7 @@ import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
 
-/// Shows details of a task with Glassmorphism design.
+/// Shows task details with solid SLine surfaces and MVVM-controlled actions.
 class TaskDetailsScreen extends StatefulWidget {
   final Task task;
   final bool showProposalsInitially;

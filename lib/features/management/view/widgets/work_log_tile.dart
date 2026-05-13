@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_date.dart';
@@ -63,7 +63,10 @@ class WorkLogTile extends StatelessWidget {
             : MainAxisAlignment.start,
         children: [
           if (!isMe) ...[
-            SignedAvatar(storagePathOrUrl: log.authorAvatar, radius: 16),
+            SignedAvatar(
+              storagePathOrUrl: log.authorAvatar,
+              radius: AppLayout.avatarSmall / 2,
+            ),
             const SizedBox(width: AppDimens.p8),
           ],
           Flexible(
@@ -71,13 +74,15 @@ class WorkLogTile extends StatelessWidget {
               padding: const EdgeInsets.all(AppDimens.p12),
               decoration: BoxDecoration(
                 color: isPrivate
-                    ? AppColors.gold.withValues(alpha: 0.1)
+                    ? colorScheme.warningMuted
                     : (isMe
-                          ? AppColors.teal.withValues(alpha: 0.1)
+                          ? colorScheme.primary.withValues(alpha: 0.1)
                           : colorScheme.cardBackground),
                 borderRadius: BorderRadius.circular(AppDimens.r12),
                 border: isPrivate
-                    ? Border.all(color: AppColors.gold.withValues(alpha: 0.3))
+                    ? Border.all(
+                        color: colorScheme.warning.withValues(alpha: 0.3),
+                      )
                     : null,
               ),
               child: Column(
@@ -85,17 +90,20 @@ class WorkLogTile extends StatelessWidget {
                 children: [
                   if (isPrivate)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
+                      padding: const EdgeInsets.only(bottom: AppDimens.p4),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.lock, size: 12, color: AppColors.gold),
-                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.lock,
+                            size: AppDimens.iconSizeSmall,
+                            color: colorScheme.warning,
+                          ),
+                          const SizedBox(width: AppDimens.p4),
                           Text(
                             'Private Note',
                             style: AppTypography.caption.copyWith(
-                              color: AppColors.gold,
-                              fontSize: 10,
+                              color: colorScheme.warning,
                             ),
                           ),
                         ],
@@ -107,12 +115,11 @@ class WorkLogTile extends StatelessWidget {
                       color: colorScheme.text,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppDimens.p4),
                   Text(
                     formatUtcToLocal(log.createdAt),
                     style: AppTypography.caption.copyWith(
                       color: colorScheme.textSecondary,
-                      fontSize: 10,
                     ),
                   ),
                 ],
@@ -121,7 +128,10 @@ class WorkLogTile extends StatelessWidget {
           ),
           if (isMe) ...[
             const SizedBox(width: AppDimens.p8),
-            SignedAvatar(storagePathOrUrl: log.authorAvatar, radius: 16),
+            SignedAvatar(
+              storagePathOrUrl: log.authorAvatar,
+              radius: AppLayout.avatarSmall / 2,
+            ),
           ],
         ],
       ),

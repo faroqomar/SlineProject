@@ -112,7 +112,7 @@ class _ChatScreenState extends State<ChatScreen> {
   /// can immediately start typing their reply.
   void _setReplyTarget(Message msg) {
     setState(() => _replyTarget = msg);
-    AppLogger.d('[ChatScreen] reply target set: ${msg.id}', tag: 'Chat');
+    AppLogger.d('ChatScreen: reply target set', tag: 'Chat');
   }
 
   /// Clears the reply target, hiding the reply preview bar.
@@ -128,10 +128,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (widget.enableLifecycleEffects) {
       _chatCtrl.activeConversation = widget.conversation;
       WidgetsBinding.instance.addPostFrameCallback((_) async {
-        AppLogger.i(
-          '[ChatScreen] opened: convo=${widget.conversation.id}',
-          tag: 'Chat',
-        );
+        AppLogger.i('ChatScreen: opened conversation', tag: 'Chat');
         // Fetch messages here so the screen navigates instantly — the
         // Consumer<ChatViewModel> builder reacts to isLoadingMessages and
         // shows content as soon as messages arrive. Previously fetchMessages
@@ -153,10 +150,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
-    AppLogger.d(
-      '[ChatScreen] closed: convo=${widget.conversation.id}',
-      tag: 'Chat',
-    );
+    AppLogger.d('ChatScreen: closed conversation', tag: 'Chat');
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _messageController.removeListener(_onTextChanged);
@@ -290,17 +284,25 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _onPickImage() async {
     try {
       await _chatCtrl.sendImageForActive();
-      AppLogger.i(
-        '[ChatScreen] image sent for convo=${widget.conversation.id}',
-        tag: 'Chat',
-      );
-    } on Exception catch (e) {
-      AppLogger.e('sendImageAttachment failed', error: e, tag: 'Chat');
+      AppLogger.i('ChatScreen: image attachment sent', tag: 'Chat');
+    } on Object catch (e, st) {
+      _logError('ChatScreen: image attachment send failed', e, st);
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Failed to send image')));
     }
+  }
+
+  /// Centralizes non-fatal chat operation logging so every handler preserves
+  /// exception and stack details without duplicating logger payload wiring.
+  void _logError(String operation, Object error, StackTrace stackTrace) {
+    AppLogger.w(
+      operation,
+      tag: 'Chat',
+      error: error,
+      json: <String, dynamic>{'stack_trace': stackTrace.toString()},
+    );
   }
 
   void _showCreateOfferModal() {
@@ -324,11 +326,14 @@ class _ChatScreenState extends State<ChatScreen> {
             price: price,
             days: days,
           );
-        } on Exception catch (e) {
+        } on Object catch (e, st) {
+          _logError('ChatScreen: create direct offer failed', e, st);
           if (!mounted) return;
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Failed to create offer: $e')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not create offer. Please try again.'),
+            ),
+          );
         }
       },
     );
@@ -453,11 +458,11 @@ class _ChatScreenState extends State<ChatScreen> {
                         } else {
                           try {
                             offerData = jsonDecode(msg.content);
-                          } on Exception catch (e) {
-                            AppLogger.w(
+                          } on Object catch (e, st) {
+                            _logError(
                               'Failed to decode legacy offer JSON',
-                              error: e,
-                              tag: 'Chat',
+                              e,
+                              st,
                             );
                           }
                         }
@@ -515,7 +520,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                 ? msg.content
                                 : null,
                             signedUrlResolver:
-                                widget.attachmentSignedUrlResolver,
+                                widget.attachmentSignedUrlResolver ??
+                                _chatCtrl.resolveAttachmentSignedUrl,
                           ),
                         );
                       }
@@ -767,16 +773,16 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                           child: Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.attach_money,
-                                color: Colors.white,
+                                color: AppColors.white,
                                 size: AppDimens.iconSizeSmall,
                               ),
                               const SizedBox(width: AppLayout.spacingTight),
                               Text(
                                 'Offer',
                                 style: AppTypography.captionBold.copyWith(
-                                  color: Colors.white,
+                                  color: AppColors.white,
                                 ),
                               ),
                             ],
@@ -947,7 +953,12 @@ class _ChatScreenState extends State<ChatScreen> {
                                     if (mounted) _scrollToBottom();
                                   });
                                 }
-                              } on Exception catch (_) {
+                              } on Object catch (e, st) {
+                                _logError(
+                                  'ChatScreen: send message failed',
+                                  e,
+                                  st,
+                                );
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
@@ -972,20 +983,20 @@ class _ChatScreenState extends State<ChatScreen> {
                             shape: BoxShape.circle,
                           ),
                           child: sending
-                              ? const Center(
+                              ? Center(
                                   child: SizedBox(
                                     width: AppInteractionStates.loadingSize,
                                     height: AppInteractionStates.loadingSize,
                                     child: CircularProgressIndicator(
                                       strokeWidth: AppInteractionStates
                                           .loadingStrokeWidth,
-                                      color: Colors.white,
+                                      color: AppColors.white,
                                     ),
                                   ),
                                 )
-                              : const Icon(
+                              : Icon(
                                   Icons.send,
-                                  color: Colors.white,
+                                  color: AppColors.white,
                                   size: AppLayout.iconStandard,
                                 ),
                         ),
@@ -1212,8 +1223,8 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ),
       );
-    } on Exception catch (e) {
-      AppLogger.e('Accept offer failed', error: e, tag: 'Chat');
+    } on Object catch (e, st) {
+      _logError('ChatScreen: accept offer failed', e, st);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -1361,13 +1372,20 @@ class _SwipeToReplyState extends State<_SwipeToReply>
   /// Spring-back animation controller.
   late final AnimationController _springController;
 
+  /// Drag offset captured at release so the single spring listener can reset.
+  double _springStartOffset = 0;
+
   @override
   void initState() {
     super.initState();
-    _springController = AnimationController(
-      duration: AppMotion.fast,
-      vsync: this,
-    );
+    _springController =
+        AnimationController(duration: AppMotion.fast, vsync: this)
+          ..addListener(() {
+            if (!mounted) return;
+            setState(() {
+              _dragOffset = _springStartOffset * (1 - _springController.value);
+            });
+          });
   }
 
   @override
@@ -1392,14 +1410,8 @@ class _SwipeToReplyState extends State<_SwipeToReply>
       widget.onReply();
     }
     // Spring back to original position
-    final startOffset = _dragOffset;
+    _springStartOffset = _dragOffset;
     _springController.reset();
-    _springController.addListener(() {
-      if (!mounted) return;
-      setState(() {
-        _dragOffset = startOffset * (1 - _springController.value);
-      });
-    });
     _springController.forward();
     _thresholdCrossed = false;
   }
@@ -1421,7 +1433,7 @@ class _SwipeToReplyState extends State<_SwipeToReply>
               child: AnimatedScale(
                 // Scale from 0→1 as drag approaches threshold
                 scale: (_dragOffset / _replyThreshold).clamp(0.0, 1.0),
-                duration: const Duration(milliseconds: 50),
+                duration: AppMotion.micro,
                 curve: AppMotion.curveSpring,
                 child: Icon(
                   Icons.reply_rounded,

@@ -8,11 +8,14 @@ import 'package:sline_app/app/main_navigation_screen.dart';
 import 'package:sline_app/core/providers/system_config_view_model.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_states.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/transitions/custom_route_transitions.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
@@ -75,6 +78,12 @@ class _SignupScreenState extends State<SignupScreen>
 
   // --- Password strength ---
   double _passwordStrength = 0.0;
+
+  bool get _hasMinLength => _passwordController.text.length >= 8;
+  bool get _hasUppercase => _passwordController.text.contains(RegExp('[A-Z]'));
+  bool get _hasNumber => _passwordController.text.contains(RegExp('[0-9]'));
+  bool get _hasSpecialChar =>
+      _passwordController.text.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
 
   @override
   void initState() {
@@ -281,7 +290,7 @@ class _SignupScreenState extends State<SignupScreen>
       );
     } else {
       final error = authVM.error ?? 'Registration failed';
-      AppLogger.e('Signup failed: $error', tag: 'Auth');
+      AppLogger.e('Signup failed', tag: 'Auth', error: error);
       setState(() {
         _generalError = error;
       });
@@ -305,10 +314,13 @@ class _SignupScreenState extends State<SignupScreen>
                   top: AppDimens.p4,
                   left: AppDimens.p4,
                 ),
-                child: Text(
-                  errorText,
-                  style: AppTypography.caption.copyWith(
-                    color: context.colorScheme.danger,
+                child: Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    errorText,
+                    style: AppTypography.caption.copyWith(
+                      color: context.colorScheme.danger,
+                    ),
                   ),
                 ),
               )
@@ -322,6 +334,7 @@ class _SignupScreenState extends State<SignupScreen>
   Widget _buildPasswordStrength(AppColorScheme colorScheme) {
     final label = _strengthLabel(_passwordStrength);
     final color = _strengthColor(colorScheme, _passwordStrength);
+    final amber = context.amberColors;
 
     return Semantics(
       label: 'Password strength: $label',
@@ -336,22 +349,22 @@ class _SignupScreenState extends State<SignupScreen>
                 children: [
                   // Background track
                   Container(
-                    height: 4,
+                    height: AppDimens.p4,
                     width: totalWidth,
                     decoration: BoxDecoration(
                       color: colorScheme.divider,
-                      borderRadius: BorderRadius.circular(2),
+                      borderRadius: BorderRadius.circular(AppDimens.r4),
                     ),
                   ),
                   // Filled bar
                   AnimatedContainer(
                     duration: AppMotion.fast,
                     curve: AppMotion.curveStandard,
-                    height: 4,
+                    height: AppDimens.p4,
                     width: _passwordStrength * totalWidth,
                     decoration: BoxDecoration(
                       color: color,
-                      borderRadius: BorderRadius.circular(2),
+                      borderRadius: BorderRadius.circular(AppDimens.r4),
                     ),
                   ),
                 ],
@@ -367,6 +380,31 @@ class _SignupScreenState extends State<SignupScreen>
               style: AppTypography.caption.copyWith(color: color),
             ),
           ),
+          const SizedBox(height: AppDimens.p8),
+          _PasswordRequirementRow(
+            label: '8 or more characters',
+            isMet: _hasMinLength,
+            textColor: amber.muted,
+            successColor: amber.forest,
+          ),
+          _PasswordRequirementRow(
+            label: 'One uppercase letter',
+            isMet: _hasUppercase,
+            textColor: amber.muted,
+            successColor: amber.forest,
+          ),
+          _PasswordRequirementRow(
+            label: 'One number',
+            isMet: _hasNumber,
+            textColor: amber.muted,
+            successColor: amber.forest,
+          ),
+          _PasswordRequirementRow(
+            label: 'One special character',
+            isMet: _hasSpecialChar,
+            textColor: amber.muted,
+            successColor: amber.forest,
+          ),
         ],
       ),
     );
@@ -379,11 +417,11 @@ class _SignupScreenState extends State<SignupScreen>
 
     final matches = _confirmPasswordController.text == _passwordController.text;
     return Padding(
-      padding: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.only(right: AppDimens.p12),
       child: Icon(
         matches ? Icons.check_circle : Icons.cancel,
         color: matches ? colorScheme.success : colorScheme.danger,
-        size: 20,
+        size: AppLayout.iconStandard,
       ),
     );
   }
@@ -391,12 +429,15 @@ class _SignupScreenState extends State<SignupScreen>
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final amber = context.amberColors;
+    final panelRecipe = AmberDuskTokens.surfaces.raised;
     final signupsDisabled =
         context.watch<SystemConfigViewModel?>()?.config.disableSignups ?? false;
 
     return ChangeNotifierProvider(
       create: (_) => AuthFormViewModel(),
       child: Scaffold(
+        backgroundColor: amber.page,
         body: Container(
           width: double.infinity,
           height: double.infinity,
@@ -404,376 +445,486 @@ class _SignupScreenState extends State<SignupScreen>
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                colorScheme.authGradientStart,
-                colorScheme.authGradientEnd,
-              ],
+              colors: [amber.background, amber.page],
             ),
           ),
           child: SafeArea(
             child: Center(
               child: SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimens.p32,
+                  horizontal: AppDimens.p20,
                   vertical: AppDimens.p24,
                 ),
-                child: Form(
-                  key: _formKey,
-                  child: Consumer<AuthFormViewModel>(
-                    builder: (context, authVM, _) {
-                      return AnimatedBuilder(
-                        animation: _shakeController,
-                        builder: (context, child) {
-                          return Transform.translate(
-                            offset: Offset(
-                              _shakeOffset(_shakeController.value),
-                              0,
-                            ),
-                            child: child,
-                          );
-                        },
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            // --- Header (Logo + Title + Subtitle) ---
-                            SlideTransition(
-                              position: _logoSlide,
-                              child: FadeTransition(
-                                opacity: _logoFade,
-                                child: Column(
-                                  children: [
-                                    Container(
-                                      width: 80,
-                                      height: 80,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.teal,
-                                        borderRadius: BorderRadius.circular(
-                                          AppDimens.r20,
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: AppColors.teal.withValues(
-                                              alpha: 0.3,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: AppLayout.formMaxWidth,
+                  ),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: panelRecipe.fill,
+                      borderRadius: BorderRadius.circular(panelRecipe.radius),
+                      border: Border.all(
+                        color: panelRecipe.border,
+                        width: AmberDuskTokens.spacing.borderWidth,
+                      ),
+                      boxShadow: AppDecorations.elevation(
+                        panelRecipe.elevationLevel,
+                        isDark: colorScheme.isDark,
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppDimens.p24),
+                      child: Form(
+                        key: _formKey,
+                        child: Consumer<AuthFormViewModel>(
+                          builder: (context, authVM, _) {
+                            return AnimatedBuilder(
+                              animation: _shakeController,
+                              builder: (context, child) {
+                                return Transform.translate(
+                                  offset: Offset(
+                                    _shakeOffset(_shakeController.value),
+                                    0,
+                                  ),
+                                  child: child,
+                                );
+                              },
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  // --- Header (Logo + Title + Subtitle) ---
+                                  SlideTransition(
+                                    position: _logoSlide,
+                                    child: FadeTransition(
+                                      opacity: _logoFade,
+                                      child: Column(
+                                        children: [
+                                          DecoratedBox(
+                                            decoration: BoxDecoration(
+                                              color: amber.primary,
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                    AmberDuskTokens
+                                                        .spacing
+                                                        .moduleRadius,
+                                                  ),
+                                              boxShadow:
+                                                  AppDecorations.elevation(
+                                                    AmberDuskTokens
+                                                        .surfaces
+                                                        .cta
+                                                        .elevationLevel,
+                                                    isDark: colorScheme.isDark,
+                                                  ),
                                             ),
-                                            blurRadius: 20,
-                                            offset: const Offset(0, 10),
+                                            child: SizedBox.square(
+                                              dimension: AppLayout.avatarHero,
+                                              child: Center(
+                                                child: Text(
+                                                  'S',
+                                                  style: AppTypography.logo
+                                                      .copyWith(
+                                                        color:
+                                                            amber.textInverse,
+                                                      ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: AppDimens.p24),
+                                          Text(
+                                            'Create Account',
+                                            style: AmberDuskTokens
+                                                .typography
+                                                .screenTitle
+                                                .copyWith(color: amber.text),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          const SizedBox(height: AppDimens.p8),
+                                          Text(
+                                            'Create a secure workspace for '
+                                            'bids, bookings, and messages.',
+                                            style: AmberDuskTokens
+                                                .typography
+                                                .body
+                                                .copyWith(color: amber.muted),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          if (signupsDisabled) ...[
+                                            const SizedBox(
+                                              height: AppDimens.p12,
+                                            ),
+                                            _AuthNotice(
+                                              text:
+                                                  'New account registration is '
+                                                  'temporarily paused.',
+                                              background: amber.dangerMuted,
+                                              foreground: amber.rust,
+                                            ),
+                                          ],
+                                          if (_generalError != null) ...[
+                                            const SizedBox(
+                                              height: AppDimens.p12,
+                                            ),
+                                            AnimatedSize(
+                                              duration: AppMotion.fast,
+                                              curve: AppMotion.curveStandard,
+                                              child: _AuthNotice(
+                                                text: _generalError!,
+                                                background: amber.dangerMuted,
+                                                foreground: amber.rust,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppDimens.p32),
+
+                                  // --- Name Field ---
+                                  SlideTransition(
+                                    position: _nameSlide,
+                                    child: FadeTransition(
+                                      opacity: _nameFade,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const _FieldLabel('Full Name'),
+                                          const SizedBox(height: AppDimens.p8),
+                                          AppTextField(
+                                            fieldKey: SignupScreen.nameFieldKey,
+                                            controller: _nameController,
+                                            hintText: 'Your full name',
+                                            showClearButton: true,
+                                            onChanged: (_) {
+                                              if (_nameError != null) {
+                                                setState(
+                                                  () => _nameError = null,
+                                                );
+                                              }
+                                            },
+                                            validator: (value) {
+                                              if (value == null ||
+                                                  value.isEmpty) {
+                                                return 'Please enter your name';
+                                              }
+                                              return null;
+                                            },
+                                          ),
+                                          _buildInlineError(_nameError),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppDimens.p16),
+
+                                  // --- Email Field ---
+                                  SlideTransition(
+                                    position: _emailSlide,
+                                    child: FadeTransition(
+                                      opacity: _emailFade,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const _FieldLabel('Email'),
+                                          const SizedBox(height: AppDimens.p8),
+                                          AppTextField(
+                                            fieldKey:
+                                                SignupScreen.emailFieldKey,
+                                            controller: _emailController,
+                                            hintText: 'your@email.com',
+                                            keyboardType:
+                                                TextInputType.emailAddress,
+                                            showClearButton: true,
+                                            onChanged: (_) {
+                                              if (_emailError != null) {
+                                                setState(
+                                                  () => _emailError = null,
+                                                );
+                                              }
+                                            },
+                                            validator: (value) {
+                                              if (value == null ||
+                                                  value.isEmpty) {
+                                                return 'Please enter your '
+                                                    'email';
+                                              }
+                                              if (!value.contains('@')) {
+                                                return 'Please enter a valid '
+                                                    'email';
+                                              }
+                                              return null;
+                                            },
+                                          ),
+                                          _buildInlineError(_emailError),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppDimens.p16),
+
+                                  // --- Password Field ---
+                                  SlideTransition(
+                                    position: _passwordSlide,
+                                    child: FadeTransition(
+                                      opacity: _passwordFade,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const _FieldLabel('Password'),
+                                          const SizedBox(height: AppDimens.p8),
+                                          AppTextField(
+                                            fieldKey:
+                                                SignupScreen.passwordFieldKey,
+                                            controller: _passwordController,
+                                            hintText: 'Create a password',
+                                            obscureText: true,
+                                            showPasswordToggle: true,
+                                            validator: (value) {
+                                              if (value == null ||
+                                                  value.isEmpty) {
+                                                return 'Please enter a '
+                                                    'password';
+                                              }
+                                              if (value.length < 8) {
+                                                return 'Password must be at '
+                                                    'least 8 characters';
+                                              }
+                                              return null;
+                                            },
+                                          ),
+                                          _buildInlineError(_passwordError),
+                                          if (_passwordController
+                                              .text
+                                              .isNotEmpty)
+                                            _buildPasswordStrength(colorScheme),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppDimens.p16),
+
+                                  // --- Confirm Password Field ---
+                                  SlideTransition(
+                                    position: _confirmSlide,
+                                    child: FadeTransition(
+                                      opacity: _confirmFade,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const _FieldLabel('Confirm Password'),
+                                          const SizedBox(height: AppDimens.p8),
+                                          AppTextField(
+                                            fieldKey: SignupScreen
+                                                .confirmPasswordFieldKey,
+                                            controller:
+                                                _confirmPasswordController,
+                                            hintText: 'Confirm password',
+                                            obscureText: true,
+                                            showPasswordToggle: true,
+                                            suffixIcon: _buildConfirmSuffix(
+                                              colorScheme,
+                                            ),
+                                            validator: (value) {
+                                              if (value == null ||
+                                                  value.isEmpty) {
+                                                return 'Please confirm your '
+                                                    'password';
+                                              }
+                                              return null;
+                                            },
+                                          ),
+                                          _buildInlineError(_confirmError),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppDimens.p16),
+                                  Text(
+                                    'By continuing, you agree to use SLine for '
+                                    'real work, safe payments, and respectful '
+                                    'messages.',
+                                    style: AmberDuskTokens.typography.bodySmall
+                                        .copyWith(color: amber.muted),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: AppDimens.p24),
+
+                                  // --- Actions ---
+                                  SlideTransition(
+                                    position: _buttonSlide,
+                                    child: FadeTransition(
+                                      opacity: _buttonFade,
+                                      child: Column(
+                                        children: [
+                                          AppButton(
+                                            tapTargetKey:
+                                                SignupScreen.signUpButtonKey,
+                                            text: 'Create Account',
+                                            isLoading: authVM.isLoading,
+                                            width: double.infinity,
+                                            onPressed: signupsDisabled
+                                                ? null
+                                                : () => _handleRegister(authVM),
+                                          ),
+                                          const SizedBox(height: AppDimens.p24),
+                                          Wrap(
+                                            alignment: WrapAlignment.center,
+                                            crossAxisAlignment:
+                                                WrapCrossAlignment.center,
+                                            children: [
+                                              Text(
+                                                'Already have an account? ',
+                                                style: AmberDuskTokens
+                                                    .typography
+                                                    .bodySmall
+                                                    .copyWith(
+                                                      color: amber.muted,
+                                                    ),
+                                              ),
+                                              GestureDetector(
+                                                key: SignupScreen.signInLinkKey,
+                                                onTap: () {
+                                                  AppLogger.i(
+                                                    'Signin link tapped from '
+                                                    'signup',
+                                                    tag: 'Auth',
+                                                  );
+                                                  Navigator.pop(context);
+                                                },
+                                                child: Text(
+                                                  'Sign In',
+                                                  style: AmberDuskTokens
+                                                      .typography
+                                                      .control
+                                                      .copyWith(
+                                                        color: amber.primary,
+                                                      ),
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
-                                      child: Center(
-                                        child: Text(
-                                          'S',
-                                          style: AppTypography.h1.copyWith(
-                                            fontSize: 36,
-                                            color: AppColors.offWhite,
-                                          ),
-                                        ),
-                                      ),
                                     ),
-                                    const SizedBox(height: AppDimens.p24),
-                                    Text(
-                                      'Create Account',
-                                      style: AppTypography.h1.copyWith(
-                                        color: colorScheme.text,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    const SizedBox(height: AppDimens.p8),
-                                    Text(
-                                      'Join SLine today',
-                                      style: AppTypography.bodyMedium.copyWith(
-                                        color: colorScheme.textSecondary,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    if (signupsDisabled) ...[
-                                      const SizedBox(height: AppDimens.p12),
-                                      Container(
-                                        width: double.infinity,
-                                        padding: const EdgeInsets.all(
-                                          AppDimens.p12,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: colorScheme.dangerMuted,
-                                          borderRadius: BorderRadius.circular(
-                                            AppDimens.r12,
-                                          ),
-                                          border: Border.all(
-                                            color: colorScheme.danger
-                                                .withValues(alpha: 0.3),
-                                          ),
-                                        ),
-                                        child: Text(
-                                          'Signups are currently disabled.',
-                                          style: AppTypography.bodySmall
-                                              .copyWith(
-                                                color: colorScheme.danger,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ),
-                                    ],
-                                    // General error banner
-                                    if (_generalError != null) ...[
-                                      const SizedBox(height: AppDimens.p12),
-                                      AnimatedSize(
-                                        duration: AppMotion.fast,
-                                        curve: AppMotion.curveStandard,
-                                        child: Container(
-                                          width: double.infinity,
-                                          padding: const EdgeInsets.all(
-                                            AppDimens.p12,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: colorScheme.dangerMuted,
-                                            borderRadius: BorderRadius.circular(
-                                              AppDimens.r12,
-                                            ),
-                                            border: Border.all(
-                                              color: colorScheme.danger
-                                                  .withValues(alpha: 0.3),
-                                            ),
-                                          ),
-                                          child: Text(
-                                            _generalError!,
-                                            style: AppTypography.bodySmall
-                                                .copyWith(
-                                                  color: colorScheme.danger,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                            ),
-                            const SizedBox(height: AppDimens.p32),
-
-                            // --- Name Field ---
-                            SlideTransition(
-                              position: _nameSlide,
-                              child: FadeTransition(
-                                opacity: _nameFade,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Full Name',
-                                      style: AppTypography.bodySmall.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: colorScheme.text,
-                                      ),
-                                    ),
-                                    const SizedBox(height: AppDimens.p8),
-                                    AppTextField(
-                                      key: SignupScreen.nameFieldKey,
-                                      controller: _nameController,
-                                      hintText: 'John Doe',
-                                      onChanged: (_) {
-                                        if (_nameError != null) {
-                                          setState(() => _nameError = null);
-                                        }
-                                      },
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return 'Please enter your name';
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                    _buildInlineError(_nameError),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: AppDimens.p16),
-
-                            // --- Email Field ---
-                            SlideTransition(
-                              position: _emailSlide,
-                              child: FadeTransition(
-                                opacity: _emailFade,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Email',
-                                      style: AppTypography.bodySmall.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: colorScheme.text,
-                                      ),
-                                    ),
-                                    const SizedBox(height: AppDimens.p8),
-                                    AppTextField(
-                                      key: SignupScreen.emailFieldKey,
-                                      controller: _emailController,
-                                      hintText: 'your@email.com',
-                                      keyboardType: TextInputType.emailAddress,
-                                      onChanged: (_) {
-                                        if (_emailError != null) {
-                                          setState(() => _emailError = null);
-                                        }
-                                      },
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return 'Please enter your email';
-                                        }
-                                        if (!value.contains('@')) {
-                                          return 'Please enter a valid email';
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                    _buildInlineError(_emailError),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: AppDimens.p16),
-
-                            // --- Password Field ---
-                            SlideTransition(
-                              position: _passwordSlide,
-                              child: FadeTransition(
-                                opacity: _passwordFade,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Password',
-                                      style: AppTypography.bodySmall.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: colorScheme.text,
-                                      ),
-                                    ),
-                                    const SizedBox(height: AppDimens.p8),
-                                    AppTextField(
-                                      key: SignupScreen.passwordFieldKey,
-                                      controller: _passwordController,
-                                      hintText: 'Create a password',
-                                      obscureText: true,
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return 'Please enter a password';
-                                        }
-                                        if (value.length < 6) {
-                                          return 'Password must be at least 6 characters';
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                    _buildInlineError(_passwordError),
-                                    if (_passwordController.text.isNotEmpty)
-                                      _buildPasswordStrength(colorScheme),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: AppDimens.p16),
-
-                            // --- Confirm Password Field ---
-                            SlideTransition(
-                              position: _confirmSlide,
-                              child: FadeTransition(
-                                opacity: _confirmFade,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Confirm Password',
-                                      style: AppTypography.bodySmall.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: colorScheme.text,
-                                      ),
-                                    ),
-                                    const SizedBox(height: AppDimens.p8),
-                                    AppTextField(
-                                      key: SignupScreen.confirmPasswordFieldKey,
-                                      controller: _confirmPasswordController,
-                                      hintText: 'Confirm password',
-                                      obscureText: true,
-                                      suffixIcon: _buildConfirmSuffix(
-                                        colorScheme,
-                                      ),
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return 'Please confirm your password';
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                    _buildInlineError(_confirmError),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: AppDimens.p24),
-
-                            // --- Actions ---
-                            SlideTransition(
-                              position: _buttonSlide,
-                              child: FadeTransition(
-                                opacity: _buttonFade,
-                                child: Column(
-                                  children: [
-                                    AppButton(
-                                      key: SignupScreen.signUpButtonKey,
-                                      text: 'Create Account',
-                                      isLoading: authVM.isLoading,
-                                      width: double.infinity,
-                                      onPressed: signupsDisabled
-                                          ? null
-                                          : () => _handleRegister(authVM),
-                                    ),
-                                    const SizedBox(height: AppDimens.p24),
-
-                                    // Sign In Link
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          'Already have an account? ',
-                                          style: AppTypography.bodySmall
-                                              .copyWith(
-                                                color:
-                                                    colorScheme.textSecondary,
-                                              ),
-                                        ),
-                                        GestureDetector(
-                                          key: SignupScreen.signInLinkKey,
-                                          onTap: () {
-                                            Navigator.pop(context);
-                                          },
-                                          child: Text(
-                                            'Sign In',
-                                            style: AppTypography.bodySmall
-                                                .copyWith(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: colorScheme.primary,
-                                                ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
+                            );
+                          },
                         ),
-                      );
-                    },
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Reusable field label for the grouped signup form.
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final amber = context.amberColors;
+    return Text(
+      text,
+      style: AmberDuskTokens.widgetTheme.fields.labelStyle.copyWith(
+        color: amber.text,
+      ),
+    );
+  }
+}
+
+/// Live-region notice used for disabled signup and account errors.
+class _AuthNotice extends StatelessWidget {
+  const _AuthNotice({
+    required this.text,
+    required this.background,
+    required this.foreground,
+  });
+
+  final String text;
+  final Color background;
+  final Color foreground;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      liveRegion: true,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(
+            AmberDuskTokens.spacing.moduleRadius,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimens.p12),
+          child: Text(
+            text,
+            style: AmberDuskTokens.typography.bodySmall.copyWith(
+              color: foreground,
+              fontWeight: FontWeight.w700,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact requirement row used to make password rules scannable on phones.
+class _PasswordRequirementRow extends StatelessWidget {
+  const _PasswordRequirementRow({
+    required this.label,
+    required this.isMet,
+    required this.textColor,
+    required this.successColor,
+  });
+
+  final String label;
+  final bool isMet;
+  final Color textColor;
+  final Color successColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppDimens.p4),
+      child: Row(
+        children: [
+          Icon(
+            isMet ? Icons.check_circle : Icons.circle_outlined,
+            color: isMet ? successColor : textColor,
+            size: AppDimens.iconSizeSmall,
+          ),
+          const SizedBox(width: AppDimens.p8),
+          Expanded(
+            child: Text(
+              label,
+              style: AmberDuskTokens.typography.bodySmall.copyWith(
+                color: isMet ? successColor : textColor,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

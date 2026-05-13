@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/services/logger_service.dart';
@@ -122,9 +123,9 @@ class _MessageBubbleState extends State<MessageBubble> {
     }
 
     final bg = widget.isMine ? colorScheme.primary : colorScheme.cardBackground;
-    final fg = widget.isMine ? Colors.white : colorScheme.text;
+    final fg = widget.isMine ? AppColors.white : colorScheme.text;
     final metaColor = widget.isMine
-        ? Colors.white.withValues(alpha: 0.7)
+        ? AppColors.white.withValues(alpha: 0.7)
         : colorScheme.textSecondary;
 
     // Corner radius: inner corner towards adjacent grouped bubble is smaller.
@@ -168,7 +169,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                 if (widget.replyToText != null) _buildReplyQuote(colorScheme),
                 // Message text — RichText with links or plain Text
                 if (_hasLinks)
-                  _buildRichText(colorScheme, fg)
+                  _buildRichText(context, colorScheme, fg)
                 else
                   Text(
                     widget.text,
@@ -236,7 +237,7 @@ class _MessageBubbleState extends State<MessageBubble> {
               // Emoji at approximately 2x body text size (32px)
               Text(
                 widget.text.trim(),
-                style: const TextStyle(fontSize: 32, height: 1.2),
+                style: AppTypography.h1.copyWith(height: 1.2),
               ),
               // Timestamp below the emoji
               if (widget.isLastInGroup) ...[
@@ -254,8 +255,12 @@ class _MessageBubbleState extends State<MessageBubble> {
   }
 
   /// Builds RichText with tappable URL links interspersed with plain text.
-  /// Link style: underlined, white for sent (teal bubble), teal for received.
-  Widget _buildRichText(AppColorScheme colorScheme, Color textColor) {
+  /// Link style: underlined, inverse text for sent and primary for received.
+  Widget _buildRichText(
+    BuildContext context,
+    AppColorScheme colorScheme,
+    Color textColor,
+  ) {
     // Dispose any previous recognizers before rebuilding
     _disposeRecognizers();
     _recognizers = [];
@@ -263,8 +268,7 @@ class _MessageBubbleState extends State<MessageBubble> {
     final spans = <InlineSpan>[];
     var lastEnd = 0;
 
-    // Link color: white underline on teal bubble, teal underline on card background
-    final linkColor = widget.isMine ? Colors.white : colorScheme.primary;
+    final linkColor = widget.isMine ? AppColors.white : colorScheme.primary;
 
     for (final match in _urlPattern.allMatches(widget.text)) {
       // Plain text before the URL
@@ -283,9 +287,39 @@ class _MessageBubbleState extends State<MessageBubble> {
 
       // Create a recognizer for this link and track it for disposal
       final recognizer = TapGestureRecognizer()
-        ..onTap = () {
-          AppLogger.d('MessageBubble: tapped link $trimmed', tag: 'Chat');
-          launchUrl(Uri.parse(trimmed), mode: LaunchMode.externalApplication);
+        ..onTap = () async {
+          AppLogger.d(
+            kDebugMode
+                ? 'MessageBubble: tapped link $trimmed'
+                : 'MessageBubble: tapped link',
+            tag: 'Chat',
+          );
+          try {
+            final uri = Uri.parse(trimmed);
+            final launched = await launchUrl(
+              uri,
+              mode: LaunchMode.externalApplication,
+            );
+            if (launched) return;
+
+            AppLogger.w(
+              'MessageBubble: link launch returned false',
+              tag: 'Chat',
+              error: kDebugMode ? trimmed : null,
+            );
+          } on Object catch (e, st) {
+            AppLogger.e(
+              'MessageBubble: link launch failed',
+              tag: 'Chat',
+              error: e,
+              stackTrace: st,
+            );
+          }
+
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Could not open link.')));
         };
       _recognizers.add(recognizer);
 
@@ -344,16 +378,16 @@ class _MessageBubbleState extends State<MessageBubble> {
   Widget _buildReplyQuote(AppColorScheme colorScheme) {
     // Accent color: white on sent bubble, primary on received
     final accentColor = widget.isMine
-        ? Colors.white.withValues(alpha: 0.5)
+        ? AppColors.white.withValues(alpha: 0.5)
         : colorScheme.primary.withValues(alpha: 0.5);
     final bgColor = widget.isMine
-        ? Colors.white.withValues(alpha: 0.1)
+        ? AppColors.white.withValues(alpha: 0.1)
         : colorScheme.primary.withValues(alpha: 0.05);
     final senderColor = widget.isMine
-        ? Colors.white.withValues(alpha: 0.9)
+        ? AppColors.white.withValues(alpha: 0.9)
         : colorScheme.text;
     final quoteTextColor = widget.isMine
-        ? Colors.white.withValues(alpha: 0.7)
+        ? AppColors.white.withValues(alpha: 0.7)
         : colorScheme.textSecondary;
 
     return Padding(

@@ -30,7 +30,7 @@ String _mapError(dynamic error) {
         return 'Database error occurred. Please try again.';
     }
   }
-  
+
   if (error is AuthException) {
     if (error.message.contains('Invalid login credentials')) {
       return 'Email or password is incorrect.';
@@ -40,18 +40,18 @@ String _mapError(dynamic error) {
     }
     return 'Authentication error. Please try again.';
   }
-  
+
   if (error is StorageException) {
     if (error.statusCode == 404) {
       return 'File not available.';
     }
     return 'Upload failed. Please try again.';
   }
-  
+
   if (error is SocketException || error is TimeoutException) {
     return 'Cannot reach the server. Check your connection and retry.';
   }
-  
+
   // Fallback
   return 'An error occurred. Please try again.';
 }
@@ -101,15 +101,15 @@ String _mapError(dynamic error) {
 class ExampleViewModel extends ChangeNotifier {
   String? _error;
   bool _isLoading = false;
-  
+
   String? get error => _error;
   bool get isLoading => _isLoading;
-  
+
   Future<void> performAction() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
-    
+
     try {
       await _service.performAction();
       AppLogger.i('Action completed successfully');
@@ -121,12 +121,12 @@ class ExampleViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   String _mapError(dynamic e) {
     // Use standard error mapping function
     // ...
   }
-  
+
   void clearError() {
     _error = null;
     notifyListeners();

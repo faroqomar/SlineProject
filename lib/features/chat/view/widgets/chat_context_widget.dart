@@ -34,7 +34,7 @@ class ChatContextWidget extends StatelessWidget {
     if (taskId == null || taskId.isEmpty) return;
 
     AppInteractionStates.hapticTap();
-    AppLogger.i('ChatContextWidget: navigating to task $taskId', tag: 'Chat');
+    AppLogger.i('ChatContextWidget: navigating to linked task', tag: 'Chat');
 
     final taskVm = context.read<TaskViewModel>();
 
@@ -55,9 +55,14 @@ class ChatContextWidget extends StatelessWidget {
           const SnackBar(content: Text('Could not load task details.')),
         );
       }
-    } on Exception catch (e) {
+    } on Object catch (e, st) {
       if (context.mounted) {
-        AppLogger.e('Error loading task for context nav', error: e);
+        AppLogger.w(
+          'ChatContextWidget: linked task navigation failed',
+          tag: 'Chat',
+          error: e,
+          json: <String, dynamic>{'stack_trace': st.toString()},
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Could not open task details. Please try again.'),

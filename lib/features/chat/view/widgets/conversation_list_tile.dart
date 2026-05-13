@@ -354,8 +354,7 @@ class _ConversationListTileState extends State<ConversationListTile>
             style: AppTypography.micro.copyWith(
               color: tagColor,
               fontWeight: FontWeight.w800,
-              fontSize: 9,
-              letterSpacing: 0.3,
+              letterSpacing: 0,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -399,7 +398,6 @@ class _ConversationListTileState extends State<ConversationListTile>
                     style: AppTypography.bodyLarge.copyWith(
                       fontWeight: FontWeight.w700,
                       color: colorScheme.primary,
-                      fontSize: 18,
                     ),
                   ),
                 ),

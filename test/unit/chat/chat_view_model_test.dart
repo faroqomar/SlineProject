@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:sline_app/core/services/role_switch_coordinator.dart';
+import 'package:sline_app/features/chat/attachments/services/upload_service.dart';
 import 'package:sline_app/features/chat/models/conversation_model.dart';
 import 'package:sline_app/features/chat/models/message_model.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
@@ -102,6 +103,7 @@ void main() {
       repo: repo,
       accountGuardService: guard,
       directOffersService: offers,
+      attachmentUploader: SupabaseAttachmentUploader(),
     );
   });
 
@@ -324,6 +326,7 @@ void main() {
         repo: repo,
         accountGuardService: guard,
         directOffersService: offers,
+        attachmentUploader: SupabaseAttachmentUploader(),
       );
       // _mounted = false prevents _notify from calling notifyListeners
       vm2.dispose();
@@ -344,6 +347,7 @@ void main() {
         repo: repo,
         accountGuardService: guard,
         directOffersService: offers,
+        attachmentUploader: SupabaseAttachmentUploader(),
       );
     });
   });

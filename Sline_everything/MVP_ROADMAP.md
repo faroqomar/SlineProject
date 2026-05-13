@@ -1,6 +1,6 @@
 # SLine MVP Roadmap
 
-**Last Updated:** 2026-05-12
+**Last Updated:** 2026-05-13
 
 This roadmap tracks the current code-state of the repository. Status values are intentionally simple:
 - `✅ Completed`
@@ -13,7 +13,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | --- | --- | --- |
 | Flutter app shell and navigation | ✅ Completed | `main.dart` + `lib/app/main_navigation_screen.dart`; visible bottom nav is Home, Dashboard, Messages, Profile via `lib/core/navigation/main_nav_destinations.dart` |
 | Supabase bootstrap and app providers | ✅ Completed | shared client/bootstrap in `lib/core/services/supabase_config.dart` and root providers in `main.dart` |
-| Theme system (Layer 1) | ✅ Completed | Phase 0: `app_colors.dart`, `app_typography.dart`, `app_motion.dart`, `app_states.dart`, `app_decorations.dart`, `app_theme.dart`. **2026-05-11:** Amber Dusk Phase 0 added a staged inactive Open Design token layer under `lib/core/theme/designs/amber_dusk/`; it is not globally runtime-activated. **2026-05-12:** Phases 2-4 consume Amber Dusk tokens in scoped phone shell/discovery/dashboard surfaces while final emulator visual parity remains open. |
+| Theme system (Layer 1) | ✅ Completed | Phase 0: `app_colors.dart`, `app_typography.dart`, `app_motion.dart`, `app_states.dart`, `app_decorations.dart`, `app_theme.dart`. **2026-05-11:** Amber Dusk Phase 0 added a staged inactive Open Design token layer under `lib/core/theme/designs/amber_dusk/`; it is not globally runtime-activated. **2026-05-12:** Phases 2-4 consume Amber Dusk tokens in scoped phone shell/discovery/dashboard surfaces. **2026-05-13:** Phases 5-8 extend scoped Amber Dusk treatment across auth gates, chat/notifications, tasks/work, booking/payment, and wallet surfaces while final emulator visual parity remains open. |
 | Layout tokens (Layer 2) | ✅ Completed | Phase 0.7: `app_layout.dart` (41 semantic tokens), `app_dimens.dart` (raw primitives). Three-layer architecture complete. |
 | Logging and crash boundaries | ✅ Completed | `AppLogger`, `CrashReportingService`, zoned/global handlers |
 | Documentation hub | ✅ Completed | maintained under `Sline_everything/` |
@@ -69,7 +69,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | Attachments | ✅ Completed | private attachment flow; participant-scoped access via `can_access_chat_attachment` |
 | Favorites-powered contact flows | ✅ Completed | favorites and chat handoff are implemented |
 | Chat Creation Matrix (v2.19) | ✅ Completed | Atomic RPC `start_direct_conversation_v1` with rate limiting (20/hr), favorites enforcement, role verification. Guard trigger hardens all paths. Feature flag `enable_direct_conversation_rpc`. See `supabase/migrations/20260306000000_chat_creation_matrix.sql` |
-| Notifications | ✅ Completed | Server-authority: client read/update only; badge, modal, deep links; auth-aware stream. **Notification routing (2026-03-08):** `user_devices` + `notification_push_queue`, trigger enqueue; ViewModel foreground sync then stream; Edge `push-notify`, `process-push-queue` (CRON_SECRET); runbook `.TODO/improvement_the_system/ImplementReady/13_notification-routing/RUNBOOK_notification_push.md`. Plan: `.TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md`. Diagram: `Sline_everything/AppDigram/All_Diagrams/13_notification-routing.md`. |
+| Notifications | ✅ Completed | Server-authority: client read/update only; badge, modal, deep links; auth-aware stream. **Notification routing (2026-03-08):** `user_devices` + `notification_push_queue`, trigger enqueue; ViewModel foreground sync then stream; Edge `push-notify`, `process-push-queue` (CRON_SECRET); runbook `.TODO/improvement_the_system/ImplementReady/13_notification-routing/RUNBOOK_notification_push.md`. **2026-05-13:** `NotificationViewModel` keeps cached notifications and reconnects on transient Supabase Realtime close codes `1002`/`1006` instead of surfacing a hard load error. Plan: `.TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md`. Diagram: `Sline_everything/AppDigram/All_Diagrams/13_notification-routing.md`. |
 | Report flows (task/user/chat) | ✅ Completed | app can submit `reports` rows from task detail, chat menu, and public profile |
 | Booking dispute submission | ✅ Completed | booking details `Report Issue` when active or delivered; **Dispute lifecycle (2026-03-08):** escrow guard in rpc_approve_delivery and rpc_finalize_auto_approval; RLS deny on disputes; dispute_status_enum + trg_dispute_guard + trg_dispute_set_resolved_at; SafetyViewModel.hasOpenDisputeForTask/ForBooking/ForDirectOffer; Approve/Review disabled when disputed on booking, work item, direct offer details; vw_unified_work_items disputed check. **Plan 14a (2026-03-08):** Frozen guards in rpc_submit_delivery and rpc_request_revision; partial unique indexes (one open/active dispute per task/direct_offer); rpc_submit_dispute (eligibility + single-active); Report Issue on task and direct_offer (work item + direct offer details); open/active dispute banners. Migration: 20260308160000. Plan: `.TODO/PLAN_DisputeLifecycle_2026-03-08.md`, `.TODO/PLAN_14a_DisputeExtension_2026-03-08.md`. |
 
@@ -96,7 +96,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | Supabase migrations | ✅ Completed | repo contains live migration history under `supabase/migrations/` |
 | Edge functions | ✅ Completed | booking/payment functions are checked into `supabase/functions/` |
 | Docs sync discipline | ✅ Completed | docs now reflect current `view/viewmodels/data/services` layout and payment/runtime helpers |
-| Agent system evolution | ✅ Completed | `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-12.md` records the latest deduped session-log findings. The Step 7 pass updated six `.cursor/Agents/*.md` files for scope amendments, missing model-contract inference, custom gesture semantics, view-log privacy, behavior-level review tests, and visual QA status in Master Reports. |
+| Agent system evolution | ✅ Completed | `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-13.md` records the latest deduped session-log findings. The Step 7 pass updated `.cursor/Agents/*.md` rules for worker checkpoints, untrusted worker patches, lazy/injected service bridges, wrapper theme harnesses, per-file emulator matrices, safe URL-facts logging, realtime transient reconnect handling, and stale guidance-path cleanup. |
 
 ## 9. Completed Phases
 
@@ -150,6 +150,7 @@ Tests: 706 → 780 (+74). Coverage floor: 40%. Architecture guard had 6 checks i
 | 0.9 | Amber Dusk Phase 0 Phone Foundation | ✅ Completed | Staged Open Design token layer | `SESSION_PLAN_OpenDesign_AmberDusk_Phase0_PhoneFoundation_2026-05-11.md` |
 | 1.0 | Amber Dusk Phase 1 Core Phone Widgets | ✅ Code complete; manual emulator visual QA checklist open | Shared-widget Amber Dusk adapter | `SESSION_PLAN_OpenDesign_AmberDusk_Phase1_CorePhoneWidgets_2026-05-11.md` |
 | 1.1 | Amber Dusk Phases 2-4 Phone Shell, Discovery, Dashboard | ✅ Code complete; manual emulator visual QA gate open | Scoped phone-view Amber Dusk runtime surfaces | `SESSION_PLAN_OpenDesign_AmberDusk_Phases2_3_4_PhoneShellDiscoveryDashboard_2026-05-11.md` |
+| 1.2 | Amber Dusk Phases 5-8 Trust, Messaging, Work, Payments | ✅ Code complete; Step 8 docs synced; manual emulator visual QA gate open | Scoped phone-view Amber Dusk runtime surfaces; no backend/schema changes | `SESSION_PLAN_OpenDesign_AmberDusk_Phases5_6_7_8_PhoneTrustMessagingWorkPayments_2026-05-12.md` |
 | 1 | Core Widget Redesign | ✅ Completed | Redesign | `SESSION_PLAN_CoreWidgetRedesign_2026-04-07.md` |
 | 2+3+5 | App Shell + Auth + Cards | ✅ Completed | Redesign | `SESSION_PLAN_Phase2_AppShellAuthCards_2026-04-08.md` |
 | 4 | Home & Discovery | ✅ Completed | Redesign | `SESSION_PLAN_Phase4_HomeDiscovery_2026-04-08.md` |
@@ -173,7 +174,7 @@ Tests: 706 → 780 (+74). Coverage floor: 40%. Architecture guard had 6 checks i
 ## 11. Current Focus
 
 ### Current Focus
-1. **Amber Dusk visual gate** — run `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4_Step6.md` on the target iOS Simulator and update `.TODO/VisualQA_OpenDesign_AmberDusk_Phases2_3_4_iOSSimulator_2026-05-12/REPORT.md`.
-2. **Missing Open Design states** — Search, Categories, Saved, Favorites, loading, empty, error, create failure/loading/success, and dashboard role/detail variants still need exact Open Design or user screenshots before pixel-match claims.
+1. **Amber Dusk visual gates** — run `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4_Step6.md` and `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases5_6_7_8.md` on the target iOS Simulator before claiming final visual parity.
+2. **Missing Open Design states** — Search, Categories, Saved, Favorites, loading, empty, error, proposal detail, payment return/WebView, attachment error, notification modal, and auth/system edge states still need exact Open Design or user screenshots before pixel-match claims.
 3. **Amber Dusk activation/preview work** — optional broader activation must explicitly map staged tokens into active `AppTheme` before widgets depend on them.
 4. **Phase F: Ship Preparation** — Arabic/Kurdish translations, widget tests for critical views, remaining lint debt adoption, GitHub repo safeguards.

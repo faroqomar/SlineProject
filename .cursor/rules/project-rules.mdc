@@ -8,10 +8,11 @@ alwaysApply: true
 ## CRITICAL: Always Reference Documentation
 
 **Before making any changes, ALWAYS check these files:**
-- `GEMINI.md` - Project overview and conventions
+- `AGENTS.md` - Project overview, conventions, build commands, and repo-specific Codex instructions
 - `Sline_everything/DEVELOPER_GUIDE.md` - Feature documentation
 - `Sline_everything/SUPABASE_SETUP.md` - Database schema
 - `Sline_everything/STRUCTURE.md` - File organization
+- `Sline_everything/UI_SURFACE_INVENTORY.md` - Required for UI, navigation, route, popup, sheet, tab, redesign, or shared-widget work
 - `.cursor/PROJECT_CONTEXT.md` - Quick reference
 - `.cursor/rules/` - Specific pattern rules
 
@@ -21,7 +22,7 @@ alwaysApply: true
 
 This is a Flutter-based mobile application for a freelance marketplace called SLine. It connects clients with service providers, allowing them to post jobs, submit bids, and communicate in real-time. The backend is powered by Supabase, utilizing its database, authentication, and storage services.
 
-**Reference**: See `GEMINI.md` for complete project overview, building instructions, and development conventions.
+**Reference**: See `AGENTS.md` for complete project overview, building instructions, and development conventions.
 
 ## Architecture
 
@@ -107,7 +108,7 @@ This project uses specialized agents defined in `.cursor/Agents/`:
 - **@Executor** (`Agents/Executor.md`): Execute plans from `.TODO/`
   - *Trigger*: "@Executor", "execute plan", "start phase"
 
-**Reference**: See `GEMINI.md` for complete agent definitions and triggers.
+**Reference**: See `.cursor/Agents/` for complete agent definitions and triggers.
 
 ## Building and Running
 
@@ -130,19 +131,21 @@ This project uses specialized agents defined in `.cursor/Agents/`:
 - `flutter analyze` - Code analysis
 - `flutter test` - Run tests
 
-**Reference**: See `GEMINI.md` for complete building/running instructions.
+**Reference**: See `AGENTS.md` for complete building/running instructions.
 
 ## Documentation References
 
 Always reference these files when working on the project:
 
-- `GEMINI.md` - Project overview, agents, building instructions
+- `AGENTS.md` - Project overview, conventions, agents, building instructions
+- `.cursor/Agents/` - Agent definitions and triggers
 - `Sline_everything/DEVELOPER_GUIDE.md` - Complete feature documentation
 - `Sline_everything/SUPABASE_SETUP.md` - Database schema, RLS, triggers
 - `Sline_everything/STRUCTURE.md` - File organization guide
 - `Sline_everything/ARCHITECTURE_ANALYSIS.md` - Architecture decisions
 - `Sline_everything/CODE_REVIEW.md` - Code quality patterns
 - `Sline_everything/MVP_ROADMAP.md` - Feature status and roadmap
+- `Sline_everything/UI_SURFACE_INVENTORY.md` - Complete UI, popup, route, tab, and shared-widget inventory
 
 ## Anti-Patterns to Avoid
 

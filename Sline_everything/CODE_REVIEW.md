@@ -1,13 +1,29 @@
 # SLine Code Review & Improvement Report
 
-**Date**: 2026-05-12 (Updated)
+**Date**: 2026-05-13 (Updated)
 **Reviewed By**: CodeGuard + Architect + Sentinel Agents
 **Previous Score**: 9/10
 **Current Score**: 9.7/10
 
 > Historical review note: this document records review findings and fixes from earlier passes. Treat references to removed files or older structure as historical context; the current live structure is documented in `Sline_everything/STRUCTURE.md` and `Sline_everything/DEVELOPER_GUIDE.md`.
 
-## Current Guardrail Notes (2026-05-12)
+## Current Guardrail Notes (2026-05-13)
+
+### Amber Dusk Phases 5-8 Phone Surface Review Rule (2026-05-13)
+
+**Pattern**: Amber Dusk Phases 5-8 are scoped runtime view work for auth/system gates, chat/attachments/notifications, task/work/payment-adjacent flows, booking/payment/WebView, and wallet summary surfaces. They are not backend authority, Supabase schema, global `MaterialApp` theme activation, or wallet withdrawal activation work.
+
+**Rule**:
+1. Treat missing exact phone artboards as adaptation/token-normalization only. Open Design screenshots prove design intent, not rendered Flutter parity.
+2. Keep action authority in existing ViewModels, services, RPCs, Edge Functions, RLS, and payment services. Views may update tokens, semantics, disabled states, and safe copy only.
+3. Do not infer conversation direction or payment/work lifecycle state from unrelated fields. If the model contract does not exist, keep the control visual-only and test that valid data is not hidden.
+4. Signed URL generation must stay behind services/ViewModels or approved signed-media widgets. Widgets must not import Supabase storage types just to render attachments.
+5. Payment, WebView, and deep-link logs must use safe URL facts only: parse state, scheme kind, path kind, trust booleans, and query-key presence. Do not log raw callback URLs, hosts, paths, query values, gateway payloads, or private storage paths in view-layer logs.
+6. Wrapper tests around shared screens must use the same app theme/provider harness as production when the screen consumes `context.colorScheme`, `context.amberColors`, or theme extensions.
+7. Broad UI phases need a per-file fixture/provider/manual QA matrix. Green analyzer/tests do not close emulator visual parity.
+8. Realtime stream fixes must test both transient transport closes and non-transient errors. Transient Supabase Realtime closes should preserve cached UI and reconnect; hard errors should keep the existing user-facing error path.
+
+**Evidence**: Open Design Amber Dusk Phases 5-8 Step 6 fixed unsafe Messages direction filtering, attachment storage boundaries, Payment WebView URL logging, solid CTA contrast, coverage/matrix gaps, and wrapper-test theme setup. The 2026-05-13 notification runtime fix handled Realtime close codes `1002`/`1006` with cached-state reconnect behavior.
 
 ### Amber Dusk Phases 2-4 Phone Surface Review Rule (2026-05-12)
 
@@ -49,7 +65,7 @@
 
 **Evidence**: Open Design Amber Dusk Phase 1 (2026-05-11) activated buttons, fields, icon buttons, cards, bottom nav, tabs, status badges, skeletons, and signed-media placeholders through the shared-widget adapter while leaving global `MaterialApp` theme wiring and Supabase behavior unchanged.
 
-### SystemEvolution Merge Runs (2026-05-12)
+### SystemEvolution Merge Runs (2026-05-12 / 2026-05-13)
 
 **Pattern**: When the human explicitly requests a SystemEvolution merge, the report is written first, then only deduped, evidence-backed rules are applied to the owning `.cursor/Agents/*.md` files.
 
@@ -59,7 +75,7 @@
 3. Prefer narrow agent-owner edits over broad rewrites.
 4. Record the merged files and evidence index in `docs/LOG/SYSTEM_EVOLUTION_REPORT_<date>.md`.
 
-**Evidence**: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-11.md` records the token/provenance and Phase 1 visual-evidence merge. `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-12.md` records the Step 7 merge for scope amendments, no invented model contracts in views, custom gesture semantics, privacy-safe view logs, behavior-level review tests, and explicit visual QA status in Master Reports.
+**Evidence**: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-11.md` records the token/provenance and Phase 1 visual-evidence merge. `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-12.md` records the Step 7 merge for scope amendments, no invented model contracts in views, custom gesture semantics, privacy-safe view logs, behavior-level review tests, and explicit visual QA status in Master Reports. `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-13.md` records the Phase 5-8 merge for worker checkpoints, untrusted worker patches, lazy/injected ViewModel service bridges, wrapper theme harnesses, per-file emulator matrices, safe URL-facts logging, realtime transient reconnect handling, and stale guidance-path cleanup.
 
 ### Coverage Artifact Hygiene (2026-05-11)
 

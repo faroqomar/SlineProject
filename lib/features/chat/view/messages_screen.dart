@@ -15,7 +15,7 @@ import 'package:sline_app/features/chat/models/conversation_model.dart';
 import 'package:sline_app/features/chat/view/chat_screen.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 
-enum _MessageMode { responses, requests }
+enum _MessageMode { received, sent }
 
 const String _kFallbackUserName = 'Unknown user';
 const int _presenceOnlineThresholdSeconds = 60;
@@ -60,7 +60,7 @@ class _MessagesScreenState extends State<MessagesScreen>
   bool _showSearch = false;
 
   /// Visual inbox mode matching the Open Design segmented control.
-  _MessageMode _mode = _MessageMode.responses;
+  _MessageMode _mode = _MessageMode.received;
 
   // ── Stagger entrance animation ─────────────────────────────
   // Pattern: single controller + Interval-based per-element animations.
@@ -115,7 +115,7 @@ class _MessagesScreenState extends State<MessagesScreen>
   /// filtering to avoid excessive rebuilds during rapid typing.
   void _onSearchChanged(String value) {
     _searchDebounce?.cancel();
-    _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+    _searchDebounce = Timer(AppMotion.standard, () {
       if (!mounted) return; // FIX-8: Guard against unmounted setState
       setState(() => _searchQuery = value.trim().toLowerCase());
     });
@@ -123,8 +123,8 @@ class _MessagesScreenState extends State<MessagesScreen>
 
   /// Filters conversations by name or last message content.
   ///
-  /// The response/request mode is visual-only until the conversation model
-  /// exposes a direction field; using last-sender would hide valid threads.
+  /// Received/Sent is visual copy until the model exposes a stable direction
+  /// field; filtering by latest sender would hide active conversations.
   List<Conversation> _filteredConversations(List<Conversation> conversations) {
     if (_searchQuery.isEmpty) return conversations;
     return conversations.where((convo) {
@@ -197,10 +197,11 @@ class _MessagesScreenState extends State<MessagesScreen>
     const spacing = AmberDuskTokens.spacing;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AmberDuskColors.transparent,
       body: Consumer<ChatViewModel>(
         builder: (context, controller, child) {
           final unreadCount = controller.conversations.where(_isUnread).length;
+          final filtered = _filteredConversations(controller.conversations);
 
           // Trigger stagger on first content arrival
           if (!controller.isLoadingConversations &&
@@ -365,9 +366,7 @@ class _MessagesScreenState extends State<MessagesScreen>
                       controller.conversations.isNotEmpty)
                     SliverToBoxAdapter(
                       child: _buildOnlineRow(
-                        _filteredConversations(
-                          controller.conversations,
-                        ).where(_isOnlineConversation).toList(),
+                        filtered.where(_isOnlineConversation).toList(),
                       ),
                     ),
 
@@ -378,12 +377,10 @@ class _MessagesScreenState extends State<MessagesScreen>
                     _buildEmptyState()
                   else ...[
                     // Apply search filter to conversations
-                    if (_filteredConversations(
-                      controller.conversations,
-                    ).isEmpty)
+                    if (filtered.isEmpty)
                       _buildNoSearchResults()
                     else
-                      _buildConversationList(controller),
+                      _buildConversationList(controller, filtered),
                   ],
                 ],
               ),
@@ -409,13 +406,13 @@ class _MessagesScreenState extends State<MessagesScreen>
       child: Row(
         children: [
           _buildModeButton(
-            label: 'Responses',
-            mode: _MessageMode.responses,
+            label: 'Received',
+            mode: _MessageMode.received,
             textStyle: tabTheme.labelStyle,
           ),
           _buildModeButton(
-            label: 'Requests',
-            mode: _MessageMode.requests,
+            label: 'Sent',
+            mode: _MessageMode.sent,
             textStyle: tabTheme.labelStyle,
           ),
         ],
@@ -706,8 +703,10 @@ class _MessagesScreenState extends State<MessagesScreen>
   /// Uses filtered conversations when a search query is active. Tiles render
   /// with transparent backgrounds and subtle dividers between them for a
   /// clean, modern inbox look.
-  Widget _buildConversationList(ChatViewModel controller) {
-    final conversations = _filteredConversations(controller.conversations);
+  Widget _buildConversationList(
+    ChatViewModel controller,
+    List<Conversation> conversations,
+  ) {
     const amber = AmberDuskTokens.colors;
     return SliverPadding(
       padding: const EdgeInsets.fromLTRB(
@@ -785,7 +784,13 @@ class _MessagesScreenState extends State<MessagesScreen>
               try {
                 await controller.deleteConversation(convo.id);
                 return true;
-              } on Exception catch (_) {
+              } on Exception catch (e, st) {
+                AppLogger.w(
+                  'MessagesScreen: deleteConversation failed; refreshing conversations',
+                  tag: 'Chat',
+                  error: e,
+                  json: {'stack_trace': st.toString()},
+                );
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -848,10 +853,7 @@ class _MessagesScreenState extends State<MessagesScreen>
     Conversation convo,
     ChatViewModel controller,
   ) async {
-    AppLogger.i(
-      '[MessagesScreen] opening conversation: ${convo.id}',
-      tag: 'Chat',
-    );
+    AppLogger.i('MessagesScreen: opening conversation', tag: 'Chat');
     AppInteractionStates.hapticTap();
     controller.activeConversation = convo;
     // Navigate immediately — ChatScreen.initState() fetches messages itself.
@@ -869,7 +871,7 @@ class _MessagesScreenState extends State<MessagesScreen>
     controller.markConversationReadLocally(convo.id);
     unawaited(controller.fetchConversations());
     AppLogger.d(
-      '[MessagesScreen] returned from chat, refreshing conversations',
+      'MessagesScreen: returned from chat, refreshing conversations',
       tag: 'Chat',
     );
   }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 
@@ -16,6 +16,9 @@ class PaymentOrderSummaryCard extends StatelessWidget {
     this.packageTier,
     this.deliveryDays,
     this.estimatedDueAt,
+    this.colors = AmberDuskTokens.colors,
+    this.typography = AmberDuskTokens.typography,
+    this.spacing = AmberDuskTokens.spacing,
   });
 
   final String taskTitle;
@@ -25,21 +28,30 @@ class PaymentOrderSummaryCard extends StatelessWidget {
   final int? deliveryDays;
   final DateTime? estimatedDueAt;
 
+  /// Color tokens used by the summary card; defaults preserve existing callers.
+  final AmberDuskColorTokens colors;
+
+  /// Typography tokens used by the summary card; defaults preserve existing callers.
+  final AmberDuskTypographyTokens typography;
+
+  /// Spacing tokens used by the summary card; defaults preserve existing callers.
+  final AmberDuskSpacingTokens spacing;
+
   @override
   Widget build(BuildContext context) {
+    final amber = colors;
     return Container(
       padding: const EdgeInsets.all(AppDimens.p16),
       decoration: BoxDecoration(
-        color: cs.cardBackground,
-        borderRadius: BorderRadius.circular(AppDimens.r16),
-        border: Border.all(color: cs.text.withValues(alpha: 0.08)),
+        color: amber.surface,
+        borderRadius: BorderRadius.circular(spacing.moduleRadius),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Order Summary',
-            style: AppTypography.h4.copyWith(color: cs.text),
+            style: typography.sectionTitle.copyWith(color: amber.text),
           ),
           const SizedBox(height: AppDimens.p12),
           _summaryRow('Service', taskTitle),
@@ -55,16 +67,24 @@ class PaymentOrderSummaryCard extends StatelessWidget {
             const SizedBox(height: AppDimens.p8),
             _summaryRow('Due', formatUtcToLocal(estimatedDueAt!)),
           ],
-          const Divider(height: 24),
+          Divider(height: AppDimens.p24, color: amber.heroDivider),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Total', style: AppTypography.h3.copyWith(color: cs.text)),
               Text(
-                PriceFormatter.formatPrice(price),
-                style: AppTypography.h3.copyWith(
-                  color: AppColors.teal,
-                  fontWeight: FontWeight.bold,
+                'Total',
+                style: typography.body.copyWith(
+                  color: amber.textSubtle,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Flexible(
+                child: Text(
+                  PriceFormatter.formatPrice(price),
+                  style: typography.moneyMedium.copyWith(color: amber.primary),
+                  textAlign: TextAlign.right,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -75,18 +95,17 @@ class PaymentOrderSummaryCard extends StatelessWidget {
   }
 
   Widget _summaryRow(String label, String value) {
+    final amber = colors;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: AppTypography.bodyMedium.copyWith(color: cs.textSecondary),
-        ),
+        Text(label, style: typography.bodySmall.copyWith(color: amber.muted)),
+        const SizedBox(width: AppDimens.p16),
         Flexible(
           child: Text(
             value,
-            style: AppTypography.bodyMedium.copyWith(
-              color: cs.text,
+            style: typography.bodySmall.copyWith(
+              color: amber.text,
               fontWeight: FontWeight.w500,
             ),
             textAlign: TextAlign.right,

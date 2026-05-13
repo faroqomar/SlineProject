@@ -67,6 +67,163 @@ class AppLocalizationsEn extends AppLocalizations {
   String get seniorityHint => 'e.g., Senior';
 
   @override
+  String get searchTenders => 'Search tenders…';
+
+  @override
+  String get bookedService => 'Booked service';
+
+  @override
+  String get bookingDetails => 'Booking Details';
+
+  @override
+  String get bookingService => 'Service';
+
+  @override
+  String bookedOn(String date) {
+    return 'Booked on $date';
+  }
+
+  @override
+  String get bookingClient => 'Client';
+
+  @override
+  String get bookingProvider => 'Provider';
+
+  @override
+  String get bookingRequester => 'Booking requester';
+
+  @override
+  String get assignedServiceProvider => 'Assigned service provider';
+
+  @override
+  String get bookingTimeline => 'Timeline';
+
+  @override
+  String get bookingTimelineBooked => 'Booked';
+
+  @override
+  String get bookingTimelineDue => 'Due';
+
+  @override
+  String get noDeadline => 'No deadline';
+
+  @override
+  String get bookingTimelineDelivery => 'Delivery';
+
+  @override
+  String bookingDeliveryDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+      zero: '0 days',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get legacySlotBasedBooking => 'Legacy slot-based booking';
+
+  @override
+  String get reject => 'Reject';
+
+  @override
+  String get awaitingPayment => 'Awaiting Payment';
+
+  @override
+  String get cancelBooking => 'Cancel Booking';
+
+  @override
+  String get escrowFunds => 'Escrow Funds';
+
+  @override
+  String get issueRefund => 'Issue Refund';
+
+  @override
+  String get decline => 'Decline';
+
+  @override
+  String get acceptJob => 'Accept Job';
+
+  @override
+  String get markDelivered => 'Mark Delivered';
+
+  @override
+  String get bookingCannotDisputeMissingTask =>
+      'This booking cannot be disputed because task data is missing.';
+
+  @override
+  String get describeBookingProblem => 'Describe the problem with this booking';
+
+  @override
+  String get disputeSubmitted => 'Dispute submitted.';
+
+  @override
+  String get disputeFailed => 'Dispute failed.';
+
+  @override
+  String get bookingStatusPendingConfirmation => 'Pending Confirmation';
+
+  @override
+  String get bookingStatusConfirmed => 'Confirmed';
+
+  @override
+  String get bookingStatusCompleted => 'Completed';
+
+  @override
+  String get bookingStatusCanceled => 'Canceled';
+
+  @override
+  String get bookingStatusNoShow => 'No Show';
+
+  @override
+  String get bookingStatusInProgress => 'In Progress';
+
+  @override
+  String get bookingStatusDeclined => 'Declined';
+
+  @override
+  String get bookingStatusActive => 'Active';
+
+  @override
+  String get bookingStatusRequestPending => 'Request Pending';
+
+  @override
+  String get bookingStatusDeliveredReview => 'Delivered (Review)';
+
+  @override
+  String get bookingStatusRefunded => 'Refunded';
+
+  @override
+  String get bookingStatusExpired => 'Expired';
+
+  @override
+  String get bookingStatusDisputedUnderReview => 'Disputed (Under Review)';
+
+  @override
+  String get statusUpdated => 'Status updated';
+
+  @override
+  String get statusUpdateFailed => 'Failed to update status';
+
+  @override
+  String get reportIssue => 'Report Issue';
+
+  @override
+  String get workFrozenInDispute => 'Work frozen — in dispute.';
+
+  @override
+  String get disputeUnderReviewReleaseDisabled =>
+      'Dispute under review. Approve and release disabled.';
+
+  @override
+  String get checking => 'Checking…';
+
+  @override
+  String get approveReleaseFunds => 'Approve & Release Funds';
+
+  @override
   String get actionLogin => 'Log In';
 
   @override

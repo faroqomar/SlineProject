@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:sline_app/core/config/payment_runtime_config.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/services/payment_pending_store.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
@@ -51,10 +50,9 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
       'Resolving payment return',
       tag: 'Payment',
       json: <String, dynamic>{
-        'uri': Uri.base.toString(),
         'has_initial_args': widget.initialArgs != null,
-        'pending_booking_id': pendingContext?.bookingId,
-        'pending_correlation_id': pendingContext?.correlationId,
+        'has_pending_booking': pendingContext?.bookingId.isNotEmpty ?? false,
+        'has_pending_correlation': pendingContext?.correlationId != null,
       },
     );
 
@@ -62,7 +60,7 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
       AppLogger.w(
         'Payment return rejected: invalid callback payload',
         tag: 'Payment',
-        error: Uri.base.toString(),
+        error: 'INVALID_CALLBACK_PAYLOAD',
       );
       _setTerminalState(
         message: 'The payment callback is invalid.',
@@ -76,7 +74,7 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
       AppLogger.w(
         'Payment return rejected: missing booking reference',
         tag: 'Payment',
-        error: paymentReturn.rawUri.toString(),
+        error: 'MISSING_BOOKING_REFERENCE',
       );
       _setTerminalState(
         message: 'The payment callback is missing the booking reference.',
@@ -94,7 +92,7 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
           tag: 'Payment',
           json: <String, dynamic>{
             'callback_host': callbackHost,
-            'expected_hosts': expectedHosts.toList(),
+            'expected_host_count': expectedHosts.length,
           },
         );
         _setTerminalState(
@@ -111,8 +109,8 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
           'Payment return rejected: booking mismatch',
           tag: 'Payment',
           json: <String, dynamic>{
-            'callback_booking_id': paymentReturn.bookingId,
-            'pending_booking_id': pendingContext.bookingId,
+            'has_callback_booking': paymentReturn.bookingId != null,
+            'has_pending_booking': pendingContext.bookingId.isNotEmpty,
           },
         );
         _setTerminalState(
@@ -129,8 +127,8 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
           'Payment return rejected: correlation mismatch',
           tag: 'Payment',
           json: <String, dynamic>{
-            'callback_correlation_id': paymentReturn.correlationId,
-            'pending_correlation_id': pendingContext.correlationId,
+            'has_callback_correlation': paymentReturn.correlationId != null,
+            'has_pending_correlation': pendingContext.correlationId != null,
           },
         );
         _setTerminalState(
@@ -147,7 +145,7 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
         'Payment return reported failure',
         tag: 'Payment',
         json: <String, dynamic>{
-          'booking_id': bookingId,
+          'has_booking': bookingId.isNotEmpty,
           'status': paymentReturn.normalizedStatus,
         },
       );
@@ -167,9 +165,9 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
       'Payment return accepted, starting recovery',
       tag: 'Payment',
       json: <String, dynamic>{
-        'booking_id': bookingId,
+        'has_booking': bookingId.isNotEmpty,
         'status': paymentReturn.normalizedStatus,
-        'correlation_id': paymentReturn.correlationId,
+        'has_correlation': paymentReturn.correlationId != null,
       },
     );
     final recovery = await context
@@ -184,7 +182,7 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
         'Payment recovery succeeded',
         tag: 'Payment',
         json: <String, dynamic>{
-          'booking_id': bookingId,
+          'has_booking': bookingId.isNotEmpty,
           'recovery_result': recovery.recoveryResult,
           'payment_status': recovery.paymentStatus,
         },
@@ -203,7 +201,7 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
       tag: 'Payment',
       error: recovery.error ?? 'BOOKING_PAYMENT_NOT_HELD',
       json: <String, dynamic>{
-        'booking_id': bookingId,
+        'has_booking': bookingId.isNotEmpty,
         'recovery_result': recovery.recoveryResult,
         'payment_status': recovery.paymentStatus,
       },
@@ -273,7 +271,9 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
                         Icon(
                           _isSuccess ? Icons.check_circle : Icons.info_outline,
                           size: 48,
-                          color: _isSuccess ? AppColors.teal : AppColors.gold,
+                          color: _isSuccess
+                              ? colorScheme.success
+                              : colorScheme.warning,
                         ),
                         const SizedBox(height: AppDimens.p16),
                         Text(

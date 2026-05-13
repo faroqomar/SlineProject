@@ -6,7 +6,8 @@ Quick reference guide for Cursor AI to understand the SLine Flutter app architec
 
 ### Documentation Files
 
-- **`GEMINI.md`** - Project overview, agent definitions, building/running instructions, development conventions
+- **`AGENTS.md`** - Project overview, repo-specific instructions, building/running commands, and development conventions
+- **`.cursor/Agents/`** - Agent definitions, triggers, and workflow responsibilities
 - **`Sline_everything/DEVELOPER_GUIDE.md`** - Complete feature documentation with MVVM examples
 - **`Sline_everything/SUPABASE_SETUP.md`** - Database schema, RLS policies, triggers, storage buckets
 - **`Sline_everything/STRUCTURE.md`** - File organization and folder structure guide
@@ -14,6 +15,7 @@ Quick reference guide for Cursor AI to understand the SLine Flutter app architec
 - **`Sline_everything/CODE_REVIEW.md`** - Code quality patterns, N+1 query fixes, best practices
 - **`Sline_everything/MVP_ROADMAP.md`** - Feature status and development roadmap
 - **`Sline_everything/Sline_Log.md`** - Version history and changelog
+- **`Sline_everything/UI_SURFACE_INVENTORY.md`** - Complete inventory of screens, routes, popups, sheets, tabs, navigation surfaces, and reusable UI widgets
 
 ### Core Code Locations
 
@@ -47,7 +49,7 @@ Agents are defined in `.cursor/Agents/` and can be invoked using triggers:
 | **@DataMigration** | `Agents/DataMigration.md` | "@DataMigration", "migration", "backfill" | Schema migration, compatibility |
 | **@ThreatModeler** | `Agents/ThreatModeler.md` | "@ThreatModeler", "threat model" | Security design, abuse cases |
 
-**Reference**: See `GEMINI.md` for complete agent definitions.
+**Reference**: See `.cursor/Agents/` for complete agent definitions.
 
 ## Architecture Overview
 
@@ -90,7 +92,8 @@ features/[feature_name]/
 4. **ViewModel**: Create ViewModel in `lib/features/[feature]/viewmodels/`
 5. **View**: Create UI in `lib/features/[feature]/view/`
 6. **Provider**: Register in `lib/main.dart`
-7. **Documentation**: Update `Sline_everything/DEVELOPER_GUIDE.md`
+7. **UI Inventory**: If a screen, route, sheet, dialog, popup menu, tab, or shared widget changed, update `Sline_everything/UI_SURFACE_INVENTORY.md`
+8. **Documentation**: Update `Sline_everything/DEVELOPER_GUIDE.md`
 
 ### Refactoring Checklist
 

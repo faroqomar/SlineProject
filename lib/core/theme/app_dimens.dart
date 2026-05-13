@@ -63,6 +63,11 @@ class AppDimens {
   static const double emptyStateIconContainer = p80;
   static const double emptyStateIconSize = p48;
 
+  // Update-required gates reuse the empty-state visual scale but keep a
+  // dedicated semantic name so system screens are not coupled to empty states.
+  static const double updateRequiredIconContainer = p80;
+  static const double updateRequiredIconSize = p48;
+
   // Favorite card avatar and actions keep these values centralized.
   static const double avatarMedium = 44.0;
   static const double avatarRadius = 22.0;

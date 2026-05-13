@@ -74,7 +74,10 @@ class _NotificationBadgeButtonState extends State<NotificationBadgeButton>
             weight: 50,
           ),
         ]).animate(
-          CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+          CurvedAnimation(
+            parent: _pulseController,
+            curve: AppMotion.curveSymmetric,
+          ),
         );
   }
 
@@ -106,6 +109,10 @@ class _NotificationBadgeButtonState extends State<NotificationBadgeButton>
       builder: (context, vm, child) {
         final count = vm.unreadCount;
         final colorScheme = context.colorScheme;
+        final badgeBackground = colorScheme.danger;
+        final badgeForeground = badgeBackground.computeLuminance() > 0.5
+            ? Colors.black
+            : Colors.white;
 
         // Only schedule the post-frame callback when the count has actually
         // changed — avoids spurious animation calls on unrelated rebuilds.
@@ -132,8 +139,7 @@ class _NotificationBadgeButtonState extends State<NotificationBadgeButton>
               final selected = await NotificationsModal.show(context);
               if (selected != null && context.mounted) {
                 AppLogger.i(
-                  'notification_tap entityType=${selected.relatedEntityType} '
-                  'id=${selected.relatedEntityId}',
+                  'NotificationBadgeButton: notification selected',
                   tag: 'Notifications',
                 );
                 await context.read<DeepLinkService>().handleNotification(
@@ -171,7 +177,7 @@ class _NotificationBadgeButtonState extends State<NotificationBadgeButton>
                             padding: const EdgeInsets.all(AppDimens.p4),
                             decoration: BoxDecoration(
                               // Semantic danger replaces hardcoded AppColors.lightRed
-                              color: colorScheme.danger,
+                              color: badgeBackground,
                               shape: BoxShape.circle,
                             ),
                             constraints: const BoxConstraints(
@@ -181,7 +187,7 @@ class _NotificationBadgeButtonState extends State<NotificationBadgeButton>
                             child: Text(
                               count > 9 ? '9+' : count.toString(),
                               style: AppTypography.micro.copyWith(
-                                color: Colors.white,
+                                color: badgeForeground,
                                 fontWeight: FontWeight.bold,
                               ),
                               textAlign: TextAlign.center,

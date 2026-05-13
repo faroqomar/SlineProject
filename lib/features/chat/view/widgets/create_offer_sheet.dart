@@ -7,6 +7,7 @@ import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_states.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
 
@@ -338,7 +339,7 @@ void showCreateOfferSheet(
 }) {
   showModalBottomSheet(
     context: context,
-    backgroundColor: Colors.transparent,
+    backgroundColor: AmberDuskColors.transparent,
     isScrollControlled: true,
     builder: (context) => CreateOfferSheet(onSubmit: onSubmit),
   );

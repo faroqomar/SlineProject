@@ -1,6 +1,6 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.28.0 (Amber Dusk Phases 2-4 phone shell, discovery, dashboard review, and 2026-05-12 SystemEvolution/DocsKeeper sync)
+**Version**: 2.29.0 (Amber Dusk Phases 5-8 trust, messaging, work, payment, wallet docs sync, and notification realtime hardening)
 **Last Updated**: 2026-05-12
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
@@ -175,6 +175,7 @@ try {
 - **Service/Repo**: put all Supabase calls here; never from UI.
 - **ViewModel**: ChangeNotifier with loading/error state; expose typed methods for UI.
 - **UI**: Material 3, local form state, mounted checks after awaits.
+- **UI inventory**: update `Sline_everything/UI_SURFACE_INVENTORY.md` when adding or changing screens, routes, tabs, sheets, dialogs, popup menus, deep-link UI, or reusable widgets.
 - **Docs**: create `Sline_everything/DEVELOPER_GUIDE/New Feature.md` using the existing template (overview → DB mapping → inventory → ERD → snippets → errors → tests).
 
 ## 10. Testing & Quality
@@ -366,6 +367,66 @@ References:
 - Session Log: `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phases2_3_4_PhoneShellDiscoveryDashboard_2026-05-11.md`
 - System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-12.md`
 - Docs Sync: `.TODO/Archive/OpenDesign_AmberDusk_Phases2_3_4_2026-05-12/DOCS_SYNC_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4.md`
+- Supabase objects changed: none
+
+### Amber Dusk Phases 5-8 Trust, Messaging, Work, Payments, And Wallet (2026-05-13)
+
+Amber Dusk Phases 5-8 extend the scoped Open Design phone treatment across
+auth/system gates, chat and notifications, task/work/payment-adjacent flows,
+booking/payment screens, and wallet summary surfaces. This remains a view-layer
+and widget/test/docs phase: it does not activate Amber Dusk globally through
+`MaterialApp`, does not change Supabase migrations/functions/RLS, and does not
+create new wallet withdrawal or payment authority.
+
+Implementation notes:
+- Phase 5 auth/system gates cover login, signup, password recovery/reset,
+  restricted account, maintenance, and update-required screens. Support and
+  store actions are real actions, not log-only stubs, and user-facing failures
+  stay generic.
+- Phase 6 keeps Messages `Received`/`Sent` copy as visual copy only until a
+  stable conversation-direction contract exists. It also keeps attachment
+  signed URL resolution behind `ChatViewModel` and chat attachment services.
+- Phase 7 task, tender, request-award, work, and management surfaces use token
+  and accessibility cleanups while preserving ViewModel/service lifecycle
+  authority.
+- Phase 8 booking, payment, WebView, return, method, order-summary, and wallet
+  surfaces use Amber Dusk tokens and safe state copy. Wallet withdraw/top-up
+  remain disabled/upcoming surfaces unless a separate product/backend/security
+  plan activates them.
+- Payment/WebView/deep-link logs must expose only safe URL facts such as parse
+  state, scheme kind, path kind, trust booleans, and query-key presence. Do not
+  log raw callback URLs, hosts, paths, query values, payment gateway payloads, or
+  private storage paths from view-layer code.
+- `NotificationViewModel` now treats Supabase Realtime websocket close codes
+  `1002` and `1006` as transient transport failures: it preserves cached
+  notifications, cancels stale subscriptions, and reconnects with testable
+  backoff. Non-transient stream errors still use the existing user-facing error
+  path.
+- Wrapper/entry widget tests for shared screens must use the same app theme or
+  established app pump harness when the production screen consumes
+  `context.colorScheme`, `context.amberColors`, or theme extensions.
+
+Validation recorded for this block:
+- `dart format` on touched Dart files: passed.
+- `flutter analyze --no-fatal-infos`: passed.
+- focused touched-surface widget/unit tests: passed.
+- `flutter test --coverage`: passed and parsed at 49.77%.
+- full `flutter test`: passed.
+- `git diff --check`: passed.
+
+Runtime visual QA remains open. The Step 6 Master Report and emulator checklist
+cover every touched Dart source file, test fixture, docs artifact, and exported
+Open Design screenshot; final parity requires an emulator/device pass.
+
+References:
+- Plan: `.TODO/PLAN_OpenDesign_AmberDusk_Phases5_6_7_8_PhoneTrustMessagingWorkPayments_2026-05-12.md`
+- Plan Critique: `.TODO/PLAN_CRITIQUE_2026-05-12_OpenDesign_AmberDusk_Phases5_6_7_8_PhoneTrustMessagingWorkPayments.md`
+- Screenshot manifest: `.TODO/OpenDesign_AmberDusk_Phases5_6_7_8_OpenDesignScreenshots_2026-05-12/README.md`
+- Master Report: `.TODO/Archive/OpenDesign_AmberDusk_Phases5_6_7_8_2026-05-13/MASTER_REPORT_2026-05-12_OpenDesign_AmberDusk_Phases5_6_7_8_Step6.md`
+- Emulator Checklist: `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases5_6_7_8.md`
+- Session Log: `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phases5_6_7_8_PhoneTrustMessagingWorkPayments_2026-05-12.md`
+- System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-13.md`
+- Docs Sync: `.TODO/Archive/OpenDesign_AmberDusk_Phases5_6_7_8_2026-05-13/DOCS_SYNC_2026-05-13_OpenDesign_AmberDusk_Phases5_6_7_8.md`
 - Supabase objects changed: none
 
 ### 10.1 CI/CD Pipeline
@@ -564,6 +625,7 @@ Flutter's built-in `gen-l10n` pipeline is wired up and ready for translation.
 - Saved: `DEVELOPER_GUIDE/Saved Feature.md`
 - Portfolio: `DEVELOPER_GUIDE/Portfolio Feature.md`
 - Categories: `DEVELOPER_GUIDE/Categories Feature.md`
+- UI Surface Inventory: `UI_SURFACE_INVENTORY.md`
 - Inventory: `DEVELOPER_GUIDE/Inventory Feature.md` (Planned)
 - Order Management: `DEVELOPER_GUIDE/Order_Management_Feature.md`
 - Proposals: `DEVELOPER_GUIDE/Proposals_Feature.md`

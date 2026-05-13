@@ -3,10 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/core/utils/unified_cta_resolver.dart';
@@ -19,26 +20,45 @@ import 'package:sline_app/features/chat/view/chat_screen.dart';
 import 'package:sline_app/features/management/models/work_log_scope.dart';
 import 'package:sline_app/features/management/view/widgets/order_management_section.dart';
 import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
+import 'package:sline_app/l10n/app_localizations.dart';
 
+/// Booking detail screen for lifecycle, payment, chat, and safety actions.
 class BookingDetailsScreen extends StatelessWidget {
+  /// Booking shown by this detail route.
   final BookingModel booking;
 
+  /// Creates a booking detail route for an existing booking model.
   const BookingDetailsScreen({super.key, required this.booking});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+    const amber = AmberDuskTokens.colors;
     final isProvider =
         context.read<BookingViewModel>().currentUserId == booking.providerId;
+    final taskTitleValue = booking.taskData?['title'];
+    final taskTitle = taskTitleValue is String
+        ? taskTitleValue
+        : l10n.bookedService;
 
     return Scaffold(
-      backgroundColor: colorScheme.phoneBackground,
+      backgroundColor: amber.page,
       appBar: AppBar(
-        title: const Text('Booking Details'),
-        backgroundColor: Colors.transparent,
+        title: Text(
+          l10n.bookingDetails,
+          style: AmberDuskTokens.typography.sectionTitle.copyWith(
+            color: amber.text,
+          ),
+        ),
+        backgroundColor: amber.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: colorScheme.text, size: 20),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: amber.text,
+            size: AppDimens.iconSizeSmall,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -89,20 +109,20 @@ class BookingDetailsScreen extends StatelessWidget {
             _BookingDisputeBanner(bookingId: booking.id),
 
             // Service Card (Task Info)
-            _buildSectionHeader(context, 'Service'),
+            _buildSectionHeader(context, l10n.bookingService),
             const SizedBox(height: AppDimens.p12),
             AppCardContainer(
               padding: const EdgeInsets.all(AppDimens.p16),
               child: Row(
                 children: [
                   Container(
-                    width: 60,
-                    height: 60,
+                    width: AppLayout.thumbnailSmall,
+                    height: AppLayout.thumbnailSmall,
                     decoration: BoxDecoration(
                       color: colorScheme.cardBackground,
                       borderRadius: BorderRadius.circular(AppDimens.r12),
                     ),
-                    child: Icon(Icons.work_outline, color: AppColors.teal),
+                    child: Icon(Icons.work_outline, color: amber.primary),
                   ),
                   const SizedBox(width: AppDimens.p16),
                   Expanded(
@@ -110,14 +130,16 @@ class BookingDetailsScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Task #${booking.taskId?.substring(0, 8) ?? "N/A"}',
+                          taskTitle,
                           style: AppTypography.h6.copyWith(
                             color: colorScheme.text,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: AppDimens.p4),
                         Text(
-                          'Booked on ${formatUtcToLocal(booking.createdAtUtc)}',
+                          l10n.bookedOn(formatUtcToLocal(booking.createdAtUtc)),
                           style: AppTypography.bodySmall.copyWith(
                             color: colorScheme.textSecondary,
                           ),
@@ -131,7 +153,10 @@ class BookingDetailsScreen extends StatelessWidget {
             const SizedBox(height: AppDimens.p24),
 
             // Counterparty Info
-            _buildSectionHeader(context, isProvider ? 'Client' : 'Provider'),
+            _buildSectionHeader(
+              context,
+              isProvider ? l10n.bookingClient : l10n.bookingProvider,
+            ),
             const SizedBox(height: AppDimens.p12),
             AppCardContainer(
               padding: const EdgeInsets.all(AppDimens.p16),
@@ -148,7 +173,9 @@ class BookingDetailsScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          isProvider ? 'Client' : 'Provider',
+                          isProvider
+                              ? l10n.bookingClient
+                              : l10n.bookingProvider,
                           style: AppTypography.bodyLarge.copyWith(
                             fontWeight: FontWeight.bold,
                             color: colorScheme.text,
@@ -156,8 +183,8 @@ class BookingDetailsScreen extends StatelessWidget {
                         ),
                         Text(
                           isProvider
-                              ? 'ID: ${booking.clientId.substring(0, 8)}'
-                              : 'ID: ${booking.providerId.substring(0, 8)}',
+                              ? l10n.bookingRequester
+                              : l10n.assignedServiceProvider,
                           style: AppTypography.caption.copyWith(
                             color: colorScheme.textSecondary,
                           ),
@@ -166,10 +193,7 @@ class BookingDetailsScreen extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    icon: Icon(
-                      Icons.chat_bubble_outline,
-                      color: AppColors.teal,
-                    ),
+                    icon: Icon(Icons.chat_bubble_outline, color: amber.primary),
                     onPressed: () => _handleMessage(context, booking),
                   ),
                 ],
@@ -178,7 +202,7 @@ class BookingDetailsScreen extends StatelessWidget {
             const SizedBox(height: AppDimens.p24),
 
             // Timeline
-            _buildSectionHeader(context, 'Timeline'),
+            _buildSectionHeader(context, l10n.bookingTimeline),
             const SizedBox(height: AppDimens.p12),
             AppCardContainer(
               padding: const EdgeInsets.all(AppDimens.p16),
@@ -187,23 +211,23 @@ class BookingDetailsScreen extends StatelessWidget {
                 children: [
                   _timelineRow(
                     context,
-                    'Booked',
+                    l10n.bookingTimelineBooked,
                     formatUtcToLocal(booking.createdAtUtc),
                   ),
                   const SizedBox(height: AppDimens.p8),
                   _timelineRow(
                     context,
-                    'Due',
+                    l10n.bookingTimelineDue,
                     booking.dueAtUtc != null
                         ? formatUtcToLocal(booking.dueAtUtc!)
-                        : 'No deadline',
+                        : l10n.noDeadline,
                   ),
                   if (booking.deliveryDays != null) ...[
                     const SizedBox(height: AppDimens.p8),
                     _timelineRow(
                       context,
-                      'Delivery',
-                      '${booking.deliveryDays} days',
+                      l10n.bookingTimelineDelivery,
+                      l10n.bookingDeliveryDays(booking.deliveryDays!),
                     ),
                   ],
                   if (booking.slotId != null) ...[
@@ -214,16 +238,16 @@ class BookingDetailsScreen extends StatelessWidget {
                         vertical: AppDimens.p8,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.gold.withValues(alpha: 0.12),
+                        color: amber.warningMuted,
                         borderRadius: BorderRadius.circular(AppDimens.r8),
                         border: Border.all(
-                          color: AppColors.gold.withValues(alpha: 0.3),
+                          color: amber.warning.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Text(
-                        'Legacy slot-based booking',
+                        l10n.legacySlotBasedBooking,
                         style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.gold,
+                          color: amber.warning,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -252,7 +276,7 @@ class BookingDetailsScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: AppButton(
-                      text: 'Reject',
+                      text: l10n.reject,
                       isPrimary: false,
                       onPressed: () => _updateStatus(
                         context,
@@ -262,15 +286,35 @@ class BookingDetailsScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: AppDimens.p16),
-                  const Expanded(
-                    child: AppButton(text: 'Awaiting Payment', onPressed: null),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimens.p12,
+                        vertical: AppDimens.p14,
+                      ),
+                      decoration: BoxDecoration(
+                        color: amber.warningMuted,
+                        borderRadius: BorderRadius.circular(AppDimens.r12),
+                        border: Border.all(
+                          color: amber.warning.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Text(
+                        l10n.awaitingPayment,
+                        style: AppTypography.bodySmall.copyWith(
+                          color: amber.warning,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                   ),
                 ],
               ),
 
             if (!isProvider && booking.status == BookingStatus.pending)
               AppButton(
-                text: 'Cancel Booking',
+                text: l10n.cancelBooking,
                 isPrimary: false,
                 onPressed: () =>
                     _updateStatus(context, booking, BookingStatus.canceled),
@@ -291,7 +335,7 @@ class BookingDetailsScreen extends StatelessWidget {
                 if (ctaMeta.allowedActions.contains('escrow_hold')) {
                   dynamicActions.add(
                     AppButton(
-                      text: 'Escrow Funds',
+                      text: l10n.escrowFunds,
                       onPressed: () => ctx
                           .read<BookingViewModel>()
                           .escrowHoldBooking(booking.id),
@@ -315,7 +359,7 @@ class BookingDetailsScreen extends StatelessWidget {
                 if (ctaMeta.allowedActions.contains('refund')) {
                   dynamicActions.add(
                     AppButton(
-                      text: 'Issue Refund',
+                      text: l10n.issueRefund,
                       isPrimary: false,
                       onPressed: () {
                         // The refund logic can be wired here if the provider needs an explicit refund button
@@ -340,7 +384,7 @@ class BookingDetailsScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: AppButton(
-                        text: 'Decline',
+                        text: l10n.decline,
                         isPrimary: false,
                         onPressed: () => context
                             .read<BookingViewModel>()
@@ -350,7 +394,7 @@ class BookingDetailsScreen extends StatelessWidget {
                     const SizedBox(width: AppDimens.p16),
                     Expanded(
                       child: AppButton(
-                        text: 'Accept Job',
+                        text: l10n.acceptJob,
                         onPressed: () => context
                             .read<BookingViewModel>()
                             .acceptBooking(booking.id),
@@ -362,7 +406,7 @@ class BookingDetailsScreen extends StatelessWidget {
               // Mark Delivered
               if (booking.status == BookingStatus.active) ...[
                 AppButton(
-                  text: 'Mark Delivered',
+                  text: l10n.markDelivered,
                   onPressed: () => context
                       .read<BookingViewModel>()
                       .markDelivered(booking.id),
@@ -424,14 +468,11 @@ class BookingDetailsScreen extends StatelessWidget {
     BuildContext context,
     BookingModel booking,
   ) async {
+    final l10n = AppLocalizations.of(context)!;
     if (booking.taskId == null || booking.taskId!.isEmpty) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'This booking cannot be disputed because task data is missing.',
-          ),
-        ),
+        SnackBar(content: Text(l10n.bookingCannotDisputeMissingTask)),
       );
       return;
     }
@@ -440,23 +481,23 @@ class BookingDetailsScreen extends StatelessWidget {
     final reason = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Report Issue'),
+        title: Text(l10n.reportIssue),
         content: TextField(
           maxLines: 4,
           onChanged: (value) => draftReason = value,
-          decoration: const InputDecoration(
-            hintText: 'Describe the problem with this booking',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            hintText: l10n.describeBookingProblem,
+            border: const OutlineInputBorder(),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(l10n.actionCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, draftReason.trim()),
-            child: const Text('Submit'),
+            child: Text(l10n.actionSubmit),
           ),
         ],
       ),
@@ -479,56 +520,58 @@ class BookingDetailsScreen extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          ok ? 'Dispute submitted.' : (vm.error ?? 'Dispute failed.'),
+          ok ? l10n.disputeSubmitted : (vm.error ?? l10n.disputeFailed),
         ),
       ),
     );
   }
 
   Widget _buildStatusBanner(BuildContext context, BookingStatus status) {
+    const amber = AmberDuskTokens.colors;
+    final l10n = AppLocalizations.of(context)!;
     Color color;
     String text;
 
     switch (status) {
       case BookingStatus.pending:
-        color = AppColors.gold;
-        text = 'Pending Confirmation';
+        color = amber.warning;
+        text = l10n.bookingStatusPendingConfirmation;
       case BookingStatus.confirmed:
-        color = AppColors.teal;
-        text = 'Confirmed';
+        color = amber.primary;
+        text = l10n.bookingStatusConfirmed;
       case BookingStatus.completed:
-        color = AppColors.mediumGrey;
-        text = 'Completed';
+        color = amber.success;
+        text = l10n.bookingStatusCompleted;
       case BookingStatus.canceled:
-        color = AppColors.lightRed;
-        text = 'Canceled';
+        color = amber.danger;
+        text = l10n.bookingStatusCanceled;
       case BookingStatus.noShow:
-        color = AppColors.lightRed;
-        text = 'No Show';
+        color = amber.danger;
+        text = l10n.bookingStatusNoShow;
       case BookingStatus.inProgress:
-        color = AppColors.teal;
-        text = 'In Progress';
+        color = amber.primary;
+        text = l10n.bookingStatusInProgress;
       case BookingStatus.declined:
-        color = AppColors.lightRed;
-        text = 'Declined';
+        color = amber.danger;
+        text = l10n.bookingStatusDeclined;
       case BookingStatus.active:
-        color = AppColors.teal;
-        text = 'Active';
+        color = amber.primary;
+        text = l10n.bookingStatusActive;
       case BookingStatus.paidRequestPending:
-        color = AppColors.gold;
-        text = 'Request Pending';
+        color = amber.warning;
+        text = l10n.bookingStatusRequestPending;
       case BookingStatus.delivered:
-        color = AppColors.teal;
-        text = 'Delivered (Review)';
+        color = amber.success;
+        text = l10n.bookingStatusDeliveredReview;
       case BookingStatus.refunded:
-        color = AppColors.mediumGrey;
-        text = 'Refunded';
+        color = amber.success;
+        text = l10n.bookingStatusRefunded;
       case BookingStatus.expiredUnanswered:
-        color = AppColors.mediumGrey;
-        text = 'Expired';
+        color = amber.muted;
+        text = l10n.bookingStatusExpired;
       case BookingStatus.disputed:
-        color = AppColors.gold;
-        text = 'Disputed (Under Review)';
+        color = amber.warning;
+        text = l10n.bookingStatusDisputedUnderReview;
     }
 
     return Container(
@@ -586,6 +629,7 @@ class BookingDetailsScreen extends StatelessWidget {
     BookingModel booking,
     BookingStatus status,
   ) async {
+    final l10n = AppLocalizations.of(context)!;
     final vm = context.read<BookingViewModel>();
     final loader = LoadingUtils.show(
       context,
@@ -601,12 +645,12 @@ class BookingDetailsScreen extends StatelessWidget {
       if (success) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Status updated')));
+        ).showSnackBar(SnackBar(content: Text(l10n.statusUpdated)));
         Navigator.pop(context); // Refresh/Back
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update status')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.statusUpdateFailed)));
       }
     } finally {
       loader.close();
@@ -626,6 +670,7 @@ class _ReportIssueGuardBooking extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return FutureBuilder<bool>(
       future: context.read<SafetyViewModel>().hasOpenDisputeForBooking(
         bookingId,
@@ -636,14 +681,13 @@ class _ReportIssueGuardBooking extends StatelessWidget {
         }
         final hasOpenDispute = snapshot.data ?? true;
         if (hasOpenDispute) return const SizedBox.shrink();
+        const amber = AmberDuskTokens.colors;
         return Center(
           child: TextButton(
             onPressed: onReportIssue,
             child: Text(
-              'Report Issue',
-              style: AppTypography.bodySmall.copyWith(
-                color: AppColors.lightRed,
-              ),
+              l10n.reportIssue,
+              style: AppTypography.bodySmall.copyWith(color: amber.danger),
             ),
           ),
         );
@@ -660,6 +704,7 @@ class _BookingDisputeBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return FutureBuilder<bool>(
       future: context.read<SafetyViewModel>().hasOpenDisputeForBooking(
         bookingId,
@@ -676,8 +721,8 @@ class _BookingDisputeBanner extends StatelessWidget {
           builder: (context, statusSnapshot) {
             final status = statusSnapshot.data;
             final text = status == 'active'
-                ? 'Work frozen — in dispute.'
-                : 'Dispute under review. Approve and release disabled.';
+                ? l10n.workFrozenInDispute
+                : l10n.disputeUnderReviewReleaseDisabled;
             return Padding(
               padding: const EdgeInsets.only(bottom: AppDimens.p24),
               child: AppCardContainer(
@@ -723,22 +768,20 @@ class _ApproveWithDisputeGuard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return FutureBuilder<bool>(
       future: context.read<SafetyViewModel>().hasOpenDisputeForBooking(
         booking.id,
       ),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const AppButton(text: 'Checking…', onPressed: null);
+          return AppButton(text: l10n.checking, onPressed: null);
         }
         final hasOpenDispute = snapshot.data ?? true;
         if (hasOpenDispute) {
-          return const AppButton(
-            text: 'Approve & Release Funds',
-            onPressed: null,
-          );
+          return AppButton(text: l10n.approveReleaseFunds, onPressed: null);
         }
-        return AppButton(text: 'Approve & Release Funds', onPressed: onRelease);
+        return AppButton(text: l10n.approveReleaseFunds, onPressed: onRelease);
       },
     );
   }

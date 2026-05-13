@@ -20,7 +20,6 @@ class WalletSnapshotCard extends StatelessWidget {
     const amber = AmberDuskTokens.colors;
     const spacing = AmberDuskTokens.spacing;
     const typography = AmberDuskTokens.typography;
-    final denseSix = spacing.xs + spacing.xxs;
     final totalBalance =
         (walletVM.balance.availableBalance + walletVM.balance.heldBalance)
             .toDouble();
@@ -43,7 +42,7 @@ class WalletSnapshotCard extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
-          SizedBox(height: denseSix),
+          SizedBox(height: spacing.sm),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -67,16 +66,16 @@ class WalletSnapshotCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _SnapshotActionPill(
-                  label: 'Withdraw',
-                  foreground: amber.textDark,
-                  background: amber.heroText,
+                  label: 'Withdraw soon',
+                  foreground: amber.heroMuted,
+                  background: amber.heroChip,
                 ),
               ),
               SizedBox(width: spacing.md),
               Expanded(
                 child: _SnapshotActionPill(
-                  label: 'Top up',
-                  foreground: amber.heroText,
+                  label: 'Top up soon',
+                  foreground: amber.heroMuted,
                   background: amber.heroChip,
                 ),
               ),
@@ -127,17 +126,23 @@ class _SnapshotActionPill extends StatelessWidget {
       button: true,
       enabled: false,
       label: label,
-      hint: 'Open wallet screen to withdraw or top up',
-      child: Container(
-        height: buttons.minHeight,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: background,
-          borderRadius: BorderRadius.circular(buttons.radius),
-        ),
-        child: Text(
-          label,
-          style: buttons.textStyle.copyWith(color: foreground),
+      hint: 'Wallet actions are coming soon',
+      child: MouseRegion(
+        cursor: SystemMouseCursors.forbidden,
+        child: Opacity(
+          opacity: 0.5,
+          child: Container(
+            height: buttons.minHeight,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: background,
+              borderRadius: BorderRadius.circular(buttons.radius),
+            ),
+            child: Text(
+              label,
+              style: buttons.textStyle.copyWith(color: foreground),
+            ),
+          ),
         ),
       ),
     );
@@ -161,25 +166,26 @@ class _BreakdownChip extends StatelessWidget {
     const amber = AmberDuskTokens.colors;
     const spacing = AmberDuskTokens.spacing;
     const typography = AmberDuskTokens.typography;
-    // Amber Dusk has no standalone 6px/10px primitives, so derive them from
-    // adjacent spacing tokens to preserve the compact chip proportions.
-    final denseSix = spacing.xs + spacing.xxs;
-    final compactTen = spacing.md - spacing.xxs;
+    // wallet_snapshot_card uses existing spacing tokens instead of deriving
+    // former denseSix/compactTen values from arithmetic.
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: compactTen, vertical: denseSix),
+      padding: EdgeInsets.symmetric(
+        horizontal: spacing.md,
+        vertical: spacing.sm,
+      ),
       decoration: BoxDecoration(
         color: amber.heroChip,
-        borderRadius: BorderRadius.circular(compactTen),
+        borderRadius: BorderRadius.circular(spacing.md),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: denseSix,
-            height: denseSix,
+            width: spacing.sm,
+            height: spacing.sm,
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
-          SizedBox(width: denseSix),
+          SizedBox(width: spacing.sm),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

@@ -2680,7 +2680,8 @@ Returns minimum-field profile summaries for all bidders on a task (for owner vie
 
 - **DEVELOPER_GUIDE.md** - Feature-specific documentation
 - **CODE_REVIEW.md** - Common mistakes and fixes
-- **GEMINI.md** - Development patterns and agents
+- **AGENTS.md** - Development patterns and repo-level agent guidance
+- **`.cursor/Agents/`** - Agent definitions and workflow responsibilities
 - **`.cursor/rules/`** - Rule files for specific patterns
 
 ---

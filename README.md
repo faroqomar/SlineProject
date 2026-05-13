@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-2.1-blue.svg)
+![Version](https://img.shields.io/badge/docs-2.30.0-blue.svg)
 ![Flutter](https://img.shields.io/badge/Flutter-3.8.1+-02569B?logo=flutter)
 ![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase)
 ![License](https://img.shields.io/badge/license-Private-red.svg)
@@ -102,12 +102,13 @@ Two-sided marketplace with:
 - Stripe webhook integration for top-ups (deposits) and payouts (withdrawals)
 - Immutable ledger architecture (append-only)
 
-### 🎨 Theme System (v2.1)
+### 🎨 Theme System
 
-- Centralized theme dashboard (`theme_dashboard.dart`)
-- iOS 26-inspired liquid glass bottom navigation
-- Material Design 3 with Glassmorphism effects
-- AppColors, AppTypography, AppDimens, AppDecorations
+- Three-layer design system: theme, layout, and components
+- AppColors, AppTypography, AppMotion, AppDecorations, AppStates, AppTheme
+- AppLayout and AppDimens for layout rhythm and fixed sizing
+- Scoped Amber Dusk token layer under `lib/core/theme/designs/amber_dusk/`
+- Material Design 3 remains the runtime foundation unless a plan explicitly changes it
 
 ---
 
@@ -149,13 +150,13 @@ sline_app/
 │   │   ├── models/               # Global models
 │   │   ├── services/             # Cross-cutting services
 │   │   ├── widgets/              # Shared UI components
-│   │   ├── theme/                # 🎨 Centralized theme system
+│   │   ├── theme/                # Three-layer theme and design tokens
 │   │   │   ├── app_colors.dart
 │   │   │   ├── app_typography.dart
 │   │   │   ├── app_dimens.dart
 │   │   │   ├── app_decorations.dart
 │   │   │   ├── app_theme.dart
-│   │   │   └── theme_dashboard.dart  # Single source of truth
+│   │   │   └── designs/              # Staged design systems, including Amber Dusk
 │   │   ├── providers/            # Global state
 │   │   └── utils/                # Helper functions
 │   ├── features/                 # Feature modules (MVVM)
@@ -173,16 +174,14 @@ sline_app/
 │   │   ├── saved/                # Saved tasks
 │   │   └── categories/           # Service categories
 │   └── main.dart                 # App entry point
-├── .cursor/                      # 🤖 Cursor AI configuration
-│   ├── Agents/                   # AI agent definitions (7 agents)
+├── .cursor/                      # Agent and rule configuration
+│   ├── Agents/                   # Agent definitions
 │   ├── rules/                    # Coding rules (.mdc files)
 │   └── PROJECT_CONTEXT.md        # Quick reference
-├── .TODO/                        # Design & planning
-│   ├── New_Design/               # React Native design references
-│   └── Future_Plans/             # Feature inventory
-├── Sline_everything/             # 📚 Project documentation
-├── GEMINI.md                     # Project overview & agent triggers
-└── .cursorrules                  # Always-active rules
+├── .TODO/                        # Active plans, QA checklists, and future work
+├── Sline_everything/             # Project documentation and diagrams
+├── AGENTS.md                     # Repository guidance for coding agents
+└── docs/LOG/                     # Session and system-evolution logs
 ```
 
 ### Feature Structure (MVVM)
@@ -200,69 +199,87 @@ features/<feature>/
 
 ---
 
-## Getting Started
+## Install And Run
 
 ### Prerequisites
 
 - [Flutter SDK 3.8.1+](https://flutter.dev/docs/get-started/install)
-- [Dart SDK 3.8.1+](https://dart.dev/get-dart)
-- Supabase account ([supabase.com](https://supabase.com))
-- IDE: VS Code or Cursor with Flutter extension
+- Dart SDK 3.8.1+ from the Flutter toolchain
+- Xcode for iOS builds and simulators
+- Android Studio or Android SDK tools for Android builds
+- Supabase project access for backend-backed development
+- VS Code, Cursor, or Android Studio with Flutter tooling
 
-### Installation
-
-1. **Clone the repository**
-
-   ```bash
-   git clone <repository-url>
-   cd sline_app
-   ```
-
-2. **Install dependencies**
-
-   ```bash
-   flutter pub get
-   ```
-
-3. **Setup Supabase**
-   - Create a new Supabase project
-   - Run the SQL schema from `Sline_everything/SUPABASE_SETUP.md`
-   - Copy your Supabase URL and anon key
-   - Update `lib/core/services/supabase_config.dart` with your credentials
-
-4. **Run the app**
-
-   ```bash
-   # List available devices
-   flutter devices
-
-   # Run on specific device
-   flutter run -d chrome              # Web
-   flutter run -d android             # Android
-   flutter run -d ios                 # iOS simulator
-   ```
-
-### Development Commands
+### 1. Clone And Install Dependencies
 
 ```bash
-# Code analysis
-flutter analyze
+git clone <repository-url>
+cd sline_app
+flutter pub get
+```
 
-# Format code
-flutter format .
+### 2. Configure Supabase
 
-# Run tests
+This checkout currently stores the Supabase URL and anon key in `lib/core/services/supabase_config.dart`. The anon key is public-client configuration; data access is protected by Row Level Security.
+
+For a new Supabase project:
+
+1. Create or select the Supabase project.
+2. Apply the schema, policies, storage buckets, triggers, and RPCs from [Sline_everything/SUPABASE_SETUP.md](./Sline_everything/SUPABASE_SETUP.md).
+3. Update `lib/core/services/supabase_config.dart` if you are pointing this app at a different project.
+4. Review [Sline_everything/DOC_SOURCE_MAP.md](./Sline_everything/DOC_SOURCE_MAP.md) for the feature docs and diagrams relevant to your work.
+5. For UI, navigation, redesign, modal, popup, tab, route, or reusable-widget work, also review [Sline_everything/UI_SURFACE_INVENTORY.md](./Sline_everything/UI_SURFACE_INVENTORY.md).
+
+### 3. Generate Localizations
+
+Run this after changing localization resources:
+
+```bash
+flutter gen-l10n
+```
+
+### 4. Run On A Device
+
+```bash
+flutter devices
+flutter run -d <device_id>
+```
+
+Common targets:
+
+```bash
+flutter run -d chrome
+flutter run -d ios
+flutter run -d android
+```
+
+Enable Sentry only when you have a DSN:
+
+```bash
+flutter run --dart-define=SENTRY_DSN=<dsn> --dart-define=SENTRY_ENV=development
+```
+
+### 5. Validate Before Handoff
+
+```bash
+dart format .
+flutter analyze --no-fatal-infos
 flutter test
+```
 
-# Check outdated packages
-flutter pub outdated
+Run these when the change touches the relevant area:
 
-# Build for production
-flutter build apk                    # Android APK
-flutter build ios                    # iOS (requires Xcode)
-flutter build web                    # Web deployment
+```bash
+flutter test test/rls/
+flutter test integration_test/
+flutter build apk --debug
+flutter build ios --no-codesign
+flutter build web
+```
 
-# Clean build artifacts
+Clean rebuild:
+
+```bash
 flutter clean && flutter pub get
 ```
 
@@ -270,17 +287,23 @@ flutter clean && flutter pub get
 
 ## AI Agents
 
-SLine uses specialized AI agents (in `.cursor/Agents/`) for different tasks:
+SLine uses specialized AI agents in `.cursor/Agents/`. The core workflow is:
 
-| Agent             | Trigger                                          | Focus                                             |
-| ----------------- | ------------------------------------------------ | ------------------------------------------------- |
-| **@Architect**    | `@Architect`, "fix logic", "refactor"            | Logic, MVVM compliance, refactoring               |
-| **@Pixel**        | `@Pixel`, "design this", "make it pretty"        | UI/UX, Glassmorphism, themes                      |
-| **@Supabase_Ops** | `@Supabase`, "add table", "secure db"            | Database, RLS, SQL, storage                       |
-| **@Sentinel**     | `@Sentinel`, "check this", "run tests"           | QA, security, testing                             |
-| **@DocsKeeper**    | `@DocsKeeper`, "document this"                    | Documentation updates                             |
-| **@Planner** | `@Planner`, "plan this feature"             | Implementation planning                           |
-| **@CodeGuard**    | `@CodeGuard`, "review code", "performance check" | Code reviews, performance, security, dependencies |
+`@Planner` → `@PlanCritic` → `@Executor` → `@Orchestrator` → `@SystemEvolution` → `@DocsKeeper`
+
+| Agent | Focus |
+| --- | --- |
+| `@Planner` | Detailed implementation plans grounded in docs, diagrams, UI inventory, code, and Supabase reality |
+| `@PlanCritic` | Plan critique, gap finding, and execution-safety rewrites |
+| `@Executor` | Plan execution, delegation, session logging, and verification gates |
+| `@Orchestrator` | Full review pipeline and Master Report synthesis |
+| `@DocsKeeper` | README, `Sline_everything/`, UI inventory, diagrams, source maps, and session docs sync |
+| `@SystemEvolution` | Agent-system improvement reports and deduped durable rule merges |
+| `@Architect` | MVVM, logic, contracts, and refactoring |
+| `@Pixel` | UI, design-system usage, accessibility, visual QA, and polish |
+| `@Supabase_Ops` | Database, RLS, RPC, triggers, storage, and Edge Functions |
+| `@Sentinel` | QA, release gate, security validation, and docs freshness checks |
+| `@CodeGuard` | Code quality, performance, dependency, and compatibility review |
 
 ### Cursor Configuration
 
@@ -292,7 +315,8 @@ SLine uses specialized AI agents (in `.cursor/Agents/`) for different tasks:
 │   ├── supabase-database.mdc # Database rules
 │   ├── ui-theme.mdc        # Theme system rules
 │   ├── error-handling.mdc  # Error handling patterns
-│   └── code-quality.mdc    # Code quality standards
+│   ├── code-quality.mdc    # Code quality standards
+│   └── comment-guidelines.mdc # Comment coverage standard
 └── PROJECT_CONTEXT.md      # Quick reference guide
 ```
 
@@ -304,8 +328,10 @@ SLine uses specialized AI agents (in `.cursor/Agents/`) for different tasks:
 
 | Document                                                                         | Purpose                                         |
 | -------------------------------------------------------------------------------- | ----------------------------------------------- |
-| **[GEMINI.md](./GEMINI.md)**                                                     | Project overview, agents, building instructions |
-| **[Sline_everything/DEVELOPER_GUIDE.md](./Sline_everything/DEVELOPER_GUIDE.md)** | System architecture & feature map               |
+| **[AGENTS.md](./AGENTS.md)**                                                     | Repository instructions, architecture rules, and standard commands |
+| **[Sline_everything/DEVELOPER_GUIDE.md](./Sline_everything/DEVELOPER_GUIDE.md)** | System architecture and feature map             |
+| **[Sline_everything/DOC_SOURCE_MAP.md](./Sline_everything/DOC_SOURCE_MAP.md)**   | Feature-to-doc and feature-to-diagram routing   |
+| **[Sline_everything/UI_SURFACE_INVENTORY.md](./Sline_everything/UI_SURFACE_INVENTORY.md)** | Complete screen, route, popup, sheet, tab, and shared-widget inventory |
 
 ### 📋 Core Documentation
 
@@ -316,6 +342,7 @@ SLine uses specialized AI agents (in `.cursor/Agents/`) for different tasks:
 | [MVP_ROADMAP.md](./Sline_everything/MVP_ROADMAP.md)       | Feature roadmap & completion status                      |
 | [Sline_Log.md](./Sline_everything/Sline_Log.md)           | Complete version history                                 |
 | [CODE_REVIEW.md](./Sline_everything/CODE_REVIEW.md)       | Code quality patterns & best practices                   |
+| [AppDigram/README.md](./Sline_everything/AppDigram/README.md) | Diagram index for feature planning and review         |
 
 ### 🎓 Feature-Specific Guides
 
@@ -381,15 +408,17 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 
 ## 🎯 Current Status
 
-### Version 2.1 (December 2025)
+### Documentation Version 2.30.0 (2026-05-13)
 
 **Latest Changes**:
 
-- ✅ Theme System Dashboard (centralized theme management)
-- ✅ iOS 26 Liquid Glass Bottom Navigation
-- ✅ CodeGuard Agent (code reviews, performance, security)
-- ✅ Feature Inventory System
-- ✅ Video Call Feature Removed (scope reduction)
+- ✅ `Sline_everything/UI_SURFACE_INVENTORY.md` added as the source of truth for screens, routes, popups, sheets, tabs, navigation surfaces, reusable UI widgets, and full visual-file coverage
+- ✅ Planner, PlanCritic, Executor, Pixel, Orchestrator, Sentinel, and DocsKeeper now require the UI inventory for UI work
+- ✅ Scoped Amber Dusk treatment across auth gates, chat/notifications, tasks/work, booking/payment, and wallet surfaces
+- ✅ Notification realtime hardening for transient Supabase websocket closes
+- ✅ Agent workflow gates for README freshness, docs/diagram source maps, and code comment coverage
+- ✅ `Sline_everything/DOC_SOURCE_MAP.md` and `Sline_everything/AppDigram/README.md` added for planning/review routing
+- ✅ Root README refreshed for new-developer install and run flow
 
 **Completed Features**:
 
@@ -402,21 +431,21 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 - Portfolio (CRUD, public gallery)
 - Wallet & Orders Dashboard
 - Notifications System
-- Theme System (centralized)
-- 7 AI Agents for development
+- Scoped Amber Dusk design-token adoption in completed phone surfaces
+- Agent-assisted planning, execution, review, system evolution, and docs sync
 
 ### Priority Roadmap
 
 **Immediate**:
 
-- Integrate Payment Ledger System (Phase A - DB Prep)
-- Audit `Colors.*` → `AppColors` migration
-- Update Supabase Flutter to v2.x
+- Complete Phase 5-8 emulator visual parity using `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases5_6_7_8.md`
+- Keep `README.md`, `Sline_everything/`, diagram index, and source map synchronized on every DocsKeeper pass
+- Continue QiCard/payment callback hardening and release verification
 
 **Short-term**:
 
-- Localization (Arabic RTL + English LTR)
-- Push notifications (FCM)
+- Expand localization coverage and RTL QA
+- Continue push-notification runtime validation
 - User ratings & reviews
 
 **Medium-term**:
@@ -435,7 +464,7 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 - ✅ English only (code, comments, docs)
 - ✅ No `print()` — use `AppLogger.d/i/w/e`
 - ✅ Lint clean (`flutter analyze`)
-- ✅ Formatted (`flutter format .`)
+- ✅ Formatted (`dart format .`)
 
 **Critical Patterns**:
 
@@ -461,7 +490,7 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 5. **ViewModels**: State management + business logic
 6. **Views**: UI screens + widgets
 7. **Wire Providers**: Add to `main.dart`
-8. **Documentation**: Update `Sline_Log.md` + create feature guide
+8. **Documentation**: Update `README.md`, `Sline_everything/`, source map, diagrams, and session docs when relevant
 
 ---
 
@@ -471,20 +500,21 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 
 ```bash
 flutter run                         # Run app
-flutter analyze                     # Static analysis
+flutter analyze --no-fatal-infos    # Static analysis
 flutter test                        # Run tests
 flutter pub outdated                # Check dependencies
-AppLogger.d('message')              # Debug logging
-AppLogger.i('message')              # Info logging
 ```
 
 **Key Files**:
 
-- **Theme**: `lib/core/theme/theme_dashboard.dart`
+- **Theme**: `lib/core/theme/`
 - **Config**: `lib/core/services/supabase_config.dart`
 - **Navigation**: `lib/app/main_navigation_screen.dart`
 - **Agents**: `.cursor/Agents/`
 - **Rules**: `.cursor/rules/`
+- **Source Map**: `Sline_everything/DOC_SOURCE_MAP.md`
+- **UI Inventory**: `Sline_everything/UI_SURFACE_INVENTORY.md`
+- **Diagram Index**: `Sline_everything/AppDigram/README.md`
 
 **Documentation Root**: `/Sline_everything/`
 

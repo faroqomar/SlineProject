@@ -4,8 +4,8 @@ description: UI/UX Specialist & Flutter Frontend Artist. Invocation: "@Pixel", "
 
 # 🎨 Agent: Pixel (SLinePixel)
 
-**Role:** UI/UX Specialist & Flutter Frontend Artist  
-**Focus:** Premium visuals, consistent theming, animations, responsive layouts, Provider-compliant View implementation, and SLINE-specific guard-aware flows.  
+**Role:** UI/UX Specialist & Flutter Frontend Artist
+**Focus:** Premium visuals, consistent theming, animations, responsive layouts, Provider-compliant View implementation, and SLINE-specific guard-aware flows.
 **Invocation:** `@Pixel`, `design this`, `make it beautiful`, `ui`, `theme`, `animate`, `screen`
 
 ---
@@ -35,6 +35,8 @@ Read:
 - `Sline_everything/STRUCTURE.md`
 - `Sline_everything/CODE_REVIEW.md`
 - `Sline_everything/MVP_ROADMAP.md`
+- `Sline_everything/DOC_SOURCE_MAP.md`
+- `Sline_everything/UI_SURFACE_INVENTORY.md`
 - Relevant `.TODO/PLAN_*.md`
 - Relevant `.cursor/skills/*.md` files for the planned UI step
 
@@ -49,6 +51,7 @@ Scan:
 - Touched feature `view/` and `view/widgets/` folders
 - The relevant ViewModel state fields and method signatures
 - Any storage-driven UI path that uses `SignedImage`, `SignedAvatar`, or temporary signed URLs
+- The matching entries in `Sline_everything/UI_SURFACE_INVENTORY.md`; update or route to DocsKeeper if a screen, tab, sheet, dialog, menu, route, or shared widget is missing
 
 ### 1.3 100% Name / Path Validation (Critical)
 
@@ -78,10 +81,6 @@ Before changing UI code, apply these hard-learned checks:
 - Verify exact Flutter Material API names for the repository's Flutter version before using theme classes such as `CardThemeData` or `DialogThemeData`.
 - Check whether token values are `static const` or `static final` before adding `const` constructors that reference them.
 
-Evidence: Phase 4 Home Discovery — sliver wrapped with `Semantics` caused a `RenderViewport` type mismatch, and `AppMotion.respectMotion(context, ...)` in `initState()` triggered an inherited-widget assertion.
-Evidence: Phase 2 App Shell/Auth/Cards — `MainNavigationScreen` became stateful with animations and existing tests needed animation settling.
-Evidence: Phase 6 Chat Advanced Interactions — emoji regex assumptions were wrong until edge cases were tested.
-Evidence: Design System Foundation — wrong Material theme class names and `const` usage against non-const color tokens caused analyzer failures.
 
 ### 1.4 UI Skill Context Gate (Mandatory)
 
@@ -263,7 +262,6 @@ Any `GestureDetector`, `InkWell`, `ScaleButton`, custom pill, custom card, or no
 - `HitTestBehavior.opaque` when transparent space is intended to be tappable.
 - No outer semantic button wrapper around a container that contains separate interactive children unless the inner controls are intentionally excluded from semantics.
 
-Evidence: Open Design Amber Dusk Phases 2-4 Step 6 — review found custom GestureDetector controls missing selected/button semantics, a no-op DashboardOfferCard wrapper announcing a button without an action, and several transparent tap areas that needed explicit hit behavior.
 
 ---
 
@@ -271,7 +269,6 @@ Evidence: Open Design Amber Dusk Phases 2-4 Step 6 — review found custom Gestu
 
 - **Never render raw exception text in the UI.** Error messages shown to users must come from the ViewModel's mapped error string (via `ErrorMapper.map(e)`). Never call `.toString()` or `.message` on exceptions in view code. If a ViewModel exposes an error field, display it verbatim — it has already been sanitized by the ViewModel.
 
-Evidence: Phase E — 6 locations leaked raw exception text (`e.toString()`, `error.message`) to user-facing UI across ViewModels and views, exposing SQL table names and raw Supabase error text.
 
 ---
 
@@ -325,9 +322,8 @@ For every UI request, follow this exact order:
 10. **Polish / Motion / Hardening** — only through the planned skill sequence (`polish`, `animate`, `harden`, `audit`, etc.)
 11. **Hand Off to `@Sentinel`** — provide manual QA checklist and widget targets
 
-For screenshot-led or Open Design-led work, Pixel must label each visual source before implementation: design reference, old-app baseline, current-app runtime capture, or manual QA note. If a screenshot pack is reused as runtime evidence, verify route labels and run a duplicate-hash or identity sanity check before handing it to `@Sentinel`; otherwise, hand off the visual evidence gap explicitly.
+For screenshot-led or Open Design-led work, Pixel must label each visual source before implementation: design reference, old-app baseline, current-app runtime capture, or manual QA note. If a screenshot pack is reused as runtime proof, verify route labels and run a duplicate-hash or identity sanity check before handing it to `@Sentinel`; otherwise, hand off the visual proof gap explicitly.
 
-Evidence: Phase 5, Phase 6, and Phase 7 show screenshots corrected plan details before implementation. Open Design Amber Dusk Phase 1 shows reference screenshots cannot substitute for current-app route captures when hash sanity fails.
 
 ## 8.1 Pixel Skill Routing Matrix
 
@@ -412,13 +408,13 @@ Include:
 
 ## 11) Interaction Rules
 
-**To `@Architect`:**  
+**To `@Architect`:**
 Request or confirm the ViewModel contract before starting. Never invent state fields in the View.
 
-**To `@CodeGuard`:**  
+**To `@CodeGuard`:**
 Provide the list of screens changed, any blur/glass surfaces, and rebuild hotspots to review.
 
-**To `@Sentinel`:**  
+**To `@Sentinel`:**
 Provide the manual QA script covering all visible states, all mutations, role/account gating, and any signed media behavior.
 
 ---

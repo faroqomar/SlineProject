@@ -3,9 +3,10 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/config/payment_runtime_config.dart';
+import 'package:sline_app/core/services/crash_reporting_service.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/features/booking/models/payment_return_args.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -99,10 +100,53 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
         (uri.host == 'localhost' || uri.host == '127.0.0.1');
   }
 
-  String? _describeUri(Uri? uri) {
-    if (uri == null) return null;
-    final port = uri.hasPort ? ':${uri.port}' : '';
-    return '${uri.scheme}://${uri.host}$port${uri.path}';
+  String _schemeKind(Uri uri) {
+    final scheme = uri.scheme.toLowerCase();
+    if (scheme == 'https' || scheme == 'http') return scheme;
+    if (scheme == 'sline') return 'app_scheme';
+    return scheme.isEmpty ? 'missing' : 'other';
+  }
+
+  String _paymentPathKind(Uri uri) {
+    final path = uri.path.toLowerCase();
+    if (uri.scheme == 'sline' && uri.host == 'payment') return 'app_payment';
+    if (path.contains('/payment/success') ||
+        (path.endsWith('/success') && path.contains('payment'))) {
+      return 'payment_success';
+    }
+    if (path.contains('/payment/failure') ||
+        path.contains('/payment/cancel') ||
+        path.contains('/payment/error')) {
+      return 'payment_failure';
+    }
+    if (path.contains('finish')) return 'payment_finish';
+    if (path.isEmpty || path == '/') return 'root';
+    return 'other';
+  }
+
+  Map<String, dynamic> _paymentUrlFacts(Uri? uri) {
+    if (uri == null) return const {'url_state': 'unparsed'};
+    // Payment URLs can include gateway structure, so logs record only
+    // non-identifying classifications and query-key presence.
+    return <String, dynamic>{
+      'url_state': 'parsed',
+      'scheme_kind': _schemeKind(uri),
+      'path_kind': _paymentPathKind(uri),
+      'trusted_callback_host': _isTrustedCallbackHost(uri),
+      'trusted_web_callback': _isTrustedWebCallback(uri),
+      'has_status': uri.queryParameters.containsKey('status'),
+      'has_booking': uri.queryParameters['booking_id'] != null,
+      'has_correlation': uri.queryParameters['correlation_id'] != null,
+      'has_payment_reference': uri.queryParameters['payment_id'] != null,
+      'has_offer': uri.queryParameters['offer_id'] != null,
+      'has_request': uri.queryParameters['request_id'] != null,
+    };
+  }
+
+  String _paymentUrlCode(Uri? uri, String fallback) {
+    if (uri == null) return fallback;
+    return 'PAYMENT_URL_${_schemeKind(uri).toUpperCase()}_'
+        '${_paymentPathKind(uri).toUpperCase()}';
   }
 
   @override
@@ -119,12 +163,12 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
       'Opening payment webview',
       tag: 'Payment',
       json: <String, dynamic>{
-        'initial_url': _describeUri(Uri.tryParse(widget.initialUrl)),
-        'expected_booking_id': widget.expectedBookingId,
-        'expected_correlation_id': widget.expectedCorrelationId,
-        'expected_offer_id': widget.expectedOfferId,
-        'payment_intent_id': widget.paymentIntentId,
-        'callback_hosts': widget.callbackHosts.toList(),
+        'initial_url_facts': _paymentUrlFacts(Uri.tryParse(widget.initialUrl)),
+        'has_expected_booking': widget.expectedBookingId != null,
+        'has_expected_correlation': widget.expectedCorrelationId != null,
+        'has_expected_offer': widget.expectedOfferId != null,
+        'has_payment_intent': widget.paymentIntentId != null,
+        'callback_host_count': widget.callbackHosts.length,
       },
     );
 
@@ -137,7 +181,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
           'Payment intent realtime status in webview: $status',
           tag: 'Payment',
           json: <String, dynamic>{
-            'intent_id': widget.paymentIntentId,
+            'has_intent': widget.paymentIntentId != null,
             'status': status,
           },
         );
@@ -166,9 +210,11 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
     _controller!.setNavigationDelegate(
       NavigationDelegate(
         onPageStarted: (url) {
+          final pageUri = Uri.tryParse(url);
           AppLogger.d(
-            'Payment webview page started: ${_describeUri(Uri.tryParse(url))}',
+            'Payment webview page started',
             tag: 'Payment',
+            json: _paymentUrlFacts(pageUri),
           );
           _safeSetState(() {
             _isLoading = true;
@@ -176,23 +222,37 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
           });
         },
         onPageFinished: (url) {
+          final pageUri = Uri.tryParse(url);
           AppLogger.d(
-            'Payment webview page finished: ${_describeUri(Uri.tryParse(url))}',
+            'Payment webview page finished',
             tag: 'Payment',
+            json: _paymentUrlFacts(pageUri),
           );
           _safeSetState(() {
             _isLoading = false;
           });
         },
         onWebResourceError: (error) {
+          final normalizedCode = 'WEBVIEW_${error.errorCode}';
           AppLogger.e(
             'Payment webview resource error',
             tag: 'Payment',
-            error: '${error.errorCode}: ${error.description}',
+            error: normalizedCode,
+            json: <String, dynamic>{
+              'description': error.description,
+              'error_type': error.errorType.toString(),
+            },
+          );
+          unawaited(
+            CrashReportingService.instance.recordError(
+              error,
+              StackTrace.current,
+              reason: normalizedCode,
+            ),
           );
           _safeSetState(() {
             _isLoading = false;
-            _loadError = error.description;
+            _loadError = 'Payment page could not load.';
           });
         },
         onNavigationRequest: (request) {
@@ -222,7 +282,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
               uri.path.contains('finish') &&
               uri.queryParameters.containsKey('status');
 
-          // QiCard success return URL: https://sline.app/payment/success
+          // QiCard success return paths stay classified before logging.
           // Or any URL containing /payment/success in the path
           final isPaymentSuccessUrl =
               uri != null &&
@@ -248,7 +308,8 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
             AppLogger.w(
               'Rejected insecure payment callback URL',
               tag: 'Payment',
-              error: _describeUri(uri) ?? 'UNKNOWN_CALLBACK_URL',
+              error: _paymentUrlCode(uri, 'UNKNOWN_CALLBACK_URL'),
+              json: _paymentUrlFacts(uri),
             );
             return NavigationDecision.prevent;
           }
@@ -258,7 +319,8 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
               AppLogger.w(
                 'Rejected payment finish callback due to booking/correlation mismatch',
                 tag: 'Payment',
-                error: _describeUri(uri) ?? 'UNKNOWN_CALLBACK_URL',
+                error: _paymentUrlCode(uri, 'UNKNOWN_CALLBACK_URL'),
+                json: _paymentUrlFacts(uri),
               );
               return NavigationDecision.prevent;
             }
@@ -269,9 +331,10 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
               'Accepted payment finish callback status=$status',
               tag: 'Payment',
               json: <String, dynamic>{
-                'booking_id': uri.queryParameters['booking_id'],
-                'correlation_id': uri.queryParameters['correlation_id'],
-                'payment_id': paymentId,
+                'has_booking': uri.queryParameters['booking_id'] != null,
+                'has_correlation':
+                    uri.queryParameters['correlation_id'] != null,
+                'has_payment_reference': paymentId != null,
               },
             );
             _popWithResult(
@@ -291,7 +354,8 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
               AppLogger.w(
                 'Rejected payment callback due to booking/correlation mismatch',
                 tag: 'Payment',
-                error: _describeUri(uri) ?? 'UNKNOWN_CALLBACK_URL',
+                error: _paymentUrlCode(uri, 'UNKNOWN_CALLBACK_URL'),
+                json: _paymentUrlFacts(uri),
               );
               return NavigationDecision.prevent;
             }
@@ -300,16 +364,17 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
               AppLogger.w(
                 'Accepted payment failure callback status=${paymentReturn.normalizedStatus}',
                 tag: 'Payment',
-                error: _describeUri(uri) ?? 'UNKNOWN_CALLBACK_URL',
+                error: _paymentUrlCode(uri, 'UNKNOWN_CALLBACK_URL'),
+                json: _paymentUrlFacts(uri),
               );
             } else {
               AppLogger.i(
                 'Accepted payment callback status=${paymentReturn.normalizedStatus}',
                 tag: 'Payment',
                 json: <String, dynamic>{
-                  'booking_id': paymentReturn.bookingId,
-                  'correlation_id': paymentReturn.correlationId,
-                  'payment_id': paymentReturn.paymentId,
+                  'has_booking': paymentReturn.bookingId != null,
+                  'has_correlation': paymentReturn.correlationId != null,
+                  'has_payment_reference': paymentReturn.paymentId != null,
                 },
               );
             }
@@ -323,7 +388,8 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
               AppLogger.w(
                 'Rejected payment success callback due to booking/correlation mismatch',
                 tag: 'Payment',
-                error: _describeUri(uri) ?? 'UNKNOWN_CALLBACK_URL',
+                error: _paymentUrlCode(uri, 'UNKNOWN_CALLBACK_URL'),
+                json: _paymentUrlFacts(uri),
               );
               return NavigationDecision.prevent;
             }
@@ -331,9 +397,11 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
               'Accepted payment success callback',
               tag: 'Payment',
               json: <String, dynamic>{
-                'booking_id': uri.queryParameters['booking_id'],
-                'correlation_id': uri.queryParameters['correlation_id'],
-                'payment_id': uri.queryParameters['payment_id'],
+                'has_booking': uri.queryParameters['booking_id'] != null,
+                'has_correlation':
+                    uri.queryParameters['correlation_id'] != null,
+                'has_payment_reference':
+                    uri.queryParameters['payment_id'] != null,
               },
             );
             _popWithResult(
@@ -354,7 +422,8 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
               AppLogger.w(
                 'Rejected payment failure callback due to booking/correlation mismatch',
                 tag: 'Payment',
-                error: _describeUri(uri) ?? 'UNKNOWN_CALLBACK_URL',
+                error: _paymentUrlCode(uri, 'UNKNOWN_CALLBACK_URL'),
+                json: _paymentUrlFacts(uri),
               );
               return NavigationDecision.prevent;
             }
@@ -364,7 +433,8 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
             AppLogger.w(
               'Accepted payment failure callback status=$status',
               tag: 'Payment',
-              error: _describeUri(uri) ?? 'UNKNOWN_CALLBACK_URL',
+              error: _paymentUrlCode(uri, 'UNKNOWN_CALLBACK_URL'),
+              json: _paymentUrlFacts(uri),
             );
             _popWithResult(
               PaymentReturnArgs(
@@ -425,9 +495,9 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
             'Back navigation resolved to payment callback status=${paymentReturn.normalizedStatus}',
             tag: 'Payment',
             json: <String, dynamic>{
-              'booking_id': paymentReturn.bookingId,
-              'correlation_id': paymentReturn.correlationId,
-              'payment_id': paymentReturn.paymentId,
+              'has_booking': paymentReturn.bookingId != null,
+              'has_correlation': paymentReturn.correlationId != null,
+              'has_payment_reference': paymentReturn.paymentId != null,
             },
           );
           _popWithResult(paymentReturn);
@@ -455,8 +525,8 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
             'Back navigation resolved to payment success page',
             tag: 'Payment',
             json: <String, dynamic>{
-              'booking_id': uri.queryParameters['booking_id'],
-              'correlation_id': uri.queryParameters['correlation_id'],
+              'has_booking': uri.queryParameters['booking_id'] != null,
+              'has_correlation': uri.queryParameters['correlation_id'] != null,
             },
           );
           _popWithResult(
@@ -475,7 +545,8 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
           AppLogger.w(
             'Back navigation resolved to payment failure page status=$status',
             tag: 'Payment',
-            error: _describeUri(uri) ?? 'UNKNOWN_CURRENT_URL',
+            error: _paymentUrlCode(uri, 'UNKNOWN_CURRENT_URL'),
+            json: _paymentUrlFacts(uri),
           );
           _popWithResult(
             PaymentReturnArgs(
@@ -488,11 +559,18 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
           return;
         }
       }
-    } on Exception catch (e) {
+    } on Exception catch (e, st) {
       AppLogger.w(
         'Failed to inspect payment webview URL during back navigation',
         tag: 'Payment',
-        error: e,
+        error: e.runtimeType.toString(),
+      );
+      unawaited(
+        CrashReportingService.instance.recordError(
+          e,
+          st,
+          reason: 'payment_webview_back_navigation_inspection_failed',
+        ),
       );
     }
 
@@ -614,11 +692,12 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
   }
 
   Widget _buildWebViewBody(BuildContext context) {
+    final colorScheme = context.colorScheme;
     return Stack(
       children: [
         WebViewWidget(controller: _controller!),
         if (_isLoading)
-          Center(child: CircularProgressIndicator(color: AppColors.teal)),
+          Center(child: CircularProgressIndicator(color: colorScheme.primary)),
         if (_loadError != null)
           Center(
             child: Padding(
@@ -626,7 +705,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.error_outline, color: AppColors.lightRed),
+                  Icon(Icons.error_outline, color: colorScheme.danger),
                   const SizedBox(height: 8),
                   Text(
                     'Failed to load payment page.\n$_loadError',

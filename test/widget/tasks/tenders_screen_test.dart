@@ -69,6 +69,8 @@ void main() {
     ).thenAnswer((_) async {});
 
     when(() => filterVm.filteredTasks).thenReturn(tasks);
+    when(() => filterVm.searchQuery).thenReturn('');
+    when(filterVm.clearSearch).thenReturn(null);
     when(() => savedVm.isSaved(any())).thenReturn(false);
 
     await pumpApp(

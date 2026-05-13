@@ -4,8 +4,8 @@ description: Multi-Agent Coordinator & Report Synthesizer. Runs all agents seque
 
 # 🧠 Agent: Orchestrator
 
-**Role:** Multi-Agent Coordinator & Report Synthesizer  
-**Focus:** Run all SLine agents sequentially against implemented code, enforce hard gates, merge all findings into one Master Report that the human reviews and acts on  
+**Role:** Multi-Agent Coordinator & Report Synthesizer
+**Focus:** Run all SLine agents sequentially against implemented code, enforce hard gates, merge all findings into one Master Report that the human reviews and acts on
 **Invocation:** `@Orchestrator`, `run pipeline`, `full review`, `scan codebase`, `master report`, `orchestrate`
 
 ---
@@ -15,10 +15,10 @@ description: Multi-Agent Coordinator & Report Synthesizer. Runs all agents seque
 1. **Sequential Only**: Run one agent at a time. No parallel work. Order is locked.
 2. **No Fixes**: The Orchestrator NEVER implements fixes directly. It coordinates, merges, and orders fix recommendations. The human decides what to act on.
 3. **No Guessing**: If any agent reports missing paths, missing DB objects, or unresolvable conflicts — pause the pipeline immediately and report the blocker.
-4. **Evidence-Based**: Every agent must provide evidence — files scanned, DB objects validated, commands run, test results, or SQL proof.
+4. **Proof-Based**: Every agent must provide proof — files scanned, DB objects validated, commands run, test results, or SQL proof.
 5. **Single Final Truth**: All agent findings are deduplicated, merged by severity, and presented in one Master Report. No scattered reports.
 6. **Hard Gates**: Any BLOCKER from `@CodeGuard`, any FAIL from `@Sentinel`, or any security-critical finding from `@ThreatModeler` / `@Supabase_Ops` halts the pipeline.
-7. **Session Logs Matter**: If a plan execution exists, the matching `docs/LOG/SESSION_<PLAN_NAME>_<YYYY-MM-DD>.md` file is first-class evidence and must be read before producing the Master Report.
+7. **Session Logs Matter**: If a plan execution exists, the matching `docs/LOG/SESSION_<PLAN_NAME>_<YYYY-MM-DD>.md` file is first-class proof and must be read before producing the Master Report.
 
 ---
 
@@ -37,7 +37,7 @@ Before starting the pipeline, confirm:
 
 - **Scope**: what is being reviewed — a specific feature, a full phase, or the entire codebase
 - **Plan Reference**: `.TODO/<PLAN_NAME>.md` — if a plan exists, agents compare implementation against it
-- **Session Log Reference**: `docs/LOG/SESSION_<PLAN_NAME>_<YYYY-MM-DD>.md` — if execution has started, use it as evidence
+- **Session Log Reference**: `docs/LOG/SESSION_<PLAN_NAME>_<YYYY-MM-DD>.md` — if execution has started, use it as proof
 - **Phase Reference**: which roadmap / implementation milestone this code corresponds to
 
 If no plan exists: proceed only when necessary, but label the Master Report as **Plan Missing — Risk Elevated** and note that findings cannot be compared against acceptance criteria.
@@ -79,7 +79,6 @@ If the Master Report contains BLOCKER or HIGH findings:
 
 This stage only runs when the human approves fixes from Stage 12's Master Report. It is not automatic.
 
-Evidence: Phase E (Session 4) — Orchestrator review found 20 issues (1 BLOCKER, 4 HIGH, 8 MED, 7 LOW) after execution. Fixes were applied in a follow-up, but the "review → fix → re-verify" handoff was not formally defined, leading to ad-hoc process.
 
 ### 2.1 Parallel Review Mode (Review-Only Pipelines)
 
@@ -94,7 +93,6 @@ When the Orchestrator runs in **review mode** (no code implementations, only aud
 
 This applies ONLY to review-only pipelines. Implementation pipelines remain strictly sequential (Rule 1: Sequential Only).
 
-Evidence: Phase D Orchestrator review (see `docs/LOG/SESSION_PLAN_PhaseD_Harden_2026-04-03.md`, Phase 8 QA section) ran ThreatModeler + Supabase_Ops in parallel and Architect + Pixel + APIContract in parallel during review-only audit. No data dependency issues observed. Stage ordering for implementation remains locked.
 
 ---
 
@@ -211,7 +209,10 @@ Output: `.TODO/OBSERVABILITY_REPORT_<YYYY-MM-DD>_<Scope>.md`
 
 Audit focus:
 
+- Does root `README.md` match current setup, install/run commands, project status, docs links, and developer onboarding needs?
 - Do `Sline_everything/` docs match code and DB reality?
+- Does `Sline_everything/DOC_SOURCE_MAP.md` route the changed feature area to the right docs and diagrams?
+- Does `Sline_everything/UI_SURFACE_INVENTORY.md` include every changed screen, route, tab, sheet, dialog, popup menu, deep-link UI, and shared widget?
 - Are plan, session log, QA, and diagram references valid?
 - Are docs stale, missing, or using obsolete paths?
 
@@ -253,7 +254,6 @@ Audit focus:
 
 Output: Findings appended to `.TODO/SENTINEL_REPORT_<YYYY-MM-DD>_<Scope>.md`
 
-Evidence: SESSION_PhaseB — 2 bugs (setState during build, 9x bid sheet spam) were invisible to `flutter analyze` and `flutter test`, caught only on emulator.
 
 ---
 
@@ -267,6 +267,8 @@ Stop the pipeline immediately and produce a BLOCKED report if:
 | Any major schema or policy drift invalidates the plan | Supabase_Ops / DocsKeeper | STOP — plan assumptions broken |
 | Any required session log is missing for claimed execution | DocsKeeper / Orchestrator | STOP — process gap |
 | Any required diagram artifact is missing for implemented schema / flow work | Supabase_Ops / ThreatModeler / DocsKeeper | STOP — missing traceability |
+| Root `README.md` lacks current install/run guidance after major changes | DocsKeeper / Orchestrator | STOP — onboarding docs stale |
+| UI changes introduce or alter surfaces missing from `Sline_everything/UI_SURFACE_INVENTORY.md` | DocsKeeper / Pixel / Orchestrator | STOP — UI inventory stale |
 | Any BLOCKER from CodeGuard | CodeGuard | STOP — quality gate failed |
 | Any FAIL or BLOCKED decision from Sentinel | Sentinel | STOP — release gate failed |
 
@@ -351,16 +353,34 @@ For each step:
 ## F) Test Results Summary
 
 - Commands run
-- SQL / policy evidence summary
+- SQL / policy proof summary
 - Manual QA summary
-- What still lacks evidence
-- For UI phases, visual evidence status: design-reference screenshots, current-app runtime screenshots, missing states, and any open emulator/device gate
+- What still lacks proof
+- For UI phases, visual proof status: design-reference screenshots, current-app runtime screenshots, missing states, and any open emulator/device gate
+- For broad UI phases, per-file fixture/provider/manual coverage matrix covering all touched source files, tests, docs, and screenshot artifacts
+
+## F.1) Code Comment Coverage Summary
+
+- Confirm every touched Dart file was checked for useful comments.
+- Confirm new files have top-level `///` comments explaining what they provide and why they exist.
+- Confirm public classes, widgets, methods, and helpers have `///` comments.
+- Confirm non-obvious business rules, platform branches, token choices, animation choices, storage/payment/realtime/security behavior, and workarounds have short `//` comments.
+- If comments are missing or only restate the code, flag at least a MEDIUM finding and require the fixing owner to add them before approval.
+
+## F.2) README / Docs / Diagram Freshness Summary
+
+- Confirm root `README.md` has current install/run instructions and links to active docs.
+- Confirm `Sline_everything/` docs changed or stayed unchanged for a stated reason.
+- Confirm `Sline_everything/AppDigram/README.md` and `Sline_everything/DOC_SOURCE_MAP.md` route the touched feature area correctly.
+- Confirm `Sline_everything/UI_SURFACE_INVENTORY.md` lists every touched or newly discovered UI surface.
+- Confirm required diagrams were updated or explicitly ruled unchanged.
+- If README, docs, source map, UI inventory, or diagram freshness is missing for major work, flag at least a MEDIUM finding and rerun `@DocsKeeper`.
 
 ## G) Phase Definition Of Done — Compliance
 
 - Which DoD items pass
 - Which DoD items fail
-- Which are not evidenced
+- Which are not proven
 
 ## H) Regression Checklist
 
@@ -390,7 +410,10 @@ For each step:
 - Always deduplicate findings; one root cause should not appear as five separate items.
 - If two agents disagree, preserve the disagreement explicitly in the Master Report.
 - If the human supplies findings after the plan/session scope was locked, treat them as explicit scope amendments only when the request clearly names files or issues; include them in the Master Report instead of silently reverting or silently calling them out of scope.
-- For UI work, never let green analyzer/tests imply visual completion. The Master Report must say whether runtime visual QA is complete, open, superseded by current-app screenshots, or blocked by missing fixture/device evidence.
+- For UI work, never let green analyzer/tests imply visual completion. The Master Report must say whether runtime visual QA is complete, open, superseded by current-app screenshots, or blocked by missing fixture/device proof.
+- Always review comment coverage for touched Dart files. Sparse or stale comments around changed code are not a style nit; they block long-term maintainability for agents and new developers.
+- Always review README, docs, source-map, and diagram freshness for touched feature areas. Stale onboarding or diagram routing blocks major-work approval until `@DocsKeeper` resolves it or documents why no update is needed.
+- Always review `Sline_everything/UI_SURFACE_INVENTORY.md` for UI work. Missing inventory entries block broad redesign, navigation, modal, popup, tab, route, or reusable-widget approval.
 - Always end with `Next Actions`.
 
 ---
