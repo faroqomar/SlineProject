@@ -8,7 +8,6 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
-import 'package:sline_app/core/widgets/signed_image.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
 import 'package:sline_app/features/favorites/view/favorites_screen.dart';
 import 'package:sline_app/features/favorites/viewmodels/favorites_view_model.dart';
@@ -52,7 +51,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AmberDuskTokens.colors.transparent,
       body: Consumer<ProfileViewModel>(
         builder: (context, vm, child) {
           if (vm.isLoadingProfile) {
@@ -101,6 +100,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     _ProfileHeroCard(vm: vm),
+                    const SizedBox(height: AppDimens.p16),
+                    _ProfileMetricsGrid(vm: vm),
                     const SizedBox(height: AppDimens.p16),
                     _ProfileAvailabilityCard(vm: vm),
                     const SizedBox(height: AppDimens.p16),
@@ -163,7 +164,7 @@ class _ProfileHeader extends StatelessWidget {
   }
 }
 
-/// High-emphasis identity card with profile actions and compact metrics.
+/// High-emphasis identity card with profile actions.
 class _ProfileHeroCard extends StatelessWidget {
   const _ProfileHeroCard({required this.vm});
 
@@ -273,19 +274,6 @@ class _ProfileHeroCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppDimens.p16),
-          Row(
-            children: [
-              _MetricPill(
-                label: 'Projects',
-                value: '${vm.portfolioItems.length}',
-              ),
-              const SizedBox(width: AppDimens.p8),
-              _MetricPill(label: 'Rating', value: vm.rating ?? 'New'),
-              const SizedBox(width: AppDimens.p8),
-              _MetricPill(label: 'Skills', value: '${vm.skills.length}'),
-            ],
-          ),
         ],
       ),
     );
@@ -359,9 +347,38 @@ class _HeroAction extends StatelessWidget {
   }
 }
 
-/// Compact metric pill shown at the bottom of the identity card.
-class _MetricPill extends StatelessWidget {
-  const _MetricPill({required this.label, required this.value});
+/// Separate metric grid matching the Open Design profile module.
+class _ProfileMetricsGrid extends StatelessWidget {
+  const _ProfileMetricsGrid({required this.vm});
+
+  final ProfileViewModel vm;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _MetricCard(
+            label: 'Projects',
+            value: '${vm.portfolioItems.length}',
+          ),
+        ),
+        const SizedBox(width: AppDimens.p10),
+        Expanded(
+          child: _MetricCard(label: 'Rating', value: vm.rating ?? 'New'),
+        ),
+        const SizedBox(width: AppDimens.p10),
+        Expanded(
+          child: _MetricCard(label: 'Skills', value: '${vm.skills.length}'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Compact metric tile shown below the identity hero.
+class _MetricCard extends StatelessWidget {
+  const _MetricCard({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -370,60 +387,25 @@ class _MetricPill extends StatelessWidget {
   Widget build(BuildContext context) {
     const amber = AmberDuskTokens.colors;
 
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimens.p10,
-          vertical: AppDimens.p8,
-        ),
-        decoration: BoxDecoration(
-          color: amber.heroChip,
-          borderRadius: BorderRadius.circular(AppDimens.r14),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              value,
-              style: AmberDuskTokens.typography.sectionTitle.copyWith(
-                color: amber.heroText,
-              ),
-            ),
-            Text(
-              label,
-              style: AmberDuskTokens.typography.chip.copyWith(
-                color: amber.heroMuted,
-              ),
-            ),
-          ],
-        ),
+    return AppCardContainer(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimens.p12,
+        vertical: AppDimens.p12,
       ),
-    );
-  }
-}
-
-/// Availability summary matching the profile reference sections.
-class _ProfileAvailabilityCard extends StatelessWidget {
-  const _ProfileAvailabilityCard({required this.vm});
-
-  final ProfileViewModel vm;
-
-  @override
-  Widget build(BuildContext context) {
-    return _Panel(
-      title: 'Availability',
+      borderRadius: BorderRadius.circular(AmberDuskSpacing.moduleRadius),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _InfoRow(
-            icon: Icons.bolt_outlined,
-            title: 'Ready for new work',
-            subtitle: vm.loadedEmail ?? 'Profile contact is connected',
+          Text(
+            value,
+            style: AmberDuskTokens.typography.sectionTitle.copyWith(
+              color: amber.text,
+            ),
           ),
-          const SizedBox(height: AppDimens.p10),
-          const _InfoRow(
-            icon: Icons.schedule_outlined,
-            title: 'Typical response',
-            subtitle: 'Within a few hours',
+          const SizedBox(height: AppDimens.p2),
+          Text(
+            label,
+            style: AmberDuskTokens.typography.chip.copyWith(color: amber.muted),
           ),
         ],
       ),
@@ -431,7 +413,97 @@ class _ProfileAvailabilityCard extends StatelessWidget {
   }
 }
 
-/// Service chips derived from the profile skills collection.
+/// Availability summary matching the profile reference card.
+class _ProfileAvailabilityCard extends StatelessWidget {
+  const _ProfileAvailabilityCard({required this.vm});
+
+  final ProfileViewModel vm;
+
+  @override
+  Widget build(BuildContext context) {
+    const amber = AmberDuskTokens.colors;
+    final subtitle = vm.loadedEmail?.trim().isEmpty ?? true
+        ? 'Profile contact is connected'
+        : vm.loadedEmail!.trim();
+
+    return AppCardContainer(
+      padding: const EdgeInsets.all(AppDimens.p16),
+      borderRadius: BorderRadius.circular(AmberDuskSpacing.moduleRadius),
+      child: Row(
+        children: [
+          Container(
+            width: AppDimens.p40,
+            height: AppDimens.p40,
+            decoration: BoxDecoration(
+              color: amber.success.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(AppDimens.r14),
+            ),
+            child: Icon(
+              Icons.bolt_outlined,
+              color: amber.success,
+              size: AppDimens.iconSizeSmall,
+            ),
+          ),
+          const SizedBox(width: AppDimens.p12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Ready for new work',
+                  style: AmberDuskTokens.typography.body.copyWith(
+                    color: amber.text,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: AppDimens.p2),
+                Text(
+                  subtitle,
+                  style: AmberDuskTokens.typography.bodySmall.copyWith(
+                    color: amber.muted,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppDimens.p10),
+          _StatusPill(label: 'Open', color: amber.success),
+        ],
+      ),
+    );
+  }
+}
+
+/// Small status badge used by profile rows and cards.
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: AmberDuskTokens.widgetTheme.statusPills.smallPadding,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(
+          AmberDuskTokens.widgetTheme.statusPills.radius,
+        ),
+      ),
+      child: Text(
+        label,
+        style: AmberDuskTokens.widgetTheme.statusPills.smallTextStyle.copyWith(
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
+/// Service rows derived from the profile skills collection.
 class _ProfileServicesCard extends StatelessWidget {
   const _ProfileServicesCard({required this.skills});
 
@@ -439,24 +511,35 @@ class _ProfileServicesCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final visibleSkills = skills.isEmpty
-        ? const ['Profile setup', 'Service packages', 'Portfolio polish']
-        : skills.take(6).toList(growable: false);
+    final visibleSkills = skills.take(3).toList(growable: false);
+
+    if (visibleSkills.isEmpty) {
+      return const _Panel(
+        title: 'Services',
+        child: _InfoRow(
+          icon: Icons.design_services_outlined,
+          title: 'No services listed yet',
+          subtitle: 'Add services from profile editing.',
+        ),
+      );
+    }
 
     return _Panel(
       title: 'Services',
-      child: Wrap(
-        spacing: AppDimens.p8,
-        runSpacing: AppDimens.p8,
-        children: visibleSkills
-            .map((skill) => _SkillChip(label: skill))
-            .toList(growable: false),
+      child: Column(
+        children: [
+          for (final skill in visibleSkills) ...[
+            _ServiceRow(label: skill),
+            if (skill != visibleSkills.last)
+              const SizedBox(height: AppDimens.p10),
+          ],
+        ],
       ),
     );
   }
 }
 
-/// Portfolio preview strip using existing resolved portfolio image data.
+/// Portfolio preview strip using compact proof tiles from existing data.
 class _ProfilePortfolioStrip extends StatelessWidget {
   const _ProfilePortfolioStrip({required this.items});
 
@@ -477,19 +560,14 @@ class _ProfilePortfolioStrip extends StatelessWidget {
 
     return _Panel(
       title: 'Portfolio',
-      child: SizedBox(
-        height: 122,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          itemCount: items.length,
-          itemBuilder: (context, index) {
-            final item = items[index];
-            return Padding(
-              padding: const EdgeInsets.only(right: AppDimens.p10),
-              child: _PortfolioTile(item: item),
-            );
-          },
-        ),
+      child: Row(
+        children: [
+          for (final item in items.take(2)) ...[
+            Expanded(child: _PortfolioProofTile(item: item)),
+            if (item != items.take(2).last)
+              const SizedBox(width: AppDimens.p10),
+          ],
+        ],
       ),
     );
   }
@@ -585,9 +663,9 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-/// Amber Dusk skill chip.
-class _SkillChip extends StatelessWidget {
-  const _SkillChip({required this.label});
+/// Service-like row used to render real profile skills.
+class _ServiceRow extends StatelessWidget {
+  const _ServiceRow({required this.label});
 
   final String label;
 
@@ -595,26 +673,55 @@ class _SkillChip extends StatelessWidget {
   Widget build(BuildContext context) {
     const amber = AmberDuskTokens.colors;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimens.p12,
-        vertical: AppDimens.p8,
-      ),
-      decoration: BoxDecoration(
-        color: amber.primary.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(AmberDuskSpacing.pillRadius),
-      ),
-      child: Text(
-        label,
-        style: AmberDuskTokens.typography.chip.copyWith(color: amber.primary),
-      ),
+    return Row(
+      children: [
+        Container(
+          width: AppDimens.p40,
+          height: AppDimens.p40,
+          decoration: BoxDecoration(
+            color: amber.primary.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(AppDimens.r14),
+          ),
+          child: Icon(
+            Icons.design_services_outlined,
+            color: amber.primary,
+            size: AppDimens.iconSizeSmall,
+          ),
+        ),
+        const SizedBox(width: AppDimens.p12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: AmberDuskTokens.typography.body.copyWith(
+                  color: amber.text,
+                  fontWeight: FontWeight.w800,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: AppDimens.p2),
+              Text(
+                'Listed skill',
+                style: AmberDuskTokens.typography.bodySmall.copyWith(
+                  color: amber.muted,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: AppDimens.p10),
+        _StatusPill(label: 'Visible', color: amber.primary),
+      ],
     );
   }
 }
 
-/// Portfolio thumbnail tile for profile previews.
-class _PortfolioTile extends StatelessWidget {
-  const _PortfolioTile({required this.item});
+/// Compact proof tile matching the profile portfolio strip reference.
+class _PortfolioProofTile extends StatelessWidget {
+  const _PortfolioProofTile({required this.item});
 
   final Map<String, dynamic> item;
 
@@ -622,38 +729,55 @@ class _PortfolioTile extends StatelessWidget {
   Widget build(BuildContext context) {
     const amber = AmberDuskTokens.colors;
     final title = item['title']?.toString() ?? 'Untitled';
-    final imageUrl = item['image_url']?.toString();
+    final description = item['description']?.toString().trim();
+    final createdAt = DateTime.tryParse(item['created_at']?.toString() ?? '');
+    final footer = createdAt == null ? 'Proof item' : '${createdAt.year} proof';
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppDimens.r16),
-      child: Container(
-        width: 164,
-        color: amber.surfaceHighest,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (imageUrl != null && imageUrl.isNotEmpty)
-              SignedImage(
-                storagePathOrUrl: imageUrl,
-                width: 164,
-                height: 122,
-                bucket: 'portfolio',
+    return Container(
+      constraints: const BoxConstraints(
+        minHeight: AppDimens.p100 + AppDimens.p24,
+      ),
+      padding: const EdgeInsets.all(AppDimens.p12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [amber.primary.withValues(alpha: 0.18), amber.surfaceHighest],
+        ),
+        borderRadius: BorderRadius.circular(AppDimens.r16),
+        border: Border.all(color: amber.heroRim),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _StatusPill(label: 'Project', color: amber.primary),
+          const SizedBox(height: AppDimens.p10),
+          Text(
+            title,
+            style: AmberDuskTokens.typography.body.copyWith(
+              color: amber.text,
+              fontWeight: FontWeight.w800,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (description != null && description.isNotEmpty) ...[
+            const SizedBox(height: AppDimens.p4),
+            Text(
+              description,
+              style: AmberDuskTokens.typography.chip.copyWith(
+                color: amber.muted,
               ),
-            Positioned(
-              left: AppDimens.p10,
-              right: AppDimens.p10,
-              bottom: AppDimens.p10,
-              child: Text(
-                title,
-                style: AmberDuskTokens.typography.chip.copyWith(
-                  color: amber.text,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
-        ),
+          const SizedBox(height: AppDimens.p12),
+          Text(
+            footer,
+            style: AmberDuskTokens.typography.chip.copyWith(color: amber.muted),
+          ),
+        ],
       ),
     );
   }

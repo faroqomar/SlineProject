@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/navigation/main_nav_destinations.dart';
+import 'package:sline_app/core/providers/navigation_provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
@@ -189,6 +191,19 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
                         color: amber.muted,
                       ),
                     ),
+                    const SizedBox(height: AppDimens.p20),
+                    FilledButton.icon(
+                      onPressed: () => _openHomeTenders(context),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: amber.primary,
+                        foregroundColor: amber.textInverse,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppDimens.r12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.assignment_outlined),
+                      label: const Text('Find tender posts'),
+                    ),
                   ],
                 ),
               ),
@@ -324,6 +339,9 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
+            style: TextButton.styleFrom(
+              foregroundColor: AmberDuskTokens.colors.muted,
+            ),
             child: const Text('Cancel'),
           ),
           FilledButton(
@@ -334,6 +352,13 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
                 MaterialPageRoute<void>(builder: (_) => const WalletScreen()),
               );
             },
+            style: FilledButton.styleFrom(
+              backgroundColor: AmberDuskTokens.colors.primary,
+              foregroundColor: AmberDuskTokens.colors.textInverse,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppDimens.r12),
+              ),
+            ),
             child: const Text('Add funds'),
           ),
         ],
@@ -416,6 +441,13 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
           );
         },
       ),
+    );
+  }
+
+  void _openHomeTenders(BuildContext context) {
+    AppLogger.i('Dashboard work empty CTA opened Home', tag: 'dashboard.work');
+    context.read<NavigationProvider?>()?.setCurrentIndex(
+      MainNavDestinations.home,
     );
   }
 }

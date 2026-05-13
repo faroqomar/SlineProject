@@ -68,7 +68,7 @@ class SearchResultProfileCard extends StatelessWidget {
                         style: AppTypography.bodySmall.copyWith(
                           color: amber.textSubtle,
                         ),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
@@ -100,7 +100,9 @@ class SearchResultProfileCard extends StatelessWidget {
                   text: 'View Profile',
                   onPressed: onTap,
                   isPrimary: false,
-                  height: AppLayout.buttonHeightSmall,
+                  // Profile result actions use the compact 48dp height so
+                  // touch targets stay accessible on narrow secondary screens.
+                  height: AppLayout.buttonHeightCompact,
                   textStyle: AppTypography.captionBold.copyWith(
                     color: amber.primary,
                   ),
@@ -132,6 +134,8 @@ class SearchResultProfileCard extends StatelessWidget {
           color: amber.primary,
           fontWeight: FontWeight.w600,
         ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }

@@ -111,7 +111,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
               Navigator.pop(context, _shouldRefresh);
             },
             child: Scaffold(
-              backgroundColor: context.colorScheme.phoneBackground,
+              backgroundColor: AmberDuskTokens.colors.page,
               appBar: AppBar(
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back),
@@ -123,13 +123,13 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
                 // Phase 7 REDESIGN: Pill-style tabs matching dashboard pattern
                 bottom: TabBar(
                   indicator: BoxDecoration(
-                    color: context.colorScheme.primary,
+                    color: AmberDuskTokens.colors.primary,
                     borderRadius: BorderRadius.circular(AppDimens.r20),
                   ),
                   indicatorSize: TabBarIndicatorSize.tab,
-                  labelColor: Theme.of(context).colorScheme.onPrimary,
+                  labelColor: AmberDuskTokens.colors.textInverse,
                   labelStyle: AppTypography.captionBold,
-                  unselectedLabelColor: context.colorScheme.textSecondary,
+                  unselectedLabelColor: AmberDuskTokens.colors.muted,
                   unselectedLabelStyle: AppTypography.caption,
                   dividerColor: AmberDuskColors.transparent,
                   tabs: const [
@@ -504,7 +504,8 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
               }
             },
             style: FilledButton.styleFrom(
-              backgroundColor: context.colorScheme.primary,
+              backgroundColor: AmberDuskTokens.colors.primary,
+              foregroundColor: AmberDuskTokens.colors.textInverse,
             ),
             child: const Text('Pay & Confirm'),
           ),

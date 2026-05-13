@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/management/models/work_log_scope.dart';
 import 'package:sline_app/features/management/view/widgets/work_log_tile.dart';
@@ -49,14 +49,14 @@ class _OrderManagementPanelState extends State<OrderManagementPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Order Timeline & Notes',
-          style: AppTypography.h5.copyWith(color: colorScheme.text),
+          style: AppTypography.h5.copyWith(color: amberColors.text),
         ),
         const SizedBox(height: AppDimens.p12),
         AppCardContainer(
@@ -66,9 +66,13 @@ class _OrderManagementPanelState extends State<OrderManagementPanel> {
               Consumer<OrderManagementViewModel>(
                 builder: (context, vm, _) {
                   if (vm.isLoading && vm.logs.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.all(AppDimens.p24),
-                      child: Center(child: CircularProgressIndicator()),
+                    return Padding(
+                      padding: const EdgeInsets.all(AppDimens.p24),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: amberColors.primary,
+                        ),
+                      ),
                     );
                   }
                   if (vm.loadError != null && vm.logs.isEmpty) {
@@ -81,7 +85,7 @@ class _OrderManagementPanelState extends State<OrderManagementPanel> {
                             vm.loadError!,
                             key: OrderManagementPanel.timelineErrorKey,
                             style: AppTypography.bodySmall.copyWith(
-                              color: colorScheme.danger,
+                              color: amberColors.danger,
                             ),
                           ),
                           const SizedBox(height: AppDimens.p12),
@@ -90,6 +94,9 @@ class _OrderManagementPanelState extends State<OrderManagementPanel> {
                             onPressed: vm.isLoading
                                 ? null
                                 : () => vm.loadLogs(widget.scope),
+                            style: TextButton.styleFrom(
+                              foregroundColor: amberColors.primary,
+                            ),
                             child: const Text('Retry'),
                           ),
                         ],
@@ -103,7 +110,7 @@ class _OrderManagementPanelState extends State<OrderManagementPanel> {
                         'No activity yet.',
                         key: OrderManagementPanel.timelineEmptyKey,
                         style: AppTypography.bodySmall.copyWith(
-                          color: colorScheme.textSecondary,
+                          color: amberColors.muted,
                         ),
                       ),
                     );
@@ -117,7 +124,7 @@ class _OrderManagementPanelState extends State<OrderManagementPanel> {
                           child: Text(
                             vm.loadError!,
                             style: AppTypography.bodySmall.copyWith(
-                              color: colorScheme.danger,
+                              color: amberColors.danger,
                             ),
                           ),
                         ),
@@ -137,7 +144,7 @@ class _OrderManagementPanelState extends State<OrderManagementPanel> {
                   );
                 },
               ),
-              const Divider(),
+              Divider(color: amberColors.heroDivider),
               Consumer<OrderManagementViewModel>(
                 builder: (context, vm, _) {
                   return Column(
@@ -151,12 +158,39 @@ class _OrderManagementPanelState extends State<OrderManagementPanel> {
                               controller: _controller,
                               decoration: InputDecoration(
                                 hintText: 'Add a note...',
-                                hintStyle: TextStyle(
-                                  color: colorScheme.textSecondary,
+                                hintStyle: TextStyle(color: amberColors.muted),
+                                filled: true,
+                                fillColor: amberColors.surfaceRaised,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimens.r12,
+                                  ),
+                                  borderSide: BorderSide(
+                                    color: amberColors.surfaceHighest,
+                                  ),
                                 ),
-                                border: InputBorder.none,
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimens.r12,
+                                  ),
+                                  borderSide: BorderSide(
+                                    color: amberColors.surfaceHighest,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimens.r12,
+                                  ),
+                                  borderSide: BorderSide(
+                                    color: amberColors.primary,
+                                    width: AmberDuskTokens
+                                        .spacing
+                                        .borderWidthStrong,
+                                  ),
+                                ),
                               ),
-                              style: TextStyle(color: colorScheme.text),
+                              cursorColor: amberColors.primary,
+                              style: TextStyle(color: amberColors.text),
                               minLines: 1,
                               maxLines: 3,
                             ),
@@ -165,8 +199,8 @@ class _OrderManagementPanelState extends State<OrderManagementPanel> {
                             icon: Icon(
                               _isPrivate ? Icons.lock : Icons.lock_open,
                               color: _isPrivate
-                                  ? colorScheme.warning
-                                  : colorScheme.textSecondary,
+                                  ? amberColors.warning
+                                  : amberColors.muted,
                             ),
                             onPressed: vm.isSending
                                 ? null
@@ -182,14 +216,15 @@ class _OrderManagementPanelState extends State<OrderManagementPanel> {
                           IconButton(
                             key: OrderManagementPanel.sendButtonKey,
                             icon: vm.isSending
-                                ? const SizedBox(
+                                ? SizedBox(
                                     width: 16,
                                     height: 16,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
+                                      color: amberColors.primary,
                                     ),
                                   )
-                                : Icon(Icons.send, color: colorScheme.primary),
+                                : Icon(Icons.send, color: amberColors.primary),
                             onPressed: vm.isSending
                                 ? null
                                 : () async {
@@ -210,7 +245,7 @@ class _OrderManagementPanelState extends State<OrderManagementPanel> {
                           vm.actionError!,
                           key: OrderManagementPanel.actionErrorKey,
                           style: AppTypography.bodySmall.copyWith(
-                            color: colorScheme.danger,
+                            color: amberColors.danger,
                           ),
                         ),
                       ],

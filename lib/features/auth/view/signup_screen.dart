@@ -4,7 +4,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:sline_app/app/main_navigation_screen.dart';
+import 'package:sline_app/core/navigation/main_nav_destinations.dart';
+import 'package:sline_app/core/providers/navigation_provider.dart';
 import 'package:sline_app/core/providers/system_config_view_model.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
@@ -16,7 +17,6 @@ import 'package:sline_app/core/theme/app_states.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
-import 'package:sline_app/core/utils/transitions/custom_route_transitions.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_form_view_model.dart';
@@ -28,7 +28,10 @@ import 'package:sline_app/features/auth/viewmodels/auth_form_view_model.dart';
 /// The View handles navigation and inline error display based on ViewModel
 /// state, keeping the ViewModel framework-agnostic.
 class SignupScreen extends StatefulWidget {
-  const SignupScreen({super.key});
+  const SignupScreen({super.key, this.authViewModel});
+
+  /// Optional test seam for exercising success navigation without real auth IO.
+  final AuthFormViewModel? authViewModel;
 
   static const Key nameFieldKey = ValueKey<String>('signup_name_field');
   static const Key emailFieldKey = ValueKey<String>('signup_email_field');
@@ -84,6 +87,9 @@ class _SignupScreenState extends State<SignupScreen>
   bool get _hasNumber => _passwordController.text.contains(RegExp('[0-9]'));
   bool get _hasSpecialChar =>
       _passwordController.text.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+  bool get _confirmMatches =>
+      _confirmPasswordController.text.isNotEmpty &&
+      _confirmPasswordController.text == _passwordController.text;
 
   @override
   void initState() {
@@ -181,10 +187,10 @@ class _SignupScreenState extends State<SignupScreen>
   }
 
   void _onConfirmPasswordChanged() {
-    // Clear confirm error when user types
-    if (_confirmError != null) {
-      setState(() => _confirmError = null);
-    }
+    setState(() {
+      // Rebuild the confirm suffix and the required password checklist row.
+      _confirmError = null;
+    });
   }
 
   String _strengthLabel(double strength) {
@@ -282,11 +288,13 @@ class _SignupScreenState extends State<SignupScreen>
 
     if (success) {
       AppLogger.i('Signup successful, navigating to main', tag: 'Auth');
+      context.read<NavigationProvider?>()?.setCurrentIndex(
+        MainNavDestinations.home,
+      );
       unawaited(
-        Navigator.pushReplacement(
+        Navigator.of(
           context,
-          SlinePageRoute.forwardPush(child: const MainNavigationScreen()),
-        ),
+        ).pushNamedAndRemoveUntil('/main', (route) => false),
       );
     } else {
       final error = authVM.error ?? 'Registration failed';
@@ -381,26 +389,49 @@ class _SignupScreenState extends State<SignupScreen>
             ),
           ),
           const SizedBox(height: AppDimens.p8),
+          Text(
+            'Required',
+            style: AppTypography.micro.copyWith(
+              color: amber.muted,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: AppDimens.p4),
           _PasswordRequirementRow(
-            label: '8 or more characters',
+            label: 'At least 8 characters',
             isMet: _hasMinLength,
             textColor: amber.muted,
             successColor: amber.forest,
           ),
           _PasswordRequirementRow(
-            label: 'One uppercase letter',
+            label: 'Passwords match',
+            isMet: _confirmMatches,
+            textColor: amber.muted,
+            successColor: amber.forest,
+          ),
+          const SizedBox(height: AppDimens.p4),
+          Text(
+            'Strength hints',
+            style: AppTypography.micro.copyWith(
+              color: amber.muted,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: AppDimens.p4),
+          _PasswordRequirementRow(
+            label: 'Add an uppercase letter',
             isMet: _hasUppercase,
             textColor: amber.muted,
             successColor: amber.forest,
           ),
           _PasswordRequirementRow(
-            label: 'One number',
+            label: 'Add a number',
             isMet: _hasNumber,
             textColor: amber.muted,
             successColor: amber.forest,
           ),
           _PasswordRequirementRow(
-            label: 'One special character',
+            label: 'Add a special character',
             isMet: _hasSpecialChar,
             textColor: amber.muted,
             successColor: amber.forest,
@@ -434,6 +465,464 @@ class _SignupScreenState extends State<SignupScreen>
     final signupsDisabled =
         context.watch<SystemConfigViewModel?>()?.config.disableSignups ?? false;
 
+    final authProvider = widget.authViewModel;
+    final signupScaffold = Scaffold(
+      backgroundColor: amber.page,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [amber.background, amber.page],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimens.p20,
+                vertical: AppDimens.p24,
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: AppLayout.formMaxWidth,
+                ),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: panelRecipe.fill,
+                    borderRadius: BorderRadius.circular(panelRecipe.radius),
+                    border: Border.all(
+                      color: panelRecipe.border,
+                      width: AmberDuskTokens.spacing.borderWidth,
+                    ),
+                    boxShadow: AppDecorations.elevation(
+                      panelRecipe.elevationLevel,
+                      isDark: colorScheme.isDark,
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppDimens.p24),
+                    child: Form(
+                      key: _formKey,
+                      child: Consumer<AuthFormViewModel>(
+                        builder: (context, authVM, _) {
+                          return AnimatedBuilder(
+                            animation: _shakeController,
+                            builder: (context, child) {
+                              return Transform.translate(
+                                offset: Offset(
+                                  _shakeOffset(_shakeController.value),
+                                  0,
+                                ),
+                                child: child,
+                              );
+                            },
+                            child: _SignupFormContents(
+                              logoSlide: _logoSlide,
+                              logoFade: _logoFade,
+                              nameSlide: _nameSlide,
+                              nameFade: _nameFade,
+                              emailSlide: _emailSlide,
+                              emailFade: _emailFade,
+                              passwordSlide: _passwordSlide,
+                              passwordFade: _passwordFade,
+                              confirmSlide: _confirmSlide,
+                              confirmFade: _confirmFade,
+                              buttonSlide: _buttonSlide,
+                              buttonFade: _buttonFade,
+                              nameController: _nameController,
+                              emailController: _emailController,
+                              passwordController: _passwordController,
+                              confirmPasswordController:
+                                  _confirmPasswordController,
+                              generalError: _generalError,
+                              nameError: _nameError,
+                              emailError: _emailError,
+                              passwordError: _passwordError,
+                              confirmError: _confirmError,
+                              signupsDisabled: signupsDisabled,
+                              buildInlineError: _buildInlineError,
+                              buildPasswordStrength: _buildPasswordStrength,
+                              buildConfirmSuffix: _buildConfirmSuffix,
+                              onNameChanged: () {
+                                if (_nameError != null) {
+                                  setState(() => _nameError = null);
+                                }
+                              },
+                              onEmailChanged: () {
+                                if (_emailError != null) {
+                                  setState(() => _emailError = null);
+                                }
+                              },
+                              onRegister: () => _handleRegister(authVM),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (authProvider != null) {
+      return ChangeNotifierProvider<AuthFormViewModel>.value(
+        value: authProvider,
+        child: signupScaffold,
+      );
+    }
+
+    return ChangeNotifierProvider<AuthFormViewModel>(
+      create: (_) => AuthFormViewModel(),
+      child: signupScaffold,
+    );
+  }
+}
+
+class _SignupFormContents extends StatelessWidget {
+  const _SignupFormContents({
+    required this.logoSlide,
+    required this.logoFade,
+    required this.nameSlide,
+    required this.nameFade,
+    required this.emailSlide,
+    required this.emailFade,
+    required this.passwordSlide,
+    required this.passwordFade,
+    required this.confirmSlide,
+    required this.confirmFade,
+    required this.buttonSlide,
+    required this.buttonFade,
+    required this.nameController,
+    required this.emailController,
+    required this.passwordController,
+    required this.confirmPasswordController,
+    required this.generalError,
+    required this.nameError,
+    required this.emailError,
+    required this.passwordError,
+    required this.confirmError,
+    required this.signupsDisabled,
+    required this.buildInlineError,
+    required this.buildPasswordStrength,
+    required this.buildConfirmSuffix,
+    required this.onNameChanged,
+    required this.onEmailChanged,
+    required this.onRegister,
+  });
+
+  final Animation<Offset> logoSlide;
+  final Animation<double> logoFade;
+  final Animation<Offset> nameSlide;
+  final Animation<double> nameFade;
+  final Animation<Offset> emailSlide;
+  final Animation<double> emailFade;
+  final Animation<Offset> passwordSlide;
+  final Animation<double> passwordFade;
+  final Animation<Offset> confirmSlide;
+  final Animation<double> confirmFade;
+  final Animation<Offset> buttonSlide;
+  final Animation<double> buttonFade;
+  final TextEditingController nameController;
+  final TextEditingController emailController;
+  final TextEditingController passwordController;
+  final TextEditingController confirmPasswordController;
+  final String? generalError;
+  final String? nameError;
+  final String? emailError;
+  final String? passwordError;
+  final String? confirmError;
+  final bool signupsDisabled;
+  final Widget Function(String? errorText) buildInlineError;
+  final Widget Function(AppColorScheme colorScheme) buildPasswordStrength;
+  final Widget? Function(AppColorScheme colorScheme) buildConfirmSuffix;
+  final VoidCallback onNameChanged;
+  final VoidCallback onEmailChanged;
+  final VoidCallback onRegister;
+
+  @override
+  Widget build(BuildContext context) {
+    final amber = context.amberColors;
+    final colorScheme = context.colorScheme;
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // --- Header (Logo + Title + Subtitle) ---
+        SlideTransition(
+          position: logoSlide,
+          child: FadeTransition(
+            opacity: logoFade,
+            child: Column(
+              children: [
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: amber.primary,
+                    borderRadius: BorderRadius.circular(
+                      AmberDuskTokens.spacing.moduleRadius,
+                    ),
+                    boxShadow: AppDecorations.elevation(
+                      AmberDuskTokens.surfaces.cta.elevationLevel,
+                      isDark: colorScheme.isDark,
+                    ),
+                  ),
+                  child: SizedBox.square(
+                    dimension: AppLayout.avatarHero,
+                    child: Center(
+                      child: Text(
+                        'S',
+                        style: AppTypography.logo.copyWith(
+                          color: amber.textInverse,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppDimens.p24),
+                Text(
+                  'Create Account',
+                  style: AmberDuskTokens.typography.screenTitle.copyWith(
+                    color: amber.text,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppDimens.p8),
+                Text(
+                  'Create a secure workspace for bids, bookings, and messages.',
+                  style: AmberDuskTokens.typography.body.copyWith(
+                    color: amber.muted,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                if (signupsDisabled) ...[
+                  const SizedBox(height: AppDimens.p12),
+                  _AuthNotice(
+                    text: 'New account registration is temporarily paused.',
+                    background: amber.dangerMuted,
+                    foreground: amber.rust,
+                  ),
+                ],
+                if (generalError != null) ...[
+                  const SizedBox(height: AppDimens.p12),
+                  AnimatedSize(
+                    duration: AppMotion.fast,
+                    curve: AppMotion.curveStandard,
+                    child: _AuthNotice(
+                      text: generalError!,
+                      background: amber.dangerMuted,
+                      foreground: amber.rust,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppDimens.p32),
+
+        // --- Name Field ---
+        SlideTransition(
+          position: nameSlide,
+          child: FadeTransition(
+            opacity: nameFade,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _FieldLabel('Full Name'),
+                const SizedBox(height: AppDimens.p8),
+                AppTextField(
+                  fieldKey: SignupScreen.nameFieldKey,
+                  controller: nameController,
+                  hintText: 'Your full name',
+                  showClearButton: true,
+                  onChanged: (_) => onNameChanged(),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your name';
+                    }
+                    return null;
+                  },
+                ),
+                buildInlineError(nameError),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppDimens.p16),
+
+        // --- Email Field ---
+        SlideTransition(
+          position: emailSlide,
+          child: FadeTransition(
+            opacity: emailFade,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _FieldLabel('Email'),
+                const SizedBox(height: AppDimens.p8),
+                AppTextField(
+                  fieldKey: SignupScreen.emailFieldKey,
+                  controller: emailController,
+                  hintText: 'your@email.com',
+                  keyboardType: TextInputType.emailAddress,
+                  showClearButton: true,
+                  onChanged: (_) => onEmailChanged(),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your email';
+                    }
+                    if (!value.contains('@')) {
+                      return 'Please enter a valid email';
+                    }
+                    return null;
+                  },
+                ),
+                buildInlineError(emailError),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppDimens.p16),
+
+        // --- Password Field ---
+        SlideTransition(
+          position: passwordSlide,
+          child: FadeTransition(
+            opacity: passwordFade,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _FieldLabel('Password'),
+                const SizedBox(height: AppDimens.p8),
+                AppTextField(
+                  fieldKey: SignupScreen.passwordFieldKey,
+                  controller: passwordController,
+                  hintText: 'Create a password',
+                  obscureText: true,
+                  showPasswordToggle: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a password';
+                    }
+                    if (value.length < 8) {
+                      return 'Password must be at least 8 characters';
+                    }
+                    return null;
+                  },
+                ),
+                buildInlineError(passwordError),
+                if (passwordController.text.isNotEmpty)
+                  buildPasswordStrength(colorScheme),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppDimens.p16),
+
+        // --- Confirm Password Field ---
+        SlideTransition(
+          position: confirmSlide,
+          child: FadeTransition(
+            opacity: confirmFade,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _FieldLabel('Confirm Password'),
+                const SizedBox(height: AppDimens.p8),
+                AppTextField(
+                  fieldKey: SignupScreen.confirmPasswordFieldKey,
+                  controller: confirmPasswordController,
+                  hintText: 'Confirm password',
+                  obscureText: true,
+                  showPasswordToggle: true,
+                  suffixIcon: buildConfirmSuffix(colorScheme),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please confirm your password';
+                    }
+                    return null;
+                  },
+                ),
+                buildInlineError(confirmError),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppDimens.p16),
+        Text(
+          'By continuing, you agree to use SLine for real work, safe payments, '
+          'and respectful messages.',
+          style: AmberDuskTokens.typography.bodySmall.copyWith(
+            color: amber.muted,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: AppDimens.p24),
+
+        // --- Actions ---
+        SlideTransition(
+          position: buttonSlide,
+          child: FadeTransition(
+            opacity: buttonFade,
+            child: Consumer<AuthFormViewModel>(
+              builder: (context, authVM, _) {
+                return Column(
+                  children: [
+                    AppButton(
+                      tapTargetKey: SignupScreen.signUpButtonKey,
+                      text: 'Create Account',
+                      isLoading: authVM.isLoading,
+                      width: double.infinity,
+                      onPressed: signupsDisabled ? null : onRegister,
+                    ),
+                    const SizedBox(height: AppDimens.p24),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          'Already have an account? ',
+                          style: AmberDuskTokens.typography.bodySmall.copyWith(
+                            color: amber.muted,
+                          ),
+                        ),
+                        GestureDetector(
+                          key: SignupScreen.signInLinkKey,
+                          onTap: () {
+                            AppLogger.i(
+                              'Signin link tapped from signup',
+                              tag: 'Auth',
+                            );
+                            Navigator.pop(context);
+                          },
+                          child: Text(
+                            'Sign In',
+                            style: AmberDuskTokens.typography.control.copyWith(
+                              color: amber.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/*
     return ChangeNotifierProvider(
       create: (_) => AuthFormViewModel(),
       child: Scaffold(
@@ -832,6 +1321,7 @@ class _SignupScreenState extends State<SignupScreen>
     );
   }
 }
+*/
 
 /// Reusable field label for the grouped signup form.
 class _FieldLabel extends StatelessWidget {

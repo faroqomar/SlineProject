@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/core/widgets/signed_image.dart';
 import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 
+/// Lets the current user manage portfolio proof items from profile settings.
+///
+/// The screen keeps CRUD and storage uploads in [ProfileViewModel] while the
+/// view renders Amber Dusk list, dialog, and destructive-action treatment.
 class ManagePortfolioScreen extends StatefulWidget {
+  /// Creates the manage portfolio route.
   const ManagePortfolioScreen({super.key});
 
   @override
@@ -40,6 +47,7 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setState) {
           final colorScheme = Theme.of(context).colorScheme;
+          final amberColors = context.amberColors;
           // Local state for the dialog
           var isUploading = localImagePath == 'loading';
 
@@ -69,9 +77,7 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
 
                               // Critical: Add delay to let iOS picker fully cleanup
                               // This prevents race condition crash on iPhone
-                              await Future.delayed(
-                                const Duration(milliseconds: 300),
-                              );
+                              await Future.delayed(AppMotion.standard);
 
                               if (context.mounted) {
                                 if (vm.portfolioUploadError != null) {
@@ -91,26 +97,32 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                                   isUploading = false;
                                 });
                               }
-                            } on Exception catch (_) {
-                              // Also delay on error path
-                              await Future.delayed(
-                                const Duration(milliseconds: 300),
+                            } on Exception catch (e, st) {
+                              AppLogger.w(
+                                'ManagePortfolioScreen: image upload failed',
+                                tag: 'Profile',
+                                error: e,
+                                json: <String, dynamic>{
+                                  'stack_trace': st.toString(),
+                                },
                               );
+                              // Keep upload feedback visible long enough before
+                              // reverting the local preview on failure.
+                              await Future.delayed(AppMotion.standard);
                               if (context.mounted) {
                                 setState(() {
-                                  localImagePath =
-                                      item?['image_url']; // Revert on error
+                                  localImagePath = item?['image_url'];
                                   isUploading = false;
                                 });
                               }
                             }
                           },
                     child: Container(
-                      height: 150,
+                      height: AppDimens.managePortfolioImagePreviewHeight,
                       width: double.infinity,
                       decoration: BoxDecoration(
                         color: colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppDimens.r12),
                         border: Border.all(
                           color: colorScheme.outline.withValues(alpha: 0.2),
                         ),
@@ -126,23 +138,22 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                               children: [
                                 Icon(
                                   Icons.check_circle,
-                                  size: 48,
-                                  color: AppColors.teal,
+                                  size: AppDimens.emptyStateIconSize,
+                                  color: amberColors.success,
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: AppDimens.p8),
                                 Text(
                                   'Image uploaded!',
                                   style: AppTypography.bodySmall.copyWith(
                                     color: colorScheme.onSurfaceVariant,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: AppDimens.p4),
                                 Text(
                                   'Tap to change',
-                                  style: AppTypography.bodySmall.copyWith(
+                                  style: AppTypography.micro.copyWith(
                                     color: colorScheme.onSurfaceVariant
                                         .withValues(alpha: 0.6),
-                                    fontSize: 10,
                                   ),
                                 ),
                               ],
@@ -152,10 +163,10 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                               children: [
                                 Icon(
                                   Icons.add_photo_alternate,
-                                  size: 40,
+                                  size: AppDimens.iconSizeLarge,
                                   color: colorScheme.onSurfaceVariant,
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: AppDimens.p8),
                                 Text(
                                   'Add Image',
                                   style: AppTypography.bodySmall.copyWith(
@@ -166,7 +177,7 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                             ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppDimens.p16),
                   TextField(
                     controller: titleController,
                     decoration: const InputDecoration(
@@ -174,7 +185,7 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                       border: OutlineInputBorder(),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppDimens.p16),
                   TextField(
                     controller: descController,
                     decoration: const InputDecoration(
@@ -248,7 +259,9 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
               vm.deletePortfolioItem(itemId);
               Navigator.pop(context);
             },
-            style: TextButton.styleFrom(foregroundColor: AppColors.lightRed),
+            style: TextButton.styleFrom(
+              foregroundColor: context.amberColors.danger,
+            ),
             child: const Text('Delete'),
           ),
         ],
@@ -259,6 +272,7 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
@@ -278,18 +292,21 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                   ),
                   child: Row(
                     children: [
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: colorScheme.cardBackground,
-                            borderRadius: BorderRadius.circular(12),
+                      SizedBox.square(
+                        dimension: AppDimens.touchTarget,
+                        child: IconButton(
+                          tooltip: 'Back',
+                          style: IconButton.styleFrom(
+                            backgroundColor: amberColors.surface,
+                            foregroundColor: amberColors.text,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppDimens.r12,
+                              ),
+                            ),
                           ),
-                          child: Icon(
-                            Icons.arrow_back,
-                            color: colorScheme.text,
-                          ),
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.arrow_back),
                         ),
                       ),
                       const SizedBox(width: AppDimens.p16),
@@ -316,10 +333,10 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                       children: [
                         Icon(
                           Icons.folder_open,
-                          size: 64,
+                          size: AppDimens.emptyStateIconSize,
                           color: colorScheme.textSecondary,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppDimens.p16),
                         Text(
                           'No items yet',
                           style: AppTypography.bodyMedium.copyWith(
@@ -344,27 +361,29 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                         direction: DismissDirection.endToStart,
                         background: Container(
                           alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.only(right: 20),
+                          padding: const EdgeInsets.only(right: AppDimens.p20),
                           decoration: BoxDecoration(
-                            color: AppColors.lightRed,
-                            borderRadius: BorderRadius.circular(20),
+                            color: amberColors.dangerMuted,
+                            borderRadius: BorderRadius.circular(AppDimens.r20),
                           ),
-                          child: const Icon(Icons.delete, color: Colors.white),
+                          child: Icon(Icons.delete, color: amberColors.text),
                         ),
                         confirmDismiss: (direction) async {
                           _confirmDelete(context, vm, item['id']);
                           return false; // Handled by dialog
                         },
                         child: AppCardContainer(
-                          padding: const EdgeInsets.all(12),
-                          borderRadius: BorderRadius.circular(20),
+                          padding: const EdgeInsets.all(AppDimens.p12),
+                          borderRadius: BorderRadius.circular(AppDimens.r20),
                           child: Row(
                             children: [
                               ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(
+                                  AppDimens.r12,
+                                ),
                                 child: Container(
-                                  width: 80,
-                                  height: 80,
+                                  width: AppDimens.p80,
+                                  height: AppDimens.p80,
                                   color: colorScheme.background,
                                   child: item['image_url'] != null
                                       ? SignedImage(
@@ -378,7 +397,7 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                                         ),
                                 ),
                               ),
-                              const SizedBox(width: 16),
+                              const SizedBox(width: AppDimens.p16),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -402,9 +421,10 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                                 ),
                               ),
                               IconButton(
+                                tooltip: 'Edit portfolio item',
                                 icon: Icon(
                                   Icons.edit,
-                                  color: colorScheme.primary,
+                                  color: amberColors.primary,
                                 ),
                                 onPressed: () =>
                                     _showAddEditDialog(context, vm, item),
@@ -425,9 +445,15 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
           final vm = context.read<ProfileViewModel>();
           _showAddEditDialog(context, vm);
         },
-        backgroundColor: AppColors.teal,
-        label: const Text('Add Item', style: TextStyle(color: Colors.white)),
-        icon: const Icon(Icons.add, color: Colors.white),
+        backgroundColor: amberColors.primary,
+        foregroundColor: amberColors.textInverse,
+        label: Text(
+          'Add Item',
+          style: AppTypography.bodyMedium.copyWith(
+            color: amberColors.textInverse,
+          ),
+        ),
+        icon: const Icon(Icons.add),
       ),
     );
   }

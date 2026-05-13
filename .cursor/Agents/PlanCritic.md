@@ -195,6 +195,8 @@ Rewrite the full plan:
 - phases or sub-phases do not name agent ownership
 - visual proof is not classified as design-reference, current-app runtime, old-app baseline, or manual QA proof
 - a visual plan uses screenshot packs as runtime QA proof without a route/device matrix and hash or identity sanity check
+- a form, composer, bottom sheet, payment screen, booking screen, or transactional CTA plan lacks focused, active, disabled, error, loading, and recovery-state runtime checks for the actual controls users touch
+- a payment or booking plan omits safe customer-facing result states, hides dashboard/list bucket verification, or allows raw IDs/callback metadata to appear in primary UI
 
 ### Backend / Supabase Gate — FAIL If:
 

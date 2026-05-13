@@ -431,6 +431,9 @@ When a UI or visual-design phase uses screenshots, Open Design, browser captures
 2. For route/device screenshot sets, perform a hash or identity sanity check before treating the set as route-specific runtime proof.
 3. If screenshots are unavailable or fail sanity checks, record the gap and keep runtime visual QA open instead of closing the phase.
 4. Open Design or design-system screenshots may prove visual intent, but they are not proof that the implemented Flutter route rendered correctly.
+5. For forms, chat composers, offer sheets, payment screens, booking screens, filters, and transactional CTAs, exercise focused, active, disabled, error, loading, and recovery states in the current app. Static resting captures and raw token scans do not prove inherited `TextField`, `InputDecoration`, route transition, or button-state styling.
+6. For payment or booking work, verify the originating route, result route, Dashboard Bookings, Dashboard Work, and any relevant list buckets after success, pending, failed, canceled, retry, and recovery paths. Terminal records must not remain in active/upcoming buckets unless the lifecycle contract explicitly says so.
+7. If an external gateway submission, account creation, post publish, or other externally visible action cannot be executed in the tool session, record the exact branch that remains unproven and the screenshots or commands needed. Do not mark that flow complete from client tests or pre-submit screens alone.
 
 
 ### Step 3.1.4 — Scope Amendment Ledger

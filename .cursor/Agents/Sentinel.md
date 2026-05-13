@@ -164,6 +164,8 @@ If the plan included UI skill steps, also require:
 - visual proof source labels: design reference, old-app baseline, current-app runtime capture, or manual QA note
 - for route/device screenshot packs, confirmation that duplicate-hash or identity sanity checks did not invalidate the pack as runtime proof
 - for broad UI phases, a per-file emulator/manual QA matrix covering every touched Dart source file, changed test fixture, docs artifact, and design-reference screenshot; unresolved rows must be marked open instead of implied complete
+- for forms, composers, sheets, payment/booking screens, and transactional CTAs, runtime checks for focused, active, disabled, error, loading, recovery, and route-transition background states
+- for payment or booking work, verification that success, pending, failed, canceled, retry, and recovery paths land in the correct source-route and dashboard/list buckets, without exposing technical IDs or raw callback metadata in customer-facing UI
 - confirmation that `Sline_everything/UI_SURFACE_INVENTORY.md` was updated or explicitly left unchanged with a reason
 
 For review-fix passes, behavior changes must have behavior-level tests. Do not accept tests that only assert token constants or static theme values when the finding was about runtime behavior. If a fix changes filtering, action enablement, callback routing, accessibility semantics, visual state selection, visible labels, or badge/status text, require a widget/unit test that exercises that behavior directly. When text changes, scan the test suite for stale assertions against the same component before approving the fix.

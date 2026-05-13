@@ -110,7 +110,7 @@ Deep-link handlers are not normal screens, but they create visible loading, erro
 | Surface | File | Subsurfaces / related UI |
 | --- | --- | --- |
 | Home feed | `lib/features/home/view/home_screen.dart` | Feed states, filter entry, task cards, signed media, refresh/empty/error states |
-| Home discovery mode tabs | `lib/features/home/view/home_screen.dart` | `_HomeDiscoveryMode` chips for All Work, Bookings, and Tenders; changes feed filtering and empty-state copy |
+| Home discovery mode tabs | `lib/features/home/view/home_screen.dart` | `_HomeDiscoveryMode` chips for All posts, Booking posts, and Tender posts; changes feed filtering, item counts, and empty-state copy |
 | Home task details entry | `lib/features/home/view/home_screen.dart` | `TaskCard.onTap` pushes `TaskDetailsScreen` with `MaterialPageRoute` |
 | Home filters sheet | `lib/features/home/view/widgets/filters_modal.dart` | Draggable sheet with sort, budget range, delivery time, seller level, reset, and apply controls |
 | Categories | `lib/features/categories/view/categories_screen.dart` | Searchable category grid, skeleton loading, empty/error states; category taps currently log only |
@@ -155,11 +155,11 @@ Deep-link handlers are not normal screens, but they create visible loading, erro
 | Bookings discovery | `lib/features/booking/view/bookings_discovery_screen.dart` | Search field, booking/service discovery list, empty/error states |
 | Bookings list | `lib/features/booking/view/bookings_list_screen.dart` | TabBar/TabBarView, status filter bar, inline refresh error banner, booking state cards |
 | Booking details | `lib/features/booking/view/booking_details_screen.dart` | Status header, requester/provider sections, timeline, legacy slot warning, provider awaiting-payment state, approve/release disabled/checking states, actions, report issue reason dialog |
-| Payment checkout | `lib/features/booking/view/payment_checkout_screen.dart` | Draft cleanup state, payment launch, success/error states |
+| Payment checkout | `lib/features/booking/view/payment_checkout_screen.dart` | Draft cleanup state, payment launch, WebView intent-stream handoff, booking recovery, success/pending/error states |
 | Payment method | `lib/features/booking/view/payment_method_screen.dart` | Legacy demo payment form; no current lib/test call sites found during 2026-05-13 inventory scan |
-| Payment return | `lib/features/booking/view/payment_return_screen.dart` | Success/failure return status and next actions |
-| Web payment callback startup surface | `lib/main.dart`, `lib/features/booking/view/payment_return_screen.dart` | Startup home builder can render `PaymentReturnScreen` for explicit or pending web payment callbacks |
-| Payment webview | `lib/features/booking/view/payment_webview_screen.dart` | WebView loading/error/retry, success/failure path handling, back-navigation prompt |
+| Payment return | `lib/features/booking/view/payment_return_screen.dart` | Sanitized success/failure/pending return status, pending-store fallback recovery, booking refresh, and next actions |
+| Web payment callback startup surface | `lib/main.dart`, `lib/features/booking/view/payment_return_screen.dart` | Startup home builder can render `PaymentReturnScreen` for explicit sanitized or pending web payment callbacks |
+| Payment webview | `lib/features/booking/view/payment_webview_screen.dart` | WebView loading/error/retry, trusted sanitized callback handling, realtime intent completion pop, back-navigation prompt |
 | Booking card | `lib/features/booking/view/widgets/booking_card.dart` | Booking list card, date/payment/status chips |
 | Dashboard booking card | `lib/features/booking/view/widgets/dashboard_booking_card.dart` | Booking summary inside dashboard contexts |
 | Payment order summary | `lib/features/booking/view/widgets/payment_order_summary_card.dart` | Reusable payment summary card |
@@ -169,15 +169,15 @@ Deep-link handlers are not normal screens, but they create visible loading, erro
 | Surface | File | Subsurfaces / related UI |
 | --- | --- | --- |
 | Messages | `lib/features/chat/view/messages_screen.dart` | Conversation search, online row, conversation list, delete confirmation dialog |
-| Messages controls and states | `lib/features/chat/view/messages_screen.dart` | Search toggle/bar, Received/Sent segmented control, online-now row, empty/no-results/loading states, chat-return unread-badge refresh |
+| Messages controls and states | `lib/features/chat/view/messages_screen.dart` | Search toggle/bar with current-mode guidance, Received/Sent segmented control, online-now row, empty/no-results/loading states, chat-return unread-badge refresh |
 | Chat | `lib/features/chat/view/chat_screen.dart` | Message list, composer, attachment actions, popup menu, reason dialogs, offer actions |
 | Chat message interactions | `lib/features/chat/view/chat_screen.dart` | Long-press Copy/Reply bottom sheet, swipe-to-reply, reply preview bar, copied/error SnackBars |
 | Chat report menu and dialogs | `lib/features/chat/view/chat_screen.dart` | Overflow menu, report conversation/user reason dialogs, report result SnackBars |
 | Chat composer and transient controls | `lib/features/chat/view/chat_screen.dart` | Attachment action, send loading state, typing indicator, scroll-to-latest FAB, send/attachment failure SnackBars |
 | Conversation tile | `lib/features/chat/view/widgets/conversation_list_tile.dart` | Conversation row, unread state, participant/avatar state |
 | Message bubble | `lib/features/chat/view/widgets/message_bubble.dart` | Text, emoji-only rendering, reply quote, sent/delivered/read status icons, link tap handling, file/link semantics, feedback on launch failure |
-| Offer message bubble | `lib/features/chat/view/widgets/offer_message_bubble.dart` | Accept/decline/cancel/deliver/complete action surface plus lifecycle chips: `Pending Payment`, `Paid`, `Completed • Paid`, accepted/canceled/declined, and `Pending Response` |
-| Create offer sheet | `lib/features/chat/view/widgets/create_offer_sheet.dart` | Bottom sheet for direct offer creation |
+| Offer message bubble | `lib/features/chat/view/widgets/offer_message_bubble.dart` | Amber Dusk direct-offer action surface with IQD amount display plus lifecycle chips: `Pending Payment`, `Paid`, `Completed • Paid`, accepted/canceled/declined, and `Pending Response` |
+| Create offer sheet | `lib/features/chat/view/widgets/create_offer_sheet.dart` | Amber Dusk bottom sheet for direct offer creation with whole-IQD amount input |
 | Chat context widget | `lib/features/chat/view/widgets/chat_context_widget.dart` | Task/profile context header and navigation feedback |
 | Attachment tile | `lib/features/chat/attachments/widgets/attachment_message_tile.dart` | Signed URL loading, retry/error state, media preview, hero transition |
 | Fullscreen attachment preview | `lib/core/widgets/fullscreen_image_viewer.dart` | Image zoom/preview route used by attachment/media surfaces |
@@ -188,10 +188,10 @@ Deep-link handlers are not normal screens, but they create visible loading, erro
 | --- | --- | --- |
 | Dashboard shell | `lib/features/dashboard/view/dashboard_screen.dart` | TabBar/TabBarView, role/settings bottom sheet, dashboard app bar |
 | Overview tab | `lib/features/dashboard/view/tabs/overview_tab.dart` | Summary cards, next actions, activity preview |
-| Bookings tab | `lib/features/dashboard/view/tabs/bookings_tab.dart` | Booking dashboard lists and state cards |
-| Work tab | `lib/features/dashboard/view/tabs/work_tab.dart` | Nested TabBar/TabBarView for work states |
-| Inbox tab | `lib/features/dashboard/view/tabs/inbox_tab.dart` | Inbox/action queues, awarding/payment/withdrawal entry points |
-| Inbox mode toggle | `lib/features/dashboard/view/tabs/inbox_tab.dart` | Received/Sent segmented mode; Sent mode disabled placeholder for missing dashboard contract; award/pay SnackBars |
+| Bookings tab | `lib/features/dashboard/view/tabs/bookings_tab.dart` | Booking dashboard lists, state cards, and empty-state browse CTA |
+| Work tab | `lib/features/dashboard/view/tabs/work_tab.dart` | Nested TabBar/TabBarView for work states plus empty-state tender discovery CTA |
+| Inbox tab | `lib/features/dashboard/view/tabs/inbox_tab.dart` | Inbox/action queues, awarding/payment/withdrawal entry points, and Messages CTA for full Received/Sent threads |
+| Inbox mode toggle | `lib/features/dashboard/view/tabs/inbox_tab.dart` | Removed disabled Sent placeholder; dashboard Inbox now presents action queues instead of unavailable message-mode tabs |
 | Wallet tab | `lib/features/dashboard/view/tabs/wallet_tab.dart` | Embedded wallet snapshot and recent wallet state |
 | Dashboard widgets | `lib/features/dashboard/view/widgets/` | Counters grid, next actions, work item card, activity feed preview, insufficient funds dialogs |
 | Dashboard payment/action feedback | `lib/features/dashboard/view/tabs/inbox_tab.dart`, `lib/features/dashboard/view/tabs/work_tab.dart`, `lib/features/dashboard/view/widgets/next_actions_list.dart` | Proposal payment launcher, post-payment return refresh, insufficient-balance dialogs, cancel-award success/error SnackBars, ErrorMapper SnackBars |
@@ -234,7 +234,7 @@ Deep-link handlers are not normal screens, but they create visible loading, erro
 | Wallet screen | `lib/features/wallet/view/wallet_screen.dart` | Standalone wallet surface |
 | Wallet dashboard | `lib/features/wallet/view/wallet_dashboard_screen.dart` | Standalone widget/screen file exists, but current route/reference scan found no app route registration |
 | Wallet shared body | `lib/features/wallet/view/widgets/wallet_shared_body.dart` | Shared wallet layout body |
-| Wallet shared states | `lib/features/wallet/view/widgets/wallet_shared_body.dart` | Loading card, unavailable/error retry card, insights tiles, withdrawals coming-soon action card |
+| Wallet shared states | `lib/features/wallet/view/widgets/wallet_shared_body.dart` | Loading card, unavailable/error retry card, insights tiles, and intentional disabled withdraw state with availability reason |
 | Wallet hero card | `lib/features/wallet/view/widgets/wallet_hero_card.dart` | Balance hero summary |
 | Wallet snapshot card | `lib/features/wallet/view/widgets/wallet_snapshot_card.dart` | Action pills, disabled action states, snapshot metrics |
 | Wallet timeline card | `lib/features/wallet/view/widgets/wallet_timeline_card.dart` | Wallet activity/timeline surface |
@@ -334,7 +334,7 @@ Last deep scan: 2026-05-13 with `rg "ScaffoldMessenger\.of\(|showSnackBar\(|Snac
 | Profile | `lib/features/profile/view/my_services_screen.dart` | Placeholder service actions | `Edit service coming soon` and `Create service coming soon` |
 | Profile | `lib/features/profile/view/profile_screen.dart` | Public profile blocked while signed out | `Sign in to view your public profile.` |
 | Profile | `lib/features/profile/view/public_profile_screen.dart` | Share placeholder | `Share coming soon` |
-| Profile | `lib/features/profile/view/public_profile_screen.dart` | Message action blocked/failure | `You must be logged in to message.`, `You cannot message yourself.`, or `Error starting chat: $e` |
+| Profile | `lib/features/profile/view/public_profile_screen.dart` | Message action blocked/failure | `You must be logged in to message.`, `You cannot message yourself.`, or `Could not start chat. Please try again.` |
 | Profile | `lib/features/profile/view/public_profile_screen.dart` | Report user result | `Report submitted.`, `vm.error`, or `Report failed.` |
 | Profile | `lib/features/profile/view/settings_screen.dart` | Settings placeholders | `Notification settings coming soon`, `Language settings coming soon`, and `Request withdrawal — coming soon` |
 | Tasks | `lib/features/tasks/services/task_deep_link_handler.dart` | Missing deep-linked task | `Task not found` |
@@ -420,7 +420,7 @@ Last deep scan: 2026-05-13 with `rg "ScaffoldMessenger\.of\(|showSnackBar\(|Snac
 | Search/categories/favorites/saved | `lib/features/search/view/search_screen.dart`, `lib/features/categories/view/categories_screen.dart`, `lib/features/favorites/view/favorites_screen.dart`, `lib/features/saved/view/saved_tasks_screen.dart` | Search initial/no-result/error states, category skeleton/empty/error, favorite empty/error, saved-task empty/error and empty CTA |
 | Task creation/details | `lib/features/tasks/view/create_task_screen.dart`, `lib/features/tasks/view/task_details_screen.dart`, `lib/features/tasks/view/widgets/task_concept_section.dart` | Multi-step `Type`/`Details`/`Review` wizard, tender/booking selected cards, category loading, review preview, report/chat/account guard states |
 | Requests/proposals | `lib/features/tasks/view/widgets/requests/requests_list_screen.dart`, `lib/features/tasks/view/widgets/requests/submit_request_sheet.dart`, `lib/features/tasks/view/widgets/requests/request_award_dialog.dart`, `lib/features/tasks/view/widgets/requests/widgets/request_tile.dart` | Request skeletons, non-tender guard, expired filter, empty/filter-empty/error states, replace-mode sheet, upload coming-soon row, award deadline/risk sections, price mismatch, request-tile payment recovery, inline retry/dismiss error |
-| Booking/payment | `lib/features/booking/view/bookings_discovery_screen.dart`, `lib/features/booking/view/bookings_list_screen.dart`, `lib/features/booking/view/booking_details_screen.dart`, `lib/features/booking/view/payment_checkout_screen.dart`, `lib/features/booking/view/payment_return_screen.dart`, `lib/features/booking/view/payment_webview_screen.dart`, `lib/features/booking/view/payment_method_screen.dart` | Booking discovery search/semantics, client/provider tabs, filter chips, state cards, legacy slot warning, awaiting-payment provider state, approve/release checking/disabled state, status banners, dispute banners, QiCard/demo checkout variants, success/error/gateway waiting, return terminal states, WebView error/retry/back behavior, legacy form validators |
+| Booking/payment | `lib/features/booking/view/bookings_discovery_screen.dart`, `lib/features/booking/view/bookings_list_screen.dart`, `lib/features/booking/view/booking_details_screen.dart`, `lib/features/booking/view/payment_checkout_screen.dart`, `lib/features/booking/view/payment_return_screen.dart`, `lib/features/booking/view/payment_webview_screen.dart`, `lib/features/booking/view/payment_method_screen.dart` | Booking discovery search/semantics, client/provider tabs, filter chips, state cards, legacy slot warning, awaiting-payment provider state, approve/release checking/disabled state, status banners, dispute banners, QiCard/demo checkout variants, sanitized success/pending/error/gateway waiting, return terminal states, WebView intent completion/error/retry/back behavior, route-transition background, focused note/input states, legacy form validators |
 | Chat/messages | `lib/features/chat/view/messages_screen.dart`, `lib/features/chat/view/chat_screen.dart`, `lib/features/chat/view/widgets/create_offer_sheet.dart`, `lib/features/chat/view/widgets/message_bubble.dart`, `lib/features/chat/view/widgets/offer_message_bubble.dart`, `lib/features/chat/attachments/widgets/attachment_message_tile.dart` | Conversation skeletons, `Received`/`Sent` mode, online row, delete swipe background, empty/no-result states, chat-return unread refresh, chat initial spinner, `Start the conversation`, typing indicator, context banner, composer spinner, reply preview, emoji-only bubbles, reply quotes, read/delivered icons, offer lifecycle chips, attachment skeleton/error/retry/hero preview |
 | Dashboard | `lib/features/dashboard/view/dashboard_screen.dart`, `lib/features/dashboard/view/tabs/inbox_tab.dart`, `lib/features/dashboard/view/tabs/work_tab.dart`, `lib/features/dashboard/view/widgets/dashboard_counters_grid.dart`, `lib/features/dashboard/view/widgets/next_actions_list.dart`, `lib/features/dashboard/view/widgets/work_item_card.dart` | Web payment callback recovery, payment route return refresh, role/settings sheet, counter loading/count-up cards, status-colored metric routing, next-action state, work-card progress/status/review alerts and action buttons |
 | Notifications | `lib/features/notifications/view/widgets/notification_badge_button.dart`, `lib/features/notifications/view/notifications_modal.dart`, `lib/features/notifications/view/widgets/notification_tile.dart` | Animated unread badge with `9+` cap, modal skeleton/empty/error/retry, unread tile tint/dot/type icon |

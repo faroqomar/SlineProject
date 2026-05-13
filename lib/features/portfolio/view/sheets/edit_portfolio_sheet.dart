@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_states.dart';
+import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/features/portfolio/models/portfolio_item.dart';
 import 'package:sline_app/features/portfolio/viewmodels/portfolio_view_model.dart';
 
-/// Bottom sheet for editing an existing portfolio item (title/description only).
+/// Bottom sheet for editing portfolio title and description fields.
+///
+/// Image storage stays intentionally out of this sheet so existing portfolio
+/// path/public URL behavior remains owned by the ViewModel/repository layer.
 class EditPortfolioSheet extends StatefulWidget {
   const EditPortfolioSheet({
     super.key,
@@ -27,7 +35,11 @@ class EditPortfolioSheet extends StatefulWidget {
       context: context,
       useSafeArea: true,
       isScrollControlled: true,
-      builder: (ctx) => EditPortfolioSheet(item: item, controller: controller),
+      barrierColor: context.amberColors.scrim,
+      backgroundColor: AmberDuskTokens.colors.transparent,
+      builder: (ctx) => _InsetSheetFrame(
+        child: EditPortfolioSheet(item: item, controller: controller),
+      ),
     );
   }
 
@@ -115,55 +127,77 @@ class _EditPortfolioSheetState extends State<EditPortfolioSheet> {
   @override
   Widget build(BuildContext context) {
     final viewInsets = MediaQuery.of(context).viewInsets.bottom;
+    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
+    final buttonTheme = AmberDuskTokens.widgetTheme.buttons;
+
     return Padding(
       padding: EdgeInsets.only(bottom: viewInsets),
       child: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          padding: const EdgeInsets.fromLTRB(
+            AppDimens.p16,
+            AppDimens.p16,
+            AppDimens.p16,
+            AppDimens.p24,
+          ),
           child: Form(
             key: _formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).dividerColor,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 12),
+                const _SheetHandle(),
+                const SizedBox(height: AppDimens.p12),
                 Text(
                   'Edit Portfolio Item',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: AppTypography.h5.copyWith(color: colorScheme.text),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppDimens.p16),
                 TextFormField(
                   controller: _title,
-                  decoration: const InputDecoration(labelText: 'Title'),
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: colorScheme.text,
+                  ),
+                  decoration: _fieldDecoration(context, 'Title'),
                   validator: (v) =>
                       (v == null || v.trim().isEmpty) ? 'Required' : null,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppDimens.p12),
                 TextFormField(
                   controller: _desc,
                   minLines: 2,
                   maxLines: 5,
-                  decoration: const InputDecoration(
-                    labelText: 'Description (optional)',
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: colorScheme.text,
+                  ),
+                  decoration: _fieldDecoration(
+                    context,
+                    'Description (optional)',
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppDimens.p16),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: amberColors.primary,
+                      foregroundColor: amberColors.textInverse,
+                      minimumSize: Size.fromHeight(buttonTheme.minHeight),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(buttonTheme.radius),
+                      ),
+                      textStyle: buttonTheme.textStyle,
+                    ),
                     onPressed: _saving ? null : _save,
                     child: _saving
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                        ? SizedBox(
+                            height: AppInteractionStates.loadingSize,
+                            width: AppInteractionStates.loadingSize,
+                            child: CircularProgressIndicator(
+                              strokeWidth:
+                                  AppInteractionStates.loadingStrokeWidth,
+                              color: amberColors.textInverse,
+                            ),
                           )
                         : const Text('Save'),
                   ),
@@ -172,6 +206,79 @@ class _EditPortfolioSheetState extends State<EditPortfolioSheet> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  InputDecoration _fieldDecoration(BuildContext context, String label) {
+    final colorScheme = context.colorScheme;
+    final fieldTheme = AmberDuskTokens.widgetTheme.fields;
+
+    return InputDecoration(
+      labelText: label,
+      labelStyle: fieldTheme.labelStyle.copyWith(
+        color: colorScheme.textSecondary,
+      ),
+      filled: true,
+      fillColor: fieldTheme.background,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(fieldTheme.radius),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(fieldTheme.radius),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(fieldTheme.radius),
+        borderSide: BorderSide(color: context.amberColors.primary),
+      ),
+      contentPadding: fieldTheme.padding,
+    );
+  }
+}
+
+/// Inset frame for edit sheets using the Open Design rounded sheet geometry.
+class _InsetSheetFrame extends StatelessWidget {
+  const _InsetSheetFrame({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final sheetRecipe = AmberDuskTokens.surfaces.sheet;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppDimens.p10,
+        AppDimens.p0,
+        AppDimens.p10,
+        AppDimens.p10,
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: sheetRecipe.fill,
+          borderRadius: BorderRadius.circular(sheetRecipe.radius),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: child,
+      ),
+    );
+  }
+}
+
+/// Visual drag affordance for Amber Dusk bottom sheets.
+class _SheetHandle extends StatelessWidget {
+  const _SheetHandle();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: AppDimens.p40,
+      height: AppDimens.p4,
+      decoration: BoxDecoration(
+        color: context.colorScheme.textSecondary.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(AppDimens.r4),
       ),
     );
   }

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/navigation/main_nav_destinations.dart';
+import 'package:sline_app/core/providers/navigation_provider.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
@@ -34,21 +37,14 @@ class BookingsTab extends StatelessWidget {
           return _buildEmptyState(context, vm);
         }
 
-        // Split into Upcoming and Past
-        final now = DateTime.now().toUtc();
-        final upcoming = bookings.where((b) {
-          final bookingTimeline = b.dueAtUtc ?? b.scheduledAt;
-          if (bookingTimeline != null) {
-            return bookingTimeline.isAfter(now);
-          }
-          // Fallback: Pending items are "Upcoming" regardless of date
-          return b.status == BookingStatus.pending ||
-              b.status == BookingStatus.confirmed;
-        }).toList();
-
-        final upcomingIds = upcoming.map((b) => b.id).toSet();
-        final past = bookings
-            .where((b) => !upcomingIds.contains(b.id))
+        // Keep terminal payment/booking drafts out of the active source of
+        // truth. A canceled QiCard draft should be visible as history, not as
+        // an upcoming booking.
+        final activeBookings = bookings
+            .where((booking) => !_isClosedBooking(booking.status))
+            .toList();
+        final closedBookings = bookings
+            .where((booking) => _isClosedBooking(booking.status))
             .toList();
 
         const spacing = AmberDuskTokens.spacing;
@@ -60,12 +56,12 @@ class BookingsTab extends StatelessWidget {
               horizontal: spacing.contentHorizontalPadding,
             ),
             children: [
-              if (upcoming.isNotEmpty) ...[
+              if (activeBookings.isNotEmpty) ...[
                 _BookingSectionHeader(
-                  title: 'Upcoming',
-                  count: upcoming.length,
+                  title: 'Active',
+                  count: activeBookings.length,
                 ),
-                ...upcoming.map(
+                ...activeBookings.map(
                   (b) => DashboardBookingCard(
                     booking: b,
                     isProvider: vm.currentRole == UserRole.freelancer,
@@ -88,9 +84,12 @@ class BookingsTab extends StatelessWidget {
                 SizedBox(height: spacing.xl),
               ],
 
-              if (past.isNotEmpty) ...[
-                _BookingSectionHeader(title: 'Past', count: past.length),
-                ...past.map(
+              if (closedBookings.isNotEmpty) ...[
+                _BookingSectionHeader(
+                  title: 'Closed',
+                  count: closedBookings.length,
+                ),
+                ...closedBookings.map(
                   (b) => Opacity(
                     opacity: 0.6,
                     child: DashboardBookingCard(
@@ -119,6 +118,26 @@ class BookingsTab extends StatelessWidget {
         );
       },
     );
+  }
+
+  /// Returns true for terminal booking statuses that should not be counted as
+  /// active dashboard work.
+  bool _isClosedBooking(BookingStatus status) {
+    return switch (status) {
+      BookingStatus.completed ||
+      BookingStatus.canceled ||
+      BookingStatus.refunded ||
+      BookingStatus.expiredUnanswered ||
+      BookingStatus.noShow ||
+      BookingStatus.declined => true,
+      BookingStatus.pending ||
+      BookingStatus.confirmed ||
+      BookingStatus.active ||
+      BookingStatus.delivered ||
+      BookingStatus.paidRequestPending ||
+      BookingStatus.disputed ||
+      BookingStatus.inProgress => false,
+    };
   }
 
   /// Skeleton loading — 4 placeholder booking cards.
@@ -178,12 +197,35 @@ class BookingsTab extends StatelessWidget {
                     'Discover services to book',
                     style: AppTypography.bodySmall.copyWith(color: amber.muted),
                   ),
+                  const SizedBox(height: AppDimens.p20),
+                  FilledButton.icon(
+                    onPressed: () => _openHomeBookings(context),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: amber.primary,
+                      foregroundColor: amber.textInverse,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppDimens.r12),
+                      ),
+                    ),
+                    icon: const Icon(Icons.travel_explore_rounded),
+                    label: const Text('Browse booking posts'),
+                  ),
                 ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  void _openHomeBookings(BuildContext context) {
+    AppLogger.i(
+      'Dashboard bookings empty CTA opened Home',
+      tag: 'dashboard.bookings',
+    );
+    context.read<NavigationProvider?>()?.setCurrentIndex(
+      MainNavDestinations.home,
     );
   }
 }

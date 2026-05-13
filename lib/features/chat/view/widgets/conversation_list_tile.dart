@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_states.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/features/chat/models/conversation_model.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
@@ -143,7 +142,7 @@ class _ConversationListTileState extends State<ConversationListTile>
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
     final vm = context.read<ChatViewModel>();
     final myId = vm.currentUserId;
     final isUnread = _isUnread(myId);
@@ -190,16 +189,16 @@ class _ConversationListTileState extends State<ConversationListTile>
           duration: AppMotion.fast,
           margin: const EdgeInsets.only(bottom: AppDimens.p10),
           decoration: BoxDecoration(
-            color: colorScheme.cardBackground,
+            color: amberColors.surface,
             borderRadius: BorderRadius.circular(AppDimens.r16),
             border: Border.all(
               color: isUnread
-                  ? colorScheme.primary.withValues(alpha: 0.3)
-                  : colorScheme.cardBorder,
+                  ? amberColors.primary.withValues(alpha: 0.35)
+                  : amberColors.surfaceHighest,
               width: isUnread ? 1.5 : AppLayout.cardBorderWidth,
             ),
             // Level 1 resting shadow for depth — cards float above background
-            boxShadow: AppDecorations.elevation(1, isDark: colorScheme.isDark),
+            boxShadow: AppDecorations.elevation(1, isDark: amberColors.isDark),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(AppDimens.r16),
@@ -213,7 +212,7 @@ class _ConversationListTileState extends State<ConversationListTile>
                     duration: AppMotion.fast,
                     width: isUnread ? 3.5 : 0,
                     decoration: BoxDecoration(
-                      color: colorScheme.primary,
+                      color: amberColors.primary,
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(AppDimens.r16),
                         bottomLeft: Radius.circular(AppDimens.r16),
@@ -233,7 +232,7 @@ class _ConversationListTileState extends State<ConversationListTile>
                       child: Row(
                         children: [
                           // ── Avatar with online status dot ──
-                          _buildAvatar(colorScheme, isOnline),
+                          _buildAvatar(amberColors, isOnline),
                           const SizedBox(width: AppDimens.p12),
 
                           // ── Content column ──
@@ -254,7 +253,7 @@ class _ConversationListTileState extends State<ConversationListTile>
                                               fontWeight: isUnread
                                                   ? FontWeight.w700
                                                   : FontWeight.w600,
-                                              color: colorScheme.text,
+                                              color: amberColors.text,
                                             ),
                                         overflow: TextOverflow.ellipsis,
                                         maxLines: 1,
@@ -272,7 +271,7 @@ class _ConversationListTileState extends State<ConversationListTile>
                                             right: AppDimens.p4,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: colorScheme.primary,
+                                            color: amberColors.primary,
                                             shape: BoxShape.circle,
                                           ),
                                         ),
@@ -282,8 +281,8 @@ class _ConversationListTileState extends State<ConversationListTile>
                                         timeText,
                                         style: AppTypography.micro.copyWith(
                                           color: isUnread
-                                              ? colorScheme.primary
-                                              : colorScheme.textTertiary,
+                                              ? amberColors.primary
+                                              : amberColors.muted,
                                           fontWeight: isUnread
                                               ? FontWeight.w700
                                               : FontWeight.w500,
@@ -295,7 +294,7 @@ class _ConversationListTileState extends State<ConversationListTile>
                                 // Task/Booking context tag
                                 if (widget.conversation.taskTitle != null) ...[
                                   const SizedBox(height: AppDimens.p2),
-                                  _buildContextTag(colorScheme),
+                                  _buildContextTag(amberColors),
                                 ],
 
                                 const SizedBox(height: AppDimens.p4),
@@ -305,8 +304,8 @@ class _ConversationListTileState extends State<ConversationListTile>
                                   isMySend ? 'You: $previewText' : previewText,
                                   style: AppTypography.bodySmall.copyWith(
                                     color: isUnread
-                                        ? colorScheme.text
-                                        : colorScheme.textSecondary,
+                                        ? amberColors.text
+                                        : amberColors.muted,
                                     fontWeight: isUnread
                                         ? FontWeight.w500
                                         : FontWeight.normal,
@@ -334,10 +333,10 @@ class _ConversationListTileState extends State<ConversationListTile>
   /// Compact context tag showing the task or booking title inline.
   ///
   /// Uses a tiny icon + uppercase text for quick visual scanning. The color
-  /// differentiates booking (warning/amber) from task (primary/blue).
-  Widget _buildContextTag(AppColorScheme colorScheme) {
+  /// differentiates booking (warning/amber) from task (primary/amber).
+  Widget _buildContextTag(AmberDuskColorScheme amberColors) {
     final isBooking = widget.conversation.taskType == 'booking';
-    final tagColor = isBooking ? colorScheme.warning : colorScheme.primary;
+    final tagColor = isBooking ? amberColors.warning : amberColors.primary;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -369,7 +368,7 @@ class _ConversationListTileState extends State<ConversationListTile>
   /// Uses a circle shape with primary tint fallback for users without a
   /// profile photo. The green online dot appears bottom-right with a
   /// spring-scale entrance for a natural, lively feel.
-  Widget _buildAvatar(AppColorScheme colorScheme, bool showDot) {
+  Widget _buildAvatar(AmberDuskColorScheme amberColors, bool showDot) {
     final initials = _getInitials(widget.conversation.otherUserName);
     // 50px diameter — slightly larger than minTouchTarget for visual presence
     const double avatarSize = 50;
@@ -382,7 +381,7 @@ class _ConversationListTileState extends State<ConversationListTile>
           width: avatarSize,
           height: avatarSize,
           decoration: BoxDecoration(
-            color: colorScheme.primary.withValues(alpha: 0.1),
+            color: amberColors.primary.withValues(alpha: 0.12),
             shape: BoxShape.circle,
           ),
           child: widget.conversation.otherUserAvatar != null
@@ -397,7 +396,7 @@ class _ConversationListTileState extends State<ConversationListTile>
                     initials,
                     style: AppTypography.bodyLarge.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: colorScheme.primary,
+                      color: amberColors.primary,
                     ),
                   ),
                 ),
@@ -417,12 +416,9 @@ class _ConversationListTileState extends State<ConversationListTile>
                 width: 14,
                 height: 14,
                 decoration: BoxDecoration(
-                  color: colorScheme.success,
+                  color: amberColors.success,
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: colorScheme.cardBackground,
-                    width: 2.5,
-                  ),
+                  border: Border.all(color: amberColors.surface, width: 2.5),
                 ),
               ),
             ),

@@ -272,8 +272,8 @@ void main() {
       );
       await tester.pump();
 
-      // The Basic package has price 100 displayed as "$100"
-      expect(find.text(r'$100'), findsOneWidget);
+      // The Basic package displays whole-IQD pricing through PriceFormatter.
+      expect(find.text('100 IQD'), findsOneWidget);
     });
 
     // ---- T234: Shows author userName in author section -----------------------
@@ -576,8 +576,10 @@ void main() {
       );
       await tester.pump();
 
-      // Header AppCardContainer + bottom bar AppCardContainer = at least 2
-      expect(find.byType(AppCardContainer), findsAtLeastNWidgets(2));
+      // The header remains card-backed while the Amber Dusk bottom bar is a
+      // full-width transactional surface with the primary AppButton inside.
+      expect(find.byType(AppCardContainer), findsAtLeastNWidgets(1));
+      expect(find.byType(AppButton), findsWidgets);
     });
 
     testWidgets('T250 back arrow icon is present in header', (tester) async {
@@ -711,15 +713,15 @@ void main() {
       );
       await tester.pump();
 
-      // Initially shows Basic price
-      expect(find.text(r'$100'), findsOneWidget);
+      // Initially shows Basic whole-IQD price.
+      expect(find.text('100 IQD'), findsOneWidget);
 
       // Tap Standard tier
       await tester.tap(find.text('Standard'));
       await tester.pump();
 
-      // Now shows Standard price and button text
-      expect(find.text(r'$200'), findsOneWidget);
+      // Now shows Standard whole-IQD price and button text.
+      expect(find.text('200 IQD'), findsOneWidget);
       expect(find.text('Book Standard'), findsOneWidget);
     });
 

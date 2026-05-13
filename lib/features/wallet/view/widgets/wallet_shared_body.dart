@@ -398,10 +398,15 @@ class _WalletActionCard extends StatelessWidget {
                     ),
                     const SizedBox(height: AppDimens.p4),
                     Text(
-                      'Bank payout workflow is next on the roadmap.',
+                      'Withdrawals are paused until payout verification is enabled.',
                       style: AppTypography.bodySmall.copyWith(
                         color: amber.textSubtle,
                       ),
+                    ),
+                    const SizedBox(height: AppDimens.p8),
+                    Text(
+                      'Your available and held balances remain visible here.',
+                      style: AppTypography.micro.copyWith(color: amber.muted),
                     ),
 
                     const SizedBox(height: AppDimens.p20),
@@ -455,7 +460,7 @@ class _WalletActionCard extends StatelessWidget {
                           ),
                         ),
                         child: Text(
-                          'Request withdrawal',
+                          'Withdrawal unavailable',
                           style: AppTypography.bodySmall.copyWith(
                             fontWeight: FontWeight.w600,
                           ),

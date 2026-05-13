@@ -498,6 +498,8 @@ Write only the header section at plan creation time:
 - UI plans that rely on screenshots, Open Design, Figma, browser captures, or user-provided images MUST classify each proof source as design-reference proof, current-app runtime proof, old-app baseline, or manual QA proof.
 - Visual implementation plans MUST include a route/device-width proof matrix. If screenshot files are already available, include a hash or identity sanity check before using them as proof of route-specific runtime QA.
 - Design-reference artifacts can justify visual intent and token values, but they do not close runtime app QA unless they were captured from the implemented app.
+- For forms, composers, bottom sheets, payment screens, booking screens, and transactional CTAs, the route/device proof matrix MUST include focused, active, disabled, error, loading, and recovery states for the actual controls users touch. Resting screenshots alone do not prove inherited `TextField`, `InputDecoration`, route transition, or button-state styling.
+- For payment or booking UI plans, include success, pending, failed, canceled, retry, and dashboard/list bucket verification. Customer-facing result screens must show safe summaries and actions, not technical IDs, raw callback metadata, or internal correlation fields.
 
 
 ### Supabase Phase Rules

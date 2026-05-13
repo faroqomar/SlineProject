@@ -20,10 +20,25 @@ import 'package:sline_app/features/tasks/view/widgets/task_card.dart';
 /// Wraps [_SearchScreenContent] in a [ChangeNotifierProvider] to scope
 /// the [SearchViewModel] lifecycle to this screen.
 class SearchScreen extends StatelessWidget {
-  const SearchScreen({super.key});
+  /// Creates the search route.
+  ///
+  /// [viewModel] is injectable for widget tests so accessibility and layout
+  /// checks do not initialize Supabase-backed search services.
+  const SearchScreen({super.key, this.viewModel});
+
+  /// Optional prebuilt ViewModel used by tests or controlled harnesses.
+  final SearchViewModel? viewModel;
 
   @override
   Widget build(BuildContext context) {
+    final injectedViewModel = viewModel;
+    if (injectedViewModel != null) {
+      return ChangeNotifierProvider<SearchViewModel>.value(
+        value: injectedViewModel,
+        child: const _SearchScreenContent(),
+      );
+    }
+
     return ChangeNotifierProvider(
       create: (_) => SearchViewModel(),
       child: const _SearchScreenContent(),
@@ -69,14 +84,20 @@ class _SearchScreenContentState extends State<_SearchScreenContent> {
                 children: [
                   const SizedBox(height: AppDimens.p16),
 
-                  AppCard(
-                    padding: EdgeInsets.zero,
-                    child: AppTextField(
-                      controller: _searchController,
-                      hintText:
-                          'Search ${vm.isTasksTab ? "tasks" : "freelancers"}...',
-                      prefixIcon: Icon(Icons.search, color: amber.textSubtle),
-                      onChanged: vm.onSearchChanged,
+                  Semantics(
+                    textField: true,
+                    label: vm.isTasksTab
+                        ? 'Search tasks'
+                        : 'Search freelancers',
+                    child: AppCard(
+                      padding: EdgeInsets.zero,
+                      child: AppTextField(
+                        controller: _searchController,
+                        hintText:
+                            'Search ${vm.isTasksTab ? "tasks" : "freelancers"}...',
+                        prefixIcon: Icon(Icons.search, color: amber.textSubtle),
+                        onChanged: vm.onSearchChanged,
+                      ),
                     ),
                   ),
                   const SizedBox(height: AppDimens.p16),
@@ -103,7 +124,7 @@ class _SearchScreenContentState extends State<_SearchScreenContent> {
     final amber = _amberFor(context);
 
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(AppDimens.p4),
       decoration: BoxDecoration(
         color: amber.surface,
         borderRadius: BorderRadius.circular(AppDimens.r12),
@@ -152,8 +173,13 @@ class _SearchScreenContentState extends State<_SearchScreenContent> {
     required VoidCallback onTap,
   }) {
     final amber = _amberFor(context);
+    final semanticKey = ValueKey<String>(
+      'search_tab_${label.toLowerCase().replaceAll(' ', '_')}',
+    );
 
     return Semantics(
+      key: semanticKey,
+      button: true,
       selected: isSelected,
       label: 'Search tab: $label',
       child: GestureDetector(
@@ -162,6 +188,7 @@ class _SearchScreenContentState extends State<_SearchScreenContent> {
           duration: AppMotion.fast,
           curve: AppMotion.curveStandard,
           alignment: Alignment.center,
+          constraints: const BoxConstraints(minHeight: AppDimens.touchTarget),
           padding: const EdgeInsets.symmetric(vertical: AppDimens.p8),
           decoration: BoxDecoration(
             // Selected state uses the Amber Dusk action token; the unselected
@@ -174,6 +201,8 @@ class _SearchScreenContentState extends State<_SearchScreenContent> {
             style: AppTypography.captionBold.copyWith(
               color: isSelected ? amber.textInverse : amber.muted,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ),
@@ -202,44 +231,53 @@ class _SearchScreenContentState extends State<_SearchScreenContent> {
       return Semantics(
         label: 'Search error',
         child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Danger circle with error icon
-              Container(
-                width: AppDimens.emptyStateIconContainer,
-                height: AppDimens.emptyStateIconContainer,
-                decoration: BoxDecoration(
-                  color: amber.dangerMuted,
-                  shape: BoxShape.circle,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppDimens.p24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Danger circle with error icon
+                Container(
+                  width: AppDimens.emptyStateIconContainer,
+                  height: AppDimens.emptyStateIconContainer,
+                  decoration: BoxDecoration(
+                    color: amber.dangerMuted,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.error_outline,
+                    size: AppDimens.emptyStateIconSize,
+                    color: amber.danger,
+                  ),
                 ),
-                child: Icon(
-                  Icons.error_outline,
-                  size: AppDimens.emptyStateIconSize,
-                  color: amber.danger,
+                const SizedBox(height: AppDimens.p16),
+                Text(
+                  vm.error!,
+                  style: AppTypography.h5.copyWith(color: amber.text),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                 ),
-              ),
-              const SizedBox(height: AppDimens.p16),
-              Text(
-                vm.error!,
-                style: AppTypography.h5.copyWith(color: amber.text),
-              ),
-              const SizedBox(height: AppDimens.p8),
-              Text(
-                'Please try again',
-                style: AppTypography.bodySmall.copyWith(
-                  color: amber.textSubtle,
+                const SizedBox(height: AppDimens.p8),
+                Text(
+                  'Please try again',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: amber.textSubtle,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                 ),
-              ),
-              const SizedBox(height: AppDimens.p24),
-              AppButton(
-                onPressed: () {
-                  AppLogger.d('Search retry tapped');
-                  vm.retry();
-                },
-                text: 'Try Again',
-              ),
-            ],
+                const SizedBox(height: AppDimens.p24),
+                AppButton(
+                  onPressed: () {
+                    AppLogger.d('Search retry tapped');
+                    vm.retry();
+                  },
+                  text: 'Try Again',
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -250,36 +288,45 @@ class _SearchScreenContentState extends State<_SearchScreenContent> {
       return Semantics(
         label: 'Start typing to search',
         child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Primary circle with search icon
-              Container(
-                width: AppDimens.emptyStateIconContainer,
-                height: AppDimens.emptyStateIconContainer,
-                decoration: BoxDecoration(
-                  color: amber.activeGlow,
-                  shape: BoxShape.circle,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppDimens.p24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Primary circle with search icon
+                Container(
+                  width: AppDimens.emptyStateIconContainer,
+                  height: AppDimens.emptyStateIconContainer,
+                  decoration: BoxDecoration(
+                    color: amber.activeGlow,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.search,
+                    size: AppDimens.emptyStateIconSize,
+                    color: amber.primary,
+                  ),
                 ),
-                child: Icon(
-                  Icons.search,
-                  size: AppDimens.emptyStateIconSize,
-                  color: amber.primary,
+                const SizedBox(height: AppDimens.p16),
+                Text(
+                  'Start typing to search',
+                  style: AppTypography.h5.copyWith(color: amber.text),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                 ),
-              ),
-              const SizedBox(height: AppDimens.p16),
-              Text(
-                'Start typing to search',
-                style: AppTypography.h5.copyWith(color: amber.text),
-              ),
-              const SizedBox(height: AppDimens.p8),
-              Text(
-                'Find tasks or freelancers',
-                style: AppTypography.bodySmall.copyWith(
-                  color: amber.textSubtle,
+                const SizedBox(height: AppDimens.p8),
+                Text(
+                  'Find tasks or freelancers',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: amber.textSubtle,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
@@ -337,34 +384,45 @@ class _SearchScreenContentState extends State<_SearchScreenContent> {
     return Semantics(
       label: 'No search results',
       child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Primary circle with search-off icon
-            Container(
-              width: AppDimens.emptyStateIconContainer,
-              height: AppDimens.emptyStateIconContainer,
-              decoration: BoxDecoration(
-                color: amber.activeGlow,
-                shape: BoxShape.circle,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppDimens.p24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Primary circle with search-off icon
+              Container(
+                width: AppDimens.emptyStateIconContainer,
+                height: AppDimens.emptyStateIconContainer,
+                decoration: BoxDecoration(
+                  color: amber.activeGlow,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.search_off,
+                  size: AppDimens.emptyStateIconSize,
+                  color: amber.primary,
+                ),
               ),
-              child: Icon(
-                Icons.search_off,
-                size: AppDimens.emptyStateIconSize,
-                color: amber.primary,
+              const SizedBox(height: AppDimens.p16),
+              Text(
+                'No results found',
+                style: AppTypography.h5.copyWith(color: amber.text),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
               ),
-            ),
-            const SizedBox(height: AppDimens.p16),
-            Text(
-              'No results found',
-              style: AppTypography.h5.copyWith(color: amber.text),
-            ),
-            const SizedBox(height: AppDimens.p8),
-            Text(
-              'Try different keywords or filters',
-              style: AppTypography.bodySmall.copyWith(color: amber.textSubtle),
-            ),
-          ],
+              const SizedBox(height: AppDimens.p8),
+              Text(
+                'Try different keywords or filters',
+                style: AppTypography.bodySmall.copyWith(
+                  color: amber.textSubtle,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );

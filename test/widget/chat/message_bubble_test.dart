@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/features/chat/view/widgets/message_bubble.dart';
 
 void main() {
@@ -121,21 +122,23 @@ void main() {
       expect(semantics, findsOneWidget);
     });
 
-    testWidgets('delivered status icon uses metaColor (white with opacity)', (
+    testWidgets('delivered status icon uses Amber Dusk metaColor', (
       tester,
     ) async {
-      // For isMine bubbles, delivered uses metaColor = white.withValues(alpha: 0.7).
-      // This verifies the icon color matches that token rather than colorScheme.info.
+      // For isMine bubbles, delivered uses the inverse Amber Dusk text color at
+      // reduced opacity, not the read-status primary accent.
       await tester.pumpWidget(
         buildTestBubble(isMine: true, status: 'delivered', isLastInGroup: true),
       );
       final iconWidget = tester.widget<Icon>(find.byIcon(Icons.done_all));
-      // metaColor for isMine is Colors.white.withValues(alpha: 0.7)
-      expect(iconWidget.color, equals(Colors.white.withValues(alpha: 0.7)));
+      expect(
+        iconWidget.color,
+        equals(AmberDuskTokens.colors.light.textInverse.withValues(alpha: 0.7)),
+      );
     });
 
-    testWidgets('read status icon uses colorScheme.info', (tester) async {
-      // For isMine read status, color must be colorScheme.info (semantic blue),
+    testWidgets('read status icon uses Amber Dusk primary', (tester) async {
+      // For isMine read status, color must be Amber Dusk primary,
       // not the default metaColor — this distinguishes read from delivered.
       await tester.pumpWidget(
         MaterialApp(
@@ -159,15 +162,9 @@ void main() {
         ),
       );
       // Retrieve the Icon widget and check its color is not the metaColor
-      // (white with opacity). It should be colorScheme.info (a blue variant).
+      // (inverse text with opacity). It should be Amber Dusk primary.
       final iconWidget = tester.widget<Icon>(find.byIcon(Icons.done_all));
-      // metaColor (white 0.7) must NOT match — read uses colorScheme.info
-      expect(
-        iconWidget.color,
-        isNot(equals(Colors.white.withValues(alpha: 0.7))),
-      );
-      // The color should be non-null (icon is coloured, not default)
-      expect(iconWidget.color, isNotNull);
+      expect(iconWidget.color, equals(AmberDuskTokens.colors.light.primary));
     });
   });
 }

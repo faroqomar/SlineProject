@@ -57,50 +57,71 @@ class FavoriteCard extends StatelessWidget {
           border: Border.all(color: colorScheme.cardBorder),
           boxShadow: AppDecorations.elevation(1, isDark: colorScheme.isDark),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Freelancer avatar — uses SignedAvatar for signed URL support
-            SignedAvatar(
-              storagePathOrUrl: favorite.freelancerAvatar,
-              size: AppDimens.avatarMedium,
-              radius: AppDimens.avatarRadius,
+            Row(
+              children: [
+                // Freelancer avatar — uses SignedAvatar for signed URL support
+                SignedAvatar(
+                  storagePathOrUrl: favorite.freelancerAvatar,
+                  size: AppDimens.avatarMedium,
+                  radius: AppDimens.avatarRadius,
+                ),
+
+                const SizedBox(width: AppDimens.p12),
+
+                // Name/date remain in the top row while actions move below so
+                // long names cannot squeeze the chat button on 360dp phones.
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Freelancer name — bold, single line with ellipsis
+                      Text(
+                        freelancerName,
+                        style: AppTypography.bodyLarge.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: colorScheme.text,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+
+                      const SizedBox(height: AppDimens.p4),
+
+                      // Date added — caption style, secondary color
+                      Text(
+                        'Added: ${formatUtcToLocal(favorite.createdAt)}',
+                        style: AppTypography.caption.copyWith(
+                          color: colorScheme.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+
+                IconButton(
+                  key: Key('favorite_card_remove_${favorite.freelancerId}'),
+                  tooltip: 'Remove from favorites',
+                  onPressed: onRemove,
+                  icon: Icon(
+                    Icons.delete_outline,
+                    color: amber.danger,
+                    size: AppDimens.iconSmall,
+                  ),
+                ),
+              ],
             ),
 
-            const SizedBox(width: AppDimens.p12),
+            const SizedBox(height: AppDimens.p16),
 
-            // Name and date column
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Freelancer name — bold, single line with ellipsis
-                  Text(
-                    freelancerName,
-                    style: AppTypography.bodyLarge.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: colorScheme.text,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-
-                  const SizedBox(height: AppDimens.p4),
-
-                  // Date added — caption style, secondary color
-                  Text(
-                    'Added: ${formatUtcToLocal(favorite.createdAt)}',
-                    style: AppTypography.caption.copyWith(
-                      color: colorScheme.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(width: AppDimens.p8),
-
-            // "Start Chat" outlined button — Uses AppDimens.touchTarget to meet minimum touch target
+            // Full-width chat action preserves the existing callback while
+            // meeting the minimum tap-target and avoiding crowded trailing UI.
             SizedBox(
+              width: double.infinity,
               height: AppDimens.touchTarget,
               child: OutlinedButton(
                 key: Key('favorite_card_start_chat_${favorite.freelancerId}'),
@@ -112,27 +133,31 @@ class FavoriteCard extends StatelessWidget {
                   ),
                   side: BorderSide(color: amber.primary),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppDimens.r8),
+                    borderRadius: BorderRadius.circular(AppDimens.r12),
                   ),
                 ),
-                child: Text(
-                  'Start Chat',
-                  style: AppTypography.captionBold.copyWith(
-                    color: amber.primary,
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.chat_bubble_outline,
+                      size: AppDimens.iconSmall,
+                      color: amber.primary,
+                    ),
+                    const SizedBox(width: AppDimens.p8),
+                    Flexible(
+                      child: Text(
+                        'Start Chat',
+                        style: AppTypography.captionBold.copyWith(
+                          color: amber.primary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ),
-
-            // Remove/delete button — danger color
-            IconButton(
-              key: Key('favorite_card_remove_${favorite.freelancerId}'),
-              tooltip: 'Remove from favorites',
-              onPressed: onRemove,
-              icon: Icon(
-                Icons.delete_outline,
-                color: amber.danger,
-                size: AppDimens.iconSmall,
               ),
             ),
           ],

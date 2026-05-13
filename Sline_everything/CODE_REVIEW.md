@@ -1,13 +1,26 @@
 # SLine Code Review & Improvement Report
 
-**Date**: 2026-05-13 (Updated)
+**Date**: 2026-05-14 (Updated)
 **Reviewed By**: CodeGuard + Architect + Sentinel Agents
 **Previous Score**: 9/10
 **Current Score**: 9.7/10
 
 > Historical review note: this document records review findings and fixes from earlier passes. Treat references to removed files or older structure as historical context; the current live structure is documented in `Sline_everything/STRUCTURE.md` and `Sline_everything/DEVELOPER_GUIDE.md`.
 
-## Current Guardrail Notes (2026-05-13)
+## Current Guardrail Notes (2026-05-14)
+
+### Amber Dusk Transactional QA Recovery Review Rule (2026-05-14)
+
+**Pattern**: Transactional QA work touches the most trust-sensitive surfaces: booking payment, payment return/WebView, Dashboard Bookings/Work, proposal/request money fields, chat offer surfaces, signup/post refresh, Wallet disabled states, and customer-facing recovery copy.
+
+**Rule**:
+1. Resting screenshots and raw token scans are not enough for transactional UI. Review focused, active, disabled, error, loading, recovery, and route-transition background states for forms, composers, sheets, payment/booking screens, and CTAs.
+2. Payment and booking fixes must prove source route, result route, Dashboard Bookings, Dashboard Work, and list-bucket outcomes after success, pending, failed, canceled, retry, and recovery paths.
+3. Customer-facing payment result screens must show safe status, amount, app context, next action, and recovery path. Booking IDs, payer IDs, entity IDs, intent IDs, correlation IDs, callback params, and gateway metadata belong in logs/support tooling only.
+4. If a gateway Pay action or other externally visible action is not executed during tooling, the branch remains unproven. Do not close it from pre-submit screenshots or client tests alone.
+5. IQD is the marketplace money unit for touched booking, proposal/request, direct-offer, dashboard, wallet, and receipt surfaces. Do not reintroduce `$` or cents conversions unless an RPC explicitly asks for cents.
+
+**Evidence**: `.TODO/VisualQA_OpenDesign_AmberDusk_Phases9_10_11_12_iOSSimulator_2026-05-13/REPORT.md` found processed QiCard payments returning to unchanged booking UI, raw gateway metadata, teal/blue transactional screens, and IQD/dollar mismatches. `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-14.md` merged the recurring proof rules into Planner, PlanCritic, Executor, Pixel, Sentinel, and Orchestrator.
 
 ### Amber Dusk Phases 5-8 Phone Surface Review Rule (2026-05-13)
 
@@ -65,7 +78,7 @@
 
 **Evidence**: Open Design Amber Dusk Phase 1 (2026-05-11) activated buttons, fields, icon buttons, cards, bottom nav, tabs, status badges, skeletons, and signed-media placeholders through the shared-widget adapter while leaving global `MaterialApp` theme wiring and Supabase behavior unchanged.
 
-### SystemEvolution Merge Runs (2026-05-12 / 2026-05-13)
+### SystemEvolution Merge Runs (2026-05-12 / 2026-05-13 / 2026-05-14)
 
 **Pattern**: When the human explicitly requests a SystemEvolution merge, the report is written first, then only deduped, evidence-backed rules are applied to the owning `.cursor/Agents/*.md` files.
 
@@ -75,7 +88,7 @@
 3. Prefer narrow agent-owner edits over broad rewrites.
 4. Record the merged files and evidence index in `docs/LOG/SYSTEM_EVOLUTION_REPORT_<date>.md`.
 
-**Evidence**: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-11.md` records the token/provenance and Phase 1 visual-evidence merge. `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-12.md` records the Step 7 merge for scope amendments, no invented model contracts in views, custom gesture semantics, privacy-safe view logs, behavior-level review tests, and explicit visual QA status in Master Reports. `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-13.md` records the Phase 5-8 merge for worker checkpoints, untrusted worker patches, lazy/injected ViewModel service bridges, wrapper theme harnesses, per-file emulator matrices, safe URL-facts logging, realtime transient reconnect handling, and stale guidance-path cleanup.
+**Evidence**: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-11.md` records the token/provenance and Phase 1 visual-evidence merge. `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-12.md` records the Step 7 merge for scope amendments, no invented model contracts in views, custom gesture semantics, privacy-safe view logs, behavior-level review tests, and explicit visual QA status in Master Reports. `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-13.md` records the Phase 5-8 merge for worker checkpoints, untrusted worker patches, lazy/injected ViewModel service bridges, wrapper theme harnesses, per-file emulator matrices, safe URL-facts logging, realtime transient reconnect handling, and stale guidance-path cleanup. `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-14.md` records the Transactional QA merge for focused/active runtime states, payment/booking lifecycle bucket proof, safe payment result UI, and unexecuted gateway-branch reporting.
 
 ### Coverage Artifact Hygiene (2026-05-11)
 

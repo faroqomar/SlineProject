@@ -1,88 +1,65 @@
 import 'package:flutter/material.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/widgets/signed_image.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 // Canonical PortfolioItem from portfolio feature
 import 'package:sline_app/features/portfolio/models/portfolio_item.dart'
     show PortfolioItem;
-// Import both for the extension methods on PortfolioItem
-import 'package:sline_app/features/profile/models/freelancer_profile.dart';
 
-/// Portfolio grid widget with masonry-style layout matching the new design.
+/// Shows public portfolio proof tiles without changing portfolio storage rules.
 class PublicProfilePortfolio extends StatelessWidget {
+  /// Portfolio rows already resolved by the public profile ViewModel.
   final List<PortfolioItem> portfolio;
 
+  /// Creates the public portfolio section for the current profile.
   const PublicProfilePortfolio({super.key, required this.portfolio});
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
 
     if (portfolio.isEmpty) {
-      return const SizedBox.shrink();
+      return const _EmptyPortfolioCard();
     }
+
+    final visibleItems = portfolio.take(2).toList(growable: false);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header row
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               'Portfolio',
-              style: AppTypography.h5.copyWith(color: colorScheme.text),
+              style: AppTypography.h5.copyWith(color: amberColors.text),
             ),
             Text(
-              'View All',
+              'Proof of work',
               style: AppTypography.caption.copyWith(
-                color: AppColors.teal,
+                color: amberColors.muted,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ],
         ),
         const SizedBox(height: AppDimens.p12),
-
-        // Masonry-style grid (using two columns)
         Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Left column
-            Expanded(
-              child: Column(
-                children: portfolio
-                    .asMap()
-                    .entries
-                    .where((e) => e.key.isEven)
-                    .map(
-                      (e) => _PortfolioCard(
-                        item: e.value,
-                        aspectRatio: e.key == 0 ? 0.8 : 1.0,
-                      ),
-                    )
-                    .toList(),
+            for (final entry in visibleItems.asMap().entries) ...[
+              Expanded(
+                child: _PortfolioProofTile(
+                  item: entry.value,
+                  accent: entry.key.isEven
+                      ? amberColors.primary
+                      : amberColors.success,
+                ),
               ),
-            ),
-            const SizedBox(width: AppDimens.p12),
-            // Right column
-            Expanded(
-              child: Column(
-                children: portfolio
-                    .asMap()
-                    .entries
-                    .where((e) => e.key.isOdd)
-                    .map(
-                      (e) => _PortfolioCard(
-                        item: e.value,
-                        aspectRatio: e.key == 1 ? 1.2 : 0.9,
-                      ),
-                    )
-                    .toList(),
-              ),
-            ),
+              if (entry.key != visibleItems.length - 1)
+                const SizedBox(width: AppDimens.p10),
+            ],
           ],
         ),
       ],
@@ -90,103 +67,138 @@ class PublicProfilePortfolio extends StatelessWidget {
   }
 }
 
-/// Individual portfolio card with image and gradient overlay.
-class _PortfolioCard extends StatelessWidget {
+/// Compact project proof tile matching the Open Design portfolio strip.
+class _PortfolioProofTile extends StatelessWidget {
   final PortfolioItem item;
-  final double aspectRatio;
+  final Color accent;
 
-  const _PortfolioCard({required this.item, this.aspectRatio = 1.0});
+  const _PortfolioProofTile({required this.item, required this.accent});
 
   @override
   Widget build(BuildContext context) {
-    // Get the effective image reference (canonical path or legacy URL)
-    final imageRef = item.effectiveImageRef;
-    // Use extension methods for UI-specific properties (fallback when no image)
-    final displayColor = item.displayColor;
+    final amberColors = context.amberColors;
+    final raisedSurface = AmberDuskTokens.surfaces.raised;
+    final description = item.description?.trim();
 
     return Container(
-      margin: const EdgeInsets.only(bottom: AppDimens.p12),
-      child: AspectRatio(
-        aspectRatio: aspectRatio,
-        child: Container(
-          decoration: BoxDecoration(
-            color: displayColor,
-            borderRadius: BorderRadius.circular(AppDimens.r16),
-            boxShadow: [
-              BoxShadow(
-                color: displayColor.withValues(alpha: 0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
+      constraints: const BoxConstraints(
+        minHeight: AppDimens.p100 + AppDimens.p24,
+      ),
+      padding: const EdgeInsets.all(AppDimens.p12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [accent.withValues(alpha: 0.18), raisedSurface.fill],
+        ),
+        borderRadius: BorderRadius.circular(raisedSurface.radius),
+        boxShadow: AppDecorations.elevation(
+          raisedSurface.elevationLevel,
+          isDark: Theme.of(context).brightness == Brightness.dark,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _ProofPill(label: 'Project', color: accent),
+          const SizedBox(height: AppDimens.p10),
+          Text(
+            item.title,
+            style: AppTypography.bodySmall.copyWith(
+              color: amberColors.text,
+              fontWeight: FontWeight.bold,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppDimens.r16),
-            child: Stack(
-              children: [
-                // Background image (if available)
-                if (imageRef != null)
-                  Positioned.fill(
-                    child: SignedImage(
-                      storagePathOrUrl: imageRef,
-                      fit: BoxFit.cover,
-                      bucket: 'portfolio',
-                      placeholder: Container(color: displayColor),
-                    ),
-                  )
-                else
-                  // Fallback to color background when no image
-                  Positioned.fill(child: Container(color: displayColor)),
+          if (description != null && description.isNotEmpty) ...[
+            const SizedBox(height: AppDimens.p4),
+            Text(
+              description,
+              style: AppTypography.micro.copyWith(color: amberColors.muted),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+          const SizedBox(height: AppDimens.p12),
+          Text(
+            '${item.createdAt.year} proof',
+            style: AppTypography.micro.copyWith(color: amberColors.muted),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-                // Gradient overlay for text readability
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(AppDimens.r16),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.8),
-                        ],
-                        stops: const [0.3, 1.0],
-                      ),
-                    ),
-                  ),
-                ),
+/// Empty-state panel used when the public profile has no proof work yet.
+class _EmptyPortfolioCard extends StatelessWidget {
+  const _EmptyPortfolioCard();
 
-                // Content
-                Positioned(
-                  bottom: AppDimens.p12,
-                  left: AppDimens.p12,
-                  right: AppDimens.p12,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        item.title,
-                        style: AppTypography.bodySmall.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        item.displayCategory,
-                        style: AppTypography.micro.copyWith(
-                          color: Colors.white.withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+  @override
+  Widget build(BuildContext context) {
+    final amberColors = context.amberColors;
+    final colorScheme = context.colorScheme;
+    final cardTheme = AmberDuskTokens.widgetTheme.cards.panel;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppDimens.p16),
+      decoration: BoxDecoration(
+        color: cardTheme.background,
+        borderRadius: BorderRadius.circular(cardTheme.radius),
+        boxShadow: AppDecorations.elevation(
+          cardTheme.elevationLevel,
+          isDark: colorScheme.isDark,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.work_outline,
+            color: amberColors.primary,
+            size: AppDimens.iconSizeMedium,
+          ),
+          const SizedBox(height: AppDimens.p8),
+          Text(
+            'No portfolio yet',
+            style: AppTypography.h6.copyWith(color: colorScheme.text),
+          ),
+          const SizedBox(height: AppDimens.p4),
+          Text(
+            'Proof projects will appear here when this freelancer adds them.',
+            style: AppTypography.bodySmall.copyWith(
+              color: colorScheme.textSecondary,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Small proof classification pill for portfolio tiles.
+class _ProofPill extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _ProofPill({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: AmberDuskTokens.widgetTheme.statusPills.smallPadding,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(
+          AmberDuskTokens.widgetTheme.statusPills.radius,
+        ),
+      ),
+      child: Text(
+        label,
+        style: AmberDuskTokens.widgetTheme.statusPills.smallTextStyle.copyWith(
+          color: color,
         ),
       ),
     );

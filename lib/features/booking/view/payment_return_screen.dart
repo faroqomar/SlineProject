@@ -12,6 +12,10 @@ import 'package:sline_app/core/utils/web_url_utils_stub.dart'
 import 'package:sline_app/features/booking/models/payment_return_args.dart';
 import 'package:sline_app/features/booking/viewmodels/booking_view_model.dart';
 
+/// Resolves web payment callbacks and recovers booking state after QiCard.
+///
+/// The screen accepts sanitized callback URLs and falls back to pending payment
+/// state for internal booking identifiers that should not be visible to users.
 class PaymentReturnScreen extends StatefulWidget {
   const PaymentReturnScreen({super.key, this.initialArgs});
 
@@ -170,14 +174,20 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
         'has_correlation': paymentReturn.correlationId != null,
       },
     );
-    final recovery = await context
-        .read<BookingViewModel>()
-        .recoverBookingPaymentWithRetries(bookingId: bookingId);
+    final bookingVm = context.read<BookingViewModel>();
+    final recovery = await bookingVm.recoverBookingPaymentWithRetries(
+      bookingId: bookingId,
+    );
 
     if (!mounted) return;
 
     if (recovery.isSuccess && recovery.paymentStatus == 'held') {
       await pendingStore.clear();
+      await _refreshBookingListsAfterHeldRecovery(
+        vm: bookingVm,
+        bookingId: bookingId,
+      );
+      if (!mounted) return;
       AppLogger.i(
         'Payment recovery succeeded',
         tag: 'Payment',
@@ -214,6 +224,24 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
           recovery.error ??
           'Payment recovery completed with status ${recovery.paymentStatus ?? 'unknown'}.';
     });
+  }
+
+  Future<void> _refreshBookingListsAfterHeldRecovery({
+    required BookingViewModel vm,
+    required String bookingId,
+  }) async {
+    AppLogger.i(
+      'Refreshing booking lists after web payment recovery',
+      tag: 'Payment',
+      json: <String, dynamic>{'has_booking': bookingId.isNotEmpty},
+    );
+    await vm.loadBookingsAsClient();
+    await vm.loadBookingsAsProvider();
+    AppLogger.i(
+      'Booking lists refreshed after web payment recovery',
+      tag: 'Payment',
+      json: <String, dynamic>{'has_booking': bookingId.isNotEmpty},
+    );
   }
 
   void _setTerminalState({

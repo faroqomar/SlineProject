@@ -73,4 +73,35 @@ class AppDimens {
   static const double avatarRadius = 22.0;
   static const double touchTarget = p48;
   static const double iconSmall = 20.0;
+
+  // Public-profile hero geometry mirrors the Open Design phone profile frame.
+  static const double profileHeroHeight = 136.0;
+  static const double publicProfileAvatarSize = p80;
+  static const double publicProfileAvatarTop = p80;
+  static const double publicProfileAvatarLeft = p20;
+  static const double publicProfileAvatarBorder = p4;
+  static const double publicProfileOnlineBadgeSize = p16;
+  static const double publicProfileOnlineBadgeTop = p80 + p60;
+  static const double publicProfileOnlineBadgeLeft = p80;
+
+  /// Minimum height for public-profile proof metric cells from Open Design.
+  static const double publicProfileMetricMinHeight = 78.0;
+
+  /// Bottom padding that keeps public profile tabs clear of the sticky action bar.
+  static const double publicProfileStickyBarClearance = p100;
+
+  /// Hairline divider used between public profile sticky actions.
+  static const double publicProfileActionDividerWidth = 1.0;
+
+  /// Height for the public profile sticky action divider.
+  static const double publicProfileActionDividerHeight = p24;
+
+  /// Button height used inside the public profile sticky action bar.
+  static const double publicProfileActionButtonHeight = 46.0;
+
+  /// Compact icon well for Amber Dusk settings rows.
+  static const double settingsRowIconWell = 34.0;
+
+  /// Image preview height for manage-portfolio edit rows.
+  static const double managePortfolioImagePreviewHeight = 150.0;
 }

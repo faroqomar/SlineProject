@@ -358,6 +358,8 @@ For each step:
 - What still lacks proof
 - For UI phases, visual proof status: design-reference screenshots, current-app runtime screenshots, missing states, and any open emulator/device gate
 - For broad UI phases, per-file fixture/provider/manual coverage matrix covering all touched source files, tests, docs, and screenshot artifacts
+- For forms, composers, sheets, payment/booking screens, and transactional CTAs, focused/active/disabled/error/loading/recovery-state proof for the actual controls users touch
+- For payment or booking work, source-route, result-route, Dashboard Bookings, Dashboard Work, and list-bucket outcomes after success, pending, failed, canceled, retry, and recovery paths, including whether any external gateway action was not executed
 
 ## F.1) Code Comment Coverage Summary
 

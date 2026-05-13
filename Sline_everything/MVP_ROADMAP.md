@@ -1,6 +1,6 @@
 # SLine MVP Roadmap
 
-**Last Updated:** 2026-05-13
+**Last Updated:** 2026-05-14
 
 This roadmap tracks the current code-state of the repository. Status values are intentionally simple:
 - `✅ Completed`
@@ -13,7 +13,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | --- | --- | --- |
 | Flutter app shell and navigation | ✅ Completed | `main.dart` + `lib/app/main_navigation_screen.dart`; visible bottom nav is Home, Dashboard, Messages, Profile via `lib/core/navigation/main_nav_destinations.dart` |
 | Supabase bootstrap and app providers | ✅ Completed | shared client/bootstrap in `lib/core/services/supabase_config.dart` and root providers in `main.dart` |
-| Theme system (Layer 1) | ✅ Completed | Phase 0: `app_colors.dart`, `app_typography.dart`, `app_motion.dart`, `app_states.dart`, `app_decorations.dart`, `app_theme.dart`. **2026-05-11:** Amber Dusk Phase 0 added a staged inactive Open Design token layer under `lib/core/theme/designs/amber_dusk/`; it is not globally runtime-activated. **2026-05-12:** Phases 2-4 consume Amber Dusk tokens in scoped phone shell/discovery/dashboard surfaces. **2026-05-13:** Phases 5-8 extend scoped Amber Dusk treatment across auth gates, chat/notifications, tasks/work, booking/payment, and wallet surfaces while final emulator visual parity remains open. |
+| Theme system (Layer 1) | ✅ Completed | Phase 0: `app_colors.dart`, `app_typography.dart`, `app_motion.dart`, `app_states.dart`, `app_decorations.dart`, `app_theme.dart`. **2026-05-11:** Amber Dusk Phase 0 added a staged inactive Open Design token layer under `lib/core/theme/designs/amber_dusk/`; it is not globally runtime-activated. **2026-05-12:** Phases 2-4 consume Amber Dusk tokens in scoped phone shell/discovery/dashboard surfaces. **2026-05-13:** Phases 5-12 extend scoped Amber Dusk treatment across auth gates, chat/notifications, tasks/work, booking/payment, wallet, profile, portfolio, services, and secondary surfaces. **2026-05-14:** Transactional QA tightened focused/active UI state proof, payment/booking lifecycle buckets, and safe payment result UI while final processed-payment simulator parity remains open. |
 | Layout tokens (Layer 2) | ✅ Completed | Phase 0.7: `app_layout.dart` (41 semantic tokens), `app_dimens.dart` (raw primitives). Three-layer architecture complete. |
 | Logging and crash boundaries | ✅ Completed | `AppLogger`, `CrashReportingService`, zoned/global handlers |
 | Documentation hub | ✅ Completed | maintained under `Sline_everything/` |
@@ -54,9 +54,9 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | --- | --- | --- |
 | **Booking Lifecycle hardening (2026-03-08)** | ✅ Completed | Enum `disputed`, `no_show`; `fn_booking_guard` blocks client delivered→canceled (use Report Issue→disputed); `rpc_finalize_auto_approval` booking branch calls ledger; `admin_resolve_booking_dispute` for disputed→completed/refunded. Plan: `.TODO/PLAN_BookingLifecycle_2026-03-08_PlanCritic.md`. Execution: `.TODO/EXECUTION_LOG_PLAN_BookingLifecycle_2026-03-08.md`. |
 | Direct booking checkout | ✅ Completed | `PaymentCheckoutScreen` + server-backed draft creation |
-| QiCard integration | 🚧 In Progress | create/recovery/webhook flow exists and continues to be hardened |
-| Web payment callback handling | ✅ Completed | same-tab redirect + `PaymentReturnScreen` |
-| Mobile payment callback handling | ✅ Completed | `PaymentWebViewScreen` validates trusted callbacks |
+| QiCard integration | 🚧 In Progress | create/recovery/webhook flow exists and continues to be hardened. **2026-05-14:** local `qicard_payment_create` and `create_payment_intent` finish URLs are sanitized; IDs remain in gateway `additionalInfo`/server logs for webhook and recovery. |
+| Web payment callback handling | ✅ Completed | same-tab redirect + `PaymentReturnScreen`; sanitized callbacks can recover through `PaymentPendingStore` |
+| Mobile payment callback handling | ✅ Completed | `PaymentWebViewScreen` validates trusted callbacks and receives payment-intent stream completion |
 | Repeat slotless direct bookings | ✅ Completed | same client can create multiple slotless bookings for one booking task |
 | Booking details and history | ✅ Completed | client/provider history lists and detail screen exist |
 
@@ -151,6 +151,8 @@ Tests: 706 → 780 (+74). Coverage floor: 40%. Architecture guard had 6 checks i
 | 1.0 | Amber Dusk Phase 1 Core Phone Widgets | ✅ Code complete; manual emulator visual QA checklist open | Shared-widget Amber Dusk adapter | `SESSION_PLAN_OpenDesign_AmberDusk_Phase1_CorePhoneWidgets_2026-05-11.md` |
 | 1.1 | Amber Dusk Phases 2-4 Phone Shell, Discovery, Dashboard | ✅ Code complete; manual emulator visual QA gate open | Scoped phone-view Amber Dusk runtime surfaces | `SESSION_PLAN_OpenDesign_AmberDusk_Phases2_3_4_PhoneShellDiscoveryDashboard_2026-05-11.md` |
 | 1.2 | Amber Dusk Phases 5-8 Trust, Messaging, Work, Payments | ✅ Code complete; Step 8 docs synced; manual emulator visual QA gate open | Scoped phone-view Amber Dusk runtime surfaces; no backend/schema changes | `SESSION_PLAN_OpenDesign_AmberDusk_Phases5_6_7_8_PhoneTrustMessagingWorkPayments_2026-05-12.md` |
+| 1.3 | Amber Dusk Phases 9-12 Phone Profile, Secondary, Readiness, Handoff | ✅ Code complete after Step 5 gap scan; docs/handoff synced; manual emulator visual QA gate open | Scoped profile, portfolio, services, secondary screens, notification/helper states; no backend/schema changes | `SESSION_PLAN_OpenDesign_AmberDusk_Phases9_10_11_12_PhoneProfileSecondaryReadiness_2026-05-13.md` |
+| 1.4 | Amber Dusk Transactional QA Recovery | ✅ Code/test/docs complete; processed-payment simulator success branch open | Payment recovery, IQD money consistency, signup/post refresh, transactional Dashboard/Messages/Wallet/Task/Chat alignment; local Edge Function source changes only | `SESSION_PLAN_OpenDesign_AmberDusk_TransactionalQARecovery_2026-05-13.md` |
 | 1 | Core Widget Redesign | ✅ Completed | Redesign | `SESSION_PLAN_CoreWidgetRedesign_2026-04-07.md` |
 | 2+3+5 | App Shell + Auth + Cards | ✅ Completed | Redesign | `SESSION_PLAN_Phase2_AppShellAuthCards_2026-04-08.md` |
 | 4 | Home & Discovery | ✅ Completed | Redesign | `SESSION_PLAN_Phase4_HomeDiscovery_2026-04-08.md` |
@@ -167,14 +169,14 @@ Tests: 706 → 780 (+74). Coverage floor: 40%. Architecture guard had 6 checks i
 | 15 | Secondary Screens | ⏳ Planned | — | — |
 | 16 | Cross-Cutting Quality | ⏳ Planned | — | — |
 
-**Note:** Phase 5 (ChatDashboardNotifications) was executed as token normalization and polish, not as the visual redesign described in the Master Plan. Phase 6 (Chat & Messaging) was then completed as the actual visual redesign: elevated conversation tiles, unread indicators, emoji-only rendering, link detection, reply quotes, swipe-to-reply, FullscreenImageViewer, deferred navigation for instant chat opening, and optimistic unread state management. Dashboard and Notifications visual redesign is still pending.
+**Note:** Phase 5 (ChatDashboardNotifications) was executed as token normalization and polish, not as the visual redesign described in the Master Plan. Phase 6 (Chat & Messaging) was then completed as the actual visual redesign: elevated conversation tiles, unread indicators, emoji-only rendering, link detection, reply quotes, swipe-to-reply, FullscreenImageViewer, deferred navigation for instant chat opening, and optimistic unread state management. Dashboard and Notifications visual redesign is still pending. The 2026-05-13 Amber Dusk Phases 9-12 plan is a phone profile/secondary/readiness/handoff closure plan and does not redefine the older master-plan rows 9-12.
 
 ---
 
 ## 11. Current Focus
 
 ### Current Focus
-1. **Amber Dusk visual gates** — run `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4_Step6.md` and `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases5_6_7_8.md` on the target iOS Simulator before claiming final visual parity.
+1. **Amber Dusk visual gates** — run `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4_Step6.md`, `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases5_6_7_8.md`, `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12_Step6.md`, and `.TODO/VisualQA_OpenDesign_AmberDusk_TransactionalQARecovery_iOSSimulator_2026-05-13/README.md` on the target iOS Simulator before claiming final visual parity. The remaining transactional gate is the full QiCard processed-payment success branch with app recovery and Dashboard Bookings proof.
 2. **Missing Open Design states** — Search, Categories, Saved, Favorites, loading, empty, error, proposal detail, payment return/WebView, attachment error, notification modal, and auth/system edge states still need exact Open Design or user screenshots before pixel-match claims.
 3. **Amber Dusk activation/preview work** — optional broader activation must explicitly map staged tokens into active `AppTheme` before widgets depend on them.
 4. **Phase F: Ship Preparation** — Arabic/Kurdish translations, widget tests for critical views, remaining lint debt adoption, GitHub repo safeguards.

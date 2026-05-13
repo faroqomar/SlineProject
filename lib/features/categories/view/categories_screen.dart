@@ -68,10 +68,10 @@ class _CategoriesView extends StatelessWidget {
   static const int _gridColumns = 2;
 
   /// Cross-axis spacing between grid cells.
-  static const double _gridCrossSpacing = 12;
+  static const double _gridCrossSpacing = AppDimens.p12;
 
   /// Main-axis spacing between grid cells.
-  static const double _gridMainSpacing = 12;
+  static const double _gridMainSpacing = AppDimens.p12;
 
   /// Aspect ratio for grid children (width / height).
   static const double _childAspectRatio = 1.2;
@@ -188,10 +188,13 @@ class _CategoriesView extends StatelessWidget {
 
                 const SizedBox(height: AppDimens.p16),
 
-                // Error message
+                // Error copy is allowed two lines so long service messages do
+                // not overflow on the narrow Phase 10 phone widths.
                 Text(
                   vm.error!,
                   style: AppTypography.h5.copyWith(color: colorScheme.text),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                 ),
 
@@ -249,6 +252,8 @@ class _CategoriesView extends StatelessWidget {
                 Text(
                   'No categories found',
                   style: AppTypography.h5.copyWith(color: colorScheme.text),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                 ),
 
@@ -260,6 +265,8 @@ class _CategoriesView extends StatelessWidget {
                   style: AppTypography.bodySmall.copyWith(
                     color: colorScheme.textSecondary,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -382,42 +389,45 @@ class _CategoryCard extends StatelessWidget {
                 isDark: colorScheme.isDark,
               ),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Icon circle — 40px diameter with token-owned accent color.
-                Container(
-                  width: AppDimens.p40,
-                  height: AppDimens.p40,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    // Amber overlay keeps the icon well inside the staged
-                    // palette while foreground color varies by category role.
-                    color: amber.activeGlow,
+            child: Padding(
+              // Inner padding keeps two-line category names away from the
+              // card border while preserving the fixed two-column grid rhythm.
+              padding: const EdgeInsets.symmetric(horizontal: AppDimens.p8),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Icon circle — 40px diameter with token-owned accent color.
+                  Container(
+                    width: AppDimens.p40,
+                    height: AppDimens.p40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      // Amber overlay keeps the icon well inside the staged
+                      // palette while foreground color varies by category role.
+                      color: amber.activeGlow,
+                    ),
+                    child: Icon(
+                      categoryIcon,
+                      size: AppDimens.p22,
+                      color: categoryColor,
+                    ),
                   ),
-                  child: Icon(
-                    categoryIcon,
-                    size: AppDimens.p22,
-                    color: categoryColor,
-                  ),
-                ),
 
-                const SizedBox(height: AppDimens.p8),
+                  const SizedBox(height: AppDimens.p8),
 
-                // Category name — captionBold, centered, single line with ellipsis
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppDimens.p8),
-                  child: Text(
+                  // Category name can wrap to two lines for longer catalog
+                  // labels without changing the grid or tap target geometry.
+                  Text(
                     name,
                     style: AppTypography.captionBold.copyWith(
                       color: colorScheme.text,
                     ),
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

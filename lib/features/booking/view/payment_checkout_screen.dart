@@ -69,7 +69,6 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
   String? _draftBookingId;
   BookingViewModel? _vm;
   Timer? _orphanDraftTimer;
-  StreamSubscription<String>? _intentSubscription;
 
   String get _runtimeFinishUrl => buildQiCardFinishUrlForRuntime();
 
@@ -90,7 +89,6 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
 
   @override
   void dispose() {
-    _intentSubscription?.cancel();
     _orphanDraftTimer?.cancel();
     final draftBookingId = _draftBookingId;
     if (!_paymentSuccess &&
@@ -115,7 +113,6 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
   Future<void> _cancelDraftIfPossible(String bookingId) async {
     _orphanDraftTimer?.cancel();
     _orphanDraftTimer = null;
-    unawaited(_intentSubscription?.cancel());
     AppLogger.i('Attempting to cancel unpaid booking draft', tag: 'Payment');
     final vm = context.read<BookingViewModel>();
     _vm = vm;
@@ -228,6 +225,12 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
       );
       _orphanDraftTimer?.cancel();
       _orphanDraftTimer = null;
+      await _clearPendingAndRefreshBookingLists(
+        vm: vm,
+        pendingStore: context.read<PaymentPendingStore>(),
+        bookingId: bookingId,
+      );
+      if (!mounted) return;
       setState(() {
         _processing = false;
         _awaitingGatewayConfirmation = false;
@@ -253,6 +256,26 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
       _awaitingGatewayConfirmation = false;
       _paymentFlowInProgress = false;
     });
+  }
+
+  Future<void> _clearPendingAndRefreshBookingLists({
+    required BookingViewModel vm,
+    required PaymentPendingStore pendingStore,
+    required String bookingId,
+  }) async {
+    AppLogger.i(
+      'Clearing pending booking payment and refreshing booking lists',
+      tag: 'Payment',
+      json: <String, dynamic>{'has_booking': bookingId.isNotEmpty},
+    );
+    await pendingStore.clear();
+    await vm.loadBookingsAsClient();
+    await vm.loadBookingsAsProvider();
+    AppLogger.i(
+      'Booking lists refreshed after held payment recovery',
+      tag: 'Payment',
+      json: <String, dynamic>{'has_booking': bookingId.isNotEmpty},
+    );
   }
 
   Future<void> _processPayment() async {
@@ -318,34 +341,6 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
       });
 
       if (createResult.formUrl != null) {
-        if (createResult.intentId != null) {
-          unawaited(_intentSubscription?.cancel());
-          _intentSubscription = vm
-              .streamPaymentIntentStatus(createResult.intentId!)
-              .listen((status) {
-                if (_paymentSuccess) return;
-                AppLogger.i(
-                  'Payment intent realtime status updated: $status',
-                  tag: 'Payment',
-                );
-                if (status == 'succeeded' || status == 'failed') {
-                  _intentSubscription?.cancel();
-                  if (mounted && Navigator.canPop(context)) {
-                    Navigator.of(context).pop(
-                      PaymentReturnArgs(
-                        paymentId: null,
-                        correlationId: createResult.correlationId,
-                        status: status == 'succeeded' ? 'SUCCESS' : 'FAILED',
-                        rawUri: Uri.parse(
-                          'sline://payment_sync?status=$status',
-                        ),
-                      ),
-                    );
-                  }
-                }
-              });
-        }
-
         final uri = Uri.tryParse(createResult.formUrl!);
         if (uri == null) {
           AppLogger.w(
@@ -376,6 +371,20 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
           _awaitingGatewayConfirmation = true;
         });
 
+        final paymentIntentStatusStream = createResult.intentId == null
+            ? null
+            : vm.streamPaymentIntentStatus(createResult.intentId!);
+        if (createResult.intentId != null) {
+          AppLogger.i(
+            'Wiring booking payment webview to realtime intent status',
+            tag: 'Payment',
+            json: <String, dynamic>{
+              'has_intent': true,
+              'has_booking': createResult.bookingId != null,
+            },
+          );
+        }
+
         if (kIsWeb) {
           await _launchWebPaymentFlow(
             paymentUri: uri,
@@ -393,6 +402,8 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
                   callbackHosts: _callbackHosts,
                   expectedBookingId: createResult.bookingId,
                   expectedCorrelationId: createResult.correlationId,
+                  paymentIntentId: createResult.intentId,
+                  paymentIntentStatusStream: paymentIntentStatusStream,
                 ),
               ),
             );
@@ -444,7 +455,14 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
         elevation: 0,
         foregroundColor: amber.text,
       ),
-      body: SafeArea(child: _paymentSuccess ? _buildSuccess() : _buildForm(cs)),
+      body: ColoredBox(
+        color: amber.page,
+        child: SafeArea(
+          child: SizedBox.expand(
+            child: _paymentSuccess ? _buildSuccess() : _buildForm(cs),
+          ),
+        ),
+      ),
     );
   }
 
@@ -507,28 +525,27 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
 
           Text(
             'Booking Note',
-            style: AppTypography.h4.copyWith(color: cs.text),
+            style: AppTypography.h4.copyWith(color: amber.text),
           ),
           const SizedBox(height: AppDimens.p8),
           TextField(
             controller: _noteCtrl,
             maxLines: 4,
             minLines: 3,
-            style: AppTypography.bodyMedium.copyWith(color: cs.text),
+            cursorColor: amber.primary,
+            style: AppTypography.bodyMedium.copyWith(color: amber.text),
             decoration: InputDecoration(
               hintText: 'Add requirements or extra details for the provider',
-              hintStyle: AppTypography.bodyMedium.copyWith(
-                color: cs.textSecondary,
-              ),
+              hintStyle: AppTypography.bodyMedium.copyWith(color: amber.muted),
               filled: true,
               fillColor: amber.surface,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppDimens.r12),
-                borderSide: BorderSide(color: cs.text.withValues(alpha: 0.1)),
+                borderSide: BorderSide(color: amber.surfaceHighest),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppDimens.r12),
-                borderSide: BorderSide(color: cs.text.withValues(alpha: 0.1)),
+                borderSide: BorderSide(color: amber.surfaceHighest),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppDimens.r12),
@@ -544,7 +561,7 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
 
           Text(
             'Payment Details',
-            style: AppTypography.h4.copyWith(color: cs.text),
+            style: AppTypography.h4.copyWith(color: amber.text),
           ),
           const SizedBox(height: AppDimens.p4),
           if (isDemoMode) ...[
@@ -565,14 +582,12 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
                 FilteringTextInputFormatter.allow(RegExp(r'[\d ]')),
                 LengthLimitingTextInputFormatter(19),
               ],
-              cs: cs,
             ),
             const SizedBox(height: AppDimens.p12),
             _buildCardField(
               controller: _nameCtrl,
               label: 'Cardholder Name',
               icon: Icons.person_outline_rounded,
-              cs: cs,
             ),
             const SizedBox(height: AppDimens.p12),
             Row(
@@ -587,7 +602,6 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
                       FilteringTextInputFormatter.allow(RegExp(r'[\d/]')),
                       LengthLimitingTextInputFormatter(5),
                     ],
-                    cs: cs,
                   ),
                 ),
                 const SizedBox(width: AppDimens.p12),
@@ -602,7 +616,6 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
                       FilteringTextInputFormatter.digitsOnly,
                       LengthLimitingTextInputFormatter(4),
                     ],
-                    cs: cs,
                   ),
                 ),
               ],
@@ -614,14 +627,12 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
               decoration: BoxDecoration(
                 color: amber.infoMuted,
                 borderRadius: BorderRadius.circular(AppDimens.r12),
-                border: Border.all(
-                  color: amber.primary.withValues(alpha: 0.35),
-                ),
+                border: Border.all(color: amber.surfaceHighest),
               ),
               child: Text(
                 'QiCard mode is active. After tapping Pay, you will complete card validation securely on the QiCard payment page.',
                 style: AppTypography.bodySmall.copyWith(
-                  color: cs.text,
+                  color: amber.text,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -718,14 +729,12 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
                 Icon(
                   Icons.shield_outlined,
                   size: AppDimens.iconSizeSmall,
-                  color: cs.textSecondary,
+                  color: amber.muted,
                 ),
                 const SizedBox(width: AppDimens.p4),
                 Text(
                   'Secured payment · Funds held in escrow',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: cs.textSecondary,
-                  ),
+                  style: AppTypography.bodySmall.copyWith(color: amber.muted),
                 ),
               ],
             ),
@@ -739,7 +748,6 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
     required TextEditingController controller,
     required String label,
     required IconData icon,
-    required AppColorScheme cs,
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
     bool obscureText = false,
@@ -750,24 +758,21 @@ class _PaymentCheckoutScreenState extends State<PaymentCheckoutScreen> {
       keyboardType: keyboardType,
       obscureText: obscureText,
       inputFormatters: inputFormatters,
-      style: AppTypography.bodyMedium.copyWith(color: cs.text),
+      cursorColor: amber.primary,
+      style: AppTypography.bodyMedium.copyWith(color: amber.text),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: AppTypography.bodySmall.copyWith(color: cs.textSecondary),
-        prefixIcon: Icon(
-          icon,
-          color: cs.textSecondary,
-          size: AppDimens.iconSmall,
-        ),
+        labelStyle: AppTypography.bodySmall.copyWith(color: amber.muted),
+        prefixIcon: Icon(icon, color: amber.muted, size: AppDimens.iconSmall),
         filled: true,
         fillColor: amber.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimens.r12),
-          borderSide: BorderSide(color: cs.text.withValues(alpha: 0.1)),
+          borderSide: BorderSide(color: amber.surfaceHighest),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimens.r12),
-          borderSide: BorderSide(color: cs.text.withValues(alpha: 0.1)),
+          borderSide: BorderSide(color: amber.surfaceHighest),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimens.r12),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
@@ -18,7 +20,10 @@ import 'package:sline_app/features/chat/view/messages_screen.dart';
 import 'package:sline_app/features/dashboard/view/dashboard_screen.dart';
 import 'package:sline_app/features/home/view/home_screen.dart';
 import 'package:sline_app/features/profile/view/profile_screen.dart';
+import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 import 'package:sline_app/features/tasks/view/create_task_screen.dart';
+import 'package:sline_app/features/tasks/viewmodels/discovery_feed_view_model_contract.dart';
+import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
 
 /// Main navigation screen that manages bottom navigation and screen switching.
 ///
@@ -118,6 +123,90 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
     _bannerController.reverse().then((_) {
       if (mounted) setState(() => _bannerDismissed = true);
     });
+  }
+
+  Future<void> _openCreateTask(
+    BuildContext context,
+    WidgetBuilder createTaskBuilder,
+  ) async {
+    AppLogger.i('Opening create task screen from Home FAB', tag: 'Navigation');
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final result = await navigator.push<CreateTaskResult>(
+      SlinePageRoute.modalSheet(child: createTaskBuilder(context)),
+    );
+
+    if (!mounted || !context.mounted) return;
+    if (result == null) {
+      AppLogger.d(
+        'Create task sheet dismissed without changes',
+        tag: 'Navigation',
+      );
+      return;
+    }
+
+    AppLogger.i(
+      'Create task sheet completed',
+      tag: 'Navigation',
+      json: <String, dynamic>{
+        'operation': result.operation.name,
+        'task_type': result.taskType.name,
+        if (result.taskId != null) 'task_id': result.taskId,
+      },
+    );
+
+    await _refreshAfterCreateTask();
+    if (!mounted) return;
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(result.successMessage),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+  }
+
+  Future<void> _refreshAfterCreateTask() async {
+    final navigationProvider = context.read<NavigationProvider?>();
+    final feedViewModel = context.read<DiscoveryFeedViewModelContract?>();
+    final filterViewModel = context.read<TaskFilterViewModel?>();
+    final profileViewModel = context.read<ProfileViewModel?>();
+
+    navigationProvider?.setCurrentIndex(MainNavDestinations.home);
+
+    final refreshes = <Future<void>>[];
+    if (feedViewModel != null && filterViewModel != null) {
+      refreshes.add(
+        feedViewModel.refresh(
+          filterController: filterViewModel,
+          surface: 'home_post_create',
+        ),
+      );
+    }
+    if (profileViewModel != null) {
+      refreshes.add(profileViewModel.loadHeaderProfile());
+    }
+
+    if (refreshes.isEmpty) {
+      AppLogger.w(
+        'Create task completed without available refresh providers',
+        tag: 'Navigation',
+      );
+      return;
+    }
+
+    try {
+      await Future.wait(refreshes);
+      AppLogger.i('Create task completion refresh finished', tag: 'Navigation');
+    } on Exception catch (error, stackTrace) {
+      AppLogger.e(
+        'Create task completion refresh failed',
+        tag: 'Navigation',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   @override
@@ -294,14 +383,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
                           child: AnimatedRotationButton(
                             rotationAngle: 0.125,
                             onTap: () {
-                              AppLogger.i(
-                                'Opening create task screen from Home FAB',
-                                tag: 'Navigation',
-                              );
-                              Navigator.of(context).push(
-                                SlinePageRoute.modalSheet(
-                                  child: createTaskBuilder(context),
-                                ),
+                              unawaited(
+                                _openCreateTask(context, createTaskBuilder),
                               );
                             },
                             child: Container(

@@ -79,22 +79,13 @@ Deno.serve(async (req: Request) => {
 
     const intentId = intent.id;
 
-    // Build finish URL with booking_id and correlation_id so PaymentReturnScreen can recover
+    // Keep customer-facing return URLs sanitized; internal IDs stay in
+    // additionalInfo and server logs for webhook/recovery correlation.
     const baseFinishUrl = resolveQiCardFinishUrl(req, success_url || null) || "https://sline.app/?payment_return=1";
     const correlationId = entity_type === "booking"
       ? buildCorrelationId(entity_id, "create")
       : `intent:${intentId}`;
     const finishParams: Record<string, string> = { payment_return: "1" };
-    if (entity_type === "booking") {
-      finishParams.booking_id = entity_id;
-      finishParams.correlation_id = correlationId;
-    } else if (entity_type === "direct_offer") {
-      finishParams.offer_id = entity_id;
-      finishParams.correlation_id = correlationId;
-    } else if (entity_type === "task") {
-      finishParams.request_id = entity_id;
-      finishParams.correlation_id = correlationId;
-    }
     const finishPaymentUrl = withQueryParams(baseFinishUrl, finishParams);
 
     // Build additionalInfo for QiCard — webhook expects booking_id for booking flow
@@ -103,15 +94,20 @@ Deno.serve(async (req: Request) => {
       entity_id,
       entity_type,
       payer_id: auth.user.id,
+      correlation_id: correlationId,
     };
     if (entity_type === "booking") {
       additionalInfo.booking_id = entity_id;
       additionalInfo.client_id = auth.user.id;
-      additionalInfo.correlation_id = correlationId;
+    } else if (entity_type === "direct_offer") {
+      additionalInfo.offer_id = entity_id;
+    } else if (entity_type === "task") {
+      additionalInfo.request_id = entity_id;
     }
 
     // Build the QiCard gateway intent
     const paymentRequestId = crypto.randomUUID();
+    additionalInfo.payment_request_id = paymentRequestId;
     const payment = await qicardCreatePayment({
       requestId: paymentRequestId,
       amount: price,

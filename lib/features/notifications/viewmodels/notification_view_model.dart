@@ -226,14 +226,17 @@ class NotificationViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> markAllAsRead() async {
+  Future<bool> markAllAsRead() async {
     try {
       await _service.markAllAsRead();
+      _error = null;
       _safeNotify();
+      return true;
     } on Exception catch (e) {
       AppLogger.e('Failed to mark all as read', error: e, tag: 'Notifications');
       _error = 'Failed to mark all as read';
       _safeNotify();
+      return false;
     }
   }
 

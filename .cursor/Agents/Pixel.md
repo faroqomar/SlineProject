@@ -324,6 +324,10 @@ For every UI request, follow this exact order:
 
 For screenshot-led or Open Design-led work, Pixel must label each visual source before implementation: design reference, old-app baseline, current-app runtime capture, or manual QA note. If a screenshot pack is reused as runtime proof, verify route labels and run a duplicate-hash or identity sanity check before handing it to `@Sentinel`; otherwise, hand off the visual proof gap explicitly.
 
+When reskinning transactional surfaces, inspect the live focused/active states for every visible input, composer, segmented control, sheet handle, route transition background, and CTA. Inherited Material focus colors, `InputDecoration` defaults, and dimmed/disabled button states count as part of the surface; do not hand off a screen as aligned when only the resting state was checked.
+
+Customer-facing payment and booking result surfaces must present safe status summaries, amount, merchant/app context, next action, and recovery path. Raw booking IDs, payer IDs, entity IDs, intent IDs, correlation IDs, callback parameters, and gateway metadata belong in logs or support tooling, not primary UI.
+
 
 ## 8.1 Pixel Skill Routing Matrix
 

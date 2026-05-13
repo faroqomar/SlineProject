@@ -5,10 +5,12 @@ import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/account_guard_service.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
+import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_card_container.dart';
@@ -70,6 +72,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
     final task = widget.task;
     final isTender = task.isTender;
     final isBooking = task.isBooking;
@@ -78,7 +81,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     final isOwner = currentUserId != null && currentUserId == task.userId;
 
     return Scaffold(
-      backgroundColor: colorScheme.phoneBackground,
+      backgroundColor: amberColors.page,
       body: Column(
         children: [
           // --- Header ---
@@ -97,15 +100,15 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                   onTap: () => Navigator.pop(context),
                   child: Icon(
                     Icons.arrow_back_ios,
-                    color: colorScheme.text,
+                    color: amberColors.text,
                     size: 20,
                   ),
                 ),
                 Text(
                   isBooking ? 'Booking Details' : 'Job Details',
-                  style: AppTypography.h5.copyWith(color: colorScheme.text),
+                  style: AppTypography.h5.copyWith(color: amberColors.text),
                 ),
-                Icon(Icons.share, color: colorScheme.text, size: 20),
+                Icon(Icons.share, color: amberColors.text, size: 20),
               ],
             ),
           ),
@@ -133,7 +136,10 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                       children: [
                         Container(
                           decoration: BoxDecoration(
-                            border: Border.all(color: AppColors.gold, width: 2),
+                            border: Border.all(
+                              color: amberColors.warning,
+                              width: 2,
+                            ),
                             shape: BoxShape.circle,
                           ),
                           child: SignedAvatar(
@@ -158,14 +164,14 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                                 Icon(
                                   Icons.check_circle,
                                   size: 14,
-                                  color: AppColors.lightTeal,
+                                  color: amberColors.success,
                                 ),
                               ],
                             ),
                             Text(
                               'View Profile',
                               style: AppTypography.micro.copyWith(
-                                color: AppColors.teal,
+                                color: amberColors.primary,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -260,38 +266,37 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
           ),
 
           // --- Bottom Bar ---
-          AppCardContainer(
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(AppDimens.r30),
-            ),
+          Container(
             padding: EdgeInsets.fromLTRB(
               AppDimens.p24,
               AppDimens.p16,
               AppDimens.p24,
               MediaQuery.of(context).padding.bottom + AppDimens.p16,
             ),
+            decoration: BoxDecoration(
+              color: amberColors.background,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AppDimens.r30),
+              ),
+              border: Border(top: BorderSide(color: amberColors.surface)),
+              boxShadow: AppDecorations.elevation(
+                AmberDuskTokens.surfaces.nav.elevationLevel,
+                isDark: amberColors.isDark,
+              ),
+            ),
             child: Row(
               children: [
                 if (!isOwner) ...[
-                  Container(
-                    width: 54,
-                    height: 54,
-                    decoration: BoxDecoration(
-                      color: colorScheme.cardBackground,
-                      borderRadius: BorderRadius.circular(AppDimens.r14),
-                      border: Border.all(color: colorScheme.cardBorder),
-                    ),
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.chat_bubble_outline,
-                        color: colorScheme.text,
-                      ),
-                      onPressed: () => _handleChatAction(
-                        context,
-                        task.id,
-                        task.userId,
-                        currentUserId,
-                      ),
+                  _buildBottomIconButton(
+                    context,
+                    icon: Icons.chat_bubble_outline,
+                    color: amberColors.primary,
+                    semanticsLabel: 'Start chat',
+                    onPressed: () => _handleChatAction(
+                      context,
+                      task.id,
+                      task.userId,
+                      currentUserId,
                     ),
                   ),
                   const SizedBox(width: AppDimens.p12),
@@ -310,18 +315,12 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                   ),
                 ),
                 const SizedBox(width: AppDimens.p12),
-                Container(
-                  width: 54,
-                  height: 54,
-                  decoration: BoxDecoration(
-                    color: colorScheme.cardBackground,
-                    borderRadius: BorderRadius.circular(AppDimens.r14),
-                    border: Border.all(color: colorScheme.cardBorder),
-                  ),
-                  child: IconButton(
-                    icon: Icon(Icons.flag_outlined, color: colorScheme.text),
-                    onPressed: () => _showReportTaskDialog(context, task.id),
-                  ),
+                _buildBottomIconButton(
+                  context,
+                  icon: Icons.flag_outlined,
+                  color: amberColors.danger,
+                  semanticsLabel: 'Report task',
+                  onPressed: () => _showReportTaskDialog(context, task.id),
                 ),
               ],
             ),
@@ -443,16 +442,47 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
 
   // --- Mock UI Helpers ---
 
+  Widget _buildBottomIconButton(
+    BuildContext context, {
+    required IconData icon,
+    required Color color,
+    required String semanticsLabel,
+    required VoidCallback onPressed,
+  }) {
+    final amberColors = context.amberColors;
+    return Semantics(
+      button: true,
+      label: semanticsLabel,
+      child: Container(
+        width: 54,
+        height: 54,
+        decoration: BoxDecoration(
+          color: amberColors.surface,
+          borderRadius: BorderRadius.circular(
+            AmberDuskTokens.spacing.compactControlRadius,
+          ),
+          border: Border.all(color: amberColors.surfaceHighest),
+        ),
+        child: IconButton(
+          icon: Icon(icon, color: color),
+          onPressed: onPressed,
+        ),
+      ),
+    );
+  }
+
   Widget _buildPackageSelector(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
     const tiers = ['Basic', 'Standard', 'Premium'];
 
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: colorScheme.inputBackground,
-        borderRadius: BorderRadius.circular(AppDimens.r14),
-        border: Border.all(color: colorScheme.inputBorder),
+        color: amberColors.surface,
+        borderRadius: BorderRadius.circular(
+          AmberDuskTokens.spacing.compactControlRadius,
+        ),
+        border: Border.all(color: amberColors.surfaceHighest),
       ),
       child: Row(
         children: tiers.map((tier) {
@@ -461,19 +491,18 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
             child: GestureDetector(
               onTap: () => setState(() => _selectedPackageTier = tier),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
+                duration: AmberDuskTokens.motion.activeState,
+                curve: AmberDuskTokens.motion.stateCurve,
                 padding: const EdgeInsets.symmetric(vertical: AppDimens.p10),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.teal : Colors.transparent,
-                  borderRadius: BorderRadius.circular(AppDimens.r10),
+                  color: isSelected
+                      ? amberColors.primary
+                      : AmberDuskColors.transparent,
+                  borderRadius: BorderRadius.circular(
+                    AmberDuskTokens.spacing.md,
+                  ),
                   boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: AppColors.teal.withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ]
+                      ? AppDecorations.elevation(1, isDark: amberColors.isDark)
                       : [],
                 ),
                 child: Center(
@@ -481,8 +510,8 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                     tier,
                     style: AppTypography.captionBold.copyWith(
                       color: isSelected
-                          ? AppColors.offWhite
-                          : colorScheme.textSecondary,
+                          ? amberColors.textInverse
+                          : amberColors.muted,
                     ),
                   ),
                 ),
@@ -495,7 +524,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
   }
 
   Widget _buildPackageDetails(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
     // Real Data from Task
     var price = 'N/A';
     var delivery = 'N/A';
@@ -506,7 +535,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
         widget.task.packages!.containsKey(_selectedPackageTier)) {
       final pkg = widget.task.packages![_selectedPackageTier];
       if (pkg != null) {
-        price = '\$${pkg['price'] ?? '0'}';
+        price = _formatPackagePrice(pkg['price']);
         delivery = '${pkg['delivery'] ?? '0'} Days';
         final revCount = pkg['revisions'] ?? 0;
         revisions = '$revCount ${revCount == 1 ? 'Revision' : 'Revisions'}';
@@ -525,18 +554,20 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
             children: [
               Text(
                 price,
-                style: AppTypography.h4.copyWith(color: AppColors.teal),
+                style: AppTypography.h4.copyWith(color: amberColors.primary),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.teal.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  color: amberColors.primary.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(
+                    AmberDuskTokens.spacing.pillRadius,
+                  ),
                 ),
                 child: Text(
                   _selectedPackageTier.toUpperCase(),
                   style: AppTypography.micro.copyWith(
-                    color: AppColors.teal,
+                    color: amberColors.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -547,27 +578,27 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
           Text(
             desc,
             style: AppTypography.bodySmall.copyWith(
-              color: colorScheme.textSecondary,
+              color: amberColors.textSubtle,
             ),
           ),
           const SizedBox(height: AppDimens.p16),
           Row(
             children: [
-              Icon(Icons.schedule, size: 14, color: AppColors.teal),
+              Icon(Icons.schedule, size: 14, color: amberColors.primary),
               const SizedBox(width: 4),
               Text(
                 delivery,
                 style: AppTypography.captionBold.copyWith(
-                  color: colorScheme.text,
+                  color: amberColors.text,
                 ),
               ),
               const SizedBox(width: 16),
-              Icon(Icons.refresh, size: 14, color: AppColors.teal),
+              Icon(Icons.refresh, size: 14, color: amberColors.primary),
               const SizedBox(width: 4),
               Text(
                 revisions,
                 style: AppTypography.captionBold.copyWith(
-                  color: colorScheme.text,
+                  color: amberColors.text,
                 ),
               ),
             ],
@@ -575,6 +606,13 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
         ],
       ),
     );
+  }
+
+  String _formatPackagePrice(Object? raw) {
+    if (raw is num) return PriceFormatter.formatPrice(raw.toDouble());
+    final parsed = double.tryParse(raw?.toString() ?? '');
+    if (parsed == null) return PriceFormatter.formatPrice(0);
+    return PriceFormatter.formatPrice(parsed);
   }
 
   String _getButtonLabel(bool isOwner, bool isTender, bool isBooking) {

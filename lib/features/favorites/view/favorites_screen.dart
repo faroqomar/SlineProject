@@ -175,12 +175,23 @@ class _FavoritesView extends StatelessWidget {
                             style: AppTypography.h5.copyWith(
                               color: colorScheme.text,
                             ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: AppDimens.p8),
-                          Text(
-                            'Find and save your favorite freelancers',
-                            style: AppTypography.bodySmall.copyWith(
-                              color: colorScheme.textSecondary,
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppDimens.p24,
+                            ),
+                            child: Text(
+                              'Find and save your favorite freelancers',
+                              style: AppTypography.bodySmall.copyWith(
+                                color: colorScheme.textSecondary,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
                             ),
                           ),
                           // CTA button to guide users toward discovery
@@ -206,6 +217,10 @@ class _FavoritesView extends StatelessWidget {
             }
             return ListView.builder(
               key: const Key('favorites_list'),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimens.p24,
+                vertical: AppDimens.p16,
+              ),
               physics: const AlwaysScrollableScrollPhysics(),
               itemCount: items.length,
               itemBuilder: (context, index) {
@@ -297,7 +312,12 @@ class _FavoritesView extends StatelessWidget {
     final amber = _amberScheme(context);
     return OutlinedButton.styleFrom(
       foregroundColor: amber.primary,
+      minimumSize: const Size(AppDimens.touchTarget, AppDimens.touchTarget),
+      padding: const EdgeInsets.symmetric(horizontal: AppDimens.p16),
       side: BorderSide(color: amber.primary),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppDimens.r12),
+      ),
     );
   }
 }

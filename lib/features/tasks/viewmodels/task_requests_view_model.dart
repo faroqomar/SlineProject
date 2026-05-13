@@ -433,7 +433,7 @@ class TaskRequestsViewModel extends ChangeNotifier {
         id: r'optimistic-${DateTime.now().millisecondsSinceEpoch}',
         taskId: taskId,
         bidderId: 'current-user', // Will be replaced by server
-        price: (price * 100).round(), // Convert to cents (int)
+        price: price.round(),
         days: days,
         note: note,
         status: OfferStatus.pending,

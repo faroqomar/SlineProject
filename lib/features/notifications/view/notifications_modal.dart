@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
@@ -8,7 +9,6 @@ import 'package:sline_app/core/theme/app_states.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
-import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/core/widgets/skeleton_loader.dart';
 import 'package:sline_app/features/notifications/models/notification_model.dart';
 import 'package:sline_app/features/notifications/view/widgets/notification_tile.dart';
@@ -21,16 +21,19 @@ class NotificationsModalKeys {
   static const Key loading = ValueKey<String>('notifications_loading');
   static const Key empty = ValueKey<String>('notifications_empty');
   static const Key error = ValueKey<String>('notifications_error');
+
+  /// Stable row key so tests can target one notification without text coupling.
   static Key row(String id) => ValueKey<String>('notification_row_$id');
 }
 
 /// Notifications modal with skeleton loading, stagger entrance animation,
-/// rich empty/error states, and full Semantics coverage.
+/// adaptation-only Amber Dusk sheet styling, and full Semantics coverage.
 ///
 /// Phase 5 redesign: replaced CircularProgressIndicator with SkeletonLoader
 /// list, added stagger entrance for tiles, enhanced empty/error states with
 /// icon + descriptive text, added haptic and AppLogger tracking.
-/// View-layer only.
+/// Phase 10 keeps this view-layer only and does not change notification
+/// creation, realtime sync, mark-as-read authority, or deep-link routing.
 class NotificationsModal extends StatefulWidget {
   const NotificationsModal({super.key});
 
@@ -40,6 +43,7 @@ class NotificationsModal extends StatefulWidget {
     return showModalBottomSheet<NotificationItem>(
       context: context,
       isScrollControlled: true,
+      barrierColor: context.amberColors.scrim,
       backgroundColor: AmberDuskColors.transparent,
       builder: (_) => const NotificationsModal(),
     );
@@ -56,6 +60,9 @@ class _NotificationsModalState extends State<NotificationsModal>
 
   /// Guard prevents stagger replay on subsequent rebuilds.
   bool _hasAnimatedEntrance = false;
+
+  /// Prevents rapid taps from dispatching duplicate mark-all-read requests.
+  bool _isMarkingAllRead = false;
 
   /// Max tiles to animate in stagger — cap to avoid long delays.
   static const int _maxStaggerCount = 8;
@@ -132,14 +139,27 @@ class _NotificationsModalState extends State<NotificationsModal>
       minChildSize: 0.5,
       maxChildSize: 0.95,
       builder: (context, scrollController) {
+        final amberColors = context.amberColors;
+        final colorScheme = context.colorScheme;
+        final sheetRecipe = AmberDuskTokens.surfaces.sheet;
+
         return Semantics(
           label: 'Notifications panel',
-          child: AppCardContainer(
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(AppDimens.r20),
+          child: Container(
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: sheetRecipe.fill,
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(sheetRecipe.radius),
+              ),
+              boxShadow: AppDecorations.elevation(
+                sheetRecipe.elevationLevel,
+                isDark: colorScheme.isDark,
+              ),
             ),
             child: Column(
               children: [
+                _buildSheetHandle(amberColors),
                 _buildHeader(context),
                 Expanded(
                   child: Consumer<NotificationViewModel>(
@@ -170,8 +190,15 @@ class _NotificationsModalState extends State<NotificationsModal>
                         label: 'Notifications list',
                         child: ListView.separated(
                           controller: scrollController,
+                          padding: const EdgeInsets.fromLTRB(
+                            AppDimens.p16,
+                            AppDimens.p4,
+                            AppDimens.p16,
+                            AppDimens.p16,
+                          ),
                           itemCount: vm.notifications.length,
-                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: AppDimens.p10),
                           itemBuilder: (context, index) {
                             final notification = vm.notifications[index];
                             final tile = NotificationTile(
@@ -221,18 +248,38 @@ class _NotificationsModalState extends State<NotificationsModal>
     );
   }
 
+  /// Small solid handle matching the Amber Dusk bottom-sheet affordance.
+  Widget _buildSheetHandle(AmberDuskColorScheme amberColors) {
+    return Padding(
+      padding: const EdgeInsets.only(top: AppDimens.p8, bottom: AppDimens.p4),
+      child: Container(
+        width: AppDimens.p40,
+        height: AppDimens.p4,
+        decoration: BoxDecoration(
+          color: amberColors.surfaceHighest,
+          borderRadius: BorderRadius.circular(AppDimens.r50),
+        ),
+      ),
+    );
+  }
+
   /// Header with title, mark-all-read action, and close button.
   Widget _buildHeader(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
 
     return Padding(
-      padding: const EdgeInsets.all(AppDimens.p16),
+      padding: const EdgeInsets.fromLTRB(
+        AppDimens.p16,
+        AppDimens.p8,
+        AppDimens.p16,
+        AppDimens.p12,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             'Notifications',
-            style: AppTypography.h3.copyWith(color: colorScheme.text),
+            style: AppTypography.h3.copyWith(color: amberColors.text),
           ),
           Row(
             children: [
@@ -240,43 +287,64 @@ class _NotificationsModalState extends State<NotificationsModal>
                 button: true,
                 label: 'Mark all notifications as read',
                 child: TextButton(
-                  onPressed: () async {
-                    AppInteractionStates.hapticTap();
-                    AppLogger.d(
-                      'NotificationsModal: mark all as read tapped',
-                      tag: 'Notifications',
-                    );
-                    try {
-                      await context
-                          .read<NotificationViewModel>()
-                          .markAllAsRead();
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('All marked as read')),
-                        );
-                      }
-                    } on Object catch (e, st) {
-                      AppLogger.w(
-                        'NotificationsModal: markAllAsRead failed',
-                        tag: 'Notifications',
-                        error: e,
-                        json: <String, dynamic>{'stack_trace': st.toString()},
-                      );
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Could not mark notifications as read. Please try again.',
-                            ),
-                          ),
-                        );
-                      }
-                    }
-                  },
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(
+                      AppDimens.touchTarget,
+                      AppDimens.touchTarget,
+                    ),
+                    foregroundColor: amberColors.primary,
+                  ),
+                  onPressed: _isMarkingAllRead
+                      ? null
+                      : () async {
+                          setState(() => _isMarkingAllRead = true);
+                          AppInteractionStates.hapticTap();
+                          AppLogger.d(
+                            'NotificationsModal: mark all as read tapped',
+                            tag: 'Notifications',
+                          );
+                          try {
+                            final didMarkAllRead = await context
+                                .read<NotificationViewModel>()
+                                .markAllAsRead();
+                            if (!didMarkAllRead) {
+                              throw StateError('markAllAsRead returned false');
+                            }
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('All marked as read'),
+                                ),
+                              );
+                            }
+                          } on Object catch (e, st) {
+                            AppLogger.w(
+                              'NotificationsModal: markAllAsRead failed',
+                              tag: 'Notifications',
+                              error: e,
+                              json: <String, dynamic>{
+                                'stack_trace': st.toString(),
+                              },
+                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Could not mark notifications as read. Please try again.',
+                                  ),
+                                ),
+                              );
+                            }
+                          } finally {
+                            if (mounted) {
+                              setState(() => _isMarkingAllRead = false);
+                            }
+                          }
+                        },
                   child: Text(
                     'Mark all as read',
                     style: AppTypography.caption.copyWith(
-                      color: colorScheme.primary,
+                      color: amberColors.primary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -286,7 +354,8 @@ class _NotificationsModalState extends State<NotificationsModal>
                 button: true,
                 label: 'Close notifications',
                 child: IconButton(
-                  icon: Icon(Icons.close, color: colorScheme.text),
+                  tooltip: 'Close notifications',
+                  icon: Icon(Icons.close, color: amberColors.text),
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
@@ -301,7 +370,12 @@ class _NotificationsModalState extends State<NotificationsModal>
   Widget _buildSkeletonList() {
     return ListView.separated(
       key: NotificationsModalKeys.loading,
-      padding: const EdgeInsets.symmetric(horizontal: AppDimens.p16),
+      padding: const EdgeInsets.fromLTRB(
+        AppDimens.p16,
+        AppDimens.p4,
+        AppDimens.p16,
+        AppDimens.p16,
+      ),
       itemCount: 5,
       separatorBuilder: (_, __) => const SizedBox(height: AppDimens.p12),
       itemBuilder: (_, __) => const _SkeletonNotificationTile(),
@@ -310,35 +384,38 @@ class _NotificationsModalState extends State<NotificationsModal>
 
   /// Rich empty state with icon and descriptive text.
   Widget _buildEmptyState(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
 
     return Center(
       key: NotificationsModalKeys.empty,
       child: Semantics(
         label: 'No notifications. You are all caught up.',
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.notifications_off_outlined,
-              size: AppLayout.iconFeature,
-              color: colorScheme.textSecondary,
-            ),
-            const SizedBox(height: AppLayout.spacingSection),
-            Text(
-              "You're all caught up!",
-              style: AppTypography.h5.copyWith(
-                color: colorScheme.textSecondary,
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimens.p24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _StateIcon(
+                icon: Icons.notifications_off_outlined,
+                foreground: amberColors.muted,
+                background: amberColors.surfaceRaised,
               ),
-            ),
-            const SizedBox(height: AppLayout.spacingStandard),
-            Text(
-              'No new notifications',
-              style: AppTypography.bodySmall.copyWith(
-                color: colorScheme.textTertiary,
+              const SizedBox(height: AppLayout.spacingSection),
+              Text(
+                "You're all caught up!",
+                textAlign: TextAlign.center,
+                style: AppTypography.h5.copyWith(color: amberColors.text),
               ),
-            ),
-          ],
+              const SizedBox(height: AppLayout.spacingStandard),
+              Text(
+                'No new notifications',
+                textAlign: TextAlign.center,
+                style: AppTypography.bodySmall.copyWith(
+                  color: amberColors.muted,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -346,51 +423,87 @@ class _NotificationsModalState extends State<NotificationsModal>
 
   /// Error state with icon, message, and styled retry button.
   Widget _buildErrorState(BuildContext context, NotificationViewModel vm) {
-    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
 
     return Center(
       key: NotificationsModalKeys.error,
       child: Semantics(
         label: 'Error loading notifications. Tap retry.',
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: AppLayout.iconFeature,
-              color: colorScheme.danger,
-            ),
-            const SizedBox(height: AppLayout.spacingSection),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppLayout.spacingLarge,
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimens.p24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _StateIcon(
+                icon: Icons.error_outline,
+                foreground: amberColors.danger,
+                background: amberColors.dangerMuted,
               ),
-              child: Text(
-                vm.error!,
-                textAlign: TextAlign.center,
-                style: AppTypography.bodySmall.copyWith(
-                  color: colorScheme.textSecondary,
+              const SizedBox(height: AppLayout.spacingSection),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppLayout.spacingLarge,
+                ),
+                child: Text(
+                  vm.error!,
+                  textAlign: TextAlign.center,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: amberColors.textSubtle,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: AppLayout.spacingStandard),
-            TextButton.icon(
-              onPressed: () {
-                AppInteractionStates.hapticTap();
-                vm.retry();
-              },
-              icon: Icon(Icons.refresh, color: colorScheme.primary),
-              label: Text(
-                'Retry',
-                style: AppTypography.bodySmall.copyWith(
-                  color: colorScheme.primary,
-                  fontWeight: FontWeight.w600,
+              const SizedBox(height: AppLayout.spacingStandard),
+              TextButton.icon(
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(
+                    AppDimens.touchTarget,
+                    AppDimens.touchTarget,
+                  ),
+                  foregroundColor: amberColors.primary,
+                ),
+                onPressed: () {
+                  AppInteractionStates.hapticTap();
+                  vm.retry();
+                },
+                icon: Icon(Icons.refresh, color: amberColors.primary),
+                label: Text(
+                  'Retry',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: amberColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+/// Decorative icon well for notification empty and error states.
+///
+/// The fill colors come from Amber Dusk semantic muted/danger surfaces so the
+/// states read as solid material instead of old transparent/glass treatments.
+class _StateIcon extends StatelessWidget {
+  const _StateIcon({
+    required this.icon,
+    required this.foreground,
+    required this.background,
+  });
+
+  final IconData icon;
+  final Color foreground;
+  final Color background;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: AppDimens.emptyStateIconContainer,
+      height: AppDimens.emptyStateIconContainer,
+      decoration: BoxDecoration(color: background, shape: BoxShape.circle),
+      child: Icon(icon, size: AppDimens.emptyStateIconSize, color: foreground),
     );
   }
 }
@@ -402,27 +515,42 @@ class _SkeletonNotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: AppDimens.p8),
+    final amberColors = context.amberColors;
+    final skeletonTheme = AmberDuskTokens.widgetTheme.skeleton;
+
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.p14),
+      decoration: BoxDecoration(
+        color: amberColors.surface,
+        borderRadius: BorderRadius.circular(AmberDuskTokens.radius.taskCard),
+      ),
       child: Row(
         children: [
-          // Icon circle skeleton
-          SkeletonLoader(width: 40, height: 40, isCircle: true),
-          SizedBox(width: AppDimens.p12),
-          // Text lines skeleton
+          SkeletonLoader(
+            width: AppDimens.p40,
+            height: AppDimens.p40,
+            isCircle: true,
+            baseColor: skeletonTheme.base,
+            highlightColor: skeletonTheme.highlight,
+          ),
+          const SizedBox(width: AppDimens.p12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SkeletonLoader(
-                  width: 180,
+                  width: AppDimens.p100 + AppDimens.p80,
                   height: AppDimens.p14,
                   borderRadius: AppDimens.r4,
+                  baseColor: skeletonTheme.base,
+                  highlightColor: skeletonTheme.highlight,
                 ),
-                SizedBox(height: AppDimens.p8),
+                const SizedBox(height: AppDimens.p8),
                 SkeletonLoader(
                   height: AppDimens.p12,
                   borderRadius: AppDimens.r4,
+                  baseColor: skeletonTheme.base,
+                  highlightColor: skeletonTheme.highlight,
                 ),
               ],
             ),

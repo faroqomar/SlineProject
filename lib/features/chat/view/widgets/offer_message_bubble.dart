@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_states.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
+import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 
 /// Offer status enum for display purposes.
@@ -15,8 +15,8 @@ enum OfferStatus { pending, accepted, declined }
 
 /// A message bubble widget for displaying custom offers in chat.
 ///
-/// Phase 5 redesign: replaced all hardcoded `AppColors.teal/gold/lightTeal/lightRed`
-/// with semantic color tokens (`colorScheme.primary/warning/success/danger`).
+/// Phase 5 redesign: replaced all hardcoded legacy accents with semantic
+/// color tokens (`primary/warning/success/danger`).
 /// Added haptic feedback on action buttons, full Semantics coverage for
 /// accessibility, and consistent dimension tokens. View-layer only.
 ///
@@ -84,17 +84,18 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
     // 85% max width — consistent with chat bubble proportions for offer cards
     final maxWidth = MediaQuery.of(context).size.width * 0.85;
+    final formattedPrice = _formattedPrice();
 
     // Status-driven border color: gives immediate visual feedback on offer
     // state without the user needing to read the status chip.
-    final borderColor = _statusBorderColor(colorScheme);
+    final borderColor = _statusBorderColor(amberColors);
 
     return Semantics(
       label:
-          'Direct offer: ${widget.title}, \$${widget.price}, '
+          'Direct offer: ${widget.title}, $formattedPrice, '
           '${widget.deliveryDays} days delivery, '
           'status: ${_semanticStatus()}',
       child: Align(
@@ -107,18 +108,21 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
           width: maxWidth,
           margin: const EdgeInsets.symmetric(vertical: AppDimens.p8),
           decoration: BoxDecoration(
-            // Semantic primary at 10% opacity — replaces hardcoded AppColors.teal
-            color: colorScheme.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(AppDimens.r20),
+            color: amberColors.surfaceRaised,
+            borderRadius: BorderRadius.circular(
+              AmberDuskTokens.spacing.taskCardRadius,
+            ),
             // 1.5px status-driven border — thicker than the previous 1px to
             // emphasize the elevated card treatment and reinforce status color.
             border: Border.all(color: borderColor, width: 1.5),
             // Level 2 raised shadow — lifts the offer card above regular
             // message bubbles so it draws the user's eye immediately.
-            boxShadow: AppDecorations.elevation(2),
+            boxShadow: AppDecorations.elevation(2, isDark: amberColors.isDark),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppDimens.r20),
+            borderRadius: BorderRadius.circular(
+              AmberDuskTokens.spacing.taskCardRadius,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -132,31 +136,33 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          // Offer badge — semantic primary replaces hardcoded teal
+                          // Offer badge uses Amber Dusk primary for the transactional action.
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: AppDimens.p8,
                               vertical: AppDimens.p4,
                             ),
                             decoration: BoxDecoration(
-                              color: colorScheme.primary,
-                              borderRadius: BorderRadius.circular(AppDimens.r8),
+                              color: amberColors.primary,
+                              borderRadius: BorderRadius.circular(
+                                AmberDuskTokens.spacing.pillRadius,
+                              ),
                             ),
                             child: Text(
                               'CUSTOM OFFER',
                               style: AppTypography.micro.copyWith(
                                 fontWeight: FontWeight.w800,
-                                color: AppColors.white,
+                                color: amberColors.textInverse,
                                 letterSpacing: 0.5,
                               ),
                             ),
                           ),
-                          // Price — semantic primary replaces hardcoded teal
+                          // Price is always displayed as IQD for SLine offers.
                           Text(
-                            '\$${widget.price}',
+                            formattedPrice,
                             style: AppTypography.h4.copyWith(
                               fontWeight: FontWeight.w900,
-                              color: colorScheme.primary,
+                              color: amberColors.primary,
                             ),
                           ),
                         ],
@@ -168,7 +174,7 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
                         widget.title,
                         style: AppTypography.bodySmall.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: colorScheme.text,
+                          color: amberColors.text,
                         ),
                       ),
                       const SizedBox(height: AppDimens.p4),
@@ -177,7 +183,7 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
                       Text(
                         widget.description,
                         style: AppTypography.bodySmall.copyWith(
-                          color: colorScheme.textSecondary,
+                          color: amberColors.textSubtle,
                           height: 1.4,
                         ),
                         maxLines: 3,
@@ -191,14 +197,14 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
                           Icon(
                             Icons.schedule,
                             size: AppLayout.iconTiny,
-                            color: colorScheme.textSecondary,
+                            color: amberColors.muted,
                           ),
                           const SizedBox(width: AppLayout.spacingTight),
                           Text(
                             '${widget.deliveryDays} Days Delivery',
                             style: AppTypography.caption.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: colorScheme.textSecondary,
+                              color: amberColors.muted,
                             ),
                           ),
                         ],
@@ -206,7 +212,7 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
                       const SizedBox(height: AppDimens.p16),
 
                       // Action buttons or status
-                      _buildActions(colorScheme),
+                      _buildActions(amberColors),
                     ],
                   ),
                 ),
@@ -222,7 +228,7 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
                   child: Text(
                     widget.time,
                     style: AppTypography.micro.copyWith(
-                      color: colorScheme.textTertiary,
+                      color: amberColors.muted,
                     ),
                   ),
                 ),
@@ -240,16 +246,27 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
   /// - pending  -> warning (gold)  — draws attention to actionable offers
   /// - accepted -> success (green) — positive confirmation
   /// - declined -> danger at 60%   — muted red, not as aggressive as full red
-  Color _statusBorderColor(AppColorScheme colorScheme) {
+  Color _statusBorderColor(AmberDuskColorScheme amberColors) {
     switch (widget.status) {
       case OfferStatus.pending:
-        return colorScheme.warning;
+        return amberColors.warning;
       case OfferStatus.accepted:
-        return colorScheme.success;
+        return amberColors.success;
       case OfferStatus.declined:
         // 60% opacity — softens the rejected state so it doesn't feel alarming
-        return colorScheme.danger.withValues(alpha: 0.6);
+        return amberColors.danger.withValues(alpha: 0.6);
     }
+  }
+
+  String _formattedPrice() {
+    final normalized = widget.price.replaceAll(',', '').trim();
+    final amount = double.tryParse(normalized);
+    if (amount == null) {
+      return normalized.toUpperCase().contains('IQD')
+          ? widget.price
+          : '${widget.price} IQD';
+    }
+    return PriceFormatter.formatPrice(amount);
   }
 
   /// Returns a human-readable status string for accessibility labels.
@@ -269,7 +286,7 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
   ///
   /// Status-driven conditionals are intentionally complex — they map 1:1 to
   /// the direct offer lifecycle. Do NOT restructure; only change token usage.
-  Widget _buildActions(AppColorScheme colorScheme) {
+  Widget _buildActions(AmberDuskColorScheme amberColors) {
     final isSent =
         widget.rawStatus == 'sent' || widget.rawStatus == 'sent_unpaid';
     final isActive =
@@ -284,17 +301,13 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
       return _buildStatusChip(
         'Pending Payment',
         Icons.payment,
-        colorScheme.warning, // semantic warning replaces hardcoded gold
+        amberColors.warning,
       );
     }
 
     // Payment done, work in progress (escrow held)
     if (isActive && widget.offerId != null) {
-      return _buildStatusChip(
-        'Paid',
-        Icons.check_circle,
-        colorScheme.success, // semantic success replaces hardcoded lightTeal
-      );
+      return _buildStatusChip('Paid', Icons.check_circle, amberColors.success);
     }
 
     // Full lifecycle done (completed and payment released)
@@ -305,7 +318,7 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
       return _buildStatusChip(
         'Completed \u2022 Paid',
         Icons.check_circle,
-        colorScheme.success, // semantic success replaces hardcoded lightTeal
+        amberColors.success,
       );
     }
 
@@ -321,7 +334,7 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
           widget.status == OfferStatus.accepted ||
           widget.rawStatus == 'completed';
       // Accepted = success token, declined/canceled = danger token
-      final stateColor = accepted ? colorScheme.success : colorScheme.danger;
+      final stateColor = accepted ? amberColors.success : amberColors.danger;
       return Container(
         padding: const EdgeInsets.symmetric(
           horizontal: AppDimens.p12,
@@ -387,14 +400,14 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
                   child: Container(
                     height: AppLayout.buttonHeightSmall,
                     decoration: BoxDecoration(
-                      color: Colors.transparent,
+                      color: AmberDuskColors.transparent,
                       borderRadius: BorderRadius.circular(AppDimens.r14),
                       border: Border.all(
-                        color: colorScheme.primary.withValues(alpha: 0.3),
+                        color: amberColors.primary.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Material(
-                      color: Colors.transparent,
+                      color: AmberDuskColors.transparent,
                       child: InkWell(
                         onTap: () {
                           AppInteractionStates.hapticTap();
@@ -407,7 +420,7 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
                             'Decline',
                             style: AppTypography.bodySmall.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: colorScheme.text,
+                              color: amberColors.text,
                             ),
                           ),
                         ),
@@ -452,11 +465,11 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(AppDimens.r14),
                 border: Border.all(
-                  color: colorScheme.primary.withValues(alpha: 0.3),
+                  color: amberColors.primary.withValues(alpha: 0.3),
                 ),
               ),
               child: Material(
-                color: Colors.transparent,
+                color: AmberDuskColors.transparent,
                 child: InkWell(
                   onTap: () {
                     AppInteractionStates.hapticTap();
@@ -469,7 +482,7 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
                       'Cancel Offer',
                       style: AppTypography.bodySmall.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: colorScheme.text,
+                        color: amberColors.text,
                       ),
                     ),
                   ),
@@ -503,7 +516,7 @@ class _OfferMessageBubbleState extends State<OfferMessageBubble> {
     return _buildStatusChip(
       'Pending Response',
       Icons.schedule,
-      colorScheme.warning, // semantic warning replaces hardcoded gold
+      amberColors.warning,
     );
   }
 

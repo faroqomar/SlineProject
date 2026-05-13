@@ -67,10 +67,34 @@ void main() {
       );
       addTearDown(vm.dispose);
 
-      await vm.markAllAsRead();
+      final didMarkAllRead = await vm.markAllAsRead();
 
+      expect(didMarkAllRead, isTrue);
       verify(() => mockService.markAllAsRead()).called(1);
     });
+
+    test(
+      'markAllAsRead returns false and sets safe error on failure',
+      () async {
+        when(
+          () => mockService.streamNotifications(),
+        ).thenAnswer((_) => Stream.value([]));
+        when(
+          () => mockService.markAllAsRead(),
+        ).thenThrow(Exception('write failed'));
+        final vm = NotificationViewModel(
+          service: mockService,
+          authStateChanges: authController.stream,
+        );
+        addTearDown(vm.dispose);
+
+        final didMarkAllRead = await vm.markAllAsRead();
+
+        expect(didMarkAllRead, isFalse);
+        expect(vm.error, 'Failed to mark all as read');
+        verify(() => mockService.markAllAsRead()).called(1);
+      },
+    );
 
     test('retry does not throw when Supabase not initialized', () {
       when(

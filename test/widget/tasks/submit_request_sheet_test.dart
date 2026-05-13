@@ -261,9 +261,9 @@ void main() {
 
       await _openSheet(tester);
 
-      expect(find.text('Bid Amount'), findsOneWidget);
-      // The money icon is rendered as prefix
-      expect(find.byIcon(Icons.attach_money), findsWidgets);
+      expect(find.text('Amount (IQD)'), findsOneWidget);
+      // The IQD amount field uses the same payments icon as the live sheet.
+      expect(find.byIcon(Icons.payments_outlined), findsWidgets);
     });
 
     testWidgets('T123: renders delivery days field', (tester) async {
@@ -696,12 +696,12 @@ void main() {
       expect(find.text('CURRENT BID'), findsOneWidget);
       expect(find.text('NEW BID'), findsOneWidget);
 
-      // Existing bid: 300000 cents => 300K IQD, 5 days
+      // Existing bid: 300000 IQD => 300K IQD, 5 days
       expect(find.text('300K IQD'), findsWidgets);
       expect(find.text('5 days'), findsWidgets);
 
-      // New bid: 4000 * 100 = 400000 cents => 400K IQD, 3 days
-      expect(find.text('400K IQD'), findsWidgets);
+      // New bid: 4000 IQD => 4K IQD, 3 days
+      expect(find.text('4K IQD'), findsWidgets);
       expect(find.text('3 days'), findsWidgets);
     });
 

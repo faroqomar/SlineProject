@@ -6,14 +6,13 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_states.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/chat/attachments/widgets/attachment_message_tile.dart';
@@ -351,270 +350,270 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final me = context.watch<ChatViewModel>().currentUserId;
-    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
     final keyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Scaffold(
-      backgroundColor: colorScheme.phoneBackground,
-      body: Stack(
-        children: [
-          // ── Messages List ──────────────────────────────────────
-          Positioned.fill(
-            child: Consumer<ChatViewModel>(
-              builder: (context, controller, child) {
-                final messages = controller.currentMessages;
+      backgroundColor: amberColors.page,
+      body: ColoredBox(
+        color: amberColors.page,
+        child: Stack(
+          children: [
+            // ── Messages List ──────────────────────────────────────
+            Positioned.fill(
+              child: Consumer<ChatViewModel>(
+                builder: (context, controller, child) {
+                  final messages = controller.currentMessages;
 
-                // Auto-scroll: two cases —
-                // 1) Initial load (previousCount was 0, now messages arrived):
-                //    always scroll to bottom so user sees latest messages.
-                // 2) New messages while viewing (previousCount > 0, count grew):
-                //    only scroll if user is near the bottom (within 300px).
-                if (messages.length > _previousMessageCount) {
-                  final wasEmpty = _previousMessageCount == 0;
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (!mounted || !_scrollController.hasClients) return;
-                    if (wasEmpty) {
-                      // Initial load — always scroll to bottom
-                      _scrollToBottom();
-                    } else {
-                      final maxScroll =
-                          _scrollController.position.maxScrollExtent;
-                      final currentScroll = _scrollController.offset;
-                      if (maxScroll - currentScroll < 300) {
+                  // Auto-scroll: two cases —
+                  // 1) Initial load (previousCount was 0, now messages arrived):
+                  //    always scroll to bottom so user sees latest messages.
+                  // 2) New messages while viewing (previousCount > 0, count grew):
+                  //    only scroll if user is near the bottom (within 300px).
+                  if (messages.length > _previousMessageCount) {
+                    final wasEmpty = _previousMessageCount == 0;
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (!mounted || !_scrollController.hasClients) return;
+                      if (wasEmpty) {
+                        // Initial load — always scroll to bottom
                         _scrollToBottom();
+                      } else {
+                        final maxScroll =
+                            _scrollController.position.maxScrollExtent;
+                        final currentScroll = _scrollController.offset;
+                        if (maxScroll - currentScroll < 300) {
+                          _scrollToBottom();
+                        }
                       }
-                    }
-                  });
-                }
-                _previousMessageCount = messages.length;
+                    });
+                  }
+                  _previousMessageCount = messages.length;
 
-                // Loading state — show a centered spinner while messages
-                // are being fetched. This runs when the screen navigates
-                // instantly and fetchMessages() hasn't resolved yet.
-                if (messages.isEmpty && controller.isLoadingMessages) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 120),
-                      child: SizedBox(
-                        width: 28,
-                        height: 28,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: colorScheme.primary,
+                  // Loading state — show a centered spinner while messages
+                  // are being fetched. This runs when the screen navigates
+                  // instantly and fetchMessages() hasn't resolved yet.
+                  if (messages.isEmpty && controller.isLoadingMessages) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 120),
+                        child: SizedBox(
+                          width: 28,
+                          height: 28,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: amberColors.primary,
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                }
+                    );
+                  }
 
-                // Empty state — no messages and not loading
-                if (messages.isEmpty) {
-                  return _buildEmptyState(colorScheme);
-                }
+                  // Empty state — no messages and not loading
+                  if (messages.isEmpty) {
+                    return _buildEmptyState();
+                  }
 
-                final chatItems = _buildChatItems(messages);
+                  final chatItems = _buildChatItems(messages);
 
-                return Semantics(
-                  label: 'Chat messages',
-                  child: ListView.builder(
-                    controller: _scrollController,
-                    // Bottom padding 140px — leaves room for the input bar (~80px)
-                    // plus typing indicator + safe area so the last message doesn't
-                    // sit flush against the input row.
-                    padding: const EdgeInsets.fromLTRB(
-                      AppLayout.spacingSection,
-                      AppDimens.p100,
-                      AppLayout.spacingSection,
-                      140,
-                    ),
-                    itemCount: chatItems.length,
-                    itemBuilder: (context, index) {
-                      final item = chatItems[index];
+                  return Semantics(
+                    label: 'Chat messages',
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      // Bottom padding 140px — leaves room for the input bar (~80px)
+                      // plus typing indicator + safe area so the last message doesn't
+                      // sit flush against the input row.
+                      padding: const EdgeInsets.fromLTRB(
+                        AppLayout.spacingSection,
+                        AppDimens.p100,
+                        AppLayout.spacingSection,
+                        140,
+                      ),
+                      itemCount: chatItems.length,
+                      itemBuilder: (context, index) {
+                        final item = chatItems[index];
 
-                      // Date separator
-                      if (item is _DateSeparatorItem) {
-                        return _buildDateSeparator(item.date, colorScheme);
-                      }
+                        // Date separator
+                        if (item is _DateSeparatorItem) {
+                          return _buildDateSeparator(item.date);
+                        }
 
-                      // Message item
-                      final msgItem = item as _MessageItem;
-                      final msg = msgItem.message;
-                      final isMine = (me != null) && msg.senderId == me;
-                      final status =
-                          controller.isPresenceReceiptsEnabled && isMine
-                          ? (msg.seenAt != null
-                                ? 'read'
-                                : (msg.deliveredAt != null
-                                      ? 'delivered'
-                                      : 'sent'))
-                          : (isMine ? 'sent' : null);
+                        // Message item
+                        final msgItem = item as _MessageItem;
+                        final msg = msgItem.message;
+                        final isMine = (me != null) && msg.senderId == me;
+                        final status =
+                            controller.isPresenceReceiptsEnabled && isMine
+                            ? (msg.seenAt != null
+                                  ? 'read'
+                                  : (msg.deliveredAt != null
+                                        ? 'delivered'
+                                        : 'sent'))
+                            : (isMine ? 'sent' : null);
 
-                      // Offer messages (structured or legacy JSON)
-                      if (msg.messageType == MessageType.offer ||
-                          msg.content.trim().startsWith('{"type":"offer"')) {
-                        var offerData = <String, dynamic>{};
-                        if (msg.messageType == MessageType.offer) {
-                          offerData = msg.payload;
-                        } else {
-                          try {
-                            offerData = jsonDecode(msg.content);
-                          } on Object catch (e, st) {
-                            _logError(
-                              'Failed to decode legacy offer JSON',
-                              e,
-                              st,
+                        // Offer messages (structured or legacy JSON)
+                        if (msg.messageType == MessageType.offer ||
+                            msg.content.trim().startsWith('{"type":"offer"')) {
+                          var offerData = <String, dynamic>{};
+                          if (msg.messageType == MessageType.offer) {
+                            offerData = msg.payload;
+                          } else {
+                            try {
+                              offerData = jsonDecode(msg.content);
+                            } on Object catch (e, st) {
+                              _logError(
+                                'Failed to decode legacy offer JSON',
+                                e,
+                                st,
+                              );
+                            }
+                          }
+
+                          if (offerData.isNotEmpty) {
+                            final offerId = offerData['offer_id'] as String?;
+                            final rawStatus =
+                                controller.getOfferStatus(offerId) ??
+                                offerData['status']?.toString() ??
+                                'sent';
+                            return OfferMessageBubble(
+                              title: offerData['title'] ?? '',
+                              description: offerData['description'] ?? '',
+                              price: offerData['price']?.toString() ?? '0',
+                              deliveryDays: ChatOfferPayload.daysFromPayload(
+                                offerData,
+                              ).toString(),
+                              status: _parseOfferStatus(rawStatus),
+                              isMine: isMine,
+                              time: formatFriendlyTime(msg.createdAt),
+                              onAccept: () =>
+                                  _onAcceptOffer(context, msg, offerData),
+                              onDecline: () => _chatCtrl.rejectOffer(msg),
+                              offerId: offerId,
+                              rawStatus: rawStatus,
+                              onCancel: offerId != null
+                                  ? () => _chatCtrl.cancelOffer(offerId)
+                                  : null,
+                              onDeliver: offerId != null
+                                  ? () => _chatCtrl.markOfferDelivered(offerId)
+                                  : null,
+                              onComplete: offerId != null
+                                  ? () => _chatCtrl.completeOffer(offerId)
+                                  : null,
                             );
                           }
                         }
 
-                        if (offerData.isNotEmpty) {
-                          final offerId = offerData['offer_id'] as String?;
-                          final rawStatus =
-                              controller.getOfferStatus(offerId) ??
-                              offerData['status']?.toString() ??
-                              'sent';
-                          return OfferMessageBubble(
-                            title: offerData['title'] ?? '',
-                            description: offerData['description'] ?? '',
-                            price: offerData['price']?.toString() ?? '0',
-                            deliveryDays: ChatOfferPayload.daysFromPayload(
-                              offerData,
-                            ).toString(),
-                            status: _parseOfferStatus(rawStatus),
+                        // Image attachments
+                        final hasImage =
+                            (msg.attachmentType == 'image') &&
+                            (msg.attachmentUrl != null &&
+                                msg.attachmentUrl!.isNotEmpty);
+
+                        if (hasImage) {
+                          return _wrapWithInteractions(
+                            message: msg,
                             isMine: isMine,
-                            time: formatFriendlyTime(msg.createdAt),
-                            onAccept: () =>
-                                _onAcceptOffer(context, msg, offerData),
-                            onDecline: () => _chatCtrl.rejectOffer(msg),
-                            offerId: offerId,
-                            rawStatus: rawStatus,
-                            onCancel: offerId != null
-                                ? () => _chatCtrl.cancelOffer(offerId)
-                                : null,
-                            onDeliver: offerId != null
-                                ? () => _chatCtrl.markOfferDelivered(offerId)
-                                : null,
-                            onComplete: offerId != null
-                                ? () => _chatCtrl.completeOffer(offerId)
-                                : null,
+                            isAttachment: true,
+                            child: AttachmentMessageTile(
+                              isMine: isMine,
+                              storagePath: msg.attachmentUrl!,
+                              time: formatFriendlyTime(msg.createdAt),
+                              caption: msg.content != '[photo]'
+                                  ? msg.content
+                                  : null,
+                              signedUrlResolver:
+                                  widget.attachmentSignedUrlResolver ??
+                                  _chatCtrl.resolveAttachmentSignedUrl,
+                            ),
                           );
                         }
-                      }
 
-                      // Image attachments
-                      final hasImage =
-                          (msg.attachmentType == 'image') &&
-                          (msg.attachmentUrl != null &&
-                              msg.attachmentUrl!.isNotEmpty);
-
-                      if (hasImage) {
+                        // Regular text messages with grouping + swipe-to-reply + long-press menu.
+                        // Check client-side reply map for quoted context.
+                        final repliedTo = _replyMap[msg.id];
                         return _wrapWithInteractions(
                           message: msg,
                           isMine: isMine,
-                          isAttachment: true,
-                          child: AttachmentMessageTile(
-                            isMine: isMine,
-                            storagePath: msg.attachmentUrl!,
+                          child: MessageBubble(
+                            text: msg.content,
                             time: formatFriendlyTime(msg.createdAt),
-                            caption: msg.content != '[photo]'
-                                ? msg.content
+                            isMine: isMine,
+                            status: isMine ? status : null,
+                            isFirstInGroup: msgItem.isFirstInGroup,
+                            isLastInGroup: msgItem.isLastInGroup,
+                            replyToSender: repliedTo != null
+                                ? (repliedTo.senderId == me
+                                      ? 'You'
+                                      : widget.conversation.otherUserName ??
+                                            'User')
                                 : null,
-                            signedUrlResolver:
-                                widget.attachmentSignedUrlResolver ??
-                                _chatCtrl.resolveAttachmentSignedUrl,
+                            replyToText: repliedTo?.content,
                           ),
                         );
-                      }
-
-                      // Regular text messages with grouping + swipe-to-reply + long-press menu.
-                      // Check client-side reply map for quoted context.
-                      final repliedTo = _replyMap[msg.id];
-                      return _wrapWithInteractions(
-                        message: msg,
-                        isMine: isMine,
-                        child: MessageBubble(
-                          text: msg.content,
-                          time: formatFriendlyTime(msg.createdAt),
-                          isMine: isMine,
-                          status: isMine ? status : null,
-                          isFirstInGroup: msgItem.isFirstInGroup,
-                          isLastInGroup: msgItem.isLastInGroup,
-                          replyToSender: repliedTo != null
-                              ? (repliedTo.senderId == me
-                                    ? 'You'
-                                    : widget.conversation.otherUserName ??
-                                          'User')
-                              : null,
-                          replyToText: repliedTo?.content,
-                        ),
-                      );
-                    },
-                  ),
-                );
-              },
+                      },
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
 
-          // ── Header ─────────────────────────────────────────────
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: _buildHeader(context, colorScheme),
-          ),
+            // ── Header ─────────────────────────────────────────────
+            Positioned(top: 0, left: 0, right: 0, child: _buildHeader(context)),
 
-          // ── Input Area ─────────────────────────────────────────
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: _buildInputArea(context, colorScheme),
-          ),
+            // ── Input Area ─────────────────────────────────────────
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: _buildInputArea(context),
+            ),
 
-          // ── Scroll-to-bottom FAB ───────────────────────────────
-          // Always kept in the widget tree so AnimatedSlide/AnimatedOpacity
-          // exit animations can play. Visibility is driven purely by the
-          // animation values: slide offscreen and fade to 0 when hidden.
-          // IgnorePointer prevents taps when the FAB is not visible.
-          Positioned(
-            // Position above input area: compact button + section spacing + extra
-            bottom:
-                AppLayout.buttonHeightCompact +
-                AppLayout.spacingSection +
-                AppLayout.spacingSection,
-            right: AppLayout.spacingSection,
-            child: IgnorePointer(
-              // Block taps when the FAB is not showing
-              ignoring: !(_showScrollFab && !keyboardOpen),
-              child: Semantics(
-                button: true,
-                label: 'Scroll to latest messages',
-                child: AnimatedSlide(
-                  duration: AppMotion.standard,
-                  curve: AppMotion.curveDecel,
-                  // Slide down out of view when hidden
-                  offset: (_showScrollFab && !keyboardOpen)
-                      ? Offset.zero
-                      : const Offset(0, 1),
-                  child: AnimatedOpacity(
-                    duration: AppMotion.fast,
-                    opacity: (_showScrollFab && !keyboardOpen) ? 1.0 : 0.0,
-                    child: GestureDetector(
-                      onTap: _scrollToBottom,
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: colorScheme.cardBackground,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: colorScheme.cardBorder),
-                          // Elevation level 2 — subtle lift for scroll-to-bottom FAB
-                          boxShadow: AppDecorations.elevation(2),
-                        ),
-                        child: Icon(
-                          Icons.keyboard_arrow_down,
-                          color: colorScheme.text,
-                          size: AppLayout.iconStandard,
+            // ── Scroll-to-bottom FAB ───────────────────────────────
+            // Always kept in the widget tree so AnimatedSlide/AnimatedOpacity
+            // exit animations can play. Visibility is driven purely by the
+            // animation values: slide offscreen and fade to 0 when hidden.
+            // IgnorePointer prevents taps when the FAB is not visible.
+            Positioned(
+              // Position above input area: compact button + section spacing + extra
+              bottom:
+                  AppLayout.buttonHeightCompact +
+                  AppLayout.spacingSection +
+                  AppLayout.spacingSection,
+              right: AppLayout.spacingSection,
+              child: IgnorePointer(
+                // Block taps when the FAB is not showing
+                ignoring: !(_showScrollFab && !keyboardOpen),
+                child: Semantics(
+                  button: true,
+                  label: 'Scroll to latest messages',
+                  child: AnimatedSlide(
+                    duration: AppMotion.standard,
+                    curve: AppMotion.curveDecel,
+                    // Slide down out of view when hidden
+                    offset: (_showScrollFab && !keyboardOpen)
+                        ? Offset.zero
+                        : const Offset(0, 1),
+                    child: AnimatedOpacity(
+                      duration: AppMotion.fast,
+                      opacity: (_showScrollFab && !keyboardOpen) ? 1.0 : 0.0,
+                      child: GestureDetector(
+                        onTap: _scrollToBottom,
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: amberColors.surfaceRaised,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: amberColors.surfaceHighest,
+                            ),
+                            // Elevation level 2 — subtle lift for scroll-to-bottom FAB
+                            boxShadow: AppDecorations.elevation(2),
+                          ),
+                          child: Icon(
+                            Icons.keyboard_arrow_down,
+                            color: amberColors.text,
+                            size: AppLayout.iconStandard,
+                          ),
                         ),
                       ),
                     ),
@@ -622,16 +621,17 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   /// Enhanced date separator: pill-style with horizontal hairline rules.
   /// Replaces the previous plain centered text separators.
-  Widget _buildDateSeparator(DateTime date, AppColorScheme colorScheme) {
+  Widget _buildDateSeparator(DateTime date) {
     final text = _formatSeparatorDate(date);
+    final amberColors = context.amberColors;
     return Semantics(
       label: 'Messages from $text',
       child: Padding(
@@ -639,7 +639,7 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Row(
           children: [
             Expanded(
-              child: Divider(color: colorScheme.cardBorder, thickness: 0.5),
+              child: Divider(color: amberColors.heroDivider, thickness: 0.5),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(
@@ -651,19 +651,19 @@ class _ChatScreenState extends State<ChatScreen> {
                   vertical: AppDimens.p4,
                 ),
                 decoration: BoxDecoration(
-                  color: colorScheme.inputBackground,
+                  color: amberColors.surfaceRaised,
                   borderRadius: BorderRadius.circular(AppDimens.r12),
                 ),
                 child: Text(
                   text,
                   style: AppTypography.caption.copyWith(
-                    color: colorScheme.textTertiary,
+                    color: amberColors.muted,
                   ),
                 ),
               ),
             ),
             Expanded(
-              child: Divider(color: colorScheme.cardBorder, thickness: 0.5),
+              child: Divider(color: amberColors.heroDivider, thickness: 0.5),
             ),
           ],
         ),
@@ -672,7 +672,8 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   /// Rich empty state when no messages exist in the conversation.
-  Widget _buildEmptyState(AppColorScheme colorScheme) {
+  Widget _buildEmptyState() {
+    final amberColors = context.amberColors;
     return Semantics(
       label: 'No messages yet. Start the conversation.',
       child: Center(
@@ -682,14 +683,12 @@ class _ChatScreenState extends State<ChatScreen> {
             Icon(
               Icons.chat_outlined,
               size: AppLayout.iconFeature,
-              color: colorScheme.textSecondary,
+              color: amberColors.muted,
             ),
             const SizedBox(height: AppLayout.spacingSection),
             Text(
               'Start the conversation',
-              style: AppTypography.h5.copyWith(
-                color: colorScheme.textSecondary,
-              ),
+              style: AppTypography.h5.copyWith(color: amberColors.textSubtle),
             ),
             const SizedBox(height: AppLayout.spacingStandard),
             if (widget.conversation.taskTitle != null)
@@ -701,7 +700,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   'Say hello about "${widget.conversation.taskTitle}"',
                   textAlign: TextAlign.center,
                   style: AppTypography.bodySmall.copyWith(
-                    color: colorScheme.textTertiary,
+                    color: amberColors.muted,
                   ),
                 ),
               ),
@@ -711,7 +710,8 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, AppColorScheme colorScheme) {
+  Widget _buildHeader(BuildContext context) {
+    final amberColors = context.amberColors;
     return Column(
       children: [
         ClipRect(
@@ -735,7 +735,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       child: IconButton(
                         icon: Icon(
                           Icons.arrow_back_ios,
-                          color: colorScheme.text,
+                          color: amberColors.text,
                           size: AppLayout.iconStandard,
                         ),
                         onPressed: () => Navigator.pop(context),
@@ -745,7 +745,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       widget.conversation.otherUserName ?? 'Chat',
                       style: AppTypography.bodyLarge.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: colorScheme.text,
+                        color: amberColors.text,
                       ),
                     ),
                   ],
@@ -768,21 +768,21 @@ class _ChatScreenState extends State<ChatScreen> {
                             vertical: AppDimens.p6,
                           ),
                           decoration: BoxDecoration(
-                            color: colorScheme.primary,
+                            color: amberColors.primary,
                             borderRadius: BorderRadius.circular(AppDimens.r20),
                           ),
                           child: Row(
                             children: [
                               Icon(
                                 Icons.attach_money,
-                                color: AppColors.white,
+                                color: amberColors.textInverse,
                                 size: AppDimens.iconSizeSmall,
                               ),
                               const SizedBox(width: AppLayout.spacingTight),
                               Text(
                                 'Offer',
                                 style: AppTypography.captionBold.copyWith(
-                                  color: AppColors.white,
+                                  color: amberColors.textInverse,
                                 ),
                               ),
                             ],
@@ -791,7 +791,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ),
                     PopupMenuButton<String>(
-                      icon: Icon(Icons.more_vert, color: colorScheme.text),
+                      icon: Icon(Icons.more_vert, color: amberColors.text),
                       onSelected: (value) {
                         if (value == 'report_chat') {
                           _reportConversation(context);
@@ -830,7 +830,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: Text(
                   'Typing...',
                   style: AppTypography.caption.copyWith(
-                    color: colorScheme.textSecondary,
+                    color: amberColors.muted,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -844,7 +844,8 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildInputArea(BuildContext context, AppColorScheme colorScheme) {
+  Widget _buildInputArea(BuildContext context) {
+    final amberColors = context.amberColors;
     return AppCardContainer(
       borderRadius: const BorderRadius.vertical(
         top: Radius.circular(AppDimens.r24),
@@ -861,7 +862,7 @@ class _ChatScreenState extends State<ChatScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           // Reply preview bar — shown when replying to a message
-          _buildReplyBar(colorScheme),
+          _buildReplyBar(),
           Row(
             children: [
               // Attachment button
@@ -875,7 +876,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     height: AppLayout.circleButtonVisualSize,
                     child: Icon(
                       Icons.attach_file,
-                      color: colorScheme.primary,
+                      color: amberColors.primary,
                       size: AppDimens.p22,
                     ),
                   ),
@@ -889,9 +890,9 @@ class _ChatScreenState extends State<ChatScreen> {
                   height: AppLayout
                       .buttonHeightCompact, // 48px standard input height
                   decoration: BoxDecoration(
-                    color: colorScheme.inputBackground,
+                    color: amberColors.surfaceRaised,
                     borderRadius: BorderRadius.circular(AppDimens.r23),
-                    border: Border.all(color: colorScheme.inputBorder),
+                    border: Border.all(color: amberColors.surfaceHighest),
                   ),
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppLayout.spacingSection,
@@ -899,11 +900,17 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: TextField(
                     key: ChatScreen.messageInputKey,
                     controller: _messageController,
-                    style: TextStyle(color: colorScheme.text),
+                    cursorColor: amberColors.primary,
+                    style: TextStyle(color: amberColors.text),
                     decoration: InputDecoration(
                       hintText: 'Type a message...',
-                      hintStyle: TextStyle(color: colorScheme.textSecondary),
+                      hintStyle: TextStyle(color: amberColors.muted),
+                      filled: false,
+                      fillColor: AmberDuskColors.transparent,
                       border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
                       contentPadding: const EdgeInsets.only(
                         bottom: AppDimens.p10,
                       ),
@@ -979,7 +986,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           width: AppLayout.buttonHeightCompact,
                           height: AppLayout.buttonHeightCompact,
                           decoration: BoxDecoration(
-                            color: colorScheme.primary,
+                            color: amberColors.primary,
                             shape: BoxShape.circle,
                           ),
                           child: sending
@@ -990,13 +997,13 @@ class _ChatScreenState extends State<ChatScreen> {
                                     child: CircularProgressIndicator(
                                       strokeWidth: AppInteractionStates
                                           .loadingStrokeWidth,
-                                      color: AppColors.white,
+                                      color: amberColors.textInverse,
                                     ),
                                   ),
                                 )
                               : Icon(
                                   Icons.send,
-                                  color: AppColors.white,
+                                  color: amberColors.textInverse,
                                   size: AppLayout.iconStandard,
                                 ),
                         ),
@@ -1014,7 +1021,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   /// Reply preview bar — shown above input when replying to a message.
   /// Slides in/out with AnimatedSize. Shows sender name + message preview + close.
-  Widget _buildReplyBar(AppColorScheme colorScheme) {
+  Widget _buildReplyBar() {
+    final amberColors = context.amberColors;
     return AnimatedSize(
       // Smooth slide-in/out for the reply bar
       duration: AppMotion.fast,
@@ -1026,11 +1034,11 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Container(
                 decoration: BoxDecoration(
                   // Subtle tinted background for the reply bar
-                  color: colorScheme.primary.withValues(alpha: 0.05),
+                  color: amberColors.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(AppDimens.r12),
                   // 3px left accent border matching the reply quote in bubbles
                   border: Border(
-                    left: BorderSide(color: colorScheme.primary, width: 3),
+                    left: BorderSide(color: amberColors.primary, width: 3),
                   ),
                 ),
                 padding: const EdgeInsets.symmetric(
@@ -1051,7 +1059,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 ? 'You'
                                 : (widget.conversation.otherUserName ?? 'User'),
                             style: AppTypography.captionBold.copyWith(
-                              color: colorScheme.primary,
+                              color: amberColors.primary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -1060,7 +1068,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           Text(
                             _replyTarget!.content,
                             style: AppTypography.caption.copyWith(
-                              color: colorScheme.textSecondary,
+                              color: amberColors.muted,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -1076,7 +1084,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         child: Icon(
                           Icons.close_rounded,
                           size: AppDimens.iconSizeSmall,
-                          color: colorScheme.textSecondary,
+                          color: amberColors.muted,
                         ),
                       ),
                     ),
@@ -1121,7 +1129,7 @@ class _ChatScreenState extends State<ChatScreen> {
     bool isAttachment = false,
   }) {
     HapticFeedback.mediumImpact();
-    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
 
     // Determine which actions to show based on message type
     final hasTextToCopy = !isAttachment || (message.content != '[photo]');
@@ -1129,7 +1137,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: colorScheme.cardBackground,
+      backgroundColor: amberColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppDimens.r24),
@@ -1148,7 +1156,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: AppDimens.p8),
                   decoration: BoxDecoration(
-                    color: colorScheme.textTertiary,
+                    color: amberColors.surfaceHighest,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -1158,12 +1166,12 @@ class _ChatScreenState extends State<ChatScreen> {
                     leading: Icon(
                       Icons.copy_outlined,
                       size: AppDimens.iconSizeSmall,
-                      color: colorScheme.text,
+                      color: amberColors.text,
                     ),
                     title: Text(
                       'Copy',
                       style: AppTypography.bodyMedium.copyWith(
-                        color: colorScheme.text,
+                        color: amberColors.text,
                       ),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
@@ -1184,12 +1192,12 @@ class _ChatScreenState extends State<ChatScreen> {
                     leading: Icon(
                       Icons.reply_rounded,
                       size: AppDimens.iconSizeSmall,
-                      color: colorScheme.text,
+                      color: amberColors.text,
                     ),
                     title: Text(
                       'Reply',
                       style: AppTypography.bodyMedium.copyWith(
-                        color: colorScheme.text,
+                        color: amberColors.text,
                       ),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
@@ -1307,6 +1315,7 @@ class _ChatScreenState extends State<ChatScreen> {
     required String title,
   }) async {
     var draftReason = '';
+    final amberColors = context.amberColors;
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -1322,10 +1331,15 @@ class _ChatScreenState extends State<ChatScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
+            style: TextButton.styleFrom(foregroundColor: amberColors.muted),
             child: const Text('Cancel'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, draftReason.trim()),
+            style: FilledButton.styleFrom(
+              backgroundColor: amberColors.primary,
+              foregroundColor: amberColors.textInverse,
+            ),
             child: const Text('Submit'),
           ),
         ],
@@ -1418,7 +1432,7 @@ class _SwipeToReplyState extends State<_SwipeToReply>
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
 
     return Stack(
       clipBehavior: Clip.none,
@@ -1437,7 +1451,7 @@ class _SwipeToReplyState extends State<_SwipeToReply>
                 curve: AppMotion.curveSpring,
                 child: Icon(
                   Icons.reply_rounded,
-                  color: colorScheme.primary,
+                  color: amberColors.primary,
                   size: AppLayout.iconStandard,
                 ),
               ),

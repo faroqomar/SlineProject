@@ -17,6 +17,48 @@ import 'package:sline_app/features/tasks/view/widgets/booking_logistics_section.
 import 'package:sline_app/features/tasks/view/widgets/task_concept_section.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
 
+/// Result returned when the create/edit sheet finishes a persisted post.
+///
+/// The parent shell uses this value to refresh the Home feed after the sheet
+/// closes instead of guessing whether a create flow completed.
+@immutable
+class CreateTaskResult {
+  /// Creates a completion result for a task create or update operation.
+  const CreateTaskResult({
+    required this.operation,
+    required this.taskType,
+    this.taskId,
+  });
+
+  /// The persistence operation that completed successfully.
+  final CreateTaskOperation operation;
+
+  /// The post type that was created or updated.
+  final TaskType taskType;
+
+  /// The persisted task id when the repository returned or already had one.
+  final String? taskId;
+
+  /// User-facing success copy for the durable parent-shell confirmation.
+  String get successMessage {
+    final postType = taskType == TaskType.booking
+        ? 'Booking post'
+        : 'Tender post';
+    return operation == CreateTaskOperation.created
+        ? '$postType published. Home feed refreshed.'
+        : '$postType updated. Home feed refreshed.';
+  }
+}
+
+/// Distinguishes create and update completions from the create/edit sheet.
+enum CreateTaskOperation {
+  /// A new post was created.
+  created,
+
+  /// An existing post was updated.
+  updated,
+}
+
 /// Bottom-sheet create/edit flow for Tender and Booking posts.
 ///
 /// The screen keeps the existing [TaskViewModel] create/update contracts while
@@ -364,8 +406,14 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         offers: widget.task?.offers ?? 0, // Preserve offers count
       );
 
+      final CreateTaskResult result;
       if (widget.task == null) {
-        await vm.createTask(task);
+        final created = await vm.createTask(task);
+        result = CreateTaskResult(
+          operation: CreateTaskOperation.created,
+          taskType: created.taskType,
+          taskId: created.id,
+        );
       } else {
         final updateData = task.toJson();
         // Remove fields that shouldn't be updated or cause issues
@@ -376,10 +424,15 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         ); // RLS might block if it looks like a change (even if same)
 
         await vm.updateTask(task.id, updateData);
+        result = CreateTaskResult(
+          operation: CreateTaskOperation.updated,
+          taskType: task.taskType,
+          taskId: task.id,
+        );
       }
 
       if (!mounted) return;
-      Navigator.pop(context);
+      Navigator.pop(context, result);
     } on Exception catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -396,57 +449,65 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     final sheetRecipe = AmberDuskTokens.surfaces.sheet;
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
 
     return Scaffold(
       backgroundColor: AmberDuskColors.transparent,
       resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        top: false,
-        child: Align(
-          alignment: Alignment.bottomCenter,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final sheetHeight =
-                  constraints.maxHeight *
-                  (_currentStep == 1
-                      ? _kTypeStepHeightFraction
-                      : _kDetailStepHeightFraction);
-              return SizedBox(
-                width: double.infinity,
-                height: sheetHeight,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: sheetRecipe.fill,
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(sheetRecipe.radius),
-                    ),
-                    boxShadow: AppDecorations.elevation(
-                      sheetRecipe.elevationLevel,
-                      isDark: colorScheme.isDark,
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      _buildHeader(colorScheme),
-
-                      Expanded(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.fromLTRB(
-                            AmberDuskSpacing.contentHorizontalPadding,
-                            AppDimens.p8,
-                            AmberDuskSpacing.contentHorizontalPadding,
-                            AppDimens.p16,
-                          ),
-                          child: _buildStepContent(colorScheme),
-                        ),
+      body: AnimatedPadding(
+        duration: AppMotion.fast,
+        curve: AppMotion.curveDecel,
+        padding: EdgeInsets.only(bottom: keyboardInset),
+        child: SafeArea(
+          top: false,
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final sheetHeight =
+                    constraints.maxHeight *
+                    (_currentStep == 1
+                        ? _kTypeStepHeightFraction
+                        : _kDetailStepHeightFraction);
+                return SizedBox(
+                  width: double.infinity,
+                  height: sheetHeight,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: sheetRecipe.fill,
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(sheetRecipe.radius),
                       ),
+                      boxShadow: AppDecorations.elevation(
+                        sheetRecipe.elevationLevel,
+                        isDark: colorScheme.isDark,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildHeader(colorScheme),
 
-                      _buildBottomBar(),
-                    ],
+                        Expanded(
+                          child: SingleChildScrollView(
+                            keyboardDismissBehavior:
+                                ScrollViewKeyboardDismissBehavior.onDrag,
+                            padding: const EdgeInsets.fromLTRB(
+                              AmberDuskSpacing.contentHorizontalPadding,
+                              AppDimens.p8,
+                              AmberDuskSpacing.contentHorizontalPadding,
+                              AppDimens.p24,
+                            ),
+                            child: _buildStepContent(colorScheme),
+                          ),
+                        ),
+
+                        _buildBottomBar(),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ),
       ),

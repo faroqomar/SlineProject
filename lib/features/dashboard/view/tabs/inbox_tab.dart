@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/navigation/main_nav_destinations.dart';
+import 'package:sline_app/core/providers/navigation_provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/skeleton_loader.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 import 'package:sline_app/features/proposals/models/proposal_payment_summary.dart';
 import 'package:sline_app/features/proposals/routes/proposal_payment_route.dart';
 import 'package:sline_app/features/tasks/view/widgets/dashboard_offer_card.dart';
-
-enum _InboxMode { received, sent }
 
 /// Dashboard inbox tab showing pending offers and proposals.
 ///
@@ -26,7 +25,6 @@ class InboxTab extends StatefulWidget {
 
 class _InboxTabState extends State<InboxTab> {
   bool _isAwarding = false;
-  _InboxMode _mode = _InboxMode.received;
 
   Future<void> _handleAwardOffer(
     BuildContext context,
@@ -108,7 +106,7 @@ class _InboxTabState extends State<InboxTab> {
         return Column(
           key: const Key('inbox_tab'),
           children: [
-            _buildModeToggle(label),
+            _buildDashboardInboxHeader(label),
             Expanded(child: body),
           ],
         );
@@ -122,25 +120,6 @@ class _InboxTabState extends State<InboxTab> {
     required bool isClient,
     required String label,
   }) {
-    if (_mode == _InboxMode.sent) {
-      return RefreshIndicator(
-        onRefresh: () => vm.refresh(),
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.symmetric(
-            horizontal: AmberDuskTokens.spacing.contentHorizontalPadding,
-          ),
-          children: [
-            _EmptyInboxState(
-              label: 'Sent $label Preview',
-              message:
-                  'Sent inbox data needs a separate dashboard contract before this mode can become active.',
-            ),
-          ],
-        ),
-      );
-    }
-
     if (vm.isLoading && vm.inboxOffers.isEmpty) {
       return _buildSkeletonList();
     }
@@ -153,7 +132,15 @@ class _InboxTabState extends State<InboxTab> {
           padding: EdgeInsets.symmetric(
             horizontal: AmberDuskTokens.spacing.contentHorizontalPadding,
           ),
-          children: [_EmptyInboxState(label: label)],
+          children: [
+            _EmptyInboxState(
+              label: label,
+              message:
+                  '$label that need dashboard action will appear here. Full Received and Sent threads live in Messages.',
+              actionLabel: 'Open Messages',
+              onAction: () => _openMessages(context),
+            ),
+          ],
         ),
       );
     }
@@ -197,9 +184,8 @@ class _InboxTabState extends State<InboxTab> {
     );
   }
 
-  Widget _buildModeToggle(String label) {
+  Widget _buildDashboardInboxHeader(String label) {
     const amber = AmberDuskTokens.colors;
-    final tabTheme = AmberDuskTokens.widgetTheme.tabs;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -209,28 +195,30 @@ class _InboxTabState extends State<InboxTab> {
         AppDimens.p12,
       ),
       child: Semantics(
-        label: '$label inbox mode',
+        label: 'Dashboard inbox actions',
         child: Container(
-          height: AppLayout.statusIndicatorHeight,
-          padding: const EdgeInsets.all(AppDimens.p4),
+          padding: const EdgeInsets.all(AppDimens.p14),
           decoration: BoxDecoration(
             color: amber.surface,
             borderRadius: BorderRadius.circular(
-              AmberDuskTokens.spacing.pillRadius,
+              AmberDuskTokens.spacing.moduleRadius,
             ),
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildModeButton(
-                label: 'Received',
-                mode: _InboxMode.received,
-                textStyle: tabTheme.labelStyle,
+              Text(
+                '$label requiring action',
+                style: AmberDuskTokens.typography.sectionTitle.copyWith(
+                  color: amber.text,
+                ),
               ),
-              _buildModeButton(
-                label: 'Sent',
-                mode: _InboxMode.sent,
-                textStyle: tabTheme.labelStyle,
-                enabled: false,
+              const SizedBox(height: AppDimens.p4),
+              Text(
+                'Use Messages for the full Received and Sent conversation views.',
+                style: AmberDuskTokens.typography.bodySmall.copyWith(
+                  color: amber.muted,
+                ),
               ),
             ],
           ),
@@ -239,62 +227,13 @@ class _InboxTabState extends State<InboxTab> {
     );
   }
 
-  Widget _buildModeButton({
-    required String label,
-    required _InboxMode mode,
-    required TextStyle textStyle,
-    bool enabled = true,
-  }) {
-    const amber = AmberDuskTokens.colors;
-    final isSelected = _mode == mode;
-
-    return Expanded(
-      child: Semantics(
-        button: true,
-        enabled: enabled,
-        selected: isSelected,
-        label: enabled ? '$label inbox mode' : '$label inbox mode unavailable',
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () {
-            if (!enabled) {
-              AppLogger.d(
-                'Inbox sent mode blocked by data contract gap',
-                tag: 'dashboard.inbox',
-              );
-              return;
-            }
-            if (_mode == mode) return;
-            AppLogger.d(
-              'Inbox mode switched',
-              tag: 'dashboard.inbox',
-              json: {'mode': mode.name},
-            );
-            setState(() => _mode = mode);
-          },
-          child: AnimatedContainer(
-            duration: AmberDuskTokens.motion.activeState,
-            curve: AmberDuskTokens.motion.stateCurve,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: isSelected ? amber.primary : amber.transparent,
-              borderRadius: BorderRadius.circular(
-                AmberDuskTokens.spacing.pillRadius,
-              ),
-            ),
-            child: Text(
-              label,
-              style: textStyle.copyWith(
-                color: !enabled
-                    ? amber.muted
-                    : isSelected
-                    ? amber.text
-                    : amber.textSubtle,
-              ),
-            ),
-          ),
-        ),
-      ),
+  void _openMessages(BuildContext context) {
+    AppLogger.i(
+      'Dashboard inbox empty CTA opened Messages',
+      tag: 'dashboard.inbox',
+    );
+    context.read<NavigationProvider?>()?.setCurrentIndex(
+      MainNavDestinations.messages,
     );
   }
 
@@ -320,9 +259,17 @@ class _InboxTabState extends State<InboxTab> {
 ///
 /// Empty inbox state for both client proposals and freelancer offers.
 class _EmptyInboxState extends StatelessWidget {
+  const _EmptyInboxState({
+    required this.label,
+    this.message,
+    this.actionLabel,
+    this.onAction,
+  });
+
   final String label;
   final String? message;
-  const _EmptyInboxState({required this.label, this.message});
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -374,6 +321,21 @@ class _EmptyInboxState extends StatelessWidget {
                       color: amber.muted,
                     ),
                   ),
+                  if (actionLabel != null && onAction != null) ...[
+                    const SizedBox(height: AppDimens.p12),
+                    FilledButton.icon(
+                      onPressed: onAction,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: amber.primary,
+                        foregroundColor: amber.textInverse,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppDimens.r12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.mark_chat_unread_outlined),
+                      label: Text(actionLabel!),
+                    ),
+                  ],
                 ],
               ),
             ),

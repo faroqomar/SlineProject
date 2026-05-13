@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_states.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
@@ -161,7 +159,7 @@ class _CreateOfferSheetState extends State<CreateOfferSheet>
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
     return Semantics(
@@ -177,11 +175,11 @@ class _CreateOfferSheetState extends State<CreateOfferSheet>
         },
         child: Container(
           decoration: BoxDecoration(
-            color: colorScheme.cardBackground,
+            color: amberColors.background,
             borderRadius: const BorderRadius.vertical(
               top: Radius.circular(AppDimens.r30),
             ),
-            border: Border.all(color: colorScheme.cardBorder),
+            border: Border.all(color: amberColors.surfaceHighest),
           ),
           child: SingleChildScrollView(
             padding: EdgeInsets.fromLTRB(
@@ -200,7 +198,7 @@ class _CreateOfferSheetState extends State<CreateOfferSheet>
                     width: AppDimens.p48,
                     height: AppLayout.spacingTight,
                     decoration: BoxDecoration(
-                      color: colorScheme.divider,
+                      color: amberColors.surfaceHighest,
                       borderRadius: BorderRadius.circular(AppDimens.r4),
                     ),
                   ),
@@ -210,12 +208,12 @@ class _CreateOfferSheetState extends State<CreateOfferSheet>
                 // Title
                 Text(
                   'Create Custom Offer',
-                  style: AppTypography.h4.copyWith(color: colorScheme.text),
+                  style: AppTypography.h4.copyWith(color: amberColors.text),
                 ),
                 const SizedBox(height: AppDimens.p20),
 
                 // Title input
-                _buildLabel('Title', colorScheme),
+                _buildLabel('Title', amberColors),
                 const SizedBox(height: AppDimens.p8),
                 Semantics(
                   label: 'Offer title',
@@ -228,25 +226,31 @@ class _CreateOfferSheetState extends State<CreateOfferSheet>
                 const SizedBox(height: AppDimens.p16),
 
                 // Description input
-                _buildLabel('Description', colorScheme),
+                _buildLabel('Description', amberColors),
                 const SizedBox(height: AppDimens.p8),
                 Semantics(
                   label: 'Offer description',
                   textField: true,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: colorScheme.inputBackground,
+                      color: amberColors.surfaceRaised,
                       borderRadius: BorderRadius.circular(AppDimens.r14),
-                      border: Border.all(color: colorScheme.inputBorder),
+                      border: Border.all(color: amberColors.surfaceHighest),
                     ),
                     child: TextField(
                       controller: _descriptionController,
                       maxLines: 3,
-                      style: TextStyle(color: colorScheme.text),
+                      cursorColor: amberColors.primary,
+                      style: TextStyle(color: amberColors.text),
                       decoration: InputDecoration(
                         hintText: 'Describe what you will deliver...',
-                        hintStyle: TextStyle(color: colorScheme.textSecondary),
+                        hintStyle: TextStyle(color: amberColors.muted),
+                        filled: false,
+                        fillColor: AmberDuskColors.transparent,
                         border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
                         contentPadding: const EdgeInsets.all(AppDimens.p12),
                       ),
                     ),
@@ -261,14 +265,14 @@ class _CreateOfferSheetState extends State<CreateOfferSheet>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildLabel(r'Price ($)', colorScheme),
+                          _buildLabel('Amount (IQD)', amberColors),
                           const SizedBox(height: AppDimens.p8),
                           Semantics(
-                            label: 'Price in dollars',
+                            label: 'Offer amount in IQD',
                             textField: true,
                             child: AppTextField(
                               controller: _priceController,
-                              hintText: '450',
+                              hintText: '50000',
                               keyboardType: TextInputType.number,
                             ),
                           ),
@@ -280,7 +284,7 @@ class _CreateOfferSheetState extends State<CreateOfferSheet>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildLabel('Delivery (Days)', colorScheme),
+                          _buildLabel('Delivery (Days)', amberColors),
                           const SizedBox(height: AppDimens.p8),
                           Semantics(
                             label: 'Delivery time in days',
@@ -316,12 +320,10 @@ class _CreateOfferSheetState extends State<CreateOfferSheet>
     );
   }
 
-  Widget _buildLabel(String text, AppColorScheme colorScheme) {
+  Widget _buildLabel(String text, AmberDuskColorScheme amberColors) {
     return Text(
       text,
-      style: AppTypography.captionBold.copyWith(
-        color: colorScheme.textSecondary,
-      ),
+      style: AppTypography.captionBold.copyWith(color: amberColors.textSubtle),
     );
   }
 }

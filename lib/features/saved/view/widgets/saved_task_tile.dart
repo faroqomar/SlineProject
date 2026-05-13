@@ -42,7 +42,7 @@ class SavedTaskTile extends StatelessWidget {
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(
             horizontal: AppDimens.p16,
-            vertical: AppDimens.p4,
+            vertical: AppDimens.p8,
           ),
           leading: Container(
             width: AppDimens.p40,
@@ -60,16 +60,21 @@ class SavedTaskTile extends StatelessWidget {
           title: Text(
             'Task: $taskId',
             style: AppTypography.bodyMedium.copyWith(color: colorScheme.text),
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          trailing: IconButton(
-            tooltip: 'Remove saved task',
-            onPressed: onRemove,
-            icon: Icon(
-              Icons.delete_outline,
-              color: amber.danger,
-              size: AppDimens.iconSmall,
+          trailing: SizedBox.square(
+            // The remove affordance keeps the 48dp minimum touch target even
+            // when the tile title wraps to two lines.
+            dimension: AppDimens.touchTarget,
+            child: IconButton(
+              tooltip: 'Remove saved task',
+              onPressed: onRemove,
+              icon: Icon(
+                Icons.delete_outline,
+                color: amber.danger,
+                size: AppDimens.iconSmall,
+              ),
             ),
           ),
         ),

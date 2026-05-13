@@ -1,7 +1,7 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.29.0 (Amber Dusk Phases 5-8 trust, messaging, work, payment, wallet docs sync, and notification realtime hardening)
-**Last Updated**: 2026-05-12
+**Version**: 2.33.0 (Amber Dusk Phase 9-12, Transactional QA Recovery, SystemEvolution 2026-05-14, and DocsKeeper sync)
+**Last Updated**: 2026-05-14
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
 
@@ -428,6 +428,91 @@ References:
 - System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-13.md`
 - Docs Sync: `.TODO/Archive/OpenDesign_AmberDusk_Phases5_6_7_8_2026-05-13/DOCS_SYNC_2026-05-13_OpenDesign_AmberDusk_Phases5_6_7_8.md`
 - Supabase objects changed: none
+
+### Amber Dusk Phases 9-12 Profile, Secondary, Readiness, And Handoff (2026-05-13)
+
+Amber Dusk Phases 9-12 close the phone profile ecosystem and secondary-screen
+readiness pass before web handoff. The work covers profile, public profile,
+settings, avatar upload surfaces, portfolio screens/sheets/tiles, services,
+search, categories, favorites, saved tasks, notification modal/list/badge,
+loading overlays, status presentation, and shared CTA metadata.
+
+Implementation notes:
+- This remains scoped Flutter view/helper work. It does not activate Amber Dusk
+  globally and does not change Supabase schema, RLS, RPCs, storage policies, or
+  Edge Functions.
+- Step 5 gap scanning tightened Open Design structure for profile/public-profile
+  composition, compact portfolio proof tiles, service rows, notification danger
+  contrast, sheet geometry, and tap-target semantics.
+- Step 6 Orchestrator review fixed notification badge contrast, mark-all failure
+  feedback, logout confirmation, report reason gating, search tab semantics,
+  modal stacking guards, raw layout-token debt, and stale skip wording.
+- The web handoff for Mohammed is `.TODO/WebRedsign/HANDOFF_OpenDesign_AmberDusk_Phases9_10_11_12_ToWeb_2026-05-13.md`.
+
+Runtime visual QA remains open for the Phase 9/10 surfaces at 360, 390, 402,
+and 430 logical widths. Use `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12_Step6.md`.
+
+References:
+- Plan: `.TODO/PLAN_OpenDesign_AmberDusk_Phases9_10_11_12_PhoneProfileSecondaryReadiness_2026-05-13.md`
+- Plan Critique: `.TODO/PLAN_CRITIQUE_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12_PhoneProfileSecondaryReadiness.md`
+- Master Report: `.TODO/MASTER_REPORT_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12.md`
+- Session Log: `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phases9_10_11_12_PhoneProfileSecondaryReadiness_2026-05-13.md`
+- Docs Sync: `.TODO/DOCS_SYNC_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12.md`
+- Supabase objects changed: none
+
+### Amber Dusk Transactional QA Recovery (2026-05-13/14)
+
+Transactional QA Recovery fixes the simulator-reported marketplace loops around
+booking payment recovery, proposal money entry, signup/post routing, Dashboard
+empty states, chat/offer surfaces, and payment/customer trust.
+
+Implementation notes:
+- `PaymentWebViewScreen` now receives the payment intent stream for booking
+  payments and can return sanitized `PaymentReturnArgs` on realtime success.
+- `PaymentReturnArgs` accepts `SUCCEEDED` as a success status and carries trusted
+  IDs through app state instead of requiring customer-facing callback URLs to
+  expose booking, payer, entity, intent, or correlation metadata.
+- `PaymentReturnScreen` and checkout recovery can fall back to
+  `PaymentPendingStore` or widget state for sanitized callbacks.
+- Booking recovery refreshes booking lists and dashboard state after held payment
+  recovery; unknown gateway state stays recoverable rather than becoming a hard
+  failure.
+- `qicard_payment_create` and `create_payment_intent` local Edge Function source
+  now keep technical IDs in `additionalInfo` for webhook/log correlation while
+  keeping finish URL query params customer-safe.
+- Touched proposal/request, booking package, direct-offer, dashboard, wallet,
+  and chat money displays use whole-IQD semantics. Avoid `/100` or `*100`
+  conversions unless an RPC explicitly asks for cents.
+- Signup success resets to Main/Home. Create-post completion returns a
+  `CreateTaskResult` so Main navigation can refresh Home and show durable
+  success feedback.
+- Dashboard empty states provide route-back CTAs; Dashboard Inbox no longer
+  displays a disabled Sent mode; Messages search clarifies current-mode scope;
+  Wallet withdraw is intentionally disabled with availability copy.
+
+Runtime proof rules from `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-14.md` now
+apply to all future transactional QA:
+- Current-app runtime checks must include focused, active, disabled, error,
+  loading, recovery, and route-transition background states for forms,
+  composers, sheets, payment/booking screens, and transactional CTAs.
+- Payment and booking work must verify source route, result route, Dashboard
+  Bookings, Dashboard Work, and list buckets after success, pending, failed,
+  canceled, retry, and recovery paths.
+- Customer-facing payment result UI must show safe status, amount, app context,
+  next action, and recovery path. Technical IDs and raw callback metadata belong
+  in logs/support tooling only.
+- If the final QiCard gateway action is not executed in a tool session, the
+  branch remains open and must be reported as unproven.
+
+References:
+- Plan: `.TODO/PLAN_OpenDesign_AmberDusk_TransactionalQARecovery_2026-05-13.md`
+- Source VisualQA Report: `.TODO/VisualQA_OpenDesign_AmberDusk_Phases9_10_11_12_iOSSimulator_2026-05-13/REPORT.md`
+- Runtime Smoke Report: `.TODO/VisualQA_OpenDesign_AmberDusk_TransactionalQARecovery_iOSSimulator_2026-05-13/SIMULATOR_SMOKE_REPORT.md`
+- Screenshot checklist: `.TODO/VisualQA_OpenDesign_AmberDusk_TransactionalQARecovery_iOSSimulator_2026-05-13/README.md`
+- Current-app screenshots: `.TODO/VisualQA_OpenDesign_AmberDusk_TransactionalQARecovery_iOSSimulator_2026-05-14/screenshots/`
+- Session Log: `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_TransactionalQARecovery_2026-05-13.md`
+- System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-14.md`
+- Supabase objects changed: local Edge Function source only (`supabase/functions/qicard_payment_create/index.ts`, `supabase/functions/create_payment_intent/index.ts`); no migration/RLS/schema changes
 
 ### 10.1 CI/CD Pipeline
 
@@ -2737,9 +2822,9 @@ Current server-backed booking/payment flow depends on:
 | `lib/features/booking/data/booking_repository.dart`        | repository | Thin abstraction over `BookingService` plus current-user access.                                    |
 | `lib/features/booking/viewmodels/booking_view_model.dart`  | viewmodel  | Orchestrates booking lists, payment creation/recovery, delivery/release actions, and chat handoff.  |
 | `lib/features/booking/view/bookings_discovery_screen.dart` | view       | Booking-task discovery surface powered by the home/task feed.                                       |
-| `lib/features/booking/view/payment_checkout_screen.dart`   | view       | Direct booking checkout screen; creates draft booking and launches payment flow.                    |
-| `lib/features/booking/view/payment_webview_screen.dart`    | view       | Mobile webview payment container for trusted callback flows.                                        |
-| `lib/features/booking/view/payment_return_screen.dart`     | view       | Web callback landing screen that validates callback state and triggers recovery.                    |
+| `lib/features/booking/view/payment_checkout_screen.dart`   | view       | Direct booking checkout screen; creates draft booking, launches QiCard, listens for payment intent recovery, and refreshes booking state. |
+| `lib/features/booking/view/payment_webview_screen.dart`    | view       | Mobile webview payment container for trusted callback flows and realtime intent completion.          |
+| `lib/features/booking/view/payment_return_screen.dart`     | view       | Web callback landing screen that validates sanitized callback state, falls back to pending context, and triggers recovery. |
 | `lib/features/booking/view/payment_method_screen.dart`     | view       | Demo/manual payment form used by non-QiCard paths.                                                  |
 | `lib/features/booking/view/bookings_list_screen.dart`      | view       | Client/provider booking history list with filtering and pagination.                                 |
 | `lib/features/booking/view/booking_details_screen.dart`    | view       | Detailed booking view with CTA resolution, management timeline, and message handoff.                |
@@ -2752,18 +2837,19 @@ Current server-backed booking/payment flow depends on:
 1. A client opens a booking task and starts checkout.
 2. `PaymentCheckoutScreen` calls `BookingViewModel.createPaymentForBooking(...)`.
 3. `QiCardPaymentService` invokes `qicard_payment_create`.
-4. The server validates the task/package/request payload, creates a canonical booking draft, and returns `booking_id`, `form_url`, and correlation identifiers.
+4. The server validates the task/package/request payload, creates a canonical booking draft, and returns `booking_id`, `form_url`, correlation identifiers, and `paymentIntentId` when available.
 
 ### 4.2 Gateway handoff
 
-- **Mobile**: `PaymentWebViewScreen` opens the payment URL and only accepts trusted callback hosts/booking identifiers.
+- **Mobile**: `PaymentWebViewScreen` opens the payment URL, listens to the payment-intent stream when present, and only accepts trusted callback hosts or trusted widget-state identifiers.
 - **Web**: checkout persists `PendingPaymentContext` through `PaymentPendingStore` and redirects the browser in the same tab.
 
 ### 4.3 Recovery
 
-- When the gateway returns, the app uses `PaymentReturnArgs` plus stored pending context.
-- `PaymentReturnScreen` or `PaymentCheckoutScreen` calls `recoverBookingPaymentWithRetries(...)`.
+- When the gateway returns, the app uses sanitized `PaymentReturnArgs` plus stored pending context or widget-held trusted state.
+- `PaymentReturnScreen`, `PaymentWebViewScreen`, or `PaymentCheckoutScreen` calls `recoverBookingPaymentWithRetries(...)` as appropriate.
 - Recovery succeeds only when the booking reaches `payment_status = held`.
+- After recovery, booking and dashboard state must refresh so a terminal or held payment never leaves the source route in the unchanged `Book Basic` purchase state.
 
 ### 4.4 Post-payment actions
 
@@ -2970,8 +3056,8 @@ Internal HMAC verification (create edge writes signature, webhook verifies) is p
 
 1. **Create draft / accept offer**: Booking draft or direct offer accepted, unpaid.
 2. **Create payment**: App calls `qicard_payment_create` (booking) or `qicard_payment_create_direct_offer` (direct offer). Edge returns `intent_id` and `form_url` when it inserts a row into `payment_intents`.
-3. **Realtime (when intent_id present)**: UI subscribes to `payment_intents(id)` via `PaymentService.streamPaymentIntentStatus(intentId)`. Booking: `PaymentCheckoutScreen`; direct offer: `PaymentWebViewScreen` (receives `paymentIntentStatusStream`).
-4. **Webview**: User completes payment at `form_url`. On success, webhook updates intent and ledger; Realtime delivers status → UI pops with success. If Realtime is not used (no intent_id), app relies on callback URL and recovery.
+3. **Realtime (when intent_id present)**: UI subscribes to `payment_intents(id)` via `PaymentService.streamPaymentIntentStatus(intentId)`. Booking and direct-offer WebView flows pass the stream into `PaymentWebViewScreen`; checkout/return screens keep pending context for fallback recovery.
+4. **Webview**: User completes payment at `form_url`. On success, webhook updates intent and ledger; Realtime delivers status → UI pops with sanitized success args. If Realtime is not used, app relies on sanitized callback URL plus trusted pending/widget state and recovery.
 
 ## 5. Security & Idempotency
 
@@ -3029,7 +3115,7 @@ Key features:
 
 ### 3.1 Payment Flow
 
-**QiCard (default)**: `PaymentCheckoutScreen` creates a server-validated booking draft through `qicard_payment_create`, launches the gateway form, then relies on webhook/recovery to move the booking to `payment_status=held`. Web uses same-tab redirect plus `PaymentReturnScreen`; mobile uses `PaymentWebViewScreen`.
+**QiCard (default)**: `PaymentCheckoutScreen` creates a server-validated booking draft through `qicard_payment_create`, launches the gateway form, then relies on webhook/realtime/recovery to move the booking to `payment_status=held`. Web uses same-tab redirect plus `PaymentReturnScreen`; mobile uses `PaymentWebViewScreen` with trusted callback and intent-stream completion.
 
 **Demo**: `processPayment()` is still available through `DemoPaymentService`, but the live booking purchase path is the server-backed QiCard flow.
 

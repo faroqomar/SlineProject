@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
+import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/portfolio/view/sheets/add_portfolio_sheet.dart';
 import 'package:sline_app/features/portfolio/view/widgets/portfolio_tile.dart';
 import 'package:sline_app/features/portfolio/viewmodels/portfolio_view_model.dart';
@@ -10,9 +16,12 @@ import 'package:sline_app/features/portfolio/viewmodels/portfolio_view_model.dar
 /// and opens bottom-sheets for add/details/edit.
 ///
 /// MVVM Compliant: Uses PortfolioViewModel through Provider pattern.
-/// Does NOT directly reference SupabaseClient.
+/// Data access remains behind the ViewModel/repository boundary.
 class PortfolioScreen extends StatefulWidget {
+  /// Creates a portfolio route, optionally scoped to a public owner.
   const PortfolioScreen({super.key, this.ownerId});
+
+  /// Owner profile id for public portfolio views; null means current user.
   final String? ownerId;
 
   @override
@@ -23,6 +32,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
   final ScrollController _scroll = ScrollController();
   bool _bootstrapped = false; // ensure first load once
   PortfolioViewModel? _ctrlRef; // controller reference for listeners
+  bool _isAddSheetOpen = false;
 
   @override
   void initState() {
@@ -61,6 +71,13 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
   }
 
   void _openAddSheet() {
+    if (_isAddSheetOpen) {
+      AppLogger.d(
+        'Add portfolio sheet open request ignored because one is active',
+        tag: 'PortfolioScreen',
+      );
+      return;
+    }
     final ctrl = _ctrlRef;
     if (ctrl == null) {
       AppLogger.w(
@@ -69,29 +86,41 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
       );
       return;
     }
+    setState(() => _isAddSheetOpen = true);
     AppLogger.d('Opening add portfolio sheet', tag: 'PortfolioScreen');
     showModalBottomSheet(
       context: context,
       useSafeArea: true,
       isScrollControlled: true,
-      builder: (ctx) => AddPortfolioSheet(
-        controller: ctrl,
-        onCreated: () {
-          Navigator.of(ctx).pop();
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Portfolio item added')));
-          AppLogger.i('Portfolio item added via sheet', tag: 'PortfolioScreen');
-        },
+      barrierColor: context.amberColors.scrim,
+      backgroundColor: AmberDuskTokens.colors.transparent,
+      builder: (ctx) => _InsetSheetFrame(
+        child: AddPortfolioSheet(
+          controller: ctrl,
+          onCreated: () {
+            Navigator.of(ctx).pop();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Portfolio item added')),
+            );
+            AppLogger.i(
+              'Portfolio item added via sheet',
+              tag: 'PortfolioScreen',
+            );
+          },
+        ),
       ),
-    );
+    ).whenComplete(() {
+      if (!mounted) return;
+      setState(() => _isAddSheetOpen = false);
+      AppLogger.d('Add portfolio sheet closed', tag: 'PortfolioScreen');
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<PortfolioViewModel>(
-      // MVVM Compliant: ViewModel creates its own repository internally.
-      // No direct SupabaseClient reference from the view.
+      // MVVM boundary: the ViewModel creates its repository internally.
+      // The view stays data-source agnostic.
       create: (ctx) {
         AppLogger.d(
           'Creating PortfolioViewModel from PortfolioScreen',
@@ -118,24 +147,36 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
           }
 
           return Scaffold(
+            backgroundColor: context.colorScheme.phoneBackground,
             appBar: AppBar(
-              title: const Text('My Portfolio'),
+              title: Text(
+                'My Portfolio',
+                style: AppTypography.h3.copyWith(
+                  color: context.colorScheme.text,
+                ),
+              ),
+              backgroundColor: context.colorScheme.phoneBackground,
+              elevation: 0,
               actions: [
                 if (ctrl.error != null)
                   IconButton(
                     tooltip: 'Retry',
                     onPressed: _reload,
-                    icon: const Icon(Icons.refresh),
+                    icon: Icon(Icons.refresh, color: context.colorScheme.text),
                   ),
               ],
             ),
             body: RefreshIndicator(
+              color: context.amberColors.primary,
+              backgroundColor: context.colorScheme.cardBackground,
               onRefresh: _reload,
               child: _buildBody(context, ctrl),
             ),
             floatingActionButton: FloatingActionButton(
               onPressed: _openAddSheet,
               tooltip: 'Add item',
+              backgroundColor: context.amberColors.primary,
+              foregroundColor: context.amberColors.textInverse,
               child: const Icon(Icons.add),
             ),
           );
@@ -153,28 +194,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
         'Portfolio error state: ${ctrl.error}',
         tag: 'PortfolioScreen',
       );
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
-              const SizedBox(height: 16),
-              Text(
-                'Failed to load portfolio',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Please try again by pulling down to refresh.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ],
-          ),
-        ),
-      );
+      return const _ErrorState();
     }
     if (ctrl.items.isEmpty) {
       return const _EmptyState();
@@ -185,12 +205,12 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
       controller: _scroll,
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppDimens.p12),
           sliver: SliverGrid.builder(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
+              crossAxisSpacing: AppDimens.p12,
+              mainAxisSpacing: AppDimens.p12,
               childAspectRatio: 0.9,
             ),
             itemCount: items.length + (ctrl.loadingMore ? 2 : 0),
@@ -211,22 +231,40 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                   final messenger = ScaffoldMessenger.of(context);
                   final ok = await showDialog<bool>(
                     context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: const Text('Delete item?'),
-                      content: const Text(
-                        'This will remove the portfolio entry.',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(ctx).pop(false),
-                          child: const Text('Cancel'),
+                    barrierColor: context.amberColors.scrim,
+                    builder: (ctx) {
+                      final dialogColors = ctx.colorScheme;
+                      final amberColors = ctx.amberColors;
+                      return AlertDialog(
+                        backgroundColor: dialogColors.cardBackground,
+                        title: Text(
+                          'Delete item?',
+                          style: AppTypography.h5.copyWith(
+                            color: dialogColors.text,
+                          ),
                         ),
-                        FilledButton(
-                          onPressed: () => Navigator.of(ctx).pop(true),
-                          child: const Text('Delete'),
+                        content: Text(
+                          'This will remove the portfolio entry.',
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: dialogColors.textSecondary,
+                          ),
                         ),
-                      ],
-                    ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(ctx).pop(false),
+                            child: const Text('Cancel'),
+                          ),
+                          FilledButton(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: amberColors.dangerMuted,
+                              foregroundColor: amberColors.text,
+                            ),
+                            onPressed: () => Navigator.of(ctx).pop(true),
+                            child: const Text('Delete'),
+                          ),
+                        ],
+                      );
+                    },
                   );
                   if (ok ?? false) {
                     AppLogger.i(
@@ -263,32 +301,88 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
   }
 }
 
+/// Centered error state for portfolio load failures.
+///
+/// The text stays deliberately generic because detailed repository errors are
+/// already mapped and logged by [PortfolioViewModel].
+class _ErrorState extends StatelessWidget {
+  const _ErrorState();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimens.p24),
+        child: AppCardContainer(
+          padding: const EdgeInsets.all(AppDimens.p20),
+          borderRadius: BorderRadius.circular(AmberDuskTokens.spacing.lg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: AppLayout.iconFeature,
+                color: amberColors.danger,
+              ),
+              const SizedBox(height: AppDimens.p16),
+              Text(
+                'Failed to load portfolio',
+                style: AppTypography.h5.copyWith(color: colorScheme.text),
+              ),
+              const SizedBox(height: AppDimens.p8),
+              Text(
+                'Please try again by pulling down to refresh.',
+                textAlign: TextAlign.center,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: colorScheme.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Empty portfolio proof state.
+///
+/// This mirrors the Amber Dusk profile rule that portfolio surfaces should be
+/// compact proof tiles instead of oversized blank cards.
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
+
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+        padding: const EdgeInsets.symmetric(horizontal: AppDimens.p24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               Icons.image_outlined,
-              size: 48,
-              color: Theme.of(context).colorScheme.primary,
+              size: AppLayout.iconFeature,
+              color: amberColors.primary,
             ),
-            const SizedBox(height: 12),
-            const Text(
+            const SizedBox(height: AppDimens.p12),
+            Text(
               'No portfolio items yet',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+              style: AppTypography.h6.copyWith(color: colorScheme.text),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppDimens.p8),
             Text(
               'Tap the + button to add your first work sample.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: AppTypography.bodyMedium.copyWith(
+                color: colorScheme.textSecondary,
+              ),
             ),
           ],
         ),
@@ -297,18 +391,49 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
+/// Inset frame for portfolio bottom sheets.
+///
+/// Open Design uses a rounded sheet lifted away from the phone edges. The sheet
+/// remains solid material here to respect the no-glass rule.
+class _InsetSheetFrame extends StatelessWidget {
+  const _InsetSheetFrame({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final sheetRecipe = AmberDuskTokens.surfaces.sheet;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppDimens.p10,
+        AppDimens.p0,
+        AppDimens.p10,
+        AppDimens.p10,
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: sheetRecipe.fill,
+          borderRadius: BorderRadius.circular(sheetRecipe.radius),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: child,
+      ),
+    );
+  }
+}
+
+/// Loading-more placeholder that keeps the two-column grid stable.
 class _LoadingTile extends StatelessWidget {
   const _LoadingTile();
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Theme.of(
-          context,
-        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(12),
-      ),
+    final cardTheme = AmberDuskTokens.widgetTheme.cards;
+    return AppCardContainer(
+      padding: EdgeInsets.zero,
+      borderRadius: BorderRadius.circular(cardTheme.panel.radius),
+      elevation: cardTheme.panel.elevationLevel,
       child: const Center(child: CircularProgressIndicator()),
     );
   }

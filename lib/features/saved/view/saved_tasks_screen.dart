@@ -96,7 +96,8 @@ class _SavedTasksView extends StatelessWidget {
                           'Saved Tasks',
                           style: AppTypography.h4.copyWith(color: amber.text),
                         ),
-                        // Refresh button with haptic feedback
+                        // Keep refresh explicit because saved-state changes can
+                        // also happen from task detail routes.
                         IconButton(
                           tooltip: 'Refresh saved tasks',
                           icon: Icon(Icons.refresh, color: amber.text),
@@ -115,7 +116,7 @@ class _SavedTasksView extends StatelessWidget {
                 if (vm.isLoading)
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimens.p16,
+                      horizontal: AppDimens.p24,
                     ),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
@@ -158,6 +159,8 @@ class _SavedTasksView extends StatelessWidget {
                                 style: AppTypography.bodySmall.copyWith(
                                   color: amber.danger,
                                 ),
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             const SizedBox(height: AppDimens.p16),
@@ -205,12 +208,23 @@ class _SavedTasksView extends StatelessWidget {
                               style: AppTypography.h5.copyWith(
                                 color: amber.text,
                               ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: AppDimens.p8),
-                            Text(
-                              "Browse and save tasks you're interested in",
-                              style: AppTypography.bodySmall.copyWith(
-                                color: amber.textSubtle,
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppDimens.p24,
+                              ),
+                              child: Text(
+                                "Browse and save tasks you're interested in",
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: amber.textSubtle,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
                               ),
                             ),
                             // CTA button to guide users toward task discovery
@@ -238,9 +252,9 @@ class _SavedTasksView extends StatelessWidget {
                 else
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(
-                      AppDimens.p16,
+                      AppDimens.p24,
                       0,
-                      AppDimens.p16,
+                      AppDimens.p24,
                       AppDimens.p24,
                     ),
                     sliver: SliverList(
@@ -272,7 +286,12 @@ class _SavedTasksView extends StatelessWidget {
   ButtonStyle _outlineButtonStyle(AmberDuskColorScheme amber) {
     return OutlinedButton.styleFrom(
       foregroundColor: amber.primary,
+      minimumSize: const Size(AppDimens.touchTarget, AppDimens.touchTarget),
+      padding: const EdgeInsets.symmetric(horizontal: AppDimens.p16),
       side: BorderSide(color: amber.primary),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppDimens.r12),
+      ),
     );
   }
 }

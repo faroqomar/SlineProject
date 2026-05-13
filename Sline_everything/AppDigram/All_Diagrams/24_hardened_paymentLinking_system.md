@@ -1,8 +1,8 @@
 # 24 — Hardened Payment Linking System
 
 **Diagram name (exact):** `24_hardened_paymentLinking_system.md`  
-**Document version:** v2 (Implemented)  
-**Date:** 2026-03-08  
+**Document version:** v3 (Implemented + Transactional QA Recovery update)
+**Date:** 2026-05-14
 **Owner:** @DocsKeeper / Backend + Flutter
 
 ---
@@ -124,7 +124,7 @@ payment_intents → payer/receiver/entity/amount; payment_events → raw gateway
 
 - **Title:** Hardened Payment Linking System (Implemented)
 - **Diagram name (exact):** `24_hardened_paymentLinking_system.md`
-- **Version:** v2 (final implemented) + date 2026-03-08
+- **Version:** v3 (implemented + Transactional QA Recovery update) + date 2026-05-14
 - **Owner/author:** Backend (Edge) + Flutter team; doc owner @DocsKeeper
 
 ---
@@ -132,7 +132,7 @@ payment_intents → payer/receiver/entity/amount; payment_events → raw gateway
 ## Purpose
 
 - **What this diagram is showing, in one paragraph:**  
-  The implemented flow where the Flutter app creates a payment via Edge (booking or direct offer), the user pays at the gateway, and the QiCard webhook is handled by `qicard_webhook_handler`. When the payload contains `additionalInfo.intent_id`, the handler looks up the intent, appends one row to `payment_events`, validates amount/currency, calls the ledger RPC with `payment_intent_id` in `p_meta` (stored in `journal_entries.meta`), and updates `payment_intents`. Unmatched or amount-mismatch events go to `orphan_payments` only. The app can resolve success via Realtime when create returns `intent_id`.
+  The implemented flow where the Flutter app creates a payment via Edge (booking or direct offer), the user pays at the gateway, and the QiCard webhook is handled by `qicard_webhook_handler`. When the payload contains `additionalInfo.intent_id`, the handler looks up the intent, appends one row to `payment_events`, validates amount/currency, calls the ledger RPC with `payment_intent_id` in `p_meta` (stored in `journal_entries.meta`), and updates `payment_intents`. Unmatched or amount-mismatch events go to `orphan_payments` only. The app can resolve success via Realtime when create returns `intent_id`; customer-facing finish URLs stay sanitized and recovery uses trusted app-held pending/widget state for entity correlation.
 
 - **What problem it solves (why it exists):**  
   It guarantees every gateway payment is tied to a known entity and payer, is auditable (payment_events + journal meta), is idempotent (no double ledger), and supports "pay and see success without refresh" when the create edge returns an intent id.
@@ -142,13 +142,13 @@ payment_intents → payer/receiver/entity/amount; payment_events → raw gateway
 ## Scope
 
 - **What's included:**  
-  Booking payment (draft → create → webview/Realtime); direct offer payment (accepted unpaid → create → webview/Realtime); webhook intent path (lookup intent, payment_events insert, amount check, ledger with payment_intent_id, payment_intents update); orphan path (intent_not_found, amount_mismatch); RLS and append-only trigger on payment_events; ledger meta payment_intent_id (process_payment_event_ledger gateway_escrow, process_gateway_escrow_direct_offer).
+  Booking payment (draft → create → webview/Realtime/sanitized callback → recovery); direct offer payment (accepted unpaid → create → webview/Realtime); webhook intent path (lookup intent, payment_events insert, amount check, ledger with payment_intent_id, payment_intents update); orphan path (intent_not_found, amount_mismatch); RLS and append-only trigger on payment_events; ledger meta payment_intent_id (process_payment_event_ledger gateway_escrow, process_gateway_escrow_direct_offer); customer-safe finish URL contract.
 
 - **What's explicitly excluded:**  
   Tender (task_request) payment flow (separate edge/RPC); Admin Orphan Queue UI and Payment Trace UI (planned); HMAC in create edge and webhook signature verification (deferred; PAYMENT_HMAC_SECRET); `create_payment_intent` as single canonical create (current create = `qicard_payment_create` / `qicard_payment_create_direct_offer`).
 
 - **Assumptions:**  
-  Payments are finalised only via webhook (or recovery). Escrow is append-only via `process_payment_event_ledger` / `process_gateway_escrow_direct_offer`. QiCard sends webhook with `paymentId`, `status`, `amount`, `currency`, and optionally `additionalInfo.intent_id`. Realtime is enabled for `payment_intents`. Edge uses Supabase `service_role` for payment_intents and payment_events writes.
+  Payments are finalised only via webhook (or recovery). Escrow is append-only via `process_payment_event_ledger` / `process_gateway_escrow_direct_offer`. QiCard sends webhook with `paymentId`, `status`, `amount`, `currency`, and optionally `additionalInfo.intent_id`. Realtime is enabled for `payment_intents`. Edge uses Supabase `service_role` for payment_intents and payment_events writes. Customer-facing finish URLs do not need booking/entity/correlation IDs because the app holds trusted pending context.
 
 ---
 
@@ -162,7 +162,7 @@ payment_intents → payer/receiver/entity/amount; payment_events → raw gateway
 | **payment_intent** | A row in `payment_intents`: binding between payer, entity, amount, currency, and gateway. |
 | **payment_event** | A row in `payment_events`: one gateway event linked to an intent (append-only). |
 | **orphan_payment** | A row in `orphan_payments`: gateway event that could not be linked to a valid intent (intent_not_found or amount_mismatch). |
-| **intent_id** | UUID of the payment_intent; returned by create edge; used for Realtime and webhook lookup. |
+| **intent_id** | UUID of the payment_intent; returned by create edge; used for Realtime and webhook lookup. It should not be displayed in customer UI. |
 | **gateway_intent_id** | Gateway-provided id (e.g. QiCard paymentId); stored on payment_intents, used for webhook lookup. |
 | **gateway_escrow** | Ledger event type: funds locked after gateway payment (user paid at gateway; platform records escrow). |
 | **escrow_hold** | Ledger event type: funds held from user balance (wallet flow). |
@@ -172,6 +172,7 @@ payment_intents → payer/receiver/entity/amount; payment_events → raw gateway
 | **RLS** | Row-Level Security (Postgres policies). |
 | **idempotency** | Same request/event processed multiple times has the same effect as once (no double ledger). |
 | **p_meta** | JSONB parameter passed to ledger RPC; can include `payment_intent_id` for audit. |
+| **sanitized finish URL** | Customer-facing return URL with safe status/return params only. Technical payment identifiers stay in gateway `additionalInfo`, app pending state, logs, and support tooling. |
 
 ---
 
@@ -190,7 +191,7 @@ payment_intents → payer/receiver/entity/amount; payment_events → raw gateway
 
 | Actor | Allowed | Forbidden |
 |-------|--------|-----------|
-| **Client (App)** | Tap Pay on owned booking/direct offer; open webview; receive Realtime status when intent_id present; call recovery on return. | Create gateway sessions directly; INSERT/UPDATE payment_intents or payment_events; see other users' intents (RLS). |
+| **Client (App)** | Tap Pay on owned booking/direct offer; open webview; receive Realtime status when intent_id present; call recovery on return using trusted pending/widget state. | Create gateway sessions directly; INSERT/UPDATE payment_intents or payment_events; see other users' intents (RLS); expose raw payment IDs in customer UI. |
 | **Freelancer (App)** | View own work; no direct role in payment create. | Create or finalise payments for bookings/direct offers. |
 | **Admin** | (Planned) View orphan queue and payment trace; mark investigated. | Finalise payments; bypass RLS (uses service_role only via Edge). |
 | **System / Edge** | Create payment intent (create edge); INSERT/UPDATE payment_intents, INSERT payment_events, INSERT orphan_payments; call ledger RPC with p_meta. | Omit payment_intent_id when intent is known; finalise without amount check. |
@@ -201,16 +202,16 @@ payment_intents → payer/receiver/entity/amount; payment_events → raw gateway
 ## System Components (Where it lives)
 
 - **App entry points:**  
-  Booking: `PaymentCheckoutScreen` (from booking flow). Direct offer: `DirectOfferDetailsScreen` → "Pay with card" → `PaymentWebViewScreen`.
+  Booking: `PaymentCheckoutScreen` (from booking flow) → `PaymentWebViewScreen` / `PaymentReturnScreen`. Direct offer: `DirectOfferDetailsScreen` → "Pay with card" → `PaymentWebViewScreen`.
 
 - **Service / ViewModel / Repository:**  
-  `lib/core/services/qicard_payment_service.dart` (create for booking/direct offer, parse intent_id, streamPaymentIntentStatus); `lib/core/services/payment_service.dart` (interface, QiCardDirectOfferPaymentResult.intentId); `lib/features/booking/viewmodels/booking_view_model.dart` (createPaymentForBooking, streamPaymentIntentStatus); `lib/features/direct_offers/viewmodels/direct_offer_details_view_model.dart` (createPaymentForCard, streamPaymentIntentStatus).
+  `lib/core/services/qicard_payment_service.dart` (create for booking/direct offer, parse intent_id, streamPaymentIntentStatus); `lib/core/services/payment_service.dart` (interface, QiCardDirectOfferPaymentResult.intentId); `lib/core/services/payment_pending_store.dart` (trusted web pending context); `lib/core/models/payment_return_args.dart` (sanitized route result); `lib/features/booking/viewmodels/booking_view_model.dart` (createPaymentForBooking, streamPaymentIntentStatus, recoverBookingPaymentWithRetries); `lib/features/direct_offers/viewmodels/direct_offer_details_view_model.dart` (createPaymentForCard, streamPaymentIntentStatus).
 
 - **Database objects:**  
   **Tables:** payment_intents (signature, currency, paid_at, gateway_intent_id, status, entity_type, entity_id, payer_id, receiver_id, gross_amount, etc.); payment_events (gateway_event_id UNIQUE, intent_id NOT NULL, event_type, payload); orphan_payments (gateway_event_id, error_reason, payload, investigated); journal_entries (meta includes payment_intent_id when provided in p_meta). **Views:** (admin trace/orphan views planned). **RPC:** process_payment_event_ledger (gateway_escrow branch), process_gateway_escrow_direct_offer. **Triggers:** trg_payment_events_append_only (BEFORE UPDATE OR DELETE on payment_events). **Policies (RLS):** payment_intents SELECT for payer, service_role_all_payment_intents; payment_events service_role_insert_payment_events only.
 
 - **Edge:**  
-  `supabase/functions/qicard_payment_create/`, `qicard_payment_create_direct_offer/`, `qicard_webhook_handler/`, `_shared/bookin_payment.ts` (submitGatewayEscrowHold, submitDirectOfferGatewayEscrow with optional paymentIntentId).
+  `supabase/functions/qicard_payment_create/`, `create_payment_intent/`, `qicard_payment_create_direct_offer/`, `qicard_webhook_handler/`, `_shared/bookin_payment.ts` (submitGatewayEscrowHold, submitDirectOfferGatewayEscrow with optional paymentIntentId).
 
 ---
 
@@ -219,8 +220,8 @@ payment_intents → payer/receiver/entity/amount; payment_events → raw gateway
 ### Happy path (intent path)
 
 1. **Trigger:** User taps Pay on a booking checkout or an accepted direct offer.
-2. **Create:** App calls Edge `qicard_payment_create` or `qicard_payment_create_direct_offer`. Edge creates/validates entity, INSERTs payment_intents, calls gateway, UPDATEs payment_intents with gateway_intent_id, returns intent_id + form_url.
-3. **Subscribe (if intent_id):** App subscribes to payment_intents(id) via streamPaymentIntentStatus and opens form_url in webview.
+2. **Create:** App calls Edge `qicard_payment_create` or `qicard_payment_create_direct_offer`. Edge creates/validates entity, INSERTs payment_intents, calls gateway with technical IDs in `additionalInfo`, UPDATEs payment_intents with gateway_intent_id, returns intent_id + form_url while keeping finish URL params customer-safe.
+3. **Subscribe (if intent_id):** App subscribes to payment_intents(id) via streamPaymentIntentStatus and opens form_url in webview with trusted expected entity/correlation state.
 4. **User pays** at gateway.
 5. **Webhook:** QiCard POSTs to qicard_webhook_handler with status=SUCCESS and additionalInfo.intent_id.
 6. **Verify:** Edge verifies QiCard RSA signature (existing).
@@ -230,7 +231,8 @@ payment_intents → payer/receiver/entity/amount; payment_events → raw gateway
 10. **Amount:** If intent.gross_amount != webhook amount or currency mismatch → INSERT orphan_payments (amount_mismatch), return 200.
 11. **Ledger:** Call submitGatewayEscrowHold (booking) or submitDirectOfferGatewayEscrow (direct offer) with paymentIntentId; RPC writes journal_entries with meta.payment_intent_id.
 12. **Update intent:** UPDATE payment_intents SET status='succeeded', paid_at=now().
-13. **Realtime:** Client receives status update and pops webview with success.
+13. **Realtime:** Client receives status update and pops webview with sanitized success args.
+14. **Recovery/UI refresh:** Booking return/checkout code calls recovery, refreshes booking and dashboard lists, and shows success/pending/retry state instead of raw gateway metadata.
 
 ### Most common failure paths
 
@@ -238,6 +240,8 @@ payment_intents → payer/receiver/entity/amount; payment_events → raw gateway
 - **Amount mismatch:** Webhook inserts orphan_payments (amount_mismatch), returns 200; no ledger.
 - **Duplicate webhook:** Second request hits idempotency (intent already succeeded or duplicate payment_events gateway_event_id); returns 200, no second ledger.
 - **App crash after pay:** Webhook still runs; intent and ledger updated; user sees success on next open or via recovery/callback.
+- **Sanitized callback without IDs:** App resolves entity/correlation through `PaymentPendingStore` or widget-held state, then runs recovery.
+- **Gateway branch not executed in QA:** Treat app recovery/dashboard success as unproven until the final gateway Pay action and return path are replayed.
 
 ---
 

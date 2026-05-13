@@ -61,23 +61,19 @@ void main() {
   });
 
   group('InboxTab functionality', () {
-    testWidgets('shows Received and disables Sent without data-contract calls', (
+    testWidgets('shows action queue header without disabled Sent control', (
       tester,
     ) async {
       final vm = _MockDashboardViewModel();
 
       await _pumpInboxTab(tester, vm);
 
-      expect(find.text('Received'), findsOneWidget);
-      expect(find.text('Sent'), findsOneWidget);
+      expect(find.text('Proposals requiring action'), findsOneWidget);
+      expect(find.text('Received'), findsNothing);
+      expect(find.text('Sent'), findsNothing);
       expect(find.text('No Proposals Yet'), findsOneWidget);
+      expect(find.text('Open Messages'), findsOneWidget);
       verifyNever(vm.refresh);
-
-      await tester.tap(find.text('Sent'));
-      await tester.pumpAndSettle();
-      verifyNever(vm.refresh);
-
-      expect(find.text('No Proposals Yet'), findsOneWidget);
       expect(
         find.text(
           'Sent inbox data needs a separate dashboard contract before this mode can become active.',

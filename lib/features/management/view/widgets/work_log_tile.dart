@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/features/management/models/work_log_model.dart';
@@ -22,7 +22,7 @@ class WorkLogTile extends StatelessWidget {
   }
 
   Widget _buildSystemEvent(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppDimens.p8),
       child: Center(
@@ -32,17 +32,13 @@ class WorkLogTile extends StatelessWidget {
             vertical: AppDimens.p4,
           ),
           decoration: BoxDecoration(
-            color: colorScheme.cardBackground.withValues(alpha: 0.5),
+            color: amberColors.surfaceRaised,
             borderRadius: BorderRadius.circular(AppDimens.r12),
-            border: Border.all(
-              color: colorScheme.textSecondary.withValues(alpha: 0.2),
-            ),
+            border: Border.all(color: amberColors.surfaceHighest),
           ),
           child: Text(
             log.content,
-            style: AppTypography.caption.copyWith(
-              color: colorScheme.textSecondary,
-            ),
+            style: AppTypography.caption.copyWith(color: amberColors.muted),
           ),
         ),
       ),
@@ -51,7 +47,7 @@ class WorkLogTile extends StatelessWidget {
 
   Widget _buildMessage(BuildContext context) {
     // Style based on private vs public
-    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
     final isPrivate = log.isPrivate;
 
     return Padding(
@@ -74,14 +70,14 @@ class WorkLogTile extends StatelessWidget {
               padding: const EdgeInsets.all(AppDimens.p12),
               decoration: BoxDecoration(
                 color: isPrivate
-                    ? colorScheme.warningMuted
+                    ? amberColors.warningMuted
                     : (isMe
-                          ? colorScheme.primary.withValues(alpha: 0.1)
-                          : colorScheme.cardBackground),
+                          ? amberColors.primary.withValues(alpha: 0.12)
+                          : amberColors.surfaceRaised),
                 borderRadius: BorderRadius.circular(AppDimens.r12),
                 border: isPrivate
                     ? Border.all(
-                        color: colorScheme.warning.withValues(alpha: 0.3),
+                        color: amberColors.warning.withValues(alpha: 0.3),
                       )
                     : null,
               ),
@@ -97,13 +93,13 @@ class WorkLogTile extends StatelessWidget {
                           Icon(
                             Icons.lock,
                             size: AppDimens.iconSizeSmall,
-                            color: colorScheme.warning,
+                            color: amberColors.warning,
                           ),
                           const SizedBox(width: AppDimens.p4),
                           Text(
                             'Private Note',
                             style: AppTypography.caption.copyWith(
-                              color: colorScheme.warning,
+                              color: amberColors.warning,
                             ),
                           ),
                         ],
@@ -112,14 +108,14 @@ class WorkLogTile extends StatelessWidget {
                   Text(
                     log.content,
                     style: AppTypography.bodySmall.copyWith(
-                      color: colorScheme.text,
+                      color: amberColors.text,
                     ),
                   ),
                   const SizedBox(height: AppDimens.p4),
                   Text(
                     formatUtcToLocal(log.createdAt),
                     style: AppTypography.caption.copyWith(
-                      color: colorScheme.textSecondary,
+                      color: amberColors.muted,
                     ),
                   ),
                 ],

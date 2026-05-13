@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/signed_url_cache.dart';
 import 'package:sline_app/core/widgets/fullscreen_image_viewer.dart';
 import 'package:sline_app/core/widgets/skeleton_loader.dart';
@@ -151,16 +150,16 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
 
-    // Semantic colors — replaces hardcoded primaryColor / grey.shade300
+    // Attachment bubbles follow the same Amber Dusk contract as text bubbles.
     final bg = widget.isMine
-        ? colorScheme.primary.withValues(alpha: 0.85)
-        : colorScheme.cardBackground;
-    final fg = widget.isMine ? AppColors.white : colorScheme.text;
+        ? amberColors.primary.withValues(alpha: 0.92)
+        : amberColors.surfaceRaised;
+    final fg = widget.isMine ? amberColors.textInverse : amberColors.text;
     final metaColor = widget.isMine
-        ? AppColors.white.withValues(alpha: 0.7)
-        : colorScheme.textSecondary;
+        ? amberColors.textInverse.withValues(alpha: 0.7)
+        : amberColors.muted;
 
     // Border radius consistent with MessageBubble
     final radius = BorderRadius.only(
@@ -192,7 +191,7 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
               borderRadius: radius,
               border: widget.isMine
                   ? null
-                  : Border.all(color: colorScheme.cardBorder),
+                  : Border.all(color: amberColors.surfaceHighest),
             ),
             child: ClipRRect(
               borderRadius: radius,
@@ -202,7 +201,7 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
                     : CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildImageSection(colorScheme),
+                  _buildImageSection(amberColors),
                   if (widget.caption != null &&
                       widget.caption!.trim().isNotEmpty)
                     Padding(
@@ -234,7 +233,7 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
     );
   }
 
-  Widget _buildImageSection(AppColorScheme colorScheme) {
+  Widget _buildImageSection(AmberDuskColorScheme amberColors) {
     // Loading state — shimmer skeleton
     if (_loading) {
       return _shimmerPlaceholder();
@@ -242,7 +241,7 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
 
     // Error state — icon + retry button
     if (_error != null || _resolvedUrl == null || _resolvedUrl!.isEmpty) {
-      return _errorBox(colorScheme, _error ?? 'Failed to load image');
+      return _errorBox(amberColors, _error ?? 'Failed to load image');
     }
 
     // Success state — image with fade-in transition
@@ -256,8 +255,7 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
         // Shimmer while image bytes load from network
         loadingBuilder: (c, child, progress) =>
             progress == null ? child : _shimmerPlaceholder(),
-        errorBuilder: (c, e, st) =>
-            _errorBox(context.colorScheme, 'Image error'),
+        errorBuilder: (c, e, st) => _errorBox(amberColors, 'Image error'),
       ),
     );
   }
@@ -275,7 +273,7 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
   }
 
   /// Error state with icon and retry action.
-  Widget _errorBox(AppColorScheme colorScheme, String msg) {
+  Widget _errorBox(AmberDuskColorScheme amberColors, String msg) {
     final canRetry =
         !_resolverMissing && !SignedUrlCache.hasError(widget.storagePath);
     return GestureDetector(
@@ -293,7 +291,7 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
       child: Container(
         height: _imageHeight,
         width: double.infinity,
-        color: colorScheme.inputBackground,
+        color: amberColors.surface,
         alignment: Alignment.center,
         padding: const EdgeInsets.all(AppDimens.p12),
         child: Column(
@@ -302,14 +300,12 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
             Icon(
               Icons.broken_image_outlined,
               size: AppLayout.iconStandard,
-              color: colorScheme.textTertiary,
+              color: amberColors.muted,
             ),
             const SizedBox(height: AppLayout.spacingStandard),
             Text(
               msg,
-              style: AppTypography.micro.copyWith(
-                color: colorScheme.textTertiary,
-              ),
+              style: AppTypography.micro.copyWith(color: amberColors.muted),
               textAlign: TextAlign.center,
             ),
             // Show retry hint for non-auth errors
@@ -320,7 +316,7 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
               Text(
                 'Tap to retry',
                 style: AppTypography.micro.copyWith(
-                  color: colorScheme.primary,
+                  color: amberColors.primary,
                   fontWeight: FontWeight.w600,
                 ),
               ),

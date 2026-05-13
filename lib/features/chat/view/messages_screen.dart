@@ -7,7 +7,6 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_states.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
@@ -190,7 +189,6 @@ class _MessagesScreenState extends State<MessagesScreen>
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
     final topPadding = MediaQuery.of(context).padding.top;
     const amber = AmberDuskTokens.colors;
     const typography = AmberDuskTokens.typography;
@@ -210,7 +208,7 @@ class _MessagesScreenState extends State<MessagesScreen>
           }
 
           return RefreshIndicator(
-            color: colorScheme.primary,
+            color: amber.primary,
             onRefresh: () async {
               // Haptic on pull-to-refresh for tactile feedback
               AppInteractionStates.hapticSelection();
@@ -601,7 +599,7 @@ class _MessagesScreenState extends State<MessagesScreen>
         controller: _searchController,
         style: AmberDuskTokens.typography.bodySmall.copyWith(color: amber.text),
         decoration: InputDecoration(
-          hintText: 'Search by name or message...',
+          hintText: 'Search current mode by name or message...',
           hintStyle: AmberDuskTokens.typography.bodySmall.copyWith(
             color: amber.muted,
           ),
@@ -686,7 +684,7 @@ class _MessagesScreenState extends State<MessagesScreen>
               ),
               const SizedBox(height: AppLayout.spacingTight),
               Text(
-                'Try a different name or keyword',
+                'Search checks the current Received or Sent view',
                 style: AmberDuskTokens.typography.bodySmall.copyWith(
                   color: amber.muted,
                 ),
@@ -940,7 +938,7 @@ class _OnlinePill extends StatelessWidget {
 /// Amber Dusk conversation card used by [MessagesScreen].
 ///
 /// The card keeps the same conversation navigation and archive behavior while
-/// replacing the old teal list tile with the Open Design message-card rhythm.
+/// replacing the legacy list tile with the Open Design message-card rhythm.
 class _AmberConversationCard extends StatelessWidget {
   const _AmberConversationCard({
     required this.conversation,

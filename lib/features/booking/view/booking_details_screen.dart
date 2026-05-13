@@ -733,7 +733,7 @@ class _BookingDisputeBanner extends StatelessWidget {
                       Icon(
                         Icons.info_outline,
                         size: 20,
-                        color: context.colorScheme.primary,
+                        color: AmberDuskTokens.colors.primary,
                       ),
                       const SizedBox(width: AppDimens.p8),
                       Expanded(

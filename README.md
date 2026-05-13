@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/docs-2.30.0-blue.svg)
+![Version](https://img.shields.io/badge/docs-2.33.0-blue.svg)
 ![Flutter](https://img.shields.io/badge/Flutter-3.8.1+-02569B?logo=flutter)
 ![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase)
 ![License](https://img.shields.io/badge/license-Private-red.svg)
@@ -118,7 +118,7 @@ Two-sided marketplace with:
 
 - **Flutter 3.8.1+** — Cross-platform UI framework (iOS, Android, Web, Desktop)
 - **Dart 3.8.1+** — Programming language
-- **Material Design 3** — Modern UI components with Glassmorphism
+- **Material Design 3** — Runtime foundation with scoped Amber Dusk token adapters
 - **Provider** — State management (ChangeNotifier pattern)
 
 ### Backend (Supabase BaaS)
@@ -408,14 +408,20 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 
 ## 🎯 Current Status
 
-### Documentation Version 2.30.0 (2026-05-13)
+### Documentation Version 2.33.0 (2026-05-14)
 
 **Latest Changes**:
 
 - ✅ `Sline_everything/UI_SURFACE_INVENTORY.md` added as the source of truth for screens, routes, popups, sheets, tabs, navigation surfaces, reusable UI widgets, and full visual-file coverage
 - ✅ Planner, PlanCritic, Executor, Pixel, Orchestrator, Sentinel, and DocsKeeper now require the UI inventory for UI work
 - ✅ Scoped Amber Dusk treatment across auth gates, chat/notifications, tasks/work, booking/payment, and wallet surfaces
+- ✅ Scoped Amber Dusk treatment across profile, public profile, portfolio, services, search, categories, favorites, saved tasks, notification modal/list, loading, status, and CTA helper surfaces
+- ✅ Step 5 gap scan tightened profile/public-profile composition, portfolio proof tiles, notification contrast, and interaction semantics against Open Design evidence
+- ✅ Step 6 Orchestrator review fixed confirmed HIGH/MED profile, notification, search, and dialog gaps and added the Phase 9-12 emulator checklist
 - ✅ Notification realtime hardening for transient Supabase websocket closes
+- ✅ Phase 9-12 phone-to-web handoff created for Mohammed with missing screenshot/runtime visual QA blockers called out
+- ✅ Transactional QA recovery fixed sanitized booking payment return handling, IQD money display, signup/post refresh, Dashboard empty-state CTAs, Dashboard Inbox behavior, Messages search guidance, Wallet withdraw copy, and transactional Amber Dusk surfaces
+- ✅ SystemEvolution 2026-05-14 merged runtime proof rules for focused/active form states, payment/booking lifecycle buckets, safe customer-facing payment result UI, and unexecuted gateway-branch reporting
 - ✅ Agent workflow gates for README freshness, docs/diagram source maps, and code comment coverage
 - ✅ `Sline_everything/DOC_SOURCE_MAP.md` and `Sline_everything/AppDigram/README.md` added for planning/review routing
 - ✅ Root README refreshed for new-developer install and run flow
@@ -438,9 +444,9 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 
 **Immediate**:
 
-- Complete Phase 5-8 emulator visual parity using `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases5_6_7_8.md`
+- Complete Amber Dusk emulator visual parity for Phases 2-8, Phases 9-12, and Transactional QA Recovery using the active session logs, handoffs, `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12_Step6.md`, and `.TODO/VisualQA_OpenDesign_AmberDusk_TransactionalQARecovery_iOSSimulator_2026-05-13/README.md` before claiming final visual parity
 - Keep `README.md`, `Sline_everything/`, diagram index, and source map synchronized on every DocsKeeper pass
-- Continue QiCard/payment callback hardening and release verification
+- Re-run the full QiCard processed-payment success branch so app success/recovery and Dashboard Bookings can be proven after gateway submission
 
 **Short-term**:
 

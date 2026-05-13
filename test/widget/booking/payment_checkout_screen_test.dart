@@ -120,6 +120,8 @@ void _stubPaymentFlow(_MockBookingViewModel vm) {
   when(
     () => vm.streamPaymentIntentStatus(any()),
   ).thenAnswer((_) => const Stream<String>.empty());
+  when(() => vm.loadBookingsAsClient()).thenAnswer((_) async {});
+  when(() => vm.loadBookingsAsProvider()).thenAnswer((_) async {});
 }
 
 Future<void> _pumpCheckout(
@@ -638,5 +640,32 @@ void main() {
 
       expect(find.byIcon(Icons.shield_outlined), findsOneWidget);
     });
+
+    testWidgets(
+      'T123 held recovery clears pending payment and refreshes booking lists',
+      (tester) async {
+        _stubSuccessPaymentFlow(mockVm);
+        final observer = _AutoPopWebViewObserver();
+
+        await _pumpCheckoutWithNav(
+          tester,
+          vm: mockVm,
+          store: mockStore,
+          observers: [observer],
+        );
+
+        await _scrollAndTapPayButton(tester);
+        for (var i = 0; i < 15; i++) {
+          await tester.pump(const Duration(milliseconds: 50));
+        }
+        tester.takeException();
+
+        verify(() => mockStore.clear()).called(1);
+        verify(() => mockVm.loadBookingsAsClient()).called(1);
+        verify(() => mockVm.loadBookingsAsProvider()).called(1);
+
+        await tester.pumpAndSettle(const Duration(seconds: 2));
+      },
+    );
   });
 }

@@ -83,8 +83,7 @@ Deno.serve(async (req: Request) => {
     const finishPaymentUrl = withQueryParams(
       resolveQiCardFinishUrl(req, requestedFinishUrl ?? QICARD_FINISH_URL),
       {
-        booking_id: bookingId,
-        correlation_id: correlationId,
+        payment_return: "1",
       },
     );
     const amount = Number(booking.price || 0);
@@ -102,6 +101,7 @@ Deno.serve(async (req: Request) => {
         booking_id: bookingId,
         client_id: auth.user.id,
         correlation_id: correlationId,
+        payment_request_id: paymentRequestId,
       },
     });
 

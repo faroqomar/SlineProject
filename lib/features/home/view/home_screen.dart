@@ -310,7 +310,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         Text(
                           '${visibleTasks.length} '
-                          '${visibleTasks.length == 1 ? 'task' : 'tasks'}',
+                          '${visibleTasks.length == 1 ? 'item' : 'items'}',
                           style: AmberDuskTokens.typography.bodySmall.copyWith(
                             color: amberColors.muted,
                           ),
@@ -391,26 +391,26 @@ class _HomeScreenState extends State<HomeScreen> {
       case _HomeDiscoveryMode.allWork:
         return (
           mode: mode,
-          label: 'All',
-          semanticLabel: 'Discovery mode: All Work',
+          label: 'All posts',
+          semanticLabel: 'Discovery mode: All posts',
           icon: Icons.work_outline,
-          emptyTitle: 'No tasks found',
+          emptyTitle: 'No posts found',
         );
       case _HomeDiscoveryMode.bookings:
         return (
           mode: mode,
-          label: 'Bookings',
-          semanticLabel: 'Discovery mode: Bookings',
+          label: 'Booking posts',
+          semanticLabel: 'Discovery mode: Booking posts',
           icon: Icons.calendar_today_outlined,
-          emptyTitle: 'No booking services',
+          emptyTitle: 'No booking posts',
         );
       case _HomeDiscoveryMode.tenders:
         return (
           mode: mode,
-          label: 'Tasks',
-          semanticLabel: 'Discovery mode: Tasks',
+          label: 'Tender posts',
+          semanticLabel: 'Discovery mode: Tender posts',
           icon: Icons.assignment_outlined,
-          emptyTitle: 'No active tasks',
+          emptyTitle: 'No tender posts',
         );
     }
   }

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sline_app/core/config/payment_runtime_config.dart';
+import 'package:sline_app/core/models/payment_return_args.dart';
 
 void main() {
   group('payment_runtime_config', () {
@@ -42,10 +43,22 @@ void main() {
 
         expect(args, isNotNull);
         expect(args!.normalizedStatus, 'UNKNOWN');
+        expect(args.isSuccess, isFalse);
+        expect(args.isFailure, isFalse);
         expect(args.bookingId, 'b1');
         expect(args.correlationId, 'c1');
       },
     );
+
+    test('PaymentReturnArgs treats SUCCEEDED as success', () {
+      final args = PaymentReturnArgs(
+        status: 'SUCCEEDED',
+        rawUri: Uri.parse('https://sline.app/?payment_return=1'),
+      );
+
+      expect(args.isSuccess, isTrue);
+      expect(args.isFailure, isFalse);
+    });
 
     test('buildQiCardFinishUrlForRuntime preserves the current web path', () {
       final finishUrl = buildQiCardFinishUrlForRuntime(

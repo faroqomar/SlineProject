@@ -73,6 +73,18 @@ void main() {
         (invocation) async =>
             _booking(invocation.positionalArguments.first as String),
       );
+      when(
+        () => bookingRepo.listBookingsAsClient(
+          limit: any(named: 'limit'),
+          cursorCreatedAtIso: any(named: 'cursorCreatedAtIso'),
+        ),
+      ).thenAnswer((_) async => <BookingModel>[_booking('booking-1')]);
+      when(
+        () => bookingRepo.listBookingsAsProvider(
+          limit: any(named: 'limit'),
+          cursorCreatedAtIso: any(named: 'cursorCreatedAtIso'),
+        ),
+      ).thenAnswer((_) async => <BookingModel>[]);
       viewModel = BookingViewModel(
         repo: bookingRepo,
         chatRepository: chatRepo,
@@ -127,6 +139,50 @@ void main() {
         find.text('Payment confirmed. Your booking is ready.'),
         findsOneWidget,
       );
+      expect(pendingStore.load(), isNull);
+    });
+
+    testWidgets('sanitized callback recovers from pending booking context', (
+      tester,
+    ) async {
+      await pendingStore.save(
+        PendingPaymentContext(
+          bookingId: 'booking-1',
+          correlationId: 'corr-1',
+          provider: 'qicard',
+          startedAt: DateTime.utc(2026, 3, 1),
+          entityType: 'booking',
+          callbackHosts: const <String>{'sline.app'},
+        ),
+      );
+      when(
+        () => paymentService.recoverBookingPayment(bookingId: 'booking-1'),
+      ).thenAnswer(
+        (_) async => const QiCardRecoveryResult(
+          bookingId: 'booking-1',
+          paymentStatus: 'held',
+          recoveryResult: 'applied',
+        ),
+      );
+
+      await _pumpReturnScreen(
+        tester,
+        viewModel: viewModel,
+        pendingStore: pendingStore,
+        args: PaymentReturnArgs(
+          status: 'SUCCEEDED',
+          rawUri: Uri.parse(
+            'https://sline.app/?payment_return=1&status=SUCCEEDED&payment_intent_id=intent-1',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Payment Complete'), findsOneWidget);
+      expect(pendingStore.load(), isNull);
+      verify(
+        () => paymentService.recoverBookingPayment(bookingId: 'booking-1'),
+      ).called(1);
     });
 
     testWidgets('failed recovery shows retryable error UI', (tester) async {

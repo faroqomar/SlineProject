@@ -4,6 +4,99 @@
 
 ---
 
+## Version 2.33.0 — DocsKeeper Sync For Transactional QA Recovery And SystemEvolution (2026-05-14)
+
+**Classification:** Documentation sync, diagram update, Supabase setup clarification, and agent-rule traceability
+**DocsKeeper Input:** `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_TransactionalQARecovery_2026-05-13.md`
+**SystemEvolution Report:** `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-14.md`
+**Docs Sync:** `.TODO/DOCS_SYNC_2026-05-14_OpenDesign_AmberDusk_TransactionalQARecovery.md`
+**Supabase objects changed:** local Edge Function source only; no schema/RLS/migration changes
+
+### Scope
+- Updated root `README.md` to documentation version `2.33.0`, including Transactional QA Recovery status and the remaining QiCard processed-payment simulator gate.
+- Updated `Sline_everything/DEVELOPER_GUIDE.md` with Phase 9-12, Transactional QA Recovery, sanitized payment callback, IQD, `CreateTaskResult`, Dashboard refresh, and SystemEvolution runtime proof rules.
+- Updated `Sline_everything/SUPABASE_SETUP.md` to document the callback privacy contract for local `qicard_payment_create` and `create_payment_intent` source.
+- Updated `Sline_everything/STRUCTURE.md`, `CODE_REVIEW.md`, `MVP_ROADMAP.md`, `UI_SURFACE_INVENTORY.md`, and the payment/booking diagrams to reflect the current Flutter and Edge Function contracts.
+
+### Validation
+- Path and diagram references were checked against the working tree.
+- `SUPABASE_SETUP.md` was updated because Edge Function source changed; no migration/RLS/schema documentation was added because no migration/RLS/schema files changed.
+- The 2026-05-14 SystemEvolution agent/rule scan was already clean, and this DocsKeeper pass did not edit `.cursor/Agents/` or `.cursor/rules/`.
+
+### Open Release Gate
+- The full QiCard processed-payment success branch still needs a simulator replay with gateway submission, app recovery, and Dashboard Bookings screenshots.
+
+---
+
+## Version 2.32.0 — Amber Dusk Transactional QA Recovery (2026-05-13)
+
+**Classification:** Payment recovery, transactional Amber Dusk alignment, IQD consistency, and flow correctness
+**Plan:** `.TODO/PLAN_OpenDesign_AmberDusk_TransactionalQARecovery_2026-05-13.md`
+**Session Log:** `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_TransactionalQARecovery_2026-05-13.md`
+**VisualQA Folder:** `.TODO/VisualQA_OpenDesign_AmberDusk_TransactionalQARecovery_iOSSimulator_2026-05-13/`
+**Supabase objects changed:** Edge Function source edited locally; no schema/RLS/migration changes
+
+### Scope
+- Reworked direct booking payment completion so `PaymentWebViewScreen` receives the payment-intent stream, sanitized callbacks can recover through trusted app state, `SUCCEEDED` is treated as success, and unknown callback state remains recoverable.
+- Sanitized QiCard finish URLs in local `qicard_payment_create` and `create_payment_intent` Edge Function source so customer-facing return screens do not expose booking, payer, entity, correlation, or intent metadata.
+- Refreshed booking state after held payment recovery and preserved pending/retry handling instead of returning users to an unchanged purchase CTA contract.
+- Normalized touched proposal, booking package, direct-offer, dashboard, wallet, and chat money labels to whole-IQD display semantics.
+- Applied Amber Dusk transactional treatment to touched task booking details, proposal sheet, offer bubble, create-offer sheet, Dashboard empty states, Dashboard Inbox, Messages search guidance, and Wallet withdraw copy.
+- Fixed first-authenticated and post-create flows: signup resets to Main/Home, create-post returns `CreateTaskResult`, Main navigation refreshes Home, and Home feed copy uses `All posts`, `Booking posts`, `Tender posts`, and item counts.
+
+### Verification
+- `flutter analyze --no-fatal-infos`: passed.
+- `git diff --check`: passed.
+- Focused payment, proposal, Home, Dashboard, Wallet, Messages, Signup, Task Details, and Offer Bubble tests: passed.
+- `flutter test`: passed (`1578` visible tests done, `30` skipped).
+
+### Open Release Gate
+- iOS simulator phase screenshots remain pending. Required names are listed in `.TODO/VisualQA_OpenDesign_AmberDusk_TransactionalQARecovery_iOSSimulator_2026-05-13/README.md`.
+- Local Edge Function source changed, but this session did not deploy functions because authenticated function listing/deploy access was not available through the connector.
+
+---
+
+## Version 2.31.0 — Amber Dusk Phases 9-12 Profile, Secondary, Readiness, Handoff (2026-05-13)
+
+**Classification:** Scoped phone-view Amber Dusk runtime work + phone-to-web handoff/docs closure
+**Plan:** `.TODO/PLAN_OpenDesign_AmberDusk_Phases9_10_11_12_PhoneProfileSecondaryReadiness_2026-05-13.md`
+**Plan Critique:** `.TODO/PLAN_CRITIQUE_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12_PhoneProfileSecondaryReadiness.md`
+**Session Log:** `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phases9_10_11_12_PhoneProfileSecondaryReadiness_2026-05-13.md`
+**Master Report:** `.TODO/MASTER_REPORT_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12.md`
+**Web Handoff:** `.TODO/WebRedsign/HANDOFF_OpenDesign_AmberDusk_Phases9_10_11_12_ToWeb_2026-05-13.md`
+**Docs Sync:** `.TODO/DOCS_SYNC_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12.md`
+**Emulator Checklist:** `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12_Step6.md`
+**Supabase objects changed:** none
+
+### Scope
+- Applied scoped Amber Dusk visual treatment across public profile, edit profile, settings, avatar, profile preview, portfolio screens/sheets/tiles, manage portfolio, my services, and service cards.
+- Applied adaptation-only Amber Dusk alignment across categories, search, favorites, saved tasks, notification modal/list/badge, loading overlay, status presenter, and unified CTA helper surfaces.
+- Completed the Step 5 gap scan fix pass for profile/public-profile composition, portfolio proof-tile structure, notification/portfolio danger contrast, sheet geometry, and interaction semantics after read-only explorer review.
+- Kept exact Open Design claims limited to strong profile evidence; secondary screens remain adaptation-only until user screenshots or exact Open Design states are provided.
+- Preserved MVVM and service authority: no backend, RLS, Edge Function, RPC, storage-policy, or `SUPABASE_SETUP.md` changes.
+- Added focused helper/modal tests for Amber Dusk status colors, loading overlay tokens, CTA metadata, and notification modal states.
+- Completed Step 6 Orchestrator review and fixed all confirmed HIGH/MED findings, including notification badge contrast, mark-all failure feedback, logout confirmation, report reason gating, search tab semantics, and modal stacking guards.
+- Created Mohammed's Phase 9-12 phone-to-web handoff and a closure docs-sync artifact.
+
+### Verification
+- `dart format --set-exit-if-changed .`: passed.
+- `flutter analyze --no-fatal-infos`: passed.
+- Step 5 post-fix format/analyzer/focused/full test pass and static guard scans: passed.
+- Focused Phase 9/10 test suites: passed.
+- Static guard scans for direct Supabase in changed view/helper areas: passed.
+- Raw visual constant scan over changed Dart files: passed.
+- No-glass scan over changed Dart files: passed.
+- `git diff --check`: passed.
+- Step 6 focused tests: passed.
+- `flutter test`: passed (`1545` passing, `30` skipped). The skipped set includes Supabase/storage-gated tests plus the existing hardcoded `test/integration_test/favorites_cross_feature_flow_test.dart` skip.
+
+### Open Release Gate
+- Runtime emulator visual QA is still open for Phase 9/10 surfaces at 360, 390, 402, and 430 logical widths.
+- Use `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12_Step6.md` for the per-file runtime pass.
+- No user-provided Phase 9/10 screenshots were available during implementation, so screenshot-dependent matching remains blocked.
+
+---
+
 ## 🧭 Version 2.30.0 — UI Surface Inventory + Agent Maintenance Gates (2026-05-13)
 
 **Classification:** Documentation source-of-truth addition + agent workflow routing
