@@ -1,0 +1,19 @@
+lib/features/services/models/service_status.dart
+  s_76b659551f9821::t_764d4198c5b973 22-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "31d44664fb9c7265a7ed1e359a8f2aeed95643df",
+  "prompts": {},
+  "sessions": {
+    "s_76b659551f9821": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2678-1754-7330-910c-8d2535876c3b",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Farooq Eros <faroqomar97@gmail.com>"
+    }
+  }
+}
