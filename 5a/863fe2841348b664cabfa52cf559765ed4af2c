@@ -1,0 +1,73 @@
+test/unit/safety/dispute_service_test.dart
+  s_c2ade65474ae88::t_fa8cb383f5248b 30
+lib/core/services/account_guard_service.dart
+  s_c2ade65474ae88::t_fa8cb383f5248b 70
+lib/features/notifications/models/notification_model.dart
+  s_c2ade65474ae88::t_fa8cb383f5248b 46
+test/security/task_requests_rls_test.dart
+  s_c2ade65474ae88::t_fa8cb383f5248b 808
+lib/features/services/viewmodels/my_services_view_model.dart
+  s_c2ade65474ae88::t_fa8cb383f5248b 161
+lib/features/tasks/services/task_request_error_mapper.dart
+  s_c2ade65474ae88::t_fa8cb383f5248b 21
+lib/core/services/crash_reporting_service.dart
+  s_c2ade65474ae88::t_fa8cb383f5248b 29,31,52,54
+Sline_everything/MVP_ROADMAP.md
+  s_c2ade65474ae88::t_3703ac5be5afde 92
+docs/LOG/SESSION_PLAN_LintStrictness_2026-05-15.md
+  s_c2ade65474ae88::t_3703ac5be5afde 16-17,21
+Sline_everything/DEVELOPER_GUIDE.md
+  s_c2ade65474ae88::t_3703ac5be5afde 544-545,551
+lib/core/services/system_config_service.dart
+  s_c2ade65474ae88::t_fa8cb383f5248b 64
+lib/core/widgets/status_badge.dart
+  s_c2ade65474ae88::t_fa8cb383f5248b 37
+test/features/direct_offers/direct_offers_service_test.dart
+  s_c2ade65474ae88::t_ba898fe979b13c 29
+analysis_options.yaml
+  s_c2ade65474ae88::t_60d073e3a2a43f 38-39,48-71
+lib/core/utils/error_mapper.dart
+  s_c2ade65474ae88::t_fa8cb383f5248b 21,259
+test/helpers/mock_supabase_rpc.dart
+  s_c2ade65474ae88::t_07ce6fdf9c1bf6 503
+  s_c2ade65474ae88::t_fa8cb383f5248b 68,94,499
+test/services/message_service_test.dart
+  s_c2ade65474ae88::t_07ce6fdf9c1bf6 19
+  s_c2ade65474ae88::t_ba898fe979b13c 49,56,99
+test/unit/booking/booking_guard_contract_test.dart
+  s_c2ade65474ae88::t_ba898fe979b13c 25
+  s_c2ade65474ae88::t_a052eb1984b4b6 46
+lib/core/services/logger_service.dart
+  s_c2ade65474ae88::t_fa8cb383f5248b 43,47,90,92,154,158,162,169,171
+lib/core/services/sentry_crash_reporting_service.dart
+  s_c2ade65474ae88::t_fa8cb383f5248b 14,16
+lib/features/chat/viewmodels/chat_view_model.dart
+  s_c2ade65474ae88::t_fa8cb383f5248b 372
+lib/core/services/payment_response_helpers.dart
+  s_c2ade65474ae88::t_fa8cb383f5248b 10,53,68
+test/unit/core/demo_payment_service_test.dart
+  s_c2ade65474ae88::t_fa8cb383f5248b 25,27
+lib/features/tasks/services/task_requests_service.dart
+  s_c2ade65474ae88::t_fa8cb383f5248b 565
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "5a863fe2841348b664cabfa52cf559765ed4af2c",
+  "prompts": {},
+  "humans": {
+    "h_eff31e0a4a0870": {
+      "author": "Farooq Eros <faroqomar97@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_c2ade65474ae88": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e281d-2586-7570-80d4-be00e4ef8347",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Farooq Eros <faroqomar97@gmail.com>"
+    }
+  }
+}
