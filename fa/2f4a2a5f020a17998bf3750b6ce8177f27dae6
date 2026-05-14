@@ -1,0 +1,363 @@
+lib/features/home/viewmodels/home_view_model.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 272-274
+lib/features/booking/view/payment_webview_screen.dart
+  s_c2ade65474ae88::t_0389cb078802da 283-289,291,293-301,303-314,316-317,320-381,383,391-403,405-410,412-462,464,467-470,472,476-477,482-495,497,502,506-508
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 225,260,282,511,642,787
+lib/features/chat/services/chat_deep_link_handler.dart
+  s_c2ade65474ae88::t_0389cb078802da 58-63
+test/helpers/role_switch_helpers.dart
+  s_c2ade65474ae88::t_e1fde577aadc8d 262
+test/widget/tasks/requests_list_screen_test.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 185,260,363
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 13-14,285
+lib/features/direct_offers/view/direct_offer_details_screen.dart
+  s_c2ade65474ae88::t_e1fde577aadc8d 40-50
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2
+lib/features/profile/viewmodels/user_profile_view_model.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,89
+.cursor/skills/dart-collect-coverage/SKILL.md
+  s_c2ade65474ae88::t_041b5d16f5dc05 9-22
+  s_c2ade65474ae88::t_b4ea74f69dd070 1-2,4-8,23-155
+  s_c2ade65474ae88::t_d84fb76761b552 3
+lib/features/chat/view/widgets/conversation_list_tile.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,89,91
+lib/features/auth/view/login_screen.dart
+  s_c2ade65474ae88::t_0389cb078802da 570-576,633-637
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 116,194-195
+lib/features/profile/view/my_services_screen.dart
+  s_c2ade65474ae88::t_0389cb078802da 89
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,28
+lib/app/main_navigation_screen.dart
+  s_c2ade65474ae88::t_0389cb078802da 103-108,114-119,127-131
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 75,280
+lib/features/portfolio/view/sheets/portfolio_details_sheet.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 88
+.cursor/skills/flutter-add-integration-test/SKILL.md
+  s_c2ade65474ae88::t_041b5d16f5dc05 9-22
+  s_c2ade65474ae88::t_aacf9d856e871f 58,80
+  s_c2ade65474ae88::t_d84fb76761b552 3
+  s_c2ade65474ae88::t_b4ea74f69dd070 5-6,8,23-57,59-79,81-107,109-113,115-116,118-121,123-124,126-127,129-130,132-133,135-139,142,144-145,147-148,150,152,155-175
+test/supabase_test_helper.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 38,40
+lib/features/portfolio/view/portfolio_screen.dart
+  s_c2ade65474ae88::t_0389cb078802da 116-120
+  s_c2ade65474ae88::t_e1fde577aadc8d 93-113,115
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,57,149
+lib/features/favorites/view/favorites_screen.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 84
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 42,131
+lib/features/dashboard/view/tabs/overview_tab.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,35
+  s_c2ade65474ae88::t_4eae00ea12a775 131
+lib/core/services/supabase_realtime_service.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 143,150,245,252,307
+  s_c2ade65474ae88::t_acd5f4f4855c06 294
+.cursor/skills/dart-migrate-to-checks-package/SKILL.md
+  s_c2ade65474ae88::t_b4ea74f69dd070 1-8,23-140
+  s_c2ade65474ae88::t_041b5d16f5dc05 9-22
+lib/features/notifications/view/notifications_modal.dart
+  s_c2ade65474ae88::t_0389cb078802da 210-216
+  s_c2ade65474ae88::t_4eae00ea12a775 202,384-385
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,104
+.cursor/skills/dart-add-unit-test/SKILL.md
+  s_c2ade65474ae88::t_b4ea74f69dd070 1-8,23-136
+  s_c2ade65474ae88::t_041b5d16f5dc05 9-22
+lib/features/tasks/view/tenders_screen.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2
+  s_c2ade65474ae88::t_0389cb078802da 39-43,160-164
+.cursor/skills/flutter-use-http-package/SKILL.md
+  s_c2ade65474ae88::t_041b5d16f5dc05 9-22
+  s_c2ade65474ae88::t_d84fb76761b552 3
+  s_c2ade65474ae88::t_b4ea74f69dd070 1-2,4-8,23-59,61-180,182-188
+  s_c2ade65474ae88::t_aacf9d856e871f 60,181
+lib/features/notifications/view/widgets/notification_badge_button.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,99,102,105
+test/fixtures/task_request_factory.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 129-130
+.cursor/skills/normalize/SKILL.md
+  s_c2ade65474ae88::t_aacf9d856e871f 25,37
+lib/core/widgets/custom_bottom_nav_bar.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,132,187,196,198
+lib/features/home/view/home_screen.dart
+  s_c2ade65474ae88::t_0389cb078802da 80-84,228-235,358-364
+  s_c2ade65474ae88::t_4eae00ea12a775 384,386
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,87
+lib/features/dashboard/view/dashboard_screen.dart
+  s_c2ade65474ae88::t_0389cb078802da 185-191,193-216,218-226,229-237
+lib/features/dashboard/view/widgets/dashboard_counters_grid.dart
+  s_c2ade65474ae88::t_a0b6995ef8122d 214,226-227,273-277
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2
+lib/core/widgets/skeleton_loader.dart
+  s_c2ade65474ae88::t_a0b6995ef8122d 64-68
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2
+lib/features/tasks/view/create_task_screen.dart
+  s_c2ade65474ae88::t_d58217c8da722b 628
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,287
+  s_c2ade65474ae88::t_a0b6995ef8122d 239
+lib/features/tasks/services/task_deep_link_handler.dart
+  s_c2ade65474ae88::t_0389cb078802da 57-62
+lib/main.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 435-436,443-444,467
+  s_c2ade65474ae88::t_e1fde577aadc8d 211-215
+  s_c2ade65474ae88::t_0389cb078802da 210,216,457-461
+  s_c2ade65474ae88::t_4eae00ea12a775 130
+lib/features/work/viewmodels/work_item_details_view_model.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,549
+.cursor/skills/dart-use-pattern-matching/SKILL.md
+  s_c2ade65474ae88::t_041b5d16f5dc05 9-22
+  s_c2ade65474ae88::t_b4ea74f69dd070 1-8,23-160
+.cursor/skills/flutter-add-widget-preview/SKILL.md
+  s_c2ade65474ae88::t_b4ea74f69dd070 1-8,23-31,33-114,116-159
+  s_c2ade65474ae88::t_041b5d16f5dc05 9-22
+  s_c2ade65474ae88::t_aacf9d856e871f 32,115
+lib/features/tasks/services/task_requests_service.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 486
+lib/features/chat/view/messages_screen.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 520
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 96,187
+.cursor/skills/dart-run-static-analysis/SKILL.md
+  s_c2ade65474ae88::t_aacf9d856e871f 115
+  s_c2ade65474ae88::t_b4ea74f69dd070 1-2,4-8,23-114,116-118
+  s_c2ade65474ae88::t_041b5d16f5dc05 9-22
+  s_c2ade65474ae88::t_d84fb76761b552 3
+lib/features/profile/view/widgets/public_profile/public_profile_header.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 77
+.cursor/skills/flutter-apply-architecture-best-practices/SKILL.md
+  s_c2ade65474ae88::t_aacf9d856e871f 100,106,119,157
+  s_c2ade65474ae88::t_041b5d16f5dc05 9-22
+  s_c2ade65474ae88::t_b4ea74f69dd070 1-2,4-8,23-99,101-105,107-118,120-156,158-176
+  s_c2ade65474ae88::t_d84fb76761b552 3
+lib/core/services/logger_service.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 10-11
+  s_c2ade65474ae88::t_0389cb078802da 184-189
+test/widget/home/filters_modal_test.dart
+  s_c2ade65474ae88::t_0389cb078802da 28-34
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2
+lib/features/categories/view/categories_screen.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,43
+  s_c2ade65474ae88::t_4eae00ea12a775 151
+lib/features/work/services/work_management_service.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 275,289,302,317
+lib/features/profile/view/manage_portfolio_screen.dart
+  s_c2ade65474ae88::t_0389cb078802da 252-271,273-274
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,32
+  s_c2ade65474ae88::t_acd5f4f4855c06 46-53
+  s_c2ade65474ae88::t_5f33d168c3d342 54-55,57-75,77-79,81-83,85-91,93-120,122-131,133-145,147-160,162-169,172-181,183-189,191-198,200-201,203-210,212-242
+lib/features/saved/viewmodels/saved_tasks_view_model.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 113,119,139
+lib/features/auth/viewmodels/auth_session_view_model.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 74
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 69,167
+lib/features/dashboard/view/tabs/work_tab.dart
+  s_c2ade65474ae88::t_0389cb078802da 332-338,340-344,346,348-370
+  s_c2ade65474ae88::t_4eae00ea12a775 233,427
+test/widget/tasks/create_task_screen_test.dart
+  s_c2ade65474ae88::t_0389cb078802da 260-273
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2
+.cursor/skills/flutter-implement-json-serialization/SKILL.md
+  s_c2ade65474ae88::t_d84fb76761b552 3
+  s_c2ade65474ae88::t_041b5d16f5dc05 9-22
+  s_c2ade65474ae88::t_aacf9d856e871f 65,98
+  s_c2ade65474ae88::t_b4ea74f69dd070 1-2,4-8,23-64,66-97,99-167
+.cursor/skills/flutter-fix-layout-issues/SKILL.md
+  s_c2ade65474ae88::t_aacf9d856e871f 31,102
+  s_c2ade65474ae88::t_b4ea74f69dd070 1-8,23-30,32-101,103-144
+  s_c2ade65474ae88::t_041b5d16f5dc05 9-22
+lib/features/booking/view/bookings_discovery_screen.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2
+  s_c2ade65474ae88::t_0389cb078802da 38-42,150-154
+lib/features/chat/attachments/widgets/attachment_message_tile.dart
+  s_c2ade65474ae88::t_0389cb078802da 336-343
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,57,70,290
+lib/features/tasks/viewmodels/requests_filter_view_model.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,102
+.cursor/skills/flutter-add-widget-test/SKILL.md
+  s_c2ade65474ae88::t_041b5d16f5dc05 9-22
+  s_c2ade65474ae88::t_b4ea74f69dd070 1-8,23-66,68-69,71-168
+  s_c2ade65474ae88::t_aacf9d856e871f 67,70
+.cursor/skills/dart-generate-test-mocks/SKILL.md
+  s_c2ade65474ae88::t_d84fb76761b552 3
+  s_c2ade65474ae88::t_b4ea74f69dd070 1-2,4-8,23-169
+  s_c2ade65474ae88::t_041b5d16f5dc05 9-22
+lib/features/profile/view/public_profile_screen.dart
+  s_c2ade65474ae88::t_e1fde577aadc8d 97-101
+  s_c2ade65474ae88::t_4eae00ea12a775 254
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 75
+lib/features/tasks/view/widgets/requests/requests_list_screen.dart
+  s_c2ade65474ae88::t_a0b6995ef8122d 100
+  s_c2ade65474ae88::t_4eae00ea12a775 250,357,386
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,239,421,465
+  s_c2ade65474ae88::t_d58217c8da722b 645-658,660-677
+lib/core/widgets/app_button.dart
+  s_c2ade65474ae88::t_d58217c8da722b 145-158,160-161,166-172
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2
+.cursor/skills/dart-resolve-package-conflicts/SKILL.md
+  s_c2ade65474ae88::t_b4ea74f69dd070 1-8,23-130
+  s_c2ade65474ae88::t_041b5d16f5dc05 9-22
+.cursor/skills/flutter-setup-declarative-routing/SKILL.md
+  s_c2ade65474ae88::t_aacf9d856e871f 33,137
+  s_c2ade65474ae88::t_041b5d16f5dc05 9-22
+  s_c2ade65474ae88::t_b4ea74f69dd070 1-2,4-8,23-32,34-136,138-269
+  s_c2ade65474ae88::t_d84fb76761b552 3
+.cursor/skills/harden/SKILL.md
+  s_c2ade65474ae88::t_aacf9d856e871f 131-133,245
+lib/features/search/view/search_screen.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 343,362
+lib/features/safety/viewmodels/safety_view_model.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 108-109
+lib/core/widgets/signed_image.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,139,252
+lib/features/dashboard/viewmodels/dashboard_view_model.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,79-81,341,343
+lib/features/proposals/view/proposal_details_modal.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2
+  s_c2ade65474ae88::t_0389cb078802da 87-93
+test/storage_rls_test.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 21
+lib/features/tasks/view/widgets/requests/request_award_dialog.dart
+  s_c2ade65474ae88::t_a0b6995ef8122d 579
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2
+.cursor/skills/animate/SKILL.md
+  s_c2ade65474ae88::t_aacf9d856e871f 4
+lib/features/auth/view/update_required_screen.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,72
+  s_c2ade65474ae88::t_4eae00ea12a775 85-86
+lib/features/management/view/order_management_panel.dart
+  s_c2ade65474ae88::t_0389cb078802da 14-31,54-56
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2
+test/unit/core/deep_link_registry_test.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 15,20,27,30,46,51,62-64,109,154,211
+lib/features/work/view/work_item_details_screen.dart
+  s_c2ade65474ae88::t_0389cb078802da 70-74,589-604,611-626
+.cursor/skills/optimize/SKILL.md
+  s_c2ade65474ae88::t_aacf9d856e871f 44
+.cursor/skills/dart-fix-runtime-errors/SKILL.md
+  s_c2ade65474ae88::t_041b5d16f5dc05 9-22
+  s_c2ade65474ae88::t_b4ea74f69dd070 1-8,23-180
+lib/features/chat/view/chat_screen.dart
+  s_c2ade65474ae88::t_0389cb078802da 343-348,1140-1147,1149-1163,1165-1171,1174-1194,1196-1201,1204-1216,1218-1219,1221-1223
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 799,801,921,1133,1437
+lib/features/chat/view/widgets/create_offer_sheet.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,109,125,142
+  s_c2ade65474ae88::t_0389cb078802da 344-350
+lib/features/dashboard/view/widgets/activity_feed_preview.dart
+  s_c2ade65474ae88::t_0389cb078802da 329-334
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,94
+test/security/task_requests_rls_test.dart
+  s_c2ade65474ae88::t_e1fde577aadc8d 36,140,153,181,194,337,350,371,384,426,474,521,565,602,732,792,795
+test/core/widgets/app_card_test.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 93
+.cursor/skills/flutter-caching-and-performance/SKILL.md
+  s_c2ade65474ae88::t_041b5d16f5dc05 9-22
+test/integration_test/proposals/proposal_regression_test.dart
+  s_c2ade65474ae88::t_e1fde577aadc8d 12
+.cursor/skills/extract/SKILL.md
+  s_c2ade65474ae88::t_aacf9d856e871f 19,55,60
+lib/core/widgets/signed_avatar.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,129,144
+lib/features/profile/view/edit_profile_screen.dart
+  s_c2ade65474ae88::t_0389cb078802da 359-366,368-374,376-389
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2
+lib/core/widgets/status_badge.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,147,153,156
+lib/features/profile/view/profile_screen.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 44
+  s_c2ade65474ae88::t_0389cb078802da 86-91,259-264,1114-1122
+.cursor/skills/flutter-setup-localization/SKILL.md
+  s_c2ade65474ae88::t_b4ea74f69dd070 1-8,23-206,209-224
+  s_c2ade65474ae88::t_aacf9d856e871f 207-208
+  s_c2ade65474ae88::t_041b5d16f5dc05 9-22
+lib/core/utils/app_animations.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,102,106,111
+lib/features/wallet/view/widgets/wallet_shared_body.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,43
+lib/features/tasks/services/task_offer_service.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 243,302
+lib/core/widgets/scale_button.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,84,90,102
+lib/features/tasks/view/widgets/discovery_task_sliver.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 133
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 395,400
+test/widget/dashboard/booking_card_test.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 56
+lib/features/profile/view/widgets/profile_preview_modal.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2
+  s_c2ade65474ae88::t_0389cb078802da 14-37,39-40,42-44
+lib/features/auth/view/account_restricted_screen.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 46
+lib/features/auth/view/signup_screen.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 132,223-224
+lib/features/search/viewmodels/search_view_model.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 50,77,106
+lib/features/tasks/view/widgets/dashboard_offer_card.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,84,535
+lib/features/notifications/viewmodels/notification_view_model.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 179,209-210
+test/rls/chat_creation_security_test.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 25
+lib/features/auth/view/maintenance_screen.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2
+  s_c2ade65474ae88::t_0389cb078802da 37
+  s_c2ade65474ae88::t_e1fde577aadc8d 38
+lib/features/dashboard/view/tabs/bookings_tab.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 153-154
+lib/features/chat/viewmodels/chat_view_model.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 107-109,233,320,675,746,748
+  s_c2ade65474ae88::t_d58217c8da722b 287-292,294-305
+  s_c2ade65474ae88::t_a0b6995ef8122d 283-286,306-314
+  s_c2ade65474ae88::t_4eae00ea12a775 578
+lib/features/booking/view/bookings_list_screen.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 168,207,392
+  s_c2ade65474ae88::t_0389cb078802da 249-254
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,34-35,62-63,229,231
+lib/features/dashboard/view/widgets/next_actions_list.dart
+  s_c2ade65474ae88::t_0389cb078802da 27-33,35-53
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 135
+.cursor/skills/onboard/SKILL.md
+  s_c2ade65474ae88::t_aacf9d856e871f 186
+.cursor/skills/flutter-build-responsive-layout/SKILL.md
+  s_c2ade65474ae88::t_b4ea74f69dd070 1-8,23-153
+  s_c2ade65474ae88::t_041b5d16f5dc05 9-22
+test/unit/portfolio/portfolio_view_model_test.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 30
+lib/features/booking/services/booking_deep_link_handler.dart
+  s_c2ade65474ae88::t_0389cb078802da 54-59
+test/unit/categories/categories_view_model_test.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 21
+lib/features/booking/view/payment_return_screen.dart
+  s_c2ade65474ae88::t_0389cb078802da 263-265
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,40,334
+lib/features/saved/view/saved_tasks_screen.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 127
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,33
+  s_c2ade65474ae88::t_0389cb078802da 108-110,175-177,240-245,274-278
+lib/features/profile/view/settings_screen.dart
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2
+  s_c2ade65474ae88::t_0389cb078802da 131-136,169-176,178-184
+test/services/message_service_test.dart
+  s_c2ade65474ae88::t_e1fde577aadc8d 85
+.cursor/skills/dart-build-cli-app/SKILL.md
+  s_c2ade65474ae88::t_b4ea74f69dd070 1-8,23-199
+  s_c2ade65474ae88::t_041b5d16f5dc05 9-22
+lib/features/portfolio/view/widgets/portfolio_tile.dart
+  s_c2ade65474ae88::t_4eae00ea12a775 86
+  s_c2ade65474ae88::t_0cebe4fe6a4b84 1-2,72
+lib/features/tasks/view/task_details_screen.dart
+  s_c2ade65474ae88::t_0389cb078802da 59-68,232-241
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "fa2f4a2a5f020a17998bf3750b6ce8177f27dae6",
+  "prompts": {},
+  "sessions": {
+    "s_c2ade65474ae88": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e281d-2586-7570-80d4-be00e4ef8347",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Farooq Eros <faroqomar97@gmail.com>"
+    }
+  }
+}
