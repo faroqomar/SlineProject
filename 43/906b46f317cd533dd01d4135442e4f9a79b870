@@ -1,0 +1,20 @@
+lib/features/notifications/services/notification_service.dart
+  s_c2ade65474ae88::t_91af4fe4e27bb6 7-9
+  s_c2ade65474ae88::t_48796bb734cfee 10,116
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "43906b46f317cd533dd01d4135442e4f9a79b870",
+  "prompts": {},
+  "sessions": {
+    "s_c2ade65474ae88": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e281d-2586-7570-80d4-be00e4ef8347",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Farooq Eros <faroqomar97@gmail.com>"
+    }
+  }
+}
