@@ -1,0 +1,19 @@
+.gemini/config.yaml
+  s_c2ade65474ae88::t_9e83a9920c9612 1-5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "39ce932c1a8c8d32f555c380e92ca846da7b1dbe",
+  "prompts": {},
+  "sessions": {
+    "s_c2ade65474ae88": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e281d-2586-7570-80d4-be00e4ef8347",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Farooq Eros <faroqomar97@gmail.com>"
+    }
+  }
+}
