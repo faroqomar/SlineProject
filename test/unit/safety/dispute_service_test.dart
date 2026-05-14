@@ -27,7 +27,7 @@ class _RpcCapture {
 class _StubRpcBuilder extends Fake implements PostgrestFilterBuilder<dynamic> {
   @override
   Future<R> then<R>(
-    FutureOr<R> Function(dynamic) onValue, {
+    FutureOr<R> Function(Object?) onValue, {
     Function? onError,
   }) => Future<dynamic>.value().then(onValue, onError: onError);
 }

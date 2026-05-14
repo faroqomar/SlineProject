@@ -18,7 +18,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// Reference: .cursor/rules/error-handling.mdc
 class ErrorMapper {
   /// Maps any exception to a user-friendly message.
-  static String map(dynamic error) {
+  static String map(Object? error) {
     if (error is PostgrestException) {
       return _mapPostgrestError(error);
     }
@@ -256,7 +256,7 @@ class ErrorMapper {
   }
 
   /// Check if error indicates session expired (for redirect to login).
-  static bool isSessionExpired(dynamic error) {
+  static bool isSessionExpired(Object? error) {
     if (error is PostgrestException && error.code == '42501') {
       return true;
     }

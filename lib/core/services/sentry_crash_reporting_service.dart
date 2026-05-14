@@ -11,9 +11,9 @@ import 'package:sline_app/core/services/crash_reporting_service.dart';
 class SentryCrashReportingService implements CrashReportingService {
   @override
   Future<void> recordError(
-    dynamic exception,
+    Object? exception,
     StackTrace? stack, {
-    dynamic reason,
+    Object? reason,
     bool fatal = false,
   }) async {
     try {

@@ -26,7 +26,7 @@ class _StubDirectOfferBuilder<T> extends Fake
   PostgrestTransformBuilder<PostgrestList> select([String columns = '*']) =>
       _StubDirectOfferBuilder<PostgrestList>(_data);
   @override
-  PostgrestFilterBuilder<T> eq(String column, dynamic value) => this;
+  PostgrestFilterBuilder<T> eq(String column, Object value) => this;
   @override
   PostgrestTransformBuilder<PostgrestMap?> maybeSingle() =>
       _StubDirectOfferBuilder<PostgrestMap?>(

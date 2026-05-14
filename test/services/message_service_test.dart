@@ -16,7 +16,7 @@ class _MC extends Mock implements SupabaseClient {
   PostgrestFilterBuilder<T> rpc<T>(
     String fn, {
     Map<String, dynamic>? params,
-    dynamic get = false,
+    Object? get = false,
   }) {
     return (super.noSuchMethod(
           Invocation.method(#rpc, [fn], {#params: params, #get: get}),
@@ -46,14 +46,14 @@ class _StubFB<T> extends Fake
   PostgrestTransformBuilder<PostgrestList> select([String columns = '*']) =>
       _StubFB<PostgrestList>(_data);
   @override
-  PostgrestFilterBuilder<T> eq(String column, dynamic value) => this;
+  PostgrestFilterBuilder<T> eq(String column, Object value) => this;
   @override
   PostgrestFilterBuilder<T> or(String filters, {String? referencedTable}) =>
       this;
   @override
   PostgrestFilterBuilder<T> isFilter(String column, bool? value) => this;
   @override
-  PostgrestFilterBuilder<T> lt(String column, dynamic value) => this;
+  PostgrestFilterBuilder<T> lt(String column, Object value) => this;
   @override
   PostgrestTransformBuilder<T> order(
     String column, {
@@ -96,7 +96,7 @@ class _QB extends Fake implements SupabaseQueryBuilder {
       _StubFB<PostgrestList>(_resolvedNext());
   @override
   PostgrestFilterBuilder<Map<String, dynamic>> insert(
-    dynamic values, {
+    Object values, {
     bool defaultToNull = true,
   }) => _StubFB<Map<String, dynamic>>(_resolvedNext());
   @override

@@ -65,7 +65,7 @@ void mockRpcCall({
   required SupabaseClient client,
   required String functionName,
   Map<String, dynamic>? params,
-  required dynamic returnValue,
+  required Object? returnValue,
 }) {
   AppLogger.d(
     'Mocking RPC call: $functionName with params: $params',
@@ -91,7 +91,7 @@ void mockRpcCall({
 void mockRpcCallAnyParams({
   required SupabaseClient client,
   required String functionName,
-  required dynamic returnValue,
+  required Object? returnValue,
 }) {
   AppLogger.d('Mocking RPC call: $functionName with ANY params', tag: _logTag);
 
@@ -496,11 +496,11 @@ void verifyTableQuery({
 /// [expectedData] - Expected data to be inserted (optional, verifies any if null)
 void verifyInsert({
   required MockSupabaseQueryBuilder queryBuilder,
-  dynamic expectedData,
+  Object? expectedData,
 }) {
   AppLogger.d('Verifying insert', tag: _logTag);
   if (expectedData != null) {
-    verify(() => queryBuilder.insert(expectedData as Object)).called(1);
+    verify(() => queryBuilder.insert(expectedData)).called(1);
   } else {
     verify(() => queryBuilder.insert(any())).called(1);
   }

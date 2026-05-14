@@ -13,8 +13,12 @@ The app now enforces the next group of code-quality gates in `analysis_options.y
 - `strict-inference: true`
 - `cascade_invocations: true`
 - `avoid_redundant_argument_values: true`
+- `avoid_annotating_with_dynamic: true`
+- `prefer_for_elements_to_map_fromiterable: true`
 
 The fixes were applied across production code and tests without adding suppressions. Most changes were mechanical cleanup from `dart fix --apply`, explicit typing at Supabase/JSON/test-double boundaries, and test expectation updates where the hardened `ErrorMapper` now intentionally hides raw technical exception text.
+
+The follow-up pass also recorded the remaining explicitly disabled lint rules in `analysis_options.yaml` so future reviews can distinguish deliberate formatter/style/noise decisions from forgotten defaults. Deprecated lints are intentionally omitted rather than configured as `false`, because current analyzer versions warn when deprecated lint names appear in the config.
 
 ## Documentation Updates
 

@@ -26,9 +26,9 @@ abstract class CrashReportingService {
   /// [reason] Optional reason or context message.
   /// [fatal] Whether this should be treated as a fatal crash (default: false).
   Future<void> recordError(
-    dynamic exception,
+    Object? exception,
     StackTrace? stack, {
-    dynamic reason,
+    Object? reason,
     bool fatal = false,
   });
 
@@ -49,9 +49,9 @@ abstract class CrashReportingService {
 class NoOpCrashReportingService implements CrashReportingService {
   @override
   Future<void> recordError(
-    dynamic exception,
+    Object? exception,
     StackTrace? stack, {
-    dynamic reason,
+    Object? reason,
     bool fatal = false,
   }) async {
     if (kDebugMode && kVerboseNoOpCrashReporting) {

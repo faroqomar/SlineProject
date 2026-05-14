@@ -541,11 +541,14 @@ The May 2026 lint hardening pass moved the most important Phase F candidates int
 - `strict-raw-types`, `strict-casts`, and `strict-inference` -- Supabase and JSON boundaries must use explicit generic types or safe casts instead of relying on implicit `dynamic`.
 - `cascade_invocations` -- repeated calls on the same object should use cascades where they improve locality.
 - `avoid_redundant_argument_values` -- redundant default arguments should be removed so intentional overrides stand out.
+- `avoid_annotating_with_dynamic` -- APIs that previously advertised `dynamic` now use `Object?`, concrete map/list types, or untyped SDK override parameters only where the upstream signature requires it.
+- `prefer_for_elements_to_map_fromiterable` -- map/list transformations should use collection elements when that keeps the transformation readable and type-safe.
 
 Remaining disabled rules are intentionally limited to convention conflicts or noisy rules that do not materially improve safety yet. Key examples:
 - `avoid_dynamic_calls` -- Supabase query results still return `dynamic` in some places; field access is handled with targeted casts where strict modes require it.
 - `public_member_api_docs` -- not enforced yet; planned for Phase F.
 - `lines_longer_than_80_chars` -- relaxed for readability in query builder chains and long string literals.
+- Deprecated lints such as `avoid_null_checks_in_equality_operators` and `prefer_final_parameters` are not listed in `analysis_options.yaml`; the analyzer warns when deprecated lints are configured even as `false`.
 
 Strong mode: `implicit-casts: false`, `implicit-dynamic: false`.
 

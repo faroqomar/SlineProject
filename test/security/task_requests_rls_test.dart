@@ -805,7 +805,7 @@ class _MockQueryBuilder {
 
   Future<List<dynamic>> delete() async => result;
 
-  void eq(String column, dynamic value) {}
+  void eq(String column, Object? value) {}
 
   void order(String column) {}
 }

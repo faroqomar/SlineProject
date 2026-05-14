@@ -369,7 +369,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
   }
 
   /// Map technical errors to user-friendly messages for conversation creation
-  String _mapConversationError(dynamic error) {
+  String _mapConversationError(Object? error) {
     final message = error.toString().toLowerCase();
 
     if (message.contains('freelancers cannot start')) {

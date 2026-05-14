@@ -22,9 +22,9 @@ class _FakeCrashReportingService implements CrashReportingService {
 
   @override
   Future<void> recordError(
-    dynamic exception,
+    Object? exception,
     StackTrace? stack, {
-    dynamic reason,
+    Object? reason,
     bool fatal = false,
   }) {
     records.add(

@@ -562,6 +562,6 @@ class TaskRequestsService {
   ///
   /// This is a public helper that can be used by ViewModels
   /// to get consistent error messages. Delegates to [TaskRequestErrorMapper].
-  String mapErrorToUserMessage(dynamic error) =>
+  String mapErrorToUserMessage(Object? error) =>
       _errorMapper.mapErrorToUserMessage(error);
 }

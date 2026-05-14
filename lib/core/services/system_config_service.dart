@@ -61,7 +61,7 @@ class SystemConfigService {
     return value.split('.').take(3).map((e) => int.tryParse(e) ?? 0).toList();
   }
 
-  Map<String, dynamic> _asJson(dynamic value) {
+  Map<String, dynamic> _asJson(Object? value) {
     if (value is Map<String, dynamic>) return value;
     if (value is Map) return value.cast<String, dynamic>();
     return <String, dynamic>{};
