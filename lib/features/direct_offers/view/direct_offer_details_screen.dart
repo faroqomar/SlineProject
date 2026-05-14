@@ -453,7 +453,6 @@ class _DirectOfferDetailsContentState
                     text: vm.cardPaymentInProgress
                         ? 'Opening…'
                         : 'Pay (QiCard)',
-                    isPrimary: true,
                     isLoading: vm.cardPaymentInProgress,
                   ),
                 ],
@@ -484,7 +483,6 @@ class _DirectOfferDetailsContentState
                     text: vm.markDeliveredInProgress
                         ? 'Submitting…'
                         : 'Submit work',
-                    isPrimary: true,
                     isLoading: vm.markDeliveredInProgress,
                   ),
                 ],
@@ -716,7 +714,6 @@ class _ApproveWithDisputeGuard extends StatelessWidget {
       return const AppButton(
         text: 'Releasing…',
         onPressed: null,
-        isPrimary: true,
         isLoading: true,
       );
     }
@@ -729,14 +726,12 @@ class _ApproveWithDisputeGuard extends StatelessWidget {
           return const AppButton(
             text: 'Checking…',
             onPressed: null,
-            isPrimary: true,
           );
         }
         final hasOpenDispute = snapshot.data ?? true;
         return AppButton(
           text: 'Approve & release payment',
           onPressed: hasOpenDispute ? null : onApprove,
-          isPrimary: true,
         );
       },
     );

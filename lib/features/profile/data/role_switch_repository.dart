@@ -37,7 +37,7 @@ class RoleSwitchRepository {
     );
 
     try {
-      final response = await _client.rpc(
+      final response = await _client.rpc<dynamic>(
         'switch_active_role',
         params: {'p_expected_old_role': expectedOldRole, 'p_new_role': newRole},
       );
@@ -95,7 +95,7 @@ class RoleSwitchRepository {
           error: e,
         );
         if (i < maxRetries - 1) {
-          await Future.delayed(Duration(milliseconds: 500 * (i + 1)));
+          await Future<void>.delayed(Duration(milliseconds: 500 * (i + 1)));
         }
       }
     }
@@ -167,7 +167,9 @@ class RoleSwitchRepository {
   /// Returns true if user is under the rate limit (3 switches per minute).
   Future<bool> checkRateLimit() async {
     try {
-      final response = await _client.rpc('check_role_switch_rate_limit');
+      final response = await _client.rpc<dynamic>(
+        'check_role_switch_rate_limit',
+      );
       final allowed = response as bool? ?? false;
 
       AppLogger.d(

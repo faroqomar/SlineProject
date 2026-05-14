@@ -54,7 +54,7 @@ class ProposalRepository {
       if (isOwner) {
         try {
           final summaries =
-              await _client.rpc(
+              await _client.rpc<dynamic>(
                     'get_proposal_bidder_summaries',
                     params: {'p_task_id': taskId},
                   )

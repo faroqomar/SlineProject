@@ -74,11 +74,11 @@ void mockRpcCall({
 
   if (params != null) {
     when<Future<dynamic>>(
-      () => client.rpc(functionName, params: params),
+      () => client.rpc<dynamic>(functionName, params: params),
     ).thenAnswer((_) async => returnValue);
   } else {
     when<Future<dynamic>>(
-      () => client.rpc(functionName),
+      () => client.rpc<dynamic>(functionName),
     ).thenAnswer((_) async => returnValue);
   }
 }
@@ -96,7 +96,7 @@ void mockRpcCallAnyParams({
   AppLogger.d('Mocking RPC call: $functionName with ANY params', tag: _logTag);
 
   when<Future<dynamic>>(
-    () => client.rpc(functionName, params: any(named: 'params')),
+    () => client.rpc<dynamic>(functionName, params: any(named: 'params')),
   ).thenAnswer((_) async => returnValue);
 }
 
@@ -119,10 +119,12 @@ void mockRpcError({
 
   if (params != null) {
     when<Future<dynamic>>(
-      () => client.rpc(functionName, params: params),
+      () => client.rpc<dynamic>(functionName, params: params),
     ).thenThrow(exception);
   } else {
-    when<Future<dynamic>>(() => client.rpc(functionName)).thenThrow(exception);
+    when<Future<dynamic>>(
+      () => client.rpc<dynamic>(functionName),
+    ).thenThrow(exception);
   }
 }
 
@@ -202,7 +204,7 @@ MockPostgrestFilterBuilder mockSelectWithEqFilters({
   // Setup eq filters to return the same builder for chaining
   filters.forEach((column, value) {
     when(
-      () => mockFilterBuilder.eq(column, value),
+      () => mockFilterBuilder.eq(column, value as Object),
     ).thenReturn(mockFilterBuilder);
   });
 
@@ -341,7 +343,7 @@ MockPostgrestFilterBuilder mockUpdateWithFilters({
   // Setup eq filters
   filters.forEach((column, value) {
     when(
-      () => mockFilterBuilder.eq(column, value),
+      () => mockFilterBuilder.eq(column, value as Object),
     ).thenReturn(mockFilterBuilder);
   });
 
@@ -402,7 +404,7 @@ MockPostgrestFilterBuilder mockDeleteWithFilters({
   // Setup eq filters
   filters.forEach((column, value) {
     when(
-      () => mockFilterBuilder.eq(column, value),
+      () => mockFilterBuilder.eq(column, value as Object),
     ).thenReturn(mockFilterBuilder);
   });
 
@@ -468,9 +470,9 @@ void verifyRpcCall({
   AppLogger.d('Verifying RPC call: $functionName', tag: _logTag);
 
   if (params != null) {
-    verify(() => client.rpc(functionName, params: params)).called(1);
+    verify(() => client.rpc<dynamic>(functionName, params: params)).called(1);
   } else {
-    verify(() => client.rpc(functionName)).called(1);
+    verify(() => client.rpc<dynamic>(functionName)).called(1);
   }
 }
 
@@ -498,7 +500,7 @@ void verifyInsert({
 }) {
   AppLogger.d('Verifying insert', tag: _logTag);
   if (expectedData != null) {
-    verify(() => queryBuilder.insert(expectedData)).called(1);
+    verify(() => queryBuilder.insert(expectedData as Object)).called(1);
   } else {
     verify(() => queryBuilder.insert(any())).called(1);
   }

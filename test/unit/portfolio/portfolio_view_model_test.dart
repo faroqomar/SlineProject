@@ -23,7 +23,7 @@ PortfolioItem _item({required String id, String title = 'Item'}) {
     id: id,
     ownerId: 'owner-1',
     title: title,
-    createdAt: DateTime.utc(2026, 1, 1),
+    createdAt: DateTime.utc(2026),
   );
 }
 

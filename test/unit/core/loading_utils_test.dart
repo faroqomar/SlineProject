@@ -51,8 +51,9 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump();
 
-      handle.close();
-      handle.close();
+      handle
+        ..close()
+        ..close();
 
       expect(tester.takeException(), isNull);
     });

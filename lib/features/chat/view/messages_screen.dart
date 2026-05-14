@@ -105,8 +105,9 @@ class _MessagesScreenState extends State<MessagesScreen>
     _searchDebounce?.cancel();
     _searchController.dispose();
     _staggerController.dispose();
-    _chatCtrl.unsubscribeFromUserConversations();
-    _chatCtrl.unsubscribeFromConversation();
+    _chatCtrl
+      ..unsubscribeFromUserConversations()
+      ..unsubscribeFromConversation();
     super.dispose();
   }
 

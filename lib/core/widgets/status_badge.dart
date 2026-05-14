@@ -250,7 +250,7 @@ class _StatusBadgeState extends State<StatusBadge>
       padding: widget.isSmall ? pills.smallPadding : pills.padding,
       decoration: ShapeDecoration(
         color: tone.background,
-        shape: const StadiumBorder(side: BorderSide.none),
+        shape: const StadiumBorder(),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

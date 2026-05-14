@@ -45,7 +45,7 @@ void main() {
       await client.from('favorites').upsert(clientFavoritesFreelancerA);
 
       // Act: Create conversation via RPC
-      final result = await client.rpc(
+      final result = await client.rpc<dynamic>(
         'start_direct_conversation_v1',
         params: {'p_target_id': testFreelancerAId},
       );
@@ -62,7 +62,7 @@ void main() {
       await _createTestTaskAndBid(client);
 
       // Act: Freelancer calls task conversation RPC
-      final result = await client.rpc(
+      final result = await client.rpc<dynamic>(
         'start_task_conversation_v1',
         params: {'p_task_id': testTaskId},
       );
@@ -77,7 +77,7 @@ void main() {
       final requestId = await _createTestTaskWithBid(client);
 
       // Act: Client rejects the bid (this creates conversation via GUC exception)
-      final result = await client.rpc(
+      final result = await client.rpc<dynamic>(
         'reject_task_request',
         params: {'p_task_id': testTaskId, 'p_request_id': requestId},
       );
@@ -92,7 +92,7 @@ void main() {
 
       // Act & Assert: Should throw error
       expect(
-        () => client.rpc(
+        () => client.rpc<dynamic>(
           'start_direct_conversation_v1',
           params: {'p_target_id': testClientId},
         ),
@@ -116,7 +116,7 @@ void main() {
 
       // Act & Assert
       expect(
-        () => client.rpc(
+        () => client.rpc<dynamic>(
           'start_direct_conversation_v1',
           params: {'p_target_id': testFreelancerBId},
         ),
@@ -150,7 +150,7 @@ void main() {
         });
 
         // Create conversation
-        await client.rpc(
+        await client.rpc<dynamic>(
           'start_direct_conversation_v1',
           params: {'p_target_id': freelancerId},
         );
@@ -158,7 +158,7 @@ void main() {
 
       // Act & Assert: 21st should fail
       expect(
-        () => client.rpc(
+        () => client.rpc<dynamic>(
           'start_direct_conversation_v1',
           params: {'p_target_id': 'another-freelancer'},
         ),
@@ -177,12 +177,12 @@ void main() {
       await client.from('favorites').upsert(clientFavoritesFreelancerA);
 
       // Act: Call twice
-      final result1 = await client.rpc(
+      final result1 = await client.rpc<dynamic>(
         'start_direct_conversation_v1',
         params: {'p_target_id': testFreelancerAId},
       );
 
-      final result2 = await client.rpc(
+      final result2 = await client.rpc<dynamic>(
         'start_direct_conversation_v1',
         params: {'p_target_id': testFreelancerAId},
       );
@@ -224,7 +224,7 @@ Future<void> _cleanupTestData(SupabaseClient client) async {
   await client
       .from('favorites')
       .delete()
-      .neq('id', clientFavoritesFreelancerA['id']);
+      .neq('id', clientFavoritesFreelancerA['id'] as Object);
 }
 
 Future<void> _authenticateAsUser(SupabaseClient client, String userId) async {

@@ -104,7 +104,7 @@ class PortfolioService {
         .uploadBinary(
           path,
           bytes,
-          fileOptions: FileOptions(contentType: contentType, upsert: false),
+          fileOptions: FileOptions(contentType: contentType),
         );
 
     // Public URL (bucket is public)

@@ -66,7 +66,7 @@ _HomeBundle _buildHomeBundle() {
   when(() => homeVm.isLoadingMore).thenReturn(false);
   when(() => homeVm.hasMore).thenReturn(false);
   when(
-    () => homeVm.refresh(filterController: filterVm, surface: 'home'),
+    () => homeVm.refresh(filterController: filterVm),
   ).thenAnswer((_) async {});
 
   when(() => filterVm.selectedCategory).thenReturn('');
@@ -104,7 +104,7 @@ Task _task({
     userId: 'user-1',
     status: TaskStatus.open,
     taskType: taskType,
-    createdAt: DateTime.utc(2026, 3, 1),
+    createdAt: DateTime.utc(2026, 3),
     category: category,
     categoryName: category,
   );
@@ -204,7 +204,6 @@ void main() {
       verify(
         () => bundle.homeVm.refresh(
           filterController: bundle.filterVm,
-          surface: 'home',
         ),
       ).called(1);
       verify(bundle.profileVm.loadHeaderProfile).called(1);

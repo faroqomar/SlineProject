@@ -22,7 +22,7 @@ Conversation _conversation({
     id: id,
     user1Id: 'user-1',
     user2Id: 'user-2',
-    createdAt: DateTime.utc(2026, 5, 1),
+    createdAt: DateTime.utc(2026, 5),
     otherUserName: name,
     lastMessage: lastMessage,
     lastMessageSenderId: lastMessageSenderId,

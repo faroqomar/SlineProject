@@ -211,7 +211,7 @@ Future<void> refreshHomeFeedViaProviders(
   T61T70Preflight.log(tag, 'Refreshing HomeViewModel/TaskFilterViewModel');
   await homeVm.refresh(filterController: filterVm);
   await tester.pump();
-  await pumpFor(tester, duration: const Duration(seconds: 1));
+  await pumpFor(tester);
 }
 
 Future<void> tapByKey(

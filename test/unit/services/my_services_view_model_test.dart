@@ -23,7 +23,7 @@ ServiceModel _service({
     title: title,
     status: status,
     price: price,
-    createdAt: DateTime.utc(2026, 1, 1),
+    createdAt: DateTime.utc(2026),
   );
 }
 
@@ -262,9 +262,9 @@ void main() {
       expect(vm.error, isNotNull);
 
       var notified = false;
-      vm.addListener(() => notified = true);
-
-      vm.clearError();
+      vm
+        ..addListener(() => notified = true)
+        ..clearError();
       expect(vm.error, isNull);
       expect(notified, isTrue);
     });

@@ -23,7 +23,7 @@ BookingModel _booking({
     paymentStatus: paymentStatus,
     note: 'Test note',
     price: 100,
-    createdAtUtc: DateTime.utc(2026, 3, 1),
+    createdAtUtc: DateTime.utc(2026, 3),
     dueAtUtc: DateTime.utc(2026, 3, 3),
     deliveryDays: 2,
     taskData: const {'title': 'Booking Task'},

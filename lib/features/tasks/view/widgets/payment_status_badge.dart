@@ -39,7 +39,7 @@ class PaymentStatusBadge extends StatelessWidget {
         decoration: BoxDecoration(
           color: config.backgroundColor,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: config.borderColor, width: 1),
+          border: Border.all(color: config.borderColor),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

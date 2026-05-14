@@ -243,7 +243,6 @@ class _FavoritesView extends StatelessWidget {
                         return;
                       }
                       final convo = await chatVM.createOrGetConversation(
-                        taskId: null,
                         user1Id: clientId,
                         user2Id: favorite.freelancerId,
                       );

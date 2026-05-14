@@ -86,8 +86,9 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
 
   @override
   void dispose() {
-    _scroll.removeListener(_onScroll);
-    _scroll.dispose();
+    _scroll
+      ..removeListener(_onScroll)
+      ..dispose();
     _filterVm?.dispose();
     super.dispose();
   }

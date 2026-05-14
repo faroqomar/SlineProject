@@ -229,7 +229,6 @@ class BookingTaskCard extends StatelessWidget {
                       Container(height: 1, color: amberColors.heroDivider),
                       SizedBox(height: cardTheme.bookingDividerBottomSpacing),
                       Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Expanded(
                             child: Column(
@@ -483,7 +482,6 @@ class _ProviderAvatar extends StatelessWidget {
         storagePathOrUrl: path,
         radius: photoSize / 2,
         borderColor: amberColors.heroRim,
-        borderWidth: 2,
         initials: initials,
         showOnlineIndicator: isOnline,
       );

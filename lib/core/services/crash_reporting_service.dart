@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 
 const bool kVerboseNoOpCrashReporting = bool.fromEnvironment(
   'VERBOSE_DEBUG_CRASH_REPORTING',
-  defaultValue: false,
 );
 
 /// Abstract service for reporting crashes and non-fatal errors.

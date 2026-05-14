@@ -22,7 +22,7 @@ Task _task({required String id, String title = 'Task'}) {
     budget: 50,
     userId: 'u1',
     status: TaskStatus.open,
-    createdAt: DateTime.utc(2026, 1, 1),
+    createdAt: DateTime.utc(2026),
   );
 }
 
@@ -59,7 +59,7 @@ void main() {
   test('construction: no auto-load when user is not logged in', () async {
     when(() => service.listMineWithDetails()).thenAnswer((_) async => <Task>[]);
 
-    final result = _buildVm(service: service, currentUser: null);
+    final result = _buildVm(service: service);
     final vm = result.vm;
 
     // Give microtasks time to settle
@@ -104,7 +104,7 @@ void main() {
     final tasks = [_task(id: 'a'), _task(id: 'b'), _task(id: 'c')];
     when(() => service.listMineWithDetails()).thenAnswer((_) async => tasks);
 
-    final result = _buildVm(service: service, currentUser: null);
+    final result = _buildVm(service: service);
     final vm = result.vm;
 
     await vm.load();
@@ -126,7 +126,7 @@ void main() {
       () => service.listMineWithDetails(),
     ).thenThrow(Exception('Network error'));
 
-    final result = _buildVm(service: service, currentUser: null);
+    final result = _buildVm(service: service);
     final vm = result.vm;
 
     await vm.load();
@@ -146,7 +146,7 @@ void main() {
       () => service.listMineWithDetails(),
     ).thenAnswer((_) async => [_task(id: 'saved-1')]);
 
-    final result = _buildVm(service: service, currentUser: null);
+    final result = _buildVm(service: service);
     final vm = result.vm;
 
     await vm.load();
@@ -165,7 +165,7 @@ void main() {
       () => service.listMineWithDetails(),
     ).thenAnswer((_) async => [_task(id: 'saved-1')]);
 
-    final result = _buildVm(service: service, currentUser: null);
+    final result = _buildVm(service: service);
     final vm = result.vm;
 
     await vm.load();
@@ -183,7 +183,7 @@ void main() {
     when(() => service.listMineWithDetails()).thenAnswer((_) async => <Task>[]);
     when(() => service.toggle(any())).thenAnswer((_) async => true);
 
-    final result = _buildVm(service: service, currentUser: null);
+    final result = _buildVm(service: service);
     final vm = result.vm;
 
     await vm.load();
@@ -208,7 +208,7 @@ void main() {
     ).thenAnswer((_) async => [_task(id: 'existing')]);
     when(() => service.toggle(any())).thenAnswer((_) async => false);
 
-    final result = _buildVm(service: service, currentUser: null);
+    final result = _buildVm(service: service);
     final vm = result.vm;
 
     await vm.load();
@@ -231,7 +231,7 @@ void main() {
     when(() => service.listMineWithDetails()).thenAnswer((_) async => <Task>[]);
     when(() => service.toggle(any())).thenThrow(Exception('DB error'));
 
-    final result = _buildVm(service: service, currentUser: null);
+    final result = _buildVm(service: service);
     final vm = result.vm;
 
     await vm.load();
@@ -251,7 +251,7 @@ void main() {
       () => service.listMineWithDetails(),
     ).thenAnswer((_) async => [_task(id: 't1')]);
 
-    final result = _buildVm(service: service, currentUser: null);
+    final result = _buildVm(service: service);
     final vm = result.vm;
 
     await vm.load();
@@ -268,7 +268,7 @@ void main() {
   test('empty state when no tasks are saved', () async {
     when(() => service.listMineWithDetails()).thenAnswer((_) async => <Task>[]);
 
-    final result = _buildVm(service: service, currentUser: null);
+    final result = _buildVm(service: service);
     final vm = result.vm;
 
     await vm.load();
@@ -290,7 +290,7 @@ void main() {
       () => service.listMineWithDetails(),
     ).thenAnswer((_) async => [_task(id: 'from-auth')]);
 
-    final result = _buildVm(service: service, currentUser: null);
+    final result = _buildVm(service: service);
     final vm = result.vm;
 
     // Emit signedIn event
@@ -320,7 +320,7 @@ void main() {
       () => service.listMineWithDetails(),
     ).thenAnswer((_) async => [_task(id: 't1')]);
 
-    final result = _buildVm(service: service, currentUser: null);
+    final result = _buildVm(service: service);
     final vm = result.vm;
 
     // Load some data first
@@ -347,7 +347,7 @@ void main() {
       () => service.listMineWithDetails(),
     ).thenAnswer((_) async => [_task(id: 't1')]);
 
-    final result = _buildVm(service: service, currentUser: null);
+    final result = _buildVm(service: service);
     final vm = result.vm;
 
     await vm.load();

@@ -44,7 +44,6 @@ class SlinePageRoute<T> extends PageRouteBuilder<T> {
     );
     return SlinePageRoute._(
       settings: settings,
-      opaque: true,
       pageBuilder: (_) => child,
       duration: AppMotion.standard,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -120,7 +119,6 @@ class SlinePageRoute<T> extends PageRouteBuilder<T> {
     );
     return SlinePageRoute._(
       settings: settings,
-      opaque: true,
       pageBuilder: (_) => child,
       duration: AppMotion.fast,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {

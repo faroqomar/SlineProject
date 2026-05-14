@@ -59,7 +59,7 @@ class DashboardBookingCard extends StatelessWidget {
     const amber = AmberDuskTokens.colors;
     const spacing = AmberDuskTokens.spacing;
     const typography = AmberDuskTokens.typography;
-    final taskTitle = booking.taskData?['title'] ?? 'Task';
+    final taskTitle = booking.taskData?['title']?.toString() ?? 'Task';
     final bookingDue = booking.dueAtUtc ?? booking.scheduledAt;
 
     var displayNote = booking.note;

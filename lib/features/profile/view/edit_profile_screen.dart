@@ -120,7 +120,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           // ProfileAvatarWidget handles tap and edit icon internally now
                           child: ProfileAvatarWidget(
                             radius: AppDimens.p50,
-                            enableEdit: true,
                           ),
                         ),
                         const SizedBox(height: AppDimens.p24),

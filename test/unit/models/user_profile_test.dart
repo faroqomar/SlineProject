@@ -33,7 +33,7 @@ void main() {
       expect(profile.accountStatus, 'active');
       expect(profile.moderationReason, isNull);
       expect(profile.restrictionScope, isNull);
-      expect(profile.forceLogoutAfterUtc, DateTime.utc(2026, 6, 1, 12, 0, 0));
+      expect(profile.forceLogoutAfterUtc, DateTime.utc(2026, 6, 1, 12));
     });
 
     test('all nullable fields handle null gracefully', () {
@@ -86,7 +86,7 @@ void main() {
 
       expect(profile.forceLogoutAfterUtc, isNotNull);
       expect(profile.forceLogoutAfterUtc!.isUtc, isTrue);
-      expect(profile.forceLogoutAfterUtc, DateTime.utc(2026, 6, 1, 12, 0, 0));
+      expect(profile.forceLogoutAfterUtc, DateTime.utc(2026, 6, 1, 12));
     });
 
     test('account_status with moderation fields parses correctly', () {
@@ -133,7 +133,7 @@ void main() {
       expect(map['force_logout_after'], isA<String>());
       expect(
         DateTime.parse(map['force_logout_after'] as String).toUtc(),
-        DateTime.utc(2026, 6, 1, 12, 0, 0),
+        DateTime.utc(2026, 6, 1, 12),
       );
     });
 

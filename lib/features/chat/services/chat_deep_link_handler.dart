@@ -11,8 +11,9 @@ import 'package:sline_app/features/chat/view/chat_screen.dart';
 /// Handles: 'conversation', 'message' (messages route to their conversation).
 void registerChatDeepLinks(DeepLinkRegistry registry) {
   const handler = _handleConversation;
-  registry.register('conversation', handler);
-  registry.register('message', handler);
+  registry
+    ..register('conversation', handler)
+    ..register('message', handler);
 }
 
 Future<void> _handleConversation(

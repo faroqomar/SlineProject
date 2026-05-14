@@ -68,7 +68,7 @@ class WalletViewModel extends ChangeNotifier {
     try {
       // Parallel fetch
       final results = await Future.wait([
-        _repo.getActivity(limit: 20),
+        _repo.getActivity(),
         _repo.getWalletBalance(),
       ]);
 
@@ -97,7 +97,6 @@ class WalletViewModel extends ChangeNotifier {
 
     try {
       final txns = await _repo.getActivity(
-        limit: 20,
         cursorCreatedAtIso: _cursor,
       );
       activities.addAll(txns);
@@ -133,12 +132,13 @@ class WalletViewModel extends ChangeNotifier {
         // Refresh balance and activities so summary stays consistent (e.g. new pending withdrawal)
         final results = await Future.wait([
           _repo.getWalletBalance(),
-          _repo.getActivity(limit: 20),
+          _repo.getActivity(),
         ]);
         balance = results[0] as WalletBalanceModel;
         final txns = results[1] as List<WalletActivityModel>;
-        activities.clear();
-        activities.addAll(txns);
+        activities
+          ..clear()
+          ..addAll(txns);
         if (txns.isNotEmpty) {
           _cursor = txns.last.createdAtUtc.toUtc().toIso8601String();
         }

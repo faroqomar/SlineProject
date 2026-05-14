@@ -6,7 +6,7 @@ import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
 
 class SubmitDeliveryModal extends StatefulWidget {
-  final Function(String note) onSubmit;
+  final void Function(String note) onSubmit;
   final bool isLoading;
 
   const SubmitDeliveryModal({

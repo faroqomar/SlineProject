@@ -140,7 +140,7 @@ class MessageService {
         .from('conversation_presence')
         .stream(primaryKey: ['conversation_id', 'user_id'])
         .eq('conversation_id', conversationId)
-        .handleError((e, st) {
+        .handleError((Object e, StackTrace st) {
           AppLogger.e(
             '[CHAT] presence stream error',
             tag: 'Chat',
@@ -171,7 +171,10 @@ class MessageService {
       AppLogger.d('Chat: using task-linked path (taskId provided)');
       try {
         final response = await _client
-            .rpc('start_task_conversation_v1', params: {'p_task_id': taskId})
+            .rpc<dynamic>(
+              'start_task_conversation_v1',
+              params: {'p_task_id': taskId},
+            )
             .select(
               '*, tasks(title, task_type), user1:profiles!conversations_user1_id_fkey(full_name, avatar_url), user2:profiles!conversations_user2_id_fkey(full_name, avatar_url)',
             )
@@ -226,7 +229,7 @@ class MessageService {
   }) async {
     try {
       final response = await _client
-          .rpc(
+          .rpc<dynamic>(
             'start_direct_conversation_v1',
             params: {'p_target_id': targetId},
           )
@@ -307,7 +310,7 @@ class MessageService {
   Future<void> deleteConversation(String conversationId, String userId) async {
     AppLogger.i('[ARCHIVE] start conversationId=$conversationId');
     try {
-      await _client.rpc(
+      await _client.rpc<dynamic>(
         'archive_conversation_v1',
         params: {'p_conversation_id': conversationId},
       );
@@ -382,14 +385,14 @@ class MessageService {
             : json['deleted_at_user2'];
 
         if (deletedAtStr != null) {
-          final deletedAt = DateTime.parse(deletedAtStr);
+          final deletedAt = DateTime.parse(deletedAtStr as String);
           final lastMsg = json['last_message'];
           // If no messages, or last message was before deletion, skip it
           if (lastMsg == null || lastMsg is! List || lastMsg.isEmpty) {
             continue;
           }
           final msgData = Map<String, dynamic>.from(lastMsg.first as Map);
-          final msgTime = DateTime.parse(msgData['created_at']);
+          final msgTime = DateTime.parse(msgData['created_at'] as String);
 
           if (msgTime.isBefore(deletedAt)) {
             continue; // Still deleted
@@ -499,7 +502,7 @@ class MessageService {
   /// Mark all messages in a conversation as delivered for the current receiver.
   /// Why: switch UI status from single tick (sent) to double-grey (delivered).
   Future<void> markDelivered(String conversationId) async {
-    await _client.rpc(
+    await _client.rpc<dynamic>(
       'mark_conversation_delivered',
       params: {'p_conversation_id': conversationId},
     );
@@ -509,7 +512,7 @@ class MessageService {
   /// Mark all messages in a conversation as seen for the current receiver.
   /// Why: switch UI status from double-grey to double-blue (read).
   Future<void> markSeen(String conversationId) async {
-    await _client.rpc(
+    await _client.rpc<dynamic>(
       'mark_conversation_seen',
       params: {'p_conversation_id': conversationId},
     );
@@ -526,7 +529,7 @@ class MessageService {
         .stream(primaryKey: ['id'])
         .eq('conversation_id', conversationId)
         .order('created_at', ascending: true)
-        .handleError((e, st) {
+        .handleError((Object e, StackTrace st) {
           AppLogger.e(
             'Realtime messages stream error (payload/transform)',
             error: e,
@@ -564,14 +567,14 @@ class MessageService {
         .stream(primaryKey: ['id'])
         .eq('receiver_id', userId)
         .order('created_at', ascending: true)
-        .handleError((e, st) {
+        .handleError((Object e, StackTrace st) {
           AppLogger.w(
             '[REALTIME] Inbox messages stream error (timeout/protocol/connection)',
             error: e,
           );
           AppLogger.d(
             '[REALTIME] Inbox stream error stackTrace',
-            json: st?.toString(),
+            json: st.toString(),
           );
         })
         .map((rows) {

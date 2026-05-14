@@ -94,7 +94,7 @@ class AuthSessionViewModel extends ChangeNotifier {
           await _loadInitialProfile();
         }
       },
-      onError: (error) {
+      onError: (Object error) {
         AppLogger.e('Auth state error', tag: 'Auth', error: error);
         if (_onSessionExpired != null) {
           _onSessionExpired!();

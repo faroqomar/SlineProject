@@ -59,9 +59,10 @@ void main() {
       });
 
       test('contains all registered keys in lowercase', () {
-        registry.register('Task', (_, _, {metadata}) async {});
-        registry.register('Booking', (_, _, {metadata}) async {});
-        registry.register('conversation', (_, _, {metadata}) async {});
+        registry
+          ..register('Task', (_, _, {metadata}) async {})
+          ..register('Booking', (_, _, {metadata}) async {})
+          ..register('conversation', (_, _, {metadata}) async {});
 
         expect(registry.registeredTypes.toSet(), {
           'task',
@@ -175,15 +176,16 @@ void main() {
       testWidgets('multiple handlers for different types', (tester) async {
         final calls = <String>[];
 
-        registry.register('task', (_, id, {metadata}) async {
-          calls.add('task:$id');
-        });
-        registry.register('booking', (_, id, {metadata}) async {
-          calls.add('booking:$id');
-        });
-        registry.register('conversation', (_, id, {metadata}) async {
-          calls.add('conversation:$id');
-        });
+        registry
+          ..register('task', (_, id, {metadata}) async {
+            calls.add('task:$id');
+          })
+          ..register('booking', (_, id, {metadata}) async {
+            calls.add('booking:$id');
+          })
+          ..register('conversation', (_, id, {metadata}) async {
+            calls.add('conversation:$id');
+          });
 
         await tester.pumpWidget(
           MaterialApp(

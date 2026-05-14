@@ -4,7 +4,7 @@ import 'package:sline_app/features/notifications/models/notification_model.dart'
 void main() {
   group('NotificationItem', () {
     test('fromJson parses message, is_read, metadata', () {
-      final json = {
+      final json = <String, dynamic>{
         'id': 'n-1',
         'user_id': 'u-1',
         'title': 'Test',
@@ -25,7 +25,7 @@ void main() {
     });
 
     test('fromJson defaults is_read to false when null', () {
-      final json = {
+      final json = <String, dynamic>{
         'id': 'n-2',
         'user_id': 'u-2',
         'title': 'T',
@@ -35,7 +35,7 @@ void main() {
       };
       final item = NotificationItem.fromJson(json);
       expect(item.isRead, false);
-      expect(item.metadata, {});
+      expect(item.metadata, <String, dynamic>{});
     });
 
     test('fromJson maps unknown type to system', () {

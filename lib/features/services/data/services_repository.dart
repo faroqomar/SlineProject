@@ -39,7 +39,7 @@ class ServicesRepository {
         .order('created_at', ascending: false);
 
     final services = (response as List)
-        .map((e) => ServiceModel.fromJson(e))
+        .map((e) => ServiceModel.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList();
     AppLogger.i('Fetched ${services.length} services', tag: _kTag);
     return services;

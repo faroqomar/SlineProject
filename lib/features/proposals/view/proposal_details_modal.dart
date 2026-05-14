@@ -117,7 +117,7 @@ class ProposalDetailsModal extends StatelessWidget {
                                   ),
                                   child: Center(
                                     child: Text(
-                                      freelancer['initials'],
+                                      freelancer['initials'].toString(),
                                       style: AppTypography.h4.copyWith(
                                         color: Colors.black,
                                       ),
@@ -149,7 +149,7 @@ class ProposalDetailsModal extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    freelancer['name'],
+                                    freelancer['name'].toString(),
                                     style: AppTypography.h5.copyWith(
                                       color: colorScheme.text,
                                     ),
@@ -200,7 +200,7 @@ class ProposalDetailsModal extends StatelessWidget {
                         Expanded(
                           child: _buildInfoCard(
                             'Bid Amount',
-                            data['bidAmount'],
+                            data['bidAmount'].toString(),
                             AppColors.teal,
                             colorScheme,
                           ),
@@ -209,7 +209,7 @@ class ProposalDetailsModal extends StatelessWidget {
                         Expanded(
                           child: _buildInfoCard(
                             'Delivery',
-                            data['deliveryTime'],
+                            data['deliveryTime'].toString(),
                             colorScheme.text,
                             colorScheme,
                           ),
@@ -232,7 +232,7 @@ class ProposalDetailsModal extends StatelessWidget {
                         border: Border.all(color: colorScheme.inputBorder),
                       ),
                       child: Text(
-                        data['coverLetter'],
+                        data['coverLetter'].toString(),
                         style: AppTypography.bodySmall.copyWith(
                           color: colorScheme.textSecondary,
                           height: 1.6,
@@ -275,7 +275,7 @@ class ProposalDetailsModal extends StatelessWidget {
                               ),
                               const SizedBox(width: 12),
                               Text(
-                                file,
+                                file.toString(),
                                 style: AppTypography.bodySmall.copyWith(
                                   color: colorScheme.text,
                                 ),

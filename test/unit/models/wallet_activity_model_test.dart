@@ -33,7 +33,7 @@ void main() {
       final activity = WalletActivityModel.fromJson(_fullJson());
 
       expect(activity.journalEntryId, 'entry-uuid-001');
-      expect(activity.createdAtUtc, DateTime.utc(2026, 3, 15, 10, 30, 0));
+      expect(activity.createdAtUtc, DateTime.utc(2026, 3, 15, 10, 30));
       expect(activity.eventType, 'booking_payment');
       expect(activity.amountGross, 50000);
       expect(activity.amountNet, 47500);
@@ -120,7 +120,7 @@ void main() {
       });
 
       expect(activity.createdAtUtc.isUtc, isTrue);
-      expect(activity.createdAtUtc, DateTime.utc(2026, 3, 15, 10, 30, 0));
+      expect(activity.createdAtUtc, DateTime.utc(2026, 3, 15, 10, 30));
     });
 
     test('handles decimal numeric values', () {

@@ -5,7 +5,6 @@ import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
@@ -238,8 +237,6 @@ class _DashboardOfferCardState extends State<DashboardOfferCard>
                         padding: const EdgeInsets.only(right: AppDimens.p12),
                         child: SignedAvatar(
                           storagePathOrUrl: widget.offer.bidderAvatar,
-                          // Dashboard cards keep the larger avatar for quick scanning.
-                          radius: AppLayout.avatarDefault / 2,
                         ),
                       ),
                     Expanded(
@@ -517,8 +514,9 @@ class _PaymentDeadlineCountdownState extends State<_PaymentDeadlineCountdown>
   void initState() {
     super.initState();
     _monitor = AwardExpirationMonitor();
-    _monitor.startMonitoring(widget.deadline);
-    _monitor.addListener(_onMonitorUpdate);
+    _monitor
+      ..startMonitoring(widget.deadline)
+      ..addListener(_onMonitorUpdate);
 
     _pulseController = AnimationController(
       // Dramatic motion makes critical payment windows visible without custom timing.
@@ -623,8 +621,9 @@ class _PaymentDeadlineCountdownState extends State<_PaymentDeadlineCountdown>
   @override
   void dispose() {
     _pulseController?.dispose();
-    _monitor.removeListener(_onMonitorUpdate);
-    _monitor.dispose();
+    _monitor
+      ..removeListener(_onMonitorUpdate)
+      ..dispose();
     super.dispose();
   }
 }

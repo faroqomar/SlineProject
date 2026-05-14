@@ -57,7 +57,7 @@ void main() {
     testWidgets('T-CW112 active item shows label with full opacity', (
       tester,
     ) async {
-      await tester.pumpWidget(buildTestApp(initialIndex: 0));
+      await tester.pumpWidget(buildTestApp());
       await tester.pump();
 
       // "Home" should be visible (first tab is active)
@@ -67,7 +67,7 @@ void main() {
     testWidgets('T-CW112a uses Amber Dusk nav surface and active colors', (
       tester,
     ) async {
-      await tester.pumpWidget(buildTestApp(initialIndex: 0));
+      await tester.pumpWidget(buildTestApp());
       await tester.pump();
 
       final navTheme = AmberDuskTokens.widgetTheme.bottomNav;
@@ -137,7 +137,7 @@ void main() {
     testWidgets('T-CW115 renders compact Messages dot for zero count', (
       tester,
     ) async {
-      await tester.pumpWidget(buildTestApp(messagesNotificationCount: 0));
+      await tester.pumpWidget(buildTestApp());
       await tester.pump();
 
       final rustDots = tester.widgetList<Container>(find.byType(Container));

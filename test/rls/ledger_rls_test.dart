@@ -64,7 +64,7 @@ void main() {
               'test-key-${DateTime.now().millisecondsSinceEpoch}',
           'status': 'posted',
           'currency': 'IQD',
-          'meta': {},
+          'meta': <String, dynamic>{},
         };
         await rlsHelper.assertCannotInsert(
           'journal_entries',

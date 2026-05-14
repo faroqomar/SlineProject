@@ -18,7 +18,7 @@ class ProfileSummaryService {
     if (ids.isEmpty) return {};
 
     try {
-      final response = await _client.rpc(
+      final response = await _client.rpc<dynamic>(
         'rpc_get_profile_summaries',
         params: {'p_ids': ids},
       );
@@ -74,7 +74,7 @@ class ProfileSummaryService {
     );
 
     try {
-      final response = await _client.rpc(
+      final response = await _client.rpc<dynamic>(
         'search_profiles',
         params: {
           'query': query,

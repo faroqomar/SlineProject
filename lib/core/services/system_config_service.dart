@@ -10,7 +10,7 @@ class SystemConfigService {
 
   Future<PublicSystemConfig> fetchPublicConfig() async {
     try {
-      final rows = await _client.rpc('get_public_system_config');
+      final rows = await _client.rpc<dynamic>('get_public_system_config');
       final map = <String, dynamic>{};
       for (final row in (rows as List<dynamic>)) {
         final json = row as Map<String, dynamic>;

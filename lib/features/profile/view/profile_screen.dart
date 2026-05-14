@@ -204,7 +204,6 @@ class _ProfileHeroCard extends StatelessWidget {
                 size: AppDimens.p70,
                 borderRadius: BorderRadius.circular(AppDimens.r20),
                 borderColor: amber.heroText,
-                borderWidth: 2,
                 initials: _initials(name),
                 showOnlineIndicator: true,
               ),
@@ -802,7 +801,9 @@ class _ProfileSettingsGroup extends StatelessWidget {
             icon: Icons.person_outline,
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+              MaterialPageRoute<void>(
+                builder: (_) => const EditProfileScreen(),
+              ),
             ),
           ),
           _ActionRow(
@@ -810,7 +811,9 @@ class _ProfileSettingsGroup extends StatelessWidget {
             icon: Icons.design_services_outlined,
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const MyServicesScreen()),
+              MaterialPageRoute<void>(
+                builder: (_) => const MyServicesScreen(),
+              ),
             ),
           ),
           Selector<SavedTasksViewModel, int>(
@@ -821,7 +824,9 @@ class _ProfileSettingsGroup extends StatelessWidget {
               badge: count > 0 ? '$count' : null,
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const SavedTasksScreen()),
+                MaterialPageRoute<void>(
+                  builder: (_) => const SavedTasksScreen(),
+                ),
               ),
             ),
           ),
@@ -833,7 +838,9 @@ class _ProfileSettingsGroup extends StatelessWidget {
               badge: count > 0 ? '$count' : null,
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const FavoritesScreen()),
+                MaterialPageRoute<void>(
+                  builder: (_) => const FavoritesScreen(),
+                ),
               ),
             ),
           ),
@@ -842,7 +849,7 @@ class _ProfileSettingsGroup extends StatelessWidget {
             icon: Icons.account_balance_wallet_outlined,
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const WalletScreen()),
+              MaterialPageRoute<void>(builder: (_) => const WalletScreen()),
             ),
           ),
           _ActionRow(

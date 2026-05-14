@@ -1,6 +1,6 @@
 # SLine App - Folder Structure Guide
 
-**Last Updated:** 2026-05-14 (Amber Dusk Phases 9-12, Transactional QA Recovery, SystemEvolution 2026-05-14, and DocsKeeper sync documented)
+**Last Updated:** 2026-05-15 (lint strictness hardening, Amber Dusk Phases 9-12, Transactional QA Recovery, SystemEvolution, and DocsKeeper sync documented)
 
 This document describes the current repository layout. It replaces older references to `presentation/` and `controllers/`; the live Flutter codebase uses `view/` and `viewmodels/` under `lib/features/`.
 
@@ -24,7 +24,7 @@ sline_app/
 ├── android/ ios/ web/    # Platform runners
 ├── linux/ macos/ windows/# Desktop runners
 ├── pubspec.yaml          # Flutter package manifest
-├── analysis_options.yaml # Lint rules (34 rules: core + safety + code quality)
+├── analysis_options.yaml # very_good_analysis + SLine safety rules + strict Dart modes
 ├── MIGRATION_REVIEW_CHECKLIST.md  # Phase D: 7-point checklist for migration PRs
 └── README.md             # Repository overview
 ```

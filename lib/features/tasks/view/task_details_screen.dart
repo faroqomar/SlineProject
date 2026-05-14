@@ -61,8 +61,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
         MaterialPageRoute(
           builder: (_) => RequestsListScreen(
             taskId: widget.task.id,
-            autoOpenSubmitSheet: false, // Just list
-            isTender: true,
             isOwner: true,
             budget: widget.task.budget.toString(),
           ),
@@ -146,7 +144,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                           ),
                           child: SignedAvatar(
                             storagePathOrUrl: task.userAvatar,
-                            radius: 20,
                           ),
                         ),
                         const SizedBox(width: AppDimens.p12),
@@ -209,7 +206,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                       width: double.infinity,
                       height: 200,
                       borderRadius: AppDimens.r16,
-                      fit: BoxFit.cover,
                     ),
                     const SizedBox(height: AppDimens.p24),
                   ],
@@ -234,8 +230,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                             MaterialPageRoute(
                               builder: (_) => RequestsListScreen(
                                 taskId: task.id,
-                                autoOpenSubmitSheet: false,
-                                isTender: true,
                                 isOwner: true,
                                 budget: task.budget.toString(),
                               ),
@@ -543,7 +537,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
         delivery = '${pkg['delivery'] ?? '0'} Days';
         final revCount = pkg['revisions'] ?? 0;
         revisions = '$revCount ${revCount == 1 ? 'Revision' : 'Revisions'}';
-        desc = pkg['description'] ?? '';
+        desc = pkg['description']?.toString() ?? '';
       }
     }
 
@@ -725,8 +719,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
             builder: (_) => RequestsListScreen(
               taskId: widget.task.id,
               autoOpenSubmitSheet: true,
-              isTender: true,
-              isOwner: false,
               budget: widget.task.budget.toString(),
             ),
           ),

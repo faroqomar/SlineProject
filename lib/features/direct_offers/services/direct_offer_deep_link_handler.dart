@@ -10,8 +10,9 @@ import 'package:sline_app/features/direct_offers/view/direct_offer_details_scree
 /// Handles: 'direct_offer', 'directoffer'.
 void registerDirectOfferDeepLinks(DeepLinkRegistry registry) {
   const handler = _handleDirectOffer;
-  registry.register('direct_offer', handler);
-  registry.register('directoffer', handler);
+  registry
+    ..register('direct_offer', handler)
+    ..register('directoffer', handler);
 }
 
 Future<void> _handleDirectOffer(

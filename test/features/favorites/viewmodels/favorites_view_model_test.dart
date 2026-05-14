@@ -23,7 +23,7 @@ void main() {
           FavoriteWithProfile(
             id: 'f1',
             freelancerId: 'fl-1',
-            createdAt: DateTime.utc(2026, 3, 1),
+            createdAt: DateTime.utc(2026, 3),
             freelancerName: 'Alice',
           ),
         ],
@@ -107,7 +107,7 @@ void main() {
           FavoriteWithProfile(
             id: 'f1',
             freelancerId: 'fl-1',
-            createdAt: DateTime.utc(2026, 3, 1),
+            createdAt: DateTime.utc(2026, 3),
           ),
         ],
       );

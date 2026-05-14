@@ -28,7 +28,7 @@ class DemoPaymentService implements PaymentService {
     AppLogger.i('Processing demo payment: $currency $amount - $description');
 
     // Simulate network delay
-    await Future.delayed(delay);
+    await Future<void>.delayed(delay);
 
     if (shouldFail) {
       AppLogger.e('Demo payment failed (simulated)');
@@ -73,7 +73,7 @@ class DemoPaymentService implements PaymentService {
     required String currency,
     String? reason,
   }) async {
-    await Future.delayed(delay);
+    await Future<void>.delayed(delay);
 
     if (shouldFail) {
       return const RefundResult(
@@ -95,7 +95,7 @@ class DemoPaymentService implements PaymentService {
     required String paymentId,
     required String reason,
   }) async {
-    await Future.delayed(delay);
+    await Future<void>.delayed(delay);
 
     if (shouldFail) {
       return const CancelResult(
@@ -114,7 +114,7 @@ class DemoPaymentService implements PaymentService {
   Future<PaymentStatusResult> getPaymentStatus({
     required String paymentId,
   }) async {
-    await Future.delayed(delay);
+    await Future<void>.delayed(delay);
 
     if (shouldFail) {
       return const PaymentStatusResult(
@@ -139,7 +139,7 @@ class DemoPaymentService implements PaymentService {
     required String successUrl,
     required String cancelUrl,
   }) async {
-    await Future.delayed(delay);
+    await Future<void>.delayed(delay);
     return const PaymentIntentResult(
       error: 'Payment Intents are not available in demo mode.',
       errorCode: 'DEMO_INTENTS_UNSUPPORTED',
@@ -155,7 +155,7 @@ class DemoPaymentService implements PaymentService {
     String? finishUrl,
     String? requestCorrelationId,
   }) async {
-    await Future.delayed(delay);
+    await Future<void>.delayed(delay);
     return QiCardCreatePaymentResult(
       requestCorrelationId: requestCorrelationId,
       error: 'Booking checkout is not available in demo mode.',
@@ -167,7 +167,7 @@ class DemoPaymentService implements PaymentService {
   Future<QiCardRecoveryResult> recoverBookingPayment({
     required String bookingId,
   }) async {
-    await Future.delayed(delay);
+    await Future<void>.delayed(delay);
     return const QiCardRecoveryResult(
       error: 'Booking recovery is not available in demo mode.',
       errorCode: 'DEMO_BOOKING_RECOVERY_UNSUPPORTED',
@@ -179,7 +179,7 @@ class DemoPaymentService implements PaymentService {
     required String bookingId,
     required String reason,
   }) async {
-    await Future.delayed(delay);
+    await Future<void>.delayed(delay);
     return const BookingRefundResult(
       error: 'Booking refund is not available in demo mode.',
       errorCode: 'DEMO_BOOKING_REFUND_UNSUPPORTED',
@@ -193,7 +193,7 @@ class DemoPaymentService implements PaymentService {
     String? finishUrl,
     String? requestCorrelationId,
   }) async {
-    await Future.delayed(delay);
+    await Future<void>.delayed(delay);
     return QiCardDirectOfferPaymentResult(
       offerId: offerId,
       error: 'Pay with card is not available in demo mode.',
@@ -210,7 +210,7 @@ class DemoPaymentService implements PaymentService {
     String? finishUrl,
     String? requestCorrelationId,
   }) async {
-    await Future.delayed(delay);
+    await Future<void>.delayed(delay);
     return QiCardTenderPaymentResult(
       requestId: requestId,
       error: 'Tender card payment is not available in demo mode.',
@@ -223,7 +223,7 @@ class DemoPaymentService implements PaymentService {
     required String requestId,
     required String paymentRequestId,
   }) async {
-    await Future.delayed(delay);
+    await Future<void>.delayed(delay);
     return const QiCardTenderRecoveryResult(
       error: 'Tender recovery is not available in demo mode.',
       errorCode: 'DEMO_TENDER_RECOVERY_UNSUPPORTED',

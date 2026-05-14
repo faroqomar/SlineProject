@@ -28,7 +28,7 @@ class SearchService {
     int offset = 0,
   }) async {
     try {
-      final response = await _client.rpc(
+      final response = await _client.rpc<dynamic>(
         'search_tasks',
         params: {'query': query, 'limit_val': limit, 'offset_val': offset},
       );

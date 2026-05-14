@@ -385,7 +385,6 @@ void main() {
             deliveryDays: '3',
             isMine: true,
             time: '12:00',
-            status: OfferStatus.pending,
           ),
         ),
       );

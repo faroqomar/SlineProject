@@ -128,8 +128,8 @@ class SavedTasksService {
 
       if (profile != null) {
         task = task.copyWith(
-          userName: profile['full_name'],
-          userAvatar: profile['avatar_url'],
+          userName: profile['full_name'] as String?,
+          userAvatar: profile['avatar_url'] as String?,
           authorSellerLevel: profile['seller_level'] as String?,
         );
       }

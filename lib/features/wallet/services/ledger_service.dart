@@ -40,7 +40,7 @@ class LedgerService {
     );
 
     try {
-      final response = await _client.rpc(
+      final response = await _client.rpc<dynamic>(
         'process_payment_event_ledger',
         params: {
           'p_event_type': eventType,
@@ -99,7 +99,6 @@ class LedgerService {
     final sessionId = _client.auth.currentUser?.id;
     final forensics = _forensics.build(
       sessionId: sessionId,
-      includeRequestId: true,
     );
     final merged = <String, dynamic>{...meta};
     for (final e in forensics.entries) {

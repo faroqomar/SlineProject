@@ -18,7 +18,6 @@ class _MockChatViewModel extends Mock
 Conversation _conversationFixture() {
   return Conversation(
     id: 'convo-1',
-    taskId: null,
     user1Id: 'user-1',
     user2Id: 'user-2',
     createdAt: DateTime.utc(2026, 2, 24, 10),

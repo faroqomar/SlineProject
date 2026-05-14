@@ -133,7 +133,7 @@ void main() {
     testWidgets('T48 successful login navigates to main navigation screen', (
       tester,
     ) async {
-      final fakeAuthVm = _FakeAuthFormViewModel(shouldSucceed: true);
+      final fakeAuthVm = _FakeAuthFormViewModel();
       final observer = _TestNavigatorObserver();
 
       await pumpApp(

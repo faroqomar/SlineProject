@@ -60,7 +60,7 @@ UnifiedWorkItemModel _taskWorkItem({
     freelancerId: _userId,
     revisionsTotal: 3,
     revisionsUsed: 0,
-    deadline: DateTime.utc(2026, 5, 1),
+    deadline: DateTime.utc(2026, 5),
     awardedRequestId: awardedRequestId,
   );
 }
@@ -80,7 +80,7 @@ UnifiedWorkItemModel _bookingWorkItem({
     freelancerId: _userId,
     revisionsTotal: 2,
     revisionsUsed: 0,
-    deadline: DateTime.utc(2026, 6, 1),
+    deadline: DateTime.utc(2026, 6),
   );
 }
 
@@ -92,7 +92,7 @@ WorkContractModel _contractFixture() {
     version: 1,
     snapshot: const {'price': 50000, 'scope': 'Logo design'},
     contractHash: 'abc123',
-    createdAt: DateTime.utc(2026, 3, 1),
+    createdAt: DateTime.utc(2026, 3),
   );
 }
 
@@ -108,7 +108,7 @@ BookingModel _bookingFixture() {
     note: 'Please do a great job',
     price: 30000,
     createdAtUtc: DateTime.utc(2026, 3, 15),
-    dueAtUtc: DateTime.utc(2026, 6, 1),
+    dueAtUtc: DateTime.utc(2026, 6),
     deliveryDays: 7,
   );
 }
@@ -296,8 +296,6 @@ Future<void> _pumpScreenLoading(
   final vm = WorkItemDetailsViewModel(
     uid: _userId,
     workService: workService,
-    chatViewModel: null,
-    dashboardViewModel: null,
   );
   // Do NOT call loadData -- leave VM in initial/loading state
 
@@ -799,7 +797,6 @@ void main() {
         tester,
         safetyVm: safetyVm,
         workService: workService,
-        type: WorkItemType.task,
       );
       await tester.pumpAndSettle();
 

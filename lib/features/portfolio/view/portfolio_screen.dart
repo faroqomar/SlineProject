@@ -44,8 +44,9 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
 
   @override
   void dispose() {
-    _scroll.removeListener(_onScroll);
-    _scroll.dispose();
+    _scroll
+      ..removeListener(_onScroll)
+      ..dispose();
     super.dispose();
   }
 
@@ -91,7 +92,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
     setState(() => _isAddSheetOpen = true);
     AppLogger.d('Opening add portfolio sheet', tag: 'PortfolioScreen');
     unawaited(
-      showModalBottomSheet(
+      showModalBottomSheet<void>(
         context: context,
         useSafeArea: true,
         isScrollControlled: true,

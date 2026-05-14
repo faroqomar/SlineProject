@@ -291,7 +291,6 @@ class _FiltersModalState extends State<FiltersModal> {
         ),
         Slider(
           value: _maxBudget,
-          min: 0,
           max: 5000,
           activeColor: amberColors.primary,
           inactiveColor: amberColors.surfaceHighest,

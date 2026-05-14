@@ -39,9 +39,13 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
     Map<String, dynamic>? item,
   ]) {
     final isEditing = item != null;
-    final titleController = TextEditingController(text: item?['title']);
-    final descController = TextEditingController(text: item?['description']);
-    String? localImagePath = item?['image_url'];
+    final titleController = TextEditingController(
+      text: item?['title']?.toString(),
+    );
+    final descController = TextEditingController(
+      text: item?['description']?.toString(),
+    );
+    var localImagePath = item?['image_url'] as String?;
 
     unawaited(
       showDialog<void>(
@@ -80,7 +84,7 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
 
                                 // Critical: Add delay to let iOS picker fully cleanup
                                 // This prevents race condition crash on iPhone
-                                await Future.delayed(AppMotion.standard);
+                                await Future<void>.delayed(AppMotion.standard);
 
                                 if (context.mounted) {
                                   if (vm.portfolioUploadError != null) {
@@ -95,7 +99,8 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                                       localImagePath = path;
                                     } else {
                                       localImagePath =
-                                          item?['image_url']; // Revert if cancelled
+                                          item?['image_url']
+                                              as String?; // Revert if cancelled
                                     }
                                     isUploading = false;
                                   });
@@ -111,10 +116,11 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                                 );
                                 // Keep upload feedback visible long enough before
                                 // reverting the local preview on failure.
-                                await Future.delayed(AppMotion.standard);
+                                await Future<void>.delayed(AppMotion.standard);
                                 if (context.mounted) {
                                   setState(() {
-                                    localImagePath = item?['image_url'];
+                                    localImagePath =
+                                        item?['image_url'] as String?;
                                     isUploading = false;
                                   });
                                 }
@@ -212,7 +218,7 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                     if (isEditing) {
                       // Update uses explicit parameters (not a map)
                       await vm.updatePortfolioItem(
-                        itemId: item['id'],
+                        itemId: item['id'] as String,
                         title: titleController.text.trim(),
                         description: descController.text.trim(),
                       );
@@ -364,7 +370,7 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                         vertical: AppDimens.p8,
                       ),
                       child: Dismissible(
-                        key: Key(item['id']),
+                        key: Key(item['id'] as String),
                         direction: DismissDirection.endToStart,
                         background: Container(
                           alignment: Alignment.centerRight,
@@ -376,7 +382,7 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                           child: Icon(Icons.delete, color: amberColors.text),
                         ),
                         confirmDismiss: (direction) async {
-                          _confirmDelete(context, vm, item['id']);
+                          _confirmDelete(context, vm, item['id'] as String);
                           return false; // Handled by dialog
                         },
                         child: AppCardContainer(
@@ -394,8 +400,8 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                                   color: colorScheme.background,
                                   child: item['image_url'] != null
                                       ? SignedImage(
-                                          storagePathOrUrl: item['image_url'],
-                                          fit: BoxFit.cover,
+                                          storagePathOrUrl:
+                                              item['image_url'] as String,
                                           bucket: 'portfolio',
                                         )
                                       : Icon(
@@ -410,14 +416,14 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      item['title'] ?? 'Untitled',
+                                      item['title']?.toString() ?? 'Untitled',
                                       style: AppTypography.h5.copyWith(
                                         color: colorScheme.text,
                                       ),
                                     ),
                                     if (item['description'] != null)
                                       Text(
-                                        item['description'],
+                                        item['description'].toString(),
                                         style: AppTypography.bodySmall.copyWith(
                                           color: colorScheme.textSecondary,
                                         ),

@@ -90,7 +90,6 @@ class TenderTaskCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     _AuthorAvatar(
                       name: authorName,
@@ -261,7 +260,6 @@ class _AuthorAvatar extends StatelessWidget {
         storagePathOrUrl: path,
         radius: avatarSize / 2,
         borderColor: amberColors.surfaceHighest,
-        borderWidth: 2,
       );
     }
 

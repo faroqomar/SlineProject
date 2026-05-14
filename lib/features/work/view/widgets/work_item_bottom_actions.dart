@@ -199,7 +199,6 @@ class WorkItemBottomActions extends StatelessWidget {
             vertical: AppDimens.p12,
           ),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               if (secondaryActionButtons.isNotEmpty) ...[
                 ...secondaryActionButtons.map(
@@ -239,7 +238,6 @@ class WorkItemBottomActions extends StatelessWidget {
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(
                 icon,

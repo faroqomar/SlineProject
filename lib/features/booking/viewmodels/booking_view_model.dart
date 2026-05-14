@@ -214,7 +214,7 @@ class BookingViewModel extends ChangeNotifier {
     while (DateTime.now().isBefore(deadline)) {
       final booking = await getBookingById(bookingId);
       if (booking == null) {
-        await Future.delayed(interval);
+        await Future<void>.delayed(interval);
         continue;
       }
 
@@ -229,7 +229,7 @@ class BookingViewModel extends ChangeNotifier {
         return false;
       }
 
-      await Future.delayed(interval);
+      await Future<void>.delayed(interval);
     }
 
     return false;
@@ -545,7 +545,7 @@ class BookingViewModel extends ChangeNotifier {
         result.paymentStatus != 'held' &&
         result.recoveryResult == 'no_action' &&
         attempt < maxAttempts) {
-      await Future.delayed(delay);
+      await Future<void>.delayed(delay);
       result = await recoverBookingPayment(bookingId: bookingId);
       attempt += 1;
     }
@@ -559,7 +559,7 @@ class BookingViewModel extends ChangeNotifier {
     bookingsClientCursor = null;
     notifyListeners();
     try {
-      final data = await _repo.listBookingsAsClient(limit: _pageSize);
+      final data = await _repo.listBookingsAsClient();
       _clientListMutable.addAll(data);
       if (data.isNotEmpty) {
         bookingsClientCursor = data.last.createdAtUtc.toUtc().toIso8601String();
@@ -594,7 +594,6 @@ class BookingViewModel extends ChangeNotifier {
     try {
       final data = await _repo.listBookingsAsClient(
         cursorCreatedAtIso: bookingsClientCursor,
-        limit: _pageSize,
       );
       _clientListMutable.addAll(data);
       if (data.isNotEmpty) {
@@ -624,7 +623,7 @@ class BookingViewModel extends ChangeNotifier {
     bookingsProviderCursor = null;
     notifyListeners();
     try {
-      final data = await _repo.listBookingsAsProvider(limit: _pageSize);
+      final data = await _repo.listBookingsAsProvider();
       _providerListMutable.addAll(data);
       if (data.isNotEmpty) {
         bookingsProviderCursor = data.last.createdAtUtc
@@ -663,7 +662,6 @@ class BookingViewModel extends ChangeNotifier {
     try {
       final data = await _repo.listBookingsAsProvider(
         cursorCreatedAtIso: bookingsProviderCursor,
-        limit: _pageSize,
       );
       _providerListMutable.addAll(data);
       if (data.isNotEmpty) {

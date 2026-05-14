@@ -4,7 +4,7 @@ import 'package:sline_app/features/proposals/models/proposal_payment_summary.dar
 void main() {
   group('ProposalPaymentSummary', () {
     test('constructs with required fields', () {
-      final deadline = DateTime.utc(2026, 3, 10, 12, 0);
+      final deadline = DateTime.utc(2026, 3, 10, 12);
       final s = ProposalPaymentSummary(
         requestId: 'req-1',
         taskId: 'task-1',

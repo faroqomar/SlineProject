@@ -73,9 +73,6 @@ class FullscreenImageViewer extends StatelessWidget {
         // Opaque black background so content behind is fully hidden.
         opaque: false,
         barrierColor: Colors.black,
-        // 300ms fade feels snappy while giving Hero time to animate.
-        transitionDuration: const Duration(milliseconds: 300),
-        reverseTransitionDuration: const Duration(milliseconds: 300),
         pageBuilder: (context, animation, secondaryAnimation) {
           return FullscreenImageViewer(
             imageUrl: imageUrl,

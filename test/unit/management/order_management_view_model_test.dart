@@ -46,7 +46,6 @@ void main() {
           () => service.addLog(
             scope: _scope,
             content: 'Trimmed note',
-            isPrivate: false,
           ),
         ).thenAnswer((_) async {});
         when(
@@ -66,7 +65,6 @@ void main() {
           () => service.addLog(
             scope: _scope,
             content: 'Trimmed note',
-            isPrivate: false,
           ),
         ).called(1);
         verify(() => service.getLogs(_scope)).called(1);

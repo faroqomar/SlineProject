@@ -46,13 +46,13 @@ void main() {
       expect(c.taskId, 'task-1');
       expect(c.user1Id, 'user-aaa');
       expect(c.user2Id, 'user-bbb');
-      expect(c.createdAt, DateTime.utc(2026, 3, 15, 8, 0, 0));
+      expect(c.createdAt, DateTime.utc(2026, 3, 15, 8));
       expect(c.user1Name, 'Alice');
       expect(c.user2Name, 'Bob');
       expect(c.otherUserName, 'Bob');
       expect(c.otherUserAvatar, 'avatars/bob.jpg');
       expect(c.otherUserTyping, false);
-      expect(c.presenceUpdatedAt, DateTime.utc(2026, 3, 15, 9, 32, 0));
+      expect(c.presenceUpdatedAt, DateTime.utc(2026, 3, 15, 9, 32));
     });
 
     test('createdAt is parsed as UTC', () {
@@ -148,9 +148,9 @@ void main() {
         final c = Conversation.fromJson(_conversationJson());
 
         expect(c.lastMessage, 'See you tomorrow');
-        expect(c.lastMessageTime, DateTime.utc(2026, 3, 15, 9, 30, 0));
+        expect(c.lastMessageTime, DateTime.utc(2026, 3, 15, 9, 30));
         expect(c.lastMessageSenderId, 'user-aaa');
-        expect(c.lastMessageSeenAt, DateTime.utc(2026, 3, 15, 9, 31, 0));
+        expect(c.lastMessageSeenAt, DateTime.utc(2026, 3, 15, 9, 31));
       },
     );
 
@@ -177,9 +177,9 @@ void main() {
       );
 
       expect(c.lastMessage, 'Most recent');
-      expect(c.lastMessageTime, DateTime.utc(2026, 3, 15, 9, 0, 0));
+      expect(c.lastMessageTime, DateTime.utc(2026, 3, 15, 9));
       expect(c.lastMessageSenderId, 'user-aaa');
-      expect(c.lastMessageSeenAt, DateTime.utc(2026, 3, 15, 9, 5, 0));
+      expect(c.lastMessageSeenAt, DateTime.utc(2026, 3, 15, 9, 5));
     });
 
     test('last_message as empty List yields all null', () {
@@ -243,7 +243,7 @@ void main() {
 
       expect(updated.lastMessage, 'New msg');
       expect(updated.otherUserTyping, true);
-      expect(updated.presenceUpdatedAt, DateTime.utc(2026, 3, 15, 10, 0, 0));
+      expect(updated.presenceUpdatedAt, DateTime.utc(2026, 3, 15, 10));
       // Other fields preserved.
       expect(updated.id, original.id);
       expect(updated.taskTitle, original.taskTitle);
@@ -253,7 +253,7 @@ void main() {
     test('can override otherUserTyping and presenceUpdatedAt', () {
       final original = Conversation.fromJson(_conversationJson());
 
-      final newPresence = DateTime.utc(2026, 4, 1, 12, 0, 0);
+      final newPresence = DateTime.utc(2026, 4, 1, 12);
       final updated = original.copyWith(
         otherUserTyping: true,
         presenceUpdatedAt: newPresence,
@@ -265,7 +265,7 @@ void main() {
 
     test('copyWith with lastMessageTime and lastMessageSeenAt', () {
       final original = Conversation.fromJson(_conversationJson());
-      final newTime = DateTime.utc(2026, 4, 1);
+      final newTime = DateTime.utc(2026, 4);
       final newSeen = DateTime.utc(2026, 4, 1, 0, 1);
 
       final updated = original.copyWith(

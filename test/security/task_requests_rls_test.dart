@@ -433,7 +433,7 @@ void main() {
       final result = _asRows(await builder.select());
 
       // Verify result
-      expect(result, isA<List>());
+      expect(result, isA<List<dynamic>>());
       expect(result.length, equals(1));
       expect(result.first['id'], equals(_testRequestId));
 
@@ -481,7 +481,7 @@ void main() {
       final result = _asRows(await builder.select());
 
       // Verify result
-      expect(result, isA<List>());
+      expect(result, isA<List<dynamic>>());
       expect(result.length, equals(2));
 
       AppLogger.i(
@@ -529,7 +529,7 @@ void main() {
         final result = _asRows(await builder.insert(bidData));
 
         // Verify result
-        expect(result, isA<List>());
+        expect(result, isA<List<dynamic>>());
         expect(result.length, equals(1));
         expect(result.first['freelancer_id'], equals(_testFreelancerId));
         expect(result.first['status'], equals('pending'));
@@ -578,7 +578,7 @@ void main() {
       final result = _asRows(await builder.update(updateData));
 
       // Verify result
-      expect(result, isA<List>());
+      expect(result, isA<List<dynamic>>());
       expect(result.length, equals(1));
       expect(result.first['price'], equals(55000));
       expect(result.first['days'], equals(7));
@@ -610,7 +610,7 @@ void main() {
       final result = _asRows(await builder.delete());
 
       // Verify result (empty list after delete)
-      expect(result, isA<List>());
+      expect(result, isA<List<dynamic>>());
       expect(result.length, equals(0));
 
       AppLogger.i(
@@ -739,7 +739,7 @@ void main() {
       final result = _asRows(await builder.select());
 
       // Verify result is empty (not a 403, just no visible rows)
-      expect(result, isA<List>());
+      expect(result, isA<List<dynamic>>());
       expect(result.length, equals(0));
 
       AppLogger.i('✅ PASS: Third party SELECT returned empty', tag: _logTag);

@@ -102,7 +102,7 @@ class Conversation {
     if (rawLastMessage is Map) {
       parseMsg(Map<String, dynamic>.from(rawLastMessage));
     } else if (rawLastMessage is List && rawLastMessage.isNotEmpty) {
-      parseMsg(Map<String, dynamic>.from(rawLastMessage.last));
+      parseMsg(Map<String, dynamic>.from(rawLastMessage.last as Map));
     }
 
     // Do not log other_user_name or other_user_avatar (PII).

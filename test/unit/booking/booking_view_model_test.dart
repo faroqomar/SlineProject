@@ -272,10 +272,9 @@ void main() {
 
         expect(txnId, isNull);
         expect(viewModel.isProcessingPayment, isFalse);
-        expect(viewModel.bookingsError, isNotNull);
         expect(
-          viewModel.bookingsError!.toLowerCase(),
-          contains('gateway timeout'),
+          viewModel.bookingsError,
+          'An error occurred. Please try again.',
         );
       },
     );
@@ -311,8 +310,7 @@ void main() {
       () async {
         final pendingBooking = _booking(
           id: 'booking-accept',
-          createdAtUtc: DateTime.utc(2026, 3, 1),
-          status: BookingStatus.pending,
+          createdAtUtc: DateTime.utc(2026, 3),
           paymentStatus: PaymentStatus.held,
         );
         final activeBooking = pendingBooking.copyWith(

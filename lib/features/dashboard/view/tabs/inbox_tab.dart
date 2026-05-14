@@ -54,7 +54,9 @@ class _InboxTabState extends State<InboxTab> {
         if (!mounted) return;
         messenger.showSnackBar(
           SnackBar(
-            content: Text(result?['error'] ?? 'Failed to award offer'),
+            content: Text(
+              result?['error']?.toString() ?? 'Failed to award offer',
+            ),
             backgroundColor: amber.danger,
           ),
         );

@@ -100,8 +100,8 @@ class _QB extends Fake implements SupabaseQueryBuilder {
     bool defaultToNull = true,
   }) => _StubFB<Map<String, dynamic>>(_resolvedNext());
   @override
-  PostgrestFilterBuilder update(Map values) =>
-      _StubFB<dynamic>(_resolvedNext());
+  PostgrestFilterBuilder<PostgrestList> update(Map<dynamic, dynamic> values) =>
+      _StubFB<PostgrestList>(_resolvedNext());
 }
 
 // --- Test Main ---
@@ -137,7 +137,7 @@ void main() {
           () => mockClient.from('app_config'),
         ).thenAnswer((_) => _QB(_FB<Map<String, dynamic>>({'value': 'true'})));
         when(
-          () => mockClient.rpc(
+          () => mockClient.rpc<dynamic>(
             'start_direct_conversation_v1',
             params: any(named: 'params'),
           ),
@@ -152,7 +152,7 @@ void main() {
 
         expect(result.id, equals('550e8400-e29b-41d4-a716-446655440032'));
         verify(
-          () => mockClient.rpc(
+          () => mockClient.rpc<dynamic>(
             'start_direct_conversation_v1',
             params: any(named: 'params'),
           ),
@@ -190,7 +190,7 @@ void main() {
 
         expect(result.id, equals(existingDirectConversation['id']));
         verifyNever(
-          () => mockClient.rpc(
+          () => mockClient.rpc<dynamic>(
             'start_direct_conversation_v1',
             params: any(named: 'params'),
           ),
@@ -241,7 +241,7 @@ void main() {
         setupBasics();
 
         when(
-          () => mockClient.rpc(
+          () => mockClient.rpc<dynamic>(
             'mark_conversation_seen',
             params: any(named: 'params'),
           ),
@@ -250,7 +250,7 @@ void main() {
         await messageService.markSeen('conv-id');
 
         verify(
-          () => mockClient.rpc(
+          () => mockClient.rpc<dynamic>(
             'mark_conversation_seen',
             params: any(named: 'params'),
           ),
@@ -261,7 +261,7 @@ void main() {
         setupBasics();
 
         when(
-          () => mockClient.rpc(
+          () => mockClient.rpc<dynamic>(
             'mark_conversation_delivered',
             params: any(named: 'params'),
           ),
@@ -270,7 +270,7 @@ void main() {
         await messageService.markDelivered('conv-id');
 
         verify(
-          () => mockClient.rpc(
+          () => mockClient.rpc<dynamic>(
             'mark_conversation_delivered',
             params: any(named: 'params'),
           ),

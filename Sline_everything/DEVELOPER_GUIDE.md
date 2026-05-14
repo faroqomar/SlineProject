@@ -537,9 +537,13 @@ Flutter version pinned: **3.41.9** across all jobs to satisfy the Dart SDK floor
 
 **Base package**: `very_good_analysis` (migrated from `flutter_lints` in Phase E). Provides ~70+ rules active out of the box.
 
-27 rules are explicitly disabled with justification, tracked in `.TODO/LINT_DEBT_PhaseE.md`. Key disabled rules:
-- `avoid_dynamic_calls` -- Supabase query results return `dynamic`; would require casts on every field access.
-- `strict-inference`, `strict-casts` -- incompatible with Supabase's dynamic return types.
+The May 2026 lint hardening pass moved the most important Phase F candidates into active enforcement. `analysis_options.yaml` now enables:
+- `strict-raw-types`, `strict-casts`, and `strict-inference` -- Supabase and JSON boundaries must use explicit generic types or safe casts instead of relying on implicit `dynamic`.
+- `cascade_invocations` -- repeated calls on the same object should use cascades where they improve locality.
+- `avoid_redundant_argument_values` -- redundant default arguments should be removed so intentional overrides stand out.
+
+Remaining disabled rules are intentionally limited to convention conflicts or noisy rules that do not materially improve safety yet. Key examples:
+- `avoid_dynamic_calls` -- Supabase query results still return `dynamic` in some places; field access is handled with targeted casts where strict modes require it.
 - `public_member_api_docs` -- not enforced yet; planned for Phase F.
 - `lines_longer_than_80_chars` -- relaxed for readability in query builder chains and long string literals.
 

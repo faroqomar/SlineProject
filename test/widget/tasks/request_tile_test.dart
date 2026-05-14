@@ -142,7 +142,7 @@ void main() {
     // -----------------------------------------------------------------------
     testWidgets('T252: shows formatted price', (tester) async {
       // 50000 -> "50K IQD" per PriceFormatter
-      final request = _makeRequest(price: 50000);
+      final request = _makeRequest();
       await _pumpTile(tester, request: request);
 
       expect(find.text('50K IQD'), findsOneWidget);
@@ -164,11 +164,10 @@ void main() {
     testWidgets('T254: shows accept/reject buttons when callbacks provided', (
       tester,
     ) async {
-      final request = _makeRequest(status: OfferStatus.pending);
+      final request = _makeRequest();
       await _pumpTile(
         tester,
         request: request,
-        isOwner: true,
         onAccept: () {},
         onReject: () {},
       );
@@ -183,13 +182,10 @@ void main() {
     testWidgets('T255: hides accept/reject when callbacks null', (
       tester,
     ) async {
-      final request = _makeRequest(status: OfferStatus.pending);
+      final request = _makeRequest();
       await _pumpTile(
         tester,
         request: request,
-        isOwner: true,
-        onAccept: null,
-        onReject: null,
       );
 
       // Icons.check_circle (green accept) should NOT be present
@@ -205,11 +201,10 @@ void main() {
     // -----------------------------------------------------------------------
     testWidgets('T256: tapping accept triggers onAccept', (tester) async {
       var acceptCalled = false;
-      final request = _makeRequest(status: OfferStatus.pending);
+      final request = _makeRequest();
       await _pumpTile(
         tester,
         request: request,
-        isOwner: true,
         onAccept: () => acceptCalled = true,
         onReject: () {},
       );
@@ -225,11 +220,10 @@ void main() {
     // -----------------------------------------------------------------------
     testWidgets('T257: tapping reject triggers onReject', (tester) async {
       var rejectCalled = false;
-      final request = _makeRequest(status: OfferStatus.pending);
+      final request = _makeRequest();
       await _pumpTile(
         tester,
         request: request,
-        isOwner: true,
         onAccept: () {},
         onReject: () => rejectCalled = true,
       );
@@ -246,11 +240,10 @@ void main() {
     testWidgets('T258: shows loading state when isLoading true', (
       tester,
     ) async {
-      final request = _makeRequest(status: OfferStatus.pending);
+      final request = _makeRequest();
       await _pumpTile(
         tester,
         request: request,
-        isOwner: true,
         isLoading: true,
         onAccept: () {},
         onReject: () {},
@@ -311,9 +304,8 @@ void main() {
       // An accepted + unpaid request shows "Accepted . Awaiting Payment" status
       final request = _makeRequest(
         status: OfferStatus.accepted,
-        paymentStatus: PaymentStatus.unpaid,
       );
-      await _pumpTile(tester, request: request, isOwner: true);
+      await _pumpTile(tester, request: request);
 
       expect(find.textContaining('Accepted'), findsWidgets);
     });

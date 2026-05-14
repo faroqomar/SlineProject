@@ -41,7 +41,6 @@ class ChatRepository {
     required String user1Id,
     required String user2Id,
   }) => _service.createOrGetConversation(
-    taskId: null,
     user1Id: user1Id,
     user2Id: user2Id,
   );

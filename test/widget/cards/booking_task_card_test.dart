@@ -31,7 +31,7 @@ Task _bookingTask({
     userId: 'user-1',
     status: status,
     taskType: TaskType.booking,
-    createdAt: DateTime.utc(2026, 4, 1),
+    createdAt: DateTime.utc(2026, 4),
     skills: const ['Design', 'Branding'],
     userName: userName ?? 'Jane Doe',
     userAvatar: userAvatar,
@@ -108,7 +108,7 @@ void main() {
     testWidgets('renders avatar with initials when no image', (tester) async {
       await _pumpBookingTaskCard(
         tester,
-        task: _bookingTask(userName: 'John Smith', userAvatar: null),
+        task: _bookingTask(userName: 'John Smith'),
         savedVm: mockSavedVm,
       );
 

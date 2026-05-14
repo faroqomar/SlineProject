@@ -122,7 +122,7 @@ void main() {
     });
 
     test('multiple loads replace previous profile', () async {
-      final first = fakeProfile(id: 'user-1');
+      final first = fakeProfile();
       final second = fakeProfile(id: 'user-2');
 
       when(

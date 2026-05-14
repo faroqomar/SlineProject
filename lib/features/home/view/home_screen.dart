@@ -80,7 +80,6 @@ class _HomeScreenState extends State<HomeScreen> {
       unawaited(
         context.read<DiscoveryFeedViewModelContract>().loadFeaturedTasks(
           filterController: context.read<TaskFilterViewModel>(),
-          surface: 'home',
         ),
       );
       // Ensure profile is loaded for the header
@@ -116,7 +115,6 @@ class _HomeScreenState extends State<HomeScreen> {
               try {
                 await homeViewModel.refresh(
                   filterController: filterController,
-                  surface: 'home',
                 );
                 await profileVM.loadHeaderProfile();
                 if (!context.mounted) return;
@@ -166,7 +164,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                     // Use the quiet Amber Dusk rim so the
                                     // header avatar stays visible on the shell.
                                     borderColor: amberColors.surfaceHighest,
-                                    borderWidth: 2,
                                   ),
                                   const SizedBox(width: AppDimens.p12),
                                   Column(
@@ -338,7 +335,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   hasMore: homeViewModel.hasMore,
                   onLoadMore: () => homeViewModel.loadMoreTasks(
                     filterController: filterController,
-                    surface: 'home',
                   ),
                   emptyTitle: selectedModeMetadata.emptyTitle,
                   emptyIcon: selectedModeMetadata.icon,

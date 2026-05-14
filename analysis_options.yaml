@@ -7,9 +7,9 @@ analyzer:
     unused_import: warning
     unused_local_variable: warning
   language:
-    strict-casts: false
-    strict-inference: false
-    strict-raw-types: false
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
   exclude:
     - '**.g.dart'
     - '**.freezed.dart'
@@ -33,8 +33,8 @@ linter:
     # --- Disabled: cosmetic/noisy, tracked for Phase F adoption ---
     sort_constructors_first: false
     always_put_required_named_parameters_first: false
-    cascade_invocations: false
-    avoid_redundant_argument_values: false
+    cascade_invocations: true
+    avoid_redundant_argument_values: true
     prefer_int_literals: false
     comment_references: false
     document_ignores: true

@@ -32,8 +32,8 @@ class ChatRealtimeMerger {
         );
       }
     }
-    final list = byId.values.toList();
-    list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    final list = byId.values.toList()
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
     return list;
   }
 }

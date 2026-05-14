@@ -417,13 +417,13 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           taskId: created.id,
         );
       } else {
-        final updateData = task.toJson();
         // Remove fields that shouldn't be updated or cause issues
-        updateData.remove('id');
-        updateData.remove('created_at');
-        updateData.remove(
-          'user_id',
-        ); // RLS might block if it looks like a change (even if same)
+        final updateData = task.toJson()
+          ..remove('id')
+          ..remove('created_at')
+          ..remove(
+            'user_id',
+          ); // RLS might block if it looks like a change (even if same)
 
         await vm.updateTask(task.id, updateData);
         result = CreateTaskResult(

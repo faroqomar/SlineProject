@@ -159,8 +159,6 @@ class TaskRequestsViewModel extends ChangeNotifier {
       if (isOwner && _proposalRepo != null) {
         final proposals = await _proposalRepo!.listByTask(
           taskId: taskId,
-          limit: _pageSize,
-          before: null,
           isOwner: true,
         );
         final list = proposals.map(TaskRequest.fromProposal).toList();
@@ -172,8 +170,6 @@ class TaskRequestsViewModel extends ChangeNotifier {
       } else {
         final list = await _service.listByTask(
           taskId: taskId,
-          limit: _pageSize,
-          before: null,
         );
         _items
           ..clear()
@@ -213,7 +209,6 @@ class TaskRequestsViewModel extends ChangeNotifier {
       if (isOwner && _proposalRepo != null) {
         final proposals = await _proposalRepo!.listByTask(
           taskId: taskId,
-          limit: _pageSize,
           before: _cursorBefore,
           isOwner: true,
         );
@@ -224,7 +219,6 @@ class TaskRequestsViewModel extends ChangeNotifier {
       } else {
         final list = await _service.listByTask(
           taskId: taskId,
-          limit: _pageSize,
           before: _cursorBefore,
         );
         _items.addAll(list);
@@ -287,7 +281,6 @@ class TaskRequestsViewModel extends ChangeNotifier {
       // Return non-replaceable on error for safety
       return const BidReplaceabilityResult(
         isReplaceable: false,
-        existingBid: null,
       );
     }
   }
@@ -436,7 +429,6 @@ class TaskRequestsViewModel extends ChangeNotifier {
         days: days,
         note: note,
         status: OfferStatus.pending,
-        paymentStatus: PaymentStatus.unpaid,
         createdAt: DateTime.now(),
       );
 
@@ -544,15 +536,16 @@ class TaskRequestsViewModel extends ChangeNotifier {
       final proposals = await _proposalRepo!.listByTask(
         taskId: taskId,
         limit: 100,
-        before: null,
         isOwner: true,
       );
-      _items.clear();
-      _items.addAll(proposals.map(TaskRequest.fromProposal).toList());
+      _items
+        ..clear()
+        ..addAll(proposals.map(TaskRequest.fromProposal).toList());
     } else {
       final list = await _service.listByTask(taskId: taskId, limit: 100);
-      _items.clear();
-      _items.addAll(list);
+      _items
+        ..clear()
+        ..addAll(list);
     }
     notifyListeners();
   }

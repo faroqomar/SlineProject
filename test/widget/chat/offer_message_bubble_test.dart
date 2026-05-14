@@ -49,7 +49,7 @@ void main() {
     });
 
     testWidgets('shows Pending Response for pending status', (tester) async {
-      await tester.pumpWidget(buildBubble(isMine: true, rawStatus: 'pending'));
+      await tester.pumpWidget(buildBubble(rawStatus: 'pending'));
       expect(find.text('Pending Response'), findsOneWidget);
     });
 

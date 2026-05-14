@@ -31,9 +31,9 @@ void main() {
     test('setFilter changes filter and notifies', () {
       final vm = buildVm();
       var notifyCount = 0;
-      vm.addListener(() => notifyCount++);
-
-      vm.setFilter(ExpiredBidFilter.showAll);
+      vm
+        ..addListener(() => notifyCount++)
+        ..setFilter(ExpiredBidFilter.showAll);
       expect(vm.filter, ExpiredBidFilter.showAll);
       expect(notifyCount, 1);
     });
@@ -41,18 +41,18 @@ void main() {
     test('setFilter with same value does not notify', () {
       final vm = buildVm();
       var notifyCount = 0;
-      vm.addListener(() => notifyCount++);
-
-      vm.setFilter(ExpiredBidFilter.hideExpired); // same as default
+      vm
+        ..addListener(() => notifyCount++)
+        ..setFilter(ExpiredBidFilter.hideExpired); // same as default
       expect(notifyCount, 0);
     });
 
     test('applyFilter hideExpired removes expired items', () {
       final vm = buildVm();
       final items = [
-        _buildRequest(id: 'r1', isExpired: false),
+        _buildRequest(id: 'r1'),
         _buildRequest(id: 'r2', isExpired: true),
-        _buildRequest(id: 'r3', isExpired: false),
+        _buildRequest(id: 'r3'),
       ];
 
       vm.setFilter(ExpiredBidFilter.hideExpired);
@@ -64,7 +64,7 @@ void main() {
     test('applyFilter showAll returns all items', () {
       final vm = buildVm();
       final items = [
-        _buildRequest(id: 'r1', isExpired: false),
+        _buildRequest(id: 'r1'),
         _buildRequest(id: 'r2', isExpired: true),
       ];
 
@@ -76,7 +76,7 @@ void main() {
     test('applyFilter showOnlyExpired returns only expired items', () {
       final vm = buildVm();
       final items = [
-        _buildRequest(id: 'r1', isExpired: false),
+        _buildRequest(id: 'r1'),
         _buildRequest(id: 'r2', isExpired: true),
         _buildRequest(id: 'r3', isExpired: true),
       ];
@@ -88,20 +88,17 @@ void main() {
     });
 
     test('getCountString shows total when showAll', () {
-      final vm = buildVm();
-      vm.setFilter(ExpiredBidFilter.showAll);
+      final vm = buildVm()..setFilter(ExpiredBidFilter.showAll);
       expect(vm.getCountString(10, 10), '10 offers');
     });
 
     test('getCountString shows filtered count when different', () {
-      final vm = buildVm();
-      vm.setFilter(ExpiredBidFilter.hideExpired);
+      final vm = buildVm()..setFilter(ExpiredBidFilter.hideExpired);
       expect(vm.getCountString(10, 7), '7 of 10 offers');
     });
 
     test('getCountString shows total when counts match', () {
-      final vm = buildVm();
-      vm.setFilter(ExpiredBidFilter.hideExpired);
+      final vm = buildVm()..setFilter(ExpiredBidFilter.hideExpired);
       expect(vm.getCountString(5, 5), '5 offers');
     });
 
@@ -113,9 +110,9 @@ void main() {
     test('isAwarding setter notifies listeners', () {
       final vm = buildVm();
       var notifyCount = 0;
-      vm.addListener(() => notifyCount++);
-
-      vm.isAwarding = true;
+      vm
+        ..addListener(() => notifyCount++)
+        ..isAwarding = true;
       expect(vm.isAwarding, isTrue);
       expect(notifyCount, 1);
 
@@ -127,21 +124,20 @@ void main() {
     test('isAwarding setter with same value does not notify', () {
       final vm = buildVm();
       var notifyCount = 0;
-      vm.addListener(() => notifyCount++);
-
-      vm.isAwarding = false; // same as default
+      vm
+        ..addListener(() => notifyCount++)
+        ..isAwarding = false; // same as default
       expect(notifyCount, 0);
     });
 
     test('filteredItems delegates to requestsVm.items', () {
       final items = [
-        _buildRequest(id: 'r1', isExpired: false),
+        _buildRequest(id: 'r1'),
         _buildRequest(id: 'r2', isExpired: true),
       ];
       when(() => mockRequestsVm.items).thenReturn(items);
 
-      final vm = buildVm();
-      vm.setFilter(ExpiredBidFilter.hideExpired);
+      final vm = buildVm()..setFilter(ExpiredBidFilter.hideExpired);
       expect(vm.filteredItems, hasLength(1));
     });
 
@@ -150,16 +146,14 @@ void main() {
       when(() => mockRequestsVm.isLoadingMore).thenReturn(false);
       when(() => mockRequestsVm.loadMore()).thenAnswer((_) async {});
 
-      final vm = buildVm();
-      vm.loadMore();
+      buildVm().loadMore();
       verify(() => mockRequestsVm.loadMore()).called(1);
     });
 
     test('loadMore does not delegate when no more pages', () {
       when(() => mockRequestsVm.hasMore).thenReturn(false);
 
-      final vm = buildVm();
-      vm.loadMore();
+      buildVm().loadMore();
       verifyNever(() => mockRequestsVm.loadMore());
     });
   });

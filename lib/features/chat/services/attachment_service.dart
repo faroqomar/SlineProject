@@ -39,7 +39,6 @@ class AttachmentService {
           fileOptions: FileOptions(
             cacheControl: SharedStorageConfig.chatAttachmentTtlSeconds
                 .toString(),
-            upsert: false,
           ),
         );
     return path;

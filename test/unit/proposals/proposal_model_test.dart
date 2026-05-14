@@ -9,7 +9,7 @@ import 'package:sline_app/features/proposals/models/proposal_model.dart';
 void main() {
   group('ProposalModel', () {
     test('constructs with required fields', () {
-      final createdAt = DateTime.utc(2026, 3, 4, 12, 0);
+      final createdAt = DateTime.utc(2026, 3, 4, 12);
       final p = ProposalModel(
         id: 'req-1',
         taskId: 'task-1',
@@ -79,7 +79,7 @@ void main() {
     });
 
     test('optional fields are stored', () {
-      final deadline = DateTime.utc(2026, 3, 10, 0, 0);
+      final deadline = DateTime.utc(2026, 3, 10);
       final p = ProposalModel(
         id: 'r',
         taskId: 't',

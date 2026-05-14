@@ -38,13 +38,13 @@ void main() {
       ownerId: 'target-user',
       title: 'Project Alpha',
       description: 'A cool project',
-      createdAt: DateTime.utc(2026, 2, 1),
+      createdAt: DateTime.utc(2026, 2),
     ),
     PortfolioItem(
       id: 'p-2',
       ownerId: 'target-user',
       title: 'Project Beta',
-      createdAt: DateTime.utc(2026, 3, 1),
+      createdAt: DateTime.utc(2026, 3),
     ),
   ];
 

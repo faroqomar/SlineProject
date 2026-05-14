@@ -21,7 +21,7 @@ import 'rls/storage_rls_test_harness.dart';
 import 'supabase_test_helper.dart';
 
 const String? _skipReason =
-    String.fromEnvironment('SUPABASE_INTEGRATION', defaultValue: '') != '1'
+    String.fromEnvironment('SUPABASE_INTEGRATION') != '1'
     ? 'Requires Supabase; run with --dart-define=SUPABASE_INTEGRATION=1'
     : null;
 const String _supabaseUrlDefine = String.fromEnvironment('SUPABASE_URL');

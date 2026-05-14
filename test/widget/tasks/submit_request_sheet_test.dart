@@ -43,7 +43,7 @@ Task _openTask({String userId = 'other-user'}) {
     budget: 5000,
     userId: userId,
     status: TaskStatus.open,
-    createdAt: DateTime.utc(2026, 3, 1),
+    createdAt: DateTime.utc(2026, 3),
   );
 }
 
@@ -60,7 +60,7 @@ TaskRequest _existingBid({
     days: days,
     note: note,
     status: OfferStatus.pending,
-    createdAt: DateTime.utc(2026, 3, 1),
+    createdAt: DateTime.utc(2026, 3),
   );
 }
 
@@ -490,7 +490,6 @@ void main() {
           taskId: _kTaskId,
           price: 100.0,
           days: 7,
-          note: null,
         ),
       ).called(1);
     });
@@ -540,7 +539,7 @@ void main() {
           budget: 5000,
           userId: 'other-user',
           status: TaskStatus.closed,
-          createdAt: DateTime.utc(2026, 3, 1),
+          createdAt: DateTime.utc(2026, 3),
         ),
       );
 
@@ -623,7 +622,7 @@ void main() {
         requestsService: requestsService,
         authVm: authVm,
         controller: controller,
-        existingBid: _existingBid(price: 300000, days: 5),
+        existingBid: _existingBid(),
       );
 
       await _pumpHost(
@@ -669,7 +668,7 @@ void main() {
         requestsService: requestsService,
         authVm: authVm,
         controller: controller,
-        existingBid: _existingBid(price: 300000, days: 5),
+        existingBid: _existingBid(),
       );
 
       await _pumpHost(
@@ -702,7 +701,7 @@ void main() {
         requestsService: requestsService,
         authVm: authVm,
         controller: controller,
-        existingBid: _existingBid(price: 300000, days: 5),
+        existingBid: _existingBid(),
       );
 
       await _pumpHost(
@@ -744,7 +743,7 @@ void main() {
         requestsService: requestsService,
         authVm: authVm,
         controller: controller,
-        existingBid: _existingBid(price: 300000, days: 5),
+        existingBid: _existingBid(),
       );
 
       await _pumpHost(

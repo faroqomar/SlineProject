@@ -333,31 +333,31 @@ class BookingDetailsScreen extends StatelessWidget {
                 final dynamicActions = <Widget>[];
 
                 if (ctaMeta.allowedActions.contains('escrow_hold')) {
-                  dynamicActions.add(
+                  dynamicActions.addAll([
                     AppButton(
                       text: l10n.escrowFunds,
                       onPressed: () => ctx
                           .read<BookingViewModel>()
                           .escrowHoldBooking(booking.id),
                     ),
-                  );
-                  dynamicActions.add(const SizedBox(height: AppDimens.p12));
+                    const SizedBox(height: AppDimens.p12),
+                  ]);
                 }
 
                 if (ctaMeta.allowedActions.contains('release_with_fee')) {
-                  dynamicActions.add(
+                  dynamicActions.addAll([
                     _ApproveWithDisputeGuard(
                       booking: booking,
                       onRelease: () => ctx
                           .read<BookingViewModel>()
                           .releaseBookingWithFee(booking.id),
                     ),
-                  );
-                  dynamicActions.add(const SizedBox(height: AppDimens.p12));
+                    const SizedBox(height: AppDimens.p12),
+                  ]);
                 }
 
                 if (ctaMeta.allowedActions.contains('refund')) {
-                  dynamicActions.add(
+                  dynamicActions.addAll([
                     AppButton(
                       text: l10n.issueRefund,
                       isPrimary: false,
@@ -366,8 +366,8 @@ class BookingDetailsScreen extends StatelessWidget {
                         // Usually handled automatically on decline though.
                       },
                     ),
-                  );
-                  dynamicActions.add(const SizedBox(height: AppDimens.p12));
+                    const SizedBox(height: AppDimens.p12),
+                  ]);
                 }
 
                 return Column(children: dynamicActions);

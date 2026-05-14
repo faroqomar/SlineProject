@@ -469,7 +469,7 @@ class _LoadMoreSentinelState extends State<_LoadMoreSentinel> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(
-        widget.onLoadMore().catchError((error, stackTrace) {
+        widget.onLoadMore().catchError((Object error, StackTrace stackTrace) {
           AppLogger.e(
             'discovery_load_more_failed',
             tag: 'DiscoveryUI',

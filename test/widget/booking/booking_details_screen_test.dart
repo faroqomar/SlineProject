@@ -406,24 +406,24 @@ class _TestBookingDetailsContent extends StatelessWidget {
                 final dynamicActions = <Widget>[];
 
                 if (ctaMeta.allowedActions.contains('release_with_fee')) {
-                  dynamicActions.add(
+                  dynamicActions.addAll([
                     AppButton(
                       text: 'Approve & Release Funds',
                       onPressed: () {},
                     ),
-                  );
-                  dynamicActions.add(const SizedBox(height: AppDimens.p12));
+                    const SizedBox(height: AppDimens.p12),
+                  ]);
                 }
 
                 if (ctaMeta.allowedActions.contains('refund')) {
-                  dynamicActions.add(
+                  dynamicActions.addAll([
                     AppButton(
                       text: 'Issue Refund',
                       isPrimary: false,
                       onPressed: () {},
                     ),
-                  );
-                  dynamicActions.add(const SizedBox(height: AppDimens.p12));
+                    const SizedBox(height: AppDimens.p12),
+                  ]);
                 }
 
                 return Column(children: dynamicActions);
@@ -704,7 +704,7 @@ void main() {
   setUp(() {
     bookingVm = _MockBookingViewModel();
     safetyVm = _MockSafetyViewModel();
-    _stubBookingVm(bookingVm, currentUserId: _kClientId);
+    _stubBookingVm(bookingVm);
     _stubSafetyNoDispute(safetyVm);
   });
 
@@ -730,7 +730,7 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        booking: _booking(status: BookingStatus.active),
+        booking: _booking(),
         bookingVm: bookingVm,
         safetyVm: safetyVm,
       );
@@ -744,7 +744,7 @@ void main() {
     testWidgets('T212 shows service card with task ID', (tester) async {
       await _pumpScreen(
         tester,
-        booking: _booking(taskId: _kTaskId),
+        booking: _booking(),
         bookingVm: bookingVm,
         safetyVm: safetyVm,
       );
@@ -760,7 +760,7 @@ void main() {
     testWidgets('T213 shows counterparty info section for client view', (
       tester,
     ) async {
-      _stubBookingVm(bookingVm, currentUserId: _kClientId);
+      _stubBookingVm(bookingVm);
 
       await _pumpScreen(
         tester,
@@ -809,7 +809,7 @@ void main() {
     testWidgets('T215 client sees Cancel Booking button for pending booking', (
       tester,
     ) async {
-      _stubBookingVm(bookingVm, currentUserId: _kClientId);
+      _stubBookingVm(bookingVm);
 
       await _pumpScreen(
         tester,
@@ -904,7 +904,7 @@ void main() {
 
       await _pumpScreen(
         tester,
-        booking: _booking(status: BookingStatus.active),
+        booking: _booking(),
         bookingVm: bookingVm,
         safetyVm: safetyVm,
       );
@@ -925,10 +925,7 @@ void main() {
 
       await _pumpScreen(
         tester,
-        booking: _booking(
-          status: BookingStatus.active,
-          paymentStatus: PaymentStatus.held,
-        ),
+        booking: _booking(),
         bookingVm: bookingVm,
         safetyVm: safetyVm,
       );
@@ -957,7 +954,7 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        booking: _booking(note: null),
+        booking: _booking(),
         bookingVm: bookingVm,
         safetyVm: safetyVm,
       );
@@ -994,7 +991,6 @@ void main() {
         tester,
         booking: _booking(
           status: BookingStatus.paidRequestPending,
-          paymentStatus: PaymentStatus.held,
         ),
         bookingVm: bookingVm,
         safetyVm: safetyVm,
@@ -1014,10 +1010,7 @@ void main() {
 
       await _pumpScreen(
         tester,
-        booking: _booking(
-          status: BookingStatus.active,
-          paymentStatus: PaymentStatus.held,
-        ),
+        booking: _booking(),
         bookingVm: bookingVm,
         safetyVm: safetyVm,
       );
@@ -1030,15 +1023,12 @@ void main() {
     testWidgets('T226 client sees Report Issue on active booking', (
       tester,
     ) async {
-      _stubBookingVm(bookingVm, currentUserId: _kClientId);
+      _stubBookingVm(bookingVm);
       _stubSafetyNoDispute(safetyVm);
 
       await _pumpScreen(
         tester,
-        booking: _booking(
-          status: BookingStatus.active,
-          paymentStatus: PaymentStatus.held,
-        ),
+        booking: _booking(),
         bookingVm: bookingVm,
         safetyVm: safetyVm,
       );
@@ -1049,15 +1039,12 @@ void main() {
 
     // T227: Report Issue hidden when dispute exists
     testWidgets('T227 Report Issue hidden when dispute exists', (tester) async {
-      _stubBookingVm(bookingVm, currentUserId: _kClientId);
+      _stubBookingVm(bookingVm);
       _stubSafetyWithDispute(safetyVm);
 
       await _pumpScreen(
         tester,
-        booking: _booking(
-          status: BookingStatus.active,
-          paymentStatus: PaymentStatus.held,
-        ),
+        booking: _booking(),
         bookingVm: bookingVm,
         safetyVm: safetyVm,
       );
@@ -1070,11 +1057,11 @@ void main() {
     testWidgets('T228 dispute banner shows review text for open status', (
       tester,
     ) async {
-      _stubSafetyWithDispute(safetyVm, status: 'open');
+      _stubSafetyWithDispute(safetyVm);
 
       await _pumpScreen(
         tester,
-        booking: _booking(status: BookingStatus.active),
+        booking: _booking(),
         bookingVm: bookingVm,
         safetyVm: safetyVm,
       );
@@ -1105,7 +1092,7 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        booking: _booking(dueAtUtc: null, deliveryDays: null),
+        booking: _booking(),
         bookingVm: bookingVm,
         safetyVm: safetyVm,
       );
@@ -1124,7 +1111,6 @@ void main() {
         tester,
         booking: _booking(
           status: BookingStatus.delivered,
-          paymentStatus: PaymentStatus.held,
         ),
         bookingVm: bookingVm,
         safetyVm: safetyVm,
@@ -1169,7 +1155,6 @@ void main() {
         tester,
         booking: _booking(
           status: BookingStatus.disputed,
-          paymentStatus: PaymentStatus.held,
         ),
         bookingVm: bookingVm,
         safetyVm: safetyVm,
@@ -1183,13 +1168,12 @@ void main() {
     testWidgets('T235 client sees Approve & Release Funds on delivered held', (
       tester,
     ) async {
-      _stubBookingVm(bookingVm, currentUserId: _kClientId);
+      _stubBookingVm(bookingVm);
 
       await _pumpScreen(
         tester,
         booking: _booking(
           status: BookingStatus.delivered,
-          paymentStatus: PaymentStatus.held,
         ),
         bookingVm: bookingVm,
         safetyVm: safetyVm,
@@ -1203,7 +1187,7 @@ void main() {
     testWidgets('T236 price section hidden when price is null', (tester) async {
       await _pumpScreen(
         tester,
-        booking: _booking(price: null),
+        booking: _booking(),
         bookingVm: bookingVm,
         safetyVm: safetyVm,
       );

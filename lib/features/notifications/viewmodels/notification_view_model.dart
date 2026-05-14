@@ -128,7 +128,7 @@ class NotificationViewModel extends ChangeNotifier {
 
     // Plan 13_notification-routing: fetch unread first so badge is correct (avoid limit-50 truncation)
     try {
-      final unread = await _service.getUnreadNotifications(limit: 50);
+      final unread = await _service.getUnreadNotifications();
       if (unread.isNotEmpty) {
         _notifications = unread;
         AppLogger.d(

@@ -37,7 +37,7 @@ Task _task({
     userId: 'user-1',
     status: TaskStatus.open,
     taskType: taskType,
-    createdAt: DateTime.utc(2026, 3, 1),
+    createdAt: DateTime.utc(2026, 3),
   );
 }
 

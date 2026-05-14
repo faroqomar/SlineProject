@@ -111,10 +111,11 @@ void main() async {
   // Sentry wraps the entire app. When DSN is empty, Sentry silently disables.
   await SentryFlutter.init(
     (options) {
-      options.dsn = _sentryDsn;
-      options.environment = _sentryEnv;
-      options.tracesSampleRate = 0.2;
-      options.sendDefaultPii = false;
+      options
+        ..dsn = _sentryDsn
+        ..environment = _sentryEnv
+        ..tracesSampleRate = 0.2
+        ..sendDefaultPii = false;
     },
     appRunner: () async {
       // Wire Sentry as the crash reporting implementation
@@ -429,9 +430,9 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener>
     WidgetsBinding.instance.addObserver(this);
     // Set up session expiry callback after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authVm = context.read<AuthSessionViewModel>();
-      authVm.onSessionExpired = _handleSessionExpired;
-      authVm.onPasswordRecovery = _handlePasswordRecovery;
+      context.read<AuthSessionViewModel>()
+        ..onSessionExpired = _handleSessionExpired
+        ..onPasswordRecovery = _handlePasswordRecovery;
       unawaited(context.read<SystemConfigViewModel>().load());
       unawaited(_runAccountGuards());
     });

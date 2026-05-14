@@ -430,7 +430,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
   Widget _buildBookingSpecifics(WorkItemDetailsViewModel vm) {
     final booking = vm.booking!;
     final profile = vm.otherPartyProfile;
-    final otherName = profile?['full_name'] ?? 'Unknown User';
+    final otherName = profile?['full_name']?.toString() ?? 'Unknown User';
     final otherAvatar = profile?['avatar_url'] as String?;
 
     return WorkItemBookingDetails(
@@ -472,7 +472,8 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     final deadline =
         vm.workItem?.paymentDeadline ??
         DateTime.now().add(const Duration(hours: 24));
-    final otherName = vm.otherPartyProfile?['full_name'] ?? 'Freelancer';
+    final otherName =
+        vm.otherPartyProfile?['full_name']?.toString() ?? 'Freelancer';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -633,7 +634,7 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
     BuildContext context,
     WorkItemDetailsViewModel vm,
   ) async {
-    final result = await showModalBottomSheet(
+    final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: context.colorScheme.cardBackground,

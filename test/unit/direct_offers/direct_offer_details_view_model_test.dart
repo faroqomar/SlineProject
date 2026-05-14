@@ -34,8 +34,8 @@ DirectOffer _offer({
     days: 3,
     status: status,
     paymentStatus: paymentStatus,
-    createdAt: DateTime.utc(2026, 4, 1),
-    updatedAt: DateTime.utc(2026, 4, 1),
+    createdAt: DateTime.utc(2026, 4),
+    updatedAt: DateTime.utc(2026, 4),
   );
 }
 
@@ -147,7 +147,7 @@ void main() {
         final failed = vm.state as ViewFailed<DirectOffer>;
         expect(failed.failure, isA<BusinessFailure>());
         expect((failed.failure as BusinessFailure).code, 'LOAD_FAILED');
-        expect(vm.error, contains('DB unavailable'));
+        expect(vm.error, 'An error occurred. Please try again.');
         vm.dispose();
       },
     );
@@ -163,7 +163,10 @@ void main() {
 
       expect(vm.state, isA<ViewFailed<DirectOffer>>());
       final failed = vm.state as ViewFailed<DirectOffer>;
-      expect(failed.failure.userMessage, contains('SocketException'));
+      expect(
+        failed.failure.userMessage,
+        'An error occurred. Please try again.',
+      );
       vm.dispose();
     });
   });
@@ -173,7 +176,7 @@ void main() {
   group('canPay', () {
     test('returns true when client and offer is accepted/unpaid', () async {
       when(() => mockService.getOffer(_kOfferId)).thenAnswer(
-        (_) async => _offer(status: 'accepted', paymentStatus: 'unpaid'),
+        (_) async => _offer(status: 'accepted'),
       );
 
       final vm = _buildVm(
@@ -205,7 +208,7 @@ void main() {
 
     test('returns false when user is freelancer (not client)', () async {
       when(() => mockService.getOffer(_kOfferId)).thenAnswer(
-        (_) async => _offer(status: 'accepted', paymentStatus: 'unpaid'),
+        (_) async => _offer(status: 'accepted'),
       );
 
       final vm = _buildVm(
@@ -225,7 +228,7 @@ void main() {
   group('canCancel', () {
     test('returns true when client and offer accepted/unpaid', () async {
       when(() => mockService.getOffer(_kOfferId)).thenAnswer(
-        (_) async => _offer(status: 'accepted', paymentStatus: 'unpaid'),
+        (_) async => _offer(status: 'accepted'),
       );
 
       final vm = _buildVm(
@@ -314,7 +317,7 @@ void main() {
     test('happy path calls service and reloads', () async {
       // First load: accepted/unpaid (canCancel == true)
       when(() => mockService.getOffer(_kOfferId)).thenAnswer(
-        (_) async => _offer(status: 'accepted', paymentStatus: 'unpaid'),
+        (_) async => _offer(status: 'accepted'),
       );
       when(
         () => mockService.cancelAcceptedOffer(_kOfferId),
@@ -330,7 +333,7 @@ void main() {
 
       // After cancel, reload returns canceled offer
       when(() => mockService.getOffer(_kOfferId)).thenAnswer(
-        (_) async => _offer(status: 'canceled', paymentStatus: 'unpaid'),
+        (_) async => _offer(status: 'canceled'),
       );
       await vm.cancelOffer();
 
@@ -344,7 +347,7 @@ void main() {
 
     test('error rethrows and resets cancelInProgress', () async {
       when(() => mockService.getOffer(_kOfferId)).thenAnswer(
-        (_) async => _offer(status: 'accepted', paymentStatus: 'unpaid'),
+        (_) async => _offer(status: 'accepted'),
       );
       when(
         () => mockService.cancelAcceptedOffer(_kOfferId),
@@ -470,7 +473,7 @@ void main() {
       'calls payment service with correct args and returns result',
       () async {
         when(() => mockService.getOffer(_kOfferId)).thenAnswer(
-          (_) async => _offer(status: 'accepted', paymentStatus: 'unpaid'),
+          (_) async => _offer(status: 'accepted'),
         );
         when(
           () => mockPayment.createPaymentForDirectOffer(
@@ -559,7 +562,7 @@ void main() {
 
     test('returns false when payment is not held', () async {
       when(() => mockService.getOffer(_kOfferId)).thenAnswer(
-        (_) async => _offer(status: 'delivered', paymentStatus: 'unpaid'),
+        (_) async => _offer(status: 'delivered'),
       );
 
       final vm = _buildVm(

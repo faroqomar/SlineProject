@@ -161,7 +161,7 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
         if (type == 'booking')
           _workService.getBooking(id)
         else
-          Future.value(null),
+          Future<BookingModel?>.value(),
       ]);
 
       final loadedWorkItem = results[0] as UnifiedWorkItemModel?;

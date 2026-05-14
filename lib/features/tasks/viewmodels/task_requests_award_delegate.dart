@@ -287,7 +287,8 @@ class TaskRequestsAwardDelegate {
         await _refreshList();
         return true;
       } else {
-        _errorMessage = result['message'] ?? 'Failed to cancel offer';
+        _errorMessage =
+            result['message']?.toString() ?? 'Failed to cancel offer';
         AppLogger.w('Cancel failed for $requestId: $_errorMessage', tag: _kTag);
         _onChanged();
         return false;

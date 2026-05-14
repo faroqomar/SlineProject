@@ -92,7 +92,6 @@ TaskRequest _makeExpiredRequest({
     price: price,
     days: days,
     status: OfferStatus.pending,
-    paymentStatus: PaymentStatus.unpaid,
     createdAt: DateTime.now().subtract(const Duration(hours: 25)),
     bidderName: 'Expired Bidder',
   );
@@ -451,7 +450,6 @@ void main() {
       RequestsListScreen(
         taskId: _kTaskId,
         autoOpenSubmitSheet: true,
-        isOwner: false,
         budget: '50000',
         viewModelBuilder: ({required taskId, required isOwner}) => vm,
         submitSheetLauncher:
@@ -543,7 +541,6 @@ void main() {
       vm: vm,
       favoritesVm: favoritesVm,
       authVm: authVm,
-      isOwner: false,
     );
 
     expect(find.text('No bids on this task'), findsOneWidget);
@@ -561,7 +558,7 @@ void main() {
     tester,
   ) async {
     final requests = [
-      _makeRequest(id: 'req-1', price: 50000, days: 5),
+      _makeRequest(days: 5),
       _makeRequest(id: 'req-2', price: 75000, days: 10, bidderId: 'b-2'),
     ];
     when(() => vm.items).thenReturn(requests);
@@ -609,7 +606,6 @@ void main() {
       vm: vm,
       favoritesVm: favoritesVm,
       authVm: authVm,
-      isOwner: false,
     );
 
     expect(find.byType(FloatingActionButton), findsOneWidget);
@@ -961,7 +957,6 @@ void main() {
       vm: vm,
       favoritesVm: favoritesVm,
       authVm: authVm,
-      isOwner: false,
     );
 
     expect(find.text('Submit a Bid'), findsOneWidget);

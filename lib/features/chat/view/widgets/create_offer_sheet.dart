@@ -18,7 +18,7 @@ import 'package:sline_app/core/widgets/app_text_field.dart';
 /// `shakeDuration`, added Semantics labels to all form fields and submit
 /// button. View-layer only.
 class CreateOfferSheet extends StatefulWidget {
-  final Function(
+  final void Function(
     String title,
     String description,
     String price,
@@ -333,7 +333,7 @@ class _CreateOfferSheetState extends State<CreateOfferSheet>
 /// Show the create offer sheet as a modal bottom sheet.
 void showCreateOfferSheet(
   BuildContext context, {
-  required Function(
+  required void Function(
     String title,
     String description,
     String price,

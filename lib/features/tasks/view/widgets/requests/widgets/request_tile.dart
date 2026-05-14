@@ -117,7 +117,6 @@ class RequestTile extends StatelessWidget {
                 if (request.isPending && !isExpired)
                   ExpirationBadge(
                     expirationTime: request.expirationTime,
-                    size: CountdownSize.small,
                   ),
                 // Show expired badge for expired bids
                 if (isExpired)

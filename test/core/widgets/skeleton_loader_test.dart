@@ -29,7 +29,7 @@ void main() {
     testWidgets('renders circular avatars with shimmer, not a spinner', (
       tester,
     ) async {
-      await pumpCoreWidget(tester, const SkeletonAvatar(size: 48));
+      await pumpCoreWidget(tester, const SkeletonAvatar());
       await tester.pump(const Duration(milliseconds: 16));
 
       final decoration = _skeletonDecoration(tester);

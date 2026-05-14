@@ -46,8 +46,8 @@ WorkItem _buildWorkItem({
     counterpartyRole: 'Client',
     statusRaw: statusRaw,
     statusUiBucket: statusUiBucket,
-    createdAt: DateTime.utc(2026, 3, 1, 10, 0),
-    lastUpdate: DateTime.utc(2026, 3, 1, 11, 0),
+    createdAt: DateTime.utc(2026, 3, 1, 10),
+    lastUpdate: DateTime.utc(2026, 3, 1, 11),
     primaryActionType: canReview
         ? PrimaryActionType.reviewDelivery
         : PrimaryActionType.viewDetails,

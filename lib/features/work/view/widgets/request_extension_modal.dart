@@ -6,7 +6,7 @@ import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
 
 class RequestExtensionModal extends StatefulWidget {
-  final Function(String note, int days) onSubmit;
+  final void Function(String note, int days) onSubmit;
   final bool isLoading;
 
   const RequestExtensionModal({

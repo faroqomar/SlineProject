@@ -53,7 +53,7 @@ void main() {
     });
 
     testWidgets('shows timestamp when last in group', (tester) async {
-      await tester.pumpWidget(buildTestBubble(isLastInGroup: true));
+      await tester.pumpWidget(buildTestBubble());
 
       expect(find.text('Hello'), findsOneWidget);
       expect(find.text('12:00'), findsOneWidget);
@@ -63,7 +63,7 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        buildTestBubble(isMine: true, status: 'sent', isLastInGroup: true),
+        buildTestBubble(status: 'sent'),
       );
 
       // Should find a check icon for sent status
@@ -72,7 +72,7 @@ void main() {
 
     testWidgets('shows double check for delivered status', (tester) async {
       await tester.pumpWidget(
-        buildTestBubble(isMine: true, status: 'delivered', isLastInGroup: true),
+        buildTestBubble(status: 'delivered'),
       );
 
       expect(find.byIcon(Icons.done_all), findsOneWidget);
@@ -80,7 +80,7 @@ void main() {
 
     testWidgets('shows double check for read status', (tester) async {
       await tester.pumpWidget(
-        buildTestBubble(isMine: true, status: 'read', isLastInGroup: true),
+        buildTestBubble(status: 'read'),
       );
 
       expect(find.byIcon(Icons.done_all), findsOneWidget);
@@ -88,7 +88,7 @@ void main() {
 
     testWidgets('no status icon for other user messages', (tester) async {
       await tester.pumpWidget(
-        buildTestBubble(isMine: false, status: 'read', isLastInGroup: true),
+        buildTestBubble(isMine: false, status: 'read'),
       );
 
       // Other user messages don't show status icons
@@ -97,7 +97,7 @@ void main() {
     });
 
     testWidgets('has Semantics with correct label', (tester) async {
-      await tester.pumpWidget(buildTestBubble(isMine: true, status: 'sent'));
+      await tester.pumpWidget(buildTestBubble(status: 'sent'));
 
       // Verify Semantics node exists with expected content
       final semantics = find.bySemanticsLabel(RegExp('You said: Hello'));
@@ -108,7 +108,7 @@ void main() {
       // Status icons are only rendered on the last message in a group;
       // middle/first-only messages should show no check icons to reduce noise.
       await tester.pumpWidget(
-        buildTestBubble(isMine: true, status: 'sent', isLastInGroup: false),
+        buildTestBubble(status: 'sent', isLastInGroup: false),
       );
       expect(find.byIcon(Icons.check), findsNothing);
       expect(find.byIcon(Icons.done_all), findsNothing);
@@ -128,7 +128,7 @@ void main() {
       // For isMine bubbles, delivered uses the inverse Amber Dusk text color at
       // reduced opacity, not the read-status primary accent.
       await tester.pumpWidget(
-        buildTestBubble(isMine: true, status: 'delivered', isLastInGroup: true),
+        buildTestBubble(status: 'delivered'),
       );
       final iconWidget = tester.widget<Icon>(find.byIcon(Icons.done_all));
       expect(

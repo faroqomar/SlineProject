@@ -139,10 +139,12 @@ class _SignupScreenState extends State<SignupScreen>
     _shakeController.dispose();
     _nameController.dispose();
     _emailController.dispose();
-    _passwordController.removeListener(_onPasswordChanged);
-    _passwordController.dispose();
-    _confirmPasswordController.removeListener(_onConfirmPasswordChanged);
-    _confirmPasswordController.dispose();
+    _passwordController
+      ..removeListener(_onPasswordChanged)
+      ..dispose();
+    _confirmPasswordController
+      ..removeListener(_onConfirmPasswordChanged)
+      ..dispose();
     super.dispose();
   }
 

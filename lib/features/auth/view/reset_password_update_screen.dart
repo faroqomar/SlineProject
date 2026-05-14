@@ -56,8 +56,9 @@ class _ResetPasswordUpdateScreenState extends State<ResetPasswordUpdateScreen> {
 
   @override
   void dispose() {
-    _passwordController.removeListener(_onPasswordChanged);
-    _passwordController.dispose();
+    _passwordController
+      ..removeListener(_onPasswordChanged)
+      ..dispose();
     _confirmPasswordController.dispose();
     _countdownTimer?.cancel();
     super.dispose();

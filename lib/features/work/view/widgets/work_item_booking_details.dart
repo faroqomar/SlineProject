@@ -46,7 +46,6 @@ class WorkItemBookingDetails extends StatelessWidget {
                 children: [
                   SignedAvatar(
                     storagePathOrUrl: otherPartyAvatar,
-                    radius: 20,
                     placeholder: CircleAvatar(
                       radius: 20,
                       backgroundColor: context.colorScheme.primary,

@@ -77,7 +77,6 @@ class FreelancerProfile {
       initials: initials,
       name: profile.fullName ?? 'Unknown User',
       verified: profile.email != null, // Simple proxy for verification
-      online: false, // Placeholder
       title: displayTitle,
       location: 'Remote', // Placeholder
       jobSuccess: '100%', // Placeholder

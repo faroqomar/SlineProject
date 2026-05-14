@@ -146,7 +146,7 @@ class TaskService {
     try {
       final response = await _client
           .from('tasks')
-          .insert(task.toJson(includeSystemFields: false))
+          .insert(task.toJson())
           .select(_selectBasic)
           .single();
 

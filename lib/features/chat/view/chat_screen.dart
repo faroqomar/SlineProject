@@ -136,7 +136,7 @@ class _ChatScreenState extends State<ChatScreen> {
         unawaited(_chatCtrl.fetchMessages(widget.conversation.id));
         unawaited(_chatCtrl.subscribeToActiveConversation());
         if (!mounted) return;
-        await _chatCtrl.markReceiptsForActive(delivered: true, seen: true);
+        await _chatCtrl.markReceiptsForActive(seen: true);
         // Scroll to bottom on initial load so the user sees the latest messages
         if (mounted) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -150,10 +150,12 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void dispose() {
     AppLogger.d('ChatScreen: closed conversation', tag: 'Chat');
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
-    _messageController.removeListener(_onTextChanged);
-    _messageController.dispose();
+    _scrollController
+      ..removeListener(_onScroll)
+      ..dispose();
+    _messageController
+      ..removeListener(_onTextChanged)
+      ..dispose();
     if (widget.enableLifecycleEffects) {
       _chatCtrl.unsubscribeFromConversation();
     }
@@ -460,7 +462,9 @@ class _ChatScreenState extends State<ChatScreen> {
                             offerData = msg.payload;
                           } else {
                             try {
-                              offerData = jsonDecode(msg.content);
+                              offerData = Map<String, dynamic>.from(
+                                jsonDecode(msg.content) as Map,
+                              );
                             } on Object catch (e, st) {
                               _logError(
                                 'Failed to decode legacy offer JSON',
@@ -477,8 +481,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                 offerData['status']?.toString() ??
                                 'sent';
                             return OfferMessageBubble(
-                              title: offerData['title'] ?? '',
-                              description: offerData['description'] ?? '',
+                              title: offerData['title']?.toString() ?? '',
+                              description:
+                                  offerData['description']?.toString() ?? '',
                               price: offerData['price']?.toString() ?? '0',
                               deliveryDays: ChatOfferPayload.daysFromPayload(
                                 offerData,

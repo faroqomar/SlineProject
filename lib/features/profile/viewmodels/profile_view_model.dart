@@ -279,7 +279,6 @@ class ProfileViewModel extends ChangeNotifier {
       // Use FilePicker instead of ImagePicker for better iOS stability
       final result = await FilePicker.pickFiles(
         type: FileType.image,
-        allowMultiple: false,
         withData: true, // Get bytes directly
       );
 
@@ -312,7 +311,6 @@ class ProfileViewModel extends ChangeNotifier {
       try {
         compressedBytes = await FlutterImageCompress.compressWithList(
           bytes,
-          minWidth: 1920,
           minHeight: 1920,
           quality: 80,
         );
@@ -579,9 +577,7 @@ class ProfileViewModel extends ChangeNotifier {
 
       // 3. Session refresh - HARD BLOCKER
       AppLogger.d('role_switch_refreshing_session', tag: 'ProfileVM');
-      final refreshSuccess = await _repo.roleSwitch.refreshSession(
-        maxRetries: 3,
-      );
+      final refreshSuccess = await _repo.roleSwitch.refreshSession();
       if (!refreshSuccess) {
         _profileError = 'Session refresh failed. Please log in again.';
         AppLogger.e('role_switch_session_refresh_failed', tag: 'ProfileVM');
@@ -598,7 +594,7 @@ class ProfileViewModel extends ChangeNotifier {
           tag: 'ProfileVM',
         );
         // Retry session refresh once
-        await Future.delayed(const Duration(milliseconds: 500));
+        await Future<void>.delayed(const Duration(milliseconds: 500));
         final retrySuccess = await _repo.roleSwitch.refreshSession(
           maxRetries: 1,
         );
@@ -675,7 +671,6 @@ class ProfileViewModel extends ChangeNotifier {
     // Use FilePicker instead of ImagePicker for better iOS stability
     final result = await FilePicker.pickFiles(
       type: FileType.image,
-      allowMultiple: false,
       withData: true,
     );
     _avatarUploadError = null;

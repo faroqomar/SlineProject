@@ -76,8 +76,8 @@ DirectOffer _offer({
     days: days,
     status: status,
     paymentStatus: paymentStatus,
-    createdAt: DateTime.utc(2026, 4, 1),
-    updatedAt: DateTime.utc(2026, 4, 1),
+    createdAt: DateTime.utc(2026, 4),
+    updatedAt: DateTime.utc(2026, 4),
   );
 }
 
@@ -199,7 +199,7 @@ void main() {
     testWidgets('T182 shows offer title when loaded', (tester) async {
       when(
         () => mockOffers.getOffer(_kOfferId),
-      ).thenAnswer((_) async => _offer(title: 'Logo Design'));
+      ).thenAnswer((_) async => _offer());
 
       await _pumpScreen(
         tester,
@@ -219,7 +219,7 @@ void main() {
     testWidgets('T183 shows offer price info row', (tester) async {
       when(
         () => mockOffers.getOffer(_kOfferId),
-      ).thenAnswer((_) async => _offer(price: 5000));
+      ).thenAnswer((_) async => _offer());
 
       await _pumpScreen(
         tester,
@@ -333,7 +333,7 @@ void main() {
     testWidgets('T188 cancel button opens confirmation dialog', (tester) async {
       // accepted + unpaid => canCancel = true for client
       when(() => mockOffers.getOffer(_kOfferId)).thenAnswer(
-        (_) async => _offer(status: 'accepted', paymentStatus: 'unpaid'),
+        (_) async => _offer(status: 'accepted'),
       );
 
       await _pumpScreen(
@@ -361,7 +361,7 @@ void main() {
       tester,
     ) async {
       when(() => mockOffers.getOffer(_kOfferId)).thenAnswer(
-        (_) async => _offer(status: 'accepted', paymentStatus: 'unpaid'),
+        (_) async => _offer(status: 'accepted'),
       );
       when(
         () => mockOffers.cancelAcceptedOffer(_kOfferId),
@@ -445,7 +445,7 @@ void main() {
 
     testWidgets('T192 no action buttons on canceled offer', (tester) async {
       when(() => mockOffers.getOffer(_kOfferId)).thenAnswer(
-        (_) async => _offer(status: 'canceled', paymentStatus: 'unpaid'),
+        (_) async => _offer(status: 'canceled'),
       );
 
       await _pumpScreen(
@@ -496,7 +496,7 @@ void main() {
       tester,
     ) async {
       when(() => mockOffers.getOffer(_kOfferId)).thenAnswer(
-        (_) async => _offer(status: 'accepted', paymentStatus: 'unpaid'),
+        (_) async => _offer(status: 'accepted'),
       );
 
       await _pumpScreen(
@@ -519,7 +519,7 @@ void main() {
     ) async {
       when(() => mockAuth.currentUserId).thenReturn(_kClientId);
       when(() => mockOffers.getOffer(_kOfferId)).thenAnswer(
-        (_) async => _offer(status: 'accepted', paymentStatus: 'unpaid'),
+        (_) async => _offer(status: 'accepted'),
       );
 
       await _pumpScreen(
@@ -665,7 +665,7 @@ void main() {
     ) async {
       when(() => mockAuth.currentUserId).thenReturn(_kFreelancerId);
       when(() => mockOffers.getOffer(_kOfferId)).thenAnswer(
-        (_) async => _offer(status: 'accepted', paymentStatus: 'unpaid'),
+        (_) async => _offer(status: 'accepted'),
       );
 
       await _pumpScreen(
@@ -689,7 +689,7 @@ void main() {
       tester,
     ) async {
       when(() => mockOffers.getOffer(_kOfferId)).thenAnswer(
-        (_) async => _offer(status: 'accepted', paymentStatus: 'unpaid'),
+        (_) async => _offer(status: 'accepted'),
       );
 
       await _pumpScreen(

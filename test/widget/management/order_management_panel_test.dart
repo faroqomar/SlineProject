@@ -105,7 +105,6 @@ void main() {
         () => service.addLog(
           scope: _scope,
           content: 'Draft note',
-          isPrivate: false,
         ),
       ).thenThrow(Exception('You cannot post notes to this order.'));
 
@@ -140,7 +139,6 @@ void main() {
         () => service.addLog(
           scope: _scope,
           content: 'Sent note',
-          isPrivate: false,
         ),
       ).thenAnswer((_) async {});
 
@@ -168,7 +166,6 @@ void main() {
         () => service.addLog(
           scope: _scope,
           content: 'Pending note',
-          isPrivate: false,
         ),
       ).thenAnswer((_) => completer.future);
 

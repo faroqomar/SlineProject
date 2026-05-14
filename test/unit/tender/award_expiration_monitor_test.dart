@@ -94,9 +94,9 @@ void main() {
       final deadline = DateTime.now().add(const Duration(hours: 24));
 
       var notificationCount = 0;
-      monitor.addListener(() => notificationCount++);
-
-      monitor.startMonitoring(deadline);
+      monitor
+        ..addListener(() => notificationCount++)
+        ..startMonitoring(deadline);
 
       // Should notify immediately on start
       expect(notificationCount, greaterThanOrEqualTo(1));

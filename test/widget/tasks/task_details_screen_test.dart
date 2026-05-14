@@ -78,7 +78,7 @@ Task _task({
     userId: userId,
     status: status,
     taskType: taskType,
-    createdAt: createdAt ?? DateTime.utc(2026, 4, 1),
+    createdAt: createdAt ?? DateTime.utc(2026, 4),
     deadline: deadline,
     categoryName: categoryName,
     userName: userName,
@@ -302,12 +302,11 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        task: _task(userId: _kOwnerId),
+        task: _task(),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
         safetyVm: mockSafety,
-        currentUserId: _kFreelancerId,
       );
       await tester.pump();
 
@@ -321,7 +320,7 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        task: _task(userId: _kOwnerId),
+        task: _task(),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
@@ -341,7 +340,7 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        task: _task(userId: _kOwnerId, offers: 5),
+        task: _task(offers: 5),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
@@ -380,7 +379,7 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        task: _task(userId: _kOwnerId, status: TaskStatus.open),
+        task: _task(),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
@@ -406,7 +405,7 @@ void main() {
       (tester) async {
         await _pumpScreen(
           tester,
-          task: _task(userId: _kOwnerId, status: TaskStatus.closed),
+          task: _task(status: TaskStatus.closed),
           taskVm: mockTaskVm,
           chatVm: mockChatVm,
           guardService: mockGuard,
@@ -466,12 +465,11 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        task: _task(taskType: TaskType.tender),
+        task: _task(),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
         safetyVm: mockSafety,
-        currentUserId: _kFreelancerId,
       );
       await tester.pump();
 
@@ -488,7 +486,7 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        task: _task(taskType: TaskType.tender),
+        task: _task(),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
@@ -520,12 +518,11 @@ void main() {
     testWidgets('T246 non-owner sees chat bubble icon', (tester) async {
       await _pumpScreen(
         tester,
-        task: _task(userId: _kOwnerId),
+        task: _task(),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
         safetyVm: mockSafety,
-        currentUserId: _kFreelancerId,
       );
       await tester.pump();
 
@@ -535,7 +532,7 @@ void main() {
     testWidgets('T247 owner does not see chat bubble icon', (tester) async {
       await _pumpScreen(
         tester,
-        task: _task(userId: _kOwnerId),
+        task: _task(),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
@@ -555,7 +552,6 @@ void main() {
         chatVm: mockChatVm,
         guardService: mockGuard,
         safetyVm: mockSafety,
-        currentUserId: _kFreelancerId,
       );
       await tester.pump();
 
@@ -634,7 +630,7 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        task: _task(userName: null),
+        task: _task(),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
@@ -651,12 +647,11 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        task: _bookingTask(status: TaskStatus.completed, userId: _kOwnerId),
+        task: _bookingTask(status: TaskStatus.completed),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
         safetyVm: mockSafety,
-        currentUserId: _kFreelancerId,
       );
       await tester.pump();
 
@@ -668,12 +663,11 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        task: _bookingTask(userId: _kOwnerId),
+        task: _bookingTask(),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
         safetyVm: mockSafety,
-        currentUserId: _kFreelancerId,
       );
       await tester.pump();
 
@@ -704,12 +698,11 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        task: _bookingTask(userId: _kOwnerId),
+        task: _bookingTask(),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
         safetyVm: mockSafety,
-        currentUserId: _kFreelancerId,
       );
       await tester.pump();
 
@@ -730,12 +723,11 @@ void main() {
     ) async {
       await _pumpScreen(
         tester,
-        task: _task(userId: _kOwnerId, offers: 3),
+        task: _task(offers: 3),
         taskVm: mockTaskVm,
         chatVm: mockChatVm,
         guardService: mockGuard,
         safetyVm: mockSafety,
-        currentUserId: _kFreelancerId,
       );
       await tester.pump();
 
@@ -750,7 +742,6 @@ void main() {
         chatVm: mockChatVm,
         guardService: mockGuard,
         safetyVm: mockSafety,
-        currentUserId: _kFreelancerId,
       );
       await tester.pump();
 
