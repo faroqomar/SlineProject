@@ -13,7 +13,7 @@ import {
   recordBookingAudit,
   submitGatewayEscrowHold,
   submitDirectOfferGatewayEscrow,
-} from "../_shared/bookin_payment.ts";
+} from "../_shared/booking_payment.ts";
 
 // Type definitions for QiCard webhook payload
 interface QiCardPaymentPayload {

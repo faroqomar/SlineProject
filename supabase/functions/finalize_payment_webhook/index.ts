@@ -8,7 +8,7 @@ import {
   submitGatewayEscrowHold,
   submitDirectOfferGatewayEscrow,
   submitTenderGatewayEscrow,
-} from "../_shared/bookin_payment.ts";
+} from "../_shared/booking_payment.ts";
 
 const QICARD_RSA_PUBLIC_KEY_PEM = Deno.env.get("QICARD_RSA_PUBLIC_KEY_PEM") || "";
 const QICARD_ALLOW_UNSIGNED_LOCAL_DEV = Deno.env.get("QICARD_ALLOW_UNSIGNED_LOCAL_DEV") === "true";

@@ -10,7 +10,7 @@ This file is the durable source of truth for SLine's user interface surfaces. It
 - Any new screen, route, sheet, dialog, popup menu, tab, major reusable widget, or deep-link UI surface must be added here in the same change that creates it.
 - If an agent discovers a UI surface that is missing from this file, the agent must update this file or route the update to DocsKeeper before the work is considered complete.
 - If a screen is renamed, moved, archived, or replaced, update the entry instead of leaving duplicate names.
-- Use this file with `Sline_everything/DOC_SOURCE_MAP.md` and `Sline_everything/AppDigram/README.md` when planning or reviewing UI work.
+- Use this file with `Sline_everything/DOC_SOURCE_MAP.md` and `Sline_everything/AppDiagram/README.md` when planning or reviewing UI work.
 
 ## How To Use This File
 
@@ -649,4 +649,4 @@ When any related agent runs:
 - Pixel must compare the changed UI code against this inventory before and after implementation.
 - Orchestrator must flag stale or missing inventory updates in the Master Report.
 - Sentinel must block major UI work when a new or changed surface is absent from this file.
-- DocsKeeper must keep this file, `README.md`, `Sline_everything/DOC_SOURCE_MAP.md`, and `Sline_everything/AppDigram/README.md` aligned.
+- DocsKeeper must keep this file, `README.md`, `Sline_everything/DOC_SOURCE_MAP.md`, and `Sline_everything/AppDiagram/README.md` aligned.

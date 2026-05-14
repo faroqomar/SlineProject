@@ -225,8 +225,8 @@ pending → accepted → payment_status:unpaid → payment_status:held (work beg
 ## Building and Running
 
 ### Prerequisites
-- Flutter SDK 3.8.1+
-- Dart SDK 3.8.1+
+- Flutter SDK 3.41.9
+- Dart SDK 3.11.0+
 - Supabase account
 
 ### Setup

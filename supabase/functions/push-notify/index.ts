@@ -2,7 +2,7 @@
 // Plan: .TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md
 // Single notification payload → FCM. Internal/cron only; set PUSH_NOTIFY_SECRET and use Authorization: Bearer.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createAdminClient, corsHeaders, jsonResponse } from "../_shared/bookin_payment.ts";
+import { createAdminClient, corsHeaders, jsonResponse } from "../_shared/booking_payment.ts";
 
 const FCM_SERVER_KEY = Deno.env.get("FCM_SERVER_KEY") ?? "";
 const PUSH_NOTIFY_SECRET = Deno.env.get("PUSH_NOTIFY_SECRET") ?? "";

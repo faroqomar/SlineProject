@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/skeleton_card_extended.dart';
 
@@ -116,7 +117,7 @@ bool _hasAmberSkeletonGradient(WidgetTester tester) {
 }
 
 bool _isAmberSkeletonGradient(Decoration? decoration) {
-  final skeletonTheme = AmberDuskTokens.widgetTheme.skeleton;
+  final skeletonTheme = _themeSkeletonColors();
   final expectedColors = [
     skeletonTheme.base,
     skeletonTheme.highlight,
@@ -128,4 +129,12 @@ bool _isAmberSkeletonGradient(Decoration? decoration) {
       gradient.colors.indexed.every(
         (entry) => entry.$2.toARGB32() == expectedColors[entry.$1].toARGB32(),
       );
+}
+
+SkeletonColors _themeSkeletonColors() {
+  final colors = AppTheme.light().extension<SkeletonColors>();
+  if (colors == null) {
+    throw TestFailure('Expected SkeletonColors extension in AppTheme.light().');
+  }
+  return colors;
 }

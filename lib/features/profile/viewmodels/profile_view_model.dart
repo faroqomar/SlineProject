@@ -277,7 +277,7 @@ class ProfileViewModel extends ChangeNotifier {
 
     try {
       // Use FilePicker instead of ImagePicker for better iOS stability
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.image,
         allowMultiple: false,
         withData: true, // Get bytes directly
@@ -308,7 +308,7 @@ class ProfileViewModel extends ChangeNotifier {
       );
 
       // Compress image to prevent OOM and reduce upload size
-      Uint8List? compressedBytes;
+      Uint8List compressedBytes;
       try {
         compressedBytes = await FlutterImageCompress.compressWithList(
           bytes,
@@ -673,7 +673,7 @@ class ProfileViewModel extends ChangeNotifier {
     if (user == null) return;
 
     // Use FilePicker instead of ImagePicker for better iOS stability
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       type: FileType.image,
       allowMultiple: false,
       withData: true,

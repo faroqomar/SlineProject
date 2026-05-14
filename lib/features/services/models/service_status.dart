@@ -5,7 +5,8 @@
 enum ServiceStatus {
   active,
   draft,
-  paused;
+  paused
+  ;
 
   /// Parses a DB string into a [ServiceStatus].
   /// Falls back to [draft] for unknown values.

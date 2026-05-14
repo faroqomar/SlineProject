@@ -142,7 +142,7 @@ payment_intents → payer/receiver/entity/amount; payment_events → raw gateway
 ## Scope
 
 - **What's included:**  
-  Booking payment (draft → create → webview/Realtime/sanitized callback → recovery); direct offer payment (accepted unpaid → create → webview/Realtime); webhook intent path (lookup intent, payment_events insert, amount check, ledger with payment_intent_id, payment_intents update); orphan path (intent_not_found, amount_mismatch); RLS and append-only trigger on payment_events; ledger meta payment_intent_id (process_payment_event_ledger gateway_escrow, process_gateway_escrow_direct_offer); customer-safe finish URL contract.
+  Booking payment (draft → create → webview/Realtime/sanitized callback → recovery); direct offer payment (accepted unpaid → create → webview/Realtime/sanitized callback → recovery); webhook intent path (lookup intent, payment_events insert, amount check, ledger with payment_intent_id, payment_intents update); orphan path (intent_not_found, amount_mismatch); RLS and append-only trigger on payment_events; ledger meta payment_intent_id (process_payment_event_ledger gateway_escrow, process_gateway_escrow_direct_offer); customer-safe finish URL contract.
 
 - **What's explicitly excluded:**  
   Tender (task_request) payment flow (separate edge/RPC); Admin Orphan Queue UI and Payment Trace UI (planned); HMAC in create edge and webhook signature verification (deferred; PAYMENT_HMAC_SECRET); `create_payment_intent` as single canonical create (current create = `qicard_payment_create` / `qicard_payment_create_direct_offer`).
@@ -211,7 +211,7 @@ payment_intents → payer/receiver/entity/amount; payment_events → raw gateway
   **Tables:** payment_intents (signature, currency, paid_at, gateway_intent_id, status, entity_type, entity_id, payer_id, receiver_id, gross_amount, etc.); payment_events (gateway_event_id UNIQUE, intent_id NOT NULL, event_type, payload); orphan_payments (gateway_event_id, error_reason, payload, investigated); journal_entries (meta includes payment_intent_id when provided in p_meta). **Views:** (admin trace/orphan views planned). **RPC:** process_payment_event_ledger (gateway_escrow branch), process_gateway_escrow_direct_offer. **Triggers:** trg_payment_events_append_only (BEFORE UPDATE OR DELETE on payment_events). **Policies (RLS):** payment_intents SELECT for payer, service_role_all_payment_intents; payment_events service_role_insert_payment_events only.
 
 - **Edge:**  
-  `supabase/functions/qicard_payment_create/`, `create_payment_intent/`, `qicard_payment_create_direct_offer/`, `qicard_webhook_handler/`, `_shared/bookin_payment.ts` (submitGatewayEscrowHold, submitDirectOfferGatewayEscrow with optional paymentIntentId).
+  `supabase/functions/qicard_payment_create/`, `create_payment_intent/`, `qicard_payment_create_direct_offer/`, `qicard_webhook_handler/`, `_shared/booking_payment.ts` (submitGatewayEscrowHold, submitDirectOfferGatewayEscrow with optional paymentIntentId).
 
 ---
 

@@ -327,5 +327,5 @@ stateDiagram-v2
 - Master report: `.TODO/MASTER_REPORT_2026-03-08_DisputeLifecycle.md`
 - Checklist: `.TODO/CHECKLIST_DisputeLifecycle_AppVerification.md`
 - RLS matrix: `.TODO/improvement_the_system/ImplementReady/14_dispute-lifecycle/RLS_CHECK_MATRIX.md`
-- Integration (14a): `Sline_everything/AppDigram/All_Diagrams/14a_dispute-entity-freeze-integration.md`
+- Integration (14a): `Sline_everything/AppDiagram/All_Diagrams/14a_dispute-entity-freeze-integration.md`
 - Migrations: `supabase/migrations/20260308140000_dispute_lifecycle_escrow_guard_rls.sql`, `20260308150000_dispute_enum_guard_resolved_at.sql`, `20260308170000_rpc_submit_dispute_booking_eligible.sql`, `20260308160000_14a_dispute_extension_frozen_guards.sql` (rpc_submit_dispute)

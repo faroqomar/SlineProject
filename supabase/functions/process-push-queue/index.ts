@@ -3,7 +3,7 @@
 // Drains notification_push_queue: select pending, get device tokens, send FCM, update status.
 // Requires CRON_SECRET in production; invoke with Authorization: Bearer <CRON_SECRET>.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createAdminClient, corsHeaders, jsonResponse } from "../_shared/bookin_payment.ts";
+import { createAdminClient, corsHeaders, jsonResponse } from "../_shared/booking_payment.ts";
 
 const FCM_SERVER_KEY = Deno.env.get("FCM_SERVER_KEY") ?? "";
 const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";

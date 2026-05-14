@@ -1862,7 +1862,7 @@ The core orchestration function for the double-entry system.
 
 #### Edge Function CORS Configuration (Phase D, 2026-04-04)
 
-All 12 Edge Functions share CORS headers from `supabase/functions/_shared/bookin_payment.ts`:
+All 12 Edge Functions share CORS headers from `supabase/functions/_shared/booking_payment.ts`:
 
 - **Origin**: `ALLOWED_ORIGIN` env var, defaults to `https://sline.app`. No wildcard `*`.
 - **Headers**: `authorization, x-client-info, apikey, content-type, x-signature`
@@ -2186,7 +2186,7 @@ WHERE pubname = 'supabase_realtime';
 -- public | conversation_presence
 ```
 
-**Note:** Tables in the realtime publication: `messages`, `notifications`, `conversation_presence`. **Do NOT add `conversations`** — Inbox realtime is driven by the messages stream (receiver_id=userId) to avoid N+1 and global RLS evaluation. Enforced by migration `20260307230000_realtime_topology_no_conversations.sql` (idempotent drop if ever added). See `Sline_everything/AppDigram/All_Diagrams/18_realtime-subscription-topology.md`.
+**Note:** Tables in the realtime publication: `messages`, `notifications`, `conversation_presence`. **Do NOT add `conversations`** — Inbox realtime is driven by the messages stream (receiver_id=userId) to avoid N+1 and global RLS evaluation. Enforced by migration `20260307230000_realtime_topology_no_conversations.sql` (idempotent drop if ever added). See `Sline_everything/AppDiagram/All_Diagrams/18_realtime-subscription-topology.md`.
 
 ### Flutter Integration
 

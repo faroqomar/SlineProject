@@ -70,7 +70,7 @@ Primary documents:
 - `Sline_Log.md`: versioned project history and release notes
 - `DOC_SOURCE_MAP.md`: feature-to-doc and feature-to-diagram routing
 - `UI_SURFACE_INVENTORY.md`: screen, route, popup, sheet, tab, navigation, and shared-widget inventory
-- `AppDigram/README.md`: diagram index for planning and review
+- `AppDiagram/README.md`: diagram index for planning and review
 - `ARCHITECTURE_ANALYSIS.md`: long-form architecture guidance
 - `CODE_REVIEW.md`: recurring review findings and reusable practices
 
@@ -248,7 +248,7 @@ Not every feature uses every subfolder, but the standard live convention is:
 - `lib/features/dashboard/`: unified dashboard tabs (Overview, Bookings, Work, Wallet, Inbox) and role-based work summaries, including the live bottom-nav dashboard slot. Amber Dusk Phase 4 updates dashboard shell/tabs/cards in this feature while keeping card ownership in booking/tasks/wallet. Transactional QA recovery adds empty-state CTAs, removes the disabled Inbox Sent placeholder, and keeps canceled/terminal booking drafts out of active/upcoming buckets. Tab cards (booking, offer, wallet snapshot) live in owning features: `booking/view/widgets/dashboard_booking_card.dart`, `tasks/view/widgets/dashboard_offer_card.dart`, `wallet/view/widgets/wallet_snapshot_card.dart`; dedicated Wallet tab in `view/tabs/wallet_tab.dart`; shared status helpers in `core/utils/status_presenter.dart`
 - `lib/features/direct_offers/`: direct chat offers (create, accept, pay, deliver, complete) and payment recovery
   - `services/direct_offer_deep_link_handler.dart` — **Phase E** Deep link handler for direct offer routes
-- `lib/features/notifications/`: in-app notification list (server-authority; foreground sync then stream), badge/modal/deep links; `PushDeviceService` registers FCM tokens in `user_devices`; push delivery via `notification_push_queue` + Edge (`push-notify`, `process-push-queue`). `NotificationViewModel` preserves cached notifications and reconnects on transient Supabase Realtime close codes `1002`/`1006`. Diagram: `Sline_everything/AppDigram/All_Diagrams/13_notification-routing.md`. Plan: `.TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md`.
+- `lib/features/notifications/`: in-app notification list (server-authority; foreground sync then stream), badge/modal/deep links; `PushDeviceService` registers FCM tokens in `user_devices`; push delivery via `notification_push_queue` + Edge (`push-notify`, `process-push-queue`). `NotificationViewModel` preserves cached notifications and reconnects on transient Supabase Realtime close codes `1002`/`1006`. Diagram: `Sline_everything/AppDiagram/All_Diagrams/13_notification-routing.md`. Plan: `.TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md`.
 - `lib/features/management/`: order timeline / note management for tasks and bookings
 - `lib/features/orders/`: decommissioned placeholder folder with `README.md` only; standalone orders runtime was removed on 2026-03-01
 - `lib/features/proposals/`: proposal models, data (repositories), routes (payment); view re-exports from tasks for list/submit/tile/payment screens
