@@ -65,7 +65,7 @@ dev_dependencies:
   mocktail: ^1.0.5
   postgrest: ^2.7.0
 
-  very_good_analysis: ^7.0.0
+  very_good_analysis: ^10.2.0
 
 dependency_overrides:
   sign_in_with_apple: ^7.0.1
