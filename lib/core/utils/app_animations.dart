@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:sline_app/core/theme/app_motion.dart';
@@ -97,16 +99,16 @@ class _SpringButtonState extends State<SpringButton>
   }
 
   void _onTapDown(TapDownDetails details) {
-    _controller.forward();
+    unawaited(_controller.forward());
   }
 
   void _onTapUp(TapUpDetails details) {
-    _controller.reverse();
+    unawaited(_controller.reverse());
     widget.onTap?.call();
   }
 
   void _onTapCancel() {
-    _controller.reverse();
+    unawaited(_controller.reverse());
   }
 
   @override

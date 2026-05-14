@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
@@ -67,7 +69,7 @@ class PortfolioTile extends StatelessWidget {
               tag: 'PortfolioTile',
               json: {'itemId': item.id},
             );
-            PortfolioDetailsSheet.open(context, item, controller);
+            unawaited(PortfolioDetailsSheet.open(context, item, controller));
           },
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -81,7 +83,7 @@ class PortfolioTile extends StatelessWidget {
                       ? Image.network(
                           imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, error, __) {
+                          errorBuilder: (_, error, _) {
                             AppLogger.w(
                               'Failed to load portfolio image',
                               tag: 'PortfolioTile',

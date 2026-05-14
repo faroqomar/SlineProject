@@ -6,6 +6,20 @@ metadata:
 ---
 
 # Flutter Caching And Performance For SLine
+## SLine Project Overrides
+
+These upstream Flutter/Dart instructions are adapted for SLine. Apply these rules before the generic workflow:
+
+- Preserve SLine's strict MVVM boundary: Views render state and call ViewModels; ViewModels call services/repositories; services own Supabase, storage, realtime, and payment access.
+- Do not put Supabase, RPC, storage, business rules, or navigation side effects directly in `lib/features/*/view/` widgets. If a View needs data the ViewModel does not expose, document the gap or extend the ViewModel/service layer.
+- Prefer existing project patterns over new dependencies: Provider state management, manual `fromJson`/`toJson`/`copyWith`, `ViewState<T>` for new complex VMs, `AppLogger`, `AppFailure`, `ErrorMapper`, `AppMotion`, `AppColors`, `AppTypography`, `AppDimens`, `AppLayout`, and shared widgets under `lib/core/widgets/`.
+- Do not introduce `build_runner`, `freezed`, generated mocks, `go_router`, `http`, or new architecture packages unless the user explicitly asks and the repo evidence supports it.
+- Before implementation, search related feature files with `rg`, then keep changes scoped to the target feature or shared layer. Preserve unrelated user changes in the dirty worktree.
+- After meaningful code changes, run `dart format` on touched Dart files, `flutter analyze --no-fatal-infos`, and focused `flutter test` targets. Run the full suite when shared behavior or cross-feature contracts changed.
+
+### SLine Performance Notes
+
+Respect the existing private-media contract: store storage paths in the database and resolve signed URLs at render time through `SignedImage`, `SignedAvatar`, `SignedUrlGenerator`, and `SignedUrlCache`. Do not persist signed URLs.
 
 ## SLine Defaults
 

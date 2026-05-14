@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -84,9 +86,9 @@ class _ConversationListTileState extends State<ConversationListTile>
   void _updateAnimations({required bool isUnread}) {
     // Badge entrance: forward on first appearance, reverse on dismissal
     if (isUnread && !_wasPreviouslyUnread) {
-      _badgeController.forward(from: 0);
+      unawaited(_badgeController.forward(from: 0));
     } else if (!isUnread && _wasPreviouslyUnread) {
-      _badgeController.reverse();
+      unawaited(_badgeController.reverse());
     }
     _wasPreviouslyUnread = isUnread;
     _animationCallbackPending = false;

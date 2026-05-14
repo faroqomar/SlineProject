@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
@@ -34,9 +36,11 @@ class _TendersScreenState extends State<TendersScreen> {
           tag: 'DiscoveryUI',
           json: {'surface': 'tenders'},
         );
-        homeVm.loadFeaturedTasks(
-          filterController: filterVm,
-          surface: 'tenders',
+        unawaited(
+          homeVm.loadFeaturedTasks(
+            filterController: filterVm,
+            surface: 'tenders',
+          ),
         );
       }
     });
@@ -153,9 +157,11 @@ class _TendersScreenState extends State<TendersScreen> {
                           'task_type': task.taskType.name,
                         },
                       );
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => TaskDetailsScreen(task: task),
+                      unawaited(
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => TaskDetailsScreen(task: task),
+                          ),
                         ),
                       );
                     },

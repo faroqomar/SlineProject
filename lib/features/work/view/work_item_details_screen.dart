@@ -67,9 +67,11 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<WorkItemDetailsViewModel>().loadData(
-        widget.id,
-        widget.type.name,
+      unawaited(
+        context.read<WorkItemDetailsViewModel>().loadData(
+          widget.id,
+          widget.type.name,
+        ),
       );
     });
   }
@@ -584,36 +586,44 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
   // ---------------------------------------------------------------------------
 
   void _showDeliveryModal(BuildContext context, WorkItemDetailsViewModel vm) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AmberDuskColors.transparent,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: SubmitDeliveryModal(
-          isLoading: vm.isLoading,
-          onSubmit: (note) async {
-            await vm.submitDelivery(note);
-            if (ctx.mounted) Navigator.pop(ctx);
-          },
+    unawaited(
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: AmberDuskColors.transparent,
+        builder: (ctx) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          ),
+          child: SubmitDeliveryModal(
+            isLoading: vm.isLoading,
+            onSubmit: (note) async {
+              await vm.submitDelivery(note);
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+          ),
         ),
       ),
     );
   }
 
   void _showExtensionModal(BuildContext context, WorkItemDetailsViewModel vm) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AmberDuskColors.transparent,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: RequestExtensionModal(
-          isLoading: vm.isLoading,
-          onSubmit: (note, days) async {
-            await vm.requestExtension(note, days);
-            if (ctx.mounted) Navigator.pop(ctx);
-          },
+    unawaited(
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: AmberDuskColors.transparent,
+        builder: (ctx) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          ),
+          child: RequestExtensionModal(
+            isLoading: vm.isLoading,
+            onSubmit: (note, days) async {
+              await vm.requestExtension(note, days);
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+          ),
         ),
       ),
     );

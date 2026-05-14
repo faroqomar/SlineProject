@@ -127,7 +127,7 @@ void main() async {
       }
 
       // Global Flutter framework error handler (widget build errors, etc.)
-      FlutterError.onError = (FlutterErrorDetails details) {
+      FlutterError.onError = (details) {
         if (isIgnoredFlutterWebEngineDisposeError(details.exception) ||
             isIgnoredRealtimeEncodeError(details.exception) ||
             isIgnoredRealtimePayloadError(details.exception)) {
@@ -207,7 +207,13 @@ class SLineApp extends StatelessWidget {
         // Theme - light/dark mode toggle
         ChangeNotifierProvider(create: (_) => ThemeModeProvider()),
         // Public runtime flags/config from system_config
-        ChangeNotifierProvider(create: (_) => SystemConfigViewModel()..load()),
+        ChangeNotifierProvider(
+          create: (_) {
+            final viewModel = SystemConfigViewModel();
+            unawaited(viewModel.load());
+            return viewModel;
+          },
+        ),
         // Saved Tasks - global bookmark state
         ChangeNotifierProvider(
           create: (_) => SavedTasksViewModel(service: SavedTasksService()),
@@ -426,16 +432,16 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener>
       final authVm = context.read<AuthSessionViewModel>();
       authVm.onSessionExpired = _handleSessionExpired;
       authVm.onPasswordRecovery = _handlePasswordRecovery;
-      context.read<SystemConfigViewModel>().load();
-      _runAccountGuards();
+      unawaited(context.read<SystemConfigViewModel>().load());
+      unawaited(_runAccountGuards());
     });
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      context.read<SystemConfigViewModel>().load();
-      _runAccountGuards();
+      unawaited(context.read<SystemConfigViewModel>().load());
+      unawaited(_runAccountGuards());
     }
   }
 
@@ -448,15 +454,17 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener>
   void _handleSessionExpired() {
     AppLogger.w('Session expired - redirecting to login', tag: 'Auth');
     // Clear navigation stack and go to login
-    _navigatorKey.currentState?.pushNamedAndRemoveUntil(
-      '/login',
-      (route) => false,
+    unawaited(
+      _navigatorKey.currentState?.pushNamedAndRemoveUntil(
+        '/login',
+        (route) => false,
+      ),
     );
   }
 
   void _handlePasswordRecovery() {
     AppLogger.i('Handling password recovery callback', tag: 'Auth');
-    _navigatorKey.currentState?.pushNamed('/reset-password');
+    unawaited(_navigatorKey.currentState?.pushNamed('/reset-password'));
   }
 
   Future<void> _runAccountGuards() async {
@@ -562,19 +570,6 @@ class _AppWithAuthListenerState extends State<_AppWithAuthListener>
           onGenerateRoute: _resolveRoute,
         );
       },
-    );
-  }
-}
-
-class SplashScreen extends StatelessWidget {
-  const SplashScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Text('SLine is loading...', style: TextStyle(fontSize: 24)),
-      ),
     );
   }
 }

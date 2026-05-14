@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
@@ -99,7 +101,7 @@ class _NotificationsModalState extends State<NotificationsModal>
       'NotificationsModal: stagger entrance triggered ($itemCount items)',
       tag: 'Notifications',
     );
-    _staggerController.forward();
+    unawaited(_staggerController.forward());
   }
 
   /// Build slide animation for tile at [index], caching the result so
@@ -197,7 +199,7 @@ class _NotificationsModalState extends State<NotificationsModal>
                             AppDimens.p16,
                           ),
                           itemCount: vm.notifications.length,
-                          separatorBuilder: (_, __) =>
+                          separatorBuilder: (_, _) =>
                               const SizedBox(height: AppDimens.p10),
                           itemBuilder: (context, index) {
                             final notification = vm.notifications[index];
@@ -205,11 +207,13 @@ class _NotificationsModalState extends State<NotificationsModal>
                               key: NotificationsModalKeys.row(notification.id),
                               notification: notification,
                               onTap: () {
-                                vm.markAsRead(notification.id).then((_) {
-                                  if (context.mounted) {
-                                    Navigator.pop(context, notification);
-                                  }
-                                });
+                                unawaited(
+                                  vm.markAsRead(notification.id).then((_) {
+                                    if (context.mounted) {
+                                      Navigator.pop(context, notification);
+                                    }
+                                  }),
+                                );
                               },
                             );
 
@@ -377,8 +381,8 @@ class _NotificationsModalState extends State<NotificationsModal>
         AppDimens.p16,
       ),
       itemCount: 5,
-      separatorBuilder: (_, __) => const SizedBox(height: AppDimens.p12),
-      itemBuilder: (_, __) => const _SkeletonNotificationTile(),
+      separatorBuilder: (_, _) => const SizedBox(height: AppDimens.p12),
+      itemBuilder: (_, _) => const _SkeletonNotificationTile(),
     );
   }
 

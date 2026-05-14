@@ -12,22 +12,22 @@ void main() {
   group('DeepLinkRegistry', () {
     group('register', () {
       test('registers a handler for an entity type', () {
-        registry.register('task', (_, __, {metadata}) async {});
+        registry.register('task', (_, _, {metadata}) async {});
         expect(registry.canHandle('task'), isTrue);
       });
 
       test('is case-insensitive', () {
-        registry.register('Task', (_, __, {metadata}) async {});
+        registry.register('Task', (_, _, {metadata}) async {});
         expect(registry.canHandle('task'), isTrue);
         expect(registry.canHandle('TASK'), isTrue);
         expect(registry.canHandle('Task'), isTrue);
       });
 
       test('throws StateError when registering duplicate key', () {
-        registry.register('task', (_, __, {metadata}) async {});
+        registry.register('task', (_, _, {metadata}) async {});
 
         expect(
-          () => registry.register('task', (_, __, {metadata}) async {}),
+          () => registry.register('task', (_, _, {metadata}) async {}),
           throwsStateError,
         );
 
@@ -43,12 +43,12 @@ void main() {
       });
 
       test('returns true for registered type', () {
-        registry.register('booking', (_, __, {metadata}) async {});
+        registry.register('booking', (_, _, {metadata}) async {});
         expect(registry.canHandle('booking'), isTrue);
       });
 
       test('is case-insensitive', () {
-        registry.register('conversation', (_, __, {metadata}) async {});
+        registry.register('conversation', (_, _, {metadata}) async {});
         expect(registry.canHandle('CONVERSATION'), isTrue);
       });
     });
@@ -59,9 +59,9 @@ void main() {
       });
 
       test('contains all registered keys in lowercase', () {
-        registry.register('Task', (_, __, {metadata}) async {});
-        registry.register('Booking', (_, __, {metadata}) async {});
-        registry.register('conversation', (_, __, {metadata}) async {});
+        registry.register('Task', (_, _, {metadata}) async {});
+        registry.register('Booking', (_, _, {metadata}) async {});
+        registry.register('conversation', (_, _, {metadata}) async {});
 
         expect(registry.registeredTypes.toSet(), {
           'task',
@@ -106,7 +106,7 @@ void main() {
       });
 
       testWidgets('returns true when handler exists', (tester) async {
-        registry.register('task', (_, __, {metadata}) async {});
+        registry.register('task', (_, _, {metadata}) async {});
 
         late bool result;
         await tester.pumpWidget(
@@ -151,7 +151,7 @@ void main() {
 
       testWidgets('is case-insensitive on dispatch', (tester) async {
         var called = false;
-        registry.register('booking', (_, __, {metadata}) async {
+        registry.register('booking', (_, _, {metadata}) async {
           called = true;
         });
 
@@ -208,7 +208,7 @@ void main() {
         Map<String, dynamic>? capturedMetadata;
         var wasCalled = false;
 
-        registry.register('task', (_, __, {metadata}) async {
+        registry.register('task', (_, _, {metadata}) async {
           wasCalled = true;
           capturedMetadata = metadata;
         });

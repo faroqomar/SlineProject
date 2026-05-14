@@ -27,7 +27,7 @@ PortfolioItem _item({required String id, String title = 'Item'}) {
   );
 }
 
-final _sampleItems = [
+final List<PortfolioItem> _sampleItems = [
   _item(id: 'p1', title: 'Project Alpha'),
   _item(id: 'p2', title: 'Project Beta'),
 ];

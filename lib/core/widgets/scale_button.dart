@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -79,13 +81,13 @@ class _ScaleButtonState extends State<ScaleButton>
 
   void _onTapDown(TapDownDetails details) {
     if (!_isInteractive) return;
-    _controller.forward();
+    unawaited(_controller.forward());
     AppInteractionStates.hapticTap();
   }
 
   void _onTapUp(TapUpDetails details) {
     if (!_isInteractive) return;
-    _controller.reverse();
+    unawaited(_controller.reverse());
     if (widget.callbackDelay == Duration.zero) {
       widget.onPressed!();
     } else {
@@ -97,7 +99,7 @@ class _ScaleButtonState extends State<ScaleButton>
 
   void _onTapCancel() {
     if (!_isInteractive) return;
-    _controller.reverse();
+    unawaited(_controller.reverse());
   }
 
   @override

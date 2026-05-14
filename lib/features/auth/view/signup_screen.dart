@@ -129,7 +129,7 @@ class _SignupScreenState extends State<SignupScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       AppLogger.d('Signup stagger animation started', tag: 'Auth');
-      _staggerController.forward();
+      unawaited(_staggerController.forward());
     });
   }
 
@@ -220,8 +220,8 @@ class _SignupScreenState extends State<SignupScreen>
   // --- Shake animation ---
 
   void _triggerShake() {
-    HapticFeedback.mediumImpact();
-    _shakeController.forward(from: 0);
+    unawaited(HapticFeedback.mediumImpact());
+    unawaited(_shakeController.forward(from: 0));
   }
 
   double _shakeOffset(double animationValue) {

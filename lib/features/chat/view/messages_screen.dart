@@ -93,7 +93,7 @@ class _MessagesScreenState extends State<MessagesScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _chatCtrl.fetchConversations();
+      unawaited(_chatCtrl.fetchConversations());
       _chatCtrl.subscribeToUserConversations();
       AppLogger.d('MessagesScreen: initial load started', tag: 'Chat');
     });
@@ -184,7 +184,7 @@ class _MessagesScreenState extends State<MessagesScreen>
       'MessagesScreen: stagger entrance triggered ($itemCount items)',
       tag: 'Chat',
     );
-    _staggerController.forward();
+    unawaited(_staggerController.forward());
   }
 
   @override
@@ -517,7 +517,7 @@ class _MessagesScreenState extends State<MessagesScreen>
       padding: const EdgeInsets.symmetric(horizontal: AppLayout.spacingSection),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
-          (_, __) => const SkeletonConversationTile(),
+          (_, _) => const SkeletonConversationTile(),
           childCount: 6,
         ),
       ),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/chat/models/conversation_model.dart';
@@ -84,6 +86,6 @@ class UserProfileViewModel extends ChangeNotifier {
   }
 
   void retry() {
-    load();
+    unawaited(load());
   }
 }

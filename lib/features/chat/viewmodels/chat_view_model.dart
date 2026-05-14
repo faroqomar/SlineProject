@@ -104,9 +104,9 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
     _offerRefreshDebounce?.cancel();
     _offerRefreshDebounce = null;
     RoleSwitchCoordinator().unregister(this);
-    _msgSub?.cancel();
-    _inboxMsgSub?.cancel();
-    _presenceSub?.cancel();
+    unawaited(_msgSub?.cancel());
+    unawaited(_inboxMsgSub?.cancel());
+    unawaited(_presenceSub?.cancel());
     super.dispose();
   }
 
@@ -230,7 +230,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
       AppLogger.d('[REALTIME] subscribeToUserConversations: no user, skip');
       return;
     }
-    _inboxMsgSub?.cancel();
+    unawaited(_inboxMsgSub?.cancel());
     AppLogger.d(
       '[REALTIME] subscribeToUserConversations: starting inbox messages stream',
     );
@@ -280,42 +280,44 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
       } else {
         if (_fetchingConversationIds.contains(message.conversationId)) continue;
         _fetchingConversationIds.add(message.conversationId);
-        _repo
-            .getConversationById(message.conversationId)
-            .then((convo) {
-              if (!_mounted) return;
-              _fetchingConversationIds.remove(message.conversationId);
-              final merged = convo.copyWith(
-                lastMessage: message.content,
-                lastMessageTime: message.createdAt,
-                lastMessageSenderId: message.senderId,
-              );
-              if (!conversations.any((c) => c.id == merged.id)) {
-                conversations.add(merged);
-                conversations.sort((a, b) {
-                  final aTime = a.lastMessageTime ?? a.createdAt;
-                  final bTime = b.lastMessageTime ?? b.createdAt;
-                  return bTime.compareTo(aTime);
-                });
-                AppLogger.d(
-                  '[REALTIME] New conversation added from inbox message: ${merged.id}',
+        unawaited(
+          _repo
+              .getConversationById(message.conversationId)
+              .then((convo) {
+                if (!_mounted) return;
+                _fetchingConversationIds.remove(message.conversationId);
+                final merged = convo.copyWith(
+                  lastMessage: message.content,
+                  lastMessageTime: message.createdAt,
+                  lastMessageSenderId: message.senderId,
                 );
-                _notify();
-              }
-            })
-            .onError<Exception>((e, st) {
-              _fetchingConversationIds.remove(message.conversationId);
-              AppLogger.w(
-                'getConversationById failed for ${message.conversationId}',
-                error: e,
-              );
-            });
+                if (!conversations.any((c) => c.id == merged.id)) {
+                  conversations.add(merged);
+                  conversations.sort((a, b) {
+                    final aTime = a.lastMessageTime ?? a.createdAt;
+                    final bTime = b.lastMessageTime ?? b.createdAt;
+                    return bTime.compareTo(aTime);
+                  });
+                  AppLogger.d(
+                    '[REALTIME] New conversation added from inbox message: ${merged.id}',
+                  );
+                  _notify();
+                }
+              })
+              .onError<Exception>((e, st) {
+                _fetchingConversationIds.remove(message.conversationId);
+                AppLogger.w(
+                  'getConversationById failed for ${message.conversationId}',
+                  error: e,
+                );
+              }),
+        );
       }
     }
   }
 
   void unsubscribeFromUserConversations() {
-    _inboxMsgSub?.cancel();
+    unawaited(_inboxMsgSub?.cancel());
     _inboxMsgSub = null;
     AppLogger.d(
       '[REALTIME] unsubscribeFromUserConversations: inbox stream cancelled',
@@ -573,7 +575,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
       messageType: 'offer_rejected',
       payload: {
         'original_offer_id': offerMsg.id,
-        if (offerId != null) 'offer_id': offerId,
+        'offer_id': ?offerId,
       },
     );
   }
@@ -670,7 +672,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
               const Duration(milliseconds: 500),
               () {
                 if (_mounted && activeConversation != null) {
-                  refreshOfferStatusesForCurrentMessages();
+                  unawaited(refreshOfferStatusesForCurrentMessages());
                 }
               },
             );
@@ -741,9 +743,9 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
   void unsubscribeFromConversation() {
     _offerRefreshDebounce?.cancel();
     _offerRefreshDebounce = null;
-    _msgSub?.cancel();
+    unawaited(_msgSub?.cancel());
     _msgSub = null;
-    _presenceSub?.cancel();
+    unawaited(_presenceSub?.cancel());
     _presenceSub = null;
   }
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
@@ -124,7 +126,7 @@ class _SignedAvatarState extends State<SignedAvatar> {
   @override
   void initState() {
     super.initState();
-    _resolve();
+    unawaited(_resolve());
   }
 
   SignedUrlGenerator _ensureUrlGenerator() {
@@ -139,7 +141,7 @@ class _SignedAvatarState extends State<SignedAvatar> {
     if (oldWidget.storagePathOrUrl != widget.storagePathOrUrl) {
       _loading = true;
       _resolvedUrl = null;
-      _resolve();
+      unawaited(_resolve());
     }
   }
 

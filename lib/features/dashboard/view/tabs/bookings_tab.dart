@@ -150,8 +150,8 @@ class BookingsTab extends StatelessWidget {
         vertical: AppDimens.p16,
       ),
       itemCount: 4,
-      separatorBuilder: (_, __) => const SizedBox(height: AppDimens.p12),
-      itemBuilder: (_, __) => const _SkeletonBookingCard(),
+      separatorBuilder: (_, _) => const SizedBox(height: AppDimens.p12),
+      itemBuilder: (_, _) => const _SkeletonBookingCard(),
     );
   }
 

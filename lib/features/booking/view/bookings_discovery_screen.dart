@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
@@ -33,9 +35,11 @@ class _BookingsDiscoveryScreenState extends State<BookingsDiscoveryScreen> {
           tag: 'DiscoveryUI',
           json: {'surface': 'bookings'},
         );
-        homeVm.loadFeaturedTasks(
-          filterController: filterVm,
-          surface: 'bookings',
+        unawaited(
+          homeVm.loadFeaturedTasks(
+            filterController: filterVm,
+            surface: 'bookings',
+          ),
         );
       }
     });
@@ -143,9 +147,11 @@ class _BookingsDiscoveryScreenState extends State<BookingsDiscoveryScreen> {
                           'task_type': task.taskType.name,
                         },
                       );
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => TaskDetailsScreen(task: task),
+                      unawaited(
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => TaskDetailsScreen(task: task),
+                          ),
                         ),
                       );
                     },

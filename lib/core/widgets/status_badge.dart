@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:sline_app/core/app_enums.dart';
@@ -142,16 +144,16 @@ class _StatusBadgeState extends State<StatusBadge>
       if (status == AnimationStatus.completed) {
         _pulseCount++;
         if (_pulseCount < _maxPulseCount) {
-          _pulseController!.reverse();
+          unawaited(_pulseController!.reverse());
         } else {
           _pulseController!.stop();
         }
       } else if (status == AnimationStatus.dismissed &&
           _pulseCount < _maxPulseCount) {
-        _pulseController!.forward();
+        unawaited(_pulseController!.forward());
       }
     });
-    _pulseController!.forward();
+    unawaited(_pulseController!.forward());
   }
 
   /// Maps status text to Amber Dusk semantic foreground and overlay roles.

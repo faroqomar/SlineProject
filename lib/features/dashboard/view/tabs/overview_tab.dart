@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
@@ -30,7 +32,7 @@ class _OverviewTabState extends State<OverviewTab> {
     // Ensure wallet loads when dashboard overview is first shown (snapshot contract)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<WalletViewModel>().loadWallet();
+        unawaited(context.read<WalletViewModel>().loadWallet());
       }
     });
   }
@@ -126,7 +128,7 @@ class _SectionCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (action != null) action!,
+                ?action,
               ],
             ),
           ),

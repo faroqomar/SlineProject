@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/deep_link_service.dart';
@@ -94,13 +96,13 @@ class _NotificationBadgeButtonState extends State<NotificationBadgeButton>
   void _handleCountChange(int newCount) {
     if (newCount > 0 && _previousCount == 0) {
       // Badge appearing — entrance animation from zero.
-      _badgeController.forward(from: 0);
+      unawaited(_badgeController.forward(from: 0));
     } else if (newCount == 0 && _previousCount > 0) {
       // Badge disappearing — reverse the entrance animation.
-      _badgeController.reverse();
+      unawaited(_badgeController.reverse());
     } else if (newCount != _previousCount && newCount > 0) {
       // Count changed while badge stays visible — play real pulse.
-      _pulseController.forward(from: 0);
+      unawaited(_pulseController.forward(from: 0));
     }
     _previousCount = newCount;
   }

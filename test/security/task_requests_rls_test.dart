@@ -33,9 +33,8 @@ const String _testTaskId = 'task-550e8400-e29b-41d4-a716-446655440000';
 const String _testRequestId = 'req-550e8400-e29b-41d4-a716-446655440004';
 
 /// Error codes for RLS violations
-class RlsErrorCodes {
+class _RlsErrorCodes {
   static const String insufficientPrivilege = '42501';
-  static const String authenticationFailed = 'PGRST301';
 }
 
 /// Custom exception for testing RLS violations
@@ -138,7 +137,7 @@ void main() {
         when(() => mockClient.from('task_requests')).thenThrow(
           RlsTestException(
             message: 'permission denied for table task_requests',
-            code: RlsErrorCodes.insufficientPrivilege,
+            code: _RlsErrorCodes.insufficientPrivilege,
           ),
         );
 
@@ -151,7 +150,7 @@ void main() {
             isA<RlsTestException>().having(
               (e) => e.code,
               'error code',
-              RlsErrorCodes.insufficientPrivilege,
+              _RlsErrorCodes.insufficientPrivilege,
             ),
           ),
         );
@@ -179,7 +178,7 @@ void main() {
       when(() => mockClient.from('task_requests')).thenThrow(
         RlsTestException(
           message: 'permission denied for table task_requests',
-          code: RlsErrorCodes.insufficientPrivilege,
+          code: _RlsErrorCodes.insufficientPrivilege,
         ),
       );
 
@@ -192,7 +191,7 @@ void main() {
           isA<RlsTestException>().having(
             (e) => e.code,
             'error code',
-            RlsErrorCodes.insufficientPrivilege,
+            _RlsErrorCodes.insufficientPrivilege,
           ),
         ),
       );
@@ -335,7 +334,7 @@ void main() {
         RlsTestException(
           message:
               'new row violates row-level security policy for table "task_requests"',
-          code: RlsErrorCodes.insufficientPrivilege,
+          code: _RlsErrorCodes.insufficientPrivilege,
         ),
       );
 
@@ -348,7 +347,7 @@ void main() {
           isA<RlsTestException>().having(
             (e) => e.code,
             'error code',
-            RlsErrorCodes.insufficientPrivilege,
+            _RlsErrorCodes.insufficientPrivilege,
           ),
         ),
       );
@@ -369,7 +368,7 @@ void main() {
       when(() => mockClient.from('task_requests')).thenThrow(
         RlsTestException(
           message: 'permission denied for table task_requests',
-          code: RlsErrorCodes.insufficientPrivilege,
+          code: _RlsErrorCodes.insufficientPrivilege,
         ),
       );
 
@@ -382,7 +381,7 @@ void main() {
           isA<RlsTestException>().having(
             (e) => e.code,
             'error code',
-            RlsErrorCodes.insufficientPrivilege,
+            _RlsErrorCodes.insufficientPrivilege,
           ),
         ),
       );
@@ -424,7 +423,7 @@ void main() {
       // Setup mock to return data (simulating a successful RLS-permitted SELECT)
       when(
         () => mockClient.from('task_requests'),
-      ).thenReturn(MockQueryBuilder(result: bidData));
+      ).thenReturn(_MockQueryBuilder(result: bidData));
 
       // Execute SELECT
       final builder = mockClient.from('task_requests');
@@ -472,7 +471,7 @@ void main() {
       // Setup mock to return data
       when(
         () => mockClient.from('task_requests'),
-      ).thenReturn(MockQueryBuilder(result: bidData));
+      ).thenReturn(_MockQueryBuilder(result: bidData));
 
       // Execute SELECT
       final builder = mockClient.from('task_requests');
@@ -519,7 +518,7 @@ void main() {
         final insertedBid = [bidData];
 
         // Setup mock for successful insert
-        final mockBuilder = MockQueryBuilder(result: insertedBid);
+        final mockBuilder = _MockQueryBuilder(result: insertedBid);
         when(() => mockClient.from('task_requests')).thenReturn(mockBuilder);
 
         // Execute INSERT
@@ -563,7 +562,7 @@ void main() {
       };
 
       // Setup mock for successful update
-      final mockBuilder = MockQueryBuilder(result: [updatedBid]);
+      final mockBuilder = _MockQueryBuilder(result: [updatedBid]);
       when(() => mockClient.from('task_requests')).thenReturn(mockBuilder);
 
       // Execute UPDATE
@@ -600,7 +599,7 @@ void main() {
       ).thenReturn({'active_role': 'freelancer'});
 
       // Setup mock for successful delete (empty result)
-      final mockBuilder = MockQueryBuilder(result: []);
+      final mockBuilder = _MockQueryBuilder(result: []);
       when(() => mockClient.from('task_requests')).thenReturn(mockBuilder);
 
       // Execute DELETE
@@ -730,7 +729,7 @@ void main() {
       // Setup mock to return empty (RLS filtered - no visible rows)
       when(
         () => mockClient.from('task_requests'),
-      ).thenReturn(MockQueryBuilder(result: []));
+      ).thenReturn(_MockQueryBuilder(result: []));
 
       // Execute SELECT
       final builder = mockClient.from('task_requests');
@@ -790,10 +789,10 @@ void main() {
 // ============================================================================
 
 /// A simple mock query builder that simulates Supabase query chain results
-class MockQueryBuilder {
+class _MockQueryBuilder {
   final List<dynamic> result;
 
-  MockQueryBuilder({required this.result});
+  _MockQueryBuilder({required this.result});
 
   Future<List<dynamic>> select() async => result;
 

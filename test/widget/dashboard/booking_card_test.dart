@@ -53,7 +53,7 @@ void main() {
           onAccept: onAccept ?? (_) {},
           onDecline: onDecline ?? (_) {},
           onCancel: onCancel ?? (_) {},
-          onUpdateStatus: onUpdateStatus ?? (_, __) {},
+          onUpdateStatus: onUpdateStatus ?? (_, _) {},
         ),
       ),
     );

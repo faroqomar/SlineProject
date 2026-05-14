@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/mixins/role_switch_aware.dart';
@@ -74,9 +76,9 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
     _currentTab = DashboardTab.overview;
     _currentRole = UserRole.freelancer;
 
-    _loadCachedRole();
-    _syncRoleFromBackend();
-    _loadOverviewData();
+    unawaited(_loadCachedRole());
+    unawaited(_syncRoleFromBackend());
+    unawaited(_loadOverviewData());
 
     RoleSwitchCoordinator().register(this);
   }
@@ -216,7 +218,6 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
     'Use awardOffer() and payAwardedOffer() for the two-step tender flow.',
   )
   Future<void> acceptOffer(TaskRequest offer) async {
-    // ignore: deprecated_member_use_from_same_package
     await _inboxDelegate.acceptOffer(offer);
     if (_abortIfDisposed()) return;
     await _fetchWorkItems();
@@ -337,9 +338,9 @@ class DashboardViewModel extends ChangeNotifier with RoleSwitchAware {
     _currentTab = tab;
     _safeNotify();
     if (tab == DashboardTab.bookings && !_bookingDelegate.bookingsLoaded) {
-      _bookingDelegate.loadBookingsData(_currentRole);
+      unawaited(_bookingDelegate.loadBookingsData(_currentRole));
     } else if (tab == DashboardTab.inbox && !_inboxDelegate.inboxLoaded) {
-      _inboxDelegate.loadInboxData(_currentRole);
+      unawaited(_inboxDelegate.loadInboxData(_currentRole));
     }
   }
 

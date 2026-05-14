@@ -140,14 +140,14 @@ class SupabaseRealtimeService {
           json: {'channel': channelName},
         );
         if (!controller.isClosed) {
-          controller.close();
+          unawaited(controller.close());
         }
       },
     );
 
     // Store subscription reference for cleanup
     controller.onCancel = () {
-      subscription.cancel();
+      unawaited(subscription.cancel());
       unsubscribe(channelName);
     };
 
@@ -242,14 +242,14 @@ class SupabaseRealtimeService {
           json: {'channel': channelName},
         );
         if (!controller.isClosed) {
-          controller.close();
+          unawaited(controller.close());
         }
       },
     );
 
     // Store subscription reference for cleanup
     controller.onCancel = () {
-      subscription.cancel();
+      unawaited(subscription.cancel());
       unsubscribe(channelName);
     };
 
@@ -291,9 +291,7 @@ class SupabaseRealtimeService {
 
     // Copy keys to avoid concurrent modification
     final channelNames = List<String>.from(_controllers.keys);
-    for (final channelName in channelNames) {
-      _cleanupChannel(channelName);
-    }
+    channelNames.forEach(_cleanupChannel);
 
     // Clear all tracking maps
     _controllers.clear();
@@ -306,7 +304,7 @@ class SupabaseRealtimeService {
     // Close and remove stream controller
     final controller = _controllers[channelName];
     if (controller != null && !controller.isClosed) {
-      controller.close();
+      unawaited(controller.close());
     }
     _controllers.remove(channelName);
   }

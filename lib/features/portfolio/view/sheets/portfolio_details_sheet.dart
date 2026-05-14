@@ -85,7 +85,7 @@ class PortfolioDetailsSheet extends StatelessWidget {
                   width: double.infinity,
                   height: AppDimens.p100 + AppDimens.p100,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, error, __) {
+                  errorBuilder: (_, error, _) {
                     AppLogger.w(
                       'Failed to load portfolio image in details',
                       tag: 'PortfolioDetailsSheet',

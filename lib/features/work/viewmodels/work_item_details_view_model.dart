@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/models/app_failure.dart';
@@ -544,7 +546,7 @@ class WorkItemDetailsViewModel extends ChangeNotifier {
 
   /// Refreshes dashboard work list (e.g. after payment). No-op if dashboard not injected.
   void refreshDashboard() {
-    _dashboardViewModel?.refresh();
+    unawaited(_dashboardViewModel?.refresh());
   }
 
   /// Cancels awarded offer. No-op if dashboard not injected. Caller should handle errors.

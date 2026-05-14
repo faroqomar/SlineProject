@@ -74,7 +74,7 @@ class PublicProfileHeader extends StatelessWidget {
                       icon: const Icon(Icons.arrow_back),
                     ),
                   ),
-                  if (trailingActions != null) trailingActions!,
+                  ?trailingActions,
                 ],
               ),
               const SizedBox(height: AppDimens.p12),

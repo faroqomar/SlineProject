@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/deep_link_service.dart';
@@ -89,7 +91,7 @@ class _ActivityFeedPreviewState extends State<ActivityFeedPreview>
       'ActivityFeedPreview: stagger entrance ($itemCount items)',
       tag: 'Dashboard',
     );
-    _staggerController.forward();
+    unawaited(_staggerController.forward());
   }
 
   @override
@@ -324,10 +326,12 @@ class _ActivityRow extends StatelessWidget {
             'ActivityFeedPreview: tapped ${item.entityType}/${item.entityId}',
             tag: 'Dashboard',
           );
-          deepLinkService.handleActivity(
-            context,
-            entityType: item.entityType,
-            entityId: item.entityId,
+          unawaited(
+            deepLinkService.handleActivity(
+              context,
+              entityType: item.entityType,
+              entityId: item.entityId,
+            ),
           );
         },
         child: Row(

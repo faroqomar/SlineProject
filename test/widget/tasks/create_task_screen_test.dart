@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -255,18 +257,20 @@ void main() {
               body: Center(
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => MultiProvider(
-                          providers: [
-                            ChangeNotifierProvider<TaskViewModel>.value(
-                              value: taskVm,
-                            ),
-                            Provider<CategoriesRepository>.value(
-                              value: categoriesRepo,
-                            ),
-                          ],
-                          child: const CreateTaskScreen(),
+                    unawaited(
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => MultiProvider(
+                            providers: [
+                              ChangeNotifierProvider<TaskViewModel>.value(
+                                value: taskVm,
+                              ),
+                              Provider<CategoriesRepository>.value(
+                                value: categoriesRepo,
+                              ),
+                            ],
+                            child: const CreateTaskScreen(),
+                          ),
                         ),
                       ),
                     );

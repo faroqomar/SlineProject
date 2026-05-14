@@ -269,9 +269,9 @@ class HomeViewModel extends ChangeNotifier
         'feed_request_id': requestId,
         'operation': operation,
         'cursor_present': cursorPresent,
-        if (resultCount != null) 'result_count': resultCount,
-        if (durationMs != null) 'duration_ms': durationMs,
-        if (hasMore != null) 'has_more': hasMore,
+        'result_count': ?resultCount,
+        'duration_ms': ?durationMs,
+        'has_more': ?hasMore,
       },
     );
   }

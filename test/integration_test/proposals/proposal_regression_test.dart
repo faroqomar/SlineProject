@@ -9,7 +9,7 @@
 ///
 /// These tests ensure the new Task Request (Bid) flow doesn't break
 /// the existing Proposal flow.
-// ignore_for_file: deprecated_member_use_from_same_package, duplicate_ignore
+// ignore_for_file: deprecated_member_use_from_same_package
 
 library;
 
@@ -49,7 +49,6 @@ void main() {
 
         // Create ProposalModel fixtures
         final proposals = [
-          // ignore: deprecated_member_use_from_same_package
           ProposalModel(
             id: 'proposal-1',
             taskId: proposalTestTaskId,
@@ -65,7 +64,6 @@ void main() {
             taskTitle: 'Test Task',
             paymentDeadline: DateTime.now().add(const Duration(hours: 48)),
           ),
-          // ignore: deprecated_member_use_from_same_package
           ProposalModel(
             id: 'proposal-2',
             taskId: proposalTestTaskId,
@@ -218,7 +216,6 @@ void main() {
       );
 
       // Create a ProposalModel (legacy)
-      // ignore: deprecated_member_use_from_same_package
       final proposal = ProposalModel(
         id: 'proposal-id',
         taskId: proposalTestTaskId,

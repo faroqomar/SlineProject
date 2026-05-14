@@ -259,9 +259,7 @@ class RoleSwitchSimulator {
   /// Register all ViewModels with the coordinator
   void registerAll() {
     AppLogger.d('Registering all ViewModels with coordinator', tag: _logTag);
-    for (final vm in _viewModels) {
-      _coordinator.register(vm);
-    }
+    _viewModels.forEach(_coordinator.register);
   }
 
   /// Get the coordinator for direct access in tests

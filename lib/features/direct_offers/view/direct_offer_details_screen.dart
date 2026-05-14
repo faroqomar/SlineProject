@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -35,13 +37,17 @@ class DirectOfferDetailsScreen extends StatelessWidget {
     return Builder(
       builder: (context) {
         return ChangeNotifierProvider<DirectOfferDetailsViewModel>(
-          create: (_) => DirectOfferDetailsViewModel(
-            offerId: offerId,
-            conversationId: conversationId,
-            currentUserId: context.read<AuthSessionViewModel>().currentUserId,
-            directOffersService: context.read<DirectOffersService>(),
-            paymentService: context.read<PaymentService>(),
-          )..loadOffer(),
+          create: (_) {
+            final viewModel = DirectOfferDetailsViewModel(
+              offerId: offerId,
+              conversationId: conversationId,
+              currentUserId: context.read<AuthSessionViewModel>().currentUserId,
+              directOffersService: context.read<DirectOffersService>(),
+              paymentService: context.read<PaymentService>(),
+            );
+            unawaited(viewModel.loadOffer());
+            return viewModel;
+          },
           child: _DirectOfferDetailsContent(offerId: offerId),
         );
       },

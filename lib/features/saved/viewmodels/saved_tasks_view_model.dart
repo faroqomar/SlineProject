@@ -110,13 +110,13 @@ class SavedTasksViewModel extends ChangeNotifier {
   void _initAuthListener() {
     // Initial load if already logged in
     if (_client.auth.currentUser != null) {
-      load();
+      unawaited(load());
     }
 
     _authSubscription = _client.auth.onAuthStateChange.listen((data) {
       final event = data.event;
       if (event == AuthChangeEvent.signedIn) {
-        load();
+        unawaited(load());
       } else if (event == AuthChangeEvent.signedOut) {
         clear();
       }
@@ -136,7 +136,7 @@ class SavedTasksViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
-    _authSubscription?.cancel();
+    unawaited(_authSubscription?.cancel());
     super.dispose();
   }
 

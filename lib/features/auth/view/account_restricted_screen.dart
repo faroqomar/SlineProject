@@ -43,7 +43,7 @@ class _AccountRestrictedScreenState extends State<AccountRestrictedScreen>
     _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _fadeController, curve: AppMotion.curveStandard),
     );
-    _fadeController.forward();
+    unawaited(_fadeController.forward());
   }
 
   @override

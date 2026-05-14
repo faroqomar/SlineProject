@@ -24,29 +24,33 @@ import 'package:sline_app/features/wallet/view/wallet_screen.dart';
 /// Insufficient funds dialog — shown when user tries to pay escrow without
 /// enough wallet balance. Navigates to WalletScreen to add funds.
 void _showInsufficientFundsDialog(BuildContext context) {
-  showDialog<void>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('Insufficient balance'),
-      content: const Text(
-        'Add funds to your wallet and try again from the Dashboard.',
+  unawaited(
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Insufficient balance'),
+        content: const Text(
+          'Add funds to your wallet and try again from the Dashboard.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              unawaited(
+                Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(builder: (_) => const WalletScreen()),
+                ),
+              );
+            },
+            child: const Text('Add funds'),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () {
-            Navigator.pop(ctx);
-            Navigator.push(
-              context,
-              MaterialPageRoute<void>(builder: (_) => const WalletScreen()),
-            );
-          },
-          child: const Text('Add funds'),
-        ),
-      ],
     ),
   );
 }
@@ -128,7 +132,7 @@ class _NextActionsListState extends State<NextActionsList>
       'NextActionsList: stagger entrance ($itemCount items)',
       tag: 'Dashboard',
     );
-    _staggerController.forward();
+    unawaited(_staggerController.forward());
   }
 
   /// Maps a work item's primary action type to a priority color.

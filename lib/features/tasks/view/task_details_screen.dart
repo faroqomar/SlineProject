@@ -56,14 +56,16 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
   }
 
   void _openProposals() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => RequestsListScreen(
-          taskId: widget.task.id,
-          autoOpenSubmitSheet: false, // Just list
-          isTender: true,
-          isOwner: true,
-          budget: widget.task.budget.toString(),
+    unawaited(
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => RequestsListScreen(
+            taskId: widget.task.id,
+            autoOpenSubmitSheet: false, // Just list
+            isTender: true,
+            isOwner: true,
+            budget: widget.task.budget.toString(),
+          ),
         ),
       ),
     );
@@ -227,14 +229,16 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                   if (isOwner && isTender)
                     GestureDetector(
                       onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => RequestsListScreen(
-                              taskId: task.id,
-                              autoOpenSubmitSheet: false,
-                              isTender: true,
-                              isOwner: true,
-                              budget: task.budget.toString(),
+                        unawaited(
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => RequestsListScreen(
+                                taskId: task.id,
+                                autoOpenSubmitSheet: false,
+                                isTender: true,
+                                isOwner: true,
+                                budget: task.budget.toString(),
+                              ),
                             ),
                           ),
                         );

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
@@ -354,35 +356,37 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   void _showAddSkillDialog(BuildContext context, ProfileViewModel vm) {
     _skillController.clear();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: context.colorScheme.cardBackground,
-        title: Text(
-          'Add Skill',
-          style: AppTypography.h5.copyWith(color: context.colorScheme.text),
+    unawaited(
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: context.colorScheme.cardBackground,
+          title: Text(
+            'Add Skill',
+            style: AppTypography.h5.copyWith(color: context.colorScheme.text),
+          ),
+          content: TextField(
+            controller: _skillController,
+            autofocus: true,
+            style: AppTypography.bodyMedium.copyWith(
+              color: context.colorScheme.text,
+            ),
+            decoration: const InputDecoration(hintText: 'e.g. Flutter'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                vm.addSkill(_skillController.text.trim());
+                Navigator.pop(context);
+              },
+              child: const Text('Add'),
+            ),
+          ],
         ),
-        content: TextField(
-          controller: _skillController,
-          autofocus: true,
-          style: AppTypography.bodyMedium.copyWith(
-            color: context.colorScheme.text,
-          ),
-          decoration: const InputDecoration(hintText: 'e.g. Flutter'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              vm.addSkill(_skillController.text.trim());
-              Navigator.pop(context);
-            },
-            child: const Text('Add'),
-          ),
-        ],
       ),
     );
   }

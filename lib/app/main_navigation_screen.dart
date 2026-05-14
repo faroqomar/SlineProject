@@ -72,7 +72,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AppLogger.d('FAB entrance animation started', tag: 'Navigation');
-      _fabController.forward();
+      unawaited(_fabController.forward());
     });
 
     // Banner slide-in
@@ -100,19 +100,23 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
     if (notification.direction == ScrollDirection.reverse && _fabVisible) {
       // Scrolling down — hide FAB
       _fabVisible = false;
-      _fabController.animateTo(
-        0,
-        duration: AppMotion.fast,
-        curve: AppMotion.curveAccel,
+      unawaited(
+        _fabController.animateTo(
+          0,
+          duration: AppMotion.fast,
+          curve: AppMotion.curveAccel,
+        ),
       );
     } else if (notification.direction == ScrollDirection.forward &&
         !_fabVisible) {
       // Scrolling up — show FAB
       _fabVisible = true;
-      _fabController.animateTo(
-        1,
-        duration: AppMotion.fast,
-        curve: AppMotion.curveSpring,
+      unawaited(
+        _fabController.animateTo(
+          1,
+          duration: AppMotion.fast,
+          curve: AppMotion.curveSpring,
+        ),
       );
     }
     return false;
@@ -120,9 +124,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
 
   void _dismissBanner() {
     AppLogger.d('Runtime banner dismissed', tag: 'Navigation');
-    _bannerController.reverse().then((_) {
-      if (mounted) setState(() => _bannerDismissed = true);
-    });
+    unawaited(
+      _bannerController.reverse().then((_) {
+        if (mounted) setState(() => _bannerDismissed = true);
+      }),
+    );
   }
 
   Future<void> _openCreateTask(
@@ -271,7 +277,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
         if (showBanner &&
             !_bannerController.isAnimating &&
             _bannerController.status == AnimationStatus.dismissed) {
-          _bannerController.forward();
+          unawaited(_bannerController.forward());
         }
 
         // Determine slide direction based on tab index change

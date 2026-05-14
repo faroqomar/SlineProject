@@ -328,7 +328,6 @@ class TaskRequestsViewModel extends ChangeNotifier {
   /// Legacy: Combined award+pay (keep for backward compatibility)
   @Deprecated('Use award() and payForAwardedOffer() instead.')
   Future<void> accept(String requestId) =>
-      // ignore: deprecated_member_use_from_same_package
       _awardDelegate.acceptLegacy(requestId);
 
   // ==========================================================================

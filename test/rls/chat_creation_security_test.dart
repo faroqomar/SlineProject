@@ -22,7 +22,7 @@ import '../supabase_test_helper.dart';
 /// 1. Ensure Supabase local is running: `supabase start`
 /// 2. Seed test fixtures
 /// 3. Run: `flutter test test/rls/chat_creation_security_test.dart --dart-define=SUPABASE_INTEGRATION=1`
-const _skipReason =
+const String? _skipReason =
     String.fromEnvironment('SUPABASE_INTEGRATION', defaultValue: '') != '1'
     ? 'Requires Supabase; run with --dart-define=SUPABASE_INTEGRATION=1'
     : null;

@@ -126,8 +126,8 @@ Map<String, dynamic> createTaskRequestRow({
     'payment_deadline': paymentDeadline,
     'awarded_at': awardedAt,
     'awarded_by': awardedBy,
-    if (profiles != null) 'profiles': profiles,
-    if (tasks != null) 'tasks': tasks,
+    'profiles': ?profiles,
+    'tasks': ?tasks,
   };
 }
 
