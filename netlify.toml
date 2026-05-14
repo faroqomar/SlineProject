@@ -1,6 +1,9 @@
 [build]
   publish = "build/web"
-  command = ""
+  command = "bash scripts/netlify_build.sh"
+
+[build.environment]
+  FLUTTER_VERSION = "3.41.9"
 
 # SPA routing for Flutter web
 [[redirects]]
