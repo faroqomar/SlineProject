@@ -177,13 +177,20 @@ void main() {
       expect(indicator.borderSide.color, tabTheme.indicatorColor);
     });
 
-    test('seeds app skeleton extension from Amber Dusk tokens', () {
-      final skeletonTheme = AmberDuskTokens.widgetTheme.skeleton;
-      final extension = AppTheme.light().extension<SkeletonColors>();
+    test('seeds app skeleton extension from brightness-specific tokens', () {
+      final lightSkeletonTheme = AmberDuskTokens.widgetThemeLight.skeleton;
+      final lightExtension = AppTheme.light().extension<SkeletonColors>();
 
-      expect(extension, isNotNull);
-      expect(extension?.base, skeletonTheme.base);
-      expect(extension?.highlight, skeletonTheme.highlight);
+      expect(lightExtension, isNotNull);
+      expect(lightExtension?.base, lightSkeletonTheme.base);
+      expect(lightExtension?.highlight, lightSkeletonTheme.highlight);
+
+      final darkSkeletonTheme = AmberDuskTokens.widgetTheme.skeleton;
+      final darkExtension = AppTheme.dark().extension<SkeletonColors>();
+
+      expect(darkExtension, isNotNull);
+      expect(darkExtension?.base, darkSkeletonTheme.base);
+      expect(darkExtension?.highlight, darkSkeletonTheme.highlight);
     });
   });
 }

@@ -5,7 +5,8 @@
 enum ServiceStatus {
   active,
   draft,
-  paused;
+  paused
+  ;
 
   /// Parses a DB string into a [ServiceStatus].
   /// Falls back to [draft] for unknown values.
@@ -19,8 +20,8 @@ enum ServiceStatus {
 
   /// Human-readable label for display.
   String get label => switch (this) {
-        ServiceStatus.active => 'Active',
-        ServiceStatus.draft => 'Draft',
-        ServiceStatus.paused => 'Paused',
-      };
+    ServiceStatus.active => 'Active',
+    ServiceStatus.draft => 'Draft',
+    ServiceStatus.paused => 'Paused',
+  };
 }
