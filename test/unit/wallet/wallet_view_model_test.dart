@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:sline_app/features/wallet/models/wallet_activity_model.dart';
@@ -288,6 +290,39 @@ void main() {
       verify(() => repo.getActivity(limit: 20)).called(1);
     });
 
+    test(
+      'forceRefresh requested during an active load runs a follow-up reload',
+      () async {
+        final firstActivityCompleter = Completer<List<WalletActivityModel>>();
+        final firstBalanceCompleter = Completer<WalletBalanceModel>();
+        var activityCalls = 0;
+        var balanceCalls = 0;
+
+        when(() => repo.getActivity(limit: 20)).thenAnswer((_) {
+          activityCalls += 1;
+          if (activityCalls == 1) return firstActivityCompleter.future;
+          return Future.value(_activityList(1));
+        });
+        when(() => repo.getWalletBalance()).thenAnswer((_) {
+          balanceCalls += 1;
+          if (balanceCalls == 1) return firstBalanceCompleter.future;
+          return Future.value(_balance(available: 7000));
+        });
+
+        final initialLoad = vm.ensureLoaded();
+        final forcedLoad = vm.ensureLoaded(forceRefresh: true);
+
+        firstActivityCompleter.complete(_activityList(2));
+        firstBalanceCompleter.complete(_balance());
+
+        await Future.wait([initialLoad, forcedLoad]);
+
+        expect(activityCalls, 2);
+        expect(balanceCalls, 2);
+        expect(vm.balance.availableBalance, 7000);
+      },
+    );
+
     test('_loadingFuture is null after ensureLoaded completes', () async {
       _stubLoadWalletSuccess(repo);
 
@@ -440,7 +475,7 @@ void main() {
       await vm.loadMore();
 
       expect(vm.error, isNotNull);
-      expect(vm.error, contains('pagination error'));
+      expect(vm.error, 'An error occurred. Please try again.');
       expect(vm.isLoading, isFalse);
     });
   });
@@ -529,6 +564,26 @@ void main() {
       expect(vm.isWithdrawing, isFalse);
     });
 
+    test(
+      'successful withdrawal still returns true when post-refresh fails',
+      () async {
+        _stubGuardAllowed(guard);
+        _stubWithdrawalSuccess(repo);
+        when(
+          () => repo.getWalletBalance(),
+        ).thenThrow(Exception('refresh unavailable'));
+        when(() => repo.getActivity(limit: 20)).thenAnswer(
+          (_) async => _activityList(1),
+        );
+
+        final result = await vm.requestWithdrawal(amount: 1000);
+
+        expect(result, isTrue);
+        expect(vm.error, 'Failed to refresh wallet after withdrawal.');
+        verify(() => repo.requestWithdrawal(amount: 1000)).called(1);
+      },
+    );
+
     test('FormatException produces specific error message', () async {
       _stubGuardAllowed(guard);
       when(
@@ -594,7 +649,7 @@ void main() {
       await vm.loadWallet();
 
       expect(vm.error, isNotNull);
-      expect(vm.error, contains('timeout'));
+      expect(vm.error, 'An error occurred. Please try again.');
       expect(vm.isLoading, isFalse);
     });
 

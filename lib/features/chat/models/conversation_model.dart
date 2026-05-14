@@ -106,6 +106,7 @@ class Conversation {
     }
 
     // Do not log other_user_name or other_user_avatar (PII).
+    final task = json['tasks'] as Map<String, dynamic>?;
 
     return Conversation(
       id: json['id'] as String,
@@ -113,8 +114,8 @@ class Conversation {
       user1Id: json['user1_id'] as String,
       user2Id: json['user2_id'] as String,
       createdAt: DateTime.parse(json['created_at'] as String).toUtc(),
-      taskTitle: json['task_title'] ?? json['tasks']?['title'] as String?,
-      taskType: json['tasks']?['task_type'] as String?, // Parse task_type
+      taskTitle: json['task_title'] as String? ?? task?['title'] as String?,
+      taskType: task?['task_type'] as String?, // Parse task_type
       user1Name: json['user1_name'] as String?,
       user2Name: json['user2_name'] as String?,
       lastMessage: lastMessage,

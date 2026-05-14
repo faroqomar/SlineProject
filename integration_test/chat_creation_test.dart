@@ -49,12 +49,12 @@ void main() {
         'start_direct_conversation_v1',
         params: {'p_target_id': testFreelancerAId},
       );
+      final conversation = Map<String, dynamic>.from(result as Map);
 
       // Assert
-      expect(result, isNotNull);
-      expect(result['task_id'], isNull);
-      expect(result['user1_id'], equals(testClientId));
-      expect(result['user2_id'], equals(testFreelancerAId));
+      expect(conversation['task_id'], isNull);
+      expect(conversation['user1_id'], equals(testClientId));
+      expect(conversation['user2_id'], equals(testFreelancerAId));
     });
 
     test('T2: Freelancer bid creates task-linked conversation', () async {
@@ -66,10 +66,10 @@ void main() {
         'start_task_conversation_v1',
         params: {'p_task_id': testTaskId},
       );
+      final conversation = Map<String, dynamic>.from(result as Map);
 
       // Assert
-      expect(result, isNotNull);
-      expect(result['task_id'], equals(testTaskId));
+      expect(conversation['task_id'], equals(testTaskId));
     });
 
     test('T3: Client rejects bid creates conversation (reject flow)', () async {
@@ -186,9 +186,11 @@ void main() {
         'start_direct_conversation_v1',
         params: {'p_target_id': testFreelancerAId},
       );
+      final firstConversation = Map<String, dynamic>.from(result1 as Map);
+      final secondConversation = Map<String, dynamic>.from(result2 as Map);
 
       // Assert
-      expect(result1['id'], equals(result2['id']));
+      expect(firstConversation['id'], equals(secondConversation['id']));
     });
   });
 }

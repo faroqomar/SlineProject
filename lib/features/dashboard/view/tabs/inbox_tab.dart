@@ -10,6 +10,7 @@ import 'package:sline_app/core/widgets/skeleton_loader.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 import 'package:sline_app/features/proposals/models/proposal_payment_summary.dart';
 import 'package:sline_app/features/proposals/routes/proposal_payment_route.dart';
+import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/features/tasks/view/widgets/dashboard_offer_card.dart';
 
 /// Dashboard inbox tab showing pending offers and proposals.
@@ -29,7 +30,7 @@ class _InboxTabState extends State<InboxTab> {
   Future<void> _handleAwardOffer(
     BuildContext context,
     DashboardViewModel vm,
-    dynamic offer,
+    TaskRequest offer,
   ) async {
     final messenger = ScaffoldMessenger.of(context);
     const amber = AmberDuskTokens.colors;
@@ -70,16 +71,16 @@ class _InboxTabState extends State<InboxTab> {
   /// Handle "Pay Now" for awarded but unpaid offers (Pay Later flow)
   Future<void> _handlePayAwardedOffer(
     BuildContext context,
-    dynamic offer,
+    TaskRequest offer,
   ) async {
     final vm = context.read<DashboardViewModel>();
     final summary = ProposalPaymentSummary(
       requestId: offer.id,
-      taskId: offer.taskId ?? '',
+      taskId: offer.taskId,
       taskTitle: offer.taskTitle ?? 'Task',
       freelancerName: offer.bidderName ?? 'Freelancer',
       amount: offer.price.toDouble(),
-      paymentDeadline: offer.paymentDeadline as DateTime?,
+      paymentDeadline: offer.paymentDeadline,
     );
     await openProposalPayment(
       context,

@@ -93,9 +93,9 @@ class MessageService {
   /// Upsert typing presence. Throttled to at most once per 5s per conversation.
   Future<void> upsertPresence(
     String conversationId,
-    String userId,
-    bool isTyping,
-  ) async {
+    String userId, {
+    required bool isTyping,
+  }) async {
     final now = DateTime.now().toUtc();
     final last = _lastPresenceUpsertByConvo[conversationId];
     if (last != null && now.difference(last).inSeconds < 5) {
@@ -336,7 +336,8 @@ class MessageService {
 
     if (currentUserId != null) {
       final isUser1 = json['user1_id'] == currentUserId;
-      final otherUser = isUser1 ? json['user2'] : json['user1'];
+      final otherUser =
+          (isUser1 ? json['user2'] : json['user1']) as Map<String, dynamic>?;
       json['other_user_name'] = otherUser?['full_name'];
       json['other_user_avatar'] = otherUser?['avatar_url'];
     }
@@ -395,14 +396,17 @@ class MessageService {
           }
         }
 
-        final otherUser = isUser1 ? json['user2'] : json['user1'];
+        final task = json['tasks'] as Map<String, dynamic>?;
+        final user1 = json['user1'] as Map<String, dynamic>?;
+        final user2 = json['user2'] as Map<String, dynamic>?;
+        final otherUser = isUser1 ? user2 : user1;
         validConversations.add(
           Conversation.fromJson({
             ...json,
-            'task_title': json['tasks']?['title'] ?? 'Untitled Task',
-            'task_type': json['tasks']?['task_type'],
-            'user1_name': json['user1']?['full_name'] ?? 'User',
-            'user2_name': json['user2']?['full_name'] ?? 'User',
+            'task_title': task?['title'] ?? 'Untitled Task',
+            'task_type': task?['task_type'],
+            'user1_name': user1?['full_name'] ?? 'User',
+            'user2_name': user2?['full_name'] ?? 'User',
             'other_user_name': otherUser?['full_name'],
             'other_user_avatar': otherUser?['avatar_url'],
           }),

@@ -389,7 +389,10 @@ class BookingService {
         return 'disputed';
       case BookingStatus.declined:
         return 'canceled';
-      default:
+      case BookingStatus.pending:
+      case BookingStatus.confirmed:
+      case BookingStatus.completed:
+      case BookingStatus.canceled:
         return status.name;
     }
   }

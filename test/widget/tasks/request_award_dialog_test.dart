@@ -78,7 +78,7 @@ Future<void> _pumpDialogLauncher(
               request: request,
               vm: vm,
               budget: budget,
-              onAwardingChanged: (_) {},
+              onAwardingChanged: ({required isAwarding}) {},
             ),
             child: const Text('Open'),
           ),

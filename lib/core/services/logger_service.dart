@@ -76,10 +76,9 @@ class AppLogger {
       );
 
       return pretty;
-    } on Exception catch (_) {
-      return json.toString();
-    } on Error catch (_) {
-      // JsonUnsupportedObjectError and other encoding errors
+    } on Object catch (_) {
+      // Encoding can fail for unsupported objects supplied by platform or SDK
+      // errors; logging must degrade to a safe string instead of crashing.
       return json.toString();
     }
   }

@@ -918,7 +918,11 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ),
                     onChanged: (value) {
-                      unawaited(_chatCtrl.setTyping(value.trim().isNotEmpty));
+                      unawaited(
+                        _chatCtrl.setTyping(
+                          isTyping: value.trim().isNotEmpty,
+                        ),
+                      );
                     },
                   ),
                 ),

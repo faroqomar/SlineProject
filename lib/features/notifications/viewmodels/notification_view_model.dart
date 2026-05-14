@@ -193,10 +193,9 @@ class NotificationViewModel extends ChangeNotifier {
       } else {
         _safeNotify();
       }
-    } on Exception catch (_) {
-      _safeNotify();
-    } on Error catch (_) {
-      // Supabase not initialized (e.g., in tests)
+    } on Object catch (_) {
+      // Supabase can be uninitialized in tests; retry should still notify so
+      // widgets leave the loading/error branch deterministically.
       _safeNotify();
     }
   }

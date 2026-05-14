@@ -112,4 +112,21 @@ void main() {
       expect(mapped, contains('revision'));
     });
   });
+
+  group('ErrorMapper generic exception sanitization', () {
+    test('does not expose arbitrary unwrapped Exception text', () {
+      final mapped = ErrorMapper.map(
+        Exception('SocketException: Connection refused at api.dart line 12'),
+      );
+
+      expect(mapped, 'An error occurred. Please try again.');
+    });
+
+    test('maps known safe wrapped domain messages', () {
+      final mapped = ErrorMapper.map(Exception('No revisions remaining'));
+
+      expect(mapped, contains('No revisions remaining'));
+      expect(mapped, contains('allowed revision requests'));
+    });
+  });
 }

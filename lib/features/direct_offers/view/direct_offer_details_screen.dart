@@ -16,6 +16,7 @@ import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
 import 'package:sline_app/features/booking/models/payment_return_args.dart';
 import 'package:sline_app/features/booking/view/payment_webview_screen.dart';
+import 'package:sline_app/features/direct_offers/models/direct_offer_model.dart';
 import 'package:sline_app/features/direct_offers/services/direct_offers_service.dart';
 import 'package:sline_app/features/direct_offers/viewmodels/direct_offer_details_view_model.dart';
 import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
@@ -530,10 +531,10 @@ class _DirectOfferDetailsContentState
   }
 
   /// Map offer status to semantic color for the header band.
-  Color _statusColor(BuildContext context, dynamic offer) {
+  Color _statusColor(BuildContext context, DirectOffer offer) {
     final colorScheme = context.colorScheme;
     if (offer.isAcceptedPendingPayment) return colorScheme.warning;
-    final status = (offer.status as String).toLowerCase();
+    final status = offer.status.toLowerCase();
     switch (status) {
       case 'active':
       case 'in_progress':

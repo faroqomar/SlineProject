@@ -1,3 +1,5 @@
+// These model tests intentionally cover deprecated compatibility fields while
+// the app still supports historical task request rows.
 // ignore_for_file: deprecated_member_use_from_same_package
 
 import 'package:flutter_test/flutter_test.dart';

@@ -173,7 +173,11 @@ class _NextActionsListState extends State<NextActionsList>
         return 'Needs attention';
       case PrimaryActionType.submitEvidence:
         return 'Action needed';
-      default:
+      case PrimaryActionType.startWork:
+      case PrimaryActionType.markCompleted:
+      case PrimaryActionType.approveClose:
+      case PrimaryActionType.viewDetails:
+      case null:
         return 'Standard';
     }
   }

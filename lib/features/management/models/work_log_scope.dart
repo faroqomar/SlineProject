@@ -1,3 +1,7 @@
+import 'package:flutter/foundation.dart';
+
+/// Value object that scopes a work-log query to a single related entity.
+@immutable
 class WorkLogScope {
   final String entityId;
   final String entityType;

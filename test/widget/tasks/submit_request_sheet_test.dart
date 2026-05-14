@@ -392,7 +392,38 @@ void main() {
       await tester.tap(submitButtons.last);
       await tester.pumpAndSettle();
 
-      expect(find.text('Invalid'), findsWidgets);
+      expect(find.text('Enter a price greater than 0'), findsWidgets);
+    });
+
+    testWidgets('T127a: zero price shows friendly validation error', (
+      tester,
+    ) async {
+      _stubNewBidHappyPath(
+        taskService: taskService,
+        requestsService: requestsService,
+        authVm: authVm,
+        controller: controller,
+      );
+
+      await _pumpHost(
+        tester,
+        taskService: taskService,
+        requestsService: requestsService,
+        authVm: authVm,
+        controller: controller,
+      );
+
+      await _openSheet(tester);
+
+      final fields = find.byType(TextFormField);
+      await tester.enterText(fields.at(0), '0');
+      await tester.enterText(fields.at(1), '7');
+      await tester.pump();
+
+      await tester.tap(find.text('Submit Proposal').last);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Enter a price greater than 0'), findsWidgets);
     });
 
     testWidgets('T128: empty days shows validation error on submit', (

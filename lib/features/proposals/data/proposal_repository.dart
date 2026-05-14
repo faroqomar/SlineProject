@@ -62,7 +62,7 @@ class ProposalRepository {
           if (summaries != null && summaries.isNotEmpty) {
             bidderSummaries = {
               for (final s in summaries)
-                (s['id'] as String? ?? ''): s as Map<String, dynamic>,
+                ((s as Map<String, dynamic>)['id'] as String? ?? ''): s,
             };
           }
         } on Object catch (e, _) {
@@ -74,6 +74,8 @@ class ProposalRepository {
         }
       }
 
+      // ProposalModel is retained while the proposal API migrates to the newer
+      // direct-offer surfaces.
       // ignore: deprecated_member_use_from_same_package
       final list = <ProposalModel>[];
       for (final row in data) {
@@ -117,6 +119,7 @@ class ProposalRepository {
     }
   }
 
+  // ProposalModel is the legacy DTO still returned by this repository.
   // ignore: deprecated_member_use_from_same_package
   static ProposalModel _rowToProposal(
     Map<String, dynamic> map, {
@@ -126,6 +129,8 @@ class ProposalRepository {
   }) {
     final status = map['status'] as String? ?? 'unknown';
     final paymentStatus = map['payment_status'] as String? ?? 'unpaid';
+    // ProposalModel construction is centralized here until callers migrate to
+    // the newer typed proposal/payment flow.
     // ignore: deprecated_member_use_from_same_package
     return ProposalModel(
       id: map['id'] as String,

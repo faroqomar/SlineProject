@@ -248,7 +248,12 @@ class Task {
     switch (status) {
       case TaskStatus.inProgress:
         return 'in_progress';
-      default:
+      case TaskStatus.open:
+      case TaskStatus.assigned:
+      case TaskStatus.completed:
+      case TaskStatus.closed:
+      case TaskStatus.canceled:
+      case TaskStatus.draft:
         return status.name;
     }
   }

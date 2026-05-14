@@ -86,20 +86,22 @@ class _FB<T> extends _StubFB<T> {
 }
 
 class _QB extends Fake implements SupabaseQueryBuilder {
-  final dynamic next;
+  final Object? next;
   _QB(this.next);
+
+  Object? _resolvedNext() => next is _StubFB ? (next! as _StubFB)._data : next;
 
   @override
   PostgrestFilterBuilder<PostgrestList> select([String columns = '*']) =>
-      _StubFB<PostgrestList>(next is _StubFB ? next._data : next);
+      _StubFB<PostgrestList>(_resolvedNext());
   @override
   PostgrestFilterBuilder<Map<String, dynamic>> insert(
     dynamic values, {
     bool defaultToNull = true,
-  }) => _StubFB<Map<String, dynamic>>(next is _StubFB ? next._data : next);
+  }) => _StubFB<Map<String, dynamic>>(_resolvedNext());
   @override
   PostgrestFilterBuilder update(Map values) =>
-      _StubFB<dynamic>(next is _StubFB ? next._data : next);
+      _StubFB<dynamic>(_resolvedNext());
 }
 
 // --- Test Main ---

@@ -21,7 +21,7 @@ Future<void> showAwardDialog({
   required TaskRequest request,
   required TaskRequestsViewModel vm,
   required String? budget,
-  required void Function(bool) onAwardingChanged,
+  required void Function({required bool isAwarding}) onAwardingChanged,
 }) async {
   final expectedPriceCents = request.price * 100;
 
@@ -185,16 +185,16 @@ Future<void> _executeAward({
   required TaskRequest request,
   required TaskRequestsViewModel vm,
   required int expectedPriceCents,
-  required void Function(bool) onAwardingChanged,
+  required void Function({required bool isAwarding}) onAwardingChanged,
 }) async {
-  onAwardingChanged(true);
+  onAwardingChanged(isAwarding: true);
   try {
     final result = await vm.award(
       request.id,
       expectedPriceCents: expectedPriceCents,
     );
     if (!context.mounted) return;
-    onAwardingChanged(false);
+    onAwardingChanged(isAwarding: false);
 
     if (result != null && result['success'] == true) {
       final deadline = result['payment_deadline'] != null
@@ -225,11 +225,11 @@ Future<void> _executeAward({
     }
   } on PriceMismatchException catch (e) {
     if (!context.mounted) return;
-    onAwardingChanged(false);
+    onAwardingChanged(isAwarding: false);
     await showPriceMismatchDialog(context: context, exception: e);
   } on OfferAlreadyAcceptedException {
     if (!context.mounted) return;
-    onAwardingChanged(false);
+    onAwardingChanged(isAwarding: false);
     await vm.loadInitial();
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -240,7 +240,7 @@ Future<void> _executeAward({
     );
   } on Exception catch (e, st) {
     if (!context.mounted) return;
-    onAwardingChanged(false);
+    onAwardingChanged(isAwarding: false);
     AppLogger.e('Award failed', error: e, stackTrace: st, tag: 'TaskRequests');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

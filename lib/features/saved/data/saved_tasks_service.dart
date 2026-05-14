@@ -96,13 +96,15 @@ class SavedTasksService {
         .eq('user_id', uid)
         .order('created_at', ascending: false);
 
-    final rows = res as List<dynamic>;
+    final rows = (res as List<dynamic>)
+        .map((row) => Map<String, dynamic>.from(row as Map))
+        .toList();
     if (rows.isEmpty) return [];
 
     // 2. Extract distinct user IDs from tasks to fetch profiles
     // tasks.user_id references auth.users which matches profiles.id
     final userIds = rows
-        .map((r) => r['task']['user_id'] as String?)
+        .map((r) => (r['task'] as Map<String, dynamic>?)?['user_id'] as String?)
         .whereType<String>()
         .toSet()
         .toList();

@@ -57,9 +57,12 @@ class MockSupabaseClient extends Mock implements MockableSupabaseClient {}
 /// A mockable interface that mimics SupabaseClient behavior for testing
 abstract class MockableSupabaseClient {
   dynamic get auth;
-  dynamic from(String table);
+  Object from(String table);
   Future<dynamic> rpc(String function, {Map<String, dynamic>? params});
 }
+
+List<Map<String, dynamic>> _asRows(List<dynamic> result) =>
+    result.map((row) => Map<String, dynamic>.from(row as Map)).toList();
 
 class MockGoTrueClient extends Mock implements MockableGoTrueClient {}
 
@@ -143,8 +146,8 @@ void main() {
 
         // Attempt direct status update (this should fail)
         expect(
-          () async {
-            await mockClient.from('task_requests');
+          () {
+            mockClient.from('task_requests');
           },
           throwsA(
             isA<RlsTestException>().having(
@@ -184,8 +187,8 @@ void main() {
 
       // Attempt to delete another freelancer's bid
       expect(
-        () async {
-          await mockClient.from('task_requests');
+        () {
+          mockClient.from('task_requests');
         },
         throwsA(
           isA<RlsTestException>().having(
@@ -340,8 +343,8 @@ void main() {
 
       // Attempt to insert bid as client role
       expect(
-        () async {
-          await mockClient.from('task_requests');
+        () {
+          mockClient.from('task_requests');
         },
         throwsA(
           isA<RlsTestException>().having(
@@ -374,8 +377,8 @@ void main() {
 
       // Attempt to update accepted bid
       expect(
-        () async {
-          await mockClient.from('task_requests');
+        () {
+          mockClient.from('task_requests');
         },
         throwsA(
           isA<RlsTestException>().having(
@@ -426,8 +429,8 @@ void main() {
       ).thenReturn(_MockQueryBuilder(result: bidData));
 
       // Execute SELECT
-      final builder = mockClient.from('task_requests');
-      final result = await builder.select();
+      final builder = mockClient.from('task_requests') as _MockQueryBuilder;
+      final result = _asRows(await builder.select());
 
       // Verify result
       expect(result, isA<List>());
@@ -474,8 +477,8 @@ void main() {
       ).thenReturn(_MockQueryBuilder(result: bidData));
 
       // Execute SELECT
-      final builder = mockClient.from('task_requests');
-      final result = await builder.select();
+      final builder = mockClient.from('task_requests') as _MockQueryBuilder;
+      final result = _asRows(await builder.select());
 
       // Verify result
       expect(result, isA<List>());
@@ -522,8 +525,8 @@ void main() {
         when(() => mockClient.from('task_requests')).thenReturn(mockBuilder);
 
         // Execute INSERT
-        final builder = mockClient.from('task_requests');
-        final result = await builder.insert(bidData);
+        final builder = mockClient.from('task_requests') as _MockQueryBuilder;
+        final result = _asRows(await builder.insert(bidData));
 
         // Verify result
         expect(result, isA<List>());
@@ -566,13 +569,13 @@ void main() {
       when(() => mockClient.from('task_requests')).thenReturn(mockBuilder);
 
       // Execute UPDATE
-      final builder = mockClient.from('task_requests');
+      final builder = mockClient.from('task_requests') as _MockQueryBuilder;
       final updateData = <String, dynamic>{
         'price': 55000,
         'days': 7,
         'note': 'Updated offer',
       };
-      final result = await builder.update(updateData);
+      final result = _asRows(await builder.update(updateData));
 
       // Verify result
       expect(result, isA<List>());
@@ -603,8 +606,8 @@ void main() {
       when(() => mockClient.from('task_requests')).thenReturn(mockBuilder);
 
       // Execute DELETE
-      final builder = mockClient.from('task_requests');
-      final result = await builder.delete();
+      final builder = mockClient.from('task_requests') as _MockQueryBuilder;
+      final result = _asRows(await builder.delete());
 
       // Verify result (empty list after delete)
       expect(result, isA<List>());
@@ -732,8 +735,8 @@ void main() {
       ).thenReturn(_MockQueryBuilder(result: []));
 
       // Execute SELECT
-      final builder = mockClient.from('task_requests');
-      final result = await builder.select();
+      final builder = mockClient.from('task_requests') as _MockQueryBuilder;
+      final result = _asRows(await builder.select());
 
       // Verify result is empty (not a 403, just no visible rows)
       expect(result, isA<List>());

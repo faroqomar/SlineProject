@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:sline_app/core/models/app_failure.dart';
 
 /// Generic view state sealed class for ViewModel state management.
@@ -35,6 +36,7 @@ class ViewLoading<T> extends ViewState<T> {
 }
 
 /// Data was successfully loaded.
+@immutable
 class ViewLoaded<T> extends ViewState<T> {
   const ViewLoaded(this.data);
 
@@ -49,6 +51,7 @@ class ViewLoaded<T> extends ViewState<T> {
 }
 
 /// An operation failed with a typed failure.
+@immutable
 class ViewFailed<T> extends ViewState<T> {
   const ViewFailed(this.failure);
 

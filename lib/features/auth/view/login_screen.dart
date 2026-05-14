@@ -123,10 +123,8 @@ class _LoginScreenState extends State<LoginScreen>
           setState(() => _emailError = sessionError);
           sessionVm.clearError();
         }
-      } on Exception catch (_) {
+      } on ProviderNotFoundException catch (_) {
         // AuthSessionViewModel not provided (e.g. in tests)
-      } on Error catch (_) {
-        // ProviderNotFoundException extends Error
       }
     });
   }

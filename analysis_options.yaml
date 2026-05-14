@@ -37,9 +37,9 @@ linter:
     avoid_redundant_argument_values: false
     prefer_int_literals: false
     comment_references: false
-    document_ignores: false
-    no_default_cases: false
-    avoid_positional_boolean_parameters: false
-    avoid_equals_and_hash_code_on_mutable_classes: false
-    avoid_dynamic_calls: false
-    avoid_catching_errors: false
+    document_ignores: true
+    no_default_cases: true
+    avoid_positional_boolean_parameters: true
+    avoid_equals_and_hash_code_on_mutable_classes: true
+    avoid_dynamic_calls: true
+    avoid_catching_errors: true

@@ -774,12 +774,16 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
   }
 
   /// Call when user starts or stops typing. Throttled in service; no-op if feature flag off.
-  Future<void> setTyping(bool isTyping) async {
+  Future<void> setTyping({required bool isTyping}) async {
     if (_presenceReceiptsEnabled != true || activeConversation == null) return;
     final uid = currentUserId;
     if (uid == null) return;
     try {
-      await _repo.upsertPresence(activeConversation!.id, uid, isTyping);
+      await _repo.upsertPresence(
+        activeConversation!.id,
+        uid,
+        isTyping: isTyping,
+      );
     } on Exception catch (e) {
       AppLogger.w('[CHAT] setTyping failed: $e', tag: 'ChatVM');
     }

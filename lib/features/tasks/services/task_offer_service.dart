@@ -76,7 +76,9 @@ class TaskOfferService {
           .or('owner_id.eq.$userId,user_id.eq.$userId,client_id.eq.$userId');
 
       final taskIds = (ownedTasks as List<dynamic>)
-          .map((row) => row['id'] as String?)
+          .map(
+            (row) => Map<String, dynamic>.from(row as Map)['id'] as String?,
+          )
           .whereType<String>()
           .toList();
 
@@ -97,7 +99,9 @@ class TaskOfferService {
           .inFilter('task_id', taskIds)
           .order('created_at', ascending: false);
 
-      final rows = response as List;
+      final rows = (response as List<dynamic>)
+          .map((row) => Map<String, dynamic>.from(row as Map))
+          .toList();
       if (rows.isEmpty) return [];
 
       final bidderIds = rows
@@ -115,7 +119,7 @@ class TaskOfferService {
       );
 
       return rows.map((json) {
-        final map = Map<String, dynamic>.from(json as Map);
+        final map = Map<String, dynamic>.from(json);
         final bidderId =
             map['freelancer_id'] as String? ?? map['bidder_id'] as String?;
         if (bidderId != null && profilesMap.containsKey(bidderId)) {

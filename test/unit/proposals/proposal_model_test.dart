@@ -1,3 +1,5 @@
+// These tests lock legacy ProposalModel behavior while the app still reads
+// historical proposal rows.
 // ignore_for_file: deprecated_member_use_from_same_package
 
 import 'package:flutter_test/flutter_test.dart';

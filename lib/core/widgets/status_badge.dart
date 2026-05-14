@@ -35,6 +35,8 @@ class StatusBadge extends StatefulWidget {
 
   factory StatusBadge.fromStatus(
     dynamic status,
+    // Work item type is accepted for call-site symmetry with unified status
+    // helpers even though current formatting only needs the status value.
     // ignore: avoid_unused_constructor_parameters
     WorkItemType type, {
     bool isSmall = false,

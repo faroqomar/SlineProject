@@ -264,7 +264,11 @@ class _ActivityFeedPreviewState extends State<ActivityFeedPreview>
           _timeGroupLabel(activities[i + 1].createdAt) != group;
 
       entries.add(
-        _DisplayEntry.activity(activities[i], activityIndex, isLastInGroup),
+        _DisplayEntry.activity(
+          activities[i],
+          activityIndex,
+          isLast: isLastInGroup,
+        ),
       );
       activityIndex++;
     }
@@ -491,11 +495,14 @@ class _DisplayEntry {
   factory _DisplayEntry.header(String label) =>
       _DisplayEntry._(isHeader: true, headerLabel: label);
 
-  factory _DisplayEntry.activity(ActivityLog log, int index, bool isLast) =>
-      _DisplayEntry._(
-        isHeader: false,
-        activity: log,
-        activityIndex: index,
-        isLastInGroup: isLast,
-      );
+  factory _DisplayEntry.activity(
+    ActivityLog log,
+    int index, {
+    required bool isLast,
+  }) => _DisplayEntry._(
+    isHeader: false,
+    activity: log,
+    activityIndex: index,
+    isLastInGroup: isLast,
+  );
 }

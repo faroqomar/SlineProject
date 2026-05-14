@@ -34,10 +34,9 @@ class AuthFormViewModel extends ChangeNotifier {
       return AccountGuardService(
         client: _explicitClient ?? Supabase.instance.client,
       );
-    } on Exception catch (_) {
-      return null;
-    } on StateError catch (_) {
-      // Supabase not initialized (e.g., in tests) — guard is optional
+    } on Object catch (_) {
+      // Supabase can be uninitialized in tests; the guard is optional in that
+      // path, so a missing default client should not block form validation.
       return null;
     }
   }

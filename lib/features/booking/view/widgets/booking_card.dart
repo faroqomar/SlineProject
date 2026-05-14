@@ -339,7 +339,15 @@ String _bookingStatusLabel(BookingStatus status) {
       return 'NO SHOW';
     case BookingStatus.expiredUnanswered:
       return 'EXPIRED';
-    default:
+    case BookingStatus.pending:
+    case BookingStatus.confirmed:
+    case BookingStatus.active:
+    case BookingStatus.delivered:
+    case BookingStatus.completed:
+    case BookingStatus.canceled:
+    case BookingStatus.refunded:
+    case BookingStatus.disputed:
+    case BookingStatus.declined:
       return status.name.toUpperCase();
   }
 }

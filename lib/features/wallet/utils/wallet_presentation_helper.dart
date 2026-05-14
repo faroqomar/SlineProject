@@ -211,7 +211,8 @@ WalletPresentationSummary buildWalletPresentationSummary({
     timelineSections: List.unmodifiable(timelineSections),
     activityCaption: sortedActivities.isEmpty
         ? 'No recent wallet activity yet'
-        : 'Based on your latest ${sortedActivities.length} wallet entries',
+        : 'Based on your latest ${sortedActivities.length} wallet '
+              '${sortedActivities.length == 1 ? 'entry' : 'entries'}',
   );
 }
 

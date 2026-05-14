@@ -74,27 +74,24 @@ class AuthSessionViewModel extends ChangeNotifier {
       (state) async {
         AppLogger.d('Auth state changed: ${state.event}', tag: 'Auth');
 
-        switch (state.event) {
-          case AuthChangeEvent.signedIn:
-            await _loadInitialProfile();
-          case AuthChangeEvent.signedOut:
-            AppLogger.i('User signed out', tag: 'Auth');
-            _currentUserProfile = null;
-            notifyListeners();
-          case AuthChangeEvent.tokenRefreshed:
-            AppLogger.d('Token refreshed successfully', tag: 'Auth');
-          case AuthChangeEvent.passwordRecovery:
-            AppLogger.i('Password recovery session established', tag: 'Auth');
-            if (_onPasswordRecovery != null) {
-              _onPasswordRecovery!();
-            } else {
-              _pendingPasswordRecovery = true;
-            }
-          case AuthChangeEvent.userUpdated:
-            AppLogger.i('User profile updated', tag: 'Auth');
-            await _loadInitialProfile();
-          default:
-            break;
+        if (state.event == AuthChangeEvent.signedIn) {
+          await _loadInitialProfile();
+        } else if (state.event == AuthChangeEvent.signedOut) {
+          AppLogger.i('User signed out', tag: 'Auth');
+          _currentUserProfile = null;
+          notifyListeners();
+        } else if (state.event == AuthChangeEvent.tokenRefreshed) {
+          AppLogger.d('Token refreshed successfully', tag: 'Auth');
+        } else if (state.event == AuthChangeEvent.passwordRecovery) {
+          AppLogger.i('Password recovery session established', tag: 'Auth');
+          if (_onPasswordRecovery != null) {
+            _onPasswordRecovery!();
+          } else {
+            _pendingPasswordRecovery = true;
+          }
+        } else if (state.event == AuthChangeEvent.userUpdated) {
+          AppLogger.i('User profile updated', tag: 'Auth');
+          await _loadInitialProfile();
         }
       },
       onError: (error) {

@@ -29,6 +29,7 @@ class WalletViewModel extends ChangeNotifier {
   bool hasMore = true;
   WalletBalanceModel balance = WalletBalanceModel.zero();
   Future<void>? _loadingFuture;
+  bool _pendingForceRefresh = false;
 
   bool get hasLoadedWallet => _hasLoadedWallet;
 
@@ -37,15 +38,22 @@ class WalletViewModel extends ChangeNotifier {
 
   Future<void> ensureLoaded({bool forceRefresh = false}) async {
     if (_loadingFuture != null) {
+      if (forceRefresh) _pendingForceRefresh = true;
       return _loadingFuture;
     }
-    if (forceRefresh || !_hasLoadedWallet) {
-      _loadingFuture = loadWallet();
-      try {
-        await _loadingFuture;
-      } finally {
-        _loadingFuture = null;
-      }
+    if (!forceRefresh && _hasLoadedWallet) return;
+
+    return _loadingFuture = _runWalletLoadQueue();
+  }
+
+  Future<void> _runWalletLoadQueue() async {
+    try {
+      do {
+        _pendingForceRefresh = false;
+        await loadWallet();
+      } while (_pendingForceRefresh);
+    } finally {
+      _loadingFuture = null;
     }
   }
 
@@ -121,20 +129,29 @@ class WalletViewModel extends ChangeNotifier {
         return false;
       }
       await _repo.requestWithdrawal(amount: amount);
-      // Refresh balance and activities so summary stays consistent (e.g. new pending withdrawal)
-      final results = await Future.wait([
-        _repo.getWalletBalance(),
-        _repo.getActivity(limit: 20),
-      ]);
-      balance = results[0] as WalletBalanceModel;
-      final txns = results[1] as List<WalletActivityModel>;
-      activities.clear();
-      activities.addAll(txns);
-      if (txns.isNotEmpty) {
-        _cursor = txns.last.createdAtUtc.toUtc().toIso8601String();
+      try {
+        // Refresh balance and activities so summary stays consistent (e.g. new pending withdrawal)
+        final results = await Future.wait([
+          _repo.getWalletBalance(),
+          _repo.getActivity(limit: 20),
+        ]);
+        balance = results[0] as WalletBalanceModel;
+        final txns = results[1] as List<WalletActivityModel>;
+        activities.clear();
+        activities.addAll(txns);
+        if (txns.isNotEmpty) {
+          _cursor = txns.last.createdAtUtc.toUtc().toIso8601String();
+        }
+        hasMore = txns.length == 20;
+        _hasLoadedWallet = true;
+      } on Exception catch (e) {
+        error = 'Failed to refresh wallet after withdrawal.';
+        AppLogger.e(
+          'Withdrawal requested but wallet refresh failed',
+          error: e,
+          tag: 'Wallet',
+        );
       }
-      hasMore = txns.length == 20;
-      _hasLoadedWallet = true;
       AppLogger.i('Withdrawal requested: amount=$amount', tag: 'Wallet');
       return true;
     } on FormatException catch (e) {

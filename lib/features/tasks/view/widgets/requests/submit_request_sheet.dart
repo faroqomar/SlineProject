@@ -301,7 +301,9 @@ class _SubmitRequestSheetContent extends StatelessWidget {
                       ),
                       validator: (v) {
                         final n = double.tryParse(v ?? '');
-                        if (n == null || n < 0) return 'Invalid';
+                        if (n == null || n <= 0) {
+                          return 'Enter a price greater than 0';
+                        }
                         return null;
                       },
                     ),

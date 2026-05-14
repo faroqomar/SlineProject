@@ -24,9 +24,9 @@ class ChatRealtimeMerger {
           tag: 'ChatMerger',
           error: e,
         );
-      } on TypeError catch (e) {
+      } on Object catch (e) {
         AppLogger.w(
-          'Skipped malformed message row (TypeError)',
+          'Skipped malformed message row',
           tag: 'ChatMerger',
           error: e,
         );

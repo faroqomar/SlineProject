@@ -134,10 +134,10 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
       request: request,
       vm: vm,
       budget: widget.budget,
-      onAwardingChanged: (v) {
+      onAwardingChanged: ({required isAwarding}) {
         if (mounted) {
           setState(() {
-            _isAwarding = v;
+            _isAwarding = isAwarding;
           });
         }
       },

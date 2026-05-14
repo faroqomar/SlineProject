@@ -68,10 +68,9 @@ class _MessageBubbleState extends State<MessageBubble> {
   /// Uses Extended_Pictographic to exclude digits (#, *, 0-9) that \p{Emoji} includes.
   /// DECISION-1: \p{Extended_Pictographic} chosen over \p{Emoji} to avoid
   /// false positives on digits and symbol characters.
-  // Analyzer reports valid_regexps false positive because it doesn't understand
-  // \p{Extended_Pictographic} unicode property escapes. Runtime tests confirm
-  // this pattern is valid with unicode: true.
   static final _emojiOnlyPattern = RegExp(
+    // Analyzer does not understand this Unicode property escape even though
+    // Dart's runtime RegExp supports it with unicode: true.
     // ignore: valid_regexps
     r'^\s*(\p{Extended_Pictographic}(\u{FE0F}|\u{200D}|\p{Extended_Pictographic})*\s*){1,3}\s*$',
     unicode: true,

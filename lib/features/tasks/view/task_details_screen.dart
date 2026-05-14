@@ -537,7 +537,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
 
     if (widget.task.packages != null &&
         widget.task.packages!.containsKey(_selectedPackageTier)) {
-      final pkg = widget.task.packages![_selectedPackageTier];
+      final pkg = _selectedPackageData();
       if (pkg != null) {
         price = _formatPackagePrice(pkg['price']);
         delivery = '${pkg['delivery'] ?? '0'} Days';

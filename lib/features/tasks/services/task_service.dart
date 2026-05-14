@@ -73,11 +73,11 @@ class TaskService {
 
   /// Merge profile data into task JSON before parsing.
   List<Task> _parseTasksWithProfiles(
-    List<dynamic> rows,
+    List<Map<String, dynamic>> rows,
     Map<String, Map<String, dynamic>> profilesMap,
   ) {
     return rows.map((json) {
-      final taskJson = Map<String, dynamic>.from(json as Map);
+      final taskJson = Map<String, dynamic>.from(json);
       final userId =
           taskJson['owner_id'] as String? ??
           taskJson['client_id'] as String? ??
@@ -100,7 +100,9 @@ class TaskService {
           .select(_selectBasic)
           .order('created_at', ascending: false);
 
-      final rows = response as List;
+      final rows = (response as List<dynamic>)
+          .map((row) => Map<String, dynamic>.from(row as Map))
+          .toList();
       final userIds = rows
           .map(
             (r) =>
@@ -256,7 +258,9 @@ class TaskService {
           .or('owner_id.eq.$ownerId,user_id.eq.$ownerId,client_id.eq.$ownerId')
           .order('created_at', ascending: false);
 
-      final rows = response as List;
+      final rows = (response as List<dynamic>)
+          .map((row) => Map<String, dynamic>.from(row as Map))
+          .toList();
       final userIds = rows
           .map(
             (r) =>
@@ -270,7 +274,7 @@ class TaskService {
       final profilesMap = await _fetchProfilesByIds(userIds);
 
       return rows.map((json) {
-        final taskJson = Map<String, dynamic>.from(json as Map);
+        final taskJson = Map<String, dynamic>.from(json);
 
         // Profiles Mapping
         final userId =
@@ -285,7 +289,8 @@ class TaskService {
         if (taskJson['task_requests'] != null) {
           final requests = taskJson['task_requests'] as List;
           if (requests.isNotEmpty && requests[0] is Map) {
-            taskJson['offers'] = requests[0]['count'];
+            final firstRequest = requests[0] as Map<String, dynamic>;
+            taskJson['offers'] = firstRequest['count'];
           }
         }
 
@@ -321,7 +326,9 @@ class TaskService {
           .eq('status', _mapStatusToDb(status))
           .order('created_at', ascending: false);
 
-      final rows = response as List;
+      final rows = (response as List<dynamic>)
+          .map((row) => Map<String, dynamic>.from(row as Map))
+          .toList();
       final userIds = rows
           .map(
             (r) =>
@@ -429,7 +436,9 @@ class TaskService {
           .order('id', ascending: false)
           .limit(limit);
 
-      final rows = response as List;
+      final rows = (response as List<dynamic>)
+          .map((row) => Map<String, dynamic>.from(row as Map))
+          .toList();
       final userIds = rows
           .map((r) => r['user_id'] as String?)
           .whereType<String>()
@@ -507,7 +516,12 @@ class TaskService {
     switch (status) {
       case TaskStatus.inProgress:
         return 'in_progress';
-      default:
+      case TaskStatus.open:
+      case TaskStatus.assigned:
+      case TaskStatus.completed:
+      case TaskStatus.closed:
+      case TaskStatus.canceled:
+      case TaskStatus.draft:
         return status.name;
     }
   }
@@ -588,7 +602,9 @@ class TaskService {
           .eq('status', 'assigned') // Awarded offers awaiting payment
           .order('created_at', ascending: false);
 
-      final rows = response as List;
+      final rows = (response as List<dynamic>)
+          .map((row) => Map<String, dynamic>.from(row as Map))
+          .toList();
       final userIds = rows
           .map((r) => r['user_id'] as String?)
           .whereType<String>()

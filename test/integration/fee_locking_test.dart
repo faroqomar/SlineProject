@@ -366,7 +366,7 @@ void main() {
       runner.logPhase('2. Escrow with fee lock');
       runner.logPhase('3. Change global fee rate');
       runner.logPhase('4. Release (should use locked rate)');
-      runner.logComplete(true);
+      runner.logComplete(success: true);
 
       // This test documents the intended flow
       // Real RPC integration tests would go here when backend is ready
@@ -387,7 +387,8 @@ void main() {
       );
 
       expect(settings['key'], equals('fee_rate_default_bps'));
-      expect(settings['value']['value'], equals(testFeeRateBps));
+      final settingsValue = settings['value'] as Map<String, dynamic>;
+      expect(settingsValue['value'], equals(testFeeRateBps));
       expect(settings['updated_by'], equals('admin-user-id'));
 
       AppLogger.i(

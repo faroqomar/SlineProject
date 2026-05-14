@@ -140,7 +140,8 @@ class RoleSwitchRepository {
       final decoded = utf8.decode(base64.decode(payload));
       final payloadMap = jsonDecode(decoded) as Map<String, dynamic>;
 
-      final jwtRole = payloadMap['app_metadata']?['active_role'] as String?;
+      final appMetadata = payloadMap['app_metadata'] as Map<String, dynamic>?;
+      final jwtRole = appMetadata?['active_role'] as String?;
       final matches = jwtRole == expectedRole;
 
       AppLogger.d(
