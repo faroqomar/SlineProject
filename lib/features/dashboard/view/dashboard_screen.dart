@@ -182,57 +182,59 @@ class _DashboardContentState extends State<_DashboardContent>
 
     AppLogger.d('DashboardScreen: opening settings sheet', tag: 'Dashboard');
 
-    showModalBottomSheet(
-      context: context,
-      // Rounded top corners for premium sheet appearance
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppDimens.r24),
-        ),
-      ),
-      backgroundColor: colorScheme.cardBackground,
-      builder: (sheetContext) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppLayout.screenHorizontalMargin,
+    unawaited(
+      showModalBottomSheet(
+        context: context,
+        // Rounded top corners for premium sheet appearance
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppDimens.r24),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: AppLayout.spacingStandard),
-              // Drag handle — visual affordance for dismissibility
-              Container(
-                width: AppDimens.p40,
-                height: AppDimens.p4,
-                decoration: BoxDecoration(
-                  color: colorScheme.textTertiary,
-                  borderRadius: BorderRadius.circular(AppDimens.r4),
-                ),
-              ),
-              const SizedBox(height: AppLayout.spacingSection),
-              Text(
-                'Dashboard Settings',
-                style: AppTypography.h5.copyWith(color: colorScheme.text),
-              ),
-              const SizedBox(height: AppLayout.spacingScreen),
-              // Section label for role switcher
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'User Role',
-                  style: AppTypography.captionBold.copyWith(
-                    color: colorScheme.textSecondary,
+        ),
+        backgroundColor: colorScheme.cardBackground,
+        builder: (sheetContext) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppLayout.screenHorizontalMargin,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: AppLayout.spacingStandard),
+                // Drag handle — visual affordance for dismissibility
+                Container(
+                  width: AppDimens.p40,
+                  height: AppDimens.p4,
+                  decoration: BoxDecoration(
+                    color: colorScheme.textTertiary,
+                    borderRadius: BorderRadius.circular(AppDimens.r4),
                   ),
                 ),
-              ),
-              const SizedBox(height: AppLayout.spacingStandard),
-              // Role switcher — shared via Provider so it reads VM state
-              ChangeNotifierProvider.value(
-                value: vm,
-                child: const _RoleSwitch(),
-              ),
-              const SizedBox(height: AppLayout.spacingScreen),
-            ],
+                const SizedBox(height: AppLayout.spacingSection),
+                Text(
+                  'Dashboard Settings',
+                  style: AppTypography.h5.copyWith(color: colorScheme.text),
+                ),
+                const SizedBox(height: AppLayout.spacingScreen),
+                // Section label for role switcher
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'User Role',
+                    style: AppTypography.captionBold.copyWith(
+                      color: colorScheme.textSecondary,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppLayout.spacingStandard),
+                // Role switcher — shared via Provider so it reads VM state
+                ChangeNotifierProvider.value(
+                  value: vm,
+                  child: const _RoleSwitch(),
+                ),
+                const SizedBox(height: AppLayout.spacingScreen),
+              ],
+            ),
           ),
         ),
       ),

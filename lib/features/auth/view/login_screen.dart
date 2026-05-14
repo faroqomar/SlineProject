@@ -113,7 +113,7 @@ class _LoginScreenState extends State<LoginScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       AppLogger.d('Login stagger animation started', tag: 'Auth');
-      _staggerController.forward();
+      unawaited(_staggerController.forward());
 
       // Show session errors inline (if any)
       try {
@@ -191,8 +191,8 @@ class _LoginScreenState extends State<LoginScreen>
   // ── Form shake ─────────────────────────────────────────────
 
   void _triggerShake() {
-    HapticFeedback.mediumImpact();
-    _shakeController.forward(from: 0);
+    unawaited(HapticFeedback.mediumImpact());
+    unawaited(_shakeController.forward(from: 0));
   }
 
   // ── Login handler ──────────────────────────────────────────
@@ -567,11 +567,13 @@ class _LoginScreenState extends State<LoginScreen>
                                             'login',
                                             tag: 'Auth',
                                           );
-                                          Navigator.push(
-                                            context,
-                                            SlinePageRoute.forwardPush(
-                                              child:
-                                                  const ForgotPasswordScreen(),
+                                          unawaited(
+                                            Navigator.push(
+                                              context,
+                                              SlinePageRoute.forwardPush(
+                                                child:
+                                                    const ForgotPasswordScreen(),
+                                              ),
                                             ),
                                           );
                                         },
@@ -628,7 +630,12 @@ class _LoginScreenState extends State<LoginScreen>
                                           'Signup link tapped from login',
                                           tag: 'Auth',
                                         );
-                                        Navigator.pushNamed(context, '/signup');
+                                        unawaited(
+                                          Navigator.pushNamed(
+                                            context,
+                                            '/signup',
+                                          ),
+                                        );
                                       },
                                       style: TextButton.styleFrom(
                                         padding: const EdgeInsets.symmetric(

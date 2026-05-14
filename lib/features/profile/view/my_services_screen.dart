@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
@@ -23,7 +25,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<MyServicesViewModel>().load();
+      unawaited(context.read<MyServicesViewModel>().load());
     });
   }
 
@@ -84,8 +86,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
           : ListView.separated(
               padding: const EdgeInsets.all(AppDimens.p16),
               itemCount: services.length,
-              separatorBuilder: (_, __) =>
-                  const SizedBox(height: AppDimens.p16),
+              separatorBuilder: (_, _) => const SizedBox(height: AppDimens.p16),
               itemBuilder: (context, index) {
                 final service = services[index];
                 return ServiceCard(

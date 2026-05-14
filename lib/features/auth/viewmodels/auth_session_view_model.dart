@@ -66,12 +66,12 @@ class AuthSessionViewModel extends ChangeNotifier {
        _authStateChanges =
            authStateChanges ?? Supabase.instance.client.auth.onAuthStateChange {
     _initAuthListener();
-    _loadInitialProfile();
+    unawaited(_loadInitialProfile());
   }
 
   void _initAuthListener() {
     _authSubscription = _authStateChanges.listen(
-      (AuthState state) async {
+      (state) async {
         AppLogger.d('Auth state changed: ${state.event}', tag: 'Auth');
 
         switch (state.event) {
@@ -164,7 +164,7 @@ class AuthSessionViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
-    _authSubscription?.cancel();
+    unawaited(_authSubscription?.cancel());
     super.dispose();
   }
 }

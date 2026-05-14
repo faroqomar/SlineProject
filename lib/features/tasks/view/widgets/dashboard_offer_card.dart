@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
@@ -79,7 +81,7 @@ class _DashboardOfferCardState extends State<DashboardOfferCard>
           curve: AppMotion.curveStandard,
         ),
       );
-      _pulseController!.repeat(reverse: true);
+      unawaited(_pulseController!.repeat(reverse: true));
     }
   }
 
@@ -530,7 +532,7 @@ class _PaymentDeadlineCountdownState extends State<_PaymentDeadlineCountdown>
 
     // Start/stop pulse animation based on urgency
     if (_monitor.shouldPulse && !_pulseController!.isAnimating) {
-      _pulseController!.repeat(reverse: true);
+      unawaited(_pulseController!.repeat(reverse: true));
     } else if (!_monitor.shouldPulse && _pulseController!.isAnimating) {
       _pulseController!.stop();
       _pulseController!.value = 1.0;

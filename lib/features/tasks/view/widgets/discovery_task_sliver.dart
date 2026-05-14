@@ -130,7 +130,7 @@ class _DiscoveryTaskSliverState extends State<DiscoveryTaskSliver> {
         ),
         sliver: SliverList(
           delegate: SliverChildBuilderDelegate(
-            (_, __) => loadingChild,
+            (_, _) => loadingChild,
             childCount: 5,
           ),
         ),
@@ -392,12 +392,12 @@ class _StaggeredTaskItemState extends State<_StaggeredTaskItem>
       if (delay > Duration.zero) {
         _staggerTimer = Timer(delay, () {
           if (mounted) {
-            _controller.forward();
+            unawaited(_controller.forward());
           }
         });
       } else {
         // First card starts immediately
-        _controller.forward();
+        unawaited(_controller.forward());
       }
 
       // Log only first/last animated cards in debug mode to reduce noise.

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -127,7 +129,7 @@ class CustomBottomNavBar extends StatelessWidget {
                   item: item,
                   isActive: isActive,
                   onTap: () {
-                    HapticFeedback.selectionClick();
+                    unawaited(HapticFeedback.selectionClick());
                     AppLogger.i(
                       'Bottom nav tap -> ${item.label} (${item.index})',
                       tag: 'Navigation',
@@ -182,7 +184,7 @@ class _SolidNavItemState extends State<_SolidNavItem>
     );
 
     if (widget.isActive) {
-      _controller.forward();
+      unawaited(_controller.forward());
     }
   }
 
@@ -191,9 +193,9 @@ class _SolidNavItemState extends State<_SolidNavItem>
     super.didUpdateWidget(oldWidget);
     if (widget.isActive != oldWidget.isActive) {
       if (widget.isActive) {
-        _controller.forward();
+        unawaited(_controller.forward());
       } else {
-        _controller.reverse();
+        unawaited(_controller.reverse());
       }
     }
   }

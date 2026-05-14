@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/features/tasks/models/expired_bid_filter.dart';
@@ -97,7 +99,7 @@ class RequestsFilterViewModel extends ChangeNotifier {
   /// Triggers the next page load.
   void loadMore() {
     if (_requestsVm.hasMore && !_requestsVm.isLoadingMore) {
-      _requestsVm.loadMore();
+      unawaited(_requestsVm.loadMore());
     }
   }
 }

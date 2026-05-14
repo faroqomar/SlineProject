@@ -340,7 +340,7 @@ class _SearchScreenContentState extends State<_SearchScreenContent> {
       return ListView.separated(
         padding: const EdgeInsets.all(AppDimens.p16),
         itemCount: vm.tasks.length,
-        separatorBuilder: (_, __) => const SizedBox(height: AppDimens.p12),
+        separatorBuilder: (_, _) => const SizedBox(height: AppDimens.p12),
         itemBuilder: (context, index) {
           final task = vm.tasks[index];
           return TaskCard(
@@ -359,7 +359,7 @@ class _SearchScreenContentState extends State<_SearchScreenContent> {
       return ListView.separated(
         padding: const EdgeInsets.all(AppDimens.p16),
         itemCount: vm.profiles.length,
-        separatorBuilder: (_, __) => const SizedBox(height: AppDimens.p12),
+        separatorBuilder: (_, _) => const SizedBox(height: AppDimens.p12),
         itemBuilder: (context, index) {
           final profile = vm.profiles[index];
           return SearchResultProfileCard(

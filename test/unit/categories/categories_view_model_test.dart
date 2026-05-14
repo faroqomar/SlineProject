@@ -18,7 +18,7 @@ CategoryModel _cat({required String id, required String name}) {
   );
 }
 
-final _sampleCategories = [
+final List<CategoryModel> _sampleCategories = [
   _cat(id: 'c1', name: 'Design'),
   _cat(id: 'c2', name: 'Development'),
   _cat(id: 'c3', name: 'Marketing'),

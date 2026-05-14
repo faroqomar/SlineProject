@@ -272,7 +272,7 @@ class WorkManagementService {
       json: {
         'entityType': entityType,
         'entityId': entityId,
-        if (correlationId != null) 'correlationId': correlationId,
+        'correlationId': ?correlationId,
       },
     );
     try {
@@ -286,7 +286,7 @@ class WorkManagementService {
         json: {
           'type': entityType,
           'entityId': entityId,
-          if (correlationId != null) 'correlationId': correlationId,
+          'correlationId': ?correlationId,
         },
       );
     } on PostgrestException catch (e, stack) {
@@ -299,7 +299,7 @@ class WorkManagementService {
         json: {
           'entityType': entityType,
           'entityId': entityId,
-          if (correlationId != null) 'correlationId': correlationId,
+          'correlationId': ?correlationId,
           'mappedMessage': friendly,
         },
       );
@@ -314,7 +314,7 @@ class WorkManagementService {
         json: {
           'entityType': entityType,
           'entityId': entityId,
-          if (correlationId != null) 'correlationId': correlationId,
+          'correlationId': ?correlationId,
           'mappedMessage': friendly,
         },
       );

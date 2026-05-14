@@ -72,7 +72,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
       _favoritesEnsureLoadedDone = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        context.read<FavoritesViewModel>().ensureLoaded();
+        unawaited(context.read<FavoritesViewModel>().ensureLoaded());
       });
     }
   }
@@ -94,7 +94,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
     final tabTheme = AmberDuskTokens.widgetTheme.tabs;
 
     return ChangeNotifierProvider(
-      create: (_) => PublicProfileViewModel()..loadProfile(widget.userId),
+      create: (_) {
+        final viewModel = PublicProfileViewModel();
+        unawaited(viewModel.loadProfile(widget.userId));
+        return viewModel;
+      },
       child: Scaffold(
         backgroundColor: colorScheme.phoneBackground,
         body: Consumer<PublicProfileViewModel>(
@@ -247,7 +251,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
                             AppDimens.publicProfileStickyBarClearance,
                           ),
                           itemCount: profile.history.length,
-                          separatorBuilder: (_, __) =>
+                          separatorBuilder: (_, _) =>
                               const SizedBox(height: AppDimens.p12),
                           itemBuilder: (context, index) {
                             return TaskCard(

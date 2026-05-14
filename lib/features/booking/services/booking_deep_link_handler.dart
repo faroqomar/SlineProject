@@ -51,10 +51,12 @@ Future<void> _handleBooking(
 }
 
 void _showLoading(BuildContext context) {
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (_) => const Center(child: CircularProgressIndicator()),
+  unawaited(
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    ),
   );
 }
 

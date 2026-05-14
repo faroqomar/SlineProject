@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
@@ -209,7 +211,7 @@ class _AnimatedCountState extends State<_AnimatedCount>
       CurvedAnimation(parent: _controller, curve: AppMotion.curveDecel),
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _controller.forward();
+      if (mounted) unawaited(_controller.forward());
     });
   }
 
@@ -221,9 +223,8 @@ class _AnimatedCountState extends State<_AnimatedCount>
           .animate(
             CurvedAnimation(parent: _controller, curve: AppMotion.curveDecel),
           );
-      _controller
-        ..reset()
-        ..forward();
+      _controller.reset();
+      unawaited(_controller.forward());
     }
   }
 
@@ -269,8 +270,11 @@ class _ShimmerPlaceholderState extends State<_ShimmerPlaceholder>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(duration: AppMotion.shimmer, vsync: this)
-      ..repeat();
+    _controller = AnimationController(
+      duration: AppMotion.shimmer,
+      vsync: this,
+    );
+    unawaited(_controller.repeat());
   }
 
   @override

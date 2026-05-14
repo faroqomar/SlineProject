@@ -105,8 +105,8 @@ class SafetyViewModel extends ChangeNotifier {
         stackTrace: st,
         json: <String, dynamic>{
           'event_name': 'safety_dispute_submit_failed',
-          if (taskId != null) 'task_id': taskId,
-          if (directOfferId != null) 'direct_offer_id': directOfferId,
+          'task_id': ?taskId,
+          'direct_offer_id': ?directOfferId,
         },
       );
       return false;

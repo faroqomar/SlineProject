@@ -47,7 +47,7 @@ class SearchViewModel extends ChangeNotifier {
 
     // If we have a query, re-run search for the new tab
     if (_query.isNotEmpty) {
-      _performSearch(_query);
+      unawaited(_performSearch(_query));
     } else {
       // Clear results if query is empty
       _tasks = [];
@@ -74,7 +74,7 @@ class SearchViewModel extends ChangeNotifier {
     }
 
     _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-      _performSearch(newQuery);
+      unawaited(_performSearch(newQuery));
     });
   }
 
@@ -103,7 +103,7 @@ class SearchViewModel extends ChangeNotifier {
   /// Retry the last search
   void retry() {
     if (_query.isNotEmpty) {
-      _performSearch(_query);
+      unawaited(_performSearch(_query));
     }
   }
 }

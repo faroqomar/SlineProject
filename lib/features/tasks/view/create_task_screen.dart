@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
@@ -234,7 +236,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     if (!_categoriesLoadScheduled) {
       _categoriesLoadScheduled = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _loadCategories();
+        if (mounted) unawaited(_loadCategories());
       });
     }
   }
@@ -282,7 +284,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     if (_currentStep < 3) {
       setState(() => _currentStep++);
     } else {
-      _submit();
+      unawaited(_submit());
     }
   }
 
@@ -623,8 +625,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   Widget _buildStep1(AppColorScheme colorScheme) {
     return TaskConceptSection(
       selectedTaskType: _selectedTaskType,
-      onTaskTypeChanged: (TaskType type) =>
-          setState(() => _selectedTaskType = type),
+      onTaskTypeChanged: (type) => setState(() => _selectedTaskType = type),
     );
   }
 

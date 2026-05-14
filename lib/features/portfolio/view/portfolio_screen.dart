@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
@@ -52,7 +54,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
     if (ctrl == null) return;
     if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 160) {
       if (ctrl.hasMore && !ctrl.loadingMore) {
-        ctrl.loadMore();
+        unawaited(ctrl.loadMore());
       }
     }
   }
@@ -88,32 +90,34 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
     }
     setState(() => _isAddSheetOpen = true);
     AppLogger.d('Opening add portfolio sheet', tag: 'PortfolioScreen');
-    showModalBottomSheet(
-      context: context,
-      useSafeArea: true,
-      isScrollControlled: true,
-      barrierColor: context.amberColors.scrim,
-      backgroundColor: AmberDuskTokens.colors.transparent,
-      builder: (ctx) => _InsetSheetFrame(
-        child: AddPortfolioSheet(
-          controller: ctrl,
-          onCreated: () {
-            Navigator.of(ctx).pop();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Portfolio item added')),
-            );
-            AppLogger.i(
-              'Portfolio item added via sheet',
-              tag: 'PortfolioScreen',
-            );
-          },
+    unawaited(
+      showModalBottomSheet(
+        context: context,
+        useSafeArea: true,
+        isScrollControlled: true,
+        barrierColor: context.amberColors.scrim,
+        backgroundColor: AmberDuskTokens.colors.transparent,
+        builder: (ctx) => _InsetSheetFrame(
+          child: AddPortfolioSheet(
+            controller: ctrl,
+            onCreated: () {
+              Navigator.of(ctx).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Portfolio item added')),
+              );
+              AppLogger.i(
+                'Portfolio item added via sheet',
+                tag: 'PortfolioScreen',
+              );
+            },
+          ),
         ),
-      ),
-    ).whenComplete(() {
-      if (!mounted) return;
-      setState(() => _isAddSheetOpen = false);
-      AppLogger.d('Add portfolio sheet closed', tag: 'PortfolioScreen');
-    });
+      ).whenComplete(() {
+        if (!mounted) return;
+        setState(() => _isAddSheetOpen = false);
+        AppLogger.d('Add portfolio sheet closed', tag: 'PortfolioScreen');
+      }),
+    );
   }
 
   @override
@@ -142,7 +146,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
                 tag: 'PortfolioScreen',
                 json: {'ownerId': widget.ownerId},
               );
-              ctrl.load(ownerId: widget.ownerId);
+              unawaited(ctrl.load(ownerId: widget.ownerId));
             });
           }
 

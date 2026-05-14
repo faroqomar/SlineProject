@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
@@ -27,7 +29,7 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProfileViewModel>().fetchPortfolio();
+      unawaited(context.read<ProfileViewModel>().fetchPortfolio());
     });
   }
 
@@ -41,200 +43,203 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
     final descController = TextEditingController(text: item?['description']);
     String? localImagePath = item?['image_url'];
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setState) {
-          final colorScheme = Theme.of(context).colorScheme;
-          final amberColors = context.amberColors;
-          // Local state for the dialog
-          var isUploading = localImagePath == 'loading';
+    unawaited(
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => StatefulBuilder(
+          builder: (context, setState) {
+            final colorScheme = Theme.of(context).colorScheme;
+            final amberColors = context.amberColors;
+            // Local state for the dialog
+            var isUploading = localImagePath == 'loading';
 
-          return AlertDialog(
-            backgroundColor: colorScheme.surface,
-            title: Text(
-              isEditing ? 'Edit Item' : 'Add Item',
-              style: AppTypography.h4.copyWith(color: colorScheme.onSurface),
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  GestureDetector(
-                    onTap: isUploading
-                        ? null
-                        : () async {
-                            // Set loading state
-                            setState(() {
-                              localImagePath = 'loading'; // Temporary marker
-                              isUploading = true;
-                            });
+            return AlertDialog(
+              backgroundColor: colorScheme.surface,
+              title: Text(
+                isEditing ? 'Edit Item' : 'Add Item',
+                style: AppTypography.h4.copyWith(color: colorScheme.onSurface),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    GestureDetector(
+                      onTap: isUploading
+                          ? null
+                          : () async {
+                              // Set loading state
+                              setState(() {
+                                localImagePath = 'loading'; // Temporary marker
+                                isUploading = true;
+                              });
 
-                            try {
-                              final path = await vm
-                                  .pickAndUploadPortfolioImage();
+                              try {
+                                final path = await vm
+                                    .pickAndUploadPortfolioImage();
 
-                              // Critical: Add delay to let iOS picker fully cleanup
-                              // This prevents race condition crash on iPhone
-                              await Future.delayed(AppMotion.standard);
+                                // Critical: Add delay to let iOS picker fully cleanup
+                                // This prevents race condition crash on iPhone
+                                await Future.delayed(AppMotion.standard);
 
-                              if (context.mounted) {
-                                if (vm.portfolioUploadError != null) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(vm.portfolioUploadError!),
-                                    ),
-                                  );
-                                }
-                                setState(() {
-                                  if (path != null) {
-                                    localImagePath = path;
-                                  } else {
-                                    localImagePath =
-                                        item?['image_url']; // Revert if cancelled
+                                if (context.mounted) {
+                                  if (vm.portfolioUploadError != null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(vm.portfolioUploadError!),
+                                      ),
+                                    );
                                   }
-                                  isUploading = false;
-                                });
+                                  setState(() {
+                                    if (path != null) {
+                                      localImagePath = path;
+                                    } else {
+                                      localImagePath =
+                                          item?['image_url']; // Revert if cancelled
+                                    }
+                                    isUploading = false;
+                                  });
+                                }
+                              } on Exception catch (e, st) {
+                                AppLogger.w(
+                                  'ManagePortfolioScreen: image upload failed',
+                                  tag: 'Profile',
+                                  error: e,
+                                  json: <String, dynamic>{
+                                    'stack_trace': st.toString(),
+                                  },
+                                );
+                                // Keep upload feedback visible long enough before
+                                // reverting the local preview on failure.
+                                await Future.delayed(AppMotion.standard);
+                                if (context.mounted) {
+                                  setState(() {
+                                    localImagePath = item?['image_url'];
+                                    isUploading = false;
+                                  });
+                                }
                               }
-                            } on Exception catch (e, st) {
-                              AppLogger.w(
-                                'ManagePortfolioScreen: image upload failed',
-                                tag: 'Profile',
-                                error: e,
-                                json: <String, dynamic>{
-                                  'stack_trace': st.toString(),
-                                },
-                              );
-                              // Keep upload feedback visible long enough before
-                              // reverting the local preview on failure.
-                              await Future.delayed(AppMotion.standard);
-                              if (context.mounted) {
-                                setState(() {
-                                  localImagePath = item?['image_url'];
-                                  isUploading = false;
-                                });
-                              }
-                            }
-                          },
-                    child: Container(
-                      height: AppDimens.managePortfolioImagePreviewHeight,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(AppDimens.r12),
-                        border: Border.all(
-                          color: colorScheme.outline.withValues(alpha: 0.2),
+                            },
+                      child: Container(
+                        height: AppDimens.managePortfolioImagePreviewHeight,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(AppDimens.r12),
+                          border: Border.all(
+                            color: colorScheme.outline.withValues(alpha: 0.2),
+                          ),
                         ),
+                        child: isUploading
+                            ? const Center(child: CircularProgressIndicator())
+                            : (localImagePath != null &&
+                                  localImagePath != 'loading')
+                            // CRITICAL: Don't use SignedImage here to avoid iOS crash
+                            // Just show a success indicator with the upload confirmation
+                            ? Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.check_circle,
+                                    size: AppDimens.emptyStateIconSize,
+                                    color: amberColors.success,
+                                  ),
+                                  const SizedBox(height: AppDimens.p8),
+                                  Text(
+                                    'Image uploaded!',
+                                    style: AppTypography.bodySmall.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppDimens.p4),
+                                  Text(
+                                    'Tap to change',
+                                    style: AppTypography.micro.copyWith(
+                                      color: colorScheme.onSurfaceVariant
+                                          .withValues(alpha: 0.6),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.add_photo_alternate,
+                                    size: AppDimens.iconSizeLarge,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                  const SizedBox(height: AppDimens.p8),
+                                  Text(
+                                    'Add Image',
+                                    style: AppTypography.bodySmall.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
                       ),
-                      child: isUploading
-                          ? const Center(child: CircularProgressIndicator())
-                          : (localImagePath != null &&
-                                localImagePath != 'loading')
-                          // CRITICAL: Don't use SignedImage here to avoid iOS crash
-                          // Just show a success indicator with the upload confirmation
-                          ? Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.check_circle,
-                                  size: AppDimens.emptyStateIconSize,
-                                  color: amberColors.success,
-                                ),
-                                const SizedBox(height: AppDimens.p8),
-                                Text(
-                                  'Image uploaded!',
-                                  style: AppTypography.bodySmall.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                                const SizedBox(height: AppDimens.p4),
-                                Text(
-                                  'Tap to change',
-                                  style: AppTypography.micro.copyWith(
-                                    color: colorScheme.onSurfaceVariant
-                                        .withValues(alpha: 0.6),
-                                  ),
-                                ),
-                              ],
-                            )
-                          : Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.add_photo_alternate,
-                                  size: AppDimens.iconSizeLarge,
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                                const SizedBox(height: AppDimens.p8),
-                                Text(
-                                  'Add Image',
-                                  style: AppTypography.bodySmall.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            ),
                     ),
-                  ),
-                  const SizedBox(height: AppDimens.p16),
-                  TextField(
-                    controller: titleController,
-                    decoration: const InputDecoration(
-                      labelText: 'Title',
-                      border: OutlineInputBorder(),
+                    const SizedBox(height: AppDimens.p16),
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(
+                        labelText: 'Title',
+                        border: OutlineInputBorder(),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: AppDimens.p16),
-                  TextField(
-                    controller: descController,
-                    decoration: const InputDecoration(
-                      labelText: 'Description',
-                      border: OutlineInputBorder(),
+                    const SizedBox(height: AppDimens.p16),
+                    TextField(
+                      controller: descController,
+                      decoration: const InputDecoration(
+                        labelText: 'Description',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 3,
                     ),
-                    maxLines: 3,
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () async {
-                  if (titleController.text.trim().isEmpty) return;
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () async {
+                    if (titleController.text.trim().isEmpty) return;
 
-                  if (isEditing) {
-                    // Update uses explicit parameters (not a map)
-                    await vm.updatePortfolioItem(
-                      itemId: item['id'],
-                      title: titleController.text.trim(),
-                      description: descController.text.trim(),
-                    );
-                  } else {
-                    // Add portfolio item
-                    // Note: Image handling is done via pickAndUploadPortfolioImage first
-                    // then the path is stored. For now, we just add without image if
-                    // no image was picked in this flow.
-                    final effectiveImagePath =
-                        (localImagePath != null && localImagePath != 'loading')
-                        ? localImagePath
-                        : null;
-                    await vm.addPortfolioItem(
-                      title: titleController.text.trim(),
-                      description: descController.text.trim(),
-                      imagePath: effectiveImagePath,
-                    );
-                  }
-                  if (context.mounted) Navigator.pop(dialogContext);
-                },
-                child: Text(isEditing ? 'Save' : 'Add'),
-              ),
-            ],
-          );
-        },
+                    if (isEditing) {
+                      // Update uses explicit parameters (not a map)
+                      await vm.updatePortfolioItem(
+                        itemId: item['id'],
+                        title: titleController.text.trim(),
+                        description: descController.text.trim(),
+                      );
+                    } else {
+                      // Add portfolio item
+                      // Note: Image handling is done via pickAndUploadPortfolioImage first
+                      // then the path is stored. For now, we just add without image if
+                      // no image was picked in this flow.
+                      final effectiveImagePath =
+                          (localImagePath != null &&
+                              localImagePath != 'loading')
+                          ? localImagePath
+                          : null;
+                      await vm.addPortfolioItem(
+                        title: titleController.text.trim(),
+                        description: descController.text.trim(),
+                        imagePath: effectiveImagePath,
+                      );
+                    }
+                    if (context.mounted) Navigator.pop(dialogContext);
+                  },
+                  child: Text(isEditing ? 'Save' : 'Add'),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -244,27 +249,29 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
     ProfileViewModel vm,
     String itemId,
   ) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Item?'),
-        content: const Text('This action cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              vm.deletePortfolioItem(itemId);
-              Navigator.pop(context);
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: context.amberColors.danger,
+    unawaited(
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Delete Item?'),
+          content: const Text('This action cannot be undone.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
             ),
-            child: const Text('Delete'),
-          ),
-        ],
+            TextButton(
+              onPressed: () {
+                unawaited(vm.deletePortfolioItem(itemId));
+                Navigator.pop(context);
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: context.amberColors.danger,
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        ),
       ),
     );
   }

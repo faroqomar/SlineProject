@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
@@ -67,7 +69,7 @@ class _UpdateRequiredScreenState extends State<UpdateRequiredScreen>
             curve: AppMotion.curveSpring,
           ),
         );
-    _slideController.forward();
+    unawaited(_slideController.forward());
   }
 
   @override
@@ -80,8 +82,8 @@ class _UpdateRequiredScreenState extends State<UpdateRequiredScreen>
     return switch (defaultTargetPlatform) {
       TargetPlatform.android => <Uri>[_androidMarketUri, _androidWebStoreUri],
       TargetPlatform.iOS => <Uri>[
-        if (_iosAppStoreUri != null) _iosAppStoreUri!,
-        if (_iosWebStoreUri != null) _iosWebStoreUri!,
+        ?_iosAppStoreUri,
+        ?_iosWebStoreUri,
         _webDownloadUri,
       ],
       _ => <Uri>[_webDownloadUri],

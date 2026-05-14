@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
@@ -32,7 +34,8 @@ class _MaintenanceScreenState extends State<MaintenanceScreen>
       vsync: this,
       // Slow looping motion keeps the gate alive without implying urgency.
       duration: AppMotion.dramatic,
-    )..repeat();
+    );
+    unawaited(_rotationController.repeat());
   }
 
   @override

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
@@ -82,11 +84,13 @@ class ProposalDetailsModal extends StatelessWidget {
                     // Freelancer Card
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => PublicProfileScreen(
-                              userId: freelancer['id'] as String? ?? 'mock-1',
+                        unawaited(
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PublicProfileScreen(
+                                userId: freelancer['id'] as String? ?? 'mock-1',
+                              ),
                             ),
                           ),
                         );

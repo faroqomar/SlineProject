@@ -82,7 +82,7 @@ class _StubFB<T> extends Fake
 
 // The generic typed version, used for from() stubs
 class _FB<T> extends _StubFB<T> {
-  _FB(super.data);
+  _FB(super._data);
 }
 
 class _QB extends Fake implements SupabaseQueryBuilder {

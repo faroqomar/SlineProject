@@ -340,10 +340,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _scrollToBottom() {
     if (!_scrollController.hasClients) return;
-    _scrollController.animateTo(
-      _scrollController.position.maxScrollExtent,
-      duration: AppMotion.emphasis,
-      curve: AppMotion.curveDecel,
+    unawaited(
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: AppMotion.emphasis,
+        curve: AppMotion.curveDecel,
+      ),
     );
   }
 
@@ -794,9 +796,9 @@ class _ChatScreenState extends State<ChatScreen> {
                       icon: Icon(Icons.more_vert, color: amberColors.text),
                       onSelected: (value) {
                         if (value == 'report_chat') {
-                          _reportConversation(context);
+                          unawaited(_reportConversation(context));
                         } else if (value == 'report_user') {
-                          _reportUser(context);
+                          unawaited(_reportUser(context));
                         }
                       },
                       itemBuilder: (_) => const [
@@ -916,7 +918,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ),
                     onChanged: (value) {
-                      _chatCtrl.setTyping(value.trim().isNotEmpty);
+                      unawaited(_chatCtrl.setTyping(value.trim().isNotEmpty));
                     },
                   ),
                 ),
@@ -1128,91 +1130,97 @@ class _ChatScreenState extends State<ChatScreen> {
     bool isMine, {
     bool isAttachment = false,
   }) {
-    HapticFeedback.mediumImpact();
+    unawaited(HapticFeedback.mediumImpact());
     final amberColors = context.amberColors;
 
     // Determine which actions to show based on message type
     final hasTextToCopy = !isAttachment || (message.content != '[photo]');
     final canReply = !isAttachment || message.content != '[photo]';
 
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: amberColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppDimens.r24),
-        ),
-      ),
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppDimens.p8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Drag handle indicator
-                Container(
-                  width: 36,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: AppDimens.p8),
-                  decoration: BoxDecoration(
-                    color: amberColors.surfaceHighest,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                // Copy option — available when message has copyable text
-                if (hasTextToCopy)
-                  ListTile(
-                    leading: Icon(
-                      Icons.copy_outlined,
-                      size: AppDimens.iconSizeSmall,
-                      color: amberColors.text,
-                    ),
-                    title: Text(
-                      'Copy',
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: amberColors.text,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: AppDimens.p16,
-                    ),
-                    onTap: () {
-                      Clipboard.setData(ClipboardData(text: message.content));
-                      Navigator.pop(sheetContext);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Message copied')),
-                      );
-                      AppInteractionStates.hapticTap();
-                    },
-                  ),
-                // Reply option — available for text and attachment messages
-                if (canReply)
-                  ListTile(
-                    leading: Icon(
-                      Icons.reply_rounded,
-                      size: AppDimens.iconSizeSmall,
-                      color: amberColors.text,
-                    ),
-                    title: Text(
-                      'Reply',
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: amberColors.text,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: AppDimens.p16,
-                    ),
-                    onTap: () {
-                      Navigator.pop(sheetContext);
-                      _setReplyTarget(message);
-                    },
-                  ),
-              ],
-            ),
+    unawaited(
+      showModalBottomSheet<void>(
+        context: context,
+        backgroundColor: amberColors.surface,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppDimens.r24),
           ),
-        );
-      },
+        ),
+        builder: (sheetContext) {
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppDimens.p8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Drag handle indicator
+                  Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: AppDimens.p8),
+                    decoration: BoxDecoration(
+                      color: amberColors.surfaceHighest,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  // Copy option — available when message has copyable text
+                  if (hasTextToCopy)
+                    ListTile(
+                      leading: Icon(
+                        Icons.copy_outlined,
+                        size: AppDimens.iconSizeSmall,
+                        color: amberColors.text,
+                      ),
+                      title: Text(
+                        'Copy',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: amberColors.text,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: AppDimens.p16,
+                      ),
+                      onTap: () {
+                        unawaited(
+                          Clipboard.setData(
+                            ClipboardData(text: message.content),
+                          ),
+                        );
+                        Navigator.pop(sheetContext);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Message copied')),
+                        );
+                        AppInteractionStates.hapticTap();
+                      },
+                    ),
+                  // Reply option — available for text and attachment messages
+                  if (canReply)
+                    ListTile(
+                      leading: Icon(
+                        Icons.reply_rounded,
+                        size: AppDimens.iconSizeSmall,
+                        color: amberColors.text,
+                      ),
+                      title: Text(
+                        'Reply',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: amberColors.text,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: AppDimens.p16,
+                      ),
+                      onTap: () {
+                        Navigator.pop(sheetContext);
+                        _setReplyTarget(message);
+                      },
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -1426,7 +1434,7 @@ class _SwipeToReplyState extends State<_SwipeToReply>
     // Spring back to original position
     _springStartOffset = _dragOffset;
     _springController.reset();
-    _springController.forward();
+    unawaited(_springController.forward());
     _thresholdCrossed = false;
   }
 

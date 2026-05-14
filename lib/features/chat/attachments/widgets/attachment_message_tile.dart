@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
@@ -52,7 +54,7 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
   @override
   void initState() {
     super.initState();
-    _loadSignedUrl();
+    unawaited(_loadSignedUrl());
   }
 
   @override
@@ -65,7 +67,7 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
       _error = null;
       _resolvedUrl = null;
       _resolverMissing = false;
-      _loadSignedUrl();
+      unawaited(_loadSignedUrl());
     }
   }
 
@@ -285,7 +287,7 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
                 _loading = true;
                 _error = null;
               });
-              _loadSignedUrl();
+              unawaited(_loadSignedUrl());
             }
           : null,
       child: Container(
@@ -331,12 +333,14 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
   /// pinch-to-zoom, and drag-to-dismiss. Replaces the old basic Dialog viewer.
   /// Phase 6B: wired to reusable FullscreenImageViewer from core/widgets.
   void _showFullScreen(BuildContext context, String url) {
-    FullscreenImageViewer.show(
-      context,
-      imageUrl: url,
-      // Full path avoids hash collisions; Hero tags are not user-visible copy.
-      heroTag: 'chat-attachment-${widget.runtimeType}-${widget.storagePath}',
-      caption: widget.caption,
+    unawaited(
+      FullscreenImageViewer.show(
+        context,
+        imageUrl: url,
+        // Full path avoids hash collisions; Hero tags are not user-visible copy.
+        heroTag: 'chat-attachment-${widget.runtimeType}-${widget.storagePath}',
+        caption: widget.caption,
+      ),
     );
   }
 }

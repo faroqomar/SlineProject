@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
@@ -9,12 +11,24 @@ import 'package:sline_app/features/management/view/widgets/work_log_tile.dart';
 import 'package:sline_app/features/management/viewmodels/order_management_view_model.dart';
 
 class OrderManagementPanel extends StatefulWidget {
-  static const noteFieldKey = ValueKey('order_management_note_field');
-  static const sendButtonKey = ValueKey('order_management_send_button');
-  static const retryButtonKey = ValueKey('order_management_retry_button');
-  static const timelineErrorKey = ValueKey('order_management_timeline_error');
-  static const timelineEmptyKey = ValueKey('order_management_timeline_empty');
-  static const actionErrorKey = ValueKey('order_management_action_error');
+  static const ValueKey<String> noteFieldKey = ValueKey(
+    'order_management_note_field',
+  );
+  static const ValueKey<String> sendButtonKey = ValueKey(
+    'order_management_send_button',
+  );
+  static const ValueKey<String> retryButtonKey = ValueKey(
+    'order_management_retry_button',
+  );
+  static const ValueKey<String> timelineErrorKey = ValueKey(
+    'order_management_timeline_error',
+  );
+  static const ValueKey<String> timelineEmptyKey = ValueKey(
+    'order_management_timeline_empty',
+  );
+  static const ValueKey<String> actionErrorKey = ValueKey(
+    'order_management_action_error',
+  );
 
   final WorkLogScope scope;
   final String currentUserId;
@@ -37,7 +51,9 @@ class _OrderManagementPanelState extends State<OrderManagementPanel> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<OrderManagementViewModel>().loadLogs(widget.scope);
+      unawaited(
+        context.read<OrderManagementViewModel>().loadLogs(widget.scope),
+      );
     });
   }
 

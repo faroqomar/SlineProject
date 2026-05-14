@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
@@ -28,7 +30,7 @@ class _SavedTasksScreenState extends State<SavedTasksScreen> {
     // VM is now global, we just refresh it on enter if needed, or rely on auto-sync
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Optional: force refresh when screen opens
-      context.read<SavedTasksViewModel>().load();
+      unawaited(context.read<SavedTasksViewModel>().load());
     });
   }
 
@@ -103,7 +105,9 @@ class _SavedTasksView extends StatelessWidget {
                           icon: Icon(Icons.refresh, color: amber.text),
                           onPressed: () {
                             AppInteractionStates.hapticTap();
-                            context.read<SavedTasksViewModel>().refresh();
+                            unawaited(
+                              context.read<SavedTasksViewModel>().refresh(),
+                            );
                           },
                         ),
                       ],
@@ -120,7 +124,7 @@ class _SavedTasksView extends StatelessWidget {
                     ),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
-                        (_, __) => const SkeletonTaskCard(),
+                        (_, _) => const SkeletonTaskCard(),
                         childCount: 5,
                       ),
                     ),
@@ -168,7 +172,9 @@ class _SavedTasksView extends StatelessWidget {
                             OutlinedButton(
                               onPressed: () {
                                 AppInteractionStates.hapticTap();
-                                context.read<SavedTasksViewModel>().refresh();
+                                unawaited(
+                                  context.read<SavedTasksViewModel>().refresh(),
+                                );
                               },
                               style: _outlineButtonStyle(amber),
                               child: const Text('Try Again'),
@@ -231,10 +237,12 @@ class _SavedTasksView extends StatelessWidget {
                             const SizedBox(height: AppDimens.p24),
                             OutlinedButton.icon(
                               onPressed: () {
-                                Navigator.pushNamedAndRemoveUntil(
-                                  context,
-                                  '/main',
-                                  (route) => false,
+                                unawaited(
+                                  Navigator.pushNamedAndRemoveUntil(
+                                    context,
+                                    '/main',
+                                    (route) => false,
+                                  ),
                                 );
                               },
                               style: _outlineButtonStyle(amber),
@@ -263,9 +271,11 @@ class _SavedTasksView extends StatelessWidget {
                         return TaskCard(
                           task: task,
                           onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => TaskDetailsScreen(task: task),
+                            unawaited(
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => TaskDetailsScreen(task: task),
+                                ),
                               ),
                             );
                           },

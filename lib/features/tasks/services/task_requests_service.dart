@@ -483,8 +483,7 @@ class TaskRequestsService {
         params: {
           'p_task_id': resolvedTaskId,
           'p_request_id': requestId,
-          if (expectedPriceCents != null)
-            'p_expected_price_cents': expectedPriceCents,
+          'p_expected_price_cents': ?expectedPriceCents,
         },
       );
       final model = await _fetchRequestById(requestId);

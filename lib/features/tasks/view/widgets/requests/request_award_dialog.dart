@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -574,7 +576,7 @@ Future<void> showPriceMismatchDialog({
             onPressed: () {
               final vm = context.read<TaskRequestsViewModel>();
               Navigator.pop(ctx);
-              if (context.mounted) vm.loadInitial();
+              if (context.mounted) unawaited(vm.loadInitial());
             },
             icon: const Icon(Icons.refresh),
             label: const Text('Review New Price'),

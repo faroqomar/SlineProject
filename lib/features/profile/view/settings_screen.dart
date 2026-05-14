@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/providers/theme_mode_provider.dart';
@@ -126,10 +128,12 @@ class SettingsScreen extends StatelessWidget {
                           'Settings manage portfolio opened',
                           tag: 'Settings',
                         );
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const ManagePortfolioScreen(),
+                        unawaited(
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ManagePortfolioScreen(),
+                            ),
                           ),
                         );
                       },
@@ -162,20 +166,22 @@ class SettingsScreen extends StatelessWidget {
                           'Settings support dialog opened',
                           tag: 'Settings',
                         );
-                        showDialog(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: const Text('Support & Safety'),
-                            content: const Text(
-                              'You can report abusive content from task details, chat conversations, and public profiles. '
-                              'For booking issues, open a booking and tap "Report Issue".',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx),
-                                child: const Text('Close'),
+                        unawaited(
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Support & Safety'),
+                              content: const Text(
+                                'You can report abusive content from task details, chat conversations, and public profiles. '
+                                'For booking issues, open a booking and tap "Report Issue".',
                               ),
-                            ],
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx),
+                                  child: const Text('Close'),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },

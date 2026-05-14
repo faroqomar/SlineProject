@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -23,11 +25,13 @@ Future<void> _openFiltersModal(
               body: Center(
                 child: TextButton(
                   onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (_) => const FiltersModal(),
+                    unawaited(
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => const FiltersModal(),
+                      ),
                     );
                   },
                   child: const Text('Open Filters'),

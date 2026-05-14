@@ -7,6 +7,8 @@
 /// 4. No raw ANSI codes by default (to prevent console garbage)
 library;
 
+import 'dart:async';
+
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
@@ -179,10 +181,12 @@ class AppLogger {
     );
 
     // Automatically report errors to crashlytics
-    CrashReportingService.instance.recordError(
-      error ?? message,
-      stackTrace,
-      reason: message,
+    unawaited(
+      CrashReportingService.instance.recordError(
+        error ?? message,
+        stackTrace,
+        reason: message,
+      ),
     );
   }
 

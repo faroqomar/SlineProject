@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
@@ -134,7 +136,7 @@ class _SignedImageState extends State<SignedImage> {
   @override
   void initState() {
     super.initState();
-    _resolve();
+    unawaited(_resolve());
   }
 
   /// Resolves the storage path to a displayable URL.
@@ -247,7 +249,7 @@ class _SignedImageState extends State<SignedImage> {
               _hasError = false;
               _resolvedUrl = null;
             });
-            _resolve();
+            unawaited(_resolve());
           },
           child:
               widget.placeholder ??

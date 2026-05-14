@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -38,7 +40,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     super.initState();
     _vm = CategoriesViewModel();
     // Initial load without search filter
-    _vm.load();
+    unawaited(_vm.load());
   }
 
   @override
@@ -146,7 +148,7 @@ class _CategoriesView extends StatelessWidget {
           childAspectRatio: _childAspectRatio,
         ),
         delegate: SliverChildBuilderDelegate(
-          (_, __) => const SkeletonCategoryTile(),
+          (_, _) => const SkeletonCategoryTile(),
           childCount: _skeletonCount,
         ),
       ),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
@@ -29,8 +31,8 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final vm = context.read<BookingViewModel>();
-      vm.loadBookingsAsClient();
-      vm.loadBookingsAsProvider();
+      unawaited(vm.loadBookingsAsClient());
+      unawaited(vm.loadBookingsAsProvider());
     });
   }
 
@@ -57,8 +59,8 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
               onPressed: () {
                 AppLogger.i('Bookings list refresh requested', tag: 'Booking');
                 final vm = context.read<BookingViewModel>();
-                vm.loadBookingsAsClient();
-                vm.loadBookingsAsProvider();
+                unawaited(vm.loadBookingsAsClient());
+                unawaited(vm.loadBookingsAsProvider());
               },
               icon: const Icon(Icons.refresh_rounded),
             ),
@@ -163,7 +165,7 @@ class _BookingsListViewState extends State<_BookingsListView> {
       return ListView.builder(
         padding: const EdgeInsets.all(AppDimens.p24),
         itemCount: 5,
-        itemBuilder: (_, __) => const Padding(
+        itemBuilder: (_, _) => const Padding(
           padding: EdgeInsets.only(bottom: AppDimens.p12),
           child: SkeletonBookingCard(),
         ),
@@ -202,7 +204,7 @@ class _BookingsListViewState extends State<_BookingsListView> {
                     AppDimens.p100,
                   ),
                   itemCount: filtered.length + (widget.hasMore ? 1 : 0),
-                  separatorBuilder: (_, __) =>
+                  separatorBuilder: (_, _) =>
                       const SizedBox(height: AppDimens.p4),
                   itemBuilder: (context, i) {
                     if (i == filtered.length) {
@@ -224,9 +226,9 @@ class _BookingsListViewState extends State<_BookingsListView> {
                               );
                               final vm = context.read<BookingViewModel>();
                               if (widget.asProvider) {
-                                vm.loadMoreBookingsAsProvider();
+                                unawaited(vm.loadMoreBookingsAsProvider());
                               } else {
-                                vm.loadMoreBookingsAsClient();
+                                unawaited(vm.loadMoreBookingsAsClient());
                               }
                             },
                             icon: Icon(
@@ -244,10 +246,12 @@ class _BookingsListViewState extends State<_BookingsListView> {
                       booking: b,
                       asProvider: widget.asProvider,
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => BookingDetailsScreen(booking: b),
+                        unawaited(
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => BookingDetailsScreen(booking: b),
+                            ),
                           ),
                         );
                       },
@@ -385,7 +389,7 @@ class _FilterBar extends StatelessWidget {
         ),
         scrollDirection: Axis.horizontal,
         itemCount: filters.length,
-        separatorBuilder: (_, __) => SizedBox(width: spacing.sm),
+        separatorBuilder: (_, _) => SizedBox(width: spacing.sm),
         itemBuilder: (context, index) {
           final filter = filters[index];
           final selected = filter.status == value;

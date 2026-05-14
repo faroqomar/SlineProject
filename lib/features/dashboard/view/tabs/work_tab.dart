@@ -230,7 +230,7 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
           AppDimens.p100,
         ),
         itemCount: visibleActive.length,
-        separatorBuilder: (_, __) => const SizedBox(height: AppDimens.p12),
+        separatorBuilder: (_, _) => const SizedBox(height: AppDimens.p12),
         itemBuilder: (_, index) {
           final item = visibleActive[index];
           return WorkItemCard(
@@ -329,39 +329,45 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
   }
 
   void _showInsufficientFundsDialog(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Insufficient balance'),
-        content: const Text(
-          'Add funds to your wallet and try again from the Dashboard.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            style: TextButton.styleFrom(
-              foregroundColor: AmberDuskTokens.colors.muted,
-            ),
-            child: const Text('Cancel'),
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Insufficient balance'),
+          content: const Text(
+            'Add funds to your wallet and try again from the Dashboard.',
           ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              Navigator.push(
-                context,
-                MaterialPageRoute<void>(builder: (_) => const WalletScreen()),
-              );
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: AmberDuskTokens.colors.primary,
-              foregroundColor: AmberDuskTokens.colors.textInverse,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppDimens.r12),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: TextButton.styleFrom(
+                foregroundColor: AmberDuskTokens.colors.muted,
               ),
+              child: const Text('Cancel'),
             ),
-            child: const Text('Add funds'),
-          ),
-        ],
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                unawaited(
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (_) => const WalletScreen(),
+                    ),
+                  ),
+                );
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: AmberDuskTokens.colors.primary,
+                foregroundColor: AmberDuskTokens.colors.textInverse,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppDimens.r12),
+                ),
+              ),
+              child: const Text('Add funds'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -418,7 +424,7 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
           AppDimens.p100,
         ),
         itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(height: AppDimens.p12),
+        separatorBuilder: (_, _) => const SizedBox(height: AppDimens.p12),
         itemBuilder: (context, index) {
           final item = items[index];
           // 0.85 opacity for Done/Cancelled tabs — visually distinguishes completed/

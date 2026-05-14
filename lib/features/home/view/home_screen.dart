@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
@@ -75,12 +77,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     // Load featured tasks and notify filter controller when screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<DiscoveryFeedViewModelContract>().loadFeaturedTasks(
-        filterController: context.read<TaskFilterViewModel>(),
-        surface: 'home',
+      unawaited(
+        context.read<DiscoveryFeedViewModelContract>().loadFeaturedTasks(
+          filterController: context.read<TaskFilterViewModel>(),
+          surface: 'home',
+        ),
       );
       // Ensure profile is loaded for the header
-      context.read<ProfileViewModel>().loadHeaderProfile();
+      unawaited(context.read<ProfileViewModel>().loadHeaderProfile());
     });
   }
 
@@ -221,12 +225,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                   tag: 'HomeUI',
                                   json: {'surface': 'home'},
                                 );
-                                showModalBottomSheet(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  backgroundColor:
-                                      AmberDuskTokens.colors.surface,
-                                  builder: (_) => const FiltersModal(),
+                                unawaited(
+                                  showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    backgroundColor:
+                                        AmberDuskTokens.colors.surface,
+                                    builder: (_) => const FiltersModal(),
+                                  ),
                                 );
                               },
                               child: Container(
@@ -349,11 +355,13 @@ class _HomeScreenState extends State<HomeScreen> {
                             'task_type': task.taskType.name,
                           },
                         );
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                widget.taskDetailsScreenBuilder?.call(task) ??
-                                TaskDetailsScreen(task: task),
+                        unawaited(
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  widget.taskDetailsScreenBuilder?.call(task) ??
+                                  TaskDetailsScreen(task: task),
+                            ),
                           ),
                         );
                       },
@@ -373,9 +381,9 @@ class _HomeScreenState extends State<HomeScreen> {
       case _HomeDiscoveryMode.allWork:
         return tasks;
       case _HomeDiscoveryMode.bookings:
-        return tasks.where((task) => task.isBooking == true).toList();
+        return tasks.where((task) => task.isBooking).toList();
       case _HomeDiscoveryMode.tenders:
-        return tasks.where((task) => task.isTender == true).toList();
+        return tasks.where((task) => task.isTender).toList();
     }
   }
 

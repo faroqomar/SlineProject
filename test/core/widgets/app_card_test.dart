@@ -90,7 +90,7 @@ void main() {
       await pumpCoreWidget(tester, const AppCard(child: Text('Semantic')));
 
       final semantics = tester.widgetList<Semantics>(find.byType(Semantics));
-      final hasContainer = semantics.any((s) => s.container == true);
+      final hasContainer = semantics.any((s) => s.container);
       expect(hasContainer, isTrue);
       handle.dispose();
     });

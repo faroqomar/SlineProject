@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:sline_app/core/theme/app_decorations.dart';
@@ -140,28 +142,34 @@ class _AppButtonState extends State<AppButton>
     if (_isInSuccessState || !mounted) return;
     setState(() => _isInSuccessState = true);
     AppInteractionStates.hapticSuccess();
-    _flashController.forward().then((_) {
-      // Show check icon for 200ms after flash
-      Future.delayed(const Duration(milliseconds: 200), () {
-        if (!mounted) return;
-        _flashController.reverse().then((_) {
-          // Auto-revert after revertDelay
-          Future.delayed(AppInteractionStates.revertDelay, () {
-            if (!mounted) return;
-            setState(() => _isInSuccessState = false);
-          });
+    unawaited(
+      _flashController.forward().then((_) {
+        // Show check icon for 200ms after flash
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (!mounted) return;
+          unawaited(
+            _flashController.reverse().then((_) {
+              // Auto-revert after revertDelay
+              Future.delayed(AppInteractionStates.revertDelay, () {
+                if (!mounted) return;
+                setState(() => _isInSuccessState = false);
+              });
+            }),
+          );
         });
-      });
-    });
+      }),
+    );
   }
 
   void _runErrorFlash() {
     AppInteractionStates.hapticHeavy();
-    _flashController.forward().then((_) {
-      Future.delayed(AppInteractionStates.flashDuration, () {
-        if (mounted) _flashController.reverse();
-      });
-    });
+    unawaited(
+      _flashController.forward().then((_) {
+        Future.delayed(AppInteractionStates.flashDuration, () {
+          if (mounted) unawaited(_flashController.reverse());
+        });
+      }),
+    );
   }
 
   @override

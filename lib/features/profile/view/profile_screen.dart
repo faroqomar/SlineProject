@@ -41,7 +41,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'ProfileScreen: initial profile load started',
         tag: 'Profile',
       );
-      profileVM.loadUserData();
+      unawaited(profileVM.loadUserData());
     });
   }
 
@@ -83,10 +83,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         'ProfileScreen: settings opened',
                         tag: 'Profile',
                       );
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const SettingsScreen(),
+                      unawaited(
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const SettingsScreen(),
+                          ),
                         ),
                       );
                     },
@@ -254,10 +256,12 @@ class _ProfileHeroCard extends StatelessWidget {
                       'ProfileScreen: edit profile opened',
                       tag: 'Profile',
                     );
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const EditProfileScreen(),
+                    unawaited(
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const EditProfileScreen(),
+                        ),
                       ),
                     );
                   },
@@ -1107,11 +1111,15 @@ void _openPublicProfile(BuildContext context, {int initialTabIndex = 0}) {
     tag: 'Profile',
     json: {'initial_tab': initialTabIndex},
   );
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) =>
-          PublicProfileScreen(userId: userId, initialTabIndex: initialTabIndex),
+  unawaited(
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PublicProfileScreen(
+          userId: userId,
+          initialTabIndex: initialTabIndex,
+        ),
+      ),
     ),
   );
 }

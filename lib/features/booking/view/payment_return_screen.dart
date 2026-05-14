@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/config/payment_runtime_config.dart';
@@ -35,7 +37,7 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _resolvePaymentReturn();
+      unawaited(_resolvePaymentReturn());
     });
   }
 
@@ -258,7 +260,9 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
   }
 
   void _openMainApp() {
-    Navigator.of(context).pushNamedAndRemoveUntil('/main', (route) => false);
+    unawaited(
+      Navigator.of(context).pushNamedAndRemoveUntil('/main', (route) => false),
+    );
   }
 
   @override
@@ -327,7 +331,7 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
                                 _isLoading = true;
                                 _isRecoverable = false;
                               });
-                              _resolvePaymentReturn();
+                              unawaited(_resolvePaymentReturn());
                             },
                             child: const Text('Retry Recovery'),
                           ),

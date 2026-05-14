@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
@@ -38,7 +40,7 @@ class _WalletSharedBodyState extends State<WalletSharedBody> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<WalletViewModel>().ensureLoaded();
+      unawaited(context.read<WalletViewModel>().ensureLoaded());
     });
   }
 

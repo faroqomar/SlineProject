@@ -240,7 +240,7 @@ class TaskOfferService {
         relatedEntityType: 'task_request',
         relatedEntityId: offerId,
         amountGross: price,
-        meta: {if (feeRateBps != null) 'fee_rate_bps': feeRateBps},
+        meta: {'fee_rate_bps': ?feeRateBps},
       );
     } on Exception catch (e) {
       AppLogger.e('Failed to release offer funds', error: e);
@@ -299,8 +299,7 @@ class TaskOfferService {
         'award_task_offer',
         params: {
           'p_request_id': offerId,
-          if (expectedPriceCents != null)
-            'p_expected_price_cents': expectedPriceCents,
+          'p_expected_price_cents': ?expectedPriceCents,
         },
       );
 

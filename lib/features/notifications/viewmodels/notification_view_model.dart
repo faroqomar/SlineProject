@@ -176,7 +176,7 @@ class NotificationViewModel extends ChangeNotifier {
     _connectGeneration++;
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
-    _subscription?.cancel();
+    unawaited(_subscription?.cancel());
     _subscription = null;
     _notifications = [];
     _error = null;
@@ -206,8 +206,8 @@ class NotificationViewModel extends ChangeNotifier {
     _disposed = true;
     _connectGeneration++;
     _reconnectTimer?.cancel();
-    _authSubscription?.cancel();
-    _subscription?.cancel();
+    unawaited(_authSubscription?.cancel());
+    unawaited(_subscription?.cancel());
     super.dispose();
   }
 

@@ -10,6 +10,8 @@
 /// T-numbers: T140 -- T157.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -180,7 +182,7 @@ class _HarnessScreen extends StatelessWidget {
     }
 
     return Consumer<TaskRequestsViewModel>(
-      builder: (context, c, __) {
+      builder: (context, c, _) {
         // Apply hide-expired filter by default (same as the screen)
         final filteredItems = c.items.where((r) => !r.isExpired).toList();
         final total = c.items.length;
@@ -255,7 +257,7 @@ class _HarnessScreen extends StatelessWidget {
       return ListView.builder(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
         itemCount: 5,
-        itemBuilder: (_, __) => const SkeletonOfferCard(),
+        itemBuilder: (_, _) => const SkeletonOfferCard(),
       );
     }
 
@@ -280,7 +282,7 @@ class _HarnessScreen extends StatelessWidget {
               FilledButton.icon(
                 onPressed: () {
                   c.clearError();
-                  c.loadInitial();
+                  unawaited(c.loadInitial());
                 },
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
@@ -358,7 +360,7 @@ class _HarnessScreen extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
       itemCount: filteredItems.length + (c.isLoadingMore ? 1 : 0),
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      separatorBuilder: (_, _) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         if (index >= filteredItems.length) {
           return const Padding(

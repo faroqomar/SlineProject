@@ -222,7 +222,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
   @override
   void dispose() {
     _isDisposed = true;
-    _intentStatusSubscription?.cancel();
+    unawaited(_intentStatusSubscription?.cancel());
     super.dispose();
   }
 
@@ -257,7 +257,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
         );
         final normalizedStatus = status.toLowerCase();
         if (normalizedStatus == 'succeeded' || normalizedStatus == 'failed') {
-          _intentStatusSubscription?.cancel();
+          unawaited(_intentStatusSubscription?.cancel());
           AppLogger.i(
             'Payment webview resolved from realtime status',
             tag: 'Payment',
@@ -279,143 +279,108 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
     }
 
     _controller = WebViewController();
-    _controller!.setJavaScriptMode(JavaScriptMode.unrestricted);
-    _controller!.setNavigationDelegate(
-      NavigationDelegate(
-        onPageStarted: (url) {
-          final pageUri = Uri.tryParse(url);
-          AppLogger.d(
-            'Payment webview page started',
-            tag: 'Payment',
-            json: _paymentUrlFacts(pageUri),
-          );
-          _safeSetState(() {
-            _isLoading = true;
-            _loadError = null;
-          });
-        },
-        onPageFinished: (url) {
-          final pageUri = Uri.tryParse(url);
-          AppLogger.d(
-            'Payment webview page finished',
-            tag: 'Payment',
-            json: _paymentUrlFacts(pageUri),
-          );
-          _safeSetState(() {
-            _isLoading = false;
-          });
-        },
-        onWebResourceError: (error) {
-          final normalizedCode = 'WEBVIEW_${error.errorCode}';
-          AppLogger.e(
-            'Payment webview resource error',
-            tag: 'Payment',
-            error: normalizedCode,
-            json: <String, dynamic>{
-              'description': error.description,
-              'error_type': error.errorType.toString(),
-            },
-          );
-          unawaited(
-            CrashReportingService.instance.recordError(
-              error,
-              StackTrace.current,
-              reason: normalizedCode,
-            ),
-          );
-          _safeSetState(() {
-            _isLoading = false;
-            _loadError = 'Payment page could not load.';
-          });
-        },
-        onNavigationRequest: (request) {
-          final uri = Uri.tryParse(request.url);
-          final isTrustedHost = _isTrustedCallbackHost(uri);
-          final isTrustedCallbackHost = _isTrustedWebCallback(uri);
-          final matchesExpectedCallback = _matchesExpectedCallback(uri);
-          final paymentReturn = uri == null
-              ? null
-              : parsePaymentReturnArgs(
-                  uri,
-                  callbackHosts: widget.callbackHosts,
-                );
-
-          // App scheme deep link: sline://payment/finish?status=...
-          final isAppSchemeFinish =
-              uri != null &&
-              uri.scheme == 'sline' &&
-              uri.host == 'payment' &&
-              uri.path.contains('finish');
-
-          // HTTPS finish URLs with status parameter
-          final isHttpsFinishWithStatus =
-              uri != null &&
-              (uri.scheme == 'https' || uri.scheme == 'http') &&
-              isTrustedCallbackHost &&
-              uri.path.contains('finish') &&
-              uri.queryParameters.containsKey('status');
-
-          // QiCard success return paths stay classified before logging.
-          // Or any URL containing /payment/success in the path
-          final isPaymentSuccessUrl =
-              uri != null &&
-              (uri.scheme == 'https' || uri.scheme == 'http') &&
-              isTrustedCallbackHost &&
-              (uri.path.contains('/payment/success') ||
-                  uri.path.endsWith('/success') &&
-                      uri.path.contains('payment'));
-
-          // QiCard failure/cancel URLs
-          final isPaymentFailureUrl =
-              uri != null &&
-              (uri.scheme == 'https' || uri.scheme == 'http') &&
-              isTrustedCallbackHost &&
-              (uri.path.contains('/payment/failure') ||
-                  uri.path.contains('/payment/cancel') ||
-                  uri.path.contains('/payment/error'));
-
-          if (uri != null &&
-              isTrustedHost &&
-              !isTrustedCallbackHost &&
-              uri.scheme != 'sline') {
-            AppLogger.w(
-              'Rejected insecure payment callback URL',
+    unawaited(_controller!.setJavaScriptMode(JavaScriptMode.unrestricted));
+    unawaited(
+      _controller!.setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (url) {
+            final pageUri = Uri.tryParse(url);
+            AppLogger.d(
+              'Payment webview page started',
               tag: 'Payment',
-              error: _paymentUrlCode(uri, 'UNKNOWN_CALLBACK_URL'),
-              json: _paymentUrlFacts(uri),
+              json: _paymentUrlFacts(pageUri),
             );
-            return NavigationDecision.prevent;
-          }
-
-          if (isAppSchemeFinish || isHttpsFinishWithStatus) {
-            if (!matchesExpectedCallback) {
-              AppLogger.w(
-                'Rejected payment finish callback due to booking/correlation mismatch',
-                tag: 'Payment',
-                error: _paymentUrlCode(uri, 'UNKNOWN_CALLBACK_URL'),
-                json: _paymentUrlFacts(uri),
-              );
-              return NavigationDecision.prevent;
-            }
-            final result = _returnArgsFromUri(uri);
-            AppLogger.i(
-              'Accepted payment finish callback status=${result.normalizedStatus}',
+            _safeSetState(() {
+              _isLoading = true;
+              _loadError = null;
+            });
+          },
+          onPageFinished: (url) {
+            final pageUri = Uri.tryParse(url);
+            AppLogger.d(
+              'Payment webview page finished',
               tag: 'Payment',
+              json: _paymentUrlFacts(pageUri),
+            );
+            _safeSetState(() {
+              _isLoading = false;
+            });
+          },
+          onWebResourceError: (error) {
+            final normalizedCode = 'WEBVIEW_${error.errorCode}';
+            AppLogger.e(
+              'Payment webview resource error',
+              tag: 'Payment',
+              error: normalizedCode,
               json: <String, dynamic>{
-                'has_booking': result.bookingId != null,
-                'has_correlation': result.correlationId != null,
-                'has_payment_reference': result.paymentId != null,
-                'has_payment_intent': result.paymentIntentId != null,
+                'description': error.description,
+                'error_type': error.errorType.toString(),
               },
             );
-            _popWithResult(result);
-            return NavigationDecision.prevent;
-          }
+            unawaited(
+              CrashReportingService.instance.recordError(
+                error,
+                StackTrace.current,
+                reason: normalizedCode,
+              ),
+            );
+            _safeSetState(() {
+              _isLoading = false;
+              _loadError = 'Payment page could not load.';
+            });
+          },
+          onNavigationRequest: (request) {
+            final uri = Uri.tryParse(request.url);
+            final isTrustedHost = _isTrustedCallbackHost(uri);
+            final isTrustedCallbackHost = _isTrustedWebCallback(uri);
+            final matchesExpectedCallback = _matchesExpectedCallback(uri);
+            final paymentReturn = uri == null
+                ? null
+                : parsePaymentReturnArgs(
+                    uri,
+                    callbackHosts: widget.callbackHosts,
+                  );
 
-          if (paymentReturn != null) {
-            if (!matchesExpectedCallback) {
+            // App scheme deep link: sline://payment/finish?status=...
+            final isAppSchemeFinish =
+                uri != null &&
+                uri.scheme == 'sline' &&
+                uri.host == 'payment' &&
+                uri.path.contains('finish');
+
+            // HTTPS finish URLs with status parameter
+            final isHttpsFinishWithStatus =
+                uri != null &&
+                (uri.scheme == 'https' || uri.scheme == 'http') &&
+                isTrustedCallbackHost &&
+                uri.path.contains('finish') &&
+                uri.queryParameters.containsKey('status');
+
+            // QiCard success return paths stay classified before logging.
+            // Or any URL containing /payment/success in the path
+            final isPaymentSuccessUrl =
+                uri != null &&
+                (uri.scheme == 'https' || uri.scheme == 'http') &&
+                isTrustedCallbackHost &&
+                (uri.path.contains('/payment/success') ||
+                    uri.path.endsWith('/success') &&
+                        uri.path.contains('payment'));
+
+            // QiCard failure/cancel URLs
+            final isPaymentFailureUrl =
+                uri != null &&
+                (uri.scheme == 'https' || uri.scheme == 'http') &&
+                isTrustedCallbackHost &&
+                (uri.path.contains('/payment/failure') ||
+                    uri.path.contains('/payment/cancel') ||
+                    uri.path.contains('/payment/error'));
+
+            if (uri != null &&
+                isTrustedHost &&
+                !isTrustedCallbackHost &&
+                uri.scheme != 'sline') {
               AppLogger.w(
-                'Rejected payment callback due to booking/correlation mismatch',
+                'Rejected insecure payment callback URL',
                 tag: 'Payment',
                 error: _paymentUrlCode(uri, 'UNKNOWN_CALLBACK_URL'),
                 json: _paymentUrlFacts(uri),
@@ -423,88 +388,127 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
               return NavigationDecision.prevent;
             }
 
-            if (paymentReturn.isFailure) {
-              AppLogger.w(
-                'Accepted payment failure callback status=${paymentReturn.normalizedStatus}',
-                tag: 'Payment',
-                error: _paymentUrlCode(uri, 'UNKNOWN_CALLBACK_URL'),
-                json: _paymentUrlFacts(uri),
-              );
-            } else {
+            if (isAppSchemeFinish || isHttpsFinishWithStatus) {
+              if (!matchesExpectedCallback) {
+                AppLogger.w(
+                  'Rejected payment finish callback due to booking/correlation mismatch',
+                  tag: 'Payment',
+                  error: _paymentUrlCode(uri, 'UNKNOWN_CALLBACK_URL'),
+                  json: _paymentUrlFacts(uri),
+                );
+                return NavigationDecision.prevent;
+              }
+              final result = _returnArgsFromUri(uri);
               AppLogger.i(
-                'Accepted payment callback status=${paymentReturn.normalizedStatus}',
+                'Accepted payment finish callback status=${result.normalizedStatus}',
                 tag: 'Payment',
                 json: <String, dynamic>{
-                  'has_booking': paymentReturn.bookingId != null,
-                  'has_correlation': paymentReturn.correlationId != null,
-                  'has_payment_reference': paymentReturn.paymentId != null,
+                  'has_booking': result.bookingId != null,
+                  'has_correlation': result.correlationId != null,
+                  'has_payment_reference': result.paymentId != null,
+                  'has_payment_intent': result.paymentIntentId != null,
+                },
+              );
+              _popWithResult(result);
+              return NavigationDecision.prevent;
+            }
+
+            if (paymentReturn != null) {
+              if (!matchesExpectedCallback) {
+                AppLogger.w(
+                  'Rejected payment callback due to booking/correlation mismatch',
+                  tag: 'Payment',
+                  error: _paymentUrlCode(uri, 'UNKNOWN_CALLBACK_URL'),
+                  json: _paymentUrlFacts(uri),
+                );
+                return NavigationDecision.prevent;
+              }
+
+              if (paymentReturn.isFailure) {
+                AppLogger.w(
+                  'Accepted payment failure callback status=${paymentReturn.normalizedStatus}',
+                  tag: 'Payment',
+                  error: _paymentUrlCode(uri, 'UNKNOWN_CALLBACK_URL'),
+                  json: _paymentUrlFacts(uri),
+                );
+              } else {
+                AppLogger.i(
+                  'Accepted payment callback status=${paymentReturn.normalizedStatus}',
+                  tag: 'Payment',
+                  json: <String, dynamic>{
+                    'has_booking': paymentReturn.bookingId != null,
+                    'has_correlation': paymentReturn.correlationId != null,
+                    'has_payment_reference': paymentReturn.paymentId != null,
+                    'has_payment_intent':
+                        paymentReturn.paymentIntentId != null ||
+                        widget.paymentIntentId != null,
+                  },
+                );
+              }
+              _popWithResult(_returnArgsWithExpectedState(paymentReturn));
+              return NavigationDecision.prevent;
+            }
+
+            // Handle QiCard success return URL
+            if (isPaymentSuccessUrl) {
+              if (!matchesExpectedCallback) {
+                AppLogger.w(
+                  'Rejected payment success callback due to booking/correlation mismatch',
+                  tag: 'Payment',
+                  error: _paymentUrlCode(uri, 'UNKNOWN_CALLBACK_URL'),
+                  json: _paymentUrlFacts(uri),
+                );
+                return NavigationDecision.prevent;
+              }
+              AppLogger.i(
+                'Accepted payment success callback',
+                tag: 'Payment',
+                json: <String, dynamic>{
+                  'has_booking': widget.expectedBookingId != null,
+                  'has_correlation': widget.expectedCorrelationId != null,
+                  'has_payment_reference':
+                      uri.queryParameters['payment_id'] != null,
                   'has_payment_intent':
-                      paymentReturn.paymentIntentId != null ||
+                      uri.queryParameters['payment_intent_id'] != null ||
                       widget.paymentIntentId != null,
                 },
               );
+              _popWithResult(
+                _returnArgsFromUri(uri, statusOverride: 'SUCCESS'),
+              );
+              return NavigationDecision.prevent;
             }
-            _popWithResult(_returnArgsWithExpectedState(paymentReturn));
-            return NavigationDecision.prevent;
-          }
 
-          // Handle QiCard success return URL
-          if (isPaymentSuccessUrl) {
-            if (!matchesExpectedCallback) {
+            // Handle QiCard failure/cancel return URL
+            if (isPaymentFailureUrl) {
+              if (!matchesExpectedCallback) {
+                AppLogger.w(
+                  'Rejected payment failure callback due to booking/correlation mismatch',
+                  tag: 'Payment',
+                  error: _paymentUrlCode(uri, 'UNKNOWN_CALLBACK_URL'),
+                  json: _paymentUrlFacts(uri),
+                );
+                return NavigationDecision.prevent;
+              }
+              final status =
+                  uri.queryParameters['status']?.toUpperCase() ??
+                  (uri.path.contains('cancel') ? 'CANCELED' : 'FAILED');
               AppLogger.w(
-                'Rejected payment success callback due to booking/correlation mismatch',
+                'Accepted payment failure callback status=$status',
                 tag: 'Payment',
                 error: _paymentUrlCode(uri, 'UNKNOWN_CALLBACK_URL'),
                 json: _paymentUrlFacts(uri),
               );
+              _popWithResult(_returnArgsFromUri(uri, statusOverride: status));
               return NavigationDecision.prevent;
             }
-            AppLogger.i(
-              'Accepted payment success callback',
-              tag: 'Payment',
-              json: <String, dynamic>{
-                'has_booking': widget.expectedBookingId != null,
-                'has_correlation': widget.expectedCorrelationId != null,
-                'has_payment_reference':
-                    uri.queryParameters['payment_id'] != null,
-                'has_payment_intent':
-                    uri.queryParameters['payment_intent_id'] != null ||
-                    widget.paymentIntentId != null,
-              },
-            );
-            _popWithResult(_returnArgsFromUri(uri, statusOverride: 'SUCCESS'));
-            return NavigationDecision.prevent;
-          }
 
-          // Handle QiCard failure/cancel return URL
-          if (isPaymentFailureUrl) {
-            if (!matchesExpectedCallback) {
-              AppLogger.w(
-                'Rejected payment failure callback due to booking/correlation mismatch',
-                tag: 'Payment',
-                error: _paymentUrlCode(uri, 'UNKNOWN_CALLBACK_URL'),
-                json: _paymentUrlFacts(uri),
-              );
-              return NavigationDecision.prevent;
-            }
-            final status =
-                uri.queryParameters['status']?.toUpperCase() ??
-                (uri.path.contains('cancel') ? 'CANCELED' : 'FAILED');
-            AppLogger.w(
-              'Accepted payment failure callback status=$status',
-              tag: 'Payment',
-              error: _paymentUrlCode(uri, 'UNKNOWN_CALLBACK_URL'),
-              json: _paymentUrlFacts(uri),
-            );
-            _popWithResult(_returnArgsFromUri(uri, statusOverride: status));
-            return NavigationDecision.prevent;
-          }
-
-          return NavigationDecision.navigate;
-        },
+            return NavigationDecision.navigate;
+          },
+        ),
       ),
     );
-    _controller!.loadRequest(Uri.parse(widget.initialUrl));
+    unawaited(_controller!.loadRequest(Uri.parse(widget.initialUrl)));
   }
 
   Future<void> _handleBackNavigation() async {
@@ -635,7 +639,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        _handleBackNavigation();
+        unawaited(_handleBackNavigation());
       },
       child: Scaffold(
         backgroundColor: amberColors.page,
@@ -780,7 +784,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
                         _isLoading = true;
                         _loadError = null;
                       });
-                      _controller?.reload();
+                      unawaited(_controller?.reload());
                     },
                     style: FilledButton.styleFrom(
                       backgroundColor: amberColors.primary,

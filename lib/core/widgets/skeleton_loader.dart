@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:sline_app/core/theme/app_dimens.dart';
@@ -59,8 +61,11 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: AppMotion.shimmer)
-      ..repeat();
+    _controller = AnimationController(
+      vsync: this,
+      duration: AppMotion.shimmer,
+    );
+    unawaited(_controller.repeat());
 
     _animation = Tween<double>(begin: -2, end: 2).animate(
       CurvedAnimation(parent: _controller, curve: AppMotion.curveSymmetric),

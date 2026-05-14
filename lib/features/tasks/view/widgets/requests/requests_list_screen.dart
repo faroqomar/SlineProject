@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
@@ -95,7 +97,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
     if (prov == null) return;
     final c = prov.read<TaskRequestsViewModel>();
     if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 200) {
-      if (c.hasMore && !c.isLoadingMore) c.loadMore();
+      if (c.hasMore && !c.isLoadingMore) unawaited(c.loadMore());
     }
   }
 
@@ -234,7 +236,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
               taskId: widget.taskId,
               isOwner: widget.isOwner,
             );
-        c.loadInitial();
+        unawaited(c.loadInitial());
         return c;
       },
       builder: (ctx, _) {
@@ -245,7 +247,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
         );
         _scheduleAutoOpenSubmitSheet(ctx, ctx.read<TaskRequestsViewModel>());
         return Consumer<TaskRequestsViewModel>(
-          builder: (context, c, __) {
+          builder: (context, c, _) {
             final filteredItems = _getFilteredItems(c.items);
             final countString = _getCountString(
               c.items.length,
@@ -352,7 +354,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
       return ListView.builder(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
         itemCount: 5,
-        itemBuilder: (_, __) => const SkeletonOfferCard(),
+        itemBuilder: (_, _) => const SkeletonOfferCard(),
       );
     }
 
@@ -381,7 +383,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
       controller: _scroll,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
       itemCount: filteredItems.length + (c.isLoadingMore ? 1 : 0),
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      separatorBuilder: (_, _) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         if (index >= filteredItems.length) {
           return const Padding(
@@ -416,7 +418,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
                     tag: 'TaskRequests',
                   );
                   c.clearError();
-                  c.loadInitial();
+                  unawaited(c.loadInitial());
                 }
               : null,
           onDismissError: c.errorMessage != null ? c.clearError : null,
@@ -460,7 +462,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
                   tag: 'TaskRequests',
                 );
                 c.clearError();
-                c.loadInitial();
+                unawaited(c.loadInitial());
               },
               icon: const Icon(Icons.refresh),
               label: const Text('Retry'),
@@ -640,37 +642,39 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
 
   void _showShareOptions() {
     // Placeholder for share functionality
-    showModalBottomSheet(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Share Task',
-                style: AppTypography.h5.copyWith(
-                  color: context.colorScheme.text,
+    unawaited(
+      showModalBottomSheet(
+        context: context,
+        builder: (ctx) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Share Task',
+                  style: AppTypography.h5.copyWith(
+                    color: context.colorScheme.text,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                leading: const Icon(Icons.copy),
-                title: const Text('Copy Link'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Link copied to clipboard')),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.share),
-                title: const Text('Share via...'),
-                onTap: () => Navigator.pop(ctx),
-              ),
-            ],
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: const Icon(Icons.copy),
+                  title: const Text('Copy Link'),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Link copied to clipboard')),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.share),
+                  title: const Text('Share via...'),
+                  onTap: () => Navigator.pop(ctx),
+                ),
+              ],
+            ),
           ),
         ),
       ),

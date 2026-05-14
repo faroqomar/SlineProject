@@ -39,7 +39,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     if (!_ensureLoadedScheduled) {
       _ensureLoadedScheduled = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        vm.ensureLoaded();
+        unawaited(vm.ensureLoaded());
       });
     }
     return const _FavoritesView();
@@ -81,7 +81,7 @@ class _FavoritesView extends StatelessWidget {
                   vertical: AppDimens.p16,
                 ),
                 itemCount: 5,
-                itemBuilder: (_, __) => const SkeletonFavoriteCard(),
+                itemBuilder: (_, _) => const SkeletonFavoriteCard(),
               );
             }
             if (vm.error != null) {
@@ -128,7 +128,7 @@ class _FavoritesView extends StatelessWidget {
                           OutlinedButton(
                             onPressed: () {
                               AppInteractionStates.hapticTap();
-                              vm.refresh();
+                              unawaited(vm.refresh());
                             },
                             style: _outlineButtonStyle(context),
                             child: const Text('Try Again'),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
@@ -104,7 +106,7 @@ class _CreateOfferSheetState extends State<CreateOfferSheet>
     if (title.isEmpty || price.isEmpty) {
       // Shake + haptic on validation failure
       AppInteractionStates.hapticHeavy();
-      _shakeController.forward(from: 0);
+      unawaited(_shakeController.forward(from: 0));
       AppLogger.d(
         'CreateOfferSheet: validation failed — title or price empty',
         tag: 'Chat',
@@ -120,7 +122,7 @@ class _CreateOfferSheetState extends State<CreateOfferSheet>
     final parsedPrice = int.tryParse(price);
     if (parsedPrice == null || parsedPrice <= 0) {
       AppInteractionStates.hapticHeavy();
-      _shakeController.forward(from: 0);
+      unawaited(_shakeController.forward(from: 0));
       AppLogger.d(
         'CreateOfferSheet: validation failed — price is not a valid positive number',
         tag: 'Chat',
@@ -137,7 +139,7 @@ class _CreateOfferSheetState extends State<CreateOfferSheet>
       final parsedDelivery = int.tryParse(delivery);
       if (parsedDelivery == null || parsedDelivery <= 0) {
         AppInteractionStates.hapticHeavy();
-        _shakeController.forward(from: 0);
+        unawaited(_shakeController.forward(from: 0));
         AppLogger.d(
           'CreateOfferSheet: validation failed — delivery days is not a valid positive number',
           tag: 'Chat',
@@ -339,10 +341,12 @@ void showCreateOfferSheet(
   )
   onSubmit,
 }) {
-  showModalBottomSheet(
-    context: context,
-    backgroundColor: AmberDuskColors.transparent,
-    isScrollControlled: true,
-    builder: (context) => CreateOfferSheet(onSubmit: onSubmit),
+  unawaited(
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AmberDuskColors.transparent,
+      isScrollControlled: true,
+      builder: (context) => CreateOfferSheet(onSubmit: onSubmit),
+    ),
   );
 }

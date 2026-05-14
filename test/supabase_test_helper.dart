@@ -35,9 +35,9 @@ void ensureSupabaseTestEnvironment() {
   const channel = MethodChannel('com.llfbandit.app_links/messages');
   const eventsChannel = MethodChannel('com.llfbandit.app_links/events');
   TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-      .setMockMethodCallHandler(channel, (MethodCall call) async => null);
+      .setMockMethodCallHandler(channel, (call) async => null);
   TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-      .setMockMethodCallHandler(eventsChannel, (MethodCall call) async => null);
+      .setMockMethodCallHandler(eventsChannel, (call) async => null);
 }
 
 /// Use as [Supabase.initialize]'s [localStorage] in VM tests (no persistence).
