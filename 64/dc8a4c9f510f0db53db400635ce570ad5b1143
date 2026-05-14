@@ -1,0 +1,41 @@
+README.md
+  s_76b659551f9821::t_0dd48d06f7348a 6,119-120,206-207,345,426,523
+pubspec.yaml
+  s_76b659551f9821::t_41f86d96de7316 79
+  s_76b659551f9821::t_08d80b9b32e64e 22
+Sline_everything/DEVELOPER_GUIDE.md
+  s_76b659551f9821::t_0dd48d06f7348a 528,2593
+Sline_everything/COMPREHENSIVE_ANALYSIS_SUMMARY.md
+  s_76b659551f9821::t_baa9fef6325fc6 209
+Sline_everything/Sline_Log.md
+  s_76b659551f9821::t_baa9fef6325fc6 691,818,875,912,941,970,998,1021,1091,1176,1178,1190,1219,1308,1320
+.github/workflows/ci.yml
+  s_76b659551f9821::t_08d80b9b32e64e 25,111,179
+.github/workflows/dependency-review.yml
+  s_76b659551f9821::t_41f86d96de7316 4-5,27-29,33-36
+  s_76b659551f9821::t_95576e9ea334f7 15
+Sline_everything/AppDiagram/All_Diagrams/24_hardened_paymentLinking_system.md
+  s_76b659551f9821::t_41f86d96de7316 1-408
+AGENTS.md
+  s_76b659551f9821::t_0dd48d06f7348a 161
+.cursor/rules/project-rules.mdc
+  s_76b659551f9821::t_0dd48d06f7348a 116-117
+.cursor/PROJECT_CONTEXT.md
+  s_76b659551f9821::t_0dd48d06f7348a 228-229
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "64dc8a4c9f510f0db53db400635ce570ad5b1143",
+  "prompts": {},
+  "sessions": {
+    "s_76b659551f9821": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2678-1754-7330-910c-8d2535876c3b",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Farooq Eros <faroqomar97@gmail.com>"
+    }
+  }
+}
