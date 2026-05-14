@@ -108,8 +108,16 @@ abstract final class AmberDuskWidgetTheme {
   static const AmberDuskSkeletonThemeTokens skeleton =
       AmberDuskSkeletonThemeTokens();
 
+  /// Light-mode skeleton colors using the derived light surface steps.
+  static const AmberDuskSkeletonThemeTokens skeletonLight =
+      _AmberDuskSkeletonThemeTokensLight();
+
   /// TabBar recipe used to remove teal-era active tab colors.
   static const AmberDuskTabThemeTokens tabs = AmberDuskTabThemeTokens();
+
+  /// Light-mode TabBar recipe using the derived light color scheme.
+  static const AmberDuskTabThemeTokens tabsLight =
+      _AmberDuskTabThemeTokensLight();
 }
 
 /// Root registry for all shared-widget Amber Dusk recipes.
@@ -117,7 +125,7 @@ abstract final class AmberDuskWidgetTheme {
 /// Consumers should enter through this type from `AmberDuskTokens.widgetTheme`
 /// so the Phase 1 activation point stays explicit and easy to audit.
 @immutable
-final class AmberDuskWidgetThemeTokens {
+class AmberDuskWidgetThemeTokens {
   /// Creates a stateless shared-widget token registry.
   const AmberDuskWidgetThemeTokens();
 
@@ -149,6 +157,20 @@ final class AmberDuskWidgetThemeTokens {
 
   /// TabBar recipe used by `AppTheme.tabBarTheme`.
   AmberDuskTabThemeTokens get tabs => AmberDuskWidgetTheme.tabs;
+}
+
+/// Light-mode widget theme that overrides skeleton and tab colors to match
+/// the derived light Amber Dusk color scheme.
+@immutable
+final class AmberDuskWidgetThemeTokensLight extends AmberDuskWidgetThemeTokens {
+  const AmberDuskWidgetThemeTokensLight();
+
+  @override
+  AmberDuskSkeletonThemeTokens get skeleton =>
+      AmberDuskWidgetTheme.skeletonLight;
+
+  @override
+  AmberDuskTabThemeTokens get tabs => AmberDuskWidgetTheme.tabsLight;
 }
 
 /// Button recipes for shared Amber Dusk actions.
@@ -694,8 +716,8 @@ final class AmberDuskMediaThemeTokens {
 /// Open Design did not provide skeleton-specific evidence, so these values are
 /// limited to existing bg2, bg3, and highlight surface steps.
 @immutable
-final class AmberDuskSkeletonThemeTokens {
-  /// Creates immutable skeleton tokens.
+class AmberDuskSkeletonThemeTokens {
+  /// Creates immutable skeleton tokens for dark mode (default).
   const AmberDuskSkeletonThemeTokens();
 
   /// Base skeleton fill derived from bg2.
@@ -708,13 +730,29 @@ final class AmberDuskSkeletonThemeTokens {
   Color get highlight => AmberDuskColors.surfaceHighest;
 }
 
+/// Light-mode skeleton tokens using the derived light color scheme.
+@immutable
+final class _AmberDuskSkeletonThemeTokensLight
+    extends AmberDuskSkeletonThemeTokens {
+  const _AmberDuskSkeletonThemeTokensLight();
+
+  @override
+  Color get base => AmberDuskColors.lightScheme.surface;
+
+  @override
+  Color get raised => AmberDuskColors.lightScheme.surfaceRaised;
+
+  @override
+  Color get highlight => AmberDuskColors.lightScheme.surfaceHighest;
+}
+
 /// TabBar recipe used by the global SLine ThemeData.
 ///
 /// Only the TabBar active color is activated in `AppTheme`; this does not remap
 /// `AppTheme.light()` or `AppTheme.dark()` to the full Amber Dusk palette.
 @immutable
-final class AmberDuskTabThemeTokens {
-  /// Creates immutable TabBar tokens.
+class AmberDuskTabThemeTokens {
+  /// Creates immutable TabBar tokens for dark mode (default).
   const AmberDuskTabThemeTokens();
 
   /// Active label and indicator color, replacing the previous teal-era value.
@@ -741,4 +779,19 @@ final class AmberDuskTabThemeTokens {
   /// Inactive tab label style from the Amber Dusk shared label system.
   TextStyle get inactiveLabelStyle =>
       AmberDuskTypography.chip.copyWith(fontSize: 12);
+}
+
+/// Light-mode TabBar tokens using the derived light color scheme.
+@immutable
+final class _AmberDuskTabThemeTokensLight extends AmberDuskTabThemeTokens {
+  const _AmberDuskTabThemeTokensLight();
+
+  @override
+  Color get activeLabelColor => AmberDuskColors.lightScheme.primary;
+
+  @override
+  Color get inactiveLabelColor => AmberDuskColors.lightScheme.muted;
+
+  @override
+  Color get indicatorColor => AmberDuskColors.lightScheme.primary;
 }

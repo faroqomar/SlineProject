@@ -52,9 +52,13 @@ abstract final class AmberDuskTokens {
   /// Component recipe registry for later UI phases.
   static const AmberDuskComponentTokens components = AmberDuskComponents.tokens;
 
-  /// Shared-widget adapter for the Phase 1 phone runtime activation.
+  /// Shared-widget adapter for the Phase 1 phone runtime activation (dark).
   static const AmberDuskWidgetThemeTokens widgetTheme =
       AmberDuskWidgetTheme.tokens;
+
+  /// Light-mode widget adapter with brightness-appropriate skeleton and tab colors.
+  static const AmberDuskWidgetThemeTokens widgetThemeLight =
+      AmberDuskWidgetThemeTokensLight();
 
   /// Phone-specific 402x874 layout registry.
   static const AmberDuskPhoneLayoutTokens phoneLayout =

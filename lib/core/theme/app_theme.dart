@@ -79,7 +79,7 @@ class AppTheme {
   /// Returns the light [ThemeData] for the application.
   static ThemeData light() {
     final lightColorScheme = AppColorScheme.light();
-    return _buildTheme(lightColorScheme, AmberDuskTokens.widgetTheme);
+    return _buildTheme(lightColorScheme, AmberDuskTokens.widgetThemeLight);
   }
 
   /// Returns the dark [ThemeData] for the application.
