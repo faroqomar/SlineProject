@@ -1,0 +1,160 @@
+test/helpers/ledger_rpc_invoker.dart
+  s_c2ade65474ae88::t_3129989e45bcf6 307
+lib/core/theme/theme_dashboard.dart
+  s_c2ade65474ae88::t_fe4715d3f8950b 11,13-14
+lib/features/notifications/viewmodels/notification_view_model.dart
+  s_c2ade65474ae88::t_750b58099cb721 196-198
+lib/core/utils/status_presenter.dart
+  s_c2ade65474ae88::t_7f57f05f365300 52-59
+lib/features/booking/models/booking_model.dart
+  s_c2ade65474ae88::t_07294e6adf9601 47-49,67-68,71-72
+  s_c2ade65474ae88::t_7f57f05f365300 102-105
+test/rls/role_switch_jwt_test.dart
+  s_c2ade65474ae88::t_26ff0c28b1d4c8 187-189,192-193,195
+test/services/message_service_test.dart
+  s_c2ade65474ae88::t_26ff0c28b1d4c8 89,92-93,96,101
+  s_c2ade65474ae88::t_71d4a949712d3a 104
+lib/features/chat/services/message_service.dart
+  s_c2ade65474ae88::t_07294e6adf9601 339-340,399-402,406-409
+  s_c2ade65474ae88::t_581b3d2e949efe 96-98
+test/unit/proposals/proposal_model_test.dart
+  s_c2ade65474ae88::t_fe4715d3f8950b 1-2
+lib/core/widgets/status_badge.dart
+  s_c2ade65474ae88::t_fe4715d3f8950b 38-39
+lib/core/utils/error_mapper.dart
+  s_c2ade65474ae88::t_2a9fab03490137 46,62-64,72-91
+lib/features/tasks/view/widgets/requests/requests_list_screen.dart
+  s_c2ade65474ae88::t_3129989e45bcf6 137,140
+lib/features/dashboard/view/tabs/inbox_tab.dart
+  s_c2ade65474ae88::t_26ff0c28b1d4c8 79,83
+  s_c2ade65474ae88::t_3ba699fde24bab 13,33,74
+test/storage_rls_test.dart
+  s_c2ade65474ae88::t_f9bf29c22af5f7 11,14-15,27-45
+  s_c2ade65474ae88::t_0ebefe8810a90a 52-67,71-72
+lib/features/chat/view/chat_screen.dart
+  s_c2ade65474ae88::t_3129989e45bcf6 921-925
+test/unit/wallet/wallet_presentation_helper_test.dart
+  s_c2ade65474ae88::t_f528e4c1c6dc29 89-101
+lib/features/management/models/work_log_scope.dart
+  s_c2ade65474ae88::t_fe4715d3f8950b 1-4
+analysis_options.yaml
+  s_c2ade65474ae88::t_e743cf0be4d2cd 40-45
+test/widget/tasks/submit_request_sheet_test.dart
+  s_c2ade65474ae88::t_f528e4c1c6dc29 395-426
+lib/features/work/view/widgets/review_delivery_modal.dart
+  s_c2ade65474ae88::t_2a9fab03490137 158
+lib/features/tasks/view/widgets/requests/request_award_dialog.dart
+  s_c2ade65474ae88::t_3129989e45bcf6 24,188,190,197,228,232,243
+lib/features/wallet/utils/wallet_presentation_helper.dart
+  s_c2ade65474ae88::t_2a9fab03490137 214-215
+test/security/task_requests_rls_test.dart
+  s_c2ade65474ae88::t_513a6f57ec0cba 64-65
+  s_c2ade65474ae88::t_a9d50d0810c546 60,149-150,190-191,346-347,380-381,432,480,528,609,738
+  s_c2ade65474ae88::t_26ff0c28b1d4c8 66
+  s_c2ade65474ae88::t_bb8eddef3fcd7c 433,481,529,578,610,739
+  s_c2ade65474ae88::t_d3b4d9f405cafc 572
+lib/features/dashboard/view/widgets/next_actions_list.dart
+  s_c2ade65474ae88::t_7f57f05f365300 176-180
+Sline_everything/SUPABASE_SETUP.md
+  s_c2ade65474ae88::t_2a9fab03490137 2401-2403
+lib/features/tasks/services/task_offer_service.dart
+  s_c2ade65474ae88::t_6f328bbf0bcc93 102-104,122
+  s_c2ade65474ae88::t_3ba699fde24bab 79,81
+  s_c2ade65474ae88::t_4223c54ecb167a 80
+lib/features/chat/viewmodels/chat_view_model.dart
+  s_c2ade65474ae88::t_3129989e45bcf6 777,782-786
+lib/features/dashboard/view/widgets/activity_feed_preview.dart
+  s_c2ade65474ae88::t_581b3d2e949efe 502-507
+  s_c2ade65474ae88::t_3129989e45bcf6 267-271,498-501
+web/index.html
+  s_c2ade65474ae88::t_2a9fab03490137 36-44
+lib/features/booking/view/widgets/booking_card.dart
+  s_c2ade65474ae88::t_7f57f05f365300 342-350
+lib/features/chat/models/conversation_model.dart
+  s_c2ade65474ae88::t_07294e6adf9601 109,117-118
+test/widget/chat/chat_screen_test.dart
+  s_c2ade65474ae88::t_dde8a62f0dca5b 75-77
+test/integration/fee_locking_test.dart
+  s_c2ade65474ae88::t_3129989e45bcf6 369
+  s_c2ade65474ae88::t_26ff0c28b1d4c8 390-391
+lib/features/tasks/models/task_model.dart
+  s_c2ade65474ae88::t_7f57f05f365300 251-256
+lib/features/tasks/services/task_service.dart
+  s_c2ade65474ae88::t_7f57f05f365300 519-524
+  s_c2ade65474ae88::t_6f328bbf0bcc93 76,80,103-105,261-263,277,329-331,439-441,605-607
+  s_c2ade65474ae88::t_7ab05a1c1b7cdc 292-293
+lib/features/auth/viewmodels/auth_session_view_model.dart
+  s_c2ade65474ae88::t_8e094959dc4f88 77-94
+test/unit/core/error_mapper_test.dart
+  s_c2ade65474ae88::t_f528e4c1c6dc29 115-131
+test/unit/models/task_request_model_test.dart
+  s_c2ade65474ae88::t_fe4715d3f8950b 1-2
+lib/features/profile/data/role_switch_repository.dart
+  s_c2ade65474ae88::t_07294e6adf9601 143-144
+lib/features/categories/models/category_model.dart
+  s_c2ade65474ae88::t_fe4715d3f8950b 1-2,14
+lib/features/proposals/data/proposal_repository.dart
+  s_c2ade65474ae88::t_750b58099cb721 77-78,122,132-133
+  s_c2ade65474ae88::t_07294e6adf9601 65
+lib/features/chat/view/widgets/message_bubble.dart
+  s_c2ade65474ae88::t_fe4715d3f8950b 72-73
+lib/features/auth/view/login_screen.dart
+  s_c2ade65474ae88::t_750b58099cb721 126
+lib/features/saved/data/saved_tasks_service.dart
+  s_c2ade65474ae88::t_7ab05a1c1b7cdc 100-101
+  s_c2ade65474ae88::t_07294e6adf9601 99,107
+integration_test/chat_creation_test.dart
+  s_c2ade65474ae88::t_26ff0c28b1d4c8 52,55-57,69,72,189-190,193
+test/unit/wallet/wallet_view_model_test.dart
+  s_c2ade65474ae88::t_f528e4c1c6dc29 293-295,297-325,567-585
+  s_c2ade65474ae88::t_0faed5d4602d20 296
+  s_c2ade65474ae88::t_661fed3624f3d3 1-2
+  s_c2ade65474ae88::t_1b51aba0bc56df 478,652
+lib/core/models/view_state.dart
+  s_c2ade65474ae88::t_fe4715d3f8950b 1,39,54
+lib/features/booking/services/booking_service.dart
+  s_c2ade65474ae88::t_7f57f05f365300 392-395
+lib/features/auth/viewmodels/auth_form_view_model.dart
+  s_c2ade65474ae88::t_750b58099cb721 37-39
+lib/features/chat/data/chat_repository.dart
+  s_c2ade65474ae88::t_581b3d2e949efe 106-108
+lib/features/search/services/search_service.dart
+  s_c2ade65474ae88::t_7ab05a1c1b7cdc 43-45,131-134
+lib/features/direct_offers/view/direct_offer_details_screen.dart
+  s_c2ade65474ae88::t_3ba699fde24bab 537
+  s_c2ade65474ae88::t_6011e087b61fbb 19,534
+lib/features/tasks/view/widgets/requests/submit_request_sheet.dart
+  s_c2ade65474ae88::t_2a9fab03490137 304-306
+lib/features/wallet/viewmodels/wallet_view_model.dart
+  s_c2ade65474ae88::t_2a9fab03490137 32,41,44-45,47-56,132-153
+  s_c2ade65474ae88::t_0ebefe8810a90a 46
+lib/features/chat/services/chat_realtime_merger.dart
+  s_c2ade65474ae88::t_750b58099cb721 27,29
+test/widget/tasks/request_award_dialog_test.dart
+  s_c2ade65474ae88::t_3129989e45bcf6 81
+lib/features/tasks/view/task_details_screen.dart
+  s_c2ade65474ae88::t_07294e6adf9601 540
+lib/core/services/logger_service.dart
+  s_c2ade65474ae88::t_750b58099cb721 79-81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "202cd64fa384334d5eda21419704387b0e4770b7",
+  "prompts": {},
+  "humans": {
+    "h_eff31e0a4a0870": {
+      "author": "Farooq Eros <faroqomar97@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_c2ade65474ae88": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e281d-2586-7570-80d4-be00e4ef8347",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Farooq Eros <faroqomar97@gmail.com>"
+    }
+  }
+}
