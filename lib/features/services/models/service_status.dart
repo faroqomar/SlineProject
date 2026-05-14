@@ -19,8 +19,8 @@ enum ServiceStatus {
 
   /// Human-readable label for display.
   String get label => switch (this) {
-    ServiceStatus.active => 'Active',
-    ServiceStatus.draft => 'Draft',
-    ServiceStatus.paused => 'Paused',
-  };
+        ServiceStatus.active => 'Active',
+        ServiceStatus.draft => 'Draft',
+        ServiceStatus.paused => 'Paused',
+      };
 }
