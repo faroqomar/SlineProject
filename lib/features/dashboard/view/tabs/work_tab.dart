@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/navigation/main_nav_destinations.dart';
+import 'package:sline_app/core/providers/navigation_provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/error_mapper.dart';
 import 'package:sline_app/features/dashboard/models/work_item.dart';
 import 'package:sline_app/features/dashboard/view/widgets/work_item_card.dart';
@@ -16,6 +18,10 @@ import 'package:sline_app/features/proposals/models/proposal_payment_summary.dar
 import 'package:sline_app/features/proposals/routes/proposal_payment_route.dart';
 import 'package:sline_app/features/wallet/view/wallet_screen.dart';
 
+/// Dashboard work bucket tab for active, completed, and cancelled work.
+///
+/// It owns only bucket presentation; all lifecycle actions continue to route
+/// through [DashboardViewModel] and the existing payment route helpers.
 class WorkTab extends StatefulWidget {
   const WorkTab({super.key});
 
@@ -45,7 +51,14 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
     final delivered = vm.deliveredWork;
     final completed = vm.completedWork;
     final cancelled = vm.cancelledWork;
-    final colorScheme = context.colorScheme;
+    final visibleActiveCount =
+        delivered.length +
+        active.where((item) => !item.actionableNeedsReview).length;
+    const amber = AmberDuskTokens.colors;
+    const spacing = AmberDuskTokens.spacing;
+    final tabTheme = AmberDuskTokens.widgetTheme.tabs;
+    // AmberDuskTokens own visual color/spacing recipes here; AppLayout and
+    // AppDimens still provide structural shell sizes shared across dashboard tabs.
 
     // Consume pending sub-tab navigation intent from ViewModel
     final pendingSubTab = vm.consumeWorkSubTabIndex();
@@ -64,62 +77,45 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
     return Column(
       key: const Key('work_tab'),
       children: [
-        // Header & Tab Bar
         Container(
-          padding: const EdgeInsets.fromLTRB(
-            AppDimens.p16,
-            AppDimens.p16,
-            AppDimens.p16,
+          padding: EdgeInsets.fromLTRB(
+            spacing.contentHorizontalPadding,
             0,
+            spacing.contentHorizontalPadding,
+            spacing.lg,
           ),
-          color: Colors.transparent,
+          color: AmberDuskColors.transparent,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'My Work',
-                style: AppTypography.h3.copyWith(color: colorScheme.text),
-              ),
-              const SizedBox(height: AppDimens.p8),
-              Text(
-                'Track all your jobs and bookings.',
-                style: AppTypography.bodyMedium.copyWith(
-                  color: colorScheme.textSecondary,
-                ),
-              ),
-              const SizedBox(height: AppDimens.p16),
-
-              // Nested Tab Bar
               Semantics(
                 label: 'Work sub-tabs',
                 child: Container(
                   height: AppLayout.statusIndicatorHeight,
                   decoration: BoxDecoration(
-                    color: colorScheme.inputBackground,
-                    borderRadius: BorderRadius.circular(AppDimens.r12),
+                    color: amber.surface,
+                    borderRadius: BorderRadius.circular(spacing.pillRadius),
                   ),
                   child: TabBar(
                     controller: _subTabController,
-                    // Semantic primary replaces hardcoded AppColors.teal
                     indicator: BoxDecoration(
-                      color: colorScheme.primary,
-                      borderRadius: BorderRadius.circular(AppDimens.r10),
+                      color: amber.primary,
+                      borderRadius: BorderRadius.circular(spacing.pillRadius),
                     ),
-                    // onPrimary (Material ColorScheme) ensures contrast against the primary-colored active indicator
-                    labelColor: Theme.of(context).colorScheme.onPrimary,
-                    unselectedLabelColor: colorScheme.textSecondary,
-                    labelStyle: AppTypography.captionBold,
+                    labelColor: amber.text,
+                    unselectedLabelColor: amber.textSubtle,
+                    labelStyle: tabTheme.labelStyle,
+                    unselectedLabelStyle: tabTheme.inactiveLabelStyle,
                     indicatorSize: TabBarIndicatorSize.tab,
-                    dividerColor: Colors.transparent,
+                    dividerColor: AmberDuskColors.transparent,
                     tabs: [
-                      Tab(text: 'Active (${active.length})'),
-                      Tab(text: 'Done (${completed.length})'),
-                      const Tab(text: 'Cancelled'),
+                      Tab(text: 'Active $visibleActiveCount'),
+                      Tab(text: 'Done ${completed.length}'),
+                      Tab(text: 'Cancelled ${cancelled.length}'),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: AppDimens.p16),
             ],
           ),
         ),
@@ -164,6 +160,7 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
     required List<WorkItem> delivered,
   }) {
     final vm = context.read<DashboardViewModel>();
+    const amber = AmberDuskTokens.colors;
     if (active.isEmpty && delivered.isEmpty) {
       return RefreshIndicator(
         onRefresh: vm.refresh,
@@ -180,21 +177,32 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
                     Icon(
                       Icons.work_off_outlined,
                       size: AppLayout.iconFeature,
-                      color: context.colorScheme.textSecondary,
+                      color: amber.textSubtle,
                     ),
                     const SizedBox(height: AppLayout.spacingSection),
                     Text(
                       'No active work',
-                      style: AppTypography.h5.copyWith(
-                        color: context.colorScheme.textSecondary,
-                      ),
+                      style: AppTypography.h5.copyWith(color: amber.textSubtle),
                     ),
                     const SizedBox(height: AppLayout.spacingStandard),
                     Text(
                       'Browse tasks to get started',
                       style: AppTypography.bodySmall.copyWith(
-                        color: context.colorScheme.textTertiary,
+                        color: amber.muted,
                       ),
+                    ),
+                    const SizedBox(height: AppDimens.p20),
+                    FilledButton.icon(
+                      onPressed: () => _openHomeTenders(context),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: amber.primary,
+                        foregroundColor: amber.textInverse,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppDimens.r12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.assignment_outlined),
+                      label: const Text('Find tender posts'),
                     ),
                   ],
                 ),
@@ -205,101 +213,35 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
       );
     }
 
-    final colorScheme = context.colorScheme;
-
-    // Separate delivered (needs review) from the rest
-    final reviewItems = delivered;
-    final otherActive = active.where((i) => !i.actionableNeedsReview).toList();
+    // Open Design evidence shows one Active work list; urgency stays inside the
+    // cards instead of splitting the tab into secondary status sections.
+    final visibleActive = [
+      ...delivered,
+      ...active.where((item) => !item.actionableNeedsReview),
+    ];
 
     return RefreshIndicator(
       onRefresh: vm.refresh,
-      child: ListView(
+      child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(
           AppDimens.p16,
           0,
           AppDimens.p16,
           AppDimens.p100,
         ),
-        children: [
-          // Pinned "Needs Review" section
-          if (reviewItems.isNotEmpty) ...[
-            Semantics(
-              header: true,
-              label: 'Needs your review, ${reviewItems.length} items',
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: AppDimens.p8),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.rate_review,
-                      size: AppDimens.iconSizeSmall,
-                      color: colorScheme.danger,
-                    ),
-                    const SizedBox(width: AppLayout.spacingTight),
-                    Text(
-                      'Needs Your Review (${reviewItems.length})',
-                      style: AppTypography.captionBold.copyWith(
-                        color: colorScheme.danger,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            ...reviewItems.map(
-              (item) => Padding(
-                padding: const EdgeInsets.only(bottom: AppDimens.p12),
-                child: WorkItemCard(
-                  item: item,
-                  onPrimaryAction: () => _onPrimaryAction(context, vm, item),
-                  onSecondaryAction:
-                      item.permissions.canCancel &&
-                          item.awardedRequestId != null
-                      ? () => _onCancelAward(context, vm, item)
-                      : null,
-                ),
-              ),
-            ),
-            if (otherActive.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(
-                  top: AppDimens.p8,
-                  bottom: AppDimens.p8,
-                ),
-                child: Divider(
-                  color: colorScheme.textSecondary.withValues(alpha: 0.2),
-                ),
-              ),
-          ],
-
-          // Remaining active work
-          if (otherActive.isNotEmpty) ...[
-            if (reviewItems.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppDimens.p8),
-                child: Text(
-                  'In Progress (${otherActive.length})',
-                  style: AppTypography.captionBold.copyWith(
-                    color: colorScheme.textSecondary,
-                  ),
-                ),
-              ),
-            ...otherActive.map(
-              (item) => Padding(
-                padding: const EdgeInsets.only(bottom: AppDimens.p12),
-                child: WorkItemCard(
-                  item: item,
-                  onPrimaryAction: () => _onPrimaryAction(context, vm, item),
-                  onSecondaryAction:
-                      item.permissions.canCancel &&
-                          item.awardedRequestId != null
-                      ? () => _onCancelAward(context, vm, item)
-                      : null,
-                ),
-              ),
-            ),
-          ],
-        ],
+        itemCount: visibleActive.length,
+        separatorBuilder: (_, __) => const SizedBox(height: AppDimens.p12),
+        itemBuilder: (_, index) {
+          final item = visibleActive[index];
+          return WorkItemCard(
+            item: item,
+            onPrimaryAction: () => _onPrimaryAction(context, vm, item),
+            onSecondaryAction:
+                item.permissions.canCancel && item.awardedRequestId != null
+                ? () => _onCancelAward(context, vm, item)
+                : null,
+          );
+        },
       ),
     );
   }
@@ -370,7 +312,7 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Award cancelled. Task is open again.'),
-            backgroundColor: context.colorScheme.success,
+            backgroundColor: AmberDuskTokens.colors.success,
           ),
         );
       }
@@ -379,7 +321,7 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(ErrorMapper.map(e)),
-            backgroundColor: context.colorScheme.danger,
+            backgroundColor: AmberDuskTokens.colors.danger,
           ),
         );
       }
@@ -397,6 +339,9 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
+            style: TextButton.styleFrom(
+              foregroundColor: AmberDuskTokens.colors.muted,
+            ),
             child: const Text('Cancel'),
           ),
           FilledButton(
@@ -407,6 +352,13 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
                 MaterialPageRoute<void>(builder: (_) => const WalletScreen()),
               );
             },
+            style: FilledButton.styleFrom(
+              backgroundColor: AmberDuskTokens.colors.primary,
+              foregroundColor: AmberDuskTokens.colors.textInverse,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppDimens.r12),
+              ),
+            ),
             child: const Text('Add funds'),
           ),
         ],
@@ -421,6 +373,7 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
     bool isDimmed = false,
   }) {
     final vm = context.read<DashboardViewModel>();
+    const amber = AmberDuskTokens.colors;
     if (items.isEmpty) {
       return RefreshIndicator(
         onRefresh: vm.refresh,
@@ -437,16 +390,14 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
                     Icon(
                       Icons.work_off_outlined,
                       size: AppLayout.iconFeature,
-                      color: context.colorScheme.textSecondary,
+                      color: amber.textSubtle,
                     ),
                     const SizedBox(height: AppLayout.spacingSection),
                     // Phase 7: h5 title + bodySmall subtitle for consistency
                     // with _buildActiveList and other tab empty states.
                     Text(
                       emptyMessage,
-                      style: AppTypography.h5.copyWith(
-                        color: context.colorScheme.textSecondary,
-                      ),
+                      style: AppTypography.h5.copyWith(color: amber.textSubtle),
                     ),
                   ],
                 ),
@@ -490,6 +441,13 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
           );
         },
       ),
+    );
+  }
+
+  void _openHomeTenders(BuildContext context) {
+    AppLogger.i('Dashboard work empty CTA opened Home', tag: 'dashboard.work');
+    context.read<NavigationProvider?>()?.setCurrentIndex(
+      MainNavDestinations.home,
     );
   }
 }

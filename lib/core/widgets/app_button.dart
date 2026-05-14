@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
-import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_states.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/scale_button.dart';
 
 /// A customizable button with the full 8-state interaction model.
@@ -31,6 +30,8 @@ import 'package:sline_app/core/widgets/scale_button.dart';
 /// - Added 8-state model with AppMotion/AppInteractionStates tokens
 /// - Added Semantics, haptics, elevation from design tokens
 /// - Removed hardcoded shadow (blurRadius: 15, alpha: 0.3)
+/// - Amber Dusk tokens now provide default colors, radius, height, padding,
+///   and label typography while constructor overrides remain supported.
 /// - All existing constructor params preserved (backward compatible)
 class AppButton extends StatefulWidget {
   final Key? tapTargetKey;
@@ -166,16 +167,15 @@ class _AppButtonState extends State<AppButton>
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final textTheme = context.appTextTheme;
+    final buttonTheme = AmberDuskTokens.widgetTheme.buttons;
+    final buttonRecipe = widget.isPrimary
+        ? buttonTheme.primary
+        : buttonTheme.ghost;
 
-    final effectiveBg =
-        widget.backgroundColor ??
-        (widget.isPrimary ? colorScheme.primary : colorScheme.cardBackground);
-    final effectiveFg =
-        widget.foregroundColor ??
-        (widget.isPrimary ? AppColors.offWhite : colorScheme.text);
+    final effectiveBg = widget.backgroundColor ?? buttonRecipe.background;
+    final effectiveFg = widget.foregroundColor ?? buttonRecipe.foreground;
     final effectiveRadius =
-        widget.borderRadius ?? BorderRadius.circular(AppDimens.r14);
+        widget.borderRadius ?? BorderRadius.circular(buttonTheme.radius);
 
     // Elevation: Level 1 at rest, Level 0 when disabled/loading/success
     final effectiveShadow =
@@ -199,22 +199,25 @@ class _AppButtonState extends State<AppButton>
       content = Icon(
         Icons.check,
         color: effectiveFg,
-        size: AppDimens.iconSizeMedium,
+        size: AppLayout.iconStandard,
       );
     } else {
       content = Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppDimens.p24),
+        padding: buttonTheme.padding,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              widget.text,
-              style:
-                  widget.textStyle ??
-                  textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: effectiveFg,
-                  ),
+            Flexible(
+              // Long labels must collapse inside fixed-width action slots
+              // instead of overflowing phone card layouts.
+              child: Text(
+                widget.text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style:
+                    widget.textStyle ??
+                    buttonTheme.textStyle.copyWith(color: effectiveFg),
+              ),
             ),
             if (widget.icon != null) ...[
               const SizedBox(width: AppLayout.spacingStandard),
@@ -234,8 +237,8 @@ class _AppButtonState extends State<AppButton>
       animation: _flashAnimation,
       builder: (context, child) {
         final flashColor = _isInSuccessState
-            ? colorScheme.success
-            : colorScheme.danger;
+            ? buttonTheme.successFlash
+            : buttonTheme.errorFlash;
         return Stack(
           alignment: Alignment.center,
           children: [
@@ -254,7 +257,7 @@ class _AppButtonState extends State<AppButton>
       },
       child: Container(
         width: widget.width,
-        height: widget.height ?? AppLayout.buttonHeight,
+        height: widget.height ?? buttonTheme.minHeight,
         decoration: BoxDecoration(
           borderRadius: effectiveRadius,
           boxShadow: effectiveShadow,
@@ -266,10 +269,8 @@ class _AppButtonState extends State<AppButton>
             key: widget.tapTargetKey,
             onTap: _inputBlocked ? null : _handleTap,
             borderRadius: effectiveRadius,
-            hoverColor: colorScheme.hoverOverlay,
-            focusColor: colorScheme.focusRing.withValues(
-              alpha: AppInteractionStates.hoverOverlayOpacity,
-            ),
+            hoverColor: buttonTheme.hoverOverlay,
+            focusColor: buttonTheme.focusOverlay,
             child: Center(child: content),
           ),
         ),

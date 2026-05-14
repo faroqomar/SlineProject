@@ -73,8 +73,35 @@ class Task {
   final List<String> imagePaths;
 
   /// Packages for booking tasks (Basic/Standard/Premium details).
-  /// Structure: { 'Basic': {...}, 'Standard': {...}, 'Premium': {...} }
+  ///
+  /// Structure: `{ 'Basic': {...}, 'Standard': {...}, 'Premium': {...} }`.
+  /// The temporary Amber Dusk create flow may also attach draft display
+  /// metadata under [packageDetailsKey] until first-class DB columns exist.
   final Map<String, dynamic>? packages;
+
+  /// Temporary metadata key used inside [packages] for create-flow display data.
+  ///
+  /// This keeps the compatibility shim centralized instead of scattering a
+  /// private JSON sentinel through views and cards.
+  static const String packageDetailsKey = '__details';
+
+  /// Reads temporary create-flow display metadata from a packages map.
+  static Map<String, dynamic>? packageDetailsFrom(
+    Map<String, dynamic>? packages,
+  ) {
+    final details = packages?[packageDetailsKey];
+    if (details is Map) return Map<String, dynamic>.from(details);
+    return null;
+  }
+
+  /// Returns [packages] with temporary display metadata attached when present.
+  static Map<String, dynamic> packagesWithDetails({
+    required Map<String, dynamic> packages,
+    required Map<String, String> details,
+  }) {
+    if (details.isEmpty) return packages;
+    return <String, dynamic>{...packages, packageDetailsKey: details};
+  }
 
   /// Number of offers/requests on this task (maintained by DB trigger).
   /// Only relevant for tender tasks.

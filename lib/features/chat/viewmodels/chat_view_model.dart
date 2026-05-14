@@ -1,11 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:sline_app/core/config/storage_config.dart';
 import 'package:sline_app/core/mixins/role_switch_aware.dart';
 import 'package:sline_app/core/services/account_guard_service.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/services/role_switch_coordinator.dart';
 import 'package:sline_app/features/chat/attachments/services/send_attachment_usecase.dart';
+import 'package:sline_app/features/chat/attachments/services/upload_service.dart';
 import 'package:sline_app/features/chat/data/chat_repository.dart';
 import 'package:sline_app/features/chat/models/conversation_model.dart';
 import 'package:sline_app/features/chat/models/message_model.dart';
@@ -35,6 +37,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
     ChatRepository? repo,
     AccountGuardService? accountGuardService,
     DirectOffersService? directOffersService,
+    SupabaseAttachmentUploader? attachmentUploader,
     SupabaseClient? client,
   }) : _repo = repo ?? ChatRepository(client ?? Supabase.instance.client),
        _accountGuardService =
@@ -42,7 +45,12 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
            AccountGuardService(client: client ?? Supabase.instance.client),
        _directOffersService =
            directOffersService ??
-           DirectOffersService(client ?? Supabase.instance.client) {
+           DirectOffersService(client ?? Supabase.instance.client),
+       _attachmentUploader =
+           attachmentUploader ??
+           SupabaseAttachmentUploader(
+             client: client ?? Supabase.instance.client,
+           ) {
     // Register with coordinator for role switch teardown
     RoleSwitchCoordinator().register(this);
   }
@@ -50,6 +58,7 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
   final ChatRepository _repo;
   final AccountGuardService _accountGuardService;
   final DirectOffersService _directOffersService;
+  final SupabaseAttachmentUploader _attachmentUploader;
 
   final List<Conversation> conversations = [];
   final List<Message> currentMessages = [];
@@ -749,6 +758,17 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
       return false;
     }
     return true;
+  }
+
+  /// Resolves a private chat attachment path into a short-lived signed URL.
+  ///
+  /// Widgets receive this resolver so Storage access stays in the ViewModel and
+  /// service layer rather than being created directly from the view tree.
+  Future<String> resolveAttachmentSignedUrl(String storagePath) {
+    return _attachmentUploader.createSignedUrl(
+      storagePath,
+      expiresInSeconds: SharedStorageConfig.chatAttachmentTtlSeconds,
+    );
   }
 
   /// Call when user starts or stops typing. Throttled in service; no-op if feature flag off.

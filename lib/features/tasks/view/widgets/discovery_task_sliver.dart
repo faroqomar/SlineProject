@@ -17,8 +17,7 @@ import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_states.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 
@@ -117,16 +116,16 @@ class _DiscoveryTaskSliverState extends State<DiscoveryTaskSliver> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    const amberColors = AmberDuskTokens.colors;
     final loadingChild = widget.skeletonItem ?? const SkeletonTaskCard();
 
     // ── Initial loading: skeleton placeholder cards ──
     if (widget.isInitialLoading) {
       return SliverPadding(
         padding: EdgeInsets.fromLTRB(
-          AppDimens.p16,
+          AmberDuskTokens.spacing.contentHorizontalPadding,
           0,
-          AppDimens.p16,
+          AmberDuskTokens.spacing.contentHorizontalPadding,
           widget.bottomPadding,
         ),
         sliver: SliverList(
@@ -155,26 +154,28 @@ class _DiscoveryTaskSliverState extends State<DiscoveryTaskSliver> {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: colorScheme.danger.withValues(alpha: 0.08),
+                      color: amberColors.rust.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       Icons.error_outline,
                       size: 48,
-                      color: colorScheme.danger,
+                      color: amberColors.rust,
                     ),
                   ),
                   const SizedBox(height: AppDimens.p16),
                   Text(
                     widget.errorMessage!,
-                    style: AppTypography.h5.copyWith(color: colorScheme.text),
+                    style: AmberDuskTokens.typography.sectionTitle.copyWith(
+                      color: amberColors.text,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: AppDimens.p8),
                   Text(
                     'Please try again',
-                    style: AppTypography.bodySmall.copyWith(
-                      color: colorScheme.textSecondary,
+                    style: AmberDuskTokens.typography.bodySmall.copyWith(
+                      color: amberColors.muted,
                     ),
                   ),
                   if (widget.onRetry != null) ...[
@@ -209,27 +210,30 @@ class _DiscoveryTaskSliverState extends State<DiscoveryTaskSliver> {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    // 8% alpha primary for a soft colored background
-                    color: colorScheme.primary.withValues(alpha: 0.08),
+                    // A muted primary wash keeps missing states on the
+                    // Amber Dusk palette without inventing a new state color.
+                    color: amberColors.primary.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   alignment: Alignment.center,
                   child: Icon(
                     widget.emptyIcon,
                     size: 36,
-                    color: colorScheme.primary,
+                    color: amberColors.primary,
                   ),
                 ),
                 const SizedBox(height: AppDimens.p16),
                 Text(
                   widget.emptyTitle,
-                  style: AppTypography.h5.copyWith(color: colorScheme.text),
+                  style: AmberDuskTokens.typography.sectionTitle.copyWith(
+                    color: amberColors.text,
+                  ),
                 ),
                 const SizedBox(height: AppDimens.p8),
                 Text(
                   'Try adjusting your filters or check back later.',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: colorScheme.textSecondary,
+                  style: AmberDuskTokens.typography.bodySmall.copyWith(
+                    color: amberColors.muted,
                   ),
                 ),
               ],
@@ -244,9 +248,9 @@ class _DiscoveryTaskSliverState extends State<DiscoveryTaskSliver> {
 
     return SliverPadding(
       padding: EdgeInsets.fromLTRB(
-        AppDimens.p16,
+        AmberDuskTokens.spacing.contentHorizontalPadding,
         0,
-        AppDimens.p16,
+        AmberDuskTokens.spacing.contentHorizontalPadding,
         widget.bottomPadding,
       ),
       sliver: SliverList(
@@ -269,15 +273,16 @@ class _DiscoveryTaskSliverState extends State<DiscoveryTaskSliver> {
 
           // ── Load-more indicator: compact themed spinner ──
           if (widget.isLoadingMore) {
-            return const Padding(
+            return Padding(
               key: DiscoveryTaskSliver.loadMoreIndicatorKey,
-              padding: EdgeInsets.symmetric(vertical: 24),
+              padding: const EdgeInsets.symmetric(vertical: AppDimens.p24),
               child: Center(
                 child: SizedBox(
                   width: AppInteractionStates.loadingSize,
                   height: AppInteractionStates.loadingSize,
                   child: CircularProgressIndicator(
                     strokeWidth: AppInteractionStates.loadingStrokeWidth,
+                    color: amberColors.primary,
                   ),
                 ),
               ),
@@ -379,12 +384,13 @@ class _StaggeredTaskItemState extends State<_StaggeredTaskItem>
   /// Initializes slide/fade animations and schedules the stagger delay.
   void _initAnimations() {
     if (widget.shouldAnimate) {
-      // Calculate the stagger delay: 50ms per card, capped at index 10
-      final cappedIndex = widget.index.clamp(0, 10);
-      final delayMs = cappedIndex * AppMotion.staggerMedium.inMilliseconds;
+      // Calculate the stagger delay from the shared motion token, capped at
+      // index 10 so the feed is ready quickly on slower phones.
+      final cappedIndex = widget.index > 10 ? 10 : widget.index;
+      final delay = AppMotion.staggerMedium * cappedIndex;
 
-      if (delayMs > 0) {
-        _staggerTimer = Timer(Duration(milliseconds: delayMs), () {
+      if (delay > Duration.zero) {
+        _staggerTimer = Timer(delay, () {
           if (mounted) {
             _controller.forward();
           }
@@ -399,7 +405,7 @@ class _StaggeredTaskItemState extends State<_StaggeredTaskItem>
         AppLogger.d(
           'stagger_animation_start',
           tag: 'DiscoveryUI',
-          json: {'index': widget.index, 'delayMs': delayMs},
+          json: {'index': widget.index, 'delayMs': delay.inMilliseconds},
         );
       }
     } else {

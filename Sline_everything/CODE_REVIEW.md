@@ -1,13 +1,106 @@
 # SLine Code Review & Improvement Report
 
-**Date**: December 14, 2025 (Updated)
+**Date**: 2026-05-14 (Updated)
 **Reviewed By**: CodeGuard + Architect + Sentinel Agents
 **Previous Score**: 9/10
 **Current Score**: 9.7/10
 
 > Historical review note: this document records review findings and fixes from earlier passes. Treat references to removed files or older structure as historical context; the current live structure is documented in `Sline_everything/STRUCTURE.md` and `Sline_everything/DEVELOPER_GUIDE.md`.
 
-## Current Guardrail Notes (2026-04-30)
+## Current Guardrail Notes (2026-05-14)
+
+### Amber Dusk Transactional QA Recovery Review Rule (2026-05-14)
+
+**Pattern**: Transactional QA work touches the most trust-sensitive surfaces: booking payment, payment return/WebView, Dashboard Bookings/Work, proposal/request money fields, chat offer surfaces, signup/post refresh, Wallet disabled states, and customer-facing recovery copy.
+
+**Rule**:
+1. Resting screenshots and raw token scans are not enough for transactional UI. Review focused, active, disabled, error, loading, recovery, and route-transition background states for forms, composers, sheets, payment/booking screens, and CTAs.
+2. Payment and booking fixes must prove source route, result route, Dashboard Bookings, Dashboard Work, and list-bucket outcomes after success, pending, failed, canceled, retry, and recovery paths.
+3. Customer-facing payment result screens must show safe status, amount, app context, next action, and recovery path. Booking IDs, payer IDs, entity IDs, intent IDs, correlation IDs, callback params, and gateway metadata belong in logs/support tooling only.
+4. If a gateway Pay action or other externally visible action is not executed during tooling, the branch remains unproven. Do not close it from pre-submit screenshots or client tests alone.
+5. IQD is the marketplace money unit for touched booking, proposal/request, direct-offer, dashboard, wallet, and receipt surfaces. Do not reintroduce `$` or cents conversions unless an RPC explicitly asks for cents.
+
+**Evidence**: `.TODO/VisualQA_OpenDesign_AmberDusk_Phases9_10_11_12_iOSSimulator_2026-05-13/REPORT.md` found processed QiCard payments returning to unchanged booking UI, raw gateway metadata, teal/blue transactional screens, and IQD/dollar mismatches. `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-14.md` merged the recurring proof rules into Planner, PlanCritic, Executor, Pixel, Sentinel, and Orchestrator.
+
+### Amber Dusk Phases 5-8 Phone Surface Review Rule (2026-05-13)
+
+**Pattern**: Amber Dusk Phases 5-8 are scoped runtime view work for auth/system gates, chat/attachments/notifications, task/work/payment-adjacent flows, booking/payment/WebView, and wallet summary surfaces. They are not backend authority, Supabase schema, global `MaterialApp` theme activation, or wallet withdrawal activation work.
+
+**Rule**:
+1. Treat missing exact phone artboards as adaptation/token-normalization only. Open Design screenshots prove design intent, not rendered Flutter parity.
+2. Keep action authority in existing ViewModels, services, RPCs, Edge Functions, RLS, and payment services. Views may update tokens, semantics, disabled states, and safe copy only.
+3. Do not infer conversation direction or payment/work lifecycle state from unrelated fields. If the model contract does not exist, keep the control visual-only and test that valid data is not hidden.
+4. Signed URL generation must stay behind services/ViewModels or approved signed-media widgets. Widgets must not import Supabase storage types just to render attachments.
+5. Payment, WebView, and deep-link logs must use safe URL facts only: parse state, scheme kind, path kind, trust booleans, and query-key presence. Do not log raw callback URLs, hosts, paths, query values, gateway payloads, or private storage paths in view-layer logs.
+6. Wrapper tests around shared screens must use the same app theme/provider harness as production when the screen consumes `context.colorScheme`, `context.amberColors`, or theme extensions.
+7. Broad UI phases need a per-file fixture/provider/manual QA matrix. Green analyzer/tests do not close emulator visual parity.
+8. Realtime stream fixes must test both transient transport closes and non-transient errors. Transient Supabase Realtime closes should preserve cached UI and reconnect; hard errors should keep the existing user-facing error path.
+
+**Evidence**: Open Design Amber Dusk Phases 5-8 Step 6 fixed unsafe Messages direction filtering, attachment storage boundaries, Payment WebView URL logging, solid CTA contrast, coverage/matrix gaps, and wrapper-test theme setup. The 2026-05-13 notification runtime fix handled Realtime close codes `1002`/`1006` with cached-state reconnect behavior.
+
+### Amber Dusk Phases 2-4 Phone Surface Review Rule (2026-05-12)
+
+**Pattern**: Amber Dusk Phases 2-4 are scoped runtime view work for phone shell, Home discovery, create flow, dashboard, wallet/dashboard cards, and selected secondary surfaces. They are not Supabase, repository, or global `MaterialApp` theme activation work.
+
+**Rule**:
+1. Exact visual matching is allowed only for screens/states with Open Design MCP or user-provided screenshot evidence. Missing states are token-normalization, accessibility, and behavior hardening only.
+2. Keep Dashboard, booking, offer, wallet, and task card actions wired through existing ViewModel/service contracts. Views may adjust labels, disabled states, semantics, and tokens; they must not invent business transitions.
+3. Do not infer model contracts from unrelated fields. If direction, presence, rating, package details, or review state is not modeled, request an explicit model/ViewModel contract or keep the UI visual-only with tests proving valid data is not hidden.
+4. Custom gesture controls must expose button/selected semantics and use `HitTestBehavior.opaque` when transparent space is intended to be tappable.
+5. Review-fix tests must exercise runtime behavior directly. Static token assertions do not prove filtering, action enablement, callback routing, visible label changes, or accessibility semantics.
+6. Keep routine view-layer logs privacy-safe. Do not add raw task, booking, offer, conversation, or user IDs to tap/render logs.
+7. Green analyzer/tests do not close visual QA. The Master Report must state whether emulator/runtime visual parity is complete or open.
+
+**Evidence**: Open Design Amber Dusk Phases 2-4 Step 6 fixed analyzer/test blockers, unsafe Messages mode filtering, scattered `Task` package-detail metadata access, missing Inbox/Dashboard action tests, custom gesture semantics, no-op DashboardOfferCard semantics, raw migrated visuals, and raw IDs in UI logs. Runtime visual parity remains gated by `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4_Step6.md`.
+
+### Amber Dusk Staged Token Layer Review Rule (2026-05-11)
+
+**Pattern**: Staged design layers under `lib/core/theme/designs/<design_name>/` are prepared token sources, not active runtime themes. Importing a staged token barrel such as `lib/core/theme/designs/amber_dusk/amber_dusk_tokens.dart` must not change widget appearance until the active `AppTheme` activation workflow explicitly maps the staged tokens into runtime theme data.
+
+**Rule**:
+1. Review staged token changes as passive `core/theme` work unless a patch also touches `AppTheme`, `MaterialApp`, shared widgets, feature views, or provider/theme activation code.
+2. Verify the staged layer has a public barrel/entry point before dependent work starts.
+3. Keep staged design tests focused on token contracts, no-glass/no-blur guardrails, layout relationships, and activation safety.
+4. If Open Design evidence says a component is borderless or transparent, pin both authored dark tokens and derived parity tokens to that contract.
+
+**Evidence**: Open Design Amber Dusk Phase 0 (2026-05-11) created the inactive Amber Dusk token layer and Orchestrator MED review fixed `heroChipBorder` to transparent in both dark and derived-light schemes.
+
+### Amber Dusk Shared-Widget Adapter Review Rule (2026-05-11)
+
+**Pattern**: Phase 1 routes selected shared phone widgets through `AmberDuskTokens.widgetTheme`. This is a scoped runtime activation for shared widgets, not a global app-theme replacement.
+
+**Rule**:
+1. Review `amber_dusk_widget_theme.dart` as the single source for shared-widget Amber geometry, color, typography, surface, and motion recipes.
+2. Block raw reusable visual values in Phase 1 widget files; widgets should consume `AmberDuskTokens.widgetTheme` or existing core tokens.
+3. Treat signed-media work as visual-only unless a separate architecture plan moves URL resolution out of widgets.
+4. Keep no-glass guardrails active: no `BackdropFilter`, `ImageFilter.blur`, frosted surfaces, or deleted `glass_*` file resurrection.
+5. For future changes to these widgets, require focused `test/core/theme/` and `test/core/widgets/` coverage plus representative downstream smoke tests.
+
+**Evidence**: Open Design Amber Dusk Phase 1 (2026-05-11) activated buttons, fields, icon buttons, cards, bottom nav, tabs, status badges, skeletons, and signed-media placeholders through the shared-widget adapter while leaving global `MaterialApp` theme wiring and Supabase behavior unchanged.
+
+### SystemEvolution Merge Runs (2026-05-12 / 2026-05-13 / 2026-05-14)
+
+**Pattern**: When the human explicitly requests a SystemEvolution merge, the report is written first, then only deduped, evidence-backed rules are applied to the owning `.cursor/Agents/*.md` files.
+
+**Rule**:
+1. Do not add speculative process rules; every merged rule needs session-log evidence.
+2. Dedupe against existing agent rules and core docs before editing agent files.
+3. Prefer narrow agent-owner edits over broad rewrites.
+4. Record the merged files and evidence index in `docs/LOG/SYSTEM_EVOLUTION_REPORT_<date>.md`.
+
+**Evidence**: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-11.md` records the token/provenance and Phase 1 visual-evidence merge. `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-12.md` records the Step 7 merge for scope amendments, no invented model contracts in views, custom gesture semantics, privacy-safe view logs, behavior-level review tests, and explicit visual QA status in Master Reports. `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-13.md` records the Phase 5-8 merge for worker checkpoints, untrusted worker patches, lazy/injected ViewModel service bridges, wrapper theme harnesses, per-file emulator matrices, safe URL-facts logging, realtime transient reconnect handling, and stale guidance-path cleanup. `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-14.md` records the Transactional QA merge for focused/active runtime states, payment/booking lifecycle bucket proof, safe payment result UI, and unexecuted gateway-branch reporting.
+
+### Coverage Artifact Hygiene (2026-05-11)
+
+**Pattern**: `coverage/lcov.info` is generated by `flutter test --coverage` and is useful for CI reporting, but it is not source code and should not be committed.
+
+**Rule**:
+1. Keep `coverage/` ignored locally.
+2. Remove tracked LCOV output from branches when it appears in diffs.
+3. CI should publish `coverage/lcov.info` as an artifact instead of storing it in the repository.
+4. Docs and review comments should reference CI artifact retention, not committed coverage files.
+
+**Evidence**: The Phase 1 core-widget cleanup removed tracked `coverage/lcov.info` from the branch and updated `.github/workflows/ci.yml` to upload the `coverage-lcov` artifact for 7 days.
 
 ### Home Discovery Navigation Contract (2026-04-30)
 

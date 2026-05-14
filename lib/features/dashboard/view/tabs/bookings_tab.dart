@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/navigation/main_nav_destinations.dart';
+import 'package:sline_app/core/providers/navigation_provider.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/skeleton_loader.dart';
 import 'package:sline_app/features/booking/view/widgets/dashboard_booking_card.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
@@ -13,9 +16,8 @@ import 'package:sline_app/features/work/view/work_item_details_screen.dart';
 /// Bookings tab with skeleton loading, icon-badged section headers,
 /// dimmed past bookings, and enhanced empty state.
 ///
-/// Phase 7 REDESIGN: Section headers get colored icon badges + count pills,
-/// past bookings wrapped in Opacity(0.6) for clear visual hierarchy,
-/// empty state icon in circular container for designed feel.
+/// The tab keeps booking callbacks in [DashboardViewModel] while normalizing
+/// the dashboard list rhythm to Amber Dusk section and surface tokens.
 class BookingsTab extends StatelessWidget {
   const BookingsTab({super.key});
 
@@ -35,39 +37,31 @@ class BookingsTab extends StatelessWidget {
           return _buildEmptyState(context, vm);
         }
 
-        // Split into Upcoming and Past
-        final now = DateTime.now().toUtc();
-        final upcoming = bookings.where((b) {
-          final bookingTimeline = b.dueAtUtc ?? b.scheduledAt;
-          if (bookingTimeline != null) {
-            return bookingTimeline.isAfter(now);
-          }
-          // Fallback: Pending items are "Upcoming" regardless of date
-          return b.status == BookingStatus.pending ||
-              b.status == BookingStatus.confirmed;
-        }).toList();
-
-        final upcomingIds = upcoming.map((b) => b.id).toSet();
-        final past = bookings
-            .where((b) => !upcomingIds.contains(b.id))
+        // Keep terminal payment/booking drafts out of the active source of
+        // truth. A canceled QiCard draft should be visible as history, not as
+        // an upcoming booking.
+        final activeBookings = bookings
+            .where((booking) => !_isClosedBooking(booking.status))
+            .toList();
+        final closedBookings = bookings
+            .where((booking) => _isClosedBooking(booking.status))
             .toList();
 
-        final colorScheme = context.colorScheme;
+        const spacing = AmberDuskTokens.spacing;
 
         return RefreshIndicator(
           onRefresh: () => vm.refresh(),
           child: ListView(
-            padding: const EdgeInsets.all(AppDimens.p16),
+            padding: EdgeInsets.symmetric(
+              horizontal: spacing.contentHorizontalPadding,
+            ),
             children: [
-              if (upcoming.isNotEmpty) ...[
-                // Phase 7: icon-badged header with count pill
+              if (activeBookings.isNotEmpty) ...[
                 _BookingSectionHeader(
-                  title: 'Upcoming',
-                  count: upcoming.length,
-                  icon: Icons.calendar_month_rounded,
-                  iconColor: colorScheme.primary,
+                  title: 'Active',
+                  count: activeBookings.length,
                 ),
-                ...upcoming.map(
+                ...activeBookings.map(
                   (b) => DashboardBookingCard(
                     booking: b,
                     isProvider: vm.currentRole == UserRole.freelancer,
@@ -87,19 +81,15 @@ class BookingsTab extends StatelessWidget {
                     onUpdateStatus: vm.updateBookingStatus,
                   ),
                 ),
-                const SizedBox(height: AppLayout.spacingScreen),
+                SizedBox(height: spacing.xl),
               ],
 
-              if (past.isNotEmpty) ...[
-                // Phase 7: muted header for past section
+              if (closedBookings.isNotEmpty) ...[
                 _BookingSectionHeader(
-                  title: 'Past',
-                  count: past.length,
-                  icon: Icons.history_rounded,
-                  iconColor: colorScheme.textTertiary,
+                  title: 'Closed',
+                  count: closedBookings.length,
                 ),
-                // Phase 7: dimmed past bookings — clearly secondary
-                ...past.map(
+                ...closedBookings.map(
                   (b) => Opacity(
                     opacity: 0.6,
                     child: DashboardBookingCard(
@@ -130,10 +120,35 @@ class BookingsTab extends StatelessWidget {
     );
   }
 
+  /// Returns true for terminal booking statuses that should not be counted as
+  /// active dashboard work.
+  bool _isClosedBooking(BookingStatus status) {
+    return switch (status) {
+      BookingStatus.completed ||
+      BookingStatus.canceled ||
+      BookingStatus.refunded ||
+      BookingStatus.expiredUnanswered ||
+      BookingStatus.noShow ||
+      BookingStatus.declined => true,
+      BookingStatus.pending ||
+      BookingStatus.confirmed ||
+      BookingStatus.active ||
+      BookingStatus.delivered ||
+      BookingStatus.paidRequestPending ||
+      BookingStatus.disputed ||
+      BookingStatus.inProgress => false,
+    };
+  }
+
   /// Skeleton loading — 4 placeholder booking cards.
   Widget _buildSkeletonList() {
+    const spacing = AmberDuskTokens.spacing;
+
     return ListView.separated(
-      padding: const EdgeInsets.all(AppDimens.p16),
+      padding: EdgeInsets.symmetric(
+        horizontal: spacing.contentHorizontalPadding,
+        vertical: AppDimens.p16,
+      ),
       itemCount: 4,
       separatorBuilder: (_, __) => const SizedBox(height: AppDimens.p12),
       itemBuilder: (_, __) => const _SkeletonBookingCard(),
@@ -142,10 +157,8 @@ class BookingsTab extends StatelessWidget {
 
   /// Enhanced empty state with circular icon container.
   ///
-  /// Phase 7 REDESIGN: Icon wrapped in primary-tinted circle (80px) for
-  /// designed feel instead of a naked floating icon.
   Widget _buildEmptyState(BuildContext context, DashboardViewModel vm) {
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
 
     return RefreshIndicator(
       onRefresh: () => vm.refresh(),
@@ -165,28 +178,37 @@ class BookingsTab extends StatelessWidget {
                     width: AppDimens.emptyStateIconContainer,
                     height: AppDimens.emptyStateIconContainer,
                     decoration: BoxDecoration(
-                      color: colorScheme.primary.withValues(alpha: 0.08),
+                      color: amber.activeGlow,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       Icons.calendar_today,
                       size: AppDimens.emptyStateIconSize,
-                      color: colorScheme.textSecondary,
+                      color: amber.textSubtle,
                     ),
                   ),
                   const SizedBox(height: AppLayout.spacingSection),
                   Text(
                     'No bookings yet',
-                    style: AppTypography.h5.copyWith(
-                      color: colorScheme.textSecondary,
-                    ),
+                    style: AppTypography.h5.copyWith(color: amber.textSubtle),
                   ),
                   const SizedBox(height: AppLayout.spacingStandard),
                   Text(
                     'Discover services to book',
-                    style: AppTypography.bodySmall.copyWith(
-                      color: colorScheme.textTertiary,
+                    style: AppTypography.bodySmall.copyWith(color: amber.muted),
+                  ),
+                  const SizedBox(height: AppDimens.p20),
+                  FilledButton.icon(
+                    onPressed: () => _openHomeBookings(context),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: amber.primary,
+                      foregroundColor: amber.textInverse,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppDimens.r12),
+                      ),
                     ),
+                    icon: const Icon(Icons.travel_explore_rounded),
+                    label: const Text('Browse booking posts'),
                   ),
                 ],
               ),
@@ -196,78 +218,62 @@ class BookingsTab extends StatelessWidget {
       ),
     );
   }
+
+  void _openHomeBookings(BuildContext context) {
+    AppLogger.i(
+      'Dashboard bookings empty CTA opened Home',
+      tag: 'dashboard.bookings',
+    );
+    context.read<NavigationProvider?>()?.setCurrentIndex(
+      MainNavDestinations.home,
+    );
+  }
 }
 
-/// Icon-badged section header with count pill.
+/// Compact booking section header with count suffix.
 ///
-/// Phase 7 REDESIGN: Colored icon in rounded container + title + count badge.
-/// Matches OverviewTab _SectionCard pattern for visual consistency.
+/// Open Design uses uppercase dashboard section labels rather than large card
+/// headers, so the count stays in-line to avoid adding another surface.
 class _BookingSectionHeader extends StatelessWidget {
   final String title;
   final int count;
-  final IconData icon;
-  final Color iconColor;
 
-  const _BookingSectionHeader({
-    required this.title,
-    required this.count,
-    required this.icon,
-    required this.iconColor,
-  });
+  const _BookingSectionHeader({required this.title, required this.count});
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
+    const typography = AmberDuskTokens.typography;
 
     return Semantics(
       header: true,
       label: '$title bookings: $count',
       excludeSemantics: true,
       child: Padding(
-        padding: const EdgeInsets.only(
-          bottom: AppDimens.p12,
-          left: AppDimens.p4,
-        ),
+        padding: const EdgeInsets.only(bottom: AppDimens.p12),
         child: Row(
           children: [
-            // Icon badge
-            Container(
-              padding: const EdgeInsets.all(AppDimens.p6),
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(AppDimens.r8),
-              ),
-              child: Icon(
-                icon,
-                size: AppDimens.iconSizeSmall,
-                color: iconColor,
-              ),
-            ),
-            const SizedBox(width: AppDimens.p8),
             Text(
-              title,
-              style: AppTypography.h3.copyWith(color: colorScheme.text),
+              _uppercaseForLocale(context, title),
+              style: typography.chip.copyWith(
+                color: amber.text,
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(width: AppDimens.p8),
-            // Count pill
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimens.p8,
-                vertical: AppDimens.p2,
-              ),
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(AppDimens.r12),
-              ),
-              child: Text(
-                '$count',
-                style: AppTypography.captionBold.copyWith(color: iconColor),
-              ),
-            ),
+            Text('$count', style: typography.chip.copyWith(color: amber.muted)),
           ],
         ),
       ),
     );
+  }
+
+  String _uppercaseForLocale(BuildContext context, String value) {
+    final locale = Localizations.localeOf(context).languageCode.toLowerCase();
+    if (locale == 'tr' || locale == 'az') {
+      return value.replaceAll('i', 'İ').replaceAll('ı', 'I').toUpperCase();
+    }
+    return value.toUpperCase();
   }
 }
 

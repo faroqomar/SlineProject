@@ -1851,9 +1851,11 @@ The core orchestration function for the double-entry system.
 - `process_gateway_escrow_booking(p_booking_id, ...) -> jsonb`
   - Server-only RPC used by `qicard_payment_recovery` and `qicard_webhook_handler` after QiCard success. It posts the booking escrow hold directly, updates `bookings.payment_status` to `held`, and leaves the later `paid_request_pending` promotion to the Edge helper. Added in `20260321000006_fix_booking_gateway_escrow_rpc.sql` to avoid enum drift in the shared `process_payment_event_ledger` gateway branch.
 - Edge functions:
+  - `create_payment_intent`
   - `qicard_payment_create`
   - `qicard_payment_recovery`
   - `booking_decline_refund`
+- **2026-05-14 callback privacy update:** local `qicard_payment_create` and `create_payment_intent` source keep booking/entity/payer/correlation/intent details in gateway `additionalInfo` and server logs for webhook/recovery correlation, but finish URLs should expose only customer-safe payment return parameters. The Flutter app recovers through trusted widget state or `PaymentPendingStore`, so customer-facing callback/result pages must not depend on raw technical IDs in the URL.
 - Booking webhook:
   - `qicard_webhook_handler` must reject unsigned payloads unless explicit local-dev override is enabled.
   - `qicard_webhook_handler` validates `intentId` and `paymentId` with regex `/^[a-zA-Z0-9\-_]{1,128}$/` before `.or()` query (Phase D, 2026-04-04). Invalid IDs return 400.
@@ -2680,7 +2682,8 @@ Returns minimum-field profile summaries for all bidders on a task (for owner vie
 
 - **DEVELOPER_GUIDE.md** - Feature-specific documentation
 - **CODE_REVIEW.md** - Common mistakes and fixes
-- **GEMINI.md** - Development patterns and agents
+- **AGENTS.md** - Development patterns and repo-level agent guidance
+- **`.cursor/Agents/`** - Agent definitions and workflow responsibilities
 - **`.cursor/rules/`** - Rule files for specific patterns
 
 ---

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
@@ -5,11 +7,12 @@ import 'package:sline_app/core/navigation/main_nav_destinations.dart';
 import 'package:sline_app/core/providers/navigation_provider.dart';
 import 'package:sline_app/core/providers/system_config_view_model.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/app_animations.dart';
 import 'package:sline_app/core/utils/transitions/custom_route_transitions.dart';
 import 'package:sline_app/core/widgets/custom_bottom_nav_bar.dart';
@@ -17,12 +20,16 @@ import 'package:sline_app/features/chat/view/messages_screen.dart';
 import 'package:sline_app/features/dashboard/view/dashboard_screen.dart';
 import 'package:sline_app/features/home/view/home_screen.dart';
 import 'package:sline_app/features/profile/view/profile_screen.dart';
+import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 import 'package:sline_app/features/tasks/view/create_task_screen.dart';
+import 'package:sline_app/features/tasks/viewmodels/discovery_feed_view_model_contract.dart';
+import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
 
 /// Main navigation screen that manages bottom navigation and screen switching.
 ///
 /// Phase 2 redesign: directional tab transitions, FAB spring entrance with
-/// scroll-aware visibility, animated runtime banner.
+/// scroll-aware visibility, Home-owned create action, and Amber Dusk shell
+/// materials that do not activate the global app theme.
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({
     super.key,
@@ -118,9 +125,95 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
     });
   }
 
+  Future<void> _openCreateTask(
+    BuildContext context,
+    WidgetBuilder createTaskBuilder,
+  ) async {
+    AppLogger.i('Opening create task screen from Home FAB', tag: 'Navigation');
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final result = await navigator.push<CreateTaskResult>(
+      SlinePageRoute.modalSheet(child: createTaskBuilder(context)),
+    );
+
+    if (!mounted || !context.mounted) return;
+    if (result == null) {
+      AppLogger.d(
+        'Create task sheet dismissed without changes',
+        tag: 'Navigation',
+      );
+      return;
+    }
+
+    AppLogger.i(
+      'Create task sheet completed',
+      tag: 'Navigation',
+      json: <String, dynamic>{
+        'operation': result.operation.name,
+        'task_type': result.taskType.name,
+        if (result.taskId != null) 'task_id': result.taskId,
+      },
+    );
+
+    await _refreshAfterCreateTask();
+    if (!mounted) return;
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(result.successMessage),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+  }
+
+  Future<void> _refreshAfterCreateTask() async {
+    final navigationProvider = context.read<NavigationProvider?>();
+    final feedViewModel = context.read<DiscoveryFeedViewModelContract?>();
+    final filterViewModel = context.read<TaskFilterViewModel?>();
+    final profileViewModel = context.read<ProfileViewModel?>();
+
+    navigationProvider?.setCurrentIndex(MainNavDestinations.home);
+
+    final refreshes = <Future<void>>[];
+    if (feedViewModel != null && filterViewModel != null) {
+      refreshes.add(
+        feedViewModel.refresh(
+          filterController: filterViewModel,
+          surface: 'home_post_create',
+        ),
+      );
+    }
+    if (profileViewModel != null) {
+      refreshes.add(profileViewModel.loadHeaderProfile());
+    }
+
+    if (refreshes.isEmpty) {
+      AppLogger.w(
+        'Create task completed without available refresh providers',
+        tag: 'Navigation',
+      );
+      return;
+    }
+
+    try {
+      await Future.wait(refreshes);
+      AppLogger.i('Create task completion refresh finished', tag: 'Navigation');
+    } on Exception catch (error, stackTrace) {
+      AppLogger.e(
+        'Create task completion refresh failed',
+        tag: 'Navigation',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    const amberColors = AmberDuskTokens.colors;
+    const phoneLayout = AmberDuskTokens.phoneLayout;
     final createTaskBuilder =
         widget.createTaskScreenBuilder ?? ((_) => const CreateTaskScreen());
 
@@ -168,6 +261,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
             runtimeConfig.bannerText.trim().isNotEmpty;
         final showBanner = !_bannerDismissed && hasBanner;
         final bottomSafePadding = MediaQuery.viewPaddingOf(context).bottom;
+        final showCreateFab = currentIndex == MainNavDestinations.home;
+        final fabBottomOffset =
+            phoneLayout.bottomNavBottom +
+            phoneLayout.bottomNavHeight +
+            AmberDuskTokens.spacing.sm;
 
         // Start banner animation if banner should be visible
         if (showBanner &&
@@ -188,25 +286,22 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
             onNotification: _onScrollNotification,
             child: Stack(
               children: [
-                // 1. Global Background
+                // 1. Amber Dusk shell background
                 Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        AppColors.teal,
-                        AppColors.lightTeal,
-                        AppColors.gold.withValues(alpha: 0.3),
+                        amberColors.page,
+                        amberColors.background,
+                        amberColors.heroDeep,
                       ],
                     ),
                   ),
                 ),
 
-                // 2. Phone Background
-                Container(color: colorScheme.phoneBackground),
-
-                // 3. Active Screen with directional slide+fade transition
+                // 2. Active Screen with directional slide+fade transition
                 AnimatedSwitcher(
                   duration: AppMotion.standard,
                   switchInCurve: AppMotion.curveStandard,
@@ -260,9 +355,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
                           ),
                           child: Text(
                             runtimeConfig.bannerText,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
+                            style: AppTypography.captionBold.copyWith(
+                              color: amberColors.text,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -271,56 +365,53 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
                     ),
                   ),
 
-                // 5. iOS 26 Liquid Glass Bottom Navigation Bar
+                // 5. Amber Dusk solid bottom navigation bar
                 const CustomBottomNavBar(),
 
-                // 6. FAB (Create Task) with spring entrance + scroll-aware
-                Positioned(
-                  bottom: AppLayout.fabBottomOffset + bottomSafePadding,
-                  right: AppDimens.p24,
-                  child: ScaleTransition(
-                    scale: _fabScale,
-                    child: AnimatedRotationButton(
-                      rotationAngle: 0.125,
-                      onTap: () {
-                        AppLogger.i(
-                          'Opening create task screen from main navigation FAB',
-                          tag: 'Navigation',
-                        );
-                        Navigator.of(context).push(
-                          SlinePageRoute.modalSheet(
-                            child: createTaskBuilder(context),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        key: MainNavigationScreen.createTaskFabKey,
-                        width: AppLayout.fabSize,
-                        height: AppLayout.fabSize,
-                        decoration: BoxDecoration(
-                          color: AppColors.teal,
-                          borderRadius: BorderRadius.circular(AppDimens.r18),
-                          // FAB uses custom teal-tinted shadow for brand emphasis,
-                          // not the generic AppDecorations.elevation() scale.
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.teal.withValues(alpha: 0.4),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
+                // 6. Home-owned FAB with spring entrance + scroll-aware motion
+                if (showCreateFab)
+                  Positioned(
+                    bottom: fabBottomOffset + bottomSafePadding,
+                    right: AppDimens.p24,
+                    child: ScaleTransition(
+                      scale: _fabScale,
+                      child: Semantics(
+                        label: 'Create a post',
+                        button: true,
+                        child: Tooltip(
+                          message: 'Create a post',
+                          child: AnimatedRotationButton(
+                            rotationAngle: 0.125,
+                            onTap: () {
+                              unawaited(
+                                _openCreateTask(context, createTaskBuilder),
+                              );
+                            },
+                            child: Container(
+                              key: MainNavigationScreen.createTaskFabKey,
+                              width: phoneLayout.fabSize,
+                              height: phoneLayout.fabSize,
+                              decoration: BoxDecoration(
+                                color: amberColors.primary,
+                                borderRadius: BorderRadius.circular(
+                                  phoneLayout.fabRadius,
+                                ),
+                                boxShadow: AppDecorations.elevation(
+                                  AmberDuskTokens.surfaces.cta.elevationLevel,
+                                  isDark: colorScheme.isDark,
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.add,
+                                color: amberColors.page,
+                                size: AppDimens.iconSizeLarge,
+                              ),
                             ),
-                          ],
-                        ),
-                        child: Icon(
-                          Icons.add,
-                          color: AppColors.white,
-                          // 30px — FAB-specific icon size, between iconMedium (24)
-                          // and iconLarge (32). Intentionally unique for visual weight.
-                          size: 30,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
@@ -332,12 +423,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
   Color _bannerColor(String type) {
     switch (type.toLowerCase()) {
       case 'warning':
-        return AppColors.gold;
+        return AmberDuskTokens.colors.star;
       case 'error':
       case 'danger':
-        return AppColors.lightRed;
+        return AmberDuskTokens.colors.rust;
       default:
-        return AppColors.teal;
+        return AmberDuskTokens.colors.primary;
     }
   }
 }

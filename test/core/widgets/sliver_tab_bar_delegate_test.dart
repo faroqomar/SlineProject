@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/sliver_tab_bar_delegate.dart';
 
 void main() {
@@ -68,10 +69,11 @@ void main() {
     });
 
     testWidgets('T-CW004 applies custom backgroundColor', (tester) async {
+      final customSurface = AmberDuskTokens.colors.surfaceRaised;
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.light(),
-          home: const DefaultTabController(
+          home: DefaultTabController(
             length: 2,
             child: Scaffold(
               body: CustomScrollView(
@@ -79,16 +81,16 @@ void main() {
                   SliverPersistentHeader(
                     pinned: true,
                     delegate: SliverTabBarDelegate(
-                      TabBar(
+                      const TabBar(
                         tabs: [
                           Tab(text: 'A'),
                           Tab(text: 'B'),
                         ],
                       ),
-                      backgroundColor: Colors.red,
+                      backgroundColor: customSurface,
                     ),
                   ),
-                  SliverFillRemaining(child: SizedBox.shrink()),
+                  const SliverFillRemaining(child: SizedBox.shrink()),
                 ],
               ),
             ),
@@ -104,11 +106,71 @@ void main() {
           matching: find.byType(Container),
         ),
       );
-      final hasRedBg = containers.any((c) {
+      final hasCustomBg = containers.any((c) {
         final dec = c.decoration;
-        return dec is BoxDecoration && dec.color == Colors.red;
+        return dec is BoxDecoration && dec.color == customSurface;
       });
-      expect(hasRedBg, isTrue);
+      expect(hasCustomBg, isTrue);
+    });
+
+    testWidgets('T-CW005 uses Amber Dusk surface with themed border', (
+      tester,
+    ) async {
+      final cardTheme = AmberDuskTokens.widgetTheme.cards;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          home: DefaultTabController(
+            length: 2,
+            child: Material(
+              child: Builder(
+                builder: (context) {
+                  const delegate = SliverTabBarDelegate(
+                    TabBar(
+                      tabs: [
+                        Tab(text: 'A'),
+                        Tab(text: 'B'),
+                      ],
+                    ),
+                  );
+                  const double shrinkOffset = 1;
+                  const overlapsContent = true;
+                  return delegate.build(context, shrinkOffset, overlapsContent);
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final containers = tester
+          .widgetList<Container>(
+            find.ancestor(
+              of: find.byType(TabBar),
+              matching: find.byType(Container),
+            ),
+          )
+          .toList();
+      expect(containers, isNotEmpty);
+      final container = containers.first;
+      final rawDecoration = container.decoration;
+      if (rawDecoration is! BoxDecoration) {
+        throw TestFailure(
+          'Expected SliverTabBarDelegate decoration to be BoxDecoration.',
+        );
+      }
+      final decoration = rawDecoration;
+      final rawBorder = decoration.border;
+      if (rawBorder is! Border) {
+        throw TestFailure('Expected SliverTabBarDelegate border to be Border.');
+      }
+      final border = rawBorder;
+
+      expect(decoration.color, cardTheme.panel.background);
+      expect(border.bottom.color, cardTheme.border);
+      expect(border.bottom.width, cardTheme.borderWidth);
+      expect(find.byType(BackdropFilter), findsNothing);
     });
   });
 }

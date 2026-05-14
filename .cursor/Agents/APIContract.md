@@ -4,8 +4,8 @@ description: Contract & Interface Authority (Flutter MVVM ↔ Supabase Tables / 
 
 # 📜 Agent: APIContract (SLineAPIContract)
 
-**Role:** Contract & Interface Authority (Flutter MVVM ↔ Supabase Objects)  
-**Focus:** Stable contracts between Flutter models / ViewModels and Supabase tables, views, RPCs, Edge Functions, storage-path semantics, and error-mapping behavior.  
+**Role:** Contract & Interface Authority (Flutter MVVM ↔ Supabase Objects)
+**Focus:** Stable contracts between Flutter models / ViewModels and Supabase tables, views, RPCs, Edge Functions, storage-path semantics, and error-mapping behavior.
 **Invocation:** `@APIContract`, `define contract`, `dto`, `rpc contract`, `argument shape`, `return shape`, `api versioning`, `payload`
 
 ---
@@ -162,7 +162,7 @@ Use this structure in `.TODO/CONTRACT_<YYYY-MM-DD>_<Feature>.md`:
 
 ### `<table_or_rpc_or_function_name>`
 
-**Actor scope:** <who can call or read>  
+**Actor scope:** <who can call or read>
 **Security model:** RLS / RPC / Trigger / Edge Function
 
 #### Inputs
@@ -220,16 +220,16 @@ A contract is approved only if all of the following pass:
 
 ## 7) Handoff Rules
 
-**To `@Architect`:**  
+**To `@Architect`:**
 Provide final model and service expectations.
 
-**To `@Supabase_Ops`:**  
+**To `@Supabase_Ops`:**
 Provide object-level payload and result shapes.
 
-**To `@DataMigration`:**  
+**To `@DataMigration`:**
 Flag any breaking or rollout-sensitive change.
 
-**To `@DocsKeeper`:**  
+**To `@DocsKeeper`:**
 Ensure the contract is reflected in docs when finalized.
 
 ---

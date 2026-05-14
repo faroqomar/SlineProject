@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/navigation/main_nav_destinations.dart';
+import 'package:sline_app/core/providers/navigation_provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_layout.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/skeleton_loader.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 import 'package:sline_app/features/proposals/models/proposal_payment_summary.dart';
@@ -14,9 +14,8 @@ import 'package:sline_app/features/tasks/view/widgets/dashboard_offer_card.dart'
 
 /// Dashboard inbox tab showing pending offers and proposals.
 ///
-/// Phase 7 redesign: replaced CircularProgressIndicator with skeleton loading,
-/// polished empty state to match other tab patterns, and migrated SnackBar
-/// colors from Colors.red to colorScheme.danger.
+/// The tab keeps all offer actions on DashboardViewModel and only normalizes
+/// inbox loading, empty, and list presentation.
 class InboxTab extends StatefulWidget {
   const InboxTab({super.key});
 
@@ -33,7 +32,7 @@ class _InboxTabState extends State<InboxTab> {
     dynamic offer,
   ) async {
     final messenger = ScaffoldMessenger.of(context);
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
     setState(() => _isAwarding = true);
 
     try {
@@ -55,8 +54,7 @@ class _InboxTabState extends State<InboxTab> {
         messenger.showSnackBar(
           SnackBar(
             content: Text(result?['error'] ?? 'Failed to award offer'),
-            // Phase 7: semantic danger replaces hardcoded Colors.red
-            backgroundColor: colorScheme.danger,
+            backgroundColor: amber.danger,
           ),
         );
       }
@@ -64,11 +62,7 @@ class _InboxTabState extends State<InboxTab> {
       if (!mounted) return;
       setState(() => _isAwarding = false);
       messenger.showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          // Phase 7: semantic danger replaces hardcoded Colors.red
-          backgroundColor: colorScheme.danger,
-        ),
+        SnackBar(content: Text('Error: $e'), backgroundColor: amber.danger),
       );
     }
   }
@@ -100,79 +94,158 @@ class _InboxTabState extends State<InboxTab> {
   Widget build(BuildContext context) {
     return Consumer<DashboardViewModel>(
       builder: (context, vm, child) {
-        // ── Skeleton loading state ──────────────────────────────
-        // Phase 7: replaced CircularProgressIndicator with skeleton shimmer
-        // matching the approximate shape of DashboardOfferCard.
-        if (vm.isLoading && vm.inboxOffers.isEmpty) {
-          return _buildSkeletonList();
-        }
-
         final isClient = vm.currentRole == UserRole.client;
         final label = isClient ? 'Proposals' : 'Offers';
+        final body = _bodyForMode(
+          context,
+          vm,
+          isClient: isClient,
+          label: label,
+        );
 
-        // ── Empty state ─────────────────────────────────────────
-        if (vm.inboxOffers.isEmpty) {
-          return RefreshIndicator(
-            onRefresh: () => vm.refresh(),
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.6,
-                child: _EmptyInboxState(label: label),
-              ),
-            ),
-          );
-        }
-
-        return RefreshIndicator(
+        return Column(
           key: const Key('inbox_tab'),
-          onRefresh: () => vm.refresh(),
-          child: ListView.builder(
-            padding: const EdgeInsets.all(AppDimens.p16),
-            itemCount: vm.inboxOffers.length,
-            itemBuilder: (context, index) {
-              final offer = vm.inboxOffers[index];
-
-              // Determine the correct handler based on offer state
-              VoidCallback acceptHandler;
-              if (isClient && !_isAwarding) {
-                if (offer.status == OfferStatus.pending) {
-                  acceptHandler = () => _handleAwardOffer(context, vm, offer);
-                } else if (offer.status == OfferStatus.accepted &&
-                    offer.paymentStatus == PaymentStatus.unpaid) {
-                  acceptHandler = () => _handlePayAwardedOffer(context, offer);
-                } else {
-                  acceptHandler = () {};
-                }
-              } else {
-                acceptHandler = () {};
-              }
-
-              return DashboardOfferCard(
-                offer: offer,
-                isClientView: isClient,
-                onAccept: acceptHandler,
-                onReject: () => vm.rejectOffer(offer),
-                onWithdraw: () => vm.withdrawOffer(offer.id),
-                onRelease: () => vm.releaseOfferWithFee(offer.id),
-                onRefund: () => vm.refundOffer(offer.id),
-              );
-            },
-          ),
+          children: [
+            _buildDashboardInboxHeader(label),
+            Expanded(child: body),
+          ],
         );
       },
     );
   }
 
+  Widget _bodyForMode(
+    BuildContext context,
+    DashboardViewModel vm, {
+    required bool isClient,
+    required String label,
+  }) {
+    if (vm.isLoading && vm.inboxOffers.isEmpty) {
+      return _buildSkeletonList();
+    }
+
+    if (vm.inboxOffers.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: () => vm.refresh(),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.symmetric(
+            horizontal: AmberDuskTokens.spacing.contentHorizontalPadding,
+          ),
+          children: [
+            _EmptyInboxState(
+              label: label,
+              message:
+                  '$label that need dashboard action will appear here. Full Received and Sent threads live in Messages.',
+              actionLabel: 'Open Messages',
+              onAction: () => _openMessages(context),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => vm.refresh(),
+      child: ListView.builder(
+        padding: EdgeInsets.symmetric(
+          horizontal: AmberDuskTokens.spacing.contentHorizontalPadding,
+        ),
+        itemCount: vm.inboxOffers.length,
+        itemBuilder: (context, index) {
+          final offer = vm.inboxOffers[index];
+
+          // Determine the correct handler based on offer state.
+          VoidCallback acceptHandler;
+          if (isClient && !_isAwarding) {
+            if (offer.status == OfferStatus.pending) {
+              acceptHandler = () => _handleAwardOffer(context, vm, offer);
+            } else if (offer.status == OfferStatus.accepted &&
+                offer.paymentStatus == PaymentStatus.unpaid) {
+              acceptHandler = () => _handlePayAwardedOffer(context, offer);
+            } else {
+              acceptHandler = () {};
+            }
+          } else {
+            acceptHandler = () {};
+          }
+
+          return DashboardOfferCard(
+            offer: offer,
+            isClientView: isClient,
+            onAccept: acceptHandler,
+            onReject: () => vm.rejectOffer(offer),
+            onWithdraw: () => vm.withdrawOffer(offer.id),
+            onRelease: () => vm.releaseOfferWithFee(offer.id),
+            onRefund: () => vm.refundOffer(offer.id),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildDashboardInboxHeader(String label) {
+    const amber = AmberDuskTokens.colors;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        AmberDuskTokens.spacing.contentHorizontalPadding,
+        0,
+        AmberDuskTokens.spacing.contentHorizontalPadding,
+        AppDimens.p12,
+      ),
+      child: Semantics(
+        label: 'Dashboard inbox actions',
+        child: Container(
+          padding: const EdgeInsets.all(AppDimens.p14),
+          decoration: BoxDecoration(
+            color: amber.surface,
+            borderRadius: BorderRadius.circular(
+              AmberDuskTokens.spacing.moduleRadius,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '$label requiring action',
+                style: AmberDuskTokens.typography.sectionTitle.copyWith(
+                  color: amber.text,
+                ),
+              ),
+              const SizedBox(height: AppDimens.p4),
+              Text(
+                'Use Messages for the full Received and Sent conversation views.',
+                style: AmberDuskTokens.typography.bodySmall.copyWith(
+                  color: amber.muted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openMessages(BuildContext context) {
+    AppLogger.i(
+      'Dashboard inbox empty CTA opened Messages',
+      tag: 'dashboard.inbox',
+    );
+    context.read<NavigationProvider?>()?.setCurrentIndex(
+      MainNavDestinations.messages,
+    );
+  }
+
   /// Skeleton loading — 3 placeholder cards matching DashboardOfferCard shape.
   ///
-  /// Phase 7: replaces CircularProgressIndicator for visual consistency with
-  /// other tabs (BookingsTab, WorkTab) that already use skeleton loading.
   Widget _buildSkeletonList() {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(AppDimens.p16),
+      padding: EdgeInsets.symmetric(
+        horizontal: AmberDuskTokens.spacing.contentHorizontalPadding,
+      ),
       itemCount: 3,
       itemBuilder: (_, index) => const Padding(
         padding: EdgeInsets.only(bottom: AppDimens.p12),
@@ -184,44 +257,86 @@ class _InboxTabState extends State<InboxTab> {
 
 /// Polished empty state for inbox tab.
 ///
-/// Phase 7 redesign: icon size downsized from hardcoded 64 to AppLayout.iconFeature
-/// (48) for consistency with other tab empty states. Typography downsized from
-/// h3 to h5 to match WorkTab and BookingsTab patterns.
+/// Empty inbox state for both client proposals and freelancer offers.
 class _EmptyInboxState extends StatelessWidget {
+  const _EmptyInboxState({
+    required this.label,
+    this.message,
+    this.actionLabel,
+    this.onAction,
+  });
+
   final String label;
-  const _EmptyInboxState({required this.label});
+  final String? message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
 
     return Semantics(
-      label: 'No $label yet. $label you receive or send will appear here.',
+      label:
+          'No $label yet. ${message ?? '$label you receive or send will appear here.'}',
       excludeSemantics: true,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      child: Container(
+        margin: const EdgeInsets.only(top: AppDimens.p8),
+        padding: const EdgeInsets.all(AppDimens.p18),
+        decoration: BoxDecoration(
+          color: amber.surface,
+          borderRadius: BorderRadius.circular(
+            AmberDuskTokens.spacing.moduleRadius,
+          ),
+        ),
+        child: Row(
           children: [
-            Icon(
-              Icons.inbox_outlined,
-              // Phase 7: AppLayout.iconFeature (48) replaces hardcoded 64
-              // for consistency with other empty states
-              size: AppLayout.iconFeature,
-              color: colorScheme.textSecondary,
-            ),
-            const SizedBox(height: AppLayout.spacingSection),
-            Text(
-              'No $label Yet',
-              // Phase 7: h5 replaces h3 for consistency with WorkTab/BookingsTab
-              style: AppTypography.h5.copyWith(
-                color: colorScheme.textSecondary,
+            Container(
+              width: AppDimens.p48,
+              height: AppDimens.p48,
+              decoration: BoxDecoration(
+                color: amber.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(AppDimens.r16),
+              ),
+              child: Icon(
+                Icons.inbox_outlined,
+                size: AppDimens.iconSizeMedium,
+                color: amber.primary,
               ),
             ),
-            const SizedBox(height: AppLayout.spacingStandard),
-            Text(
-              '$label you receive or send will appear here.',
-              style: AppTypography.bodySmall.copyWith(
-                color: colorScheme.textTertiary,
+            const SizedBox(width: AppDimens.p12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'No $label Yet',
+                    style: AmberDuskTokens.typography.sectionTitle.copyWith(
+                      color: amber.text,
+                    ),
+                  ),
+                  const SizedBox(height: AppDimens.p4),
+                  Text(
+                    message ?? '$label you receive or send will appear here.',
+                    style: AmberDuskTokens.typography.bodySmall.copyWith(
+                      color: amber.muted,
+                    ),
+                  ),
+                  if (actionLabel != null && onAction != null) ...[
+                    const SizedBox(height: AppDimens.p12),
+                    FilledButton.icon(
+                      onPressed: onAction,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: amber.primary,
+                        foregroundColor: amber.textInverse,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppDimens.r12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.mark_chat_unread_outlined),
+                      label: Text(actionLabel!),
+                    ),
+                  ],
+                ],
               ),
             ),
           ],

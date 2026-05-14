@@ -8,7 +8,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 ///
 /// Uses [SharedStorageConfig] for consistent TTL values.
 class AttachmentService {
-  final SupabaseClient _client = Supabase.instance.client;
+  /// Creates the attachment service with an injectable Supabase client.
+  ///
+  /// Tests and ViewModels pass a client explicitly so private storage access
+  /// stays behind the service boundary instead of leaking into widgets.
+  AttachmentService({SupabaseClient? client})
+    : _client = client ?? Supabase.instance.client;
+
+  final SupabaseClient _client;
   static const String _bucket = 'chat-attachments';
 
   /// Upload raw bytes under: conversationId/random_filename

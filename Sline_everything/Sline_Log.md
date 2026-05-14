@@ -1,16 +1,391 @@
 # 📘 SLine App - Complete Development Log
 
-**Last Updated:** 2026-04-30
+**Last Updated:** 2026-05-13
+
+---
+
+## Version 2.33.0 — DocsKeeper Sync For Transactional QA Recovery And SystemEvolution (2026-05-14)
+
+**Classification:** Documentation sync, diagram update, Supabase setup clarification, and agent-rule traceability
+**DocsKeeper Input:** `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_TransactionalQARecovery_2026-05-13.md`
+**SystemEvolution Report:** `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-14.md`
+**Docs Sync:** `.TODO/DOCS_SYNC_2026-05-14_OpenDesign_AmberDusk_TransactionalQARecovery.md`
+**Supabase objects changed:** local Edge Function source only; no schema/RLS/migration changes
+
+### Scope
+- Updated root `README.md` to documentation version `2.33.0`, including Transactional QA Recovery status and the remaining QiCard processed-payment simulator gate.
+- Updated `Sline_everything/DEVELOPER_GUIDE.md` with Phase 9-12, Transactional QA Recovery, sanitized payment callback, IQD, `CreateTaskResult`, Dashboard refresh, and SystemEvolution runtime proof rules.
+- Updated `Sline_everything/SUPABASE_SETUP.md` to document the callback privacy contract for local `qicard_payment_create` and `create_payment_intent` source.
+- Updated `Sline_everything/STRUCTURE.md`, `CODE_REVIEW.md`, `MVP_ROADMAP.md`, `UI_SURFACE_INVENTORY.md`, and the payment/booking diagrams to reflect the current Flutter and Edge Function contracts.
+
+### Validation
+- Path and diagram references were checked against the working tree.
+- `SUPABASE_SETUP.md` was updated because Edge Function source changed; no migration/RLS/schema documentation was added because no migration/RLS/schema files changed.
+- The 2026-05-14 SystemEvolution agent/rule scan was already clean, and this DocsKeeper pass did not edit `.cursor/Agents/` or `.cursor/rules/`.
+
+### Open Release Gate
+- The full QiCard processed-payment success branch still needs a simulator replay with gateway submission, app recovery, and Dashboard Bookings screenshots.
+
+---
+
+## Version 2.32.0 — Amber Dusk Transactional QA Recovery (2026-05-13)
+
+**Classification:** Payment recovery, transactional Amber Dusk alignment, IQD consistency, and flow correctness
+**Plan:** `.TODO/PLAN_OpenDesign_AmberDusk_TransactionalQARecovery_2026-05-13.md`
+**Session Log:** `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_TransactionalQARecovery_2026-05-13.md`
+**VisualQA Folder:** `.TODO/VisualQA_OpenDesign_AmberDusk_TransactionalQARecovery_iOSSimulator_2026-05-13/`
+**Supabase objects changed:** Edge Function source edited locally; no schema/RLS/migration changes
+
+### Scope
+- Reworked direct booking payment completion so `PaymentWebViewScreen` receives the payment-intent stream, sanitized callbacks can recover through trusted app state, `SUCCEEDED` is treated as success, and unknown callback state remains recoverable.
+- Sanitized QiCard finish URLs in local `qicard_payment_create` and `create_payment_intent` Edge Function source so customer-facing return screens do not expose booking, payer, entity, correlation, or intent metadata.
+- Refreshed booking state after held payment recovery and preserved pending/retry handling instead of returning users to an unchanged purchase CTA contract.
+- Normalized touched proposal, booking package, direct-offer, dashboard, wallet, and chat money labels to whole-IQD display semantics.
+- Applied Amber Dusk transactional treatment to touched task booking details, proposal sheet, offer bubble, create-offer sheet, Dashboard empty states, Dashboard Inbox, Messages search guidance, and Wallet withdraw copy.
+- Fixed first-authenticated and post-create flows: signup resets to Main/Home, create-post returns `CreateTaskResult`, Main navigation refreshes Home, and Home feed copy uses `All posts`, `Booking posts`, `Tender posts`, and item counts.
+
+### Verification
+- `flutter analyze --no-fatal-infos`: passed.
+- `git diff --check`: passed.
+- Focused payment, proposal, Home, Dashboard, Wallet, Messages, Signup, Task Details, and Offer Bubble tests: passed.
+- `flutter test`: passed (`1578` visible tests done, `30` skipped).
+
+### Open Release Gate
+- iOS simulator phase screenshots remain pending. Required names are listed in `.TODO/VisualQA_OpenDesign_AmberDusk_TransactionalQARecovery_iOSSimulator_2026-05-13/README.md`.
+- Local Edge Function source changed, but this session did not deploy functions because authenticated function listing/deploy access was not available through the connector.
+
+---
+
+## Version 2.31.0 — Amber Dusk Phases 9-12 Profile, Secondary, Readiness, Handoff (2026-05-13)
+
+**Classification:** Scoped phone-view Amber Dusk runtime work + phone-to-web handoff/docs closure
+**Plan:** `.TODO/PLAN_OpenDesign_AmberDusk_Phases9_10_11_12_PhoneProfileSecondaryReadiness_2026-05-13.md`
+**Plan Critique:** `.TODO/PLAN_CRITIQUE_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12_PhoneProfileSecondaryReadiness.md`
+**Session Log:** `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phases9_10_11_12_PhoneProfileSecondaryReadiness_2026-05-13.md`
+**Master Report:** `.TODO/MASTER_REPORT_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12.md`
+**Web Handoff:** `.TODO/WebRedsign/HANDOFF_OpenDesign_AmberDusk_Phases9_10_11_12_ToWeb_2026-05-13.md`
+**Docs Sync:** `.TODO/DOCS_SYNC_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12.md`
+**Emulator Checklist:** `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12_Step6.md`
+**Supabase objects changed:** none
+
+### Scope
+- Applied scoped Amber Dusk visual treatment across public profile, edit profile, settings, avatar, profile preview, portfolio screens/sheets/tiles, manage portfolio, my services, and service cards.
+- Applied adaptation-only Amber Dusk alignment across categories, search, favorites, saved tasks, notification modal/list/badge, loading overlay, status presenter, and unified CTA helper surfaces.
+- Completed the Step 5 gap scan fix pass for profile/public-profile composition, portfolio proof-tile structure, notification/portfolio danger contrast, sheet geometry, and interaction semantics after read-only explorer review.
+- Kept exact Open Design claims limited to strong profile evidence; secondary screens remain adaptation-only until user screenshots or exact Open Design states are provided.
+- Preserved MVVM and service authority: no backend, RLS, Edge Function, RPC, storage-policy, or `SUPABASE_SETUP.md` changes.
+- Added focused helper/modal tests for Amber Dusk status colors, loading overlay tokens, CTA metadata, and notification modal states.
+- Completed Step 6 Orchestrator review and fixed all confirmed HIGH/MED findings, including notification badge contrast, mark-all failure feedback, logout confirmation, report reason gating, search tab semantics, and modal stacking guards.
+- Created Mohammed's Phase 9-12 phone-to-web handoff and a closure docs-sync artifact.
+
+### Verification
+- `dart format --set-exit-if-changed .`: passed.
+- `flutter analyze --no-fatal-infos`: passed.
+- Step 5 post-fix format/analyzer/focused/full test pass and static guard scans: passed.
+- Focused Phase 9/10 test suites: passed.
+- Static guard scans for direct Supabase in changed view/helper areas: passed.
+- Raw visual constant scan over changed Dart files: passed.
+- No-glass scan over changed Dart files: passed.
+- `git diff --check`: passed.
+- Step 6 focused tests: passed.
+- `flutter test`: passed (`1545` passing, `30` skipped). The skipped set includes Supabase/storage-gated tests plus the existing hardcoded `test/integration_test/favorites_cross_feature_flow_test.dart` skip.
+
+### Open Release Gate
+- Runtime emulator visual QA is still open for Phase 9/10 surfaces at 360, 390, 402, and 430 logical widths.
+- Use `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12_Step6.md` for the per-file runtime pass.
+- No user-provided Phase 9/10 screenshots were available during implementation, so screenshot-dependent matching remains blocked.
+
+---
+
+## 🧭 Version 2.30.0 — UI Surface Inventory + Agent Maintenance Gates (2026-05-13)
+
+**Classification:** Documentation source-of-truth addition + agent workflow routing
+**Supabase objects changed:** none
+
+### Scope
+- Added `Sline_everything/UI_SURFACE_INVENTORY.md` as the maintained inventory for screens, routes, app-shell surfaces, tabs, sheets, dialogs, popup menus, deep-link UI, transient feedback, and shared widgets.
+- Expanded the inventory with a full visual-file coverage index covering every current app-shell, core-widget, feature `view/`, feature `routes/`, and feature deep-link handler file found in the scan.
+- Wired Planner, PlanCritic, Executor, Pixel, Orchestrator, Sentinel, SystemEvolution, and DocsKeeper so UI work must read and maintain the inventory.
+- Updated `Sline_everything/DOC_SOURCE_MAP.md`, `.cursor/PROJECT_CONTEXT.md`, `.cursor/rules/project-rules.mdc`, and `README.md` so new developers and agents can find the inventory before redesign or navigation work.
+
+### Key Files
+- `Sline_everything/UI_SURFACE_INVENTORY.md`
+- `Sline_everything/DOC_SOURCE_MAP.md`
+- `README.md`
+- `.cursor/PROJECT_CONTEXT.md`
+- `.cursor/rules/project-rules.mdc`
+- `.cursor/Agents/Planner.md`
+- `.cursor/Agents/PlanCritic.md`
+- `.cursor/Agents/Executor.md`
+- `.cursor/Agents/Pixel.md`
+- `.cursor/Agents/Orchestrator.md`
+- `.cursor/Agents/Sentinel.md`
+- `.cursor/Agents/SystemEvolution.md`
+- `.cursor/Agents/DocsKeeper.md`
+
+### Verification
+- Verified `Sline_everything/UI_SURFACE_INVENTORY.md` backtick file references point to existing repo paths.
+- Verified the inventory has no missing exact file references for the 131 scanned visual/routing files under `lib/main.dart`, `lib/app/`, `lib/core/widgets/`, feature `view/`, feature `routes/`, and feature deep-link handlers.
+- `rg -ni "evidence" .cursor/Agents .cursor/rules`: no matches.
+- `git diff --check` on changed agent, rule, README, and `Sline_everything/` docs: passed.
+
+---
+
+## 🧭 Version 2.29.0 — Amber Dusk Phases 5-8 + Notification Realtime Hardening + Docs Sync (2026-05-13)
+
+**Classification:** Scoped phone-view Amber Dusk runtime work + notification realtime resilience + agent-system rule merge + documentation sync
+**Plan:** `.TODO/PLAN_OpenDesign_AmberDusk_Phases5_6_7_8_PhoneTrustMessagingWorkPayments_2026-05-12.md`
+**Plan Critique:** `.TODO/PLAN_CRITIQUE_2026-05-12_OpenDesign_AmberDusk_Phases5_6_7_8_PhoneTrustMessagingWorkPayments.md`
+**Open Design Screenshots:** `.TODO/OpenDesign_AmberDusk_Phases5_6_7_8_OpenDesignScreenshots_2026-05-12/`
+**Session Log:** `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phases5_6_7_8_PhoneTrustMessagingWorkPayments_2026-05-12.md`
+**Master Report:** `.TODO/Archive/OpenDesign_AmberDusk_Phases5_6_7_8_2026-05-13/MASTER_REPORT_2026-05-12_OpenDesign_AmberDusk_Phases5_6_7_8_Step6.md`
+**Emulator Checklist:** `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases5_6_7_8.md`
+**System Evolution:** `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-13.md`
+**Docs Sync:** `.TODO/Archive/OpenDesign_AmberDusk_Phases5_6_7_8_2026-05-13/DOCS_SYNC_2026-05-13_OpenDesign_AmberDusk_Phases5_6_7_8.md`
+**Reference Fix:** `.TODO/Archive/OpenDesign_AmberDusk_Phases5_6_7_8_2026-05-13/DOCS_REFERENCE_FIX_2026-05-13_GuidancePaths.md`
+**Supabase objects changed:** none
+
+### Scope
+- Applied scoped Amber Dusk treatment across Phase 5 auth/system gates, Phase 6 chat/attachments/notifications, Phase 7 tasks/tenders/work/management, and Phase 8 booking/payment/wallet surfaces.
+- Kept Amber Dusk as scoped token/widget consumption; no global `MaterialApp` theme activation occurred.
+- Preserved backend/payment/wallet authority: no Supabase migrations, RLS, Edge Functions, RPCs, or active withdrawal flow were introduced.
+- Kept Messages `Received`/`Sent` as visual copy only until a stable conversation-direction model contract exists.
+- Moved attachment signed URL resolution behind `ChatViewModel`/services and kept attachment UI errors generic.
+- Sanitized Payment WebView logging to safe URL facts instead of raw callback URL structure.
+- Fixed solid payment/award CTA contrast and added the per-file emulator checklist for every touched source/test/docs/screenshot artifact.
+- Hardened `NotificationViewModel` so transient Supabase Realtime websocket closes (`1002`, `1006`, subscribe timeout) preserve cached notifications, cancel stale streams, and reconnect instead of surfacing a hard notification load error.
+- Ran SystemEvolution Step 7 and merged deduped rules into `SystemEvolution`, `Executor`, `Architect`, `Sentinel`, `Observability`, `DocsKeeper`, and `Orchestrator`.
+- Ran DocsKeeper Step 8 and replaced stale `GEMINI.md` guidance references with `AGENTS.md` / `.cursor/Agents/`.
+
+### Key Files
+- `lib/features/auth/view/login_screen.dart`
+- `lib/features/auth/view/signup_screen.dart`
+- `lib/features/auth/view/forgot_password_screen.dart`
+- `lib/features/auth/view/account_restricted_screen.dart`
+- `lib/features/auth/view/update_required_screen.dart`
+- `lib/features/chat/view/messages_screen.dart`
+- `lib/features/chat/view/chat_screen.dart`
+- `lib/features/chat/attachments/widgets/attachment_message_tile.dart`
+- `lib/features/chat/viewmodels/chat_view_model.dart`
+- `lib/features/notifications/viewmodels/notification_view_model.dart`
+- `lib/features/notifications/view/notifications_modal.dart`
+- `lib/features/tasks/view/tenders_screen.dart`
+- `lib/features/tasks/view/widgets/requests/request_award_dialog.dart`
+- `lib/features/work/view/work_item_details_screen.dart`
+- `lib/features/booking/view/payment_webview_screen.dart`
+- `lib/features/booking/view/payment_checkout_screen.dart`
+- `lib/features/booking/view/booking_details_screen.dart`
+- `lib/features/wallet/view/widgets/wallet_snapshot_card.dart`
+- `.cursor/rules/project-rules.mdc`
+- `.cursor/PROJECT_CONTEXT.md`
+- `.cursor/Agents/SystemEvolution.md`
+- `.cursor/Agents/Executor.md`
+- `.cursor/Agents/Architect.md`
+- `.cursor/Agents/Sentinel.md`
+- `.cursor/Agents/Observability.md`
+- `.cursor/Agents/DocsKeeper.md`
+- `.cursor/Agents/Orchestrator.md`
+
+### Verification
+- `dart format` on touched Dart files: passed.
+- `flutter analyze --no-fatal-infos`: passed.
+- Focused touched-surface tests: passed.
+- `flutter test --coverage`: passed; parsed coverage was 49.77%.
+- Full `flutter test`: passed.
+- `git diff --check`: passed.
+
+### Open Release Gate
+- Final emulator visual parity remains open for Phase 5-8. Use `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases5_6_7_8.md` against the exported Open Design screenshot folder before claiming visual completion.
+
+---
+
+## 🧭 Version 2.28.0 — Amber Dusk Phases 2-4 Phone Shell, Discovery, Dashboard + SystemEvolution + Docs Sync (2026-05-12)
+
+**Classification:** Scoped phone-view Amber Dusk runtime work + review fixes + agent-system rule merge + documentation sync
+**Plan:** `.TODO/PLAN_OpenDesign_AmberDusk_Phases2_3_4_PhoneShellDiscoveryDashboard_2026-05-11.md`
+**Plan Critique:** `.TODO/PLAN_CRITIQUE_2026-05-11_OpenDesign_AmberDusk_Phases2_3_4_PhoneShellDiscoveryDashboard.md`
+**Open Design Screenshots:** `.TODO/OpenDesign_AmberDusk_Phases2_3_4_OpenDesignScreenshots_2026-05-11/`
+**Runtime Visual QA Captures:** `.TODO/VisualQA_OpenDesign_AmberDusk_Phases2_3_4_iOSSimulator_2026-05-12/`
+**Session Log:** `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phases2_3_4_PhoneShellDiscoveryDashboard_2026-05-11.md`
+**Master Report:** `.TODO/Archive/OpenDesign_AmberDusk_Phases2_3_4_2026-05-12/MASTER_REPORT_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4_Step6.md`
+**Emulator Checklist:** `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4_Step6.md`
+**System Evolution:** `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-12.md`
+**Docs Sync:** `.TODO/Archive/OpenDesign_AmberDusk_Phases2_3_4_2026-05-12/DOCS_SYNC_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4.md`
+**Supabase objects changed:** none
+
+### Scope
+- Applied Amber Dusk tokens and component recipes across the authenticated phone shell, bottom navigation, create-task sheet, Home discovery modes, task/tender/booking cards, Dashboard tabs/cards, Wallet surfaces, and selected secondary screens.
+- Kept Search, Categories, Saved, and Favorites to token-normalization/accessibility-only where exact Open Design phone screenshots are missing.
+- Accepted explicit Step 6 scope amendments for Messages and Profile review fixes, then covered them with targeted tests and the emulator checklist.
+- Centralized temporary create/card package-detail metadata through `Task.packageDetailsKey`, `Task.packageDetailsFrom`, and `Task.packagesWithDetails`.
+- Removed unsafe Messages request/response filtering that inferred direction from sender identity until a real model contract exists.
+- Hardened custom gesture semantics and hit behavior across Messages mode controls, Inbox mode controls, Create category/deadline controls, and dashboard offer card action semantics.
+- Removed raw task/booking/offer IDs from new routine view-level logs while keeping event instrumentation.
+- Ran SystemEvolution Step 7 and merged deduped rules into `Architect`, `Executor`, `Observability`, `Orchestrator`, `Pixel`, and `Sentinel`.
+
+### Key Files
+- `lib/app/main_navigation_screen.dart`
+- `lib/core/widgets/custom_bottom_nav_bar.dart`
+- `lib/core/theme/designs/amber_dusk/amber_dusk_colors.dart`
+- `lib/core/theme/designs/amber_dusk/amber_dusk_spacing.dart`
+- `lib/core/theme/designs/amber_dusk/amber_dusk_tokens.dart`
+- `lib/core/theme/designs/amber_dusk/amber_dusk_widget_theme.dart`
+- `lib/features/home/view/home_screen.dart`
+- `lib/features/home/view/widgets/filters_modal.dart`
+- `lib/features/tasks/models/task_model.dart`
+- `lib/features/tasks/view/create_task_screen.dart`
+- `lib/features/tasks/view/widgets/task_card.dart`
+- `lib/features/tasks/view/widgets/tender_task_card.dart`
+- `lib/features/tasks/view/widgets/booking_task_card.dart`
+- `lib/features/tasks/view/widgets/dashboard_offer_card.dart`
+- `lib/features/booking/view/widgets/booking_card.dart`
+- `lib/features/booking/view/widgets/dashboard_booking_card.dart`
+- `lib/features/dashboard/view/dashboard_screen.dart`
+- `lib/features/dashboard/view/tabs/inbox_tab.dart`
+- `lib/features/dashboard/view/tabs/work_tab.dart`
+- `lib/features/dashboard/view/widgets/work_item_card.dart`
+- `lib/features/chat/view/messages_screen.dart`
+- `lib/features/profile/view/profile_screen.dart`
+- `lib/features/profile/viewmodels/profile_view_model.dart`
+- `lib/features/search/view/search_screen.dart`
+- `lib/features/search/view/widgets/search_result_profile_card.dart`
+- `lib/features/saved/view/saved_tasks_screen.dart`
+- `lib/features/favorites/view/widgets/favorite_card.dart`
+- `lib/features/wallet/view/wallet_screen.dart`
+- `lib/features/wallet/view/widgets/wallet_hero_card.dart`
+- `lib/features/wallet/view/widgets/wallet_snapshot_card.dart`
+- `.cursor/Agents/Architect.md`
+- `.cursor/Agents/Executor.md`
+- `.cursor/Agents/Observability.md`
+- `.cursor/Agents/Orchestrator.md`
+- `.cursor/Agents/Pixel.md`
+- `.cursor/Agents/Sentinel.md`
+
+### Verification
+- `flutter gen-l10n`: passed.
+- `dart format` on changed Dart files: passed, 68 files checked, 0 changed.
+- `git diff --check`: passed.
+- `flutter analyze --no-fatal-infos`: passed.
+- Focused Step 6 regression suite: passed, 47 tests.
+- Full suite: `flutter test`: passed, 1523 passed, 30 skipped.
+
+### Open Release Gate
+- Final iOS Simulator visual parity remains open. The current checklist is `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4_Step6.md`; update `.TODO/VisualQA_OpenDesign_AmberDusk_Phases2_3_4_iOSSimulator_2026-05-12/REPORT.md` after the manual device pass.
+
+---
+
+## 🧭 Version 2.27.0 — Amber Dusk Phase 1 Core Phone Widgets + Docs Sync (2026-05-11)
+
+**Classification:** Scoped shared-widget runtime activation + QA/process documentation
+**Plan:** `.TODO/Archive/OpenDesign_AmberDusk_Phase1_2026-05-11/PLAN_OpenDesign_AmberDusk_Phase1_CorePhoneWidgets_2026-05-11.md`
+**Plan Critique:** `.TODO/Archive/OpenDesign_AmberDusk_Phase1_2026-05-11/PLAN_CRITIQUE_2026-05-11_OpenDesign_AmberDusk_Phase1_CorePhoneWidgets.md`
+**Session Log:** `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phase1_CorePhoneWidgets_2026-05-11.md`
+**Master Report:** `.TODO/Archive/OpenDesign_AmberDusk_Phase1_2026-05-11/MASTER_REPORT_2026-05-11_OpenDesign_AmberDusk_Phase1_CoreWidgets.md`
+**Emulator Checklist:** `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-11_OpenDesign_AmberDusk_Phase1_CoreWidgets.md`
+**System Evolution:** `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-11.md`
+**Docs Sync:** `.TODO/Archive/OpenDesign_AmberDusk_Phase1_2026-05-11/DOCS_SYNC_2026-05-11_OpenDesign_AmberDusk_Phase1_CoreWidgets.md`
+**Supabase objects changed:** none
+
+### Scope
+- Added `lib/core/theme/designs/amber_dusk/amber_dusk_widget_theme.dart` as the typed shared-widget adapter for Amber Dusk Phase 1.
+- Routed selected shared phone widgets through `AmberDuskTokens.widgetTheme` without globally flipping `MaterialApp`, `AppTheme.light()`, or `AppTheme.dark()`.
+- Covered buttons, fields, icon buttons, cards, bottom nav, tab styling, status badges, skeleton placeholders, and signed-media placeholders.
+- Preserved signed-media URL resolution behavior while hardening fallback visuals, localized retry text, media-token overrides, and redacted logging.
+- Added focused theme/widget tests for adapter roles and missing states, including skeleton loader/card coverage.
+- Updated CI hygiene so generated `coverage/lcov.info` is ignored locally, removed from the branch, and uploaded by CI as the `coverage-lcov` artifact.
+- Ran SystemEvolution after Phase 1 and merged rules for visual-evidence classification, screenshot hash sanity, external platform release gates, and stale CI/platform fact validation.
+
+### Key Files
+- `lib/core/theme/designs/amber_dusk/amber_dusk_widget_theme.dart`
+- `lib/core/theme/designs/amber_dusk/amber_dusk_tokens.dart`
+- `lib/core/theme/app_theme.dart`
+- `lib/core/widgets/app_button.dart`
+- `lib/core/widgets/app_styled_button.dart`
+- `lib/core/widgets/app_text_field.dart`
+- `lib/core/widgets/circle_icon_button.dart`
+- `lib/core/widgets/custom_bottom_nav_bar.dart`
+- `lib/core/widgets/signed_avatar.dart`
+- `lib/core/widgets/signed_image.dart`
+- `lib/core/widgets/skeleton_card.dart`
+- `lib/core/widgets/skeleton_card_extended.dart`
+- `lib/core/widgets/skeleton_loader.dart`
+- `lib/core/widgets/sliver_tab_bar_delegate.dart`
+- `lib/core/widgets/status_badge.dart`
+- `lib/l10n/app_en.arb`
+- `.github/workflows/ci.yml`
+- `.cursor/Agents/Planner.md`
+- `.cursor/Agents/PlanCritic.md`
+- `.cursor/Agents/Executor.md`
+- `.cursor/Agents/Pixel.md`
+- `.cursor/Agents/Sentinel.md`
+- `.cursor/Agents/DocsKeeper.md`
+
+### Verification
+- `flutter gen-l10n`: passed.
+- `dart format --set-exit-if-changed lib/core/widgets lib/core/theme test/core/widgets test/core/theme`: passed.
+- `flutter analyze --no-fatal-infos`: passed.
+- `flutter test test/core/theme/ test/core/widgets/`: passed, 210 tests.
+- Downstream smoke tests: passed, 73 tests.
+- `flutter test --coverage`: passed, 1502 passed, 30 skipped, 46.80% coverage.
+- `git diff --check && git diff --cached --check`: passed.
+- Manual emulator visual QA remains open until the Phase 1 checklist is executed at 360, 390, 402, and 430 logical widths.
+
+---
+
+## 🧭 Version 2.26.0 — Amber Dusk Phase 0 + Agent System Evolution (2026-05-11)
+
+**Classification:** Staged Open Design token foundation + agent-system process hardening
+**Plan:** `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/PLAN_OpenDesign_AmberDusk_Phase0_PhoneFoundation_2026-05-11.md`
+**Plan Critique:** `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/PLAN_CRITIQUE_2026-05-11_OpenDesign_AmberDusk_Phase0_PhoneFoundation.md`
+**Session Log:** `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phase0_PhoneFoundation_2026-05-11.md`
+**Master Report:** `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/MASTER_REPORT_2026-05-11_OpenDesign_AmberDusk_Phase0.md`
+**System Evolution:** `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-11.md`
+**Docs Sync:** `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/DOCS_SYNC_2026-05-11_DocsKeeper_AgentSystemAmberDusk.md`
+**Supabase objects changed:** none
+
+### Scope
+- Added staged Amber Dusk Open Design tokens under `lib/core/theme/designs/amber_dusk/`.
+- Added `lib/core/theme/designs/amber_dusk/amber_dusk_tokens.dart` as the public barrel for colors, typography, spacing, surfaces, motion, component recipes, and phone layout constants.
+- Added focused token and phone layout tests under `test/core/theme/`.
+- Clarified that staged design layers are imported for token access only and are not runtime replacements for active Layer 1 `AppTheme`.
+- Ran Orchestrator Step 6 review, fixed all MED findings, and produced `.TODO/Archive/EMULATOR_TEST_CHECKLIST_2026-05-11_OpenDesign_AmberDusk_Phase0.md`.
+- Ran SystemEvolution Step 7 and merged evidence-backed process rules into seven `.cursor/Agents/*.md` files.
+
+### Key Files
+- `lib/core/theme/designs/amber_dusk/amber_dusk_tokens.dart`
+- `lib/core/theme/designs/amber_dusk/amber_dusk_colors.dart`
+- `lib/core/theme/designs/amber_dusk/amber_dusk_typography.dart`
+- `lib/core/theme/designs/amber_dusk/amber_dusk_spacing.dart`
+- `lib/core/theme/designs/amber_dusk/amber_dusk_surfaces.dart`
+- `lib/core/theme/designs/amber_dusk/amber_dusk_motion.dart`
+- `lib/core/theme/designs/amber_dusk/amber_dusk_components.dart`
+- `lib/core/theme/designs/amber_dusk/phone/amber_dusk_phone_layout.dart`
+- `test/core/theme/amber_dusk_tokens_test.dart`
+- `test/core/theme/amber_dusk_phone_layout_test.dart`
+- `.cursor/Agents/Planner.md`
+- `.cursor/Agents/PlanCritic.md`
+- `.cursor/Agents/Pixel.md`
+- `.cursor/Agents/Executor.md`
+- `.cursor/Agents/Sentinel.md`
+- `.cursor/Agents/CodeGuard.md`
+- `.cursor/Agents/SystemEvolution.md`
+
+### Verification
+- `flutter analyze --no-fatal-infos`: passed.
+- `flutter test test/core/theme/`: passed.
+- `flutter test --coverage`: passed, coverage above the 40% floor.
+- `Architecture Guard / Check MVVM boundaries`: passed.
+- `git diff --check`: passed.
 
 ---
 
 ## 🧭 Version 2.25.1 — Home Discovery Navigation Consolidation (2026-04-30)
 
 **Classification:** Navigation consolidation + Home discovery polish
-**Plan:** `.TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
-**Plan Critique:** `.TODO/PLAN_CRITIQUE_2026-04-30_HomeDiscoveryNavConsolidation.md`
+**Plan:** `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
+**Plan Critique:** `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/PLAN_CRITIQUE_2026-04-30_HomeDiscoveryNavConsolidation.md`
 **Session Log:** `docs/LOG/SESSION_HomeDiscoveryNavConsolidation_2026-04-30.md`
-**Master Report:** `.TODO/MASTER_REPORT_2026-04-30_HomeDiscoveryNavConsolidation.md`
+**Master Report:** `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/MASTER_REPORT_2026-04-30_HomeDiscoveryNavConsolidation.md`
 **System Evolution:** `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-30.md`
 **Supabase objects changed:** none
 
@@ -129,7 +504,7 @@
 
 **Classification:** Token Normalization (foundation infrastructure)
 **Master Plan Coverage:** Phase 0 sub-phase
-**Session Log:** `docs/LOG/SESSION_PLAN_LayoutTokens_Phase0_7_2026-04-08.md`
+**Session Log:** `docs/LOG/SESSION_PLAN_LayoutTokens_Phase0.7_2026-04-08.md`
 
 ### Scope: NEW `app_layout.dart` with 41 semantic tokens + 53 tests
 - Card sizes, avatar sizes, button heights, spacing rhythm
@@ -2808,7 +3183,7 @@
 - **Theme:** `lib/core/theme/theme_dashboard.dart` (new), `lib/core/theme/app_typography.dart`, `lib/core/theme/app_dimens.dart`
 - **Navigation:** `lib/core/widgets/custom_bottom_nav_bar.dart`, `lib/app/main_navigation_screen.dart`
 - **Agents:** `.cursor/Agents/CodeGuard.md` (new)
-- **Documentation:** `GEMINI.md`, `.cursorrules`, `.cursor/PROJECT_CONTEXT.md`
+- **Documentation:** `AGENTS.md`, `.cursorrules`, `.cursor/PROJECT_CONTEXT.md`
 - **Removed:** `lib/features/chat/view/video_call_modal.dart`, video call references in chat
 
 #### 🔜 Next

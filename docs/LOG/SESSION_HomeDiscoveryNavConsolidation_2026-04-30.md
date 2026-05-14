@@ -2,7 +2,7 @@
 
 Date: 2026-04-30
 
-Plan artifact: `.TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
+Plan artifact: `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
 
 ## Planner Notes
 
@@ -19,7 +19,7 @@ Plan artifact: `.TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
 ## PlanCritic Notes
 
 - Ran critique pass using `.cursor/Agents/PlanCritic.md`.
-- Added persisted critique artifact: `.TODO/PLAN_CRITIQUE_2026-04-30_HomeDiscoveryNavConsolidation.md`.
+- Added persisted critique artifact: `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/PLAN_CRITIQUE_2026-04-30_HomeDiscoveryNavConsolidation.md`.
 - Rewrote the original plan into a gate-based corrected plan.
 - Original plan failed Test Infrastructure, UI / Integration, and Release / QA gates.
 - Corrected plan locks the four-tab navigation contract, resolves the duplicate `All` chip ambiguity with `All Work`, adds Home discovery keys, front-loads test fixture strategy, and adds visual/accessibility/static verification gates.
@@ -29,8 +29,8 @@ Plan artifact: `.TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
 ### [2026-04-30 19:17:14 +03] SESSION STARTED
 
 - Agent: `@Executor`
-- Plan: `.TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
-- Critique: `.TODO/PLAN_CRITIQUE_2026-04-30_HomeDiscoveryNavConsolidation.md`
+- Plan: `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
+- Critique: `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/PLAN_CRITIQUE_2026-04-30_HomeDiscoveryNavConsolidation.md`
 - Critical gaps from PlanCritic:
   - Visible navigation contract was not locked.
   - Wallet visibility was ambiguous.
@@ -56,8 +56,8 @@ Plan artifact: `.TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
 ### [2026-04-30 19:17:14 +03] STEP COMPLETED
 
 - Phase: Pre-execution validation
-- Step: Patched concrete skill labels in `.TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`.
-- Evidence: `rg -n "Skill:" .TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md` now resolves UI phases to `frontend-design` and test phase to `flutter-testing`.
+- Step: Patched concrete skill labels in `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`.
+- Evidence: `rg -n "Skill:" .TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md` now resolves UI phases to `frontend-design` and test phase to `flutter-testing`.
 
 ### [2026-04-30 19:17:14 +03] PROBLEM ENCOUNTERED
 
@@ -276,7 +276,7 @@ Plan artifact: `.TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
 
 - Phase: Orchestrator review
 - Step: Reviewed session implementation against plan, session log, MVVM boundaries, UI behavior, observability, docs, and QA evidence.
-- Master Report: `.TODO/MASTER_REPORT_2026-04-30_HomeDiscoveryNavConsolidation.md`
+- Master Report: `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/MASTER_REPORT_2026-04-30_HomeDiscoveryNavConsolidation.md`
 - Findings:
   - MED-1: Home route-push test was over-coupled to the real backend-dependent `TaskDetailsScreen`.
   - MED-2: Main navigation fallback normalization did not reset provider state for visible indexes invalid for a short override screen list.
@@ -329,7 +329,7 @@ Plan artifact: `.TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
 ### [2026-04-30 20:10:00 +03] STEP COMPLETED
 
 - Phase: DocsKeeper update
-- Step: Updated source-of-truth docs and created `.TODO/DOCS_SYNC_2026-04-30_HomeDiscoveryNavConsolidation.md`.
+- Step: Updated source-of-truth docs and created `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/DOCS_SYNC_2026-04-30_HomeDiscoveryNavConsolidation.md`.
 - Evidence:
   - `Sline_everything/DEVELOPER_GUIDE.md` documents the four-slot bottom-nav contract, Home discovery modes, required code/test files, AppLogger requirement, and session references.
   - `Sline_everything/STRUCTURE.md` documents `lib/core/navigation/` and `main_nav_destinations.dart`.

@@ -16,6 +16,8 @@ import 'package:sline_app/core/theme/app_states.dart';
 /// - Added [Semantics] wrapper for accessibility
 /// - Added [callbackDelay] parameter (default 50ms for backward compat)
 /// - Respects reduced motion via [AppMotion.respectMotion]
+/// - Amber Dusk is a no-op here because this wrapper owns interaction motion
+///   only; surfaces, colors, and typography come from the child widget.
 class ScaleButton extends StatefulWidget {
   /// The child widget to wrap with scale effect.
   final Widget child;

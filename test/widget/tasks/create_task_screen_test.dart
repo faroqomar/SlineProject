@@ -1,9 +1,10 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/features/categories/data/categories_repository.dart';
 import 'package:sline_app/features/categories/models/category_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
@@ -81,6 +82,20 @@ Future<void> _pumpCreateTaskScreen(
   await tester.pump();
 }
 
+Future<void> _tapPackageTier(WidgetTester tester, Key key) async {
+  FocusManager.instance.primaryFocus?.unfocus();
+  await tester.pumpAndSettle();
+  final finder = find.byKey(key);
+  await Scrollable.ensureVisible(
+    tester.element(finder),
+    alignment: 0.5,
+    duration: Duration.zero,
+  );
+  await tester.pumpAndSettle();
+  await tester.tap(finder);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   setUpAll(() {
     registerFallbackValue(_fallbackTask());
@@ -128,9 +143,11 @@ void main() {
 
       await tester.tap(find.byKey(CreateTaskScreen.primaryActionButtonKey));
       await tester.pump();
-      await tester.tap(find.byKey(CreateTaskScreen.primaryActionButtonKey));
-      await tester.pump();
 
+      await tester.ensureVisible(
+        find.byKey(CreateTaskScreen.packagePriceFieldKey),
+      );
+      await tester.pump();
       await tester.enterText(
         find.byKey(CreateTaskScreen.packagePriceFieldKey),
         '50',
@@ -140,8 +157,7 @@ void main() {
         'Basic package description',
       );
 
-      await tester.tap(find.byKey(CreateTaskScreen.packageTierStandardKey));
-      await tester.pump();
+      await _tapPackageTier(tester, CreateTaskScreen.packageTierStandardKey);
       await tester.enterText(
         find.byKey(CreateTaskScreen.packagePriceFieldKey),
         '90',
@@ -151,8 +167,7 @@ void main() {
         'Standard package description',
       );
 
-      await tester.tap(find.byKey(CreateTaskScreen.packageTierBasicKey));
-      await tester.pump();
+      await _tapPackageTier(tester, CreateTaskScreen.packageTierBasicKey);
       expect(
         tester
             .widget<TextFormField>(
@@ -172,8 +187,7 @@ void main() {
         'Basic package description',
       );
 
-      await tester.tap(find.byKey(CreateTaskScreen.packageTierStandardKey));
-      await tester.pump();
+      await _tapPackageTier(tester, CreateTaskScreen.packageTierStandardKey);
       expect(
         tester
             .widget<TextFormField>(
@@ -267,20 +281,34 @@ void main() {
       await tester.tap(find.text('Open'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Design').first);
-      await tester.pump();
       await tester.tap(find.byKey(CreateTaskScreen.primaryActionButtonKey));
-      await tester.pump();
+      await tester.pumpAndSettle();
+      expect(find.text('Tender title'), findsOneWidget);
 
-      await tester.enterText(find.byType(TextFormField).at(0), 'Task title');
       await tester.enterText(
-        find.byType(TextFormField).at(1),
+        find.descendant(
+          of: find.byKey(CreateTaskScreen.titleFieldKey),
+          matching: find.byType(EditableText),
+        ),
+        'Task title',
+      );
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(CreateTaskScreen.descriptionFieldKey),
+          matching: find.byType(EditableText),
+        ),
         'Task description',
+      );
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(CreateTaskScreen.budgetFieldKey),
+          matching: find.byType(EditableText),
+        ),
+        '100',
       );
       await tester.tap(find.byKey(CreateTaskScreen.primaryActionButtonKey));
       await tester.pump();
 
-      await tester.enterText(find.byType(TextFormField).first, '100');
       await tester.tap(find.byKey(CreateTaskScreen.primaryActionButtonKey));
       await tester.pumpAndSettle();
 
@@ -297,15 +325,8 @@ void main() {
       categoriesRepo = _MockCategoriesRepository();
     });
 
-    /// Helper to advance from step 1 to step 2 by tapping Next Step.
+    /// Helper to advance from step 1 to step 2 via the primary action button.
     Future<void> advanceToStep2(WidgetTester tester) async {
-      await tester.tap(find.byKey(CreateTaskScreen.primaryActionButtonKey));
-      await tester.pump();
-    }
-
-    /// Helper to advance from step 1 to step 3.
-    Future<void> advanceToStep3(WidgetTester tester) async {
-      await advanceToStep2(tester);
       await tester.tap(find.byKey(CreateTaskScreen.primaryActionButtonKey));
       await tester.pump();
     }
@@ -374,18 +395,19 @@ void main() {
 
       expect(find.byKey(CreateTaskScreen.tenderTypeCardKey), findsOneWidget);
       expect(find.byKey(CreateTaskScreen.bookingTypeCardKey), findsOneWidget);
-      expect(find.text('Tender'), findsOneWidget);
-      expect(find.text('Booking'), findsOneWidget);
+      expect(find.text('Tender post'), findsOneWidget);
+      expect(find.text('Booking post'), findsOneWidget);
     });
 
-    testWidgets('T291 step 1 shows category selector', (tester) async {
+    testWidgets('T291 step 2 shows category selector', (tester) async {
       await _pumpCreateTaskScreen(
         tester,
         taskVm: taskVm,
         categoriesRepo: categoriesRepo,
       );
+      await advanceToStep2(tester);
 
-      expect(find.text('Choose Category'), findsOneWidget);
+      expect(find.text('Category'), findsOneWidget);
       // The mock provides a single Design category
       expect(find.text('Design'), findsOneWidget);
     });
@@ -399,16 +421,18 @@ void main() {
         categoriesRepo: categoriesRepo,
       );
 
+      await advanceToStep2(tester);
+
       // Tap the Design category
-      await tester.tap(find.text('Design'));
+      await tester.ensureVisible(find.text('Design'));
+      await tester.tap(find.text('Design').hitTestable());
       await tester.pump();
 
-      // Tap Next Step to advance to step 2
+      // Tap Continue to advance to review.
       await tester.tap(find.byKey(CreateTaskScreen.primaryActionButtonKey));
       await tester.pump();
 
-      // Step 2 should now show the Title label
-      expect(find.text('Title'), findsOneWidget);
+      expect(find.text('Review preview'), findsOneWidget);
     });
 
     testWidgets('T293 step 2 renders title and description fields', (
@@ -422,12 +446,21 @@ void main() {
 
       await advanceToStep2(tester);
 
-      expect(find.text('Title'), findsOneWidget);
-      expect(find.text('Description'), findsOneWidget);
+      expect(find.text('Tender title'), findsOneWidget);
+      expect(find.text('Tender description'), findsOneWidget);
       expect(find.text('Tags'), findsOneWidget);
+      expect(find.text('Budget (IQD)'), findsOneWidget);
+      expect(find.text('Location'), findsOneWidget);
+      expect(find.text('Work type'), findsOneWidget);
       // Hint texts from the source
-      expect(find.text('e.g., Modern Logo Design'), findsOneWidget);
-      expect(find.text('Describe your project...'), findsOneWidget);
+      expect(
+        find.text('e.g., Landing page for clothing brand'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Describe the project freelancers should quote...'),
+        findsOneWidget,
+      );
     });
 
     testWidgets(
@@ -514,9 +547,9 @@ void main() {
       expect(progressWidget.value, closeTo(1 / 3, 0.01));
 
       // Step labels should be visible
-      expect(find.text('Concept'), findsOneWidget);
+      expect(find.text('Type'), findsOneWidget);
       expect(find.text('Details'), findsOneWidget);
-      expect(find.text('Logistics'), findsOneWidget);
+      expect(find.text('Review'), findsOneWidget);
     });
 
     testWidgets('T298 Back button returns to previous step', (tester) async {
@@ -528,65 +561,104 @@ void main() {
 
       // Advance to step 2
       await advanceToStep2(tester);
-      expect(find.text('Title'), findsOneWidget);
+      expect(find.text('Tender title'), findsOneWidget);
 
-      // Back button uses Icons.chevron_left in a GestureDetector
-      await tester.tap(find.byIcon(Icons.chevron_left));
+      // Back returns to the Type step without discarding entered state.
+      await tester.tap(find.text('Back'));
       await tester.pump();
 
       // Should be back at step 1 with the type cards
-      expect(find.text('Select Task Type'), findsOneWidget);
+      expect(find.text('Create a post'), findsWidgets);
       expect(find.byKey(CreateTaskScreen.tenderTypeCardKey), findsOneWidget);
     });
 
-    testWidgets('T299 tender type step 3 shows budget field', (tester) async {
+    testWidgets('T299 tender details step shows budget field', (tester) async {
       await _pumpCreateTaskScreen(
         tester,
         taskVm: taskVm,
         categoriesRepo: categoriesRepo,
       );
 
-      // Tender is selected by default; advance to step 3
-      await advanceToStep3(tester);
+      // Tender is selected by default; advance to details.
+      await advanceToStep2(tester);
 
       expect(find.text('Budget (IQD)'), findsOneWidget);
       expect(find.text('Enter amount'), findsOneWidget);
       expect(find.text('Deadline'), findsOneWidget);
     });
 
-    testWidgets('T300 tender deadline chip selection works', (tester) async {
+    testWidgets('T299a review step renders a live tender preview', (
+      tester,
+    ) async {
       await _pumpCreateTaskScreen(
         tester,
         taskVm: taskVm,
         categoriesRepo: categoriesRepo,
       );
 
-      await advanceToStep3(tester);
-
-      // Deadline chips: '3 Days', '1 Week', '2 Weeks', '1 Month'
-      expect(find.text('3 Days'), findsOneWidget);
-      expect(find.text('1 Week'), findsOneWidget);
-      expect(find.text('2 Weeks'), findsOneWidget);
-      expect(find.text('1 Month'), findsOneWidget);
-
-      // Tap the '1 Week' chip
-      await tester.tap(find.text('1 Week'));
+      await advanceToStep2(tester);
+      await tester.enterText(
+        find.byType(TextFormField).at(0),
+        'Landing page redesign',
+      );
+      await tester.enterText(
+        find.byType(TextFormField).at(1),
+        'Need a polished storefront.',
+      );
+      await tester.tap(find.byKey(CreateTaskScreen.primaryActionButtonKey));
       await tester.pump();
 
-      // The chip should still be visible (no crash, selection applied)
-      expect(find.text('1 Week'), findsOneWidget);
-
-      // Verify selection: the selected deadline chip's Text gets
-      // AppColors.teal color, while unselected chips use textSecondary.
-      final selectedText = tester.widget<Text>(find.text('1 Week'));
-      expect(selectedText.style?.color, AppColors.teal);
-
-      // Verify an unselected chip does NOT have teal color
-      final unselectedText = tester.widget<Text>(find.text('3 Days'));
-      expect(unselectedText.style?.color, isNot(AppColors.teal));
+      expect(find.text('Review preview'), findsOneWidget);
+      expect(find.text('Landing page redesign'), findsOneWidget);
+      expect(find.text('TENDER'), findsOneWidget);
     });
 
-    testWidgets('T301 booking type step 3 shows package price field', (
+    testWidgets('T300 tender deadline chip selection works', (tester) async {
+      final semantics = tester.ensureSemantics();
+      try {
+        await _pumpCreateTaskScreen(
+          tester,
+          taskVm: taskVm,
+          categoriesRepo: categoriesRepo,
+        );
+
+        await advanceToStep2(tester);
+
+        // Deadline chips: '3 Days', '1 Week', '2 Weeks', '1 Month'
+        expect(find.text('3 Days'), findsOneWidget);
+        expect(find.text('1 Week'), findsOneWidget);
+        expect(find.text('2 Weeks'), findsOneWidget);
+        expect(find.text('1 Month'), findsOneWidget);
+
+        // Tap the '1 Week' chip
+        await tester.ensureVisible(find.text('1 Week'));
+        await tester.tap(find.text('1 Week'));
+        await tester.pump();
+
+        // The chip should still be visible (no crash, selection applied)
+        expect(find.text('1 Week'), findsOneWidget);
+
+        final selectedSemantics = tester.getSemantics(
+          find.byKey(const ValueKey<String>('create_task_deadline_7')),
+        );
+        final unselectedSemantics = tester.getSemantics(
+          find.byKey(const ValueKey<String>('create_task_deadline_3')),
+        );
+
+        expect(
+          selectedSemantics.flagsCollection.isSelected,
+          ui.Tristate.isTrue,
+        );
+        expect(
+          unselectedSemantics.flagsCollection.isSelected,
+          ui.Tristate.isFalse,
+        );
+      } finally {
+        semantics.dispose();
+      }
+    });
+
+    testWidgets('T301 booking details step shows package price field', (
       tester,
     ) async {
       await _pumpCreateTaskScreen(
@@ -599,10 +671,13 @@ void main() {
       await tester.tap(find.byKey(CreateTaskScreen.bookingTypeCardKey));
       await tester.pump();
 
-      // Advance to step 3
-      await advanceToStep3(tester);
+      // Advance to details.
+      await advanceToStep2(tester);
 
       expect(find.byKey(CreateTaskScreen.packagePriceFieldKey), findsOneWidget);
+      expect(find.text('Role'), findsOneWidget);
+      expect(find.text('Seniority'), findsOneWidget);
+      expect(find.text('Period'), findsOneWidget);
       expect(
         find.byKey(CreateTaskScreen.packageDescriptionFieldKey),
         findsOneWidget,
@@ -634,13 +709,11 @@ void main() {
         find.byType(TextFormField).at(1),
         'Valid Description',
       );
+      await tester.enterText(find.byType(TextFormField).at(3), '200');
 
-      // Advance to step 3
+      // Advance to review.
       await tester.tap(find.byKey(CreateTaskScreen.primaryActionButtonKey));
       await tester.pump();
-
-      // Enter budget
-      await tester.enterText(find.byType(TextFormField).first, '200');
 
       // Submit
       await tester.tap(find.byKey(CreateTaskScreen.primaryActionButtonKey));
@@ -669,8 +742,8 @@ void main() {
         editTask: editTask,
       );
 
-      // In edit mode the header says 'Edit Task'
-      expect(find.text('Edit Task'), findsOneWidget);
+      // In edit mode the header says 'Edit post'
+      expect(find.text('Edit post'), findsOneWidget);
 
       // Advance to step 2 to see the pre-filled fields
       await advanceToStep2(tester);

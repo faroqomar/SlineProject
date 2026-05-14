@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/features/wallet/view/widgets/wallet_shared_body.dart';
 
+/// Wallet screen variant used from dashboard-style navigation.
+///
+/// It provides only a local header and delegates all wallet state rendering to
+/// [WalletSharedBody].
 class WalletDashboardScreen extends StatelessWidget {
   const WalletDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
+    const typography = AmberDuskTokens.typography;
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: amber.page,
       body: WalletSharedBody(
         padding: EdgeInsets.fromLTRB(
           AppDimens.p24,
@@ -26,14 +30,12 @@ class WalletDashboardScreen extends StatelessWidget {
           children: [
             Text(
               'My Wallet',
-              style: AppTypography.h2.copyWith(color: colorScheme.text),
+              style: typography.screenTitle.copyWith(color: amber.text),
             ),
             const SizedBox(height: AppDimens.p4),
             Text(
               'Manage your earnings',
-              style: AppTypography.bodySmall.copyWith(
-                color: colorScheme.textSecondary,
-              ),
+              style: typography.bodySmall.copyWith(color: amber.textSubtle),
             ),
           ],
         ),

@@ -108,7 +108,7 @@ class SubmitRequestViewModel extends ChangeNotifier {
         );
         _isReplaceMode = _replaceabilityResult?.isReplaceable ?? false;
         return (
-          price: (_existingBid!.price / 100).toStringAsFixed(0),
+          price: _existingBid!.price.toString(),
           days: _existingBid!.days.toString(),
           note: _existingBid!.note ?? '',
         );
@@ -137,11 +137,11 @@ class SubmitRequestViewModel extends ChangeNotifier {
   /// Returns null if there's no existing bid.
   /// UI should map priceDiffSign / daysDiffSign to colors.
   ({String priceDiff, int priceDiffSign, String daysDiff, int daysDiffSign})?
-  computeComparison({required int newPriceCents, required int newDays}) {
+  computeComparison({required int newPriceIqd, required int newDays}) {
     final existing = _existingBid;
     if (existing == null) return null;
 
-    final priceDiffVal = newPriceCents - existing.price;
+    final priceDiffVal = newPriceIqd - existing.price;
     final daysDiffVal = newDays - existing.days;
 
     final priceDiffText = priceDiffVal > 0
@@ -181,7 +181,7 @@ class SubmitRequestViewModel extends ChangeNotifier {
       AppLogger.i(
         'Submitting new bid for task $taskId',
         tag: _kTag,
-        json: {'price': (price * 100).toInt(), 'days': days},
+        json: {'price': price.round(), 'currency': 'IQD', 'days': days},
       );
 
       final ok = await _controller.submitOfferUI(
@@ -225,13 +225,13 @@ class SubmitRequestViewModel extends ChangeNotifier {
     _submitError = null;
     notifyListeners();
     try {
-      final priceCents = (price * 100).toInt();
       AppLogger.i(
         'Replacing bid for task $taskId',
         tag: _kTag,
         json: {
           'existingBidId': _existingBid?.id,
-          'newPrice': priceCents,
+          'newPrice': price.round(),
+          'currency': 'IQD',
           'newDays': days,
         },
       );

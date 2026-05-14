@@ -1,22 +1,23 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/deep_link_service.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_layout.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/utils/format_date.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
+import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/widgets/app_card.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/features/dashboard/models/work_item.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 import 'package:sline_app/features/profile/view/widgets/profile_preview_modal.dart';
 
+/// Compact dashboard work card with navigation and lifecycle action callbacks.
+///
+/// The card keeps business actions delegated to callers while presenting the
+/// work item with Amber Dusk dashboard status, money, and progress treatments.
 class WorkItemCard extends StatelessWidget {
   final WorkItem item;
   final VoidCallback? onPrimaryAction;
@@ -47,43 +48,45 @@ class WorkItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
+    const spacing = AmberDuskTokens.spacing;
+    const typography = AmberDuskTokens.typography;
+    final media = AmberDuskTokens.widgetTheme.media;
     final isBooking = item.type == WorkItemType.booking;
     final isDirectOffer = item.type == WorkItemType.directOffer;
     final deepLinkService = context.read<DeepLinkService>();
 
-    // Phase 7: migrated from AppColors.* to semantic colorScheme.* tokens
-    // for consistent light/dark mode rendering.
     Color statusColor;
     switch (item.statusRaw) {
       case 'open':
       case 'pending':
       case 'paid_request_pending':
       case 'accepted': // direct offer pending payment
-        statusColor = colorScheme.warning; // was AppColors.gold
+        statusColor = amber.warning;
       case 'assigned':
       case 'confirmed':
       case 'inProgress':
       case 'in_progress':
       case 'active':
-        statusColor = colorScheme.primary; // was AppColors.teal
+        statusColor = amber.primary;
       case 'delivered':
-        statusColor = colorScheme.danger;
+        statusColor = amber.warning;
       case 'completed':
       case 'closed':
-        statusColor = colorScheme.success; // was AppColors.lightTeal
+      case 'refunded':
+        statusColor = amber.text;
       case 'canceled':
       case 'declined':
-      case 'refunded':
-        statusColor = colorScheme.danger;
+        statusColor = amber.danger;
       default:
-        statusColor = colorScheme.textTertiary; // was AppColors.mediumGrey
+        statusColor = amber.muted;
     }
 
     final typeLabel = isDirectOffer
         ? 'Custom offer'
         : (isBooking ? 'Booking' : 'Task');
     final statusLabel = _getStatusDisplayLabel(item.statusRaw);
+    final progressValue = _progressForStatus(item.statusRaw);
 
     return Semantics(
       label: '$typeLabel: ${item.title}, $statusLabel',
@@ -100,233 +103,165 @@ class WorkItemCard extends StatelessWidget {
             unawaited(context.read<DashboardViewModel>().refresh());
           }
         },
-        margin: const EdgeInsets.only(bottom: AppDimens.p16),
-        padding: EdgeInsets.zero,
+        margin: EdgeInsets.zero,
+        padding: EdgeInsets.all(spacing.md),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Removed extra closing stuff
-            // Header
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimens.p16,
-                // Phase 7 REDESIGN: taller header for more visual weight
-                vertical: AppDimens.p14,
-              ),
-              decoration: BoxDecoration(
-                // Phase 7 REDESIGN: 0.15 alpha up from 0.1 for more color presence
-                color: statusColor.withValues(alpha: 0.15),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(AppDimens.r16),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    if (context.mounted) {
+                      showProfilePreview(context, item.counterpartyId);
+                    }
+                  },
+                  child: SignedAvatar(
+                    storagePathOrUrl: item.counterpartyAvatar,
+                    radius: AppDimens.p18,
+                    placeholder: CircleAvatar(
+                      radius: AppDimens.p18,
+                      backgroundColor: media.avatarFallback,
+                      child: Icon(
+                        Icons.person,
+                        size: AppDimens.iconSizeSmall,
+                        color: media.foreground,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: spacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.title,
+                        style: typography.body.copyWith(
+                          color: amber.text,
+                          fontWeight: FontWeight.w800,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: AppDimens.p2),
+                      Text(
+                        '${item.counterpartyName} · ${item.statusRaw.replaceAll('_', ' ')}',
+                        style: typography.bodySmall.copyWith(
+                          color: amber.muted,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: spacing.sm),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      item.price == null
+                          ? PriceFormatter.formatPrice(0)
+                          : PriceFormatter.formatPrice(item.price!),
+                      style: typography.sectionTitle.copyWith(
+                        color: statusColor,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                    const SizedBox(height: AppDimens.p4),
+                    _StatusPill(label: statusLabel, color: statusColor),
+                  ],
+                ),
+              ],
+            ),
+            SizedBox(height: spacing.sm),
+            Row(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(AppDimens.r4),
+                    child: LinearProgressIndicator(
+                      minHeight: AppDimens.p4,
+                      value: progressValue,
+                      backgroundColor: amber.surfaceHighest,
+                      valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+                    ),
+                  ),
+                ),
+                SizedBox(width: spacing.sm),
+                Text(
+                  '${(progressValue * 100).round()}%',
+                  style: typography.chip.copyWith(color: amber.muted),
+                ),
+              ],
+            ),
+            if (item.needsReview) ...[
+              SizedBox(height: spacing.sm),
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(
+                  horizontal: spacing.md,
+                  vertical: spacing.xs,
+                ),
+                decoration: BoxDecoration(
+                  color: amber.dangerMuted,
+                  borderRadius: BorderRadius.circular(spacing.moduleRadius),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.rate_review,
+                      size: AppDimens.iconSizeSmall,
+                      color: amber.danger,
+                    ),
+                    SizedBox(width: spacing.sm),
+                    Expanded(
+                      child: Text(
+                        item.actionableNeedsReview
+                            ? 'Delivery ready for your review'
+                            : 'Waiting for client review',
+                        style: typography.chip.copyWith(color: amber.danger),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Icon(
-                          isDirectOffer
-                              ? Icons.chat_bubble_outline
-                              : (isBooking
-                                    ? Icons.calendar_today
-                                    : Icons.assignment),
-                          size: AppDimens.iconSizeSmall,
-                          color: statusColor,
-                        ),
-                        const SizedBox(width: AppDimens.p8),
-                        Text(
-                          isDirectOffer
-                              ? 'CUSTOM OFFER'
-                              : (isBooking ? 'BOOKING' : 'TASK'),
-                          style: AppTypography.captionBold.copyWith(
-                            color: statusColor,
-                          ),
-                        ),
-                        const SizedBox(width: AppDimens.p8),
-                        Flexible(
-                          child: Text(
-                            item.scheduledAt != null
-                                ? '• Due ${DateFormat('MMM d, h:mm a').format(item.scheduledAt!.toLocal())}'
-                                : '• Posted ${formatFriendlyTime(item.createdAt)}',
-                            style: AppTypography.caption.copyWith(
-                              color: statusColor.withValues(alpha: 0.8),
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
+            ],
+
+            if (item.primaryActionType != PrimaryActionType.startWork &&
+                item.primaryActionType != PrimaryActionType.reviewDelivery &&
+                (item.permissions.canComplete ||
+                    item.permissions.canApprove ||
+                    item.permissions.canReview ||
+                    item.permissions.canPayEscrow)) ...[
+              SizedBox(height: spacing.sm),
+              SizedBox(
+                height: AppDimens.p40,
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: onPrimaryAction,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: amber.primary,
+                    foregroundColor: amber.text,
                   ),
-                  // Phase 7 REDESIGN: Filled badge for status — more visual
-                  // weight than bare text, consistent with card header identity.
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimens.p8,
-                      vertical: AppDimens.p4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.20),
-                      borderRadius: BorderRadius.circular(AppDimens.r8),
-                    ),
-                    child: Text(
-                      _getStatusDisplayLabel(item.statusRaw),
-                      style: AppTypography.micro.copyWith(
-                        color: statusColor,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
+                  child: Text(_getPrimaryButtonLabel(item.primaryActionType)),
+                ),
               ),
-            ),
-
-            // Body
-            Padding(
-              padding: const EdgeInsets.all(AppDimens.p16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.title,
-                    style: AppTypography.h5.copyWith(color: colorScheme.text),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  // Avatar + Name (Clickable)
-                  GestureDetector(
-                    onTap: () {
-                      if (context.mounted) {
-                        showProfilePreview(context, item.counterpartyId);
-                      }
-                    },
-                    child: Row(
-                      children: [
-                        // Phase 7 REDESIGN: avatarDefault (40px) up from
-                        // avatarSmall (36px) for more personality
-                        SignedAvatar(
-                          storagePathOrUrl: item.counterpartyAvatar,
-                          radius: AppLayout.avatarDefault / 2,
-                          placeholder: CircleAvatar(
-                            radius: AppLayout.avatarDefault / 2,
-                            backgroundColor: colorScheme.textSecondary,
-                            child: Icon(
-                              Icons.person,
-                              size: AppLayout.avatarDefault / 2,
-                              color: Theme.of(context).colorScheme.onPrimary,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: AppDimens.p8),
-                        // Name + role subtitle
-                        Flexible(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item.counterpartyName,
-                                style: AppTypography.bodySmall.copyWith(
-                                  color: colorScheme.text,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              // Phase 7: role subtitle for context
-                              Text(
-                                item.counterpartyRole,
-                                style: AppTypography.micro.copyWith(
-                                  color: colorScheme.textTertiary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: AppDimens.p16),
-
-                  // Phase 7 REDESIGN: Full-width review banner with border —
-                  // impossible to miss, replaces the small inline chip.
-                  if (item.needsReview)
-                    Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.only(bottom: AppDimens.p12),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimens.p12,
-                        vertical: AppDimens.p10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colorScheme.dangerMuted,
-                        borderRadius: BorderRadius.circular(AppDimens.r12),
-                        border: Border.all(
-                          color: colorScheme.danger.withValues(alpha: 0.20),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.rate_review,
-                            size: AppDimens.iconSizeSmall,
-                            color: colorScheme.danger,
-                          ),
-                          const SizedBox(width: AppDimens.p8),
-                          Expanded(
-                            child: Text(
-                              item.actionableNeedsReview
-                                  ? 'Delivery ready for your review'
-                                  : 'Waiting for client review',
-                              style: AppTypography.captionBold.copyWith(
-                                color: colorScheme.danger,
-                              ),
-                            ),
-                          ),
-                          // Chevron hints at actionability
-                          Icon(
-                            Icons.chevron_right,
-                            size: AppDimens.iconSizeSmall,
-                            color: colorScheme.danger,
-                          ),
-                        ],
-                      ),
-                    ),
-
-                  // Actions
-                  if (item.primaryActionType != PrimaryActionType.startWork &&
-                      item.primaryActionType !=
-                          PrimaryActionType.reviewDelivery &&
-                      (item.permissions.canComplete ||
-                          item.permissions.canApprove ||
-                          item.permissions.canReview ||
-                          item.permissions.canPayEscrow))
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: onPrimaryAction,
-                        style: FilledButton.styleFrom(
-                          // Phase 7: semantic primary replaces AppColors.teal
-                          backgroundColor: colorScheme.primary,
-                        ),
-                        child: Text(
-                          _getPrimaryButtonLabel(item.primaryActionType),
-                        ),
-                      ),
-                    ),
-                  if (onSecondaryAction != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: AppDimens.p8),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: TextButton(
-                          onPressed: onSecondaryAction,
-                          child: const Text('Cancel payment'),
-                        ),
-                      ),
-                    ),
-                ],
+            ],
+            if (onSecondaryAction != null) ...[
+              SizedBox(height: spacing.xs),
+              SizedBox(
+                height: AppDimens.p40,
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: onSecondaryAction,
+                  style: TextButton.styleFrom(foregroundColor: amber.danger),
+                  child: const Text('Cancel payment'),
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),
@@ -350,5 +285,77 @@ class WorkItemCard extends StatelessWidget {
       case PrimaryActionType.viewDetails:
         return 'View Details';
     }
+  }
+
+  /// Maps lifecycle buckets to a stable visual progress marker.
+  ///
+  /// The dashboard evidence shows progress on every work card, but the current
+  /// model does not expose a numeric completion ratio, so status provides the
+  /// least surprising deterministic proxy.
+  double _progressForStatus(String rawStatus) {
+    switch (rawStatus.toLowerCase()) {
+      case 'open':
+      case 'draft':
+        // Created but not yet committed to payment or delivery.
+        return 0.12;
+      case 'pending':
+      case 'paid_request_pending':
+      case 'accepted':
+        // Awaiting payment or a required party action.
+        return 0.28;
+      case 'confirmed':
+      case 'assigned':
+        // Confirmed and queued for work to begin.
+        return 0.42;
+      case 'active':
+      case 'inprogress':
+      case 'in_progress':
+        // Work has started but is not delivered yet.
+        return 0.58;
+      case 'delivered':
+        // Delivered and waiting for client review.
+        return 0.72;
+      case 'completed':
+      case 'closed':
+      case 'refunded':
+        // Lifecycle is finished for dashboard purposes.
+        return 1;
+      case 'canceled':
+      case 'cancelled':
+      case 'declined':
+      case 'expired':
+        // Short-lived or aborted work still shows slight progress.
+        return 0.16;
+      default:
+        // Unknown statuses stay low-emphasis until mapped explicitly.
+        return 0.24;
+    }
+  }
+}
+
+/// Compact status capsule used by [WorkItemCard].
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final pills = AmberDuskTokens.widgetTheme.statusPills;
+
+    return Container(
+      padding: pills.smallPadding,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(pills.radius),
+      ),
+      child: Text(
+        label,
+        style: pills.smallTextStyle.copyWith(color: color),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
   }
 }

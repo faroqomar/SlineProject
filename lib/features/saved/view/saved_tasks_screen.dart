@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_states.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/scale_button.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
 import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
@@ -44,17 +44,16 @@ class _SavedTasksView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<SavedTasksViewModel>();
-    final colorScheme = context.colorScheme;
+    final amber = context.amberColors;
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Semantics(
       label: 'Saved tasks screen',
       child: Scaffold(
-        backgroundColor: colorScheme
-            .phoneBackground, // Or transparent if global bg is visible
+        backgroundColor: amber.page,
         body: Stack(
           children: [
-            // Gradient Background (if needed, or rely on phoneBackground)
+            // Solid phone background keeps this secondary screen theme-owned.
             CustomScrollView(
               slivers: [
                 // --- Header ---
@@ -81,15 +80,13 @@ class _SavedTasksView extends StatelessWidget {
                               width: AppDimens.touchTarget,
                               height: AppDimens.touchTarget,
                               decoration: BoxDecoration(
-                                color: colorScheme.cardBackground,
+                                color: amber.surface,
                                 shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: colorScheme.cardBorder,
-                                ),
+                                border: Border.all(color: amber.border),
                               ),
                               child: Icon(
                                 Icons.arrow_back,
-                                color: colorScheme.text,
+                                color: amber.text,
                                 size: AppDimens.iconSmall,
                               ),
                             ),
@@ -97,13 +94,13 @@ class _SavedTasksView extends StatelessWidget {
                         ),
                         Text(
                           'Saved Tasks',
-                          style: AppTypography.h4.copyWith(
-                            color: colorScheme.text,
-                          ),
+                          style: AppTypography.h4.copyWith(color: amber.text),
                         ),
-                        // Refresh button with haptic feedback
+                        // Keep refresh explicit because saved-state changes can
+                        // also happen from task detail routes.
                         IconButton(
-                          icon: Icon(Icons.refresh, color: colorScheme.text),
+                          tooltip: 'Refresh saved tasks',
+                          icon: Icon(Icons.refresh, color: amber.text),
                           onPressed: () {
                             AppInteractionStates.hapticTap();
                             context.read<SavedTasksViewModel>().refresh();
@@ -119,7 +116,7 @@ class _SavedTasksView extends StatelessWidget {
                 if (vm.isLoading)
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimens.p16,
+                      horizontal: AppDimens.p24,
                     ),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
@@ -142,15 +139,13 @@ class _SavedTasksView extends StatelessWidget {
                               width: AppDimens.p80,
                               height: AppDimens.p80,
                               decoration: BoxDecoration(
-                                color: colorScheme.danger.withValues(
-                                  alpha: 0.08,
-                                ),
+                                color: amber.dangerMuted,
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
                                 Icons.error_outline,
                                 size: AppDimens.p48,
-                                color: colorScheme.danger,
+                                color: amber.danger,
                               ),
                             ),
                             const SizedBox(height: AppDimens.p16),
@@ -162,8 +157,10 @@ class _SavedTasksView extends StatelessWidget {
                                 vm.error!,
                                 textAlign: TextAlign.center,
                                 style: AppTypography.bodySmall.copyWith(
-                                  color: colorScheme.danger,
+                                  color: amber.danger,
                                 ),
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             const SizedBox(height: AppDimens.p16),
@@ -173,6 +170,7 @@ class _SavedTasksView extends StatelessWidget {
                                 AppInteractionStates.hapticTap();
                                 context.read<SavedTasksViewModel>().refresh();
                               },
+                              style: _outlineButtonStyle(amber),
                               child: const Text('Try Again'),
                             ),
                           ],
@@ -195,29 +193,38 @@ class _SavedTasksView extends StatelessWidget {
                               width: AppDimens.p80,
                               height: AppDimens.p80,
                               decoration: BoxDecoration(
-                                color: colorScheme.primary.withValues(
-                                  alpha: 0.08,
-                                ),
+                                color: amber.activeGlow,
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
                                 Icons.bookmark_border,
                                 size: AppDimens.p48,
-                                color: colorScheme.primary,
+                                color: amber.primary,
                               ),
                             ),
                             const SizedBox(height: AppDimens.p16),
                             Text(
                               'No saved tasks yet',
                               style: AppTypography.h5.copyWith(
-                                color: colorScheme.text,
+                                color: amber.text,
                               ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: AppDimens.p8),
-                            Text(
-                              "Browse and save tasks you're interested in",
-                              style: AppTypography.bodySmall.copyWith(
-                                color: colorScheme.textSecondary,
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppDimens.p24,
+                              ),
+                              child: Text(
+                                "Browse and save tasks you're interested in",
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: amber.textSubtle,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
                               ),
                             ),
                             // CTA button to guide users toward task discovery
@@ -230,7 +237,11 @@ class _SavedTasksView extends StatelessWidget {
                                   (route) => false,
                                 );
                               },
-                              icon: const Icon(Icons.search, size: 18),
+                              style: _outlineButtonStyle(amber),
+                              icon: const Icon(
+                                Icons.search,
+                                size: AppDimens.iconSmall,
+                              ),
                               label: const Text('Browse Tasks'),
                             ),
                           ],
@@ -241,9 +252,9 @@ class _SavedTasksView extends StatelessWidget {
                 else
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(
-                      AppDimens.p16,
+                      AppDimens.p24,
                       0,
-                      AppDimens.p16,
+                      AppDimens.p24,
                       AppDimens.p24,
                     ),
                     sliver: SliverList(
@@ -266,6 +277,20 @@ class _SavedTasksView extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Applies Amber Dusk action color to secondary buttons while preserving
+  /// the existing navigation and refresh callbacks.
+  ButtonStyle _outlineButtonStyle(AmberDuskColorScheme amber) {
+    return OutlinedButton.styleFrom(
+      foregroundColor: amber.primary,
+      minimumSize: const Size(AppDimens.touchTarget, AppDimens.touchTarget),
+      padding: const EdgeInsets.symmetric(horizontal: AppDimens.p16),
+      side: BorderSide(color: amber.primary),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppDimens.r12),
       ),
     );
   }

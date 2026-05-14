@@ -2,16 +2,14 @@ import 'package:flutter/material.dart';
 
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/models/work_item.dart';
-import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 
 /// A status indicator badge with semantic colors, icons, and optional pulse.
 ///
 /// ## Phase 1 Changes
-/// - Replaced hardcoded Colors.green / AppColors.lightRed / AppColors.gold / AppColors.teal
-///   with semantic colors from [AppColorScheme] (success, danger, warning, info)
+/// - Replaced legacy status colors with Amber Dusk semantic foregrounds and
+///   adapter-owned overlays.
 /// - Added status-specific icons (check_circle, schedule, cancel, etc.)
 /// - Changed shape from [RoundedRectangleBorder] to pill (StadiumBorder)
 /// - Added bounded pulse animation on pending statuses (3 reps, reduced motion safe)
@@ -68,6 +66,37 @@ class _StatusBadgeState extends State<StatusBadge>
   Animation<double>? _pulseAnimation;
   int _pulseCount = 0;
   static const _maxPulseCount = 3;
+  static const _setupStatuses = {'setup', 'timeout', 'timed out'};
+  static const _pendingStatuses = {
+    'waiting',
+    'pending',
+    'draft',
+    'payment pending',
+    'review',
+    'offers review',
+  };
+  static const _activeStatuses = {
+    'active',
+    'confirmed',
+    'in progress',
+    'assigned',
+    'open',
+    'won',
+  };
+  static const _completedStatuses = {
+    'completed',
+    'delivered',
+    'closed',
+    'refunded',
+  };
+  static const _canceledStatuses = {
+    'canceled',
+    'cancelled',
+    'declined',
+    'rejected',
+    'failed',
+    'failure',
+  };
 
   @override
   void initState() {
@@ -91,8 +120,7 @@ class _StatusBadgeState extends State<StatusBadge>
   }
 
   bool get _isPendingStatus {
-    final t = widget.text.toLowerCase();
-    return t == 'pending' || t == 'draft' || t == 'payment pending';
+    return _pendingStatuses.contains(widget.text.toLowerCase());
   }
 
   void _maybeStartPulse() {
@@ -126,53 +154,75 @@ class _StatusBadgeState extends State<StatusBadge>
     _pulseController!.forward();
   }
 
-  /// Maps status text to semantic color from the current theme.
-  Color _resolveColor(BuildContext context) {
-    if (widget.color != null) return widget.color!;
+  /// Maps status text to Amber Dusk semantic foreground and overlay roles.
+  _StatusBadgeTone _resolveTone() {
+    final pills = AmberDuskTokens.widgetTheme.statusPills;
+    if (widget.color != null) {
+      return _StatusBadgeTone(
+        foreground: widget.color!,
+        background: widget.color!.withValues(alpha: 0.12),
+      );
+    }
 
-    final colorScheme = context.colorScheme;
     final t = widget.text.toLowerCase();
+    const colors = AmberDuskTokens.colors;
 
-    // Completed / delivered → success
-    if (t == 'completed' || t == 'delivered') return colorScheme.success;
-    // Canceled / declined / rejected → danger
-    if (t == 'canceled' ||
-        t == 'cancelled' ||
-        t == 'declined' ||
-        t == 'rejected') {
-      return colorScheme.danger;
-    }
-    // Pending / draft / payment pending → warning
-    if (t == 'pending' || t == 'draft' || t == 'payment pending') {
-      return colorScheme.warning;
-    }
-    // Active / confirmed / in progress / assigned / open → info
-    if (t == 'active' ||
-        t == 'confirmed' ||
-        t == 'in progress' ||
-        t == 'assigned' ||
-        t == 'open' ||
-        t == 'offers review') {
-      return colorScheme.info;
+    if (_setupStatuses.contains(t)) {
+      return _StatusBadgeTone(
+        foreground: pills.muted.foreground,
+        background: pills.muted.background,
+      );
     }
 
-    return colorScheme.info;
+    if (_pendingStatuses.contains(t)) {
+      return _StatusBadgeTone(
+        foreground: pills.primary.foreground,
+        background: pills.primary.background,
+      );
+    }
+
+    if (_activeStatuses.contains(t)) {
+      return _StatusBadgeTone(
+        foreground: pills.active.foreground,
+        background: pills.active.background,
+      );
+    }
+
+    if (_completedStatuses.contains(t)) {
+      return _StatusBadgeTone(
+        foreground: pills.completed.foreground,
+        background: pills.completed.background,
+      );
+    }
+
+    if (_canceledStatuses.contains(t)) {
+      return _StatusBadgeTone(
+        foreground: colors.rust,
+        background: pills.urgent.background,
+      );
+    }
+
+    return _StatusBadgeTone(
+      foreground: pills.primary.foreground,
+      background: pills.primary.background,
+    );
   }
 
   /// Maps status to an icon for colorblind accessibility.
   IconData _resolveIcon() {
     final t = widget.text.toLowerCase();
-    if (t == 'completed' || t == 'delivered') return Icons.check_circle;
-    if (t == 'canceled' ||
-        t == 'cancelled' ||
-        t == 'declined' ||
-        t == 'rejected') {
+    if (_completedStatuses.contains(t)) {
+      return Icons.check_circle;
+    }
+    if (_canceledStatuses.contains(t)) {
       return Icons.cancel;
     }
-    if (t == 'pending' || t == 'draft' || t == 'payment pending') {
+    if (_pendingStatuses.contains(t)) {
       return Icons.schedule;
     }
-    if (t == 'in progress' || t == 'active') return Icons.play_circle;
+    if (_activeStatuses.contains(t) && t != 'confirmed' && t != 'open') {
+      return Icons.play_circle;
+    }
     if (t == 'confirmed') return Icons.verified;
     if (t == 'open') return Icons.radio_button_unchecked;
     return Icons.info_outline;
@@ -180,38 +230,33 @@ class _StatusBadgeState extends State<StatusBadge>
 
   @override
   Widget build(BuildContext context) {
-    final effectiveColor = _resolveColor(context);
+    final pills = AmberDuskTokens.widgetTheme.statusPills;
+    final tone = _resolveTone();
     final iconData = _resolveIcon();
-    final iconSize = widget.isSmall ? 10.0 : 14.0;
+    final iconSize = widget.isSmall ? pills.smallIconSize : pills.iconSize;
     final effectiveDuration = AppMotion.respectMotion(
       context,
       AppMotion.dramatic,
     );
+    final displayText = pills.labelUppercase
+        ? widget.text.toUpperCase()
+        : widget.text;
 
     Widget badge = Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: widget.isSmall ? 6.0 : 10.0,
-        vertical: widget.isSmall ? 2.0 : 4.0,
-      ),
+      padding: widget.isSmall ? pills.smallPadding : pills.padding,
       decoration: ShapeDecoration(
-        color: effectiveColor.withValues(alpha: 0.12),
-        shape: StadiumBorder(
-          side: BorderSide(color: effectiveColor.withValues(alpha: 0.3)),
-        ),
+        color: tone.background,
+        shape: const StadiumBorder(side: BorderSide.none),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(iconData, size: iconSize, color: effectiveColor),
-          const SizedBox(width: AppLayout.spacingTight),
+          Icon(iconData, size: iconSize, color: tone.foreground),
+          SizedBox(width: AmberDuskTokens.spacing.xs),
           Text(
-            widget.text,
-            style: widget.isSmall
-                ? AppTypography.micro.copyWith(
-                    color: effectiveColor,
-                    fontWeight: FontWeight.bold,
-                  )
-                : AppTypography.captionBold.copyWith(color: effectiveColor),
+            displayText,
+            style: (widget.isSmall ? pills.smallTextStyle : pills.textStyle)
+                .copyWith(color: tone.foreground),
           ),
         ],
       ),
@@ -232,4 +277,15 @@ class _StatusBadgeState extends State<StatusBadge>
 
     return Semantics(label: 'Status: ${widget.text}', child: badge);
   }
+}
+
+/// Holds the resolved Amber Dusk status colors for one badge render.
+class _StatusBadgeTone {
+  const _StatusBadgeTone({required this.foreground, required this.background});
+
+  /// Status icon and label color.
+  final Color foreground;
+
+  /// Status pill overlay color.
+  final Color background;
 }

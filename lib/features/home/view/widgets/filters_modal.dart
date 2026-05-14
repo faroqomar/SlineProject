@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_states.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
@@ -79,7 +79,7 @@ class _FiltersModalState extends State<FiltersModal> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final amberColors = _amberColors;
 
     // Wrap in Semantics so screen readers announce the panel purpose
     return Semantics(
@@ -93,9 +93,13 @@ class _FiltersModalState extends State<FiltersModal> {
         builder: (context, scrollController) {
           return Container(
             decoration: BoxDecoration(
-              color: colorScheme.cardBackground,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(AppDimens.r24),
+              color: amberColors.background,
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(AmberDuskTokens.spacing.sheetRadius),
+              ),
+              boxShadow: AppDecorations.elevation(
+                3,
+                isDark: amberColors.isDark,
               ),
             ),
             child: Column(
@@ -110,9 +114,10 @@ class _FiltersModalState extends State<FiltersModal> {
                     bottom: AppDimens.p8,
                   ),
                   decoration: BoxDecoration(
-                    // textTertiary provides a subtle neutral tone for the handle
-                    color: colorScheme.textTertiary,
-                    borderRadius: BorderRadius.circular(2),
+                    // A raised neutral handle makes the sheet affordance
+                    // visible without adding blur or transparency effects.
+                    color: amberColors.surfaceHighest,
+                    borderRadius: BorderRadius.circular(AppDimens.r4),
                   ),
                 ),
 
@@ -126,8 +131,9 @@ class _FiltersModalState extends State<FiltersModal> {
                     children: [
                       Text(
                         'Filters',
-                        style: AppTypography.h4.copyWith(
-                          color: colorScheme.text,
+                        style: AmberDuskTokens.typography.sectionTitle.copyWith(
+                          color: amberColors.text,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                       // Accessible TextButton replaces GestureDetector so
@@ -152,7 +158,7 @@ class _FiltersModalState extends State<FiltersModal> {
                         child: Text(
                           'Reset All',
                           style: AppTypography.captionBold.copyWith(
-                            color: AppColors.teal,
+                            color: amberColors.primary,
                           ),
                         ),
                       ),
@@ -170,19 +176,19 @@ class _FiltersModalState extends State<FiltersModal> {
                     ),
                     children: [
                       // -- Sort By --
-                      _buildSortBySection(colorScheme),
+                      _buildSortBySection(),
                       const SizedBox(height: AppDimens.p24),
 
                       // -- Budget Range --
-                      _buildBudgetRangeSection(colorScheme),
+                      _buildBudgetRangeSection(),
                       const SizedBox(height: AppDimens.p24),
 
                       // -- Delivery Time --
-                      _buildDeliveryTimeSection(colorScheme),
+                      _buildDeliveryTimeSection(),
                       const SizedBox(height: AppDimens.p24),
 
                       // -- Seller Level --
-                      _buildSellerLevelSection(colorScheme),
+                      _buildSellerLevelSection(),
 
                       // Extra padding so the last section isn't hidden
                       // behind the fixed apply button
@@ -192,7 +198,7 @@ class _FiltersModalState extends State<FiltersModal> {
                 ),
 
                 // --- Apply Button (fixed at bottom) ---
-                _buildApplyButton(colorScheme),
+                _buildApplyButton(),
               ],
             ),
           );
@@ -205,15 +211,20 @@ class _FiltersModalState extends State<FiltersModal> {
   // Section builders — extracted for readability and maintainability
   // ---------------------------------------------------------------------------
 
+  AmberDuskColorScheme get _amberColors => context.amberColors;
+
   /// Builds the "Sort By" horizontal chip row.
-  /// Uses [AppTypography.h5] for the section header per design-system tokens.
-  Widget _buildSortBySection(AppColorScheme colorScheme) {
+  /// Uses Amber Dusk section typography for the section header.
+  Widget _buildSortBySection() {
+    final amberColors = _amberColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Sort By',
-          style: AppTypography.h5.copyWith(color: colorScheme.text),
+          style: AmberDuskTokens.typography.sectionTitle.copyWith(
+            color: amberColors.text,
+          ),
         ),
         const SizedBox(height: AppDimens.p12),
         SingleChildScrollView(
@@ -237,19 +248,21 @@ class _FiltersModalState extends State<FiltersModal> {
                         AppInteractionStates.hapticSelection();
                         setState(() => _sortBy = sort);
                       },
-                      selectedColor: colorScheme.primary,
-                      backgroundColor: colorScheme.inputBackground,
-                      labelStyle: AppTypography.captionBold.copyWith(
+                      selectedColor: amberColors.primary,
+                      backgroundColor: amberColors.surface,
+                      labelStyle: AmberDuskTokens.typography.chip.copyWith(
                         color: isSelected
-                            ? Colors.white
-                            : colorScheme.textSecondary,
+                            ? amberColors.textInverse
+                            : amberColors.muted,
                       ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppDimens.r12),
+                        borderRadius: BorderRadius.circular(
+                          AmberDuskTokens.spacing.pillRadius,
+                        ),
                         side: BorderSide(
                           color: isSelected
-                              ? colorScheme.primary
-                              : colorScheme.inputBorder,
+                              ? amberColors.primary
+                              : amberColors.border,
                         ),
                       ),
                       showCheckmark: false,
@@ -265,20 +278,23 @@ class _FiltersModalState extends State<FiltersModal> {
   /// Builds the "Budget Range" section with a slider and min/max text fields.
   /// The slider uses design-system primary/secondary tokens instead of
   /// hardcoded colors so it adapts to theme changes automatically.
-  Widget _buildBudgetRangeSection(AppColorScheme colorScheme) {
+  Widget _buildBudgetRangeSection() {
+    final amberColors = _amberColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Budget Range',
-          style: AppTypography.h5.copyWith(color: colorScheme.text),
+          style: AmberDuskTokens.typography.sectionTitle.copyWith(
+            color: amberColors.text,
+          ),
         ),
         Slider(
           value: _maxBudget,
           min: 0,
           max: 5000,
-          activeColor: colorScheme.primary,
-          inactiveColor: colorScheme.textSecondary.withValues(alpha: 0.2),
+          activeColor: amberColors.primary,
+          inactiveColor: amberColors.surfaceHighest,
           onChanged: (v) => setState(() {
             _maxBudget = v;
             _maxBudgetController.text = v.toInt().toString();
@@ -291,7 +307,10 @@ class _FiltersModalState extends State<FiltersModal> {
                 hintText: 'Min',
                 controller: _minBudgetController,
                 keyboardType: TextInputType.number,
-                prefixIcon: const Icon(Icons.attach_money, size: 16),
+                prefixIcon: const Icon(
+                  Icons.attach_money,
+                  size: AppDimens.iconSizeSmall,
+                ),
               ),
             ),
             const Padding(
@@ -303,7 +322,10 @@ class _FiltersModalState extends State<FiltersModal> {
                 hintText: 'Max',
                 controller: _maxBudgetController,
                 keyboardType: TextInputType.number,
-                prefixIcon: const Icon(Icons.attach_money, size: 16),
+                prefixIcon: const Icon(
+                  Icons.attach_money,
+                  size: AppDimens.iconSizeSmall,
+                ),
                 onChanged: (val) {
                   final v = double.tryParse(val);
                   // Clamp to slider range so text input and slider stay in sync
@@ -321,13 +343,16 @@ class _FiltersModalState extends State<FiltersModal> {
 
   /// Builds the "Delivery Time" chip wrap section.
   /// Each chip triggers haptic feedback on tap for consistent tactile response.
-  Widget _buildDeliveryTimeSection(AppColorScheme colorScheme) {
+  Widget _buildDeliveryTimeSection() {
+    final amberColors = _amberColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Delivery Time',
-          style: AppTypography.h5.copyWith(color: colorScheme.text),
+          style: AmberDuskTokens.typography.sectionTitle.copyWith(
+            color: amberColors.text,
+          ),
         ),
         const SizedBox(height: AppDimens.p12),
         Wrap(
@@ -348,17 +373,17 @@ class _FiltersModalState extends State<FiltersModal> {
                   }
                 });
               },
-              selectedColor: colorScheme.primary,
-              backgroundColor: colorScheme.inputBackground,
-              labelStyle: AppTypography.captionBold.copyWith(
-                color: isSelected ? Colors.white : colorScheme.textSecondary,
+              selectedColor: amberColors.primary,
+              backgroundColor: amberColors.surface,
+              labelStyle: AmberDuskTokens.typography.chip.copyWith(
+                color: isSelected ? amberColors.textInverse : amberColors.muted,
               ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppDimens.r12),
+                borderRadius: BorderRadius.circular(
+                  AmberDuskTokens.spacing.pillRadius,
+                ),
                 side: BorderSide(
-                  color: isSelected
-                      ? colorScheme.primary
-                      : colorScheme.inputBorder,
+                  color: isSelected ? amberColors.primary : amberColors.border,
                 ),
               ),
               showCheckmark: false,
@@ -371,14 +396,17 @@ class _FiltersModalState extends State<FiltersModal> {
 
   /// Builds the "Seller Level" list section.
   /// Each tile triggers haptic feedback on tap and highlights the selected
-  /// levels using design-system primary color at 10% opacity.
-  Widget _buildSellerLevelSection(AppColorScheme colorScheme) {
+  /// levels using a subtle Amber Dusk primary wash.
+  Widget _buildSellerLevelSection() {
+    final amberColors = _amberColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Seller Level',
-          style: AppTypography.h5.copyWith(color: colorScheme.text),
+          style: AmberDuskTokens.typography.sectionTitle.copyWith(
+            color: amberColors.text,
+          ),
         ),
         const SizedBox(height: AppDimens.p12),
         Column(
@@ -406,12 +434,12 @@ class _FiltersModalState extends State<FiltersModal> {
                   padding: const EdgeInsets.all(AppDimens.p12),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? colorScheme.primary.withValues(alpha: 0.1)
-                        : colorScheme.inputBackground,
+                        ? amberColors.primary.withValues(alpha: 0.14)
+                        : amberColors.surface,
                     border: Border.all(
                       color: isSelected
-                          ? colorScheme.primary
-                          : colorScheme.inputBorder,
+                          ? amberColors.primary
+                          : amberColors.border,
                     ),
                     borderRadius: BorderRadius.circular(AppDimens.r14),
                   ),
@@ -422,12 +450,16 @@ class _FiltersModalState extends State<FiltersModal> {
                         level,
                         style: AppTypography.captionBold.copyWith(
                           color: isSelected
-                              ? colorScheme.primary
-                              : colorScheme.text,
+                              ? amberColors.primary
+                              : amberColors.text,
                         ),
                       ),
                       if (isSelected)
-                        Icon(Icons.check, color: colorScheme.primary, size: 18),
+                        Icon(
+                          Icons.check,
+                          color: amberColors.primary,
+                          size: AppDimens.iconSizeSmall,
+                        ),
                     ],
                   ),
                 ),
@@ -443,7 +475,7 @@ class _FiltersModalState extends State<FiltersModal> {
   /// Shows the count of active (non-default) filters so users know how many
   /// changes they are about to commit — "Apply Filters" when 0, otherwise
   /// "Apply N Filters".
-  Widget _buildApplyButton(AppColorScheme colorScheme) {
+  Widget _buildApplyButton() {
     final count = _activeFilterCount;
     // Singular/plural: "Apply 1 Filter" vs "Apply N Filters"
     final label = count == 0

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_price.dart' as price_utils;
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
@@ -117,7 +117,7 @@ class _SubmitRequestSheetContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<SubmitRequestViewModel>();
-    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
     final insets = MediaQuery.of(context).viewInsets;
 
     return Container(
@@ -126,11 +126,15 @@ class _SubmitRequestSheetContent extends StatelessWidget {
       ),
       height: MediaQuery.of(context).size.height * 0.85,
       decoration: BoxDecoration(
-        color: colorScheme.cardBackground,
+        color: amberColors.background,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(AppDimens.r30),
         ),
-        border: Border(top: BorderSide(color: colorScheme.cardBorder)),
+        border: Border(top: BorderSide(color: amberColors.surfaceHighest)),
+        boxShadow: AppDecorations.elevation(
+          AmberDuskTokens.surfaces.sheet.elevationLevel,
+          isDark: amberColors.isDark,
+        ),
       ),
       padding: EdgeInsets.only(bottom: insets.bottom),
       child: Column(
@@ -145,18 +149,18 @@ class _SubmitRequestSheetContent extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.withValues(alpha: 0.3),
+                color: amberColors.surfaceHighest,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
 
           // Header
-          _buildHeader(colorScheme, vm.isReplaceMode),
+          _buildHeader(amberColors, vm.isReplaceMode),
 
           // Existing bid summary
           if (vm.isReplaceMode && vm.existingBid != null)
-            _buildExistingBidSummary(colorScheme, vm.existingBid!),
+            _buildExistingBidSummary(amberColors, vm.existingBid!),
 
           const SizedBox(height: AppDimens.p16),
 
@@ -164,7 +168,7 @@ class _SubmitRequestSheetContent extends StatelessWidget {
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: AppDimens.p24),
-              child: _buildForm(colorScheme),
+              child: _buildForm(amberColors),
             ),
           ),
 
@@ -181,7 +185,7 @@ class _SubmitRequestSheetContent extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(AppColorScheme colorScheme, bool isReplace) {
+  Widget _buildHeader(AmberDuskColorScheme amberColors, bool isReplace) {
     return Padding(
       padding: const EdgeInsets.all(AppDimens.p24),
       child: Row(
@@ -191,18 +195,20 @@ class _SubmitRequestSheetContent extends StatelessWidget {
               margin: const EdgeInsets.only(right: 8),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.teal.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppDimens.r8),
+                color: amberColors.primary.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(
+                  AmberDuskTokens.spacing.pillRadius,
+                ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.swap_horiz, color: AppColors.teal, size: 16),
+                  Icon(Icons.swap_horiz, color: amberColors.primary, size: 16),
                   const SizedBox(width: 4),
                   Text(
                     'REPLACE',
                     style: AppTypography.captionBold.copyWith(
-                      color: AppColors.teal,
+                      color: amberColors.primary,
                       fontSize: 10,
                     ),
                   ),
@@ -212,7 +218,7 @@ class _SubmitRequestSheetContent extends StatelessWidget {
           Expanded(
             child: Text(
               isReplace ? 'Replace Your Bid' : 'Submit Proposal',
-              style: AppTypography.h4.copyWith(color: colorScheme.text),
+              style: AppTypography.h4.copyWith(color: amberColors.text),
             ),
           ),
         ],
@@ -221,35 +227,31 @@ class _SubmitRequestSheetContent extends StatelessWidget {
   }
 
   Widget _buildExistingBidSummary(
-    AppColorScheme colorScheme,
+    AmberDuskColorScheme amberColors,
     TaskRequest existingBid,
   ) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppDimens.p24),
       padding: const EdgeInsets.all(AppDimens.p16),
       decoration: BoxDecoration(
-        color: colorScheme.cardBackground.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(AppDimens.r12),
-        border: Border.all(
-          color: colorScheme.inputBorder.withValues(alpha: 0.5),
-        ),
+        color: amberColors.surface,
+        borderRadius: BorderRadius.circular(AmberDuskTokens.spacing.lg),
+        border: Border.all(color: amberColors.surfaceHighest),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Current Bid (will be archived)',
-            style: AppTypography.captionBold.copyWith(
-              color: colorScheme.textSecondary,
-            ),
+            style: AppTypography.captionBold.copyWith(color: amberColors.muted),
           ),
           const SizedBox(height: AppDimens.p8),
           Row(
             children: [
               Expanded(
                 child: _ExistingBidInfo(
-                  icon: Icons.attach_money,
-                  label: 'Price',
+                  icon: Icons.payments_outlined,
+                  label: 'Amount',
                   value: price_utils.PriceFormatter.formatPrice(
                     existingBid.price.toDouble(),
                   ),
@@ -269,7 +271,7 @@ class _SubmitRequestSheetContent extends StatelessWidget {
     );
   }
 
-  Widget _buildForm(AppColorScheme colorScheme) {
+  Widget _buildForm(AmberDuskColorScheme amberColors) {
     return Form(
       key: formKey,
       child: Column(
@@ -282,9 +284,9 @@ class _SubmitRequestSheetContent extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Bid Amount',
+                      'Amount (IQD)',
                       style: AppTypography.captionBold.copyWith(
-                        color: colorScheme.textSecondary,
+                        color: amberColors.muted,
                       ),
                     ),
                     const SizedBox(height: AppDimens.p8),
@@ -293,8 +295,8 @@ class _SubmitRequestSheetContent extends StatelessWidget {
                       hintText: budget,
                       keyboardType: TextInputType.number,
                       prefixIcon: Icon(
-                        Icons.attach_money,
-                        color: AppColors.teal,
+                        Icons.payments_outlined,
+                        color: amberColors.primary,
                         size: 18,
                       ),
                       validator: (v) {
@@ -314,7 +316,7 @@ class _SubmitRequestSheetContent extends StatelessWidget {
                     Text(
                       'Delivery (Days)',
                       style: AppTypography.captionBold.copyWith(
-                        color: colorScheme.textSecondary,
+                        color: amberColors.muted,
                       ),
                     ),
                     const SizedBox(height: AppDimens.p8),
@@ -336,9 +338,7 @@ class _SubmitRequestSheetContent extends StatelessWidget {
           const SizedBox(height: AppDimens.p24),
           Text(
             'Cover Letter',
-            style: AppTypography.captionBold.copyWith(
-              color: colorScheme.textSecondary,
-            ),
+            style: AppTypography.captionBold.copyWith(color: amberColors.muted),
           ),
           const SizedBox(height: AppDimens.p8),
           AppTextField(
@@ -351,7 +351,7 @@ class _SubmitRequestSheetContent extends StatelessWidget {
           Container(
             height: 100,
             decoration: BoxDecoration(
-              border: Border.all(color: colorScheme.inputBorder, width: 1),
+              border: Border.all(color: amberColors.surfaceHighest),
               borderRadius: BorderRadius.circular(AppDimens.r14),
             ),
             child: Center(
@@ -360,13 +360,13 @@ class _SubmitRequestSheetContent extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.upload_file,
-                    color: colorScheme.textSecondary.withValues(alpha: 0.5),
+                    color: amberColors.muted.withValues(alpha: 0.6),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Upload Files (Coming Soon)',
                     style: AppTypography.captionBold.copyWith(
-                      color: colorScheme.textSecondary.withValues(alpha: 0.5),
+                      color: amberColors.muted.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
@@ -391,14 +391,14 @@ class _SubmitRequestSheetContent extends StatelessWidget {
 
     if (vm.isReplaceMode || vm.isResubmitMode) {
       // Replace or resubmit existing bid
-      final priceCents = (priceDouble * 100).toInt();
+      final priceIqd = priceDouble.round();
       if (vm.isReplaceMode && vm.existingBid != null) {
         // Show confirmation dialog before replacing
         if (!context.mounted) return;
         final confirmed = await _showConfirmReplaceDialog(
           context,
           existing: vm.existingBid!,
-          newPriceCents: priceCents,
+          newPriceIqd: priceIqd,
           newDays: days,
           newNote: note,
         );
@@ -464,11 +464,11 @@ class _SubmitRequestSheetContent extends StatelessWidget {
   Future<bool> _showConfirmReplaceDialog(
     BuildContext context, {
     required TaskRequest existing,
-    required int newPriceCents,
+    required int newPriceIqd,
     required int newDays,
     String? newNote,
   }) async {
-    final priceDiff = newPriceCents - existing.price;
+    final priceDiff = newPriceIqd - existing.price;
     final daysDiff = newDays - existing.days;
     final priceDiffText = priceDiff > 0
         ? '+${price_utils.PriceFormatter.formatPrice(priceDiff.toDouble())}'
@@ -485,10 +485,11 @@ class _SubmitRequestSheetContent extends StatelessWidget {
           context: context,
           barrierDismissible: false,
           builder: (dCtx) {
+            final amberColors = dCtx.amberColors;
             return AlertDialog(
               title: Row(
                 children: [
-                  Icon(Icons.swap_horiz, color: AppColors.teal),
+                  Icon(Icons.swap_horiz, color: amberColors.primary),
                   const SizedBox(width: 8),
                   const Text('Replace your bid?'),
                 ],
@@ -506,7 +507,7 @@ class _SubmitRequestSheetContent extends StatelessWidget {
                     Text(
                       'CURRENT BID',
                       style: AppTypography.captionBold.copyWith(
-                        color: dCtx.colorScheme.textSecondary,
+                        color: amberColors.muted,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -530,31 +531,31 @@ class _SubmitRequestSheetContent extends StatelessWidget {
                     Text(
                       'NEW BID',
                       style: AppTypography.captionBold.copyWith(
-                        color: AppColors.teal,
+                        color: amberColors.primary,
                       ),
                     ),
                     const SizedBox(height: 8),
                     _ComparisonRow(
                       label: 'Price',
                       value: price_utils.PriceFormatter.formatPrice(
-                        newPriceCents.toDouble(),
+                        newPriceIqd.toDouble(),
                       ),
                       changeIndicator: priceDiffText,
                       changeColor: priceDiff > 0
-                          ? Colors.green
+                          ? amberColors.success
                           : priceDiff < 0
-                          ? Colors.red
-                          : Colors.grey,
+                          ? amberColors.danger
+                          : amberColors.muted,
                     ),
                     _ComparisonRow(
                       label: 'Delivery',
                       value: '$newDays days',
                       changeIndicator: daysDiffText,
                       changeColor: daysDiff > 0
-                          ? Colors.red
+                          ? amberColors.danger
                           : daysDiff < 0
-                          ? Colors.green
-                          : Colors.grey,
+                          ? amberColors.success
+                          : amberColors.muted,
                     ),
                     if ((newNote ?? '').isNotEmpty)
                       _ComparisonRow(
@@ -572,8 +573,8 @@ class _SubmitRequestSheetContent extends StatelessWidget {
                 ),
                 FilledButton(
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.teal,
-                    foregroundColor: Colors.white,
+                    backgroundColor: amberColors.primary,
+                    foregroundColor: amberColors.textInverse,
                   ),
                   onPressed: () => Navigator.pop(dCtx, true),
                   child: const Text('Replace Bid'),
@@ -604,9 +605,10 @@ class _ExistingBidInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final amberColors = context.amberColors;
     return Row(
       children: [
-        Icon(icon, size: 16, color: Colors.grey),
+        Icon(icon, size: 16, color: amberColors.muted),
         const SizedBox(width: 4),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -614,7 +616,7 @@ class _ExistingBidInfo extends StatelessWidget {
             Text(
               label,
               style: AppTypography.caption.copyWith(
-                color: Colors.grey,
+                color: amberColors.muted,
                 fontSize: 10,
               ),
             ),
@@ -623,6 +625,7 @@ class _ExistingBidInfo extends StatelessWidget {
               style: AppTypography.bodyMedium.copyWith(
                 fontWeight: FontWeight.w700,
                 fontSize: 14,
+                color: amberColors.text,
               ),
             ),
           ],
@@ -650,6 +653,7 @@ class _ComparisonRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final amberColors = context.amberColors;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -661,7 +665,7 @@ class _ComparisonRow extends StatelessWidget {
             width: 80,
             child: Text(
               label,
-              style: AppTypography.caption.copyWith(color: Colors.grey),
+              style: AppTypography.caption.copyWith(color: amberColors.muted),
             ),
           ),
           Expanded(
@@ -672,6 +676,7 @@ class _ComparisonRow extends StatelessWidget {
                   value,
                   style: AppTypography.bodyMedium.copyWith(
                     fontWeight: FontWeight.w700,
+                    color: amberColors.text,
                   ),
                 ),
                 if (changeIndicator != null)
@@ -711,23 +716,22 @@ class _WarningBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final amberColors = context.amberColors;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.orange.withValues(alpha: 0.1),
+        color: amberColors.warningMuted,
         borderRadius: BorderRadius.circular(AppDimens.r8),
-        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+        border: Border.all(color: amberColors.warning),
       ),
       child: Row(
         children: [
-          Icon(Icons.info_outline, color: Colors.orange.shade700, size: 20),
+          Icon(Icons.info_outline, color: amberColors.warning, size: 20),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
-              style: AppTypography.caption.copyWith(
-                color: Colors.orange.shade800,
-              ),
+              style: AppTypography.caption.copyWith(color: amberColors.text),
             ),
           ),
         ],

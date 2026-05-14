@@ -86,6 +86,22 @@ class TaskFilterViewModel extends ChangeNotifier {
     );
   }
 
+  /// Clears only the search query while preserving category and advanced filters.
+  ///
+  /// Tenders and other scoped discovery screens call this when their visible
+  /// search field is reset so the controller text and ViewModel filter remain
+  /// aligned.
+  void clearSearch() {
+    if (_searchQuery.isEmpty) return;
+    _searchQuery = '';
+    _applyFilters();
+    AppLogger.d(
+      'home_search_cleared',
+      tag: 'HomeFilters',
+      json: {'result_count': _filteredTasks.length},
+    );
+  }
+
   void filterByCategory(String category) {
     _selectedCategory = category;
     _applyFilters();

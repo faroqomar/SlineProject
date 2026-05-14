@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/widgets/scale_button.dart';
+import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:sline_app/features/tasks/view/widgets/task_card.dart';
 
 import '../../test_support/pump_app.dart';
+
+class _MockSavedTasksViewModel extends Mock
+    with ChangeNotifier
+    implements SavedTasksViewModel {}
 
 Task _testTask({
   String id = 'task-1',
@@ -83,6 +90,51 @@ void main() {
 
       // Tender badge should be rendered
       expect(find.text('TENDER'), findsOneWidget);
+    });
+  });
+
+  group('TaskCard Phase 3 — Amber Dusk tender card', () {
+    late _MockSavedTasksViewModel savedVm;
+
+    setUp(() {
+      savedVm = _MockSavedTasksViewModel();
+      when(() => savedVm.isSaved(any())).thenReturn(false);
+    });
+
+    testWidgets('renders quiet tender hierarchy and preserves tap callback', (
+      tester,
+    ) async {
+      var tapped = false;
+      final task = _testTask(
+        title: 'Landing page for clothing brand',
+        description: 'Creative landing page for a new clothes line',
+        taskType: TaskType.tender,
+      );
+
+      await pumpApp(
+        tester,
+        ChangeNotifierProvider<SavedTasksViewModel>.value(
+          value: savedVm,
+          child: Scaffold(
+            body: SingleChildScrollView(
+              child: TaskCard(
+                task: task,
+                onTap: () => tapped = true,
+                useLegacyLayout: false,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Landing page for clothing brand'), findsOneWidget);
+      expect(find.text('TASK'), findsOneWidget);
+      expect(find.text('Make offer'), findsOneWidget);
+
+      await tester.tap(find.byType(ScaleButton).first);
+      await tester.pumpAndSettle();
+
+      expect(tapped, isTrue);
     });
   });
 }

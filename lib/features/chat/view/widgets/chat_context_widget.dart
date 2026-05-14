@@ -6,8 +6,8 @@ import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_states.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/features/chat/models/conversation_model.dart';
 import 'package:sline_app/features/tasks/view/task_details_screen.dart';
@@ -15,8 +15,10 @@ import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
 
 /// Compact pill showing the linked Task or Booking at the top of a chat screen.
 ///
-/// Phase 5 redesign: replaced hardcoded `AppColors.gold/teal` with semantic
-/// tokens (`colorScheme.warning/primary`), replaced raw icon sizes and spacing
+/// Phase 5 redesign: replaced hardcoded legacy accents with semantic
+/// tokens. The TransactionalQA recovery pass pins the accent to Amber Dusk
+/// instead of the legacy app primary.
+/// Replaced raw icon sizes and spacing
 /// with `AppDimens`/`AppLayout` tokens, added haptic feedback on tap, and
 /// full Semantics coverage for accessibility. View-layer only.
 ///
@@ -34,7 +36,7 @@ class ChatContextWidget extends StatelessWidget {
     if (taskId == null || taskId.isEmpty) return;
 
     AppInteractionStates.hapticTap();
-    AppLogger.i('ChatContextWidget: navigating to task $taskId', tag: 'Chat');
+    AppLogger.i('ChatContextWidget: navigating to linked task', tag: 'Chat');
 
     final taskVm = context.read<TaskViewModel>();
 
@@ -55,9 +57,14 @@ class ChatContextWidget extends StatelessWidget {
           const SnackBar(content: Text('Could not load task details.')),
         );
       }
-    } on Exception catch (e) {
+    } on Object catch (e, st) {
       if (context.mounted) {
-        AppLogger.e('Error loading task for context nav', error: e);
+        AppLogger.w(
+          'ChatContextWidget: linked task navigation failed',
+          tag: 'Chat',
+          error: e,
+          json: <String, dynamic>{'stack_trace': st.toString()},
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Could not open task details. Please try again.'),
@@ -79,9 +86,9 @@ class ChatContextWidget extends StatelessWidget {
 
     final isBooking = conversation.taskType == 'booking';
     final title = conversation.taskTitle ?? 'Untitled Task';
-    final colorScheme = context.colorScheme;
-    // Semantic tokens — warning for bookings, primary for tasks
-    final accentColor = isBooking ? colorScheme.warning : colorScheme.primary;
+    final amberColors = context.amberColors;
+    // Booking context gets the warning accent; task context stays on primary.
+    final accentColor = isBooking ? amberColors.warning : amberColors.primary;
     final contextLabel = isBooking ? 'BOOKING CONTEXT' : 'TASK CONTEXT';
 
     // Phase 6: compact pill — Center prevents full-width stretch
@@ -124,7 +131,7 @@ class ChatContextWidget extends StatelessWidget {
                   child: Text(
                     title,
                     style: AppTypography.caption.copyWith(
-                      color: colorScheme.text,
+                      color: amberColors.text,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -135,7 +142,7 @@ class ChatContextWidget extends StatelessWidget {
                 Icon(
                   Icons.chevron_right_rounded,
                   size: AppDimens.iconSizeSmall,
-                  color: colorScheme.textSecondary,
+                  color: amberColors.muted,
                 ),
               ],
             ),

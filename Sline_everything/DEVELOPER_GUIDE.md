@@ -1,7 +1,7 @@
 # 🗺️ SLine Developer Guide (Complete Reference)
 
-**Version**: 2.25.1 (Home discovery navigation consolidation: four-slot bottom nav, Home-hosted Bookings/Tenders discovery modes, named nav destination contract, route-push test seam)
-**Last Updated**: 2026-04-30
+**Version**: 2.33.0 (Amber Dusk Phase 9-12, Transactional QA Recovery, SystemEvolution 2026-05-14, and DocsKeeper sync)
+**Last Updated**: 2026-05-14
 
 This comprehensive guide consolidates all feature-specific documentation into a single reference. It includes the system map, architecture overview, and deep-dives for every feature module.
 
@@ -175,6 +175,7 @@ try {
 - **Service/Repo**: put all Supabase calls here; never from UI.
 - **ViewModel**: ChangeNotifier with loading/error state; expose typed methods for UI.
 - **UI**: Material 3, local form state, mounted checks after awaits.
+- **UI inventory**: update `Sline_everything/UI_SURFACE_INVENTORY.md` when adding or changing screens, routes, tabs, sheets, dialogs, popup menus, deep-link UI, or reusable widgets.
 - **Docs**: create `Sline_everything/DEVELOPER_GUIDE/New Feature.md` using the existing template (overview → DB mapping → inventory → ERD → snippets → errors → tests).
 
 ## 10. Testing & Quality
@@ -239,12 +240,279 @@ When changing this surface, update all of these together:
 - `test/features/profile/services/profile_deep_link_handler_test.dart`
 
 References:
-- Plan: `.TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
-- Plan Critique: `.TODO/PLAN_CRITIQUE_2026-04-30_HomeDiscoveryNavConsolidation.md`
-- Master Report: `.TODO/MASTER_REPORT_2026-04-30_HomeDiscoveryNavConsolidation.md`
+- Plan: `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`
+- Plan Critique: `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/PLAN_CRITIQUE_2026-04-30_HomeDiscoveryNavConsolidation.md`
+- Master Report: `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/MASTER_REPORT_2026-04-30_HomeDiscoveryNavConsolidation.md`
 - Session Log: `docs/LOG/SESSION_HomeDiscoveryNavConsolidation_2026-04-30.md`
 - System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-04-30.md`
 - Supabase objects changed: none
+
+### Amber Dusk Phase 0 and Agent System Evolution (2026-05-11)
+
+Amber Dusk Phase 0 added a staged Open Design token layer under
+`lib/core/theme/designs/amber_dusk/`. This layer is prepared-but-inactive:
+it can be imported through
+`lib/core/theme/designs/amber_dusk/amber_dusk_tokens.dart` for token access,
+tests, and future preview tooling, but it does not change runtime `ThemeData`
+or any widget appearance until a later activation step explicitly maps it into
+`AppTheme`.
+
+The 2026-05-11 Orchestrator review closed all BLOCKER/HIGH/MED findings for
+this staged layer. The follow-up SystemEvolution pass merged durable agent rules
+for token value provenance, public entry-point-first file contracts, UI
+lifecycle pitfalls, import/orphan hygiene, regex edge-case coverage, path/skill
+validation, and navigation smoke evidence into `.cursor/Agents/`.
+
+References:
+- Plan: `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/PLAN_OpenDesign_AmberDusk_Phase0_PhoneFoundation_2026-05-11.md`
+- Plan Critique: `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/PLAN_CRITIQUE_2026-05-11_OpenDesign_AmberDusk_Phase0_PhoneFoundation.md`
+- Master Report: `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/MASTER_REPORT_2026-05-11_OpenDesign_AmberDusk_Phase0.md`
+- Emulator Checklist: `.TODO/Archive/EMULATOR_TEST_CHECKLIST_2026-05-11_OpenDesign_AmberDusk_Phase0.md`
+- Session Log: `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phase0_PhoneFoundation_2026-05-11.md`
+- System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-11.md`
+- Docs Sync: `.TODO/Archive/OpenDesign_AmberDusk_Phase0_2026-05-11/DOCS_SYNC_2026-05-11_DocsKeeper_AgentSystemAmberDusk.md`
+- Key token entry point: `lib/core/theme/designs/amber_dusk/amber_dusk_tokens.dart`
+- Supabase objects changed: none
+
+### Amber Dusk Phase 1 Core Phone Widgets (2026-05-11)
+
+Amber Dusk Phase 1 activates the Open Design look for a narrow shared-widget
+surface without flipping the entire app theme. The activation point is
+`lib/core/theme/designs/amber_dusk/amber_dusk_widget_theme.dart`, exported
+through `amber_dusk_tokens.dart` as `AmberDuskTokens.widgetTheme`.
+
+Runtime widget changes are limited to shared controls and surfaces: buttons,
+text fields, icon buttons, cards, the bottom nav, tab styling, status badges,
+skeleton placeholders, and signed-media placeholders. Signed media remains
+visual-only in this phase: `SignedImage` keeps its pre-existing URL/Supabase
+resolution behavior and `SignedAvatar` keeps the existing generator contract.
+
+Implementation notes:
+- Use `AmberDuskTokens.widgetTheme` for shared-widget recipes instead of raw
+  Amber colors, radii, font sizes, shadows, or padding inside widgets.
+- Keep `AppTheme.light()` and `AppTheme.dark()` as the active global theme;
+  Phase 1 only updates the tab theme and listed shared widgets.
+- Do not add blur, glass, `BackdropFilter`, `ImageFilter.blur`, or deleted
+  `glass_*` widget files.
+- Run focused shared-widget tests, representative downstream widget smoke
+  tests, and `flutter test --coverage` for future changes to this surface.
+
+References:
+- Plan: `.TODO/Archive/OpenDesign_AmberDusk_Phase1_2026-05-11/PLAN_OpenDesign_AmberDusk_Phase1_CorePhoneWidgets_2026-05-11.md`
+- Plan Critique: `.TODO/Archive/OpenDesign_AmberDusk_Phase1_2026-05-11/PLAN_CRITIQUE_2026-05-11_OpenDesign_AmberDusk_Phase1_CorePhoneWidgets.md`
+- Session Log: `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phase1_CorePhoneWidgets_2026-05-11.md`
+- Open Design screenshots: `.TODO/Archive/OpenDesign_AmberDusk_Phase1_2026-05-11/OpenDesign_AmberDusk_Phase1_OpenDesignScreenshots_2026-05-11/`
+- Docs Sync: `.TODO/Archive/OpenDesign_AmberDusk_Phase1_2026-05-11/DOCS_SYNC_2026-05-11_OpenDesign_AmberDusk_Phase1_CoreWidgets.md`
+- Web Handoff: `.TODO/WebRedsign/HANDOFF_OpenDesign_AmberDusk_Phase1_CoreWidgets_ToWeb_2026-05-11.md`
+- Supabase objects changed: none
+
+### Amber Dusk Phases 2-4 Phone Shell, Discovery, And Dashboard (2026-05-12)
+
+Amber Dusk Phases 2-4 apply the Open Design phone direction to scoped runtime
+surfaces without changing Supabase, services, repositories, or global
+`MaterialApp` theme activation. The affected surface is the authenticated phone
+shell, create-task sheet, Home discovery modes, task/booking cards, selected
+secondary discovery screens, dashboard tabs/cards, and wallet dashboard
+surfaces.
+
+Implementation notes:
+- `lib/app/main_navigation_screen.dart` and
+  `lib/core/widgets/custom_bottom_nav_bar.dart` own the phone shell, FAB, and
+  bottom-nav Amber Dusk treatment.
+- `lib/features/tasks/view/create_task_screen.dart` owns the create-task type,
+  details, and review sheet states. Temporary package-detail metadata is routed
+  through `Task.packageDetailsKey`, `Task.packageDetailsFrom`, and
+  `Task.packagesWithDetails` in `lib/features/tasks/models/task_model.dart`;
+  views must not repeat raw sentinel keys.
+- Home and discovery card visuals are scoped to
+  `lib/features/home/view/home_screen.dart`,
+  `lib/features/home/view/widgets/filters_modal.dart`,
+  `lib/features/tasks/view/widgets/task_card.dart`,
+  `lib/features/tasks/view/widgets/tender_task_card.dart`,
+  `lib/features/tasks/view/widgets/booking_task_card.dart`, and
+  `lib/features/booking/view/widgets/booking_card.dart`.
+- Dashboard work covers `lib/features/dashboard/view/dashboard_screen.dart`,
+  dashboard tab files, `DashboardBookingCard`, `DashboardOfferCard`,
+  `WorkItemCard`, and wallet card widgets. Dashboard action behavior remains
+  ViewModel/service-owned; the UI only adjusts actions, labels, tokens, and
+  accessibility.
+- Search, Categories, Saved, and Favorites are token-normalization /
+  accessibility-only unless a future Open Design or user screenshot provides an
+  exact phone-state reference.
+- Messages and Profile were added to the Step 6 review scope by explicit
+  follow-up findings. Their fixes are documented as scope amendments and covered
+  by targeted tests plus the emulator checklist.
+- No Supabase objects changed.
+
+Validation recorded in the Step 6 Master Report:
+- `flutter gen-l10n`: passed.
+- `dart format` on changed Dart files: passed, 68 files checked, 0 changed.
+- `git diff --check`: passed.
+- `flutter analyze --no-fatal-infos`: passed.
+- Focused regression suite: passed, 47 tests.
+- `flutter test`: passed, 1523 tests passed, 30 skipped.
+
+Runtime visual QA remains an open release gate. The implementation has Open
+Design screenshots and runtime iOS Simulator captures, but final visual parity
+must be checked with the emulator checklist before the phase is called visually
+complete.
+
+References:
+- Plan: `.TODO/PLAN_OpenDesign_AmberDusk_Phases2_3_4_PhoneShellDiscoveryDashboard_2026-05-11.md`
+- Plan Critique: `.TODO/PLAN_CRITIQUE_2026-05-11_OpenDesign_AmberDusk_Phases2_3_4_PhoneShellDiscoveryDashboard.md`
+- Open Design screenshots: `.TODO/OpenDesign_AmberDusk_Phases2_3_4_OpenDesignScreenshots_2026-05-11/`
+- Runtime visual QA captures: `.TODO/VisualQA_OpenDesign_AmberDusk_Phases2_3_4_iOSSimulator_2026-05-12/`
+- Master Report: `.TODO/Archive/OpenDesign_AmberDusk_Phases2_3_4_2026-05-12/MASTER_REPORT_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4_Step6.md`
+- Emulator Checklist: `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4_Step6.md`
+- Session Log: `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phases2_3_4_PhoneShellDiscoveryDashboard_2026-05-11.md`
+- System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-12.md`
+- Docs Sync: `.TODO/Archive/OpenDesign_AmberDusk_Phases2_3_4_2026-05-12/DOCS_SYNC_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4.md`
+- Supabase objects changed: none
+
+### Amber Dusk Phases 5-8 Trust, Messaging, Work, Payments, And Wallet (2026-05-13)
+
+Amber Dusk Phases 5-8 extend the scoped Open Design phone treatment across
+auth/system gates, chat and notifications, task/work/payment-adjacent flows,
+booking/payment screens, and wallet summary surfaces. This remains a view-layer
+and widget/test/docs phase: it does not activate Amber Dusk globally through
+`MaterialApp`, does not change Supabase migrations/functions/RLS, and does not
+create new wallet withdrawal or payment authority.
+
+Implementation notes:
+- Phase 5 auth/system gates cover login, signup, password recovery/reset,
+  restricted account, maintenance, and update-required screens. Support and
+  store actions are real actions, not log-only stubs, and user-facing failures
+  stay generic.
+- Phase 6 keeps Messages `Received`/`Sent` copy as visual copy only until a
+  stable conversation-direction contract exists. It also keeps attachment
+  signed URL resolution behind `ChatViewModel` and chat attachment services.
+- Phase 7 task, tender, request-award, work, and management surfaces use token
+  and accessibility cleanups while preserving ViewModel/service lifecycle
+  authority.
+- Phase 8 booking, payment, WebView, return, method, order-summary, and wallet
+  surfaces use Amber Dusk tokens and safe state copy. Wallet withdraw/top-up
+  remain disabled/upcoming surfaces unless a separate product/backend/security
+  plan activates them.
+- Payment/WebView/deep-link logs must expose only safe URL facts such as parse
+  state, scheme kind, path kind, trust booleans, and query-key presence. Do not
+  log raw callback URLs, hosts, paths, query values, payment gateway payloads, or
+  private storage paths from view-layer code.
+- `NotificationViewModel` now treats Supabase Realtime websocket close codes
+  `1002` and `1006` as transient transport failures: it preserves cached
+  notifications, cancels stale subscriptions, and reconnects with testable
+  backoff. Non-transient stream errors still use the existing user-facing error
+  path.
+- Wrapper/entry widget tests for shared screens must use the same app theme or
+  established app pump harness when the production screen consumes
+  `context.colorScheme`, `context.amberColors`, or theme extensions.
+
+Validation recorded for this block:
+- `dart format` on touched Dart files: passed.
+- `flutter analyze --no-fatal-infos`: passed.
+- focused touched-surface widget/unit tests: passed.
+- `flutter test --coverage`: passed and parsed at 49.77%.
+- full `flutter test`: passed.
+- `git diff --check`: passed.
+
+Runtime visual QA remains open. The Step 6 Master Report and emulator checklist
+cover every touched Dart source file, test fixture, docs artifact, and exported
+Open Design screenshot; final parity requires an emulator/device pass.
+
+References:
+- Plan: `.TODO/PLAN_OpenDesign_AmberDusk_Phases5_6_7_8_PhoneTrustMessagingWorkPayments_2026-05-12.md`
+- Plan Critique: `.TODO/PLAN_CRITIQUE_2026-05-12_OpenDesign_AmberDusk_Phases5_6_7_8_PhoneTrustMessagingWorkPayments.md`
+- Screenshot manifest: `.TODO/OpenDesign_AmberDusk_Phases5_6_7_8_OpenDesignScreenshots_2026-05-12/README.md`
+- Master Report: `.TODO/Archive/OpenDesign_AmberDusk_Phases5_6_7_8_2026-05-13/MASTER_REPORT_2026-05-12_OpenDesign_AmberDusk_Phases5_6_7_8_Step6.md`
+- Emulator Checklist: `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases5_6_7_8.md`
+- Session Log: `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phases5_6_7_8_PhoneTrustMessagingWorkPayments_2026-05-12.md`
+- System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-13.md`
+- Docs Sync: `.TODO/Archive/OpenDesign_AmberDusk_Phases5_6_7_8_2026-05-13/DOCS_SYNC_2026-05-13_OpenDesign_AmberDusk_Phases5_6_7_8.md`
+- Supabase objects changed: none
+
+### Amber Dusk Phases 9-12 Profile, Secondary, Readiness, And Handoff (2026-05-13)
+
+Amber Dusk Phases 9-12 close the phone profile ecosystem and secondary-screen
+readiness pass before web handoff. The work covers profile, public profile,
+settings, avatar upload surfaces, portfolio screens/sheets/tiles, services,
+search, categories, favorites, saved tasks, notification modal/list/badge,
+loading overlays, status presentation, and shared CTA metadata.
+
+Implementation notes:
+- This remains scoped Flutter view/helper work. It does not activate Amber Dusk
+  globally and does not change Supabase schema, RLS, RPCs, storage policies, or
+  Edge Functions.
+- Step 5 gap scanning tightened Open Design structure for profile/public-profile
+  composition, compact portfolio proof tiles, service rows, notification danger
+  contrast, sheet geometry, and tap-target semantics.
+- Step 6 Orchestrator review fixed notification badge contrast, mark-all failure
+  feedback, logout confirmation, report reason gating, search tab semantics,
+  modal stacking guards, raw layout-token debt, and stale skip wording.
+- The web handoff for Mohammed is `.TODO/WebRedsign/HANDOFF_OpenDesign_AmberDusk_Phases9_10_11_12_ToWeb_2026-05-13.md`.
+
+Runtime visual QA remains open for the Phase 9/10 surfaces at 360, 390, 402,
+and 430 logical widths. Use `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12_Step6.md`.
+
+References:
+- Plan: `.TODO/PLAN_OpenDesign_AmberDusk_Phases9_10_11_12_PhoneProfileSecondaryReadiness_2026-05-13.md`
+- Plan Critique: `.TODO/PLAN_CRITIQUE_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12_PhoneProfileSecondaryReadiness.md`
+- Master Report: `.TODO/MASTER_REPORT_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12.md`
+- Session Log: `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_Phases9_10_11_12_PhoneProfileSecondaryReadiness_2026-05-13.md`
+- Docs Sync: `.TODO/DOCS_SYNC_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12.md`
+- Supabase objects changed: none
+
+### Amber Dusk Transactional QA Recovery (2026-05-13/14)
+
+Transactional QA Recovery fixes the simulator-reported marketplace loops around
+booking payment recovery, proposal money entry, signup/post routing, Dashboard
+empty states, chat/offer surfaces, and payment/customer trust.
+
+Implementation notes:
+- `PaymentWebViewScreen` now receives the payment intent stream for booking
+  payments and can return sanitized `PaymentReturnArgs` on realtime success.
+- `PaymentReturnArgs` accepts `SUCCEEDED` as a success status and carries trusted
+  IDs through app state instead of requiring customer-facing callback URLs to
+  expose booking, payer, entity, intent, or correlation metadata.
+- `PaymentReturnScreen` and checkout recovery can fall back to
+  `PaymentPendingStore` or widget state for sanitized callbacks.
+- Booking recovery refreshes booking lists and dashboard state after held payment
+  recovery; unknown gateway state stays recoverable rather than becoming a hard
+  failure.
+- `qicard_payment_create` and `create_payment_intent` local Edge Function source
+  now keep technical IDs in `additionalInfo` for webhook/log correlation while
+  keeping finish URL query params customer-safe.
+- Touched proposal/request, booking package, direct-offer, dashboard, wallet,
+  and chat money displays use whole-IQD semantics. Avoid `/100` or `*100`
+  conversions unless an RPC explicitly asks for cents.
+- Signup success resets to Main/Home. Create-post completion returns a
+  `CreateTaskResult` so Main navigation can refresh Home and show durable
+  success feedback.
+- Dashboard empty states provide route-back CTAs; Dashboard Inbox no longer
+  displays a disabled Sent mode; Messages search clarifies current-mode scope;
+  Wallet withdraw is intentionally disabled with availability copy.
+
+Runtime proof rules from `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-14.md` now
+apply to all future transactional QA:
+- Current-app runtime checks must include focused, active, disabled, error,
+  loading, recovery, and route-transition background states for forms,
+  composers, sheets, payment/booking screens, and transactional CTAs.
+- Payment and booking work must verify source route, result route, Dashboard
+  Bookings, Dashboard Work, and list buckets after success, pending, failed,
+  canceled, retry, and recovery paths.
+- Customer-facing payment result UI must show safe status, amount, app context,
+  next action, and recovery path. Technical IDs and raw callback metadata belong
+  in logs/support tooling only.
+- If the final QiCard gateway action is not executed in a tool session, the
+  branch remains open and must be reported as unproven.
+
+References:
+- Plan: `.TODO/PLAN_OpenDesign_AmberDusk_TransactionalQARecovery_2026-05-13.md`
+- Source VisualQA Report: `.TODO/VisualQA_OpenDesign_AmberDusk_Phases9_10_11_12_iOSSimulator_2026-05-13/REPORT.md`
+- Runtime Smoke Report: `.TODO/VisualQA_OpenDesign_AmberDusk_TransactionalQARecovery_iOSSimulator_2026-05-13/SIMULATOR_SMOKE_REPORT.md`
+- Screenshot checklist: `.TODO/VisualQA_OpenDesign_AmberDusk_TransactionalQARecovery_iOSSimulator_2026-05-13/README.md`
+- Current-app screenshots: `.TODO/VisualQA_OpenDesign_AmberDusk_TransactionalQARecovery_iOSSimulator_2026-05-14/screenshots/`
+- Session Log: `docs/LOG/SESSION_PLAN_OpenDesign_AmberDusk_TransactionalQARecovery_2026-05-13.md`
+- System Evolution: `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-14.md`
+- Supabase objects changed: local Edge Function source only (`supabase/functions/qicard_payment_create/index.ts`, `supabase/functions/create_payment_intent/index.ts`); no migration/RLS/schema changes
 
 ### 10.1 CI/CD Pipeline
 
@@ -254,7 +522,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every push/PR to `main`:
 |-----|-------------|---------------|
 | **Lint & Analyze** | `dart format --set-exit-if-changed .` + `flutter analyze --no-fatal-infos` | Yes (warnings/errors fail) |
 | **Architecture Guard** | 7 grep-based MVVM boundary checks (Supabase in views, controllers in VMs, Navigator in VMs, repo imports in views, view imports in VMs, Supabase in VMs, core-to-features boundary). Check 7 (Phase E): blocks `core/` importing from `features/` (max 5 threshold). | Yes (hard failure since Phase B, 2026-04-01) |
-| **Unit & Widget Tests** | `flutter test --coverage` with coverage % reported to PR summary | Yes |
+| **Unit & Widget Tests** | `flutter test --coverage` with coverage % reported to PR summary, 40% floor enforced, and `coverage/lcov.info` uploaded as the `coverage-lcov` artifact for 7 days. The generated `coverage/` folder is ignored locally and should not be committed. | Yes |
 | **Build** | APK (debug) + Web (release) compilation | Yes |
 
 Flutter version pinned: **3.38.9** across all jobs.
@@ -442,6 +710,7 @@ Flutter's built-in `gen-l10n` pipeline is wired up and ready for translation.
 - Saved: `DEVELOPER_GUIDE/Saved Feature.md`
 - Portfolio: `DEVELOPER_GUIDE/Portfolio Feature.md`
 - Categories: `DEVELOPER_GUIDE/Categories Feature.md`
+- UI Surface Inventory: `UI_SURFACE_INVENTORY.md`
 - Inventory: `DEVELOPER_GUIDE/Inventory Feature.md` (Planned)
 - Order Management: `DEVELOPER_GUIDE/Order_Management_Feature.md`
 - Proposals: `DEVELOPER_GUIDE/Proposals_Feature.md`
@@ -1725,6 +1994,7 @@ Core also owns two browser-specific stability helpers:
 | `lib/core/theme/app_states.dart`                 | theme     | Interaction state definitions: 8-state model (default→error), focus ring, shake, haptic mapping. |
 | `lib/core/theme/app_decorations.dart`            | theme     | 5-level elevation shadow scale + input/badge/avatar decoration methods. NO GLASS (Phase 1). |
 | `lib/core/theme/theme_dashboard.dart`            | theme     | Documentation-only reference for all design tokens. **Read this first for token overview.** |
+| `lib/core/theme/designs/amber_dusk/`             | theme     | **Amber Dusk Phase 0/1** design layer: staged tokens plus the Phase 1 shared-widget adapter. Importing `amber_dusk_tokens.dart` exposes constants and `AmberDuskTokens.widgetTheme`; only widgets explicitly routed through the adapter change appearance. The global `MaterialApp` theme is not flipped by this layer. |
 | `lib/core/widgets/custom_bottom_nav_bar.dart`    | widget    | Shared app shell bottom nav.                                                            |
 | `lib/core/widgets/signed_avatar.dart`            | widget    | Renders private avatar paths through signed URLs.                                       |
 | `lib/core/widgets/signed_image.dart`             | widget    | Renders private image paths through signed URLs.                                        |
@@ -1736,6 +2006,7 @@ The design system separates DESIGN (structure) from THEME (visual identity) so e
 ```
 Layer 1 — THEME (colors, typography, motion, elevation, interaction states)
   AppColors, AppTypography, AppMotion, AppDecorations, AppStates, AppTheme
+  Optional staged design layers under lib/core/theme/designs/<design_name>/
 
 Layer 2 — LAYOUT (spacing, sizes, structure, proportions)
   AppLayout (semantic tokens: cardPadding, avatarMedium, buttonHeight, spacingSection)
@@ -1745,10 +2016,37 @@ Layer 3 — COMPONENTS (widgets that CONSUME Layer 1 + Layer 2)
   All widgets in lib/core/widgets/ and lib/features/*/view/
 ```
 
+Layer 1 is the active runtime theme. Today `MaterialApp` receives
+`AppTheme.light()`, `AppTheme.dark()`, and `ThemeModeProvider.themeMode`; widgets
+consume the resulting `ThemeData`, `ColorScheme`, `AppThemeExtension`, and core
+tokens. Optional staged designs under `lib/core/theme/designs/<design_name>/`
+are prepared supplement layers. Importing a staged barrel such as
+`amber_dusk_tokens.dart` gives access to named token constants for preview,
+tests, adapters, or implementation work. It does not apply values globally by
+itself; widgets change only when they explicitly consume an adapter such as
+`AmberDuskTokens.widgetTheme`.
+
+Token contracts are agreed token interfaces and named token sets. For example,
+`amber_dusk_tokens.dart` is the Amber Dusk contract: it exports colors,
+typography roles, spacing, surfaces, motion, component recipes, and phone layout
+values using stable names. Consumers may reference those tokens for prototype
+previews and tests now. Production widgets should continue to read from the
+active `AppTheme` unless a scoped adapter activation has been accepted and
+documented, as Phase 1 does for selected shared phone widgets.
+
+The current activation workflow is a code merge through `AppTheme` and the
+`MaterialApp` theme wiring in `lib/main.dart`. A future activation must document
+the exact adapter/API it introduces, the changelog or session-log entry that
+records the switch, and the user impact: runtime visuals change only after
+activation, preview tooling can opt into staged tokens earlier, and consumers
+should opt out by continuing to use the active `AppTheme` tokens.
+
 **Rules:**
 - Components NEVER hardcode colors, font sizes, durations, padding, avatar sizes, card heights, or spacing.
-- To retheme: change Layer 1 files (AppColors, AppTypography, AppMotion).
+- To retheme the active app: change Layer 1 files (`AppColors`, `AppTypography`, `AppMotion`, `AppDecorations`, `AppStates`, `AppTheme`) and verify the whole affected runtime surface.
+- To activate a staged design: add an explicit adapter or merge path that feeds the staged token set into `AppTheme.light()` / `AppTheme.dark()` or a documented theme activation API, then record that activation in the session log/docs before widgets depend on it.
 - To redesign layout: change Layer 2 files (AppLayout, AppDimens).
+- Components consume tokens from the active `AppTheme` unless a documented staged-design adapter is explicitly in scope for that component family.
 - `AppDimens` = raw scale (p16 = 16px). `AppLayout` = semantic meaning (cardPadding = 16px for card context).
 - No overlapping icon sizes: AppDimens has 16/24/32, AppLayout has 12/20/48.
 
@@ -2073,7 +2371,7 @@ The chat module provides one-to-one messaging between a client and a freelancer.
 
 **New in v2.8.2**:
 
-- `ChatContextWidget`: Glassmorphism banner linking chat to its task. Tapping navigates to Task Details.
+- `ChatContextWidget`: Solid context banner linking chat to its task. Tapping navigates to Task Details.
 - `LoadingUtils`: Used to show blocking loaders during navigation or heavy actions.
 
 **Direct Chat Offers (v2.17)**: Freelancer creates an offer from any 1:1 chat (no task required). Client accepts in chat only; payment is from Dashboard (QiCard). Full flow, DB mapping, and file inventory: [Direct Chat Offers (Direct Offers Feature)](DEVELOPER_GUIDE/Direct_Offers_Feature.md).
@@ -2524,9 +2822,9 @@ Current server-backed booking/payment flow depends on:
 | `lib/features/booking/data/booking_repository.dart`        | repository | Thin abstraction over `BookingService` plus current-user access.                                    |
 | `lib/features/booking/viewmodels/booking_view_model.dart`  | viewmodel  | Orchestrates booking lists, payment creation/recovery, delivery/release actions, and chat handoff.  |
 | `lib/features/booking/view/bookings_discovery_screen.dart` | view       | Booking-task discovery surface powered by the home/task feed.                                       |
-| `lib/features/booking/view/payment_checkout_screen.dart`   | view       | Direct booking checkout screen; creates draft booking and launches payment flow.                    |
-| `lib/features/booking/view/payment_webview_screen.dart`    | view       | Mobile webview payment container for trusted callback flows.                                        |
-| `lib/features/booking/view/payment_return_screen.dart`     | view       | Web callback landing screen that validates callback state and triggers recovery.                    |
+| `lib/features/booking/view/payment_checkout_screen.dart`   | view       | Direct booking checkout screen; creates draft booking, launches QiCard, listens for payment intent recovery, and refreshes booking state. |
+| `lib/features/booking/view/payment_webview_screen.dart`    | view       | Mobile webview payment container for trusted callback flows and realtime intent completion.          |
+| `lib/features/booking/view/payment_return_screen.dart`     | view       | Web callback landing screen that validates sanitized callback state, falls back to pending context, and triggers recovery. |
 | `lib/features/booking/view/payment_method_screen.dart`     | view       | Demo/manual payment form used by non-QiCard paths.                                                  |
 | `lib/features/booking/view/bookings_list_screen.dart`      | view       | Client/provider booking history list with filtering and pagination.                                 |
 | `lib/features/booking/view/booking_details_screen.dart`    | view       | Detailed booking view with CTA resolution, management timeline, and message handoff.                |
@@ -2539,18 +2837,19 @@ Current server-backed booking/payment flow depends on:
 1. A client opens a booking task and starts checkout.
 2. `PaymentCheckoutScreen` calls `BookingViewModel.createPaymentForBooking(...)`.
 3. `QiCardPaymentService` invokes `qicard_payment_create`.
-4. The server validates the task/package/request payload, creates a canonical booking draft, and returns `booking_id`, `form_url`, and correlation identifiers.
+4. The server validates the task/package/request payload, creates a canonical booking draft, and returns `booking_id`, `form_url`, correlation identifiers, and `paymentIntentId` when available.
 
 ### 4.2 Gateway handoff
 
-- **Mobile**: `PaymentWebViewScreen` opens the payment URL and only accepts trusted callback hosts/booking identifiers.
+- **Mobile**: `PaymentWebViewScreen` opens the payment URL, listens to the payment-intent stream when present, and only accepts trusted callback hosts or trusted widget-state identifiers.
 - **Web**: checkout persists `PendingPaymentContext` through `PaymentPendingStore` and redirects the browser in the same tab.
 
 ### 4.3 Recovery
 
-- When the gateway returns, the app uses `PaymentReturnArgs` plus stored pending context.
-- `PaymentReturnScreen` or `PaymentCheckoutScreen` calls `recoverBookingPaymentWithRetries(...)`.
+- When the gateway returns, the app uses sanitized `PaymentReturnArgs` plus stored pending context or widget-held trusted state.
+- `PaymentReturnScreen`, `PaymentWebViewScreen`, or `PaymentCheckoutScreen` calls `recoverBookingPaymentWithRetries(...)` as appropriate.
 - Recovery succeeds only when the booking reaches `payment_status = held`.
+- After recovery, booking and dashboard state must refresh so a terminal or held payment never leaves the source route in the unchanged `Book Basic` purchase state.
 
 ### 4.4 Post-payment actions
 
@@ -2757,8 +3056,8 @@ Internal HMAC verification (create edge writes signature, webhook verifies) is p
 
 1. **Create draft / accept offer**: Booking draft or direct offer accepted, unpaid.
 2. **Create payment**: App calls `qicard_payment_create` (booking) or `qicard_payment_create_direct_offer` (direct offer). Edge returns `intent_id` and `form_url` when it inserts a row into `payment_intents`.
-3. **Realtime (when intent_id present)**: UI subscribes to `payment_intents(id)` via `PaymentService.streamPaymentIntentStatus(intentId)`. Booking: `PaymentCheckoutScreen`; direct offer: `PaymentWebViewScreen` (receives `paymentIntentStatusStream`).
-4. **Webview**: User completes payment at `form_url`. On success, webhook updates intent and ledger; Realtime delivers status → UI pops with success. If Realtime is not used (no intent_id), app relies on callback URL and recovery.
+3. **Realtime (when intent_id present)**: UI subscribes to `payment_intents(id)` via `PaymentService.streamPaymentIntentStatus(intentId)`. Booking and direct-offer WebView flows pass the stream into `PaymentWebViewScreen`; checkout/return screens keep pending context for fallback recovery.
+4. **Webview**: User completes payment at `form_url`. On success, webhook updates intent and ledger; Realtime delivers status → UI pops with sanitized success args. If Realtime is not used, app relies on sanitized callback URL plus trusted pending/widget state and recovery.
 
 ## 5. Security & Idempotency
 
@@ -2816,7 +3115,7 @@ Key features:
 
 ### 3.1 Payment Flow
 
-**QiCard (default)**: `PaymentCheckoutScreen` creates a server-validated booking draft through `qicard_payment_create`, launches the gateway form, then relies on webhook/recovery to move the booking to `payment_status=held`. Web uses same-tab redirect plus `PaymentReturnScreen`; mobile uses `PaymentWebViewScreen`.
+**QiCard (default)**: `PaymentCheckoutScreen` creates a server-validated booking draft through `qicard_payment_create`, launches the gateway form, then relies on webhook/realtime/recovery to move the booking to `payment_status=held`. Web uses same-tab redirect plus `PaymentReturnScreen`; mobile uses `PaymentWebViewScreen` with trusted callback and intent-stream completion.
 
 **Demo**: `processPayment()` is still available through `DemoPaymentService`, but the live booking purchase path is the server-backed QiCard flow.
 

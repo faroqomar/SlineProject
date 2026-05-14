@@ -1,15 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 
-/// Widget for displaying and editing user profile avatar
+/// Displays and edits the signed profile avatar from [ProfileViewModel].
+///
+/// The widget stays view-only: image picking and upload remain owned by the
+/// ViewModel while this surface applies Amber Dusk media tokens.
 class ProfileAvatarWidget extends StatelessWidget {
+  /// Avatar radius used to size the circular image surface.
   final double radius;
+
+  /// Whether the camera affordance should be shown.
   final bool enableEdit;
 
+  /// Creates an avatar control for profile edit and account screens.
   const ProfileAvatarWidget({
     super.key,
-    this.radius = 60,
+    this.radius = AppDimens.p60,
     this.enableEdit = true,
   });
 
@@ -21,6 +32,8 @@ class ProfileAvatarWidget extends StatelessWidget {
             controller.avatarSignedUrl != null &&
             controller.avatarSignedUrl!.isNotEmpty;
         final diameter = radius * 2;
+        final amberColors = context.amberColors;
+        final mediaTheme = AmberDuskTokens.widgetTheme.media;
 
         return Center(
           child: Stack(
@@ -31,10 +44,10 @@ class ProfileAvatarWidget extends StatelessWidget {
                 height: diameter,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.grey.shade200,
+                  color: mediaTheme.avatarFallback,
                   border: Border.all(
-                    color: Theme.of(context).primaryColor,
-                    width: 3,
+                    color: amberColors.primary,
+                    width: AppDimens.p2,
                   ),
                   image: hasImage
                       ? DecorationImage(
@@ -45,32 +58,56 @@ class ProfileAvatarWidget extends StatelessWidget {
                 ),
                 child: hasImage
                     ? null
-                    : Icon(Icons.person, size: radius, color: Colors.grey),
+                    : Icon(
+                        Icons.person,
+                        size: radius,
+                        color: mediaTheme.foreground,
+                      ),
               ),
               if (enableEdit)
                 Positioned(
-                  bottom: 0,
-                  right: 0,
+                  bottom: AppDimens.p0,
+                  right: AppDimens.p0,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor,
+                      color: amberColors.primary,
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
+                      border: Border.all(
+                        color: context.colorScheme.phoneBackground,
+                        width: AppDimens.p2,
+                      ),
                     ),
                     child: IconButton(
-                      icon: const Icon(
+                      tooltip: 'Change profile photo',
+                      icon: Icon(
                         Icons.camera_alt,
-                        color: Colors.white,
-                        size: 20,
+                        color: amberColors.textInverse,
+                        size: AppDimens.iconSmall,
                       ),
                       onPressed: () async {
+                        AppLogger.d(
+                          'Profile avatar upload requested',
+                          tag: 'Profile',
+                        );
                         await controller.pickAndUploadAvatar();
                         if (controller.avatarUploadError != null &&
                             context.mounted) {
+                          AppLogger.w(
+                            'Profile avatar upload failed',
+                            tag: 'Profile',
+                            json: <String, dynamic>{
+                              'reason': controller.avatarUploadError,
+                            },
+                          );
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(controller.avatarUploadError!),
                             ),
+                          );
+                        } else {
+                          AppLogger.d(
+                            'Profile avatar upload completed',
+                            tag: 'Profile',
                           );
                         }
                       },
@@ -78,18 +115,25 @@ class ProfileAvatarWidget extends StatelessWidget {
                   ),
                 ),
               if (controller.avatarUploading)
-                Container(
-                  width: 124,
-                  height: 124,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.25),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                Semantics(
+                  label: 'Uploading profile photo',
+                  liveRegion: true,
+                  child: Container(
+                    width: diameter,
+                    height: diameter,
+                    decoration: BoxDecoration(
+                      color: amberColors.scrim,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: SizedBox(
+                        width: AppDimens.p24,
+                        height: AppDimens.p24,
+                        child: CircularProgressIndicator(
+                          color: amberColors.primary,
+                          strokeWidth: AppDimens.p2,
+                        ),
+                      ),
                     ),
                   ),
                 ),

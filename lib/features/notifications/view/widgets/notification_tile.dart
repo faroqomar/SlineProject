@@ -1,25 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_states.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/features/notifications/models/notification_model.dart';
 
 /// Individual notification tile with semantic colors, unread indicator,
 /// haptic feedback, and full Semantics coverage.
 ///
-/// Phase 5 redesign: replaced all hardcoded `AppColors.teal/gold/mediumGrey/lightRed`
-/// with semantic tokens (`colorScheme.primary/warning/textSecondary/danger`).
-/// Enhanced unread dot from 8px to 10px, added haptic on tap, and full
-/// accessibility label. View-layer only.
+/// Phase 5 redesign moved legacy colors to semantic tokens, enhanced the
+/// unread dot, added haptic feedback, and kept the tile view-layer only.
 class NotificationTile extends StatelessWidget {
+  /// Notification data already loaded by [NotificationViewModel].
   final NotificationItem notification;
+
+  /// Tap callback owned by the modal so deep-link routing stays above the tile.
   final VoidCallback onTap;
 
+  /// Creates one notification row for the modal list.
   const NotificationTile({
     super.key,
     required this.notification,
@@ -29,6 +31,7 @@ class NotificationTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
     final isRead = notification.isRead;
 
     return Semantics(
@@ -44,20 +47,19 @@ class NotificationTile extends StatelessWidget {
         onTap: () {
           AppInteractionStates.hapticTap();
           AppLogger.d(
-            'NotificationTile: tapped ${notification.id} '
-            '(type: ${notification.type.name})',
+            'NotificationTile: tapped ${notification.type.name} notification',
             tag: 'Notifications',
           );
           onTap();
         },
         child: Container(
-          // Subtle primary tint for unread — replaces hardcoded AppColors.teal
-          color: isRead ? null : colorScheme.primary.withValues(alpha: 0.05),
+          // Subtle primary tint keeps unread rows visible without a new state.
+          color: isRead ? null : amberColors.primary.withValues(alpha: 0.05),
           padding: const EdgeInsets.all(AppDimens.p16),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildIcon(colorScheme),
+              _buildIcon(context),
               const SizedBox(width: AppDimens.p12),
               Expanded(
                 child: Column(
@@ -75,6 +77,8 @@ class NotificationTile extends StatelessWidget {
                                   : FontWeight.bold,
                               color: colorScheme.text,
                             ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         Text(
@@ -102,11 +106,10 @@ class NotificationTile extends StatelessWidget {
               if (!isRead) ...[
                 const SizedBox(width: AppDimens.p8),
                 Container(
-                  width: 10,
-                  height: 10,
+                  width: AppDimens.p10,
+                  height: AppDimens.p10,
                   decoration: BoxDecoration(
-                    // Semantic danger replaces hardcoded AppColors.lightRed
-                    color: colorScheme.danger,
+                    color: amberColors.danger,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -119,33 +122,35 @@ class NotificationTile extends StatelessWidget {
   }
 
   /// Type-colored icon with semantic token mapping.
-  Widget _buildIcon(AppColorScheme colorScheme) {
+  Widget _buildIcon(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
     IconData icon;
     Color color;
 
-    // Map notification types to semantic colors
+    // Map notification types to semantic colors.
     switch (notification.type) {
       case NotificationType.offer:
         icon = Icons.local_offer_outlined;
-        color = colorScheme.warning; // replaces AppColors.gold
+        color = amberColors.warning;
       case NotificationType.message:
         icon = Icons.chat_bubble_outline;
-        color = colorScheme.primary; // replaces AppColors.teal
+        color = amberColors.primary;
       case NotificationType.booking:
         icon = Icons.calendar_today_outlined;
-        color = colorScheme.primary; // replaces AppColors.teal
+        color = amberColors.primary;
       case NotificationType.payment:
         icon = Icons.payment_outlined;
-        color = colorScheme.warning; // replaces AppColors.gold
+        color = amberColors.warning;
       case NotificationType.review:
         icon = Icons.star_outline;
-        color = colorScheme.warning; // replaces AppColors.gold
+        color = amberColors.warning;
       case NotificationType.task:
         icon = Icons.assignment_outlined;
-        color = colorScheme.primary; // replaces AppColors.teal
+        color = amberColors.primary;
       case NotificationType.system:
         icon = Icons.notifications_none;
-        color = colorScheme.textSecondary; // replaces AppColors.mediumGrey
+        color = colorScheme.textSecondary;
     }
 
     return Container(

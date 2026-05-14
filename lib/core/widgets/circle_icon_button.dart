@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_states.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/scale_button.dart';
 
 /// A circular icon button with haptic feedback and accessibility support.
@@ -12,6 +12,8 @@ import 'package:sline_app/core/widgets/scale_button.dart';
 /// - Added [tooltip] optional parameter
 /// - Added [Semantics] with button role and label
 /// - Enforces minimum 48px touch target (WCAG guideline)
+/// - Amber Dusk icon-button tokens now provide the 42px visual size, text
+///   icon color, solid surface, and borderless treatment.
 class CircleIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
@@ -20,6 +22,7 @@ class CircleIconButton extends StatelessWidget {
   final Color? borderColor;
   final double size;
   final double iconSize;
+  final double borderWidth;
 
   /// Optional tooltip text. Also used as the Semantics label.
   final String? tooltip;
@@ -31,27 +34,31 @@ class CircleIconButton extends StatelessWidget {
     this.iconColor,
     this.backgroundColor,
     this.borderColor,
-    this.size = AppLayout.circleButtonVisualSize,
-    this.iconSize = AppLayout.iconStandard,
+    this.size = AmberDuskWidgetTheme.iconButtonSize,
+    this.iconSize = AmberDuskWidgetTheme.iconButtonIconSize,
+    this.borderWidth = AmberDuskSpacing.borderWidth,
     this.tooltip,
   });
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final iconButtonTheme = AmberDuskTokens.widgetTheme.iconButtons;
 
     Widget button = Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: backgroundColor ?? colorScheme.cardBackground,
+        color: backgroundColor ?? iconButtonTheme.background,
         shape: BoxShape.circle,
-        border: Border.all(color: borderColor ?? colorScheme.cardBorder),
+        border: Border.all(
+          color: borderColor ?? iconButtonTheme.border,
+          width: borderWidth,
+        ),
       ),
       child: Icon(
         icon,
         size: iconSize,
-        color: iconColor ?? colorScheme.textSecondary,
+        color: iconColor ?? iconButtonTheme.foreground,
       ),
     );
 

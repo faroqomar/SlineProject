@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/features/dashboard/view/dashboard_screen.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 
@@ -58,6 +59,9 @@ void main() {
         find.byKey(const ValueKey('dashboard_tab_body_0')),
         findsOneWidget,
       );
+
+      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold).first);
+      expect(scaffold.backgroundColor, AmberDuskTokens.colors.page);
     });
 
     testWidgets('T57 tab tap calls setTab(index)', (tester) async {

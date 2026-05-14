@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/features/tasks/view/task_details_screen.dart';
 import 'package:sline_app/features/tasks/view/widgets/discovery_task_sliver.dart';
 import 'package:sline_app/features/tasks/view/widgets/task_card.dart';
 import 'package:sline_app/features/tasks/viewmodels/discovery_feed_view_model_contract.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
+import 'package:sline_app/l10n/app_localizations.dart';
 
 class TendersScreen extends StatefulWidget {
   const TendersScreen({super.key});
@@ -18,12 +19,15 @@ class TendersScreen extends StatefulWidget {
 }
 
 class _TendersScreenState extends State<TendersScreen> {
+  final TextEditingController _searchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final homeVm = context.read<DiscoveryFeedViewModelContract>();
       final filterVm = context.read<TaskFilterViewModel>();
+      _clearSearch(filterVm);
       if (!homeVm.isLoading && homeVm.featuredTasks.isEmpty) {
         AppLogger.d(
           'discovery_screen_bootstrap',
@@ -39,12 +43,30 @@ class _TendersScreenState extends State<TendersScreen> {
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _clearSearch(TaskFilterViewModel filterVm) {
+    if (_searchController.text.isNotEmpty) {
+      _searchController.clear();
+    }
+    // TextEditingController.clear may already drive onChanged; only reset the
+    // ViewModel directly when its query is still dirty after the field reset.
+    if (filterVm.searchQuery.isNotEmpty) {
+      filterVm.clearSearch();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
     final topPadding = MediaQuery.of(context).padding.top;
+    const amberColors = AmberDuskTokens.colors;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: amberColors.page,
       body: Consumer2<DiscoveryFeedViewModelContract, TaskFilterViewModel>(
         builder: (context, homeVM, filterVM, child) {
           final tenders = filterVM.filteredTasks
@@ -65,16 +87,42 @@ class _TendersScreenState extends State<TendersScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Tenders',
-                        style: AppTypography.h1.copyWith(
-                          color: colorScheme.text,
+                        'BROWSE',
+                        style: AppTypography.overline.copyWith(
+                          color: amberColors.muted,
                         ),
                       ),
                       Text(
-                        'Open proposals',
-                        style: AppTypography.bodySmall.copyWith(
-                          color: colorScheme.textSecondary,
-                          fontWeight: FontWeight.bold,
+                        'Tenders',
+                        style: AmberDuskTokens.typography.screenTitle.copyWith(
+                          color: amberColors.text,
+                        ),
+                      ),
+                      const SizedBox(height: AppDimens.p16),
+                      TextField(
+                        controller: _searchController,
+                        onChanged: filterVM.searchTasks,
+                        style: AmberDuskTokens.typography.body.copyWith(
+                          color: amberColors.text,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: l10n.searchTenders,
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: amberColors.muted,
+                          ),
+                          filled: true,
+                          fillColor:
+                              AmberDuskTokens.widgetTheme.fields.background,
+                          hintStyle: AmberDuskTokens.typography.body.copyWith(
+                            color: amberColors.muted,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                              AmberDuskTokens.spacing.moduleRadius,
+                            ),
+                            borderSide: BorderSide.none,
+                          ),
                         ),
                       ),
                     ],
@@ -102,7 +150,6 @@ class _TendersScreenState extends State<TendersScreen> {
                         tag: 'DiscoveryUI',
                         json: {
                           'surface': 'tenders',
-                          'task_id': task.id,
                           'task_type': task.taskType.name,
                         },
                       );

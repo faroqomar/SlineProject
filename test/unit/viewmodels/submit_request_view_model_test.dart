@@ -129,7 +129,7 @@ void main() {
         final result = await vm.checkReplaceability();
 
         expect(result, isNotNull);
-        expect(result!.price, '50'); // 5000 cents / 100
+        expect(result!.price, '5000'); // task_requests.price is whole IQD
         expect(result.days, '7');
         expect(result.note, 'test');
         expect(vm.isReplaceMode, isTrue);
@@ -252,7 +252,7 @@ void main() {
     group('computeComparison', () {
       test('returns null when no existing bid', () {
         final vm = buildVm();
-        final result = vm.computeComparison(newPriceCents: 5000, newDays: 7);
+        final result = vm.computeComparison(newPriceIqd: 5000, newDays: 7);
         expect(result, isNull);
       });
 
@@ -268,7 +268,7 @@ void main() {
         final vm = buildVm();
         await vm.checkReplaceability();
 
-        final result = vm.computeComparison(newPriceCents: 7000, newDays: 5);
+        final result = vm.computeComparison(newPriceIqd: 7000, newDays: 5);
         expect(result, isNotNull);
         expect(result!.priceDiffSign, 1); // Price increased
         expect(result.daysDiffSign, -1); // Days decreased (positive for user)

@@ -3,10 +3,15 @@ import 'package:provider/provider.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/features/services/view/widgets/service_card.dart';
 import 'package:sline_app/features/services/viewmodels/my_services_view_model.dart';
 
+/// Shows the current provider's services without changing service ownership.
+///
+/// Loading, error, and service rows stay driven by [MyServicesViewModel].
 class MyServicesScreen extends StatefulWidget {
+  /// Creates the profile services management route.
   const MyServicesScreen({super.key});
 
   @override
@@ -26,15 +31,17 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
   Widget build(BuildContext context) {
     final vm = context.watch<MyServicesViewModel>();
     final services = vm.services;
+    final amberColors = context.amberColors;
 
     return Scaffold(
-      backgroundColor: context.colorScheme.background,
+      backgroundColor: context.colorScheme.phoneBackground,
       appBar: AppBar(
         title: Text('My Services', style: AppTypography.h3),
         centerTitle: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: AmberDuskTokens.colors.transparent,
         elevation: 0,
         leading: IconButton(
+          tooltip: 'Back',
           icon: Icon(Icons.arrow_back, color: context.colorScheme.text),
           onPressed: () => Navigator.pop(context),
         ),
@@ -61,7 +68,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                 children: [
                   Icon(
                     Icons.design_services_outlined,
-                    size: 64,
+                    size: AppDimens.emptyStateIconSize,
                     color: context.colorScheme.textSecondary,
                   ),
                   const SizedBox(height: AppDimens.p16),
@@ -103,8 +110,9 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
             ),
           );
         },
-        backgroundColor: context.colorScheme.primary,
-        child: const Icon(Icons.add, color: Colors.white),
+        backgroundColor: amberColors.primary,
+        foregroundColor: amberColors.textInverse,
+        child: const Icon(Icons.add),
       ),
     );
   }

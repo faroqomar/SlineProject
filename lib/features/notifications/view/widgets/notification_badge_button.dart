@@ -6,8 +6,8 @@ import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_states.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/notifications/view/notifications_modal.dart';
 import 'package:sline_app/features/notifications/viewmodels/notification_view_model.dart';
@@ -17,9 +17,8 @@ import 'package:sline_app/features/notifications/viewmodels/notification_view_mo
 /// Phase 5 redesign: converted from StatelessWidget to StatefulWidget with
 /// TickerProviderStateMixin to host AnimationController for badge entrance
 /// (scale 0→1 with spring curve) and pulse on count change (1.0→1.1→1.0).
-/// Replaced hardcoded `AppColors.lightRed` with `colorScheme.danger`,
-/// hardcoded font size with `AppTypography.micro`, and added full
-/// Semantics coverage. View-layer only.
+/// Phase 10 keeps the badge on scheme-aware Amber Dusk danger/text tokens while
+/// preserving modal opening and deep-link routing behavior. View-layer only.
 class NotificationBadgeButton extends StatefulWidget {
   const NotificationBadgeButton({super.key});
 
@@ -43,6 +42,9 @@ class _NotificationBadgeButtonState extends State<NotificationBadgeButton>
 
   /// Track previous count to detect changes and trigger pulse.
   int _previousCount = 0;
+
+  /// Prevents rapid taps from stacking multiple notification sheets.
+  bool _isOpeningModal = false;
 
   @override
   void initState() {
@@ -74,7 +76,10 @@ class _NotificationBadgeButtonState extends State<NotificationBadgeButton>
             weight: 50,
           ),
         ]).animate(
-          CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+          CurvedAnimation(
+            parent: _pulseController,
+            curve: AppMotion.curveSymmetric,
+          ),
         );
   }
 
@@ -105,7 +110,9 @@ class _NotificationBadgeButtonState extends State<NotificationBadgeButton>
     return Consumer<NotificationViewModel>(
       builder: (context, vm, child) {
         final count = vm.unreadCount;
-        final colorScheme = context.colorScheme;
+        final amberColors = context.amberColors;
+        final badgeBackground = amberColors.dangerMuted;
+        final badgeForeground = amberColors.text;
 
         // Only schedule the post-frame callback when the count has actually
         // changed — avoids spurious animation calls on unrelated rebuilds.
@@ -124,24 +131,35 @@ class _NotificationBadgeButtonState extends State<NotificationBadgeButton>
           child: GestureDetector(
             key: NotificationBadgeButton.buttonKey,
             onTap: () async {
+              if (_isOpeningModal) {
+                AppLogger.d(
+                  'Notification badge tap ignored while modal is opening',
+                  tag: 'Notifications',
+                );
+                return;
+              }
+              setState(() => _isOpeningModal = true);
               AppInteractionStates.hapticTap();
               AppLogger.d(
                 'Notification badge tapped, opening modal',
                 tag: 'Notifications',
               );
-              final selected = await NotificationsModal.show(context);
-              if (selected != null && context.mounted) {
-                AppLogger.i(
-                  'notification_tap entityType=${selected.relatedEntityType} '
-                  'id=${selected.relatedEntityId}',
-                  tag: 'Notifications',
-                );
-                await context.read<DeepLinkService>().handleNotification(
-                  context,
-                  entityType: selected.relatedEntityType,
-                  entityId: selected.relatedEntityId,
-                  metadata: selected.metadata,
-                );
+              try {
+                final selected = await NotificationsModal.show(context);
+                if (selected != null && context.mounted) {
+                  AppLogger.i(
+                    'NotificationBadgeButton: notification selected',
+                    tag: 'Notifications',
+                  );
+                  await context.read<DeepLinkService>().handleNotification(
+                    context,
+                    entityType: selected.relatedEntityType,
+                    entityId: selected.relatedEntityId,
+                    metadata: selected.metadata,
+                  );
+                }
+              } finally {
+                if (mounted) setState(() => _isOpeningModal = false);
               }
             },
             child: AppCardContainer(
@@ -152,7 +170,7 @@ class _NotificationBadgeButtonState extends State<NotificationBadgeButton>
                 children: [
                   Icon(
                     Icons.notifications_outlined,
-                    color: colorScheme.text,
+                    color: amberColors.text,
                     size: AppLayout.iconStandard,
                   ),
                   if (count > 0)
@@ -170,8 +188,9 @@ class _NotificationBadgeButtonState extends State<NotificationBadgeButton>
                           child: Container(
                             padding: const EdgeInsets.all(AppDimens.p4),
                             decoration: BoxDecoration(
-                              // Semantic danger replaces hardcoded AppColors.lightRed
-                              color: colorScheme.danger,
+                              // Dark rust wash keeps unread counts urgent while
+                              // preserving AA contrast for the small badge text.
+                              color: badgeBackground,
                               shape: BoxShape.circle,
                             ),
                             constraints: const BoxConstraints(
@@ -181,7 +200,7 @@ class _NotificationBadgeButtonState extends State<NotificationBadgeButton>
                             child: Text(
                               count > 9 ? '9+' : count.toString(),
                               style: AppTypography.micro.copyWith(
-                                color: Colors.white,
+                                color: badgeForeground,
                                 fontWeight: FontWeight.bold,
                               ),
                               textAlign: TextAlign.center,

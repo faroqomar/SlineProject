@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
@@ -179,8 +178,7 @@ class _ReviewDeliveryModalState extends State<ReviewDeliveryModal> {
               text: 'Submit Request',
               isLoading: _isLoading,
               onPressed: _handleReject,
-              backgroundColor: AppColors.lightRed, // Use warning color?
-              // Or standard primary but logic implies "Negative" path
+              backgroundColor: context.colorScheme.warning,
             ),
             const SizedBox(height: AppDimens.p12),
             Center(

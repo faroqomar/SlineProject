@@ -1,26 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 
 import 'package:sline_app/features/profile/view/public_profile_screen.dart';
 
+/// Opens the public profile route inside the Amber Dusk preview sheet.
+///
+/// The modal only hosts [PublicProfileScreen]; data loading and route actions
+/// remain owned by that screen and its ViewModels.
 void showProfilePreview(BuildContext context, String userId) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: AmberDuskTokens.colors.transparent,
+    barrierColor: AmberDuskTokens.colors.scrim,
     builder: (context) => DraggableScrollableSheet(
       initialChildSize: 0.9,
       minChildSize: 0.5,
       maxChildSize: 0.95,
       builder: (_, controller) {
-        return Container(
-          decoration: const BoxDecoration(
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(AppDimens.r24),
-            ),
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppDimens.p10,
+            AppDimens.p0,
+            AppDimens.p10,
+            AppDimens.p10,
           ),
-          clipBehavior: Clip.antiAlias,
-          child: PublicProfileScreen(userId: userId),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AmberDuskTokens.colors.background,
+              borderRadius: BorderRadius.circular(
+                AmberDuskTokens.spacing.sheetRadius,
+              ),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: PublicProfileScreen(userId: userId),
+          ),
         );
       },
     ),

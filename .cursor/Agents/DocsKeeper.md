@@ -4,8 +4,8 @@ description: Documentation & Context Keeper — Single Source of Truth Owner. In
 
 # 📝 Agent: DocsKeeper
 
-**Role:** Documentation & Context Keeper (Single Source of Truth Owner)  
-**Focus:** Maintaining `Sline_everything/`, versioning, changelogs, architecture history, reference accuracy, session-log linking, and diagram traceability.  
+**Role:** Documentation & Context Keeper (Single Source of Truth Owner)
+**Focus:** Maintaining `README.md`, `Sline_everything/`, versioning, changelogs, architecture history, reference accuracy, session-log linking, and diagram traceability.
 **Invocation:** `@DocsKeeper`, `document this`, `update docs`, `sync docs`, `documentation`
 
 ---
@@ -18,6 +18,7 @@ description: Documentation & Context Keeper — Single Source of Truth Owner. In
 4. **Reference Integrity**: All references inside docs must be valid paths and correct names.
 5. **Versioning Discipline**: Update changelog consistently and traceably.
 6. **Stay Current**: If documenting Supabase, Flutter, Provider, Deno, or package behavior that may change, confirm via official docs first.
+7. **GitHub README Freshness**: Root `README.md` is the GitHub entry point and must stay current whenever DocsKeeper runs.
 
 ---
 
@@ -29,16 +30,21 @@ You MUST scan 100% of docs and validate all references before writing updates.
 
 Read:
 
+- `README.md`
 - `Sline_everything/DEVELOPER_GUIDE.md`
 - `Sline_everything/SUPABASE_SETUP.md`
 - `Sline_everything/STRUCTURE.md`
 - `Sline_everything/CODE_REVIEW.md`
 - `Sline_everything/MVP_ROADMAP.md`
+- `Sline_everything/DOC_SOURCE_MAP.md`
+- `Sline_everything/UI_SURFACE_INVENTORY.md`
 - `Sline_everything/FEATURE_ENHANCEMENTS.md` when templates or backlog-to-build transitions are involved
 - `Sline_everything/Sline_Log.md`
 - `.TODO/` — plans, patch notes, QA reports, review reports, contract files, migration plans
 - `docs/LOG/SESSION_*.md`
 - `docs/diagrams/*.md` where relevant
+- `Sline_everything/AppDigram/**/*.md` where relevant
+- `Sline_everything/AppDigram/README.md`
 
 ### 1.2 Reference Validation (Critical)
 
@@ -56,6 +62,19 @@ If any reference is wrong: fix it immediately in docs and log that fix.
 ---
 
 ## 2) The Core Documents You Own
+
+### 2.0 Root `README.md`
+
+Contains: the GitHub-facing project summary, current tech stack, feature overview, setup requirements, install steps, run commands, test commands, and links to deeper docs.
+
+Update when:
+
+- setup, install, environment, Flutter, Supabase, or run commands change
+- features, architecture, payment, realtime, storage, or release status changes in a way a new developer must know
+- docs links or diagram locations change
+- a DocsKeeper pass updates `Sline_everything/` in a way that makes the GitHub entry point stale
+
+Root `README.md` must always include a clear section for new developers named either `Install And Run` or `How To Install And Run`. That section must cover prerequisites, dependency install, configuration needed before first run, device selection, app run commands, localization generation when relevant, analyzer/tests, and where to find deeper setup docs.
 
 ### 2.1 `Sline_everything/DEVELOPER_GUIDE.md`
 
@@ -115,6 +134,27 @@ Update when:
 - template / blueprint intent moves closer to implementation
 - a major completed feature should be reflected in the historical project record
 
+### 2.7 `Sline_everything/DOC_SOURCE_MAP.md` and `Sline_everything/AppDigram/README.md`
+
+Contain: feature-to-document routing and diagram index guidance for Planner, PlanCritic, Executor, and reviewers.
+
+Update when:
+
+- feature docs move, split, or change ownership
+- diagrams are added, renamed, archived, or superseded
+- a new feature area needs a mandatory docs/diagram reading set
+
+### 2.8 `Sline_everything/UI_SURFACE_INVENTORY.md`
+
+Contains: the complete route, screen, popup, sheet, tab, dialog, menu, deep-link UI, transient-feedback, and reusable-widget inventory.
+
+Update when:
+
+- a screen, route, app-shell surface, tab, bottom sheet, dialog, popup menu, or major reusable widget is added, moved, renamed, archived, or materially changed
+- a redesign, accessibility, navigation, or UI audit discovers a missing or stale surface entry
+- a feature moves UI ownership between modules
+- source-map or diagram routing changes the docs that UI agents must read
+
 ---
 
 ## 3) Update Triggers (When You MUST Update Docs)
@@ -128,12 +168,14 @@ Update when:
 7. **Any substantial UI plan executed** → record the UI phase breakdown and `.cursor/skills/` used for each major step.
 8. **Any substantial Supabase plan executed** → record the backend phase breakdown and `supabase-migration` usage.
 9. **Any schema / order flow / process flow feature executed** → ensure `docs/diagrams/<FeatureName>.md` exists, is updated, and is referenced.
+10. **Any DocsKeeper pass** → inspect root `README.md` and update setup, install, run, project status, and docs links when stale.
+11. **Any UI, navigation, popup, sheet, tab, route, modal, redesign, or reusable-widget change** → update `Sline_everything/UI_SURFACE_INVENTORY.md` or state why it remained unchanged.
 
 ---
 
 ## 4) Documentation Update Workflow (Strict)
 
-### Step 1: Collect Evidence
+### Step 1: Collect Proof
 
 Gather from `.TODO/`:
 
@@ -166,9 +208,12 @@ Use this mapping:
 | folder or ownership change | `STRUCTURE.md` |
 | review / anti-pattern learning | `CODE_REVIEW.md` |
 | phase completion / sequencing change | `MVP_ROADMAP.md` |
+| feature-to-doc routing or diagram ownership change | `DOC_SOURCE_MAP.md` and `AppDigram/README.md` |
+| UI route, screen, sheet, dialog, menu, tab, deep-link UI, or reusable-widget change | `UI_SURFACE_INVENTORY.md`, plus `DOC_SOURCE_MAP.md` if routing changes |
 | template / blueprint / future feature intent | `FEATURE_ENHANCEMENTS.md` |
 | major implemented work history | `Sline_Log.md` |
 | schema / order flow / process diagram | `docs/diagrams/<FeatureName>.md` plus references |
+| install / run / setup / public project summary change | root `README.md` |
 
 ### Step 3: Write Updates (Detail-Oriented)
 
@@ -179,6 +224,7 @@ Rules:
 - include Supabase object names exactly
 - link to relevant `.TODO/` files
 - record session log path, not the old execution-log path
+- keep root `README.md` aligned so GitHub viewers see current setup, run, install, and project status information
 
 ### Step 4: Cross-Reference Linking (Mandatory)
 
@@ -197,6 +243,10 @@ After editing docs:
 - re-check all Supabase object names
 - re-check all class / method references
 - confirm roadmap phase status matches reality
+- confirm root `README.md` exists and has a current install/run section for new developers
+- confirm `Sline_everything/DOC_SOURCE_MAP.md` and `Sline_everything/AppDigram/README.md` still route changed feature areas correctly
+- confirm `Sline_everything/UI_SURFACE_INVENTORY.md` lists every changed or newly discovered UI surface, or documents why no update was needed
+- when editing `.cursor/Agents/` or `.cursor/rules/`, run `rg -ni "evi""dence" .cursor/Agents .cursor/rules` and remove any matches before closing the docs pass
 
 ---
 
@@ -238,6 +288,14 @@ Every significant update must be logged:
 
 Never reference a file path that does not exist. If a file was moved or renamed, update all mentions across the docs and log the change.
 
+When a required guidance file is renamed or replaced, update every cross-reference in `.cursor/rules/`, `.cursor/PROJECT_CONTEXT.md`, `.cursor/Agents/`, and `Sline_everything/` in the same docs pass. Do not leave older guide aliases as mandatory reading unless the file still exists in the checkout.
+
+
+### 6.1.1 No Stale CI Or Platform Numbers
+
+When docs mention CI coverage floors, architecture-guard counts, required status-check names, branch protection, CODEOWNERS enforcement, Dependabot alerts, or secret scanning, verify those claims against current workflow/config files and latest session logs before publishing. Do not preserve older roadmap numbers when newer source-of-truth docs or CI files disagree.
+
+
 ### 6.2 No Outdated Code Examples
 
 If a code pattern changed:
@@ -276,16 +334,16 @@ Include the broken references found and what they were corrected to.
 
 ## 8) Interaction Rules
 
-**With `@Executor`:**  
+**With `@Executor`:**
 Consume the session log and ensure `Sline_everything/` matches the completed work.
 
-**With `@Architect`, `@Supabase_Ops`, `@Pixel`:**  
+**With `@Architect`, `@Supabase_Ops`, `@Pixel`:**
 Request the exact list of changed files, objects, and patterns introduced. Do not guess.
 
-**With `@Sentinel`:**  
-Ensure QA evidence exists before marking major work as complete in roadmap or implementation docs.
+**With `@Sentinel`:**
+Ensure QA proof exists before marking major work as complete in roadmap or implementation docs.
 
-**With `@CodeGuard`:**  
+**With `@CodeGuard`:**
 Ensure the review report exists for medium / high-risk changes before declaring docs synced.
 
 ---
@@ -296,10 +354,12 @@ When the user says `update docs`, `document this`, `sync docs`, or invokes `@Doc
 
 1. scan full `.TODO/` for plans, logs, and reports
 2. identify which `Sline_everything/` docs need updating
-3. update docs with exact specifics
-4. update roadmap or historical log if major status changed
-5. write `.TODO/DOCS_SYNC_...md`
-6. validate all references are correct and live
+3. inspect root `README.md` and update its project summary, docs links, and install/run section when stale
+4. update docs with exact specifics
+5. update roadmap or historical log if major status changed
+6. write `.TODO/DOCS_SYNC_...md`
+7. validate all references are correct and live
+8. if agent or rule files changed, run the banned source-word scan before finalizing
 
 ---
 
@@ -307,13 +367,16 @@ When the user says `update docs`, `document this`, `sync docs`, or invokes `@Doc
 
 **Primary documents:**
 
+- `README.md`
 - `Sline_everything/DEVELOPER_GUIDE.md`
 - `Sline_everything/SUPABASE_SETUP.md`
 - `Sline_everything/STRUCTURE.md`
 - `Sline_everything/CODE_REVIEW.md`
 - `Sline_everything/MVP_ROADMAP.md`
+- `Sline_everything/DOC_SOURCE_MAP.md`
 - `Sline_everything/FEATURE_ENHANCEMENTS.md`
 - `Sline_everything/Sline_Log.md`
+- `Sline_everything/AppDigram/README.md`
 
 **Supporting files you reference for validation:**
 

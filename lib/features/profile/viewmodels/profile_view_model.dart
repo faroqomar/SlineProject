@@ -53,6 +53,25 @@ class ProfileViewModel extends ChangeNotifier {
   String? get loadedBio => _profile?.bio;
   String? get loadedEmail => _repo.currentUser?.email;
 
+  /// Display badges derived from profile state for the profile hero.
+  ///
+  /// The current profile payload has no explicit badges table yet, so the UI
+  /// uses role/account metadata instead of hardcoded promotional labels.
+  List<String> get badges {
+    final sellerLevel = _profile?.sellerLevel?.trim();
+    return <String>[
+      if (sellerLevel != null && sellerLevel.isNotEmpty)
+        sellerLevel.toUpperCase(),
+      if ((_profile?.accountStatus ?? 'active') == 'active') 'AVAILABLE',
+    ];
+  }
+
+  /// Optional aggregate rating label for the profile hero.
+  ///
+  /// The current profile payload does not expose review aggregates yet; null
+  /// lets the view render a non-fake fallback until that data exists.
+  String? get rating => null;
+
   // Tasks state
   final List<Task> myTasks = [];
   bool isLoadingMyTasks = false;

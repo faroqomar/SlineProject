@@ -2,10 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_card_container.dart';
@@ -14,6 +15,7 @@ import 'package:sline_app/core/widgets/sliver_tab_bar_delegate.dart';
 import 'package:sline_app/features/chat/view/chat_screen.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
 import 'package:sline_app/features/favorites/viewmodels/favorites_view_model.dart';
+import 'package:sline_app/features/profile/models/freelancer_profile.dart';
 import 'package:sline_app/features/profile/view/widgets/public_profile/public_profile_header.dart';
 import 'package:sline_app/features/profile/view/widgets/public_profile/public_profile_portfolio.dart';
 import 'package:sline_app/features/profile/view/widgets/public_profile/public_profile_reviews.dart';
@@ -22,10 +24,16 @@ import 'package:sline_app/features/profile/viewmodels/public_profile_view_model.
 import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
 import 'package:sline_app/features/tasks/view/widgets/task_card.dart';
 
+/// Displays another user's profile while preserving profile, favorite, chat,
+/// and report behavior in their existing ViewModels.
 class PublicProfileScreen extends StatefulWidget {
+  /// Supabase profile id loaded by [PublicProfileViewModel].
   final String userId;
+
+  /// Initial tab selected when opening the profile preview route.
   final int initialTabIndex;
 
+  /// Creates a public profile surface for the provided [userId].
   const PublicProfileScreen({
     super.key,
     required this.userId,
@@ -82,6 +90,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
+    final tabTheme = AmberDuskTokens.widgetTheme.tabs;
 
     return ChangeNotifierProvider(
       create: (_) => PublicProfileViewModel()..loadProfile(widget.userId),
@@ -90,12 +100,17 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
         body: Consumer<PublicProfileViewModel>(
           builder: (context, vm, child) {
             if (vm.isLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return Center(
+                child: CircularProgressIndicator(color: amberColors.primary),
+              );
             }
 
             final profile = vm.profile;
             if (profile == null) {
-              return const Center(child: Text('User not found'));
+              return _PublicProfileErrorState(
+                message: vm.error ?? 'User not found',
+                onRetry: () => vm.loadProfile(widget.userId),
+              );
             }
 
             return Stack(
@@ -103,145 +118,19 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
                 NestedScrollView(
                   headerSliverBuilder: (context, innerBoxIsScrolled) {
                     return [
-                      // 1. Visual Header (Gradient + Avatar) using existing component
-                      // We wrap it in SliverToBoxAdapter because it wasn't designed as a FlexibleSpaceBar
-                      PublicProfileHeader(profile: profile),
-
-                      // 2. Profile Info (Name, Title, Location, Actions)
+                      PublicProfileHeader(
+                        profile: profile,
+                        trailingActions: _buildHeroActions(context, profile),
+                      ),
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: const EdgeInsets.only(
-                            left: AppDimens.p24,
-                            right: AppDimens.p24,
-                            bottom: AppDimens.p24,
+                          padding: const EdgeInsets.fromLTRB(
+                            AppDimens.p24,
+                            AppDimens.p0,
+                            AppDimens.p24,
+                            AppDimens.p16,
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Push content down below the absolute positioned avatar/header
-                              // PublicProfileHeader height is 120, plus avatar positioning...
-                              // We need about 50-60px separation from top of this sliver
-                              const SizedBox(height: 60),
-
-                              // Name & Verification
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        profile.name,
-                                        style: AppTypography.h3.copyWith(
-                                          color: colorScheme.text,
-                                        ),
-                                      ),
-                                      if (profile.verified)
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            left: 4,
-                                          ),
-                                          child: Icon(
-                                            Icons.check_circle,
-                                            color: AppColors.lightTeal,
-                                            size: 20,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                  Row(
-                                    children: [
-                                      CircleIconButton(
-                                        icon: Icons.share,
-                                        onTap: () {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Share coming soon',
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Consumer<FavoritesViewModel>(
-                                        builder: (context, favoritesVm, _) {
-                                          final isFavorited = favoritesVm.items
-                                              .any(
-                                                (f) =>
-                                                    f.freelancerId ==
-                                                    profile.id,
-                                              );
-                                          final icon = isFavorited
-                                              ? Icons.favorite
-                                              : Icons.favorite_border;
-                                          final color = isFavorited
-                                              ? AppColors.lightRed
-                                              : colorScheme.textSecondary;
-
-                                          return CircleIconButton(
-                                            key: const Key(
-                                              'public_profile_favorite_toggle',
-                                            ),
-                                            icon: icon,
-                                            iconColor: color,
-                                            onTap: () async {
-                                              if (isFavorited) {
-                                                await favoritesVm.remove(
-                                                  profile.id,
-                                                );
-                                              } else {
-                                                await favoritesVm.add(
-                                                  profile.id,
-                                                );
-                                              }
-                                            },
-                                          );
-                                        },
-                                      ),
-                                      const SizedBox(width: 8),
-                                      CircleIconButton(
-                                        icon: Icons.flag_outlined,
-                                        iconColor: AppColors.lightRed,
-                                        onTap: () => _reportUserProfileAction(
-                                          context,
-                                          profile.id,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              Text(
-                                profile.title,
-                                style: AppTypography.bodyMedium.copyWith(
-                                  color: colorScheme.textSecondary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.location_on,
-                                    size: 14,
-                                    color: colorScheme.textSecondary,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    profile.location,
-                                    style: AppTypography.micro.copyWith(
-                                      color: colorScheme.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: AppDimens.p24),
-                              PublicProfileStats(profile: profile),
-                            ],
-                          ),
+                          child: PublicProfileStats(profile: profile),
                         ),
                       ),
 
@@ -251,12 +140,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
                         delegate: SliverTabBarDelegate(
                           TabBar(
                             controller: _tabController,
-                            labelColor: AppColors.teal,
-                            unselectedLabelColor: colorScheme.textSecondary,
-                            labelStyle: AppTypography.bodySmall.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                            indicatorColor: AppColors.teal,
+                            labelColor: tabTheme.activeLabelColor,
+                            unselectedLabelColor: tabTheme.inactiveLabelColor,
+                            labelStyle: tabTheme.labelStyle,
+                            unselectedLabelStyle: tabTheme.inactiveLabelStyle,
+                            indicatorColor: tabTheme.indicatorColor,
                             indicatorSize: TabBarIndicatorSize.label,
                             tabs: const [
                               Tab(text: 'About'),
@@ -286,28 +174,24 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
                               profile.bio,
                               style: AppTypography.bodySmall.copyWith(
                                 color: colorScheme.textSecondary,
-                                height: 1.5,
                               ),
                             ),
                             const SizedBox(height: AppDimens.p24),
                             Text('Skills', style: AppTypography.h5),
                             const SizedBox(height: AppDimens.p8),
                             Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
+                              spacing: AppDimens.p8,
+                              runSpacing: AppDimens.p8,
                               children: profile.skills.map((skill) {
                                 return Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
+                                    horizontal: AppDimens.p12,
+                                    vertical: AppDimens.p6,
                                   ),
                                   decoration: BoxDecoration(
                                     color: colorScheme.cardBackground,
                                     borderRadius: BorderRadius.circular(
-                                      AppDimens.r8,
-                                    ),
-                                    border: Border.all(
-                                      color: colorScheme.cardBorder,
+                                      AmberDuskTokens.spacing.pillRadius,
                                     ),
                                   ),
                                   child: Text(
@@ -320,7 +204,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
                               }).toList(),
                             ),
                             // Add extra padding at bottom to avoid floating bar overlap
-                            const SizedBox(height: 100),
+                            const SizedBox(
+                              height: AppDimens.publicProfileStickyBarClearance,
+                            ),
                           ],
                         ),
                       ),
@@ -334,7 +220,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
                             PublicProfilePortfolio(
                               portfolio: profile.portfolio,
                             ),
-                            const SizedBox(height: 100),
+                            const SizedBox(
+                              height: AppDimens.publicProfileStickyBarClearance,
+                            ),
                           ],
                         ),
                       ),
@@ -356,7 +244,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
                             AppDimens.p24,
                             AppDimens.p24,
                             AppDimens.p24,
-                            100,
+                            AppDimens.publicProfileStickyBarClearance,
                           ),
                           itemCount: profile.history.length,
                           separatorBuilder: (_, __) =>
@@ -378,7 +266,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
                           AppDimens.p24,
                           AppDimens.p24,
                           AppDimens.p24,
-                          100,
+                          AppDimens.publicProfileStickyBarClearance,
                         ),
                         child: PublicProfileReviews(reviews: profile.reviews),
                       ),
@@ -412,17 +300,20 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
                           ),
                         ),
                         Container(
-                          width: 1,
-                          height: 24,
-                          color: Colors.grey.withValues(alpha: 0.3),
+                          width: AppDimens.publicProfileActionDividerWidth,
+                          height: AppDimens.publicProfileActionDividerHeight,
+                          color: amberColors.heroDivider,
                         ),
                         Expanded(
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppDimens.p8,
+                            ),
                             child: AppButton(
                               text: 'Hire Now',
-                              onPressed: () {},
-                              height: 46,
+                              onPressed: () =>
+                                  _handleHireAction(context, profile.id),
+                              height: AppDimens.publicProfileActionButtonHeight,
                             ),
                           ),
                         ),
@@ -434,6 +325,72 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
             );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildHeroActions(BuildContext context, FreelancerProfile profile) {
+    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CircleIconButton(
+          icon: Icons.share,
+          tooltip: 'Share profile',
+          onTap: () {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('Share coming soon')));
+          },
+        ),
+        const SizedBox(width: AppDimens.p4),
+        Consumer<FavoritesViewModel>(
+          builder: (context, favoritesVm, _) {
+            final isFavorited = favoritesVm.items.any(
+              (f) => f.freelancerId == profile.id,
+            );
+            final icon = isFavorited ? Icons.favorite : Icons.favorite_border;
+            final color = isFavorited
+                ? amberColors.danger
+                : colorScheme.textSecondary;
+
+            return CircleIconButton(
+              key: const Key('public_profile_favorite_toggle'),
+              icon: icon,
+              iconColor: color,
+              tooltip: isFavorited ? 'Remove favorite' : 'Add favorite',
+              onTap: () async {
+                if (isFavorited) {
+                  await favoritesVm.remove(profile.id);
+                } else {
+                  await favoritesVm.add(profile.id);
+                }
+              },
+            );
+          },
+        ),
+        const SizedBox(width: AppDimens.p4),
+        CircleIconButton(
+          icon: Icons.flag_outlined,
+          iconColor: amberColors.danger,
+          tooltip: 'Report profile',
+          onTap: () => _reportUserProfileAction(context, profile.id),
+        ),
+      ],
+    );
+  }
+
+  void _handleHireAction(BuildContext context, String targetUserId) {
+    AppLogger.i(
+      'Public profile hire action requested',
+      tag: 'PublicProfile',
+      json: {'target_user_id': targetUserId},
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Booking from public profiles is coming soon.'),
       ),
     );
   }
@@ -484,12 +441,20 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
           ),
         ),
       );
-    } on Exception catch (e) {
+    } on Exception catch (e, st) {
+      AppLogger.e(
+        'Public profile chat start failed',
+        tag: 'PublicProfile',
+        error: e,
+        stackTrace: st,
+      );
       if (!context.mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error starting chat: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not start chat. Please try again.'),
+        ),
+      );
     } finally {
       loader.close();
     }
@@ -499,30 +464,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
     BuildContext context,
     String targetUserId,
   ) async {
-    var draftReason = '';
     final reason = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Report User'),
-        content: TextField(
-          maxLines: 4,
-          onChanged: (value) => draftReason = value,
-          decoration: const InputDecoration(
-            hintText: 'Describe the issue',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, draftReason.trim()),
-            child: const Text('Submit'),
-          ),
-        ],
-      ),
+      builder: (ctx) => const ReportUserDialog(),
     );
     if (!context.mounted || reason == null || reason.isEmpty) return;
 
@@ -537,6 +481,130 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
       SnackBar(
         content: Text(
           ok ? 'Report submitted.' : (vm.error ?? 'Report failed.'),
+        ),
+      ),
+    );
+  }
+}
+
+/// Dialog that collects a non-empty reason before submitting a user report.
+///
+/// The dialog owns only temporary form state. [SafetyViewModel] submission stays
+/// in the parent screen so report authority remains outside the form widget.
+class ReportUserDialog extends StatefulWidget {
+  /// Creates the report-user reason prompt.
+  const ReportUserDialog({super.key});
+
+  @override
+  State<ReportUserDialog> createState() => _ReportUserDialogState();
+}
+
+class _ReportUserDialogState extends State<ReportUserDialog> {
+  var _draftReason = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final dialogColors = context.colorScheme;
+    final dialogAmber = context.amberColors;
+    final trimmedReason = _draftReason.trim();
+
+    return AlertDialog(
+      backgroundColor: dialogAmber.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(
+          AmberDuskTokens.spacing.taskCardRadius,
+        ),
+      ),
+      title: Text(
+        'Report User',
+        style: AppTypography.h5.copyWith(color: dialogColors.text),
+      ),
+      content: TextField(
+        maxLines: 4,
+        onChanged: (value) => setState(() => _draftReason = value),
+        style: AppTypography.bodyMedium.copyWith(color: dialogColors.text),
+        decoration: InputDecoration(
+          hintText: 'Describe the issue',
+          hintStyle: AppTypography.bodyMedium.copyWith(
+            color: dialogColors.textSecondary,
+          ),
+          filled: true,
+          fillColor: dialogAmber.background,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(
+              AmberDuskTokens.widgetTheme.fields.radius,
+            ),
+            borderSide: BorderSide.none,
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: trimmedReason.isEmpty
+              ? null
+              : () => Navigator.pop(context, trimmedReason),
+          child: const Text('Submit'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Error state for public-profile load failures.
+///
+/// It distinguishes repository/network failures from a genuine missing profile
+/// while preserving the existing retry path through [PublicProfileViewModel].
+class _PublicProfileErrorState extends StatelessWidget {
+  const _PublicProfileErrorState({
+    required this.message,
+    required this.onRetry,
+  });
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimens.p24),
+        child: AppCardContainer(
+          padding: const EdgeInsets.all(AppDimens.p20),
+          borderRadius: BorderRadius.circular(AmberDuskTokens.spacing.lg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.person_off_outlined,
+                color: amberColors.danger,
+                size: AppDimens.emptyStateIconSize,
+              ),
+              const SizedBox(height: AppDimens.p12),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: colorScheme.text,
+                ),
+              ),
+              const SizedBox(height: AppDimens.p16),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: amberColors.primary,
+                  foregroundColor: amberColors.textInverse,
+                ),
+                onPressed: onRetry,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
         ),
       ),
     );

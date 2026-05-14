@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/payment_service.dart';
+import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/features/tasks/services/task_service.dart';
 import 'package:sline_app/features/tasks/services/tender_payment_coordinator.dart';
 import 'package:sline_app/features/tasks/view/tender_payment_screen.dart';
@@ -25,6 +26,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          theme: AppTheme.light(),
           home: ChangeNotifierProvider<TenderPaymentViewModel>.value(
             value: vm,
             child: const TenderPaymentScreen(),

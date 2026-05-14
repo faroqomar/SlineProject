@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/config/payment_runtime_config.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/features/booking/models/payment_return_args.dart';
 import 'package:sline_app/features/booking/view/payment_webview_screen.dart';
@@ -33,14 +35,15 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
             if (!mounted) return;
             final navigator = Navigator.of(context);
             final messenger = ScaffoldMessenger.of(context);
+            final successColor = context.colorScheme.success;
             try {
               final dashboardVm = context.read<DashboardViewModel>();
               await dashboardVm.refresh();
             } on Exception catch (_) {}
             messenger.showSnackBar(
-              const SnackBar(
-                content: Text('Payment successful! Work is now active.'),
-                backgroundColor: Colors.green,
+              SnackBar(
+                content: const Text('Payment successful! Work is now active.'),
+                backgroundColor: successColor,
               ),
             );
             navigator.popUntil((route) => route.isFirst);
@@ -127,20 +130,24 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
     int hours,
     int minutes,
   ) {
+    final colorScheme = context.colorScheme;
+    final statusColor = vm.isExpired ? colorScheme.danger : colorScheme.warning;
+    final statusMuted = vm.isExpired
+        ? colorScheme.dangerMuted
+        : colorScheme.warningMuted;
+
     return Container(
       padding: const EdgeInsets.all(AppDimens.p12),
       decoration: BoxDecoration(
-        color: vm.isExpired ? Colors.red.shade50 : Colors.orange.shade50,
+        color: statusMuted,
         borderRadius: BorderRadius.circular(AppDimens.r12),
-        border: Border.all(
-          color: vm.isExpired ? Colors.red.shade200 : Colors.orange.shade200,
-        ),
+        border: Border.all(color: statusColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
           Icon(
             vm.isExpired ? Icons.timer_off : Icons.timer,
-            color: vm.isExpired ? Colors.red : Colors.orange,
+            color: statusColor,
           ),
           const SizedBox(width: AppDimens.p12),
           Expanded(
@@ -151,17 +158,16 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
                   vm.isExpired
                       ? 'Payment Deadline Expired'
                       : 'Payment Required',
-                  style: TextStyle(
+                  style: AppTypography.bodyMedium.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: vm.isExpired ? Colors.red : Colors.orange.shade800,
+                    color: statusColor,
                   ),
                 ),
                 if (!vm.isExpired)
                   Text(
                     'Complete payment in ${hours}h ${minutes}m to activate work',
-                    style: TextStyle(
-                      color: Colors.orange.shade700,
-                      fontSize: 12,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: colorScheme.textSecondary,
                     ),
                   ),
               ],
@@ -178,14 +184,13 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
       children: [
         Text(
           'Order Summary',
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          style: AppTypography.h5.copyWith(color: context.colorScheme.text),
         ),
         const SizedBox(height: AppDimens.p16),
-        _buildSummaryRow('Task', vm.taskTitle),
-        _buildSummaryRow('Freelancer', vm.freelancerName),
+        _buildSummaryRow(context, 'Task', vm.taskTitle),
+        _buildSummaryRow(context, 'Freelancer', vm.freelancerName),
         _buildSummaryRow(
+          context,
           'Amount',
           PriceFormatter.formatPrice(vm.amount),
           isBold: true,
@@ -195,46 +200,47 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
   }
 
   Widget _buildPaymentMethod(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final appColors = context.colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Payment Method',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          style: AppTypography.h6.copyWith(color: appColors.text),
         ),
         const SizedBox(height: AppDimens.p12),
         Container(
           padding: const EdgeInsets.all(AppDimens.p12),
           decoration: BoxDecoration(
-            color: colorScheme.surface,
+            color: appColors.cardBackground,
             borderRadius: BorderRadius.circular(AppDimens.r12),
-            border: Border.all(
-              color: colorScheme.outline.withValues(alpha: 0.2),
-            ),
+            border: Border.all(color: appColors.cardBorder),
           ),
           child: Row(
             children: [
-              Icon(Icons.credit_card, color: colorScheme.primary),
+              Icon(Icons.credit_card, color: appColors.primary),
               const SizedBox(width: AppDimens.p12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Card Payment',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: AppTypography.bodyMedium.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: appColors.text,
+                      ),
                     ),
                     Text(
                       'Secure payment confirmation',
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                      style: AppTypography.bodySmall.copyWith(
+                        color: appColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
               ),
-              Icon(Icons.check_circle, color: colorScheme.primary),
+              Icon(Icons.check_circle, color: appColors.primary),
             ],
           ),
         ),
@@ -243,19 +249,25 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
   }
 
   Widget _buildErrorSection(BuildContext context, String message) {
+    final colorScheme = context.colorScheme;
     return Container(
       padding: const EdgeInsets.all(AppDimens.p12),
       margin: const EdgeInsets.only(bottom: AppDimens.p16),
       decoration: BoxDecoration(
-        color: Colors.red.shade50,
+        color: colorScheme.dangerMuted,
         borderRadius: BorderRadius.circular(AppDimens.r8),
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline, color: Colors.red.shade700),
+          Icon(Icons.error_outline, color: colorScheme.danger),
           const SizedBox(width: AppDimens.p8),
           Expanded(
-            child: Text(message, style: TextStyle(color: Colors.red.shade700)),
+            child: Text(
+              message,
+              style: AppTypography.bodySmall.copyWith(
+                color: colorScheme.danger,
+              ),
+            ),
           ),
         ],
       ),
@@ -263,22 +275,23 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
   }
 
   Widget _buildTenderUnavailableBanner(BuildContext context) {
+    final colorScheme = context.colorScheme;
     return Container(
       padding: const EdgeInsets.all(AppDimens.p12),
       margin: const EdgeInsets.only(top: AppDimens.p16),
       decoration: BoxDecoration(
-        color: Colors.amber.shade50,
+        color: colorScheme.warningMuted,
         borderRadius: BorderRadius.circular(AppDimens.r8),
-        border: Border.all(color: Colors.amber.shade200),
+        border: Border.all(color: colorScheme.warning.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          Icon(Icons.info_outline, color: Colors.amber.shade800),
+          Icon(Icons.info_outline, color: colorScheme.warning),
           const SizedBox(width: AppDimens.p12),
           Expanded(
             child: Text(
               'Card payment for this flow is not yet available. Use Pay Later and complete payment when server-backed payment is enabled.',
-              style: TextStyle(fontSize: 13, color: Colors.amber.shade900),
+              style: AppTypography.bodySmall.copyWith(color: colorScheme.text),
             ),
           ),
         ],
@@ -290,17 +303,18 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
     final canPay =
         vm.isTenderPaymentAvailable && !vm.isProcessing && !vm.isExpired;
     final finishUrl = buildQiCardFinishUrlForRuntime();
+    final colorScheme = context.colorScheme;
     return SizedBox(
       width: double.infinity,
       child: FilledButton(
         onPressed: canPay ? () => vm.submit(finishUrl: finishUrl) : null,
         child: vm.isProcessing
-            ? const SizedBox(
-                height: 20,
-                width: 20,
+            ? SizedBox(
+                height: AppDimens.p20,
+                width: AppDimens.p20,
                 child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  strokeWidth: AppDimens.hairlineDivider * 4,
+                  valueColor: AlwaysStoppedAnimation<Color>(colorScheme.text),
                 ),
               )
             : Text('Pay ${PriceFormatter.formatPrice(vm.amount)}'),
@@ -318,17 +332,29 @@ class _TenderPaymentScreenState extends State<TenderPaymentScreen> {
     );
   }
 
-  Widget _buildSummaryRow(String label, String value, {bool isBold = false}) {
+  Widget _buildSummaryRow(
+    BuildContext context,
+    String label,
+    String value, {
+    bool isBold = false,
+  }) {
+    final colorScheme = context.colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppDimens.p12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(color: Colors.grey.shade600)),
+          Text(
+            label,
+            style: AppTypography.bodySmall.copyWith(
+              color: colorScheme.textSecondary,
+            ),
+          ),
           Text(
             value,
-            style: TextStyle(
+            style: AppTypography.bodyMedium.copyWith(
               fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+              color: colorScheme.text,
             ),
           ),
         ],

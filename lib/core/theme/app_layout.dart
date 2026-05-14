@@ -160,6 +160,9 @@ class AppLayout {
   /// NOTE: Master Plan suggested 64, but actual is 70.
   static const double bottomNavHeight = 70.0;
 
+  /// Stable bottom inset for tabbed screens that sit above the app nav bar.
+  static const double tabViewBottomPadding = bottomNavHeight + spacingStandard;
+
   /// FAB bottom offset above the navigation bar.
   /// Source: main_navigation_screen.dart:265 — `bottom: 100`.
   static const double fabBottomOffset = 100.0;

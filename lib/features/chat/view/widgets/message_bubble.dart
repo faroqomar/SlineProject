@@ -1,12 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Chat message bubble with grouping support, link detection, emoji-only
@@ -114,18 +114,18 @@ class _MessageBubbleState extends State<MessageBubble> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
 
     // Emoji-only messages: render at 2x size without bubble background
     if (_isEmojiOnly) {
-      return _buildEmojiOnly(colorScheme);
+      return _buildEmojiOnly(amberColors);
     }
 
-    final bg = widget.isMine ? colorScheme.primary : colorScheme.cardBackground;
-    final fg = widget.isMine ? Colors.white : colorScheme.text;
+    final bg = widget.isMine ? amberColors.primary : amberColors.surfaceRaised;
+    final fg = widget.isMine ? amberColors.textInverse : amberColors.text;
     final metaColor = widget.isMine
-        ? Colors.white.withValues(alpha: 0.7)
-        : colorScheme.textSecondary;
+        ? amberColors.textInverse.withValues(alpha: 0.7)
+        : amberColors.muted;
 
     // Corner radius: inner corner towards adjacent grouped bubble is smaller.
     final radius = _buildBorderRadius();
@@ -156,7 +156,7 @@ class _MessageBubbleState extends State<MessageBubble> {
               borderRadius: radius,
               border: widget.isMine
                   ? null
-                  : Border.all(color: colorScheme.cardBorder),
+                  : Border.all(color: amberColors.surfaceHighest),
             ),
             child: Column(
               crossAxisAlignment: widget.isMine
@@ -165,10 +165,10 @@ class _MessageBubbleState extends State<MessageBubble> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Reply quote — shown when replyToText is set
-                if (widget.replyToText != null) _buildReplyQuote(colorScheme),
+                if (widget.replyToText != null) _buildReplyQuote(amberColors),
                 // Message text — RichText with links or plain Text
                 if (_hasLinks)
-                  _buildRichText(colorScheme, fg)
+                  _buildRichText(context, amberColors, fg)
                 else
                   Text(
                     widget.text,
@@ -194,7 +194,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                           child: _statusIcon(
                             widget.status!,
                             metaColor,
-                            colorScheme,
+                            amberColors,
                           ),
                         ),
                       ],
@@ -211,10 +211,8 @@ class _MessageBubbleState extends State<MessageBubble> {
 
   /// Emoji-only rendering: 1-3 emoji at 2x font size without bubble background.
   /// Keeps alignment and timestamp consistent with regular messages.
-  Widget _buildEmojiOnly(AppColorScheme colorScheme) {
-    final metaColor = widget.isMine
-        ? colorScheme.textSecondary
-        : colorScheme.textSecondary;
+  Widget _buildEmojiOnly(AmberDuskColorScheme amberColors) {
+    final metaColor = amberColors.muted;
 
     return Semantics(
       label:
@@ -236,7 +234,7 @@ class _MessageBubbleState extends State<MessageBubble> {
               // Emoji at approximately 2x body text size (32px)
               Text(
                 widget.text.trim(),
-                style: const TextStyle(fontSize: 32, height: 1.2),
+                style: AppTypography.h1.copyWith(height: 1.2),
               ),
               // Timestamp below the emoji
               if (widget.isLastInGroup) ...[
@@ -254,8 +252,12 @@ class _MessageBubbleState extends State<MessageBubble> {
   }
 
   /// Builds RichText with tappable URL links interspersed with plain text.
-  /// Link style: underlined, white for sent (teal bubble), teal for received.
-  Widget _buildRichText(AppColorScheme colorScheme, Color textColor) {
+  /// Link style: underlined, inverse text for sent and primary for received.
+  Widget _buildRichText(
+    BuildContext context,
+    AmberDuskColorScheme amberColors,
+    Color textColor,
+  ) {
     // Dispose any previous recognizers before rebuilding
     _disposeRecognizers();
     _recognizers = [];
@@ -263,8 +265,9 @@ class _MessageBubbleState extends State<MessageBubble> {
     final spans = <InlineSpan>[];
     var lastEnd = 0;
 
-    // Link color: white underline on teal bubble, teal underline on card background
-    final linkColor = widget.isMine ? Colors.white : colorScheme.primary;
+    final linkColor = widget.isMine
+        ? amberColors.textInverse
+        : amberColors.primary;
 
     for (final match in _urlPattern.allMatches(widget.text)) {
       // Plain text before the URL
@@ -283,9 +286,39 @@ class _MessageBubbleState extends State<MessageBubble> {
 
       // Create a recognizer for this link and track it for disposal
       final recognizer = TapGestureRecognizer()
-        ..onTap = () {
-          AppLogger.d('MessageBubble: tapped link $trimmed', tag: 'Chat');
-          launchUrl(Uri.parse(trimmed), mode: LaunchMode.externalApplication);
+        ..onTap = () async {
+          AppLogger.d(
+            kDebugMode
+                ? 'MessageBubble: tapped link $trimmed'
+                : 'MessageBubble: tapped link',
+            tag: 'Chat',
+          );
+          try {
+            final uri = Uri.parse(trimmed);
+            final launched = await launchUrl(
+              uri,
+              mode: LaunchMode.externalApplication,
+            );
+            if (launched) return;
+
+            AppLogger.w(
+              'MessageBubble: link launch returned false',
+              tag: 'Chat',
+              error: kDebugMode ? trimmed : null,
+            );
+          } on Object catch (e, st) {
+            AppLogger.e(
+              'MessageBubble: link launch failed',
+              tag: 'Chat',
+              error: e,
+              stackTrace: st,
+            );
+          }
+
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Could not open link.')));
         };
       _recognizers.add(recognizer);
 
@@ -341,20 +374,20 @@ class _MessageBubbleState extends State<MessageBubble> {
 
   /// Reply quote visual — displayed above message text when replyToText is set.
   /// Thin left accent border + sender name + quoted text preview.
-  Widget _buildReplyQuote(AppColorScheme colorScheme) {
+  Widget _buildReplyQuote(AmberDuskColorScheme amberColors) {
     // Accent color: white on sent bubble, primary on received
     final accentColor = widget.isMine
-        ? Colors.white.withValues(alpha: 0.5)
-        : colorScheme.primary.withValues(alpha: 0.5);
+        ? amberColors.textInverse.withValues(alpha: 0.5)
+        : amberColors.primary.withValues(alpha: 0.5);
     final bgColor = widget.isMine
-        ? Colors.white.withValues(alpha: 0.1)
-        : colorScheme.primary.withValues(alpha: 0.05);
+        ? amberColors.textInverse.withValues(alpha: 0.12)
+        : amberColors.primary.withValues(alpha: 0.08);
     final senderColor = widget.isMine
-        ? Colors.white.withValues(alpha: 0.9)
-        : colorScheme.text;
+        ? amberColors.textInverse.withValues(alpha: 0.9)
+        : amberColors.text;
     final quoteTextColor = widget.isMine
-        ? Colors.white.withValues(alpha: 0.7)
-        : colorScheme.textSecondary;
+        ? amberColors.textInverse.withValues(alpha: 0.7)
+        : amberColors.muted;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppDimens.p8),
@@ -420,7 +453,7 @@ class _MessageBubbleState extends State<MessageBubble> {
   static Widget _statusIcon(
     String status,
     Color defaultColor,
-    AppColorScheme colorScheme,
+    AmberDuskColorScheme amberColors,
   ) {
     switch (status) {
       case 'read':
@@ -428,7 +461,7 @@ class _MessageBubbleState extends State<MessageBubble> {
           Icons.done_all,
           key: const ValueKey('status_read'),
           size: AppDimens.iconSizeSmall,
-          color: colorScheme.info,
+          color: amberColors.primary,
         );
       case 'delivered':
         return Icon(

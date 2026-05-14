@@ -22,6 +22,7 @@ class SlinePageRoute<T> extends PageRouteBuilder<T> {
     super.settings,
     super.fullscreenDialog,
     super.barrierColor,
+    super.opaque,
   }) : super(
          pageBuilder: (context, animation, secondaryAnimation) =>
              pageBuilder(context),
@@ -43,6 +44,7 @@ class SlinePageRoute<T> extends PageRouteBuilder<T> {
     );
     return SlinePageRoute._(
       settings: settings,
+      opaque: true,
       pageBuilder: (_) => child,
       duration: AppMotion.standard,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -84,6 +86,7 @@ class SlinePageRoute<T> extends PageRouteBuilder<T> {
     return SlinePageRoute._(
       settings: settings,
       fullscreenDialog: true,
+      opaque: false,
       pageBuilder: (_) => child,
       duration: AppMotion.emphasis,
       barrierColor: Colors.black38,
@@ -117,6 +120,7 @@ class SlinePageRoute<T> extends PageRouteBuilder<T> {
     );
     return SlinePageRoute._(
       settings: settings,
+      opaque: true,
       pageBuilder: (_) => child,
       duration: AppMotion.fast,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {

@@ -145,6 +145,9 @@ void main() {
         find.byKey(const ValueKey<String>('wallet_hero_card')),
         findsOneWidget,
       );
+      expect(find.text('AVAILABLE BALANCE'), findsOneWidget);
+      expect(find.text('Withdraw soon'), findsOneWidget);
+      expect(find.text('Top up soon'), findsOneWidget);
 
       await tester.drag(
         find.byKey(const ValueKey<String>('wallet_shared_list')),

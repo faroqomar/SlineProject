@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/features/portfolio/models/portfolio_item.dart';
 import 'package:sline_app/features/portfolio/view/sheets/edit_portfolio_sheet.dart';
 import 'package:sline_app/features/portfolio/view/widgets/image_placeholder.dart';
 import 'package:sline_app/features/portfolio/viewmodels/portfolio_view_model.dart';
 
 /// Bottom sheet that shows portfolio item details and actions.
-/// Uses effectiveImageRef for rendering portfolio images.
+///
+/// Uses [PortfolioViewModel.getImageUrl] for image rendering so storage path
+/// resolution and legacy URL fallback remain unchanged.
 class PortfolioDetailsSheet extends StatelessWidget {
   const PortfolioDetailsSheet({
     super.key,
@@ -30,8 +36,11 @@ class PortfolioDetailsSheet extends StatelessWidget {
       context: context,
       useSafeArea: true,
       isScrollControlled: true,
-      builder: (ctx) =>
-          PortfolioDetailsSheet(item: item, controller: controller),
+      barrierColor: context.amberColors.scrim,
+      backgroundColor: AmberDuskTokens.colors.transparent,
+      builder: (ctx) => _InsetSheetFrame(
+        child: PortfolioDetailsSheet(item: item, controller: controller),
+      ),
     );
   }
 
@@ -39,6 +48,9 @@ class PortfolioDetailsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final createdLocal = item.createdAt.toLocal();
     final imageUrl = controller.getImageUrl(item);
+    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
+    final buttonTheme = AmberDuskTokens.widgetTheme.buttons;
 
     AppLogger.d(
       'Building portfolio details',
@@ -47,33 +59,31 @@ class PortfolioDetailsSheet extends StatelessWidget {
     );
 
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(
+          AppDimens.p16,
+          AppDimens.p16,
+          AppDimens.p16,
+          AppDimens.p24,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).dividerColor,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
+            const Center(child: _SheetHandle()),
+            const SizedBox(height: AppDimens.p12),
             Text(
               'Portfolio Item',
-              style: Theme.of(context).textTheme.titleMedium,
+              style: AppTypography.h5.copyWith(color: colorScheme.text),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppDimens.p12),
             if (imageUrl != null)
               ClipRRect(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppDimens.r18),
                 child: Image.network(
                   imageUrl,
+                  width: double.infinity,
+                  height: AppDimens.p100 + AppDimens.p100,
                   fit: BoxFit.cover,
                   errorBuilder: (_, error, __) {
                     AppLogger.w(
@@ -81,35 +91,54 @@ class PortfolioDetailsSheet extends StatelessWidget {
                       tag: 'PortfolioDetailsSheet',
                       error: error,
                     );
-                    return ImagePlaceholder(title: item.title, height: 200);
+                    return ImagePlaceholder(
+                      title: item.title,
+                      height: AppDimens.p100 + AppDimens.p100,
+                    );
                   },
                 ),
               )
             else
-              ImagePlaceholder(title: item.title, height: 200),
-            const SizedBox(height: 12),
+              ImagePlaceholder(
+                title: item.title,
+                height: AppDimens.p100 + AppDimens.p100,
+              ),
+            const SizedBox(height: AppDimens.p12),
             Text(
               item.title,
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+              style: AppTypography.h6.copyWith(color: colorScheme.text),
             ),
             if ((item.description ?? '').isNotEmpty) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: AppDimens.p6),
               Text(
                 item.description!,
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: colorScheme.textSecondary,
+                ),
               ),
             ],
-            const SizedBox(height: 8),
+            const SizedBox(height: AppDimens.p8),
             Text(
               'Created: ${createdLocal.year}-${createdLocal.month.toString().padLeft(2, '0')}-${createdLocal.day.toString().padLeft(2, '0')} '
               '${createdLocal.hour.toString().padLeft(2, '0')}:${createdLocal.minute.toString().padLeft(2, '0')}',
-              style: Theme.of(context).textTheme.bodySmall,
+              style: AppTypography.caption.copyWith(
+                color: colorScheme.textSecondary,
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppDimens.p16),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: colorScheme.text,
+                      minimumSize: Size.fromHeight(buttonTheme.minHeight),
+                      side: BorderSide(color: colorScheme.cardBorder),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(buttonTheme.radius),
+                      ),
+                      textStyle: buttonTheme.textStyle,
+                    ),
                     onPressed: () async {
                       AppLogger.d(
                         'Edit button pressed',
@@ -128,12 +157,17 @@ class PortfolioDetailsSheet extends StatelessWidget {
                     label: const Text('Edit'),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppDimens.p12),
                 Expanded(
                   child: FilledButton.icon(
                     style: FilledButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.error,
-                      foregroundColor: Theme.of(context).colorScheme.onError,
+                      backgroundColor: amberColors.dangerMuted,
+                      foregroundColor: amberColors.text,
+                      minimumSize: Size.fromHeight(buttonTheme.minHeight),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(buttonTheme.radius),
+                      ),
+                      textStyle: buttonTheme.textStyle,
                     ),
                     onPressed: () async {
                       AppLogger.d(
@@ -142,22 +176,40 @@ class PortfolioDetailsSheet extends StatelessWidget {
                       );
                       final ok = await showDialog<bool>(
                         context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('Delete item?'),
-                          content: const Text(
-                            'This will permanently remove the portfolio entry.',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(ctx).pop(false),
-                              child: const Text('Cancel'),
+                        barrierColor: amberColors.scrim,
+                        builder: (ctx) {
+                          final dialogColors = ctx.colorScheme;
+                          final dialogAmber = ctx.amberColors;
+                          return AlertDialog(
+                            backgroundColor: dialogColors.cardBackground,
+                            title: Text(
+                              'Delete item?',
+                              style: AppTypography.h5.copyWith(
+                                color: dialogColors.text,
+                              ),
                             ),
-                            FilledButton(
-                              onPressed: () => Navigator.of(ctx).pop(true),
-                              child: const Text('Delete'),
+                            content: Text(
+                              'This will permanently remove the portfolio entry.',
+                              style: AppTypography.bodyMedium.copyWith(
+                                color: dialogColors.textSecondary,
+                              ),
                             ),
-                          ],
-                        ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(ctx).pop(false),
+                                child: const Text('Cancel'),
+                              ),
+                              FilledButton(
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: dialogAmber.dangerMuted,
+                                  foregroundColor: dialogAmber.text,
+                                ),
+                                onPressed: () => Navigator.of(ctx).pop(true),
+                                child: const Text('Delete'),
+                              ),
+                            ],
+                          );
+                        },
                       );
                       if (!context.mounted) return;
                       if (ok ?? false) {
@@ -188,6 +240,52 @@ class PortfolioDetailsSheet extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Inset frame for details sheets using the Open Design rounded sheet geometry.
+class _InsetSheetFrame extends StatelessWidget {
+  const _InsetSheetFrame({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final sheetRecipe = AmberDuskTokens.surfaces.sheet;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppDimens.p10,
+        AppDimens.p0,
+        AppDimens.p10,
+        AppDimens.p10,
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: sheetRecipe.fill,
+          borderRadius: BorderRadius.circular(sheetRecipe.radius),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: child,
+      ),
+    );
+  }
+}
+
+/// Visual drag affordance for Amber Dusk bottom sheets.
+class _SheetHandle extends StatelessWidget {
+  const _SheetHandle();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: AppDimens.p40,
+      height: AppDimens.p4,
+      decoration: BoxDecoration(
+        color: context.colorScheme.textSecondary.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(AppDimens.r4),
       ),
     );
   }

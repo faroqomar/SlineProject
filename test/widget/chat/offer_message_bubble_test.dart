@@ -40,7 +40,7 @@ void main() {
 
     testWidgets('shows price', (tester) async {
       await tester.pumpWidget(buildBubble());
-      expect(find.text(r'$500'), findsOneWidget);
+      expect(find.text('500 IQD'), findsOneWidget);
     });
 
     testWidgets('shows delivery days', (tester) async {

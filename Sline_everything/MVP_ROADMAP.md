@@ -1,6 +1,6 @@
 # SLine MVP Roadmap
 
-**Last Updated:** 2026-04-30
+**Last Updated:** 2026-05-14
 
 This roadmap tracks the current code-state of the repository. Status values are intentionally simple:
 - `✅ Completed`
@@ -13,7 +13,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | --- | --- | --- |
 | Flutter app shell and navigation | ✅ Completed | `main.dart` + `lib/app/main_navigation_screen.dart`; visible bottom nav is Home, Dashboard, Messages, Profile via `lib/core/navigation/main_nav_destinations.dart` |
 | Supabase bootstrap and app providers | ✅ Completed | shared client/bootstrap in `lib/core/services/supabase_config.dart` and root providers in `main.dart` |
-| Theme system (Layer 1) | ✅ Completed | Phase 0: `app_colors.dart`, `app_typography.dart`, `app_motion.dart`, `app_states.dart`, `app_decorations.dart`, `app_theme.dart` |
+| Theme system (Layer 1) | ✅ Completed | Phase 0: `app_colors.dart`, `app_typography.dart`, `app_motion.dart`, `app_states.dart`, `app_decorations.dart`, `app_theme.dart`. **2026-05-11:** Amber Dusk Phase 0 added a staged inactive Open Design token layer under `lib/core/theme/designs/amber_dusk/`; it is not globally runtime-activated. **2026-05-12:** Phases 2-4 consume Amber Dusk tokens in scoped phone shell/discovery/dashboard surfaces. **2026-05-13:** Phases 5-12 extend scoped Amber Dusk treatment across auth gates, chat/notifications, tasks/work, booking/payment, wallet, profile, portfolio, services, and secondary surfaces. **2026-05-14:** Transactional QA tightened focused/active UI state proof, payment/booking lifecycle buckets, and safe payment result UI while final processed-payment simulator parity remains open. |
 | Layout tokens (Layer 2) | ✅ Completed | Phase 0.7: `app_layout.dart` (41 semantic tokens), `app_dimens.dart` (raw primitives). Three-layer architecture complete. |
 | Logging and crash boundaries | ✅ Completed | `AppLogger`, `CrashReportingService`, zoned/global handlers |
 | Documentation hub | ✅ Completed | maintained under `Sline_everything/` |
@@ -33,7 +33,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 
 | Feature | Status | Notes |
 | --- | --- | --- |
-| Home feed and task discovery | ✅ Completed | repo implementation is live; production rollout depends on the `20260301_*home*` migrations and RLS verification. **2026-04-30:** Home now hosts `All Work`, `Bookings`, and `Tenders` discovery modes below search; Tenders/Bookings were removed from the bottom nav. Plan: `.TODO/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`; Session: `docs/LOG/SESSION_HomeDiscoveryNavConsolidation_2026-04-30.md`; Supabase changes: none. |
+| Home feed and task discovery | ✅ Completed | repo implementation is live; production rollout depends on the `20260301_*home*` migrations and RLS verification. **2026-04-30:** Home now hosts `All Work`, `Bookings`, and `Tenders` discovery modes below search; Tenders/Bookings were removed from the bottom nav. Plan: `.TODO/Archive/HomeDiscoveryNavConsolidation_2026-04-30/PLAN_HomeDiscoveryNavConsolidation_2026-04-30.md`; Session: `docs/LOG/SESSION_HomeDiscoveryNavConsolidation_2026-04-30.md`; Supabase changes: none. |
 | Category-backed task browsing | ✅ Completed | categories feature and task filters exist |
 | Booking discovery feed | ✅ Completed | Booking discovery is accessible from Home's `Bookings` mode and continues to reuse task-feed data for booking tasks |
 | Search | 🚧 In Progress | dedicated `search/` feature exists; ongoing refinement |
@@ -54,9 +54,9 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | --- | --- | --- |
 | **Booking Lifecycle hardening (2026-03-08)** | ✅ Completed | Enum `disputed`, `no_show`; `fn_booking_guard` blocks client delivered→canceled (use Report Issue→disputed); `rpc_finalize_auto_approval` booking branch calls ledger; `admin_resolve_booking_dispute` for disputed→completed/refunded. Plan: `.TODO/PLAN_BookingLifecycle_2026-03-08_PlanCritic.md`. Execution: `.TODO/EXECUTION_LOG_PLAN_BookingLifecycle_2026-03-08.md`. |
 | Direct booking checkout | ✅ Completed | `PaymentCheckoutScreen` + server-backed draft creation |
-| QiCard integration | 🚧 In Progress | create/recovery/webhook flow exists and continues to be hardened |
-| Web payment callback handling | ✅ Completed | same-tab redirect + `PaymentReturnScreen` |
-| Mobile payment callback handling | ✅ Completed | `PaymentWebViewScreen` validates trusted callbacks |
+| QiCard integration | 🚧 In Progress | create/recovery/webhook flow exists and continues to be hardened. **2026-05-14:** local `qicard_payment_create` and `create_payment_intent` finish URLs are sanitized; IDs remain in gateway `additionalInfo`/server logs for webhook and recovery. |
+| Web payment callback handling | ✅ Completed | same-tab redirect + `PaymentReturnScreen`; sanitized callbacks can recover through `PaymentPendingStore` |
+| Mobile payment callback handling | ✅ Completed | `PaymentWebViewScreen` validates trusted callbacks and receives payment-intent stream completion |
 | Repeat slotless direct bookings | ✅ Completed | same client can create multiple slotless bookings for one booking task |
 | Booking details and history | ✅ Completed | client/provider history lists and detail screen exist |
 
@@ -69,7 +69,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | Attachments | ✅ Completed | private attachment flow; participant-scoped access via `can_access_chat_attachment` |
 | Favorites-powered contact flows | ✅ Completed | favorites and chat handoff are implemented |
 | Chat Creation Matrix (v2.19) | ✅ Completed | Atomic RPC `start_direct_conversation_v1` with rate limiting (20/hr), favorites enforcement, role verification. Guard trigger hardens all paths. Feature flag `enable_direct_conversation_rpc`. See `supabase/migrations/20260306000000_chat_creation_matrix.sql` |
-| Notifications | ✅ Completed | Server-authority: client read/update only; badge, modal, deep links; auth-aware stream. **Notification routing (2026-03-08):** `user_devices` + `notification_push_queue`, trigger enqueue; ViewModel foreground sync then stream; Edge `push-notify`, `process-push-queue` (CRON_SECRET); runbook `.TODO/improvement_the_system/ImplementReady/13_notification-routing/RUNBOOK_notification_push.md`. Plan: `.TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md`. Diagram: `Sline_everything/AppDigram/All_Diagrams/13_notification-routing.md`. |
+| Notifications | ✅ Completed | Server-authority: client read/update only; badge, modal, deep links; auth-aware stream. **Notification routing (2026-03-08):** `user_devices` + `notification_push_queue`, trigger enqueue; ViewModel foreground sync then stream; Edge `push-notify`, `process-push-queue` (CRON_SECRET); runbook `.TODO/improvement_the_system/ImplementReady/13_notification-routing/RUNBOOK_notification_push.md`. **2026-05-13:** `NotificationViewModel` keeps cached notifications and reconnects on transient Supabase Realtime close codes `1002`/`1006` instead of surfacing a hard load error. Plan: `.TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md`. Diagram: `Sline_everything/AppDigram/All_Diagrams/13_notification-routing.md`. |
 | Report flows (task/user/chat) | ✅ Completed | app can submit `reports` rows from task detail, chat menu, and public profile |
 | Booking dispute submission | ✅ Completed | booking details `Report Issue` when active or delivered; **Dispute lifecycle (2026-03-08):** escrow guard in rpc_approve_delivery and rpc_finalize_auto_approval; RLS deny on disputes; dispute_status_enum + trg_dispute_guard + trg_dispute_set_resolved_at; SafetyViewModel.hasOpenDisputeForTask/ForBooking/ForDirectOffer; Approve/Review disabled when disputed on booking, work item, direct offer details; vw_unified_work_items disputed check. **Plan 14a (2026-03-08):** Frozen guards in rpc_submit_delivery and rpc_request_revision; partial unique indexes (one open/active dispute per task/direct_offer); rpc_submit_dispute (eligibility + single-active); Report Issue on task and direct_offer (work item + direct offer details); open/active dispute banners. Migration: 20260308160000. Plan: `.TODO/PLAN_DisputeLifecycle_2026-03-08.md`, `.TODO/PLAN_14a_DisputeExtension_2026-03-08.md`. |
 
@@ -87,7 +87,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 
 | Area | Status | Notes |
 | --- | --- | --- |
-| CI/CD pipeline | ✅ Completed | GitHub Actions: lint + test + build + architecture guard. `.github/workflows/ci.yml`. Added 2026-04-01. |
+| CI/CD pipeline | ✅ Completed | GitHub Actions: lint + test/coverage + coverage artifact upload + build + architecture guard. Coverage floor is 40%; generated `coverage/` output is ignored and `coverage/lcov.info` is uploaded as `coverage-lcov`. `.github/workflows/ci.yml`. Added 2026-04-01; coverage artifact documented 2026-05-11. |
 | Pre-commit hook | ✅ Completed | `.githooks/pre-commit` runs format + analyze locally. Enable: `git config core.hooksPath .githooks`. Added 2026-04-01. |
 | Lint rules (34 rules) | ✅ Completed | `analysis_options.yaml`: 18 core + 7 safety + 9 code quality. Strong mode enabled. Updated 2026-04-01. |
 | Architecture guard | ✅ Completed | 7 MVVM boundary checks in CI (hard failure). Graduated 2026-04-01 after Phase B fixed all violations. |
@@ -96,6 +96,7 @@ This roadmap tracks the current code-state of the repository. Status values are 
 | Supabase migrations | ✅ Completed | repo contains live migration history under `supabase/migrations/` |
 | Edge functions | ✅ Completed | booking/payment functions are checked into `supabase/functions/` |
 | Docs sync discipline | ✅ Completed | docs now reflect current `view/viewmodels/data/services` layout and payment/runtime helpers |
+| Agent system evolution | ✅ Completed | `docs/LOG/SYSTEM_EVOLUTION_REPORT_2026-05-13.md` records the latest deduped session-log findings. The Step 7 pass updated `.cursor/Agents/*.md` rules for worker checkpoints, untrusted worker patches, lazy/injected service bridges, wrapper theme harnesses, per-file emulator matrices, safe URL-facts logging, realtime transient reconnect handling, and stale guidance-path cleanup. |
 
 ## 9. Completed Phases
 
@@ -110,11 +111,11 @@ All 11 items (D1–D11) completed:
 - Migration review checklist (7 sections)
 - Edge Function CORS hardening (wildcard `*` → `sline.app` allowlist)
 - paymentId regex validation in webhook handler
-- CI coverage floor (28% regression prevention)
+- CI coverage floor introduced for regression prevention; current floor is 40%
 - A6 architecture violations fixed (NotificationVM, SavedTasksVM)
 - Architecture guard Check 3 tightened
 
-Tests: 706 → 780 (+74). Coverage floor: 40%. All 6 architecture guard checks pass.
+Tests: 706 → 780 (+74). Coverage floor: 40%. Architecture guard had 6 checks in Phase D and now has 7 checks after the Phase E core-to-features boundary guard.
 
 ### Phase E: Polish (2026-04-05) ✅
 - **E1** — APK build self-resolved (Kotlin version mismatch fixed by SDK update)
@@ -145,13 +146,19 @@ Tests: 706 → 780 (+74). Coverage floor: 40%. All 6 architecture guard checks p
 | Phase | Name | Status | Classification | Session Log |
 |-------|------|--------|---------------|-------------|
 | 0 | Design System Foundation | ✅ Completed | Token Infrastructure | `SESSION_PLAN_DesignSystemFoundation_2026-04-07.md` |
-| 0.7 | Layout Tokens | ✅ Completed | Token Infrastructure | `SESSION_PLAN_LayoutTokens_Phase0_7_2026-04-08.md` |
+| 0.7 | Layout Tokens | ✅ Completed | Token Infrastructure | `SESSION_PLAN_LayoutTokens_Phase0.7_2026-04-08.md` |
+| 0.9 | Amber Dusk Phase 0 Phone Foundation | ✅ Completed | Staged Open Design token layer | `SESSION_PLAN_OpenDesign_AmberDusk_Phase0_PhoneFoundation_2026-05-11.md` |
+| 1.0 | Amber Dusk Phase 1 Core Phone Widgets | ✅ Code complete; manual emulator visual QA checklist open | Shared-widget Amber Dusk adapter | `SESSION_PLAN_OpenDesign_AmberDusk_Phase1_CorePhoneWidgets_2026-05-11.md` |
+| 1.1 | Amber Dusk Phases 2-4 Phone Shell, Discovery, Dashboard | ✅ Code complete; manual emulator visual QA gate open | Scoped phone-view Amber Dusk runtime surfaces | `SESSION_PLAN_OpenDesign_AmberDusk_Phases2_3_4_PhoneShellDiscoveryDashboard_2026-05-11.md` |
+| 1.2 | Amber Dusk Phases 5-8 Trust, Messaging, Work, Payments | ✅ Code complete; Step 8 docs synced; manual emulator visual QA gate open | Scoped phone-view Amber Dusk runtime surfaces; no backend/schema changes | `SESSION_PLAN_OpenDesign_AmberDusk_Phases5_6_7_8_PhoneTrustMessagingWorkPayments_2026-05-12.md` |
+| 1.3 | Amber Dusk Phases 9-12 Phone Profile, Secondary, Readiness, Handoff | ✅ Code complete after Step 5 gap scan; docs/handoff synced; manual emulator visual QA gate open | Scoped profile, portfolio, services, secondary screens, notification/helper states; no backend/schema changes | `SESSION_PLAN_OpenDesign_AmberDusk_Phases9_10_11_12_PhoneProfileSecondaryReadiness_2026-05-13.md` |
+| 1.4 | Amber Dusk Transactional QA Recovery | ✅ Code/test/docs complete; processed-payment simulator success branch open | Payment recovery, IQD money consistency, signup/post refresh, transactional Dashboard/Messages/Wallet/Task/Chat alignment; local Edge Function source changes only | `SESSION_PLAN_OpenDesign_AmberDusk_TransactionalQARecovery_2026-05-13.md` |
 | 1 | Core Widget Redesign | ✅ Completed | Redesign | `SESSION_PLAN_CoreWidgetRedesign_2026-04-07.md` |
 | 2+3+5 | App Shell + Auth + Cards | ✅ Completed | Redesign | `SESSION_PLAN_Phase2_AppShellAuthCards_2026-04-08.md` |
 | 4 | Home & Discovery | ✅ Completed | Redesign | `SESSION_PLAN_Phase4_HomeDiscovery_2026-04-08.md` |
 | 6 | Chat & Messaging | ✅ Completed | Redesign (Phase 6 Advanced Interactions + continuation) | `SESSION_PLAN_Phase6_ChatAdvancedInteractions_2026-04-10.md` |
 | 6.1 | Home Discovery Nav Consolidation | ✅ Completed | Navigation consolidation + Home discovery polish | `SESSION_HomeDiscoveryNavConsolidation_2026-04-30.md` |
-| 7 | Dashboard | 🚧 Token-normalized | Token Normalization (visual redesign pending) | (same as above) |
+| 7 | Dashboard | 🚧 Amber Dusk scoped code complete; final emulator parity open | Token-normalized / scoped Amber Dusk surface; broader visual redesign evidence still gated | `SESSION_PLAN_OpenDesign_AmberDusk_Phases2_3_4_PhoneShellDiscoveryDashboard_2026-05-11.md` |
 | 8 | Booking & Payments | ⏳ Planned | — | — |
 | 9 | Profile | ⏳ Planned | — | — |
 | 10 | Portfolio | ⏳ Planned | — | — |
@@ -162,13 +169,14 @@ Tests: 706 → 780 (+74). Coverage floor: 40%. All 6 architecture guard checks p
 | 15 | Secondary Screens | ⏳ Planned | — | — |
 | 16 | Cross-Cutting Quality | ⏳ Planned | — | — |
 
-**Note:** Phase 5 (ChatDashboardNotifications) was executed as token normalization and polish, not as the visual redesign described in the Master Plan. Phase 6 (Chat & Messaging) was then completed as the actual visual redesign: elevated conversation tiles, unread indicators, emoji-only rendering, link detection, reply quotes, swipe-to-reply, FullscreenImageViewer, deferred navigation for instant chat opening, and optimistic unread state management. Dashboard and Notifications visual redesign is still pending.
+**Note:** Phase 5 (ChatDashboardNotifications) was executed as token normalization and polish, not as the visual redesign described in the Master Plan. Phase 6 (Chat & Messaging) was then completed as the actual visual redesign: elevated conversation tiles, unread indicators, emoji-only rendering, link detection, reply quotes, swipe-to-reply, FullscreenImageViewer, deferred navigation for instant chat opening, and optimistic unread state management. Dashboard and Notifications visual redesign is still pending. The 2026-05-13 Amber Dusk Phases 9-12 plan is a phone profile/secondary/readiness/handoff closure plan and does not redefine the older master-plan rows 9-12.
 
 ---
 
 ## 11. Current Focus
 
 ### Current Focus
-1. **UI Redesign Phase 7: Dashboard** (next) — actual visual redesign of dashboard tabs, overview cards, and work summaries
-2. **UI Redesign Phase 8: Booking & Payments** (planned) — booking flow screens, payment UI, escrow status
-3. **Phase F: Ship Preparation** (planned) — Arabic/Kurdish translations, widget tests for critical views, remaining lint debt adoption, GitHub repo safeguards
+1. **Amber Dusk visual gates** — run `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases2_3_4_Step6.md`, `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-12_OpenDesign_AmberDusk_Phases5_6_7_8.md`, `.TODO/EMULATOR_TEST_CHECKLIST_2026-05-13_OpenDesign_AmberDusk_Phases9_10_11_12_Step6.md`, and `.TODO/VisualQA_OpenDesign_AmberDusk_TransactionalQARecovery_iOSSimulator_2026-05-13/README.md` on the target iOS Simulator before claiming final visual parity. The remaining transactional gate is the full QiCard processed-payment success branch with app recovery and Dashboard Bookings proof.
+2. **Missing Open Design states** — Search, Categories, Saved, Favorites, loading, empty, error, proposal detail, payment return/WebView, attachment error, notification modal, and auth/system edge states still need exact Open Design or user screenshots before pixel-match claims.
+3. **Amber Dusk activation/preview work** — optional broader activation must explicitly map staged tokens into active `AppTheme` before widgets depend on them.
+4. **Phase F: Ship Preparation** — Arabic/Kurdish translations, widget tests for critical views, remaining lint debt adoption, GitHub repo safeguards.

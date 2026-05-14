@@ -6,6 +6,7 @@ import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
 import 'package:sline_app/core/widgets/scale_button.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
@@ -67,10 +68,10 @@ class _CategoriesView extends StatelessWidget {
   static const int _gridColumns = 2;
 
   /// Cross-axis spacing between grid cells.
-  static const double _gridCrossSpacing = 12;
+  static const double _gridCrossSpacing = AppDimens.p12;
 
   /// Main-axis spacing between grid cells.
-  static const double _gridMainSpacing = 12;
+  static const double _gridMainSpacing = AppDimens.p12;
 
   /// Aspect ratio for grid children (width / height).
   static const double _childAspectRatio = 1.2;
@@ -86,9 +87,16 @@ class _CategoriesView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<CategoriesViewModel>();
+    final amber = context.amberColors;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Categories')),
+      backgroundColor: amber.page,
+      appBar: AppBar(
+        title: const Text('Categories'),
+        backgroundColor: amber.page,
+        foregroundColor: amber.text,
+        surfaceTintColor: AmberDuskColors.transparent,
+      ),
       body: RefreshIndicator(
         onRefresh: vm.refresh,
         child: CustomScrollView(
@@ -151,6 +159,7 @@ class _CategoriesView extends StatelessWidget {
   /// the error context before the retry action.
   Widget _buildErrorState(BuildContext context, CategoriesViewModel vm) {
     final colorScheme = context.colorScheme;
+    final amber = context.amberColors;
 
     return SliverFillRemaining(
       hasScrollBody: false,
@@ -162,27 +171,30 @@ class _CategoriesView extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Danger icon circle — 80x80 with danger color at 8% alpha
+                // Danger icon circle uses the Amber Dusk muted danger wash.
                 Container(
                   width: AppDimens.p80,
                   height: AppDimens.p80,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: colorScheme.danger.withValues(alpha: 0.08),
+                    color: amber.dangerMuted,
                   ),
                   child: Icon(
                     Icons.error_outline,
                     size: AppDimens.p48,
-                    color: colorScheme.danger,
+                    color: amber.danger,
                   ),
                 ),
 
                 const SizedBox(height: AppDimens.p16),
 
-                // Error message
+                // Error copy is allowed two lines so long service messages do
+                // not overflow on the narrow Phase 10 phone widths.
                 Text(
                   vm.error!,
                   style: AppTypography.h5.copyWith(color: colorScheme.text),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                 ),
 
@@ -207,6 +219,7 @@ class _CategoriesView extends StatelessWidget {
   /// the empty result to users.
   Widget _buildEmptyState(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final amber = context.amberColors;
 
     return SliverFillRemaining(
       hasScrollBody: false,
@@ -218,18 +231,18 @@ class _CategoriesView extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Icon circle — 80x80 with primary at 8% alpha
+                // Icon circle uses the Amber Dusk active-state wash.
                 Container(
                   width: AppDimens.p80,
                   height: AppDimens.p80,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: colorScheme.primary.withValues(alpha: 0.08),
+                    color: amber.activeGlow,
                   ),
                   child: Icon(
                     Icons.category,
                     size: AppDimens.p48,
-                    color: colorScheme.primary,
+                    color: amber.primary,
                   ),
                 ),
 
@@ -239,6 +252,8 @@ class _CategoriesView extends StatelessWidget {
                 Text(
                   'No categories found',
                   style: AppTypography.h5.copyWith(color: colorScheme.text),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                 ),
 
@@ -250,6 +265,8 @@ class _CategoriesView extends StatelessWidget {
                   style: AppTypography.bodySmall.copyWith(
                     color: colorScheme.textSecondary,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -297,8 +314,8 @@ class _CategoriesView extends StatelessWidget {
 /// category name), the category name in [AppTypography.captionBold],
 /// and is wrapped in [ScaleButton] for press feedback.
 ///
-/// The icon color is picked from a small curated palette using the name's
-/// hash code, giving each category a visually distinct but repeatable hue.
+/// The accent role is picked from existing Amber Dusk semantic tokens using
+/// the name hash, giving each category a distinct but token-owned treatment.
 class _CategoryCard extends StatelessWidget {
   const _CategoryCard({required this.name, required this.onTap});
 
@@ -308,26 +325,21 @@ class _CategoryCard extends StatelessWidget {
   /// Callback when the card is tapped.
   final VoidCallback onTap;
 
-  /// Curated palette for category icon circles.
-  /// Picked by hashing the category name for deterministic assignment.
-  static const List<Color> _categoryColors = [
-    Color(0xFF146068), // teal
-    Color(0xFFF3BB19), // gold
-    Color(0xFF6B5CE7), // purple
-    Color(0xFFE85D75), // rose
-    Color(0xFF2AAA8A), // mint
-    Color(0xFFE07C24), // orange
-    Color(0xFF4A90D9), // blue
-    Color(0xFF9B59B6), // violet
-  ];
-
-  /// Maps a category name to one of the curated icon colours.
+  /// Maps a category name to one of the Amber Dusk semantic accent colors.
   ///
   /// Uses bitmask (& 0x7fffffff) instead of .abs() to avoid overflow
   /// when hashCode == int.minValue (where .abs() returns negative).
-  Color _colorForName(String name) {
-    final index = (name.hashCode & 0x7fffffff) % _categoryColors.length;
-    return _categoryColors[index];
+  Color _colorForName(AmberDuskColorScheme amber, String name) {
+    final categoryColors = [
+      amber.primary,
+      amber.amber,
+      amber.forest,
+      amber.star,
+      amber.info,
+      amber.rust,
+    ];
+    final index = (name.hashCode & 0x7fffffff) % categoryColors.length;
+    return categoryColors[index];
   }
 
   /// Maps a category name to a deterministic icon from a curated set.
@@ -353,7 +365,8 @@ class _CategoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final categoryColor = _colorForName(name);
+    final amber = context.amberColors;
+    final categoryColor = _colorForName(amber, name);
     final categoryIcon = _iconForName(name);
 
     return Semantics(
@@ -376,40 +389,45 @@ class _CategoryCard extends StatelessWidget {
                 isDark: colorScheme.isDark,
               ),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Icon circle — 40px diameter, category color at 10% alpha
-                Container(
-                  width: AppDimens.p40,
-                  height: AppDimens.p40,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: categoryColor.withValues(alpha: 0.1),
+            child: Padding(
+              // Inner padding keeps two-line category names away from the
+              // card border while preserving the fixed two-column grid rhythm.
+              padding: const EdgeInsets.symmetric(horizontal: AppDimens.p8),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Icon circle — 40px diameter with token-owned accent color.
+                  Container(
+                    width: AppDimens.p40,
+                    height: AppDimens.p40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      // Amber overlay keeps the icon well inside the staged
+                      // palette while foreground color varies by category role.
+                      color: amber.activeGlow,
+                    ),
+                    child: Icon(
+                      categoryIcon,
+                      size: AppDimens.p22,
+                      color: categoryColor,
+                    ),
                   ),
-                  child: Icon(
-                    categoryIcon,
-                    size: AppDimens.p22,
-                    color: categoryColor,
-                  ),
-                ),
 
-                const SizedBox(height: AppDimens.p8),
+                  const SizedBox(height: AppDimens.p8),
 
-                // Category name — captionBold, centered, single line with ellipsis
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppDimens.p8),
-                  child: Text(
+                  // Category name can wrap to two lines for longer catalog
+                  // labels without changing the grid or tap target geometry.
+                  Text(
                     name,
                     style: AppTypography.captionBold.copyWith(
                       color: colorScheme.text,
                     ),
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

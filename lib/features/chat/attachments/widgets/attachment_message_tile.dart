@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:sline_app/core/config/storage_config.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
-import 'package:sline_app/core/utils/error_mapper.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/signed_url_cache.dart';
 import 'package:sline_app/core/widgets/fullscreen_image_viewer.dart';
 import 'package:sline_app/core/widgets/skeleton_loader.dart';
-import 'package:sline_app/features/chat/attachments/services/upload_service.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 typedef AttachmentSignedUrlResolver =
     Future<String> Function(String storagePath);
@@ -24,8 +19,7 @@ typedef AttachmentSignedUrlResolver =
 /// coverage for accessibility. View-layer only.
 ///
 /// Uses [SignedUrlCache] to prevent redundant API calls when scrolling
-/// through chat history. Handles error states gracefully and caches
-/// auth/permission errors to prevent retry storms.
+/// through chat history, while keeping backend-specific errors out of widgets.
 class AttachmentMessageTile extends StatefulWidget {
   final bool isMine;
   final String storagePath; // e.g. chat-attachments/convos/<id>/file.jpg
@@ -50,11 +44,7 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
   String? _resolvedUrl;
   bool _loading = true;
   String? _error;
-
-  /// Single uploader instance — avoids creating a new object on every URL
-  /// resolution call (which previously happened inside _loadSignedUrl).
-  late final SupabaseAttachmentUploader _uploader =
-      SupabaseAttachmentUploader();
+  bool _resolverMissing = false;
 
   /// Image height — consistent across loading, error, and success states
   static const double _imageHeight = 180.0;
@@ -69,10 +59,12 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
   void didUpdateWidget(covariant AttachmentMessageTile oldWidget) {
     super.didUpdateWidget(oldWidget);
     // Re-load if storage path changed
-    if (oldWidget.storagePath != widget.storagePath) {
+    if (oldWidget.storagePath != widget.storagePath ||
+        oldWidget.signedUrlResolver != widget.signedUrlResolver) {
       _loading = true;
       _error = null;
       _resolvedUrl = null;
+      _resolverMissing = false;
       _loadSignedUrl();
     }
   }
@@ -89,10 +81,7 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
           _loading = false;
         });
       }
-      AppLogger.d(
-        'AttachmentMessageTile: error cache hit for ${widget.storagePath.split('/').last}',
-        tag: 'Chat',
-      );
+      AppLogger.d('AttachmentMessageTile: error cache hit', tag: 'Chat');
       return;
     }
 
@@ -108,14 +97,25 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
       return;
     }
 
-    // Generate new signed URL
+    final resolver = widget.signedUrlResolver;
+    if (resolver == null) {
+      if (mounted) {
+        setState(() {
+          _error = 'Could not load attachment. Please try again.';
+          _loading = false;
+          _resolverMissing = true;
+        });
+      }
+      AppLogger.w(
+        'AttachmentMessageTile: missing signed URL resolver',
+        tag: 'Chat',
+      );
+      return;
+    }
+
+    // Generate new signed URL through the ViewModel-provided resolver.
     try {
-      final url =
-          await (widget.signedUrlResolver?.call(widget.storagePath) ??
-              _uploader.createSignedUrl(
-                widget.storagePath,
-                expiresInSeconds: SharedStorageConfig.chatAttachmentTtlSeconds,
-              ));
+      final url = await resolver(widget.storagePath);
 
       // Cache the successful URL
       SignedUrlCache.set(widget.storagePath, url);
@@ -124,26 +124,14 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
         setState(() {
           _resolvedUrl = url;
           _loading = false;
+          _resolverMissing = false;
         });
       }
-      AppLogger.d(
-        'AttachmentMessageTile: signed URL resolved for ${widget.storagePath.split('/').last}',
-        tag: 'Chat',
-      );
-    } on Exception catch (e) {
-      // Cache only auth/permission failures so transient errors can retry
-      final isAuthFailure =
-          e is StorageException &&
-          (e.statusCode == '403' ||
-              e.statusCode == '401' ||
-              e.message.toLowerCase().contains('permission') ||
-              e.message.toLowerCase().contains('policy'));
-      if (isAuthFailure) {
-        SignedUrlCache.setError(widget.storagePath);
-      }
-
-      // Map error to user-friendly message
-      final errorMessage = ErrorMapper.map(e);
+      AppLogger.d('AttachmentMessageTile: signed URL resolved', tag: 'Chat');
+    } on Object catch (e, st) {
+      // Resolver errors may include private storage paths, so the widget keeps
+      // copy generic and lets the service/ViewModel own backend-specific types.
+      const errorMessage = 'Could not load attachment. Please try again.';
 
       if (mounted) {
         setState(() {
@@ -154,22 +142,24 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
       AppLogger.w(
         'AttachmentMessageTile: failed to resolve URL — $errorMessage',
         tag: 'Chat',
+        error: e,
+        json: {'stack_trace': st.toString()},
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
 
-    // Semantic colors — replaces hardcoded primaryColor / grey.shade300
+    // Attachment bubbles follow the same Amber Dusk contract as text bubbles.
     final bg = widget.isMine
-        ? colorScheme.primary.withValues(alpha: 0.85)
-        : colorScheme.cardBackground;
-    final fg = widget.isMine ? Colors.white : colorScheme.text;
+        ? amberColors.primary.withValues(alpha: 0.92)
+        : amberColors.surfaceRaised;
+    final fg = widget.isMine ? amberColors.textInverse : amberColors.text;
     final metaColor = widget.isMine
-        ? Colors.white.withValues(alpha: 0.7)
-        : colorScheme.textSecondary;
+        ? amberColors.textInverse.withValues(alpha: 0.7)
+        : amberColors.muted;
 
     // Border radius consistent with MessageBubble
     final radius = BorderRadius.only(
@@ -201,7 +191,7 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
               borderRadius: radius,
               border: widget.isMine
                   ? null
-                  : Border.all(color: colorScheme.cardBorder),
+                  : Border.all(color: amberColors.surfaceHighest),
             ),
             child: ClipRRect(
               borderRadius: radius,
@@ -211,7 +201,7 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
                     : CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildImageSection(colorScheme),
+                  _buildImageSection(amberColors),
                   if (widget.caption != null &&
                       widget.caption!.trim().isNotEmpty)
                     Padding(
@@ -243,7 +233,7 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
     );
   }
 
-  Widget _buildImageSection(AppColorScheme colorScheme) {
+  Widget _buildImageSection(AmberDuskColorScheme amberColors) {
     // Loading state — shimmer skeleton
     if (_loading) {
       return _shimmerPlaceholder();
@@ -251,7 +241,7 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
 
     // Error state — icon + retry button
     if (_error != null || _resolvedUrl == null || _resolvedUrl!.isEmpty) {
-      return _errorBox(colorScheme, _error ?? 'Failed to load image');
+      return _errorBox(amberColors, _error ?? 'Failed to load image');
     }
 
     // Success state — image with fade-in transition
@@ -265,8 +255,7 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
         // Shimmer while image bytes load from network
         loadingBuilder: (c, child, progress) =>
             progress == null ? child : _shimmerPlaceholder(),
-        errorBuilder: (c, e, st) =>
-            _errorBox(context.colorScheme, 'Image error'),
+        errorBuilder: (c, e, st) => _errorBox(amberColors, 'Image error'),
       ),
     );
   }
@@ -284,26 +273,25 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
   }
 
   /// Error state with icon and retry action.
-  Widget _errorBox(AppColorScheme colorScheme, String msg) {
+  Widget _errorBox(AmberDuskColorScheme amberColors, String msg) {
+    final canRetry =
+        !_resolverMissing && !SignedUrlCache.hasError(widget.storagePath);
     return GestureDetector(
-      onTap: () {
-        // Allow retry for non-auth errors
-        if (!SignedUrlCache.hasError(widget.storagePath)) {
-          AppLogger.d(
-            'AttachmentMessageTile: retrying load for ${widget.storagePath.split('/').last}',
-            tag: 'Chat',
-          );
-          setState(() {
-            _loading = true;
-            _error = null;
-          });
-          _loadSignedUrl();
-        }
-      },
+      onTap: canRetry
+          ? () {
+              // Allow retry for non-auth errors
+              AppLogger.d('AttachmentMessageTile: retrying load', tag: 'Chat');
+              setState(() {
+                _loading = true;
+                _error = null;
+              });
+              _loadSignedUrl();
+            }
+          : null,
       child: Container(
         height: _imageHeight,
         width: double.infinity,
-        color: colorScheme.inputBackground,
+        color: amberColors.surface,
         alignment: Alignment.center,
         padding: const EdgeInsets.all(AppDimens.p12),
         child: Column(
@@ -312,25 +300,23 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
             Icon(
               Icons.broken_image_outlined,
               size: AppLayout.iconStandard,
-              color: colorScheme.textTertiary,
+              color: amberColors.muted,
             ),
             const SizedBox(height: AppLayout.spacingStandard),
             Text(
               msg,
-              style: AppTypography.micro.copyWith(
-                color: colorScheme.textTertiary,
-              ),
+              style: AppTypography.micro.copyWith(color: amberColors.muted),
               textAlign: TextAlign.center,
             ),
             // Show retry hint for non-auth errors
             // Localization backlog: 'Tap to retry' and error strings below
             // should move to AppLocalizations once l10n covers this surface.
-            if (!SignedUrlCache.hasError(widget.storagePath)) ...[
+            if (canRetry) ...[
               const SizedBox(height: AppLayout.spacingTight),
               Text(
                 'Tap to retry',
                 style: AppTypography.micro.copyWith(
-                  color: colorScheme.primary,
+                  color: amberColors.primary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -348,8 +334,8 @@ class _AttachmentMessageTileState extends State<AttachmentMessageTile> {
     FullscreenImageViewer.show(
       context,
       imageUrl: url,
-      // Hero tag uses storage path for stable identity across URL regeneration
-      heroTag: 'chat-attachment-${widget.storagePath}',
+      // Full path avoids hash collisions; Hero tags are not user-visible copy.
+      heroTag: 'chat-attachment-${widget.runtimeType}-${widget.storagePath}',
       caption: widget.caption,
     );
   }

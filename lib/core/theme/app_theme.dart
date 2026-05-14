@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 
 /// A custom [ThemeExtension] to provide easy access to the [AppColorScheme]
 /// within the widget tree using `Theme.of(context).extension<AppThemeExtension>()`.
@@ -30,6 +31,43 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
   }
 }
 
+/// Theme extension for animated skeleton placeholder colors.
+///
+/// Skeleton primitives read this extension so loading colors follow the active
+/// app theme instead of importing a named design system directly.
+@immutable
+class SkeletonColors extends ThemeExtension<SkeletonColors> {
+  const SkeletonColors({required this.base, required this.highlight});
+
+  /// Base fill color for skeleton placeholders.
+  final Color base;
+
+  /// Moving shimmer highlight color.
+  final Color highlight;
+
+  @override
+  SkeletonColors copyWith({Color? base, Color? highlight}) {
+    return SkeletonColors(
+      base: base ?? this.base,
+      highlight: highlight ?? this.highlight,
+    );
+  }
+
+  @override
+  SkeletonColors lerp(
+    covariant ThemeExtension<SkeletonColors>? other,
+    double t,
+  ) {
+    if (other is! SkeletonColors) {
+      return this;
+    }
+    return SkeletonColors(
+      base: Color.lerp(base, other.base, t)!,
+      highlight: Color.lerp(highlight, other.highlight, t)!,
+    );
+  }
+}
+
 /// Defines the main [ThemeData] for the application, providing both
 /// light and dark themes.
 ///
@@ -41,18 +79,23 @@ class AppTheme {
   /// Returns the light [ThemeData] for the application.
   static ThemeData light() {
     final lightColorScheme = AppColorScheme.light();
-    return _buildTheme(lightColorScheme);
+    return _buildTheme(lightColorScheme, AmberDuskTokens.widgetThemeLight);
   }
 
   /// Returns the dark [ThemeData] for the application.
   static ThemeData dark() {
     final darkColorScheme = AppColorScheme.dark();
-    return _buildTheme(darkColorScheme);
+    return _buildTheme(darkColorScheme, AmberDuskTokens.widgetTheme);
   }
 
   /// Builds a [ThemeData] instance based on the provided [AppColorScheme].
-  static ThemeData _buildTheme(AppColorScheme appColorScheme) {
+  static ThemeData _buildTheme(
+    AppColorScheme appColorScheme,
+    AmberDuskWidgetThemeTokens widgetTheme,
+  ) {
     final isDark = appColorScheme.isDark;
+    final tabTheme = widgetTheme.tabs;
+    final skeletonTheme = widgetTheme.skeleton;
 
     return ThemeData(
       // Core Material 3 ColorScheme, derived from a seed color for harmony
@@ -246,15 +289,22 @@ class AppTheme {
 
       // TabBar Theme
       tabBarTheme: TabBarThemeData(
-        labelColor: AppColors.teal,
-        unselectedLabelColor: appColorScheme.textSecondary,
+        labelColor: tabTheme.activeLabelColor,
+        unselectedLabelColor: tabTheme.inactiveLabelColor,
         indicatorSize: TabBarIndicatorSize.label,
         indicator: UnderlineTabIndicator(
-          borderSide: BorderSide(color: AppColors.teal, width: 3),
-          borderRadius: BorderRadius.circular(2),
+          borderSide: BorderSide(
+            color: tabTheme.indicatorColor,
+            width: tabTheme.indicatorThickness,
+          ),
+          borderRadius: BorderRadius.circular(tabTheme.indicatorRadius),
         ),
-        labelStyle: AppTypography.captionBold,
-        unselectedLabelStyle: AppTypography.caption,
+        labelStyle: tabTheme.labelStyle.copyWith(
+          color: tabTheme.activeLabelColor,
+        ),
+        unselectedLabelStyle: tabTheme.inactiveLabelStyle.copyWith(
+          color: tabTheme.inactiveLabelColor,
+        ),
       ),
 
       // TextButton Theme (Phase 1 — deferred from Phase 0 LOW-2)
@@ -291,6 +341,10 @@ class AppTheme {
       // Extensions
       extensions: <ThemeExtension<dynamic>>[
         AppThemeExtension(colors: appColorScheme),
+        SkeletonColors(
+          base: skeletonTheme.base,
+          highlight: skeletonTheme.highlight,
+        ),
       ],
     );
   }

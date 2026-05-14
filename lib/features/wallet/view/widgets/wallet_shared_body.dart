@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/widgets/app_card.dart';
 import 'package:sline_app/features/wallet/utils/wallet_presentation_helper.dart';
@@ -14,8 +14,8 @@ import 'package:sline_app/features/wallet/viewmodels/wallet_view_model.dart';
 
 /// Wallet tab body — renders hero card, insights, withdrawals, and timeline.
 ///
-/// Phase 7 PREMIUM REDESIGN: Stripe/Linear aesthetic — overline headers,
-/// hairline dividers, large colored amounts, minimal decoration, data-rich.
+/// The shared body is used by both the dashboard wallet tab and full wallet
+/// screen, while wallet loading and ledger data remain owned by WalletViewModel.
 class WalletSharedBody extends StatefulWidget {
   const WalletSharedBody({
     super.key,
@@ -105,6 +105,7 @@ class _WalletLoadingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const amber = AmberDuskTokens.colors;
     return AppCard(
       key: const ValueKey<String>('wallet_shared_loading'),
       padding: const EdgeInsets.all(AppDimens.p24),
@@ -115,14 +116,12 @@ class _WalletLoadingCard extends StatelessWidget {
           const SizedBox(height: AppDimens.p20),
           Text(
             'Loading wallet',
-            style: AppTypography.h5.copyWith(color: context.colorScheme.text),
+            style: AppTypography.h5.copyWith(color: amber.text),
           ),
           const SizedBox(height: AppDimens.p8),
           Text(
             'Pulling in your live balance and recent ledger activity.',
-            style: AppTypography.bodyMedium.copyWith(
-              color: context.colorScheme.textSecondary,
-            ),
+            style: AppTypography.bodyMedium.copyWith(color: amber.textSubtle),
             textAlign: TextAlign.center,
           ),
         ],
@@ -139,7 +138,7 @@ class _WalletErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
     return AppCard(
       key: const ValueKey<String>('wallet_shared_error'),
       padding: const EdgeInsets.all(AppDimens.p24),
@@ -150,26 +149,24 @@ class _WalletErrorCard extends StatelessWidget {
             width: AppDimens.p48,
             height: AppDimens.p48,
             decoration: BoxDecoration(
-              color: colorScheme.danger.withValues(alpha: 0.16),
+              color: amber.dangerMuted,
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.wifi_tethering_error_rounded,
-              color: colorScheme.danger,
+              color: amber.danger,
               size: AppDimens.iconSizeMedium,
             ),
           ),
           const SizedBox(height: AppDimens.p16),
           Text(
             'Wallet unavailable',
-            style: AppTypography.h5.copyWith(color: colorScheme.text),
+            style: AppTypography.h5.copyWith(color: amber.text),
           ),
           const SizedBox(height: AppDimens.p8),
           Text(
             message,
-            style: AppTypography.bodyMedium.copyWith(
-              color: colorScheme.textSecondary,
-            ),
+            style: AppTypography.bodyMedium.copyWith(color: amber.textSubtle),
           ),
           const SizedBox(height: AppDimens.p20),
           SizedBox(
@@ -178,7 +175,8 @@ class _WalletErrorCard extends StatelessWidget {
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),
               style: FilledButton.styleFrom(
-                backgroundColor: colorScheme.primary,
+                backgroundColor: amber.primary,
+                foregroundColor: amber.text,
                 padding: const EdgeInsets.symmetric(vertical: AppDimens.p16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppDimens.r14),
@@ -194,11 +192,10 @@ class _WalletErrorCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Insights — Warm, branded stat cards
+// Insights — dashboard wallet flow stats
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Wallet flow stats — friendly h5 header, individual tinted stat tiles
-/// with colored left accent, generous spacing. Warm, not cold corporate.
+/// Wallet flow stats with individual Amber Dusk metric tiles.
 class _WalletInsightsCard extends StatelessWidget {
   const _WalletInsightsCard({required this.summary});
 
@@ -206,23 +203,19 @@ class _WalletInsightsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
     return Column(
       key: const ValueKey<String>('wallet_insights_card'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Section header — friendly, not cold overline ──
-        // TEST: must find text "Recent wallet flow"
         Text(
           'Recent wallet flow',
-          style: AppTypography.h5.copyWith(color: colorScheme.text),
+          style: AppTypography.h5.copyWith(color: amber.text),
         ),
         const SizedBox(height: AppDimens.p4),
         Text(
           summary.activityCaption,
-          style: AppTypography.bodySmall.copyWith(
-            color: colorScheme.textSecondary,
-          ),
+          style: AppTypography.bodySmall.copyWith(color: amber.textSubtle),
         ),
         const SizedBox(height: AppDimens.p16),
 
@@ -268,16 +261,16 @@ class _InsightTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final accentColor = _insightColor(insight.kind, colorScheme);
+    const amber = AmberDuskTokens.colors;
+    final accentColor = _insightColor(insight.kind, amber);
     final icon = _insightIcon(insight.kind);
 
     return Container(
       padding: const EdgeInsets.all(AppDimens.p16),
       decoration: BoxDecoration(
-        color: colorScheme.cardBackground,
+        color: amber.surface,
         borderRadius: BorderRadius.circular(AppDimens.r16),
-        border: Border.all(color: colorScheme.cardBorder),
+        border: Border.all(color: AmberDuskColors.transparent),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -301,11 +294,10 @@ class _InsightTile extends StatelessWidget {
                   children: [
                     Icon(icon, size: 14, color: accentColor),
                     const SizedBox(width: AppDimens.p6),
-                    // TEST: must find text "Received", "Spent", "Fees"
                     Text(
                       insight.label,
                       style: AppTypography.captionBold.copyWith(
-                        color: colorScheme.textSecondary,
+                        color: amber.textSubtle,
                       ),
                     ),
                   ],
@@ -322,9 +314,7 @@ class _InsightTile extends StatelessWidget {
                 const SizedBox(height: AppDimens.p2),
                 Text(
                   insight.caption,
-                  style: AppTypography.micro.copyWith(
-                    color: colorScheme.textTertiary,
-                  ),
+                  style: AppTypography.micro.copyWith(color: amber.muted),
                 ),
               ],
             ),
@@ -336,11 +326,10 @@ class _InsightTile extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Action card — Premium coming-soon preview with gradient accent
+// Action card — coming-soon withdrawal preview
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Withdrawals feature preview with gradient left accent border.
-/// Stripe-like sharp badge, dot-indicator metrics, clean disabled CTA.
+/// Withdrawals feature preview that keeps the existing coming-soon boundary.
 class _WalletActionCard extends StatelessWidget {
   const _WalletActionCard({required this.summary});
 
@@ -349,13 +338,14 @@ class _WalletActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
 
     return Container(
       key: const ValueKey<String>('wallet_action_card'),
       decoration: BoxDecoration(
-        color: colorScheme.cardBackground,
+        color: amber.surface,
         borderRadius: BorderRadius.circular(AppDimens.r20),
-        border: Border.all(color: colorScheme.cardBorder),
+        border: Border.all(color: AmberDuskColors.transparent),
         boxShadow: AppDecorations.elevation(1, isDark: colorScheme.isDark),
       ),
       child: ClipRRect(
@@ -363,19 +353,10 @@ class _WalletActionCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Gradient left accent border (gold → teal) ──
-            // Signals premium/upcoming feature
             Container(
               width: 3,
-              // Needs explicit height to render in Row; use constraints
               constraints: const BoxConstraints(minHeight: 180),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [colorScheme.accent, colorScheme.primary],
-                ),
-              ),
+              color: amber.primary,
             ),
 
             // ── Content ──
@@ -385,37 +366,31 @@ class _WalletActionCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title + "Coming Soon" sharp badge
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           'Withdrawals',
-                          style: AppTypography.h5.copyWith(
-                            color: colorScheme.text,
-                          ),
+                          style: AppTypography.h5.copyWith(color: amber.text),
                         ),
-                        // TEST: must find text "Coming Soon"
-                        // Sharp r4 badge — more technical than rounded pill
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppDimens.p8,
                             vertical: AppDimens.p4,
                           ),
                           decoration: BoxDecoration(
-                            color: colorScheme.accent.withValues(alpha: 0.12),
+                            color: amber.primary.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(AppDimens.r4),
                             border: Border.all(
-                              color: colorScheme.accent.withValues(alpha: 0.24),
+                              color: amber.primary.withValues(alpha: 0.24),
                               width: 0.5,
                             ),
                           ),
                           child: Text(
                             'Coming Soon',
                             style: AppTypography.micro.copyWith(
-                              color: colorScheme.accent,
+                              color: amber.primary,
                               fontWeight: FontWeight.w700,
-                              letterSpacing: 0.3,
                             ),
                           ),
                         ),
@@ -423,10 +398,15 @@ class _WalletActionCard extends StatelessWidget {
                     ),
                     const SizedBox(height: AppDimens.p4),
                     Text(
-                      'Bank payout workflow is next on the roadmap.',
+                      'Withdrawals are paused until payout verification is enabled.',
                       style: AppTypography.bodySmall.copyWith(
-                        color: colorScheme.textSecondary,
+                        color: amber.textSubtle,
                       ),
+                    ),
+                    const SizedBox(height: AppDimens.p8),
+                    Text(
+                      'Your available and held balances remain visible here.',
+                      style: AppTypography.micro.copyWith(color: amber.muted),
                     ),
 
                     const SizedBox(height: AppDimens.p20),
@@ -439,7 +419,7 @@ class _WalletActionCard extends StatelessWidget {
                           value: PriceFormatter.formatPrice(
                             summary.availableFunds,
                           ),
-                          dotColor: colorScheme.primary,
+                          dotColor: amber.primary,
                         ),
                         const SizedBox(width: AppDimens.p24),
                         _WithdrawalMetric(
@@ -447,13 +427,13 @@ class _WalletActionCard extends StatelessWidget {
                           value: PriceFormatter.formatPrice(
                             summary.pendingWithdrawalFunds,
                           ),
-                          dotColor: colorScheme.danger,
+                          dotColor: amber.danger,
                         ),
                         const SizedBox(width: AppDimens.p24),
                         _WithdrawalMetric(
                           label: 'HELD',
                           value: PriceFormatter.formatPrice(summary.heldFunds),
-                          dotColor: colorScheme.accent,
+                          dotColor: amber.star,
                         ),
                       ],
                     ),
@@ -466,21 +446,21 @@ class _WalletActionCard extends StatelessWidget {
                       child: FilledButton(
                         onPressed: null,
                         style: FilledButton.styleFrom(
-                          disabledBackgroundColor: colorScheme.inputBackground,
-                          disabledForegroundColor: colorScheme.textTertiary,
+                          disabledBackgroundColor: amber.surfaceRaised,
+                          disabledForegroundColor: amber.muted,
                           padding: const EdgeInsets.symmetric(
                             vertical: AppDimens.p14,
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(AppDimens.r12),
                             side: BorderSide(
-                              color: colorScheme.divider,
+                              color: amber.heroDivider,
                               width: 0.5,
                             ),
                           ),
                         ),
                         child: Text(
-                          'Request withdrawal',
+                          'Withdrawal unavailable',
                           style: AppTypography.bodySmall.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
@@ -512,7 +492,7 @@ class _WithdrawalMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -530,9 +510,8 @@ class _WithdrawalMetric extends StatelessWidget {
             Text(
               label,
               style: AppTypography.micro.copyWith(
-                color: colorScheme.textSecondary,
+                color: amber.textSubtle,
                 fontWeight: FontWeight.w600,
-                letterSpacing: 0.5,
               ),
             ),
           ],
@@ -541,7 +520,7 @@ class _WithdrawalMetric extends StatelessWidget {
         Text(
           value,
           style: AppTypography.bodyLarge.copyWith(
-            color: colorScheme.text,
+            color: amber.text,
             fontWeight: FontWeight.w700,
             fontFeatures: const [FontFeature.tabularFigures()],
           ),
@@ -568,13 +547,13 @@ IconData _insightIcon(WalletInsightKind kind) {
 }
 
 /// Semantic insight color for light/dark mode consistency.
-Color _insightColor(WalletInsightKind kind, AppColorScheme colorScheme) {
+Color _insightColor(WalletInsightKind kind, AmberDuskColorTokens colors) {
   switch (kind) {
     case WalletInsightKind.received:
-      return colorScheme.primary;
+      return colors.primary;
     case WalletInsightKind.spent:
-      return colorScheme.danger;
+      return colors.danger;
     case WalletInsightKind.fees:
-      return colorScheme.accent;
+      return colors.star;
   }
 }

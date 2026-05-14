@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/features/proposals/models/proposal_payment_summary.dart';
 import 'package:sline_app/features/proposals/routes/proposal_payment_route.dart';
 import 'package:sline_app/features/tasks/models/task_request_model.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_requests_view_model.dart';
+
+const int _kPaymentDeadlineHours = 24;
 
 /// Shows the award confirmation dialog and handles the award + payment flow.
 Future<void> showAwardDialog({
@@ -21,15 +26,12 @@ Future<void> showAwardDialog({
   AppLogger.i(
     'Award dialog opened',
     tag: 'TaskRequests',
-    json: {
-      'requestId': request.id,
-      'bidderName': request.bidderName,
-      'price': request.price,
-      'taskBudget': budget,
-    },
+    json: {'surface': 'award_dialog'},
   );
 
-  final paymentDeadline = DateTime.now().add(const Duration(hours: 24));
+  final paymentDeadline = DateTime.now().add(
+    const Duration(hours: _kPaymentDeadlineHours),
+  );
   final formattedDeadline = DateFormat('MMM d, h:mm a').format(paymentDeadline);
 
   final budgetValue = double.tryParse(budget ?? '0') ?? 0;
@@ -38,21 +40,22 @@ Future<void> showAwardDialog({
   final isUnderBudget = budgetDiff < 0;
   final isAtBudget = budgetDiff.abs() < 0.01;
 
+  const amberColors = AmberDuskTokens.colors;
   Color budgetColor;
   IconData budgetIcon;
   String budgetMessage;
 
   if (isUnderBudget) {
-    budgetColor = Colors.green.shade700;
+    budgetColor = amberColors.forest;
     budgetIcon = Icons.trending_down;
     budgetMessage =
         'Under budget by ${PriceFormatter.formatPrice(budgetDiff.abs())}';
   } else if (isAtBudget) {
-    budgetColor = Colors.orange.shade700;
+    budgetColor = amberColors.warning;
     budgetIcon = Icons.check_circle;
     budgetMessage = 'At budget limit';
   } else {
-    budgetColor = Colors.red.shade700;
+    budgetColor = amberColors.danger;
     budgetIcon = Icons.trending_up;
     budgetMessage = 'Over budget by ${PriceFormatter.formatPrice(budgetDiff)}';
   }
@@ -61,14 +64,15 @@ Future<void> showAwardDialog({
     context: context,
     barrierDismissible: false,
     builder: (ctx) => AlertDialog(
+      backgroundColor: amberColors.background,
       title: Row(
         children: [
-          const Icon(Icons.emoji_events, color: Colors.amber),
-          const SizedBox(width: 8),
+          Icon(Icons.emoji_events, color: amberColors.warning),
+          const SizedBox(width: AppDimens.p8),
           Expanded(
             child: Text(
               'Award ${request.bidderName ?? "Freelancer"}?',
-              style: const TextStyle(fontSize: 18),
+              style: AppTypography.h5.copyWith(color: amberColors.text),
             ),
           ),
         ],
@@ -78,199 +82,36 @@ Future<void> showAwardDialog({
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Price Comparison
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Price Comparison',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Your Budget:',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                      Text(
-                        PriceFormatter.formatPrice(budgetValue),
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Bid Price:',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                      Text(
-                        PriceFormatter.formatPrice(bidPrice),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Divider(height: 16),
-                  Row(
-                    children: [
-                      Icon(budgetIcon, color: budgetColor, size: 18),
-                      const SizedBox(width: 6),
-                      Text(
-                        budgetMessage,
-                        style: TextStyle(
-                          color: budgetColor,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+            _PriceComparisonSection(
+              budgetValue: budgetValue,
+              bidPrice: bidPrice,
+              budgetIcon: budgetIcon,
+              budgetColor: budgetColor,
+              budgetMessage: budgetMessage,
+              amberColors: amberColors,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppDimens.p16),
             Row(
               children: [
-                const Icon(Icons.schedule, size: 18, color: Colors.grey),
-                const SizedBox(width: 8),
+                Icon(Icons.schedule, size: 18, color: amberColors.muted),
+                const SizedBox(width: AppDimens.p8),
                 Text(
                   'Delivery: ${request.days} days',
-                  style: const TextStyle(color: Colors.grey),
+                  style: AppTypography.bodySmall.copyWith(
+                    color: amberColors.muted,
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            // Payment Deadline
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blue.shade100),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.access_time,
-                        color: Colors.blue.shade700,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Payment Required Within 24 Hours',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue.shade800,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'After awarding, you have until $formattedDeadline to complete payment.',
-                    style: TextStyle(color: Colors.blue.shade700, fontSize: 13),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Work starts only after payment is confirmed.',
-                    style: TextStyle(
-                      color: Colors.blue.shade600,
-                      fontSize: 12,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ],
-              ),
+            const SizedBox(height: AppDimens.p16),
+            _PaymentDeadlineSection(
+              formattedDeadline: formattedDeadline,
+              amberColors: amberColors,
             ),
-            const SizedBox(height: 16),
-            // What Happens Next
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.green.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.green.shade100),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'What happens next:',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green.shade800,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const _StepRow(
-                    number: 1,
-                    title: 'Award the bid',
-                    description: 'Now',
-                    isActive: true,
-                  ),
-                  const _StepRow(
-                    number: 2,
-                    title: 'Complete payment',
-                    description: 'Within 24 hours',
-                    isActive: false,
-                  ),
-                  const _StepRow(
-                    number: 3,
-                    title: 'Work begins',
-                    description: 'After payment confirmed',
-                    isActive: false,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Risk Acknowledgment
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    size: 16,
-                    color: Colors.orange.shade700,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'By awarding, you commit to completing payment within 24 hours. Failure to pay will cancel this award.',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.orange.shade800,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            const SizedBox(height: AppDimens.p16),
+            const _WhatHappensNextSection(amberColors: amberColors),
+            const SizedBox(height: AppDimens.p12),
+            const _RiskAcknowledgmentSection(amberColors: amberColors),
           ],
         ),
       ),
@@ -280,41 +121,43 @@ Future<void> showAwardDialog({
             AppLogger.i(
               'Award dialog cancelled by user',
               tag: 'TaskRequests',
-              json: {'requestId': request.id},
+              json: {'surface': 'award_dialog'},
             );
             Navigator.pop(ctx, false);
           },
           icon: const Icon(Icons.close),
           label: const Text('Cancel'),
-          style: TextButton.styleFrom(foregroundColor: Colors.grey.shade700),
+          style: TextButton.styleFrom(foregroundColor: amberColors.muted),
         ),
         ElevatedButton.icon(
           onPressed: () {
             AppLogger.i(
               'Award dialog confirmed by user',
               tag: 'TaskRequests',
-              json: {
-                'requestId': request.id,
-                'bidPrice': bidPrice,
-                'budget': budgetValue,
-              },
+              json: {'surface': 'award_dialog'},
             );
             Navigator.pop(ctx, true);
           },
           icon: const Icon(Icons.check),
-          label: const Text(
-            'Award Freelancer',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
+          label: const Text('Award Freelancer'),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Theme.of(ctx).primaryColor,
-            foregroundColor: Colors.white,
-            elevation: 2,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            backgroundColor: amberColors.primary,
+            foregroundColor: amberColors.textInverse,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimens.p20,
+              vertical: AppDimens.p12,
+            ),
+            textStyle: AppTypography.captionBold,
           ),
         ),
       ],
-      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      actionsPadding: const EdgeInsets.fromLTRB(
+        AppDimens.p16,
+        0,
+        AppDimens.p16,
+        AppDimens.p16,
+      ),
     ),
   );
 
@@ -322,7 +165,7 @@ Future<void> showAwardDialog({
     AppLogger.i(
       'Award attempt started',
       tag: 'TaskRequests',
-      json: {'requestId': request.id, 'expectedPriceCents': expectedPriceCents},
+      json: {'surface': 'requests_list'},
     );
     await _executeAward(
       context: context,
@@ -371,8 +214,10 @@ Future<void> _executeAward({
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result?['error'] ?? 'Failed to award offer'),
-          backgroundColor: Colors.red,
+          content: const Text(
+            'Failed to award offer. Please refresh and try again.',
+          ),
+          backgroundColor: AmberDuskTokens.colors.danger,
         ),
       );
     }
@@ -386,17 +231,250 @@ Future<void> _executeAward({
     await vm.loadInitial();
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('This offer has already been awarded.'),
-        backgroundColor: Colors.orange,
+      SnackBar(
+        content: const Text('This offer has already been awarded.'),
+        backgroundColor: AmberDuskTokens.colors.warning,
       ),
     );
-  } on Exception catch (e) {
+  } on Exception catch (e, st) {
     if (!context.mounted) return;
     onAwardingChanged(false);
-    AppLogger.e('Award failed', error: e, tag: 'TaskRequests');
+    AppLogger.e('Award failed', error: e, stackTrace: st, tag: 'TaskRequests');
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Award failed: $e'), backgroundColor: Colors.red),
+      SnackBar(
+        content: const Text('Award failed. Please refresh and try again.'),
+        backgroundColor: AmberDuskTokens.colors.danger,
+      ),
+    );
+  }
+}
+
+/// Shows the client budget beside the selected bid and the budget delta state.
+class _PriceComparisonSection extends StatelessWidget {
+  const _PriceComparisonSection({
+    required this.budgetValue,
+    required this.bidPrice,
+    required this.budgetIcon,
+    required this.budgetColor,
+    required this.budgetMessage,
+    required this.amberColors,
+  });
+
+  final double budgetValue;
+  final double bidPrice;
+  final IconData budgetIcon;
+  final Color budgetColor;
+  final String budgetMessage;
+  final AmberDuskColorTokens amberColors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.p16),
+      decoration: BoxDecoration(
+        color: amberColors.surface,
+        borderRadius: BorderRadius.circular(
+          AmberDuskTokens.spacing.moduleRadius,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Price Comparison',
+            style: AppTypography.captionBold.copyWith(color: amberColors.text),
+          ),
+          const SizedBox(height: AppDimens.p12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Your Budget:',
+                style: AppTypography.bodySmall.copyWith(
+                  color: amberColors.muted,
+                ),
+              ),
+              Text(
+                PriceFormatter.formatPrice(budgetValue),
+                style: AppTypography.bodyMedium.copyWith(
+                  color: amberColors.text,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimens.p8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Bid Price:',
+                style: AppTypography.bodySmall.copyWith(
+                  color: amberColors.muted,
+                ),
+              ),
+              Text(
+                PriceFormatter.formatPrice(bidPrice),
+                style: AppTypography.bodyMedium.copyWith(
+                  color: amberColors.text,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          Divider(height: AppDimens.p16, color: amberColors.muted),
+          Row(
+            children: [
+              Icon(budgetIcon, color: budgetColor, size: 18),
+              const SizedBox(width: AppDimens.p6),
+              Text(
+                budgetMessage,
+                style: AppTypography.bodySmall.copyWith(
+                  color: budgetColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Explains the deadline that starts after the award is confirmed.
+class _PaymentDeadlineSection extends StatelessWidget {
+  const _PaymentDeadlineSection({
+    required this.formattedDeadline,
+    required this.amberColors,
+  });
+
+  final String formattedDeadline;
+  final AmberDuskColorTokens amberColors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.p16),
+      decoration: BoxDecoration(
+        color: amberColors.warningMuted,
+        borderRadius: BorderRadius.circular(
+          AmberDuskTokens.spacing.moduleRadius,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.access_time, color: amberColors.warning, size: 20),
+              const SizedBox(width: AppDimens.p8),
+              Text(
+                'Payment Required Within $_kPaymentDeadlineHours Hours',
+                style: AppTypography.bodySmall.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: amberColors.warning,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimens.p10),
+          Text(
+            'After awarding, you have until $formattedDeadline to complete payment.',
+            style: AppTypography.bodySmall.copyWith(color: amberColors.text),
+          ),
+          const SizedBox(height: AppDimens.p6),
+          Text(
+            'Work starts only after payment is confirmed.',
+            style: AppTypography.caption.copyWith(
+              color: amberColors.muted,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Summarizes the post-award sequence so the client understands the next steps.
+class _WhatHappensNextSection extends StatelessWidget {
+  const _WhatHappensNextSection({required this.amberColors});
+
+  final AmberDuskColorTokens amberColors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.p16),
+      decoration: BoxDecoration(
+        color: amberColors.surface,
+        borderRadius: BorderRadius.circular(
+          AmberDuskTokens.spacing.moduleRadius,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'What happens next:',
+            style: AppTypography.bodySmall.copyWith(
+              fontWeight: FontWeight.bold,
+              color: amberColors.text,
+            ),
+          ),
+          const SizedBox(height: AppDimens.p12),
+          const _StepRow(
+            number: 1,
+            title: 'Award the bid',
+            description: 'Now',
+            isActive: true,
+          ),
+          const _StepRow(
+            number: 2,
+            title: 'Complete payment',
+            description: 'Within $_kPaymentDeadlineHours hours',
+            isActive: false,
+          ),
+          const _StepRow(
+            number: 3,
+            title: 'Work begins',
+            description: 'After payment confirmed',
+            isActive: false,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Calls out the payment commitment before the award action is confirmed.
+class _RiskAcknowledgmentSection extends StatelessWidget {
+  const _RiskAcknowledgmentSection({required this.amberColors});
+
+  final AmberDuskColorTokens amberColors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.p12),
+      decoration: BoxDecoration(
+        color: amberColors.infoMuted,
+        borderRadius: BorderRadius.circular(AppDimens.r8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, size: 16, color: amberColors.info),
+          const SizedBox(width: AppDimens.p8),
+          Expanded(
+            child: Text(
+              'By awarding, you commit to completing payment within $_kPaymentDeadlineHours hours. Failure to pay will cancel this award.',
+              style: AppTypography.caption.copyWith(color: amberColors.text),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -411,78 +489,99 @@ Future<void> showPriceMismatchDialog({
 
   await showDialog<void>(
     context: context,
-    builder: (ctx) => AlertDialog(
-      icon: const Icon(Icons.price_change, color: Colors.orange, size: 48),
-      title: const Text('Offer Updated'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'The freelancer changed their offer while you were reviewing it.',
-            style: Theme.of(ctx).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(8),
+    builder: (ctx) {
+      const amberColors = AmberDuskTokens.colors;
+      return AlertDialog(
+        backgroundColor: amberColors.background,
+        icon: Icon(Icons.price_change, color: amberColors.warning, size: 48),
+        title: Text(
+          'Offer Updated',
+          style: AppTypography.h5.copyWith(color: amberColors.text),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'The freelancer changed their offer while you were reviewing it.',
+              style: AppTypography.bodyMedium.copyWith(color: amberColors.text),
             ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Old Price:'),
-                    Text(
-                      expectedIqd,
-                      style: const TextStyle(
-                        decoration: TextDecoration.lineThrough,
+            const SizedBox(height: AppDimens.p16),
+            Container(
+              padding: const EdgeInsets.all(AppDimens.p12),
+              decoration: BoxDecoration(
+                color: amberColors.surface,
+                borderRadius: BorderRadius.circular(AppDimens.r8),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Old Price:',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: amberColors.muted,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('New Price:'),
-                    Text(
-                      actualIqd,
-                      style: TextStyle(
-                        color: Colors.orange.shade700,
-                        fontWeight: FontWeight.bold,
+                      Text(
+                        expectedIqd,
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: amberColors.muted,
+                          decoration: TextDecoration.lineThrough,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                  const SizedBox(height: AppDimens.p4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'New Price:',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: amberColors.muted,
+                        ),
+                      ),
+                      Text(
+                        actualIqd,
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: amberColors.warning,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(height: AppDimens.p16),
+            Text(
+              'Please review the new price before awarding.',
+              style: AppTypography.bodySmall.copyWith(
+                color: amberColors.muted,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'Please review the new price before awarding.',
-            style: TextStyle(fontStyle: FontStyle.italic),
+          FilledButton.icon(
+            onPressed: () {
+              final vm = context.read<TaskRequestsViewModel>();
+              Navigator.pop(ctx);
+              if (context.mounted) vm.loadInitial();
+            },
+            icon: const Icon(Icons.refresh),
+            label: const Text('Review New Price'),
           ),
         ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('Cancel'),
-        ),
-        FilledButton.icon(
-          onPressed: () {
-            final vm = context.read<TaskRequestsViewModel>();
-            Navigator.pop(ctx);
-            if (context.mounted) vm.loadInitial();
-          },
-          icon: const Icon(Icons.refresh),
-          label: const Text('Review New Price'),
-        ),
-      ],
-    ),
+      );
+    },
   );
 }
 
@@ -502,46 +601,44 @@ class _StepRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const amberColors = AmberDuskTokens.colors;
+    final stepColor = isActive ? amberColors.forest : amberColors.surfaceRaised;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: AppDimens.p10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             width: 24,
             height: 24,
-            decoration: BoxDecoration(
-              color: isActive ? Colors.green : Colors.grey.shade300,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: stepColor, shape: BoxShape.circle),
             child: Center(
               child: Text(
                 '$number',
-                style: TextStyle(
-                  color: isActive ? Colors.white : Colors.grey.shade700,
+                style: AppTypography.captionBold.copyWith(
+                  color: isActive ? amberColors.textInverse : amberColors.text,
                   fontWeight: FontWeight.bold,
-                  fontSize: 12,
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppDimens.p12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: TextStyle(
+                  style: AppTypography.bodySmall.copyWith(
                     fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                    color: isActive
-                        ? Colors.green.shade800
-                        : Colors.grey.shade800,
+                    color: isActive ? amberColors.forest : amberColors.text,
                   ),
                 ),
                 Text(
                   description,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  style: AppTypography.caption.copyWith(
+                    color: amberColors.muted,
+                  ),
                 ),
               ],
             ),

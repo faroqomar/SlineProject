@@ -67,10 +67,34 @@ void main() {
       );
       addTearDown(vm.dispose);
 
-      await vm.markAllAsRead();
+      final didMarkAllRead = await vm.markAllAsRead();
 
+      expect(didMarkAllRead, isTrue);
       verify(() => mockService.markAllAsRead()).called(1);
     });
+
+    test(
+      'markAllAsRead returns false and sets safe error on failure',
+      () async {
+        when(
+          () => mockService.streamNotifications(),
+        ).thenAnswer((_) => Stream.value([]));
+        when(
+          () => mockService.markAllAsRead(),
+        ).thenThrow(Exception('write failed'));
+        final vm = NotificationViewModel(
+          service: mockService,
+          authStateChanges: authController.stream,
+        );
+        addTearDown(vm.dispose);
+
+        final didMarkAllRead = await vm.markAllAsRead();
+
+        expect(didMarkAllRead, isFalse);
+        expect(vm.error, 'Failed to mark all as read');
+        verify(() => mockService.markAllAsRead()).called(1);
+      },
+    );
 
     test('retry does not throw when Supabase not initialized', () {
       when(
@@ -151,5 +175,104 @@ void main() {
         expect(vm.notifications, isEmpty);
       },
     );
+
+    test(
+      'transient realtime close keeps notifications and reconnects',
+      () async {
+        final firstStream =
+            StreamController<List<NotificationItem>>.broadcast();
+        final secondStream =
+            StreamController<List<NotificationItem>>.broadcast();
+        addTearDown(firstStream.close);
+        addTearDown(secondStream.close);
+
+        var streamCallCount = 0;
+        when(
+          () => mockService.getUnreadNotifications(limit: any(named: 'limit')),
+        ).thenAnswer((_) async => []);
+        when(() => mockService.streamNotifications()).thenAnswer((_) {
+          streamCallCount++;
+          return streamCallCount == 1
+              ? firstStream.stream
+              : secondStream.stream;
+        });
+
+        final vm = NotificationViewModel(
+          service: mockService,
+          authStateChanges: authController.stream,
+          realtimeReconnectBaseDelay: Duration.zero,
+        );
+        addTearDown(vm.dispose);
+
+        final mockUser = MockUser();
+        when(() => mockUser.id).thenReturn('user-1');
+        final mockSession = MockSession();
+        when(() => mockSession.user).thenReturn(mockUser);
+
+        authController.add(AuthState(AuthChangeEvent.signedIn, mockSession));
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        firstStream.add([
+          NotificationItem(
+            id: 'n-1',
+            userId: 'user-1',
+            title: 'Notification',
+            message: 'Message',
+            type: NotificationType.system,
+            isRead: false,
+            createdAt: DateTime.utc(2026),
+          ),
+        ]);
+        await Future<void>.delayed(Duration.zero);
+
+        firstStream.addError(
+          RealtimeSubscribeException(
+            RealtimeSubscribeStatus.channelError,
+            const RealtimeCloseEvent(code: 1006, reason: ''),
+          ),
+          StackTrace.current,
+        );
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(vm.error, isNull);
+        expect(vm.notifications, hasLength(1));
+        expect(streamCallCount, 2);
+      },
+    );
+
+    test('non-realtime stream error sets user-facing error', () async {
+      final notificationStream =
+          StreamController<List<NotificationItem>>.broadcast();
+      addTearDown(notificationStream.close);
+      when(
+        () => mockService.getUnreadNotifications(limit: any(named: 'limit')),
+      ).thenAnswer((_) async => []);
+      when(
+        () => mockService.streamNotifications(),
+      ).thenAnswer((_) => notificationStream.stream);
+
+      final vm = NotificationViewModel(
+        service: mockService,
+        authStateChanges: authController.stream,
+      );
+      addTearDown(vm.dispose);
+
+      final mockUser = MockUser();
+      when(() => mockUser.id).thenReturn('user-1');
+      final mockSession = MockSession();
+      when(() => mockSession.user).thenReturn(mockUser);
+
+      authController.add(AuthState(AuthChangeEvent.signedIn, mockSession));
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      notificationStream.addError(Exception('fatal'), StackTrace.current);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(vm.error, 'Failed to load notifications');
+    });
   });
 }

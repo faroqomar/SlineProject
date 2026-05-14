@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/widgets/scale_button.dart';
-import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
+import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 
+/// Quiet Amber Dusk card for tender-style discovery tasks.
+///
+/// The card keeps task navigation and saved-state callbacks untouched while
+/// rendering tender work as the compact raised panels shown in Phase 3.
 class TenderTaskCard extends StatelessWidget {
-  final Task task;
-  final VoidCallback onTap;
-  final bool isHot;
-
+  /// Creates a tender task card for the discovery feed.
   const TenderTaskCard({
     super.key,
     required this.task,
@@ -24,9 +24,40 @@ class TenderTaskCard extends StatelessWidget {
     this.isHot = false,
   });
 
+  /// Task model supplied by the discovery ViewModel.
+  final Task task;
+
+  /// Opens the existing task details route when the card is pressed.
+  final VoidCallback onTap;
+
+  /// Highlights urgent or promoted tender cards without changing data flow.
+  final bool isHot;
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    const amberColors = AmberDuskTokens.colors;
+    final cardTheme = AmberDuskTokens.widgetTheme.cards;
+    final authorName = task.userName ?? 'Client';
+    final details = _tenderDetails;
+    final locationLabel =
+        _firstNonEmpty([
+          details['location'],
+          task.categoryName,
+          task.category,
+          if (task.skills.isNotEmpty) task.skills.first,
+        ]) ??
+        'Task';
+    final scheduleLabel =
+        _firstNonEmpty([
+          details['workType'],
+          if (task.skills.isNotEmpty) task.skills.first,
+        ]) ??
+        'Fixed';
+    final deadlineLabel = task.deadline == null
+        ? 'Open'
+        : _formatDeadline(task.deadline!);
+    final statusLabel = isHot ? 'URGENT' : 'TASK';
 
     return Semantics(
       button: true,
@@ -34,250 +65,150 @@ class TenderTaskCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: AppDimens.p12),
         decoration: BoxDecoration(
-          color: colorScheme.cardBackground,
-          borderRadius: BorderRadius.circular(AppDimens.r20),
-          border: Border.all(color: colorScheme.cardBorder, width: 1),
-          boxShadow: AppDecorations.elevation(1, isDark: colorScheme.isDark),
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: cardTheme.taskGradientStops,
+          ),
+          borderRadius: BorderRadius.circular(
+            AmberDuskTokens.spacing.taskCardRadius,
+          ),
+          border: Border.all(
+            color: cardTheme.border,
+            width: cardTheme.borderWidth,
+          ),
+          boxShadow: AppDecorations.elevation(2, isDark: colorScheme.isDark),
         ),
         child: ScaleButton(
           onPressed: () {
-            AppLogger.d('TenderTaskCard tapped: ${task.id}', tag: 'Cards');
+            AppLogger.d('TenderTaskCard tapped', tag: 'Cards');
             onTap();
           },
-          child: IntrinsicHeight(
-            child: Stack(
+          child: Padding(
+            padding: cardTheme.taskPadding,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Left Accent Bar
-                    Container(
-                      width: 4,
-                      decoration: BoxDecoration(
-                        color: colorScheme.danger.withValues(alpha: 0.8),
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(AppDimens.r20),
-                          bottomLeft: Radius.circular(AppDimens.r20),
+                    _AuthorAvatar(
+                      name: authorName,
+                      avatarPath: task.userAvatar,
+                    ),
+                    const SizedBox(width: AppDimens.p12),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              authorName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: cardTheme.taskAuthorStyle.copyWith(
+                                color: amberColors.text,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: AppDimens.p4),
+                          Text(
+                            formatFriendlyTime(task.createdAt),
+                            style: cardTheme.taskCopyStyle.copyWith(
+                              color: amberColors.muted,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: AppDimens.p8),
+                    _StatusPill(label: statusLabel, isUrgent: isHot),
+                  ],
+                ),
+                SizedBox(height: cardTheme.taskSectionSpacing),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        task.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: cardTheme.taskTitleStyle.copyWith(
+                          color: amberColors.text,
                         ),
                       ),
                     ),
-
-                    // Content Area
+                    const SizedBox(width: AppDimens.p12),
+                    _PricePill(amount: task.budget),
+                  ],
+                ),
+                const SizedBox(height: AppDimens.p8),
+                Text(
+                  task.description,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: cardTheme.taskCopyStyle.copyWith(
+                    color: amberColors.muted,
+                  ),
+                ),
+                const SizedBox(height: AppDimens.p12),
+                Wrap(
+                  spacing: AppDimens.p6,
+                  runSpacing: AppDimens.p6,
+                  children: [
+                    _MetadataChip(
+                      icon: Icons.location_on_outlined,
+                      label: locationLabel,
+                    ),
+                    _MetadataChip(icon: Icons.tune, label: scheduleLabel),
+                    _MetadataChip(
+                      icon: Icons.schedule,
+                      label: deadlineLabel,
+                      isEmphasized: deadlineLabel != 'Open',
+                    ),
+                  ],
+                ),
+                SizedBox(height: cardTheme.taskSectionSpacing),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.group_outlined,
+                      size: AppDimens.iconSizeSmall,
+                      color: amberColors.muted,
+                    ),
+                    const SizedBox(width: AppDimens.p6),
                     Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          AppDimens.p20,
-                          AppDimens.p16,
-                          AppDimens.p16,
-                          AppDimens.p16,
+                      child: Text(
+                        '${task.offers} offers',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AmberDuskTokens.typography.bodySmall.copyWith(
+                          color: amberColors.muted,
+                          fontSize: 12.5,
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Header: Tags + Time
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Tags (first 2)
-                                Expanded(
-                                  child: Wrap(
-                                    spacing: AppDimens.p8,
-                                    runSpacing: AppDimens.p4,
-                                    children: task.skills
-                                        .take(2)
-                                        .map(
-                                          (tag) => Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: AppDimens.p8,
-                                              vertical: AppDimens.p2,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: colorScheme.tagBackground,
-                                              borderRadius:
-                                                  BorderRadius.circular(
-                                                    AppDimens.r8,
-                                                  ),
-                                              border: Border.all(
-                                                color: colorScheme.tagBorder,
-                                              ),
-                                            ),
-                                            child: Text(
-                                              tag.toUpperCase(),
-                                              style: AppTypography.micro
-                                                  .copyWith(
-                                                    fontWeight: FontWeight.w700,
-                                                    letterSpacing: 0.5,
-                                                    color: colorScheme
-                                                        .textSecondary,
-                                                  ),
-                                            ),
-                                          ),
-                                        )
-                                        .toList(),
-                                  ),
-                                ),
-
-                                // Time
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                    left: AppDimens.p8,
-                                    right: AppDimens.p24,
-                                  ),
-                                  child: Text(
-                                    formatFriendlyTime(task.createdAt),
-                                    style: AppTypography.caption.copyWith(
-                                      fontWeight: FontWeight.w500,
-                                      color: colorScheme.textSecondary,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: AppDimens.p12),
-
-                            // Title
-                            Text(
-                              task.title,
-                              style: AppTypography.bodyLarge.copyWith(
-                                fontWeight: FontWeight.w700,
-                                height: 1.2,
-                                color: colorScheme.text,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-
-                            const SizedBox(height: AppDimens.p8),
-
-                            // Description
-                            Text(
-                              task.description,
-                              style: AppTypography.bodySmall.copyWith(
-                                color: colorScheme.textSecondary.withValues(
-                                  alpha: 0.8,
-                                ),
-                                height: 1.5,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-
-                            const SizedBox(height: AppDimens.p16),
-
-                            // Footer
-                            Container(
-                              padding: const EdgeInsets.only(
-                                top: AppDimens.p12,
-                              ),
-                              decoration: BoxDecoration(
-                                border: Border(
-                                  top: BorderSide(color: colorScheme.divider),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  // Left: Time Left + Bids
-                                  Row(
-                                    children: [
-                                      // Time Left
-                                      if (task.deadline != null) ...[
-                                        Icon(
-                                          Icons.schedule,
-                                          size: 14,
-                                          color: colorScheme.textSecondary,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          _formatDeadline(task.deadline!),
-                                          style: AppTypography.caption.copyWith(
-                                            fontWeight: FontWeight.w700,
-                                            color: colorScheme.textSecondary,
-                                          ),
-                                        ),
-                                        const SizedBox(width: AppDimens.p16),
-                                      ],
-
-                                      // Bids Count
-                                      Icon(
-                                        Icons.group_outlined,
-                                        size: 14,
-                                        color: colorScheme.textSecondary,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '${task.offers} bids',
-                                        style: AppTypography.caption.copyWith(
-                                          fontWeight: FontWeight.w700,
-                                          color: colorScheme.textSecondary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-
-                                  // Right: Budget + Arrow
-                                  Row(
-                                    children: [
-                                      Text(
-                                        PriceFormatter.formatPrice(task.budget),
-                                        style: AppTypography.bodyLarge.copyWith(
-                                          fontWeight: FontWeight.w900,
-                                          color: colorScheme.danger,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Icon(
-                                        Icons.arrow_outward,
-                                        size: 16,
-                                        color: colorScheme.danger,
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                      ),
+                    ),
+                    Container(
+                      height: cardTheme.cardActionHeight,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimens.p18,
+                      ),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: amberColors.primary.withValues(alpha: 0.105),
+                        borderRadius: BorderRadius.circular(
+                          AmberDuskTokens.spacing.pillRadius,
+                        ),
+                      ),
+                      child: Text(
+                        'Make offer',
+                        style: cardTheme.taskActionStyle.copyWith(
+                          color: amberColors.primary,
                         ),
                       ),
                     ),
                   ],
-                ),
-
-                // Bookmark Button - Top Right
-                Positioned(
-                  top: AppDimens.p8,
-                  right: AppDimens.p8,
-                  child: Consumer<SavedTasksViewModel>(
-                    builder: (context, savedVM, child) {
-                      final isSaved = savedVM.isSaved(task.id);
-                      return GestureDetector(
-                        onTap: () {
-                          savedVM.toggle(task.id);
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(AppDimens.p8),
-                          decoration: BoxDecoration(
-                            color: isSaved
-                                ? colorScheme.danger.withValues(alpha: 0.1)
-                                : Colors.transparent,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            isSaved ? Icons.favorite : Icons.favorite_border,
-                            size: 20,
-                            color: isSaved
-                                ? colorScheme.danger
-                                : colorScheme.textSecondary.withValues(
-                                    alpha: 0.5,
-                                  ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
                 ),
               ],
             ),
@@ -285,6 +216,18 @@ class TenderTaskCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Map<String, dynamic> get _tenderDetails {
+    return Task.packageDetailsFrom(task.packages) ?? const <String, dynamic>{};
+  }
+
+  String? _firstNonEmpty(List<Object?> values) {
+    for (final value in values) {
+      final text = value?.toString().trim();
+      if (text != null && text.isNotEmpty) return text;
+    }
+    return null;
   }
 
   String _formatDeadline(DateTime date) {
@@ -297,4 +240,198 @@ class TenderTaskCard extends StatelessWidget {
     if (diff.inHours > 0) return '${diff.inHours}h left';
     return '${diff.inMinutes}m left';
   }
+}
+
+class _AuthorAvatar extends StatelessWidget {
+  const _AuthorAvatar({required this.name, required this.avatarPath});
+
+  final String name;
+  final String? avatarPath;
+
+  @override
+  Widget build(BuildContext context) {
+    final cardTheme = AmberDuskTokens.widgetTheme.cards;
+    final media = AmberDuskTokens.widgetTheme.media;
+    const amberColors = AmberDuskTokens.colors;
+    final avatarSize = cardTheme.taskAvatarSize;
+    final path = avatarPath;
+
+    if (path != null && path.isNotEmpty) {
+      return SignedAvatar(
+        storagePathOrUrl: path,
+        radius: avatarSize / 2,
+        borderColor: amberColors.surfaceHighest,
+        borderWidth: 2,
+      );
+    }
+
+    return Container(
+      width: avatarSize,
+      height: avatarSize,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: media.avatarFallback,
+        shape: BoxShape.circle,
+      ),
+      child: Text(_initials(name), style: media.initialsTextStyle(avatarSize)),
+    );
+  }
+
+  String _initials(String name) {
+    final parts = name.trim().split(' ').where((p) => p.isNotEmpty).toList();
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({required this.label, required this.isUrgent});
+
+  final String label;
+  final bool isUrgent;
+
+  @override
+  Widget build(BuildContext context) {
+    const amberColors = AmberDuskTokens.colors;
+    final pillTheme = AmberDuskTokens.widgetTheme.statusPills;
+    final foreground = isUrgent ? amberColors.rust : amberColors.primary;
+    return Container(
+      padding: pillTheme.padding,
+      decoration: BoxDecoration(
+        color: isUrgent
+            ? pillTheme.urgent.background
+            : pillTheme.primary.background,
+        borderRadius: BorderRadius.circular(AmberDuskTokens.spacing.pillRadius),
+      ),
+      child: Text(
+        label,
+        style: pillTheme.textStyle.copyWith(color: foreground),
+      ),
+    );
+  }
+}
+
+class _PricePill extends StatelessWidget {
+  const _PricePill({required this.amount});
+
+  final double amount;
+
+  @override
+  Widget build(BuildContext context) {
+    const amberColors = AmberDuskTokens.colors;
+    final cardTheme = AmberDuskTokens.widgetTheme.cards;
+    final price = _splitFormattedPrice(_formatCardPrice(amount));
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 128),
+      child: Container(
+        padding: cardTheme.taskPricePadding,
+        decoration: BoxDecoration(
+          color: cardTheme.taskPillFill,
+          borderRadius: BorderRadius.circular(cardTheme.taskPriceRadius),
+        ),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerRight,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                price.amount,
+                style: cardTheme.taskPriceStyle.copyWith(
+                  color: amberColors.primary,
+                ),
+              ),
+              if (price.suffix != null) ...[
+                SizedBox(width: cardTheme.taskInlineGap - AppDimens.p2),
+                Text(
+                  price.suffix!,
+                  style: AmberDuskTokens.typography.chip.copyWith(
+                    color: amberColors.muted,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MetadataChip extends StatelessWidget {
+  const _MetadataChip({
+    required this.icon,
+    required this.label,
+    this.isEmphasized = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool isEmphasized;
+
+  @override
+  Widget build(BuildContext context) {
+    const amberColors = AmberDuskTokens.colors;
+    final cardTheme = AmberDuskTokens.widgetTheme.cards;
+    final foreground = isEmphasized ? amberColors.star : amberColors.text;
+    return Container(
+      padding: cardTheme.taskTagPadding,
+      decoration: BoxDecoration(
+        color: isEmphasized
+            ? amberColors.star.withValues(alpha: 0.12)
+            : cardTheme.taskPillFill,
+        borderRadius: BorderRadius.circular(AmberDuskTokens.spacing.pillRadius),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: AppDimens.iconSizeSmall, color: foreground),
+          SizedBox(width: cardTheme.taskInlineGap),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 120),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: cardTheme.taskChipStyle.copyWith(color: foreground),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+({String amount, String? suffix}) _splitFormattedPrice(String value) {
+  final trimmed = value.trim();
+  final suffixMatch = RegExp(r'\s+([A-Z]{2,5})$').firstMatch(trimmed);
+  if (suffixMatch == null) return (amount: trimmed, suffix: null);
+  return (
+    amount: trimmed.substring(0, suffixMatch.start).trim(),
+    suffix: suffixMatch.group(1),
+  );
+}
+
+String _formatCardPrice(
+  double amount, {
+  String suffix = PriceFormatter.defaultCurrency,
+}) {
+  final rounded = amount.round();
+  final prefix = rounded < 0 ? '-' : '';
+  return '$prefix${_groupThousands(rounded.abs().toString())} $suffix';
+}
+
+String _groupThousands(String digits) {
+  final buffer = StringBuffer();
+  for (var index = 0; index < digits.length; index += 1) {
+    final remaining = digits.length - index;
+    buffer.write(digits[index]);
+    if (remaining > 1 && remaining % 3 == 1) buffer.write(',');
+  }
+  return buffer.toString();
 }

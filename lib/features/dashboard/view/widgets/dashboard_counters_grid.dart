@@ -4,16 +4,16 @@ import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/app_card.dart';
 import 'package:sline_app/features/dashboard/viewmodels/dashboard_view_model.dart';
 
+const int _kCompletedWorkSubTab = 1;
+
 /// Dashboard counters grid — 2x2 stat cards for freelancer or client.
 ///
-/// Phase 7 REDESIGN: Icon in colored badge container, count bumped to h2,
-/// column layout with icon badge top-left and number+label bottom-left.
-/// Visual hierarchy through colored icon wells and larger typography.
+/// Cards use Amber Dusk surface and status tokens while preserving the
+/// DashboardViewModel tap routing for each metric.
 class DashboardCountersGrid extends StatelessWidget {
   const DashboardCountersGrid({super.key});
 
@@ -26,38 +26,35 @@ class DashboardCountersGrid extends StatelessWidget {
 
     AppLogger.d('DashboardCountersGrid loaded', tag: 'Cards');
 
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
 
-    // Map counters to UI cards with semantic colors.
-    // Phase 7: migrated from hardcoded AppColors.* to colorScheme.* for
-    // consistent light/dark mode rendering.
     final items = isFreelancer
         ? [
             _CounterData(
-              'Pending Requests',
+              'Pending',
               counters.pendingRequests,
-              colorScheme.warning, // was AppColors.gold
+              amber.warning,
               Icons.pending_actions,
               () => vm.setTab(DashboardTab.activeWork.index),
             ),
             _CounterData(
-              'Active Work',
+              'Active',
               counters.activeWork,
-              colorScheme.primary, // was AppColors.teal
+              amber.success,
               Icons.work,
               () => vm.setTab(DashboardTab.activeWork.index),
             ),
             _CounterData(
               'Messages',
               counters.newMessages,
-              colorScheme.info, // was AppColors.lightTeal
+              amber.star,
               Icons.chat,
               () => vm.setTab(DashboardTab.inbox.index),
             ),
             _CounterData(
               'New Offers',
               counters.newOffers,
-              colorScheme.textSecondary, // was AppColors.mediumGrey
+              amber.danger,
               Icons.local_offer,
               () => vm.setTab(DashboardTab.activeWork.index),
             ),
@@ -66,30 +63,33 @@ class DashboardCountersGrid extends StatelessWidget {
             _CounterData(
               'Active Work',
               counters.activeWork,
-              colorScheme.primary, // was AppColors.teal
+              amber.success,
               Icons.work_outline,
               () => vm.setTab(DashboardTab.activeWork.index),
             ),
             _CounterData(
               'Needs Review',
               counters.needsReview,
-              colorScheme.danger,
+              amber.warning,
               Icons.rate_review_outlined,
               () => vm.setTab(DashboardTab.activeWork.index),
             ),
             _CounterData(
               'Pending Payment',
               counters.pendingPayment,
-              colorScheme.warning, // was AppColors.gold
+              amber.star,
               Icons.payment_outlined,
               () => vm.setTab(DashboardTab.bookings.index),
             ),
             _CounterData(
               'Completed',
               counters.completed,
-              colorScheme.success, // was AppColors.lightTeal
+              amber.success,
               Icons.check_circle_outline,
-              () => vm.setTab(DashboardTab.activeWork.index, workSubTab: 1),
+              () => vm.setTab(
+                DashboardTab.activeWork.index,
+                workSubTab: _kCompletedWorkSubTab,
+              ),
             ),
           ];
 
@@ -100,8 +100,7 @@ class DashboardCountersGrid extends StatelessWidget {
         crossAxisCount: 2,
         crossAxisSpacing: AppDimens.p12,
         mainAxisSpacing: AppDimens.p12,
-        // Slightly taller to fit column layout with icon badge + number + label
-        childAspectRatio: 1.4,
+        childAspectRatio: 1.62,
       ),
       itemCount: items.length,
       itemBuilder: (context, index) {
@@ -123,9 +122,8 @@ class _CounterData {
 
 /// Counter card with colored icon badge and bold number.
 ///
-/// Phase 7 REDESIGN: Column layout with icon in colored rounded container
-/// top-left, large h2 number + caption label bottom-left. Creates clear
-/// visual hierarchy — icon identifies the metric, number dominates.
+/// The icon well and count color encode status without changing the tap target
+/// or the ViewModel tab-routing callbacks.
 class _CounterCard extends StatelessWidget {
   final _CounterData data;
   final bool isLoading;
@@ -134,20 +132,20 @@ class _CounterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
+    const typography = AmberDuskTokens.typography;
 
     return Semantics(
       label: '${data.label}: ${data.count}',
       child: AppCard(
         onTap: data.onTap,
-        padding: const EdgeInsets.all(AppDimens.p16),
+        padding: const EdgeInsets.all(AppDimens.p12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Icon in colored badge container — gives the icon visual weight
             Container(
-              padding: const EdgeInsets.all(AppDimens.p8),
+              padding: const EdgeInsets.all(AppDimens.p6),
               decoration: BoxDecoration(
                 color: data.color.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(AppDimens.r10),
@@ -169,9 +167,7 @@ class _CounterCard extends StatelessWidget {
                 const SizedBox(height: AppDimens.p2),
                 Text(
                   data.label,
-                  style: AppTypography.caption.copyWith(
-                    color: colorScheme.textSecondary,
-                  ),
+                  style: typography.bodySmall.copyWith(color: amber.muted),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -186,8 +182,7 @@ class _CounterCard extends StatelessWidget {
 
 /// Animated count-up widget using IntTween.
 ///
-/// Phase 7 REDESIGN: Typography bumped from h3 (22px) to h2 (28px/900)
-/// for stronger visual dominance — the number is the primary information.
+/// Count-up motion keeps metric changes noticeable without shifting layout.
 class _AnimatedCount extends StatefulWidget {
   final int endValue;
   final Color color;
@@ -240,13 +235,14 @@ class _AnimatedCountState extends State<_AnimatedCount>
 
   @override
   Widget build(BuildContext context) {
+    const typography = AmberDuskTokens.typography;
+
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
         return Text(
           '${_animation.value}',
-          // Phase 7: h2 (28px/900) up from h3 — bolder visual presence
-          style: AppTypography.h2.copyWith(
+          style: typography.sectionTitle.copyWith(
             color: widget.color,
             fontWeight: FontWeight.w900,
           ),
@@ -285,7 +281,7 @@ class _ShimmerPlaceholderState extends State<_ShimmerPlaceholder>
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final skeleton = AmberDuskTokens.widgetTheme.skeleton;
 
     return AnimatedBuilder(
       animation: _controller,
@@ -295,7 +291,7 @@ class _ShimmerPlaceholderState extends State<_ShimmerPlaceholder>
           height: AppDimens.p20,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppDimens.r4),
-            color: colorScheme.cardBorder.withValues(
+            color: skeleton.highlight.withValues(
               alpha: 0.3 + (_controller.value * 0.3),
             ),
           ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/app_card.dart';
 import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/core/widgets/scale_button.dart';
@@ -16,6 +17,25 @@ void main() {
       expect(find.byType(AppCardContainer), findsOneWidget);
       // NO BackdropFilter per NO GLASS POLICY
       expect(find.byType(BackdropFilter), findsNothing);
+    });
+
+    testWidgets('T-CW040a uses Amber Dusk task-card defaults', (tester) async {
+      final cardTheme = AmberDuskTokens.widgetTheme.cards;
+      await pumpCoreWidget(tester, const AppCard(child: Text('Content')));
+
+      final container = tester.widget<AppCardContainer>(
+        find.byType(AppCardContainer),
+      );
+      final radius = container.borderRadius;
+      if (radius == null) {
+        throw TestFailure('Expected AppCardContainer borderRadius.');
+      }
+
+      expect(container.elevation, cardTheme.task.elevationLevel);
+      expect(radius.topLeft.x, cardTheme.task.radius);
+      expect(radius.topRight.x, cardTheme.task.radius);
+      expect(radius.bottomLeft.x, cardTheme.task.radius);
+      expect(radius.bottomRight.x, cardTheme.task.radius);
     });
 
     testWidgets('T-CW041 wraps in ScaleButton when onTap provided', (
@@ -59,7 +79,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.text('Disabled Card'));
+      await tester.tap(find.text('Disabled Card'), warnIfMissed: false);
       await tester.pump(const Duration(milliseconds: 100));
 
       expect(tapped, isFalse);

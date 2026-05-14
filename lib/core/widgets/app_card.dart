@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/core/widgets/scale_button.dart';
 
@@ -18,6 +18,10 @@ import 'package:sline_app/core/widgets/scale_button.dart';
 /// - Added [elevation] parameter for shadow depth
 /// - Added [disabled] parameter forwarded to [ScaleButton]
 /// - Added [Semantics] container wrapper
+/// - Amber Dusk tokens now provide the default task-card radius and depth.
+///
+/// The [elevation] default now comes from Amber Dusk while the public field
+/// stays non-null for compatibility with existing call sites.
 class AppCard extends StatelessWidget {
   final Widget child;
   final VoidCallback? onTap;
@@ -27,8 +31,7 @@ class AppCard extends StatelessWidget {
   final double? height;
   final BorderRadius? borderRadius;
 
-  /// Elevation level for the shadow. Defaults to 1 (resting).
-  /// See [AppDecorations.elevation] for levels 0-4.
+  /// Elevation level for the shadow.
   final int elevation;
 
   /// When true, disables tap interaction and applies reduced opacity.
@@ -44,7 +47,7 @@ class AppCard extends StatelessWidget {
     this.width,
     this.height,
     this.borderRadius,
-    this.elevation = 1,
+    this.elevation = AmberDuskWidgetTheme.taskCardElevationLevel,
     this.disabled = false,
   });
 
@@ -60,13 +63,16 @@ class AppCard extends StatelessWidget {
   }
 
   Widget _buildContainer() {
+    final cardTheme = AmberDuskTokens.widgetTheme.cards;
+    final taskRecipe = cardTheme.task;
+
     return SizedBox(
       width: width,
       height: height,
       child: AppCardContainer(
-        padding: padding ?? const EdgeInsets.all(AppDimens.p16),
+        padding: padding ?? EdgeInsets.all(AmberDuskTokens.spacing.lg),
         margin: margin,
-        borderRadius: borderRadius ?? BorderRadius.circular(AppDimens.r20),
+        borderRadius: borderRadius ?? BorderRadius.circular(taskRecipe.radius),
         elevation: elevation,
         child: child,
       ),

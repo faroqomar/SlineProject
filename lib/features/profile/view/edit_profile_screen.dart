@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/profile/view/widgets/profile_avatar_widget.dart';
 import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 
+/// Lets the current user edit basic profile fields and local skill chips.
+///
+/// Profile persistence remains owned by [ProfileViewModel]; this screen only
+/// validates form input and maps ViewModel state into Amber Dusk surfaces.
 class EditProfileScreen extends StatefulWidget {
+  /// Creates the edit profile route.
   const EditProfileScreen({super.key});
 
   @override
@@ -47,6 +54,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
+    final statusPills = AmberDuskTokens.widgetTheme.statusPills;
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
@@ -66,18 +75,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                   child: Row(
                     children: [
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: colorScheme.cardBackground,
-                            borderRadius: BorderRadius.circular(12),
+                      SizedBox.square(
+                        dimension: AppDimens.touchTarget,
+                        child: IconButton(
+                          tooltip: 'Back',
+                          style: IconButton.styleFrom(
+                            backgroundColor: amberColors.surface,
+                            foregroundColor: amberColors.text,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppDimens.r12,
+                              ),
+                            ),
                           ),
-                          child: Icon(
-                            Icons.arrow_back,
-                            color: colorScheme.text,
-                          ),
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.arrow_back),
                         ),
                       ),
                       const SizedBox(width: AppDimens.p16),
@@ -105,7 +117,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         const Center(
                           // ProfileAvatarWidget handles tap and edit icon internally now
                           child: ProfileAvatarWidget(
-                            radius: 50,
+                            radius: AppDimens.p50,
                             enableEdit: true,
                           ),
                         ),
@@ -170,24 +182,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               ),
                               const SizedBox(height: AppDimens.p16),
                               Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
+                                spacing: AppDimens.p8,
+                                runSpacing: AppDimens.p8,
                                 children: [
                                   ...vm.skills.map(
                                     (skill) => Chip(
                                       label: Text(skill),
-                                      backgroundColor: AppColors.teal
-                                          .withValues(alpha: 0.1),
+                                      backgroundColor:
+                                          statusPills.primary.background,
                                       labelStyle: AppTypography.bodySmall
-                                          .copyWith(color: AppColors.teal),
+                                          .copyWith(
+                                            color:
+                                                statusPills.primary.foreground,
+                                          ),
                                       deleteIcon: const Icon(
                                         Icons.close,
-                                        size: 14,
+                                        size: AppDimens.p14,
                                       ),
                                       onDeleted: () => vm.removeSkill(skill),
                                       side: BorderSide.none,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20),
+                                        borderRadius: BorderRadius.circular(
+                                          statusPills.radius,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -215,10 +232,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         // Save Button
                         SizedBox(
                           width: double.infinity,
-                          height: 56,
+                          height: AmberDuskTokens.widgetTheme.buttons.minHeight,
                           child: FilledButton(
                             style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.teal,
+                              backgroundColor: amberColors.primary,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(
                                   AppDimens.r16,
@@ -240,7 +257,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                       if (context.mounted) {
                                         Navigator.pop(context);
                                       }
-                                    } on Exception catch (_) {
+                                    } on Exception catch (e, st) {
+                                      AppLogger.e(
+                                        'EditProfileScreen: save failed',
+                                        tag: 'Profile',
+                                        error: e,
+                                        stackTrace: st,
+                                      );
                                       if (context.mounted) {
                                         ScaffoldMessenger.of(
                                           context,
@@ -256,17 +279,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   },
                             child: vm.isLoadingUpdate
                                 ? const SizedBox(
-                                    width: 24,
-                                    height: 24,
+                                    width: AppDimens.p24,
+                                    height: AppDimens.p24,
                                     child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
+                                      strokeWidth: AppDimens.p2,
                                     ),
                                   )
                                 : Text(
                                     'Save Changes',
                                     style: AppTypography.bodyLarge.copyWith(
-                                      color: Colors.white,
+                                      color: amberColors.text,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -307,7 +329,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         labelStyle: AppTypography.bodySmall.copyWith(
           color: colorScheme.textSecondary,
         ),
-        prefixIcon: Icon(icon, color: colorScheme.textSecondary, size: 20),
+        prefixIcon: Icon(
+          icon,
+          color: colorScheme.textSecondary,
+          size: AppDimens.iconSmall,
+        ),
         filled: true,
         fillColor: colorScheme.background,
         border: OutlineInputBorder(
@@ -320,7 +346,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimens.r12),
-          borderSide: BorderSide(color: AppColors.teal),
+          borderSide: BorderSide(color: context.amberColors.primary),
         ),
       ),
     );
@@ -339,7 +365,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         content: TextField(
           controller: _skillController,
           autofocus: true,
-          style: TextStyle(color: context.colorScheme.text),
+          style: AppTypography.bodyMedium.copyWith(
+            color: context.colorScheme.text,
+          ),
           decoration: const InputDecoration(hintText: 'e.g. Flutter'),
         ),
         actions: [

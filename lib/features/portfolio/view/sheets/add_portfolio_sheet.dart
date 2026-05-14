@@ -3,16 +3,31 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
+import 'package:sline_app/core/theme/app_states.dart';
+import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
+import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/portfolio/viewmodels/portfolio_view_model.dart';
 
-/// Bottom sheet for adding a portfolio item (supports optional image).
+/// Bottom sheet for adding a portfolio proof item with an optional image.
+///
+/// The sheet gathers UI input only; [PortfolioViewModel.addItem] still owns
+/// storage upload, repository writes, and public portfolio bucket behavior.
 class AddPortfolioSheet extends StatefulWidget {
+  /// Creates the add-portfolio sheet for the supplied ViewModel.
   const AddPortfolioSheet({
     super.key,
     required this.controller,
     required this.onCreated,
   });
+
+  /// Controller that owns portfolio validation, storage upload, and persistence.
   final PortfolioViewModel controller;
+
+  /// Called after a successful create so the host route can close the sheet.
   final VoidCallback onCreated;
 
   @override
@@ -101,8 +116,8 @@ class _AddPortfolioSheetState extends State<AddPortfolioSheet> {
       imageFilename: _imageFilename,
     );
 
-    setState(() => _submitting = false);
     if (!mounted) return;
+    setState(() => _submitting = false);
 
     if (ok) {
       AppLogger.i(
@@ -130,77 +145,128 @@ class _AddPortfolioSheetState extends State<AddPortfolioSheet> {
   @override
   Widget build(BuildContext context) {
     final viewInsets = MediaQuery.of(context).viewInsets.bottom;
+    final colorScheme = context.colorScheme;
+    final amberColors = context.amberColors;
+    final buttonTheme = AmberDuskTokens.widgetTheme.buttons;
+
     return Padding(
       padding: EdgeInsets.only(bottom: viewInsets),
       child: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          padding: const EdgeInsets.fromLTRB(
+            AppDimens.p16,
+            AppDimens.p16,
+            AppDimens.p16,
+            AppDimens.p24,
+          ),
           child: Form(
             key: _formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).dividerColor,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 12),
+                const _SheetHandle(),
+                const SizedBox(height: AppDimens.p12),
                 Text(
                   'Add Portfolio Item',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: AppTypography.h5.copyWith(color: colorScheme.text),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppDimens.p16),
                 TextFormField(
                   controller: _title,
-                  decoration: const InputDecoration(labelText: 'Title'),
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: colorScheme.text,
+                  ),
+                  decoration: _fieldDecoration(context, 'Title'),
                   validator: (v) =>
                       (v == null || v.trim().isEmpty) ? 'Required' : null,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppDimens.p12),
                 TextFormField(
                   controller: _desc,
                   minLines: 2,
                   maxLines: 5,
-                  decoration: const InputDecoration(
-                    labelText: 'Description (optional)',
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: colorScheme.text,
+                  ),
+                  decoration: _fieldDecoration(
+                    context,
+                    'Description (optional)',
                   ),
                 ),
-                const SizedBox(height: 12),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.image),
-                  title: Text(_imageFilename ?? 'No image selected'),
-                  subtitle: const Text('Image is optional'),
-                  trailing: OutlinedButton(
-                    onPressed: _pickImage,
-                    child: const Text('Pick image'),
+                const SizedBox(height: AppDimens.p12),
+                AppCardContainer(
+                  padding: const EdgeInsets.all(AppDimens.p12),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.image,
+                        color: amberColors.primary,
+                        size: AppLayout.iconStandard,
+                      ),
+                      const SizedBox(width: AppDimens.p12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _imageFilename ?? 'No image selected',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.bodyMedium.copyWith(
+                                color: colorScheme.text,
+                              ),
+                            ),
+                            Text(
+                              'Image is optional',
+                              style: AppTypography.caption.copyWith(
+                                color: colorScheme.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _pickImage,
+                        child: const Text('Pick image'),
+                      ),
+                    ],
                   ),
                 ),
                 if (_imageBytes != null) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppDimens.p12),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppDimens.r12),
                     child: Image.memory(
                       _imageBytes!,
-                      height: 160,
+                      height: AppDimens.p80 + AppDimens.p80,
+                      width: double.infinity,
                       fit: BoxFit.cover,
                     ),
                   ),
                 ],
-                const SizedBox(height: 16),
+                const SizedBox(height: AppDimens.p16),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: amberColors.primary,
+                      foregroundColor: amberColors.textInverse,
+                      minimumSize: Size.fromHeight(buttonTheme.minHeight),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(buttonTheme.radius),
+                      ),
+                      textStyle: buttonTheme.textStyle,
+                    ),
                     onPressed: _submitting ? null : _submit,
                     child: _submitting
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                        ? SizedBox(
+                            height: AppInteractionStates.loadingSize,
+                            width: AppInteractionStates.loadingSize,
+                            child: CircularProgressIndicator(
+                              strokeWidth:
+                                  AppInteractionStates.loadingStrokeWidth,
+                              color: amberColors.textInverse,
+                            ),
                           )
                         : const Text('Create'),
                   ),
@@ -209,6 +275,50 @@ class _AddPortfolioSheetState extends State<AddPortfolioSheet> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  InputDecoration _fieldDecoration(BuildContext context, String label) {
+    final colorScheme = context.colorScheme;
+    final fieldTheme = AmberDuskTokens.widgetTheme.fields;
+
+    return InputDecoration(
+      labelText: label,
+      labelStyle: fieldTheme.labelStyle.copyWith(
+        color: colorScheme.textSecondary,
+      ),
+      filled: true,
+      fillColor: fieldTheme.background,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(fieldTheme.radius),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(fieldTheme.radius),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(fieldTheme.radius),
+        borderSide: BorderSide(color: context.amberColors.primary),
+      ),
+      contentPadding: fieldTheme.padding,
+    );
+  }
+}
+
+/// Visual drag affordance for Amber Dusk bottom sheets.
+class _SheetHandle extends StatelessWidget {
+  const _SheetHandle();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: AppDimens.p40,
+      height: AppDimens.p4,
+      decoration: BoxDecoration(
+        color: context.colorScheme.textSecondary.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(AppDimens.r4),
       ),
     );
   }

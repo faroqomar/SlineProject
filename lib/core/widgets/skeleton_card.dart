@@ -1,9 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/core/widgets/skeleton_loader.dart';
+
+AmberDuskCardThemeTokens _skeletonCardTheme() =>
+    AmberDuskTokens.widgetTheme.cards;
+
+AmberDuskSkeletonThemeTokens _skeletonTheme() =>
+    AmberDuskTokens.widgetTheme.skeleton;
+
+AmberDuskMediaThemeTokens _skeletonMediaTheme() =>
+    AmberDuskTokens.widgetTheme.media;
 
 /// Pre-built skeleton card that mimics a TenderTaskCard loading state.
 ///
@@ -14,22 +24,25 @@ class SkeletonTaskCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final cardTheme = _skeletonCardTheme();
+    final skeletonTheme = _skeletonTheme();
+    final taskCard = cardTheme.task;
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimens.p12),
       decoration: BoxDecoration(
-        color: colorScheme.cardBackground,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colorScheme.cardBorder, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.isDark
-                ? AppColors.almostBlack.withValues(alpha: 0.2)
-                : AppColors.almostBlack.withValues(alpha: 0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: taskCard.background,
+        borderRadius: BorderRadius.circular(taskCard.radius),
+        border: Border.all(
+          color: cardTheme.border,
+          width: cardTheme.borderWidth,
+        ),
+        boxShadow: AppDecorations.elevation(
+          taskCard.elevationLevel,
+          // Shadows follow the active app brightness while the skeleton
+          // surface recipe remains Amber Dusk for this Phase 1 widget scope.
+          isDark: colorScheme.isDark,
+        ),
       ),
       child: IntrinsicHeight(
         child: Stack(
@@ -39,12 +52,12 @@ class SkeletonTaskCard extends StatelessWidget {
               children: [
                 // Left Accent Bar
                 Container(
-                  width: 4,
+                  width: AmberDuskTokens.spacing.xs,
                   decoration: BoxDecoration(
-                    color: AppColors.lightRed.withValues(alpha: 0.5),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      bottomLeft: Radius.circular(20),
+                    color: skeletonTheme.raised,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(taskCard.radius),
+                      bottomLeft: Radius.circular(taskCard.radius),
                     ),
                   ),
                 ),
@@ -89,7 +102,7 @@ class SkeletonTaskCard extends StatelessWidget {
                           padding: const EdgeInsets.only(top: 12),
                           decoration: BoxDecoration(
                             border: Border(
-                              top: BorderSide(color: colorScheme.divider),
+                              top: BorderSide(color: skeletonTheme.raised),
                             ),
                           ),
                           child: const Row(
@@ -149,22 +162,26 @@ class SkeletonBookingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final cardTheme = _skeletonCardTheme();
+    final skeletonTheme = _skeletonTheme();
+    final mediaTheme = _skeletonMediaTheme();
+    final taskCard = cardTheme.task;
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimens.p12),
       decoration: BoxDecoration(
-        color: colorScheme.cardBackground,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: colorScheme.cardBorder, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.isDark
-                ? AppColors.almostBlack.withValues(alpha: 0.2)
-                : AppColors.almostBlack.withValues(alpha: 0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: taskCard.background,
+        borderRadius: BorderRadius.circular(taskCard.radius),
+        border: Border.all(
+          color: cardTheme.border,
+          width: cardTheme.borderWidth,
+        ),
+        boxShadow: AppDecorations.elevation(
+          taskCard.elevationLevel,
+          // Shadows follow the active app brightness while the skeleton
+          // surface recipe remains Amber Dusk for this Phase 1 widget scope.
+          isDark: colorScheme.isDark,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,18 +191,15 @@ class SkeletonBookingCard extends StatelessWidget {
             children: [
               // Gradient background placeholder
               Container(
-                height: 90,
+                height: AppDimens.bookingHeaderHeight,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(24),
-                    topRight: Radius.circular(24),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(taskCard.radius),
+                    topRight: Radius.circular(taskCard.radius),
                   ),
                   gradient: LinearGradient(
-                    colors: [
-                      AppColors.teal.withValues(alpha: 0.3),
-                      AppColors.lightTeal.withValues(alpha: 0.3),
-                    ],
+                    colors: [skeletonTheme.raised, skeletonTheme.highlight],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                   ),
@@ -218,10 +232,10 @@ class SkeletonBookingCard extends StatelessWidget {
                         width: 56,
                         height: 56,
                         decoration: BoxDecoration(
-                          color: AppColors.gold.withValues(alpha: 0.5),
+                          color: mediaTheme.avatarFallback,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: colorScheme.cardBackground,
+                            color: taskCard.background,
                             width: 4,
                           ),
                         ),
@@ -276,7 +290,9 @@ class SkeletonBookingCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.only(top: 12),
                   decoration: BoxDecoration(
-                    border: Border(top: BorderSide(color: colorScheme.divider)),
+                    border: Border(
+                      top: BorderSide(color: skeletonTheme.raised),
+                    ),
                   ),
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -318,15 +334,19 @@ class SkeletonOfferCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final cardTheme = _skeletonCardTheme();
+    final panelCard = cardTheme.panel;
 
     return Container(
       padding: const EdgeInsets.all(AppDimens.p16),
       margin: const EdgeInsets.only(bottom: AppDimens.p12),
       decoration: BoxDecoration(
-        color: colorScheme.cardBackground,
+        color: panelCard.background,
         borderRadius: BorderRadius.circular(AppDimens.r16),
-        border: Border.all(color: colorScheme.cardBorder),
+        border: Border.all(
+          color: cardTheme.border,
+          width: cardTheme.borderWidth,
+        ),
       ),
       child: const Row(
         children: [
@@ -368,7 +388,9 @@ class SkeletonMessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final cardTheme = _skeletonCardTheme();
+    final skeletonTheme = _skeletonTheme();
+    final messageCard = cardTheme.message;
 
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -383,11 +405,14 @@ class SkeletonMessageBubble extends StatelessWidget {
           maxWidth: MediaQuery.of(context).size.width * 0.75,
         ),
         decoration: BoxDecoration(
-          color: isMe
-              ? colorScheme.primary.withValues(alpha: 0.2)
-              : colorScheme.cardBackground,
+          color: isMe ? skeletonTheme.raised : messageCard.background,
           borderRadius: BorderRadius.circular(AppDimens.r18),
-          border: isMe ? null : Border.all(color: colorScheme.cardBorder),
+          border: isMe
+              ? null
+              : Border.all(
+                  color: cardTheme.border,
+                  width: cardTheme.borderWidth,
+                ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -419,15 +444,19 @@ class SkeletonConversationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final cardTheme = _skeletonCardTheme();
+    final panelCard = cardTheme.panel;
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimens.p12),
       padding: const EdgeInsets.all(AppDimens.p14),
       decoration: BoxDecoration(
-        color: colorScheme.cardBackground,
+        color: panelCard.background,
         borderRadius: BorderRadius.circular(AppDimens.r18),
-        border: Border.all(color: colorScheme.cardBorder),
+        border: Border.all(
+          color: cardTheme.border,
+          width: cardTheme.borderWidth,
+        ),
       ),
       child: const Row(
         children: [
@@ -465,15 +494,19 @@ class SkeletonSearchResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final cardTheme = _skeletonCardTheme();
+    final panelCard = cardTheme.panel;
 
     return Container(
       padding: const EdgeInsets.all(AppDimens.p16),
       margin: const EdgeInsets.only(bottom: AppDimens.p12),
       decoration: BoxDecoration(
-        color: colorScheme.cardBackground,
+        color: panelCard.background,
         borderRadius: BorderRadius.circular(AppDimens.r16),
-        border: Border.all(color: colorScheme.cardBorder),
+        border: Border.all(
+          color: cardTheme.border,
+          width: cardTheme.borderWidth,
+        ),
       ),
       child: const Row(
         children: [
@@ -517,14 +550,18 @@ class SkeletonCategoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final cardTheme = _skeletonCardTheme();
+    final panelCard = cardTheme.panel;
 
     return Container(
       padding: const EdgeInsets.all(AppDimens.p12),
       decoration: BoxDecoration(
-        color: colorScheme.cardBackground,
+        color: panelCard.background,
         borderRadius: BorderRadius.circular(AppDimens.r16),
-        border: Border.all(color: colorScheme.cardBorder),
+        border: Border.all(
+          color: cardTheme.border,
+          width: cardTheme.borderWidth,
+        ),
       ),
       child: const Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -552,15 +589,19 @@ class SkeletonFavoriteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final cardTheme = _skeletonCardTheme();
+    final panelCard = cardTheme.panel;
 
     return Container(
       padding: const EdgeInsets.all(AppDimens.p16),
       margin: const EdgeInsets.only(bottom: AppDimens.p12),
       decoration: BoxDecoration(
-        color: colorScheme.cardBackground,
+        color: panelCard.background,
         borderRadius: BorderRadius.circular(AppDimens.r16),
-        border: Border.all(color: colorScheme.cardBorder),
+        border: Border.all(
+          color: cardTheme.border,
+          width: cardTheme.borderWidth,
+        ),
       ),
       child: const Row(
         children: [

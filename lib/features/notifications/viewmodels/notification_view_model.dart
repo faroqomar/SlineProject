@@ -8,10 +8,31 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// ViewModel for notification list and read state. Context-free; navigation is view-layer responsibility.
 class NotificationViewModel extends ChangeNotifier {
+  /// Creates the notification state holder and starts auth-aware streaming.
+  ///
+  /// [realtimeReconnectBaseDelay] is injectable so tests can exercise the
+  /// reconnect path without waiting on production backoff timers.
+  NotificationViewModel({
+    NotificationService? service,
+    Stream<AuthState>? authStateChanges,
+    SupabaseClient? client,
+    Duration realtimeReconnectBaseDelay = const Duration(seconds: 2),
+  }) : _service = service ?? NotificationService(),
+       _injectedClient = client,
+       _realtimeReconnectBaseDelay = realtimeReconnectBaseDelay {
+    _init(authStateChanges);
+  }
+
   final NotificationService _service;
   final SupabaseClient? _injectedClient;
+  final Duration _realtimeReconnectBaseDelay;
   StreamSubscription<List<NotificationItem>>? _subscription;
   StreamSubscription<AuthState>? _authSubscription;
+  Timer? _reconnectTimer;
+  var _connectGeneration = 0;
+  var _reconnectAttempt = 0;
+  var _disposed = false;
+  var _hasActiveSession = false;
 
   List<NotificationItem> _notifications = [];
   bool _isLoading = false;
@@ -20,17 +41,6 @@ class NotificationViewModel extends ChangeNotifier {
   /// Lazily resolves the Supabase client. Uses injected client if provided,
   /// otherwise falls back to Supabase.instance.client at call time.
   SupabaseClient get _client => _injectedClient ?? Supabase.instance.client;
-
-  /// [authStateChanges] optional for tests; if null uses [client].auth.onAuthStateChange.
-  /// [client] optional for tests; if null uses Supabase.instance.client lazily.
-  NotificationViewModel({
-    NotificationService? service,
-    Stream<AuthState>? authStateChanges,
-    SupabaseClient? client,
-  }) : _service = service ?? NotificationService(),
-       _injectedClient = client {
-    _init(authStateChanges);
-  }
 
   List<NotificationItem> get notifications => List.unmodifiable(_notifications);
   bool get isLoading => _isLoading;
@@ -48,17 +58,19 @@ class NotificationViewModel extends ChangeNotifier {
         final event = data.event;
         if (event == AuthChangeEvent.signedIn) {
           if (data.session?.user != null) {
+            _hasActiveSession = true;
             AppLogger.d(
               'NotificationViewModel: session ready, connecting stream',
               tag: 'Notifications',
             );
-            _connect();
+            unawaited(_connect());
           }
         } else if (_shouldDisconnectForAuthEvent(event)) {
           AppLogger.d(
             'NotificationViewModel: auth ended, disconnecting and clearing state',
             tag: 'Notifications',
           );
+          _hasActiveSession = false;
           _disconnect();
         }
       });
@@ -66,8 +78,9 @@ class NotificationViewModel extends ChangeNotifier {
     }
     final stream = _client.auth.onAuthStateChange;
     final user = _client.auth.currentUser;
+    _hasActiveSession = user != null;
     if (user != null) {
-      _connect();
+      unawaited(_connect());
     } else {
       AppLogger.d(
         'NotificationViewModel: no session, stream not started',
@@ -78,27 +91,36 @@ class NotificationViewModel extends ChangeNotifier {
       final event = data.event;
       if (event == AuthChangeEvent.signedIn) {
         if (data.session?.user != null) {
+          _hasActiveSession = true;
           AppLogger.d(
             'NotificationViewModel: session ready, connecting stream',
             tag: 'Notifications',
           );
-          _connect();
+          unawaited(_connect());
         }
       } else if (_shouldDisconnectForAuthEvent(event)) {
         AppLogger.d(
           'NotificationViewModel: auth ended, disconnecting and clearing state',
           tag: 'Notifications',
         );
+        _hasActiveSession = false;
         _disconnect();
       }
     });
   }
 
   Future<void> _connect() async {
-    unawaited(_subscription?.cancel());
+    final generation = ++_connectGeneration;
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+    final currentSubscription = _subscription;
+    _subscription = null;
+    await currentSubscription?.cancel();
+    if (_disposed || generation != _connectGeneration) return;
+
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _safeNotify();
     AppLogger.d(
       'NotificationViewModel: foreground sync then stream',
       tag: 'Notifications',
@@ -113,7 +135,7 @@ class NotificationViewModel extends ChangeNotifier {
           'NotificationViewModel: initial unread=${unread.length}',
           tag: 'Notifications',
         );
-        notifyListeners();
+        _safeNotify();
       }
     } on Exception catch (e) {
       AppLogger.w(
@@ -123,32 +145,43 @@ class NotificationViewModel extends ChangeNotifier {
       );
     }
 
+    if (_disposed || generation != _connectGeneration) return;
+
     _subscription = _service.streamNotifications().listen(
       (items) {
+        if (_disposed || generation != _connectGeneration) return;
         _notifications = items;
+        _reconnectAttempt = 0;
+        _error = null;
         _isLoading = false;
-        notifyListeners();
+        _safeNotify();
       },
-      onError: (e) {
-        AppLogger.e(
-          'Error streaming notifications',
-          error: e,
+      onError: (Object e, StackTrace st) {
+        _handleStreamError(e, st, generation);
+      },
+      onDone: () {
+        if (_disposed || generation != _connectGeneration) return;
+        AppLogger.w(
+          'NotificationViewModel: realtime stream closed',
           tag: 'Notifications',
         );
-        _error = 'Failed to load notifications';
         _isLoading = false;
-        notifyListeners();
+        _safeNotify();
+        _scheduleReconnect();
       },
     );
   }
 
   void _disconnect() {
+    _connectGeneration++;
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
     _subscription?.cancel();
     _subscription = null;
     _notifications = [];
     _error = null;
     _isLoading = false;
-    notifyListeners();
+    _safeNotify();
   }
 
   /// Clears error and reconnects the stream (e.g. after failure).
@@ -156,20 +189,23 @@ class NotificationViewModel extends ChangeNotifier {
     _error = null;
     try {
       if (_client.auth.currentUser != null) {
-        _connect();
+        unawaited(_connect());
       } else {
-        notifyListeners();
+        _safeNotify();
       }
     } on Exception catch (_) {
-      notifyListeners();
+      _safeNotify();
     } on Error catch (_) {
       // Supabase not initialized (e.g., in tests)
-      notifyListeners();
+      _safeNotify();
     }
   }
 
   @override
   void dispose() {
+    _disposed = true;
+    _connectGeneration++;
+    _reconnectTimer?.cancel();
     _authSubscription?.cancel();
     _subscription?.cancel();
     super.dispose();
@@ -178,7 +214,7 @@ class NotificationViewModel extends ChangeNotifier {
   Future<void> markAsRead(String id) async {
     try {
       await _service.markAsRead(id);
-      notifyListeners();
+      _safeNotify();
     } on Exception catch (e) {
       AppLogger.e(
         'Failed to update notification',
@@ -186,18 +222,90 @@ class NotificationViewModel extends ChangeNotifier {
         tag: 'Notifications',
       );
       _error = 'Failed to update notification';
-      notifyListeners();
+      _safeNotify();
     }
   }
 
-  Future<void> markAllAsRead() async {
+  Future<bool> markAllAsRead() async {
     try {
       await _service.markAllAsRead();
-      notifyListeners();
+      _error = null;
+      _safeNotify();
+      return true;
     } on Exception catch (e) {
       AppLogger.e('Failed to mark all as read', error: e, tag: 'Notifications');
       _error = 'Failed to mark all as read';
-      notifyListeners();
+      _safeNotify();
+      return false;
     }
+  }
+
+  void _handleStreamError(Object error, StackTrace stackTrace, int generation) {
+    if (_disposed || generation != _connectGeneration) return;
+
+    final transient = _isTransientRealtimeError(error);
+    if (transient) {
+      AppLogger.w(
+        'NotificationViewModel: realtime stream interrupted; reconnecting',
+        error: error,
+        tag: 'Notifications',
+      );
+      unawaited(_subscription?.cancel());
+      _subscription = null;
+      _error = null;
+      _isLoading = false;
+      _safeNotify();
+      _scheduleReconnect();
+      return;
+    }
+
+    AppLogger.e(
+      'Error streaming notifications',
+      error: error,
+      stackTrace: stackTrace,
+      tag: 'Notifications',
+    );
+    _error = 'Failed to load notifications';
+    _isLoading = false;
+    _safeNotify();
+  }
+
+  bool _isTransientRealtimeError(Object error) {
+    if (error is! RealtimeSubscribeException) return false;
+    final details = error.details;
+    if (details is RealtimeCloseEvent) {
+      return details.code == 1002 || details.code == 1006;
+    }
+    return error.status == RealtimeSubscribeStatus.timedOut;
+  }
+
+  void _scheduleReconnect() {
+    if (_disposed || (_reconnectTimer?.isActive ?? false)) return;
+
+    final delay = _nextReconnectDelay();
+    AppLogger.d(
+      'NotificationViewModel: scheduling realtime reconnect',
+      tag: 'Notifications',
+      json: <String, dynamic>{'delay_ms': delay.inMilliseconds},
+    );
+    _reconnectTimer = Timer(delay, () {
+      _reconnectTimer = null;
+      if (_disposed) return;
+      if (_hasActiveSession) {
+        unawaited(_connect());
+      }
+    });
+  }
+
+  Duration _nextReconnectDelay() {
+    final exponent = _reconnectAttempt.clamp(0, 4);
+    final multiplier = 1 << exponent;
+    _reconnectAttempt++;
+    final delayMs = _realtimeReconnectBaseDelay.inMilliseconds * multiplier;
+    return Duration(milliseconds: delayMs.clamp(0, 30000));
+  }
+
+  void _safeNotify() {
+    if (!_disposed) notifyListeners();
   }
 }

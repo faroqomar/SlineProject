@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'package:sline_app/core/theme/app_decorations.dart';
-import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 
 /// A reusable container with solid background, subtle border, and elevation shadow.
 ///
@@ -12,8 +11,8 @@ import 'package:sline_app/core/theme/app_theme.dart';
 /// This widget was previously a glassmorphism container with [BackdropFilter] blur.
 /// As of Phase 1 (Core Widget Redesign), ALL glass effects have been removed.
 /// The widget now renders as a solid-surface container using:
-/// - `colorScheme.cardBackground` for background
-/// - `colorScheme.cardBorder` for border
+/// - `AmberDuskTokens.widgetTheme.cards.panel` for background and radius
+/// - `AmberDuskTokens.widgetTheme.cards.borderWidth` for borderless cards
 /// - [AppDecorations.elevation] for shadow depth
 ///
 /// The widget name is kept as `AppCardContainer` for backward compatibility
@@ -21,14 +20,16 @@ import 'package:sline_app/core/theme/app_theme.dart';
 /// `child`, `padding`, `margin`, `borderRadius` parameters are unchanged.
 ///
 /// The `blurRadius` parameter is deprecated and ignored.
+///
+/// The [elevation] default now comes from Amber Dusk while the public field
+/// stays non-null for compatibility with existing call sites.
 class AppCardContainer extends StatelessWidget {
   final Widget? child;
   final EdgeInsetsGeometry? padding;
   final EdgeInsetsGeometry? margin;
   final BorderRadius? borderRadius;
 
-  /// Elevation level for the shadow. Defaults to 1 (resting).
-  /// See [AppDecorations.elevation] for levels 0-4.
+  /// Elevation level for the shadow.
   final int elevation;
 
   /// Deprecated — ignored. Glass blur has been removed per NO GLASS POLICY.
@@ -41,25 +42,27 @@ class AppCardContainer extends StatelessWidget {
     this.padding,
     this.margin,
     this.borderRadius,
-    this.elevation = 1,
+    this.elevation = AmberDuskWidgetTheme.panelCardElevationLevel,
     @Deprecated('Glass blur removed. Use elevation instead.') this.blurRadius,
   });
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final cardTheme = AmberDuskTokens.widgetTheme.cards;
+    final panelRecipe = cardTheme.panel;
     final effectiveRadius =
-        borderRadius ?? BorderRadius.circular(AppDimens.r20);
+        borderRadius ?? BorderRadius.circular(panelRecipe.radius);
 
     return Container(
       margin: margin,
       padding: padding,
       decoration: BoxDecoration(
-        color: colorScheme.cardBackground,
+        color: panelRecipe.background,
         borderRadius: effectiveRadius,
         border: Border.all(
-          color: colorScheme.cardBorder,
-          width: AppLayout.cardBorderWidth,
+          color: cardTheme.border,
+          width: cardTheme.borderWidth,
         ),
         boxShadow: AppDecorations.elevation(
           elevation,

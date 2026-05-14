@@ -3,13 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/providers/theme_mode_provider.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
-import 'package:sline_app/core/widgets/signed_image.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
 import 'package:sline_app/features/favorites/view/favorites_screen.dart';
 import 'package:sline_app/features/favorites/viewmodels/favorites_view_model.dart';
@@ -22,7 +20,10 @@ import 'package:sline_app/features/saved/view/saved_tasks_screen.dart';
 import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
 import 'package:sline_app/features/wallet/view/wallet_screen.dart';
 
-/// Profile screen - user profile management and settings with Glassmorphism design.
+/// Amber Dusk profile screen for account, services, portfolio, and settings.
+///
+/// The screen remains ViewModel-driven and keeps navigation to existing
+/// profile, wallet, saved, favorites, and settings screens.
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -36,549 +37,79 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final profileVM = context.read<ProfileViewModel>();
+      AppLogger.d(
+        'ProfileScreen: initial profile load started',
+        tag: 'Profile',
+      );
       profileVM.loadUserData();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    const amber = AmberDuskTokens.colors;
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AmberDuskTokens.colors.transparent,
       body: Consumer<ProfileViewModel>(
         builder: (context, vm, child) {
           if (vm.isLoadingProfile) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: CircularProgressIndicator(color: amber.primary),
+            );
           }
 
           if (vm.profileError != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    vm.profileError!,
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.lightRed,
-                    ),
-                  ),
-                  const SizedBox(height: AppDimens.p16),
-                  ElevatedButton(
-                    onPressed: () => vm.loadUserData(),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
+            return _ProfileErrorState(
+              message: vm.profileError!,
+              onRetry: vm.loadUserData,
             );
           }
 
           return CustomScrollView(
             slivers: [
-              // --- Header Title ---
               SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(
-                    AppDimens.p24,
+                    AmberDuskSpacing.contentHorizontalPadding,
                     topPadding + AppDimens.p24,
-                    AppDimens.p24,
-                    AppDimens.p16,
+                    AmberDuskSpacing.contentHorizontalPadding,
+                    AppDimens.p12,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Profile',
-                            style: AppTypography.h3.copyWith(
-                              color: colorScheme.text,
-                            ),
-                          ),
-                          Text(
-                            'Manage your account',
-                            style: AppTypography.bodySmall.copyWith(
-                              color: colorScheme.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const EditProfileScreen(),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.teal,
-                            borderRadius: BorderRadius.circular(AppDimens.r12),
-                          ),
-                          child: Text(
-                            'Edit',
-                            style: AppTypography.captionBold.copyWith(
-                              color: AppColors.offWhite,
-                            ),
-                          ),
+                  child: _ProfileHeader(
+                    onSettingsTap: () {
+                      AppLogger.d(
+                        'ProfileScreen: settings opened',
+                        tag: 'Profile',
+                      );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SettingsScreen(),
                         ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
                 ),
               ),
-
-              // --- Profile Card ---
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimens.p24,
-                  ),
-                  child: AppCardContainer(
-                    padding: const EdgeInsets.all(AppDimens.p16),
-                    borderRadius: BorderRadius.circular(AppDimens.r20),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            SignedAvatar(
-                              storagePathOrUrl: vm.avatarUrl,
-                              size: 70,
-                              borderRadius: BorderRadius.circular(
-                                AppDimens.r16,
-                              ),
-                              borderColor: AppColors.gold,
-                              borderWidth: 3,
-                            ),
-                            const SizedBox(width: AppDimens.p16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Flexible(
-                                        child: Text(
-                                          vm.fullName ?? 'Guest User',
-                                          style: AppTypography.h5.copyWith(
-                                            color: colorScheme.text,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Icon(
-                                        Icons.check_circle,
-                                        size: 16,
-                                        color: AppColors.lightTeal,
-                                      ),
-                                    ],
-                                  ),
-                                  Text(
-                                    (vm.loadedBio ?? '').isNotEmpty
-                                        ? vm.loadedBio!
-                                        : 'No bio yet',
-                                    style: AppTypography.bodySmall.copyWith(
-                                      color: colorScheme.textSecondary,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      _buildBadge(
-                                        context,
-                                        '⭐ Top Rated',
-                                        AppColors.lightTeal,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      _buildBadge(
-                                        context,
-                                        'Rising',
-                                        AppColors.gold,
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: AppDimens.p16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildStatItem(
-                                context,
-                                'Projects',
-                                '47',
-                                AppColors.teal,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _buildStatItem(
-                                context,
-                                'Rating',
-                                '4.9',
-                                AppColors.gold,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _buildStatItem(
-                                context,
-                                'Earned',
-                                r'$12.5k',
-                                AppColors.lightTeal,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              const SliverToBoxAdapter(child: SizedBox(height: AppDimens.p24)),
-
-              // --- Skills Section ---
-              if (vm.skills.isNotEmpty) ...[
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimens.p24,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Skills',
-                          style: AppTypography.h5.copyWith(
-                            color: colorScheme.text,
-                          ),
-                        ),
-                        const SizedBox(height: AppDimens.p12),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: vm.skills
-                              .map(
-                                (skill) => Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.teal.withValues(
-                                      alpha: 0.1,
-                                    ),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: AppColors.teal.withValues(
-                                        alpha: 0.2,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    skill,
-                                    style: AppTypography.micro.copyWith(
-                                      color: AppColors.teal,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: AppDimens.p24),
-                ),
-              ],
-
-              // --- Portfolio Section ---
-              if (vm.portfolioItems.isNotEmpty) ...[
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimens.p24,
-                    ),
-                    child: Text(
-                      'Portfolio',
-                      style: AppTypography.h5.copyWith(color: colorScheme.text),
-                    ),
-                  ),
-                ),
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: AppDimens.p12),
-                ),
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: 140,
-                    child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimens.p24,
-                      ),
-                      scrollDirection: Axis.horizontal,
-                      itemCount: vm.portfolioItems.length,
-                      itemBuilder: (context, index) {
-                        final item = vm.portfolioItems[index];
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 12),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              width: 200,
-                              color: colorScheme.cardBackground,
-                              child: Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  if (item['image_url'] != null)
-                                    SignedImage(
-                                      storagePathOrUrl: item['image_url'],
-                                      width: 120,
-                                      height: 120,
-                                      bucket: 'portfolio',
-                                    ),
-                                  Positioned(
-                                    bottom: 0,
-                                    left: 0,
-                                    right: 0,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.bottomCenter,
-                                          end: Alignment.topCenter,
-                                          colors: [
-                                            Colors.black.withValues(alpha: 0.8),
-                                            Colors.transparent,
-                                          ],
-                                        ),
-                                      ),
-                                      child: Text(
-                                        item['title'] ?? 'Untitled',
-                                        style: AppTypography.captionBold
-                                            .copyWith(color: Colors.white),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: AppDimens.p24),
-                ),
-              ],
-
-              // --- Menu Items ---
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: AppDimens.p24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AmberDuskSpacing.contentHorizontalPadding,
+                ),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    _buildMenuItem(
-                      context,
-                      'Edit Profile',
-                      Icons.person,
-                      AppColors.teal,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const EditProfileScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: AppDimens.p8),
-                    _buildMenuItem(
-                      context,
-                      'My Services',
-                      Icons.design_services_outlined,
-                      AppColors.gold,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const MyServicesScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: AppDimens.p8),
-                    Selector<SavedTasksViewModel, int>(
-                      selector: (_, vm) => vm.savedTasks.length,
-                      builder: (context, count, _) {
-                        return _buildMenuItem(
-                          context,
-                          'Saved Projects',
-                          Icons.favorite,
-                          AppColors.lightRed,
-                          badge: count > 0 ? '$count' : null,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const SavedTasksScreen(),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                    const SizedBox(height: AppDimens.p8),
-                    Selector<FavoritesViewModel, int>(
-                      selector: (_, vm) => vm.itemsWithProfile.length,
-                      builder: (context, count, _) {
-                        return _buildMenuItem(
-                          context,
-                          'Favorites',
-                          Icons.star_outline,
-                          AppColors.gold,
-                          badge: count > 0 ? '$count' : null,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const FavoritesScreen(),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                    const SizedBox(height: AppDimens.p8),
-                    _buildMenuItem(
-                      context,
-                      'Work History',
-                      Icons.history,
-                      AppColors.lightTeal,
-                      onTap: () {
-                        final userId = context
-                            .read<AuthSessionViewModel>()
-                            .currentUserId;
-                        if (userId != null) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => PublicProfileScreen(
-                                userId: userId,
-                                initialTabIndex: 2, // History Tab
-                              ),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                    const SizedBox(height: AppDimens.p8),
-                    _buildMenuItem(
-                      context,
-                      'Wallet',
-                      Icons.account_balance_wallet,
-                      AppColors.teal,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const WalletScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: AppDimens.p8),
-                    _buildMenuItem(
-                      context,
-                      'Request Withdrawal',
-                      Icons.send_outlined,
-                      AppColors.teal,
-                      badge: 'Coming soon',
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Request withdrawal — coming soon'),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: AppDimens.p8),
-                    _buildMenuItem(
-                      context,
-                      'Settings',
-                      Icons.settings,
-                      AppColors.mediumGreyBlue,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const SettingsScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: AppDimens.p8),
-
-                    // Dark Mode Toggle
-                    _buildDarkModeToggle(context),
-                    const SizedBox(height: AppDimens.p24),
-
-                    // Logout button
-                    GestureDetector(
-                      onTap: () async {
-                        final authVM = context.read<AuthSessionViewModel>();
-                        await authVM.logout();
-                        if (!context.mounted) return;
-
-                        unawaited(
-                          Navigator.pushNamedAndRemoveUntil(
-                            context,
-                            '/login',
-                            (route) => false,
-                          ),
-                        );
-                      },
-                      child: Container(
-                        height: 54,
-                        decoration: BoxDecoration(
-                          color: AppColors.lightRed.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(AppDimens.r16),
-                          border: Border.all(
-                            color: AppColors.lightRed.withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Logout',
-                            style: AppTypography.bodyMedium.copyWith(
-                              color: AppColors.lightRed,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                    _ProfileHeroCard(vm: vm),
+                    const SizedBox(height: AppDimens.p16),
+                    _ProfileMetricsGrid(vm: vm),
+                    const SizedBox(height: AppDimens.p16),
+                    _ProfileAvailabilityCard(vm: vm),
+                    const SizedBox(height: AppDimens.p16),
+                    _ProfileServicesCard(skills: vm.skills),
+                    const SizedBox(height: AppDimens.p16),
+                    _ProfilePortfolioStrip(items: vm.portfolioItems),
+                    const SizedBox(height: AppDimens.p16),
+                    const _ProfileSettingsGroup(),
                     const SizedBox(height: AppDimens.p100),
                   ]),
                 ),
@@ -589,172 +120,998 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+}
 
-  Widget _buildBadge(BuildContext context, String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: AppTypography.micro.copyWith(
-          color: color,
-          fontWeight: FontWeight.bold,
+/// Header matching the Open Design account screen hierarchy.
+class _ProfileHeader extends StatelessWidget {
+  const _ProfileHeader({required this.onSettingsTap});
+
+  final VoidCallback onSettingsTap;
+
+  @override
+  Widget build(BuildContext context) {
+    const amber = AmberDuskTokens.colors;
+    const typography = AmberDuskTokens.typography;
+
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'ACCOUNT',
+                style: typography.chip.copyWith(
+                  color: amber.muted,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: AppDimens.p4),
+              Text(
+                'Profile',
+                style: typography.screenTitle.copyWith(color: amber.text),
+              ),
+            ],
+          ),
         ),
-      ),
+        IconButton(
+          tooltip: 'Profile settings',
+          onPressed: onSettingsTap,
+          icon: Icon(Icons.settings_outlined, color: amber.textSubtle),
+        ),
+      ],
     );
   }
+}
 
-  Widget _buildStatItem(
-    BuildContext context,
-    String label,
-    String value,
-    Color color,
-  ) {
-    final isDark = context.colorScheme.isDark;
+/// High-emphasis identity card with profile actions.
+class _ProfileHeroCard extends StatelessWidget {
+  const _ProfileHeroCard({required this.vm});
+
+  final ProfileViewModel vm;
+
+  @override
+  Widget build(BuildContext context) {
+    const amber = AmberDuskTokens.colors;
+    const typography = AmberDuskTokens.typography;
+    final name = _displayName(vm);
+    final bio = (vm.loadedBio ?? '').trim().isEmpty
+        ? 'Independent service provider'
+        : vm.loadedBio!.trim();
+    final badges = vm.badges.isEmpty ? const <String>['AVAILABLE'] : vm.badges;
+
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppDimens.p18),
       decoration: BoxDecoration(
-        color: isDark
-            ? Colors.black.withValues(alpha: 0.2)
-            : AppColors.offWhite.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(AppDimens.r14),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: AmberDuskTokens.surfaces.hero.gradientStops,
+        ),
+        borderRadius: BorderRadius.circular(AmberDuskSpacing.heroCardRadius),
+        border: Border.all(color: amber.heroRim),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(value, style: AppTypography.h4.copyWith(color: color)),
-          Text(
-            label,
-            style: AppTypography.micro.copyWith(
-              color: context.colorScheme.textSecondary,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SignedAvatar(
+                storagePathOrUrl: vm.avatarUrl,
+                size: AppDimens.p70,
+                borderRadius: BorderRadius.circular(AppDimens.r20),
+                borderColor: amber.heroText,
+                borderWidth: 2,
+                initials: _initials(name),
+                showOnlineIndicator: true,
+              ),
+              const SizedBox(width: AppDimens.p14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: typography.bookingName.copyWith(
+                        color: amber.heroText,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppDimens.p4),
+                    Text(
+                      bio,
+                      style: typography.bodySmall.copyWith(
+                        color: amber.heroMuted,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppDimens.p8),
+                    Wrap(
+                      spacing: AppDimens.p6,
+                      runSpacing: AppDimens.p6,
+                      children: badges
+                          .map((badge) => _HeroBadge(label: badge))
+                          .toList(growable: false),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimens.p16),
+          Row(
+            children: [
+              Expanded(
+                child: _HeroAction(
+                  label: 'Edit profile',
+                  foreground: AmberDuskColors.textDark,
+                  background: amber.heroText,
+                  onTap: () {
+                    AppLogger.d(
+                      'ProfileScreen: edit profile opened',
+                      tag: 'Profile',
+                    );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const EditProfileScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: AppDimens.p10),
+              Expanded(
+                child: _HeroAction(
+                  label: 'Public view',
+                  foreground: amber.heroText,
+                  background: amber.heroChip,
+                  onTap: () => _openPublicProfile(context),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildMenuItem(
-    BuildContext context,
-    String label,
-    IconData icon,
-    Color color, {
-    String? badge,
-    VoidCallback? onTap,
-  }) {
-    final colorScheme = context.colorScheme;
-    return GestureDetector(
-      onTap: onTap,
-      child: AppCardContainer(
-        padding: const EdgeInsets.all(AppDimens.p16),
-        borderRadius: BorderRadius.circular(AppDimens.r16),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(AppDimens.r12),
-              ),
-              child: Icon(icon, color: color, size: 20),
-            ),
-            const SizedBox(width: AppDimens.p12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: AppTypography.bodyMedium.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.text,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (badge != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.teal.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  badge,
-                  style: AppTypography.micro.copyWith(
-                    color: AppColors.teal,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            const SizedBox(width: 8),
-            Icon(
-              Icons.arrow_forward_ios,
-              size: 14,
-              color: colorScheme.textSecondary,
-            ),
-          ],
+/// Tiny badge used inside the profile hero.
+class _HeroBadge extends StatelessWidget {
+  const _HeroBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    const amber = AmberDuskTokens.colors;
+    return Container(
+      padding: AmberDuskTokens.widgetTheme.statusPills.smallPadding,
+      decoration: BoxDecoration(
+        color: amber.heroChip,
+        borderRadius: BorderRadius.circular(
+          AmberDuskTokens.widgetTheme.statusPills.radius,
+        ),
+      ),
+      child: Text(
+        label,
+        style: AmberDuskTokens.widgetTheme.statusPills.smallTextStyle.copyWith(
+          color: amber.heroText,
         ),
       ),
     );
   }
+}
 
-  Widget _buildDarkModeToggle(BuildContext context) {
-    final colorScheme = context.colorScheme;
+/// Hero action that preserves current navigation behavior.
+class _HeroAction extends StatelessWidget {
+  const _HeroAction({
+    required this.label,
+    required this.foreground,
+    required this.background,
+    required this.onTap,
+  });
+
+  final String label;
+  final Color foreground;
+  final Color background;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final buttons = AmberDuskTokens.widgetTheme.buttons;
+
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          height: buttons.minHeight,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: background,
+            borderRadius: BorderRadius.circular(buttons.radius),
+          ),
+          child: Text(
+            label,
+            style: buttons.textStyle.copyWith(color: foreground),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Separate metric grid matching the Open Design profile module.
+class _ProfileMetricsGrid extends StatelessWidget {
+  const _ProfileMetricsGrid({required this.vm});
+
+  final ProfileViewModel vm;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _MetricCard(
+            label: 'Projects',
+            value: '${vm.portfolioItems.length}',
+          ),
+        ),
+        const SizedBox(width: AppDimens.p10),
+        Expanded(
+          child: _MetricCard(label: 'Rating', value: vm.rating ?? 'New'),
+        ),
+        const SizedBox(width: AppDimens.p10),
+        Expanded(
+          child: _MetricCard(label: 'Skills', value: '${vm.skills.length}'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Compact metric tile shown below the identity hero.
+class _MetricCard extends StatelessWidget {
+  const _MetricCard({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    const amber = AmberDuskTokens.colors;
+
+    return AppCardContainer(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimens.p12,
+        vertical: AppDimens.p12,
+      ),
+      borderRadius: BorderRadius.circular(AmberDuskSpacing.moduleRadius),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: AmberDuskTokens.typography.sectionTitle.copyWith(
+              color: amber.text,
+            ),
+          ),
+          const SizedBox(height: AppDimens.p2),
+          Text(
+            label,
+            style: AmberDuskTokens.typography.chip.copyWith(color: amber.muted),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Availability summary matching the profile reference card.
+class _ProfileAvailabilityCard extends StatelessWidget {
+  const _ProfileAvailabilityCard({required this.vm});
+
+  final ProfileViewModel vm;
+
+  @override
+  Widget build(BuildContext context) {
+    const amber = AmberDuskTokens.colors;
+    final subtitle = vm.loadedEmail?.trim().isEmpty ?? true
+        ? 'Profile contact is connected'
+        : vm.loadedEmail!.trim();
+
+    return AppCardContainer(
+      padding: const EdgeInsets.all(AppDimens.p16),
+      borderRadius: BorderRadius.circular(AmberDuskSpacing.moduleRadius),
+      child: Row(
+        children: [
+          Container(
+            width: AppDimens.p40,
+            height: AppDimens.p40,
+            decoration: BoxDecoration(
+              color: amber.success.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(AppDimens.r14),
+            ),
+            child: Icon(
+              Icons.bolt_outlined,
+              color: amber.success,
+              size: AppDimens.iconSizeSmall,
+            ),
+          ),
+          const SizedBox(width: AppDimens.p12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Ready for new work',
+                  style: AmberDuskTokens.typography.body.copyWith(
+                    color: amber.text,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: AppDimens.p2),
+                Text(
+                  subtitle,
+                  style: AmberDuskTokens.typography.bodySmall.copyWith(
+                    color: amber.muted,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppDimens.p10),
+          _StatusPill(label: 'Open', color: amber.success),
+        ],
+      ),
+    );
+  }
+}
+
+/// Small status badge used by profile rows and cards.
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: AmberDuskTokens.widgetTheme.statusPills.smallPadding,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(
+          AmberDuskTokens.widgetTheme.statusPills.radius,
+        ),
+      ),
+      child: Text(
+        label,
+        style: AmberDuskTokens.widgetTheme.statusPills.smallTextStyle.copyWith(
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
+/// Service rows derived from the profile skills collection.
+class _ProfileServicesCard extends StatelessWidget {
+  const _ProfileServicesCard({required this.skills});
+
+  final List<String> skills;
+
+  @override
+  Widget build(BuildContext context) {
+    final visibleSkills = skills.take(3).toList(growable: false);
+
+    if (visibleSkills.isEmpty) {
+      return const _Panel(
+        title: 'Services',
+        child: _InfoRow(
+          icon: Icons.design_services_outlined,
+          title: 'No services listed yet',
+          subtitle: 'Add services from profile editing.',
+        ),
+      );
+    }
+
+    return _Panel(
+      title: 'Services',
+      child: Column(
+        children: [
+          for (final skill in visibleSkills) ...[
+            _ServiceRow(label: skill),
+            if (skill != visibleSkills.last)
+              const SizedBox(height: AppDimens.p10),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Portfolio preview strip using compact proof tiles from existing data.
+class _ProfilePortfolioStrip extends StatelessWidget {
+  const _ProfilePortfolioStrip({required this.items});
+
+  final List<Map<String, dynamic>> items;
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return const _Panel(
+        title: 'Portfolio',
+        child: _InfoRow(
+          icon: Icons.image_outlined,
+          title: 'No portfolio yet',
+          subtitle: 'Add work samples from profile editing.',
+        ),
+      );
+    }
+
+    return _Panel(
+      title: 'Portfolio',
+      child: Row(
+        children: [
+          for (final item in items.take(2)) ...[
+            Expanded(child: _PortfolioProofTile(item: item)),
+            if (item != items.take(2).last)
+              const SizedBox(width: AppDimens.p10),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Reusable panel matching Amber Dusk profile grouped modules.
+class _Panel extends StatelessWidget {
+  const _Panel({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    const amber = AmberDuskTokens.colors;
+
+    return AppCardContainer(
+      padding: const EdgeInsets.all(AppDimens.p16),
+      borderRadius: BorderRadius.circular(AmberDuskSpacing.moduleRadius),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title.toUpperCase(),
+            style: AmberDuskTokens.typography.chip.copyWith(
+              color: amber.text,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: AppDimens.p12),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+/// Icon, title, and subtitle row used in profile panels.
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    const amber = AmberDuskTokens.colors;
+
+    return Row(
+      children: [
+        Container(
+          width: AppDimens.p40,
+          height: AppDimens.p40,
+          decoration: BoxDecoration(
+            color: amber.primary.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(AppDimens.r14),
+          ),
+          child: Icon(
+            icon,
+            color: amber.primary,
+            size: AppDimens.iconSizeSmall,
+          ),
+        ),
+        const SizedBox(width: AppDimens.p12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: AmberDuskTokens.typography.body.copyWith(
+                  color: amber.text,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: AppDimens.p2),
+              Text(
+                subtitle,
+                style: AmberDuskTokens.typography.bodySmall.copyWith(
+                  color: amber.muted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Service-like row used to render real profile skills.
+class _ServiceRow extends StatelessWidget {
+  const _ServiceRow({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    const amber = AmberDuskTokens.colors;
+
+    return Row(
+      children: [
+        Container(
+          width: AppDimens.p40,
+          height: AppDimens.p40,
+          decoration: BoxDecoration(
+            color: amber.primary.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(AppDimens.r14),
+          ),
+          child: Icon(
+            Icons.design_services_outlined,
+            color: amber.primary,
+            size: AppDimens.iconSizeSmall,
+          ),
+        ),
+        const SizedBox(width: AppDimens.p12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: AmberDuskTokens.typography.body.copyWith(
+                  color: amber.text,
+                  fontWeight: FontWeight.w800,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: AppDimens.p2),
+              Text(
+                'Listed skill',
+                style: AmberDuskTokens.typography.bodySmall.copyWith(
+                  color: amber.muted,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: AppDimens.p10),
+        _StatusPill(label: 'Visible', color: amber.primary),
+      ],
+    );
+  }
+}
+
+/// Compact proof tile matching the profile portfolio strip reference.
+class _PortfolioProofTile extends StatelessWidget {
+  const _PortfolioProofTile({required this.item});
+
+  final Map<String, dynamic> item;
+
+  @override
+  Widget build(BuildContext context) {
+    const amber = AmberDuskTokens.colors;
+    final title = item['title']?.toString() ?? 'Untitled';
+    final description = item['description']?.toString().trim();
+    final createdAt = DateTime.tryParse(item['created_at']?.toString() ?? '');
+    final footer = createdAt == null ? 'Proof item' : '${createdAt.year} proof';
+
+    return Container(
+      constraints: const BoxConstraints(
+        minHeight: AppDimens.p100 + AppDimens.p24,
+      ),
+      padding: const EdgeInsets.all(AppDimens.p12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [amber.primary.withValues(alpha: 0.18), amber.surfaceHighest],
+        ),
+        borderRadius: BorderRadius.circular(AppDimens.r16),
+        border: Border.all(color: amber.heroRim),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _StatusPill(label: 'Project', color: amber.primary),
+          const SizedBox(height: AppDimens.p10),
+          Text(
+            title,
+            style: AmberDuskTokens.typography.body.copyWith(
+              color: amber.text,
+              fontWeight: FontWeight.w800,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (description != null && description.isNotEmpty) ...[
+            const SizedBox(height: AppDimens.p4),
+            Text(
+              description,
+              style: AmberDuskTokens.typography.chip.copyWith(
+                color: amber.muted,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+          const SizedBox(height: AppDimens.p12),
+          Text(
+            footer,
+            style: AmberDuskTokens.typography.chip.copyWith(color: amber.muted),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Account actions grouped in the Amber Dusk settings module.
+class _ProfileSettingsGroup extends StatelessWidget {
+  const _ProfileSettingsGroup();
+
+  @override
+  Widget build(BuildContext context) {
+    return _Panel(
+      title: 'Settings',
+      child: Column(
+        children: [
+          _ActionRow(
+            label: 'Edit Profile',
+            icon: Icons.person_outline,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+            ),
+          ),
+          _ActionRow(
+            label: 'My Services',
+            icon: Icons.design_services_outlined,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MyServicesScreen()),
+            ),
+          ),
+          Selector<SavedTasksViewModel, int>(
+            selector: (_, vm) => vm.savedTasks.length,
+            builder: (context, count, _) => _ActionRow(
+              label: 'Saved Projects',
+              icon: Icons.bookmark_border,
+              badge: count > 0 ? '$count' : null,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SavedTasksScreen()),
+              ),
+            ),
+          ),
+          Selector<FavoritesViewModel, int>(
+            selector: (_, vm) => vm.itemsWithProfile.length,
+            builder: (context, count, _) => _ActionRow(
+              label: 'Favorites',
+              icon: Icons.star_outline,
+              badge: count > 0 ? '$count' : null,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const FavoritesScreen()),
+              ),
+            ),
+          ),
+          _ActionRow(
+            label: 'Wallet',
+            icon: Icons.account_balance_wallet_outlined,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const WalletScreen()),
+            ),
+          ),
+          _ActionRow(
+            label: 'Work History',
+            icon: Icons.history,
+            onTap: () => _openPublicProfile(context, initialTabIndex: 2),
+          ),
+          const _DarkModeRow(),
+          const SizedBox(height: AppDimens.p8),
+          const _LogoutButton(),
+        ],
+      ),
+    );
+  }
+}
+
+/// Tappable row with optional badge for account actions.
+class _ActionRow extends StatelessWidget {
+  const _ActionRow({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.badge,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  final String? badge;
+
+  @override
+  Widget build(BuildContext context) {
+    const amber = AmberDuskTokens.colors;
+
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          AppLogger.d(
+            'ProfileScreen: action tapped',
+            tag: 'Profile',
+            json: {'action': label},
+          );
+          onTap();
+        },
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: AppDimens.p8),
+          child: Row(
+            children: [
+              Container(
+                width: AppDimens.p40,
+                height: AppDimens.p40,
+                decoration: BoxDecoration(
+                  color: amber.surfaceHighest,
+                  borderRadius: BorderRadius.circular(AppDimens.r14),
+                ),
+                child: Icon(
+                  icon,
+                  color: amber.primary,
+                  size: AppDimens.iconSizeSmall,
+                ),
+              ),
+              const SizedBox(width: AppDimens.p12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: AmberDuskTokens.typography.body.copyWith(
+                    color: amber.text,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (badge != null)
+                Container(
+                  padding: AmberDuskTokens.widgetTheme.statusPills.smallPadding,
+                  decoration: BoxDecoration(
+                    color: amber.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(
+                      AmberDuskTokens.widgetTheme.statusPills.radius,
+                    ),
+                  ),
+                  child: Text(
+                    badge!,
+                    style: AmberDuskTokens
+                        .widgetTheme
+                        .statusPills
+                        .smallTextStyle
+                        .copyWith(color: amber.primary),
+                  ),
+                ),
+              const SizedBox(width: AppDimens.p8),
+              Icon(
+                Icons.chevron_right,
+                color: amber.muted,
+                size: AppDimens.iconSizeSmall,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Theme mode toggle row kept in the profile settings group.
+class _DarkModeRow extends StatelessWidget {
+  const _DarkModeRow();
+
+  @override
+  Widget build(BuildContext context) {
+    const amber = AmberDuskTokens.colors;
     final themeProvider = context.watch<ThemeModeProvider>();
     final isDark = themeProvider.themeMode == ThemeMode.dark;
 
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppDimens.p8),
+      child: Row(
+        children: [
+          Container(
+            width: AppDimens.p40,
+            height: AppDimens.p40,
+            decoration: BoxDecoration(
+              color: amber.surfaceHighest,
+              borderRadius: BorderRadius.circular(AppDimens.r14),
+            ),
+            child: Icon(
+              isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+              color: amber.primary,
+              size: AppDimens.iconSizeSmall,
+            ),
+          ),
+          const SizedBox(width: AppDimens.p12),
+          Expanded(
+            child: Text(
+              'Dark Mode',
+              style: AmberDuskTokens.typography.body.copyWith(
+                color: amber.text,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Switch(
+            value: isDark,
+            activeThumbColor: amber.primary,
+            onChanged: (_) => themeProvider.toggleThemeMode(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Logout control with the existing auth-session navigation behavior.
+class _LogoutButton extends StatelessWidget {
+  const _LogoutButton();
+
+  @override
+  Widget build(BuildContext context) {
+    const amber = AmberDuskTokens.colors;
+
     return GestureDetector(
-      onTap: themeProvider.toggleThemeMode,
-      child: AppCardContainer(
-        padding: const EdgeInsets.all(AppDimens.p16),
-        borderRadius: BorderRadius.circular(AppDimens.r16),
-        child: Row(
+      behavior: HitTestBehavior.opaque,
+      onTap: () async {
+        AppLogger.i('ProfileScreen: logout requested', tag: 'Profile');
+        final authVM = context.read<AuthSessionViewModel>();
+        await authVM.logout();
+        if (!context.mounted) return;
+        unawaited(
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/login',
+            (route) => false,
+          ),
+        );
+      },
+      child: Container(
+        height: AppDimens.p48,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: amber.dangerMuted,
+          borderRadius: BorderRadius.circular(AppDimens.r16),
+        ),
+        child: Text(
+          'Logout',
+          style: AmberDuskTokens.typography.control.copyWith(
+            color: amber.danger,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Profile error panel with retry action.
+class _ProfileErrorState extends StatelessWidget {
+  const _ProfileErrorState({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    const amber = AmberDuskTokens.colors;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimens.p24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.teal.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(AppDimens.r12),
+            Text(
+              message,
+              style: AmberDuskTokens.typography.body.copyWith(
+                color: amber.danger,
               ),
-              child: Icon(
-                isDark ? Icons.dark_mode : Icons.light_mode,
-                color: colorScheme.text,
-                size: 20,
-              ),
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(width: AppDimens.p12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Dark Mode',
-                    style: AppTypography.bodyMedium.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.text,
-                    ),
-                  ),
-                  Text(
-                    'Switch between themes',
-                    style: AppTypography.micro.copyWith(
-                      color: colorScheme.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Switch(
-              value: isDark,
-              activeThumbColor: AppColors.teal,
-              onChanged: (value) => themeProvider.toggleThemeMode(),
+            const SizedBox(height: AppDimens.p16),
+            _HeroAction(
+              label: 'Retry',
+              foreground: amber.text,
+              background: amber.primary,
+              onTap: onRetry,
             ),
           ],
         ),
       ),
     );
   }
+}
+
+String _displayName(ProfileViewModel vm) {
+  final name = vm.fullName?.trim();
+  return name == null || name.isEmpty ? 'Guest User' : name;
+}
+
+String _initials(String value) {
+  final words = value
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .toList(growable: false);
+  if (words.isEmpty) return '?';
+  if (words.length == 1) return words.first.substring(0, 1).toUpperCase();
+  return '${words.first.substring(0, 1)}${words.last.substring(0, 1)}'
+      .toUpperCase();
+}
+
+void _openPublicProfile(BuildContext context, {int initialTabIndex = 0}) {
+  final userId = context.read<AuthSessionViewModel>().currentUserId;
+  if (userId == null) {
+    AppLogger.w(
+      'ProfileScreen: public profile blocked without current user',
+      tag: 'Profile',
+      json: {'initial_tab': initialTabIndex},
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Sign in to view your public profile.')),
+    );
+    return;
+  }
+
+  AppLogger.d(
+    'ProfileScreen: public profile opened',
+    tag: 'Profile',
+    json: {'initial_tab': initialTabIndex},
+  );
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) =>
+          PublicProfileScreen(userId: userId, initialTabIndex: initialTabIndex),
+    ),
+  );
 }

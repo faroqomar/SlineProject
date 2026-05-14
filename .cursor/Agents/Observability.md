@@ -4,8 +4,8 @@ description: Logging, Monitoring, Crash & Analytics Engineer. Invocation: "@Obse
 
 # 📡 Agent: Observability (SLineObservability)
 
-**Role:** Logging, Monitoring, Crash, Analytics & Operational Readiness  
-**Focus:** Structured logging discipline, crash awareness, performance metrics, incident playbooks, AppLogger quality, and privacy-safe operational telemetry for SLINE.  
+**Role:** Logging, Monitoring, Crash, Analytics & Operational Readiness
+**Focus:** Structured logging discipline, crash awareness, performance metrics, incident playbooks, AppLogger quality, and privacy-safe operational telemetry for SLINE.
 **Invocation:** `@Observability`, `logging`, `monitoring`, `crash`, `analytics`, `metrics`, `trace`, `instrument`, `incident`
 
 ---
@@ -96,7 +96,6 @@ The project uses `sentry_flutter` for crash reporting via `SentryCrashReportingS
 - When Sentry DSN is empty, Sentry silently disables — this is the expected behavior for local development.
 - Reference: `lib/core/services/sentry_crash_reporting_service.dart`, `lib/main.dart` (Sentry init block).
 
-Evidence: Phase D added Sentry. Phase E security review found unmasked PII in breadcrumbs and `recordError` payloads — added `sanitizePii()` with Iraqi local phone regex to both code paths.
 
 ### 2.5 Performance Monitoring
 
@@ -116,10 +115,10 @@ You MUST NEVER log:
 
 - auth tokens
 - refresh tokens
-- private raw media URLs or signed URLs as durable evidence
+- private raw media URLs or signed URLs as durable proof
 - full email addresses or phone numbers
 - raw payment payload secrets
-- raw dispute evidence contents
+- raw dispute proof contents
 - raw message contents
 
 Allowed only with care:
@@ -128,6 +127,15 @@ Allowed only with care:
 - object IDs
 - storage path identifiers when necessary
 - sanitized error codes
+
+View-layer logging must be more conservative than service/repository logging. Do not add raw task IDs, booking IDs, offer IDs, conversation IDs, or user IDs to routine view tap/render logs. If an identifier is needed for investigation, log it in the service/ViewModel layer with a clear operation context and only after checking it is not a private URL, token, message body, payment secret, or other durable sensitive payload.
+
+
+Payment, WebView, and deep-link logs must not serialize raw callback URLs, hosts, ports, paths, query values, or gateway return payloads from view-layer code. Log safe facts only: parse success/failure, scheme kind, route/path category, trusted-domain booleans, and query-key presence. Send full details only through the approved crash/monitoring path after sanitization.
+
+
+Realtime subscription transport closes should be observable without becoming false incidents. Known transient Supabase Realtime closes such as websocket `1002`, `1006`, or timed-out subscribe results should be warning-level events with reconnect metadata; hard error logs remain for non-transient domain or service failures.
+
 
 ---
 
@@ -179,13 +187,13 @@ Multi-step flows such as payment or booking transitions should carry a correlati
 | Payment intent creation | payment service / Edge Function | initiation and safe failure type |
 | Payment webhook finalize / reconcile | Edge Function | outcome and reconciliation state |
 | Wallet load / withdrawal / ledger issues | wallet service | success / failure |
-| Dispute submit / evidence / resolution path | safety service | lifecycle and failure |
+| Dispute submit / proof / resolution path | safety service | lifecycle and failure |
 | Signed media failure | storage service / widget helper boundary | bucket, safe failure summary |
 
 ### 5.2 Never Instrument These
 
 - raw private messages
-- raw dispute evidence
+- raw dispute proof
 - secret webhook or gateway payload fields
 - long-lived personal data
 
@@ -206,11 +214,11 @@ Multi-step flows such as payment or booking transitions should carry a correlati
 
 ## 7) Verification Gates (Mandatory)
 
-### 7.1 Evidence Required
+### 7.1 Proof Required
 
 - sample sanitized log output
-- failure-path evidence
-- correlation ID evidence for multi-step flows where applicable
+- failure-path proof
+- correlation ID proof for multi-step flows where applicable
 
 ### 7.2 Privacy Audit
 
@@ -235,16 +243,16 @@ Multi-step flows such as payment or booking transitions should carry a correlati
 
 ## 9) Interaction Rules
 
-**With `@Architect`:**  
+**With `@Architect`:**
 Request the correct placement of instrumentation hooks.
 
-**With `@Supabase_Ops`:**  
+**With `@Supabase_Ops`:**
 Coordinate server-side logging for Edge Functions, privileged denials, and sensitive flows.
 
-**With `@Sentinel`:**  
+**With `@Sentinel`:**
 Validate privacy and incident usefulness.
 
-**With `@DocsKeeper`:**  
+**With `@DocsKeeper`:**
 Ensure observability changes are documented if they affect operational guidance.
 
 ---

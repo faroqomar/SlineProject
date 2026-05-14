@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
-import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_states.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/app_text_field.dart';
 import 'package:sline_app/core/widgets/scale_button.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
@@ -21,9 +21,11 @@ import 'package:sline_app/features/tasks/view/widgets/discovery_task_sliver.dart
 import 'package:sline_app/features/tasks/view/widgets/task_card.dart';
 import 'package:sline_app/features/tasks/viewmodels/discovery_feed_view_model_contract.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
-import 'package:sline_app/shared/constants/categories.dart';
 
-/// Home screen - main dashboard for the app (MVVM) with Glassmorphism design.
+/// Home screen for browsing mixed marketplace work.
+///
+/// The screen keeps discovery data in the existing ViewModels while rendering
+/// the Phase 3 Amber Dusk feed, search, filter, and card entry points.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
@@ -84,10 +86,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const amberColors = AmberDuskTokens.colors;
     final colorScheme = context.colorScheme;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: amberColors.page,
       body: Consumer3<DiscoveryFeedViewModelContract, TaskFilterViewModel, ProfileViewModel>(
         builder: (context, homeViewModel, filterController, profileVM, child) {
           final topPadding = MediaQuery.of(context).padding.top;
@@ -134,9 +137,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(
-                      AppDimens.p24,
+                      AmberDuskTokens.spacing.contentHorizontalPadding,
                       topPadding + AppDimens.p24,
-                      AppDimens.p24,
+                      AmberDuskTokens.spacing.contentHorizontalPadding,
                       AppDimens.p16,
                     ),
                     child: Column(
@@ -152,12 +155,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                 children: [
                                   SignedAvatar(
                                     storagePathOrUrl: profileVM.avatarUrl,
-                                    size: 52,
+                                    size: AppDimens.avatarMedium,
                                     borderRadius: BorderRadius.circular(
                                       AppDimens.r16,
                                     ),
-                                    // Use semantic token for theme-aware border
-                                    borderColor: colorScheme.cardBorder,
+                                    // Use the quiet Amber Dusk rim so the
+                                    // header avatar stays visible on the shell.
+                                    borderColor: amberColors.surfaceHighest,
                                     borderWidth: 2,
                                   ),
                                   const SizedBox(width: AppDimens.p12),
@@ -167,15 +171,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                     children: [
                                       Text(
                                         _getGreeting(),
-                                        style: AppTypography.bodySmall.copyWith(
-                                          color: colorScheme.textSecondary,
-                                        ),
+                                        style: AmberDuskTokens
+                                            .typography
+                                            .bodySmall
+                                            .copyWith(color: amberColors.muted),
                                       ),
                                       Text(
                                         profileVM.fullName ?? 'Guest',
-                                        style: AppTypography.h4.copyWith(
-                                          color: colorScheme.text,
-                                        ),
+                                        style: AmberDuskTokens
+                                            .typography
+                                            .bookingName
+                                            .copyWith(color: amberColors.text),
                                       ),
                                     ],
                                   ),
@@ -193,10 +199,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             Expanded(
                               child: AppTextField(
                                 fieldKey: HomeScreen.searchFieldKey,
-                                hintText: 'Search amazing projects...',
+                                hintText: 'Search freelancers, tasks...',
                                 prefixIcon: Icon(
                                   Icons.search,
-                                  color: colorScheme.textSecondary,
+                                  color: amberColors.muted,
                                 ),
                                 onChanged: filterController.searchTasks,
                               ),
@@ -218,7 +224,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 showModalBottomSheet(
                                   context: context,
                                   isScrollControlled: true,
-                                  backgroundColor: Colors.transparent,
+                                  backgroundColor:
+                                      AmberDuskTokens.colors.surface,
                                   builder: (_) => const FiltersModal(),
                                 );
                               },
@@ -226,19 +233,21 @@ class _HomeScreenState extends State<HomeScreen> {
                                 width: 50,
                                 height: 50,
                                 decoration: BoxDecoration(
-                                  color: AppColors.teal,
+                                  color: AmberDuskTokens
+                                      .widgetTheme
+                                      .iconButtons
+                                      .background,
                                   borderRadius: BorderRadius.circular(
                                     AppDimens.r14,
                                   ),
-                                  // Use elevation token instead of hardcoded teal shadow
                                   boxShadow: AppDecorations.elevation(
-                                    1,
+                                    2,
                                     isDark: colorScheme.isDark,
                                   ),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.filter_list,
-                                  color: Colors.white,
+                                  color: amberColors.text,
                                 ),
                               ),
                             ),
@@ -276,34 +285,34 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: AppDimens.p16),
+                      ],
+                    ),
+                  ),
+                ),
 
-                        // 4. Categories
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          clipBehavior: Clip.none,
-                          child: Row(
-                            children: [
-                              _buildCategoryChip(
-                                context,
-                                label: 'All',
-                                isSelected:
-                                    filterController.selectedCategory == '',
-                                onTap: () =>
-                                    filterController.filterByCategory(''),
-                              ),
-                              ...taskCategories.map((category) {
-                                return _buildCategoryChip(
-                                  context,
-                                  label: category,
-                                  isSelected:
-                                      filterController.selectedCategory ==
-                                      category,
-                                  onTap: () => filterController
-                                      .filterByCategory(category),
-                                );
-                              }),
-                            ],
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      AmberDuskTokens.spacing.contentHorizontalPadding,
+                      0,
+                      AmberDuskTokens.spacing.contentHorizontalPadding,
+                      AppDimens.p12,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'FEED',
+                          style: AmberDuskTokens.typography.chip.copyWith(
+                            color: amberColors.text,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        Text(
+                          '${visibleTasks.length} '
+                          '${visibleTasks.length == 1 ? 'item' : 'items'}',
+                          style: AmberDuskTokens.typography.bodySmall.copyWith(
+                            color: amberColors.muted,
                           ),
                         ),
                       ],
@@ -382,26 +391,26 @@ class _HomeScreenState extends State<HomeScreen> {
       case _HomeDiscoveryMode.allWork:
         return (
           mode: mode,
-          label: 'All Work',
-          semanticLabel: 'Discovery mode: All Work',
+          label: 'All posts',
+          semanticLabel: 'Discovery mode: All posts',
           icon: Icons.work_outline,
-          emptyTitle: 'No tasks found',
+          emptyTitle: 'No posts found',
         );
       case _HomeDiscoveryMode.bookings:
         return (
           mode: mode,
-          label: 'Bookings',
-          semanticLabel: 'Discovery mode: Bookings',
+          label: 'Booking posts',
+          semanticLabel: 'Discovery mode: Booking posts',
           icon: Icons.calendar_today_outlined,
-          emptyTitle: 'No booking services',
+          emptyTitle: 'No booking posts',
         );
       case _HomeDiscoveryMode.tenders:
         return (
           mode: mode,
-          label: 'Tenders',
-          semanticLabel: 'Discovery mode: Tenders',
+          label: 'Tender posts',
+          semanticLabel: 'Discovery mode: Tender posts',
           icon: Icons.assignment_outlined,
-          emptyTitle: 'No active tenders',
+          emptyTitle: 'No tender posts',
         );
     }
   }
@@ -423,6 +432,7 @@ class _HomeScreenState extends State<HomeScreen> {
     metadata,
   }) {
     final colorScheme = context.colorScheme;
+    const amberColors = AmberDuskTokens.colors;
     final isSelected = _selectedDiscoveryMode == metadata.mode;
     return Padding(
       padding: const EdgeInsets.only(right: AppDimens.p8),
@@ -457,13 +467,17 @@ class _HomeScreenState extends State<HomeScreen> {
               vertical: AppDimens.p10,
             ),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.teal : colorScheme.inputBackground,
-              borderRadius: BorderRadius.circular(AppDimens.r12),
+              color: isSelected ? amberColors.primary : amberColors.dark.border,
+              borderRadius: BorderRadius.circular(
+                AmberDuskTokens.spacing.pillRadius,
+              ),
               border: Border.all(
-                color: isSelected ? AppColors.teal : colorScheme.inputBorder,
+                color: isSelected
+                    ? amberColors.primary
+                    : amberColors.dark.border,
               ),
               boxShadow: isSelected
-                  ? AppDecorations.elevation(1, isDark: colorScheme.isDark)
+                  ? AppDecorations.elevation(2, isDark: colorScheme.isDark)
                   : [],
             ),
             child: Row(
@@ -472,7 +486,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 Icon(
                   metadata.icon,
                   size: AppDimens.iconSizeSmall,
-                  color: isSelected ? AppColors.offWhite : colorScheme.text,
+                  color: isSelected
+                      ? amberColors.dark.textInverse
+                      : amberColors.text,
                 ),
                 const SizedBox(width: AppDimens.p8),
                 Text(
@@ -481,69 +497,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.bodySmall.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: isSelected ? AppColors.offWhite : colorScheme.text,
+                    color: isSelected
+                        ? amberColors.dark.textInverse
+                        : amberColors.text,
                   ),
                 ),
               ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Builds a single category filter chip with selection animation and haptics.
-  ///
-  /// Uses [AppMotion.fast] + [AppMotion.curveStandard] for the state transition
-  /// and [AppDecorations.elevation] instead of a hardcoded teal shadow.
-  Widget _buildCategoryChip(
-    BuildContext context, {
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    final colorScheme = context.colorScheme;
-    return Padding(
-      padding: const EdgeInsets.only(right: AppDimens.p8),
-      // Semantics wrapper so screen readers announce selection state
-      child: Semantics(
-        selected: isSelected,
-        label: 'Category: $label',
-        child: GestureDetector(
-          onTap: () {
-            // Haptic selection click for chip toggle — selection, not tap
-            AppInteractionStates.hapticSelection();
-            AppLogger.d(
-              'home_chip_haptic',
-              tag: 'HomeScreen',
-              json: {'label': label},
-            );
-            onTap();
-          },
-          child: AnimatedContainer(
-            duration: AppMotion.fast,
-            curve: AppMotion.curveStandard,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimens.p16,
-              vertical: AppDimens.p10,
-            ),
-            decoration: BoxDecoration(
-              color: isSelected ? AppColors.teal : colorScheme.inputBackground,
-              borderRadius: BorderRadius.circular(AppDimens.r12),
-              border: Border.all(
-                color: isSelected ? AppColors.teal : colorScheme.inputBorder,
-              ),
-              // Use elevation token instead of hardcoded teal shadow
-              boxShadow: isSelected
-                  ? AppDecorations.elevation(1, isDark: colorScheme.isDark)
-                  : [],
-            ),
-            child: Text(
-              label,
-              style: AppTypography.bodySmall.copyWith(
-                fontWeight: FontWeight.bold,
-                color: isSelected ? AppColors.offWhite : colorScheme.text,
-              ),
             ),
           ),
         ),
