@@ -81,7 +81,7 @@ RLS: participant SELECT; self-only INSERT/UPDATE. Realtime: table is in `supabas
 ### 2.8 Realtime (Inbox + Active Chat + Presence)
 
 - **Active chat:** `subscribeToMessages(conversationId)` — stream on `messages`; ViewModel merges with `_lastMessages` via `ChatRealtimeMerger`. `subscribeToPresence(conversationId)` — stream on `conversation_presence` for typing indicator (when feature flag on).
-- **Inbox (conversation list):** `subscribeToInboxMessages(userId)` — stream on `messages` with `.eq('receiver_id', userId)`. The `conversations` table is **not** in the `supabase_realtime` publication; Inbox updates are driven by incoming messages. `ChatViewModel` merges each message event into the local conversation list (updates last_message_*, re-sorts). New conversations (message for unknown conversation_id) are hydrated via `getConversationById` with a guard to prevent duplicate fetches. See `Sline_everything/AppDigram/All_Diagrams/18_realtime-subscription-topology.md`.
+- **Inbox (conversation list):** `subscribeToInboxMessages(userId)` — stream on `messages` with `.eq('receiver_id', userId)`. The `conversations` table is **not** in the `supabase_realtime` publication; Inbox updates are driven by incoming messages. `ChatViewModel` merges each message event into the local conversation list (updates last_message_*, re-sorts). New conversations (message for unknown conversation_id) are hydrated via `getConversationById` with a guard to prevent duplicate fetches. See `Sline_everything/AppDiagram/All_Diagrams/18_realtime-subscription-topology.md`.
 
 ## 3. File Inventory
 | File | Layer | Description |

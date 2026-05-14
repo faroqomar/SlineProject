@@ -1,5 +1,5 @@
 -- Plan 14a: Frozen guards on submit_delivery and request_revision; partial unique indexes; dispute insert guard.
--- Spec: Sline_everything/AppDigram/All_Diagrams/14a_dispute-entity-freeze-integration.md
+-- Spec: Sline_everything/AppDiagram/All_Diagrams/14a_dispute-entity-freeze-integration.md
 -- rpc_submit_delivery was only in Archive (20260224); restored here with Frozen guard. task + booking branches only.
 
 -- 6.0/6.1 — Restore rpc_submit_delivery with Frozen guard at start (task, booking)

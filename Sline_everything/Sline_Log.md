@@ -688,7 +688,7 @@
 - Referenced in `CLAUDE.md` Supabase Backend section
 
 **D7 — Edge Function CORS Hardening:**
-- `supabase/functions/_shared/bookin_payment.ts` — `"*"` replaced with `ALLOWED_ORIGIN` env var (defaults to `https://sline.app`)
+- `supabase/functions/_shared/booking_payment.ts` — `"*"` replaced with `ALLOWED_ORIGIN` env var (defaults to `https://sline.app`)
 - `isTrustedFinishUrl()` narrowed: HTTPS trusted only for `sline.app` (was all HTTPS domains)
 - All 12 Edge Functions affected automatically (all import `corsHeaders` from shared file)
 
@@ -815,7 +815,7 @@
 
 ### ✅ Implemented
 
-- **CI/CD — GitHub Actions:** Created `.github/workflows/ci.yml` with 4 jobs: Lint & Analyze (`dart format --set-exit-if-changed` + `flutter analyze --no-fatal-infos`), Architecture Guard (6 MVVM boundary checks, warning-only), Unit & Widget Tests (`flutter test --coverage` with lcov parsing to GitHub step summary), Build (APK debug + Web release matrix). Flutter 3.38.9 pinned. Triggers on `main` push/PR. Concurrency group with cancel-in-progress. Workflow-level `permissions: contents: read` for least-privilege.
+- **CI/CD — GitHub Actions:** Created `.github/workflows/ci.yml` with 4 jobs: Lint & Analyze (`dart format --set-exit-if-changed` + `flutter analyze --no-fatal-infos`), Architecture Guard (6 MVVM boundary checks, warning-only), Unit & Widget Tests (`flutter test --coverage` with lcov parsing to GitHub step summary), Build (APK debug + Web release matrix). Flutter was initially pinned at 3.38.9 and later updated to 3.41.9 to satisfy the Dart SDK floor required by `very_good_analysis` 10.2.0. Triggers on `main` push/PR. Concurrency group with cancel-in-progress. Workflow-level `permissions: contents: read` for least-privilege.
 - **CI/CD — Architecture Guard:** 6 grep-based checks detect: (1) `Supabase.instance` in view layer, (2) view imports in viewmodels, (3) `Supabase.instance` in viewmodels, (4) `TextEditingController`/`GlobalKey<FormState>` in viewmodels, (5) `Navigator` calls in viewmodels, (6) repository imports in view layer. All violations output as `::warning::` annotations. Currently warning-only (`exit 0`); graduates to hard failure after Phase B.
 - **Pre-commit Hook:** Created `.githooks/pre-commit` with explicit failure messaging. Runs `dart format --set-exit-if-changed .` and `flutter analyze --no-fatal-infos`. Enable: `git config core.hooksPath .githooks`. Documented in `CLAUDE.md` under "Setup (First Time)".
 - **Lint Rules:** Upgraded `analysis_options.yaml` from 18 to 34 rules. Added 7 safety rules (`cancel_subscriptions`, `close_sinks`, `no_duplicate_case_values`, `throw_in_finally`, `unnecessary_statements`, `literal_only_boolean_expressions`, `no_adjacent_strings_in_list`) and 9 code quality rules (`prefer_final_locals`, `avoid_void_async`, `prefer_if_null_operators`, `prefer_null_aware_operators`, `prefer_collection_literals`, `unnecessary_await_in_return`, `use_super_parameters`, `depend_on_referenced_packages`, `sort_child_properties_last`). Impact: +12 new issues only. Safety rules caught zero new violations.
@@ -872,7 +872,7 @@
 ### ✅ Implemented
 
 - **DB:** `20260308200000_hardened_payment_linking_schema.sql` — payment_intents (signature, currency, paid_at), orphan_payments (investigated), payment_events RLS (service_role INSERT only) + trigger trg_payment_events_append_only, payment_intents policy service_role_all_payment_intents. `20260308200100_hardened_payment_ledger_meta_payment_intent_id.sql` — process_gateway_escrow_direct_offer and process_payment_event_ledger (gateway_escrow branch) merge payment_intent_id from p_meta into journal_entries.meta.
-- **Edge:** qicard_webhook_handler: when additionalInfo.intent_id present, handleIntentBasedPayment (lookup intent, insert payment_events, validate amount/currency, call submit* with paymentIntentId, update payment_intents). _shared/bookin_payment.ts: optional paymentIntentId in submitGatewayEscrowHold and submitDirectOfferGatewayEscrow, passed in p_meta. Structured logs: intent_path_processed, intent_path_orphan (no PII).
+- **Edge:** qicard_webhook_handler: when additionalInfo.intent_id present, handleIntentBasedPayment (lookup intent, insert payment_events, validate amount/currency, call submit* with paymentIntentId, update payment_intents). _shared/booking_payment.ts: optional paymentIntentId in submitGatewayEscrowHold and submitDirectOfferGatewayEscrow, passed in p_meta. Structured logs: intent_path_processed, intent_path_orphan (no PII).
 - **App:** qicard_payment_service parses intent_id from create response (booking + direct offer); payment_service QiCardDirectOfferPaymentResult.intentId; PaymentWebViewScreen optional paymentIntentId + paymentIntentStatusStream (pops on Realtime succeeded/failed); DirectOfferDetailsViewModel.streamPaymentIntentStatus; direct_offer_details_screen passes intentId + stream when present. Booking checkout already subscribed when intentId != null.
 
 ### 📊 Impact
@@ -909,7 +909,7 @@
 
 - Plan Critic: `.TODO/PLAN_BookingLifecycle_2026-03-08_PlanCritic.md`
 - Execution log: `.TODO/EXECUTION_LOG_PLAN_BookingLifecycle_2026-03-08.md`
-- Diagram: `Sline_everything/AppDigram/All_Diagrams/05_booking-lifecycle.md`
+- Diagram: `Sline_everything/AppDiagram/All_Diagrams/05_booking-lifecycle.md`
 
 ---
 
@@ -938,7 +938,7 @@
 - Execution log: `.TODO/EXECUTION_LOG_Plan_NotificationRouting_2026-03-08.md`
 - Master report: `.TODO/MASTER_REPORT_2026-03-08_NotificationRouting.md`
 - Runbook: `.TODO/improvement_the_system/ImplementReady/13_notification-routing/RUNBOOK_notification_push.md`
-- Diagram: `Sline_everything/AppDigram/All_Diagrams/13_notification-routing.md`
+- Diagram: `Sline_everything/AppDiagram/All_Diagrams/13_notification-routing.md`
 
 ---
 
@@ -967,7 +967,7 @@
 
 - SUPABASE_SETUP §17 changelog (20260308170000, 20260308180000, 20260308180100, 20260308190000)
 - STRUCTURE recent migrations; DEVELOPER_GUIDE dispute and tender sections
-- Diagram: `Sline_everything/AppDigram/All_Diagrams/14a_dispute-entity-freeze-integration.md`
+- Diagram: `Sline_everything/AppDiagram/All_Diagrams/14a_dispute-entity-freeze-integration.md`
 
 ---
 
@@ -995,7 +995,7 @@
 - Execution log: `.TODO/EXECUTION_LOG_PLAN_UnifiedWorkView_2026-03-08_CRITIC.md`
 - Master report: `.TODO/MASTER_REPORT_2026-03-08_UnifiedWorkView.md`
 - Contract: `.TODO/contract_vw_unified_work_items.md`
-- Diagram: `Sline_everything/AppDigram/All_Diagrams/12_unified-work-view.md`
+- Diagram: `Sline_everything/AppDiagram/All_Diagrams/12_unified-work-view.md`
 
 ### 🔧 Technical Notes
 
@@ -1018,7 +1018,7 @@
 ### 🔗 References
 
 - Plan: `.TODO/PLAN_14a_DisputeExtension_2026-03-08.md`
-- Spec: `Sline_everything/AppDigram/All_Diagrams/14a_dispute-entity-freeze-integration.md`
+- Spec: `Sline_everything/AppDiagram/All_Diagrams/14a_dispute-entity-freeze-integration.md`
 
 ---
 
@@ -1088,7 +1088,7 @@
 
 - DOCS_SYNC: `.TODO/DOCS_SYNC_2026-03-08_RealtimeTopology.md`
 - Plan 18: `.TODO/PLAN_RealtimeSubscriptionTopology_2026-03-07.md`
-- Diagram 18: `Sline_everything/AppDigram/All_Diagrams/18_realtime-subscription-topology.md`
+- Diagram 18: `Sline_everything/AppDiagram/All_Diagrams/18_realtime-subscription-topology.md`
 
 ---
 
@@ -1173,9 +1173,9 @@
 ### ✅ Implemented
 
 - **Reference integrity (09/16):** All `Sline_everything/` references to ledger (09) and escrow idempotency (16) point to **Done** folders. Paths `ImplementReady/09_ledger-event-flow/` and `ImplementReady/16_escrow-invariants-idempotency/` were updated in a prior pass.
-- **Reference integrity (21):** Plan 21 (Wallet System Escrow Available balances) was moved to **Done**. All references in `Sline_everything/` updated: `Sline_Log.md`, `AppDigram/All_Diagrams/21_Wallet_System_Escrow_Available_balances.md`, `DEVELOPER_GUIDE/Wallet_Feature.md`, `MVP_ROADMAP.md` now point to `.TODO/improvement_the_system/Done/21_Wallet_System_Escrow_Available_balances/`.
+- **Reference integrity (21):** Plan 21 (Wallet System Escrow Available balances) was moved to **Done**. All references in `Sline_everything/` updated: `Sline_Log.md`, `AppDiagram/All_Diagrams/21_Wallet_System_Escrow_Available_balances.md`, `DEVELOPER_GUIDE/Wallet_Feature.md`, `MVP_ROADMAP.md` now point to `.TODO/improvement_the_system/Done/21_Wallet_System_Escrow_Available_balances/`.
 - **Direct Chat Offer Flow:** Sline_Log entry completed with Impact, Verification, Technical Notes; MVP_ROADMAP Direct Chat Offers row updated with hardening note and plan path; SUPABASE_SETUP and STRUCTURE Last Updated lines refreshed.
-- **Diagram 09:** `Sline_everything/AppDigram/All_Diagrams/09_ledger-event-flow.md` updated to full diagram-doc standard (checklist, OLD diagram preserved, Implemented diagram v2 with forensics/idempotency/gates/withdrawal/gateway); references in diagram point to `.TODO/improvement_the_system/Done/09_ledger-event-flow/`.
+- **Diagram 09:** `Sline_everything/AppDiagram/All_Diagrams/09_ledger-event-flow.md` updated to full diagram-doc standard (checklist, OLD diagram preserved, Implemented diagram v2 with forensics/idempotency/gates/withdrawal/gateway); references in diagram point to `.TODO/improvement_the_system/Done/09_ledger-event-flow/`.
 - **SUPABASE_SETUP:** §6.6 `vw_wallet_activity_user` updated to match migration `20260307160000_wallet_activity_include_spent.sql` (include spent / gateway_escrow; security_invoker; new columns). Changelog §17: added bullet for this view change.
 
 ### 📊 Impact
@@ -1187,7 +1187,7 @@
 
 - DOCS_SYNC note: `.TODO/DOCS_SYNC_2026-03-08_DocsKeeperReferenceIntegrity.md`
 - This pass (full scan + ref integrity): `.TODO/DOCS_SYNC_2026-03-08_DocsKeeperUpToDate.md` — Sline_Log 16/21 paths, MVP_ROADMAP full paths, SUPABASE_SETUP changelog bullet for wallet_activity_include_spent.
-- Diagram 09: `Sline_everything/AppDigram/All_Diagrams/09_ledger-event-flow.md`
+- Diagram 09: `Sline_everything/AppDiagram/All_Diagrams/09_ledger-event-flow.md`
 - Done 09: `.TODO/improvement_the_system/Done/09_ledger-event-flow/`
 - Done 16: `.TODO/improvement_the_system/Done/16_escrow-invariants-idempotency/`
 
@@ -1216,7 +1216,7 @@
 
 - Plan: `.TODO/PLAN_RealtimeSubscriptionTopology_2026-03-07.md`
 - Master Report: `.TODO/MASTER_REPORT_2026-03-07_RealtimeSubscriptionTopology.md`
-- Diagram 18: `Sline_everything/AppDigram/All_Diagrams/18_realtime-subscription-topology.md`
+- Diagram 18: `Sline_everything/AppDiagram/All_Diagrams/18_realtime-subscription-topology.md`
 - Migration: `supabase/migrations/20260307230000_realtime_topology_no_conversations.sql`
 
 ---
@@ -1305,7 +1305,7 @@
 
 ### ✅ Implemented / Updated
 
-- **Diagram 21:** `Sline_everything/AppDigram/All_Diagrams/21_Wallet_System_Escrow_Available_balances.md` — Full checklist (Purpose, Scope, Glossary, Legend, Actors, System Components, Step-by-step Flow, State Machine, Invariants, Guards, Failure Modes, Security, Data Model, Observability, Verification, Dependencies, Open Questions, Final Status). OLD diagram (v1 legacy) retained; NEW/Implemented diagram (v2) updated with gateway_escrow, `vw_wallet_activity_user` including spent (user_available DEBIT, user_pending_withdrawal DEBIT). References fixed to use full paths under `.TODO/improvement_the_system/Done/21_Wallet_System_Escrow_Available_balances/`.
+- **Diagram 21:** `Sline_everything/AppDiagram/All_Diagrams/21_Wallet_System_Escrow_Available_balances.md` — Full checklist (Purpose, Scope, Glossary, Legend, Actors, System Components, Step-by-step Flow, State Machine, Invariants, Guards, Failure Modes, Security, Data Model, Observability, Verification, Dependencies, Open Questions, Final Status). OLD diagram (v1 legacy) retained; NEW/Implemented diagram (v2) updated with gateway_escrow, `vw_wallet_activity_user` including spent (user_available DEBIT, user_pending_withdrawal DEBIT). References fixed to use full paths under `.TODO/improvement_the_system/Done/21_Wallet_System_Escrow_Available_balances/`.
 - **Wallet activity view:** Migration `supabase/migrations/20260307160000_wallet_activity_include_spent.sql` — `vw_wallet_activity_user` expanded to include client “spent” (user_available DEBIT, user_pending_withdrawal DEBIT for gateway_escrow). Documented in diagram 21, SUPABASE_SETUP changelog, DEVELOPER_GUIDE Wallet_Feature.
 - **Reference fixes:** Execution log and plan paths in diagram 21 and Sline_Log corrected to full `.TODO/.../21_Wallet_System_Escrow_Available_balances/` paths. Master Report path in Sline_Log Wallet Escrow entry corrected.
 
@@ -1317,7 +1317,7 @@
 ### 🧪 Verification
 
 - Docs sync note: `.TODO/DOCS_SYNC_2026-03-08_Diagram21_WalletDocs.md`
-- Diagram 21: `Sline_everything/AppDigram/All_Diagrams/21_Wallet_System_Escrow_Available_balances.md`
+- Diagram 21: `Sline_everything/AppDiagram/All_Diagrams/21_Wallet_System_Escrow_Available_balances.md`
 
 ### 🔗 References
 

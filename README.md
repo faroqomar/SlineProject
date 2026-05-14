@@ -3,7 +3,7 @@
 <div align="center">
 
 ![Version](https://img.shields.io/badge/docs-2.33.0-blue.svg)
-![Flutter](https://img.shields.io/badge/Flutter-3.8.1+-02569B?logo=flutter)
+![Flutter](https://img.shields.io/badge/Flutter-3.41.9-02569B?logo=flutter)
 ![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase)
 ![License](https://img.shields.io/badge/license-Private-red.svg)
 
@@ -116,8 +116,8 @@ Two-sided marketplace with:
 
 ### Frontend
 
-- **Flutter 3.8.1+** — Cross-platform UI framework (iOS, Android, Web, Desktop)
-- **Dart 3.8.1+** — Programming language
+- **Flutter 3.41.9** — CI-pinned cross-platform UI framework (iOS, Android, Web, Desktop)
+- **Dart 3.11.0+** — Programming language from the Flutter toolchain
 - **Material Design 3** — Runtime foundation with scoped Amber Dusk token adapters
 - **Provider** — State management (ChangeNotifier pattern)
 
@@ -203,8 +203,8 @@ features/<feature>/
 
 ### Prerequisites
 
-- [Flutter SDK 3.8.1+](https://flutter.dev/docs/get-started/install)
-- Dart SDK 3.8.1+ from the Flutter toolchain
+- [Flutter SDK 3.41.9](https://flutter.dev/docs/get-started/install)
+- Dart SDK 3.11.0+ from the Flutter toolchain
 - Xcode for iOS builds and simulators
 - Android Studio or Android SDK tools for Android builds
 - Supabase project access for backend-backed development
@@ -342,7 +342,7 @@ SLine uses specialized AI agents in `.cursor/Agents/`. The core workflow is:
 | [MVP_ROADMAP.md](./Sline_everything/MVP_ROADMAP.md)       | Feature roadmap & completion status                      |
 | [Sline_Log.md](./Sline_everything/Sline_Log.md)           | Complete version history                                 |
 | [CODE_REVIEW.md](./Sline_everything/CODE_REVIEW.md)       | Code quality patterns & best practices                   |
-| [AppDigram/README.md](./Sline_everything/AppDigram/README.md) | Diagram index for feature planning and review         |
+| [AppDiagram/README.md](./Sline_everything/AppDiagram/README.md) | Diagram index for feature planning and review         |
 
 ### 🎓 Feature-Specific Guides
 
@@ -423,7 +423,7 @@ Located in `Sline_everything/DEVELOPER_GUIDE/`:
 - ✅ Transactional QA recovery fixed sanitized booking payment return handling, IQD money display, signup/post refresh, Dashboard empty-state CTAs, Dashboard Inbox behavior, Messages search guidance, Wallet withdraw copy, and transactional Amber Dusk surfaces
 - ✅ SystemEvolution 2026-05-14 merged runtime proof rules for focused/active form states, payment/booking lifecycle buckets, safe customer-facing payment result UI, and unexecuted gateway-branch reporting
 - ✅ Agent workflow gates for README freshness, docs/diagram source maps, and code comment coverage
-- ✅ `Sline_everything/DOC_SOURCE_MAP.md` and `Sline_everything/AppDigram/README.md` added for planning/review routing
+- ✅ `Sline_everything/DOC_SOURCE_MAP.md` and `Sline_everything/AppDiagram/README.md` added for planning/review routing
 - ✅ Root README refreshed for new-developer install and run flow
 
 **Completed Features**:
@@ -520,7 +520,7 @@ flutter pub outdated                # Check dependencies
 - **Rules**: `.cursor/rules/`
 - **Source Map**: `Sline_everything/DOC_SOURCE_MAP.md`
 - **UI Inventory**: `Sline_everything/UI_SURFACE_INVENTORY.md`
-- **Diagram Index**: `Sline_everything/AppDigram/README.md`
+- **Diagram Index**: `Sline_everything/AppDiagram/README.md`
 
 **Documentation Root**: `/Sline_everything/`
 

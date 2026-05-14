@@ -7,7 +7,7 @@ This folder is the routing index for SLine architecture, lifecycle, UI sequence,
 | Area | Diagram |
 | --- | --- |
 | Client experience overview | `Client_Diagram.md` |
-| Freelancer experience overview | `Freelancer_Digram.md` |
+| Freelancer experience overview | `Freelancer_Diagram.md` |
 | App UI sequence overview | `UI_Sequence/01_app_ui_diagram.md` |
 
 ## UI Sequence Diagrams

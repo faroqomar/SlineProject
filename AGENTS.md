@@ -158,7 +158,7 @@ ViewModel pattern: `_isLoading` + `_error` fields, `try/catch` with `_mapError()
 
 ## Environment
 
-- Flutter SDK ^3.8.1, Dart ^3.8.1
+- Flutter SDK 3.41.9 in CI, Dart ^3.11.0
 - Android: Kotlin DSL (`build.gradle.kts`), namespace `com.example.sline_app`
 - iOS: Swift AppDelegate, CocoaPods
 - Key deps: `supabase_flutter`, `provider`, `google_fonts`, `rxdart`, `cached_network_image`, `webview_flutter`, `image_picker`, `shared_preferences`

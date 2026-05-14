@@ -10,7 +10,7 @@ import {
   recordBookingAudit,
   requireAuthenticatedUser,
   submitGatewayEscrowHold,
-} from "../_shared/bookin_payment.ts";
+} from "../_shared/booking_payment.ts";
 
 const RECOVERY_RETRYABLE_STATUSES = new Set(["UNKNOWN", "CREATED"]);
 const RECOVERY_MAX_ATTEMPTS = 3;

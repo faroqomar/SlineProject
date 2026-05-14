@@ -369,7 +369,7 @@ Phase 5-8 implementation has passed Step 5 gap scanning and gap repair. Open Des
   - `Sline_everything/STRUCTURE.md`
   - `Sline_everything/CODE_REVIEW.md`
   - `Sline_everything/Sline_Log.md`
-  - `Sline_everything/AppDigram/All_Diagrams/13_notification-routing.md`
+  - `Sline_everything/AppDiagram/All_Diagrams/13_notification-routing.md`
   - `.cursor/rules/project-rules.mdc`
   - `.cursor/PROJECT_CONTEXT.md`
 - Documentation outcomes:

@@ -525,7 +525,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every push/PR to `main`:
 | **Unit & Widget Tests** | `flutter test --coverage` with coverage % reported to PR summary, 40% floor enforced, and `coverage/lcov.info` uploaded as the `coverage-lcov` artifact for 7 days. The generated `coverage/` folder is ignored locally and should not be committed. | Yes |
 | **Build** | APK (debug) + Web (release) compilation | Yes |
 
-Flutter version pinned: **3.38.9** across all jobs.
+Flutter version pinned: **3.41.9** across all jobs to satisfy the Dart SDK floor required by `very_good_analysis` 10.2.0.
 
 ### 10.2 Pre-commit Hook
 
@@ -2590,7 +2590,7 @@ Future<void> sendImage({required String convId, required String receiverId, requ
 
 ## 7. Extra Notes & Testing Checklist
 
-- **Realtime**: Subscribe to `messages` stream only: active chat via `.eq('conversation_id')`, Inbox via `.eq('receiver_id', userId)`. The `conversations` table is not in the realtime publication. See `Sline_everything/AppDigram/All_Diagrams/18_realtime-subscription-topology.md`.
+- **Realtime**: Subscribe to `messages` stream only: active chat via `.eq('conversation_id')`, Inbox via `.eq('receiver_id', userId)`. The `conversations` table is not in the realtime publication. See `Sline_everything/AppDiagram/All_Diagrams/18_realtime-subscription-topology.md`.
 - **Signed URLs**: Keep attachments private; generate signed URLs on demand and cache short-term.
 - **Time zones**: `created_at` stored in UTC; format locally in UI.
 - **Receipts**: RPCs `mark_conversation_delivered` and `mark_conversation_seen` update delivery/read states.

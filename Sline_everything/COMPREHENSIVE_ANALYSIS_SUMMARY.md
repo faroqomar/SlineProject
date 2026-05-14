@@ -206,7 +206,7 @@ final tasks = await supabase.from('tasks').select('''
 2. **Excellent Documentation**: Comprehensive guides in `Sline_everything/`
 3. **Good Flutter Practices**: Mounted checks, NULL safety, stream disposal
 4. **Strong Security**: RLS policies properly implemented
-5. **Modern Stack**: Flutter 3.8.1+, Supabase, Provider
+5. **Modern Stack**: Flutter 3.41.9 in CI, Dart 3.11.0+, Supabase, Provider
 6. **Feature-Rich**: 10+ complete features with MVVM structure
 
 ---

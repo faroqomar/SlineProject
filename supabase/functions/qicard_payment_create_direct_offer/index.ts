@@ -8,7 +8,7 @@ import {
   requireAuthenticatedUser,
   resolveQiCardFinishUrl,
   withQueryParams,
-} from "../_shared/bookin_payment.ts";
+} from "../_shared/booking_payment.ts";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {

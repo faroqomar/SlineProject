@@ -1,6 +1,8 @@
 # NOTE: dependency-review-action does not scan pub/Dart dependencies.
 # Pub dep vulnerabilities are covered by Dependabot alerts (GitHub Settings > Code Security).
 # This workflow scans GitHub Actions dependencies and license compliance.
+# Private repos without GitHub Advanced Security can report this as unsupported,
+# so the job records that state without blocking unrelated Flutter PR validation.
 
 name: Dependency Review
 
@@ -10,6 +12,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
   group: dep-review-${{ github.ref }}
@@ -21,7 +24,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/dependency-review-action@v5
+      - id: dependency-review
+        uses: actions/dependency-review-action@v5
+        continue-on-error: ${{ github.event.repository.private }}
         with:
           fail-on-severity: high
           allow-licenses: MIT, BSD-2-Clause, BSD-3-Clause, Apache-2.0, ISC, Zlib
+      - name: Report private-repo dependency review limitation
+        if: ${{ github.event.repository.private && steps.dependency-review.outcome == 'failure' }}
+        run: |
+          echo "::notice::Dependency Review is unavailable for this private repository configuration. Dependabot alerts remain the dependency vulnerability signal until GitHub Advanced Security/dependency graph support is enabled."
