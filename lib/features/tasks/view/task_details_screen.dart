@@ -7,6 +7,7 @@ import 'package:sline_app/core/services/account_guard_service.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
@@ -101,14 +102,18 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                   child: Icon(
                     Icons.arrow_back_ios,
                     color: amberColors.text,
-                    size: 20,
+                    size: AppLayout.iconStandard,
                   ),
                 ),
                 Text(
                   isBooking ? 'Booking Details' : 'Job Details',
                   style: AppTypography.h5.copyWith(color: amberColors.text),
                 ),
-                Icon(Icons.share, color: amberColors.text, size: 20),
+                Icon(
+                  Icons.share,
+                  color: amberColors.text,
+                  size: AppLayout.iconStandard,
+                ),
               ],
             ),
           ),
@@ -159,10 +164,10 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                                     color: colorScheme.text,
                                   ),
                                 ),
-                                const SizedBox(width: 4),
+                                const SizedBox(width: AppDimens.p4),
                                 Icon(
                                   Icons.check_circle,
-                                  size: 14,
+                                  size: AppDimens.p14,
                                   color: amberColors.success,
                                 ),
                               ],
@@ -251,7 +256,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                             ),
                             Icon(
                               Icons.arrow_forward_ios,
-                              size: 16,
+                              size: AppDimens.iconSizeSmall,
                               color: colorScheme.textSecondary,
                             ),
                           ],
@@ -585,17 +590,25 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
           const SizedBox(height: AppDimens.p16),
           Row(
             children: [
-              Icon(Icons.schedule, size: 14, color: amberColors.primary),
-              const SizedBox(width: 4),
+              Icon(
+                Icons.schedule,
+                size: AppDimens.p14,
+                color: amberColors.primary,
+              ),
+              const SizedBox(width: AppDimens.p4),
               Text(
                 delivery,
                 style: AppTypography.captionBold.copyWith(
                   color: amberColors.text,
                 ),
               ),
-              const SizedBox(width: 16),
-              Icon(Icons.refresh, size: 14, color: amberColors.primary),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppDimens.p16),
+              Icon(
+                Icons.refresh,
+                size: AppDimens.p14,
+                color: amberColors.primary,
+              ),
+              const SizedBox(width: AppDimens.p4),
               Text(
                 revisions,
                 style: AppTypography.captionBold.copyWith(

@@ -38,11 +38,14 @@ class NoHardcodedFeatureViewTokensRule extends DartLintRule {
 
     context.registry.addInstanceCreationExpression((node) {
       final typeName = node.constructorName.type.name.lexeme;
+
       if (_isHardcodedColor(typeName, node) ||
           _isHardcodedDuration(typeName, node) ||
           _isHardcodedTextStyle(typeName, node) ||
           _isHardcodedSpacing(typeName, node) ||
           _isHardcodedRadius(typeName, node) ||
+          _isHardcodedSizedBoxSpacing(typeName, node) ||
+          _isHardcodedIconSize(typeName, node) ||
           typeName == 'BoxShadow') {
         reporter.atNode(node, code);
       }
@@ -50,6 +53,12 @@ class NoHardcodedFeatureViewTokensRule extends DartLintRule {
 
     context.registry.addPrefixedIdentifier((node) {
       if (node.prefix.name == 'Colors' || node.prefix.name == 'Curves') {
+        reporter.atNode(node, code);
+      }
+    });
+
+    context.registry.addMethodInvocation((node) {
+      if (_isColorSchemeFromSeed(node)) {
         reporter.atNode(node, code);
       }
     });
@@ -105,6 +114,31 @@ class NoHardcodedFeatureViewTokensRule extends DartLintRule {
     if (typeName != 'BorderRadius' && typeName != 'Radius') return false;
     return node.argumentList.arguments.any(_containsNonZeroNumericLiteral);
   }
+
+  static bool _isHardcodedSizedBoxSpacing(
+    String typeName,
+    InstanceCreationExpression node,
+  ) {
+    if (typeName != 'SizedBox') return false;
+    return node.argumentList.arguments.any((argument) {
+      return argument is NamedExpression &&
+          (argument.name.label.name == 'width' ||
+              argument.name.label.name == 'height') &&
+          _containsNonZeroNumericLiteral(argument.expression);
+    });
+  }
+
+  static bool _isHardcodedIconSize(
+    String typeName,
+    InstanceCreationExpression node,
+  ) {
+    if (typeName != 'Icon') return false;
+    return node.argumentList.arguments.any((argument) {
+      return argument is NamedExpression &&
+          argument.name.label.name == 'size' &&
+          _containsNonZeroNumericLiteral(argument.expression);
+    });
+  }
 }
 
 const _motionDurationLiteralNames = <String>{'milliseconds', 'microseconds'};
@@ -123,4 +157,11 @@ bool _containsNonZeroNumericLiteral(Expression expression) {
   }
 
   return false;
+}
+
+bool _isColorSchemeFromSeed(MethodInvocation node) {
+  final target = node.target;
+  return target is SimpleIdentifier &&
+      target.name == 'ColorScheme' &&
+      node.methodName.name == 'fromSeed';
 }

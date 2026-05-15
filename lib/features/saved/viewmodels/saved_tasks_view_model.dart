@@ -14,14 +14,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SavedTasksViewModel extends ChangeNotifier {
   final SavedTasksService service;
-  final SupabaseClient? _explicitClient;
+  final SupabaseClient _client;
 
   SavedTasksViewModel({required this.service, SupabaseClient? client})
-    : _explicitClient = client {
+    : _client = client ?? Supabase.instance.client {
     _initAuthListener();
   }
-
-  SupabaseClient get _client => _explicitClient ?? Supabase.instance.client;
 
   final Set<String> _savedTaskIds = <String>{};
   bool _loading = false;

@@ -397,7 +397,11 @@ class _WorkItemDetailsContentState extends State<_WorkItemDetailsContent> {
           const SizedBox(height: AppDimens.p8),
           Row(
             children: [
-              Icon(Icons.schedule, size: 14, color: colorScheme.textTertiary),
+              Icon(
+                Icons.schedule,
+                size: AppDimens.p14,
+                color: colorScheme.textTertiary,
+              ),
               const SizedBox(width: AppDimens.p6),
               Text(
                 'Due ${vm.workItem!.deadline}',

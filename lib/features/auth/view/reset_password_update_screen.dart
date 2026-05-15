@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
@@ -169,7 +170,7 @@ class _ResetPasswordUpdateScreenState extends State<ResetPasswordUpdateScreen> {
             ),
             child: Icon(
               Icons.check_circle_outline_rounded,
-              size: 48,
+              size: AppLayout.iconFeature,
               color: colorScheme.success,
             ),
           ),
@@ -320,13 +321,13 @@ class _PasswordRequirement extends StatelessWidget {
                 ? Icon(
                     Icons.check_circle,
                     key: const ValueKey<String>('check'),
-                    size: 18,
+                    size: AppDimens.p18,
                     color: colorScheme.success,
                   )
                 : Icon(
                     Icons.circle_outlined,
                     key: const ValueKey<String>('circle'),
-                    size: 18,
+                    size: AppDimens.p18,
                     color: colorScheme.textSecondary,
                   ),
           ),

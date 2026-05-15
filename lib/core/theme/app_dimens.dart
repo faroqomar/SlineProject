@@ -23,12 +23,14 @@ class AppDimens {
   static const double p24 = 24.0;
   static const double p28 = 28.0;
   static const double p32 = 32.0;
+  static const double p36 = 36.0;
   static const double p40 = 40.0;
   static const double p48 = 48.0;
   static const double p50 = 50.0;
   static const double p52 = 52.0;
   static const double p54 = 54.0;
   static const double p60 = 60.0;
+  static const double p64 = 64.0;
   static const double p70 = 70.0;
   static const double p80 = 80.0;
   static const double p100 = 100.0;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
@@ -51,7 +52,7 @@ class DisputeBannerContent extends StatelessWidget {
               children: [
                 Icon(
                   Icons.info_outline,
-                  size: 20,
+                  size: AppLayout.iconStandard,
                   color: context.colorScheme.primary,
                 ),
                 const SizedBox(width: AppDimens.p8),

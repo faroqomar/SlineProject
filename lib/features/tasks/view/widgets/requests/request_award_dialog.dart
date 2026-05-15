@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_price.dart';
@@ -95,7 +96,11 @@ Future<void> showAwardDialog({
             const SizedBox(height: AppDimens.p16),
             Row(
               children: [
-                Icon(Icons.schedule, size: 18, color: amberColors.muted),
+                Icon(
+                  Icons.schedule,
+                  size: AppDimens.p18,
+                  color: amberColors.muted,
+                ),
                 const SizedBox(width: AppDimens.p8),
                 Text(
                   'Delivery: ${request.days} days',
@@ -327,7 +332,7 @@ class _PriceComparisonSection extends StatelessWidget {
           Divider(height: AppDimens.p16, color: amberColors.muted),
           Row(
             children: [
-              Icon(budgetIcon, color: budgetColor, size: 18),
+              Icon(budgetIcon, color: budgetColor, size: AppDimens.p18),
               const SizedBox(width: AppDimens.p6),
               Text(
                 budgetMessage,
@@ -369,7 +374,11 @@ class _PaymentDeadlineSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.access_time, color: amberColors.warning, size: 20),
+              Icon(
+                Icons.access_time,
+                color: amberColors.warning,
+                size: AppLayout.iconStandard,
+              ),
               const SizedBox(width: AppDimens.p8),
               Text(
                 'Payment Required Within $_kPaymentDeadlineHours Hours',
@@ -467,7 +476,11 @@ class _RiskAcknowledgmentSection extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline, size: 16, color: amberColors.info),
+          Icon(
+            Icons.info_outline,
+            size: AppDimens.iconSizeSmall,
+            color: amberColors.info,
+          ),
           const SizedBox(width: AppDimens.p8),
           Expanded(
             child: Text(
@@ -495,7 +508,11 @@ Future<void> showPriceMismatchDialog({
       const amberColors = AmberDuskTokens.colors;
       return AlertDialog(
         backgroundColor: amberColors.background,
-        icon: Icon(Icons.price_change, color: amberColors.warning, size: 48),
+        icon: Icon(
+          Icons.price_change,
+          color: amberColors.warning,
+          size: AppLayout.iconFeature,
+        ),
         title: Text(
           'Offer Updated',
           style: AppTypography.h5.copyWith(color: amberColors.text),

@@ -126,7 +126,7 @@ Before writing any View code, you MUST confirm:
 
 ### 3.0 Automated Token Guardrail (Do Not Ignore)
 
-The local `packages/sline_lints` plugin enforces feature-view theme tokens. After UI, widget, theme, layout, or motion edits, run `dart run custom_lint` and fix every `sline_no_hardcoded_feature_view_tokens` diagnostic instead of suppressing it. The rule covers hardcoded colors, `Colors.*`, motion-like millisecond durations, `Curves`, `BoxShadow`, `TextStyle.fontSize`, `EdgeInsets`, `BorderRadius`, and `Radius` literals in feature views.
+The local `packages/sline_lints` plugin enforces feature-view theme tokens. After UI, widget, theme, layout, or motion edits, run `dart run custom_lint` and fix every `sline_no_hardcoded_feature_view_tokens` diagnostic instead of suppressing it. The enforced rule covers hardcoded colors, `Colors.*`, motion-like millisecond durations, `Curves`, `BoxShadow`, `TextStyle.fontSize`, `EdgeInsets`, `BorderRadius`, `Radius`, numeric `SizedBox` spacing, and numeric `Icon` sizes in feature views. The package also contains stricter staged rules for raw constructors, decorations, border widths, opacity, MediaQuery math, animation-controller durations, and shared-widget padding.
 
 ### 3.1 Tokens Only — No Hardcoding
 

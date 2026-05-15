@@ -553,7 +553,7 @@ class _MessagesScreenState extends State<MessagesScreen>
                   ),
                   child: Icon(
                     Icons.chat_bubble_outline_rounded,
-                    size: 32,
+                    size: AppDimens.iconSizeLarge,
                     color: amber.primary,
                   ),
                 ),
@@ -606,7 +606,11 @@ class _MessagesScreenState extends State<MessagesScreen>
           ),
           prefixIcon: Padding(
             padding: const EdgeInsets.only(left: AppDimens.p12),
-            child: Icon(Icons.search_rounded, color: amber.muted, size: 18),
+            child: Icon(
+              Icons.search_rounded,
+              color: amber.muted,
+              size: AppDimens.p18,
+            ),
           ),
           prefixIconConstraints: const BoxConstraints(
             minWidth: 36,
@@ -622,7 +626,7 @@ class _MessagesScreenState extends State<MessagesScreen>
                   child: Icon(
                     Icons.clear_rounded,
                     color: amber.muted,
-                    size: 18,
+                    size: AppDimens.p18,
                   ),
                 )
               : null,
@@ -671,7 +675,7 @@ class _MessagesScreenState extends State<MessagesScreen>
                 ),
                 child: Icon(
                   Icons.search_off_rounded,
-                  size: 24,
+                  size: AppDimens.iconSizeMedium,
                   color: amber.muted,
                 ),
               ),
@@ -728,7 +732,11 @@ class _MessagesScreenState extends State<MessagesScreen>
               ),
               alignment: Alignment.centerRight,
               padding: const EdgeInsets.only(right: AppLayout.spacingScreen),
-              child: Icon(Icons.delete_outline, color: amber.text, size: 24),
+              child: Icon(
+                Icons.delete_outline,
+                color: amber.text,
+                size: AppDimens.iconSizeMedium,
+              ),
             ),
             confirmDismiss: (direction) async {
               // Haptic for destructive action warning

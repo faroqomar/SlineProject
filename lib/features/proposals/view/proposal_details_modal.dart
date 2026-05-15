@@ -69,7 +69,7 @@ class ProposalDetailsModal extends StatelessWidget {
                     'Proposal Details',
                     style: AppTypography.h4.copyWith(color: colorScheme.text),
                   ),
-                  const SizedBox(width: 40), // Balance
+                  const SizedBox(width: AppDimens.p40), // Balance
                 ],
               ),
             ),
@@ -154,12 +154,12 @@ class ProposalDetailsModal extends StatelessWidget {
                                       color: colorScheme.text,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: AppDimens.p4),
                                   Row(
                                     children: [
                                       Icon(
                                         Icons.star,
-                                        size: 14,
+                                        size: AppDimens.p14,
                                         color: AppColors.gold,
                                       ),
                                       Text(
@@ -167,10 +167,10 @@ class ProposalDetailsModal extends StatelessWidget {
                                         style: AppTypography.captionBold
                                             .copyWith(color: AppColors.gold),
                                       ),
-                                      const SizedBox(width: 8),
+                                      const SizedBox(width: AppDimens.p8),
                                       Icon(
                                         Icons.location_on,
-                                        size: 14,
+                                        size: AppDimens.p14,
                                         color: colorScheme.textSecondary,
                                       ),
                                       Text(
@@ -271,11 +271,11 @@ class ProposalDetailsModal extends StatelessWidget {
                                 ),
                                 child: Icon(
                                   Icons.attach_file,
-                                  size: 18,
+                                  size: AppDimens.p18,
                                   color: AppColors.lightRed,
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: AppDimens.p12),
                               Text(
                                 file.toString(),
                                 style: AppTypography.bodySmall.copyWith(
@@ -285,7 +285,7 @@ class ProposalDetailsModal extends StatelessWidget {
                               const Spacer(),
                               Icon(
                                 Icons.download,
-                                size: 18,
+                                size: AppDimens.p18,
                                 color: colorScheme.textSecondary,
                               ),
                             ],
@@ -364,7 +364,7 @@ class ProposalDetailsModal extends StatelessWidget {
               color: colorScheme.textSecondary,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppDimens.p4),
           Text(
             value,
             style: AppTypography.h5.copyWith(

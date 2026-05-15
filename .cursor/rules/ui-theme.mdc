@@ -10,7 +10,7 @@ alwaysApply: false
 
 ### Automated Enforcement
 
-Run `dart run custom_lint` after UI, widget, theme, layout, or motion edits. The local SLine lint plugin reports hardcoded feature-view colors, `Colors.*`, motion-like millisecond durations, `Curves`, `BoxShadow`, `TextStyle.fontSize`, `EdgeInsets`, `BorderRadius`, and `Radius` literals as diagnostics. Fix the token usage; do not ignore the rule.
+Run `dart run custom_lint` after UI, widget, theme, layout, or motion edits. The local SLine lint plugin reports hardcoded feature-view colors, `Colors.*`, motion-like millisecond durations, `Curves`, `BoxShadow`, `TextStyle.fontSize`, `EdgeInsets`, `BorderRadius`, `Radius`, numeric `SizedBox` spacing, and numeric `Icon` sizes as diagnostics. Fix the token usage; do not ignore the rule. Stricter constructor, decoration, border-width, opacity, MediaQuery arithmetic, animation-controller duration, and shared-widget padding rules are implemented in `packages/sline_lints` but staged until the existing UI debt is migrated.
 
 ### Core Theme Files
 

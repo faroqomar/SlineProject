@@ -18,13 +18,13 @@ class NotificationViewModel extends ChangeNotifier {
     SupabaseClient? client,
     Duration realtimeReconnectBaseDelay = const Duration(seconds: 2),
   }) : _service = service ?? NotificationService(),
-       _injectedClient = client,
+       _client = client ?? Supabase.instance.client,
        _realtimeReconnectBaseDelay = realtimeReconnectBaseDelay {
     _init(authStateChanges);
   }
 
   final NotificationService _service;
-  final SupabaseClient? _injectedClient;
+  final SupabaseClient _client;
   final Duration _realtimeReconnectBaseDelay;
   StreamSubscription<List<NotificationItem>>? _subscription;
   StreamSubscription<AuthState>? _authSubscription;
@@ -37,10 +37,6 @@ class NotificationViewModel extends ChangeNotifier {
   List<NotificationItem> _notifications = [];
   bool _isLoading = false;
   String? _error;
-
-  /// Lazily resolves the Supabase client. Uses injected client if provided,
-  /// otherwise falls back to Supabase.instance.client at call time.
-  SupabaseClient get _client => _injectedClient ?? Supabase.instance.client;
 
   List<NotificationItem> get notifications => List.unmodifiable(_notifications);
   bool get isLoading => _isLoading;

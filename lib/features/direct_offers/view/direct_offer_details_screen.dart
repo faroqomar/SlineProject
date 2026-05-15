@@ -7,6 +7,7 @@ import 'package:sline_app/core/config/payment_runtime_config.dart';
 import 'package:sline_app/core/services/deep_link_service.dart';
 import 'package:sline_app/core/services/payment_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
@@ -388,7 +389,10 @@ class _DirectOfferDetailsContentState
                               .openConversation(context, convId);
                         }
                       },
-                      icon: const Icon(Icons.chat_bubble_outline, size: 20),
+                      icon: const Icon(
+                        Icons.chat_bubble_outline,
+                        size: AppLayout.iconStandard,
+                      ),
                       label: const Text('Open chat'),
                     ),
                   ),
@@ -586,7 +590,7 @@ class _DirectOfferDisputeBanner extends StatelessWidget {
                     children: [
                       Icon(
                         Icons.info_outline,
-                        size: 20,
+                        size: AppLayout.iconStandard,
                         color: context.colorScheme.primary,
                       ),
                       const SizedBox(width: AppDimens.p8),

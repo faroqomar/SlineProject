@@ -104,7 +104,8 @@ class TenderPaymentViewModel extends ChangeNotifier {
         error: e,
         stackTrace: st,
       );
-      _errorMessage = _userFriendlyPaymentError(e.toString());
+      final friendlyMessage = _userFriendlyPaymentError(e.toString());
+      _errorMessage = friendlyMessage;
     } finally {
       _isProcessing = false;
       notifyListeners();
@@ -183,7 +184,8 @@ class TenderPaymentViewModel extends ChangeNotifier {
         error: e,
         stackTrace: st,
       );
-      _errorMessage = _userFriendlyPaymentError(e.toString());
+      final friendlyMessage = _userFriendlyPaymentError(e.toString());
+      _errorMessage = friendlyMessage;
     } finally {
       _isProcessing = false;
       notifyListeners();

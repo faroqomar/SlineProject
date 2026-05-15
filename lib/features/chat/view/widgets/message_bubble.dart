@@ -189,7 +189,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                         style: AppTypography.micro.copyWith(color: metaColor),
                       ),
                       if (widget.isMine && widget.status != null) ...[
-                        const SizedBox(width: 6),
+                        const SizedBox(width: AppDimens.p6),
                         AnimatedSwitcher(
                           duration: AppMotion.fast,
                           child: _statusIcon(

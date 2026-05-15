@@ -370,27 +370,28 @@ class ChatViewModel extends ChangeNotifier with RoleSwitchAware {
 
   /// Map technical errors to user-friendly messages for conversation creation
   String _mapConversationError(Object? error) {
-    final message = error.toString().toLowerCase();
+    final rawMessage = error.toString().toLowerCase();
 
-    if (message.contains('freelancers cannot start')) {
+    if (rawMessage.contains('freelancers cannot start')) {
       return 'Only clients can start conversations with freelancers.';
     }
-    if (message.contains('favorites list')) {
+    if (rawMessage.contains('favorites list')) {
       return 'Add this freelancer to your favorites first to start a conversation.';
     }
-    if (message.contains('rate limit exceeded')) {
+    if (rawMessage.contains('rate limit exceeded')) {
       return "You've reached the conversation limit. Try again in an hour.";
     }
-    if (message.contains('target user not found')) {
+    if (rawMessage.contains('target user not found')) {
       return 'User not found. They may have deleted their account.';
     }
-    if (message.contains('cannot create conversation with yourself')) {
+    if (rawMessage.contains('cannot create conversation with yourself')) {
       return "You can't start a conversation with yourself.";
     }
-    if (message.contains('timeout') || message.contains('timed out')) {
+    if (rawMessage.contains('timeout') || rawMessage.contains('timed out')) {
       return 'Connection timeout. Check your internet and try again.';
     }
-    if (message.contains('unauthenticated') || message.contains('session')) {
+    if (rawMessage.contains('unauthenticated') ||
+        rawMessage.contains('session')) {
       return 'Session expired. Please log in again.';
     }
 

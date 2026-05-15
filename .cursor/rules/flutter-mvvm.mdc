@@ -10,7 +10,7 @@ alwaysApply: false
 
 ### Automated Enforcement
 
-Run `dart run custom_lint` after MVVM or feature-view edits. The local SLine lint plugin reports direct Supabase/raw-network access in feature views, repository imports in feature views, view imports in ViewModels, `Navigator` usage in ViewModels, and UI controller/form-key ownership in ViewModels. Treat these diagnostics as blockers.
+Run `dart run custom_lint` after MVVM or feature-view edits. The local SLine lint plugin reports direct Supabase/raw-network access in feature views, repository imports in feature views, view imports in ViewModels, view/ViewModel imports in services/data, feature UI imports in core, UI framework imports in ViewModels, `Navigator` usage in ViewModels, UI controller/form-key ownership in ViewModels, Supabase access from ViewModel executable bodies, `BuildContext` in ViewModels/data/repositories, ViewModel notification loops, raw exception strings assigned to UI error fields, `print`/`debugPrint` in `lib/`, offset pagination, dynamic model `fromJson` maps, and signed URL persistence. Treat enforced diagnostics as blockers; stricter service-import, feature-to-feature view import, public mutable state, catch/logging, query-shape, and test-coverage rules live in `packages/sline_lints` as staged rules until legacy debt is migrated.
 
 ### Layer Separation (CRITICAL)
 

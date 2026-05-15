@@ -15,7 +15,7 @@
 ///   Layer 3 — COMPONENTS: Widgets consume Layer 1 + Layer 2, own neither
 ///
 /// RELATIONSHIP TO AppDimens:
-///   - `AppDimens` = raw spacing/radius primitives (p0–p100, r4–r50, iconSize*)
+///   - `AppDimens` = raw spacing/radius primitives (p0–p140, r2–r50, iconSize*)
 ///   - `AppLayout` = semantic structural tokens with named intent
 ///   - Both are Layer 2. `AppLayout` provides meaning, `AppDimens` provides the scale.
 ///   - There is NO overlap: icon sizes 16/24/32 live in `AppDimens` only.
@@ -98,7 +98,7 @@ class AppLayout {
 
   // ── Spacing Rhythm ───────────────────────────────────────────────────
   // Semantic spacing rhythm for layout flow.
-  // For raw spacing primitives (p0–p100), see `AppDimens`.
+  // For raw spacing primitives (p0–p140), see `AppDimens`.
 
   /// Tight spacing within a single component (icon-to-text, badge gap).
   static const double spacingTight = 4.0;

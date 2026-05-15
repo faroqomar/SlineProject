@@ -20,20 +20,16 @@ class AuthFormViewModel extends ChangeNotifier {
     AccountGuardService? accountGuardService,
     SupabaseClient? client,
   }) : _authRepo = authRepo ?? AuthRepository(),
-       _explicitGuardService = accountGuardService,
-       _explicitClient = client;
+       _accountGuardService =
+           accountGuardService ?? _tryCreateAccountGuardService(client);
 
-  final AccountGuardService? _explicitGuardService;
-  final SupabaseClient? _explicitClient;
+  late final AccountGuardService? _accountGuardService;
 
-  late final AccountGuardService? _accountGuardService =
-      _explicitGuardService ?? _buildDefaultGuardService();
-
-  AccountGuardService? _buildDefaultGuardService() {
+  static AccountGuardService? _tryCreateAccountGuardService(
+    SupabaseClient? client,
+  ) {
     try {
-      return AccountGuardService(
-        client: _explicitClient ?? Supabase.instance.client,
-      );
+      return AccountGuardService(client: client);
     } on Object catch (_) {
       // Supabase can be uninitialized in tests; the guard is optional in that
       // path, so a missing default client should not block form validation.

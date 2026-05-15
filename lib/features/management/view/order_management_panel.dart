@@ -233,8 +233,8 @@ class _OrderManagementPanelState extends State<OrderManagementPanel> {
                             key: OrderManagementPanel.sendButtonKey,
                             icon: vm.isSending
                                 ? SizedBox(
-                                    width: 16,
-                                    height: 16,
+                                    width: AppDimens.p16,
+                                    height: AppDimens.p16,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
                                       color: amberColors.primary,

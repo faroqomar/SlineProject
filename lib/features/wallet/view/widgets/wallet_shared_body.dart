@@ -294,7 +294,7 @@ class _InsightTile extends StatelessWidget {
                 // Icon + label row
                 Row(
                   children: [
-                    Icon(icon, size: 14, color: accentColor),
+                    Icon(icon, size: AppDimens.p14, color: accentColor),
                     const SizedBox(width: AppDimens.p6),
                     Text(
                       insight.label,

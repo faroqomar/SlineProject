@@ -4,6 +4,7 @@ import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_price.dart' as price_utils;
@@ -207,7 +208,11 @@ class _SubmitRequestSheetContent extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.swap_horiz, color: amberColors.primary, size: 16),
+                  Icon(
+                    Icons.swap_horiz,
+                    color: amberColors.primary,
+                    size: AppDimens.iconSizeSmall,
+                  ),
                   const SizedBox(width: AppDimens.p4),
                   Text(
                     'REPLACE',
@@ -301,7 +306,7 @@ class _SubmitRequestSheetContent extends StatelessWidget {
                       prefixIcon: Icon(
                         Icons.payments_outlined,
                         color: amberColors.primary,
-                        size: 18,
+                        size: AppDimens.iconSizeSmall,
                       ),
                       validator: (v) {
                         final n = double.tryParse(v ?? '');
@@ -368,7 +373,7 @@ class _SubmitRequestSheetContent extends StatelessWidget {
                     Icons.upload_file,
                     color: amberColors.muted.withValues(alpha: 0.6),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppDimens.p8),
                   Text(
                     'Upload Files (Coming Soon)',
                     style: AppTypography.captionBold.copyWith(
@@ -427,7 +432,7 @@ class _SubmitRequestSheetContent extends StatelessWidget {
                   Icons.check_circle,
                   color: context.amberColors.textInverse,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppDimens.p8),
                 Text(
                   vm.isReplaceMode
                       ? 'Bid replaced successfully'
@@ -499,7 +504,7 @@ class _SubmitRequestSheetContent extends StatelessWidget {
               title: Row(
                 children: [
                   Icon(Icons.swap_horiz, color: amberColors.primary),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppDimens.p8),
                   const Text('Replace your bid?'),
                 ],
               ),
@@ -512,14 +517,14 @@ class _SubmitRequestSheetContent extends StatelessWidget {
                       text:
                           'Your current bid will be archived and replaced with the new one. This action cannot be undone.',
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: AppDimens.p20),
                     Text(
                       'CURRENT BID',
                       style: AppTypography.captionBold.copyWith(
                         color: amberColors.muted,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppDimens.p8),
                     _ComparisonRow(
                       label: 'Price',
                       value: price_utils.PriceFormatter.formatPrice(
@@ -536,14 +541,14 @@ class _SubmitRequestSheetContent extends StatelessWidget {
                         value: existing.note!,
                         isMultiline: true,
                       ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppDimens.p16),
                     Text(
                       'NEW BID',
                       style: AppTypography.captionBold.copyWith(
                         color: amberColors.primary,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppDimens.p8),
                     _ComparisonRow(
                       label: 'Price',
                       value: price_utils.PriceFormatter.formatPrice(
@@ -617,7 +622,7 @@ class _ExistingBidInfo extends StatelessWidget {
     final amberColors = context.amberColors;
     return Row(
       children: [
-        Icon(icon, size: 16, color: amberColors.muted),
+        Icon(icon, size: AppDimens.iconSizeSmall, color: amberColors.muted),
         const SizedBox(width: AppDimens.p4),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -671,7 +676,7 @@ class _ComparisonRow extends StatelessWidget {
             : CrossAxisAlignment.center,
         children: [
           SizedBox(
-            width: 80,
+            width: AppDimens.p80,
             child: Text(
               label,
               style: AppTypography.caption.copyWith(color: amberColors.muted),
@@ -735,8 +740,12 @@ class _WarningBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.info_outline, color: amberColors.warning, size: 20),
-          const SizedBox(width: 8),
+          Icon(
+            Icons.info_outline,
+            color: amberColors.warning,
+            size: AppLayout.iconStandard,
+          ),
+          const SizedBox(width: AppDimens.p8),
           Expanded(
             child: Text(
               text,

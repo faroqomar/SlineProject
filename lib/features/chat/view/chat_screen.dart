@@ -401,8 +401,8 @@ class _ChatScreenState extends State<ChatScreen> {
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: AppDimens.p120),
                         child: SizedBox(
-                          width: 28,
-                          height: 28,
+                          width: AppDimens.p28,
+                          height: AppDimens.p28,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.5,
                             color: amberColors.primary,

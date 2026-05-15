@@ -150,8 +150,8 @@ class RequestTile extends StatelessWidget {
                         tooltip: pending ? null : 'Add to favorites',
                         icon: pending
                             ? const SizedBox(
-                                width: 24,
-                                height: 24,
+                                width: AppDimens.p24,
+                                height: AppDimens.p24,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                 ),

@@ -549,7 +549,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                   color: colors.text,
                 ),
               ),
-              const SizedBox(width: 24), // Balance spacing
+              const SizedBox(width: AppDimens.p24), // Balance spacing
             ],
           ),
           const SizedBox(height: AppDimens.p12),

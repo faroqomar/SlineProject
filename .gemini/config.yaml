@@ -1,5 +1,0 @@
-# Repository-level Gemini Code Assist configuration.
-# Keep Gemini disabled for PR reviews because this repo relies on Flutter/Dart
-# analyzer output and existing reviewer checks for language-version accuracy.
-code_review:
-  disable: true

@@ -584,7 +584,7 @@ class BookingDetailsScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.info_outline, color: color, size: 20),
+          Icon(Icons.info_outline, color: color, size: AppLayout.iconStandard),
           const SizedBox(width: AppDimens.p12),
           Text(
             text,
@@ -732,7 +732,7 @@ class _BookingDisputeBanner extends StatelessWidget {
                     children: [
                       Icon(
                         Icons.info_outline,
-                        size: 20,
+                        size: AppLayout.iconStandard,
                         color: AmberDuskTokens.colors.primary,
                       ),
                       const SizedBox(width: AppDimens.p8),

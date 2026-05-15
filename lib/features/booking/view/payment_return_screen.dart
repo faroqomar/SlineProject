@@ -6,6 +6,7 @@ import 'package:sline_app/core/config/payment_runtime_config.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/services/payment_pending_store.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/utils/web_url_utils_stub.dart'
@@ -302,7 +303,7 @@ class _PaymentReturnScreenState extends State<PaymentReturnScreen> {
                       children: [
                         Icon(
                           _isSuccess ? Icons.check_circle : Icons.info_outline,
-                          size: 48,
+                          size: AppLayout.iconFeature,
                           color: _isSuccess
                               ? colorScheme.success
                               : colorScheme.warning,
