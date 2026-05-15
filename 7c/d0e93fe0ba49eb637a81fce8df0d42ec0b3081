@@ -1,0 +1,213 @@
+test/widget/tasks/task_details_screen_test.dart
+  s_3105149c65c0b8::t_553e22fd56dec6 14
+  s_3105149c65c0b8::t_2572ca14dd3705 803-839,843-844,846-849
+  s_3105149c65c0b8::t_3f2b71f5291b99 13,358-384
+  s_3105149c65c0b8::t_fbce1df8275164 840-842,845
+test/widget/chat/chat_screen_test.dart
+  s_3105149c65c0b8::t_050db3394973bf 250,256
+  s_3105149c65c0b8::t_066907d209f592 18-21,28-29,72,90,156-183,187,189-192
+  s_3105149c65c0b8::t_29aec0a9120ae5 184-186
+  s_3105149c65c0b8::t_e8d18ce88d7f1b 226-229
+  s_3105149c65c0b8::t_3f27f87b028317 195-197,199-207,209-212,214-219,221-224,230,232-237
+  s_3105149c65c0b8::t_9820d5c9abc9d3 188
+  s_3105149c65c0b8::t_f695fd4eba2867 194,198,208,213,220,225,231,238-249,251-255,257-263
+lib/features/dashboard/view/dashboard_screen.dart
+  s_3105149c65c0b8::t_d045ff6ab54343 534
+  s_3105149c65c0b8::t_675d03831789f8 267,333-335,343,367-398,442,459-460,467-468
+  s_3105149c65c0b8::t_4e6ea5a9dcfda7 192-194
+  s_3105149c65c0b8::t_45253bf7dd3448 176-177,179-180,188-191,195-201,203-205,207-213,215-251,253,255-256,477,483,523,536-543,555,560-561
+  s_3105149c65c0b8::t_ccceca834f67a7 9,485
+  s_3105149c65c0b8::t_f7ba5f055bcb7d 399-408,462-466
+  s_3105149c65c0b8::t_77c9d3962998dc 409-441,443-458,461
+lib/features/dashboard/view/tabs/wallet_tab.dart
+  s_3105149c65c0b8::t_64b81643e4fd93 2-3,15-23
+lib/features/chat/view/chat_screen.dart
+  s_3105149c65c0b8::t_bbe0d803954673 364,366-376,585,587-634,641,644-647
+  s_3105149c65c0b8::t_8d0e68c7f89bc1 819,821-831,839,842-847,851-853,856-858,1327,1331-1332,1357-1363,1384-1385,1388,1390,1392-1432,1434,1436-1447,1450-1489,1494-1497,1499-1506,1523,1530,1536,1547,1564-1565,1577-1578,1600-1601,1603-1604,1609,1612
+  s_3105149c65c0b8::t_b1f8425040c41a 854-855
+  s_3105149c65c0b8::t_38e989b6eeab7c 1391
+  s_3105149c65c0b8::t_80da43b6d30493 1507-1517
+  s_3105149c65c0b8::t_29aec0a9120ae5 377-387,389,391-424,427-430,432-448,450-453,455-488,490-529,531-554,556-580
+  s_3105149c65c0b8::t_eff40bea083b1e 1490-1493
+  s_3105149c65c0b8::t_a45ae048bc79db 1518-1522,1524-1529,1531-1535,1537-1546,1548-1563,1566-1576,1579-1599,1602,1605-1608
+  s_3105149c65c0b8::t_9cca84c49b1076 820,1433,1435,1498
+  s_3105149c65c0b8::t_184c85ff2a6dda 388,390
+lib/features/dashboard/view/widgets/work_item_card.dart
+  s_3105149c65c0b8::t_0ba54f28adcc6c 10,91,94,142
+lib/features/wallet/view/widgets/wallet_shared_body.dart
+  s_3105149c65c0b8::t_79df20c512ecfb 86-87
+lib/features/dashboard/view/tabs/overview_tab.dart
+  s_3105149c65c0b8::t_c3ffb1544ee82e 45-51,56-60,98
+lib/features/profile/view/widgets/profile_preview_modal.dart
+  s_3105149c65c0b8::t_fc1bfc74718bd1 20-35,38-41
+test/unit/profile/freelancer_profile_test.dart
+  s_3105149c65c0b8::t_9c13e1ac56ab1b 1-5,7,9-12,15-20,22-26,29-32,37,39-44,65-79,81-86,88-90
+  s_3105149c65c0b8::t_9f50011008b248 46-50,53-54,57-61,80,87
+  s_3105149c65c0b8::t_bf70f5438a68f6 52
+  s_3105149c65c0b8::t_4ff197f7fafaf7 51
+  s_3105149c65c0b8::t_890818caa04bdd 33-36
+  s_3105149c65c0b8::t_07d9e07d2efc9f 8
+test/widget/wallet/wallet_snapshot_card_test.dart
+  s_3105149c65c0b8::t_191c1677b4e6b0 94
+  s_3105149c65c0b8::t_7022798e0fa60c 91
+  s_3105149c65c0b8::t_3184fda8432514 26-28,31-35,39-46,51-56,62-64,66-67
+  s_3105149c65c0b8::t_880e0d563e8d1a 1-5,11-13,15,18-22,47
+  s_3105149c65c0b8::t_6ef29e6b5c8f88 69-71,74-78,82-90,95-97
+  s_3105149c65c0b8::t_94659c22208ef5 10,57-61
+lib/features/chat/view/widgets/message_bubble.dart
+  s_3105149c65c0b8::t_66144dfd71e0bb 129-131
+lib/features/tasks/view/task_details_screen.dart
+  s_3105149c65c0b8::t_48d6c71adfe20f 80,269
+  s_3105149c65c0b8::t_e99fb2019cea74 443-447
+  s_3105149c65c0b8::t_890818caa04bdd 804-808
+  s_3105149c65c0b8::t_2006a901471b05 14,79,125-130,195-197,207,440-442,448-469,768-803,809-865
+lib/features/notifications/view/notifications_modal.dart
+  s_3105149c65c0b8::t_ed790f5d7b49c8 414,458
+  s_3105149c65c0b8::t_9aa32dfb5fe882 24,49,196,198,202,287-295,297,299,363,368,389,393,410-413,415,454-457,459,509-516
+lib/core/theme/designs/amber_dusk/amber_dusk_typography.dart
+  s_3105149c65c0b8::t_ecf7328faa23f5 22-24,112-119,288-289
+  s_3105149c65c0b8::t_5c27966ce9d4c9 34-39,154-179,267-268,300-304
+test/core/theme/amber_dusk_tokens_test.dart
+  s_3105149c65c0b8::t_2a949d77591a7a 140,171-179
+  s_3105149c65c0b8::t_9fe19b581446a7 161-163
+lib/features/dashboard/view/tabs/inbox_tab.dart
+  s_3105149c65c0b8::t_cf0a7bb80dfa11 126-130,134,139,156-157,159,190-214,216,218-221,253
+  s_3105149c65c0b8::t_82ecb70d35c7d4 101
+  s_3105149c65c0b8::t_7600bc93da7c87 215,217
+test/widget/dashboard/dashboard_screen_test.dart
+  s_3105149c65c0b8::t_5113e55fa798d3 62-71
+  s_3105149c65c0b8::t_42f8df4a8dabb2 88,106
+lib/features/profile/view/profile_screen.dart
+  s_3105149c65c0b8::t_d5bb08a532a30e 44-51,70-93,95-97,100-117,119-120
+  s_3105149c65c0b8::t_294a9c16e8275a 773
+  s_3105149c65c0b8::t_d0b65cb18f2857 782-783
+lib/features/profile/view/public_profile_screen.dart
+  s_3105149c65c0b8::t_6690b15a7dcf11 175-180,187-189,197-212,214-218,220-228,236-241,264,268,286,290
+  s_3105149c65c0b8::t_02a487eadd0f17 119,121-122
+  s_3105149c65c0b8::t_886a63a2a7cf6f 120
+  s_3105149c65c0b8::t_bcf01960055cd6 300,324-326,328-330,332-344
+test/widget/booking/booking_details_screen_test.dart
+  s_3105149c65c0b8::t_b3bfc39e28cfd0 6-9,113
+test/widget/notifications/notifications_modal_test.dart
+  s_3105149c65c0b8::t_861611ea780491 44,68,106,158,193,221,241
+  s_3105149c65c0b8::t_685392b4dbe2cc 86-105,107-140,259-268
+lib/features/tasks/view/create_task_screen.dart
+  s_3105149c65c0b8::t_aaeb1ae34b3e10 107,465,1222,1224,1228
+packages/sline_lints/OPEN_SOURCE_ROADMAP.md
+  s_c2ade65474ae88::t_9d9091f04ec890 1-111
+lib/features/dashboard/view/tabs/work_tab.dart
+  s_3105149c65c0b8::t_3d2fe1b5000c9d 165,169,224,227,380,384,414,417,451-476
+test/unit/core/content_safety_filter_test.dart
+  s_3105149c65c0b8::t_4352599b6b211e 1-30
+lib/features/home/view/widgets/filters_modal.dart
+  s_3105149c65c0b8::t_25edf651eed50e 91
+  s_3105149c65c0b8::t_577de95364ad29 16-17,84,89-90,92-97,99-105,107-117,119,121-131,133-156,160-162,164-169,171-182,184,186-193
+  s_3105149c65c0b8::t_5527d6b06cfb82 25,106
+  s_3105149c65c0b8::t_5964a70d94f3a7 204,218-246,248-256,293,305,465-470,494-511
+lib/features/tasks/view/widgets/dashboard_offer_card.dart
+  s_3105149c65c0b8::t_dce536bac953f6 375,387-393,406-409,422-425,438-441,454-457,470-473,483-489,502-505
+  s_3105149c65c0b8::t_d8d081f3bcbe75 111
+  s_3105149c65c0b8::t_8c33add3fdab39 116,173,207,233-235,238,262-263,277-280,318
+  s_3105149c65c0b8::t_10a99cc20c0849 104,117,174,188-197,206,236-237,274
+  s_3105149c65c0b8::t_11e1a64d9de8ff 152
+  s_3105149c65c0b8::t_48a23b0d1820e8 372,374
+test/widget/home/filters_modal_test.dart
+  s_3105149c65c0b8::t_4c10e7d9c010e7 10,61-62,64,66,76-77,147-156,161-162,167
+  s_3105149c65c0b8::t_fd4e3ddd1e74ab 163-166
+  s_3105149c65c0b8::t_ffd240790d5e9d 32,157-159
+  s_3105149c65c0b8::t_5508af910dee03 160
+test/widget/chat/messages_screen_test.dart
+  s_3105149c65c0b8::t_4a8f0a03e35a64 5-6,172-196,199-210
+  s_3105149c65c0b8::t_50fce833f67bad 231-263
+  s_3105149c65c0b8::t_d4f9c71fb38675 197-198
+  s_3105149c65c0b8::t_0e38ec1368174b 22-23,34-35,211-229
+lib/core/utils/transitions/custom_route_transitions.dart
+  s_3105149c65c0b8::t_5ddb0a82ade823 5,92
+Sline_everything/STRUCTURE.md
+  s_3105149c65c0b8::t_96f20f50aa78bc 254,399
+  s_3105149c65c0b8::t_5216c33fc04b3f 105
+lib/features/profile/view/widgets/public_profile/public_profile_header.dart
+  s_3105149c65c0b8::t_e3feadedaf81de 152-160,162
+  s_3105149c65c0b8::t_ead4f8ee686c0b 140-145,173,176,195
+lib/core/theme/app_dimens.dart
+  s_3105149c65c0b8::t_b9b68a839bd588 112-114
+test/unit/profile/public_profile_view_model_test.dart
+  s_3105149c65c0b8::t_af4b0a9341647e 29
+Sline_everything/MVP_ROADMAP.md
+  s_3105149c65c0b8::t_0939a0e355aea8 82
+lib/features/wallet/view/widgets/wallet_snapshot_card.dart
+  s_3105149c65c0b8::t_2f8a194a87864e 59
+  s_3105149c65c0b8::t_18564db5fb9f4e 8,24-25,58,72-74,76,119,129-132,197
+  s_3105149c65c0b8::t_b4f9c87428659c 64,107,110-111,126,128,133-135,141-142
+  s_3105149c65c0b8::t_8600810d090334 36,40,43-57,60-63,65,69-71,75,77,85-88,91,93-96,114,118,120,127,136-138,143-144,168,186-193,195-196,198-205
+test/widget/dashboard/inbox_tab_test.dart
+  s_3105149c65c0b8::t_82762fa3b92908 71,74,111-112,172-195,199-200
+  s_3105149c65c0b8::t_365f7a030ae32a 196-198
+test/widget/dashboard/dashboard_offer_card_test.dart
+  s_3105149c65c0b8::t_f74af4c777e171 18-21,27-29,34,108,112,130-133,135
+  s_3105149c65c0b8::t_9cf931c0c1bb85 58
+  s_3105149c65c0b8::t_eedf5668d9bb46 109-111,113-129,134,136-150
+lib/features/wallet/view/widgets/wallet_hero_card.dart
+  s_3105149c65c0b8::t_422bf10ebc9d04 57
+  s_3105149c65c0b8::t_11d75032f88eac 36,48-56,58-64,66-69,71-74,76-79,103,106-108,124,127-131
+lib/core/utils/content_safety_filter.dart
+  s_3105149c65c0b8::t_3e1f6d6bb2d2a6 1-18,23-26,29,103-104
+  s_3105149c65c0b8::t_f1d5d11d36b5d8 19-22,27-28,30-45,47-102
+  s_3105149c65c0b8::t_807040b79fe99d 46
+lib/features/chat/view/messages_screen.dart
+  s_3105149c65c0b8::t_ab3fbc22fd03a7 982,987-989,1103-1110
+  s_3105149c65c0b8::t_f75c009000c755 722-723
+  s_3105149c65c0b8::t_3eea948fb9f8ed 304-327,720-721,724-729,731,735
+  s_3105149c65c0b8::t_c4165b0ce8f17a 994-998,1000-1005,1062
+test/widget/dashboard/work_tab_test.dart
+  s_3105149c65c0b8::t_b20d8fa1c2c225 175-195
+lib/features/profile/models/freelancer_profile.dart
+  s_3105149c65c0b8::t_890818caa04bdd 96-98
+  s_3105149c65c0b8::t_554557aca11f3c 4
+  s_3105149c65c0b8::t_445b630aa53aa2 22,41,76-80,93,99,101,111-113
+  s_3105149c65c0b8::t_75793f016fa375 20-21,72,83-86
+  s_3105149c65c0b8::t_6ef29e6b5c8f88 73-75
+lib/features/home/view/home_screen.dart
+  s_3105149c65c0b8::t_66eb4e62e7efd1 99-103,110-115,117,121-208,210-255,257-261,264-266,268,272,274-278,280-286,288-293,296-301,303,306-307,311-327,329-333,335-336,340-377,379-385
+test/widget/chat/message_bubble_test.dart
+  s_3105149c65c0b8::t_88cc8e0cf50f1a 169-182
+test/widget/profile/profile_screen_test.dart
+  s_3105149c65c0b8::t_d826ae13307db7 1-6,8-9,11-18,20-21,23-41,44-51,54-56,59-63
+  s_3105149c65c0b8::t_881603c9e1eb30 57-58
+lib/features/notifications/view/widgets/notification_tile.dart
+  s_3105149c65c0b8::t_dc5ae9bfe06e61 72,86-87,95-96,101-124,175
+  s_3105149c65c0b8::t_17ddd537e463a1 73-79
+  s_3105149c65c0b8::t_eda4f7b57b7723 71
+packages/sline_lints/README.md
+  s_c2ade65474ae88::t_f3a5e6dce14242 5-7
+test/widget/home/home_screen_test.dart
+  s_3105149c65c0b8::t_0452dbd7a31b8f 7,173-180
+  s_3105149c65c0b8::t_bcebcf0dc51fbe 16
+Sline_everything/DEVELOPER_GUIDE.md
+  s_3105149c65c0b8::t_1a248fee6bee43 2770,2840,2933
+  s_3105149c65c0b8::t_896aae4b7f321f 2876,2878
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "7cd0e93fe0ba49eb637a81fce8df0d42ec0b3081",
+  "prompts": {},
+  "sessions": {
+    "s_3105149c65c0b8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2b7e-db73-7ee3-a18b-3bf450c8c30d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Farooq Eros <faroqomar97@gmail.com>"
+    },
+    "s_c2ade65474ae88": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e281d-2586-7570-80d4-be00e4ef8347",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Farooq Eros <faroqomar97@gmail.com>"
+    }
+  }
+}
