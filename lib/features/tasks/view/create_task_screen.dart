@@ -104,7 +104,7 @@ class CreateTaskScreen extends StatefulWidget {
 }
 
 class _CreateTaskScreenState extends State<CreateTaskScreen> {
-  static const double _kTypeStepHeightFraction = 0.74;
+  static const double _kTypeStepHeightFraction = 0.68;
   static const double _kDetailStepHeightFraction = 0.84;
 
   int _currentStep = 1;
@@ -462,6 +462,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         padding: EdgeInsets.only(bottom: keyboardInset),
         child: SafeArea(
           top: false,
+          bottom: false,
           child: Align(
             alignment: Alignment.bottomCenter,
             child: LayoutBuilder(
@@ -1218,12 +1219,13 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   }
 
   Widget _buildBottomBar() {
+    final bottomSafePadding = MediaQuery.viewPaddingOf(context).bottom;
     return AppCardContainer(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         AmberDuskSpacing.contentHorizontalPadding,
         AppDimens.p12,
         AmberDuskSpacing.contentHorizontalPadding,
-        AppDimens.p16,
+        AppDimens.p16 + bottomSafePadding,
       ),
       borderRadius: BorderRadius.zero,
       child: Row(

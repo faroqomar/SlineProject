@@ -126,7 +126,9 @@ class _MessageBubbleState extends State<MessageBubble> {
     final fg = widget.isMine ? amberColors.textInverse : amberColors.text;
     final metaColor = widget.isMine
         ? amberColors.textInverse.withValues(alpha: 0.7)
-        : amberColors.muted;
+        // Received-message timestamps sit on raised dark surfaces, so they use
+        // the stronger subtle text token instead of muted secondary copy.
+        : amberColors.textSubtle.withValues(alpha: 0.82);
 
     // Corner radius: inner corner towards adjacent grouped bubble is smaller.
     final radius = _buildBorderRadius();

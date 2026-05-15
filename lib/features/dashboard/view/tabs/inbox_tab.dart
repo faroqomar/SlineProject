@@ -98,7 +98,7 @@ class _InboxTabState extends State<InboxTab> {
     return Consumer<DashboardViewModel>(
       builder: (context, vm, child) {
         final isClient = vm.currentRole == UserRole.client;
-        final label = isClient ? 'Proposals' : 'Offers';
+        const label = 'Offers';
         final body = _bodyForMode(
           context,
           vm,
@@ -123,18 +123,20 @@ class _InboxTabState extends State<InboxTab> {
     required bool isClient,
     required String label,
   }) {
-    if (vm.isLoading && vm.inboxOffers.isEmpty) {
+    final actionableOffers = vm.inboxOffers
+        .where((offer) => _isActionableOffer(offer, isClient: isClient))
+        .toList(growable: false);
+
+    if (vm.isLoading && actionableOffers.isEmpty) {
       return _buildSkeletonList();
     }
 
-    if (vm.inboxOffers.isEmpty) {
+    if (actionableOffers.isEmpty) {
       return RefreshIndicator(
         onRefresh: () => vm.refresh(),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.symmetric(
-            horizontal: AmberDuskTokens.spacing.contentHorizontalPadding,
-          ),
+          padding: _listPadding(context),
           children: [
             _EmptyInboxState(
               label: label,
@@ -151,12 +153,10 @@ class _InboxTabState extends State<InboxTab> {
     return RefreshIndicator(
       onRefresh: () => vm.refresh(),
       child: ListView.builder(
-        padding: EdgeInsets.symmetric(
-          horizontal: AmberDuskTokens.spacing.contentHorizontalPadding,
-        ),
-        itemCount: vm.inboxOffers.length,
+        padding: _listPadding(context),
+        itemCount: actionableOffers.length,
         itemBuilder: (context, index) {
-          final offer = vm.inboxOffers[index];
+          final offer = actionableOffers[index];
 
           // Determine the correct handler based on offer state.
           VoidCallback acceptHandler;
@@ -184,6 +184,38 @@ class _InboxTabState extends State<InboxTab> {
           );
         },
       ),
+    );
+  }
+
+  /// Keeps the dashboard action queue focused on rows that expose a CTA.
+  ///
+  /// Unknown/unavailable offers are intentionally excluded so the "requiring
+  /// action" section does not present dead cards under the bottom navigation.
+  bool _isActionableOffer(TaskRequest offer, {required bool isClient}) {
+    if (isClient) {
+      return offer.status == OfferStatus.pending ||
+          (offer.status == OfferStatus.accepted &&
+              offer.paymentStatus == PaymentStatus.unpaid);
+    }
+    return offer.status == OfferStatus.pending;
+  }
+
+  EdgeInsets _listPadding(BuildContext context) {
+    const phoneLayout = AmberDuskTokens.phoneLayout;
+    final bottomSafePadding = MediaQuery.viewPaddingOf(context).bottom;
+    // The tab sits under an overlaid floating nav, so the scrollable owns the
+    // clearance that lets the final card move fully above the nav shell.
+    final bottomNavClearance =
+        bottomSafePadding +
+        phoneLayout.bottomNavBottom +
+        phoneLayout.bottomNavHeight +
+        AppDimens.p24;
+
+    return EdgeInsets.fromLTRB(
+      AppDimens.p16,
+      0,
+      AppDimens.p16,
+      bottomNavClearance,
     );
   }
 
@@ -218,7 +250,7 @@ class _InboxTabState extends State<InboxTab> {
               ),
               const SizedBox(height: AppDimens.p4),
               Text(
-                'Use Messages for the full Received and Sent conversation views.',
+                'Review pending offers here. Full Received and Sent threads live in Messages.',
                 style: AmberDuskTokens.typography.bodySmall.copyWith(
                   color: amber.muted,
                 ),

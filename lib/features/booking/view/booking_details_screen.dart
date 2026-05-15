@@ -17,8 +17,6 @@ import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/features/booking/models/booking_model.dart';
 import 'package:sline_app/features/booking/viewmodels/booking_view_model.dart';
 import 'package:sline_app/features/chat/view/chat_screen.dart';
-import 'package:sline_app/features/management/models/work_log_scope.dart';
-import 'package:sline_app/features/management/view/widgets/order_management_section.dart';
 import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
 import 'package:sline_app/l10n/app_localizations.dart';
 
@@ -255,15 +253,6 @@ class BookingDetailsScreen extends StatelessWidget {
                   ],
                 ],
               ),
-            ),
-
-            const SizedBox(height: AppDimens.p24),
-
-            // Order Management
-            OrderManagementSection(
-              scope: WorkLogScope(entityId: booking.id, entityType: 'booking'),
-              currentUserId:
-                  context.read<BookingViewModel>().currentUserId ?? '',
             ),
 
             const SizedBox(height: AppDimens.p24),

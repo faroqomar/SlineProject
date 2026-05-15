@@ -15,19 +15,23 @@ import '../../test_support/pump_app.dart';
 TaskRequest _offer({
   OfferStatus status = OfferStatus.pending,
   PaymentStatus paymentStatus = PaymentStatus.unpaid,
+  int price = 450,
+  int days = 3,
+  String note = 'I can start tomorrow.',
+  String taskTitle = 'Landing page design',
 }) {
   return TaskRequest(
     id: 'offer-1',
     taskId: 'task-1',
     bidderId: 'freelancer-1',
-    price: 450,
-    days: 3,
-    note: 'I can start tomorrow.',
+    price: price,
+    days: days,
+    note: note,
     status: status,
     paymentStatus: paymentStatus,
     createdAt: DateTime.utc(2020),
     bidderName: 'Yara Ahmed',
-    taskTitle: 'Landing page design',
+    taskTitle: taskTitle,
   );
 }
 
@@ -51,6 +55,7 @@ void main() {
     expect(find.text('450 IQD'), findsOneWidget);
     expect(find.text('Yara Ahmed'), findsOneWidget);
     expect(find.text('PENDING'), findsOneWidget);
+    expect(find.text('2020-01-01  03:00'), findsNothing);
   });
 
   testWidgets('DashboardOfferCard invokes reject callback only', (
@@ -100,4 +105,47 @@ void main() {
     expect(accepted, isTrue);
     expect(rejected, isFalse);
   });
+
+  testWidgets(
+    'DashboardOfferCard keeps provider card compact with all fields',
+    (
+      tester,
+    ) async {
+      await pumpApp(
+        tester,
+        Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 360,
+              child: DashboardOfferCard(
+                offer: _offer(
+                  price: 989,
+                  days: 76,
+                  note: 'kmhh',
+                  taskTitle: 'Seeking Professional Graphic Designer',
+                ),
+                isClientView: false,
+                onAccept: () {},
+                onWithdraw: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(
+        find.text('Seeking Professional Graphic Designer'),
+        findsOneWidget,
+      );
+      expect(find.text('989 IQD'), findsOneWidget);
+      expect(find.text('76'), findsOneWidget);
+      expect(find.text('DAYS'), findsOneWidget);
+      expect(find.text('"kmhh"'), findsOneWidget);
+      expect(find.widgetWithText(OutlinedButton, 'Withdraw'), findsOneWidget);
+      expect(
+        tester.getSize(find.byType(DashboardOfferCard)).height,
+        lessThan(290),
+      );
+    },
+  );
 }

@@ -41,6 +41,7 @@ void main() {
       final vm = NotificationViewModel(
         service: mockService,
         authStateChanges: authController.stream,
+        client: createMockSupabaseClient(),
       );
       addTearDown(vm.dispose);
 
@@ -64,6 +65,7 @@ void main() {
       final vm = NotificationViewModel(
         service: mockService,
         authStateChanges: authController.stream,
+        client: createMockSupabaseClient(),
       );
       addTearDown(vm.dispose);
 
@@ -79,6 +81,61 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(NotificationsModalKeys.modal), findsOneWidget);
+    });
+
+    testWidgets('notification list reserves bottom safe-area padding', (
+      tester,
+    ) async {
+      final notificationStream =
+          StreamController<List<NotificationItem>>.broadcast();
+      addTearDown(notificationStream.close);
+      final notifications = List<NotificationItem>.generate(
+        8,
+        (index) => _notification(id: 'safe-$index', isRead: index.isEven),
+      );
+      when(
+        () => mockService.getUnreadNotifications(limit: any(named: 'limit')),
+      ).thenAnswer((_) async => notifications);
+      when(
+        () => mockService.streamNotifications(),
+      ).thenAnswer((_) => notificationStream.stream);
+
+      final vm = NotificationViewModel(
+        service: mockService,
+        authStateChanges: authController.stream,
+        client: createMockSupabaseClient(),
+      );
+      addTearDown(vm.dispose);
+
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(
+            padding: EdgeInsets.only(bottom: 34),
+            viewPadding: EdgeInsets.only(bottom: 34),
+          ),
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            home: Scaffold(
+              body: ChangeNotifierProvider<NotificationViewModel>.value(
+                value: vm,
+                child: const NotificationsModal(),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      authController.add(_signedInAuthState());
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byKey(NotificationsModalKeys.list), findsOneWidget);
+      final listView = tester.widget<ListView>(
+        find.byKey(NotificationsModalKeys.list),
+      );
+      final padding = listView.padding! as EdgeInsets;
+      expect(padding.bottom, greaterThan(34));
+      expect(find.text('Unread'), findsWidgets);
     });
 
     testWidgets('shows Amber Dusk skeleton loading state after auth connects', (
@@ -98,6 +155,7 @@ void main() {
       final vm = NotificationViewModel(
         service: mockService,
         authStateChanges: authController.stream,
+        client: createMockSupabaseClient(),
       );
       addTearDown(vm.dispose);
 
@@ -132,6 +190,7 @@ void main() {
       final vm = NotificationViewModel(
         service: mockService,
         authStateChanges: authController.stream,
+        client: createMockSupabaseClient(),
       );
       addTearDown(vm.dispose);
 
@@ -159,6 +218,7 @@ void main() {
         final vm = NotificationViewModel(
           service: mockService,
           authStateChanges: authController.stream,
+          client: createMockSupabaseClient(),
         );
         addTearDown(vm.dispose);
 
@@ -178,6 +238,7 @@ void main() {
       final vm = NotificationViewModel(
         service: mockService,
         authStateChanges: authController.stream,
+        client: createMockSupabaseClient(),
       );
       addTearDown(vm.dispose);
 
@@ -193,6 +254,18 @@ void main() {
       );
     });
   });
+}
+
+NotificationItem _notification({required String id, required bool isRead}) {
+  return NotificationItem(
+    id: id,
+    userId: 'user-1',
+    title: 'Booking Updated',
+    message: 'Booking status changed.',
+    type: NotificationType.booking,
+    isRead: isRead,
+    createdAt: DateTime.utc(2026, 5, 15, 12),
+  );
 }
 
 Future<void> _pumpModal(

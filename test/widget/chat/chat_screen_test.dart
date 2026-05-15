@@ -15,13 +15,18 @@ class _MockChatViewModel extends Mock
     with ChangeNotifier
     implements ChatViewModel {}
 
-Conversation _conversationFixture() {
+Conversation _conversationFixture({
+  String? taskId,
+  String? taskTitle,
+}) {
   return Conversation(
     id: 'convo-1',
     user1Id: 'user-1',
     user2Id: 'user-2',
     createdAt: DateTime.utc(2026, 2, 24, 10),
     otherUserName: 'Other User',
+    taskId: taskId,
+    taskTitle: taskTitle,
   );
 }
 
@@ -64,6 +69,7 @@ Future<void> _pumpChatScreen(
   _MockChatViewModel vm, {
   required List<Message> messages,
   AttachmentSignedUrlResolver? resolver,
+  Conversation? conversation,
 }) async {
   when(() => vm.currentUserId).thenReturn('user-1');
   when(() => vm.currentMessages).thenReturn(messages);
@@ -81,7 +87,7 @@ Future<void> _pumpChatScreen(
     ChangeNotifierProvider<ChatViewModel>.value(
       value: vm,
       child: ChatScreen(
-        conversation: _conversationFixture(),
+        conversation: conversation ?? _conversationFixture(),
         enableLifecycleEffects: false,
         attachmentSignedUrlResolver: resolver,
       ),
@@ -146,6 +152,114 @@ void main() {
         resolvedPaths,
         equals(['chat-attachments/convos/convo-1/image.jpg']),
       );
+    });
+
+    testWidgets('reserves context banner space above date separator', (
+      tester,
+    ) async {
+      final vm = _MockChatViewModel();
+      final message = Message(
+        id: 'msg-context-1',
+        conversationId: 'convo-1',
+        senderId: 'user-2',
+        receiverId: 'user-1',
+        content: 'Hi, I am testing the booking flow.',
+        createdAt: DateTime.now().subtract(const Duration(days: 1)).toUtc(),
+        messageType: MessageType.text,
+        payload: const {},
+      );
+
+      await _pumpChatScreen(
+        tester,
+        vm,
+        messages: [message],
+        conversation: _conversationFixture(
+          taskId: 'task-1',
+          taskTitle: 'i will market your campaign with a long title',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final contextBottom = tester
+          .getBottomLeft(
+            find.text('i will market your campaign with a long title'),
+          )
+          .dy;
+      final dateTop = tester.getTopLeft(find.text('Yesterday').first).dy;
+
+      // The linked-task context must participate in layout, leaving rhythm
+      // space before the list begins so date pills and messages cannot overlap.
+      expect(contextBottom, lessThan(dateTop));
+    });
+
+    testWidgets(
+      'report conversation dialog names target and validates reason',
+      (
+        tester,
+      ) async {
+        final vm = _MockChatViewModel();
+
+        await _pumpChatScreen(
+          tester,
+          vm,
+          messages: const [],
+          conversation: _conversationFixture(taskTitle: 'Linked task'),
+        );
+
+        await tester.tap(find.byIcon(Icons.more_vert));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Report conversation'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Report Conversation'), findsOneWidget);
+        expect(find.text('Conversation with Other User'), findsOneWidget);
+        expect(
+          find.text('Tell us what happened in this thread.'),
+          findsOneWidget,
+        );
+
+        final emptySubmit = tester.widget<FilledButton>(
+          find.widgetWithText(FilledButton, 'Submit'),
+        );
+        expect(emptySubmit.onPressed, isNull);
+
+        await tester.enterText(
+          find.byType(TextField).last,
+          'Spam and harassment',
+        );
+        await tester.pump();
+
+        final filledSubmit = tester.widget<FilledButton>(
+          find.widgetWithText(FilledButton, 'Submit'),
+        );
+        expect(filledSubmit.onPressed, isNotNull);
+      },
+    );
+
+    testWidgets('report user dialog makes the reported account clear', (
+      tester,
+    ) async {
+      final vm = _MockChatViewModel();
+
+      await _pumpChatScreen(tester, vm, messages: const []);
+
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Report user'), findsOneWidget);
+      expect(find.text('Other User'), findsWidgets);
+
+      await tester.tap(find.text('Report user'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Report User'), findsOneWidget);
+      expect(find.text('Other User'), findsWidgets);
+      expect(find.text('Tell us what this account did.'), findsOneWidget);
+
+      final emptySubmit = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Submit'),
+      );
+      expect(emptySubmit.onPressed, isNull);
     });
   });
 }

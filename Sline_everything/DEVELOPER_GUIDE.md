@@ -22,7 +22,6 @@ This comprehensive guide consolidates all feature-specific documentation into a 
 - [Chat Feature Reference](#chat-feature-reference)
 - [Direct Chat Offers (Direct Offers Feature)](DEVELOPER_GUIDE/Direct_Offers_Feature.md)
 - [Booking Feature Reference](#booking-feature-reference)
-- [Order Management Feature Reference](DEVELOPER_GUIDE/Order_Management_Feature.md)
 - [Proposals Feature Reference](DEVELOPER_GUIDE/Proposals_Feature.md)
 - [Wallet Feature Reference](DEVELOPER_GUIDE/Wallet_Feature.md)
 - [Work Management (Unified Flow)](#work-management-unified-flow)
@@ -724,7 +723,6 @@ Flutter's built-in `gen-l10n` pipeline is wired up and ready for translation.
 - Categories: `DEVELOPER_GUIDE/Categories Feature.md`
 - UI Surface Inventory: `UI_SURFACE_INVENTORY.md`
 - Inventory: `DEVELOPER_GUIDE/Inventory Feature.md` (Planned)
-- Order Management: `DEVELOPER_GUIDE/Order_Management_Feature.md`
 - Proposals: `DEVELOPER_GUIDE/Proposals_Feature.md`
 
 ## 13. Gotchas & Tips
@@ -2769,7 +2767,7 @@ Primary user flows:
 - clients can purchase a booking package from a booking task
 - providers can review booking requests, accept or decline them, and mark work as delivered
 - clients can review details and approve release after delivery
-- both sides can inspect booking history and the embedded management timeline
+- both sides can inspect booking history and use booking detail lifecycle actions without the removed Order Timeline & Notes surface
 
 Important current behavior:
 
@@ -2839,7 +2837,7 @@ Current server-backed booking/payment flow depends on:
 | `lib/features/booking/view/payment_return_screen.dart`     | view       | Web callback landing screen that validates sanitized callback state, falls back to pending context, and triggers recovery. |
 | `lib/features/booking/view/payment_method_screen.dart`     | view       | Demo/manual payment form used by non-QiCard paths.                                                  |
 | `lib/features/booking/view/bookings_list_screen.dart`      | view       | Client/provider booking history list with filtering and pagination.                                 |
-| `lib/features/booking/view/booking_details_screen.dart`    | view       | Detailed booking view with CTA resolution, management timeline, and message handoff.                |
+| `lib/features/booking/view/booking_details_screen.dart`    | view       | Detailed booking view with CTA resolution and message handoff.                                      |
 | `lib/features/booking/view/widgets/booking_card.dart`      | widget     | Shared summary card for booking rows.                                                               |
 
 ## 4. Current Flutter Flow
@@ -2875,9 +2873,9 @@ Client-side actions:
 
 - release booking payment with fee handling
 - message provider
-- review timeline/history
+- review booking history
 
-`BookingDetailsScreen` also embeds `OrderManagementSection` with `WorkLogScope(entityId: booking.id, entityType: 'booking')`.
+The former task/booking Order Timeline & Notes UI has been removed. Work-log service calls remain internal for direct-offer system events only.
 
 ## 5. Example Snippets
 
@@ -2932,7 +2930,7 @@ Additional notes:
 - verify successful recovery reaches `payment_status = held`
 - verify repeat slotless direct bookings for the same client/task pair are allowed
 - verify provider can accept/decline/deliver and client can release after delivery
-- verify booking details show due date, delivery days, and management timeline correctly
+- verify booking details show due date, delivery days, and lifecycle actions correctly
 - verify legacy slot-based bookings still render safely when `slot_id` is present
 
 **Added in v2.13** — 2026-02-16

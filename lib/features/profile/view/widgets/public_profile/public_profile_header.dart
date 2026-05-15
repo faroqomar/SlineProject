@@ -137,22 +137,29 @@ class PublicProfileHeader extends StatelessWidget {
                         ],
                         if (profile.verified) ...[
                           const SizedBox(height: AppDimens.p8),
-                          _VerifiedPill(color: amberColors.success),
+                          _VerifiedPill(
+                            color: amberColors.success,
+                            label: profile.isFreelancer
+                                ? 'Verified freelancer'
+                                : 'Verified client',
+                          ),
                         ],
                       ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: AppDimens.p16),
-              Text(
-                profile.bio,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: AppTypography.bodySmall.copyWith(
-                  color: amberColors.heroMuted,
+              if (profile.bio.trim().isNotEmpty) ...[
+                const SizedBox(height: AppDimens.p16),
+                Text(
+                  profile.bio,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: amberColors.heroMuted,
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),
@@ -163,9 +170,10 @@ class PublicProfileHeader extends StatelessWidget {
 
 /// Verified freelancer pill inside the hero card.
 class _VerifiedPill extends StatelessWidget {
-  const _VerifiedPill({required this.color});
+  const _VerifiedPill({required this.color, required this.label});
 
   final Color color;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -184,7 +192,7 @@ class _VerifiedPill extends StatelessWidget {
           Icon(Icons.verified, color: color, size: AppDimens.iconSizeSmall),
           const SizedBox(width: AppDimens.p4),
           Text(
-            'Verified freelancer',
+            label,
             style: AppTypography.captionBold.copyWith(color: color),
           ),
         ],

@@ -3,10 +3,6 @@
 // Type A screen: StatefulWidget that reads TaskViewModel, ChatViewModel,
 // AccountGuardService, and SafetyViewModel from context.
 // Tests inject file-local mocks via Provider ancestors.
-//
-// Supabase.initialize is called in setUpAll to prevent assertion errors from
-// OrderManagementSection (rendered when currentUserId is non-null), which
-// internally creates WorkLogService -> Supabase.instance.client.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,6 +10,8 @@ import 'package:mocktail/mocktail.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/services/account_guard_service.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
 import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
@@ -21,9 +19,7 @@ import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:sline_app/features/tasks/view/task_details_screen.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_view_model.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../supabase_test_helper.dart';
 import '../../test_support/pump_app.dart';
 
 // ---------------------------------------------------------------------------
@@ -171,19 +167,6 @@ void main() {
   late _MockChatViewModel mockChatVm;
   late _MockAccountGuardService mockGuard;
   late _MockSafetyViewModel mockSafety;
-
-  setUpAll(() async {
-    ensureSupabaseTestEnvironment();
-    await Supabase.initialize(
-      url: 'https://test.supabase.co',
-      anonKey: 'test-anon-key',
-      debug: false,
-      authOptions: FlutterAuthClientOptions(
-        localStorage: supabaseTestLocalStorage,
-        pkceAsyncStorage: supabaseTestPkceStorage,
-      ),
-    );
-  });
 
   setUp(() {
     mockTaskVm = _MockTaskViewModel();
@@ -370,6 +353,35 @@ void main() {
       await tester.pump();
 
       expect(find.byType(TaskDetailsScreen), findsOneWidget);
+    });
+
+    testWidgets('T238b exposes task facts above long descriptions', (
+      tester,
+    ) async {
+      await _pumpScreen(
+        tester,
+        task: _task(
+          budget: 25000,
+          deadline: DateTime.now().toUtc().add(const Duration(days: 3)),
+          categoryName: 'Graphic Design',
+          description: 'Line one.\n\nLine two.',
+        ),
+        taskVm: mockTaskVm,
+        chatVm: mockChatVm,
+        guardService: mockGuard,
+        safetyVm: mockSafety,
+        currentUserId: null,
+      );
+      await tester.pump();
+
+      expect(find.text('25K IQD'), findsOneWidget);
+      expect(find.text('Graphic Design'), findsOneWidget);
+
+      final scrollView = tester.widget<SingleChildScrollView>(
+        find.byType(SingleChildScrollView),
+      );
+      final padding = scrollView.padding! as EdgeInsets;
+      expect(padding.bottom, greaterThanOrEqualTo(AppDimens.p140));
     });
 
     // ---- T239: Manage Task button disabled for owner -------------------------
@@ -788,5 +800,52 @@ void main() {
       // _selectedPackageTier.toUpperCase() for the badge
       expect(find.text('BASIC'), findsOneWidget);
     });
+
+    testWidgets(
+      'T262 booking details remove order notes and keep long content usable on small screens',
+      (tester) async {
+        final previousSize = tester.view.physicalSize;
+        final previousRatio = tester.view.devicePixelRatio;
+        tester.view
+          ..physicalSize = const Size(390, 640)
+          ..devicePixelRatio = 1;
+        addTearDown(() {
+          tester.view
+            ..physicalSize = previousSize
+            ..devicePixelRatio = previousRatio;
+        });
+
+        const longDescription =
+            'Need a private tutor for help with calculus and algebra topics. '
+            'One session first, with possibility of more later. '
+            'Please include preparation, examples, and follow-up review.';
+
+        await _pumpScreen(
+          tester,
+          task: _bookingTask(description: longDescription),
+          taskVm: mockTaskVm,
+          chatVm: mockChatVm,
+          guardService: mockGuard,
+          safetyVm: mockSafety,
+          currentUserId: _kOwnerId,
+        );
+        await tester.pump();
+
+        expect(find.text('Order Timeline & Notes'), findsNothing);
+        expect(find.text('No activity yet.'), findsNothing);
+        expect(find.text('Add a note...'), findsNothing);
+        expect(find.byIcon(Icons.lock), findsNothing);
+        expect(find.byIcon(Icons.send), findsNothing);
+
+        final descriptionFinder = find.text(longDescription);
+        final description = tester.widget<Text>(descriptionFinder);
+        final descriptionContext = tester.element(descriptionFinder);
+        expect(
+          description.style?.color,
+          equals(descriptionContext.amberColors.textSubtle),
+        );
+        expect(find.text('Manage Task'), findsOneWidget);
+      },
+    );
   });
 }

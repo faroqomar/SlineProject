@@ -59,6 +59,16 @@ void main() {
         find.byKey(const ValueKey('dashboard_tab_body_0')),
         findsOneWidget,
       );
+      expect(find.byType(TabBar), findsNothing);
+      final activeTabContainers = tester
+          .widgetList<AnimatedContainer>(find.byType(AnimatedContainer))
+          .where((widget) {
+            final decoration = widget.decoration;
+            return decoration is BoxDecoration &&
+                decoration.color == AmberDuskTokens.colors.activeGlow;
+          })
+          .length;
+      expect(activeTabContainers, 1);
 
       final scaffold = tester.widget<Scaffold>(find.byType(Scaffold).first);
       expect(scaffold.backgroundColor, AmberDuskTokens.colors.page);
@@ -75,7 +85,7 @@ void main() {
       verify(() => vm.setTab(2)).called(1);
     });
 
-    testWidgets('T58 role switch triggers setRole transitions', (tester) async {
+    testWidgets('T58 role switch ignores active role taps', (tester) async {
       final vm = _MockDashboardViewModel();
 
       await _pumpDashboardScreen(tester, vm);
@@ -93,7 +103,7 @@ void main() {
       await tester.pump();
 
       verify(() => vm.setRole(UserRole.client)).called(1);
-      verify(() => vm.setRole(UserRole.freelancer)).called(1);
+      verifyNever(() => vm.setRole(UserRole.freelancer));
     });
   });
 }

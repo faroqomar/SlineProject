@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_motion.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 
 /// Centralized route transition factory for the SLine app.
 ///
@@ -88,7 +89,7 @@ class SlinePageRoute<T> extends PageRouteBuilder<T> {
       opaque: false,
       pageBuilder: (_) => child,
       duration: AppMotion.emphasis,
-      barrierColor: Colors.black38,
+      barrierColor: AmberDuskTokens.colors.scrim,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         if (MediaQuery.of(context).disableAnimations) return child;
 

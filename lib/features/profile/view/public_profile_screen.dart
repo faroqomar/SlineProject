@@ -116,6 +116,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
                 onRetry: () => vm.loadProfile(widget.userId),
               );
             }
+            final bottomViewPadding = MediaQuery.viewPaddingOf(context).bottom;
+            final stickyBarClearance =
+                AppDimens.publicProfileStickyBarClearance + bottomViewPadding;
+            final stickyBarBottom = AppDimens.p16 + bottomViewPadding;
 
             return Stack(
               children: [
@@ -168,14 +172,21 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
                       // --- About Tab ---
                       SingleChildScrollView(
                         controller: _aboutScrollController,
-                        padding: const EdgeInsets.all(AppDimens.p24),
+                        padding: EdgeInsets.fromLTRB(
+                          AppDimens.p24,
+                          AppDimens.p24,
+                          AppDimens.p24,
+                          stickyBarClearance,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('Bio', style: AppTypography.h5),
                             const SizedBox(height: AppDimens.p8),
                             Text(
-                              profile.bio,
+                              profile.bio.trim().isEmpty
+                                  ? 'No bio available.'
+                                  : profile.bio,
                               style: AppTypography.bodySmall.copyWith(
                                 color: colorScheme.textSecondary,
                               ),
@@ -183,34 +194,38 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
                             const SizedBox(height: AppDimens.p24),
                             Text('Skills', style: AppTypography.h5),
                             const SizedBox(height: AppDimens.p8),
-                            Wrap(
-                              spacing: AppDimens.p8,
-                              runSpacing: AppDimens.p8,
-                              children: profile.skills.map((skill) {
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: AppDimens.p12,
-                                    vertical: AppDimens.p6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.cardBackground,
-                                    borderRadius: BorderRadius.circular(
-                                      AmberDuskTokens.spacing.pillRadius,
+                            if (profile.skills.isEmpty)
+                              Text(
+                                'No skills listed yet.',
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: colorScheme.textSecondary,
+                                ),
+                              )
+                            else
+                              Wrap(
+                                spacing: AppDimens.p8,
+                                runSpacing: AppDimens.p8,
+                                children: profile.skills.map((skill) {
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: AppDimens.p12,
+                                      vertical: AppDimens.p6,
                                     ),
-                                  ),
-                                  child: Text(
-                                    skill,
-                                    style: AppTypography.captionBold.copyWith(
-                                      color: colorScheme.text,
+                                    decoration: BoxDecoration(
+                                      color: colorScheme.cardBackground,
+                                      borderRadius: BorderRadius.circular(
+                                        AmberDuskTokens.spacing.pillRadius,
+                                      ),
                                     ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                            // Add extra padding at bottom to avoid floating bar overlap
-                            const SizedBox(
-                              height: AppDimens.publicProfileStickyBarClearance,
-                            ),
+                                    child: Text(
+                                      skill,
+                                      style: AppTypography.captionBold.copyWith(
+                                        color: colorScheme.text,
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
                           ],
                         ),
                       ),
@@ -218,14 +233,16 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
                       // --- Portfolio Tab ---
                       SingleChildScrollView(
                         controller: _portfolioScrollController,
-                        padding: const EdgeInsets.all(AppDimens.p24),
+                        padding: EdgeInsets.fromLTRB(
+                          AppDimens.p24,
+                          AppDimens.p24,
+                          AppDimens.p24,
+                          stickyBarClearance,
+                        ),
                         child: Column(
                           children: [
                             PublicProfilePortfolio(
                               portfolio: profile.portfolio,
-                            ),
-                            const SizedBox(
-                              height: AppDimens.publicProfileStickyBarClearance,
                             ),
                           ],
                         ),
@@ -244,11 +261,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
                       else
                         ListView.separated(
                           controller: _historyScrollController,
-                          padding: const EdgeInsets.fromLTRB(
+                          padding: EdgeInsets.fromLTRB(
                             AppDimens.p24,
                             AppDimens.p24,
                             AppDimens.p24,
-                            AppDimens.publicProfileStickyBarClearance,
+                            stickyBarClearance,
                           ),
                           itemCount: profile.history.length,
                           separatorBuilder: (_, _) =>
@@ -266,11 +283,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
                       // --- Reviews Tab ---
                       SingleChildScrollView(
                         controller: _reviewsScrollController,
-                        padding: const EdgeInsets.fromLTRB(
+                        padding: EdgeInsets.fromLTRB(
                           AppDimens.p24,
                           AppDimens.p24,
                           AppDimens.p24,
-                          AppDimens.publicProfileStickyBarClearance,
+                          stickyBarClearance,
                         ),
                         child: PublicProfileReviews(reviews: profile.reviews),
                       ),
@@ -280,7 +297,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
 
                 // Sticky Bottom Bar (Hire / Message)
                 Positioned(
-                  bottom: AppDimens.p24,
+                  bottom: stickyBarBottom,
                   left: AppDimens.p24,
                   right: AppDimens.p24,
                   child: AppCardContainer(
@@ -304,23 +321,29 @@ class _PublicProfileScreenState extends State<PublicProfileScreen>
                           ),
                         ),
                         Container(
-                          width: AppDimens.publicProfileActionDividerWidth,
+                          width: profile.isFreelancer
+                              ? AppDimens.publicProfileActionDividerWidth
+                              : AppDimens.p0,
                           height: AppDimens.publicProfileActionDividerHeight,
-                          color: amberColors.heroDivider,
+                          color: profile.isFreelancer
+                              ? amberColors.heroDivider
+                              : AmberDuskTokens.colors.transparent,
                         ),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppDimens.p8,
-                            ),
-                            child: AppButton(
-                              text: 'Hire Now',
-                              onPressed: () =>
-                                  _handleHireAction(context, profile.id),
-                              height: AppDimens.publicProfileActionButtonHeight,
+                        if (profile.isFreelancer)
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppDimens.p8,
+                              ),
+                              child: AppButton(
+                                text: 'Hire Now',
+                                onPressed: () =>
+                                    _handleHireAction(context, profile.id),
+                                height:
+                                    AppDimens.publicProfileActionButtonHeight,
+                              ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                   ),

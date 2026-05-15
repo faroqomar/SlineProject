@@ -13,8 +13,8 @@ import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart'
 /// Filters modal shown as a draggable bottom sheet from the HomeScreen.
 ///
 /// Allows users to set sort order, budget range, delivery time, and seller
-/// level filters before applying them to the task feed. Uses a
-/// [DraggableScrollableSheet] so users can swipe to expand or dismiss.
+/// level filters before applying them to the task feed. The route owns the
+/// modal sheet; this widget owns one surface, one handle, and one scroll body.
 /// All filter state is local until the user taps "Apply Filters", at which
 /// point it is pushed to [TaskFilterViewModel].
 class FiltersModal extends StatefulWidget {
@@ -22,6 +22,7 @@ class FiltersModal extends StatefulWidget {
 
   static const Key resetButtonKey = ValueKey<String>('filters_reset_button');
   static const Key applyButtonKey = ValueKey<String>('filters_apply_button');
+  static const Key sheetHandleKey = ValueKey<String>('filters_sheet_handle');
 
   @override
   State<FiltersModal> createState() => _FiltersModalState();
@@ -80,129 +81,116 @@ class _FiltersModalState extends State<FiltersModal> {
   @override
   Widget build(BuildContext context) {
     final amberColors = _amberColors;
+    final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
 
     // Wrap in Semantics so screen readers announce the panel purpose
     return Semantics(
       label: 'Filters panel',
-      child: DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.9,
-        snap: true,
-        snapSizes: const [0.5, 0.7, 0.9],
-        builder: (context, scrollController) {
-          return Container(
-            decoration: BoxDecoration(
-              color: amberColors.background,
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(AmberDuskTokens.spacing.sheetRadius),
-              ),
-              boxShadow: AppDecorations.elevation(
-                3,
-                isDark: amberColors.isDark,
-              ),
+      child: FractionallySizedBox(
+        alignment: Alignment.bottomCenter,
+        heightFactor: 0.86,
+        child: Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: amberColors.background,
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(AmberDuskTokens.spacing.sheetRadius),
             ),
-            child: Column(
-              children: [
-                // --- Drag handle ---
-                // Visual affordance indicating the sheet is draggable
-                Container(
-                  width: 32,
-                  height: 4,
-                  margin: const EdgeInsets.only(
-                    top: AppDimens.p12,
-                    bottom: AppDimens.p8,
-                  ),
-                  decoration: BoxDecoration(
-                    // A raised neutral handle makes the sheet affordance
-                    // visible without adding blur or transparency effects.
-                    color: amberColors.surfaceHighest,
-                    borderRadius: BorderRadius.circular(AppDimens.r4),
-                  ),
+            boxShadow: AppDecorations.elevation(3, isDark: amberColors.isDark),
+          ),
+          child: Column(
+            children: [
+              // --- Drag handle ---
+              // Single modal handle; the route owns drag-to-dismiss behavior.
+              Container(
+                key: FiltersModal.sheetHandleKey,
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(
+                  top: AppDimens.p12,
+                  bottom: AppDimens.p8,
                 ),
+                decoration: BoxDecoration(
+                  // A raised neutral handle makes the sheet affordance visible
+                  // without adding blur, transparency, or a nested sheet.
+                  color: amberColors.surfaceHighest,
+                  borderRadius: BorderRadius.circular(AppDimens.r4),
+                ),
+              ),
 
-                // --- Header (non-scrollable) ---
-                Padding(
+              // --- Header (non-scrollable) ---
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppDimens.p24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Filters',
+                      style: AmberDuskTokens.typography.sectionTitle.copyWith(
+                        color: amberColors.text,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    // Accessible TextButton replaces GestureDetector so screen
+                    // readers and keyboard users can activate it.
+                    // Reset only mutates local state — user commits via Apply.
+                    TextButton(
+                      key: FiltersModal.resetButtonKey,
+                      onPressed: () {
+                        AppLogger.d(
+                          'home_filters_reset',
+                          tag: 'FiltersModal',
+                        );
+                        setState(() {
+                          _sortBy = TaskFilterViewModel.sortRelevance;
+                          _maxBudget = 1000;
+                          _minBudgetController.clear();
+                          _maxBudgetController.clear();
+                          _deliveryTimes.clear();
+                          _sellerLevels.clear();
+                        });
+                      },
+                      child: Text(
+                        'Reset All',
+                        style: AppTypography.captionBold.copyWith(
+                          color: amberColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // --- Scrollable filter sections ---
+              Expanded(
+                child: ListView(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppDimens.p24,
+                    vertical: AppDimens.p12,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Filters',
-                        style: AmberDuskTokens.typography.sectionTitle.copyWith(
-                          color: amberColors.text,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      // Accessible TextButton replaces GestureDetector so
-                      // screen readers and keyboard users can activate it.
-                      // Reset only mutates local state — user commits via Apply.
-                      TextButton(
-                        key: FiltersModal.resetButtonKey,
-                        onPressed: () {
-                          AppLogger.d(
-                            'home_filters_reset',
-                            tag: 'FiltersModal',
-                          );
-                          setState(() {
-                            _sortBy = TaskFilterViewModel.sortRelevance;
-                            _maxBudget = 1000;
-                            _minBudgetController.clear();
-                            _maxBudgetController.clear();
-                            _deliveryTimes.clear();
-                            _sellerLevels.clear();
-                          });
-                        },
-                        child: Text(
-                          'Reset All',
-                          style: AppTypography.captionBold.copyWith(
-                            color: amberColors.primary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  children: [
+                    _buildSortBySection(),
+                    const SizedBox(height: AppDimens.p24),
+                    _buildBudgetRangeSection(),
+                    const SizedBox(height: AppDimens.p24),
+                    _buildDeliveryTimeSection(),
+                    const SizedBox(height: AppDimens.p24),
+                    _buildSellerLevelSection(),
+                    // Extra padding keeps the final seller-level row clear of
+                    // the fixed apply area on short devices.
+                    const SizedBox(height: AppDimens.p32),
+                  ],
                 ),
+              ),
 
-                // --- Scrollable filter sections ---
-                Expanded(
-                  child: ListView(
-                    controller: scrollController,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimens.p24,
-                      vertical: AppDimens.p12,
-                    ),
-                    children: [
-                      // -- Sort By --
-                      _buildSortBySection(),
-                      const SizedBox(height: AppDimens.p24),
-
-                      // -- Budget Range --
-                      _buildBudgetRangeSection(),
-                      const SizedBox(height: AppDimens.p24),
-
-                      // -- Delivery Time --
-                      _buildDeliveryTimeSection(),
-                      const SizedBox(height: AppDimens.p24),
-
-                      // -- Seller Level --
-                      _buildSellerLevelSection(),
-
-                      // Extra padding so the last section isn't hidden
-                      // behind the fixed apply button
-                      const SizedBox(height: AppDimens.p24),
-                    ],
-                  ),
-                ),
-
-                // --- Apply Button (fixed at bottom) ---
-                _buildApplyButton(),
-              ],
-            ),
-          );
-        },
+              // --- Apply Button (fixed at bottom) ---
+              Padding(
+                padding: EdgeInsets.only(bottom: bottomInset),
+                child: _buildApplyButton(),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -213,7 +201,7 @@ class _FiltersModalState extends State<FiltersModal> {
 
   AmberDuskColorScheme get _amberColors => context.amberColors;
 
-  /// Builds the "Sort By" horizontal chip row.
+  /// Builds the "Sort By" chip group.
   /// Uses Amber Dusk section typography for the section header.
   Widget _buildSortBySection() {
     final amberColors = _amberColors;
@@ -227,49 +215,45 @@ class _FiltersModalState extends State<FiltersModal> {
           ),
         ),
         const SizedBox(height: AppDimens.p12),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children:
-                [
-                  TaskFilterViewModel.sortRelevance,
-                  TaskFilterViewModel.sortNewest,
-                  TaskFilterViewModel.sortPriceLowToHigh,
-                  TaskFilterViewModel.sortPriceHighToLow,
-                ].map((sort) {
-                  final isSelected = _sortBy == sort;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: AppDimens.p8),
-                    child: ChoiceChip(
-                      label: Text(sort),
-                      selected: isSelected,
-                      onSelected: (v) {
-                        // Haptic feedback on chip selection for tactile response
-                        AppInteractionStates.hapticSelection();
-                        setState(() => _sortBy = sort);
-                      },
-                      selectedColor: amberColors.primary,
-                      backgroundColor: amberColors.surface,
-                      labelStyle: AmberDuskTokens.typography.chip.copyWith(
-                        color: isSelected
-                            ? amberColors.textInverse
-                            : amberColors.muted,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          AmberDuskTokens.spacing.pillRadius,
-                        ),
-                        side: BorderSide(
-                          color: isSelected
-                              ? amberColors.primary
-                              : amberColors.border,
-                        ),
-                      ),
-                      showCheckmark: false,
+        Wrap(
+          spacing: AppDimens.p8,
+          runSpacing: AppDimens.p8,
+          children:
+              [
+                TaskFilterViewModel.sortRelevance,
+                TaskFilterViewModel.sortNewest,
+                TaskFilterViewModel.sortPriceLowToHigh,
+                TaskFilterViewModel.sortPriceHighToLow,
+              ].map((sort) {
+                final isSelected = _sortBy == sort;
+                return ChoiceChip(
+                  label: Text(sort),
+                  selected: isSelected,
+                  onSelected: (v) {
+                    // Haptic feedback on chip selection for tactile response.
+                    AppInteractionStates.hapticSelection();
+                    setState(() => _sortBy = sort);
+                  },
+                  selectedColor: amberColors.primary,
+                  backgroundColor: amberColors.surface,
+                  labelStyle: AmberDuskTokens.typography.chip.copyWith(
+                    color: isSelected
+                        ? amberColors.textInverse
+                        : amberColors.muted,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                      AmberDuskTokens.spacing.pillRadius,
                     ),
-                  );
-                }).toList(),
-          ),
+                    side: BorderSide(
+                      color: isSelected
+                          ? amberColors.primary
+                          : amberColors.border,
+                    ),
+                  ),
+                  showCheckmark: false,
+                );
+              }).toList(),
         ),
       ],
     );
@@ -306,10 +290,7 @@ class _FiltersModalState extends State<FiltersModal> {
                 hintText: 'Min',
                 controller: _minBudgetController,
                 keyboardType: TextInputType.number,
-                prefixIcon: const Icon(
-                  Icons.attach_money,
-                  size: AppDimens.iconSizeSmall,
-                ),
+                prefixIcon: const _CurrencyPrefix(),
               ),
             ),
             const Padding(
@@ -321,10 +302,7 @@ class _FiltersModalState extends State<FiltersModal> {
                 hintText: 'Max',
                 controller: _maxBudgetController,
                 keyboardType: TextInputType.number,
-                prefixIcon: const Icon(
-                  Icons.attach_money,
-                  size: AppDimens.iconSizeSmall,
-                ),
+                prefixIcon: const _CurrencyPrefix(),
                 onChanged: (val) {
                   final v = double.tryParse(val);
                   // Clamp to slider range so text input and slider stay in sync
@@ -484,7 +462,12 @@ class _FiltersModalState extends State<FiltersModal> {
         : 'Apply $count Filters';
 
     return Padding(
-      padding: const EdgeInsets.all(AppDimens.p24),
+      padding: const EdgeInsets.fromLTRB(
+        AppDimens.p24,
+        AppDimens.p12,
+        AppDimens.p24,
+        AppDimens.p16,
+      ),
       child: AppButton(
         key: FiltersModal.applyButtonKey,
         text: label,
@@ -504,6 +487,28 @@ class _FiltersModalState extends State<FiltersModal> {
           );
           Navigator.pop(context);
         },
+      ),
+    );
+  }
+}
+
+/// Compact non-interactive IQD prefix for budget fields.
+///
+/// The filter sheet uses IQD to match marketplace pricing and avoid mixing
+/// currencies with the rest of the Amber Dusk task feed.
+class _CurrencyPrefix extends StatelessWidget {
+  const _CurrencyPrefix();
+
+  @override
+  Widget build(BuildContext context) {
+    final amberColors = context.amberColors;
+    return Padding(
+      padding: const EdgeInsets.only(left: AppDimens.p12, right: AppDimens.p8),
+      child: Text(
+        'IQD',
+        style: AmberDuskTokens.typography.chip.copyWith(
+          color: amberColors.muted,
+        ),
       ),
     );
   }

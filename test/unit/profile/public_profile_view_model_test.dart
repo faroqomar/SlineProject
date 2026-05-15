@@ -26,6 +26,7 @@ void main() {
       initials: 'JD',
       name: 'Jane Doe',
       verified: true,
+      role: 'freelancer',
       title: 'Flutter Developer',
       location: 'Remote',
       jobSuccess: '100%',

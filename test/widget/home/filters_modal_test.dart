@@ -7,8 +7,7 @@ import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/features/home/view/widgets/filters_modal.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
 
-const Offset _sheetDragLarge = Offset(0, -500);
-const Offset _sheetDragSmall = Offset(0, -200);
+const Offset _sheetScrollSmall = Offset(0, -260);
 
 Future<void> _openFiltersModal(
   WidgetTester tester,
@@ -30,6 +29,7 @@ Future<void> _openFiltersModal(
                         context: context,
                         isScrollControlled: true,
                         backgroundColor: Colors.transparent,
+                        barrierColor: Colors.black87,
                         builder: (_) => const FiltersModal(),
                       ),
                     );
@@ -58,15 +58,12 @@ void main() {
 
         await _openFiltersModal(tester, viewModel);
 
-        // Expand the sheet to full height so all filters are visible.
-        // The drag handle area is at the top of the sheet — drag up to expand.
-        final sheetFinder = find.byType(DraggableScrollableSheet);
-        await tester.drag(sheetFinder, _sheetDragLarge);
-        await tester.pumpAndSettle();
+        expect(find.byType(DraggableScrollableSheet), findsNothing);
+        expect(find.byKey(FiltersModal.sheetHandleKey), findsOneWidget);
 
-        // Now scroll the inner ListView to find delivery time chips
+        // Scroll the single inner ListView to find delivery time chips.
         final listFinder = find.byType(ListView);
-        await tester.drag(listFinder, _sheetDragSmall);
+        await tester.drag(listFinder, _sheetScrollSmall);
         await tester.pumpAndSettle();
 
         final deliveryFinder = find
@@ -76,8 +73,8 @@ void main() {
         await tester.tap(deliveryFinder);
         await tester.pumpAndSettle();
 
-        // Scroll more to reach seller levels
-        await tester.drag(listFinder, _sheetDragSmall);
+        // Scroll more to reach seller levels.
+        await tester.drag(listFinder, _sheetScrollSmall);
         await tester.pumpAndSettle();
 
         final sellerFinder = find
@@ -122,11 +119,6 @@ void main() {
       await tester.pumpAndSettle();
 
       // Reset now only mutates local state. Tap Apply to commit to ViewModel.
-      // Scroll to make Apply button visible in DraggableScrollableSheet.
-      final sheetFinder = find.byType(DraggableScrollableSheet);
-      await tester.drag(sheetFinder, const Offset(0, -300));
-      await tester.pumpAndSettle();
-
       await tester.tap(find.byKey(FiltersModal.applyButtonKey));
       await tester.pumpAndSettle();
 
@@ -151,6 +143,28 @@ void main() {
 
       expect(find.text('Apply 1 Filter'), findsOneWidget);
       expect(viewModel.sortBy, initialSortBy);
+    });
+
+    testWidgets('uses a single sheet surface and IQD budget fields', (
+      tester,
+    ) async {
+      final viewModel = TaskFilterViewModel();
+
+      await _openFiltersModal(tester, viewModel);
+
+      expect(find.byType(DraggableScrollableSheet), findsNothing);
+      expect(find.byKey(FiltersModal.sheetHandleKey), findsOneWidget);
+      final sheet = tester.widget<FractionallySizedBox>(
+        find.byType(FractionallySizedBox),
+      );
+      expect(sheet.heightFactor, equals(0.86));
+      expect(find.text('IQD'), findsWidgets);
+      expect(find.byIcon(Icons.attach_money), findsNothing);
+
+      await tester.drag(find.byType(ListView), _sheetScrollSmall);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Delivery Time'), findsOneWidget);
     });
   });
 }

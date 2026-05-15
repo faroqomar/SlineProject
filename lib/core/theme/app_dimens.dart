@@ -109,4 +109,7 @@ class AppDimens {
 
   /// Image preview height for manage-portfolio edit rows.
   static const double managePortfolioImagePreviewHeight = 150.0;
+
+  /// Maximum readable width for modal dialogs on tablet and landscape layouts.
+  static const double dialogMaxWidth = 640.0;
 }

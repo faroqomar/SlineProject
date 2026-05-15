@@ -17,30 +17,28 @@ void showProfilePreview(BuildContext context, String userId) {
       isScrollControlled: true,
       backgroundColor: AmberDuskTokens.colors.transparent,
       barrierColor: AmberDuskTokens.colors.scrim,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.9,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        builder: (_, controller) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppDimens.p10,
-              AppDimens.p0,
-              AppDimens.p10,
-              AppDimens.p10,
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                color: AmberDuskTokens.colors.background,
-                borderRadius: BorderRadius.circular(
-                  AmberDuskTokens.spacing.sheetRadius,
-                ),
+      useSafeArea: true,
+      builder: (context) => FractionallySizedBox(
+        heightFactor: 0.96,
+        alignment: Alignment.bottomCenter,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppDimens.p10,
+            AppDimens.p0,
+            AppDimens.p10,
+            AppDimens.p10,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AmberDuskTokens.colors.background,
+              borderRadius: BorderRadius.circular(
+                AmberDuskTokens.spacing.sheetRadius,
               ),
-              clipBehavior: Clip.antiAlias,
-              child: PublicProfileScreen(userId: userId),
             ),
-          );
-        },
+            clipBehavior: Clip.antiAlias,
+            child: PublicProfileScreen(userId: userId),
+          ),
+        ),
       ),
     ),
   );

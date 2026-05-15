@@ -2,23 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sline_app/core/providers/theme_mode_provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/app_card_container.dart';
 import 'package:sline_app/core/widgets/signed_avatar.dart';
 import 'package:sline_app/features/auth/viewmodels/auth_session_view_model.dart';
-import 'package:sline_app/features/favorites/view/favorites_screen.dart';
-import 'package:sline_app/features/favorites/viewmodels/favorites_view_model.dart';
 import 'package:sline_app/features/profile/view/edit_profile_screen.dart';
-import 'package:sline_app/features/profile/view/my_services_screen.dart';
 import 'package:sline_app/features/profile/view/public_profile_screen.dart';
 import 'package:sline_app/features/profile/view/settings_screen.dart';
 import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
-import 'package:sline_app/features/saved/view/saved_tasks_screen.dart';
-import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
-import 'package:sline_app/features/wallet/view/wallet_screen.dart';
 
 /// Amber Dusk profile screen for account, services, portfolio, and settings.
 ///
@@ -48,7 +41,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     const amber = AmberDuskTokens.colors;
-    final topPadding = MediaQuery.of(context).padding.top;
+    const phoneLayout = AmberDuskTokens.phoneLayout;
+    const spacing = AmberDuskTokens.spacing;
+    final bottomSafePadding = MediaQuery.viewPaddingOf(context).bottom;
+    final bottomNavClearance =
+        bottomSafePadding +
+        phoneLayout.bottomNavBottom +
+        phoneLayout.bottomNavHeight +
+        spacing.lg;
 
     return Scaffold(
       backgroundColor: AmberDuskTokens.colors.transparent,
@@ -67,56 +67,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
             );
           }
 
-          return CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    AmberDuskSpacing.contentHorizontalPadding,
-                    topPadding + AppDimens.p24,
-                    AmberDuskSpacing.contentHorizontalPadding,
-                    AppDimens.p12,
-                  ),
-                  child: _ProfileHeader(
-                    onSettingsTap: () {
-                      AppLogger.d(
-                        'ProfileScreen: settings opened',
-                        tag: 'Profile',
-                      );
-                      unawaited(
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const SettingsScreen(),
+          return SafeArea(
+            bottom: false,
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AmberDuskSpacing.contentHorizontalPadding,
+                      AppDimens.p24,
+                      AmberDuskSpacing.contentHorizontalPadding,
+                      AppDimens.p12,
+                    ),
+                    child: _ProfileHeader(
+                      onSettingsTap: () {
+                        AppLogger.d(
+                          'ProfileScreen: settings opened',
+                          tag: 'Profile',
+                        );
+                        unawaited(
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const SettingsScreen(),
+                            ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
                 ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AmberDuskSpacing.contentHorizontalPadding,
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AmberDuskSpacing.contentHorizontalPadding,
+                  ),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      _ProfileHeroCard(vm: vm),
+                      const SizedBox(height: AppDimens.p16),
+                      _ProfileMetricsGrid(vm: vm),
+                      const SizedBox(height: AppDimens.p16),
+                      _ProfileAvailabilityCard(vm: vm),
+                      const SizedBox(height: AppDimens.p16),
+                      _ProfileServicesCard(skills: vm.skills),
+                      const SizedBox(height: AppDimens.p16),
+                      _ProfilePortfolioStrip(items: vm.portfolioItems),
+                      SizedBox(height: bottomNavClearance),
+                    ]),
+                  ),
                 ),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    _ProfileHeroCard(vm: vm),
-                    const SizedBox(height: AppDimens.p16),
-                    _ProfileMetricsGrid(vm: vm),
-                    const SizedBox(height: AppDimens.p16),
-                    _ProfileAvailabilityCard(vm: vm),
-                    const SizedBox(height: AppDimens.p16),
-                    _ProfileServicesCard(skills: vm.skills),
-                    const SizedBox(height: AppDimens.p16),
-                    _ProfilePortfolioStrip(items: vm.portfolioItems),
-                    const SizedBox(height: AppDimens.p16),
-                    const _ProfileSettingsGroup(),
-                    const SizedBox(height: AppDimens.p100),
-                  ]),
-                ),
-              ),
-            ],
+              ],
+            ),
           );
         },
       ),
@@ -769,7 +770,7 @@ class _PortfolioProofTile extends StatelessWidget {
             Text(
               description,
               style: AmberDuskTokens.typography.chip.copyWith(
-                color: amber.muted,
+                color: amber.textSubtle,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -778,267 +779,11 @@ class _PortfolioProofTile extends StatelessWidget {
           const SizedBox(height: AppDimens.p12),
           Text(
             footer,
-            style: AmberDuskTokens.typography.chip.copyWith(color: amber.muted),
+            style: AmberDuskTokens.typography.chip.copyWith(
+              color: amber.textSubtle,
+            ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Account actions grouped in the Amber Dusk settings module.
-class _ProfileSettingsGroup extends StatelessWidget {
-  const _ProfileSettingsGroup();
-
-  @override
-  Widget build(BuildContext context) {
-    return _Panel(
-      title: 'Settings',
-      child: Column(
-        children: [
-          _ActionRow(
-            label: 'Edit Profile',
-            icon: Icons.person_outline,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute<void>(
-                builder: (_) => const EditProfileScreen(),
-              ),
-            ),
-          ),
-          _ActionRow(
-            label: 'My Services',
-            icon: Icons.design_services_outlined,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute<void>(
-                builder: (_) => const MyServicesScreen(),
-              ),
-            ),
-          ),
-          Selector<SavedTasksViewModel, int>(
-            selector: (_, vm) => vm.savedTasks.length,
-            builder: (context, count, _) => _ActionRow(
-              label: 'Saved Projects',
-              icon: Icons.bookmark_border,
-              badge: count > 0 ? '$count' : null,
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute<void>(
-                  builder: (_) => const SavedTasksScreen(),
-                ),
-              ),
-            ),
-          ),
-          Selector<FavoritesViewModel, int>(
-            selector: (_, vm) => vm.itemsWithProfile.length,
-            builder: (context, count, _) => _ActionRow(
-              label: 'Favorites',
-              icon: Icons.star_outline,
-              badge: count > 0 ? '$count' : null,
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute<void>(
-                  builder: (_) => const FavoritesScreen(),
-                ),
-              ),
-            ),
-          ),
-          _ActionRow(
-            label: 'Wallet',
-            icon: Icons.account_balance_wallet_outlined,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute<void>(builder: (_) => const WalletScreen()),
-            ),
-          ),
-          _ActionRow(
-            label: 'Work History',
-            icon: Icons.history,
-            onTap: () => _openPublicProfile(context, initialTabIndex: 2),
-          ),
-          const _DarkModeRow(),
-          const SizedBox(height: AppDimens.p8),
-          const _LogoutButton(),
-        ],
-      ),
-    );
-  }
-}
-
-/// Tappable row with optional badge for account actions.
-class _ActionRow extends StatelessWidget {
-  const _ActionRow({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-    this.badge,
-  });
-
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-  final String? badge;
-
-  @override
-  Widget build(BuildContext context) {
-    const amber = AmberDuskTokens.colors;
-
-    return Semantics(
-      button: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          AppLogger.d(
-            'ProfileScreen: action tapped',
-            tag: 'Profile',
-            json: {'action': label},
-          );
-          onTap();
-        },
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: AppDimens.p8),
-          child: Row(
-            children: [
-              Container(
-                width: AppDimens.p40,
-                height: AppDimens.p40,
-                decoration: BoxDecoration(
-                  color: amber.surfaceHighest,
-                  borderRadius: BorderRadius.circular(AppDimens.r14),
-                ),
-                child: Icon(
-                  icon,
-                  color: amber.primary,
-                  size: AppDimens.iconSizeSmall,
-                ),
-              ),
-              const SizedBox(width: AppDimens.p12),
-              Expanded(
-                child: Text(
-                  label,
-                  style: AmberDuskTokens.typography.body.copyWith(
-                    color: amber.text,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              if (badge != null)
-                Container(
-                  padding: AmberDuskTokens.widgetTheme.statusPills.smallPadding,
-                  decoration: BoxDecoration(
-                    color: amber.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(
-                      AmberDuskTokens.widgetTheme.statusPills.radius,
-                    ),
-                  ),
-                  child: Text(
-                    badge!,
-                    style: AmberDuskTokens
-                        .widgetTheme
-                        .statusPills
-                        .smallTextStyle
-                        .copyWith(color: amber.primary),
-                  ),
-                ),
-              const SizedBox(width: AppDimens.p8),
-              Icon(
-                Icons.chevron_right,
-                color: amber.muted,
-                size: AppDimens.iconSizeSmall,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Theme mode toggle row kept in the profile settings group.
-class _DarkModeRow extends StatelessWidget {
-  const _DarkModeRow();
-
-  @override
-  Widget build(BuildContext context) {
-    const amber = AmberDuskTokens.colors;
-    final themeProvider = context.watch<ThemeModeProvider>();
-    final isDark = themeProvider.themeMode == ThemeMode.dark;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppDimens.p8),
-      child: Row(
-        children: [
-          Container(
-            width: AppDimens.p40,
-            height: AppDimens.p40,
-            decoration: BoxDecoration(
-              color: amber.surfaceHighest,
-              borderRadius: BorderRadius.circular(AppDimens.r14),
-            ),
-            child: Icon(
-              isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
-              color: amber.primary,
-              size: AppDimens.iconSizeSmall,
-            ),
-          ),
-          const SizedBox(width: AppDimens.p12),
-          Expanded(
-            child: Text(
-              'Dark Mode',
-              style: AmberDuskTokens.typography.body.copyWith(
-                color: amber.text,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          Switch(
-            value: isDark,
-            activeThumbColor: amber.primary,
-            onChanged: (_) => themeProvider.toggleThemeMode(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Logout control with the existing auth-session navigation behavior.
-class _LogoutButton extends StatelessWidget {
-  const _LogoutButton();
-
-  @override
-  Widget build(BuildContext context) {
-    const amber = AmberDuskTokens.colors;
-
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () async {
-        AppLogger.i('ProfileScreen: logout requested', tag: 'Profile');
-        final authVM = context.read<AuthSessionViewModel>();
-        await authVM.logout();
-        if (!context.mounted) return;
-        unawaited(
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            '/login',
-            (route) => false,
-          ),
-        );
-      },
-      child: Container(
-        height: AppDimens.p48,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: amber.dangerMuted,
-          borderRadius: BorderRadius.circular(AppDimens.r16),
-        ),
-        child: Text(
-          'Logout',
-          style: AmberDuskTokens.typography.control.copyWith(
-            color: amber.danger,
-          ),
-        ),
       ),
     );
   }

@@ -21,6 +21,7 @@ class NotificationsModalKeys {
   NotificationsModalKeys._();
   static const Key modal = ValueKey<String>('notifications_modal');
   static const Key loading = ValueKey<String>('notifications_loading');
+  static const Key list = ValueKey<String>('notifications_list');
   static const Key empty = ValueKey<String>('notifications_empty');
   static const Key error = ValueKey<String>('notifications_error');
 
@@ -45,6 +46,7 @@ class NotificationsModal extends StatefulWidget {
     return showModalBottomSheet<NotificationItem>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       barrierColor: context.amberColors.scrim,
       backgroundColor: AmberDuskColors.transparent,
       builder: (_) => const NotificationsModal(),
@@ -191,12 +193,13 @@ class _NotificationsModalState extends State<NotificationsModal>
                       return Semantics(
                         label: 'Notifications list',
                         child: ListView.separated(
+                          key: NotificationsModalKeys.list,
                           controller: scrollController,
-                          padding: const EdgeInsets.fromLTRB(
+                          padding: EdgeInsets.fromLTRB(
                             AppDimens.p16,
                             AppDimens.p4,
                             AppDimens.p16,
-                            AppDimens.p16,
+                            _bottomListPadding(context),
                           ),
                           itemCount: vm.notifications.length,
                           separatorBuilder: (_, _) =>
@@ -281,11 +284,19 @@ class _NotificationsModalState extends State<NotificationsModal>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            'Notifications',
-            style: AppTypography.h3.copyWith(color: amberColors.text),
+          Expanded(
+            child: Text(
+              'Notifications',
+              style: AmberDuskTokens.typography.sectionTitle.copyWith(
+                color: amberColors.text,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
+          const SizedBox(width: AppDimens.p12),
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Semantics(
                 button: true,
@@ -349,11 +360,12 @@ class _NotificationsModalState extends State<NotificationsModal>
                     'Mark all as read',
                     style: AppTypography.caption.copyWith(
                       color: amberColors.primary,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
               ),
+              const SizedBox(width: AppDimens.p8),
               Semantics(
                 button: true,
                 label: 'Close notifications',
@@ -374,11 +386,11 @@ class _NotificationsModalState extends State<NotificationsModal>
   Widget _buildSkeletonList() {
     return ListView.separated(
       key: NotificationsModalKeys.loading,
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         AppDimens.p16,
         AppDimens.p4,
         AppDimens.p16,
-        AppDimens.p16,
+        _bottomListPadding(context),
       ),
       itemCount: 5,
       separatorBuilder: (_, _) => const SizedBox(height: AppDimens.p12),
@@ -395,7 +407,12 @@ class _NotificationsModalState extends State<NotificationsModal>
       child: Semantics(
         label: 'No notifications. You are all caught up.',
         child: Padding(
-          padding: const EdgeInsets.all(AppDimens.p24),
+          padding: EdgeInsets.fromLTRB(
+            AppDimens.p24,
+            AppDimens.p24,
+            AppDimens.p24,
+            _bottomListPadding(context),
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -434,7 +451,12 @@ class _NotificationsModalState extends State<NotificationsModal>
       child: Semantics(
         label: 'Error loading notifications. Tap retry.',
         child: Padding(
-          padding: const EdgeInsets.all(AppDimens.p24),
+          padding: EdgeInsets.fromLTRB(
+            AppDimens.p24,
+            AppDimens.p24,
+            AppDimens.p24,
+            _bottomListPadding(context),
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -483,6 +505,15 @@ class _NotificationsModalState extends State<NotificationsModal>
         ),
       ),
     );
+  }
+
+  /// Bottom inset for scrollable notification states.
+  ///
+  /// The modal is draggable and can sit above the home indicator, so rows need
+  /// explicit safe-area clearance inside the scroll view rather than relying on
+  /// the route to pad only the sheet shell.
+  double _bottomListPadding(BuildContext context) {
+    return AppDimens.p24 + MediaQuery.viewPaddingOf(context).bottom;
   }
 }
 

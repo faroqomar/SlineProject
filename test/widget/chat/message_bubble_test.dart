@@ -166,5 +166,19 @@ void main() {
       final iconWidget = tester.widget<Icon>(find.byIcon(Icons.done_all));
       expect(iconWidget.color, equals(AmberDuskTokens.colors.light.primary));
     });
+
+    testWidgets('received timestamp uses stronger subtle text token', (
+      tester,
+    ) async {
+      await tester.pumpWidget(buildTestBubble(isMine: false));
+
+      final timestamp = tester.widget<Text>(find.text('12:00'));
+      expect(
+        timestamp.style?.color,
+        equals(
+          AmberDuskTokens.colors.light.textSubtle.withValues(alpha: 0.82),
+        ),
+      );
+    });
   });
 }

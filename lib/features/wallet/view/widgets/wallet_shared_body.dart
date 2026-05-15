@@ -83,6 +83,8 @@ class _WalletSharedBodyState extends State<WalletSharedBody> {
         children.add(SizedBox(height: widget.bottomSpacing));
 
         return RefreshIndicator(
+          color: AmberDuskTokens.colors.primary,
+          backgroundColor: AmberDuskTokens.colors.surface,
           onRefresh: () => _refresh(context),
           child: ListView(
             key: const ValueKey<String>('wallet_shared_list'),

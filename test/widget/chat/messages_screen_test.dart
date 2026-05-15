@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:provider/provider.dart';
+import 'package:sline_app/core/theme/app_layout.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/features/chat/models/conversation_model.dart';
 import 'package:sline_app/features/chat/view/messages_screen.dart';
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
@@ -17,6 +19,8 @@ Conversation _conversation({
   required String name,
   required String lastMessage,
   String? lastMessageSenderId,
+  String? taskTitle,
+  String? taskType,
 }) {
   return Conversation(
     id: id,
@@ -27,6 +31,8 @@ Conversation _conversation({
     lastMessage: lastMessage,
     lastMessageSenderId: lastMessageSenderId,
     lastMessageTime: DateTime.utc(2026, 5, 1, 12),
+    taskTitle: taskTitle,
+    taskType: taskType,
   );
 }
 
@@ -162,6 +168,98 @@ void main() {
 
       expect(find.text('Yara Designer'), findsOneWidget);
       expect(find.text('Omar Finance'), findsNothing);
+    });
+
+    testWidgets('conversation list clears floating bottom navigation', (
+      tester,
+    ) async {
+      final vm = _MockChatViewModel();
+      await _pumpMessagesScreen(
+        tester,
+        vm,
+        conversations: [
+          _conversation(
+            id: 'last-visible',
+            name: 'Zahraa Firas',
+            lastMessage: 'Ready',
+          ),
+        ],
+      );
+
+      final paddingWidgets = tester.widgetList<SliverPadding>(
+        find.byType(SliverPadding),
+      );
+      final conversationListPadding = paddingWidgets
+          .map((widget) => widget.padding)
+          .whereType<EdgeInsets>()
+          .firstWhere(
+            (padding) =>
+                padding.left ==
+                AmberDuskTokens.spacing.contentHorizontalPadding,
+          );
+
+      // The inbox lives behind the app shell Stack, so its scrollable content
+      // must reserve the floating nav band even when the test safe area is 0.
+      expect(
+        conversationListPadding.bottom,
+        equals(
+          AmberDuskTokens.phoneLayout.bottomNavBottom +
+              AmberDuskTokens.phoneLayout.bottomNavHeight +
+              AppLayout.spacingScreen,
+        ),
+      );
+    });
+
+    testWidgets('empty linked task rows explain the context', (tester) async {
+      final vm = _MockChatViewModel();
+      await _pumpMessagesScreen(
+        tester,
+        vm,
+        conversations: [
+          _conversation(
+            id: 'task-empty',
+            name: 'Test One',
+            lastMessage: '',
+            taskTitle: 'i will market your campaign',
+          ),
+        ],
+      );
+
+      expect(find.text('Linked task - no messages yet'), findsOneWidget);
+      expect(find.text('No messages yet'), findsNothing);
+    });
+
+    testWidgets('read conversation rows use quiet blended surfaces', (
+      tester,
+    ) async {
+      final vm = _MockChatViewModel();
+      await _pumpMessagesScreen(
+        tester,
+        vm,
+        conversations: [
+          _conversation(
+            id: 'read-thread',
+            name: 'Eros Gray',
+            lastMessage: 'hi',
+            taskTitle: 'Outdoor Personal Photo Session',
+          ),
+        ],
+      );
+
+      final quietSurface = AmberDuskTokens.colors.surface.withValues(
+        alpha: 0.46,
+      );
+      final quietConversationCards = tester
+          .widgetList<Container>(find.byType(Container))
+          .where((container) {
+            final decoration = container.decoration;
+            return decoration is BoxDecoration &&
+                decoration.color == quietSurface;
+          });
+
+      // Read rows should blend with the inbox canvas instead of using the full
+      // card surface, which made the message list look like stacked blocks.
+      expect(quietConversationCards, isNotEmpty);
     });
   });
 }

@@ -162,10 +162,11 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
     final vm = context.read<DashboardViewModel>();
     const amber = AmberDuskTokens.colors;
     if (active.isEmpty && delivered.isEmpty) {
-      return RefreshIndicator(
+      return _dashboardRefreshIndicator(
         onRefresh: vm.refresh,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
+          padding: _workListPadding(context),
           child: Semantics(
             label: 'No active work. Browse tasks to get started.',
             child: SizedBox(
@@ -220,15 +221,10 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
       ...active.where((item) => !item.actionableNeedsReview),
     ];
 
-    return RefreshIndicator(
+    return _dashboardRefreshIndicator(
       onRefresh: vm.refresh,
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(
-          AppDimens.p16,
-          0,
-          AppDimens.p16,
-          AppDimens.p100,
-        ),
+        padding: _workListPadding(context),
         itemCount: visibleActive.length,
         separatorBuilder: (_, _) => const SizedBox(height: AppDimens.p12),
         itemBuilder: (_, index) {
@@ -381,10 +377,11 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
     final vm = context.read<DashboardViewModel>();
     const amber = AmberDuskTokens.colors;
     if (items.isEmpty) {
-      return RefreshIndicator(
+      return _dashboardRefreshIndicator(
         onRefresh: vm.refresh,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
+          padding: _workListPadding(context),
           child: Semantics(
             label: emptyMessage,
             child: SizedBox(
@@ -414,15 +411,10 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
       );
     }
 
-    return RefreshIndicator(
+    return _dashboardRefreshIndicator(
       onRefresh: vm.refresh,
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(
-          AppDimens.p16,
-          0,
-          AppDimens.p16,
-          AppDimens.p100,
-        ),
+        padding: _workListPadding(context),
         itemCount: items.length,
         separatorBuilder: (_, _) => const SizedBox(height: AppDimens.p12),
         itemBuilder: (context, index) {
@@ -454,6 +446,34 @@ class _WorkTabState extends State<WorkTab> with SingleTickerProviderStateMixin {
     AppLogger.i('Dashboard work empty CTA opened Home', tag: 'dashboard.work');
     context.read<NavigationProvider?>()?.setCurrentIndex(
       MainNavDestinations.home,
+    );
+  }
+
+  EdgeInsets _workListPadding(BuildContext context) {
+    const phoneLayout = AmberDuskTokens.phoneLayout;
+    final bottomSafePadding = MediaQuery.viewPaddingOf(context).bottom;
+    return EdgeInsets.fromLTRB(
+      AppDimens.p16,
+      0,
+      AppDimens.p16,
+      bottomSafePadding +
+          phoneLayout.bottomNavBottom +
+          phoneLayout.bottomNavHeight +
+          AppDimens.p24,
+    );
+  }
+
+  RefreshIndicator _dashboardRefreshIndicator({
+    required RefreshCallback onRefresh,
+    required Widget child,
+  }) {
+    const amber = AmberDuskTokens.colors;
+    return RefreshIndicator(
+      color: amber.primary,
+      backgroundColor: amber.surface,
+      strokeWidth: 2.6,
+      onRefresh: onRefresh,
+      child: child,
     );
   }
 }

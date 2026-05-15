@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
 // Canonical PortfolioItem from portfolio feature
 import 'package:sline_app/features/portfolio/models/portfolio_item.dart'
@@ -16,6 +17,9 @@ class FreelancerProfile {
   final String name;
   final bool verified;
   final bool online;
+
+  /// Active public role. Supported values are `freelancer` and `client`.
+  final String role;
   final String title;
   final String location;
   final String jobSuccess;
@@ -34,6 +38,7 @@ class FreelancerProfile {
     required this.name,
     this.verified = false,
     this.online = false,
+    required this.role,
     required this.title,
     required this.location,
     required this.jobSuccess,
@@ -64,25 +69,36 @@ class FreelancerProfile {
       }
     }
 
-    // Determine title based on role or skills (mock logic for now as title isn't in DB)
-    var displayTitle = profile.activeRole == 'freelancer'
-        ? 'Freelancer'
-        : 'Client';
-    if (profile.skills.isNotEmpty) {
+    final trimmedRole = profile.activeRole.trim();
+    final activeRole = trimmedRole.isEmpty
+        ? 'client'
+        : trimmedRole.toLowerCase();
+    // Freelancers can use their first skill as a short professional title.
+    // Client profiles should stay role-labeled so the public CTA cannot imply
+    // that a client is a bookable service provider.
+    var displayTitle = activeRole == 'freelancer' ? 'Freelancer' : 'Client';
+    if (activeRole == 'freelancer' && profile.skills.isNotEmpty) {
       displayTitle = profile.skills.first;
     }
+    final completedHistory = history
+        .where((task) => task.status == TaskStatus.completed)
+        .toList(growable: false);
+    final completedJobs = completedHistory.length;
 
     return FreelancerProfile(
       id: profile.id,
       initials: initials,
       name: profile.fullName ?? 'Unknown User',
       verified: profile.email != null, // Simple proxy for verification
+      role: activeRole,
       title: displayTitle,
       location: 'Remote', // Placeholder
-      jobSuccess: '100%', // Placeholder
-      jobsCompleted: 0, // Placeholder
+      jobSuccess: completedJobs == 0
+          ? '-'
+          : '100%', // Placeholder until ratings exist
+      jobsCompleted: completedJobs,
       hourlyRate: '-', // Placeholder
-      bio: profile.bio ?? 'No bio available.',
+      bio: profile.bio?.trim() ?? '',
       skills: profile.skills,
       portfolio: portfolio,
       reviews: reviews,
@@ -92,6 +108,9 @@ class FreelancerProfile {
   }
 
   // Keeping mock for testing/previews if needed, but updated to use new structure if necessary
+
+  /// True when this profile is allowed to present freelancer booking actions.
+  bool get isFreelancer => role == 'freelancer';
 }
 
 /// Extension to provide UI-specific properties for PortfolioItem display.

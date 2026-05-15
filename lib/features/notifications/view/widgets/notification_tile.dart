@@ -3,8 +3,6 @@ import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_states.dart';
-import 'package:sline_app/core/theme/app_theme.dart';
-import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/features/notifications/models/notification_model.dart';
@@ -30,7 +28,6 @@ class NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
     final amberColors = context.amberColors;
     final isRead = notification.isRead;
 
@@ -71,20 +68,23 @@ class NotificationTile extends StatelessWidget {
                         Expanded(
                           child: Text(
                             notification.title,
-                            style: AppTypography.h4.copyWith(
-                              fontWeight: isRead
-                                  ? FontWeight.normal
-                                  : FontWeight.bold,
-                              color: colorScheme.text,
-                            ),
+                            style: AmberDuskTokens.typography.notificationTitle
+                                .copyWith(
+                                  fontWeight: isRead
+                                      ? FontWeight.normal
+                                      : FontWeight.bold,
+                                  color: isRead
+                                      ? amberColors.textSubtle
+                                      : amberColors.text,
+                                ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         Text(
                           formatFriendlyTime(notification.createdAt),
-                          style: AppTypography.caption.copyWith(
-                            color: colorScheme.textSecondary,
+                          style: AmberDuskTokens.typography.bodySmall.copyWith(
+                            color: amberColors.textSubtle,
                           ),
                         ),
                       ],
@@ -92,13 +92,36 @@ class NotificationTile extends StatelessWidget {
                     const SizedBox(height: AppDimens.p4),
                     Text(
                       notification.message,
-                      style: AppTypography.bodyMedium.copyWith(
-                        // Semantic textSecondary replaces hardcoded mediumGrey
-                        color: colorScheme.textSecondary,
+                      style: AmberDuskTokens.typography.body.copyWith(
+                        color: amberColors.textSubtle,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    if (!isRead) ...[
+                      const SizedBox(height: AppDimens.p8),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppDimens.p8,
+                            vertical: AppDimens.p4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: amberColors.primary.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(
+                              AmberDuskTokens.radius.pill,
+                            ),
+                          ),
+                          child: Text(
+                            'Unread',
+                            style: AmberDuskTokens.typography.chip.copyWith(
+                              color: amberColors.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -123,7 +146,6 @@ class NotificationTile extends StatelessWidget {
 
   /// Type-colored icon with semantic token mapping.
   Widget _buildIcon(BuildContext context) {
-    final colorScheme = context.colorScheme;
     final amberColors = context.amberColors;
     IconData icon;
     Color color;
@@ -150,7 +172,7 @@ class NotificationTile extends StatelessWidget {
         color = amberColors.primary;
       case NotificationType.system:
         icon = Icons.notifications_none;
-        color = colorScheme.textSecondary;
+        color = amberColors.textSubtle;
     }
 
     return Container(

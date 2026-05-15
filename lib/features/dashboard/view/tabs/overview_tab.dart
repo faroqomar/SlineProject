@@ -42,12 +42,22 @@ class _OverviewTabState extends State<OverviewTab> {
     final vm = context.watch<DashboardViewModel>();
     const spacing = AmberDuskTokens.spacing;
     const amber = AmberDuskTokens.colors;
+    const phoneLayout = AmberDuskTokens.phoneLayout;
+    final bottomSafePadding = MediaQuery.viewPaddingOf(context).bottom;
+    final bottomNavClearance =
+        bottomSafePadding +
+        phoneLayout.bottomNavBottom +
+        phoneLayout.bottomNavHeight +
+        spacing.lg;
 
     return RefreshIndicator(
       onRefresh: vm.refresh,
       child: ListView(
-        padding: EdgeInsets.symmetric(
-          horizontal: spacing.contentHorizontalPadding,
+        padding: EdgeInsets.fromLTRB(
+          spacing.contentHorizontalPadding,
+          0,
+          spacing.contentHorizontalPadding,
+          bottomNavClearance,
         ),
         children: [
           // Wallet appears first to match the dashboard overview evidence.
@@ -85,7 +95,7 @@ class _OverviewTabState extends State<OverviewTab> {
             ),
           ),
 
-          SizedBox(height: spacing.xxl),
+          SizedBox(height: spacing.md),
         ],
       ),
     );

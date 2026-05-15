@@ -2,6 +2,9 @@
 
 Project-specific `custom_lint` plugin for the SLine Flutter app.
 
+See `OPEN_SOURCE_ROADMAP.md` for the future plan to extract this into a
+generic pub.dev package for Flutter architecture enforcement.
+
 This package turns SLine architecture, design-token, and safety conventions into
 analyzer diagnostics that appear in `dart run custom_lint`, CI, pre-commit, and
 supported IDE Problems panels. Generic Dart lint packages cannot know SLine's

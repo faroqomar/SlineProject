@@ -102,7 +102,7 @@ Recent migration themes in `supabase/migrations/`:
 - ledger introduction and wallet views
 - booking server authority and payment remediation
 - repeat slotless booking support
-- management timeline scope index
+- internal work-log scope indexes
 - escrow idempotency (stable key + FOR UPDATE in `rpc_approve_delivery`, migration `20260307000001_escrow_idempotency_stable_key.sql`)
 - **Hardened Payment Gateway & Administrator Views (v2.20, 2026-03-07):** Added `payment_intents`, `payment_events`, and `orphan_payments` tables. New admin financial views `vw_admin_finance_metrics`, `vw_admin_escrow_open`, and `vw_admin_booking_finance`.
 - direct_offers table, RLS, triggers, ledger RPC and enum fix (20260303–20260308); 20260308 fixes release_with_fee zero-amount and enum cast
@@ -251,7 +251,7 @@ Not every feature uses every subfolder, but the standard live convention is:
 - `lib/features/direct_offers/`: direct chat offers (create, accept, pay, deliver, complete) and payment recovery
   - `services/direct_offer_deep_link_handler.dart` — **Phase E** Deep link handler for direct offer routes
 - `lib/features/notifications/`: in-app notification list (server-authority; foreground sync then stream), badge/modal/deep links; `PushDeviceService` registers FCM tokens in `user_devices`; push delivery via `notification_push_queue` + Edge (`push-notify`, `process-push-queue`). `NotificationViewModel` preserves cached notifications and reconnects on transient Supabase Realtime close codes `1002`/`1006`. Diagram: `Sline_everything/AppDiagram/All_Diagrams/13_notification-routing.md`. Plan: `.TODO/PLAN_NotificationRouting_2026-03-08_PlanCritic.md`.
-- `lib/features/management/`: order timeline / note management for tasks and bookings
+- `lib/features/management/`: internal work-log models/services used for system event logging; the task/booking Order Timeline & Notes UI was removed.
 - `lib/features/orders/`: decommissioned placeholder folder with `README.md` only; standalone orders runtime was removed on 2026-03-01
 - `lib/features/proposals/`: proposal models, data (repositories), routes (payment); view re-exports from tasks for list/submit/tile/payment screens
 - `lib/features/tasks/`: task creation, details, requests/offers, tender payment, delivery flows. Amber Dusk Phases 2-4 touch create flow, task/tender/booking card widgets, dashboard offer cards, and `models/task_model.dart` package-detail helper accessors without changing Supabase contracts. Amber Dusk Phase 7 tokenizes tender/request/payment-adjacent work surfaces while preserving ViewModel/service lifecycle authority. Transactional QA recovery adds `CreateTaskResult`, poster-visible Home refresh, category-specific Home copy, and whole-IQD proposal/request amount handling.
@@ -396,7 +396,7 @@ Current bundled asset folder:
 - Chat feature includes `models/chat_offer_payload.dart` (canonical offer payload) and `services/chat_realtime_merger.dart` (realtime snapshot merge); archive uses RPC `archive_conversation_v1`. Inbox realtime: `subscribeToInboxMessages(userId)` (messages stream, not conversations); see diagram 18 and `.TODO/PLAN_RealtimeSubscriptionTopology_2026-03-07.md`.
 - Booking flow now uses `payment_checkout_screen.dart`, `payment_webview_screen.dart`, and `payment_return_screen.dart` instead of older slot-sheet-only docs.
 - Core runtime now includes `payment_runtime_config.dart`, `payment_pending_store.dart`, and `flutter_error_filters.dart`.
-- Management now includes `work_log_scope.dart` and `view/widgets/order_management_section.dart`.
+- Management now keeps `work_log_scope.dart` for internal work-log service calls; the reusable `OrderManagementSection` UI was removed from task and booking details.
 - Loading overlays use `LoadingHandle` from `lib/core/utils/loading_utils.dart`; the old dialog `show/hide` pattern is obsolete.
 - Profile cross-user reads are centralized in `lib/features/profile/services/profile_summary_service.dart`; views and sibling features should not query another user from base `profiles`.
 - Home, Tenders, and Booking discovery now share `lib/features/tasks/viewmodels/discovery_feed_view_model_contract.dart` as their feed API, while `home/viewmodels/home_view_model.dart` remains the concrete notifier.

@@ -137,6 +137,7 @@ void main() {
       expect(typography.titleFamily, equals('Fraunces'));
       expect(typography.nameFamily, equals('Fraunces'));
       expect(typography.moneyFamily, equals('Fraunces'));
+      expect(typography.walletAmountFamily, equals('DM Sans'));
       expect(
         typography.displayFallbacks,
         equals(const <String>[
@@ -157,6 +158,9 @@ void main() {
       expect(typography.screenTitle.fontSize, equals(30));
       expect(typography.screenTitle.fontWeight, equals(FontWeight.w700));
       expect(typography.screenTitle.letterSpacing, equals(0));
+      expect(typography.notificationTitle.fontFamily, equals('DM Sans'));
+      expect(typography.notificationTitle.fontSize, equals(18));
+      expect(typography.notificationTitle.fontWeight, isNull);
       expect(typography.bookingName.fontFamily, equals('Fraunces'));
       expect(typography.bookingName.fontSize, equals(22));
       expect(typography.bookingName.fontWeight, equals(FontWeight.w700));
@@ -164,6 +168,15 @@ void main() {
       expect(typography.moneyLarge.fontWeight, equals(FontWeight.w800));
       expect(typography.moneyMedium.fontSize, equals(36));
       expect(typography.moneyMedium.fontWeight, equals(FontWeight.w800));
+      expect(typography.walletAmount.fontFamily, equals('DM Sans'));
+      expect(typography.walletAmount.fontSize, equals(38));
+      expect(typography.walletAmount.fontWeight, equals(FontWeight.w900));
+      expect(typography.walletAmountCompact.fontFamily, equals('DM Sans'));
+      expect(typography.walletAmountCompact.fontSize, equals(30));
+      expect(
+        typography.walletAmountCompact.fontWeight,
+        equals(FontWeight.w900),
+      );
       expect(typography.body.fontFamily, equals('DM Sans'));
       expect(typography.body.fontSize, equals(14));
       expect(typography.control.fontWeight, equals(FontWeight.w700));

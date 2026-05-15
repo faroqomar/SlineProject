@@ -11,6 +11,7 @@ import 'package:sline_app/core/theme/app_layout.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
+import 'package:sline_app/core/utils/format_date.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/utils/loading_utils.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
@@ -20,8 +21,6 @@ import 'package:sline_app/core/widgets/signed_image.dart';
 import 'package:sline_app/features/booking/view/payment_checkout_screen.dart';
 import 'package:sline_app/features/chat/view/chat_screen.dart'; // Added
 import 'package:sline_app/features/chat/viewmodels/chat_view_model.dart';
-import 'package:sline_app/features/management/models/work_log_scope.dart';
-import 'package:sline_app/features/management/view/widgets/order_management_section.dart';
 import 'package:sline_app/features/profile/view/widgets/profile_preview_modal.dart';
 import 'package:sline_app/features/proposals/view/proposals_list_screen.dart';
 import 'package:sline_app/features/safety/viewmodels/safety_view_model.dart';
@@ -77,6 +76,8 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     final task = widget.task;
     final isTender = task.isTender;
     final isBooking = task.isBooking;
+    final scrollBottomClearance =
+        MediaQuery.viewPaddingOf(context).bottom + AppDimens.p140;
 
     final currentUserId = context.read<TaskViewModel>().currentUserId;
     final isOwner = currentUserId != null && currentUserId == task.userId;
@@ -121,7 +122,12 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
           // --- Scrollable Content ---
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppDimens.p24),
+              padding: EdgeInsets.fromLTRB(
+                AppDimens.p24,
+                AppDimens.p24,
+                AppDimens.p24,
+                scrollBottomClearance,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -186,6 +192,9 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                   ),
                   const SizedBox(height: AppDimens.p24),
 
+                  _buildTaskSummaryChips(context),
+                  const SizedBox(height: AppDimens.p24),
+
                   // Packages (Booking Only)
                   if (isBooking) ...[
                     _buildPackageSelector(context),
@@ -195,13 +204,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                   ],
 
                   // Description
-                  Text(
-                    task.description,
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: colorScheme.textSecondary,
-                      height: 1.5,
-                    ),
-                  ),
+                  _TaskDescriptionText(description: task.description),
                   const SizedBox(height: AppDimens.p24),
 
                   // Images
@@ -214,17 +217,6 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                     ),
                     const SizedBox(height: AppDimens.p24),
                   ],
-
-                  // Order Management (Notes & Timeline)
-                  if (currentUserId != null)
-                    OrderManagementSection(
-                      padding: const EdgeInsets.only(bottom: AppDimens.p24),
-                      scope: WorkLogScope(
-                        entityId: task.id,
-                        entityType: 'task',
-                      ),
-                      currentUserId: currentUserId,
-                    ),
 
                   // Proposals Link (Owner of Tender)
                   if (isOwner && isTender)
@@ -274,7 +266,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
               AppDimens.p24,
               AppDimens.p16,
               AppDimens.p24,
-              MediaQuery.of(context).padding.bottom + AppDimens.p16,
+              MediaQuery.viewPaddingOf(context).bottom + AppDimens.p24,
             ),
             decoration: BoxDecoration(
               color: amberColors.background,
@@ -444,6 +436,36 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
   }
 
   // --- Mock UI Helpers ---
+
+  Widget _buildTaskSummaryChips(BuildContext context) {
+    final task = widget.task;
+    final chips = <_TaskFact>[
+      if (task.isTender)
+        _TaskFact(
+          icon: Icons.payments_outlined,
+          label: PriceFormatter.formatPrice(task.budget),
+        ),
+      _TaskFact(
+        icon: Icons.schedule,
+        label: task.deadline == null
+            ? 'Open deadline'
+            : formatTimeLeft(task.deadline!),
+      ),
+      if ((task.categoryName ?? task.category)?.trim().isNotEmpty ?? false)
+        _TaskFact(
+          icon: Icons.category_outlined,
+          label: (task.categoryName ?? task.category)!.trim(),
+        ),
+      if (task.offers > 0 && task.isTender)
+        _TaskFact(icon: Icons.local_offer_outlined, label: '${task.offers}'),
+    ];
+
+    return Wrap(
+      spacing: AppDimens.p8,
+      runSpacing: AppDimens.p8,
+      children: chips.map((chip) => _TaskFactChip(fact: chip)).toList(),
+    );
+  }
 
   Widget _buildBottomIconButton(
     BuildContext context, {
@@ -741,5 +763,105 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
         ),
       );
     }
+  }
+}
+
+/// Small immutable fact displayed in the job details summary row.
+///
+/// Keeping the icon and label together makes the summary chips easy to expand
+/// without mixing display metadata into the task model.
+class _TaskFact {
+  const _TaskFact({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+}
+
+/// Renders compact Amber Dusk metadata chips for budget, deadline, and category.
+class _TaskFactChip extends StatelessWidget {
+  const _TaskFactChip({required this.fact});
+
+  final _TaskFact fact;
+
+  @override
+  Widget build(BuildContext context) {
+    final amberColors = context.amberColors;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimens.p10,
+        vertical: AppDimens.p8,
+      ),
+      decoration: BoxDecoration(
+        color: amberColors.surface,
+        borderRadius: BorderRadius.circular(
+          AmberDuskTokens.spacing.pillRadius,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            fact.icon,
+            size: AppDimens.iconSizeSmall,
+            color: amberColors.primary,
+          ),
+          const SizedBox(width: AppDimens.p6),
+          Text(
+            fact.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.captionBold.copyWith(
+              color: amberColors.text,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Displays task descriptions with paragraph spacing while preserving authored breaks.
+class _TaskDescriptionText extends StatelessWidget {
+  const _TaskDescriptionText({required this.description});
+
+  final String description;
+
+  @override
+  Widget build(BuildContext context) {
+    final amberColors = context.amberColors;
+    final paragraphs = description
+        .trim()
+        .split(RegExp(r'\n\s*\n'))
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .toList(growable: false);
+
+    if (paragraphs.isEmpty) {
+      return Text(
+        'No description provided.',
+        style: AppTypography.bodyMedium.copyWith(
+          color: amberColors.muted,
+          height: 1.55,
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final paragraph in paragraphs) ...[
+          Text(
+            paragraph,
+            style: AppTypography.bodyMedium.copyWith(
+              color: amberColors.textSubtle,
+              height: 1.55,
+            ),
+          ),
+          if (paragraph != paragraphs.last)
+            const SizedBox(height: AppDimens.p14),
+        ],
+      ],
+    );
   }
 }

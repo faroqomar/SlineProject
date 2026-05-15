@@ -4,6 +4,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/app_enums.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
 import 'package:sline_app/features/home/view/home_screen.dart';
 import 'package:sline_app/features/home/viewmodels/home_view_model.dart';
@@ -12,6 +13,7 @@ import 'package:sline_app/features/profile/viewmodels/profile_view_model.dart';
 import 'package:sline_app/features/saved/viewmodels/saved_tasks_view_model.dart';
 import 'package:sline_app/features/tasks/models/task_model.dart';
 import 'package:sline_app/features/tasks/view/widgets/booking_task_card.dart';
+import 'package:sline_app/features/tasks/view/widgets/discovery_task_sliver.dart';
 import 'package:sline_app/features/tasks/viewmodels/discovery_feed_view_model_contract.dart';
 import 'package:sline_app/features/tasks/viewmodels/task_filter_view_model.dart';
 
@@ -168,6 +170,14 @@ void main() {
       expect(find.text('FEED'), findsOneWidget);
       expect(find.text('0 items'), findsOneWidget);
       expect(find.byType(SkeletonTaskCard), findsWidgets);
+      expect(find.byType(SafeArea), findsWidgets);
+      final discoverySliver = tester.widget<DiscoveryTaskSliver>(
+        find.byType(DiscoveryTaskSliver),
+      );
+      expect(
+        discoverySliver.bottomPadding,
+        greaterThan(AmberDuskTokens.phoneLayout.bottomScrollPadding),
+      );
     });
 
     testWidgets(

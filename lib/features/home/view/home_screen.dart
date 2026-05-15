@@ -96,275 +96,293 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: amberColors.page,
       body: Consumer3<DiscoveryFeedViewModelContract, TaskFilterViewModel, ProfileViewModel>(
         builder: (context, homeViewModel, filterController, profileVM, child) {
-          final topPadding = MediaQuery.of(context).padding.top;
+          const phoneLayout = AmberDuskTokens.phoneLayout;
+          final bottomFeedClearance =
+              MediaQuery.viewPaddingOf(context).bottom +
+              phoneLayout.bottomScrollPadding +
+              AppDimens.p24;
           final visibleTasks = _tasksForMode(
             filterController.filteredTasks,
             _selectedDiscoveryMode,
           );
           final selectedModeMetadata = _metadataForMode(_selectedDiscoveryMode);
 
-          return RefreshIndicator(
-            key: HomeScreen.refreshIndicatorKey,
-            onRefresh: () async {
-              final saved = context.read<SavedTasksViewModel>();
-              AppLogger.i(
-                'home_refresh_started',
-                tag: 'HomeUI',
-                json: {'surface': 'home'},
-              );
-              try {
-                await homeViewModel.refresh(
-                  filterController: filterController,
-                );
-                await profileVM.loadHeaderProfile();
-                if (!context.mounted) return;
-                await saved.refresh();
+          return SafeArea(
+            bottom: false,
+            child: RefreshIndicator(
+              key: HomeScreen.refreshIndicatorKey,
+              onRefresh: () async {
+                final saved = context.read<SavedTasksViewModel>();
                 AppLogger.i(
-                  'home_refresh_succeeded',
+                  'home_refresh_started',
                   tag: 'HomeUI',
                   json: {'surface': 'home'},
                 );
-              } on Exception catch (error, stackTrace) {
-                AppLogger.e(
-                  'home_refresh_failed',
-                  tag: 'HomeUI',
-                  error: error,
-                  stackTrace: stackTrace,
-                );
-              }
-            },
-            child: CustomScrollView(
-              slivers: [
-                // --- Custom Header Section ---
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      AmberDuskTokens.spacing.contentHorizontalPadding,
-                      topPadding + AppDimens.p24,
-                      AmberDuskTokens.spacing.contentHorizontalPadding,
-                      AppDimens.p16,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 1. User Info & Bell — wrapped in Semantics for a11y
-                        Semantics(
-                          label: 'Home screen greeting',
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  SignedAvatar(
-                                    storagePathOrUrl: profileVM.avatarUrl,
-                                    size: AppDimens.avatarMedium,
-                                    borderRadius: BorderRadius.circular(
-                                      AppDimens.r16,
-                                    ),
-                                    // Use the quiet Amber Dusk rim so the
-                                    // header avatar stays visible on the shell.
-                                    borderColor: amberColors.surfaceHighest,
-                                  ),
-                                  const SizedBox(width: AppDimens.p12),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        _getGreeting(),
-                                        style: AmberDuskTokens
-                                            .typography
-                                            .bodySmall
-                                            .copyWith(color: amberColors.muted),
-                                      ),
-                                      Text(
-                                        profileVM.fullName ?? 'Guest',
-                                        style: AmberDuskTokens
-                                            .typography
-                                            .bookingName
-                                            .copyWith(color: amberColors.text),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              const NotificationBadgeButton(),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: AppDimens.p24),
-
-                        // 2. Search & Filter
-                        Row(
-                          children: [
-                            Expanded(
-                              child: AppTextField(
-                                fieldKey: HomeScreen.searchFieldKey,
-                                hintText: 'Search freelancers, tasks...',
-                                prefixIcon: Icon(
-                                  Icons.search,
-                                  color: amberColors.muted,
-                                ),
-                                onChanged: filterController.searchTasks,
-                              ),
-                            ),
-                            const SizedBox(width: AppDimens.p12),
-
-                            /// Filter button — opens the filters modal with
-                            /// haptic feedback and scale-down press effect.
-                            ScaleButton(
-                              key: HomeScreen.filterButtonKey,
-                              onPressed: () {
-                                // Haptic tap before showing modal — curveSpring for delight
-                                AppInteractionStates.hapticTap();
-                                AppLogger.d(
-                                  'home_filters_opened',
-                                  tag: 'HomeUI',
-                                  json: {'surface': 'home'},
-                                );
-                                unawaited(
-                                  showModalBottomSheet(
-                                    context: context,
-                                    isScrollControlled: true,
-                                    backgroundColor:
-                                        AmberDuskTokens.colors.surface,
-                                    builder: (_) => const FiltersModal(),
-                                  ),
-                                );
-                              },
-                              child: Container(
-                                width: 50,
-                                height: 50,
-                                decoration: BoxDecoration(
-                                  color: AmberDuskTokens
-                                      .widgetTheme
-                                      .iconButtons
-                                      .background,
-                                  borderRadius: BorderRadius.circular(
-                                    AppDimens.r14,
-                                  ),
-                                  boxShadow: AppDecorations.elevation(
-                                    2,
-                                    isDark: colorScheme.isDark,
-                                  ),
-                                ),
-                                child: Icon(
-                                  Icons.filter_list,
-                                  color: amberColors.text,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: AppDimens.p24),
-
-                        // 3. Discovery mode chips
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          clipBehavior: Clip.none,
-                          child: Row(
-                            children: [
-                              _buildDiscoveryModeChip(
-                                context,
-                                key: HomeScreen.discoveryAllWorkKey,
-                                metadata: _metadataForMode(
-                                  _HomeDiscoveryMode.allWork,
-                                ),
-                              ),
-                              _buildDiscoveryModeChip(
-                                context,
-                                key: HomeScreen.discoveryBookingsKey,
-                                metadata: _metadataForMode(
-                                  _HomeDiscoveryMode.bookings,
-                                ),
-                              ),
-                              _buildDiscoveryModeChip(
-                                context,
-                                key: HomeScreen.discoveryTendersKey,
-                                metadata: _metadataForMode(
-                                  _HomeDiscoveryMode.tenders,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      AmberDuskTokens.spacing.contentHorizontalPadding,
-                      0,
-                      AmberDuskTokens.spacing.contentHorizontalPadding,
-                      AppDimens.p12,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'FEED',
-                          style: AmberDuskTokens.typography.chip.copyWith(
-                            color: amberColors.text,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        Text(
-                          '${visibleTasks.length} '
-                          '${visibleTasks.length == 1 ? 'item' : 'items'}',
-                          style: AmberDuskTokens.typography.bodySmall.copyWith(
-                            color: amberColors.muted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Task feed section — DiscoveryTaskSliver is a sliver
-                // widget and cannot be wrapped with Semantics directly
-                // inside a CustomScrollView (slivers require RenderSliver
-                // children). Individual cards have their own Semantics.
-                DiscoveryTaskSliver(
-                  surface: 'home',
-                  tasks: visibleTasks,
-                  isInitialLoading: homeViewModel.isLoading,
-                  isLoadingMore: homeViewModel.isLoadingMore,
-                  hasMore: homeViewModel.hasMore,
-                  onLoadMore: () => homeViewModel.loadMoreTasks(
+                try {
+                  await homeViewModel.refresh(
                     filterController: filterController,
-                  ),
-                  emptyTitle: selectedModeMetadata.emptyTitle,
-                  emptyIcon: selectedModeMetadata.icon,
-                  taskBuilder: (context, task) {
-                    return TaskCard(
-                      task: task,
-                      onTap: () {
-                        AppLogger.d(
-                          'home_task_opened',
-                          tag: 'HomeUI',
-                          json: {
-                            'surface': 'home',
-                            'task_id': task.id,
-                            'task_type': task.taskType.name,
-                          },
-                        );
-                        unawaited(
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  widget.taskDetailsScreenBuilder?.call(task) ??
-                                  TaskDetailsScreen(task: task),
+                  );
+                  await profileVM.loadHeaderProfile();
+                  if (!context.mounted) return;
+                  await saved.refresh();
+                  AppLogger.i(
+                    'home_refresh_succeeded',
+                    tag: 'HomeUI',
+                    json: {'surface': 'home'},
+                  );
+                } on Exception catch (error, stackTrace) {
+                  AppLogger.e(
+                    'home_refresh_failed',
+                    tag: 'HomeUI',
+                    error: error,
+                    stackTrace: stackTrace,
+                  );
+                }
+              },
+              child: CustomScrollView(
+                slivers: [
+                  // --- Custom Header Section ---
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AmberDuskSpacing.contentHorizontalPadding,
+                        AppDimens.p24,
+                        AmberDuskSpacing.contentHorizontalPadding,
+                        AppDimens.p16,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 1. User Info & Bell — wrapped in Semantics for a11y
+                          Semantics(
+                            label: 'Home screen greeting',
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    SignedAvatar(
+                                      storagePathOrUrl: profileVM.avatarUrl,
+                                      size: AppDimens.avatarMedium,
+                                      borderRadius: BorderRadius.circular(
+                                        AppDimens.r16,
+                                      ),
+                                      // Use the quiet Amber Dusk rim so the
+                                      // header avatar stays visible on the shell.
+                                      borderColor: amberColors.surfaceHighest,
+                                    ),
+                                    const SizedBox(width: AppDimens.p12),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          _getGreeting(),
+                                          style: AmberDuskTokens
+                                              .typography
+                                              .bodySmall
+                                              .copyWith(
+                                                color: amberColors.muted,
+                                              ),
+                                        ),
+                                        Text(
+                                          profileVM.fullName ?? 'Guest',
+                                          style: AmberDuskTokens
+                                              .typography
+                                              .bookingName
+                                              .copyWith(
+                                                color: amberColors.text,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                const NotificationBadgeButton(),
+                              ],
                             ),
                           ),
-                        );
-                      },
-                    );
-                  },
-                ),
-              ],
+                          const SizedBox(height: AppDimens.p24),
+
+                          // 2. Search & Filter
+                          Row(
+                            children: [
+                              Expanded(
+                                child: AppTextField(
+                                  fieldKey: HomeScreen.searchFieldKey,
+                                  hintText: 'Search freelancers, tasks...',
+                                  prefixIcon: Icon(
+                                    Icons.search,
+                                    color: amberColors.muted,
+                                  ),
+                                  onChanged: filterController.searchTasks,
+                                ),
+                              ),
+                              const SizedBox(width: AppDimens.p12),
+
+                              /// Filter button — opens the filters modal with
+                              /// haptic feedback and scale-down press effect.
+                              ScaleButton(
+                                key: HomeScreen.filterButtonKey,
+                                onPressed: () {
+                                  // Haptic tap before showing modal — curveSpring for delight
+                                  AppInteractionStates.hapticTap();
+                                  AppLogger.d(
+                                    'home_filters_opened',
+                                    tag: 'HomeUI',
+                                    json: {'surface': 'home'},
+                                  );
+                                  unawaited(
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      useSafeArea: true,
+                                      backgroundColor:
+                                          AmberDuskColors.transparent,
+                                      barrierColor:
+                                          AmberDuskTokens.colors.scrim,
+                                      builder: (_) => const FiltersModal(),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  width: 50,
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                    color: AmberDuskTokens
+                                        .widgetTheme
+                                        .iconButtons
+                                        .background,
+                                    borderRadius: BorderRadius.circular(
+                                      AppDimens.r14,
+                                    ),
+                                    boxShadow: AppDecorations.elevation(
+                                      2,
+                                      isDark: colorScheme.isDark,
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    Icons.filter_list,
+                                    color: amberColors.text,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppDimens.p24),
+
+                          // 3. Discovery mode chips
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.only(
+                              right: AppDimens.p8,
+                            ),
+                            child: Row(
+                              children: [
+                                _buildDiscoveryModeChip(
+                                  context,
+                                  key: HomeScreen.discoveryAllWorkKey,
+                                  metadata: _metadataForMode(
+                                    _HomeDiscoveryMode.allWork,
+                                  ),
+                                ),
+                                _buildDiscoveryModeChip(
+                                  context,
+                                  key: HomeScreen.discoveryBookingsKey,
+                                  metadata: _metadataForMode(
+                                    _HomeDiscoveryMode.bookings,
+                                  ),
+                                ),
+                                _buildDiscoveryModeChip(
+                                  context,
+                                  key: HomeScreen.discoveryTendersKey,
+                                  metadata: _metadataForMode(
+                                    _HomeDiscoveryMode.tenders,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AmberDuskSpacing.contentHorizontalPadding,
+                        0,
+                        AmberDuskSpacing.contentHorizontalPadding,
+                        AppDimens.p12,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'FEED',
+                            style: AmberDuskTokens.typography.chip.copyWith(
+                              color: amberColors.text,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          Text(
+                            '${visibleTasks.length} '
+                            '${visibleTasks.length == 1 ? 'item' : 'items'}',
+                            style: AmberDuskTokens.typography.bodySmall
+                                .copyWith(color: amberColors.muted),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Task feed section — DiscoveryTaskSliver is a sliver
+                  // widget and cannot be wrapped with Semantics directly
+                  // inside a CustomScrollView (slivers require RenderSliver
+                  // children). Individual cards have their own Semantics.
+                  DiscoveryTaskSliver(
+                    surface: 'home',
+                    tasks: visibleTasks,
+                    isInitialLoading: homeViewModel.isLoading,
+                    isLoadingMore: homeViewModel.isLoadingMore,
+                    hasMore: homeViewModel.hasMore,
+                    bottomPadding: bottomFeedClearance,
+                    onLoadMore: () => homeViewModel.loadMoreTasks(
+                      filterController: filterController,
+                    ),
+                    emptyTitle: selectedModeMetadata.emptyTitle,
+                    emptyIcon: selectedModeMetadata.icon,
+                    taskBuilder: (context, task) {
+                      return TaskCard(
+                        task: task,
+                        onTap: () {
+                          AppLogger.d(
+                            'home_task_opened',
+                            tag: 'HomeUI',
+                            json: {
+                              'surface': 'home',
+                              'task_id': task.id,
+                              'task_type': task.taskType.name,
+                            },
+                          );
+                          unawaited(
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    widget.taskDetailsScreenBuilder?.call(
+                                      task,
+                                    ) ??
+                                    TaskDetailsScreen(task: task),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           );
         },

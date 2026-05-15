@@ -3,12 +3,10 @@
 // Type A screen: StatelessWidget that reads BookingViewModel and
 // SafetyViewModel from context.
 //
-// BookingDetailsScreen embeds OrderManagementSection (which internally
-// creates OrderManagementViewModel -> WorkLogService -> Supabase.instance)
-// and SignedAvatar (which also hits Supabase.instance). To avoid Supabase
-// singleton access in widget tests, we use a thin test wrapper that
-// replicates the screen's rendering logic while substituting those
-// Supabase-dependent children with inert placeholders.
+// BookingDetailsScreen embeds SignedAvatar, which can hit Supabase.instance.
+// To avoid Supabase singleton access in widget tests, we use a thin test
+// wrapper that replicates the screen's rendering logic while substituting
+// Supabase-dependent avatar rendering with an inert placeholder.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -112,7 +110,7 @@ void _stubSafetyWithDispute(_MockSafetyViewModel vm, {String status = 'open'}) {
 // Thin test wrapper
 // ---------------------------------------------------------------------------
 /// Replicates the rendering logic of [BookingDetailsScreen] without the
-/// Supabase-dependent child widgets (OrderManagementSection, SignedAvatar).
+/// Supabase-dependent child widgets (SignedAvatar).
 ///
 /// This lets us verify status banners, counterparty sections, timeline,
 /// action buttons, and dispute banners without requiring Supabase.instance.
@@ -358,11 +356,6 @@ class _TestBookingDetailsContent extends StatelessWidget {
                 ],
               ),
             ),
-
-            const SizedBox(height: AppDimens.p24),
-
-            // Order Management placeholder (real widget hits Supabase)
-            const Text('Order Management'),
 
             const SizedBox(height: AppDimens.p24),
 

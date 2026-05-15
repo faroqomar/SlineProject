@@ -301,25 +301,31 @@ class _MessagesScreenState extends State<MessagesScreen>
                                       tag: 'Chat',
                                     );
                                   },
-                                  child: AnimatedContainer(
-                                    duration: AppMotion.fast,
-                                    padding: const EdgeInsets.all(AppDimens.p8),
-                                    decoration: BoxDecoration(
-                                      color: _showSearch
-                                          ? amber.primary.withValues(alpha: 0.1)
-                                          : AmberDuskColors.transparent,
-                                      borderRadius: BorderRadius.circular(
-                                        AppDimens.r10,
+                                  child: SizedBox(
+                                    width: AppLayout.minTouchTarget,
+                                    height: AppLayout.minTouchTarget,
+                                    child: AnimatedContainer(
+                                      duration: AppMotion.fast,
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: _showSearch
+                                            ? amber.primary.withValues(
+                                                alpha: 0.1,
+                                              )
+                                            : AmberDuskColors.transparent,
+                                        borderRadius: BorderRadius.circular(
+                                          AppDimens.r10,
+                                        ),
                                       ),
-                                    ),
-                                    child: Icon(
-                                      _showSearch
-                                          ? Icons.close_rounded
-                                          : Icons.search_rounded,
-                                      color: _showSearch
-                                          ? amber.primary
-                                          : amber.textSubtle,
-                                      size: AppLayout.iconStandard,
+                                      child: Icon(
+                                        _showSearch
+                                            ? Icons.close_rounded
+                                            : Icons.search_rounded,
+                                        color: _showSearch
+                                            ? amber.primary
+                                            : amber.textSubtle,
+                                        size: AppLayout.iconStandard,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -711,12 +717,22 @@ class _MessagesScreenState extends State<MessagesScreen>
     List<Conversation> conversations,
   ) {
     const amber = AmberDuskTokens.colors;
+    const phoneLayout = AmberDuskTokens.phoneLayout;
+    final bottomSafePadding = MediaQuery.viewPaddingOf(context).bottom;
+    // Reserve the same vertical band occupied by the floating nav so the last
+    // conversation can scroll fully above the overlaid app shell.
+    final bottomNavClearance =
+        bottomSafePadding +
+        phoneLayout.bottomNavBottom +
+        phoneLayout.bottomNavHeight +
+        AppLayout.spacingScreen;
+
     return SliverPadding(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         AmberDuskSpacing.contentHorizontalPadding,
         0,
         AmberDuskSpacing.contentHorizontalPadding,
-        AppDimens.p100,
+        bottomNavClearance,
       ),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate((context, index) {
@@ -963,20 +979,30 @@ class _AmberConversationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     const amber = AmberDuskTokens.colors;
     final name = conversation.otherUserName ?? _kFallbackUserName;
+    final taskTitle = conversation.taskTitle?.trim();
     final message = conversation.otherUserTyping
         ? 'Typing...'
         : (conversation.lastMessage?.trim().isNotEmpty ?? false)
         ? conversation.lastMessage!.trim()
-        : 'No messages yet';
-    final taskTitle = conversation.taskTitle?.trim();
+        // Empty task-linked rows need context because repeated names can
+        // otherwise look like duplicate conversations with no content.
+        : _emptyConversationPreview(taskTitle);
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: AppDimens.p10),
-        padding: const EdgeInsets.all(AppDimens.p14),
+        margin: const EdgeInsets.only(bottom: AppDimens.p8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimens.p12,
+          vertical: AppDimens.p12,
+        ),
         decoration: BoxDecoration(
-          color: amber.surface,
+          // Read conversations should blend into the inbox canvas instead of
+          // forming stacked heavy cards. Unread rows keep a stronger surface so
+          // the state is still visible without adding another badge shape.
+          color: isUnread
+              ? amber.surface.withValues(alpha: 0.78)
+              : amber.surface.withValues(alpha: 0.46),
           borderRadius: BorderRadius.circular(AmberDuskSpacing.moduleRadius),
           border: Border.all(
             color: isUnread
@@ -1033,7 +1059,7 @@ class _AmberConversationCard extends StatelessWidget {
                       padding:
                           AmberDuskTokens.widgetTheme.statusPills.smallPadding,
                       decoration: BoxDecoration(
-                        color: amber.surfaceHighest,
+                        color: amber.surfaceHighest.withValues(alpha: 0.58),
                         borderRadius: BorderRadius.circular(
                           AmberDuskTokens.widgetTheme.statusPills.radius,
                         ),
@@ -1073,6 +1099,15 @@ class _AmberConversationCard extends StatelessWidget {
     if (diff.inMinutes < 60) return '${diff.inMinutes}m';
     if (diff.inHours < 24) return '${diff.inHours}h';
     return '${diff.inDays}d';
+  }
+
+  /// Preview copy for conversations that were created from work context before
+  /// either participant sent the first message.
+  String _emptyConversationPreview(String? taskTitle) {
+    if (taskTitle == null || taskTitle.isEmpty) return 'No messages yet';
+    return conversation.taskType == 'booking'
+        ? 'Linked booking - no messages yet'
+        : 'Linked task - no messages yet';
   }
 }
 

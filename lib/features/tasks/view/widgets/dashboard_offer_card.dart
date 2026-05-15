@@ -101,19 +101,20 @@ class _DashboardOfferCardState extends State<DashboardOfferCard>
     final isDark = colorScheme.isDark;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: AppDimens.p16),
+      margin: const EdgeInsets.only(bottom: AppDimens.p10),
       decoration: BoxDecoration(
         color: amber.surface,
         borderRadius: BorderRadius.circular(spacing.taskCardRadius),
         boxShadow: AppDecorations.elevation(1, isDark: isDark),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.symmetric(
-              horizontal: AppDimens.p16,
-              vertical: AppDimens.p12,
+              horizontal: AppDimens.p12,
+              vertical: AppDimens.p8,
             ),
             decoration: BoxDecoration(
               color: statusColor.withValues(alpha: 0.1),
@@ -148,6 +149,7 @@ class _DashboardOfferCardState extends State<DashboardOfferCard>
                             color: amber.muted,
                             overflow: TextOverflow.ellipsis,
                           ),
+                          maxLines: 2,
                         ),
                       ),
                     ],
@@ -168,8 +170,8 @@ class _DashboardOfferCardState extends State<DashboardOfferCard>
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(
-              horizontal: AppDimens.p16,
-              vertical: AppDimens.p16,
+              horizontal: AppDimens.p12,
+              vertical: AppDimens.p8,
             ),
             decoration: BoxDecoration(color: amber.heroChip),
             child: Row(
@@ -183,12 +185,16 @@ class _DashboardOfferCardState extends State<DashboardOfferCard>
                         style: typography.chip.copyWith(color: amber.heroMuted),
                       ),
                       const SizedBox(height: AppDimens.p4),
-                      Text(
-                        PriceFormatter.formatPrice(
-                          widget.offer.price.toDouble(),
-                        ),
-                        style: typography.moneyMedium.copyWith(
-                          color: amber.heroText,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          PriceFormatter.formatPrice(
+                            widget.offer.price.toDouble(),
+                          ),
+                          style: typography.moneyMedium.copyWith(
+                            color: amber.heroText,
+                          ),
                         ),
                       ),
                     ],
@@ -197,8 +203,8 @@ class _DashboardOfferCardState extends State<DashboardOfferCard>
                 // Days badge with info color
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimens.p12,
-                    vertical: AppDimens.p8,
+                    horizontal: AppDimens.p8,
+                    vertical: AppDimens.p6,
                   ),
                   decoration: BoxDecoration(
                     color: amber.infoMuted,
@@ -223,13 +229,16 @@ class _DashboardOfferCardState extends State<DashboardOfferCard>
             ),
           ),
 
-          // ── BIDDER SECTION ──────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.all(AppDimens.p16),
+            padding: const EdgeInsets.fromLTRB(
+              AppDimens.p12,
+              AppDimens.p10,
+              AppDimens.p12,
+              AppDimens.p8,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Avatar + name + date row
                 Row(
                   children: [
                     if (widget.offer.bidderAvatar != null)
@@ -250,6 +259,8 @@ class _DashboardOfferCardState extends State<DashboardOfferCard>
                             style: typography.sectionTitle.copyWith(
                               color: amber.text,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           _buildDeadlineText(),
                         ],
@@ -260,10 +271,13 @@ class _DashboardOfferCardState extends State<DashboardOfferCard>
                 // Note block
                 if (widget.offer.note != null &&
                     widget.offer.note!.isNotEmpty) ...[
-                  const SizedBox(height: AppDimens.p12),
+                  const SizedBox(height: AppDimens.p8),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(AppDimens.p10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimens.p10,
+                      vertical: AppDimens.p8,
+                    ),
                     decoration: BoxDecoration(
                       color: amber.surfaceRaised,
                       borderRadius: BorderRadius.circular(AppDimens.r8),
@@ -301,7 +315,7 @@ class _DashboardOfferCardState extends State<DashboardOfferCard>
     const colors = AmberDuskTokens.colors;
     const typography = AmberDuskTokens.typography;
     final text = Text(
-      formatUtcToLocal(widget.offer.createdAt),
+      formatFriendlyTime(widget.offer.createdAt.toLocal()),
       style: typography.bodySmall.copyWith(color: colors.muted),
     );
 
@@ -355,10 +369,10 @@ class _OfferActionRow extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        AppDimens.p16,
+        AppDimens.p12,
         0,
-        AppDimens.p16,
-        AppDimens.p16,
+        AppDimens.p12,
+        AppDimens.p10,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
@@ -370,7 +384,13 @@ class _OfferActionRow extends StatelessWidget {
                   AppLogger.i('Offer card reject tapped', tag: 'OfferCard');
                   onReject?.call();
                 },
-                style: TextButton.styleFrom(foregroundColor: colors.danger),
+                style: TextButton.styleFrom(
+                  foregroundColor: colors.danger,
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.p12,
+                  ),
+                ),
                 child: const Text('Reject'),
               ),
             const SizedBox(width: AppDimens.p8),
@@ -383,6 +403,10 @@ class _OfferActionRow extends StatelessWidget {
                 style: FilledButton.styleFrom(
                   backgroundColor: colors.primary,
                   foregroundColor: colors.text,
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.p14,
+                  ),
                 ),
                 child: const Text('Award'),
               ),
@@ -395,6 +419,10 @@ class _OfferActionRow extends StatelessWidget {
                 style: FilledButton.styleFrom(
                   backgroundColor: colors.warning,
                   foregroundColor: colors.text,
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.p14,
+                  ),
                 ),
                 child: const Text('Pay Now'),
               ),
@@ -407,6 +435,10 @@ class _OfferActionRow extends StatelessWidget {
                 style: FilledButton.styleFrom(
                   backgroundColor: colors.primary,
                   foregroundColor: colors.text,
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.p14,
+                  ),
                 ),
                 child: const Text('Escrow Funds'),
               ),
@@ -419,6 +451,10 @@ class _OfferActionRow extends StatelessWidget {
                 style: FilledButton.styleFrom(
                   backgroundColor: colors.primary,
                   foregroundColor: colors.text,
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.p14,
+                  ),
                 ),
                 child: const Text('Accept'),
               ),
@@ -431,6 +467,10 @@ class _OfferActionRow extends StatelessWidget {
                 style: FilledButton.styleFrom(
                   backgroundColor: colors.primary,
                   foregroundColor: colors.text,
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.p14,
+                  ),
                 ),
                 child: const Text('Release Funds'),
               ),
@@ -440,7 +480,13 @@ class _OfferActionRow extends StatelessWidget {
                   AppLogger.i('Offer card refund tapped', tag: 'OfferCard');
                   onRefund?.call();
                 },
-                style: TextButton.styleFrom(foregroundColor: colors.danger),
+                style: TextButton.styleFrom(
+                  foregroundColor: colors.danger,
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.p12,
+                  ),
+                ),
                 child: const Text('Refund'),
               ),
           ] else ...[
@@ -453,6 +499,10 @@ class _OfferActionRow extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: colors.danger,
                   side: BorderSide(color: colors.danger.withValues(alpha: 0.5)),
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.p12,
+                  ),
                 ),
                 icon: const Icon(Icons.close, size: AppDimens.iconSizeSmall),
                 label: const Text('Withdraw'),
