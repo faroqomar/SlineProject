@@ -2,10 +2,12 @@
 
 
 echo "Running format check..."
-if ! dart format --set-exit-if-changed . ; then
+if ! find . \
+  \( -path './.dart_tool' -o -path './build' \) -prune -o \
+  -type f -name '*.dart' -print0 | xargs -0 -r dart format --set-exit-if-changed ; then
   echo ""
   echo "FAILED: Formatting issues found."
-  echo "Fix:    dart format ."
+  echo "Fix:    dart format changed Dart files."
   exit 1
 fi
 echo ""
@@ -18,6 +20,24 @@ if ! flutter analyze --no-fatal-infos ; then
   echo ""
   echo "FAILED: Analysis found warnings or errors."
   echo "Fix:    Review the issues above and fix them before committing."
+  exit 1
+fi
+echo ""
+
+echo "Running SLine custom lints..."
+if ! dart run custom_lint ; then
+  echo ""
+  echo "FAILED: SLine custom lint rules found issues."
+  echo "Fix:    Follow the custom_lint diagnostics above."
+  exit 1
+fi
+echo ""
+
+echo "Running dependency validator..."
+if ! dart run dependency_validator ; then
+  echo ""
+  echo "FAILED: Dependency declarations are out of sync."
+  echo "Fix:    Move, remove, or document dependencies in dart_dependency_validator.yaml."
   exit 1
 fi
 echo ""

@@ -8,6 +8,10 @@ alwaysApply: false
 
 ## Theme System
 
+### Automated Enforcement
+
+Run `dart run custom_lint` after UI, widget, theme, layout, or motion edits. The local SLine lint plugin reports hardcoded feature-view colors, `Colors.*`, motion-like millisecond durations, `Curves`, `BoxShadow`, `TextStyle.fontSize`, `EdgeInsets`, `BorderRadius`, and `Radius` literals as diagnostics. Fix the token usage; do not ignore the rule.
+
 ### Core Theme Files
 
 - `lib/core/theme/app_colors.dart` - Color palette (`AppColors.teal`, `AppColors.gold`, etc.)

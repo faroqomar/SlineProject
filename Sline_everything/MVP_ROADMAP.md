@@ -1,6 +1,6 @@
 # SLine MVP Roadmap
 
-**Last Updated:** 2026-05-14
+**Last Updated:** 2026-05-15
 
 This roadmap tracks the current code-state of the repository. Status values are intentionally simple:
 - `✅ Completed`
@@ -87,9 +87,10 @@ This roadmap tracks the current code-state of the repository. Status values are 
 
 | Area | Status | Notes |
 | --- | --- | --- |
-| CI/CD pipeline | ✅ Completed | GitHub Actions: lint + test/coverage + coverage artifact upload + build + architecture guard. Coverage floor is 40%; generated `coverage/` output is ignored and `coverage/lcov.info` is uploaded as `coverage-lcov`. `.github/workflows/ci.yml`. Added 2026-04-01; coverage artifact documented 2026-05-11. |
-| Pre-commit hook | ✅ Completed | `.githooks/pre-commit` runs format + analyze locally. Enable: `git config core.hooksPath .githooks`. Added 2026-04-01. |
+| CI/CD pipeline | ✅ Completed | GitHub Actions: lint + SLine custom_lint rules + dependency validation + test/coverage + coverage artifact upload + build + architecture guard. Coverage floor is 40%; generated `coverage/` output is ignored and `coverage/lcov.info` is uploaded as `coverage-lcov`. `.github/workflows/ci.yml`. Added 2026-04-01; custom lint/dependency validation added 2026-05-15. |
+| Pre-commit hook | ✅ Completed | `.githooks/pre-commit` runs format + analyze + SLine custom lints + dependency validation locally. Enable: `git config core.hooksPath .githooks`. Added 2026-04-01; custom lint/dependency validation added 2026-05-15. |
 | Lint rules (`very_good_analysis` + strict modes) | ✅ Completed | `analysis_options.yaml`: very_good_analysis base plus SLine safety rules. May 2026 hardening enabled `strict-raw-types`, `strict-casts`, `strict-inference`, `cascade_invocations`, `avoid_redundant_argument_values`, `avoid_annotating_with_dynamic`, and `prefer_for_elements_to_map_fromiterable`; analyzer and tests pass. |
+| SLine custom lints | ✅ Ready | Local `packages/sline_lints` plugin enforces project-specific MVVM and design-token rules through `dart run custom_lint` in CI and pre-commit. |
 | Architecture guard | ✅ Completed | 7 MVVM boundary checks in CI (hard failure). Graduated 2026-04-01 after Phase B fixed all violations. |
 | Phase B: Bug Exposure | ✅ Completed | 48 unawaited_futures → 0, 258 bare catches → 0, 6 MVVM violations → 0. `flutter analyze` = 0 issues. Completed 2026-04-01. |
 | Phase C: Critical Tests | ✅ Completed | 706 pass / 30 skip / 0 fail (+306 tests). 14/26 VMs tested (54%). 14 model test files. WalletVM + ChatVM refactored for DI. Shared mock file created. Completed 2026-04-02. |

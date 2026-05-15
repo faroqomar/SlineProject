@@ -279,7 +279,7 @@ class _LoginScreenState extends State<LoginScreen>
         label: label,
         child: Padding(
           key: ValueKey<bool>(isValid),
-          padding: const EdgeInsets.only(right: 12),
+          padding: const EdgeInsets.only(right: AppDimens.p12),
           child: icon,
         ),
       ),

@@ -32,6 +32,8 @@ class AppDimens {
   static const double p70 = 70.0;
   static const double p80 = 80.0;
   static const double p100 = 100.0;
+  static const double p120 = 120.0;
+  static const double p140 = 140.0;
 
   /// Header height for booking skeleton cards.
   static const double bookingHeaderHeight = p80 + p10;
@@ -40,6 +42,7 @@ class AppDimens {
   static const double hairlineDivider = 0.5;
 
   // --- Border Radii ---
+  static const double r2 = 2.0;
   static const double r4 = 4.0;
   static const double r8 = 8.0;
   static const double r10 = 10.0;

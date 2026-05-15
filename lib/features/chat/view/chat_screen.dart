@@ -399,7 +399,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   if (messages.isEmpty && controller.isLoadingMessages) {
                     return Center(
                       child: Padding(
-                        padding: const EdgeInsets.only(bottom: 120),
+                        padding: const EdgeInsets.only(bottom: AppDimens.p120),
                         child: SizedBox(
                           width: 28,
                           height: 28,
@@ -430,7 +430,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         AppLayout.spacingSection,
                         AppDimens.p100,
                         AppLayout.spacingSection,
-                        140,
+                        AppDimens.p140,
                       ),
                       itemCount: chatItems.length,
                       itemBuilder: (context, index) {
@@ -1169,7 +1169,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     margin: const EdgeInsets.only(bottom: AppDimens.p8),
                     decoration: BoxDecoration(
                       color: amberColors.surfaceHighest,
-                      borderRadius: BorderRadius.circular(2),
+                      borderRadius: BorderRadius.circular(AppDimens.r2),
                     ),
                   ),
                   // Copy option — available when message has copyable text

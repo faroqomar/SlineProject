@@ -597,6 +597,8 @@ Write only the header section at plan creation time:
 
 **Primary Agent(s):** `@Architect`, `@APIContract`, `@Observability`, `@Sentinel`
 
+Every Flutter app-layer phase that touches Dart source must include `dart run custom_lint` in its gate when MVVM, UI, widget, theme, layout, or motion rules could apply. This is the executable guard for SLine-specific MVVM and token rules; plans must not rely on `flutter analyze` alone.
+
 ### 2.1 Model Layer
 
 - [ ] (`@Architect`) Define or update typed models with nullability aligned to current DB or RPC reality.

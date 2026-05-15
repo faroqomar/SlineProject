@@ -520,7 +520,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every push/PR to `main`:
 
 | Job | What It Does | Blocks Merge? |
 |-----|-------------|---------------|
-| **Lint & Analyze** | `dart format --set-exit-if-changed .` + `flutter analyze --no-fatal-infos` | Yes (warnings/errors fail) |
+| **Lint & Analyze** | `dart format --set-exit-if-changed`, `flutter analyze --no-fatal-infos`, `dart run custom_lint`, and `dart run dependency_validator` | Yes (warnings/errors, SLine rule violations, and dependency drift fail) |
 | **Architecture Guard** | 7 grep-based MVVM boundary checks (Supabase in views, controllers in VMs, Navigator in VMs, repo imports in views, view imports in VMs, Supabase in VMs, core-to-features boundary). Check 7 (Phase E): blocks `core/` importing from `features/` (max 5 threshold). | Yes (hard failure since Phase B, 2026-04-01) |
 | **Unit & Widget Tests** | `flutter test --coverage` with coverage % reported to PR summary, 40% floor enforced, and `coverage/lcov.info` uploaded as the `coverage-lcov` artifact for 7 days. The generated `coverage/` folder is ignored locally and should not be committed. | Yes |
 | **Build** | APK (debug) + Web (release) compilation | Yes |
@@ -529,7 +529,7 @@ Flutter version pinned: **3.41.9** across all jobs to satisfy the Dart SDK floor
 
 ### 10.2 Pre-commit Hook
 
-`.githooks/pre-commit` runs `dart format` + `flutter analyze` locally before every commit.
+`.githooks/pre-commit` runs `dart format`, `flutter analyze`, `dart run custom_lint`, and `dart run dependency_validator` locally before every commit.
 
 **First-time setup:** `git config core.hooksPath .githooks`
 
@@ -551,6 +551,11 @@ Remaining disabled rules are intentionally limited to convention conflicts or no
 - Deprecated lints such as `avoid_null_checks_in_equality_operators` and `prefer_final_parameters` are not listed in `analysis_options.yaml`; the analyzer warns when deprecated lints are configured even as `false`.
 
 Strong mode: `implicit-casts: false`, `implicit-dynamic: false`.
+
+### 10.3.1 Tooling Gates
+
+- `dependency_validator` runs in CI and pre-commit to catch missing, unused, over-promoted, or under-promoted package declarations. Intentional plugin/font/tooling packages are documented in `dart_dependency_validator.yaml`.
+- `custom_lint` loads the local `packages/sline_lints` plugin. The current rules block direct Supabase/raw network access in feature views, repository imports in feature views, view imports in ViewModels, Navigator/UI-controller ownership in ViewModels, and hardcoded feature-view UI tokens for colors, motion-like millisecond durations, `Curves`, `BoxShadow`, `TextStyle.fontSize`, `EdgeInsets`, `BorderRadius`, and `Radius` literals.
 
 ### 10.4 Error vs Exception Handling (Dart-Specific)
 
@@ -1993,7 +1998,7 @@ Core also owns two browser-specific stability helpers:
 | `lib/core/models/user_profile.dart`              | model     | Shared typed profile model.                                                             |
 | `lib/core/models/payment_return_args.dart`       | model     | Shared typed browser payment callback payload.                                          |
 | `lib/core/theme/app_colors.dart`                 | theme     | Central palette + semantic status colors (success/warning/info/danger) + interactive state colors. |
-| `lib/core/theme/app_dimens.dart`                 | theme     | Raw spacing primitives (p0-p100), border radii (r4-r50), icon sizes (Layer 2 primitives). |
+| `lib/core/theme/app_dimens.dart`                 | theme     | Raw spacing primitives (p0-p140), border radii (r2-r50), icon sizes (Layer 2 primitives). |
 | `lib/core/theme/app_layout.dart`                 | theme     | **Phase 0.7** Semantic layout tokens: card, avatar, button, spacing, icon, thumbnail, nav, border (Layer 2 semantic). |
 | `lib/core/theme/app_typography.dart`             | theme     | Typography with per-style line heights (1.0-1.5) and letter spacing.                    |
 | `lib/core/theme/app_theme.dart`                  | theme     | Builds `ThemeData` + `AppThemeExtension` + 7 component themes (Card, Dialog, BottomSheet, Chip, Divider, SnackBar, TabBar). |
@@ -2017,7 +2022,7 @@ Layer 1 — THEME (colors, typography, motion, elevation, interaction states)
 
 Layer 2 — LAYOUT (spacing, sizes, structure, proportions)
   AppLayout (semantic tokens: cardPadding, avatarMedium, buttonHeight, spacingSection)
-  AppDimens  (raw primitives: p0-p100, r4-r50, iconSizeSmall/Medium/Large)
+  AppDimens  (raw primitives: p0-p140, r2-r50, iconSizeSmall/Medium/Large)
 
 Layer 3 — COMPONENTS (widgets that CONSUME Layer 1 + Layer 2)
   All widgets in lib/core/widgets/ and lib/features/*/view/

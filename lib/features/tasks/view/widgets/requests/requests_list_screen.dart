@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
 import 'package:sline_app/core/theme/app_colors.dart';
+import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
 import 'package:sline_app/core/widgets/skeleton_card.dart';
@@ -216,7 +217,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
         appBar: AppBar(title: const Text('Offers')),
         body: const Center(
           child: Padding(
-            padding: EdgeInsets.all(24),
+            padding: EdgeInsets.all(AppDimens.p24),
             child: Text(
               'Offers are only available for tender-type tasks.',
               textAlign: TextAlign.center,
@@ -353,7 +354,12 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
     // Loading state
     if (c.isLoadingInitial) {
       return ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+        padding: const EdgeInsets.fromLTRB(
+          AppDimens.p16,
+          AppDimens.p12,
+          AppDimens.p16,
+          AppDimens.p100,
+        ),
         itemCount: 5,
         itemBuilder: (_, _) => const SkeletonOfferCard(),
       );
@@ -382,13 +388,18 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
     // List with offers
     return ListView.separated(
       controller: _scroll,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+      padding: const EdgeInsets.fromLTRB(
+        AppDimens.p16,
+        AppDimens.p12,
+        AppDimens.p16,
+        AppDimens.p100,
+      ),
       itemCount: filteredItems.length + (c.isLoadingMore ? 1 : 0),
       separatorBuilder: (_, _) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         if (index >= filteredItems.length) {
           return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16),
+            padding: EdgeInsets.symmetric(vertical: AppDimens.p16),
             child: SkeletonOfferCard(),
           );
         }
@@ -432,7 +443,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
   Widget _buildErrorState(TaskRequestsViewModel c, AppColorScheme colorScheme) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppDimens.p24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -512,7 +523,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
           height: MediaQuery.of(context).size.height * 0.6,
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.all(32),
+              padding: const EdgeInsets.all(AppDimens.p32),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -604,7 +615,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
           height: MediaQuery.of(context).size.height * 0.5,
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.all(32),
+              padding: const EdgeInsets.all(AppDimens.p32),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -648,7 +659,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> {
         context: context,
         builder: (ctx) => SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppDimens.p16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [

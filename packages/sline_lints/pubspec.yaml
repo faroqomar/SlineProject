@@ -1,0 +1,16 @@
+name: sline_lints
+description: Project-specific custom_lint rules for the SLine Flutter app.
+version: 0.1.0
+publish_to: 'none'
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  analyzer: ^8.4.0
+  analyzer_plugin: ^0.13.10
+  custom_lint_builder: ^0.8.1
+
+dev_dependencies:
+  very_good_analysis: ^10.2.0
+

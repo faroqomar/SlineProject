@@ -26,9 +26,16 @@ jobs:
           cache: true
       - run: flutter pub get
       - name: Check formatting
-        run: dart format --set-exit-if-changed .
+        run: |
+          find . \
+            \( -path './.dart_tool' -o -path './build' \) -prune -o \
+            -type f -name '*.dart' -print0 | xargs -0 -r dart format --set-exit-if-changed
       - name: Analyze (infos allowed, warnings/errors fatal)
         run: flutter analyze --no-fatal-infos
+      - name: Run SLine custom lints
+        run: dart run custom_lint
+      - name: Validate dependencies
+        run: dart run dependency_validator
 
   architecture-guard:
     name: Architecture Guard

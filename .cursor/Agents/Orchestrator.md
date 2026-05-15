@@ -63,7 +63,7 @@ STAGE 7  ─── @TemplateOwner     Template integrity audit (if template-driv
 STAGE 8  ─── @Observability     Telemetry audit (logging, privacy, instrumentation)
 STAGE 9  ─── @DocsKeeper         Documentation sync audit (docs ↔ code ↔ DB reality)
 STAGE 10 ─── @CodeGuard         Final performance + security + dependency gate
-STAGE 11 ─── @Sentinel          Final QA + RLS + release gate
+STAGE 11 ─── @Sentinel          Final QA + RLS + release gate, including `dart run custom_lint`
 STAGE 11.5── @Sentinel          Runtime smoke test (emulator/device, if UI/state changes)
 STAGE 12 ─── @Orchestrator      Merge all findings → produce Master Report
 STAGE 13 ─── @Orchestrator      Fix Verification (Conditional — see §2.2)
@@ -413,6 +413,7 @@ For each step:
 - If two agents disagree, preserve the disagreement explicitly in the Master Report.
 - If the human supplies findings after the plan/session scope was locked, treat them as explicit scope amendments only when the request clearly names files or issues; include them in the Master Report instead of silently reverting or silently calling them out of scope.
 - For UI work, never let green analyzer/tests imply visual completion. The Master Report must say whether runtime visual QA is complete, open, superseded by current-app screenshots, or blocked by missing fixture/device proof.
+- Always include `dart run custom_lint` status for MVVM, UI, widget, theme, layout, or motion changes. Any `sline_no_*` diagnostic is a BLOCKER/HIGH unless the lint package itself is under intentional review.
 - Always review comment coverage for touched Dart files. Sparse or stale comments around changed code are not a style nit; they block long-term maintainability for agents and new developers.
 - Always review README, docs, source-map, and diagram freshness for touched feature areas. Stale onboarding or diagram routing blocks major-work approval until `@DocsKeeper` resolves it or documents why no update is needed.
 - Always review `Sline_everything/UI_SURFACE_INVENTORY.md` for UI work. Missing inventory entries block broad redesign, navigation, modal, popup, tab, route, or reusable-widget approval.

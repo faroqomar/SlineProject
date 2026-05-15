@@ -381,10 +381,10 @@ class _RoleSwitch extends StatelessWidget {
     final isFreelancer = vm.currentRole == UserRole.freelancer;
 
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(AppDimens.p4),
       decoration: BoxDecoration(
         color: colorScheme.inputBackground,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDimens.r20),
         border: Border.all(color: colorScheme.inputBorder),
       ),
       child: Row(

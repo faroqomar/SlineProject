@@ -765,7 +765,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
         if (_loadError != null)
           Center(
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(AppDimens.p20),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

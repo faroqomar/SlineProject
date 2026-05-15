@@ -124,6 +124,10 @@ Before writing any View code, you MUST confirm:
 
 ## 3) Theme System (Non-Negotiable)
 
+### 3.0 Automated Token Guardrail (Do Not Ignore)
+
+The local `packages/sline_lints` plugin enforces feature-view theme tokens. After UI, widget, theme, layout, or motion edits, run `dart run custom_lint` and fix every `sline_no_hardcoded_feature_view_tokens` diagnostic instead of suppressing it. The rule covers hardcoded colors, `Colors.*`, motion-like millisecond durations, `Curves`, `BoxShadow`, `TextStyle.fontSize`, `EdgeInsets`, `BorderRadius`, and `Radius` literals in feature views.
+
 ### 3.1 Tokens Only — No Hardcoding
 
 NEVER use:
@@ -398,6 +402,7 @@ Include:
 - [ ] Controllers / focus nodes / animations disposed
 - [ ] No repeated signed URL generation in build-heavy loops
 - [ ] `flutter analyze` has been run after new UI files or theme files were created
+- [ ] `dart run custom_lint` has been run and all SLine token/MVVM diagnostics are fixed
 - [ ] Imports are used, no orphan local variables remain after edits, and removed imports were checked against all type references
 
 ### Accessibility Verification

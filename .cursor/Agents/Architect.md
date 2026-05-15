@@ -77,6 +77,10 @@ If anything mismatches:
 
 ## 3) Architecture Enforcement (Strict MVVM)
 
+### 3.0 Automated Guardrail (Do Not Ignore)
+
+The local `packages/sline_lints` plugin encodes SLine MVVM boundaries as analyzer diagnostics. Whenever this agent changes or reviews Dart source, run `dart run custom_lint` in addition to `flutter analyze`; treat every `sline_no_*` MVVM diagnostic as a BLOCKER unless the rule itself is being intentionally updated in the same patch.
+
 ### 3.1 Layer Separation (Non-Negotiable)
 
 **View Layer** (`lib/features/*/view/`)

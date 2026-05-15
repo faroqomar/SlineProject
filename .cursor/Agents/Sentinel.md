@@ -211,6 +211,7 @@ For realtime stream fixes, require a regression test that simulates at least one
 ## 5) Architecture & Quality Rules (Hard)
 
 - Strict MVVM / service separation: View → ViewModel → Service / Repository → Supabase
+- `dart run custom_lint` must pass; any `sline_no_*` diagnostic is a release blocker unless the lint package itself is the reviewed change
 - No direct Supabase client calls in Views or ChangeNotifier ViewModels
 - No business logic in Views
 - No `BuildContext` in services or repositories

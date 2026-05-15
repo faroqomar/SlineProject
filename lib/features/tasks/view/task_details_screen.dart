@@ -474,7 +474,7 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
     const tiers = ['Basic', 'Standard', 'Premium'];
 
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(AppDimens.p4),
       decoration: BoxDecoration(
         color: amberColors.surface,
         borderRadius: BorderRadius.circular(
@@ -555,7 +555,10 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                 style: AppTypography.h4.copyWith(color: amberColors.primary),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimens.p8,
+                  vertical: AppDimens.p4,
+                ),
                 decoration: BoxDecoration(
                   color: amberColors.primary.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(

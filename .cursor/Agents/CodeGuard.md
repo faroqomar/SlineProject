@@ -208,6 +208,7 @@ HARD-GATE requires:
 
 ```bash
 flutter analyze
+dart run custom_lint
 flutter format --set-exit-if-changed .
 flutter test
 flutter pub outdated
@@ -298,6 +299,7 @@ For every review, generate a report:
 ### 7.1 Block Immediately If
 
 - A View or ChangeNotifier ViewModel performs direct Supabase access
+- `dart run custom_lint` reports any `sline_no_*` diagnostic
 - An RLS / actor isolation gap exists
 - `flutter analyze` reports errors
 - `flutter test` fails

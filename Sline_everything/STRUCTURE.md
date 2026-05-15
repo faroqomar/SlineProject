@@ -1,6 +1,6 @@
 # SLine App - Folder Structure Guide
 
-**Last Updated:** 2026-05-15 (lint strictness hardening, Amber Dusk Phases 9-12, Transactional QA Recovery, SystemEvolution, and DocsKeeper sync documented)
+**Last Updated:** 2026-05-15 (lint/tooling hardening, Amber Dusk Phases 9-12, Transactional QA Recovery, SystemEvolution, and DocsKeeper sync documented)
 
 This document describes the current repository layout. It replaces older references to `presentation/` and `controllers/`; the live Flutter codebase uses `view/` and `viewmodels/` under `lib/features/`.
 
@@ -11,13 +11,14 @@ sline_app/
 ├── .agents/              # Local skills and workflows used by the coding agents
 ├── .cursor/              # Cursor agent definitions and project rules
 ├── .github/workflows/    # CI pipeline (lint, test, coverage artifact, build, architecture guard)
-├── .githooks/            # Pre-commit hook (format + analyze)
+├── .githooks/            # Pre-commit hook (format + analyze + custom_lint + dependency validation)
 ├── .TODO/                # Audits, plans, execution logs, QA notes, docs-sync notes
 ├── docs/LOG/             # Session logs and SystemEvolution reports
 ├── docs/diagrams/        # Feature diagrams (Mermaid + explanations)
 ├── Sline_everything/     # Source-of-truth project documentation
 ├── assets/               # Bundled app assets
 ├── lib/                  # Flutter application source
+├── packages/             # Local tooling packages such as SLine custom lints
 ├── supabase/             # Edge functions and SQL migrations
 ├── test/                 # Unit and widget tests
 ├── integration_test/     # End-to-end test entrypoints
@@ -25,6 +26,7 @@ sline_app/
 ├── linux/ macos/ windows/# Desktop runners
 ├── pubspec.yaml          # Flutter package manifest
 ├── analysis_options.yaml # very_good_analysis + SLine safety rules + strict Dart modes
+├── dart_dependency_validator.yaml # Dependency validator intentional-ignore config
 ├── MIGRATION_REVIEW_CHECKLIST.md  # Phase D: 7-point checklist for migration PRs
 └── README.md             # Repository overview
 ```
@@ -166,7 +168,7 @@ Current subfolders:
 - `theme/`: Three-layer design system (Theme → Layout → Components)
   - `app_colors.dart` — color palette + 44-property AppColorScheme (semantic status + interactive colors)
   - `app_typography.dart` — 14 text styles with per-style line heights (1.0–1.5)
-  - `app_dimens.dart` — raw spacing primitives (p0–p100), border radii (r4–r50), icon sizes
+  - `app_dimens.dart` — raw spacing primitives (p0–p140), border radii (r2–r50), icon sizes
   - `app_layout.dart` — **Phase 0.7** semantic layout tokens (card, avatar, button, spacing, icon, nav, border)
   - `app_motion.dart` — **Phase 0** animation tokens (7 durations, 7 curves, 4 scales, 3 staggers)
   - `app_states.dart` — **Phase 0** interaction state constants (8-state model, haptic mapping)

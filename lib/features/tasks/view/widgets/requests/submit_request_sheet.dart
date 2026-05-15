@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sline_app/core/services/logger_service.dart';
+import 'package:sline_app/core/theme/app_colors.dart';
 import 'package:sline_app/core/theme/app_decorations.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
@@ -46,7 +47,7 @@ Future<void> showSubmitRequestSheet(
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(vm.guardError ?? 'Unable to load task.'),
-          backgroundColor: Colors.red,
+          backgroundColor: context.amberColors.danger,
         ),
       );
     }
@@ -72,7 +73,7 @@ Future<void> showSubmitRequestSheet(
   await showModalBottomSheet<TaskRequest>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: AmberDuskColors.transparent,
     builder: (ctx) {
       // Scoped provider: VM lifecycle tied to sheet
       return ChangeNotifierProvider<SubmitRequestViewModel>.value(
@@ -150,7 +151,7 @@ class _SubmitRequestSheetContent extends StatelessWidget {
               height: 4,
               decoration: BoxDecoration(
                 color: amberColors.surfaceHighest,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(AppDimens.r2),
               ),
             ),
           ),
@@ -192,8 +193,11 @@ class _SubmitRequestSheetContent extends StatelessWidget {
         children: [
           if (isReplace)
             Container(
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              margin: const EdgeInsets.only(right: AppDimens.p8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimens.p8,
+                vertical: AppDimens.p4,
+              ),
               decoration: BoxDecoration(
                 color: amberColors.primary.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(
@@ -204,7 +208,7 @@ class _SubmitRequestSheetContent extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.swap_horiz, color: amberColors.primary, size: 16),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: AppDimens.p4),
                   Text(
                     'REPLACE',
                     style: AppTypography.captionBold.copyWith(
@@ -419,7 +423,10 @@ class _SubmitRequestSheetContent extends StatelessWidget {
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle, color: Colors.white),
+                Icon(
+                  Icons.check_circle,
+                  color: context.amberColors.textInverse,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   vm.isReplaceMode
@@ -428,7 +435,7 @@ class _SubmitRequestSheetContent extends StatelessWidget {
                 ),
               ],
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: context.amberColors.success,
           ),
         );
         onReplaced?.call(replaced);
@@ -442,7 +449,7 @@ class _SubmitRequestSheetContent extends StatelessWidget {
           messenger.showSnackBar(
             SnackBar(
               content: Text(vm.submitError ?? 'Failed to submit bid'),
-              backgroundColor: Colors.red,
+              backgroundColor: context.amberColors.danger,
             ),
           );
         }
@@ -611,7 +618,7 @@ class _ExistingBidInfo extends StatelessWidget {
     return Row(
       children: [
         Icon(icon, size: 16, color: amberColors.muted),
-        const SizedBox(width: 4),
+        const SizedBox(width: AppDimens.p4),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -657,7 +664,7 @@ class _ComparisonRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final amberColors = context.amberColors;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: AppDimens.p8),
       child: Row(
         crossAxisAlignment: isMultiline
             ? CrossAxisAlignment.start
@@ -683,16 +690,16 @@ class _ComparisonRow extends StatelessWidget {
                 ),
                 if (changeIndicator != null)
                   Container(
-                    margin: const EdgeInsets.only(top: 2),
+                    margin: const EdgeInsets.only(top: AppDimens.p2),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
+                      horizontal: AppDimens.p6,
+                      vertical: AppDimens.p2,
                     ),
                     decoration: BoxDecoration(
-                      color: (changeColor ?? Colors.grey).withValues(
+                      color: (changeColor ?? AppColors.mediumGrey).withValues(
                         alpha: 0.1,
                       ),
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(AppDimens.r4),
                     ),
                     child: Text(
                       changeIndicator!,
@@ -720,7 +727,7 @@ class _WarningBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final amberColors = context.amberColors;
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppDimens.p12),
       decoration: BoxDecoration(
         color: amberColors.warningMuted,
         borderRadius: BorderRadius.circular(AppDimens.r8),

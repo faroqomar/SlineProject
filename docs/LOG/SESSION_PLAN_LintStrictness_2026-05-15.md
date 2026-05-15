@@ -20,17 +20,22 @@ The fixes were applied across production code and tests without adding suppressi
 
 The follow-up pass also recorded the remaining explicitly disabled lint rules in `analysis_options.yaml` so future reviews can distinguish deliberate formatter/style/noise decisions from forgotten defaults. Deprecated lints are intentionally omitted rather than configured as `false`, because current analyzer versions warn when deprecated lint names appear in the config.
 
+The tooling follow-up added `dependency_validator` and `custom_lint` as dev dependencies. `dependency_validator` now runs in CI and the pre-commit hook, with intentional plugin/font/tooling exceptions documented in `dart_dependency_validator.yaml`. The local `packages/sline_lints` plugin adds SLine-specific MVVM and feature-view design-token rules that generic Dart lint packages cannot express, including direct Supabase/raw-network access in feature views, forbidden repository imports in feature views, view imports and navigation/controller ownership in ViewModels, and hardcoded feature-view color, motion, typography, spacing, radius, shadow, and curve literals. Mason scaffolding was removed because no active app or CI gate depends on generated bricks.
+
 ## Documentation Updates
 
 - `Sline_everything/DEVELOPER_GUIDE.md`: updated lint-rule guidance to show the newly active strict rules and the remaining disabled-rule rationale.
 - `Sline_everything/MVP_ROADMAP.md`: replaced the stale "34 rules" row with the current `very_good_analysis` plus strict-mode status.
-- `Sline_everything/STRUCTURE.md`: updated the `analysis_options.yaml` description and last-updated marker.
+- `Sline_everything/STRUCTURE.md`: updated the `analysis_options.yaml` description, custom lint hook description, token ranges, and last-updated marker.
+- `packages/sline_lints/README.md`: documented the local custom lint plugin.
 
 ## Verification
 
 - `flutter analyze --no-fatal-infos` -- passed with no issues.
 - `flutter test` -- passed.
 - `git diff --check` -- passed.
+- `dart analyze` in `packages/sline_lints` -- passed.
+- `dart run custom_lint` -- passed.
 
 ## Follow-Up Rule
 

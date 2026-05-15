@@ -112,7 +112,7 @@ class WorkItemBookingDetails extends StatelessWidget {
 
   Widget _infoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppDimens.p4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

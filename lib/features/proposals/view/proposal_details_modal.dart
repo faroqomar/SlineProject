@@ -119,7 +119,7 @@ class ProposalDetailsModal extends StatelessWidget {
                                     child: Text(
                                       freelancer['initials'].toString(),
                                       style: AppTypography.h4.copyWith(
-                                        color: Colors.black,
+                                        color: AppColors.almostBlack,
                                       ),
                                     ),
                                   ),
@@ -250,7 +250,7 @@ class ProposalDetailsModal extends StatelessWidget {
                     if (data['attachments'] != null)
                       ...(data['attachments'] as List).map(
                         (file) => Container(
-                          margin: const EdgeInsets.only(bottom: 8),
+                          margin: const EdgeInsets.only(bottom: AppDimens.p8),
                           padding: const EdgeInsets.all(AppDimens.p12),
                           decoration: BoxDecoration(
                             color: colorScheme.cardBackground,
@@ -260,12 +260,14 @@ class ProposalDetailsModal extends StatelessWidget {
                           child: Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(8),
+                                padding: const EdgeInsets.all(AppDimens.p8),
                                 decoration: BoxDecoration(
                                   color: AppColors.lightRed.withValues(
                                     alpha: 0.1,
                                   ),
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimens.r8,
+                                  ),
                                 ),
                                 child: Icon(
                                   Icons.attach_file,
@@ -310,7 +312,9 @@ class ProposalDetailsModal extends StatelessWidget {
                       onPressed: () {},
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: colorScheme.cardBorder),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppDimens.p16,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppDimens.r16),
                         ),

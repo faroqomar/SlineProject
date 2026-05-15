@@ -75,7 +75,7 @@ lib/
 ### Code Style
 - **Language**: All code and comments in English
 - **Logging**: Use `AppLogger` instead of `print()`. Import from `lib/core/services/logger_service.dart`
-- **Formatting**: Code must be lint-clean (`flutter analyze`) and formatted (`flutter format .`)
+- **Formatting**: Code must be lint-clean (`flutter analyze`), SLine custom-lint clean (`dart run custom_lint`), and formatted (`dart format`)
 
 ### Data Handling
 - **Timestamps**: Store in UTC, convert to local time in UI using `formatUtcToLocal()` from `lib/core/utils/format_date.dart`

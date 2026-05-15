@@ -9,6 +9,7 @@ import 'package:sline_app/core/services/payment_service.dart';
 import 'package:sline_app/core/theme/app_dimens.dart';
 import 'package:sline_app/core/theme/app_theme.dart';
 import 'package:sline_app/core/theme/app_typography.dart';
+import 'package:sline_app/core/theme/designs/amber_dusk/amber_dusk_tokens.dart';
 import 'package:sline_app/core/utils/error_mapper.dart';
 import 'package:sline_app/core/utils/format_price.dart';
 import 'package:sline_app/core/widgets/app_button.dart';
@@ -189,7 +190,7 @@ class _DirectOfferDetailsContentState
               icon: const Icon(Icons.arrow_back),
               onPressed: () => Navigator.pop(context, true),
             ),
-            backgroundColor: Colors.transparent,
+            backgroundColor: AmberDuskColors.transparent,
             elevation: 0,
           ),
           body: SingleChildScrollView(
