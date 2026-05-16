@@ -1,0 +1,164 @@
+lib/features/home/view/home_screen.dart
+  s_054e7dad07028d::t_fb7833b119aeb3 403,411,419-420,475
+  s_7e3adfc5901167::t_9f470be7ecf206 95
+  s_7e3adfc5901167::t_fef9bd4d61a6da 107-109,111-117,119,123-171,173-202,204-205,207-208,210-221,224-225,245-247,251-252,256,258-273,275-280,282-287,289-290,292-293,297-319,321-322,326-363,365-371
+lib/core/theme/designs/amber_dusk/amber_dusk_colors.dart
+  s_7e3adfc5901167::t_fbc4685980208e 49-50,94-114,300-319
+  s_7e3adfc5901167::t_ff23bce4189b5c 70,73,76
+test/widget/chat/messages_screen_test.dart
+  s_7e3adfc5901167::t_60a6478657936d 84,162-165
+  s_7e3adfc5901167::t_3f49554d8a057e 259-260,262,267-275
+  s_7e3adfc5901167::t_1db47470becc58 233,247-251,255-258,264-266
+lib/features/dashboard/view/widgets/next_actions_list.dart
+  s_7e3adfc5901167::t_8842e6f8a1b7af 188-189,195
+test/widget/app/main_navigation_screen_test.dart
+  s_7e3adfc5901167::t_d8524374568854 193,220
+lib/features/tasks/view/widgets/tender_task_card.dart
+  s_7e3adfc5901167::t_18d1913a9abca2 12,15
+  s_7e3adfc5901167::t_e0277d63c94f2e 64-65
+lib/features/home/view/widgets/filters_modal.dart
+  s_7e3adfc5901167::t_33597d41e06e0d 34,39-40,52-53,55,73-76,251-252,354,372-375,397-403,408-414,564-567,569-570
+  s_7e3adfc5901167::t_4e6e6c96f7b55b 6-7,35-36,88,99,101-105,110-111,122,124,126,153-192,195-204,206-214,216-250,253-288,297-309,311-314,316-329,331-340,342-353,355-359,361-371,376-396,404-407,415-423,430-477,480-481,483,487-490,494-531,550
+  s_7e3adfc5901167::t_2d41bf0e3df14f 330
+  s_7e3adfc5901167::t_1793edfa8e30f2 193,641
+  s_7e3adfc5901167::t_6eafadc8d09c6e 341
+  s_7e3adfc5901167::t_64ac2c63f2a64b 603-640,642-872
+lib/features/tasks/view/widgets/dashboard_offer_card.dart
+  s_7e3adfc5901167::t_8e03128ddc5947 101-102,114,170-172,181,192
+lib/features/notifications/view/notifications_modal.dart
+  s_7e3adfc5901167::t_d74a1cdc9fed7d 277-292,294,296-326,336-338,340-345,409-420,426-427,592-651
+lib/core/theme/designs/amber_dusk/amber_dusk_material.dart
+  s_7e3adfc5901167::t_d8c9fa8e0fc3d0 36-38,41,112,115-117,121
+  s_7e3adfc5901167::t_8cd4a4f33e54e1 2-21,25-35,39-40,42-45,54-58,113-114,118-120,123-148,152-158,162-164,200
+  s_7e3adfc5901167::t_45fc5abef0cf05 22
+  s_7e3adfc5901167::t_84f5f3f65e27fb 23-24
+  s_06e71e5b87d30d::t_8e1b68b84c2567 122
+  s_7e3adfc5901167::t_b086e721261127 46-53,149-151,159-161,165-199
+  h_eff31e0a4a0870 1
+  s_7e3adfc5901167::t_de61bf8d0e8624 59-111
+test/widget/home/home_screen_test.dart
+  s_054e7dad07028d::t_4b5dc4a1069bba 168-169,171
+lib/core/theme/designs/amber_dusk/amber_dusk_surfaces.dart
+  s_7e3adfc5901167::t_6030155d59863b 67
+lib/features/notifications/view/widgets/notification_tile.dart
+  s_7e3adfc5901167::t_235aff12cf2b25 33,35,47,57-79,83-92,96,116-118,123-132,134-136,141,149-164,166,175-177,180-193,197-198,205-206,210-211,215-216,220-221,225-226,230-231,235-236,239-310,312-315,317-325
+  s_7e3adfc5901167::t_548c6c84f46a2f 80-82,93-95,97-114,120,137-140,143-144
+  s_7e3adfc5901167::t_56d20e980d5a5e 3
+  s_7e3adfc5901167::t_fb91c298962767 178-179
+test/core/widgets/custom_bottom_nav_bar_test.dart
+  s_7e3adfc5901167::t_d8524374568854 189,211
+  s_7e3adfc5901167::t_15693b6484c630 7,104,106
+lib/core/utils/content_safety_filter.dart
+  s_06e71e5b87d30d::t_8e1b68b84c2567 36,49
+lib/features/dashboard/view/tabs/work_tab.dart
+  s_7e3adfc5901167::t_05465d913be8dc 96,98,103
+lib/core/widgets/custom_bottom_nav_bar.dart
+  s_7e3adfc5901167::t_6a5b55b6bbd12f 54,117-120,130-142,250,263-275,277-289,291,294,297-310,313-329,331-381
+  s_7e3adfc5901167::t_d45c8fc278a0b8 18,22,124,290,330
+  s_7e3adfc5901167::t_d8524374568854 108-111
+lib/features/dashboard/view/dashboard_screen.dart
+  s_12370e20f5e5d3::t_60bacfe62d557a 334-345
+  s_7e3adfc5901167::t_fac34e2e4520b8 196,200,268,414-417,462
+lib/features/tasks/view/widgets/booking_task_card.dart
+  s_7e3adfc5901167::t_acf62b6011856a 19,22
+  s_7e3adfc5901167::t_c577d98538bbd6 90-91
+lib/features/dashboard/view/widgets/activity_feed_preview.dart
+  s_7e3adfc5901167::t_0fc6e2627e1ffe 194-198,366-370
+test/widget/profile/settings_screen_test.dart
+  s_7e3adfc5901167::t_d5525cada69175 1-32,34-35
+  s_7e3adfc5901167::t_0d33eb347e38b8 33
+test/widget/dashboard/dashboard_screen_test.dart
+  s_7e3adfc5901167::t_4bf7f6019f65d3 68,74
+lib/core/widgets/app_card_container.dart
+  s_7e3adfc5901167::t_70398d6de7b6c7 5,11-14,53,58-61
+lib/features/booking/view/widgets/dashboard_booking_card.dart
+  s_7e3adfc5901167::t_e8e025806dabd0 119,239,411
+lib/features/chat/view/messages_screen.dart
+  s_7e3adfc5901167::t_455ef265c175e3 796-805,807-809,816-828,830-863,865-868,870,873,875
+  s_06e71e5b87d30d::t_8e1b68b84c2567 913-915,988,1085,1090,1095,1121
+  s_7e3adfc5901167::t_766e217cb905d9 299-302,306-307,317,323,334,371-389
+  s_7e3adfc5901167::t_d6fc6f4caa1efb 479-480,482,484-485,487-488,492,496,500-501,503,513,520,524,528,534-535
+  s_7e3adfc5901167::t_466669ef66c097 363-365
+  s_7e3adfc5901167::t_fad7eb7c2c2573 529,531,910-912,1058-1061
+  s_7e3adfc5901167::t_540ecfb60e0e9a 36-38,54-56,109,210,234,236,238-248,254-258,266,268,270-272,275
+  s_7e3adfc5901167::t_8e365c957fc275 881,883-885,904-907,931-932,940-943,948-953,958,960-961,968,971-972,974-975,977,979-981,984-987,989,993-1010,1018-1023,1043-1057,1062-1084,1086-1089,1091-1094,1096-1120,1122-1142,1145-1149,1153,1157-1158,1160,1163-1191,1196-1199,1204-1209,1212-1215
+  s_7e3adfc5901167::t_010ebe6d4b77b7 206,309,311,366,518,530,619-620,908,933-934,1192-1195,1211
+  s_7e3adfc5901167::t_fe7eea37a9f3fe 141-149
+  s_7e3adfc5901167::t_9a8935c6af7881 864,1210
+  s_7e3adfc5901167::t_275dad9309e4be 647-649,706
+  s_7e3adfc5901167::t_6396cff59f9f05 35,909,926-929,936,938-939,944-945,954-957,965-967,969-970,978
+  s_7e3adfc5901167::t_449709068781ca 592-593,616-618,621-622,626-636,638-641,644-646,650-657,659-688,690-692,694-705,708-724,726-735,740-744,890,896
+  s_7e3adfc5901167::t_9c47f882c7a87d 623-624
+  s_7e3adfc5901167::t_9d1c5e6c38752d 693,707
+test/widget/home/filters_modal_test.dart
+  s_7e3adfc5901167::t_3a57bc27337ab7 78,89
+  s_7e3adfc5901167::t_4ce080901768c1 114,118-134
+  s_7e3adfc5901167::t_7b51236f909723 67-68,71
+  s_7e3adfc5901167::t_0b6112c5eb6096 69-70
+  s_7e3adfc5901167::t_ebb560f7eed58d 64-66,75-77,79-80,85-88,90
+test/core/theme/amber_dusk_widget_theme_test.dart
+  s_7e3adfc5901167::t_0581a3303c6be9 123,126,129
+lib/features/dashboard/view/tabs/bookings_tab.dart
+  s_7e3adfc5901167::t_186ff5a2c7446b 181
+lib/app/main_navigation_screen.dart
+  s_7e3adfc5901167::t_12233a6ba9b7bc 274-278,299-310,378-394,397
+  s_7e3adfc5901167::t_d8524374568854 400-403
+test/core/theme/amber_dusk_tokens_test.dart
+  s_7e3adfc5901167::t_2f9b31673e0bf2 286-289,291-296,298-301,303-311,316-317
+  s_7e3adfc5901167::t_f440183630ed00 49-76
+  s_7e3adfc5901167::t_481863d02dda0c 38-41
+  s_7e3adfc5901167::t_7374f4f501d10b 302,312-315
+lib/core/theme/designs/amber_dusk/amber_dusk_widget_theme.dart
+  s_7e3adfc5901167::t_6796dba68f0846 38-39,41-42,475,482,489
+lib/core/theme/designs/amber_dusk/amber_dusk_tokens.dart
+  s_7e3adfc5901167::t_8de72a92670af6 19
+lib/features/dashboard/view/widgets/work_item_card.dart
+  s_7e3adfc5901167::t_79f0c7d3dfee71 211
+lib/features/profile/view/settings_screen.dart
+  s_7e3adfc5901167::t_53747f5e980d9e 26-38,40-48,50-53,55-60,64-78,80-93,95-137,139-178,180-186,188-204,206,209-246,248-250,252-263,265-266
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "92d1d0f79982b22cbc39efec686832437ddc4d8b",
+  "prompts": {},
+  "humans": {
+    "h_eff31e0a4a0870": {
+      "author": "Farooq Eros <faroqomar97@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_054e7dad07028d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2d01-f921-78b3-bf17-138a00914b4f",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Farooq Eros <faroqomar97@gmail.com>"
+    },
+    "s_06e71e5b87d30d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e313a-f772-7c53-9259-b2bae6c8fb74",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Farooq Eros <faroqomar97@gmail.com>"
+    },
+    "s_12370e20f5e5d3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2cf7-b36e-7e91-8159-4eeea1d7f6f3",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Farooq Eros <faroqomar97@gmail.com>"
+    },
+    "s_7e3adfc5901167": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2ccb-524b-7951-b95f-c8928f56a692",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Farooq Eros <faroqomar97@gmail.com>"
+    }
+  }
+}
